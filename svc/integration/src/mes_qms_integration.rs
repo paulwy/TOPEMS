@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::{Db, ScopedTxn};
@@ -1021,6 +1022,7 @@ pub async fn get_mes_qms_sync_stats(scope: &mut ScopedTxn<'_>) -> Result<SyncSta
 // ==================== Retry Functions ====================
 
 pub async fn retry_failed_sync(
+    txn_arc: &RlsTxnCell,
     db: &Db,
     mes_url: &str,
     qms_url: &str,
@@ -1028,19 +1030,28 @@ pub async fn retry_failed_sync(
 ) -> Result<MesQmsSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    // 后台重试路径无请求事务：读取/更新各自建立短作用域。
-    let mut scope = db
-        .scope()
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
-    let sync = get_mes_qms_sync(&mut scope, sync_id)
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
-        .ok_or_else(|| TopemsError::ResourceNotFound("同步记录不存在".to_string()))?;
-    scope
-        .commit()
-        .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
+    // HTTP 入口：读取复用请求事务；重试执行与失败计数在请求事务之外（见下）。
+    let sync = {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "请求事务上下文缺失：retry_failed_sync 未注入请求事务".to_string(),
+            ));
+        };
+        let mut scope = db
+            .scope_with(txn)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+        let sync = get_mes_qms_sync(&mut scope, sync_id)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
+            .ok_or_else(|| TopemsError::ResourceNotFound("同步记录不存在".to_string()))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
+        sync
+    };
 
     if sync.retry_count >= sync.max_retries {
         return Err(TopemsError::ValidationFailed(
@@ -1087,8 +1098,14 @@ pub async fn retry_failed_sync(
 
     match result {
         RetryResult::Success(_) => {
+            let mut guard = txn_arc.lock().await;
+            let Some(txn) = guard.as_mut() else {
+                return Err(TopemsError::DatabaseQuery(
+                    "请求事务上下文缺失：retry_failed_sync 未注入请求事务".to_string(),
+                ));
+            };
             let mut scope = db
-                .scope()
+                .scope_with(txn)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
             let updated =
@@ -1102,8 +1119,9 @@ pub async fn retry_failed_sync(
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
+            // 失败计数必须在非 2xx 响应下持久化：按租户短事务提交，不并入请求事务。
             let mut scope = db
-                .scope()
+                .scope_for_tenant(sync.tenant_id)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
             increment_retry_count(&mut scope, sync_id, &error).await?;
@@ -1128,8 +1146,9 @@ async fn execute_sync_by_type(
     sync_type: &str,
     payload: &serde_json::Value,
 ) -> Result<(), TopemsError> {
+    // 重试执行在请求事务之外（含退避等待），按租户短事务提交。
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
     match sync_type {
@@ -1194,7 +1213,7 @@ pub async fn handle_mes_production_completed(
     };
 
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
     match trigger_qms_inspection(&mut scope, tenant_id, mes_url, qms_url, &req).await {
@@ -1239,7 +1258,7 @@ pub async fn handle_qms_inspection_completed(
     };
 
     let mut scope = db
-        .scope()
+        .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
     match sync_quality_result_to_mes(&mut scope, tenant_id, mes_url, qms_url, &req).await {

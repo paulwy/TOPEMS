@@ -1,7 +1,7 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -20,9 +20,7 @@ use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
 )]
 pub async fn list_lims_qms_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<LimsQmsSync>> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -66,9 +64,7 @@ pub async fn list_lims_qms_sync(
 )]
 pub async fn create_lims_qms_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateLimsQmsSyncRequest>,
 ) -> ApiResponse<LimsQmsSync> {
     let id = Uuid::new_v4();
@@ -149,9 +145,7 @@ pub async fn create_lims_qms_sync(
 )]
 pub async fn get_lims_qms_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LimsQmsSync> {
     let mut guard = txn_arc.lock().await;
@@ -201,9 +195,7 @@ pub async fn get_lims_qms_sync(
 )]
 pub async fn sync_lims_qms(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LimsQmsSync> {
     let now = Utc::now();

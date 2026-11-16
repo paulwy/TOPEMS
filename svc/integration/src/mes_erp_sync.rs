@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::time::Duration;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
@@ -808,12 +809,21 @@ impl MesErpSyncService {
 
     // ==================== 重试失败同步 ====================
 
-    pub async fn retry_failed_sync(&self, sync_id: Uuid) -> Result<SyncResult, TopemsError> {
-        // HTTP 入口：请求租户上下文由 scope_read 内部的 task-local 提供，
-        // 无上下文直接返回 Protocol，不再静默读全表。
+    pub async fn retry_failed_sync(
+        &self,
+        txn_arc: &RlsTxnCell,
+        sync_id: Uuid,
+    ) -> Result<SyncResult, TopemsError> {
+        // HTTP 入口：读取复用请求事务，租户由请求上下文决定。
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "请求事务上下文缺失：retry_failed_sync 未注入请求事务".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
 
@@ -880,14 +890,21 @@ impl MesErpSyncService {
 
     pub async fn list_sync_records(
         &self,
+        txn_arc: &RlsTxnCell,
         direction: Option<&str>,
         status: Option<&str>,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<MesErpSyncRecord>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "请求事务上下文缺失：list_sync_records 未注入请求事务".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
 
@@ -922,11 +939,18 @@ impl MesErpSyncService {
 
     pub async fn get_sync_record(
         &self,
+        txn_arc: &RlsTxnCell,
         sync_id: Uuid,
     ) -> Result<Option<MesErpSyncRecord>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "请求事务上下文缺失：get_sync_record 未注入请求事务".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
 
@@ -953,10 +977,20 @@ impl MesErpSyncService {
         Ok(row)
     }
 
-    pub async fn get_sync_logs(&self, sync_id: Uuid) -> Result<Vec<SyncLog>, TopemsError> {
+    pub async fn get_sync_logs(
+        &self,
+        txn_arc: &RlsTxnCell,
+        sync_id: Uuid,
+    ) -> Result<Vec<SyncLog>, TopemsError> {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return Err(TopemsError::DatabaseQuery(
+                "请求事务上下文缺失：get_sync_logs 未注入请求事务".to_string(),
+            ));
+        };
         let mut scope = self
             .db
-            .scope_read()
+            .scope_with(txn)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
 

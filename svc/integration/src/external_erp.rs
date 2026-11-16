@@ -1,12 +1,12 @@
 //! 外部 ERP 集成（缺口#13 扩展版）
 //! 覆盖 /external-erp/* 全部路径，基于 erp_connections / erp_mappings / external_erp_sync_logs 真实表实现
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::ScopedTxn;
@@ -392,9 +392,7 @@ pub struct SyncStatistics {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -448,9 +446,7 @@ pub async fn list_connections(
 pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let id = Uuid::new_v4();
@@ -646,9 +642,7 @@ async fn test_connection(
 async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -702,9 +696,7 @@ async fn get_connection(
 pub async fn update_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -779,9 +771,7 @@ pub async fn update_connection(
 pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -817,9 +807,7 @@ pub async fn delete_connection(
 pub async fn list_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -861,9 +849,7 @@ pub async fn list_entity_mappings(
 async fn create_entity_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
@@ -933,9 +919,7 @@ async fn create_entity_mapping(
 pub async fn batch_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1021,9 +1005,7 @@ pub async fn batch_entity_mappings(
 pub async fn preview_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -1267,9 +1249,7 @@ async fn write_to_staging(
 pub async fn sync_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(entity): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1491,9 +1471,7 @@ pub async fn sync_entity(
 pub async fn sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ExternalErpSyncLog>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -1533,9 +1511,7 @@ pub async fn sync_logs(
 pub async fn sync_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SyncStatistics> {
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -1624,9 +1600,7 @@ pub async fn sync_statistics(
 pub async fn export_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -1670,9 +1644,7 @@ pub async fn export_mappings(
 pub async fn export_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -1719,9 +1691,7 @@ pub async fn export_sync_logs(
 pub async fn toggle_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -1767,9 +1737,7 @@ pub async fn toggle_connection(
 pub async fn sync_connection_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -1800,9 +1768,7 @@ pub async fn sync_connection_status(
 pub async fn list_company_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -1843,9 +1809,7 @@ pub async fn list_company_mappings(
 pub async fn create_company_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
@@ -1912,9 +1876,7 @@ pub async fn create_company_mapping(
 
 pub async fn update_company_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, mapping_id)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
@@ -1965,9 +1927,7 @@ pub async fn update_company_mapping(
 
 pub async fn delete_company_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, mapping_id)): Path<(String, String)>,
 ) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -2003,9 +1963,7 @@ pub async fn delete_company_mapping(
 
 pub async fn update_entity_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
@@ -2057,9 +2015,7 @@ pub async fn update_entity_mapping(
 
 pub async fn delete_entity_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
 ) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
@@ -2105,9 +2061,7 @@ pub async fn auto_match_mappings() -> ApiResponse<serde_json::Value> {
 /// 取消同步（待上游支持：此处校验日志存在性后返回成功，真实中断后续接入）
 pub async fn cancel_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(log_id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
@@ -2141,9 +2095,7 @@ pub async fn cancel_sync(
 
 pub async fn get_sync_log(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(log_id): Path<String>,
 ) -> ApiResponse<ExternalErpSyncLog> {
     let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
@@ -2180,9 +2132,7 @@ pub async fn get_sync_log(
 
 pub async fn connection_sync_statistics(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(conn_id): Path<String>,
 ) -> ApiResponse<SyncStatistics> {
     let uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());

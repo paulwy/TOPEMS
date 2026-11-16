@@ -1,10 +1,10 @@
 //! ERP 连接管理（缺口#11）
 //! GET/POST /erp/connections, GET/PUT/DELETE /erp/connections/{id}, POST /erp/connections/test
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -43,9 +43,7 @@ fn tenant_for_write(claims: &Claims) -> Uuid {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid = tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
@@ -96,9 +94,7 @@ pub async fn list_connections(
 pub async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let tid = tenant_filter(&claims);
@@ -144,9 +140,7 @@ pub async fn get_connection(
 pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateErpConnectionRequest>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let tid = tenant_for_write(&claims);
@@ -207,9 +201,7 @@ pub async fn create_connection(
 pub async fn update_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -278,9 +270,7 @@ pub async fn update_connection(
 pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let tid = tenant_filter(&claims);

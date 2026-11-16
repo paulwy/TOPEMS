@@ -4,10 +4,10 @@
 //! 提供同步任务的 CRUD、统计、重试以及供应链触发器（SCM→WMS、WMS→CRM、SRM→SCM）。
 //! 统一由 integration 服务承载，与既有 mes_erp / wms_scm / lims_qms 等同步模块并列。
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Json, State};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
@@ -135,9 +135,7 @@ impl From<SyncTaskRow> for SyncTask {
 )]
 pub async fn create_task(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSyncTaskRequest>,
 ) -> ApiResponse<SyncTask> {
     let now = chrono::Utc::now();
@@ -208,9 +206,7 @@ pub async fn create_task(
 )]
 pub async fn get_task(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
 ) -> ApiResponse<Option<SyncTask>> {
     let mut guard = txn_arc.lock().await;
@@ -264,9 +260,7 @@ pub async fn update_status(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> ApiResponse<SyncTask> {
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -332,9 +326,7 @@ pub async fn update_status(
 )]
 pub async fn get_pending(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SyncTask>> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -380,9 +372,7 @@ pub async fn get_pending(
 )]
 pub async fn get_statistics(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -465,9 +455,7 @@ pub async fn get_statistics(
 pub async fn retry_failed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RetryFailedRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let now = chrono::Utc::now();
@@ -573,9 +561,7 @@ pub async fn retry_failed(
 )]
 pub async fn trigger_scm_wms(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<TriggerSyncRequest>,
 ) -> ApiResponse<SyncTask> {
     let mut guard = txn_arc.lock().await;
@@ -646,9 +632,7 @@ pub async fn trigger_scm_wms(
 )]
 pub async fn trigger_wms_crm(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<TriggerSyncRequest>,
 ) -> ApiResponse<SyncTask> {
     let mut guard = txn_arc.lock().await;
@@ -719,9 +703,7 @@ pub async fn trigger_wms_crm(
 )]
 pub async fn trigger_srm_scm(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<TriggerSyncRequest>,
 ) -> ApiResponse<SyncTask> {
     let mut guard = txn_arc.lock().await;
@@ -834,9 +816,7 @@ struct SyncStatsAggRow {
 )]
 pub async fn get_integration_sync_stats(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<IntegrationSyncStatsResp> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -961,9 +941,7 @@ struct SyncHistoryRow {
 )]
 pub async fn get_sync_history(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     axum::extract::Query(q): axum::extract::Query<SyncHistoryQuery>,
 ) -> ApiResponse<Vec<SyncHistoryItemResp>> {
     let page = q.page.unwrap_or(1).max(1);

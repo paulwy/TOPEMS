@@ -1,9 +1,9 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -35,9 +35,7 @@ pub struct SyncMesToErpRequest {
 )]
 pub async fn list_mes_erp_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<MesErpSync>> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -80,9 +78,7 @@ pub async fn list_mes_erp_sync(
 )]
 pub async fn create_mes_erp_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateMesErpSyncRequest>,
 ) -> ApiResponse<MesErpSync> {
     let id = Uuid::new_v4();
@@ -162,9 +158,7 @@ pub async fn create_mes_erp_sync(
 )]
 pub async fn get_mes_erp_sync(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MesErpSync> {
     let mut guard = txn_arc.lock().await;
@@ -213,9 +207,7 @@ pub async fn get_mes_erp_sync(
 )]
 pub async fn sync_mes_erp(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MesErpSync> {
     let now = Utc::now();
@@ -356,8 +348,13 @@ pub async fn sync_mes_progress_to_erp(
 pub async fn retry_mes_erp_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<mes_erp_sync::SyncResult> {
-    match state.mes_erp_sync_service.retry_failed_sync(id).await {
+    match state
+        .mes_erp_sync_service
+        .retry_failed_sync(&txn_arc, id)
+        .await
+    {
         Ok(result) => ApiResponse::success(result, "MES↔ERP 同步重试成功"),
         Err(e) => {
             tracing::error!("MES↔ERP sync retry failed: {}", e);
@@ -382,8 +379,9 @@ pub async fn retry_mes_erp_sync(
 pub async fn get_mes_erp_sync_logs(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<mes_erp_sync::SyncLog>> {
-    match state.mes_erp_sync_service.get_sync_logs(id).await {
+    match state.mes_erp_sync_service.get_sync_logs(&txn_arc, id).await {
         Ok(logs) => ApiResponse::success(logs, "同步日志获取成功"),
         Err(e) => {
             tracing::error!("Failed to fetch sync logs: {}", e);
@@ -404,6 +402,7 @@ pub async fn get_mes_erp_sync_logs(
 pub async fn list_mes_erp_sync_records(
     State(state): State<AppState>,
     Query(query): Query<HashMap<String, String>>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<mes_erp_sync::MesErpSyncRecord>> {
     let direction = query.get("direction").map(|s| s.as_str());
     let status = query.get("status").map(|s| s.as_str());
@@ -418,7 +417,7 @@ pub async fn list_mes_erp_sync_records(
 
     match state
         .mes_erp_sync_service
-        .list_sync_records(direction, status, limit, offset)
+        .list_sync_records(&txn_arc, direction, status, limit, offset)
         .await
     {
         Ok(records) => ApiResponse::success(records, "同步记录获取成功"),

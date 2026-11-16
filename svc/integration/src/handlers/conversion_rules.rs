@@ -1,8 +1,8 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -26,9 +26,7 @@ use crate::models::AppState;
 )]
 pub async fn list_conversion_rules_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ConversionRule>> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -66,9 +64,7 @@ pub async fn list_conversion_rules_api(
 )]
 pub async fn get_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
     let mut guard = txn_arc.lock().await;
@@ -111,9 +107,7 @@ pub async fn get_conversion_rule_api(
 )]
 pub async fn create_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateConversionRuleRequest>,
 ) -> ApiResponse<ConversionRule> {
     let id = Uuid::new_v4();
@@ -180,9 +174,7 @@ pub async fn create_conversion_rule_api(
 )]
 pub async fn update_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateConversionRuleRequest>,
 ) -> ApiResponse<ConversionRule> {
@@ -270,9 +262,7 @@ pub async fn update_conversion_rule_api(
 )]
 pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
@@ -324,9 +314,7 @@ pub async fn delete_conversion_rule_api(
 )]
 pub async fn get_rule_executions_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ConversionExecution>> {
     let mut guard = txn_arc.lock().await;
@@ -368,9 +356,7 @@ pub async fn get_rule_executions_api(
 )]
 pub async fn execute_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
 ) -> ApiResponse<ExecuteConversionResponse> {
@@ -464,9 +450,7 @@ pub async fn execute_conversion_rule_api(
 )]
 pub async fn enable_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
     let mut guard = txn_arc.lock().await;
@@ -513,9 +497,7 @@ pub async fn enable_conversion_rule_api(
 )]
 pub async fn disable_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
     let mut guard = txn_arc.lock().await;

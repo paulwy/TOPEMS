@@ -1,10 +1,10 @@
 //! ERP 字段映射管理（缺口#12）
 //! GET/POST /erp/mappings, GET/PUT/DELETE /erp/mappings/{id}
 
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -24,9 +24,7 @@ use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMapp
 pub async fn list_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -79,9 +77,7 @@ pub async fn list_mappings(
 pub async fn get_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ErpMapping> {
     let tid: Option<&str> = if claims.is_superuser {
@@ -130,9 +126,7 @@ pub async fn get_mapping(
 )]
 pub async fn create_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateErpMappingRequest>,
 ) -> ApiResponse<ErpMapping> {
     let tid = "default".to_string();
@@ -195,9 +189,7 @@ pub async fn create_mapping(
 )]
 pub async fn update_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpMappingRequest>,
 ) -> ApiResponse<ErpMapping> {
@@ -269,9 +261,7 @@ pub async fn update_mapping(
 )]
 pub async fn delete_mapping(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     let tid = "default".to_string();

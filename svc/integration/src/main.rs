@@ -44,7 +44,8 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let ctx = bootstrap_service_shared(&config).await?;
-    let db = Db::new(ctx.db.clone(), "integration, public");
+    // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务（兜底守卫）。
+    let db = Db::new(ctx.db.clone(), "integration, public").deny_request_own_txn();
 
     // 业务初始化：运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）+ 事件订阅者
     // 迁移/自检使用原生池（需要 DDL/会话级操作），业务查询统一走 Db 作用域。

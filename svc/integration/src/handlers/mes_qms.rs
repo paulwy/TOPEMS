@@ -1,7 +1,7 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use std::collections::HashMap;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -22,9 +22,7 @@ use topems_shared_auth::get_tenant_id_from_claims;
 pub async fn list_mes_qms_sync_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<HashMap<String, String>>,
 ) -> ApiResponse<Vec<mes_qms_integration::MesQmsSync>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -76,9 +74,7 @@ pub async fn list_mes_qms_sync_api(
 )]
 pub async fn get_mes_qms_sync_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let mut guard = txn_arc.lock().await;
@@ -114,9 +110,7 @@ pub async fn get_mes_qms_sync_api(
 )]
 pub async fn get_mes_qms_stats_api(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<mes_qms_integration::SyncStats> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -153,9 +147,7 @@ pub async fn get_mes_qms_stats_api(
 pub async fn trigger_qms_inspection_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -201,9 +193,7 @@ pub async fn trigger_qms_inspection_api(
 pub async fn sync_quality_result_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -252,9 +242,7 @@ pub async fn sync_quality_result_api(
 pub async fn sync_trace_chain_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -300,9 +288,7 @@ pub async fn sync_trace_chain_api(
 pub async fn defect_handling_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -354,9 +340,16 @@ pub async fn defect_handling_api(
 pub async fn retry_mes_qms_sync_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
-    match mes_qms_integration::retry_failed_sync(&state.db, &state.mes_url, &state.qms_url, id)
-        .await
+    match mes_qms_integration::retry_failed_sync(
+        &txn_arc,
+        &state.db,
+        &state.mes_url,
+        &state.qms_url,
+        id,
+    )
+    .await
     {
         Ok(sync) => ApiResponse::success(sync, "MES↔QMS sync retried successfully"),
         Err(e) => {

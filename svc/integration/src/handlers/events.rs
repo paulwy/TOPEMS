@@ -1,7 +1,7 @@
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use axum::extract::{Extension, State};
 use axum::Json;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -20,9 +20,7 @@ use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, S
 )]
 pub async fn get_sync_stats(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SyncStats> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -137,9 +135,7 @@ pub async fn get_sync_stats(
 )]
 pub async fn list_events(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<IntegrationEvent>> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -182,9 +178,7 @@ pub async fn list_events(
 )]
 pub async fn create_event(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<
-        RlsTxnCell,
-    >,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateIntegrationEventRequest>,
 ) -> ApiResponse<IntegrationEvent> {
     let id = Uuid::new_v4();
