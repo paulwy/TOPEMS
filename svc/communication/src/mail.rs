@@ -1062,8 +1062,8 @@ pub fn queue_email(
     let db = db.clone();
     let id_for_task = id.clone();
     tokio::spawn(async move {
-        // 持久化写库（主路径）
-        match db.scope().await {
+        // 持久化写库（主路径）：后台任务无请求上下文，走系统写作用域。
+        match db.scope_system().await {
             Ok(mut scope) => {
                 match sqlx::query(only_own_schema_query!(
                     "public",
@@ -1130,7 +1130,8 @@ async fn process_persisted_queue(db: &Db) {
         i32,
         i32,
     );
-    let mut scope = match db.scope().await {
+    // 后台队列消费无请求上下文，走系统写作用域（队列表为全局 nil 租户数据）。
+    let mut scope = match db.scope_system().await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("邮件队列拉取 pending 失败: {}", e);

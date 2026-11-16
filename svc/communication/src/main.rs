@@ -39,7 +39,9 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let ctx = bootstrap_service_shared(&config).await?;
-    let db = Db::new(ctx.db.clone(), "communication, public");
+    // M-1：请求链路禁止自开事务，必须复用 tenant_middleware 注入的请求事务；
+    // 后台任务（邮件队列落库/消费）改用 scope_system()。
+    let db = Db::new(ctx.db.clone(), "communication, public").deny_request_own_txn();
 
     // C-1：自建 DDL 已移除（迁移权威唯一仲裁）；Schema 防御保留
     if let Err(e) = schema_defense::run_schema_migration_and_verify(
