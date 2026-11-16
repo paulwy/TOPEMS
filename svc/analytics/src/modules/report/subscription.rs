@@ -3,14 +3,16 @@
 use axum::{
     extract::{Path, State},
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use std::fmt;
+use topems_shared_auth::auth::Claims;
 use tracing::info;
 use uuid::Uuid;
 
+use super::begin_tenant_txn;
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -96,9 +98,20 @@ pub struct SubscriptionRow {
 )]
 pub async fn get_subscription(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting subscription: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let subscription = sqlx::query(
         r#"
@@ -110,7 +123,7 @@ pub async fn get_subscription(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match subscription {
@@ -146,8 +159,21 @@ pub async fn get_subscription(
     operation_id = "list_subscriptions",
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_subscriptions(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing subscriptions");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let subscriptions = sqlx::query(
         r#"
@@ -156,7 +182,7 @@ pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_jso
         ORDER BY s.created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
 
@@ -192,9 +218,20 @@ pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_jso
 )]
 pub async fn get_user_subscriptions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     info!("Listing subscriptions for user: {}", user_id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let subscriptions = sqlx::query(
         r#"
@@ -207,7 +244,7 @@ pub async fn get_user_subscriptions(
         "#,
     )
     .bind(user_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
 
@@ -244,11 +281,22 @@ pub async fn get_user_subscriptions(
 )]
 pub async fn create_subscription(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSubscriptionRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating subscription for user: {}", req.user_id);
 
     let id = Uuid::new_v4();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -262,15 +310,21 @@ pub async fn create_subscription(
     .bind(&req.email)
     .bind(req.frequency.to_string())
     .bind(true)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Subscription created",
-            "data": id
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Subscription created",
+                "data": id
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit subscription: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create subscription: {}", e),
@@ -288,10 +342,21 @@ pub async fn create_subscription(
 )]
 pub async fn update_subscription(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating subscription: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -306,14 +371,20 @@ pub async fn update_subscription(
         req.enabled,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Subscription updated"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Subscription updated"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit subscription: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to update subscription: {}", e),
@@ -331,9 +402,20 @@ pub async fn update_subscription(
 )]
 pub async fn delete_subscription(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting subscription: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -342,14 +424,20 @@ pub async fn delete_subscription(
         "#,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Subscription deleted"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Subscription deleted"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit subscription: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to delete subscription: {}", e),
@@ -367,9 +455,20 @@ pub async fn delete_subscription(
 )]
 pub async fn toggle_subscription(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Toggling subscription: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -380,12 +479,13 @@ pub async fn toggle_subscription(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
         Ok(Some(row)) => {
             let enabled = row.enabled.unwrap_or(false);
+            let _ = tx.commit().await;
             Json(serde_json::json!({
                 "success": true,
                 "message": format!("Subscription {}d", if enabled { "enable" } else { "disable" }),

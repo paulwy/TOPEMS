@@ -3,13 +3,15 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
+use topems_shared_auth::auth::Claims;
 use tracing::info;
 use uuid::Uuid;
 
+use super::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -135,8 +137,21 @@ pub struct TemplateListItem {
     operation_id = "list_templates",
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_templates(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing templates");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let templates = sqlx::query(
         r#"
@@ -145,7 +160,7 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::V
         ORDER BY created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
 
@@ -181,12 +196,23 @@ pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::V
 )]
 pub async fn create_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating template: {}", req.name);
 
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -209,16 +235,22 @@ pub async fn create_template(
     .bind(true)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
-    .execute(&state.pool)
+    .bind(tenant_uuid(&claims))
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Template created",
-            "data": id
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Template created",
+                "data": id
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit template: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create template: {}", e),
@@ -236,9 +268,20 @@ pub async fn create_template(
 )]
 pub async fn get_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting template: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let template = sqlx::query(
         r#"
@@ -248,7 +291,7 @@ pub async fn get_template(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match template {
@@ -310,10 +353,21 @@ pub async fn get_template(
 )]
 pub async fn update_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating template: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -346,14 +400,20 @@ pub async fn update_template(
     .bind(req.is_active)
     .bind(chrono::Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Template updated"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Template updated"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit template: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to update template: {}", e),
@@ -371,9 +431,20 @@ pub async fn update_template(
 )]
 pub async fn delete_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting template: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -382,14 +453,20 @@ pub async fn delete_template(
         "#,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Template deleted"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Template deleted"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit template: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to delete template: {}", e),

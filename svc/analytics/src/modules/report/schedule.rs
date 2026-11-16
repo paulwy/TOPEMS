@@ -3,16 +3,18 @@
 use axum::{
     extract::{Path, State},
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::fmt;
 use std::str::FromStr;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use tracing::info;
 use uuid::Uuid;
 
+use super::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -139,8 +141,21 @@ pub struct ScheduleExecutionRecord {
     operation_id = "list_schedules",
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_schedules(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing schedules");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let schedules = sqlx::query(
         r#"
@@ -153,7 +168,7 @@ pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::V
         ORDER BY s.created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
 
@@ -197,12 +212,23 @@ pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::V
 )]
 pub async fn create_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScheduleRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating schedule: {}", req.name);
 
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -223,16 +249,22 @@ pub async fn create_schedule(
     .bind(0)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
-    .execute(&state.pool)
+    .bind(tenant_uuid(&claims))
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Schedule created",
-            "data": id
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Schedule created",
+                "data": id
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit schedule: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create schedule: {}", e),
@@ -250,9 +282,20 @@ pub async fn create_schedule(
 )]
 pub async fn get_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting schedule: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let schedule = sqlx::query(
         r#"
@@ -266,7 +309,7 @@ pub async fn get_schedule(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match schedule {
@@ -311,10 +354,21 @@ pub async fn get_schedule(
 )]
 pub async fn update_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateScheduleRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating schedule: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -335,14 +389,20 @@ pub async fn update_schedule(
     .bind(req.status.map(|s| s.to_string()))
     .bind(chrono::Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Schedule updated"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Schedule updated"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit schedule: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to update schedule: {}", e),
@@ -360,9 +420,20 @@ pub async fn update_schedule(
 )]
 pub async fn delete_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting schedule: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -371,14 +442,20 @@ pub async fn delete_schedule(
         "#,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Schedule deleted"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Schedule deleted"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit schedule: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to delete schedule: {}", e),
@@ -396,11 +473,22 @@ pub async fn delete_schedule(
 )]
 pub async fn execute_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Executing schedule: {}", id);
 
     let now = chrono::Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -412,14 +500,20 @@ pub async fn execute_schedule(
     .bind(now)
     .bind(now)
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Schedule execution triggered"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Schedule execution triggered"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit schedule: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to execute schedule: {}", e),
@@ -437,9 +531,20 @@ pub async fn execute_schedule(
 )]
 pub async fn get_execution_history(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting execution history for schedule: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let records = sqlx::query(
         r#"
@@ -452,7 +557,7 @@ pub async fn get_execution_history(
         "#,
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
 
@@ -481,11 +586,22 @@ pub async fn get_execution_history(
 
 pub async fn run_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Running schedule: {}", id);
 
     let now = chrono::Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -497,14 +613,20 @@ pub async fn run_schedule(
     .bind(now)
     .bind(now)
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Schedule execution triggered"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Schedule execution triggered"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit schedule: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to execute schedule: {}", e),
@@ -527,9 +649,20 @@ pub async fn run_schedule(
 )]
 pub async fn toggle_schedule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Toggling schedule: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -541,14 +674,20 @@ pub async fn toggle_schedule(
     )
     .bind(chrono::Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Schedule status toggled"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Schedule status toggled"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit schedule: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to toggle schedule: {}", e),

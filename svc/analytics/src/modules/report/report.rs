@@ -3,13 +3,15 @@
 use axum::{
     extract::{Path, State},
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use tracing::info;
 use uuid::Uuid;
 
+use super::{begin_tenant_txn, tenant_uuid};
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -52,8 +54,22 @@ pub struct CreateReportFromTemplateRequest {
     operation_id = "list_reports",
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_reports(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing reports");
+
+    // RLS：事务内设置 app.tenant_id，确保 GUC 与 SELECT 落在同一连接
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let reports = sqlx::query(
         r#"
@@ -62,7 +78,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
         ORDER BY created_at DESC
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
 
@@ -99,12 +115,23 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
 )]
 pub async fn create_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating report");
 
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -122,16 +149,22 @@ pub async fn create_report(
     .bind("draft")
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
-    .execute(&state.pool)
+    .bind(tenant_uuid(&claims))
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Report created",
-            "data": id
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Report created",
+                "data": id
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit report: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create report: {}", e),
@@ -149,9 +182,20 @@ pub async fn create_report(
 )]
 pub async fn create_report_from_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportFromTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating report from template: {}", req.template_id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let template = sqlx::query(
         r#"
@@ -161,7 +205,7 @@ pub async fn create_report_from_template(
         "#,
     )
     .bind(req.template_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match template {
@@ -207,21 +251,27 @@ pub async fn create_report_from_template(
             .bind("draft")
             .bind(now)
             .bind(now)
-            .bind(Uuid::nil())
-            .execute(&state.pool)
+            .bind(tenant_uuid(&claims))
+            .execute(&mut *tx)
             .await;
 
             match result {
-                Ok(_) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Report created from template",
-                    "data": {
-                        "id": id,
-                        "name": report_name,
-                        "report_type": t_report_type,
-                        "template_id": req.template_id
-                    }
-                })),
+                Ok(_) => match tx.commit().await {
+                    Ok(()) => Json(serde_json::json!({
+                        "success": true,
+                        "message": "Report created from template",
+                        "data": {
+                            "id": id,
+                            "name": report_name,
+                            "report_type": t_report_type,
+                            "template_id": req.template_id
+                        }
+                    })),
+                    Err(e) => Json(topems_shared_core::response::error_value(
+                        500,
+                        &format!("Failed to commit report: {}", e),
+                    )),
+                },
                 Err(e) => Json(topems_shared_core::response::error_value(
                     500,
                     &format!("Failed to create report: {}", e),
@@ -249,9 +299,20 @@ pub async fn create_report_from_template(
 )]
 pub async fn get_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting report: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let report = sqlx::query(
         r#"
@@ -261,7 +322,7 @@ pub async fn get_report(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match report {
@@ -302,6 +363,7 @@ pub async fn get_report(
 )]
 pub async fn update_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -311,6 +373,16 @@ pub async fn update_report(
     let description = req.get("description").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str());
     let config = req.get("config");
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -329,14 +401,20 @@ pub async fn update_report(
     .bind(config)
     .bind(chrono::Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Report updated"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Report updated"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit report: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to update report: {}", e),
@@ -354,9 +432,20 @@ pub async fn update_report(
 )]
 pub async fn delete_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting report: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -365,14 +454,20 @@ pub async fn delete_report(
         "#,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Report deleted"
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Report deleted"
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit report: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to delete report: {}", e),
@@ -391,9 +486,20 @@ pub async fn delete_report(
 )]
 pub async fn export_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Exporting report: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let report = sqlx::query(
         r#"
@@ -403,7 +509,7 @@ pub async fn export_report(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match report {
@@ -496,9 +602,20 @@ pub async fn download_export(
 )]
 pub async fn run_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Running report: {}", id);
+
+    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ))
+        }
+    };
 
     let result = sqlx::query(
         r#"
@@ -509,15 +626,21 @@ pub async fn run_report(
     )
     .bind(chrono::Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Report is running",
-            "data": id
-        })),
+        Ok(_) => match tx.commit().await {
+            Ok(()) => Json(serde_json::json!({
+                "success": true,
+                "message": "Report is running",
+                "data": id
+            })),
+            Err(e) => Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to commit report: {}", e),
+            )),
+        },
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to run report: {}", e),

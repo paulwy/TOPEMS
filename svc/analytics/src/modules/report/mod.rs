@@ -12,6 +12,34 @@ pub use scheduler::ReportScheduler;
 use axum::routing::{get, post, put};
 use axum::Router;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
+use uuid::Uuid;
+
+/// 当前请求的租户 id（超管/无租户 claims 回退零租户，与 `bi/datasource.rs` 口径一致）
+pub(crate) fn tenant_uuid(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil)
+}
+
+/// 建立带租户上下文的事务。
+///
+/// 与 `bi/datasource.rs` / `bi/dataset.rs` 同一范式：在事务内
+/// `set_config('app.tenant_id', …, true)`，保证 GUC 与后续 SQL 落在同一连接；
+/// `is_local` 设置随事务结束自动失效，只读场景直接 drop（回滚）即可。
+pub(crate) async fn begin_tenant_txn(
+    pool: &PgPool,
+    claims: &Claims,
+) -> Result<sqlx::Transaction<'static, sqlx::Postgres>, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_uuid(claims).to_string())
+        .execute(&mut *tx)
+        .await?;
+    Ok(tx)
+}
 
 /// 报表中心读路由（由 routes.rs 叠加细粒度码 bi:report:read）
 pub fn create_read_routes() -> Router<crate::shared::AppState> {
