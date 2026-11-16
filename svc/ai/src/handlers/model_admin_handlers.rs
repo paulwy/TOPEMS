@@ -85,9 +85,8 @@ pub struct FeatureUsageItem {
 pub async fn get_dashboard_stats(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<DashboardStats>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Json(ApiResponse::<DashboardStats>::server_error(
@@ -107,15 +106,14 @@ pub async fn get_dashboard_stats(
     let (documents, qa_count, conv_trend, msg_trend, total_tokens, trend_tokens, active_users): (i64, i64, i64, i64, i64, i64, i64) =
         match sqlx::query(
             "SELECT
-                (SELECT COUNT(*) FROM ai.documents WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)),
-                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)),
-                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days'),
-                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days'),
-                (SELECT COALESCE(SUM(COALESCE(tokens_in, 0)) + SUM(COALESCE(tokens_out, 0)), 0) FROM ai.usage_logs WHERE tenant_id IS NULL OR tenant_id = $1),
-                (SELECT COALESCE(SUM(COALESCE(tokens_in, 0)) + SUM(COALESCE(tokens_out, 0)), 0) FROM ai.usage_logs WHERE (tenant_id IS NULL OR tenant_id = $1) AND created_at >= NOW() - INTERVAL '7 days'),
-                (SELECT COUNT(DISTINCT user_id) FROM public.audit_logs WHERE action LIKE 'ask%' AND (tenant_id IS NULL OR tenant_id = $1))",
+                (SELECT COUNT(*) FROM ai.documents WHERE deleted_at IS NULL),
+                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL),
+                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days'),
+                (SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days'),
+                (SELECT COALESCE(SUM(COALESCE(tokens_in, 0)) + SUM(COALESCE(tokens_out, 0)), 0) FROM ai.usage_logs),
+                (SELECT COALESCE(SUM(COALESCE(tokens_in, 0)) + SUM(COALESCE(tokens_out, 0)), 0) FROM ai.usage_logs WHERE created_at >= NOW() - INTERVAL '7 days'),
+                (SELECT COUNT(DISTINCT user_id) FROM public.audit_logs WHERE action LIKE 'ask%')",
         )
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
         {
@@ -157,9 +155,8 @@ pub async fn get_activity_trend(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<ActivityTrendQuery>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<TrendPoint>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let days = params.days.unwrap_or(7).clamp(1, 90);
     let group_by = params.group_by.as_deref().unwrap_or("day");
 
@@ -170,8 +167,8 @@ pub async fn get_activity_trend(
                     COALESCE(SUM(COALESCE(u.tokens_in, 0)) + SUM(COALESCE(u.tokens_out, 0)), 0) AS tokens
              FROM ai.qa_history q
              LEFT JOIN ai.usage_logs u ON u.qa_id = q.id
-             WHERE q.deleted_at IS NULL AND (q.tenant_id IS NULL OR q.tenant_id = $1)
-               AND q.created_at >= NOW() - make_interval(days => $2::int)
+             WHERE q.deleted_at IS NULL
+               AND q.created_at >= NOW() - make_interval(days => $1::int)
              GROUP BY date_trunc('hour', q.created_at) ORDER BY d"
         }
         _ => {
@@ -179,8 +176,8 @@ pub async fn get_activity_trend(
                     COALESCE(SUM(COALESCE(u.tokens_in, 0)) + SUM(COALESCE(u.tokens_out, 0)), 0) AS tokens
              FROM ai.qa_history q
              LEFT JOIN ai.usage_logs u ON u.qa_id = q.id
-             WHERE q.deleted_at IS NULL AND (q.tenant_id IS NULL OR q.tenant_id = $1)
-               AND q.created_at >= NOW() - make_interval(days => $2::int)
+             WHERE q.deleted_at IS NULL
+               AND q.created_at >= NOW() - make_interval(days => $1::int)
              GROUP BY date_trunc('day', q.created_at) ORDER BY d"
         }
     };
@@ -202,7 +199,6 @@ pub async fn get_activity_trend(
     };
 
     match sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(tenant_id)
         .bind(days)
         .fetch_all(&mut scope)
         .await
@@ -247,9 +243,8 @@ pub async fn get_activity_trend(
 pub async fn get_feature_usage(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FeatureUsageItem>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Json(ApiResponse::<Vec<FeatureUsageItem>>::server_error(
@@ -265,24 +260,24 @@ pub async fn get_feature_usage(
         }
     };
     let counts: Vec<(String, String, i64)> = match sqlx::query_as(
-        "SELECT 'qa' AS f, '智能问答' AS l, COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)
+        "SELECT 'qa' AS f, '智能问答' AS l, COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL
          UNION ALL
-         SELECT 'documents', '文档解析', COUNT(*) FROM ai.documents WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)
+         SELECT 'documents', '文档解析', COUNT(*) FROM ai.documents WHERE deleted_at IS NULL
          UNION ALL
-         SELECT 'analysis', '智能分析', COUNT(*) FROM ai.analysis_results WHERE (tenant_id IS NULL OR tenant_id = $1)
+         SELECT 'analysis', '智能分析', COUNT(*) FROM ai.analysis_results
          UNION ALL
          -- ai.vectors 表无 tenant_id 列（schema 漂移），向量统计不按租户过滤
          SELECT 'vectors', '向量检索', COUNT(*) FROM ai.vectors WHERE deleted_at IS NULL",
     )
-    // 4 个 UNION 分支共用同一个 $1 参数，Postgres 预备语句只需绑定一次
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await
     {
-        Ok(rows) => rows
-            .into_iter()
-            .collect(),
-        Err(e) => return Json(ApiResponse::<Vec<FeatureUsageItem>>::from(TopemsError::internal("获取功能使用统计失败", e))),
+        Ok(rows) => rows.into_iter().collect(),
+        Err(e) => {
+            return Json(ApiResponse::<Vec<FeatureUsageItem>>::from(
+                TopemsError::internal("获取功能使用统计失败", e),
+            ))
+        }
     };
     let _ = scope.commit().await;
 
@@ -451,17 +446,8 @@ pub async fn get_model_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(model_id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<ModelConfig>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let _tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Json(ApiResponse::<ModelConfig>::server_error(
@@ -480,10 +466,9 @@ pub async fn get_model_config(
     match sqlx::query_as::<_, (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>)>(
         "SELECT id, temperature::float8, max_tokens, top_p::float8, frequency_penalty::float8,
                 presence_penalty::float8, system_prompt
-         FROM ai.ai_models WHERE id = $1 AND (tenant_id IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))",
+         FROM ai.ai_models WHERE id = $1",
     )
     .bind(model_id)
-    .bind(tenant_opt)
     .fetch_optional(&mut scope)
     .await
     {
@@ -508,7 +493,10 @@ pub async fn get_model_config(
             "Success",
         )),
         Ok(None) => Json(ApiResponse::<ModelConfig>::not_found("模型不存在")),
-        Err(e) => Json(ApiResponse::<ModelConfig>::from(TopemsError::internal("获取模型配置失败", e))),
+        Err(e) => Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
+            "获取模型配置失败",
+            e,
+        ))),
     }
 }
 
@@ -517,10 +505,9 @@ pub async fn update_model_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Path(model_id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Json(payload): Json<ModelConfigUpdate>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Json(ApiResponse::<serde_json::Value>::server_error(
@@ -544,7 +531,7 @@ pub async fn update_model_config(
             presence_penalty = COALESCE($5, presence_penalty),
             system_prompt = COALESCE($6, system_prompt),
             updated_at = NOW()
-         WHERE id = $7 AND (tenant_id IS NULL OR tenant_id = $8)",
+         WHERE id = $7",
     )
     .bind(payload.temperature)
     .bind(payload.max_tokens)
@@ -553,7 +540,6 @@ pub async fn update_model_config(
     .bind(payload.presence_penalty)
     .bind(payload.system_prompt)
     .bind(model_id)
-    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     let _ = scope.commit().await;
@@ -611,9 +597,8 @@ pub async fn get_model_usage(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Query(params): Query<UsageStatsQuery>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<UsageStats>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return Json(ApiResponse::<UsageStats>::server_error(
@@ -630,9 +615,9 @@ pub async fn get_model_usage(
         }
     };
 
-    // 构建动态 WHERE 子句（$1 始终为 tenant_id）
-    let mut where_clauses: Vec<String> = vec!["(tenant_id IS NULL OR tenant_id = $1)".to_string()];
-    let mut param_idx = 2;
+    // 构建动态过滤子句
+    let mut where_clauses: Vec<String> = Vec::new();
+    let mut param_idx = 1;
 
     if params.start_date.is_some() {
         where_clauses.push(format!("date >= ${}::date", param_idx));
@@ -647,7 +632,11 @@ pub async fn get_model_usage(
         param_idx += 1;
     }
 
-    let where_sql = where_clauses.join(" AND ");
+    let where_sql = if where_clauses.is_empty() {
+        "TRUE".to_string()
+    } else {
+        where_clauses.join(" AND ")
+    };
 
     // 1) 总计聚合
     let total_sql = format!(
@@ -657,7 +646,7 @@ pub async fn get_model_usage(
         where_sql
     );
 
-    let mut total_query = sqlx::query(sqlx::AssertSqlSafe(total_sql)).bind(tenant_id);
+    let mut total_query = sqlx::query(sqlx::AssertSqlSafe(total_sql));
     if let Some(ref sd) = params.start_date {
         total_query = total_query.bind(sd);
     }
@@ -691,7 +680,7 @@ pub async fn get_model_usage(
         where_sql
     );
 
-    let mut breakdown_query = sqlx::query(sqlx::AssertSqlSafe(breakdown_sql)).bind(tenant_id);
+    let mut breakdown_query = sqlx::query(sqlx::AssertSqlSafe(breakdown_sql));
     if let Some(ref sd) = params.start_date {
         breakdown_query = breakdown_query.bind(sd);
     }

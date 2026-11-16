@@ -255,7 +255,7 @@ impl AnalysisService {
         &self,
         analysis_type: Option<&str>,
         limit: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<AnalysisResult>, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -275,7 +275,7 @@ impl AnalysisService {
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
                 FROM ai.analysis_results
-                WHERE analysis_type = $1 AND ($3::uuid IS NULL OR tenant_id = $3)
+                WHERE analysis_type = $1
                 ORDER BY created_at DESC
                 LIMIT $2
                 "#,
@@ -283,21 +283,18 @@ impl AnalysisService {
             ))
             .bind(type_)
             .bind(limit as i64)
-            .bind(tenant_id)
         } else {
             sqlx::query(only_own_schema_query!(
                 "ai",
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
                 FROM ai.analysis_results
-                WHERE ($2::uuid IS NULL OR tenant_id = $2)
                 ORDER BY created_at DESC
                 LIMIT $1
                 "#,
                 "plugin_ai"
             ))
             .bind(limit as i64)
-            .bind(tenant_id)
         };
 
         let rows = query

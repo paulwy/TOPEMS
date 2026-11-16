@@ -44,7 +44,7 @@ pub async fn retrieve_relevant_chunks(
     db: &Db,
     txn_arc: &RlsTxnCell,
     ai_client: &Arc<UnifiedAIClient>,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     kb_id: Uuid,
     question: &str,
     top_k: i32,
@@ -76,16 +76,14 @@ pub async fn retrieve_relevant_chunks(
             (1 - (c.embedding <=> $1::vector))::float8 AS score
            FROM core.knowledge_chunks c
            JOIN core.knowledge_documents d ON d.id = c.document_id
-           WHERE ($2::uuid IS NULL OR c.tenant_id = $2)
-             AND c.kb_id = $3
+           WHERE c.kb_id = $2
              AND c.embedding IS NOT NULL
              AND d.status = 'ready'
            ORDER BY c.embedding <=> $1::vector
-           LIMIT $4"#,
+           LIMIT $3"#,
         "core"
     ))
     .bind(&vector_str)
-    .bind(tenant_id)
     .bind(kb_id)
     .bind(top_k)
     .fetch_all(&mut scope)

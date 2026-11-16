@@ -144,7 +144,7 @@ impl VectorService {
     pub async fn get_document(
         &self,
         id: Uuid,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Option<Document>, sqlx::Error> {
         let mut guard = txn_arc.lock().await;
@@ -158,12 +158,11 @@ impl VectorService {
             SELECT id, tenant_id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM ai.documents WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            FROM ai.documents WHERE id = $1
             "#,
             "plugin_ai"
         ))
         .bind(id)
-        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await?;
         scope.commit().await?;
@@ -174,7 +173,7 @@ impl VectorService {
     /// 获取所有文档
     pub async fn list_documents(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<Document>, sqlx::Error> {
         let mut guard = txn_arc.lock().await;
@@ -189,12 +188,10 @@ impl VectorService {
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
             FROM ai.documents
-            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             ORDER BY created_at DESC
             "#,
             "plugin_ai"
         ))
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -300,7 +297,7 @@ impl VectorService {
         &self,
         query_embedding: &[f32],
         top_k: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, sqlx::Error> {
         // 构建查询向量字符串
@@ -330,7 +327,6 @@ impl VectorService {
             FROM ai.document_chunks c
             JOIN ai.documents d ON c.document_id = d.id
             WHERE c.embedding <=> $1::vector < 0.5
-              AND ($3::uuid IS NULL OR c.tenant_id = $3)
             ORDER BY c.embedding <=> $1::vector
             LIMIT $2
             "#,
@@ -338,7 +334,6 @@ impl VectorService {
         ))
         .bind(&embedding_str)
         .bind(top_k as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -437,7 +432,7 @@ impl VectorService {
         &self,
         query: &str,
         top_k: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, sqlx::Error> {
         let mut guard = txn_arc.lock().await;
@@ -458,7 +453,6 @@ impl VectorService {
             JOIN ai.documents d ON c.document_id = d.id,
                  to_tsquery('simple', $1) query
             WHERE to_tsvector('simple', c.content) @@ query
-              AND ($3::uuid IS NULL OR c.tenant_id = $3)
             ORDER BY similarity DESC
             LIMIT $2
             "#,
@@ -466,7 +460,6 @@ impl VectorService {
         ))
         .bind(query)
         .bind(top_k as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -566,7 +559,7 @@ impl VectorService {
     pub async fn get_document_chunks(
         &self,
         document_id: Uuid,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<DocumentChunk>, sqlx::Error> {
         let mut guard = txn_arc.lock().await;
@@ -579,13 +572,12 @@ impl VectorService {
             r#"
             SELECT id, tenant_id, document_id, chunk_index, content, metadata, created_at
             FROM ai.document_chunks
-            WHERE document_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE document_id = $1
             ORDER BY chunk_index
             "#,
             "plugin_ai"
         ))
         .bind(document_id)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await?;
         scope.commit().await?;
@@ -597,7 +589,7 @@ impl VectorService {
     pub async fn get_vector(
         &self,
         id: Uuid,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Option<VectorEmbedding>, sqlx::Error> {
         let mut guard = txn_arc.lock().await;
@@ -610,12 +602,11 @@ impl VectorService {
             r#"
             SELECT id, tenant_id, document_id, chunk_index, content, embedding
             FROM ai.document_chunks
-            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE id = $1
             "#,
             "plugin_ai"
         ))
         .bind(id)
-        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await?;
         scope.commit().await?;

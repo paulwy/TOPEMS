@@ -333,7 +333,7 @@ impl QAService {
         &self,
         offset: usize,
         limit: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<QAHistory>, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -352,7 +352,7 @@ impl QAService {
             r#"
             SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
-            WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3)
+            WHERE deleted_at IS NULL
             ORDER BY created_at DESC
             OFFSET $1 LIMIT $2
             "#,
@@ -360,7 +360,6 @@ impl QAService {
         ))
         .bind(offset as i64)
         .bind(limit as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史失败: {}", e)))?;
@@ -394,7 +393,7 @@ impl QAService {
     /// 获取问答历史总数
     pub async fn get_qa_history_count(
         &self,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<i64, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -411,11 +410,10 @@ impl QAService {
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
-            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
+            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL
             "#,
             "plugin_ai"
         ))
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史总数失败: {}", e)))?;
@@ -434,7 +432,7 @@ impl QAService {
         query: &str,
         offset: usize,
         limit: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<QAHistory>, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -453,7 +451,7 @@ impl QAService {
             r#"
             SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
-            WHERE deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4)
+            WHERE deleted_at IS NULL
               AND (question ILIKE $1 OR answer ILIKE $1)
             ORDER BY created_at DESC
             OFFSET $2 LIMIT $3
@@ -463,7 +461,6 @@ impl QAService {
         .bind(format!("%{}%", query))
         .bind(offset as i64)
         .bind(limit as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史失败: {}", e)))?;
@@ -498,7 +495,7 @@ impl QAService {
     pub async fn search_qa_history_count(
         &self,
         query: &str,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<i64, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -516,13 +513,12 @@ impl QAService {
             "ai",
             r#"
             SELECT COUNT(*) FROM ai.qa_history 
-            WHERE deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE deleted_at IS NULL
               AND (question ILIKE $1 OR answer ILIKE $1)
             "#,
             "plugin_ai"
         ))
         .bind(format!("%{}%", query))
-        .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史总数失败: {}", e)))?;
@@ -1149,10 +1145,9 @@ impl QAService {
         &self,
         query: &str,
         top_k: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<SearchResult>, TopemsError> {
-        let tenant_id = self.require_qa_tenant(tenant_id, txn_arc).await?;
         let query_embedding = self.generate_query_embedding(query).await?;
 
         if query_embedding.is_empty() {
@@ -1181,7 +1176,7 @@ impl QAService {
                         d.title AS document_title
                     FROM ai.document_chunks c
                     JOIN ai.documents d ON c.document_id = d.id
-                    WHERE c.embedding IS NOT NULL AND ($3::uuid IS NULL OR d.tenant_id = $3)
+                    WHERE c.embedding IS NOT NULL
                     ORDER BY c.embedding <=> $1::vector
                     LIMIT $2
                     "#,
@@ -1196,7 +1191,6 @@ impl QAService {
                 .join(",")
         ))
         .bind(top_k as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("语义搜索失败: {}", e)))?;

@@ -129,7 +129,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -148,14 +148,13 @@ impl RecommendationService {
             r#"
             SELECT id, title, description, category
             FROM ai.documents
-            WHERE status = 'ready' AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE status = 'ready'
             ORDER BY created_at DESC
             LIMIT $1
             "#,
             "plugin_ai"
         ))
         .bind(top_k as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))?;
@@ -517,7 +516,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
-        tenant_id: Uuid,
+        _tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let mut guard = txn_arc.lock().await;
@@ -536,14 +535,13 @@ impl RecommendationService {
             r#"
             SELECT id, title, description, category
             FROM ai.documents
-            WHERE category = 'article' AND status = 'ready' AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE category = 'article' AND status = 'ready'
             ORDER BY created_at DESC
             LIMIT $1
             "#,
             "plugin_ai"
         ))
         .bind(top_k as i64)
-        .bind(tenant_id)
         .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询文章失败: {}", e)))?;

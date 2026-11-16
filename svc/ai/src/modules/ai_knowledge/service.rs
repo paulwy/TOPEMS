@@ -54,7 +54,7 @@ pub fn create_ai_client() -> UnifiedAIClient {
 pub async fn list_knowledge_bases(
     db: &Db,
     txn_arc: &RlsTxnCell,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     query: &KbQuery,
 ) -> Result<Vec<KnowledgeBase>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
@@ -72,15 +72,13 @@ pub async fn list_knowledge_bases(
         r#"SELECT id, tenant_id, name, description, kb_type, status,
                   document_count, created_by, created_at, updated_at
            FROM core.knowledge_bases
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::text IS NULL OR kb_type = $2)
-             AND ($3::text IS NULL OR status = $3)
-             AND ($4::text IS NULL OR name ILIKE $4)
+           WHERE ($1::text IS NULL OR kb_type = $1)
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::text IS NULL OR name ILIKE $3)
            ORDER BY created_at DESC
-           LIMIT $5 OFFSET $6"#,
+           LIMIT $4 OFFSET $5"#,
         "core"
     ))
-    .bind(tenant_id)
     .bind(&query.kb_type)
     .bind(&query.status)
     .bind(&search_like)
@@ -96,7 +94,7 @@ pub async fn list_knowledge_bases(
 pub async fn get_knowledge_base(
     db: &Db,
     txn_arc: &RlsTxnCell,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     kb_id: Uuid,
 ) -> Result<Option<KnowledgeBase>, sqlx::Error> {
     let mut guard = txn_arc.lock().await;
@@ -109,11 +107,10 @@ pub async fn get_knowledge_base(
         r#"SELECT id, tenant_id, name, description, kb_type, status,
                   document_count, created_by, created_at, updated_at
            FROM core.knowledge_bases
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+           WHERE id = $1"#,
         "core"
     ))
     .bind(kb_id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await?;
 
@@ -234,7 +231,7 @@ pub async fn delete_knowledge_base(
 pub async fn list_documents(
     db: &Db,
     txn_arc: &RlsTxnCell,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     query: &DocumentQuery,
 ) -> Result<Vec<KnowledgeDocument>, sqlx::Error> {
     let page = query.page.unwrap_or(1).max(1);
@@ -253,16 +250,14 @@ pub async fn list_documents(
                   file_size, chunk_count, status, error_message, created_by,
                   created_at, updated_at
            FROM core.knowledge_documents
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::uuid IS NULL OR kb_id = $2)
-             AND ($3::text IS NULL OR status = $3)
-             AND ($4::text IS NULL OR doc_type = $4)
-             AND ($5::text IS NULL OR title ILIKE $5)
+           WHERE ($1::uuid IS NULL OR kb_id = $1)
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::text IS NULL OR doc_type = $3)
+             AND ($4::text IS NULL OR title ILIKE $4)
            ORDER BY created_at DESC
-           LIMIT $6 OFFSET $7"#,
+           LIMIT $5 OFFSET $6"#,
         "core"
     ))
-    .bind(tenant_id)
     .bind(query.kb_id)
     .bind(&query.status)
     .bind(&query.doc_type)
@@ -279,7 +274,7 @@ pub async fn list_documents(
 pub async fn get_document_detail(
     db: &Db,
     txn_arc: &RlsTxnCell,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     document_id: Uuid,
 ) -> Result<Option<DocumentDetail>, sqlx::Error> {
     let mut guard = txn_arc.lock().await;
@@ -293,11 +288,10 @@ pub async fn get_document_detail(
                   file_size, chunk_count, status, error_message, created_by,
                   created_at, updated_at
            FROM core.knowledge_documents
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+           WHERE id = $1"#,
         "core"
     ))
     .bind(document_id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await?;
 
@@ -310,12 +304,11 @@ pub async fn get_document_detail(
         r#"SELECT id, tenant_id, document_id, kb_id, chunk_index, content,
                   token_count, metadata, created_at
            FROM core.knowledge_chunks
-           WHERE document_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+           WHERE document_id = $1
            ORDER BY chunk_index"#,
         "core"
     ))
     .bind(document_id)
-    .bind(tenant_id)
     .fetch_all(&mut scope)
     .await?;
 
@@ -495,13 +488,12 @@ pub async fn update_document(
                 r#"UPDATE core.knowledge_bases
                    SET document_count = (
                        SELECT COUNT(*) FROM core.knowledge_documents
-                       WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'ready'
+                       WHERE kb_id = $1 AND status = 'ready'
                    )
-                   WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+                   WHERE id = $1"#,
                 "core"
             ))
             .bind(old_kb_id)
-            .bind(tenant_id)
             .execute(&mut scope)
             .await;
 
@@ -510,13 +502,12 @@ pub async fn update_document(
                 r#"UPDATE core.knowledge_bases
                    SET document_count = (
                        SELECT COUNT(*) FROM core.knowledge_documents
-                       WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'ready'
+                       WHERE kb_id = $1 AND status = 'ready'
                    )
-                   WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+                   WHERE id = $1"#,
                 "core"
             ))
             .bind(new_kb_id)
-            .bind(tenant_id)
             .execute(&mut scope)
             .await;
         }
@@ -542,11 +533,10 @@ pub async fn delete_document(
     let doc: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"SELECT kb_id FROM core.knowledge_documents
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+           WHERE id = $1"#,
         "core"
     ))
     .bind(document_id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await?;
 
@@ -572,13 +562,12 @@ pub async fn delete_document(
             r#"UPDATE core.knowledge_bases
                SET document_count = (
                    SELECT COUNT(*) FROM core.knowledge_documents
-                   WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+                   WHERE kb_id = $1
                )
-               WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+               WHERE id = $1"#,
             "core"
         ))
         .bind(kb_id)
-        .bind(tenant_id)
         .execute(&mut scope)
         .await;
     }
@@ -646,11 +635,10 @@ pub async fn process_document(
             "ai",
             r#"SELECT kb_id, title, content, doc_type
            FROM core.knowledge_documents
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+           WHERE id = $1"#,
             "core"
         ))
         .bind(document_id)
-        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await
         .map_err(|e| ProcessorError::ParseError(format!("读取文档失败: {}", e)))?;
@@ -785,13 +773,12 @@ pub async fn process_document(
         r#"UPDATE core.knowledge_bases
            SET document_count = (
                SELECT COUNT(*) FROM core.knowledge_documents
-               WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'ready'
+               WHERE kb_id = $1 AND status = 'ready'
            )
-           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+           WHERE id = $1"#,
         "core"
     ))
     .bind(kb_id)
-    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     let _ = scope.commit().await;
@@ -827,7 +814,7 @@ async fn mark_document_failed(db: &Db, tenant_id: Uuid, document_id: Uuid, error
 pub async fn list_qa_history(
     db: &Db,
     txn_arc: &RlsTxnCell,
-    tenant_id: Uuid,
+    _tenant_id: Uuid,
     user_id: Option<Uuid>,
     query: &QaHistoryQuery,
 ) -> Result<Vec<QaHistory>, sqlx::Error> {
@@ -845,14 +832,12 @@ pub async fn list_qa_history(
         r#"SELECT id, tenant_id, kb_id, question, answer, sources, feedback,
                   user_id, created_at
            FROM core.knowledge_qa_history
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::uuid IS NULL OR kb_id = $2)
-             AND ($3::uuid IS NULL OR user_id = $3)
+           WHERE ($1::uuid IS NULL OR kb_id = $1)
+             AND ($2::uuid IS NULL OR user_id = $2)
            ORDER BY created_at DESC
-           LIMIT $4 OFFSET $5"#,
+           LIMIT $3 OFFSET $4"#,
         "core"
     ))
-    .bind(tenant_id)
     .bind(query.kb_id)
     .bind(user_id)
     .bind(page_size)
