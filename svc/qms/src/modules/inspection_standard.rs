@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::require_tenant;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -224,6 +226,7 @@ pub struct ListResponse<T> {
 
 async fn list_inspection_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListQuery>,
@@ -256,13 +259,6 @@ async fn list_inspection_items(
     for p in &params {
         count_query = count_query.bind(p);
     }
-    let total = match count_query.fetch_one(&state.pool).await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("[qms] 检验项计数失败: {}", e);
-            return ApiResponse::server_error("查询检验项失败");
-        }
-    };
     let fetch_sql = format!(
         "SELECT id, code, name, category, specification, method, unit, standard_value, tolerance, status, description \
          FROM qms.qa_inspection_items {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
@@ -272,7 +268,26 @@ async fn list_inspection_items(
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验项读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询检验项失败");
+        }
+    };
+    let total = match count_query.fetch_one(&mut scope).await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[qms] 检验项计数失败: {}", e);
+            return ApiResponse::server_error("查询检验项失败");
+        }
+    };
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 检验项查询失败: {}", e);
@@ -303,6 +318,7 @@ async fn list_inspection_items(
 
 async fn get_inspection_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -317,7 +333,18 @@ async fn get_inspection_item(
         sql = format!("{sql} AND tenant_id = $2");
         q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
-    let row = q.fetch_optional(&state.pool).await;
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验项读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询检验项失败");
+        }
+    };
+    let row = q.fetch_optional(&mut scope).await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
@@ -345,11 +372,26 @@ async fn get_inspection_item(
 
 async fn create_inspection_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateInspectionItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验项写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项创建失败");
+        }
+    };
     let result = sqlx::query(
         "INSERT INTO qms.qa_inspection_items \
          (tenant_id, code, name, category, specification, method, unit, standard_value, tolerance, status, description) \
@@ -366,32 +408,53 @@ async fn create_inspection_item(
     .bind(&req.tolerance)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
-    match result {
-        Ok(Some(r)) => {
-            let id: Uuid = r.get("id");
-            ApiResponse::success(serde_json::json!({ "id": id }), "检验项创建成功")
+    let row = match result {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            // 显式回滚请求事务，避免"写入后返回非 2xx"被中间件静默丢弃
+            if let Err(e) = scope.rollback().await {
+                tracing::error!("[qms] 回滚检验项创建事务失败: {}", e);
+            }
+            return ApiResponse::server_error("检验项创建失败");
         }
-        Ok(None) => ApiResponse::server_error("检验项创建失败"),
         Err(e) => {
             tracing::error!("[qms] 检验项创建失败: {}", e);
             if e.to_string().contains("duplicate") {
                 return ApiResponse::conflict("检验项编码已存在");
             }
-            ApiResponse::server_error("检验项创建失败")
+            return ApiResponse::server_error("检验项创建失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[qms] 检验项创建提交失败: {}", e);
+        return ApiResponse::server_error("检验项创建失败");
     }
+    let id: Uuid = row.get("id");
+    ApiResponse::success(serde_json::json!({ "id": id }), "检验项创建成功")
 }
 
 async fn update_inspection_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInspectionItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验项写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项更新失败");
+        }
+    };
     let result = if let Some(t) = filter {
         sqlx::query(
             "UPDATE qms.qa_inspection_items SET \
@@ -413,7 +476,7 @@ async fn update_inspection_item(
         .bind(&req.status)
         .bind(&req.description)
         .bind(t)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     } else {
         sqlx::query(
@@ -435,11 +498,17 @@ async fn update_inspection_item(
         .bind(&req.tolerance)
         .bind(&req.status)
         .bind(&req.description)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     };
     match result {
-        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "检验项更新成功"),
+        Ok(Some(_)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 检验项更新提交失败: {}", e);
+                return ApiResponse::server_error("检验项更新失败");
+            }
+            ApiResponse::success(serde_json::json!({ "id": id }), "检验项更新成功")
+        }
         Ok(None) => ApiResponse::not_found("检验项不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项更新失败: {}", e);
@@ -450,27 +519,45 @@ async fn update_inspection_item(
 
 async fn delete_inspection_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验项写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项删除失败");
+        }
+    };
     let result = if let Some(t) = filter {
         sqlx::query(
             "UPDATE qms.qa_inspection_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else {
         sqlx::query("UPDATE qms.qa_inspection_items SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 检验项删除提交失败: {}", e);
+                return ApiResponse::server_error("检验项删除失败");
+            }
+            ApiResponse::success("".to_string(), "检验项删除成功")
+        }
         Ok(_) => ApiResponse::not_found("检验项不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项删除失败: {}", e);
@@ -483,6 +570,7 @@ async fn delete_inspection_item(
 
 async fn list_sampling_plans(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListQuery>,
@@ -515,13 +603,6 @@ async fn list_sampling_plans(
     for p in &params {
         count_query = count_query.bind(p);
     }
-    let total = match count_query.fetch_one(&state.pool).await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("[qms] 抽样方案计数失败: {}", e);
-            return ApiResponse::server_error("查询抽样方案失败");
-        }
-    };
     let fetch_sql = format!(
         "SELECT id, code, name, level, sample_size, aql, inspection_level, status, description \
          FROM qms.qa_sampling_plans {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
@@ -531,7 +612,26 @@ async fn list_sampling_plans(
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 抽样方案读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询抽样方案失败");
+        }
+    };
+    let total = match count_query.fetch_one(&mut scope).await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[qms] 抽样方案计数失败: {}", e);
+            return ApiResponse::server_error("查询抽样方案失败");
+        }
+    };
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 抽样方案查询失败: {}", e);
@@ -560,6 +660,7 @@ async fn list_sampling_plans(
 
 async fn get_sampling_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -574,7 +675,18 @@ async fn get_sampling_plan(
         sql = format!("{sql} AND tenant_id = $2");
         q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
-    let row = q.fetch_optional(&state.pool).await;
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 抽样方案读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询抽样方案失败");
+        }
+    };
+    let row = q.fetch_optional(&mut scope).await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
@@ -600,11 +712,26 @@ async fn get_sampling_plan(
 
 async fn create_sampling_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSamplingPlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 抽样方案写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("抽样方案创建失败");
+        }
+    };
     let result = sqlx::query(
         "INSERT INTO qms.qa_sampling_plans \
          (tenant_id, code, name, level, sample_size, aql, inspection_level, status, description) \
@@ -619,26 +746,35 @@ async fn create_sampling_plan(
     .bind(&req.inspection_level)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
-    match result {
-        Ok(Some(r)) => {
-            let id: Uuid = r.get("id");
-            ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案创建成功")
+    let row = match result {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            if let Err(e) = scope.rollback().await {
+                tracing::error!("[qms] 回滚抽样方案创建事务失败: {}", e);
+            }
+            return ApiResponse::server_error("抽样方案创建失败");
         }
-        Ok(None) => ApiResponse::server_error("抽样方案创建失败"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案创建失败: {}", e);
             if e.to_string().contains("duplicate") {
                 return ApiResponse::conflict("抽样方案编码已存在");
             }
-            ApiResponse::server_error("抽样方案创建失败")
+            return ApiResponse::server_error("抽样方案创建失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[qms] 抽样方案创建提交失败: {}", e);
+        return ApiResponse::server_error("抽样方案创建失败");
     }
+    let id: Uuid = row.get("id");
+    ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案创建成功")
 }
 
 async fn update_sampling_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -651,6 +787,17 @@ async fn update_sampling_plan(
         inspection_level = COALESCE($6, inspection_level), status = COALESCE($7, status), \
         description = COALESCE($8, description), updated_at = NOW() \
         WHERE id = $1 AND deleted_at IS NULL RETURNING id";
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 抽样方案写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("抽样方案更新失败");
+        }
+    };
     let result = match filter {
         Some(t) => {
             sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -665,7 +812,7 @@ async fn update_sampling_plan(
             .bind(&req.status)
             .bind(&req.description)
             .bind(t)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
         }
         None => {
@@ -678,12 +825,18 @@ async fn update_sampling_plan(
                 .bind(&req.inspection_level)
                 .bind(&req.status)
                 .bind(&req.description)
-                .fetch_optional(&state.pool)
+                .fetch_optional(&mut scope)
                 .await
         }
     };
     match result {
-        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案更新成功"),
+        Ok(Some(_)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 抽样方案更新提交失败: {}", e);
+                return ApiResponse::server_error("抽样方案更新失败");
+            }
+            ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案更新成功")
+        }
         Ok(None) => ApiResponse::not_found("抽样方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案更新失败: {}", e);
@@ -694,27 +847,45 @@ async fn update_sampling_plan(
 
 async fn delete_sampling_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 抽样方案写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("抽样方案删除失败");
+        }
+    };
     let result = if let Some(t) = filter {
         sqlx::query(
             "UPDATE qms.qa_sampling_plans SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else {
         sqlx::query("UPDATE qms.qa_sampling_plans SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "抽样方案删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 抽样方案删除提交失败: {}", e);
+                return ApiResponse::server_error("抽样方案删除失败");
+            }
+            ApiResponse::success("".to_string(), "抽样方案删除成功")
+        }
         Ok(_) => ApiResponse::not_found("抽样方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案删除失败: {}", e);
@@ -727,6 +898,7 @@ async fn delete_sampling_plan(
 
 async fn list_inspection_plans(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListQuery>,
@@ -761,13 +933,6 @@ async fn list_inspection_plans(
     for p in &params {
         count_query = count_query.bind(p);
     }
-    let total = match count_query.fetch_one(&state.pool).await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("[qms] 检验方案计数失败: {}", e);
-            return ApiResponse::server_error("查询检验方案失败");
-        }
-    };
     let fetch_sql = format!(
         "SELECT p.id, p.code, p.name, p.product_code, p.product_name, p.sampling_plan_id, p.status, p.description \
          FROM qms.qa_inspection_plans p {where_sql} ORDER BY p.created_at DESC LIMIT {page_size} OFFSET {}",
@@ -777,7 +942,26 @@ async fn list_inspection_plans(
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验方案读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询检验方案失败");
+        }
+    };
+    let total = match count_query.fetch_one(&mut scope).await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("[qms] 检验方案计数失败: {}", e);
+            return ApiResponse::server_error("查询检验方案失败");
+        }
+    };
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 检验方案查询失败: {}", e);
@@ -805,6 +989,7 @@ async fn list_inspection_plans(
 
 async fn get_inspection_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -819,7 +1004,18 @@ async fn get_inspection_plan(
         sql = format!("{sql} AND tenant_id = $2");
         q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
-    let row = q.fetch_optional(&state.pool).await;
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验方案读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询检验方案失败");
+        }
+    };
+    let row = q.fetch_optional(&mut scope).await;
     match row {
         Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
@@ -844,11 +1040,26 @@ async fn get_inspection_plan(
 
 async fn create_inspection_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateInspectionPlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验方案写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验方案创建失败");
+        }
+    };
     let result = sqlx::query(
         "INSERT INTO qms.qa_inspection_plans \
          (tenant_id, code, name, product_code, product_name, sampling_plan_id, status, description) \
@@ -862,26 +1073,35 @@ async fn create_inspection_plan(
     .bind(req.sampling_plan_id)
     .bind(&req.status)
     .bind(&req.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
-    match result {
-        Ok(Some(r)) => {
-            let id: Uuid = r.get("id");
-            ApiResponse::success(serde_json::json!({ "id": id }), "检验方案创建成功")
+    let row = match result {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            if let Err(e) = scope.rollback().await {
+                tracing::error!("[qms] 回滚检验方案创建事务失败: {}", e);
+            }
+            return ApiResponse::server_error("检验方案创建失败");
         }
-        Ok(None) => ApiResponse::server_error("检验方案创建失败"),
         Err(e) => {
             tracing::error!("[qms] 检验方案创建失败: {}", e);
             if e.to_string().contains("duplicate") {
                 return ApiResponse::conflict("检验方案编码已存在");
             }
-            ApiResponse::server_error("检验方案创建失败")
+            return ApiResponse::server_error("检验方案创建失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[qms] 检验方案创建提交失败: {}", e);
+        return ApiResponse::server_error("检验方案创建失败");
     }
+    let id: Uuid = row.get("id");
+    ApiResponse::success(serde_json::json!({ "id": id }), "检验方案创建成功")
 }
 
 async fn update_inspection_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -893,6 +1113,17 @@ async fn update_inspection_plan(
         product_name = COALESCE($4, product_name), sampling_plan_id = COALESCE($5, sampling_plan_id), \
         status = COALESCE($6, status), description = COALESCE($7, description), \
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验方案写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验方案更新失败");
+        }
+    };
     let result = match filter {
         Some(t) => {
             sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -906,7 +1137,7 @@ async fn update_inspection_plan(
             .bind(&req.status)
             .bind(&req.description)
             .bind(t)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
         }
         None => {
@@ -918,12 +1149,18 @@ async fn update_inspection_plan(
                 .bind(req.sampling_plan_id)
                 .bind(&req.status)
                 .bind(&req.description)
-                .fetch_optional(&state.pool)
+                .fetch_optional(&mut scope)
                 .await
         }
     };
     match result {
-        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "检验方案更新成功"),
+        Ok(Some(_)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 检验方案更新提交失败: {}", e);
+                return ApiResponse::server_error("检验方案更新失败");
+            }
+            ApiResponse::success(serde_json::json!({ "id": id }), "检验方案更新成功")
+        }
         Ok(None) => ApiResponse::not_found("检验方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验方案更新失败: {}", e);
@@ -934,27 +1171,45 @@ async fn update_inspection_plan(
 
 async fn delete_inspection_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 检验方案写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验方案删除失败");
+        }
+    };
     let result = if let Some(t) = filter {
         sqlx::query(
             "UPDATE qms.qa_inspection_plans SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else {
         sqlx::query("UPDATE qms.qa_inspection_plans SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验方案删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 检验方案删除提交失败: {}", e);
+                return ApiResponse::server_error("检验方案删除失败");
+            }
+            ApiResponse::success("".to_string(), "检验方案删除成功")
+        }
         Ok(_) => ApiResponse::not_found("检验方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验方案删除失败: {}", e);
@@ -967,6 +1222,7 @@ async fn delete_inspection_plan(
 
 async fn list_plan_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
@@ -983,7 +1239,18 @@ async fn list_plan_items(
         sql = format!("{sql} AND i.tenant_id = $2");
         q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
-    let rows = match q.fetch_all(&state.pool).await {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 方案检验项读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("查询方案检验项失败");
+        }
+    };
+    let rows = match q.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 方案检验项查询失败: {}", e);
@@ -1006,12 +1273,24 @@ async fn list_plan_items(
 
 async fn add_plan_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<AddPlanItemRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 方案检验项写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项添加失败");
+        }
+    };
     // 校验方案与检验项归属（非超管按租户隔离）
     if let Some(t) = filter {
         let ok = sqlx::query_scalar::<_, i64>(
@@ -1019,7 +1298,7 @@ async fn add_plan_item(
         )
         .bind(id)
         .bind(t)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
         if ok == 0 {
@@ -1034,31 +1313,51 @@ async fn add_plan_item(
     .bind(req.item_id)
     .bind(req.sample_qty)
     .bind(req.sort_order)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
-    match result {
-        Ok(Some(r)) => {
-            let pid: Uuid = r.get("id");
-            ApiResponse::success(serde_json::json!({ "id": pid }), "检验项添加成功")
+    let row = match result {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            if let Err(e) = scope.rollback().await {
+                tracing::error!("[qms] 回滚检验项添加事务失败: {}", e);
+            }
+            return ApiResponse::server_error("检验项添加失败");
         }
-        Ok(None) => ApiResponse::server_error("检验项添加失败"),
         Err(e) => {
             tracing::error!("[qms] 检验项添加失败: {}", e);
             if e.to_string().contains("duplicate") {
                 return ApiResponse::conflict("该检验项已在方案中");
             }
-            ApiResponse::server_error("检验项添加失败")
+            return ApiResponse::server_error("检验项添加失败");
         }
+    };
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[qms] 检验项添加提交失败: {}", e);
+        return ApiResponse::server_error("检验项添加失败");
     }
+    let pid: Uuid = row.get("id");
+    ApiResponse::success(serde_json::json!({ "id": pid }), "检验项添加成功")
 }
 
 async fn remove_plan_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 方案检验项写入作用域创建失败: {}", e);
+            return ApiResponse::server_error("检验项移除失败");
+        }
+    };
     // 明细表无 tenant_id，租户归属由父方案决定：谓词直接进 DELETE（与 add_plan_item 同口径）
     let result = sqlx::query(
         "DELETE FROM qms.qa_inspection_plan_items i \
@@ -1070,10 +1369,16 @@ async fn remove_plan_item(
     .bind(id)
     .bind(item_id)
     .bind(filter)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项移除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[qms] 检验项移除提交失败: {}", e);
+                return ApiResponse::server_error("检验项移除失败");
+            }
+            ApiResponse::success("".to_string(), "检验项移除成功")
+        }
         Ok(_) => ApiResponse::not_found("关联不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项移除失败: {}", e);
