@@ -93,7 +93,7 @@ impl ShortTxnTimer {
     }
 
     pub fn finish(&self) {
-        let elapsed_ms = self.started.elapsed().as_millis() as u64;
+        let elapsed_ms = u64::try_from(self.started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if elapsed_ms >= SHORT_TXN_WARN_MS {
             tracing::warn!(
                 target: "wms.txn",
