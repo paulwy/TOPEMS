@@ -313,7 +313,7 @@ pre-commit:
 
     # [Gate P] API path duplicates check — migrated from husky #4（脚本已迁移 scripts/tools/，由 CI job 执行）
     # NOTE: scripts/tools/check_api_duplicates_ci.py 纯文件扫描（--ci 离线，无需 live DB）。
-    # [Gate P] API Gate（check-api 三合一审计：audit+coverage+compare，dry-run 报告不阻断）
+    # [Gate P] API Gate（check-api 三合一审计：audit+coverage+compare，真实阻断）
     api-gate:
       tags: api rust
       run: |
@@ -322,7 +322,7 @@ pre-commit:
           exit 0
         fi
         if [ -f "scripts/ci/check-api.cjs" ]; then
-          node scripts/ci/check-api.cjs --mode=all --dry-run
+          node scripts/ci/check-api.cjs --mode=all
         else
           printf '\033[33m[Gate P] WARN\033[0m scripts/ci/check-api.cjs not found, skipping api-gate check\n'
           exit 0

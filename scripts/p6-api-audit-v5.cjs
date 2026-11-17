@@ -84,6 +84,72 @@ function extractPromiseInner(text) {
 }
 
 const allApiFiles = walk(API_DIR);
+
+// 将对象字面量的内层文本按顶层成员切分（支持多行箭头函数、嵌套泛型）
+// 仅识别 `key: value`；返回 [{ name, block }]
+function splitObjectBody(inner) {
+  const depths = new Array(inner.length).fill(0);
+  {
+    let d = 0,
+      inS = false,
+      q = '';
+    for (let i = 0; i < inner.length; i++) {
+      const ch = inner[i];
+      if (inS) {
+        if (ch === q && inner[i - 1] !== '\\') {
+          inS = false;
+          q = '';
+        }
+      } else if (ch === '"' || ch === "'") {
+        inS = true;
+        q = ch;
+      } else if (ch === '{' || ch === '[' || ch === '(') d++;
+      else if (ch === '}' || ch === ']' || ch === ')') d--;
+      depths[i] = d;
+    }
+  }
+  const anchors = [];
+  {
+    const re = /(?:^|[\n,{])\s*([A-Za-z_$][\w$]*)\s*:/g;
+    let m;
+    while ((m = re.exec(inner)) !== null) {
+      const namePos = m.index + m[0].lastIndexOf(m[1]);
+      if (depths[namePos] !== 0) continue;
+      anchors.push({ pos: namePos, name: m[1] });
+    }
+  }
+  const out = [];
+  for (const a of anchors) {
+    let end = inner.length,
+      d3 = 0,
+      inS = false,
+      q = '',
+      genD = 0;
+    for (let k = a.pos; k < inner.length; k++) {
+      const ch = inner[k];
+      if (inS) {
+        if (ch === q && inner[k - 1] !== '\\') {
+          inS = false;
+          q = '';
+        }
+      } else if (ch === '"' || ch === "'") {
+        inS = true;
+        q = ch;
+      } else if (ch === '{' || ch === '[' || ch === '(') d3++;
+      else if (ch === '}' || ch === ']' || ch === ')') {
+        d3--;
+        if (d3 < 0) d3 = 0;
+      } else if (ch === '<') genD++;
+      else if (ch === '>' && genD > 0 && inner[k - 1] !== '=') genD--;
+      else if (ch === ',' && d3 === 0 && genD === 0) {
+        end = k;
+        break;
+      }
+    }
+    out.push({ name: a.name, block: inner.slice(a.pos, end) });
+  }
+  return out;
+}
 console.log(`[P6 v5] 扫描 API 文件：${allApiFiles.length} 个`);
 
 for (const fp of allApiFiles) {
@@ -329,6 +395,21 @@ for (const fp of allApiFiles) {
         anchors.push({ pos: namePos, name, kind: 'shorthand', asyncK: !!m[2] });
       }
     }
+    // 4) 裸简写属性: { getA, getB }（ES shorthand，按行判定，避免误伤注释/参数）——
+    //    这类条目的值是同文件内的顶层函数，需按 ref 解析，否则整个 xxxApi 会被判定为"方法不存在"
+    {
+      const lines = body.split('\n');
+      let offset = 0;
+      for (const line of lines) {
+        const lm = line.trim().match(/^([A-Za-z_$][\w$]*)\s*,?$/);
+        if (lm && !JS_KW.has(lm[1])) {
+          const name = lm[1];
+          const namePos = offset + line.indexOf(name);
+          if (depths[namePos] === 0) anchors.push({ pos: namePos, name, kind: 'bare' });
+        }
+        offset += line.length + 1;
+      }
+    }
     anchors.sort((a, b) => a.pos - b.pos);
 
     for (let ai = 0; ai < anchors.length; ai++) {
@@ -412,6 +493,13 @@ for (const fp of allApiFiles) {
         continue;
       }
 
+      if (a.kind === 'bare') {
+        // 裸简写属性 → 指向同文件顶层函数（LOCAL: 在 drillDown 时才解析，此时函数尚未登记）
+        const tSym = localAlias[a.name] || (fileExports.has(a.name) ? fileExports.get(a.name) : null);
+        entries[a.name] = { kind: 'ref', target: tSym || 'LOCAL:' + a.name, restPath: '' };
+        continue;
+      }
+
       if (a.kind === 'kv') {
         // 去掉开头 "name:"
         const afterColon = blockT.slice(a.name.length).replace(/^\s*:/, '').trim();
@@ -463,7 +551,62 @@ for (const fp of allApiFiles) {
           inferredVerb = crudVerbMap[crudCallMatch[3]];
           inferredUrl = crudCallMatch[2];
         }
-        if (verb || url || rtInner || crudCallMatch) {
+        // 嵌套对象字面量优先判定：其内部可能含 Promise/apiClient，不能按方法处理
+        if (afterColon.startsWith('{')) {
+          // 嵌套对象字面量: alert: { batch: alertBatchApi } / settings: { list: async () => ... }
+          const nestedBody = afterColon;
+          const nestedEntries = {};
+          const nestedCan = canonical + '.' + a.name;
+          // 解析嵌套对象中的 spread: ...xxxApi
+          const nspreadRe = /\.\.\.([A-Za-z_$][\w$]*Api)/g;
+          let nsm;
+          while ((nsm = nspreadRe.exec(nestedBody)) !== null) {
+            const nRef = nsm[1];
+            const tSym = localAlias[nRef] || (fileExports.has(nRef) ? fileExports.get(nRef) : null);
+            nestedEntries['__spread_' + nRef] = tSym || 'LOCAL:' + nRef;
+          }
+          // 解析嵌套对象的成员：key: xxxApi（引用）与 key: <方法定义>（方法）
+          const innerBody = nestedBody.trim().replace(/^\{/, '').replace(/\}\s*$/, '');
+          for (const { name: nKey, block: nBlock } of splitObjectBody(innerBody)) {
+            const nAfter = nBlock.slice(nKey.length).replace(/^\s*:/, '').trim();
+            if (!nAfter) continue;
+            const nRefM = nAfter.match(/^([A-Za-z_$][\w$]*Api(?:\s*\??\.\s*[A-Za-z_$][\w$]*)*)\s*,?\s*$/);
+            if (nRefM) {
+              const firstSeg = nRefM[1].split('.')[0].split('?')[0].trim();
+              const tSym = localAlias[firstSeg] || (fileExports.has(firstSeg) ? fileExports.get(firstSeg) : null);
+              nestedEntries[nKey] = {
+                kind: 'ref',
+                target: tSym || 'LOCAL:' + firstSeg,
+                restPath: nRefM[1].split('.').slice(1).filter(Boolean).join('.'),
+              };
+              continue;
+            }
+            const nVerb = nAfter.match(/apiClient(?:\.[A-Za-z_][\w]*)?\s*\.\s*(get|post|put|patch|delete)/);
+            const nUrl = nAfter.match(
+              /apiClient(?:\.[A-Za-z_][\w]*)?\s*\.\s*(?:get|post|put|patch|delete)\s*\(\s*[`'"]([^`'"]+)/
+            );
+            const nInner = extractPromiseInner(nAfter);
+            if (nVerb || nUrl || nInner) {
+              nestedEntries[nKey] = { kind: 'method' };
+              LEAF_DICT[nestedCan + '.' + nKey] = {
+                verb: nVerb?.[1] || '',
+                url: nUrl?.[1] || '',
+                returns: nInner || '',
+                file: relFile,
+              };
+            } else if (/(async\s+)?\([^)]*\)\s*=>|async\s+function|function\s*\(/.test(nAfter)) {
+              nestedEntries[nKey] = { kind: 'method' };
+              LEAF_DICT[nestedCan + '.' + nKey] = { verb: '', url: '', returns: '', file: relFile };
+            }
+          }
+          if (Object.keys(nestedEntries).length) {
+            // 将嵌套对象注册为新的 NESTED_MAP 条目
+            NESTED_MAP[nestedCan] = nestedEntries;
+            entries[a.name] = { kind: 'ref', target: nestedCan, restPath: '' };
+          } else {
+            entries[a.name] = { kind: 'unknown' };
+          }
+        } else if (verb || url || rtInner || crudCallMatch) {
           entries[a.name] = { kind: 'method' };
           LEAF_DICT[canonical + '.' + a.name] = {
             verb: inferredVerb,
@@ -480,35 +623,6 @@ for (const fp of allApiFiles) {
           // 纯标识符引用（如 create: createDataSource），通常是导入的函数引用
           entries[a.name] = { kind: 'method' };
           LEAF_DICT[canonical + '.' + a.name] = { verb: '', url: '', returns: '', file: relFile };
-        } else if (afterColon.startsWith('{')) {
-          // 嵌套对象字面量: alert: { batch: alertBatchApi } 或 contracts: { ...contractApi, ... }
-          const nestedBody = afterColon;
-          const nestedEntries = {};
-          // 解析嵌套对象中的 spread: ...xxxApi
-          const nspreadRe = /\.\.\.([A-Za-z_$][\w$]*Api)/g;
-          let nsm;
-          while ((nsm = nspreadRe.exec(nestedBody)) !== null) {
-            const nRef = nsm[1];
-            const tSym = localAlias[nRef] || (fileExports.has(nRef) ? fileExports.get(nRef) : null);
-            nestedEntries['__spread_' + nRef] = tSym || 'LOCAL:' + nRef;
-          }
-          // 解析嵌套对象的 key-value 对（ref 模式）
-          const nkvRe = /([A-Za-z_$][\w$]*)\s*:\s*([A-Za-z_$][\w$]*Api)/g;
-          let nm;
-          while ((nm = nkvRe.exec(nestedBody)) !== null) {
-            const nKey = nm[1];
-            const nRef = nm[2];
-            const tSym = localAlias[nRef] || (fileExports.has(nRef) ? fileExports.get(nRef) : null);
-            nestedEntries[nKey] = { kind: 'ref', target: tSym || 'LOCAL:' + nRef, restPath: '' };
-          }
-          if (Object.keys(nestedEntries).length) {
-            // 将嵌套对象注册为新的 NESTED_MAP 条目
-            const nestedCan = canonical + '.' + a.name;
-            NESTED_MAP[nestedCan] = nestedEntries;
-            entries[a.name] = { kind: 'ref', target: nestedCan, restPath: '' };
-          } else {
-            entries[a.name] = { kind: 'unknown' };
-          }
         } else {
           entries[a.name] = { kind: 'unknown' };
         }

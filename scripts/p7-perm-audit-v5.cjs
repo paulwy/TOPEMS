@@ -116,6 +116,9 @@ if (codesByModBlock) {
 }
 const arrBlk = permSrc.match(/export\s+const\s+ALL_3PART_PERM_CODES\s*:\s*string\[\]\s*=\s*\[([\s\S]*?)\];/);
 if (arrBlk) for (const m of arrBlk[1].matchAll(/'([A-Za-z0-9_:-]{3,90})'/g)) LEGAL.add(m[1]);
+// 后端签发码真源：由 scripts/ci/gen-permissions.mjs 从 core_permissions 迁移生成（幂等块）
+const coreBlk = permSrc.match(/export\s+const\s+CORE_PERMISSION_CODES\s*:\s*string\[\]\s*=\s*\[([\s\S]*?)\];/);
+if (coreBlk) for (const m of coreBlk[1].matchAll(/'([A-Za-z0-9_:-]{3,90})'/g)) LEGAL.add(m[1]);
 
 // 提取 PERMISSION_DEFS 的分组信息（name/description/group）用于报告
 const PERM_INFO = new Map();

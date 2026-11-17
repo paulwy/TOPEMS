@@ -125,7 +125,10 @@ function runScriptForAudit(scriptPath, label, quiet) {
   }
   try {
     if (!quiet) console.log(`▶ Running ${label} ...`);
-    execSync(`node ${scriptPath}`, { cwd: PROJECT_ROOT, stdio: quiet ? 'pipe' : 'inherit' });
+    // 必须带 --apply：P6/P7 生成器默认 DRY-RUN，不落盘 artifact。
+    // 不落盘时下方读到的 p6-red.json / p7-audit-report.json 是旧文件或不存在，
+    // 会被当成 0 条 RED → 闸门假绿（历史缺陷）。
+    execSync(`node ${scriptPath} --apply`, { cwd: PROJECT_ROOT, stdio: quiet ? 'pipe' : 'inherit' });
     return true;
   } catch (e) {
     if (!quiet) console.log(`  (${label} exit=${e.status || 'n/a'} — proceeding to read outputs)`);
@@ -171,8 +174,20 @@ function runAuditCheck(opts) {
   runScriptForAudit(P6_SCRIPT, 'P6 (Page→API)', quiet);
   runScriptForAudit(P7_SCRIPT, 'P7 (RBAC)', quiet);
 
-  const p6Red = readJson(path.join(TMP_OUT, 'p6-red.json')) || [];
-  const p7Report = readJson(path.join(TMP_OUT, 'p7-audit-report.json')) || {};
+  // artifact 缺失/不可解析 = 审计未真正执行 → 必须 FAIL，不能静默当作 0 条
+  const p6RedPath = path.join(TMP_OUT, 'p6-red.json');
+  const p7ReportPath = path.join(TMP_OUT, 'p7-audit-report.json');
+  const p6RedRaw = readJson(p6RedPath);
+  const p7ReportRaw = readJson(p7ReportPath);
+  const artifactErrors = [];
+  if (!Array.isArray(p6RedRaw)) {
+    artifactErrors.push(`P6 artifact 缺失或不可解析：${p6RedPath}`);
+  }
+  if (!p7ReportRaw || typeof p7ReportRaw !== 'object' || Array.isArray(p7ReportRaw)) {
+    artifactErrors.push(`P7 artifact 缺失或不可解析：${p7ReportPath}`);
+  }
+  const p6Red = Array.isArray(p6RedRaw) ? p6RedRaw : [];
+  const p7Report = p7ReportRaw && typeof p7ReportRaw === 'object' && !Array.isArray(p7ReportRaw) ? p7ReportRaw : {};
   const p6Yellow = countCsvLevel('YELLOW');
   const p6Amber = countCsvLevel('AMBER');
 
@@ -201,6 +216,12 @@ function runAuditCheck(opts) {
     results.push({ key, value, threshold, level, isFailRule });
   }
 
+  // artifact 缺失属于硬失败：不参与阈值比较，直接计入 FAIL
+  for (const msg of artifactErrors) {
+    failCount++;
+    results.push({ key: 'audit.artifact', value: 1, threshold: 0, level: 'FAIL', isFailRule: true, message: msg });
+  }
+
   if (!quiet) {
     console.log('\n┌──────────────────────────────────────────────────────────────────┐');
     console.log('│                    Audit Results Summary                        │');
@@ -208,6 +229,10 @@ function runAuditCheck(opts) {
     for (const r of results) {
       const pad = (s, n) => String(s).padEnd(n);
       const mark = r.level === 'PASS' ? '✅' : r.level === 'FAIL' ? '❌' : '⚠️';
+      if (r.message) {
+        console.log(`│ ${mark} ${pad(r.key, 18)} ${r.message}`);
+        continue;
+      }
       const thr = r.threshold === Infinity ? '∞' : r.threshold;
       console.log(`│ ${mark} ${pad(r.key, 18)} value=${pad(r.value, 5)} threshold=${pad(thr, 5)} ${pad(r.level, 5)} │`);
     }
