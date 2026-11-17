@@ -6,9 +6,10 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, tenant_claims, test_app_state};
+use app_state::{super_claims, tenant_claims, test_app_state, test_txn_cell};
 use axum::extract::{Json, Path, State};
 use axum::Extension;
+use topems_shared_auth::middleware::tenant::{rls_request_tenant, scope_request_tenant};
 use topems_unified_core::modules::doc::handlers::{
     create_document, delete_document, get_document, list_documents, update_document,
 };
@@ -70,9 +71,14 @@ async fn insert_doc(pool: &sqlx::PgPool, tenant: &str, title: &str) -> uuid::Uui
 async fn list_empty_returns_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = list_documents(State(state), Extension(claims)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        list_documents(State(state), Extension(cell)),
+    )
+    .await;
     let docs: Vec<Document> = resp.data.unwrap();
     assert!(docs.is_empty());
 }
@@ -83,9 +89,14 @@ async fn list_superuser_sees_all_tenants(pool: sqlx::PgPool) {
     insert_doc(&pool, TENANT_A, "doc-a").await;
     insert_doc(&pool, TENANT_B, "doc-b").await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = list_documents(State(state), Extension(claims)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        list_documents(State(state), Extension(cell)),
+    )
+    .await;
     let docs: Vec<Document> = resp.data.unwrap();
     assert_eq!(docs.len(), 2);
 }
@@ -96,9 +107,14 @@ async fn list_tenant_sees_only_own(pool: sqlx::PgPool) {
     insert_doc(&pool, TENANT_A, "doc-a").await;
     insert_doc(&pool, TENANT_B, "doc-b").await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = tenant_claims();
-    let resp = list_documents(State(state), Extension(claims)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        list_documents(State(state), Extension(cell)),
+    )
+    .await;
     let docs: Vec<Document> = resp.data.unwrap();
     assert_eq!(docs.len(), 1);
     assert_eq!(docs[0].tenant_id.to_string(), TENANT_A);
@@ -134,9 +150,14 @@ async fn get_returns_document(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = insert_doc(&pool, TENANT_A, "doc-a").await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_document(State(state), Extension(claims), Path(id)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        get_document(State(state), Extension(cell), Path(id)),
+    )
+    .await;
     let doc: Option<Document> = resp.data.unwrap();
     assert!(doc.is_some());
     assert_eq!(doc.unwrap().title, "doc-a");
@@ -146,9 +167,14 @@ async fn get_returns_document(pool: sqlx::PgPool) {
 async fn get_missing_returns_none(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_document(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        get_document(State(state), Extension(cell), Path(uuid::Uuid::new_v4())),
+    )
+    .await;
     let doc: Option<Document> = resp.data.unwrap();
     assert!(doc.is_none());
 }
@@ -184,9 +210,14 @@ async fn delete_hides_from_list(pool: sqlx::PgPool) {
     assert!(deleted);
 
     // 软删除后 list 不再返回
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool.clone());
     let claims = super_claims();
-    let resp = list_documents(State(state), Extension(claims)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        list_documents(State(state), Extension(cell)),
+    )
+    .await;
     let docs: Vec<Document> = resp.data.unwrap();
     assert!(docs.is_empty());
 }

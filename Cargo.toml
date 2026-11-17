@@ -457,6 +457,12 @@ mockall = "0.11"
 # TOPEMS 私有补丁：vendor/rsa manifest 版本 0.9.10（上游 0.9.10 含 RUSTSEC-2023-0071
 # Marvin Attack，无修复版本；vendor/rsa 移植上游 PR #702 implicit rejection 缓解）
 rsa = { path = "vendor/rsa" }
+# zeroize 1.8.x 在 nightly-2026-07-01 + aarch64 下，proc macro crate zeroize_derive
+# extern 加载报 E0463（rustc bug），导致 src/aarch64.rs 里 use crate::Zeroize 连锁 E0432。
+# vendor 版禁用 aarch64/x86 SIMD 后端，走 barrier + 主实现，满足内存清零语义。
+# 影响面：仅 SIMD 加速路径禁用，主清零逻辑不变。
+# zeroize = { path = "vendor/zeroize" }
+# zerofrom = { path = "vendor/zerofrom" }
 
 [profile.release]
 # 性能优先：相比 "z"，二进制仅大 ~5% 但服务端吞吐量提升 10~25%

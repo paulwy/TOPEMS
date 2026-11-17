@@ -6,9 +6,10 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{super_claims, test_app_state, test_txn_cell};
 use axum::extract::{Json, Path, State};
 use axum::Extension;
+use topems_shared_auth::middleware::tenant::{rls_request_tenant, scope_request_tenant};
 use topems_unified_core::modules::doc::handlers::{
     create_folder, create_template, get_template, list_folders, list_templates,
 };
@@ -85,9 +86,14 @@ fn folder_req(name: &str) -> CreateFolderRequest {
 async fn list_templates_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = list_templates(State(state), Extension(claims)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        list_templates(State(state), Extension(cell)),
+    )
+    .await;
     let items: Vec<Template> = resp.data.unwrap();
     assert!(items.is_empty());
 }
@@ -123,9 +129,14 @@ async fn get_template_roundtrip(pool: sqlx::PgPool) {
     .await;
     let tpl: Template = resp.data.unwrap();
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = get_template(State(state), Extension(claims), Path(tpl.id)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        get_template(State(state), Extension(cell), Path(tpl.id)),
+    )
+    .await;
     let got: Option<Template> = resp.data.unwrap();
     assert!(got.is_some());
     assert_eq!(got.unwrap().id, tpl.id);
@@ -135,9 +146,14 @@ async fn get_template_roundtrip(pool: sqlx::PgPool) {
 async fn list_folders_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = list_folders(State(state), Extension(claims)).await;
+    let resp = scope_request_tenant(
+        rls_request_tenant(&claims),
+        list_folders(State(state), Extension(cell)),
+    )
+    .await;
     let items: Vec<Folder> = resp.data.unwrap();
     assert!(items.is_empty());
 }
