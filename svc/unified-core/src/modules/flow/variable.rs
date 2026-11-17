@@ -176,6 +176,30 @@ async fn upsert_variable(
     .await
 }
 
+/// K16：实例作用域写入前必须确认目标实例归属当前请求租户。
+///
+/// 与 `public.core_workflow_instances` 的 RLS 策略同型：系统通道（`app.rls_system='on'`）
+/// 放行，其余只认 `app.tenant_id`；租户为空/NULL 时谓词为 NULL，同样视为不存在（fail-closed）。
+/// 该检查与后续写入共用同一个请求事务，避免检查与写入之间被并发改租户。
+async fn instance_owned_by_request(
+    tx: &mut ScopedTxn<'_>,
+    instance_id: Uuid,
+) -> Result<bool, sqlx::Error> {
+    let found: Option<Uuid> = sqlx::query_scalar(
+        r#"SELECT id FROM public.core_workflow_instances
+           WHERE id = $1
+             AND deleted_at IS NULL
+             AND (
+               COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+               OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
+             )"#,
+    )
+    .bind(instance_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    Ok(found.is_some())
+}
+
 fn infer_value_type(v: &serde_json::Value) -> String {
     match v {
         serde_json::Value::Null => "null".to_string(),
@@ -387,6 +411,18 @@ pub async fn set_instance_variable(
             ));
         }
     };
+    match instance_owned_by_request(&mut scope, instance_id).await {
+        Ok(true) => {}
+        Ok(false) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound(
+                "流程实例不存在".to_string(),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("校验实例归属失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("校验实例归属失败".to_string()));
+        }
+    }
     match upsert_variable(
         &mut scope,
         "instance",
@@ -427,6 +463,19 @@ pub async fn set_instance_variables_batch(
             ));
         }
     };
+    match instance_owned_by_request(&mut scope, instance_id).await {
+        Ok(true) => {}
+        Ok(false) => {
+            // 归属校验失败时本请求事务内尚未写入任何变量，整批不执行
+            return ApiResponse::from(TopemsError::ResourceNotFound(
+                "流程实例不存在".to_string(),
+            ));
+        }
+        Err(e) => {
+            tracing::error!("校验实例归属失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("校验实例归属失败".to_string()));
+        }
+    }
     let mut updated = 0usize;
     for (key, value) in payload.variables {
         match upsert_variable(
