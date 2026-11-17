@@ -12,8 +12,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -45,13 +47,46 @@ pub struct UpdateSettingsRequest {
 )]
 pub async fn get_settings(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(category): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let result = sqlx::query("SELECT key, value FROM rs.module_settings WHERE category = $1")
-        .bind(&category)
-        .fetch_all(&state.db)
-        .await;
+    // 超管看全部租户；普通用户必须有有效租户，缺失即拒绝，避免退化成跨租户读取。
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        match claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+        {
+            Some(t) => Some(t),
+            None => return ApiResponse::unauthorized("缺少租户上下文"),
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let db = Db::new(state.db.clone(), "rs, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::server_error("查询失败");
+        }
+    };
+
+    let result = sqlx::query(
+        "SELECT key, value FROM rs.module_settings \
+         WHERE category = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+    )
+    .bind(&category)
+    .bind(tenant_opt)
+    .fetch_all(&mut scope)
+    .await;
 
     match result {
         Ok(rows) => {
@@ -79,6 +114,7 @@ pub async fn get_settings(
 pub async fn update_settings(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(category): Path<String>,
     Json(req): Json<UpdateSettingsRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -93,6 +129,20 @@ pub async fn update_settings(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let now = chrono::Utc::now().naive_utc();
+
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let db = Db::new(state.db.clone(), "rs, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::server_error("更新设置项失败");
+        }
+    };
 
     let mut updated = 0;
     for (key, value) in &req.settings {
@@ -109,7 +159,7 @@ pub async fn update_settings(
         .bind(key)
         .bind(value)
         .bind(now)
-        .execute(&state.db)
+        .execute(&mut scope)
         .await;
 
         match result {
@@ -118,6 +168,14 @@ pub async fn update_settings(
                 tracing::error!("更新RD模块设置失败 (key={}): {}", key, e);
                 return ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()));
             }
+        }
+    }
+
+    drop(scope);
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return ApiResponse::server_error("事务提交失败");
         }
     }
 

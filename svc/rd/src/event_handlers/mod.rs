@@ -3,9 +3,9 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType, PdmBomCreatedPayload,
-    PdmBomUpdatedPayload, PdmMaterialCreatedPayload, PdmMaterialUpdatedPayload,
-    PmProjectCompletedPayload, PmProjectCreatedPayload,
+    require_event_tenant, Event, EventPublisher, EventResult, EventSubscriber, EventType,
+    PdmBomCreatedPayload, PdmBomUpdatedPayload, PdmMaterialCreatedPayload,
+    PdmMaterialUpdatedPayload, PmProjectCompletedPayload, PmProjectCreatedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -63,6 +63,9 @@ impl RdEventHandlers {
             event.trace_id
         );
 
+        // 事件必须携带合法租户：缺失/零租户直接拒绝，禁止写零租户或按名称跨租户更新。
+        let tenant_id = require_event_tenant(&event)?.get();
+
         match event.event_type {
             EventType::PmProjectCreated => {
                 let payload: PmProjectCreatedPayload = event.parse_payload().map_err(|e| {
@@ -82,8 +85,8 @@ impl RdEventHandlers {
                     Utc::now().timestamp_subsec_millis()
                 );
                 let result = sqlx::query_scalar::<_, uuid::Uuid>(
-                    "INSERT INTO rs_projects (name, code, project_type, status, leader, progress, start_date, created_by, created_at, updated_at, source_type, source_id)
-                     VALUES ($1, $2, 'r_d', 'pending', $3, 0, $4, 'system', $4, $4, 'pm_project', $5)
+                    "INSERT INTO rs_projects (name, code, project_type, status, leader, progress, start_date, created_by, created_at, updated_at, source_type, source_id, tenant_id)
+                     VALUES ($1, $2, 'r_d', 'pending', $3, 0, $4, 'system', $4, $4, 'pm_project', $5, $6)
                      ON CONFLICT (source_type, source_id) DO NOTHING
                      RETURNING id",
                 )
@@ -92,6 +95,7 @@ impl RdEventHandlers {
                 .bind(payload.owner_id.to_string())
                 .bind(Utc::now())
                 .bind(payload.project_id)
+                .bind(tenant_id)
                 .fetch_optional(&self.db)
                 .await;
 
@@ -128,10 +132,11 @@ impl RdEventHandlers {
                 );
 
                 let result = sqlx::query(
-                    "UPDATE rs_projects SET status = 'completed', progress = 100, updated_at = $1 WHERE name = $2",
+                    "UPDATE rs_projects SET status = 'completed', progress = 100, updated_at = $1 WHERE name = $2 AND tenant_id = $3",
                 )
                 .bind(Utc::now())
                 .bind(&payload.project_name)
+                .bind(tenant_id)
                 .execute(&self.db)
                 .await;
 
