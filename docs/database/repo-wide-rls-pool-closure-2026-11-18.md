@@ -978,6 +978,51 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 写校验（`topems_prod`，A 上下文）：本租户 INSERT 成功；跨租户 INSERT 触发 `row-level security policy` 拒绝；跨租户 UPDATE / DELETE 各 0 行。
 回滚后六档复原为 8，再 up 回到 strict；夹具已清理，克隆库回 allow_all 基线。
 
+## Batch D｜portal.portal_quick_actions 平台语料化（2026-11-17 拍板）
+
+迁移：`database/migrations/20261118113000_portal_quick_actions_platform_read_strict.sql`
+回滚：`database/rollback/20261118113000_portal_quick_actions_platform_read_strict.rollback.sql`
+克隆库六档演练与回滚往返通过，manifest `status: to_apply`。
+
+### 定性结论：平台语料（非超管私有行）
+
+1. **读路径**：`svc/portal/src/modules/quick_actions.rs` 的 `load_quick_actions` 走 `db.scope_read_system()`，SQL 无租户谓词，只按 `is_active`/`deleted_at` 过滤，对所有调用者返回同一份列表；代码「块 D 登记」原文写明「平台级快捷入口配置，对所有租户可见，不按请求租户过滤」。
+2. **写路径**：全仓无 `INSERT/UPDATE/DELETE portal_quick_actions`（收藏只写 IAM 用户偏好 `quick_actions.favorites`），行只可能来自种子/运维，语义是平台配置。
+3. **数据**：两库均 0 行；`tenant_id` 自 `20261115141900` 起 NOT NULL、无默认，「nil 租户行」已不可能出现（代码注释的 nil 说法是补列前的历史描述）。
+4. **策略**：两库唯一 `portal_allow_all_portal_quick_actions`（ALL，true/true），RLS+FORCE 已开，隔离形同虚设。
+
+按已固化规则（平台语料 → NULL 归一 + 平台读）：因列 NOT NULL，**归一为空操作**（前置断言 NULL 行 = 0，迁移无任何 UPDATE）；平台读按哨兵 `00000000-…-000000000000` 实现。
+
+### 可见范围对照（0 行现状；描述策略容量与未来种子可见性）
+
+| 上下文 | 现状 allow_all | 收严后 strict + platform_read |
+|---|---|---|
+| 未设 `app.tenant_id` | 全部行 | 0 |
+| 空串 `app.tenant_id` | 全部行 | 0 |
+| 全零 GUC | 全部行 | 哨兵（平台）行 |
+| 租户 A（…0001） | 全部行 | 哨兵行 + A 行 |
+| 租户 B（合成） | 全部行 | 哨兵行 + B 行 |
+| A + `rls_system=on` | 全部行 | 全部行 |
+| 租户 A 写 | 任意行 | 仅 A 行（系统通道不受限） |
+
+净变化：租户上下文从「可见全部行」收为「平台哨兵行 + 本租户行」，属**净减少**（与 Batch A 同口径）；系统通道读写不变，现有读路径（系统通道）可见结果不变。
+
+**种子约定**：今后平台快捷入口必须以哨兵 `tenant_id` 写入，否则该行只对所属租户可见。
+
+### 六档演练读数（克隆库，夹具=哨兵/A/B 各 1 行）
+
+| 上下文 | 改动前（allow_all） | 改动后（strict + platform_read） |
+|---|---|---|
+| 未设 GUC | 3 | 0 |
+| 空串 GUC | 3 | 0 |
+| 全零 GUC | 3 | 1 |
+| 租户 A（…0001） | 3 | 2 |
+| 租户 B（合成） | 3 | 2 |
+| A + `rls_system=on` | 3 | 3 |
+
+写校验（`topems_prod`，A 上下文）：本租户 INSERT 成功（A 可见 2）；插哨兵行 / 插 B 行均 `row-level security policy` 拒绝（42501）；UPDATE 哨兵行 0 行。
+回滚后六档全 3；清理夹具后再 up 成功（0 行六档全 0）；克隆库已回 allow_all 基线。
+
 ## 保持不动与仅登记
 
 - `erp.audit_logs`（13 行，t1=8 / t2=5）**保持不动**：`svc/erp/src/modules/audit.rs` 的列表/详情显式 `set_system_channel` 跨租户读，属平台跨租户审计视图；改租户作用域会改变 ERP 审计的产品语义，需产品确认后再排。
@@ -985,6 +1030,6 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 
 ## 同窗口清单（更新）
 
-`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`
+`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`、`20261118113000`
 以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
-生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，七条迁移全部 `to_apply`。
+生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，**八条**迁移全部 `to_apply`。

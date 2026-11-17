@@ -140,10 +140,16 @@
 
 | 候选表 | 现状 | 阻塞点 |
 |---|---|---|
-| `pdm.pdm_master_data_refs` | `tenant_id` NOT NULL、0 行；读 allow_all(SELECT) + 写 system-only | `svc/pdm/src/event_handlers/mod.rs` 的 INSERT 未绑定 `tenant_id`（注释仍写「无 tenant_id」），需先改代码再收严 |
-| `portal.portal_quick_actions` | `tenant_id` NOT NULL、0 行；ALL allow_all | `svc/portal/src/modules/quick_actions.rs` 按平台级共享配置读（块 D 登记），需先定「平台读通道」语义 |
+| `pdm.pdm_master_data_refs` | `tenant_id` NOT NULL、0 行；读 allow_all(SELECT) + 写 system-only | **代码已修**（`b8560b889`，INSERT 经 `TenantScope::tenant()` 显式绑租户、缺失即拒绝）；策略收严仍待排 |
+| `portal.portal_quick_actions` | `tenant_id` NOT NULL、0 行；ALL allow_all | **已处理**：定性为平台语料，Batch D 迁移 `20261118113000` 收严 + 平台读（见收口文档 Batch D） |
 | `erp.dict_items` / `erp.dict_types` | 0 行，`tenant_id` 可空 | 需先确认是否存在平台/全局字典行（NULL 语义） |
 | `bi.audit_logs` / `rs.formulas` / `core.core_plugins` | 0 行，`tenant_id` 可空（部分有 …0001 默认） | 同上，NULL/默认租户语义未定 |
 | `iam.roles`（1 行）等 allow_all 无 `tenant_id` | 全局元数据 | 不适用严格 B；如需隔离只能另定「全局只读 + 系统写」 |
 
 上述均未在本波次改动，继续留待逐表定性。
+
+## 7. 状态更新（2026-11-17 决策 3 续推：Batch D + pdm 写入缺陷）
+
+- **`pdm.pdm_master_data_refs` 写入缺陷**：核实 INSERT 早已绑定 `tenant_id`（`89422132a`/`a75ef4dc1`），真正问题是过期注释误导台账。已按缺陷口径收口（`b8560b889`）：改为经 `TenantScope::tenant(event.tenant_id)` 严格解析后取 `tenant_id()`，nil/缺失在构造期拒绝、无兜底零；`cargo check` / `clippy -D warnings` 通过，`tenant_rejects_nil` 单测通过；生产只读复核列仍为 NOT NULL、无默认、0 行。**与表定性解耦**：无论该表最终定性如何，写入都必须显式绑租户。
+- **`portal.portal_quick_actions`**：定性为**平台语料**（读路径系统通道 + 无租户谓词 + 全仓无写代码 + 块 D 声明），Batch D 迁移 `20261118113000` + 回滚，`status: to_apply`；克隆库六档 0/0/1/2/2/3 与写校验通过，净减少声明见收口文档 Batch D。
+- 剩余 NULL 语义不明的表进入逐表证据链核查（erp 字典 / bi / rs / core），证据不足者列「待定」。
