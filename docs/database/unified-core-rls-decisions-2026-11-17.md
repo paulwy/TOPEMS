@@ -1,6 +1,7 @@
 # unified-core 租户隔离待决事项决策文档（2026-11-17）
 
-> 状态：待拍板。本文只汇集事实、可选改法与验证判据，不含迁移文件、不改业务代码、未做新演练、未触碰生产。
+> 状态：**部分已拍板**（2026-11-17，见 §6「待决项收口」）；§2 中 R1–R9 未列入 §6 的事项仍为待决。
+> 本文只汇集事实、可选改法与验证判据；§6 为拍板结论，与前文"建议方向"冲突处以 §6 为准。
 > 证据基线：分支 `main`（HEAD 含 `be9f36ad0` / `f3eb89196` / `85224ec12`）；数据库证据取自克隆库 `m2_dryrun_20261116`（与生产同源，2026-11-17 查询）。
 > 相关文档：`docs/database/scope-with-plan-20261116.md`、`docs/database/zero-tenant-inventory-2026-11-16.md`、`docs/database/rls-live-coverage.md`。
 
@@ -17,6 +18,8 @@
 | R7 | D-01 批量任务写 | 真实 SQL 错误改为整体非 2xx | 独立 |
 | R8 | D-02 / D-03 端点不可用 | 纯代码修复，优先级最高 | 独立，可立即做 |
 | R9 | `list_instances` 4 处 | 随 R6 决策 | 与 R1/R2 同窗口 |
+
+**已拍板收口（2026-11-17，详见 §6）**：analytics `list_datasets` 的 `is_public` 不恢复跨租户可见；`list_files` 超管保持 `TenantScope::from_claims`；跨租户读取只保留「平台语料（全零租户）」与「显式系统通道（需 GUC）」两个入口，业务可见性一律在查询层用显式谓词表达。
 
 ---
 
@@ -372,3 +375,51 @@ OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
 - `flow.core_comments` / `flow.core_favorites`（engagement 3 处池直连）：无表级 RLS，方案与 R1 同类，待与统一 DDL 批次一并处理。
 - 生产库数据归一与平台语料迁移：生产库不动，等待窗口。
 - 策略收紧后的历史 NULL 行归属：克隆库无样本，需在生产预检后补充规则。
+
+---
+
+## 6. 待决项收口（拍板日 2026-11-17）
+
+> 本节为最终结论，不是备选方案。落地时不需再就本节列出的三项回问；若与前文 §2 的建议方向冲突，以本节为准。
+
+### 6.1 D-1：analytics `list_datasets` 的 `is_public` —— 不恢复跨租户可见性
+
+- **拍板日**：2026-11-17
+- **结论**：不恢复跨租户可见性；**不出** `OR is_public` 分支的迁移，也不在代码里加该谓词。
+- **目标形态**：`bi.analytics_datasets` 保持现有「严格 B 范式 RLS + 查询层显式 `tenant_id` 谓词」；`is_public` 仅作为**本租户内部**的展示/筛选字段保留，不承担可见性语义。
+- **落地证据**：`svc/analytics/src/modules/bi/dataset.rs` 列表 SQL 无 `OR is_public`；读取走请求事务 + 租户谓词。
+- **影响**：公开数据集不再对其他租户可见（原本也无跨租户通路，此为确认而非收紧）。若产品确需数据集共享，按 6.3 作为新需求单独立项，走平台语料路线。
+
+### 6.2 D-2：`list_files` 的超管语义 —— 保持 `TenantScope::from_claims`
+
+- **拍板日**：2026-11-17
+- **结论**：保持 `TenantScope::from_claims`，**不恢复**隐式系统通道（即不因"超管"身份自动获得 `TenantScope::system` / `TRUE` 谓词）。
+- **目标形态**（即当前形态，无需改动）：`svc/unified-core/src/modules/file/manage.rs` 的 `list_files` 先 `TenantScope::from_claims(&claims, "unified-core.file.list_files", "core_files")`，再 `state.db.scope_with(txn)` 取请求事务，SQL 带 `sql_predicate("tenant_id", "$1")`。
+- **语义边界**：超管缺租户 → 按 `from_claims` 既有规则 400（不静默升级为跨租户）；服务令牌 → 走既有**显式**系统通道（GUC + warn + 计数）。
+- **影响**：超管跨租户文件列表不再隐式可用；如需跨租户盘点，须走显式系统通道接口并在审计中留痕。
+
+### 6.3 D-3：通用规则（固化）
+
+**策略层只做租户隔离。跨租户读取只有两个入口：**
+
+1. **平台语料**：全零租户（`00000000-0000-0000-0000-000000000000`）行，读取端用 `Db::scope_read_platform()`，并在 SQL 中**显式**写 `tenant_id = PLATFORM_TENANT_ID`（不依赖策略放行）。
+2. **显式系统通道**：需 `app.rls_system = 'on'` 的受控 GUC/角色（`Db::scope_system()` / `Db::scope_read_system()` / `TenantScope::system(SystemChannel)`），构造时保持 `warn` + Prometheus 计数，不得隐式触发。
+
+**其余所有业务可见性**（公开、共享、收藏、推荐、白名单等）**一律在查询层用显式谓词表达**：不得写进 RLS 策略，也不得以"策略放行 + 代码忘了过滤"的方式实现。
+
+**衍生约束**：
+
+- 新增跨租户能力时，只能新增上述两个入口之一，并同步补审计/计数；不得新增第三种"策略放行"。
+- 若将来产品需要数据集共享，作为**新需求**按平台语料路线单独做（新迁移 + 读取端同窗口 + 回滚脚本），不写进策略，也不复用 `is_public` 开关。
+- 无 `tenant_id` 的平台全局系统表（当前仅 `public.alert_rules`）属已登记的既有例外：读对所有身份开放、写仅系统通道（`app.rls_system='on'`）。不新增此类表；新增前必须先按本规则判定是否属平台语料。
+- 门禁对应：`scripts/ci/check-pool-direct-system-scope.py` 禁止「池直连 + `TenantScope::system`」同函数共存，正是本规则第 2 入口"必须显式"的机器化约束。
+
+### 6.4 收口后的待决项状态
+
+| 编号 | 状态 |
+|---|---|
+| D-1 `is_public` | **已收口**（不恢复） |
+| D-2 `list_files` 超管 | **已收口**（保持 `from_claims`） |
+| D-3 通用规则 | **已固化**（写入本节，作为后续评审依据） |
+| R1–R9 其余项 | 仍按 §3.2 批次推进，不在本次拍板范围 |
+
