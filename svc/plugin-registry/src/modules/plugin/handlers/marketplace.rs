@@ -45,12 +45,11 @@ pub fn paginate(page: Option<u32>, page_size: Option<u32>) -> (u32, u32, u32) {
 
 /// Get marketplace summary
 ///
-/// 全局表登记：`core.core_plugins` 是**全租户共享插件目录**，不是租户私有数据。
-/// - `code` 全局唯一；`tenant_id` 表示发布方，不表示查看方；
-/// - 租户级安装/授权关系在 `core.core_tenant_plugins`（按 tenant_id 隔离）；
-/// - 因此市场列表按 `is_published` 放行，**禁止**在本查询追加 `tenant_id` 谓词，
-///   否则非发布租户会看到空市场（把越权改成功能故障）；
-/// - 租户隔离责任在发布侧：谁能上传/发布插件由 `/api/plugin/dev/*` 鉴权与审核控制。
+/// 平台语料化后：`core.core_plugins` 的**已发布条目**只存在于哨兵租户
+/// （`tenant_id = 00000000-0000-0000-0000-000000000000`），租户草稿留在各自租户下。
+/// 市场是公开路由（`is_public_path` 放行，不注入请求事务/租户 GUC），因此这里保持
+/// 系统通道，并用显式哨兵 + `is_published` + `deleted_at IS NULL` 限定可见集合；
+/// 可见结果与「租户 scope 读哨兵行 + 本租户行 + 发布过滤」等价，不会暴露任何租户草稿。
 pub async fn get_marketplace_summary(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -70,11 +69,14 @@ pub async fn get_marketplace_summary(
         }
     };
 
-    let total: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true")
-            .fetch_one(&mut scope)
-            .await
-            .unwrap_or((0,));
+    let total: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM core.core_plugins \
+         WHERE tenant_id = '00000000-0000-0000-0000-000000000000' \
+           AND is_published = true AND deleted_at IS NULL",
+    )
+    .fetch_one(&mut scope)
+    .await
+    .unwrap_or((0,));
 
     let categories: Vec<PluginCategory> = sqlx::query_as(
         "SELECT id, name, description, sort_order, is_active, created_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
@@ -84,7 +86,7 @@ pub async fn get_marketplace_summary(
     .unwrap_or_default();
 
     let featured: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE tenant_id = '00000000-0000-0000-0000-000000000000' AND is_published = true AND deleted_at IS NULL AND is_featured = true ORDER BY install_count DESC LIMIT 6"
     )
     .bind(locale)
     .fetch_all(&mut scope)
@@ -92,7 +94,7 @@ pub async fn get_marketplace_summary(
     .unwrap_or_default();
 
     let new_plugins: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE tenant_id = '00000000-0000-0000-0000-000000000000' AND is_published = true AND deleted_at IS NULL ORDER BY published_at DESC LIMIT 6",
     )
     .bind(locale)
     .fetch_all(&mut scope)
@@ -100,7 +102,7 @@ pub async fn get_marketplace_summary(
     .unwrap_or_default();
 
     let top_rated: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE tenant_id = '00000000-0000-0000-0000-000000000000' AND is_published = true AND deleted_at IS NULL AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
     )
     .bind(locale)
     .fetch_all(&mut scope)
@@ -205,7 +207,7 @@ pub async fn list_plugins(
     };
 
     let total: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true AND ($1::text IS NULL OR category = $1) AND ($2::text IS NULL OR (name ILIKE $2 OR description ILIKE $2)) AND ($3::boolean IS NULL OR is_free = $3)",
+        "SELECT COUNT(*) FROM core.core_plugins WHERE tenant_id = '00000000-0000-0000-0000-000000000000' AND is_published = true AND deleted_at IS NULL AND ($1::text IS NULL OR category = $1) AND ($2::text IS NULL OR (name ILIKE $2 OR description ILIKE $2)) AND ($3::boolean IS NULL OR is_free = $3)",
     )
     .bind(category)
     .bind(search_pattern.as_deref())
@@ -223,7 +225,7 @@ pub async fn list_plugins(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut sql = String::from("SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND ($2::text IS NULL OR category = $2) AND ($3::text IS NULL OR (name ILIKE $3 OR description ILIKE $3)) AND ($4::boolean IS NULL OR is_free = $4) ORDER BY ");
+    let mut sql = String::from("SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE tenant_id = '00000000-0000-0000-0000-000000000000' AND is_published = true AND deleted_at IS NULL AND ($2::text IS NULL OR category = $2) AND ($3::text IS NULL OR (name ILIKE $3 OR description ILIKE $3)) AND ($4::boolean IS NULL OR is_free = $4) ORDER BY ");
     sql.push_str(sort_order);
     sql.push_str(" LIMIT $5 OFFSET $6");
     let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(sqlx::AssertSqlSafe(sql))
@@ -279,7 +281,7 @@ pub async fn get_plugin(
             )));
         }
     };
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND tenant_id = '00000000-0000-0000-0000-000000000000' AND is_published = true AND deleted_at IS NULL")
         .bind(&code)
         .bind(locale)
         .fetch_optional(&mut scope)
@@ -323,7 +325,7 @@ pub async fn get_plugin_versions(
     };
 
     let versions: Vec<PluginVersion> = sqlx::query_as(
-        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
+        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND EXISTS (SELECT 1 FROM core.core_plugins p WHERE p.id = $1 AND p.tenant_id = '00000000-0000-0000-0000-000000000000' AND p.is_published = true AND p.deleted_at IS NULL) ORDER BY created_at DESC",
     )
     .bind(plugin_id)
     .fetch_all(&mut scope)
@@ -367,7 +369,7 @@ pub async fn get_plugin_reviews(
     };
 
     let reviews: Vec<PluginReview> = sqlx::query_as(
-        "SELECT id, plugin_id, user_id, rating, title, content, is_featured, helpful_count, created_at FROM core.core_plugin_reviews WHERE plugin_id = $1 ORDER BY is_featured DESC, helpful_count DESC, created_at DESC"
+        "SELECT id, plugin_id, user_id, rating, title, content, is_featured, helpful_count, created_at FROM core.core_plugin_reviews WHERE plugin_id = $1 AND EXISTS (SELECT 1 FROM core.core_plugins p WHERE p.id = $1 AND p.tenant_id = '00000000-0000-0000-0000-000000000000' AND p.is_published = true AND p.deleted_at IS NULL) ORDER BY is_featured DESC, helpful_count DESC, created_at DESC"
     )
     .bind(plugin_id)
     .fetch_all(&mut scope)

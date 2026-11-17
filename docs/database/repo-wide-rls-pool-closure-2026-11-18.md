@@ -1051,7 +1051,7 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 |---|---|---|---|
 | `erp.dict_types` / `erp.dict_items` | `svc/erp` 列表/详情走请求级 scope，无跨租户读取、无 unified-core 读取 | 否。租户只应看本租户行；超管也被中间件限定在所选租户 | 本批收严 |
 | `rs.formulas` | `svc/rd` 列表/详情走请求级 scope，仅靠 RLS 过滤 | 否。无跨租户/平台读分支 | 本批收严 |
-| `core.core_plugins` | `tenant_plugins.rs:134` 租户列表 JOIN 全局目录、`:449` uninstall 按 code 读、`:736/:855` install 子查询取 id | **是**。严格隔离后租户看不到他方发布的插件，列表/安装/卸载都会空 | **停下，不纳入**：需先定「全局目录走平台读/系统通道」方案 |
+| `core.core_plugins` | `tenant_plugins.rs:134` 租户列表 JOIN 全局目录、`:449` uninstall 按 code 读、`:736/:855` install 子查询取 id | **是**。严格隔离后租户看不到他方发布的插件，列表/安装/卸载都会空 | **Batch F 已处理**：平台语料化（哨兵行 OR 本租户行），见下节 |
 | `bi.audit_logs` | 全仓无读者 | — | **登记 DROP 候选**，不写策略 |
 
 ### 4. 六档演练读数（克隆库）
@@ -1070,13 +1070,62 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 写校验（A 上下文）：本租户 INSERT 成功；插 B 行与插哨兵行均 42501；UPDATE B 行 0 行。
 down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档均 4；`dict_items`/`rs.formulas` 四档均 3）；清理后再 up 成功（0 行各档 0）；克隆库已回 allow_all 基线。
 
+## Batch F｜core.core_plugins 平台语料化（2026-11-17 五点拍板）
+
+设计：`docs/database/core-plugins-platform-catalog-design-2026-11-18.md`
+
+迁移：`database/migrations/20261118123000_core_plugins_platform_catalog.sql`
+回滚：`database/rollback/20261118123000_core_plugins_platform_catalog.rollback.sql`
+同批代码：`svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs`、`marketplace.rs`。
+
+### 1. 数据形态
+
+- 发布 = 原地迁哨兵行：`tenant_id = 哨兵`、`owner_tenant_id = 发布方`、`is_published = true`；不保留草稿副本。
+- 下架 = 回落发布方：`tenant_id = owner`、`owner_tenant_id = NULL`、`last_owner_tenant_id = 发布方`、`unpublished_at = NOW()`。
+- 租户下线：平台行保留、`owner_tenant_id` 置空，`last_owner_tenant_id` / `unpublished_at` 留痕。
+- 新增列：`owner_tenant_id`、`last_owner_tenant_id`、`unpublished_at`；移除 `tenant_id` 默认值 `…0001`。
+- `name` 平台维度唯一（`core_plugins_platform_name_key`，哨兵行且未删除）；`code` 保持全局唯一。
+- 外键 `iam.core_tenant_plugins.plugin_id → core.core_plugins(id) ON DELETE RESTRICT`；迁移内先跑孤儿断言。
+
+### 2. 策略
+
+动态清空既有策略 → ENABLE+FORCE → `rls_tenant_isolation`(ALL) + `rls_platform_read`(SELECT，哨兵行且 GUC 非空)。哨兵行**不开写入放行**：发布/下架/计数只走系统通道 + owner 校验。
+
+### 3. 代码
+
+| 位置 | 处理 |
+|---|---|
+| `tenant_plugins.rs` publish / unpublish | `Extension<Claims>` + `TenantScope::require_tenant`，请求事务内 `set_config('app.rls_system','on',true)`；`WHERE` 锁归属；重名 23505 → 409，非本人 → 404 |
+| `:134` 租户插件列表 | 补 `p.deleted_at IS NULL`（平台读策略覆盖跨租户目录） |
+| `:247` install | 补 `deleted_at IS NULL`；`install_count + 1` 走系统通道 |
+| `:449` uninstall | 加 `(is_published = true OR tenant_id = $3)`；Uninstall/Delete 成功后在系统通道 `install_count = GREATEST(install_count - 1, 0)` |
+| `:736` / `:855` | 不改 SQL，平台读策略覆盖 |
+| `upload_plugin_version` / `versioning.rs` 回退 / `upgrade_workflow.rs` 升级 | 目录行版本号写入改系统通道；upload 版本加 owner 校验，回退/升级保持既有语义（改全局目录行是否应改为写安装记录另议） |
+| `marketplace.rs` | 公开路由不注入请求事务/租户上下文，保持系统通道，统一强制 `tenant_id = 哨兵 AND is_published = true AND deleted_at IS NULL`（versions/reviews 用 `EXISTS` 守住父插件） |
+
+### 4. 六档演练（克隆库，4 行夹具：A 草稿 / B 草稿 / B 发布 / 平台未发布）
+
+| 上下文 | 行数 |
+|---|---|
+| 未设 GUC | 0 |
+| 空串 GUC | 0 |
+| 全零 GUC | 2（两条哨兵行） |
+| 租户 A（…0001） | 3（A 草稿 + 2 条哨兵） |
+| 租户 B（合成） | 3（B 草稿 + 2 条哨兵） |
+| A + `rls_system=on` | 4 |
+
+关键断言：**A 能看到 B 发布的 `b-pub`，看不到 B 的草稿 `b-draft`**。
+写校验：A 改 B 草稿 0 行；A 把自有草稿迁哨兵 42501；发布 1 行、重复发布 1 行、发布他方草稿 0 行；平台重名 23505；下架回落 1 行、重复下架 0 行；`install_count` 1→0 不为负；孤儿安装行 23503。
+回滚往返：down 后策略数 1（allow_all）、三列/三索引/FK 消失、默认值恢复；再 up 策略数 2、FK `convalidated`；再 down 并清空夹具，克隆库回 allow_all 基线。
+
 ## 保持不动与仅登记
 
 - `erp.audit_logs`（13 行，t1=8 / t2=5）**保持不动**：`svc/erp/src/modules/audit.rs` 的列表/详情显式 `set_system_channel` 跨租户读，属平台跨租户审计视图；改租户作用域会改变 ERP 审计的产品语义，需产品确认后再排。
+- `bi.audit_logs`：全仓无读写，**登记 DROP 候选**，不写策略；删表属破坏性 DDL，进窗口时单独确认。
 - qms 5 张无 `tenant_id` 的幻影表：只登记 **DROP 候选**（另开窗），本波次不删、不建策略。
 
 ## 同窗口清单（更新）
 
-`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`、`20261118113000`、`20261118120000`
+`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`、`20261118113000`、`20261118120000`、`20261118123000`
 以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
-生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，**九条**迁移全部 `to_apply`。
+生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，**十条**迁移全部 `to_apply`。

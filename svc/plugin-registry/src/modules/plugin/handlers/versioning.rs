@@ -319,6 +319,19 @@ pub async fn rollback_plugin_version(
         return Json(CoreResponse::error("Target version not found"));
     }
 
+    // 已发布条目的目录行在哨兵命名空间，版本回退需系统通道。
+    if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut scope)
+        .await
+    {
+        tracing::error!("[Plugin] Failed to open system channel for version rollback: {}", e);
+        let _ = scope.rollback().await;
+        return Json(CoreResponse::error(&format!(
+            "Rollback failed: {}",
+            e
+        )));
+    }
+
     let result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
         .bind(&target_version)
         .bind(plugin.id)

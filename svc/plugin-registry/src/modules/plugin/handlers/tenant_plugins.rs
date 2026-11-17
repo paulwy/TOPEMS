@@ -1,6 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
     Extension, Json,
 };
 use uuid::Uuid;
@@ -10,7 +11,7 @@ use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
-use topems_shared_auth::middleware::tenant_scope::TenantScope;
+use topems_shared_auth::middleware::tenant_scope::{TenantScope, PLATFORM_TENANT_ID};
 use topems_shared_core::locale::Locale;
 
 // ============================================================================
@@ -97,6 +98,17 @@ pub fn requires_confirmation(tier: &str) -> bool {
     tier.eq_ignore_ascii_case("delete")
 }
 
+/// 平台维度 name 唯一冲突：23505 且命中 `core_plugins_platform_name_key`。
+fn is_platform_name_conflict(err: &sqlx::Error) -> bool {
+    match err {
+        sqlx::Error::Database(db) => {
+            db.code().as_deref() == Some("23505")
+                && db.constraint() == Some("core_plugins_platform_name_key")
+        }
+        _ => false,
+    }
+}
+
 /// Get tenant's installed plugins
 pub async fn list_tenant_plugins(
     State(state): State<AppState>,
@@ -133,6 +145,7 @@ pub async fn list_tenant_plugins(
         FROM iam.core_tenant_plugins tp
         JOIN core.core_plugins p ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
+          AND p.deleted_at IS NULL
         ORDER BY tp.is_active DESC, tp.activated_at DESC
         "#,
     )
@@ -244,7 +257,7 @@ async fn install_plugin_inner(
         }
     };
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true AND deleted_at IS NULL")
             .bind(&plugin_code)
             .bind(locale)
             .fetch_optional(&mut scope)
@@ -327,8 +340,22 @@ async fn install_plugin_inner(
 
     match installation_result {
         Ok(installation) => {
+            // install_count 属于平台目录行（tenant_id = 哨兵），租户 scope 无法写入；
+            // 在本请求事务内显式打开系统通道后只改计数列。
+            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+                .execute(&mut scope)
+                .await
+            {
+                tracing::error!("[Plugin] Failed to open system channel for install_count: {}", e);
+                let _ = scope.rollback().await;
+                return Json(CoreResponse::error(&format!(
+                    "Failed to install plugin: {}",
+                    e
+                )));
+            }
             sqlx::query(
-                "UPDATE core.core_plugins SET install_count = install_count + 1 WHERE id = $1",
+                "UPDATE core.core_plugins SET install_count = install_count + 1 \
+                 WHERE id = $1 AND tenant_id = '00000000-0000-0000-0000-000000000000'",
             )
             .bind(plugin.id)
             .execute(&mut scope)
@@ -446,9 +473,10 @@ async fn uninstall_plugin_inner(
             )));
         }
     };
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND (is_published = true OR tenant_id = $3)")
         .bind(&plugin_code)
         .bind(locale)
+        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
@@ -596,7 +624,11 @@ async fn uninstall_plugin_inner(
             .await;
 
             match result {
-                Ok(_) => {
+                Ok(r) => {
+                    if r.rows_affected() == 0 {
+                        let _ = scope.rollback().await;
+                        return Json(CoreResponse::error("Plugin not installed for this tenant"));
+                    }
                     tracing::info!(
                         "[Plugin] Plugin {} completely deleted for tenant {}",
                         plugin_code,
@@ -625,6 +657,33 @@ async fn uninstall_plugin_inner(
             }
         }
     };
+
+    // 卸载/删除成功后回收平台目录行的 install_count（Uninstall/Delete 档）；
+    // 平台行属于哨兵命名空间，必须走系统通道写入。
+    if matches!(
+        &req.uninstall_tier,
+        UninstallTier::Uninstall | UninstallTier::Delete
+    ) {
+        if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("[Plugin] Failed to open system channel for install_count: {}", e);
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error(&format!(
+                "Failed to uninstall plugin: {}",
+                e
+            )));
+        }
+        sqlx::query(
+            "UPDATE core.core_plugins SET install_count = GREATEST(install_count - 1, 0) \
+             WHERE id = $1 AND tenant_id = '00000000-0000-0000-0000-000000000000'",
+        )
+        .bind(plugin.id)
+        .execute(&mut scope)
+        .await
+        .ok();
+    }
 
     let _ = scope.commit().await;
 
@@ -1090,9 +1149,12 @@ pub async fn upload_plugin(
             code, name, description, version, plugin_type,
             is_free, price_cents, remote_url, entry_point,
             dependencies, author_name, author_url, homepage_url,
-            screenshots, tags, category, is_published, tenant_id
+            screenshots, tags, category, is_published, tenant_id,
+            owner_tenant_id, last_owner_tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, $17)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, $17,
+                NULLIF($17::uuid, '00000000-0000-0000-0000-000000000000'::uuid),
+                NULLIF($17::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
         RETURNING *
         "#,
     )
@@ -1153,6 +1215,7 @@ pub async fn upload_plugin(
 pub async fn upload_plugin_version(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
     headers: HeaderMap,
     Json(req): Json<UploadVersionRequest>,
@@ -1194,6 +1257,15 @@ pub async fn upload_plugin_version(
         }
     };
 
+    // 版本号落在平台目录行上，只能由发布方（草稿所属租户或平台行 owner）更新。
+    let owner_tenant = match TenantScope::require_tenant(&claims) {
+        Ok(s) => s.create_tenant_id(),
+        Err((_, msg)) => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error(&msg));
+        }
+    };
+
     let version_result = sqlx::query_as(
         r#"
         INSERT INTO core.core_plugin_versions (
@@ -1218,12 +1290,43 @@ pub async fn upload_plugin_version(
 
     match version_result {
         Ok(version) => {
-            sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
-                .bind(&req.version)
-                .bind(plugin.id)
+            // 平台目录行（哨兵）需系统通道写入；WHERE 锁发布方归属。
+            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
                 .execute(&mut scope)
                 .await
-                .ok();
+            {
+                tracing::error!("[Plugin] Failed to open system channel for version bump: {}", e);
+                let _ = scope.rollback().await;
+                return Json(CoreResponse::error(&format!(
+                    "Failed to upload plugin version: {}",
+                    e
+                )));
+            }
+            let bumped = sqlx::query(
+                "UPDATE core.core_plugins SET version = $1 \
+                 WHERE id = $2 \
+                   AND (tenant_id = $3 OR (tenant_id = '00000000-0000-0000-0000-000000000000' AND owner_tenant_id = $3))",
+            )
+            .bind(&req.version)
+            .bind(plugin.id)
+            .bind(owner_tenant)
+            .execute(&mut scope)
+            .await;
+            match bumped {
+                Ok(r) if r.rows_affected() == 1 => {}
+                Ok(_) => {
+                    let _ = scope.rollback().await;
+                    return Json(CoreResponse::error("插件不存在或不属于当前租户"));
+                }
+                Err(e) => {
+                    tracing::error!("[Plugin] Failed to bump plugin version: {}", e);
+                    let _ = scope.rollback().await;
+                    return Json(CoreResponse::error(&format!(
+                        "Failed to upload plugin version: {}",
+                        e
+                    )));
+                }
+            }
             if let Err(e) = scope.commit().await {
                 tracing::error!("[Plugin] Failed to commit version upload: {}", e);
                 return Json(CoreResponse::error(&format!(
@@ -1266,47 +1369,119 @@ pub async fn upload_plugin_version(
 pub async fn publish_plugin(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
-) -> Json<CoreResponse<Plugin>> {
+) -> Response {
     tracing::info!("[Plugin] Publishing plugin: {}", plugin_code);
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
-        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(CoreResponse::<Plugin>::error(
+                "数据库事务上下文缺失：请求事务未注入",
+            )),
+        )
+            .into_response();
     };
     let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
-            return Json(CoreResponse::error(&format!(
-                "Failed to publish plugin: {}",
-                e
-            )));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(CoreResponse::<Plugin>::error(&format!(
+                    "Failed to publish plugin: {}",
+                    e
+                ))),
+            )
+                .into_response();
         }
     };
 
-    let plugin: Option<Plugin> = sqlx::query_as(
+    // 发布方必须来自显式租户上下文：服务身份不得代替租户发布。
+    let owner_tenant = match TenantScope::require_tenant(&claims) {
+        Ok(s) => s.create_tenant_id(),
+        Err((code, msg)) => {
+            let _ = scope.rollback().await;
+            let status = StatusCode::from_u16(code).unwrap_or(StatusCode::BAD_REQUEST);
+            return (status, Json(CoreResponse::<Plugin>::error(&msg))).into_response();
+        }
+    };
+
+    // 发布 = 把发布方草稿原地迁到哨兵命名空间；平台行只允许系统通道写入。
+    if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut scope)
+        .await
+    {
+        tracing::error!("[Plugin] Failed to open system channel for publish: {}", e);
+        let _ = scope.rollback().await;
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(CoreResponse::<Plugin>::error(&format!(
+                "Failed to publish plugin: {}",
+                e
+            ))),
+        )
+            .into_response();
+    }
+
+    let plugin: Result<Option<Plugin>, sqlx::Error> = sqlx::query_as(
         r#"
         UPDATE core.core_plugins
-        SET is_published = true, published_at = NOW(), updated_at = NOW()
+        SET tenant_id = $2,
+            owner_tenant_id = $3,
+            last_owner_tenant_id = $3,
+            is_published = true,
+            published_at = NOW(),
+            unpublished_at = NULL,
+            updated_at = NOW()
         WHERE code = $1
+          AND (tenant_id = $3 OR (tenant_id = $2 AND owner_tenant_id = $3))
         RETURNING *
         "#,
     )
     .bind(&plugin_code)
+    .bind(PLATFORM_TENANT_ID)
+    .bind(owner_tenant)
     .fetch_optional(&mut scope)
-    .await
-    .unwrap_or(None);
+    .await;
 
     match plugin {
-        Some(p) => {
+        Ok(Some(p)) => {
             let _ = scope.commit().await;
             tracing::info!("[Plugin] Plugin published: {}", plugin_code);
-            Json(CoreResponse::success(p, "Plugin published"))
+            Json(CoreResponse::success(p, "Plugin published")).into_response()
         }
-        None => {
+        Ok(None) => {
             let _ = scope.rollback().await;
-            Json(CoreResponse::error("Plugin not found"))
+            (
+                StatusCode::NOT_FOUND,
+                Json(CoreResponse::<Plugin>::error("插件不存在或不属于当前租户")),
+            )
+                .into_response()
+        }
+        Err(e) if is_platform_name_conflict(&e) => {
+            let _ = scope.rollback().await;
+            (
+                StatusCode::CONFLICT,
+                Json(CoreResponse::<Plugin>::error(
+                    "平台已有同名插件，请为名称加前缀后重试",
+                )),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to publish plugin: {}", e);
+            let _ = scope.rollback().await;
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(CoreResponse::<Plugin>::error(&format!(
+                    "Failed to publish plugin: {}",
+                    e
+                ))),
+            )
+                .into_response()
         }
     }
 }
@@ -1328,47 +1503,111 @@ pub async fn publish_plugin(
 pub async fn unpublish_plugin(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
-) -> Json<CoreResponse<Plugin>> {
+) -> Response {
     tracing::info!("[Plugin] Unpublishing plugin: {}", plugin_code);
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
-        return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(CoreResponse::<Plugin>::error(
+                "数据库事务上下文缺失：请求事务未注入",
+            )),
+        )
+            .into_response();
     };
     let mut scope = match state.db.scope_with(txn).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
-            return Json(CoreResponse::error(&format!(
-                "Failed to unpublish plugin: {}",
-                e
-            )));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(CoreResponse::<Plugin>::error(&format!(
+                    "Failed to unpublish plugin: {}",
+                    e
+                ))),
+            )
+                .into_response();
         }
     };
 
-    let plugin: Option<Plugin> = sqlx::query_as(
+    let owner_tenant = match TenantScope::require_tenant(&claims) {
+        Ok(s) => s.create_tenant_id(),
+        Err((code, msg)) => {
+            let _ = scope.rollback().await;
+            let status = StatusCode::from_u16(code).unwrap_or(StatusCode::BAD_REQUEST);
+            return (status, Json(CoreResponse::<Plugin>::error(&msg))).into_response();
+        }
+    };
+
+    // 下架 = 平台行回落到发布方成为草稿；只允许原发布方操作，平台原生条目不可下架。
+    if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut scope)
+        .await
+    {
+        tracing::error!("[Plugin] Failed to open system channel for unpublish: {}", e);
+        let _ = scope.rollback().await;
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(CoreResponse::<Plugin>::error(&format!(
+                "Failed to unpublish plugin: {}",
+                e
+            ))),
+        )
+            .into_response();
+    }
+
+    let plugin: Result<Option<Plugin>, sqlx::Error> = sqlx::query_as(
         r#"
         UPDATE core.core_plugins
-        SET is_published = false, updated_at = NOW()
+        SET tenant_id = $2,
+            owner_tenant_id = NULL,
+            last_owner_tenant_id = $2,
+            is_published = false,
+            published_at = NULL,
+            unpublished_at = NOW(),
+            updated_at = NOW()
         WHERE code = $1
+          AND tenant_id = $3
+          AND owner_tenant_id = $2
         RETURNING *
         "#,
     )
     .bind(&plugin_code)
+    .bind(owner_tenant)
+    .bind(PLATFORM_TENANT_ID)
     .fetch_optional(&mut scope)
-    .await
-    .unwrap_or(None);
+    .await;
 
     match plugin {
-        Some(p) => {
+        Ok(Some(p)) => {
             let _ = scope.commit().await;
             tracing::info!("[Plugin] Plugin unpublished: {}", plugin_code);
-            Json(CoreResponse::success(p, "Plugin unpublished"))
+            Json(CoreResponse::success(p, "Plugin unpublished")).into_response()
         }
-        None => {
+        Ok(None) => {
             let _ = scope.rollback().await;
-            Json(CoreResponse::error("Plugin not found"))
+            (
+                StatusCode::NOT_FOUND,
+                Json(CoreResponse::<Plugin>::error(
+                    "插件不存在、未发布，或发布方不是当前租户",
+                )),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to unpublish plugin: {}", e);
+            let _ = scope.rollback().await;
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(CoreResponse::<Plugin>::error(&format!(
+                    "Failed to unpublish plugin: {}",
+                    e
+                ))),
+            )
+                .into_response()
         }
     }
 }
@@ -1390,6 +1629,7 @@ pub async fn unpublish_plugin(
 pub async fn update_plugin(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
     Json(req): Json<UpdatePluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
@@ -1403,10 +1643,19 @@ pub async fn update_plugin(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
-            return Json(CoreResponse::error(&format!(
+            return Json(CoreResponse::<Plugin>::error(&format!(
                 "Failed to update plugin: {}",
                 e
             )));
+        }
+    };
+
+    // 开发者只能编辑自己的草稿；已发布条目在哨兵命名空间，需先下架。
+    let owner_tenant = match TenantScope::require_tenant(&claims) {
+        Ok(s) => s.create_tenant_id(),
+        Err((_, msg)) => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error(&msg));
         }
     };
 
@@ -1425,6 +1674,7 @@ pub async fn update_plugin(
             category = COALESCE($10, category),
             updated_at = NOW()
         WHERE code = $1
+          AND tenant_id = $11
         RETURNING *
         "#,
     )
@@ -1444,6 +1694,7 @@ pub async fn update_plugin(
             .map(|t| serde_json::to_value(t).unwrap_or_default()),
     )
     .bind(&req.category)
+    .bind(owner_tenant)
     .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
@@ -1456,7 +1707,7 @@ pub async fn update_plugin(
         }
         None => {
             let _ = scope.rollback().await;
-            Json(CoreResponse::error("Plugin not found"))
+            Json(CoreResponse::error("插件不存在或不是当前租户的草稿"))
         }
     }
 }

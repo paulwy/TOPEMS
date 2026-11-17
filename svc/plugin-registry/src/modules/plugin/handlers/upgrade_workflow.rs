@@ -221,6 +221,24 @@ async fn execute_upgrade(
         }
     };
 
+    // 已发布条目的目录行在哨兵命名空间，升级写版本号需系统通道。
+    if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut scope)
+        .await
+    {
+        tracing::error!("[Plugin] Failed to open system channel for upgrade: {}", e);
+        let _ = scope.rollback().await;
+        return UpgradeResult {
+            task_id,
+            from_version: from_version.to_string(),
+            to_version: to_version.to_string(),
+            success: false,
+            message: "Upgrade failed".to_string(),
+            backup_created: Some(backup_created),
+            rollback_available: backup_created,
+        };
+    }
+
     let update_result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
         .bind(to_version)
         .bind(plugin.id)

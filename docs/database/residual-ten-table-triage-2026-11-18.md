@@ -174,6 +174,6 @@
 
 1. **潜在 NULL 写点已消（代码）**：`erp/dict.rs` 三处与 `tenant_plugins.rs` 一处改为 `TenantScope::from_claims(...).create_tenant_id()` 显式绑定；真实租户 / 服务身份显式哨兵 / 缺租户 400，SQL 中 `NULLIF(GUC)` 全部移除。`cargo check` 通过。
 2. **严格 B 已落 3 张表**：`erp.dict_types`、`erp.dict_items`、`rs.formulas` → Batch E 迁移 `20261118120000`（唯一 `rls_tenant_isolation`，无平台读，补 tenant_id 索引），回滚与克隆库六档 0/0/1/1/1/3、写校验、往返均通过。
-3. **`core.core_plugins` 停下**：读路径核查发现租户通道依赖全局目录（`tenant_plugins.rs:134` JOIN、`:449` uninstall、`:736/:855` install 子查询），严格隔离会让租户读不到他方发布行。按「有读不到本该看到的行就停下报」规则**未纳入本批**；已出平台语料化设计（[core-plugins-platform-catalog-design-2026-11-18.md](core-plugins-platform-catalog-design-2026-11-18.md)），待确认后再出迁移与代码。
+3. **`core.core_plugins` 已按平台语料化落地（Batch F）**：五点拍板后出迁移 `20261118123000` + 回滚 + 克隆库六档演练（含「A 能看到 B 发布、看不到 B 草稿」断言）+ 代码同批；读取策略 = 哨兵行 OR 本租户行，发布/下架/计数走系统通道 + owner 校验。设计见 [core-plugins-platform-catalog-design-2026-11-18.md](core-plugins-platform-catalog-design-2026-11-18.md)。
 4. **`bi.audit_logs` 登记 DROP 候选**：全仓无读者、无写者；本波次不建策略、不删表。**删表属破坏性 DDL，进窗口时单独确认**。
-5. NULL 语义本身仍维持「待定」，但**不再阻塞写路径与隔离收严**：四张 0 行表不再依赖 NULL 语义即可安全收紧（三张已收，core 因读路径另议）。
+5. NULL 语义本身仍维持「待定」，但**不再阻塞写路径与隔离收严**：四张 0 行表均已按「显式绑定 + 严格 B（core 另加平台读）」落地。
