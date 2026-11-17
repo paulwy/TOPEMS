@@ -283,7 +283,7 @@ select 'platform_after_1',
 | 项 | 预期 |
 |---|---|
 | 耗时 | < 1 s（克隆 0.05 s） |
-| 立即校验 | flow 四表 + `search_logs`：`t/t/1`；段 B 五表：`t/t/1` 且策略文本仍严格（无 `IS NULL`、无全零放行）；`alerts` `t/t/1`；`alert_rules` `t/t/4`；残留 `public_allow_all%` = 0 |
+| 立即校验 | flow 四表 + `search_logs`：`t/t/1`；段 B 五表：`t/t/1` 且策略文本仍严格（无 `IS NULL`、无全零放行）；`alerts` `t/t/1`；`alert_rules` `t/t/4`；`alerts`/`alert_rules` 上的 `public_allow_all%` = 0（全库其他表不在本批范围，窗口外 6 张表保留各自 `allow_all`，属既有基线） |
 
 ```bash
 psql -d topems_prod -X -A -F$'\t' -c "
@@ -504,7 +504,7 @@ curl -s -o /dev/null -w 'ai-models %{http_code}\n'     "$BASE/api/ai/models"
 } | tee "$ARCH/endpoints.txt"
 ```
 
-预期：全部 200；flow 列表 0 条（不得 500 / permission denied）；`dict` 非空（验证 `ec4aff8e8` 生效）；`ai/models` 4 条；`global-stats` 与 §2.3 记录的停服前基线逐字段一致。
+预期：`/health` = 200；其余 `/api/...` 均为 **401**（`未授权：缺少有效的认证令牌`，认证中间件先于 handler 生效，未带 token 必然 401；**不得**出现 500 / `permission denied` / 数据库报错）。口径修正（2026-11-17 实跑）：原写「全部 200」不成立，带 token 才能验到列表内容；RLS 效果以六档抽查为准。`dict` 非空与 `ai/models` 4 条需带 token 复核，窗口内以六档读数 + 库内计数替代。
 
 六档抽查（**只读**，必须用非超管应用角色）。租户取值（T-60 已确认）：`TENANT_A = 00000000-0000-0000-0000-000000000001`（「默认租户」，`public.core_tenants` 唯一真实租户；`public.tenants` 为空）；`TENANT_B = ffffffff-ffff-4fff-8fff-ffffffffffff`（**不存在的合成 UUID**，仅作越权对照，生产无第二真实租户）。
 
