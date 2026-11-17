@@ -15,13 +15,15 @@
 
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::ScopedTxn;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -125,7 +127,7 @@ pub struct SetVariablesBatchRequest {
 const COLUMNS: &str = "id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type, created_at, updated_at";
 
 async fn upsert_variable(
-    pool: &sqlx::PgPool,
+    tx: &mut ScopedTxn<'_>,
     scope: &str,
     instance_id: Option<Uuid>,
     task_id: Option<Uuid>,
@@ -137,8 +139,9 @@ async fn upsert_variable(
     let vt = value_type.unwrap_or_else(|| infer_value_type(&value));
     // 先写历史（旧值快照）
     let _ = sqlx::query(
-        r#"INSERT INTO core_flow_variable_history (variable_id, var_key, var_value, value_type, changed_by)
-           SELECT id, var_key, var_value, value_type, NULL
+        r#"INSERT INTO core_flow_variable_history (tenant_id, variable_id, var_key, var_value, value_type, changed_by)
+           SELECT (NULLIF(current_setting('app.tenant_id', true), ''))::uuid,
+                  id, var_key, var_value, value_type, NULL
            FROM core_flow_variables
            WHERE scope = $1
              AND ($2::uuid IS NULL OR instance_id = $2)
@@ -151,12 +154,12 @@ async fn upsert_variable(
     .bind(task_id)
     .bind(workflow_id)
     .bind(key)
-    .execute(pool)
+    .execute(&mut *tx)
     .await;
 
     sqlx::query_as::<_, VariableRow>(
-        r#"INSERT INTO core_flow_variables (scope, instance_id, task_id, workflow_id, var_key, var_value, value_type)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+        r#"INSERT INTO core_flow_variables (tenant_id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type)
+           VALUES ((NULLIF(current_setting('app.tenant_id', true), ''))::uuid, $1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (scope, instance_id, task_id, workflow_id, var_key)
              WHERE deleted_at IS NULL
            DO UPDATE SET var_value = EXCLUDED.var_value, value_type = EXCLUDED.value_type, updated_at = NOW()
@@ -169,7 +172,7 @@ async fn upsert_variable(
     .bind(key)
     .bind(value)
     .bind(vt)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await
 }
 
@@ -185,7 +188,7 @@ fn infer_value_type(v: &serde_json::Value) -> String {
 }
 
 async fn find_variable(
-    pool: &sqlx::PgPool,
+    tx: &mut ScopedTxn<'_>,
     scope: &str,
     instance_id: Option<Uuid>,
     task_id: Option<Uuid>,
@@ -206,12 +209,12 @@ async fn find_variable(
     .bind(task_id)
     .bind(workflow_id)
     .bind(key)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await
 }
 
 async fn delete_variable(
-    pool: &sqlx::PgPool,
+    tx: &mut ScopedTxn<'_>,
     scope: &str,
     instance_id: Option<Uuid>,
     task_id: Option<Uuid>,
@@ -231,13 +234,13 @@ async fn delete_variable(
     .bind(task_id)
     .bind(workflow_id)
     .bind(key)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
     Ok(r.rows_affected())
 }
 
 async fn list_variables(
-    pool: &sqlx::PgPool,
+    tx: &mut ScopedTxn<'_>,
     scope: &str,
     instance_id: Option<Uuid>,
     task_id: Option<Uuid>,
@@ -258,7 +261,7 @@ async fn list_variables(
     .bind(instance_id)
     .bind(task_id)
     .bind(workflow_id)
-    .fetch_one(pool)
+    .fetch_one(&mut *tx)
     .await?;
     let rows = sqlx::query_as::<_, VariableRow>(
         r#"SELECT id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type, created_at, updated_at
@@ -277,7 +280,7 @@ async fn list_variables(
     .bind(workflow_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(pool)
+    .fetch_all(&mut *tx)
     .await?;
     Ok((rows, total))
 }
@@ -286,13 +289,27 @@ async fn list_variables(
 
 pub async fn list_instance_variables(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(instance_id): Path<Uuid>,
     Query(query): Query<VariableListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowVariable>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化实例变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     match list_variables(
-        &state.pool,
+        &mut scope,
         "instance",
         Some(instance_id),
         None,
@@ -325,9 +342,23 @@ pub async fn list_instance_variables(
 
 pub async fn get_instance_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((instance_id, key)): Path<(Uuid, String)>,
 ) -> ApiResponse<WorkflowVariable> {
-    match find_variable(&state.pool, "instance", Some(instance_id), None, None, &key).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化实例变量事务作用域失败".to_string(),
+            ));
+        }
+    };
+    match find_variable(&mut scope, "instance", Some(instance_id), None, None, &key).await {
         Ok(Some(r)) => ApiResponse::success(WorkflowVariable::from(r), "查询成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())),
         Err(e) => {
@@ -339,11 +370,25 @@ pub async fn get_instance_variable(
 
 pub async fn set_instance_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((instance_id, key)): Path<(Uuid, String)>,
     Json(payload): Json<SetVariableRequest>,
 ) -> ApiResponse<WorkflowVariable> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化实例变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     match upsert_variable(
-        &state.pool,
+        &mut scope,
         "instance",
         Some(instance_id),
         None,
@@ -365,13 +410,27 @@ pub async fn set_instance_variable(
 
 pub async fn set_instance_variables_batch(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(instance_id): Path<Uuid>,
     Json(payload): Json<SetVariablesBatchRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化批量设置变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化批量设置变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     let mut updated = 0usize;
     for (key, value) in payload.variables {
         match upsert_variable(
-            &state.pool,
+            &mut scope,
             "instance",
             Some(instance_id),
             None,
@@ -385,6 +444,10 @@ pub async fn set_instance_variables_batch(
             Ok(Some(_)) => updated += 1,
             Ok(None) => {}
             Err(e) => {
+                drop(scope);
+                if let Some(txn) = guard.take() {
+                    let _ = txn.rollback().await;
+                }
                 tracing::error!("批量设置实例变量失败: {}", e);
                 return ApiResponse::from(TopemsError::Internal(
                     "批量设置实例变量失败".to_string(),
@@ -397,9 +460,23 @@ pub async fn set_instance_variables_batch(
 
 pub async fn delete_instance_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((instance_id, key)): Path<(Uuid, String)>,
 ) -> ApiResponse<serde_json::Value> {
-    match delete_variable(&state.pool, "instance", Some(instance_id), None, None, &key).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化删除变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化删除变量事务作用域失败".to_string(),
+            ));
+        }
+    };
+    match delete_variable(&mut scope, "instance", Some(instance_id), None, None, &key).await {
         Ok(n) if n > 0 => ApiResponse::success(serde_json::json!({"deleted": n}), "删除成功"),
         Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())),
         Err(e) => {
@@ -411,8 +488,22 @@ pub async fn delete_instance_variable(
 
 pub async fn get_variables_by_scope(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((instance_id, scope)): Path<(Uuid, String)>,
 ) -> ApiResponse<Vec<WorkflowVariable>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化变量作用域查询事务失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化变量作用域查询事务失败".to_string(),
+            ));
+        }
+    };
     let scope = match scope.as_str() {
         "global" | "local" => scope,
         other => {
@@ -420,7 +511,7 @@ pub async fn get_variables_by_scope(
             return ApiResponse::from(TopemsError::ValidationFailed("未知变量作用域".to_string()));
         }
     };
-    match list_variables(&state.pool, &scope, Some(instance_id), None, None, 1, 500).await {
+    match list_variables(&mut db_scope, &scope, Some(instance_id), None, None, 1, 500).await {
         Ok((rows, _)) => {
             let items: Vec<WorkflowVariable> =
                 rows.into_iter().map(WorkflowVariable::from).collect();
@@ -435,9 +526,23 @@ pub async fn get_variables_by_scope(
 
 pub async fn get_variable_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((instance_id, key)): Path<(Uuid, String)>,
     Query(query): Query<VariableListQuery>,
 ) -> ApiResponse<PaginatedResponse<VariableHistory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化变量历史事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化变量历史事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     let offset = (page - 1) * page_size;
@@ -453,7 +558,7 @@ pub async fn get_variable_history(
     .bind(&key)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -480,13 +585,27 @@ pub async fn get_variable_history(
 
 pub async fn list_task_variables(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(task_id): Path<Uuid>,
     Query(query): Query<VariableListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowVariable>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化任务变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     match list_variables(
-        &state.pool,
+        &mut scope,
         "task",
         None,
         Some(task_id),
@@ -519,11 +638,25 @@ pub async fn list_task_variables(
 
 pub async fn set_task_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((task_id, key)): Path<(Uuid, String)>,
     Json(payload): Json<SetVariableRequest>,
 ) -> ApiResponse<WorkflowVariable> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化任务变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     match upsert_variable(
-        &state.pool,
+        &mut scope,
         "task",
         None,
         Some(task_id),
@@ -547,13 +680,27 @@ pub async fn set_task_variable(
 
 pub async fn get_global_variables(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
     Query(query): Query<VariableListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowVariable>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化全局变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化全局变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     match list_variables(
-        &state.pool,
+        &mut scope,
         "global",
         None,
         None,
@@ -586,11 +733,25 @@ pub async fn get_global_variables(
 
 pub async fn set_global_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((workflow_id, key)): Path<(Uuid, String)>,
     Json(payload): Json<SetVariableRequest>,
 ) -> ApiResponse<WorkflowVariable> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化全局变量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化全局变量事务作用域失败".to_string(),
+            ));
+        }
+    };
     match upsert_variable(
-        &state.pool,
+        &mut scope,
         "global",
         None,
         None,

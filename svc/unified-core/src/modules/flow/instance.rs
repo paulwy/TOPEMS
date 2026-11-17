@@ -746,8 +746,22 @@ pub async fn error_instances(
 )]
 pub async fn overdue_instances(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化逾期实例事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化逾期实例事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -762,7 +776,7 @@ pub async fn overdue_instances(
                  AND t.completed_at IS NULL
            )"#,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -789,7 +803,7 @@ pub async fn overdue_instances(
     )
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,

@@ -15,6 +15,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_db::scope::ScopedTxn;
 
 use super::instance::InstanceQueryParams;
 use super::models::{ProcessLog, WorkflowInstance};
@@ -318,46 +319,60 @@ pub async fn suspended_instances(
 /// GET /monitor/statistics
 pub async fn get_monitor_statistics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<MonitorStatistics> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let total_instances: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut db_scope)
             .await
             .unwrap_or(0);
 
     let running_instances: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending')",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
     let completed_instances: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
     let rejected_instances: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
     let suspended_instances: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'suspended'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
     let error_instances: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -365,7 +380,7 @@ pub async fn get_monitor_statistics(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
            FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0.0);
 
@@ -379,7 +394,7 @@ pub async fn get_monitor_statistics(
         r#"SELECT status, COUNT(*) as count FROM public.core_workflow_instances
            GROUP BY status ORDER BY count DESC"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -389,7 +404,7 @@ pub async fn get_monitor_statistics(
            LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY count DESC LIMIT 20"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -416,12 +431,26 @@ pub async fn get_monitor_statistics(
 /// GET /monitor/analysis/{workflow_id}
 pub async fn get_workflow_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
 ) -> ApiResponse<WorkflowAnalysis> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let wf_name: Option<String> =
         sqlx::query_scalar("SELECT name FROM public.core_workflows WHERE id = $1")
             .bind(workflow_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut db_scope)
             .await
             .ok();
 
@@ -429,7 +458,7 @@ pub async fn get_workflow_analysis(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE workflow_id = $1",
     )
     .bind(workflow_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -437,7 +466,7 @@ pub async fn get_workflow_analysis(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE workflow_id = $1 AND status = 'completed'",
     )
     .bind(workflow_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -445,7 +474,7 @@ pub async fn get_workflow_analysis(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE workflow_id = $1 AND status IN ('running','pending')",
     )
     .bind(workflow_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -454,7 +483,7 @@ pub async fn get_workflow_analysis(
            FROM public.core_workflow_instances WHERE workflow_id = $1 AND completed_at IS NOT NULL"#,
     )
     .bind(workflow_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0.0);
 
@@ -474,7 +503,7 @@ pub async fn get_workflow_analysis(
            GROUP BY t.node_id ORDER BY instance_count DESC LIMIT 20"#,
     )
     .bind(workflow_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -513,8 +542,22 @@ pub async fn get_workflow_analysis(
 /// GET /monitor/analysis/{workflow_id}/nodes
 pub async fn get_node_statistics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
 ) -> ApiResponse<Vec<NodeStat>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let nodes: Vec<NodeStat> = sqlx::query_as(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
@@ -525,7 +568,7 @@ pub async fn get_node_statistics(
            GROUP BY t.node_id ORDER BY instance_count DESC"#,
     )
     .bind(workflow_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -535,8 +578,22 @@ pub async fn get_node_statistics(
 /// GET /monitor/analysis/{workflow_id}/bottlenecks
 pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Bottleneck>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let nodes: Vec<NodeStat> = sqlx::query_as(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
@@ -548,7 +605,7 @@ pub async fn get_bottleneck_analysis(
            ORDER BY avg_duration_seconds DESC"#,
     )
     .bind(workflow_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -574,12 +631,26 @@ pub async fn get_bottleneck_analysis(
 /// GET /monitor/analysis/efficiency
 pub async fn get_efficiency_analysis(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<EfficiencyAnalysis> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let total: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at IS NOT NULL",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -587,19 +658,19 @@ pub async fn get_efficiency_analysis(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
            FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0.0);
 
     let total_all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut db_scope)
         .await
         .unwrap_or(0);
 
     let completed: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -620,7 +691,7 @@ pub async fn get_efficiency_analysis(
            LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY instance_count DESC LIMIT 20"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -641,8 +712,22 @@ pub async fn get_efficiency_analysis(
 /// GET /monitor/analysis/trend
 pub async fn get_trend_data(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<Vec<TrendData>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let trends: Vec<TrendData> = sqlx::query_as(
         r#"SELECT d.date as date,
                   COALESCE(s.count, 0) as instances_started,
@@ -664,7 +749,7 @@ pub async fn get_trend_data(
            ) c ON c.dt = d.date
            ORDER BY d.date"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -674,8 +759,22 @@ pub async fn get_trend_data(
 /// GET /monitor/analysis/users
 pub async fn get_user_stats(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<Vec<UserWorkflowStat>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let stats: Vec<UserWorkflowStat> = sqlx::query_as(
         r#"SELECT i.initiator_id::text as user_id, NULL as user_name,
                   COUNT(*) as initiated_count,
@@ -684,7 +783,7 @@ pub async fn get_user_stats(
            FROM public.core_workflow_instances i
            GROUP BY i.initiator_id ORDER BY initiated_count DESC LIMIT 20"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -694,8 +793,22 @@ pub async fn get_user_stats(
 /// GET /monitor/analysis/departments
 pub async fn get_department_stats(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<Vec<DepartmentWorkflowStat>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     // No department column on instances; return aggregated by workflow as proxy
     let stats: Vec<DepartmentWorkflowStat> = sqlx::query_as(
         r#"SELECT w.name as department,
@@ -708,7 +821,7 @@ pub async fn get_department_stats(
            LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.name ORDER BY instance_count DESC LIMIT 20"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -720,9 +833,23 @@ pub async fn get_department_stats(
 /// GET /monitor/logs — query from public.core_workflow_tasks as process log proxy
 pub async fn list_logs(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -741,7 +868,7 @@ pub async fn list_logs(
         scope.sql_predicate("t.tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -764,7 +891,7 @@ pub async fn list_logs(
     .bind(page_size)
     .bind(offset)
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -777,9 +904,23 @@ pub async fn list_logs(
 /// GET /monitor/logs/{id}
 pub async fn get_log(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProcessLog> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let scope = match TenantScope::from_claims(
         &claims,
         "unified-core.flow.monitor.get_log",
@@ -806,7 +947,7 @@ pub async fn get_log(
     )))
     .bind(id)
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await;
 
     match log {
@@ -825,10 +966,24 @@ pub async fn get_log(
 /// GET /monitor/logs/instance/{instance_id}
 pub async fn get_logs_by_instance(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(instance_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -848,7 +1003,7 @@ pub async fn get_logs_by_instance(
     )))
     .bind(instance_id)
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -872,7 +1027,7 @@ pub async fn get_logs_by_instance(
     .bind(page_size)
     .bind(offset)
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -885,10 +1040,24 @@ pub async fn get_logs_by_instance(
 /// GET /monitor/logs/workflow/{workflow_id}
 pub async fn get_logs_by_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -910,7 +1079,7 @@ pub async fn get_logs_by_workflow(
     )))
     .bind(workflow_id)
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -934,7 +1103,7 @@ pub async fn get_logs_by_workflow(
     .bind(page_size)
     .bind(offset)
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -947,10 +1116,24 @@ pub async fn get_logs_by_workflow(
 /// GET /monitor/logs/node/{workflow_id}/{node_id}
 pub async fn get_logs_by_node(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path((workflow_id, node_id)): Path<(Uuid, String)>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -973,7 +1156,7 @@ pub async fn get_logs_by_node(
     .bind(workflow_id)
     .bind(&node_id)
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -998,7 +1181,7 @@ pub async fn get_logs_by_node(
     .bind(page_size)
     .bind(offset)
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1011,10 +1194,24 @@ pub async fn get_logs_by_node(
 /// GET /monitor/logs/user/{user_id}
 pub async fn get_logs_by_user(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
 ) -> ApiResponse<PaginatedResponse<ProcessLog>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1034,7 +1231,7 @@ pub async fn get_logs_by_user(
     )))
     .bind(user_id)
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1058,7 +1255,7 @@ pub async fn get_logs_by_user(
     .bind(page_size)
     .bind(offset)
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1073,8 +1270,22 @@ pub async fn get_logs_by_user(
 /// GET /monitor/realtime
 pub async fn get_realtime_stats(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<RealtimeStats> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let scope = match TenantScope::from_claims(
         &claims,
         "unified-core.flow.monitor.get_realtime_stats",
@@ -1089,7 +1300,7 @@ pub async fn get_realtime_stats(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1098,7 +1309,7 @@ pub async fn get_realtime_stats(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1107,7 +1318,7 @@ pub async fn get_realtime_stats(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1116,7 +1327,7 @@ pub async fn get_realtime_stats(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1138,8 +1349,22 @@ pub async fn get_realtime_stats(
 /// GET /monitor/dashboard
 pub async fn get_dashboard_data(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<MonitorDashboard> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let scope = match TenantScope::from_claims(
         &claims,
         "unified-core.flow.monitor.get_dashboard_data",
@@ -1155,7 +1380,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
     let running: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1163,7 +1388,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
     let completed: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1171,7 +1396,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
     let rejected: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1179,7 +1404,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
     let suspended: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1187,7 +1412,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
     let error: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
@@ -1195,7 +1420,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1205,7 +1430,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0.0);
 
@@ -1220,7 +1445,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1234,7 +1459,7 @@ pub async fn get_dashboard_data(
         workflow_pred = scope.sql_predicate("w.tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1247,7 +1472,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1256,7 +1481,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1265,7 +1490,7 @@ pub async fn get_dashboard_data(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1309,9 +1534,23 @@ pub async fn get_dashboard_data(
 /// GET /monitor/performance
 pub async fn get_performance_metrics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<PerformanceMetrics> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let scope = match TenantScope::from_claims(
         &claims,
         "unified-core.flow.monitor.get_performance_metrics",
@@ -1326,7 +1565,7 @@ pub async fn get_performance_metrics(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1336,7 +1575,7 @@ pub async fn get_performance_metrics(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0.0);
 
@@ -1345,7 +1584,7 @@ pub async fn get_performance_metrics(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1354,7 +1593,7 @@ pub async fn get_performance_metrics(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1379,7 +1618,7 @@ pub async fn get_performance_metrics(
         workflow_pred = scope.sql_predicate("w.tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1402,9 +1641,23 @@ pub async fn get_performance_metrics(
 /// GET /monitor/sla-compliance
 pub async fn get_sla_compliance(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<SlaCompliance> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化监控事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化监控事务作用域失败".to_string(),
+            ));
+        }
+    };
     let scope = match TenantScope::from_claims(
         &claims,
         "unified-core.flow.monitor.get_sla_compliance",
@@ -1419,7 +1672,7 @@ pub async fn get_sla_compliance(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1428,7 +1681,7 @@ pub async fn get_sla_compliance(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1437,7 +1690,7 @@ pub async fn get_sla_compliance(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1446,7 +1699,7 @@ pub async fn get_sla_compliance(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1472,7 +1725,7 @@ pub async fn get_sla_compliance(
         workflow_pred = scope.sql_predicate("w.tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1481,7 +1734,7 @@ pub async fn get_sla_compliance(
         scope.sql_predicate("tenant_id", "$1")
     )))
     .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
 
@@ -1505,7 +1758,7 @@ pub async fn get_sla_compliance(
 
 /// 强制干预流程必须留痕：与实例更新同事务写入 public.audit_logs。
 async fn insert_force_audit(
-    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tx: &mut ScopedTxn<'_>,
     tenant: Uuid,
     claims: &Claims,
     action: &str,
@@ -1528,7 +1781,7 @@ async fn insert_force_audit(
         "status": instance.status,
         "current_node_id": instance.current_node_id,
     }))
-    .execute(&mut **tx)
+    .execute(&mut *tx)
     .await?;
     Ok(())
 }
@@ -1537,21 +1790,26 @@ async fn insert_force_audit(
 pub async fn skip_node(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<SkipNodeRequest>,
 ) -> ApiResponse<WorkflowInstance> {
-    let scope = match TenantScope::require_tenant(&claims) {
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
         Ok(scope) => scope,
         Err((_, message)) => return ApiResponse::bad_request(&message),
     };
-    let Some(tenant) = scope.tenant_id() else {
+    let Some(tenant) = tenant_scope.tenant_id() else {
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("开启事务失败: {}", e);
+            tracing::error!("初始化跳过节点事务作用域失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()));
         }
     };
@@ -1568,13 +1826,13 @@ pub async fn skip_node(
     .bind(id)
     .bind(&payload.node_id)
     .bind(tenant)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut db_scope)
     .await;
 
     match instance {
         Ok(v) => {
             let audit = insert_force_audit(
-                &mut tx,
+                &mut db_scope,
                 tenant,
                 &claims,
                 "skip_node",
@@ -1584,10 +1842,10 @@ pub async fn skip_node(
             .await;
             if let Err(e) = audit {
                 tracing::error!("跳过节点审计写入失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()));
-            }
-            if let Err(e) = tx.commit().await {
-                tracing::error!("跳过节点提交失败: {}", e);
+                drop(db_scope);
+                if let Some(txn) = guard.take() {
+                    let _ = txn.rollback().await;
+                }
                 return ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()));
             }
             ApiResponse::success(v, "跳过节点成功")
@@ -1609,21 +1867,26 @@ pub async fn skip_node(
 pub async fn force_complete(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<ForceActionRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
-    let scope = match TenantScope::require_tenant(&claims) {
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
         Ok(scope) => scope,
         Err((_, message)) => return ApiResponse::bad_request(&message),
     };
-    let Some(tenant) = scope.tenant_id() else {
+    let Some(tenant) = tenant_scope.tenant_id() else {
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("开启事务失败: {}", e);
+            tracing::error!("初始化强制完成事务作用域失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()));
         }
     };
@@ -1638,14 +1901,14 @@ pub async fn force_complete(
     )
     .bind(id)
     .bind(tenant)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut db_scope)
     .await;
 
     match instance {
         Ok(v) => {
             let reason = payload.and_then(|p| p.reason);
             let audit = insert_force_audit(
-                &mut tx,
+                &mut db_scope,
                 tenant,
                 &claims,
                 "force_complete",
@@ -1655,10 +1918,10 @@ pub async fn force_complete(
             .await;
             if let Err(e) = audit {
                 tracing::error!("强制完成审计写入失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()));
-            }
-            if let Err(e) = tx.commit().await {
-                tracing::error!("强制完成提交失败: {}", e);
+                drop(db_scope);
+                if let Some(txn) = guard.take() {
+                    let _ = txn.rollback().await;
+                }
                 return ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()));
             }
             ApiResponse::success(v, "强制完成成功")
@@ -1680,21 +1943,26 @@ pub async fn force_complete(
 pub async fn force_terminate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<ForceActionRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
-    let scope = match TenantScope::require_tenant(&claims) {
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
         Ok(scope) => scope,
         Err((_, message)) => return ApiResponse::bad_request(&message),
     };
-    let Some(tenant) = scope.tenant_id() else {
+    let Some(tenant) = tenant_scope.tenant_id() else {
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("开启事务失败: {}", e);
+            tracing::error!("初始化强制终止事务作用域失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()));
         }
     };
@@ -1709,14 +1977,14 @@ pub async fn force_terminate(
     )
     .bind(id)
     .bind(tenant)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut db_scope)
     .await;
 
     match instance {
         Ok(v) => {
             let reason = payload.and_then(|p| p.reason);
             let audit = insert_force_audit(
-                &mut tx,
+                &mut db_scope,
                 tenant,
                 &claims,
                 "force_terminate",
@@ -1726,10 +1994,10 @@ pub async fn force_terminate(
             .await;
             if let Err(e) = audit {
                 tracing::error!("强制终止审计写入失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()));
-            }
-            if let Err(e) = tx.commit().await {
-                tracing::error!("强制终止提交失败: {}", e);
+                drop(db_scope);
+                if let Some(txn) = guard.take() {
+                    let _ = txn.rollback().await;
+                }
                 return ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()));
             }
             ApiResponse::success(v, "强制终止成功")

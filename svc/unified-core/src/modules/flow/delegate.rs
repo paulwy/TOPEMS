@@ -27,7 +27,9 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::{ApiResponse, PaginatedResponse};
+use topems_shared_db::scope::ScopedTxn;
 
 #[derive(Debug, FromRow)]
 pub struct DelegateRow {
@@ -113,8 +115,22 @@ const COLUMNS: &str = "id, delegator_id, attorney_id, workflow_id, scope, start_
 
 pub async fn list_delegates(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<DelegateListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowDelegate>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化委托列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化委托列表事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -132,7 +148,7 @@ pub async fn list_delegates(
     .bind(delegator_id)
     .bind(attorney_id)
     .bind(status.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -157,7 +173,7 @@ pub async fn list_delegates(
     .bind(status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -182,14 +198,28 @@ pub async fn list_delegates(
 
 pub async fn get_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowDelegate> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化委托详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化委托详情事务作用域失败".to_string(),
+            ));
+        }
+    };
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
            FROM core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -206,29 +236,44 @@ pub async fn get_delegate(
 
 pub async fn create_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateDelegateRequest>,
 ) -> ApiResponse<WorkflowDelegate> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化创建委托事务作用域失败".to_string(),
+            ));
+        }
+    };
     let delegator_id = payload
         .delegator_id
         .or_else(|| Uuid::parse_str(&claims.sub).ok())
         .unwrap_or(Uuid::nil());
-    let scope = payload.scope.unwrap_or_else(|| "all".to_string());
+    let scope_name = payload.scope.unwrap_or_else(|| "all".to_string());
 
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"INSERT INTO core_flow_delegates
-             (delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+             (tenant_id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason)
+           VALUES ((NULLIF(current_setting('app.tenant_id', true), ''))::uuid,
+                   $1, $2, $3, $4, $5, $6, $7)
            RETURNING id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at"#,
     )
     .bind(delegator_id)
     .bind(payload.attorney_id)
     .bind(payload.workflow_id)
-    .bind(scope)
+    .bind(scope_name)
     .bind(payload.start_date)
     .bind(payload.end_date)
     .bind(payload.reason)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -246,9 +291,23 @@ pub async fn create_delegate(
 
 pub async fn update_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDelegateRequest>,
 ) -> ApiResponse<WorkflowDelegate> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化更新委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化更新委托事务作用域失败".to_string(),
+            ));
+        }
+    };
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"UPDATE core_flow_delegates
            SET attorney_id = COALESCE($2, attorney_id),
@@ -270,7 +329,7 @@ pub async fn update_delegate(
     .bind(payload.end_date)
     .bind(payload.reason)
     .bind(payload.status)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -288,22 +347,46 @@ pub async fn update_delegate(
 
 pub async fn delete_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化删除委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化删除委托事务作用域失败".to_string(),
+            ));
+        }
+    };
     let res = sqlx::query(
         r#"UPDATE core_flow_delegates SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match res {
         Ok(r) if r.rows_affected() > 0 => {
             ApiResponse::success(serde_json::json!({"id": id}), "删除成功")
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string())),
+        Ok(_) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))
+        }
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("删除委托失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除委托失败".to_string()))
         }
@@ -311,7 +394,7 @@ pub async fn delete_delegate(
 }
 
 pub async fn set_delegate_status(
-    state: &AppState,
+    scope: &mut ScopedTxn<'_>,
     id: Uuid,
     status: &str,
 ) -> ApiResponse<serde_json::Value> {
@@ -321,7 +404,7 @@ pub async fn set_delegate_status(
     )
     .bind(id)
     .bind(status)
-    .execute(&state.pool)
+    .execute(&mut *scope)
     .await;
 
     match res {
@@ -338,26 +421,56 @@ pub async fn set_delegate_status(
 
 pub async fn activate_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    set_delegate_status(&state, id, "active").await
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化启用委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化启用委托事务作用域失败".to_string(),
+            ));
+        }
+    };
+    set_delegate_status(&mut scope, id, "active").await
 }
 
 pub async fn deactivate_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    set_delegate_status(&state, id, "inactive").await
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化停用委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化停用委托事务作用域失败".to_string(),
+            ));
+        }
+    };
+    set_delegate_status(&mut scope, id, "inactive").await
 }
 
 pub async fn get_my_delegates(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DelegateListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowDelegate>> {
     let uid = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
     list_delegates(
         State(state),
+        Extension(txn_arc),
         Query(DelegateListQuery {
             page: query.page,
             page_size: query.page_size,
@@ -372,12 +485,14 @@ pub async fn get_my_delegates(
 
 pub async fn get_my_attorneys(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DelegateListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowDelegate>> {
     let uid = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
     list_delegates(
         State(state),
+        Extension(txn_arc),
         Query(DelegateListQuery {
             page: query.page,
             page_size: query.page_size,
@@ -392,9 +507,23 @@ pub async fn get_my_attorneys(
 
 pub async fn get_active_delegate(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DelegateListQuery>,
 ) -> ApiResponse<Vec<WorkflowDelegate>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化有效委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化有效委托事务作用域失败".to_string(),
+            ));
+        }
+    };
     let uid = query.user_id.or_else(|| Uuid::parse_str(&claims.sub).ok());
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
@@ -407,7 +536,7 @@ pub async fn get_active_delegate(
            ORDER BY created_at DESC"#,
     )
     .bind(uid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -422,14 +551,28 @@ pub async fn get_active_delegate(
 
 pub async fn get_delegate_workflows(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化委托工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化委托工作流事务作用域失败".to_string(),
+            ));
+        }
+    };
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
            FROM core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -447,7 +590,7 @@ pub async fn get_delegate_workflows(
                        FROM public.core_workflows WHERE id = $1 AND deleted_at IS NULL"#,
                 )
                 .bind(wf_id)
-                .fetch_optional(&state.pool)
+                .fetch_optional(&mut scope)
                 .await
                 {
                     Ok(v) => v,
@@ -483,9 +626,23 @@ pub async fn get_delegate_workflows(
 
 pub async fn check_delegation(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
     Query(query): Query<DelegateListQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化委托检查事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化委托检查事务作用域失败".to_string(),
+            ));
+        }
+    };
     let uid = query.user_id;
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
@@ -500,7 +657,7 @@ pub async fn check_delegation(
     )
     .bind(uid)
     .bind(workflow_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,

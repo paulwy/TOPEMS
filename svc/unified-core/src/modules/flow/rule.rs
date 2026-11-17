@@ -15,13 +15,15 @@
 
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::ScopedTxn;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -120,8 +122,22 @@ pub struct BatchUpdateRulesRequest {
 
 pub async fn list_rules(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<RuleListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowRule>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化规则列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化规则列表事务作用域失败".to_string(),
+            ));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -139,7 +155,7 @@ pub async fn list_rules(
     .bind(workflow_id)
     .bind(rule_type.clone())
     .bind(status.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -164,7 +180,7 @@ pub async fn list_rules(
     .bind(status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -189,14 +205,28 @@ pub async fn list_rules(
 
 pub async fn get_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化规则详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化规则详情事务作用域失败".to_string(),
+            ));
+        }
+    };
     let row: Option<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
            FROM core_flow_rules WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -214,8 +244,22 @@ pub async fn get_rule(
 
 pub async fn create_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateRuleRequest>,
 ) -> ApiResponse<WorkflowRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化创建规则事务作用域失败".to_string(),
+            ));
+        }
+    };
     if payload.name.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "规则名称不能为空".to_string(),
@@ -229,8 +273,9 @@ pub async fn create_rule(
 
     let row: Option<RuleRow> = match sqlx::query_as(
         r#"INSERT INTO core_flow_rules
-             (name, workflow_id, node_id, rule_type, condition, action, priority, status, description)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             (tenant_id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description)
+           VALUES ((NULLIF(current_setting('app.tenant_id', true), ''))::uuid,
+                   $1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at"#,
     )
     .bind(payload.name.trim())
@@ -242,7 +287,7 @@ pub async fn create_rule(
     .bind(priority)
     .bind(status)
     .bind(payload.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -260,9 +305,23 @@ pub async fn create_rule(
 
 pub async fn update_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateRuleRequest>,
 ) -> ApiResponse<WorkflowRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化更新规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化更新规则事务作用域失败".to_string(),
+            ));
+        }
+    };
     let row: Option<RuleRow> = match sqlx::query_as(
         r#"UPDATE core_flow_rules
            SET name = COALESCE($2, name),
@@ -288,7 +347,7 @@ pub async fn update_rule(
     .bind(payload.priority)
     .bind(payload.status)
     .bind(payload.description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -306,22 +365,46 @@ pub async fn update_rule(
 
 pub async fn delete_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化删除规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化删除规则事务作用域失败".to_string(),
+            ));
+        }
+    };
     let res = sqlx::query(
         r#"UPDATE core_flow_rules SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match res {
         Ok(r) if r.rows_affected() > 0 => {
             ApiResponse::success(serde_json::json!({"id": id}), "删除成功")
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
+        Ok(_) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
+        }
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("删除规则失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除规则失败".to_string()))
         }
@@ -330,9 +413,23 @@ pub async fn delete_rule(
 
 pub async fn get_rules_by_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
     Query(query): Query<RuleListQuery>,
 ) -> ApiResponse<Vec<WorkflowRule>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化流程规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化流程规则事务作用域失败".to_string(),
+            ));
+        }
+    };
     let rule_type = query.rule_type.filter(|s| !s.is_empty());
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
@@ -343,7 +440,7 @@ pub async fn get_rules_by_workflow(
     )
     .bind(workflow_id)
     .bind(rule_type)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -359,8 +456,22 @@ pub async fn get_rules_by_workflow(
 
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((workflow_id, node_id)): Path<(Uuid, String)>,
 ) -> ApiResponse<Vec<WorkflowRule>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化节点规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化节点规则事务作用域失败".to_string(),
+            ));
+        }
+    };
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
            FROM core_flow_rules
@@ -369,7 +480,7 @@ pub async fn get_rules_by_node(
     )
     .bind(workflow_id)
     .bind(&node_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -385,10 +496,12 @@ pub async fn get_rules_by_node(
 
 pub async fn get_rules_by_type(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<RuleListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowRule>> {
     list_rules(
         State(state),
+        Extension(txn_arc),
         Query(RuleListQuery {
             page: query.page,
             page_size: query.page_size,
@@ -401,7 +514,7 @@ pub async fn get_rules_by_type(
 }
 
 pub async fn set_rule_status(
-    state: &AppState,
+    scope: &mut ScopedTxn<'_>,
     id: Uuid,
     status: &str,
 ) -> ApiResponse<serde_json::Value> {
@@ -411,7 +524,7 @@ pub async fn set_rule_status(
     )
     .bind(id)
     .bind(status)
-    .execute(&state.pool)
+    .execute(&mut *scope)
     .await;
 
     match res {
@@ -428,22 +541,64 @@ pub async fn set_rule_status(
 
 pub async fn activate_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    set_rule_status(&state, id, "active").await
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化启用规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化启用规则事务作用域失败".to_string(),
+            ));
+        }
+    };
+    set_rule_status(&mut scope, id, "active").await
 }
 
 pub async fn deactivate_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    set_rule_status(&state, id, "inactive").await
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化停用规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化停用规则事务作用域失败".to_string(),
+            ));
+        }
+    };
+    set_rule_status(&mut scope, id, "inactive").await
 }
 
 pub async fn batch_update_rules(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<BatchUpdateRulesRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化批量更新规则事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化批量更新规则事务作用域失败".to_string(),
+            ));
+        }
+    };
     if payload.rules.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "规则列表不能为空".to_string(),
@@ -468,12 +623,16 @@ pub async fn batch_update_rules(
         .bind(rule.priority)
         .bind(rule.status)
         .bind(rule.description)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
         match res {
             Ok(r) if r.rows_affected() > 0 => updated += 1,
             Ok(_) => {}
             Err(e) => {
+                drop(scope);
+                if let Some(txn) = guard.take() {
+                    let _ = txn.rollback().await;
+                }
                 tracing::error!("批量更新规则失败: {}", e);
                 return ApiResponse::from(TopemsError::Internal("批量更新规则失败".to_string()));
             }
