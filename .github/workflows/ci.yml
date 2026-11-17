@@ -259,6 +259,9 @@ jobs:
       - name: Request txn gate
         run: node scripts/ci/check-request-txn.mjs
 
+      - name: Pool direct + system scope gate
+        run: python3 scripts/ci/check-pool-direct-system-scope.py
+
   # ──────────────────────────────────────────────────────────────────────────
   # [Gate SC] Shellcheck 回归防线（P1-1 清零 195→0 后固化）
   # 全量扫描所有 git 跟踪的 *.sh；任何告警/语法错误即 job 失败。

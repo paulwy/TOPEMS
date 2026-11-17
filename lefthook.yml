@@ -155,6 +155,15 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         python3 scripts/ci/check-txn-write-non2xx.py --changed-only
 
+    # [Gate POOL-SYSTEM] 禁止「池直连 + TenantScope::system/SystemChannel」同函数并存
+    # 池连接无 app.rls_system，系统身份谓词会静默读成 0 行
+    pool-direct-system-scope:
+      tags: rust rls transaction
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^scripts/ci/check-pool-direct-system-scope' || true)
+        [ -z "$STAGED" ] && exit 0
+        python3 scripts/ci/check-pool-direct-system-scope.py --changed-only
+
     # [Gate H] CRM contract consistency
     crm-contract:
       tags: crm contract
