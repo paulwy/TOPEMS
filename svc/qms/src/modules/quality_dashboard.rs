@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
@@ -163,29 +164,41 @@ pub struct CreateAlertMessageRequest {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_overview(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityOverview> {
+    // 看板聚合全部落到租户谓词上，超管保持全量口径。
+    let tenant = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
     let total_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections"
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
     let total_inspections = total_insp.unwrap_or(0);
 
-    let qualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified'"))
+    let qualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
     let qualified_inspections = qualified_insp.unwrap_or(0);
 
-    let unqualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified'"))
+    let unqualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
     let unqualified_inspections = unqualified_insp.unwrap_or(0);
 
-    let avg_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed'"#))
+    let avg_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"#))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -194,16 +207,18 @@ pub async fn get_quality_overview(
 
     let total_issues_count: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues"
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
     let total_issues = total_issues_count.unwrap_or(0);
 
     let open_issues_count: Option<i64> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE status = 'open' OR status = 'in_progress'"),
+        only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE (status = 'open' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
     )
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -211,8 +226,9 @@ pub async fn get_quality_overview(
 
     let complaint_count_val: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint'"
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -225,14 +241,16 @@ pub async fn get_quality_overview(
 
     let in_progress_8d: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress'"
+        "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
     let in_progress_eightd = in_progress_8d.unwrap_or(0);
 
-    let pending_act: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE status = 'pending' OR status = 'in_progress'"))
+    let pending_act: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -267,10 +285,17 @@ pub async fn get_quality_overview(
 )]
 pub async fn get_quality_trend(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<TrendQuery>,
 ) -> ApiResponse<Vec<QualityTrendItem>> {
     let days = query.days.unwrap_or(30);
     let days_str = days.to_string();
+    let tenant = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let rows = sqlx::query(only_own_schema_query!("qms", r#"
         SELECT 
@@ -280,9 +305,10 @@ pub async fn get_quality_trend(
             COALESCE(AVG(CASE WHEN result = 'qualified' THEN 100.0 ELSE 0 END), 0) as qualification_rate
         FROM qms.qa_quality_inspections
         WHERE created_at >= NOW() - ($1 || ' days')::INTERVAL
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY period ASC
-        "#)).bind(days_str)
+        "#)).bind(days_str).bind(tenant)
     .fetch_all(&state.pool)
     .await;
 
@@ -324,11 +350,19 @@ pub async fn get_quality_trend(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_defect_distribution(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<QualityDefectDistribution>> {
+    let tenant = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
     let total: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_inspection_results WHERE is_qualified = false"
+        "SELECT COUNT(*) FROM qms.qa_inspection_results WHERE is_qualified = false AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant)
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -342,11 +376,13 @@ pub async fn get_defect_distribution(
             COUNT(*) as count
         FROM qms.qa_inspection_results
         WHERE is_qualified = false
+          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         GROUP BY item_name
         ORDER BY count DESC
         LIMIT 10
         "#
     ))
+    .bind(tenant)
     .fetch_all(&state.pool)
     .await;
 
