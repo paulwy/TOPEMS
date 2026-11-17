@@ -4,42 +4,43 @@
 > 配套记录：[阶段二正式读数](./unified-core-rls-stage2-record-2026-11-17.md)；决策依据：[unified-core-rls-decisions-2026-11-17.md](./unified-core-rls-decisions-2026-11-17.md)。
 > 目标库：`topems_prod`（本机 127.0.0.1:5432）；服务：`com.topems.server`，端口 **8099**。
 
-## 0. 阻塞项（窗口前必须拍板）
+## 0. 原阻塞项（已解除，2026-11-17）
 
-**生产与克隆库在段 B 的五张表上形态不同，现有迁移在生产会安全中止。**
+**原阻塞**：生产已于 2026-11-16 应用 M-2 batch06，`core_workflows` / `core_workflow_versions` / `core_workflow_instances` / `core_workflow_tasks` / `monitor_settings` **已是严格 B 范式**；`20261117180000` 的前置断言 §2.4 要求这五表「仍是宽松文本」，不满足即 `RAISE EXCEPTION` 整笔回滚。
 
-- 生产已于 2026-11-16 应用 M-2 batch06，`core_workflows` / `core_workflow_versions` / `core_workflow_instances` / `core_workflow_tasks` / `monitor_settings` **已是严格 B 范式**（无 `IS NULL`、无全零分支）。
-- `20261117180000` 的前置断言 §2.4 要求这五表「必须仍是宽松文本」，不满足即 `RAISE EXCEPTION`，整笔回滚（无部分落地）。
-- 因此现有迁移**当前不具备生产可执行性**。三个选项：
+**处理（原选项 A，已落地）**：新增前向补丁 `database/migrations/20261117220000_unified_core_rls_strict_prod.sql`（提交 `da6c99228`，manifest 已登记）：段 A/C/D/E 与原迁移一致；段 B 允许「宽松」或「已严格」两种输入，统一归一为 `USING` + `WITH CHECK` 全显式的严格 B 范式。
 
-| 选项 | 做法 | 评价 |
-|---|---|---|
-| **A（推荐）** | 新增一条前向补丁迁移（如 `20261118xxxxxx_unified_core_rls_strict_prod.sql`）：段 A/C/D/E 照原逻辑；段 B 改为「已是严格则校验一致、仍是宽松则收紧」的幂等处理；不改 `20261117180000` | 保留既有迁移与演练记录；需一次代码提交 + 从生产形态克隆重跑演练 |
-| B | 窗口内先把五表策略临时还原成宽松文本，再跑原迁移 | 会在生产短暂重新引入宽松策略，且回滚证据链不干净，不建议 |
-| C | 手工拆开执行 A/C/D/E，不记账 | 破坏单事务与账本一致性，禁止 |
+**执行口径**：
 
-**决策前不要进入执行阶段。** 若选 A，窗口顺延到补丁合入、克隆库（以生产形态为基线）演练通过之后。
+- 生产：用**前向补丁**替代 `20261117180000`。
+- `20261117180000` 仍保留给非生产库（克隆/测试），**二者互斥**，不得在同一库先后执行（补丁后段 B 已严格，原迁移 §2.4 仍会中止）。
+- 克隆库（已切生产形态）up/down 往返演练通过，见 manifest `20261117220000` 的 `rehearsal` 证据。
 
 ## 1. 变更清单与执行顺序
 
-| 顺序 | 对象 | 说明 |
-|---:|---|---|
-| 1 | `database/migrations/20261117120000_platform_corpus_null_to_nil.sql` | 平台语料 NULL → 全零 UUID，481 行（77/397/3/4）；**未改**，沿用既有 |
-| 2 | `database/migrations/20261117180000_unified_core_rls_strict.sql` | 11 张表 RLS 收紧/补齐；受 §0 阻塞约束 |
-| 3 | 新二进制 | 必须同时包含：平台语料读路径（`ec4aff8e8`）、阶段一 4 笔、阶段三 `43eb4726d` |
+发布包共 **4 条迁移**（下表 #1–#4）；生产实际执行 **3 条**（#2 由 #3 替代，二者互斥）。另有 1 个新二进制。
+
+| 顺序 | 对象 | 生产执行 | 说明 |
+|---:|---|---|---|
+| 1 | `database/migrations/20261117120000_platform_corpus_null_to_nil.sql` | 是 | 平台语料 NULL → 全零 UUID，481 行（77/397/3/4）；**未改**，沿用既有 |
+| 2 | `database/migrations/20261117180000_unified_core_rls_strict.sql` | **否**（由 #3 替代） | 11 张表 RLS 收紧/补齐；保留给非生产库；与 #3 互斥，见 §0 |
+| 3 | `database/migrations/20261117220000_unified_core_rls_strict_prod.sql` | 是 | 生产前向补丁，段 B 幂等（宽松/已严格两种输入），其余段与 #2 逐字一致 |
+| 4 | `database/migrations/20261117233000_master_data_schema_registry_rls.sql` | 是 | `public.schema_registry` / `public.dynamic_data` 补 `tenant_id NOT NULL` + 严格 B 范式 RLS；`name` 唯一键改租户内唯一 |
+| — | 新二进制 | — | 必须同时包含：平台语料读路径（`ec4aff8e8`）、阶段一 4 笔、阶段三 `43eb4726d`、master-data 批次 3e（`1669a30aa6`） |
 
 > 平台语料迁移头部要求读路径代码同窗口上线；生产当前二进制构建于 2026-11-16 23:39，**不含** `ec4aff8e8`（2026-11-17 08:00），因此必须换新二进制，不能只跑 DDL。
-> 两条迁移均无业务 DML（平台语料为 481 行 UPDATE 归一；严格迁移纯 DDL），可放在同一停机窗口。
+> 三条待执行迁移均无业务 DML（平台语料为 481 行 UPDATE 归一；#3/#4 纯 DDL，#4 附加"两表必须为空"的硬断言），可放在同一停机窗口。
+> #4 与 master-data 代码改造硬耦合：只上迁移会让旧池直连代码读 0 行、写入因 `tenant_id NOT NULL` 失败；因此二进制必须含 `1669a30aa6`。
 
 ## 2. 前置检查（窗口前 1 天 + 窗口前 10 分钟各跑一次）
 
 ```bash
 cd /Users/xingzhai/topems
 psql -d topems_prod -X -A -F$'\t' -c "
--- 1) 账本：两条迁移不应存在；max 应为 20261116180000
+-- 1) 账本：四条迁移均不应存在；max 应为 20261116180000
 select 'ledger', max(version), count(*) from _sqlx_migrations;
 select 'pending', version, count(*) from _sqlx_migrations
- where version in (20261117120000,20261117180000) group by version;
+ where version in (20261117120000,20261117180000,20261117220000,20261117233000) group by version;
 
 -- 2) 11 张目标表行数与 NULL 租户（预期全部 0）
 select 'rows', 'core_flow_rules', count(*), count(*) filter (where tenant_id is null) from public.core_flow_rules
@@ -90,11 +91,22 @@ select 'platform_zero',
 -- 7) 连接与容量
 select 'conn', count(*) from pg_stat_activity where datname='topems_prod';
 select 'db_size', pg_size_pretty(pg_database_size('topems_prod'));
+
+-- 8) master-data 动态 Schema 两表（迁移 #4 的前置：必须 0 行、无 tenant_id、rls=false）
+select 'mdm_dynamic',
+ (select count(*) from public.schema_registry) as schema_rows,
+ (select count(*) from public.dynamic_data) as data_rows,
+ (select count(*) from information_schema.columns
+   where table_schema='public' and table_name='schema_registry' and column_name='tenant_id') as schema_has_tid,
+ (select c.relrowsecurity from pg_class c where c.oid = to_regclass('public.schema_registry')) as schema_rls,
+ (select c.relrowsecurity from pg_class c where c.oid = to_regclass('public.dynamic_data')) as data_rls;
 "
 df -h /Users/xingzhai | tail -1
 ```
 
-2026-11-17 实测基线（可复述）：账本 `max=20261116180000`（699 条）；11 张表**全部 0 行**；段 A 四表 + `search_logs` = `f/f/0`；段 B 五表**已是严格**；`alerts`/`alert_rules` 各 1 条 allow_all；平台语料 NULL `77/397/3/4`、全零 `0/0/0/0`。
+2026-11-17 实测基线（可复述）：账本 `max=20261116180000`（699 条）；11 张 flow/monitor/search/alerts 表**全部 0 行**；段 A 四表 + `search_logs` = `f/f/0`；段 B 五表**已是严格**；`alerts`/`alert_rules` 各 1 条 allow_all；平台语料 NULL `77/397/3/4`、全零 `0/0/0/0`；`schema_registry`/`dynamic_data` 均 0 行、无 `tenant_id`、`rls=false`。
+
+> 第 8 项若出现非 0 行，**不得进入窗口**：迁移 #4 的断言会中止，且历史行租户归属无法自动推断，需先另发数据迁移。
 
 ## 3. 备份（停机前完成）
 
@@ -109,14 +121,15 @@ pg_dump -Fc -d topems_prod -f "backups/unified-core-rls-pre-$TS.dump"
 pg_restore -l "backups/unified-core-rls-pre-$TS.dump" | head -5
 shasum -a 256 "backups/unified-core-rls-pre-$TS.dump" | tee "backups/unified-core-rls-pre-$TS.dump.sha256"
 
-# 2) 受影响 11 表的策略快照（回滚比对证据）
+# 2) 受影响 13 表的策略快照（回滚比对证据；含 master-data 两表）
 psql -d topems_prod -X -A -F$'\t' -c "
 select schemaname, tablename, policyname, cmd, permissive, roles::text, qual, with_check
   from pg_policies
  where schemaname='public'
    and tablename in ('core_flow_rules','core_flow_variables','core_flow_variable_history','core_flow_delegates',
                      'core_workflows','core_workflow_versions','core_workflow_instances','core_workflow_tasks',
-                     'monitor_settings','alerts','search_logs','alert_rules')
+                     'monitor_settings','alerts','search_logs','alert_rules',
+                     'schema_registry','dynamic_data')
  order by tablename, policyname;" > "backups/unified-core-rls-policies-pre-$TS.tsv"
 
 # 3) 账本快照
@@ -148,6 +161,7 @@ sha256sum bin/topems-server.new
 | `ec4aff8e8` | 平台语料读路径（与 `20261117120000` 配套） |
 | `e112b39e7` / `59e2d7965` / `2c914763e` / `3bb52aeb1` | 阶段一：D-01 / D-02+D-03 / TenantScope (b) / statistics 系统通道 |
 | `43eb4726d` | 阶段三：flow 规则/变量/委托/监控请求事务迁移 |
+| `1669a30aa6` | master-data 批次 3e：`schema_registry` / `master_plugin` 请求事务 + `persist.rs` 系统通道（与 `20261117233000` 配套） |
 
 ## 5. 停服（目标停机起点）
 
@@ -163,38 +177,52 @@ psql -d topems_prod -X -A -t -c "select count(*) from pg_stat_activity where dat
 
 ## 6. 执行迁移（单事务、遇错即停）
 
+> 本窗口实际执行 3 条（#1 平台语料、#3 严格前向补丁、#4 master-data 动态 Schema）。
+> **不要**执行 `20261117180000`：它已由 #3 替代，在本库会因 §2.4 前置断言中止（见 §0）。
+
 ```bash
 cd /Users/xingzhai/topems
 set -e
 
-# 6.1 平台语料归一
+# 6.1 平台语料归一（#1）
 /usr/bin/time -p psql -d topems_prod -X -v ON_ERROR_STOP=1 --single-transaction \
   -f database/migrations/20261117120000_platform_corpus_null_to_nil.sql
 
-# 6.2 严格 RLS 收紧（若走 §0 选项 A，替换为补丁迁移文件名）
+# 6.2 严格 RLS 收紧 —— 生产前向补丁（#3，替代 20261117180000）
 /usr/bin/time -p psql -d topems_prod -X -v ON_ERROR_STOP=1 --single-transaction \
-  -f database/migrations/20261117180000_unified_core_rls_strict.sql
+  -f database/migrations/20261117220000_unified_core_rls_strict_prod.sql
 
-# 6.3 手工记账（scripts/migrate.sh 口径：sha384 48 字节、execution_time=0）
-psql -d topems_prod -X -v ON_ERROR_STOP=1 <<'SQL'
+# 6.3 master-data 动态 Schema/数据两表补租户列 + 严格 RLS（#4）
+/usr/bin/time -p psql -d topems_prod -X -v ON_ERROR_STOP=1 --single-transaction \
+  -f database/migrations/20261117233000_master_data_schema_registry_rls.sql
+
+# 6.4 手工记账（scripts/migrate.sh 口径：sha384 48 字节、execution_time=0）
+#     checksum 直接取真实文件摘要，避免占位串残留
+CS1=$(shasum -a 384 database/migrations/20261117120000_platform_corpus_null_to_nil.sql | cut -d' ' -f1)
+CS3=$(shasum -a 384 database/migrations/20261117220000_unified_core_rls_strict_prod.sql | cut -d' ' -f1)
+CS4=$(shasum -a 384 database/migrations/20261117233000_master_data_schema_registry_rls.sql | cut -d' ' -f1)
+echo "CS1=$CS1"; echo "CS3=$CS3"; echo "CS4=$CS4"
+
+psql -d topems_prod -X -v ON_ERROR_STOP=1 -v cs1="$CS1" -v cs3="$CS3" -v cs4="$CS4" <<'SQL'
 INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time)
-VALUES (20261117120000, 'platform corpus null to nil', now(), true,
-        decode('30235bcd385e000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex'), 0)
+VALUES (20261117120000, 'platform corpus null to nil', now(), true, decode(:'cs1', 'hex'), 0)
 ON CONFLICT (version) DO NOTHING;
 INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time)
-VALUES (20261117180000, 'unified core rls strict', now(), true,
-        decode('9b9ad378031c000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex'), 0)
+VALUES (20261117220000, 'unified core rls strict prod', now(), true, decode(:'cs3', 'hex'), 0)
+ON CONFLICT (version) DO NOTHING;
+INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time)
+VALUES (20261117233000, 'master data schema registry rls', now(), true, decode(:'cs4', 'hex'), 0)
 ON CONFLICT (version) DO NOTHING;
 SQL
 
-# 6.4 记账校验：checksum 必须是真实文件摘要
-for f in database/migrations/20261117120000_platform_corpus_null_to_nil.sql \
-         database/migrations/20261117180000_unified_core_rls_strict.sql; do
-  echo "$f $(shasum -a 384 "$f" | cut -d' ' -f1)"
-done
+# 6.5 记账校验：账本 checksum 必须与文件摘要逐条一致
+psql -d topems_prod -X -A -F$'\t' -c "
+select version, encode(checksum,'hex') from _sqlx_migrations
+ where version in (20261117120000,20261117220000,20261117233000) order by version;"
 ```
 
-> 记账前必须用 `shasum -a 384` 的真实 96 位十六进制替换上面两个 `decode(...)` 占位串（本文只保留前缀便于识别）。checksum 不一致会导致服务启动自检失败。
+> checksum 不一致会导致服务启动自检失败；6.5 的输出必须与 6.4 打印的 `CS1/CS3/CS4` 逐条相等。
+> `20261117180000` 本窗口**不登记**（未执行）。若该库此前已应用过 `20261117180000`（仅限非生产），则改跑 `20261117220000` 前需先确认段 B 形态，二者互斥。
 > 任何一步失败：整笔已由 `--single-transaction` 回滚；停止后续步骤，按 §9 回滚判据处理，**不要**手工补执行剩余 SQL。
 
 ## 7. 起服
@@ -217,14 +245,20 @@ tail -80 /Users/xingzhai/Library/Logs/topems-server.err.log
 
 ```bash
 psql -d topems_prod -X -A -t -c "
-select 'ledger', version, success from _sqlx_migrations where version in (20261117120000,20261117180000) order by version;
+select 'ledger', version, success from _sqlx_migrations
+ where version in (20261117120000,20261117220000,20261117233000) order by version;
+select 'ledger_180000_absent', count(*) from _sqlx_migrations where version = 20261117180000;
 select 'rls', c.relname, c.relrowsecurity, c.relforcerowsecurity,
  (select count(*) from pg_policies p where p.schemaname='public' and p.tablename=c.relname)
  from pg_class c join pg_namespace n on n.oid=c.relnamespace
- where n.nspname='public' and c.relname in ('core_flow_rules','core_flow_variables','core_flow_variable_history','core_flow_delegates','core_workflows','core_workflow_versions','core_workflow_instances','core_workflow_tasks','monitor_settings','alerts','search_logs','alert_rules') order by 1,2;
+ where n.nspname='public' and c.relname in ('core_flow_rules','core_flow_variables','core_flow_variable_history','core_flow_delegates','core_workflows','core_workflow_versions','core_workflow_instances','core_workflow_tasks','monitor_settings','alerts','search_logs','alert_rules','schema_registry','dynamic_data') order by 1,2;
 select 'alert_rules_policies', policyname, cmd, coalesce(left(qual,40),'')
  from pg_policies where schemaname='public' and tablename='alert_rules' order by 2;
 select 'allow_all_left', count(*) from pg_policies where schemaname='public' and policyname like 'public_allow_all%';
+select 'mdm_dynamic_tid',
+ (select count(*) from information_schema.columns where table_schema='public' and table_name='schema_registry' and column_name='tenant_id' and is_nullable='NO'),
+ (select count(*) from information_schema.columns where table_schema='public' and table_name='dynamic_data' and column_name='tenant_id' and is_nullable='NO');
+select 'mdm_dynamic_idx', indexname from pg_indexes where schemaname='public' and tablename in ('schema_registry','dynamic_data') order by 2;
 select 'platform', (select count(*) from public.core_dict_types where tenant_id is null),
  (select count(*) from public.core_dict_items where tenant_id is null),
  (select count(*) from ai.ai_prompt_templates where tenant_id is null),
@@ -240,11 +274,15 @@ select 'platform', (select count(*) from public.core_dict_types where tenant_id 
 
 | 项 | 预期 |
 |---|---|
-| 账本 | 两条均 `success=t` |
+| 账本 | 三条（`20261117120000` / `20261117220000` / `20261117233000`）均 `success=t` |
+| `20261117180000` 账本行 | `0`（本窗口未执行） |
 | flow 四表 + `search_logs` | `rls=t / force=t / 1 条策略` |
 | 段 B 五表（已严格） | 补丁形态：`t/t/1`，文本仍为严格 B 范式 |
 | `alerts` | `t/t/1`，策略名 `rls_tenant_isolation` |
 | `alert_rules` | `t/t/4`（1 读 + 3 写） |
+| `schema_registry` / `dynamic_data` | `t/t/1`，策略名 `rls_tenant_isolation` |
+| master-data 两表 `tenant_id` | 两列均存在且 `is_nullable='NO'` |
+| master-data 索引 | `schema_registry_tenant_name_key`（UNIQUE）+ `idx_dynamic_data_tenant_schema` |
 | 残留 allow_all | `0` |
 | 平台语料 | NULL `0/0/0/0`；全零 `77/397/3/4` |
 
@@ -293,7 +331,7 @@ curl -s -o /dev/null -w 'ai-models %{http_code}\n'   "$BASE/api/ai/models"
 5. 出现跨租户可见（同一请求身份看到非本租户行）或 `alert_rules` 写入报 42501 且确属业务需要；
 6. 业务方在窗口内报告字典/审批不可用。
 
-### 9.2 回滚步骤（逆序：先 strict，后 platform，再换回二进制）
+### 9.2 回滚步骤（逆序：先 #4，再 #3，后 #1，最后换回二进制）
 
 ```bash
 cd /Users/xingzhai/topems
@@ -301,22 +339,26 @@ set -e
 launchctl bootout gui/$(id -u)/com.topems.server
 sleep 2
 
-# 1) 严格迁移回滚
+# 1) master-data 动态 Schema 两表回滚（#4：删策略/索引、DROP tenant_id 列）
 psql -d topems_prod -X -v ON_ERROR_STOP=1 --single-transaction \
-  -f database/rollback/20261117180000_unified_core_rls_strict.rollback.sql
+  -f database/rollback/20261117233000_master_data_schema_registry_rls.rollback.sql
 
-# 2) 平台语料回滚（全零 → NULL）
+# 2) 严格前向补丁回滚（#3：段 B 保持严格不降级，A/C/D/E 恢复迁移前形态）
+psql -d topems_prod -X -v ON_ERROR_STOP=1 --single-transaction \
+  -f database/rollback/20261117220000_unified_core_rls_strict_prod.rollback.sql
+
+# 3) 平台语料回滚（全零 → NULL）
 psql -d topems_prod -X -v ON_ERROR_STOP=1 --single-transaction \
   -f database/rollback/20261117120000_platform_corpus_null_to_nil.rollback.sql
 
-# 3) 撤销账本登记（否则重跑会跳过）
+# 4) 撤销账本登记（否则重跑会跳过）
 psql -d topems_prod -X -v ON_ERROR_STOP=1 -c \
-  "DELETE FROM _sqlx_migrations WHERE version in (20261117120000,20261117180000);"
+  "DELETE FROM _sqlx_migrations WHERE version in (20261117120000,20261117220000,20261117233000);"
 
-# 4) 恢复旧二进制
+# 5) 恢复旧二进制
 cp -p "/Users/xingzhai/topems-backups/topems-server.bak-$TS-pre-uc-rls" bin/topems-server
 
-# 5) 起服与验证
+# 6) 起服与验证
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.topems.server.plist
 sleep 3
 curl -s -o /dev/null -w 'health %{http_code}\n' http://127.0.0.1:8099/health
@@ -326,12 +368,17 @@ select 'platform_restored',
  (select count(*) from public.core_dict_items where tenant_id is null),
  (select count(*) from ai.ai_prompt_templates where tenant_id is null),
  (select count(*) from ai.ai_models where tenant_id is null);
-select 'ledger', count(*) from _sqlx_migrations where version in (20261117120000,20261117180000);"
+select 'mdm_dynamic_restored',
+ (select count(*) from information_schema.columns where table_schema='public' and table_name='schema_registry' and column_name='tenant_id'),
+ (select count(*) from information_schema.columns where table_schema='public' and table_name='dynamic_data' and column_name='tenant_id');
+select 'ledger', count(*) from _sqlx_migrations
+ where version in (20261117120000,20261117220000,20261117233000);"
 ```
 
-回滚成功判据：health=200；平台语料 NULL 恢复 `77/397/3/4`；账本两条为 0；`pg_policies` 与 §3.2 快照逐行一致；flow 四表恢复 `f/f/0`。
+回滚成功判据：health=200；平台语料 NULL 恢复 `77/397/3/4`；账本三条为 0；`schema_registry`/`dynamic_data` 的 `tenant_id` 列已删除；`pg_policies` 与 §3.2 快照逐行一致；flow 四表恢复 `f/f/0`。
 
-> 若走 §0 选项 A（补丁迁移），回滚时改用补丁对应的 rollback 文件；如补丁对段 B 是 no-op，回滚也不应把已严格策略降级。
+> #3 的回滚对段 B 是「保持严格、不降级」，避免把生产 M-2 batch06 的成果重新放松；A/C/D/E 恢复迁移前形态。
+> `20261117180000` 不在本窗口登记，回滚无需处理；若该库此前应用过它，按该迁移自身的 rollback 处理。
 
 ## 10. 时间估算与窗口编排
 
@@ -340,14 +387,15 @@ select 'ledger', count(*) from _sqlx_migrations where version in (20261117120000
 | release 构建 + 门禁 + 二进制校验 | 6–8 min | 否（窗口前） |
 | 全库备份 + 策略快照 + 校验 | 20–40 s | 否（停服前） |
 | bootout + 连接排空 | 5–10 s | 是 |
-| 平台语料迁移 | < 1 s（克隆 0.02 s） | 是 |
-| 严格迁移（或补丁） | < 1 s（克隆 0.04 s） | 是 |
+| 平台语料迁移（#1） | < 1 s（克隆 0.02 s） | 是 |
+| 严格前向补丁（#3） | < 1 s（克隆 0.05 s） | 是 |
+| master-data 动态 Schema（#4） | < 1 s（空表 DDL） | 是 |
 | 记账 + 校验 | 5–10 s | 是 |
 | 二进制替换 + bootstrap + health | 10–20 s | 是 |
 | 窗口内验收（SQL + 端点） | 1–2 min（可起服后并行） | 部分 |
 | **纯停机时间** | **约 60–90 秒** | — |
 
-参考：2026-11-16 M-2 窗口实测纯停机 56 秒（单条迁移 + 二进制替换），本次多一条迁移、DDL 均 < 0.1 s，预计同量级。
+参考：2026-11-16 M-2 窗口实测纯停机 56 秒（单条迁移 + 二进制替换），本次多两条迁移、DDL 均 < 0.1 s，预计同量级。
 建议窗口：业务低峰（22:00–24:00），预留 15 分钟处置余量。
 
 ## 11. 发布说明与遗留事项
@@ -357,3 +405,6 @@ select 'ledger', count(*) from _sqlx_migrations where version in (20261117120000
 3. 平台语料迁移要求读路径同窗口上线，禁止「只跑 DDL 不换二进制」。
 4. 冻结项 engagement 3 处（`core_comments` / `core_favorites`）不在本窗口范围，保持挂起。
 5. 本次不修缺陷：变量写入不校验实例归属（见 `known-gate-defects.md` K16）。
+6. `20261117233000` 对 `public.schema_registry` / `public.dynamic_data` 有「必须 0 行」的硬断言；窗口前第 8 项读数非 0 即中止窗口，不做自动租户归属。
+7. 发布包 4 条迁移中 `20261117180000` 不在生产执行（由 `20261117220000` 替代），台账口径已写明，避免账本/文件比对误判。
+8. 拍板口径（2026-11-17）：跨租户读取只保留「平台语料」与「显式系统通道」两个入口，业务可见性一律查询层显式谓词；本窗口不会引入 `OR is_public` 之类的策略级可见性开关。详见决策文档 §6。
