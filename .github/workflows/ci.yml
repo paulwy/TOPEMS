@@ -120,6 +120,8 @@ jobs:
               - 'apps/web/src/lib/navigation/**'
               - 'apps/web/src/lib/routes/v2.tsx'
               - 'scripts/ci/perm-matrix-toolkit.cjs'
+              - 'scripts/ci/gen-permissions.mjs'
+              - 'database/migrations/**'
               - 'docs/roadmap/artifacts/rN-perm-matrix-baseline.json'
               - 'apps/web/src/__tests__/permission-matrix-guard.test.ts'
             menu:
@@ -1126,6 +1128,13 @@ jobs:
             echo "Perm-Gate exit=$PERM_EXIT — failing the job"
             exit $PERM_EXIT
           fi
+
+      - name: Permission codegen drift (core_permissions 迁移 → permissions.ts)
+        run: |
+          # 真源 = database/migrations 里对 core_permissions 的 INSERT/UPDATE/DELETE。
+          # permissions.ts 的 CORE_PERMISSION_CODES 生成块必须与之一致，否则 P7 NOT_LEGAL 会漂移。
+          # 修复：node scripts/ci/gen-permissions.mjs --apply
+          node scripts/ci/gen-permissions.mjs --check
 
       - name: Write Perm-Gate summary
         if: always()

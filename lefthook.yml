@@ -328,6 +328,22 @@ pre-commit:
           exit 0
         fi
 
+    # [Gate PC] 权限码生成块漂移：permissions.ts 的 CORE_PERMISSION_CODES 必须与
+    # core_permissions 迁移一致（真源=database/migrations，生成器 scripts/ci/gen-permissions.mjs）
+    perm-codegen:
+      tags: api permission db
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(database/migrations/.*\.sql|apps/web/src/config/permissions\.ts|scripts/ci/gen-permissions\.mjs)$' || true)
+        if [ -z "$STAGED" ]; then
+          exit 0
+        fi
+        if [ -f "scripts/ci/gen-permissions.mjs" ]; then
+          node scripts/ci/gen-permissions.mjs --check
+        else
+          printf '\033[31m[Gate PC] FAILED\033[0m scripts/ci/gen-permissions.mjs 缺失，无法校验权限码生成块\n'
+          exit 1
+        fi
+
     # [Gate P2] Schema boundary check（Plan v1.0 §4.4 编译时边界 CI 侧强制：
     # 全量扫描 svc 裸 sqlx 查询的 schema.table 引用，跨 schema 违规阻断提交）
     # V531: 走 allowlist 感知脚本（scripts/ci/check-schema-boundary.cjs）——
