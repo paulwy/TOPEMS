@@ -21,11 +21,20 @@ pub async fn record_login(
     State(state): State<AppState>,
     Json(req): Json<RecordLoginRequest>,
 ) -> ApiResponse<LoginLog> {
-    let tenant_id = req
-        .tenant_id
-        .as_ref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    // 登录前事件（认证尚未完成，无法从 Claims 取租户）允许零租户，但必须是**显式**
+    // 平台通道；调用方一旦传了 tenant_id 就必须是可解析的非 nil 值，避免"写错格式"
+    // 被静默降级成平台语料。
+    let tenant_id = match req.tenant_id.as_deref() {
+        Some(raw) => match Uuid::parse_str(raw).ok().filter(|t| !t.is_nil()) {
+            Some(tenant) => tenant,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "租户ID格式非法".to_string(),
+                ))
+            }
+        },
+        None => topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID,
+    };
 
     let user_id = req.user_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 

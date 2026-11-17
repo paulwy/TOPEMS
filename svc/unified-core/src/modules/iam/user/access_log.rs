@@ -418,7 +418,22 @@ pub async fn create_access_log(
     };
 
     let status_str = if success { "success" } else { "failed" };
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    // 审计写入禁止静默落零租户：
+    // - 有可解析租户 → 落真实租户；
+    // - 超管/服务令牌的系统事件 → 显式落平台哨兵（配合下方 scope_system 系统通道）；
+    // - 普通用户缺租户/租户非法 → 400，不再兜底成零租户。
+    let tenant_id = match topems_shared_auth::middleware::try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err(_) if claims.is_superuser || topems_shared_auth::service::is_service_claims(&claims) => {
+            topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID
+        }
+        Err((code, message)) => {
+            return (
+                StatusCode::from_u16(code).unwrap_or(StatusCode::BAD_REQUEST),
+                Json(topems_shared_core::response::error_value(code, &message)),
+            );
+        }
+    };
 
     let db = Db::new(state.pool.clone(), "public, shared");
     let mut guard = txn_arc.lock().await;

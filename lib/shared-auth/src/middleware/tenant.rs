@@ -462,14 +462,17 @@ pub fn try_tenant_id(claims: &Claims, headers: &HeaderMap) -> Result<Uuid, (u16,
 
 /// 仅从 `Claims.tenant_id` 解析租户 ID，不回退到 header。
 ///
-/// 适用于 service 层或无 `HeaderMap` 可用的调用点；解析失败返回 nil UUID
-/// （`Uuid::default()`），与各业务服务历史单参数实现行为一致。
+/// 仅用于**读取/过滤**：系统通道（超管/服务令牌/无租户）返回
+/// [`PLATFORM_TENANT_ID`](super::tenant_scope::PLATFORM_TENANT_ID)。
+/// **写路径禁止使用本函数给业务行兜底**——必须用 [`try_tenant_id_from_claims`]
+/// 或 [`resolve_create_tenant`]，缺失/非法租户应显式 400 或走系统事件通道。
 pub fn get_tenant_id_from_claims(claims: &Claims) -> Uuid {
     claims
         .tenant_id
-        .as_ref()
+        .as_deref()
         .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_default()
+        .filter(|t| !t.is_nil())
+        .unwrap_or(super::tenant_scope::PLATFORM_TENANT_ID)
 }
 
 /// 仅从 claims 严格解析租户（W7 阶段三 B0）。

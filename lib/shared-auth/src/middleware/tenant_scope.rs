@@ -25,6 +25,13 @@ use sqlx::Postgres;
 use std::sync::OnceLock;
 use uuid::Uuid;
 
+/// 平台级租户哨兵（全零 UUID）。
+///
+/// 仅用于**系统通道**写入平台语料（模板/字典/模型注册）或系统事件（登录前日志、
+/// 超管审计），不是"缺少租户"的兜底值：租户通道经 [`TenantScope::tenant`] 构造，
+/// nil 在构造期即被拒绝；普通用户缺失租户由 [`TenantScope::require_tenant`] 直接 400。
+pub const PLATFORM_TENANT_ID: Uuid = Uuid::nil();
+
 /// 系统通道来源。用于日志与计数维度，便于追溯"谁在用系统通道读数据"。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SystemChannel {
@@ -135,6 +142,17 @@ impl TenantScope {
             ScopeInner::Tenant(id) => Some(id),
             ScopeInner::System(_) => None,
         }
+    }
+
+    /// 写入行要落库的 tenant_id。
+    ///
+    /// - 租户通道 → 真实租户；
+    /// - 系统通道 → [`PLATFORM_TENANT_ID`]（平台语料/系统事件），构造系统通道时
+    ///   已记录来源日志与计数。
+    ///
+    /// 租户通道不可能为 nil，业务写路径不会因"忘记租户"被静默写成零租户。
+    pub fn create_tenant_id(&self) -> Uuid {
+        self.tenant_id().unwrap_or(PLATFORM_TENANT_ID)
     }
 
     pub fn system_channel(&self) -> Option<SystemChannel> {
