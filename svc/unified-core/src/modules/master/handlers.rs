@@ -19,6 +19,7 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::id::{generate_master_data_id, MasterDataDomain as IdMasterDataDomain};
 use topems_shared_event::event::{MasterDataAction, MasterDataDomain, MasterDataEvent};
 
@@ -33,7 +34,7 @@ use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_db::audit::AuditLogService;
 use topems_shared_db::master_data_refs::MasterDataRefService;
 use topems_shared_db::reconciliation_log::ReconciliationLogService;
-use topems_shared_db::scope::Db;
+use topems_shared_db::scope::{Db, ScopedTxn};
 
 /// V284: shared-db MasterDataRef → unified-core MasterDataRef 转换
 impl From<topems_shared_db::master_data_refs::MasterDataRef> for MasterDataRef {
@@ -350,7 +351,7 @@ impl MasterDataService {
     /// 变更历史
     pub async fn list_changes(
         &self,
-        tenant_id: Option<Uuid>,
+        scope: &mut ScopedTxn<'_>,
         master_data_id: &str,
         limit: i64,
     ) -> Result<Vec<MasterDataChangeLog>, sqlx::Error> {
@@ -358,30 +359,32 @@ impl MasterDataService {
             r#"
             SELECT id, master_data_id, tenant_id, action, source_service, operator, changed_fields, payload, created_at
             FROM core_master_data_change_log
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND master_data_id = $2
+            WHERE master_data_id = $1
             ORDER BY created_at DESC
-            LIMIT $3
+            LIMIT $2
             "#,
         )
-        .bind(tenant_id)
         .bind(master_data_id)
         .bind(limit)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(items)
     }
 
     /// 整体统计
-    pub async fn get_overall_stats(&self, tenant_id: Uuid) -> Result<MdmOverallStats, sqlx::Error> {
+    pub async fn get_overall_stats(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+    ) -> Result<MdmOverallStats, sqlx::Error> {
         let total: i64 = self.ref_service.count_by_tenant(tenant_id).await?;
 
         let since = Utc::now() - Duration::hours(24);
         let recent: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_master_data_change_log WHERE ($1::uuid IS NULL OR tenant_id = $1) AND created_at >= $2",
+            "SELECT COUNT(*) FROM core_master_data_change_log WHERE created_at >= $1",
         )
-        .bind(tenant_id)
         .bind(since)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *scope)
         .await?;
 
         let mut by_domain = Vec::new();
@@ -849,7 +852,7 @@ impl MasterDataService {
     /// 查询待审批列表
     pub async fn list_pending_approvals(
         &self,
-        tenant_id: Option<Uuid>,
+        scope: &mut ScopedTxn<'_>,
         domain: Option<&str>,
         limit: i64,
     ) -> Result<Vec<MasterDataApproval>, sqlx::Error> {
@@ -859,14 +862,13 @@ impl MasterDataService {
                 SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                        status, reviewed_by, reviewed_at, review_comment, payload
                 FROM core_mdm_approvals
-                WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending' AND domain = $2
-                ORDER BY requested_at DESC LIMIT $3
+                WHERE status = 'pending' AND domain = $1
+                ORDER BY requested_at DESC LIMIT $2
                 "#,
             )
-            .bind(tenant_id)
             .bind(d)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *scope)
             .await?
         } else {
             sqlx::query_as::<_, MasterDataApproval>(
@@ -874,13 +876,12 @@ impl MasterDataService {
                 SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                        status, reviewed_by, reviewed_at, review_comment, payload
                 FROM core_mdm_approvals
-                WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending'
-                ORDER BY requested_at DESC LIMIT $2
+                WHERE status = 'pending'
+                ORDER BY requested_at DESC LIMIT $1
                 "#,
             )
-            .bind(tenant_id)
             .bind(limit)
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *scope)
             .await?
         };
         Ok(rows)
@@ -889,7 +890,7 @@ impl MasterDataService {
     /// 查询审批历史
     pub async fn list_approval_history(
         &self,
-        tenant_id: Option<Uuid>,
+        scope: &mut ScopedTxn<'_>,
         master_data_id: &str,
     ) -> Result<Vec<MasterDataApproval>, sqlx::Error> {
         let rows = sqlx::query_as::<_, MasterDataApproval>(
@@ -897,13 +898,12 @@ impl MasterDataService {
             SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                    status, reviewed_by, reviewed_at, review_comment, payload
             FROM core_mdm_approvals
-            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND master_data_id = $2
+            WHERE master_data_id = $1
             ORDER BY requested_at DESC
             "#,
         )
-        .bind(tenant_id)
         .bind(master_data_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows)
     }
@@ -1082,21 +1082,25 @@ pub async fn list_refs_handler(
 /// 变更历史
 pub async fn list_changes_handler(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<Vec<MasterDataChangeLog>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
-    };
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据变更历史事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据变更历史事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service
-        .list_changes(opt_tenant_id, &master_data_id, 50)
-        .await
-    {
+    match service.list_changes(&mut scope, &master_data_id, 50).await {
         Ok(changes) => ApiResponse::success(changes, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_changes_handler", e)),
     }
@@ -1106,11 +1110,25 @@ pub async fn list_changes_handler(
 pub async fn get_overall_stats_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MdmOverallStats> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据统计事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据统计事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.get_overall_stats(tenant_id).await {
+    match service.get_overall_stats(&mut scope, tenant_id).await {
         Ok(stats) => ApiResponse::success(stats, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_overall_stats_handler", e)),
     }
@@ -1308,20 +1326,27 @@ pub async fn review_approval_handler(
 /// 待审批列表
 pub async fn list_pending_approvals_handler(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<PendingApprovalQuery>,
 ) -> ApiResponse<Vec<MasterDataApproval>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
-    };
     let limit = params.limit.unwrap_or(50).min(200);
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据待审批列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据待审批列表事务作用域失败".to_string(),
+            ));
+        }
+    };
 
     match service
-        .list_pending_approvals(opt_tenant_id, params.domain.as_deref(), limit)
+        .list_pending_approvals(&mut scope, params.domain.as_deref(), limit)
         .await
     {
         Ok(approvals) => ApiResponse::success(approvals, "查询成功"),
@@ -1332,19 +1357,26 @@ pub async fn list_pending_approvals_handler(
 /// 审批历史
 pub async fn list_approval_history_handler(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<Vec<MasterDataApproval>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
-    };
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据审批历史事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据审批历史事务作用域失败".to_string(),
+            ));
+        }
+    };
 
     match service
-        .list_approval_history(opt_tenant_id, &master_data_id)
+        .list_approval_history(&mut scope, &master_data_id)
         .await
     {
         Ok(history) => ApiResponse::success(history, "查询成功"),
