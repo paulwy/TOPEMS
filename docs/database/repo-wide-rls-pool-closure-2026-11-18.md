@@ -950,6 +950,34 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 
 即：会话两表在租户上下文始终 0 行、系统通道全量；操作审计平台视图由代码切系统通道后与改动前读数一致。
 
+## Batch C｜gis 图层/空间 4 表 allow_all 收严（2026-11-17 拍板）
+
+迁移：`database/migrations/20261118112000_gis_map_layers_allow_all_strict.sql`
+回滚：`database/rollback/20261118112000_gis_map_layers_allow_all_strict.rollback.sql`
+克隆库六档演练与回滚往返通过，manifest `status: to_apply`。
+
+### 挑选依据
+
+从生产只读扫描（`pg_policies` + `information_schema` + `pg_stat_user_tables`）里精确筛「真正的宽松表」：`qual='true'` 的 allow_all（55 条策略），排除已处理批次、`erp.audit_logs`（保持不动）、`core_login_logs`（等回填）后，找「有 `tenant_id` 且读数 0 行」的可安全收严表。`iam.roles`、`bi.audit_logs` 等多数 allow_all 表没有 `tenant_id`（全局元数据，不能套严格 B）；`gis` 4 表在 `20261115141400_b_class_gis_tenant_id_4tables` 已补齐 `tenant_id`（NOT NULL、无默认），正好可收。
+
+- `gis.geodata`、`gis.geofeatures`、`gis.map_layers`、`gis.spatial_analysis`：各 1 条 allow_all，两库均 0 行。
+- 代码侧 `svc/gis` 读写全走请求级 scope（`scope_with` 注入 `app.tenant_id`），INSERT 显式绑定 `tenant_id`，无 `set_system_channel` / 平台读分支，无跨租户读路径。
+- 迁移只做策略替换 + 4 条 `tenant_id` 索引，不改列、不改数据、不做 NULL→哨兵归一（列 NOT NULL，无零租户行）。
+
+### 六档演练读数（每表 A/B 各 1 行临时夹具，共 8 行）
+
+| 上下文 | 改动前（allow_all） | 改动后（strict） |
+|---|---|---|
+| 未设 GUC | 8 | 0 |
+| 空串 GUC | 8 | 0 |
+| 全零 GUC | 8 | 0 |
+| 租户 A（…0001） | 8 | 4 |
+| 租户 B（合成） | 8 | 4 |
+| A + `rls_system=on` | 8 | 8 |
+
+写校验（`topems_prod`，A 上下文）：本租户 INSERT 成功；跨租户 INSERT 触发 `row-level security policy` 拒绝；跨租户 UPDATE / DELETE 各 0 行。
+回滚后六档复原为 8，再 up 回到 strict；夹具已清理，克隆库回 allow_all 基线。
+
 ## 保持不动与仅登记
 
 - `erp.audit_logs`（13 行，t1=8 / t2=5）**保持不动**：`svc/erp/src/modules/audit.rs` 的列表/详情显式 `set_system_channel` 跨租户读，属平台跨租户审计视图；改租户作用域会改变 ERP 审计的产品语义，需产品确认后再排。
@@ -957,6 +985,6 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 
 ## 同窗口清单（更新）
 
-`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`
+`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`
 以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
-生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，六条迁移全部 `to_apply`。
+生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，七条迁移全部 `to_apply`。

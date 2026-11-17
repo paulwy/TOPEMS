@@ -126,3 +126,12 @@
 
 克隆库六档演练与逐表可见行数对照见
 `docs/database/repo-wide-rls-pool-closure-2026-11-18.md` 的 Batch A / Batch B 章节。
+
+## 6. 状态更新（2026-11-17 决策 3 续推：Batch C）
+
+按生产只读扫描重新精确筛「真宽松表」（`qual='true'` allow_all / 含 `tenant_id IS NULL` 放行 / RLS 未启用），排除已处理批次、`erp.audit_logs`（保持不动）、`core_login_logs`（等回填）后，本批选 **gis 4 表**：
+
+- `gis.geodata`、`gis.geofeatures`、`gis.map_layers`、`gis.spatial_analysis`：`tenant_id` 已由 `20261115141400_b_class_gis_tenant_id_4tables` 补齐且 NOT NULL，两库均 0 行，`svc/gis` 读写全部显式绑定租户、无跨租户读路径，allow_all 可直接收为严格 B。
+- 迁移 `20261118112000_gis_map_layers_allow_all_strict.sql` + 同名 rollback，`status: to_apply`；克隆库六档演练（夹具 8 行）与回滚往返通过，详见收口文档 Batch C 章节。
+
+其余 allow_all 表（`iam.roles`、`bi.audit_logs` 等）**没有 `tenant_id`**，属全局元数据，不能套严格 B，本波次不动；含 `tenant_id IS NULL` 放行或 RLS 未启用且有真实数据的表仍被跨租户读路径/回填前置挡住，继续留在顺延矩阵。
