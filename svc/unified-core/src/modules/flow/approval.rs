@@ -1223,10 +1223,22 @@ pub async fn get_approval(
 #[allow(clippy::unwrap_used)]
 pub async fn create_approval(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建审批事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建审批失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     // 租户绑定对齐 nil 上下文惯例（超管/无 claims → None/SQL NULL；普通用户 → Some(claims.tenant_id)）。
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -1282,7 +1294,7 @@ pub async fn create_approval(
     .bind(title)
     .bind(initiator_id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -1316,7 +1328,7 @@ pub async fn create_approval(
     .bind(instance.id)
     .bind(assignee_id)
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -1331,7 +1343,7 @@ pub async fn create_approval(
     )
     .bind(workflow_id)
     .bind(locale)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
