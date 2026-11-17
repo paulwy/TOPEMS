@@ -14,7 +14,8 @@ use uuid::Uuid;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::{BindTenantScope, SystemChannel, TenantScope};
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 
 #[derive(Debug, Clone, Serialize)]
 struct FileInfo {
@@ -64,6 +65,7 @@ pub struct FilePermissionRequest {
 pub async fn list_files(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<FileQuery>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
@@ -88,15 +90,9 @@ pub async fn list_files(
         }
     };
 
-    // A 类：超管显式跨租户查看文件列表（走系统通道，落日志与计数）；
-    // 其余身份按 Claims 严格解析：普通用户缺租户即 400，服务令牌走服务通道。
-    let scope = if claims.is_superuser {
-        TenantScope::system(
-            SystemChannel::Superuser,
-            "unified-core.file.list_files",
-            "core_files",
-        )
-    } else {
+    // A 类：超管显式携带 x-tenant-id 时按该租户读写（缺失租户的超管在中间件即 400）；
+    // 服务令牌走系统通道，由请求事务上的 app.rls_system='on' 放行。
+    let tenant_scope =
         match TenantScope::from_claims(&claims, "unified-core.file.list_files", "core_files") {
             Ok(scope) => scope,
             Err((_, message)) => {
@@ -107,6 +103,27 @@ pub async fn list_files(
                     "code": 400
                 }));
             }
+        };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
         }
     };
 
@@ -115,7 +132,7 @@ pub async fn list_files(
         "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, original_name
          FROM public.core_files
          WHERE deleted_at IS NULL AND {}",
-        scope.sql_predicate("tenant_id", "$1")
+        tenant_scope.sql_predicate("tenant_id", "$1")
     );
 
     let _count_query = "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL";
@@ -135,8 +152,8 @@ pub async fn list_files(
             Option<String>,
         ),
     >(sqlx::AssertSqlSafe(base_query))
-    .bind_tenant_scope(&scope)
-    .fetch_all(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -179,11 +196,11 @@ pub async fn list_files(
             };
             let total = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
                 "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR uploader_id = $1) AND {}",
-                scope.sql_predicate("tenant_id", "$2")
+                tenant_scope.sql_predicate("tenant_id", "$2")
             )))
             .bind(uploader_filter)
-            .bind_tenant_scope(&scope)
-            .fetch_one(&state.pool)
+            .bind_tenant_scope(&tenant_scope)
+            .fetch_one(&mut scope)
             .await;
 
             let total = match total {
@@ -237,6 +254,7 @@ fn forbidden_response(message: &str) -> Response {
 pub async fn get_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> Response {
     tracing::info!(
@@ -273,12 +291,52 @@ pub async fn get_file(
         }
     };
 
-    let row = match sqlx::query(
+    let tenant_scope =
+        match TenantScope::from_claims(&claims, "unified-core.file.get_file", "core_files") {
+            Ok(scope) => scope,
+            Err((_, message)) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                    "code": 400
+                }))
+                .into_response();
+            }
+        };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }))
+        .into_response();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }))
+            .into_response();
+        }
+    };
+
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, original_name
-         FROM public.core_files WHERE id = $1",
-    )
+         FROM public.core_files WHERE id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .fetch_optional(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -340,6 +398,7 @@ pub async fn get_file(
 pub async fn update_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(payload): Json<UpdateFileRequest>,
 ) -> Json<serde_json::Value> {
@@ -375,12 +434,49 @@ pub async fn update_file(
         }
     };
 
+    let tenant_scope =
+        match TenantScope::from_claims(&claims, "unified-core.file.update_file", "core_files") {
+            Ok(scope) => scope,
+            Err((_, message)) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                    "code": 400
+                }));
+            }
+        };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     // 检查文件是否存在且有权限
-    let row = match sqlx::query(
-        "SELECT uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL",
-    )
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .fetch_optional(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -465,7 +561,7 @@ pub async fn update_file(
         }
     }
 
-    match query_builder.execute(&state.pool).await {
+    match query_builder.execute(&mut scope).await {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
             "message": "文件更新成功",
@@ -494,6 +590,7 @@ pub async fn update_file(
 pub async fn delete_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
@@ -528,12 +625,49 @@ pub async fn delete_file(
         }
     };
 
+    let tenant_scope =
+        match TenantScope::from_claims(&claims, "unified-core.file.delete_file", "core_files") {
+            Ok(scope) => scope,
+            Err((_, message)) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                    "code": 400
+                }));
+            }
+        };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     // 获取文件信息
-    let row = match sqlx::query(
-        "SELECT uploader_id, path, deleted_at FROM public.core_files WHERE id = $1",
-    )
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT uploader_id, path, deleted_at FROM public.core_files WHERE id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .fetch_optional(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -579,11 +713,13 @@ pub async fn delete_file(
     }
 
     // 软删除文件
-    match sqlx::query(
-        "UPDATE public.core_files SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
-    )
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "UPDATE public.core_files SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .execute(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => {
@@ -621,6 +757,7 @@ pub async fn delete_file(
 pub async fn move_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -678,12 +815,49 @@ pub async fn move_file(
         None
     };
 
+    let tenant_scope =
+        match TenantScope::from_claims(&claims, "unified-core.file.move_file", "core_files") {
+            Ok(scope) => scope,
+            Err((_, message)) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                    "code": 400
+                }));
+            }
+        };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     // 检查文件权限
-    let row = match sqlx::query(
-        "SELECT uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL",
-    )
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .fetch_optional(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -717,12 +891,14 @@ pub async fn move_file(
     }
 
     // 更新文件的文件夹ID
-    match sqlx::query(
-        "UPDATE public.core_files SET folder_id = $2, updated_at = NOW() WHERE id = $1",
-    )
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "UPDATE public.core_files SET folder_id = $2, updated_at = NOW() WHERE id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$3")
+    )))
     .bind(file_id)
     .bind(target_folder_uuid)
-    .execute(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -753,6 +929,7 @@ pub async fn move_file(
 pub async fn copy_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -803,10 +980,49 @@ pub async fn copy_file(
         }
     };
 
+    let tenant_scope =
+        match TenantScope::from_claims(&claims, "unified-core.file.copy_file", "core_files") {
+            Ok(scope) => scope,
+            Err((_, message)) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                    "code": 400
+                }));
+            }
+        };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     // 获取源文件信息
-    let row = match sqlx::query("SELECT name, size, mime_type, path, uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL")
+    let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
+        "SELECT name, size, mime_type, path, uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
         .bind(file_id)
-        .fetch_optional(&state.pool)
+        .bind_tenant_scope(&tenant_scope)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(r)) => r,
@@ -901,7 +1117,7 @@ pub async fn copy_file(
     .bind(target_folder_uuid)
     .bind(user_id)
     .bind(tenant_bind)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(_) => Json(serde_json::json!({
@@ -930,6 +1146,7 @@ pub async fn copy_file(
 pub async fn set_file_permission(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(payload): Json<FilePermissionRequest>,
 ) -> Json<serde_json::Value> {
@@ -1001,12 +1218,52 @@ pub async fn set_file_permission(
         }));
     }
 
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.file.set_file_permission",
+        "core_files",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": message,
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "缺少请求事务上下文",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     // 检查文件是否存在
-    let exists = match sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM public.core_files WHERE id = $1 AND deleted_at IS NULL)",
-    )
+    let exists = match sqlx::query_scalar::<_, bool>(sqlx::AssertSqlSafe(format!(
+        "SELECT EXISTS(SELECT 1 FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {})",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(file_id)
-    .fetch_one(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(e) => e,
@@ -1039,7 +1296,7 @@ pub async fn set_file_permission(
     .bind(target_user_id)
     .bind(&payload.permission)
     .bind(tenant_bind)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(_) => Json(serde_json::json!({

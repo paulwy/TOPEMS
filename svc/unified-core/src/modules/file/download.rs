@@ -14,6 +14,7 @@ use std::path::Path;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use uuid::Uuid;
 
@@ -38,6 +39,7 @@ fn tenant_scope_or_400(
 pub async fn download_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!(
@@ -65,6 +67,34 @@ pub async fn download_file(
 
     let scope = tenant_scope_or_400(&claims)?;
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "缺少请求事务上下文",
+                "data": null,
+                "code": 500
+            })),
+        ));
+    };
+    let mut tx_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": "内部服务器错误",
+                    "data": null,
+                    "code": 500
+                })),
+            ));
+        }
+    };
+
     // 查询文件信息
     let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT name, path, mime_type, size, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
@@ -72,7 +102,7 @@ pub async fn download_file(
     )))
     .bind(file_id)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut tx_scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -181,6 +211,7 @@ pub async fn download_file(
 pub async fn preview_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!(
@@ -208,6 +239,34 @@ pub async fn preview_file(
 
     let scope = tenant_scope_or_400(&claims)?;
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "缺少请求事务上下文",
+                "data": null,
+                "code": 500
+            })),
+        ));
+    };
+    let mut tx_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": "内部服务器错误",
+                    "data": null,
+                    "code": 500
+                })),
+            ));
+        }
+    };
+
     // 查询文件信息
     let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT name, path, mime_type, size, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
@@ -215,7 +274,7 @@ pub async fn preview_file(
     )))
     .bind(file_id)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut tx_scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -324,6 +383,7 @@ pub async fn preview_file(
 pub async fn get_thumbnail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     tracing::info!(
@@ -351,6 +411,34 @@ pub async fn get_thumbnail(
 
     let scope = tenant_scope_or_400(&claims)?;
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "缺少请求事务上下文",
+                "data": null,
+                "code": 500
+            })),
+        ));
+    };
+    let mut tx_scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": "内部服务器错误",
+                    "data": null,
+                    "code": 500
+                })),
+            ));
+        }
+    };
+
     // 查询文件信息
     let row = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT name, path, mime_type, uploader_id AS created_by FROM public.core_files WHERE id = $1 AND deleted_at IS NULL AND {}",
@@ -358,7 +446,7 @@ pub async fn get_thumbnail(
     )))
     .bind(file_id)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut tx_scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -492,11 +580,13 @@ pub async fn get_thumbnail(
 pub async fn thumbnail_compat(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     AxumPath((id, _size)): AxumPath<(String, String)>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     get_thumbnail(
         axum::extract::State(state),
         axum::Extension(claims),
+        axum::Extension(txn_arc),
         AxumPath(id),
     )
     .await

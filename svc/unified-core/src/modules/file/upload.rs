@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 #[derive(Debug, Clone, Serialize)]
 struct FileUploadResponse {
@@ -30,6 +31,7 @@ struct FileUploadResponse {
 pub async fn upload_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
     // 文件写操作必须携带有效租户：缺失或零租户时返回 400，禁止把文件写入零 UUID 区间。
@@ -51,6 +53,24 @@ pub async fn upload_file(
         "File upload upload_file called for user: {}",
         claims.username
     );
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "缺少请求事务上下文",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
+        }
+    };
 
     let mut results: Vec<FileUploadResponse> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
@@ -152,6 +172,16 @@ pub async fn upload_file(
             }
         };
 
+        // 单文件失败不能拖垮整批：每条写入前建保存点，失败回滚到保存点后继续。
+        if let Err(e) = sqlx::query("SAVEPOINT file_upload")
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("Failed to create savepoint: {}", e);
+            failed.push(format!("{}: 数据库保存失败", file_name));
+            continue;
+        }
+
         match sqlx::query(
             r#"
             INSERT INTO public.core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
@@ -166,7 +196,7 @@ pub async fn upload_file(
         .bind(folder_id)
         .bind(user_id)
         .bind(tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         {
             Ok(_) => {
@@ -183,6 +213,9 @@ pub async fn upload_file(
             }
             Err(e) => {
                 tracing::error!("Failed to save file metadata: {}", e);
+                let _ = sqlx::query("ROLLBACK TO SAVEPOINT file_upload")
+                    .execute(&mut scope)
+                    .await;
                 // 清理已保存的文件
                 let _ = fs::remove_file(&storage_path);
                 failed.push(format!("{}: 数据库保存失败", file_name));
@@ -228,6 +261,7 @@ pub async fn upload_file(
 pub async fn upload_multiple(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
     // 文件写操作必须携带有效租户：缺失或零租户时返回 400，禁止把文件写入零 UUID 区间。
@@ -249,6 +283,24 @@ pub async fn upload_multiple(
         "File upload upload_multiple called for user: {}",
         claims.username
     );
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "缺少请求事务上下文",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open request scope: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
+        }
+    };
 
     let mut results: Vec<FileUploadResponse> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
@@ -323,6 +375,16 @@ pub async fn upload_multiple(
             }
         };
 
+        // 单文件失败不能拖垮整批：每条写入前建保存点，失败回滚到保存点后继续。
+        if let Err(e) = sqlx::query("SAVEPOINT file_upload")
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("Failed to create savepoint: {}", e);
+            failed.push(format!("{}: 数据库保存失败", file_name));
+            continue;
+        }
+
         match sqlx::query(
             r#"
             INSERT INTO public.core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
@@ -337,7 +399,7 @@ pub async fn upload_multiple(
         .bind(folder_id)
         .bind(user_id)
         .bind(tenant_bind)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         {
             Ok(_) => {
@@ -354,6 +416,9 @@ pub async fn upload_multiple(
             }
             Err(e) => {
                 tracing::error!("Failed to save file metadata: {}", e);
+                let _ = sqlx::query("ROLLBACK TO SAVEPOINT file_upload")
+                    .execute(&mut scope)
+                    .await;
                 let _ = fs::remove_file(&storage_path);
                 failed.push(format!("{}: 数据库保存失败", file_name));
             }
