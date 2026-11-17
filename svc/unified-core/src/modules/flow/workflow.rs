@@ -644,6 +644,7 @@ pub async fn deploy_workflow(
     request_body = RollbackWorkflowRequest,
     responses(
         (status = 200, description = "回滚成功", body = ApiResponse<Workflow>),
+        (status = 400, description = "版本号格式非法"),
         (status = 404, description = "工作流或目标版本不存在"),
         (status = 500, description = "回滚失败"),
     ),
@@ -654,6 +655,12 @@ pub async fn rollback_workflow(
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<RollbackWorkflowRequest>,
 ) -> ApiResponse<Workflow> {
+    let to_version: i32 = match payload.to_version.trim().parse::<i32>() {
+        Ok(v) => v,
+        Err(_) => {
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的版本号".to_string()))
+        }
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -673,7 +680,7 @@ pub async fn rollback_workflow(
          ORDER BY created_at DESC LIMIT 1",
     )
     .bind(workflow_id)
-    .bind(&payload.to_version)
+    .bind(to_version)
     .fetch_optional(&mut scope)
     .await
     {
@@ -717,7 +724,7 @@ pub async fn rollback_workflow(
          AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) ",
     )
     .bind(workflow_id)
-    .bind(&payload.to_version)
+    .bind(to_version)
     .execute(&mut scope)
     .await
     {
@@ -809,6 +816,7 @@ pub async fn list_workflow_versions(
     request_body = CreateWorkflowVersionRequest,
     responses(
         (status = 200, description = "创建版本成功", body = ApiResponse<WorkflowVersion>),
+        (status = 400, description = "版本号或创建人格式非法"),
         (status = 404, description = "工作流不存在"),
         (status = 500, description = "创建失败"),
     ),
@@ -821,6 +829,23 @@ pub async fn create_workflow_version(
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<CreateWorkflowVersionRequest>,
 ) -> ApiResponse<WorkflowVersion> {
+    let version_no: i32 = match payload.version.trim().parse::<i32>() {
+        Ok(v) => v,
+        Err(_) => {
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的版本号".to_string()))
+        }
+    };
+    let created_by: Option<Uuid> = match payload.created_by.as_deref() {
+        Some(raw) => match Uuid::parse_str(raw) {
+            Ok(id) => Some(id),
+            Err(_) => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的创建人ID".to_string(),
+                ))
+            }
+        },
+        None => Uuid::parse_str(&claims.sub).ok(),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -899,10 +924,10 @@ pub async fn create_workflow_version(
          RETURNING id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at",
     )
     .bind(workflow_id)
-    .bind(&payload.version)
+    .bind(version_no)
     .bind(definition)
     .bind(&payload.change_description)
-    .bind(payload.created_by.as_deref().unwrap_or("system"))
+    .bind(created_by)
     .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await;
