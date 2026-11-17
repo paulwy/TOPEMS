@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::resolve_create_tenant;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
 use utoipa::ToSchema;
@@ -30,6 +30,12 @@ fn validate_sort_order(order: &str) -> Result<String, TopemsError> {
             order
         ))),
     }
+}
+
+/// bi_datasets 白名单是全局元数据（不触达业务行），按仓库口径走裸池校验。
+async fn validate_columns_meta(state: &AppState, columns: &[String]) -> Result<(), TopemsError> {
+    let AppState { pool, .. } = state;
+    validate_columns(pool, DEFAULT_BI_TABLE, columns).await
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -101,17 +107,42 @@ pub struct ReportExportQuery {
     )
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_reports(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing self-service reports");
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.list_reports",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list reports: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
         FROM analytics_self_service_reports
+        WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,
@@ -172,11 +203,24 @@ pub async fn create_report(
 ) -> Json<serde_json::Value> {
     info!("Creating self-service report: {}", req.name);
 
-    // 报表是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
-    let tenant_id = match resolve_create_tenant(&claims) {
-        Ok(t) => t,
-        Err((code, msg)) => {
-            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+    // 报表是业务数据，必须落调用方租户：超管/服务令牌走系统通道。
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.create_report",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to create report: {}", e),
+            ));
         }
     };
 
@@ -201,29 +245,37 @@ pub async fn create_report(
         req.is_public.unwrap_or(false),
 now,
 now,
-        tenant_id,
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create report",
-                            "data": ReportResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                fields: row.fields.unwrap_or(serde_json::json!([])),
-                                filters: row.filters,
-                                config: row.config,
-                                owner_id: row.owner_id,
-                                is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to create report: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Create report",
+                                "data": ReportResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    datasource_id: row.datasource_id,
+                                    fields: row.fields.unwrap_or(serde_json::json!([])),
+                                    filters: row.filters,
+                                    config: row.config,
+                                    owner_id: row.owner_id,
+                                    is_public: row.is_public.unwrap_or(false),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create report: {}", e),
@@ -246,19 +298,42 @@ now,
 )]
 pub async fn get_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting self-service report: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.get_report",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get report: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
         FROM analytics_self_service_reports
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -315,10 +390,31 @@ pub async fn get_report(
 )]
 pub async fn update_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateReportRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating self-service report: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.update_report",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to update report: {}", e),
+            ));
+        }
+    };
 
     let now = Utc::now();
 
@@ -334,6 +430,7 @@ pub async fn update_report(
             is_public = COALESCE($7, is_public),
             updated_at = $8
         WHERE id = $9
+          AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
         RETURNING id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
         "#,
         req.name,
@@ -345,28 +442,37 @@ pub async fn update_report(
         req.is_public,
 now,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update report",
-                            "data": ReportResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                fields: row.fields.unwrap_or(serde_json::json!([])),
-                                filters: row.filters,
-                                config: row.config,
-                                owner_id: row.owner_id,
-                                is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(Some(row)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to update report: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update report",
+                                "data": ReportResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    datasource_id: row.datasource_id,
+                                    fields: row.fields.unwrap_or(serde_json::json!([])),
+                                    filters: row.filters,
+                                    config: row.config,
+                                    owner_id: row.owner_id,
+                                    is_public: row.is_public.unwrap_or(false),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Report not found",
@@ -395,26 +501,57 @@ now,
 )]
 pub async fn delete_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting self-service report: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.delete_report",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to delete report: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
         UPDATE analytics_self_service_reports SET deleted_at = NOW()
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete report"
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to delete report: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete report"
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Report not found",
@@ -437,20 +574,43 @@ pub async fn delete_report(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn query_report_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ReportQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Querying report data for: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.query_report_data",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to query report data: {}", e),
+            ));
+        }
+    };
 
     let report = match sqlx::query!(
         r#"
         SELECT id, name, datasource_id, fields, filters
         FROM analytics_self_service_reports
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(Some(row)) => row,
@@ -535,9 +695,7 @@ pub async fn query_report_data(
         if !whitelist_cols.is_empty() {
             // sort_by 也作为 SELECT 列参与校验（若在列表中）
             if whitelist_cols.contains(&sort_by_raw) {
-                if let Err(msg) =
-                    validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
-                {
+                if let Err(msg) = validate_columns_meta(&state, &whitelist_cols).await {
                     return Json(topems_shared_core::response::error_value(
                         500,
                         &msg.to_string(),
@@ -546,7 +704,7 @@ pub async fn query_report_data(
             } else {
                 // sort_by 必须是已注册列或保留 id
                 let check = vec![sort_by_raw.clone()];
-                if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &check).await {
+                if let Err(msg) = validate_columns_meta(&state, &check).await {
                     // strict 模式下若 sort_by 未注册，报错；warn 模式放行并记录日志
                     tracing::warn!(
                         "query_report_data sort_by '{}' 未在白名单中：{}",
@@ -554,9 +712,7 @@ pub async fn query_report_data(
                         msg
                     );
                 }
-                if let Err(msg) =
-                    validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
-                {
+                if let Err(msg) = validate_columns_meta(&state, &whitelist_cols).await {
                     return Json(topems_shared_core::response::error_value(
                         500,
                         &msg.to_string(),
@@ -598,14 +754,15 @@ pub async fn query_report_data(
 
     // S1.1: LIMIT/OFFSET 参数化绑定，杜绝 format! 拼接用户可控数值。
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
     let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await;
 
     match data_result {
@@ -658,20 +815,57 @@ pub async fn query_report_data(
 )]
 pub async fn export_report(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(query): Query<ReportExportQuery>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     info!("Exporting report: {} format: {:?}", id, query.format);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.report.export_report",
+        "bi.analytics_self_service_reports",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "code": 400,
+                    "success": false,
+                    "message": message,
+                    "data": null,
+                })),
+            ))
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("Failed to open read scope for export: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "code": 500,
+                    "success": false,
+                    "message": "导出失败",
+                    "data": null,
+                })),
+            ));
+        }
+    };
 
     let report = match sqlx::query!(
         r#"
         SELECT id, name, fields
         FROM analytics_self_service_reports
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(Some(row)) => row,

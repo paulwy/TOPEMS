@@ -1,6 +1,11 @@
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Extension, State},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
 
@@ -19,7 +24,7 @@ const DEFAULT_BI_TABLE: &str = "analytics_data";
 /// 返回 (quoted_time, quoted_value, quoted_time_for_order_by)；
 /// 错误时直接返回 `Err(String)`，由 handler 转换为 JSON 500 响应。
 async fn validate_prediction_fields(
-    pool: &sqlx::PgPool,
+    state: &AppState,
     time_field: &str,
     value_field: &str,
 ) -> Result<(String, String), TopemsError> {
@@ -28,6 +33,8 @@ async fn validate_prediction_fields(
 
     // sort 也依赖 time_field，白名单校验覆盖全部字段。
     let cols = vec![time_field.to_string(), value_field.to_string()];
+    // bi_datasets 白名单是全局元数据（不触达业务行），按仓库口径走裸池校验。
+    let AppState { pool, .. } = state;
     validate_columns(pool, DEFAULT_BI_TABLE, &cols).await?;
 
     Ok((t, v))
@@ -268,6 +275,7 @@ fn calculate_mse(actual: &[f64], predicted: &[f64]) -> f64 {
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn moving_average_forecast(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<MovingAverageRequest>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -275,12 +283,32 @@ pub async fn moving_average_forecast(
         req.datasource_id
     );
 
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.prediction.moving_average",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to run moving average forecast: {}", e),
+            ));
+        }
+    };
+
     let window_size = req.window_size.unwrap_or(7);
     let forecast_periods = req.forecast_periods.unwrap_or(7);
 
     // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
     let (time_q, value_q) =
-        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+        match validate_prediction_fields(&state, &req.time_field, &req.value_field).await {
             Ok(v) => v,
             Err(e) => {
                 return Json(topems_shared_core::response::error_value(
@@ -291,13 +319,14 @@ pub async fn moving_average_forecast(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
     let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(rows) => rows,
@@ -389,6 +418,7 @@ pub async fn moving_average_forecast(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn exponential_smoothing_forecast(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ExponentialSmoothingRequest>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -396,12 +426,32 @@ pub async fn exponential_smoothing_forecast(
         req.datasource_id
     );
 
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.prediction.exponential_smoothing",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to run exponential smoothing forecast: {}", e),
+            ));
+        }
+    };
+
     let alpha = req.alpha.unwrap_or(0.3);
     let forecast_periods = req.forecast_periods.unwrap_or(7);
 
     // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
     let (time_q, value_q) =
-        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+        match validate_prediction_fields(&state, &req.time_field, &req.value_field).await {
             Ok(v) => v,
             Err(e) => {
                 return Json(topems_shared_core::response::error_value(
@@ -412,13 +462,14 @@ pub async fn exponential_smoothing_forecast(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
     let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(rows) => rows,
@@ -496,13 +547,34 @@ pub async fn exponential_smoothing_forecast(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn trend_analysis(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<TrendAnalysisRequest>,
 ) -> Json<serde_json::Value> {
     info!("Trend analysis for datasource: {}", req.datasource_id);
 
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.prediction.trend",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to run trend analysis: {}", e),
+            ));
+        }
+    };
+
     // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
     let (time_q, value_q) =
-        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+        match validate_prediction_fields(&state, &req.time_field, &req.value_field).await {
             Ok(v) => v,
             Err(e) => {
                 return Json(topems_shared_core::response::error_value(
@@ -513,13 +585,14 @@ pub async fn trend_analysis(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
     let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(rows) => rows,
@@ -581,6 +654,7 @@ pub async fn trend_analysis(
 #[allow(clippy::as_conversions)]
 pub async fn prediction_comparison(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<PredictionCompareRequest>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -588,9 +662,29 @@ pub async fn prediction_comparison(
         req.datasource_id
     );
 
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.prediction.comparison",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to run prediction comparison: {}", e),
+            ));
+        }
+    };
+
     // S1.2 + S1.3: 字段白名单校验 + 参数化 LIMIT
     let (time_q, value_q) =
-        match validate_prediction_fields(&state.pool, &req.time_field, &req.value_field).await {
+        match validate_prediction_fields(&state, &req.time_field, &req.value_field).await {
             Ok(v) => v,
             Err(e) => {
                 return Json(topems_shared_core::response::error_value(
@@ -601,13 +695,14 @@ pub async fn prediction_comparison(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
     let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(rows) => rows,

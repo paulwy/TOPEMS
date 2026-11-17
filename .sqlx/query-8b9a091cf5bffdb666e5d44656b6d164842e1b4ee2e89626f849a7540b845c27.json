@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE analytics_dashboard_templates\n        SET is_active = false, updated_at = $1\n        WHERE id = $2\n          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)\n        RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "analytics_dashboard_templates",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8b9a091cf5bffdb666e5d44656b6d164842e1b4ee2e89626f849a7540b845c27"
+}

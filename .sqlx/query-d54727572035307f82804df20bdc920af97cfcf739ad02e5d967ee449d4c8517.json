@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE analytics_comparison_analyses\n        SET status = 'running', updated_at = $1\n        WHERE id = $2\n          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d54727572035307f82804df20bdc920af97cfcf739ad02e5d967ee449d4c8517"
+}

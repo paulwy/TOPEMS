@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::resolve_create_tenant;
+use topems_shared_auth::middleware::TenantScope;
 use tracing::info;
 
 use crate::shared::AppState;
@@ -93,17 +93,42 @@ pub struct DrilldownHistoryListResponse {
     responses((status = 200, description = "OK")),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_drilldown_paths(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing drilldown paths");
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.list_paths",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list drilldown paths: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
         FROM analytics_drilldown_paths
+        WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,
@@ -154,10 +179,23 @@ pub async fn create_drilldown_path(
     info!("Creating drilldown path: {}", req.name);
 
     // 下钻路径是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
-    let tenant_id = match resolve_create_tenant(&claims) {
-        Ok(t) => t,
-        Err((code, msg)) => {
-            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.create_path",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to create drilldown path: {}", e),
+            ));
         }
     };
 
@@ -180,27 +218,35 @@ pub async fn create_drilldown_path(
         req.owner_id,
 now,
 now,
-        tenant_id,
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create drilldown path",
-                            "data": DrilldownPathResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                levels: row.levels.unwrap_or(serde_json::json!([])),
-                                measures: row.measures.unwrap_or(serde_json::json!([])),
-                                owner_id: row.owner_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to create drilldown path: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Create drilldown path",
+                                "data": DrilldownPathResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    datasource_id: row.datasource_id,
+                                    levels: row.levels.unwrap_or(serde_json::json!([])),
+                                    measures: row.measures.unwrap_or(serde_json::json!([])),
+                                    owner_id: row.owner_id,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create drilldown path: {}", e),
@@ -218,19 +264,42 @@ now,
 )]
 pub async fn get_drilldown_path(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting drilldown path: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.get_path",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get drilldown path: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
         FROM analytics_drilldown_paths
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -272,10 +341,31 @@ pub async fn get_drilldown_path(
 )]
 pub async fn update_drilldown_path(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDrilldownPathRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating drilldown path: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.update_path",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to update drilldown path: {}", e),
+            ));
+        }
+    };
 
     let now = Utc::now();
 
@@ -288,6 +378,7 @@ pub async fn update_drilldown_path(
             measures = COALESCE($4, measures),
             updated_at = $5
         WHERE id = $6
+          AND ($7::uuid IS NULL OR tenant_id = $7::uuid)
         RETURNING id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
         "#,
         req.name,
@@ -296,26 +387,35 @@ pub async fn update_drilldown_path(
         req.measures,
 now,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update drilldown path",
-                            "data": DrilldownPathResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                levels: row.levels.unwrap_or(serde_json::json!([])),
-                                measures: row.measures.unwrap_or(serde_json::json!([])),
-                                owner_id: row.owner_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(Some(row)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to update drilldown path: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update drilldown path",
+                                "data": DrilldownPathResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    datasource_id: row.datasource_id,
+                                    levels: row.levels.unwrap_or(serde_json::json!([])),
+                                    measures: row.measures.unwrap_or(serde_json::json!([])),
+                                    owner_id: row.owner_id,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Drilldown path not found",
@@ -337,26 +437,57 @@ now,
 )]
 pub async fn delete_drilldown_path(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting drilldown path: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.delete_path",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to delete drilldown path: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
         UPDATE analytics_drilldown_paths SET deleted_at = NOW()
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete drilldown path"
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to delete drilldown path: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete drilldown path"
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Drilldown path not found",
@@ -385,10 +516,23 @@ pub async fn drill_down(
     info!("Drilling down on path: {}", req.path_id);
 
     // 下钻历史是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
-    let tenant_id = match resolve_create_tenant(&claims) {
-        Ok(t) => t,
-        Err((code, msg)) => {
-            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.drill_down",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get drilldown path: {}", e),
+            ));
         }
     };
 
@@ -397,10 +541,12 @@ pub async fn drill_down(
         SELECT id, name, levels, measures
         FROM analytics_drilldown_paths
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         req.path_id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(Some(row)) => row,
@@ -448,10 +594,17 @@ pub async fn drill_down(
         req.drill_value.clone(),
         req.filters.clone(),
 now,
-        tenant_id,
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
+
+    if let Err(e) = db_scope.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to record drilldown history: {}", e),
+        ));
+    }
 
     Json(serde_json::json!({
         "success": true,
@@ -487,10 +640,23 @@ pub async fn roll_up(
     info!("Rolling up on path: {}", req.path_id);
 
     // 上卷历史是业务数据，必须落调用方租户：零 UUID 仅供平台内置共享语料。
-    let tenant_id = match resolve_create_tenant(&claims) {
-        Ok(t) => t,
-        Err((code, msg)) => {
-            return Json(serde_json::json!({ "success": false, "code": code, "message": msg }))
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.roll_up",
+        "bi.analytics_drilldown_paths",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get drilldown path: {}", e),
+            ));
         }
     };
 
@@ -499,10 +665,12 @@ pub async fn roll_up(
         SELECT id, name, levels, measures
         FROM analytics_drilldown_paths
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         req.path_id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(Some(row)) => row,
@@ -549,10 +717,17 @@ pub async fn roll_up(
         req.drill_value.clone(),
         req.filters.clone(),
 now,
-        tenant_id,
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
+
+    if let Err(e) = db_scope.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to record drilldown history: {}", e),
+        ));
+    }
 
     Json(serde_json::json!({
         "success": true,
@@ -580,9 +755,30 @@ now,
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_drilldown_history(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<DrilldownHistoryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Getting drilldown history for user: {}", req.user_id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.drilldown.get_history",
+        "bi.analytics_drilldown_history",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get drilldown history: {}", e),
+            ));
+        }
+    };
 
     let page = req.page.unwrap_or(1);
     let page_size = req.page_size.unwrap_or(20);
@@ -593,14 +789,16 @@ pub async fn get_drilldown_history(
         SELECT id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at
         FROM analytics_drilldown_history
         WHERE user_id = $1
+          AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
         "#,
         req.user_id,
         page_size,
         offset,
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,

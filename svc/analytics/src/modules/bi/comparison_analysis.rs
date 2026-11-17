@@ -13,12 +13,15 @@
 //! - GET    /api/bi/comparison-analysis/{id}/result
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
+use topems_shared_db::scope::ScopedTxn;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
@@ -128,9 +131,30 @@ pub struct RunComparisonResponse {
 )]
 pub async fn list_comparisons(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ListComparisonsQuery>,
 ) -> Json<serde_json::Value> {
     info!("Listing comparison analyses");
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.list",
+        "bi.analytics_comparison_analyses",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list comparison analyses: {}", e),
+            ));
+        }
+    };
 
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 200);
@@ -145,6 +169,7 @@ pub async fn list_comparisons(
         FROM analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
+          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -152,8 +177,9 @@ pub async fn list_comparisons(
         query.status,
         page_size,
         offset,
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,
@@ -171,11 +197,13 @@ pub async fn list_comparisons(
         FROM analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#,
         search_pattern,
         query.status,
+        tenant_scope.tenant_id(),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     {
         Ok(c) => c,
@@ -231,8 +259,29 @@ pub async fn list_comparisons(
 )]
 pub async fn get_comparison(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.get",
+        "bi.analytics_comparison_analyses",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get comparison analysis: {}", e),
+            ));
+        }
+    };
+
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
@@ -251,10 +300,12 @@ pub async fn get_comparison(
                indicators, filters, status, last_run_at, created_by, created_at, updated_at
         FROM analytics_comparison_analyses
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -303,9 +354,30 @@ pub async fn get_comparison(
 )]
 pub async fn create_comparison(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateComparisonRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating comparison analysis: {}", req.name);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.create",
+        "bi.analytics_comparison_analyses",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to create comparison analysis: {}", e),
+            ));
+        }
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -330,31 +402,39 @@ pub async fn create_comparison(
         req.created_by,
         now,
         now,
-        Uuid::nil(),
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create comparison analysis",
-                            "data": ComparisonAnalysisResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                comparison_type: row.comparison_type,
-                                dimension_a: row.dimension_a,
-                                dimension_b: row.dimension_b,
-                                indicators: row.indicators.unwrap_or(serde_json::json!([])),
-                                filters: row.filters,
-                                status: row.status,
-        last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
-                                created_by: row.created_by,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to create comparison analysis: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Create comparison analysis",
+                                "data": ComparisonAnalysisResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    comparison_type: row.comparison_type,
+                                    dimension_a: row.dimension_a,
+                                    dimension_b: row.dimension_b,
+                                    indicators: row.indicators.unwrap_or(serde_json::json!([])),
+                                    filters: row.filters,
+                                    status: row.status,
+            last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
+                                    created_by: row.created_by,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create comparison analysis: {}", e),
@@ -372,9 +452,30 @@ pub async fn create_comparison(
 )]
 pub async fn update_comparison(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id_str): Path<String>,
     Json(req): Json<UpdateComparisonRequest>,
 ) -> Json<serde_json::Value> {
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.update",
+        "bi.analytics_comparison_analyses",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to update comparison analysis: {}", e),
+            ));
+        }
+    };
+
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
@@ -402,6 +503,7 @@ pub async fn update_comparison(
             status = COALESCE($8, status),
             updated_at = $9
         WHERE id = $10
+          AND ($11::uuid IS NULL OR tenant_id = $11::uuid)
         RETURNING id, name, description, comparison_type, dimension_a, dimension_b,
                   indicators, filters, status, last_run_at, created_by, created_at, updated_at
         "#,
@@ -415,30 +517,39 @@ pub async fn update_comparison(
         req.status,
         now,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update comparison analysis",
-                            "data": ComparisonAnalysisResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                comparison_type: row.comparison_type,
-                                dimension_a: row.dimension_a,
-                                dimension_b: row.dimension_b,
-                                indicators: row.indicators.unwrap_or(serde_json::json!([])),
-                                filters: row.filters,
-                                status: row.status,
-        last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
-                                created_by: row.created_by,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(Some(row)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to update comparison analysis: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update comparison analysis",
+                                "data": ComparisonAnalysisResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    comparison_type: row.comparison_type,
+                                    dimension_a: row.dimension_a,
+                                    dimension_b: row.dimension_b,
+                                    indicators: row.indicators.unwrap_or(serde_json::json!([])),
+                                    filters: row.filters,
+                                    status: row.status,
+            last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
+                                    created_by: row.created_by,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Comparison analysis not found",
@@ -460,8 +571,29 @@ pub async fn update_comparison(
 )]
 pub async fn delete_comparison(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.delete",
+        "bi.analytics_comparison_analyses",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to delete comparison analysis: {}", e),
+            ));
+        }
+    };
+
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
@@ -478,19 +610,29 @@ pub async fn delete_comparison(
         r#"
         UPDATE analytics_comparison_analyses SET deleted_at = NOW()
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete comparison analysis",
-            "data": { "id": id }
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to delete comparison analysis: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete comparison analysis",
+                "data": { "id": id }
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Comparison analysis not found",
@@ -516,8 +658,29 @@ pub async fn delete_comparison(
 )]
 pub async fn run_comparison(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.run",
+        "bi.analytics_comparison_analyses,bi.analytics_comparison_results",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get comparison analysis: {}", e),
+            ));
+        }
+    };
+
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
@@ -535,10 +698,12 @@ pub async fn run_comparison(
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
         FROM analytics_comparison_analyses
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -566,11 +731,13 @@ pub async fn run_comparison(
         UPDATE analytics_comparison_analyses
         SET status = 'running', updated_at = $1
         WHERE id = $2
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#,
         Utc::now(),
         id,
+        tenant_scope.tenant_id(),
     )
-    .execute(&state.pool)
+    .execute(&mut db_scope)
     .await
     {
         warn!("Failed to mark comparison as running: {}", e);
@@ -617,9 +784,9 @@ pub async fn run_comparison(
         data_json,
         summary,
         generated_at,
-        Uuid::nil(),
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .execute(&state.pool)
+    .execute(&mut db_scope)
     .await;
 
     if let Err(e) = insert_result {
@@ -629,11 +796,13 @@ pub async fn run_comparison(
             UPDATE analytics_comparison_analyses
             SET status = 'failed', updated_at = $1
             WHERE id = $2
+              AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
             "#,
             Utc::now(),
             id,
+            tenant_scope.tenant_id(),
         )
-        .execute(&state.pool)
+        .execute(&mut db_scope)
         .await;
 
         return Json(topems_shared_core::response::error_value(
@@ -649,12 +818,21 @@ pub async fn run_comparison(
             last_run_at = $1,
             updated_at = $1
         WHERE id = $2
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#,
         completed_at,
         id,
+        tenant_scope.tenant_id(),
     )
-    .execute(&state.pool)
+    .execute(&mut db_scope)
     .await;
+
+    if let Err(e) = db_scope.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to commit comparison result: {}", e),
+        ));
+    }
 
     Json(serde_json::json!({
         "success": true,
@@ -680,16 +858,38 @@ pub async fn run_comparison(
 )]
 pub async fn get_comparison_result(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.comparison.get_result",
+        "bi.analytics_comparison_analyses,bi.analytics_comparison_results",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get comparison result: {}", e),
+            ));
+        }
+    };
+
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
             if id_str == "1" || id_str.parse::<i32>().is_ok() {
                 let default_id = sqlx::query_scalar!(
-                    r#"SELECT id FROM analytics_comparison_analyses ORDER BY created_at DESC LIMIT 1"#
+                    r#"SELECT id FROM analytics_comparison_analyses WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT 1"#,
+                    tenant_scope.tenant_id(),
                 )
-                .fetch_optional(&state.pool)
+                .fetch_optional(&mut db_scope)
                 .await;
 
                 match default_id {
@@ -717,12 +917,14 @@ pub async fn get_comparison_result(
         SELECT id, comparison_id, status, data, summary, generated_at
         FROM analytics_comparison_results
         WHERE comparison_id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY generated_at DESC
         LIMIT 1
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -740,7 +942,7 @@ pub async fn get_comparison_result(
             // If a result has never been generated, derive a deterministic
             // mock result from the analysis record so the UI can render
             // something useful on first load.
-            return fallback_comparison_result(&state, id).await;
+            return fallback_comparison_result(&mut db_scope, tenant_scope.tenant_id(), id).await;
         }
     };
 
@@ -848,16 +1050,22 @@ fn round2(v: f64) -> f64 {
     (v * 100.0).round() / 100.0
 }
 
-async fn fallback_comparison_result(state: &AppState, id: Uuid) -> Json<serde_json::Value> {
+async fn fallback_comparison_result(
+    db_scope: &mut ScopedTxn<'_>,
+    tenant_id: Option<Uuid>,
+    id: Uuid,
+) -> Json<serde_json::Value> {
     let row = sqlx::query!(
         r#"
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
         FROM analytics_comparison_analyses
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *db_scope)
     .await
     .ok()
     .flatten();

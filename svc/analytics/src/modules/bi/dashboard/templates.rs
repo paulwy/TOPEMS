@@ -5,6 +5,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
 use tracing::info;
 
 use crate::modules::bi::{begin_tenant_txn, tenant_uuid};
@@ -23,18 +24,43 @@ use super::models::{
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_dashboard_templates(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing dashboard templates");
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.dashboard.list_templates",
+        "bi.analytics_dashboard_templates",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list templates: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         FROM analytics_dashboard_templates
         WHERE is_active = true
+          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,
@@ -164,19 +190,42 @@ now,
 )]
 pub async fn get_dashboard_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting dashboard template: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.dashboard.get_template",
+        "bi.analytics_dashboard_templates",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get template: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         FROM analytics_dashboard_templates
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -224,10 +273,31 @@ pub async fn get_dashboard_template(
 )]
 pub async fn update_dashboard_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDashboardTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating dashboard template: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.dashboard.update_template",
+        "bi.analytics_dashboard_templates",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to update template: {}", e),
+            ));
+        }
+    };
 
     let now = Utc::now();
 
@@ -243,6 +313,7 @@ pub async fn update_dashboard_template(
             is_active = COALESCE($7, is_active),
             updated_at = $8
         WHERE id = $9
+          AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
         RETURNING id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         "#,
         req.name,
@@ -254,27 +325,36 @@ pub async fn update_dashboard_template(
         req.is_active,
 now,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update dashboard template",
-                            "data": DashboardTemplateResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                layout: row.layout.unwrap_or(serde_json::json!({})),
-                                preview_image: row.preview_image,
-                                category: row.category,
-                                tags: row.tags,
-                                is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(Some(row)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to update template: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update dashboard template",
+                                "data": DashboardTemplateResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    layout: row.layout.unwrap_or(serde_json::json!({})),
+                                    preview_image: row.preview_image,
+                                    category: row.category,
+                                    tags: row.tags,
+                                    is_active: row.is_active.unwrap_or(true),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Template not found",
@@ -300,28 +380,59 @@ now,
 )]
 pub async fn delete_dashboard_template(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting dashboard template: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.dashboard.delete_template",
+        "bi.analytics_dashboard_templates",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to delete template: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
         UPDATE analytics_dashboard_templates
         SET is_active = false, updated_at = $1
         WHERE id = $2
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id
         "#,
         Utc::now(),
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete dashboard template"
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to delete template: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete dashboard template"
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Template not found",

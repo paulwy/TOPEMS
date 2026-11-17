@@ -1,10 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
 use utoipa::ToSchema;
@@ -151,18 +153,43 @@ pub struct FilteredDataResponse {
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_json::Value> {
+pub async fn list_permission_rules(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
     info!("Listing row-level permission rules");
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.list_rules",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list permission rules: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, table_name, rule_type, condition, 
                role_ids, user_ids, is_active, created_by, created_at, updated_at
         FROM analytics_row_level_permissions
+        WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,
@@ -225,9 +252,30 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
 )]
 pub async fn create_permission_rule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePermissionRuleRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating permission rule: {}", req.name);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.create_rule",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to create permission rule: {}", e),
+            ));
+        }
+    };
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -254,31 +302,39 @@ pub async fn create_permission_rule(
         req.created_by,
         now,
         now,
-        Uuid::nil(),
+        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await;
 
     match result {
-        Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create permission rule",
-                            "data": PermissionRuleResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                table_name: row.table_name,
-                                rule_type: row.rule_type,
-                                condition: row.condition.unwrap_or(serde_json::json!({})),
-                                role_ids: row.role_ids,
-                                user_ids: row.user_ids,
-                                is_active: row.is_active.unwrap_or(true),
-                                created_by: row.created_by,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(row) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to create permission rule: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Create permission rule",
+                                "data": PermissionRuleResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    datasource_id: row.datasource_id,
+                                    table_name: row.table_name,
+                                    rule_type: row.rule_type,
+                                    condition: row.condition.unwrap_or(serde_json::json!({})),
+                                    role_ids: row.role_ids,
+                                    user_ids: row.user_ids,
+                                    is_active: row.is_active.unwrap_or(true),
+                                    created_by: row.created_by,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create permission rule: {}", e),
@@ -304,9 +360,30 @@ pub async fn create_permission_rule(
 )]
 pub async fn get_permission_rule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting permission rule: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.get_rule",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get permission rule: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query!(
         r#"
@@ -314,10 +391,12 @@ pub async fn get_permission_rule(
                role_ids, user_ids, is_active, created_by, created_at, updated_at
         FROM analytics_row_level_permissions
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(row) => row,
@@ -379,10 +458,31 @@ pub async fn get_permission_rule(
 )]
 pub async fn update_permission_rule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePermissionRuleRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating permission rule: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.update_rule",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to update permission rule: {}", e),
+            ));
+        }
+    };
 
     let now = Utc::now();
 
@@ -397,6 +497,7 @@ pub async fn update_permission_rule(
             is_active = COALESCE($6, is_active),
             updated_at = $7
         WHERE id = $8
+          AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
         RETURNING id, name, description, datasource_id, table_name, rule_type, condition,
                   role_ids, user_ids, is_active, created_by, created_at, updated_at
         "#,
@@ -408,30 +509,39 @@ pub async fn update_permission_rule(
         req.is_active,
         now,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update permission rule",
-                            "data": PermissionRuleResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                table_name: row.table_name,
-                                rule_type: row.rule_type,
-                                condition: row.condition.unwrap_or(serde_json::json!({})),
-                                role_ids: row.role_ids,
-                                user_ids: row.user_ids,
-                                is_active: row.is_active.unwrap_or(true),
-                                created_by: row.created_by,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+        Ok(Some(row)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to update permission rule: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update permission rule",
+                                "data": PermissionRuleResponse {
+                                    id: row.id,
+                                    name: row.name,
+                                    description: row.description,
+                                    datasource_id: row.datasource_id,
+                                    table_name: row.table_name,
+                                    rule_type: row.rule_type,
+                                    condition: row.condition.unwrap_or(serde_json::json!({})),
+                                    role_ids: row.role_ids,
+                                    user_ids: row.user_ids,
+                                    is_active: row.is_active.unwrap_or(true),
+                                    created_by: row.created_by,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+                                }
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Permission rule not found",
@@ -461,26 +571,57 @@ pub async fn update_permission_rule(
 )]
 pub async fn delete_permission_rule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting permission rule: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.delete_rule",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to delete permission rule: {}", e),
+            ));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
         UPDATE analytics_row_level_permissions SET deleted_at = NOW()
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
         "#,
         id,
+        tenant_scope.tenant_id(),
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete permission rule"
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to delete permission rule: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete permission rule"
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Permission rule not found",
@@ -508,12 +649,33 @@ pub async fn delete_permission_rule(
 )]
 pub async fn validate_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ValidatePermissionRequest>,
 ) -> Json<serde_json::Value> {
     info!(
         "Validating permission for user: {} on table: {}",
         req.user_id, req.table_name
     );
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.validate_permission",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to validate permission: {}", e),
+            ));
+        }
+    };
 
     let role_ids = req.role_ids.unwrap_or_default();
 
@@ -529,13 +691,15 @@ pub async fn validate_permission(
             OR role_ids && $4::text[]
             OR (user_ids IS NULL AND role_ids IS NULL)
           )
+          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         "#,
         req.datasource_id,
         req.table_name,
         &[req.user_id.clone()][..],
         &role_ids[..],
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,
@@ -625,9 +789,30 @@ pub async fn filter_data(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     info!("Getting permissions for user: {}", user_id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.rlp.get_user_permissions",
+        "bi.analytics_row_level_permissions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get user permissions: {}", e),
+            ));
+        }
+    };
 
     let rows = match sqlx::query!(
         r#"
@@ -636,11 +821,13 @@ pub async fn get_user_permissions(
         FROM analytics_row_level_permissions
         WHERE is_active = true
           AND (user_ids @> $1::text[] OR user_ids IS NULL)
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY created_at DESC
         "#,
         &[user_id.clone()][..],
+        tenant_scope.tenant_id(),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => rows,

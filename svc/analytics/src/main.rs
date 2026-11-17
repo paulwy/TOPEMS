@@ -91,7 +91,13 @@ async fn main() -> anyhow::Result<()> {
     // 统一复用 routes::create_protected_routes（唯一事实源，与 embed 轨一致）：
     // 消除 f4a9d3ee4d 引入的 main.rs 平行重复构建（曾与 routes.rs 双套并存，
     // 造成 GET /report/{id}/export Overlapping panic 隐患与 widgets drilldown 漂移）。
-    let protected_routes = routes::create_protected_routes(app_state.clone());
+    let protected_routes = routes::create_protected_routes(app_state.clone())
+        // W7 收口：BI 请求统一注入租户上下文（app.tenant_id / app.rls_system 事务级 GUC）。
+        // 此前 analytics 未挂载该层，BI handler 只能裸池读取，无法按租户隔离。
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ));
 
     // ── OpenAPI JSON ──────────────────────────────────────────────────
     let openapi_json = Some(

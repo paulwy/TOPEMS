@@ -10,10 +10,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::response::PaginatedResponse;
 use tracing::{info, warn};
 
-use crate::modules::bi::begin_tenant_txn;
 use crate::shared::AppState;
 
 // ==================== Data Structures ====================
@@ -96,9 +96,30 @@ pub struct RetrySyncResponse {
 )]
 pub async fn list_sync_records(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<SyncRecordQuery>,
 ) -> Json<serde_json::Value> {
     info!("Listing BI sync records with query: {:?}", query);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.sync_records.list",
+        "bi.analytics_sync_records",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to list sync records: {}", e),
+            ));
+        }
+    };
 
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 200);
@@ -185,7 +206,7 @@ pub async fn list_sync_records(
         count_query = count_query.bind(format!("%{}%", s));
     }
 
-    let total: i64 = match count_query.fetch_one(&state.pool).await {
+    let total: i64 = match count_query.fetch_one(&mut db_scope).await {
         Ok(t) => t,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -211,7 +232,7 @@ pub async fn list_sync_records(
     }
     list_query = list_query.bind(page_size).bind(offset);
 
-    let rows = match list_query.fetch_all(&state.pool).await {
+    let rows = match list_query.fetch_all(&mut db_scope).await {
         Ok(r) => r,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -239,9 +260,30 @@ pub async fn list_sync_records(
 )]
 pub async fn get_sync_record(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting BI sync record: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.sync_records.get",
+        "bi.analytics_sync_records",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to get sync record: {}", e),
+            ));
+        }
+    };
 
     let row = match sqlx::query_as::<_, SyncRecordRow>(
         "SELECT s.id, s.data_source_id, d.name AS data_source_name, s.status, s.sync_type, \
@@ -252,7 +294,7 @@ pub async fn get_sync_record(
          WHERE s.id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(r) => r,
@@ -299,32 +341,44 @@ pub async fn create_sync_record(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let started_at = req.started_at.unwrap_or_else(Utc::now);
 
-    // Verify data source exists (analytics_datasources 受 RLS 约束，需带租户上下文)
-    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
-        Ok(tx) => tx,
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.sync_records.create",
+        "bi.analytics_sync_records",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
                 500,
-                &format!("Failed to open tenant txn: {}", e),
+                &format!("Failed to open write scope: {}", e),
             ));
         }
     };
 
-    let ds_exists: Option<Uuid> =
-        match sqlx::query_scalar("SELECT id FROM analytics_datasources WHERE id = $1")
-            .bind(req.data_source_id)
-            .fetch_optional(&mut *tx)
-            .await
-        {
-            Ok(r) => r,
-            Err(e) => {
-                return Json(topems_shared_core::response::error_value(
-                    500,
-                    &format!("Failed to validate data source: {}", e),
-                ));
-            }
-        };
-    drop(tx);
+    // Verify data source exists (analytics_datasources 受 RLS 约束，需带租户上下文)
+    let ds_exists: Option<Uuid> = match sqlx::query_scalar(
+        "SELECT id FROM analytics_datasources WHERE id = $1 \
+         AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
+    )
+    .bind(req.data_source_id)
+    .bind(tenant_scope.tenant_id())
+    .fetch_optional(&mut db_scope)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to validate data source: {}", e),
+            ));
+        }
+    };
     if ds_exists.is_none() {
         return Json(topems_shared_core::response::error_value(
             404,
@@ -352,7 +406,7 @@ pub async fn create_sync_record(
     .bind(req.duration_ms)
     .bind(now)
     .bind(now)
-    .execute(&state.pool)
+    .execute(&mut db_scope)
     .await;
 
     if let Err(e) = row {
@@ -362,7 +416,14 @@ pub async fn create_sync_record(
         ));
     }
 
-    match get_sync_record(State(state), Path(id)).await {
+    if let Err(e) = db_scope.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to create sync record: {}", e),
+        ));
+    }
+
+    match get_sync_record(State(state.clone()), Extension(claims.clone()), Path(id)).await {
         Json(value) => Json(serde_json::json!({
             "success": true,
             "message": "Create sync record",
@@ -380,10 +441,31 @@ pub async fn create_sync_record(
 )]
 pub async fn update_sync_record(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSyncRecordRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating BI sync record: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.sync_records.update",
+        "bi.analytics_sync_records",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open write scope: {}", e),
+            ));
+        }
+    };
 
     let now = Utc::now();
 
@@ -412,7 +494,7 @@ pub async fn update_sync_record(
     .bind(req.duration_ms)
     .bind(now)
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut db_scope)
     .await;
 
     match result {
@@ -420,13 +502,21 @@ pub async fn update_sync_record(
             404,
             "Sync record not found",
         )),
-        Ok(_) => match get_sync_record(State(state), Path(id)).await {
-            Json(value) => Json(serde_json::json!({
-                "success": true,
-                "message": "Update sync record",
-                "data": value.get("data").cloned().unwrap_or(serde_json::Value::Null)
-            })),
-        },
+        Ok(_) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to update sync record: {}", e),
+                ));
+            }
+            match get_sync_record(State(state.clone()), Extension(claims.clone()), Path(id)).await {
+                Json(value) => Json(serde_json::json!({
+                    "success": true,
+                    "message": "Update sync record",
+                    "data": value.get("data").cloned().unwrap_or(serde_json::Value::Null)
+                })),
+            }
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to update sync record: {}", e),
@@ -443,13 +533,34 @@ pub async fn update_sync_record(
 )]
 pub async fn delete_sync_record(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting BI sync record: {}", id);
 
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.sync_records.delete",
+        "bi.analytics_sync_records",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open write scope: {}", e),
+            ));
+        }
+    };
+
     let result = sqlx::query("DELETE FROM analytics_sync_records WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut db_scope)
         .await;
 
     match result {
@@ -457,11 +568,19 @@ pub async fn delete_sync_record(
             404,
             "Sync record not found",
         )),
-        Ok(_) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete sync record",
-            "data": true
-        })),
+        Ok(_) => {
+            if let Err(e) = db_scope.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to delete sync record: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete sync record",
+                "data": true
+            }))
+        }
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to delete sync record: {}", e),
@@ -478,10 +597,31 @@ pub async fn delete_sync_record(
 )]
 pub async fn retry_sync(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     req: Option<Json<RetrySyncRequest>>,
 ) -> Json<serde_json::Value> {
     info!("Retrying BI sync record: {}", id);
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.sync_records.retry",
+        "bi.analytics_sync_records",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to open write scope: {}", e),
+            ));
+        }
+    };
 
     // Check that record exists
     let existing = sqlx::query_as::<_, SyncRecordRow>(
@@ -493,7 +633,7 @@ pub async fn retry_sync(
          WHERE s.id = $1",
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut db_scope)
     .await;
 
     let existing = match existing {
@@ -545,7 +685,7 @@ pub async fn retry_sync(
     .bind(note.as_deref())
     .bind(now)
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut db_scope)
     .await;
 
     if let Err(e) = result {
@@ -555,12 +695,20 @@ pub async fn retry_sync(
         ));
     }
 
-    let refreshed = match get_sync_record(State(state), Path(id)).await {
-        Json(value) => value
-            .get("data")
-            .cloned()
-            .unwrap_or(serde_json::Value::Null),
-    };
+    if let Err(e) = db_scope.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to reset sync record: {}", e),
+        ));
+    }
+
+    let refreshed =
+        match get_sync_record(State(state.clone()), Extension(claims.clone()), Path(id)).await {
+            Json(value) => value
+                .get("data")
+                .cloned()
+                .unwrap_or(serde_json::Value::Null),
+        };
 
     Json(serde_json::json!({
         "success": true,

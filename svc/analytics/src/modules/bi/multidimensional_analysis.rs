@@ -1,6 +1,11 @@
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Extension, State},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::error::TopemsError;
 use tracing::info;
 
@@ -26,6 +31,12 @@ fn validate_sort_order(order: &str) -> Result<String, TopemsError> {
             order
         ))),
     }
+}
+
+/// bi_datasets 白名单是全局元数据（不触达业务行），按仓库口径走裸池校验。
+async fn validate_columns_meta(state: &AppState, columns: &[String]) -> Result<(), TopemsError> {
+    let AppState { pool, .. } = state;
+    validate_columns(pool, DEFAULT_BI_TABLE, columns).await
 }
 
 #[derive(Debug, Deserialize)]
@@ -120,11 +131,32 @@ pub struct RankItem {
 )]
 pub async fn query_cube(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CubeQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Querying cube with dimensions: {:?}", req.dimensions);
 
     let start_time = std::time::Instant::now();
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.multidim.query_cube",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to query cube: {}", e),
+            ));
+        }
+    };
 
     let mut select_cols: Vec<String> = Vec::new();
     select_cols.extend(req.dimensions.iter().cloned());
@@ -155,7 +187,7 @@ pub async fn query_cube(
     {
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
-        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+        if let Err(msg) = validate_columns_meta(&state, &whitelist_cols).await {
             return Json(topems_shared_core::response::error_value(
                 500,
                 &msg.to_string(),
@@ -187,14 +219,15 @@ pub async fn query_cube(
 
     // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
     let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(limit)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await;
 
     match data_result {
@@ -251,11 +284,32 @@ pub async fn query_cube(
 )]
 pub async fn slice_cube(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CubeQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Slicing cube on dimension");
 
     let start_time = std::time::Instant::now();
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.multidim.slice_cube",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to slice cube: {}", e),
+            ));
+        }
+    };
 
     let slice_filters = req.slice_filters.unwrap_or(serde_json::json!({}));
 
@@ -288,7 +342,7 @@ pub async fn slice_cube(
     {
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
-        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+        if let Err(msg) = validate_columns_meta(&state, &whitelist_cols).await {
             return Json(topems_shared_core::response::error_value(
                 500,
                 &msg.to_string(),
@@ -320,14 +374,15 @@ pub async fn slice_cube(
 
     // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
     let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(limit)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await;
 
     match data_result {
@@ -385,11 +440,32 @@ pub async fn slice_cube(
 )]
 pub async fn dice_cube(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CubeQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Dicing cube");
 
     let start_time = std::time::Instant::now();
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.multidim.dice_cube",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to dice cube: {}", e),
+            ));
+        }
+    };
 
     let dice_filters = req.dice_filters.unwrap_or(serde_json::json!({}));
 
@@ -422,7 +498,7 @@ pub async fn dice_cube(
     {
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
-        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+        if let Err(msg) = validate_columns_meta(&state, &whitelist_cols).await {
             return Json(topems_shared_core::response::error_value(
                 500,
                 &msg.to_string(),
@@ -454,14 +530,15 @@ pub async fn dice_cube(
 
     // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
     let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(limit)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await;
 
     match data_result {
@@ -515,11 +592,32 @@ pub async fn dice_cube(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn pivot_table(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<PivotQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Generating pivot table");
 
     let start_time = std::time::Instant::now();
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.multidim.pivot_table",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to generate pivot table: {}", e),
+            ));
+        }
+    };
 
     let mut all_dims: Vec<String> = Vec::new();
     all_dims.extend(req.row_dimensions.iter().cloned());
@@ -542,7 +640,7 @@ pub async fn pivot_table(
 
     // S1.3: 第二层白名单校验
     if !all_dims.is_empty() {
-        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &all_dims).await {
+        if let Err(msg) = validate_columns_meta(&state, &all_dims).await {
             return Json(topems_shared_core::response::error_value(
                 500,
                 &msg.to_string(),
@@ -553,11 +651,15 @@ pub async fn pivot_table(
     let limit = req.limit.unwrap_or(100).clamp(1, 10_000);
 
     // S1.1: LIMIT 参数化绑定，杜绝 format! 硬编码数字。
-    let query = format!("SELECT {} FROM analytics_data LIMIT $1", select_clause);
+    let query = format!(
+        "SELECT {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) LIMIT $1",
+        select_clause
+    );
 
     let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(limit)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await;
 
     match data_result {
@@ -621,6 +723,7 @@ pub async fn pivot_table(
 )]
 pub async fn rank_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RankQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -629,6 +732,26 @@ pub async fn rank_data(
     );
 
     let start_time = std::time::Instant::now();
+
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.multidim.rank_data",
+        "bi.analytics_data",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, &message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to rank data: {}", e),
+            ));
+        }
+    };
     let top_n = req.top_n.unwrap_or(10);
     let rank_by = req.rank_by.clone().unwrap_or_else(|| "desc".to_string());
 
@@ -663,7 +786,7 @@ pub async fn rank_data(
     // S1.3: 第二层白名单校验 — dimension + measure 列
     {
         let whitelist_cols = vec![req.dimension.clone(), req.measure.clone()];
-        if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
+        if let Err(msg) = validate_columns_meta(&state, &whitelist_cols).await {
             return Json(topems_shared_core::response::error_value(
                 500,
                 &msg.to_string(),
@@ -673,13 +796,14 @@ pub async fn rank_data(
 
     // S1.1: 使用参数化绑定 LIMIT，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {}, {} FROM analytics_data ORDER BY {} {} LIMIT $1",
+        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} {} LIMIT $1",
         dimension, measure, measure, sort_order
     );
 
     let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(top_n)
-        .fetch_all(&state.pool)
+        .bind(tenant_scope.tenant_id())
+        .fetch_all(&mut db_scope)
         .await;
 
     match data_result {
