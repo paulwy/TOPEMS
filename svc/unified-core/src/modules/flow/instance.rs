@@ -354,25 +354,27 @@ pub async fn create_instance(
 )]
 pub async fn start_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化启动实例事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("启动工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances SET status = 'running', started_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         WHERE id = $1
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
