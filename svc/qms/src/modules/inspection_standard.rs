@@ -1058,13 +1058,20 @@ async fn remove_plan_item(
     headers: axum::http::HeaderMap,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<String> {
-    let _ = tenant_filter(&claims, &headers);
-    let result =
-        sqlx::query("DELETE FROM qms.qa_inspection_plan_items WHERE plan_id = $1 AND item_id = $2")
-            .bind(id)
-            .bind(item_id)
-            .execute(&state.pool)
-            .await;
+    let filter = tenant_filter(&claims, &headers);
+    // 明细表无 tenant_id，租户归属由父方案决定：谓词直接进 DELETE（与 add_plan_item 同口径）
+    let result = sqlx::query(
+        "DELETE FROM qms.qa_inspection_plan_items i \
+         USING qms.qa_inspection_plans p \
+         WHERE i.plan_id = p.id AND i.plan_id = $1 AND i.item_id = $2 \
+           AND p.deleted_at IS NULL \
+           AND ($3::uuid IS NULL OR p.tenant_id = $3::uuid)",
+    )
+    .bind(id)
+    .bind(item_id)
+    .bind(filter)
+    .execute(&state.pool)
+    .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项移除成功"),
         Ok(_) => ApiResponse::not_found("关联不存在"),
