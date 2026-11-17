@@ -366,11 +366,12 @@ pub async fn setup_company_info(
             let _ = sqlx::query(
                 only_own_schema_query!("hrm", r#"
                 INSERT INTO hrm.initialization_logs (id, organization_id, tenant_id, step_name, action, new_data, created_at)
-                VALUES ($1, $2, NULLIF(current_setting('app.tenant_id', true), '')::UUID, 'company_info', 'update', $3, $4)
+                VALUES ($1, $2, $3, 'company_info', 'update', $4, $5)
                 "#)
             )
             .bind(Uuid::new_v4())
             .bind(org_id)
+            .bind(tenant_uuid)
             .bind(serde_json::json!({ "org_id": company.id, "name": company.name }))
             .bind(now)
             .execute(&mut **txn)

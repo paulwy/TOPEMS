@@ -825,3 +825,49 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 - [biz_noctx] svc/unified-core/src/modules/automation/mod.rs:1232 | fn=save_designer_canvas | .execute(&state.pool)
 - [biz_noctx] svc/unified-core/src/modules/automation/mod.rs:1261 | fn=sync_to_rule | .execute(&state.pool)
 - [biz_noctx] svc/unified-core/src/modules/automation/mod.rs:1284 | fn=sync_from_rule | .fetch_one(&state.pool)
+
+## 决策 3 第二批（2026-11-18）与顺延矩阵
+
+迁移：`database/migrations/20261118103000_residual_loose_tables_rls_strict.sql`
+（回滚同名 `.rollback.sql`，克隆库 `m2_dryrun_20261116` 六档演练通过，`status: to_apply`）。
+
+本批判定只用了两条轴：**有无真实数据**、**有无跨租户读路径**。生产 `topems_prod`
+（superuser 复核，2026-11-17）结果：
+
+- 无 RLS 且含 `tenant_id` 的 91 张表，除平台元数据外全部 0 行。
+- 宽松策略表中有真实数据的仅 13 张；其中 10 张被跨租户读路径或回填前置挡住。
+
+### 本批收严（3 张）
+
+| 表 | 行数 | 原策略 | 依据 |
+|---|---:|---|---|
+| `hrm.initialization_logs` | 1（…0001，无 NULL） | `hrm_allow_all_initialization_logs` (true) | 仅 `setup.rs` 一处 INSERT、无 SELECT；同批改为显式绑定 claims 租户 |
+| `qms.quality_inspections` | 0 | `qms_allow_all_quality_inspections` (true) | qms 幻影表，代码零引用；仍带 `tenant_id`，防遗留洞 |
+| `qms.quality_standards` | 0 | `qms_allow_all_quality_standards` (true) | 同上 |
+
+演练读数（克隆库，A/B/全零夹具）：
+
+- up 前六档：3/3/3、3/3/3、3/3/3、3/3/3、3/3/3、3/3/3（allow_all，无隔离）。
+- up 后六档：0/0/0、0/0/0、1/1/1、1/1/1、1/1/1、3/3/3。
+- A 上下文跨租户 UPDATE/DELETE 0 行；INSERT 他人/全零 `42501`；INSERT 自有成功。
+- down 复原 allow_all 且无新增索引；再 up 停严格态；夹具清理为 0 行。
+
+### 顺延矩阵（写明前置，不伪造空迁移）
+
+| 表 | 行数 | 阻塞原因 | 前置条件 |
+|---|---:|---|---|
+| `erp.audit_logs` | 13（t1=8,t2=5） | `audit.rs` 列表/详情显式 `set_system_channel` 跨租户读 | 端点改租户作用域 + 产品确认平台视角 |
+| `finance.core_finance_currencies` | 16（8 NULL） | 全局币种全租户读 | 回填 8 行 NULL 或定义全局语料语义 |
+| `finance.core_finance_report_line_map` | 48（全 NULL） | 全局报表行映射 | 定义全局语料语义 |
+| `public.core_roles` | 17（16 NULL） | 平台角色模板全租户读 | 定全局角色语义 / 回填 16 行 |
+| `public.core_sessions` / `core_refresh_tokens` | 106 / 106 | 登录前置，仅 `rls_system=on` | 认证系统通道设计 |
+| `public.core_login_logs` | 137（全零） | 登录前置，零租户待回填 | 见 `zero-tenant-backfill-plan-2026-11-18.md`，先回填 54 行 |
+| `mobile.sync_policies` / `pm.project_type_configs` | 1 / 1（NULL） | 全局默认策略 | 定全局默认语义 |
+| `public.core_operation_logs` | 0 | 读取端 tenant_id 可选 = 平台跨租户视图 | 系统通道设计 |
+| `public.core_menus` / `core_menu_groups` / `core_tenants` | 452 / 130 / 1 | 平台元数据 | 有意保留 |
+| 5 张无 `tenant_id` 的 qms 幻影表 | 0 | 无租户列 | 登记为 DROP 候选（另开窗） |
+
+### 同窗口清单
+
+`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`
+以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
