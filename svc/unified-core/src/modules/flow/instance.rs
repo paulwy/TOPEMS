@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_auth::service::is_service_claims;
 use topems_shared_core::response::ApiResponse;
@@ -253,13 +254,25 @@ pub async fn list_instances(
 )]
 pub async fn get_instance(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化工作流实例详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询工作流实例失败".to_string()));
+        }
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -641,9 +654,10 @@ pub async fn suspend_instance(
 )]
 pub async fn get_instance_details(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    get_instance(State(state), Path(id)).await
+    get_instance(State(state), Extension(txn_arc), Path(id)).await
 }
 
 #[utoipa::path(
