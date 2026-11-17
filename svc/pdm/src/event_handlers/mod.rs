@@ -4,6 +4,7 @@ use topems_shared_core::cache::{
 };
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType, MasterDataAction,
@@ -253,15 +254,21 @@ impl PdmEventHandlers {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
         // 事件载荷缺租户直接报错，禁止降级为 nil（nil 租户是系统通道，不属于业务事件）。
-        if event.tenant_id.is_nil() {
-            return Err(TopemsError::ValidationFailed(format!(
-                "[pdm-mdm] 事件载荷缺少租户：master_data_id={} domain={}",
-                event.master_data_id, domain_str
-            )));
-        }
+        // 统一经 TenantScope 严格原语解析：nil/缺失在构造期拒绝，绑定值直接取自作用域，
+        // 不做任何兜底零值（与表定性解耦，任何定性下都必须显式绑定租户）。
+        let tenant_scope = TenantScope::tenant(event.tenant_id).map_err(|(_, msg)| {
+            TopemsError::ValidationFailed(format!(
+                "[pdm-mdm] 事件载荷缺少租户（{}）：master_data_id={} domain={}",
+                msg, event.master_data_id, domain_str
+            ))
+        })?;
+        let tenant_id = tenant_scope.tenant_id().ok_or_else(|| {
+            TopemsError::Internal("[pdm-mdm] 租户作用域状态异常（Tenant 变体缺少 tenant_id）".to_string())
+        })?;
 
-        // pdm_master_data_refs 无 tenant_id，按「全局只读 + 系统通道写」处理：
-        // 写入必须走 scope_system（app.rls_system='on'），不能用请求租户上下文借道。
+        // pdm_master_data_refs 已含 tenant_id（20261115142300 补齐），写入为
+        // 「系统通道 + 显式租户绑定」：走 scope_system（app.rls_system='on'）的同时
+        // 必须把租户写进行内，禁止用请求租户上下文借道或写 nil。
         // tenant-system: 后台事件处理器（白名单第 4 类），主数据引用按系统通道写。
         let result = match self.db.scope_system().await {
             Ok(mut scope) => {
@@ -279,7 +286,7 @@ impl PdmEventHandlers {
                            updated_at = NOW()"#,
                 )
                 .bind(&event.master_data_id)
-                .bind(event.tenant_id)
+                .bind(tenant_id)
                 .bind(&domain_str)
                 .bind(&event.code)
                 .bind(name)
