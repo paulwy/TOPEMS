@@ -187,7 +187,8 @@ pub async fn list_dict_types(
         }
     };
 
-    let platform_total = platform_items.len() as i64;
+    // usize→i64 用受检转换并饱和到 i64::MAX，避免 as 截断/回绕
+    let platform_total = i64::try_from(platform_items.len()).unwrap_or(i64::MAX);
     let skip = usize::try_from((offset - tenant_total).max(0)).unwrap_or(0);
     let remaining = usize::try_from(page_size)
         .unwrap_or(0)
@@ -624,7 +625,8 @@ pub async fn list_dict_items(
         }
     };
 
-    let platform_total = platform_items.len() as i64;
+    // usize→i64 用受检转换并饱和到 i64::MAX，避免 as 截断/回绕
+    let platform_total = i64::try_from(platform_items.len()).unwrap_or(i64::MAX);
     let skip = usize::try_from((offset - tenant_total).max(0)).unwrap_or(0);
     let remaining = usize::try_from(page_size)
         .unwrap_or(0)

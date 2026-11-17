@@ -408,7 +408,7 @@ pub async fn search_handler(
     let recent_db = db.clone();
     let total_count = total;
     // 服务端处理耗时（毫秒整数），在调度后台写之前定格；未采集时写 NULL，不写 0。
-    let elapsed_ms: i64 = started_at.elapsed().as_millis() as i64;
+    let elapsed_ms: i64 = i64::try_from(started_at.elapsed().as_millis()).unwrap_or(i64::MAX);
     tokio::spawn(async move {
         // 后台任务无请求事务：按显式租户短事务写入。
         let Ok(mut scope) = recent_db.scope_for_tenant(recent_tenant_id).await else {
@@ -433,7 +433,7 @@ pub async fn search_handler(
         .bind(recent_tenant_id)
         .bind(recent_user_id)
         .bind(recent_keyword.as_str())
-        .bind(total_count as i32)
+        .bind(i32::try_from(total_count).unwrap_or(i32::MAX))
         .bind(elapsed_ms)
         .execute(&mut scope)
         .await;

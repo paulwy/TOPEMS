@@ -263,18 +263,15 @@ async fn load_dashboard_aggregate(
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 赢单金额查询失败: {}", e)))?;
 
-    let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
+    // 转化率直接在库里算：避免 i64→f64 的精度丢失，也避免为通过 lint 做饱和转换。
+    let conversion_rate: f64 = sqlx::query_scalar(
+        "SELECT CASE WHEN COUNT(*) = 0 THEN 0::float8 \
+         ELSE COUNT(*) FILTER (WHERE stage = 'closed_won')::float8 / COUNT(*)::float8 * 100.0 END \
+         FROM crm.opportunities WHERE deleted_at IS NULL",
     )
     .fetch_one(&mut scope)
     .await
-    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 赢单数查询失败: {}", e)))?;
-
-    let conversion_rate = if total_opportunities > 0 {
-        (won_count as f64 / total_opportunities as f64) * 100.0
-    } else {
-        0.0
-    };
+    .map_err(|e| TopemsError::DatabaseQuery(format!("CRM 转化率查询失败: {}", e)))?;
 
     let average_cycle: f64 = sqlx::query_scalar(
         "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
