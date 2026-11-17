@@ -153,4 +153,26 @@
 - **验证**：`cargo check -p topems-search --all-targets --offline` 通过。
 - **状态**：RESOLVED（口径 + 唯一写入点）。
 
+## K16 flow 变量写入不校验 `instance_id` / `task_id` / `workflow_id` 归属 —— OPEN（2026-11-17 登记，先不修）
+
+- **位置**：
+  - [svc/unified-core/src/modules/flow/variable.rs](../../svc/unified-core/src/modules/flow/variable.rs) `upsert_variable`（单键写入）与 `set_instance_variables_batch`（批量写入）调用链；
+  - 路由：[svc/unified-core/src/routes/flow.rs](../../svc/unified-core/src/routes/flow.rs) 的 `POST /variables/instance/{instance_id}`、`POST /variables/instance/{instance_id}/{key}`、`POST /variables/task/{task_id}/{key}`、`POST /variables/global/{workflow_id}/{key}`。
+- **现状**：写入只依赖 RLS 约束 `tenant_id`，SQL 不校验 `instance_id` / `task_id` / `workflow_id` 是否属于当前租户或是否存在。2026-11-17 克隆库端到端实测：租户 B 对租户 A 的实例 id 调用 `POST /variables/instance/{A 的实例}/amount` 返回 **200**，并在 `core_flow_variables` 落下一行 `tenant_id=B、instance_id=A 的实例` 的数据；A 侧因 RLS 看不到该行，B 读 A 实例变量也看不到 A 的数据。跨租户跳实例的 `skip` 等实例写操作已返回 404，仅变量写入缺这层校验。
+- **影响**：
+  1. 数据完整性：产生指向他租户实例的孤儿/脏变量行，租户内统计与变量聚合会把它算进 B，但实际业务对象属于 A；
+  2. 语义误导：调用方拿到 200，误以为写入了目标实例；
+  3. 不构成读取越权（RLS 仍隔离），但为后续跨租户关联查询/服务通道聚合埋下脏数据；
+  4. 批量接口可一次性写入多条，放大面更大。
+- **修法（建议，先不实施）**：
+  1. 在写入前做归属校验：`SELECT 1 FROM core_workflow_instances WHERE id=$1 AND deleted_at IS NULL`（task/global 分别校验 `core_workflow_tasks` / `core_workflows`），查询走同一请求事务 `ScopedTxn`，租户谓词由 RLS 保证；服务身份则显式带 `tenant_id = $2`；
+  2. 校验失败返回 404（与实例写操作一致），不落任何行；批量接口整批 400/404 或返回逐条失败明细（按 D-01 口径，整批回滚）；
+  3. 仅补校验，不改 upsert 的 `ON CONFLICT` 口径与历史表写入。
+- **验证方式（修后）**：
+  1. 克隆库：B 写 A 实例变量 → 404，`core_flow_variables` 无新增；A 写本租户 → 200；B 读 A 实例变量 → 空；
+  2. 服务身份按显式租户写 → 200，跨租户写 → 404；
+  3. 批量接口含 1 条越权 id → 整批回滚、无部分成功；
+  4. 复跑 `check-txn-write-non2xx.py`、`cargo check -p topems-unified-core`、阶段三端点矩阵无 0 行回归。
+- **状态**：OPEN，先不修；不阻断当前窗口（生产 flow 表 0 行，无存量脏数据）。
+
 
