@@ -1659,6 +1659,11 @@ pub async fn approve_order(
     // 校验 approval_id 与版本，执行状态转换并写入 audit log
     if let Err(e) = execute_transition_and_log(
         &state.pool,
+        if claims.is_superuser {
+            None
+        } else {
+            Some(get_tenant_id(&claims))
+        },
         Some("production_orders"),
         "production_order",
         id,

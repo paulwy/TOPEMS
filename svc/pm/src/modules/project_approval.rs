@@ -501,6 +501,7 @@ async fn handle_approval_action(
                     let _ = execute_transition_and_log(
                         &state.approval_pool,
                         None,
+                        None,
                         "project",
                         project_id,
                         approval.id,

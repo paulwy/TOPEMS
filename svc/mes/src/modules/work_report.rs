@@ -1364,6 +1364,11 @@ pub async fn approve_rework(
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
     if let Err(e) = execute_transition_and_log(
         &state.pool,
+        if claims.is_superuser {
+            None
+        } else {
+            Some(get_tenant_id(&claims))
+        },
         Some("work_reports"),
         "work_report",
         record_id,

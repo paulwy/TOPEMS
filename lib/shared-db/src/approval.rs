@@ -202,9 +202,12 @@ pub async fn create_approval_and_log(
 ///
 /// 当 `table` 为 `Some(table_name)` 时，执行
 /// `UPDATE {table} SET status = to_status WHERE id = record_id AND status = from_status`。
+/// 传入 `Some(tenant_id)` 时附加租户谓词，避免按 id 跨租户推进审批状态；
+/// 超管/服务身份传 `None` 保持全量语义。
 /// 然后记录审批通过事件。对于无持久化表的虚拟实体（如 anomaly_alert）传入 `None` 跳过 UPDATE。
 pub async fn execute_transition_and_log(
     pool: &PgPool,
+    tenant_id: Option<Uuid>,
     table: Option<&str>,
     entity_type: &str,
     record_id: Uuid,
@@ -216,13 +219,15 @@ pub async fn execute_transition_and_log(
     if let Some(table) = table {
         let sql = format!(
             "UPDATE {} SET status = $1, updated_at = NOW() \
-             WHERE id = $2 AND status = $3 AND deleted_at IS NULL",
+             WHERE id = $2 AND status = $3 AND deleted_at IS NULL \
+             AND ($4::uuid IS NULL OR tenant_id = $4::uuid)",
             table
         );
         sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(to_status)
             .bind(record_id)
             .bind(from_status)
+            .bind(tenant_id)
             .execute(pool)
             .await?;
     }
