@@ -12,6 +12,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
@@ -123,9 +124,21 @@ pub struct ApprovalTaskListResponse {
 )]
 pub async fn list_approval_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<ApprovalTaskQuery>,
     headers: HeaderMap,
 ) -> ApiResponse<ApprovalTaskListResponse> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化审批任务列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询审批任务列表失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -143,7 +156,7 @@ pub async fn list_approval_tasks(
     )
     .bind(status.clone())
     .bind(assignee_id.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -170,7 +183,7 @@ pub async fn list_approval_tasks(
     .bind(page_size)
     .bind(offset)
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -231,9 +244,21 @@ pub async fn list_approval_tasks(
 )]
 pub async fn get_approval_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化审批任务详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询审批任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -253,7 +278,7 @@ pub async fn get_approval_task(
     )
     .bind(task_id)
     .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -302,8 +327,20 @@ pub async fn get_approval_task(
 )]
 pub async fn list_pending_approvals(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<ApprovalTask>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化待审批任务事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询待审批任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let tasks: Vec<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
@@ -317,7 +354,7 @@ pub async fn list_pending_approvals(
            LIMIT 20"#,
     )
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -1013,8 +1050,20 @@ pub async fn reassign_task(
 )]
 pub async fn list_approvals(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<ApprovalTask>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化审批列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询审批列表失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let tasks: Vec<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
@@ -1027,7 +1076,7 @@ pub async fn list_approvals(
            LIMIT 20"#,
     )
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -1080,10 +1129,11 @@ pub async fn list_approvals(
 )]
 pub async fn get_approval(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<ApprovalTask> {
-    get_approval_task(State(state), Path(id), headers).await
+    get_approval_task(State(state), Extension(txn_arc), Path(id), headers).await
 }
 
 #[utoipa::path(
