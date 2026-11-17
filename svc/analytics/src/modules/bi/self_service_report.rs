@@ -245,7 +245,7 @@ pub async fn create_report(
         req.is_public.unwrap_or(false),
 now,
 now,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .fetch_one(&mut db_scope)
     .await;

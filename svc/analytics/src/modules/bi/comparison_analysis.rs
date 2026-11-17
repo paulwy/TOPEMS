@@ -402,7 +402,7 @@ pub async fn create_comparison(
         req.created_by,
         now,
         now,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .fetch_one(&mut db_scope)
     .await;
@@ -784,7 +784,7 @@ pub async fn run_comparison(
         data_json,
         summary,
         generated_at,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .execute(&mut db_scope)
     .await;

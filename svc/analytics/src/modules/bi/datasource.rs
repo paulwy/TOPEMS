@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::time::Duration;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::response::PaginatedResponse;
 use tracing::{info, warn};
 
@@ -249,12 +250,9 @@ pub async fn list_datasources(
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 SELECT 同连接
     // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
-    // 只读事务，结束后直接 drop（回滚），不提交。
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // 只读事务，结束后直接 drop（回滚），不提交。只读路径不兜底写数据：缺失/非法
+    // 租户 → 显式平台哨兵，严格 RLS 下 fail-closed 为 0 行。
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -386,12 +384,20 @@ pub async fn create_datasource(
     let is_enabled = req.is_enabled.unwrap_or(true);
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）。
+    // 写路径禁止静默兜底：普通用户缺租户 400；超管/服务身份走显式系统通道
+    // （记录来源并计数），落平台哨兵。
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.datasource.create",
+        "analytics_datasources",
+    ) {
+        Ok(scope) => scope,
+        Err((code, message)) => {
+            return Json(topems_shared_core::response::error_value(code, &message));
+        }
+    };
+    let tenant_id = tenant_scope.create_tenant_id();
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -506,11 +512,7 @@ pub async fn get_datasource(
     // RLS 连接级隔离：事务内设置租户上下文，确保 SELECT 与 set_config 同连接
     // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
     // 只读事务，结束后直接 drop（回滚），不提交。
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -608,12 +610,19 @@ pub async fn update_datasource(
     let now = Utc::now();
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）。
+    // 写路径禁止静默兜底：普通用户缺租户 400；超管/服务身份走显式系统通道。
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.datasource.update",
+        "analytics_datasources",
+    ) {
+        Ok(scope) => scope,
+        Err((code, message)) => {
+            return Json(topems_shared_core::response::error_value(code, &message));
+        }
+    };
+    let tenant_id = tenant_scope.create_tenant_id();
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -744,12 +753,19 @@ pub async fn delete_datasource(
     info!("Deleting datasource: {}", id);
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与软删 UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）。
+    // 写路径禁止静默兜底：普通用户缺租户 400；超管/服务身份走显式系统通道。
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.datasource.delete",
+        "analytics_datasources",
+    ) {
+        Ok(scope) => scope,
+        Err((code, message)) => {
+            return Json(topems_shared_core::response::error_value(code, &message));
+        }
+    };
+    let tenant_id = tenant_scope.create_tenant_id();
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -832,12 +848,9 @@ pub async fn test_datasource(
     let started = std::time::Instant::now();
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 SELECT/UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）。
+    // 连接测试只读不写数据，缺失/非法租户 → 显式平台哨兵，fail-closed 为 0 行。
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -965,12 +978,19 @@ pub async fn refresh_datasource(
     let now = Utc::now();
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 SELECT/UPDATE 同连接
-    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）。
+    // 刷新会写 last_sync，按写路径处理：普通用户缺租户 400；超管/服务身份走系统通道。
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.datasource.refresh",
+        "analytics_datasources",
+    ) {
+        Ok(scope) => scope,
+        Err((code, message)) => {
+            return Json(topems_shared_core::response::error_value(code, &message));
+        }
+    };
+    let tenant_id = tenant_scope.create_tenant_id();
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {

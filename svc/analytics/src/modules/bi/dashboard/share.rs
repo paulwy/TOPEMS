@@ -81,7 +81,7 @@ pub async fn create_share_link(
         &req.shared_with,
         req.permission,
 expires_at, now,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .fetch_one(&mut db_scope)
     .await;

@@ -24,13 +24,13 @@ use sqlx::{PgPool, Postgres, Transaction};
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
-/// 从 claims 取租户 UUID；缺失或非法时返回 nil（与 report 子系统一致）
+/// 从 claims 取租户 UUID（只读/过滤专用）。
+///
+/// 缺失、非法或 nil 一律返回显式平台哨兵 [`topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID`]，
+/// 在严格 RLS 下 fail-closed 为 0 行；写路径禁止使用本函数，必须经
+/// `TenantScope::from_claims` / `require_tenant` 显式判定。
 pub(crate) fn tenant_uuid(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil)
+    topems_shared_auth::middleware::get_tenant_id_from_claims(claims)
 }
 
 /// 开启事务并在同连接设置 `app.tenant_id`（is_local，随事务结束失效），

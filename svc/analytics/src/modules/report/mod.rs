@@ -15,13 +15,12 @@ use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
-/// 当前请求的租户 id（超管/无租户 claims 回退零租户，与 `bi/datasource.rs` 口径一致）
+/// 当前请求的租户 id（只读/过滤专用）。
+///
+/// 缺失、非法或 nil 一律返回显式平台哨兵，严格 RLS 下 fail-closed 为 0 行；
+/// 写路径禁止使用本函数。
 pub(crate) fn tenant_uuid(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil)
+    topems_shared_auth::middleware::get_tenant_id_from_claims(claims)
 }
 
 /// 建立带租户上下文的事务。

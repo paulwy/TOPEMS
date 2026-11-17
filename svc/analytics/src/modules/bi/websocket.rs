@@ -78,13 +78,9 @@ async fn handle_dashboard_socket(
         dashboard_id
     );
 
-    // P1-13: 订阅者租户上下文（与 tenant_middleware 同口径：超管/服务/无 tenant claims
-    // → nil UUID，RLS 全局豁免；普通用户按 claims.tenant_id 隔离看板数据）。
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil);
+    // P1-13: 订阅者租户上下文（只读通道）。普通用户按 claims.tenant_id 隔离看板数据；
+    // 超管/服务/无 tenant claims → 显式平台哨兵，严格 RLS 下 fail-closed 为 0 行。
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let (mut sender, mut receiver) = socket.split();
 

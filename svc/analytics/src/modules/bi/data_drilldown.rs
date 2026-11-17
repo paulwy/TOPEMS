@@ -218,7 +218,7 @@ pub async fn create_drilldown_path(
         req.owner_id,
 now,
 now,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .fetch_one(&mut db_scope)
     .await;
@@ -594,7 +594,7 @@ pub async fn drill_down(
         req.drill_value.clone(),
         req.filters.clone(),
 now,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await;
@@ -717,7 +717,7 @@ pub async fn roll_up(
         req.drill_value.clone(),
         req.filters.clone(),
 now,
-        tenant_scope.tenant_id().unwrap_or_else(Uuid::nil),
+        tenant_scope.create_tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await;

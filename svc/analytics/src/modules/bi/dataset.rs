@@ -952,13 +952,11 @@ async fn check_bi_sql_allowed(pool: &sqlx::PgPool, sql: &str) -> Result<(), Tope
     }
 }
 
-/// 与 tenant_middleware 同口径：普通用户取 claims.tenant_id；超管/服务/缺失 → nil UUID。
+/// 只读执行上下文的租户 id：与 tenant_middleware 同口径（普通用户取 claims.tenant_id；
+/// 超管/服务/缺失 → 显式平台哨兵）。仅用于 `BEGIN READ ONLY` 事务的 GUC 设置，
+/// 写路径禁止沿用。
 fn tenant_id_from_claims(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(Uuid::nil)
+    topems_shared_auth::middleware::get_tenant_id_from_claims(claims)
 }
 
 /// 在 BI 只读上下文执行用户 SQL：
