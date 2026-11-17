@@ -58,6 +58,19 @@ pub async fn list_operation_logs(
         }
     };
 
+    // 平台视图（超管/service 无租户过滤）跨租户读：core_operation_logs 已是严格 B，
+    // 请求上下文只会看到本租户行，须在请求事务上显式打开系统通道；
+    // 普通租户保持租户上下文 + 显式 tenant_id 过滤。
+    if tenant_id.is_none() {
+        if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("审计平台视图打开系统通道失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询操作审计日志失败".to_string()));
+        }
+    }
+
     let user_id = query.user_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let user_name_like = query.user_name.as_ref().map(|s| format!("%{}%", s));
     let module_like = query.module.as_ref().map(|s| format!("%{}%", s));
@@ -191,6 +204,19 @@ pub async fn get_operation_log(
         }
     };
 
+    // 平台视图跨租户读：同 list_operation_logs，须显式打开系统通道。
+    if tenant_id.is_none() {
+        if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("审计详情平台视图打开系统通道失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "查询操作审计日志详情失败".to_string(),
+            ));
+        }
+    }
+
     let log: Option<OperationLog> = match sqlx::query_as::<_, OperationLog>(
         r#"SELECT id, tenant_id, user_id, user_name, module, operation,
                   resource_type, resource_id, description, request_data,
@@ -238,6 +264,17 @@ pub async fn get_operation_log_stats(
             return ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string()));
         }
     };
+
+    // 平台视图跨租户统计：同 list_operation_logs，须显式打开系统通道。
+    if tenant_id.is_none() {
+        if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("审计统计平台视图打开系统通道失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string()));
+        }
+    }
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_operation_logs WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,
