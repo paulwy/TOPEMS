@@ -1975,6 +1975,20 @@ pending_forward_patches:
       - { kind: code, ref: "svc/integration/src/handlers/sync.rs:752", detail: "core_inter_module_sync 写 source_entity/source_id/source_code/retry_count/max_retries/next_retry_at/executed_at；prod 独有 5 列仍在用" }
     note: "core_inter_module_sync 按工程决定取 dev∪prod 并集（补后 23 列），不删任何一侧字段，operation 与 source_entity 的同义性另立项；portal_todos 的 sort_order 代码未引用，本批不补（prod 仍 20 列）；crm_product_id / erp_sales_order_id 代码未引用，不补"
 
+  # ===== 报表从表租户列收口（2026-11-16，已在生产应用）=====
+  # 口径来源：迁移文件头 + docs/database/m2-window-application-2026-11-16.md（M-2 窗口实录）
+  - version: "20261116180000"
+    file: "database/migrations/20261116180000_report_subs_exec_records_tenant_id.sql"
+    status: applied
+    effect: "bi.report_subscriptions / analytics.report_execution_records 补 tenant_id(uuid NOT NULL 无默认)，按父表 report_templates / report_schedules 回填并断言无 NULL；补 2 个 tenant_id 索引；ENABLE+FORCE RLS，各建 1 条 rls_tenant_isolation（B 范式：app.rls_system 系统通道 OR 本租户）"
+    destructive_scan: "2 条 UPDATE（只按父表推导，零租户/空租户不推导，回填后仍有 NULL 即 RAISE 中止整笔）；2 次 ADD COLUMN + 2 次 SET NOT NULL + 2 次 CREATE INDEX + 2 次 ENABLE/FORCE RLS + 2 次 CREATE POLICY；无 DROP/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: ledger, ref: "topems_prod _sqlx_migrations（2026-11-17 只读查询）", detail: "version=20261116180000 success=t 已应用；账本 max=20261117235500 / 704 行 / failed=0" }
+      - { kind: catalog, ref: "topems_prod pg_class/pg_attribute/pg_policies（2026-11-17 只读）", detail: "两表 tenant_id attnotnull=t、relrowsecurity=t、relforcerowsecurity=t、rls_tenant_isolation 各 1 条，与迁移第 8 段后置断言逐项一致" }
+      - { kind: data, ref: "迁移文件头 2026-11-16 只读实测", detail: "执行前两表均 0 行、无 tenant_id 列、RLS 关闭；父表 report_templates / report_schedules 均 0 行且 tenant_id NOT NULL，回填天然完成" }
+      - { kind: ledger, ref: "docs/database/m2-window-application-2026-11-16.md:372", detail: "23:20:52 该迁移执行完成，耗时 0.07s（单事务含账本记录），属 M-2 收口窗口的既定步骤" }
+    note: "已在生产应用，登记在 pending 段只因 version 高于 manifest 锚点 20261115130000；不是待应用项。部署耦合：新二进制写 tenant_id 与旧库必须同窗口（旧二进制在无列库 parse 阶段 42703），该窗口已于 2026-11-16 完成。回滚文件 database/rollback/20261116180000_report_subs_exec_records_tenant_id.rollback.sql"
+
   # ===== 统一核心 RLS 收紧（2026-11-17）=====
   # 口径来源：docs/database/unified-core-rls-decisions-2026-11-17.md（R1 / R2 / R3 / R6-b）
   - version: "20261117120000"

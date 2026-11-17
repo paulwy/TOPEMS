@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T13:27:12.121Z",
+  "generated_at": "2026-11-17T16:18:58.216Z",
   "root": "/Users/xingzhai/TOPEMS",
   "txn": {
     "total": {
@@ -112,15 +112,15 @@
   },
   "schema_prefix": {
     "scanned_files": 1431,
-    "sql_literals": 6493,
-    "violations": 1535,
+    "sql_literals": 6505,
+    "violations": 1536,
     "by_level": {
       "AMBIGUOUS": 0,
       "CROSS_SCHEMA": 0,
-      "SEARCH_PATH_DEPENDENT": 874,
-      "UNKNOWN": 661
+      "SEARCH_PATH_DEPENDENT": 872,
+      "UNKNOWN": 664
     },
-    "baseline_keys": 308,
+    "baseline_keys": 306,
     "new_violations": 0,
     "stale_keys": 0,
     "stale_samples": [],
@@ -129,7 +129,7 @@
   "txn_write_non2xx": {
     "hits": 0,
     "by_service": {},
-    "allowlist_entries": 96,
+    "allowlist_entries": 107,
     "unregistered": 0
   },
   "tenant_context": {
@@ -187,8 +187,8 @@
     "real_module_with_set_var": 1
   },
   "docs": {
-    "todo_lines": 781,
-    "todo_h2_sections": 18
+    "todo_lines": 323,
+    "todo_h2_sections": 7
   },
   "external": {
     "note": "以下数值需连库只读取数，本脚本不采集；更新时请同步修改本段与文档出处。",
@@ -209,5 +209,5 @@
     },
     "tenants_in_prod": 1
   },
-  "fingerprint": "b831878ad3b39b6614af5878f24f44cf212d4ad4e2637dfd53d4b336c82c2d20"
+  "fingerprint": "87f14d641fdc71d745b6f01031b8d6700a25d9d4f5296275f58cc9a5cad20539"
 }

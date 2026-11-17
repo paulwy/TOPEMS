@@ -1059,14 +1059,6 @@
       "table": "core_guides"
     },
     {
-      "file": "svc/portal/src/modules/help/mod.rs",
-      "table": "core_faqs"
-    },
-    {
-      "file": "svc/portal/src/modules/help/mod.rs",
-      "table": "core_guides"
-    },
-    {
       "file": "svc/qms/src/models/audit_log.rs",
       "table": "qa_approval_events"
     },
