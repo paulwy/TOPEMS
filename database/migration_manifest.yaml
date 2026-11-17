@@ -2023,3 +2023,14 @@ pending_forward_patches:
       - { kind: code, ref: "svc/master-data/src/modules/schema_registry.rs", detail: "10 个 handler 改为请求事务 scope_with，写入显式绑定 claims 租户，读路径保留显式 tenant_id 谓词；helper get_schema_def/create_dynamic_table 改收 ScopedTxn" }
       - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116", detail: "up 前两表 0 行；up 后 tenant_id NOT NULL + 严格策略；down 恢复无列/无 RLS/全局唯一索引" }
     note: "部署耦合：必须与 schema_registry.rs 代码改造同窗口。只上迁移 → 池直连的旧代码读 0 行、写入因 tenant_id NOT NULL 失败；只上代码 → 池直连仍可绕过 RLS。回滚文件 database/rollback/20261117233000_master_data_schema_registry_rls.rollback.sql"
+
+  - version: "20261117234000"
+    file: "database/migrations/20261117234000_legacy_permissive_rls_to_strict.sql"
+    status: to_apply
+    effect: "三张历史宽松策略表（public.core_files / bi.analytics_datasets / master_data.mdm_metadata_objects）收紧：NULL 租户归一到全零平台租户；清空该表全部既有策略后重建唯一严格 rls_tenant_isolation（USING + WITH CHECK + ENABLE/FORCE）；mdm.tenant_id 收敛 NOT NULL 并补 tenant_id 索引"
+    destructive_scan: "3 条 UPDATE（各表 WHERE tenant_id IS NULL，两库实际 0 行，destructive-gate: allow / max-rows=1000 / ticket PLATFORM-CORPUS-20261117）；无 INSERT/DELETE/TRUNCATE；3 次 ENABLE + 3 次 FORCE RLS、动态 DROP POLICY、3 次 CREATE POLICY、1 次 SET NOT NULL、1 次 CREATE INDEX；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: data, ref: "topems_prod 与克隆库 m2_dryrun_20261116 count(*)", detail: "迁移前两库三表均 0 行：tenant_id NULL=0 / 全零=0 / 真实租户=0；平台种子路径仅 20261014000060 的 mdm_metadata_objects INSERT（未写 tenant_id，落 default ...0001），生产该表 0 行" }
+      - { kind: catalog, ref: "topems_prod pg_class/pg_policies 2026-11-17", detail: "生产三表已是严格 B 范式（M-2 batch06 线下收紧），bi.analytics_datasets 同时残留两条严格策略；克隆库三表仍是四放行分支宽松策略 → 迁移对两种输入幂等" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（A/B/全零 各 1 行夹具）", detail: "up 前六档 core_files/datasets/mdm：未设 0/0/3、空串 0/0/3、全零 3/3/3、A 1/1/1、B 1/1/1、A+system 1/1/1；up 后：未设 0/0/0、空串 0/0/0、全零 1/1/1、A 1/1/1、B 1/1/1、A+system 3/3/3；全零上下文平台行 1/1/1（可见性未收掉）；A 上下文写 B 行 42501；down 后策略名恢复为 tenant_isolation_core_files / tenant_isolation_analytics_datasets / mdm_metadata_objects_tenant_policy；夹具清理后三表 0 行" }
+    note: "回滚文件 database/rollback/20261117234000_legacy_permissive_rls_to_strict.rollback.sql：恢复三表历史宽松策略、移除新索引、恢复 mdm.tenant_id 可空；NULL→全零归一不回退（避免平台行重新失去归属）。读取端无需同改：list_files / dataset.rs / metadata_v60 / master_plugin 均已用请求事务 + 显式 tenant_id 谓词"
