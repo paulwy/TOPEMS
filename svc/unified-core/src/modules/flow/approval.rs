@@ -408,10 +408,22 @@ pub async fn list_pending_approvals(
 )]
 pub async fn approve_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<TaskActionRequest>,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务审批事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("审批任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -431,7 +443,7 @@ pub async fn approve_task(
     )
     .bind(payload.comment)
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -447,7 +459,7 @@ pub async fn approve_task(
                 "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -459,7 +471,7 @@ pub async fn approve_task(
             )
             .bind(instance.workflow_id)
             .bind(locale)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -513,10 +525,22 @@ pub async fn approve_task(
 )]
 pub async fn reject_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<TaskActionRequest>,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务驳回事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("驳回任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -536,7 +560,7 @@ pub async fn reject_task(
     )
     .bind(payload.comment)
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -552,7 +576,7 @@ pub async fn reject_task(
                 "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -564,7 +588,7 @@ pub async fn reject_task(
             )
             .bind(instance.workflow_id)
             .bind(locale)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -617,9 +641,21 @@ pub async fn reject_task(
 )]
 pub async fn claim_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务认领事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("认领任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -636,7 +672,7 @@ pub async fn claim_task(
            RETURNING id as task_id, instance_id as task_instance_id, node_id as task_node_id, assignee_id as task_assignee_id, status as task_status, comment as task_comment, created_at as task_created_at, completed_at as task_completed_at"#,
     )
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -652,7 +688,7 @@ pub async fn claim_task(
                 "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -664,7 +700,7 @@ pub async fn claim_task(
             )
             .bind(instance.workflow_id)
             .bind(locale)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -717,9 +753,21 @@ pub async fn claim_task(
 )]
 pub async fn unclaim_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务取消认领事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("取消认领任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -736,7 +784,7 @@ pub async fn unclaim_task(
            RETURNING id as task_id, instance_id as task_instance_id, node_id as task_node_id, assignee_id as task_assignee_id, status as task_status, comment as task_comment, created_at as task_created_at, completed_at as task_completed_at"#,
     )
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -752,7 +800,7 @@ pub async fn unclaim_task(
                 "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -764,7 +812,7 @@ pub async fn unclaim_task(
             )
             .bind(instance.workflow_id)
             .bind(locale)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -818,10 +866,22 @@ pub async fn unclaim_task(
 )]
 pub async fn delegate_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("委托任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -857,7 +917,7 @@ pub async fn delegate_task(
     )
     .bind(delegate_to_id)
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -873,7 +933,7 @@ pub async fn delegate_task(
                 "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -885,7 +945,7 @@ pub async fn delegate_task(
             )
             .bind(instance.workflow_id)
             .bind(locale)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -937,10 +997,22 @@ pub async fn delegate_task(
 )]
 pub async fn reassign_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<ApprovalTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务重新分配事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("重新分配任务失败".to_string()));
+        }
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -976,7 +1048,7 @@ pub async fn reassign_task(
     )
     .bind(assignee_uuid)
     .bind(task_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -992,7 +1064,7 @@ pub async fn reassign_task(
                 "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -1004,7 +1076,7 @@ pub async fn reassign_task(
             )
             .bind(instance.workflow_id)
             .bind(locale)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(v) => v,
@@ -1308,6 +1380,7 @@ pub async fn create_approval(
 )]
 pub async fn process_approval(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     headers: HeaderMap,
     Json(payload): Json<TaskActionRequest>,
@@ -1320,8 +1393,26 @@ pub async fn process_approval(
     };
 
     match action {
-        "approve" => approve_task(State(state), Path(id), headers, Json(payload)).await,
-        "reject" => reject_task(State(state), Path(id), headers, Json(payload)).await,
+        "approve" => {
+            approve_task(
+                State(state),
+                Extension(txn_arc),
+                Path(id),
+                headers,
+                Json(payload),
+            )
+            .await
+        }
+        "reject" => {
+            reject_task(
+                State(state),
+                Extension(txn_arc),
+                Path(id),
+                headers,
+                Json(payload),
+            )
+            .await
+        }
         _ => ApiResponse::from(TopemsError::ValidationFailed("无效的操作类型".to_string())),
     }
 }
