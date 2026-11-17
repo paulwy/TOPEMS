@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use topems_shared_db::scope::PLATFORM_TENANT_ID;
 
 #[allow(
     clippy::as_conversions,
@@ -23,7 +24,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(&mut *tx)
         .await?;
     sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind("00000000-0000-0000-0000-000000000001")
+        .bind(PLATFORM_TENANT_ID.to_string())
         .execute(&mut *tx)
         .await?;
 
@@ -47,13 +48,14 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         // 插入字典类型
         let type_id: uuid::Uuid = sqlx::query_scalar(
             r#"INSERT INTO public.core_dict_types (code, name, category, description, tenant_id)
-               VALUES ($1, $2, 'system', $3, '00000000-0000-0000-0000-000000000001')
+               VALUES ($1, $2, 'system', $3, $4)
                ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
                RETURNING id"#,
         )
         .bind(type_code)
         .bind(type_name)
         .bind(format!("系统预置 - {}", type_name))
+        .bind(PLATFORM_TENANT_ID)
         .fetch_one(&mut *tx)
         .await?;
 
@@ -61,7 +63,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         for (idx, (code, name, value)) in items.iter().enumerate() {
             sqlx::query(
                 r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, value, sort_order, tenant_id)
-                   VALUES ($1, $2, $3, $4, $5, '00000000-0000-0000-0000-000000000001')
+                   VALUES ($1, $2, $3, $4, $5, $6)
                    ON CONFLICT (dict_type_id, code) DO UPDATE SET name = EXCLUDED.name, value = EXCLUDED.value"#,
             )
             .bind(type_id)
@@ -69,6 +71,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
             .bind(name)
             .bind(value)
             .bind(idx as i32)
+            .bind(PLATFORM_TENANT_ID)
             .execute(&mut *tx)
             .await?;
         }

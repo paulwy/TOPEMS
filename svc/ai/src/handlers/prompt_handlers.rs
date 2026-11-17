@@ -152,7 +152,8 @@ pub async fn list_prompt_templates(
     let is_fav: Option<bool> = params.is_favorite.as_deref().map(|v| v == "true");
     let locale = Locale::from_headers(&headers).as_sql();
 
-    let where_sql = "(tenant_id IS NULL OR tenant_id = $1)
+    // 租户域只查本租户行；平台内置模板（PLATFORM_TENANT_ID）由下方只读通道补齐。
+    let where_sql = "tenant_id = $1
        AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' OR description ILIKE '%' || $2 || '%')
        AND ($3::text IS NULL OR category = $3)
        AND ($4::boolean IS NULL OR is_favorite = $4)";
@@ -197,7 +198,7 @@ pub async fn list_prompt_templates(
         }
     };
 
-    let items = {
+    let mut items = {
         let mut guard = txn_arc.lock().await;
         let Some(txn) = guard.as_mut() else {
             return Json(ApiResponse::<PromptTemplateList>::server_error(
@@ -244,6 +245,62 @@ pub async fn list_prompt_templates(
             }
         }
     };
+
+    // 平台内置模板：系统只读通道 + 显式平台谓词，排在租户行之后按合并序列分页。
+    let q_platform = format!(
+        "SELECT id,
+                CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
+         FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC"
+    );
+    let platform_items = {
+        let mut pscope = match state.db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                return Json(ApiResponse::<PromptTemplateList>::from(
+                    TopemsError::internal("获取提示词模板列表失败", e),
+                ))
+            }
+        };
+        let result = sqlx::query(sqlx::AssertSqlSafe(q_platform))
+            .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+            .bind(&search)
+            .bind(&category)
+            .bind(is_fav)
+            .bind(locale)
+            .fetch_all(&mut pscope)
+            .await;
+        let _ = pscope.rollback().await;
+        match result {
+            Ok(rows) => {
+                let mut out = Vec::new();
+                for row in rows {
+                    match to_out(&row) {
+                        Ok(item) => out.push(item),
+                        Err(e) => {
+                            return Json(ApiResponse::<PromptTemplateList>::from(
+                                TopemsError::internal("获取提示词模板列表失败", e),
+                            ))
+                        }
+                    }
+                }
+                out
+            }
+            Err(e) => {
+                return Json(ApiResponse::<PromptTemplateList>::from(
+                    TopemsError::internal("获取提示词模板列表失败", e),
+                ))
+            }
+        }
+    };
+
+    let total = total + platform_items.len() as i64;
+    let skip =
+        usize::try_from((offset - (total - platform_items.len() as i64)).max(0)).unwrap_or(0);
+    let remaining = usize::try_from(page_size)
+        .unwrap_or(0)
+        .saturating_sub(items.len());
+    items.extend(platform_items.into_iter().skip(skip).take(remaining));
 
     Json(ApiResponse::success(
         PromptTemplateList {
@@ -298,11 +355,11 @@ pub async fn get_prompt_template(
             ))
         }
     };
-    match sqlx::query(
+    let tenant_row = match sqlx::query(
         "SELECT id,
                 CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                 description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
-         FROM ai.ai_prompt_templates WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)",
+         FROM ai.ai_prompt_templates WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -310,12 +367,57 @@ pub async fn get_prompt_template(
     .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(row)) => match to_out(&row) {
+        Ok(v) => v,
+        Err(e) => {
+            return Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("获取提示词模板失败", e),
+            ))
+        }
+    };
+
+    let row = match tenant_row {
+        Some(row) => Some(row),
+        None => {
+            // 租户域未命中 → 平台内置模板兜底（显式平台谓词，只读通道）。
+            let mut pscope = match state.db.scope_read_platform().await {
+                Ok(s) => s,
+                Err(e) => {
+                    return Json(ApiResponse::<PromptTemplateOut>::from(
+                        TopemsError::internal("获取提示词模板失败", e),
+                    ))
+                }
+            };
+            let result = sqlx::query(
+                "SELECT id,
+                        CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                        description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
+                 FROM ai.ai_prompt_templates WHERE id = $1 AND tenant_id = $2",
+            )
+            .bind(id)
+            .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+            .bind(locale)
+            .fetch_optional(&mut pscope)
+            .await;
+            let _ = pscope.rollback().await;
+            match result {
+                Ok(v) => v,
+                Err(e) => {
+                    return Json(ApiResponse::<PromptTemplateOut>::from(
+                        TopemsError::internal("获取提示词模板失败", e),
+                    ))
+                }
+            }
+        }
+    };
+
+    match row {
+        Some(row) => match to_out(&row) {
             Ok(item) => Json(ApiResponse::success(item, "Success")),
-            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("获取提示词模板失败", e))),
+            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("获取提示词模板失败", e),
+            )),
         },
-        Ok(None) => Json(ApiResponse::<PromptTemplateOut>::not_found("模板不存在")),
-        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("获取提示词模板失败", e))),
+        None => Json(ApiResponse::<PromptTemplateOut>::not_found("模板不存在")),
     }
 }
 
@@ -394,7 +496,7 @@ pub async fn update_prompt_template(
     let result = sqlx::query(
         "UPDATE ai.ai_prompt_templates SET
             name = $3, description = $4, category = $5, fields = $6, prompt_template = $7, updated_at = NOW()
-         WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
+         WHERE id = $1 AND tenant_id = $2
          RETURNING id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at",
     )
     .bind(id)
@@ -442,13 +544,11 @@ pub async fn delete_prompt_template(
             )))
         }
     };
-    let result = sqlx::query(
-        "DELETE FROM ai.ai_prompt_templates WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)",
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .execute(&mut scope)
-    .await;
+    let result = sqlx::query("DELETE FROM ai.ai_prompt_templates WHERE id = $1 AND tenant_id = $2")
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&mut scope)
+        .await;
     let _ = scope.commit().await;
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "Success")),
@@ -498,7 +598,7 @@ pub async fn toggle_prompt_favorite(
     };
     let result = sqlx::query(
         "UPDATE ai.ai_prompt_templates SET is_favorite = NOT is_favorite, updated_at = NOW()
-         WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
+         WHERE id = $1 AND tenant_id = $2
          RETURNING id, is_favorite",
     )
     .bind(id)
@@ -553,30 +653,63 @@ pub async fn get_prompt_categories(
             ))
         }
     };
-    match sqlx::query(
-        "SELECT category, COUNT(*) AS count FROM ai.ai_prompt_templates
-         WHERE (tenant_id IS NULL OR tenant_id = $1)
-         GROUP BY category ORDER BY count DESC",
-    )
-    .bind(tenant_id)
-    .fetch_all(&mut scope)
-    .await
+    let category_sql = "SELECT category, COUNT(*) AS count FROM ai.ai_prompt_templates
+         WHERE tenant_id = $1
+         GROUP BY category";
+    let tenant_rows = match sqlx::query(category_sql)
+        .bind(tenant_id)
+        .fetch_all(&mut scope)
+        .await
     {
-        Ok(rows) => {
-            let mut items = Vec::new();
-            for row in rows {
-                items.push(PromptCategory {
-                    id: row.try_get("category").unwrap_or_default(),
-                    name: row.try_get("category").unwrap_or_default(),
-                    count: row.try_get("count").unwrap_or(0),
-                });
-            }
-            Json(ApiResponse::success(items, "Success"))
+        Ok(rows) => rows,
+        Err(e) => {
+            return Json(ApiResponse::<Vec<PromptCategory>>::from(
+                TopemsError::internal("获取提示词分类失败", e),
+            ))
         }
-        Err(e) => Json(ApiResponse::<Vec<PromptCategory>>::from(
-            TopemsError::internal("获取提示词分类失败", e),
-        )),
+    };
+
+    // 平台内置模板分类计数合并（显式平台谓词，只读通道）。
+    let platform_rows = {
+        let mut pscope = match state.db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                return Json(ApiResponse::<Vec<PromptCategory>>::from(
+                    TopemsError::internal("获取提示词分类失败", e),
+                ))
+            }
+        };
+        let result = sqlx::query(category_sql)
+            .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+            .fetch_all(&mut pscope)
+            .await;
+        let _ = pscope.rollback().await;
+        match result {
+            Ok(rows) => rows,
+            Err(e) => {
+                return Json(ApiResponse::<Vec<PromptCategory>>::from(
+                    TopemsError::internal("获取提示词分类失败", e),
+                ))
+            }
+        }
+    };
+
+    let mut counts: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    for row in tenant_rows.iter().chain(platform_rows.iter()) {
+        let category: String = row.try_get("category").unwrap_or_default();
+        let count: i64 = row.try_get("count").unwrap_or(0);
+        *counts.entry(category).or_insert(0) += count;
     }
+    let mut items: Vec<PromptCategory> = counts
+        .into_iter()
+        .map(|(category, count)| PromptCategory {
+            id: category.clone(),
+            name: category,
+            count,
+        })
+        .collect();
+    items.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.id.cmp(&b.id)));
+    Json(ApiResponse::success(items, "Success"))
 }
 
 /// POST /prompts/templates/{id}/use — 模板渲染（变量替换），usage_count+1
@@ -618,7 +751,7 @@ pub async fn use_prompt_template(
     };
     let template = match sqlx::query(
         "UPDATE ai.ai_prompt_templates SET usage_count = usage_count + 1, updated_at = NOW()
-         WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
+         WHERE id = $1 AND tenant_id = $2
          RETURNING prompt_template",
     )
     .bind(id)
@@ -629,7 +762,39 @@ pub async fn use_prompt_template(
         Ok(Some(row)) => row
             .try_get::<String, _>("prompt_template")
             .unwrap_or_default(),
-        Ok(None) => return Json(ApiResponse::<UsePromptResult>::not_found("模板不存在")),
+        Ok(None) => {
+            // 平台内置模板仍可使用：只读通道取模板原文，不在租户事务里累计 usage_count。
+            let mut pscope = match state.db.scope_read_platform().await {
+                Ok(s) => s,
+                Err(e) => {
+                    return Json(ApiResponse::<UsePromptResult>::from(TopemsError::internal(
+                        "使用提示词模板失败",
+                        e,
+                    )))
+                }
+            };
+            let result = sqlx::query(
+                "SELECT prompt_template FROM ai.ai_prompt_templates
+                 WHERE id = $1 AND tenant_id = $2",
+            )
+            .bind(id)
+            .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+            .fetch_optional(&mut pscope)
+            .await;
+            let _ = pscope.rollback().await;
+            match result {
+                Ok(Some(row)) => row
+                    .try_get::<String, _>("prompt_template")
+                    .unwrap_or_default(),
+                Ok(None) => return Json(ApiResponse::<UsePromptResult>::not_found("模板不存在")),
+                Err(e) => {
+                    return Json(ApiResponse::<UsePromptResult>::from(TopemsError::internal(
+                        "使用提示词模板失败",
+                        e,
+                    )))
+                }
+            }
+        }
         Err(e) => {
             return Json(ApiResponse::<UsePromptResult>::from(TopemsError::internal(
                 "使用提示词模板失败",

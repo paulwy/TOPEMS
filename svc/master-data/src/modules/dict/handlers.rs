@@ -9,6 +9,7 @@ use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::PLATFORM_TENANT_ID;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -43,12 +44,12 @@ fn csv_field(s: &str) -> String {
 
 /// 写路径落库租户：
 /// - 普通用户 → `claims.tenant_id`（`tenant_middleware` 已确保存在且合法）；
-/// - 超管 / 服务身份 → 系统租户 `…0001`（与标准字典种子同一归属），
-///   不再落 `tenant_id = 0`。
+/// - 超管 / 服务身份 → 平台语料租户 `PLATFORM_TENANT_ID`（与标准字典种子同一归属），
+///   由读取端「本租户行 ∪ 平台行」对所有租户可见；普通租户写不到平台行。
 fn create_tenant_id(claims: &Claims) -> Result<Uuid, String> {
     match resolve_create_tenant(claims) {
         Ok(Some(tenant_id)) => Ok(tenant_id),
-        Ok(None) => Ok(Uuid::from_u128(1)),
+        Ok(None) => Ok(PLATFORM_TENANT_ID),
         Err((_code, message)) => Err(message),
     }
 }
@@ -128,10 +129,10 @@ pub async fn list_dict_types(
         dict_type_columns("$6")
     );
 
-    let items: Vec<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
-        .bind(category)
-        .bind(status)
-        .bind(search)
+    let mut items: Vec<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
+        .bind(category.clone())
+        .bind(status.clone())
+        .bind(search.clone())
         .bind(page_size)
         .bind(offset)
         .bind(Locale::from_headers(&headers).as_sql())
@@ -144,10 +145,58 @@ pub async fn list_dict_types(
             return ApiResponse::from(TopemsError::Internal("查询字典类型列表失败".to_string()));
         }
     };
+    let tenant_total = total;
+
+    // 平台内置字典行（PLATFORM_TENANT_ID）：系统只读通道 + 显式平台谓词。
+    // 平台行排在租户自定义行之后，两侧按合并序列做全局分页。
+    // code 全局唯一（UNIQUE(code)），租户行与平台行天然不重叠，无需去重。
+    let platform_sql = format!(
+        r#"SELECT {} FROM public.core_dict_types
+           WHERE deleted_at IS NULL AND tenant_id = $4
+             AND ($1::text IS NULL OR category = $1)
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
+           ORDER BY created_at DESC"#,
+        dict_type_columns("$5")
+    );
+    let platform_items: Vec<DictType> = {
+        let mut pscope = match state.rls_db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("建立平台只读作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+            }
+        };
+        let result = sqlx::query_as(sqlx::AssertSqlSafe(platform_sql))
+            .bind(category)
+            .bind(status)
+            .bind(search)
+            .bind(PLATFORM_TENANT_ID)
+            .bind(Locale::from_headers(&headers).as_sql())
+            .fetch_all(&mut pscope)
+            .await;
+        let _ = pscope.rollback().await;
+        match result {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询平台字典类型列表失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "查询字典类型列表失败".to_string(),
+                ));
+            }
+        }
+    };
+
+    let platform_total = platform_items.len() as i64;
+    let skip = usize::try_from((offset - tenant_total).max(0)).unwrap_or(0);
+    let remaining = usize::try_from(page_size)
+        .unwrap_or(0)
+        .saturating_sub(items.len());
+    items.extend(platform_items.into_iter().skip(skip).take(remaining));
 
     api_success(DictTypeListResponse {
         items,
-        total,
+        total: tenant_total + platform_total,
         page,
         page_size,
     })
@@ -201,6 +250,43 @@ pub async fn get_dict_type(
         Err(e) => {
             tracing::error!("查询字典类型详情失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("查询字典类型详情失败".to_string()));
+        }
+    };
+
+    let dict_type = match dict_type {
+        Some(dt) => Some(dt),
+        None => {
+            // 租户域未命中 → 平台内置行兜底（显式平台谓词，只读通道）。
+            let platform_sql = format!(
+                r#"SELECT {} FROM public.core_dict_types
+                   WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $3"#,
+                dict_type_columns("$2")
+            );
+            let mut pscope = match state.rls_db.scope_read_platform().await {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!("建立平台只读作用域失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "数据库事务不可用".to_string(),
+                    ));
+                }
+            };
+            let result = sqlx::query_as(sqlx::AssertSqlSafe(platform_sql))
+                .bind(id)
+                .bind(Locale::from_headers(&headers).as_sql())
+                .bind(PLATFORM_TENANT_ID)
+                .fetch_optional(&mut pscope)
+                .await;
+            let _ = pscope.rollback().await;
+            match result {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("查询平台字典类型详情失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "查询字典类型详情失败".to_string(),
+                    ));
+                }
+            }
         }
     };
 
@@ -484,10 +570,10 @@ pub async fn list_dict_items(
         dict_item_columns("$6")
     );
 
-    let items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
+    let mut items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(dict_type_id)
-        .bind(status)
-        .bind(search)
+        .bind(status.clone())
+        .bind(search.clone())
         .bind(page_size)
         .bind(offset)
         .bind(Locale::from_headers(&headers).as_sql())
@@ -500,10 +586,54 @@ pub async fn list_dict_items(
             return ApiResponse::from(TopemsError::Internal("查询字典项列表失败".to_string()));
         }
     };
+    let tenant_total = total;
+
+    // 平台内置字典项（PLATFORM_TENANT_ID）：与平台字典类型同 dict_type_id，
+    // 租户域查不到平台类型时由这里补齐；按合并序列做全局分页。
+    let platform_sql = format!(
+        r#"SELECT {} FROM public.core_dict_items
+           WHERE deleted_at IS NULL AND dict_type_id = $1 AND tenant_id = $4
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
+           ORDER BY sort_order ASC, created_at DESC"#,
+        dict_item_columns("$5")
+    );
+    let platform_items: Vec<DictItem> = {
+        let mut pscope = match state.rls_db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("建立平台只读作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+            }
+        };
+        let result = sqlx::query_as(sqlx::AssertSqlSafe(platform_sql))
+            .bind(dict_type_id)
+            .bind(status)
+            .bind(search)
+            .bind(PLATFORM_TENANT_ID)
+            .bind(Locale::from_headers(&headers).as_sql())
+            .fetch_all(&mut pscope)
+            .await;
+        let _ = pscope.rollback().await;
+        match result {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询平台字典项列表失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("查询字典项列表失败".to_string()));
+            }
+        }
+    };
+
+    let platform_total = platform_items.len() as i64;
+    let skip = usize::try_from((offset - tenant_total).max(0)).unwrap_or(0);
+    let remaining = usize::try_from(page_size)
+        .unwrap_or(0)
+        .saturating_sub(items.len());
+    items.extend(platform_items.into_iter().skip(skip).take(remaining));
 
     api_success(DictItemListResponse {
         items,
-        total,
+        total: tenant_total + platform_total,
         page,
         page_size,
     })
@@ -557,6 +687,43 @@ pub async fn get_dict_item(
         Err(e) => {
             tracing::error!("查询字典项详情失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("查询字典项详情失败".to_string()));
+        }
+    };
+
+    let dict_item = match dict_item {
+        Some(di) => Some(di),
+        None => {
+            // 租户域未命中 → 平台内置行兜底（显式平台谓词，只读通道）。
+            let platform_sql = format!(
+                r#"SELECT {} FROM public.core_dict_items
+                   WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $3"#,
+                dict_item_columns("$2")
+            );
+            let mut pscope = match state.rls_db.scope_read_platform().await {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!("建立平台只读作用域失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "数据库事务不可用".to_string(),
+                    ));
+                }
+            };
+            let result = sqlx::query_as(sqlx::AssertSqlSafe(platform_sql))
+                .bind(id)
+                .bind(Locale::from_headers(&headers).as_sql())
+                .bind(PLATFORM_TENANT_ID)
+                .fetch_optional(&mut pscope)
+                .await;
+            let _ = pscope.rollback().await;
+            match result {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("查询平台字典项详情失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "查询字典项详情失败".to_string(),
+                    ));
+                }
+            }
         }
     };
 
@@ -895,7 +1062,7 @@ pub async fn export_dict_items(
         }
     };
 
-    let items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
+    let mut items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(dict_type_id)
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&mut scope)
@@ -907,6 +1074,37 @@ pub async fn export_dict_items(
             return format!("导出失败: {}", e);
         }
     };
+
+    // 平台内置字典项一并导出（显式平台谓词，只读通道）。
+    let platform_sql = format!(
+        r#"SELECT {} FROM public.core_dict_items
+           WHERE deleted_at IS NULL AND dict_type_id = $1 AND tenant_id = $3
+           ORDER BY sort_order ASC, created_at DESC"#,
+        dict_item_columns("$2")
+    );
+    {
+        let mut pscope = match state.rls_db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("建立平台只读作用域失败: {}", e);
+                return format!("导出失败: {}", e);
+            }
+        };
+        let result = sqlx::query_as::<_, DictItem>(sqlx::AssertSqlSafe(platform_sql))
+            .bind(dict_type_id)
+            .bind(Locale::from_headers(&headers).as_sql())
+            .bind(PLATFORM_TENANT_ID)
+            .fetch_all(&mut pscope)
+            .await;
+        let _ = pscope.rollback().await;
+        match result {
+            Ok(v) => items.extend(v),
+            Err(e) => {
+                tracing::error!("导出平台字典项失败: {}", e);
+                return format!("导出失败: {}", e);
+            }
+        }
+    }
 
     let mut csv = String::from(
         "id,dict_type_id,code,name,value,sort_order,parent_id,status,created_at,updated_at\n",

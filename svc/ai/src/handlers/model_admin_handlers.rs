@@ -369,63 +369,92 @@ pub async fn list_models(
             )))
         }
     };
-    match sqlx::query_as::<
-        _,
-        (
-            Uuid,
-            String,
-            String,
-            String,
-            String,
-            Option<String>,
-            Option<i32>,
-            Option<serde_json::Value>,
-            Option<serde_json::Value>,
-        ),
-    >(
-        "SELECT id,
+    let model_sql = "SELECT id,
                 CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                 provider, type, status, description, max_tokens, pricing, capabilities
-         FROM ai.ai_models WHERE tenant_id IS NULL OR tenant_id = $1 ORDER BY created_at",
-    )
-    .bind(tenant_id)
-    .bind(locale)
-    .fetch_all(&mut scope)
-    .await
+         FROM ai.ai_models WHERE tenant_id = $1 ORDER BY created_at";
+    type ModelRow = (
+        Uuid,
+        String,
+        String,
+        String,
+        String,
+        Option<String>,
+        Option<i32>,
+        Option<serde_json::Value>,
+        Option<serde_json::Value>,
+    );
+    let to_item = |(
+        id,
+        name,
+        provider,
+        r#type,
+        status,
+        description,
+        max_tokens,
+        pricing,
+        capabilities,
+    ): ModelRow| ModelItem {
+        id,
+        name,
+        provider,
+        r#type,
+        status,
+        description,
+        max_tokens,
+        pricing,
+        capabilities,
+    };
+
+    let tenant_rows = match sqlx::query_as::<_, ModelRow>(model_sql)
+        .bind(tenant_id)
+        .bind(locale)
+        .fetch_all(&mut scope)
+        .await
     {
-        Ok(rows) => Json(ApiResponse::success(
-            rows.into_iter()
-                .map(
-                    |(
-                        id,
-                        name,
-                        provider,
-                        r#type,
-                        status,
-                        description,
-                        max_tokens,
-                        pricing,
-                        capabilities,
-                    )| ModelItem {
-                        id,
-                        name,
-                        provider,
-                        r#type,
-                        status,
-                        description,
-                        max_tokens,
-                        pricing,
-                        capabilities,
-                    },
-                )
-                .collect(),
-            "Success",
-        )),
-        Err(e) => Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
-            "获取模型列表失败",
-            e,
-        ))),
-    }
+        Ok(rows) => rows,
+        Err(e) => {
+            return Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
+                "获取模型列表失败",
+                e,
+            )))
+        }
+    };
+
+    // 平台全局模型（PLATFORM_TENANT_ID）：系统只读通道 + 显式平台谓词，追加在租户模型之后。
+    let platform_rows = {
+        let mut pscope = match state.db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                return Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
+                    "获取模型列表失败",
+                    e,
+                )))
+            }
+        };
+        let result = sqlx::query_as::<_, ModelRow>(model_sql)
+            .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+            .bind(locale)
+            .fetch_all(&mut pscope)
+            .await;
+        let _ = pscope.rollback().await;
+        match result {
+            Ok(rows) => rows,
+            Err(e) => {
+                return Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
+                    "获取模型列表失败",
+                    e,
+                )))
+            }
+        }
+    };
+
+    let items: Vec<ModelItem> = tenant_rows
+        .into_iter()
+        .chain(platform_rows)
+        .map(to_item)
+        .collect();
+    Json(ApiResponse::success(items, "Success"))
 }
 
 /// GET /models/{id}/config
@@ -463,16 +492,64 @@ pub async fn get_model_config(
             )))
         }
     };
-    match sqlx::query_as::<_, (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>)>(
+    let config_sql =
         "SELECT id, temperature::float8, max_tokens, top_p::float8, frequency_penalty::float8,
                 presence_penalty::float8, system_prompt
-         FROM ai.ai_models WHERE id = $1",
-    )
+         FROM ai.ai_models WHERE id = $1 AND tenant_id = $2";
+    let tenant_row = match sqlx::query_as::<
+        _,
+        (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>),
+    >(config_sql)
     .bind(model_id)
+    .bind(_claims.tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some((
+        Ok(v) => v,
+        Err(e) => {
+            return Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
+                "获取模型配置失败",
+                e,
+            )))
+        }
+    };
+
+    let row = match tenant_row {
+        Some(row) => Some(row),
+        None => {
+            // 租户域未命中 → 平台全局模型兜底（显式平台谓词，只读通道）。
+            let mut pscope = match state.db.scope_read_platform().await {
+                Ok(s) => s,
+                Err(e) => {
+                    return Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
+                        "获取模型配置失败",
+                        e,
+                    )))
+                }
+            };
+            let result =
+                sqlx::query_as::<_, (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>)>(
+                    config_sql,
+                )
+                .bind(model_id)
+                .bind(topems_shared_db::scope::PLATFORM_TENANT_ID)
+                .fetch_optional(&mut pscope)
+                .await;
+            let _ = pscope.rollback().await;
+            match result {
+                Ok(v) => v,
+                Err(e) => {
+                    return Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
+                        "获取模型配置失败",
+                        e,
+                    )))
+                }
+            }
+        }
+    };
+
+    match row {
+        Some((
             model_id,
             temperature,
             max_tokens,
@@ -480,7 +557,7 @@ pub async fn get_model_config(
             frequency_penalty,
             presence_penalty,
             system_prompt,
-        ))) => Json(ApiResponse::success(
+        )) => Json(ApiResponse::success(
             ModelConfig {
                 model_id,
                 temperature,
@@ -492,11 +569,7 @@ pub async fn get_model_config(
             },
             "Success",
         )),
-        Ok(None) => Json(ApiResponse::<ModelConfig>::not_found("模型不存在")),
-        Err(e) => Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
-            "获取模型配置失败",
-            e,
-        ))),
+        None => Json(ApiResponse::<ModelConfig>::not_found("模型不存在")),
     }
 }
 
