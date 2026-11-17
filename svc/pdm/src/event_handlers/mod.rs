@@ -1,10 +1,10 @@
 use std::sync::Arc;
+use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
-use topems_shared_auth::middleware::TenantScope;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType, MasterDataAction,
@@ -263,7 +263,9 @@ impl PdmEventHandlers {
             ))
         })?;
         let tenant_id = tenant_scope.tenant_id().ok_or_else(|| {
-            TopemsError::Internal("[pdm-mdm] 租户作用域状态异常（Tenant 变体缺少 tenant_id）".to_string())
+            TopemsError::Internal(
+                "[pdm-mdm] 租户作用域状态异常（Tenant 变体缺少 tenant_id）".to_string(),
+            )
         })?;
 
         // pdm_master_data_refs 已含 tenant_id（20261115142300 补齐），写入为

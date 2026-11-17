@@ -108,7 +108,12 @@ where
 
 /// 在测试事务内造一条质量规则（规则种子已从关系表下线，测试自备夹具）。
 /// 与后续查询共用同一请求事务，测试结束随事务回滚，不落库残留。
-async fn seed_quality_rule(state: &AppState, cell: &RlsTxnCell, entity_type: &str, rule_type: &str) {
+async fn seed_quality_rule(
+    state: &AppState,
+    cell: &RlsTxnCell,
+    entity_type: &str,
+    rule_type: &str,
+) {
     let req = CreateQualityRuleRequest {
         name: format!("测试夹具-{entity_type}-{rule_type}"),
         entity_type: entity_type.to_string(),

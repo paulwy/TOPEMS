@@ -460,13 +460,14 @@ pub async fn remove_favorite(
         }
     };
 
-    let result =
-        sqlx::query(r#"DELETE FROM core_favorites WHERE id = $1 AND user_id = $2 AND tenant_id = $3"#)
-            .bind(id)
-            .bind(&claims.sub)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        r#"DELETE FROM core_favorites WHERE id = $1 AND user_id = $2 AND tenant_id = $3"#,
+    )
+    .bind(id)
+    .bind(&claims.sub)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success(id.to_string()),

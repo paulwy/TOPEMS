@@ -295,7 +295,11 @@ fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid, tenant_id: Uuid)
         }
 
         if let Err(e) = scope.commit().await {
-            tracing::warn!("[srm→mdm] 提交租户作用域失败: id={}, err={}", srm_supplier_id, e);
+            tracing::warn!(
+                "[srm→mdm] 提交租户作用域失败: id={}, err={}",
+                srm_supplier_id,
+                e
+            );
         }
     });
 }

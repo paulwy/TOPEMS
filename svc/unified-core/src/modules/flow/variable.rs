@@ -414,9 +414,7 @@ pub async fn set_instance_variable(
     match instance_owned_by_request(&mut scope, instance_id).await {
         Ok(true) => {}
         Ok(false) => {
-            return ApiResponse::from(TopemsError::ResourceNotFound(
-                "流程实例不存在".to_string(),
-            ));
+            return ApiResponse::from(TopemsError::ResourceNotFound("流程实例不存在".to_string()));
         }
         Err(e) => {
             tracing::error!("校验实例归属失败: {}", e);
@@ -467,9 +465,7 @@ pub async fn set_instance_variables_batch(
         Ok(true) => {}
         Ok(false) => {
             // 归属校验失败时本请求事务内尚未写入任何变量，整批不执行
-            return ApiResponse::from(TopemsError::ResourceNotFound(
-                "流程实例不存在".to_string(),
-            ));
+            return ApiResponse::from(TopemsError::ResourceNotFound("流程实例不存在".to_string()));
         }
         Err(e) => {
             tracing::error!("校验实例归属失败: {}", e);

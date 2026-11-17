@@ -424,7 +424,9 @@ pub async fn create_access_log(
     // - 普通用户缺租户/租户非法 → 400，不再兜底成零租户。
     let tenant_id = match topems_shared_auth::middleware::try_tenant_id_from_claims(&claims) {
         Ok(t) => t,
-        Err(_) if claims.is_superuser || topems_shared_auth::service::is_service_claims(&claims) => {
+        Err(_)
+            if claims.is_superuser || topems_shared_auth::service::is_service_claims(&claims) =>
+        {
             topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID
         }
         Err((code, message)) => {

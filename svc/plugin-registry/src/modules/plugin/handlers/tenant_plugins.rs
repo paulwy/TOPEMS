@@ -346,7 +346,10 @@ async fn install_plugin_inner(
                 .execute(&mut scope)
                 .await
             {
-                tracing::error!("[Plugin] Failed to open system channel for install_count: {}", e);
+                tracing::error!(
+                    "[Plugin] Failed to open system channel for install_count: {}",
+                    e
+                );
                 let _ = scope.rollback().await;
                 return Json(CoreResponse::error(&format!(
                     "Failed to install plugin: {}",
@@ -668,7 +671,10 @@ async fn uninstall_plugin_inner(
             .execute(&mut scope)
             .await
         {
-            tracing::error!("[Plugin] Failed to open system channel for install_count: {}", e);
+            tracing::error!(
+                "[Plugin] Failed to open system channel for install_count: {}",
+                e
+            );
             let _ = scope.rollback().await;
             return Json(CoreResponse::error(&format!(
                 "Failed to uninstall plugin: {}",
@@ -1295,7 +1301,10 @@ pub async fn upload_plugin_version(
                 .execute(&mut scope)
                 .await
             {
-                tracing::error!("[Plugin] Failed to open system channel for version bump: {}", e);
+                tracing::error!(
+                    "[Plugin] Failed to open system channel for version bump: {}",
+                    e
+                );
                 let _ = scope.rollback().await;
                 return Json(CoreResponse::error(&format!(
                     "Failed to upload plugin version: {}",
@@ -1547,7 +1556,10 @@ pub async fn unpublish_plugin(
         .execute(&mut scope)
         .await
     {
-        tracing::error!("[Plugin] Failed to open system channel for unpublish: {}", e);
+        tracing::error!(
+            "[Plugin] Failed to open system channel for unpublish: {}",
+            e
+        );
         let _ = scope.rollback().await;
         return (
             StatusCode::INTERNAL_SERVER_ERROR,

@@ -324,12 +324,12 @@ pub async fn rollback_plugin_version(
         .execute(&mut scope)
         .await
     {
-        tracing::error!("[Plugin] Failed to open system channel for version rollback: {}", e);
-        let _ = scope.rollback().await;
-        return Json(CoreResponse::error(&format!(
-            "Rollback failed: {}",
+        tracing::error!(
+            "[Plugin] Failed to open system channel for version rollback: {}",
             e
-        )));
+        );
+        let _ = scope.rollback().await;
+        return Json(CoreResponse::error(&format!("Rollback failed: {}", e)));
     }
 
     let result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")

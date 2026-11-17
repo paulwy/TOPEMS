@@ -105,7 +105,9 @@ pub async fn list_inspections(
 
     // 显式租户谓词：裸池连接上的 app.tenant_id 不可依赖，超管保持全量口径。
     if !claims.is_superuser {
-        params.push(serde_json::Value::String(get_tenant_id(&claims).to_string()));
+        params.push(serde_json::Value::String(
+            get_tenant_id(&claims).to_string(),
+        ));
         where_clause.push_str(" WHERE qi.tenant_id = $1::uuid");
     }
 
