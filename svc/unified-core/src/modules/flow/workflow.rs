@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -41,16 +42,21 @@ pub struct WorkflowQueryParams {
 )]
 pub async fn list_workflows(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<WorkflowQueryParams>,
 ) -> ApiResponse<PaginatedResponse<Workflow>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化工作流列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化工作流列表事务作用域失败".to_string(),
+            ));
+        }
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -62,22 +68,27 @@ pub async fn list_workflows(
     let has_filters = !search.is_empty() || status.is_some();
 
     let total: i64 = if !has_filters {
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflows WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR ($1::uuid IS NULL OR tenant_id = $1))")
-            .bind(tenant_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0)
+        match sqlx::query_scalar(
+            "SELECT COUNT(*) FROM public.core_workflows WHERE deleted_at IS NULL",
+        )
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询工作流总数失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("查询工作流总数失败".to_string()));
+            }
+        }
     } else {
         match sqlx::query_scalar(
             r#"SELECT COUNT(*) FROM public.core_workflows 
                WHERE deleted_at IS NULL AND (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
-                 AND (status = $2 OR $2 = '')
-                 AND ($3::uuid IS NULL OR ($3::uuid IS NULL OR tenant_id = $3))"#,
+                 AND (status = $2 OR $2 = '')"#,
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
-        .bind(tenant_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(v) => v,
@@ -90,12 +101,11 @@ pub async fn list_workflows(
 
     let items: Vec<Workflow> = if !has_filters {
         match sqlx::query_as::<_, Workflow>(
-            "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE ($3::uuid IS NULL OR ($3::uuid IS NULL OR tenant_id = $3)) ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
-        .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(v) => v,
@@ -110,15 +120,13 @@ pub async fn list_workflows(
                FROM public.core_workflows 
                WHERE (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
-                 AND ($5::uuid IS NULL OR ($5::uuid IS NULL OR tenant_id = $5))
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(page_size)
         .bind(offset)
-        .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(v) => v,
@@ -151,23 +159,27 @@ pub async fn list_workflows(
 )]
 pub async fn get_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Workflow> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化工作流详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化工作流详情事务作用域失败".to_string(),
+            ));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))",
+        "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
-    .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
