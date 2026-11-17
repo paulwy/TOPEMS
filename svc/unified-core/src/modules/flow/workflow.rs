@@ -805,9 +805,21 @@ pub async fn list_workflow_versions(
 pub async fn create_workflow_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<CreateWorkflowVersionRequest>,
 ) -> ApiResponse<WorkflowVersion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建工作流版本事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string()));
+        }
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -817,11 +829,10 @@ pub async fn create_workflow_version(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let wf_ok: bool = match sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM public.core_workflows WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id=$2))",
+        "SELECT EXISTS(SELECT 1 FROM public.core_workflows WHERE id = $1 AND deleted_at IS NULL)",
     )
     .bind(workflow_id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(b) => b,
@@ -837,15 +848,16 @@ pub async fn create_workflow_version(
     let definition = match payload.definition {
         Some(d) => d,
         None => match sqlx::query_scalar::<_, serde_json::Value>(
-            "SELECT definition FROM public.core_workflows WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id=$2)",
+            "SELECT definition FROM public.core_workflows WHERE id = $1 AND deleted_at IS NULL",
         )
         .bind(workflow_id)
-        .bind(tenant_opt)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         {
             Ok(Some(d)) => d,
-            Ok(None) => return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())),
+            Ok(None) => {
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()))
+            }
             Err(e) => {
                 tracing::error!("读取工作流快照失败: {}", e);
                 return ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string()));
@@ -854,16 +866,18 @@ pub async fn create_workflow_version(
     };
 
     // 新版本创建后成为唯一激活版本：先将该工作流旧版本全部置为非激活
-    if let Err(e) = sqlx::query(
-        "UPDATE public.core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) ",
+    match sqlx::query(
+        "UPDATE public.core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) ",
     )
     .bind(workflow_id)
-    .bind(tenant_opt)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
-        tracing::error!("创建版本前重置激活状态失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("创建版本失败".to_string()));
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("创建版本前重置激活状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建版本失败".to_string()));
+        }
     }
 
     let version = sqlx::query_as::<_, WorkflowVersion>(
@@ -878,7 +892,7 @@ pub async fn create_workflow_version(
     .bind(&payload.change_description)
     .bind(payload.created_by.as_deref().unwrap_or("system"))
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match version {
