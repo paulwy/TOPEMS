@@ -1,6 +1,8 @@
 //! 通用评论 / 收藏 handler。
 //!
-//! 仅依赖全局 auth_middleware 注入的 Claims（登录即可用，不绑定细粒度权限点），
+//! 走请求事务通道（A 类）：读取用 `TenantScope` 生成显式租户谓词，写入用
+//! `TenantScope::require_tenant` 显式绑定 `tenant_id`；非 2xx 分支显式回滚并释放
+//! 请求事务，避免把失败写入留到中间件提交。
 //! 评论按实体过滤、作者本人可改可删；收藏按当前登录用户隔离，查重幂等。
 
 use axum::{
@@ -8,6 +10,8 @@ use axum::{
     Json,
 };
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -21,18 +25,6 @@ const COMMENT_COLUMNS: &str =
 const FAVORITE_COLUMNS: &str =
     "id, tenant_id, entity_type, entity_id, entity_name, user_id, created_at";
 
-/// 解析租户隔离值：超管不限租户，普通用户限定 claims.tenant_id。
-fn resolve_tenant(claims: &Claims) -> Option<Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    }
-}
-
 // ============================================================
 // Comments
 // ============================================================
@@ -41,28 +33,54 @@ fn resolve_tenant(claims: &Claims) -> Option<Uuid> {
 pub async fn list_comments(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Query(q): Query<CommentListQuery>,
 ) -> ApiResponse<Vec<Comment>> {
-    let tenant_opt = resolve_tenant(&claims);
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.engagement.list_comments",
+        "core_comments",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"SELECT {} FROM core_comments
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR entity_type = $1)
              AND ($2::text IS NULL OR entity_id = $2)
-             AND ($3::uuid IS NULL OR tenant_id = $3)
+             AND {}
            ORDER BY created_at ASC"#,
-        COMMENT_COLUMNS
+        COMMENT_COLUMNS,
+        tenant_scope.sql_predicate("tenant_id", "$3")
     );
 
     let items: Vec<Comment> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(q.entity_type)
         .bind(q.entity_id)
-        .bind(tenant_opt)
-        .fetch_all(&state.pool)
+        .bind_tenant_scope(&tenant_scope)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("查询评论列表失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("查询评论列表失败".to_string()));
         }
@@ -71,10 +89,11 @@ pub async fn list_comments(
     api_success(items)
 }
 
-/// POST /comments — 创建评论（作者取自 Claims）。
+/// POST /comments — 创建评论（作者取自 Claims，租户取当前请求租户）。
 pub async fn create_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Json(req): Json<CreateCommentRequest>,
 ) -> ApiResponse<Comment> {
     if req.content.trim().is_empty() {
@@ -88,7 +107,24 @@ pub async fn create_comment(
         ));
     }
 
-    let tenant_id = resolve_tenant(&claims).unwrap_or_else(Uuid::nil);
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+    let tenant_id = tenant_scope.tenant_id();
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"INSERT INTO core_comments
              (tenant_id, content, author_id, author_name, entity_type, entity_id, parent_id)
@@ -105,11 +141,15 @@ pub async fn create_comment(
         .bind(req.entity_type.trim())
         .bind(req.entity_id.trim())
         .bind(req.parent_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(v) => v,
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("创建评论失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("创建评论失败".to_string()));
         }
@@ -122,6 +162,7 @@ pub async fn create_comment(
 pub async fn update_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCommentRequest>,
 ) -> ApiResponse<Comment> {
@@ -131,10 +172,28 @@ pub async fn update_comment(
         ));
     }
 
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+    let tenant_id = tenant_scope.tenant_id();
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"UPDATE core_comments
            SET content = $1, updated_at = NOW()
-           WHERE id = $2 AND author_id = $3 AND deleted_at IS NULL
+           WHERE id = $2 AND author_id = $3 AND tenant_id = $4 AND deleted_at IS NULL
            RETURNING {}"#,
         COMMENT_COLUMNS
     );
@@ -143,11 +202,16 @@ pub async fn update_comment(
         .bind(req.content.trim())
         .bind(id)
         .bind(&claims.sub)
-        .fetch_optional(&state.pool)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("更新评论失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("更新评论失败".to_string()));
         }
@@ -155,9 +219,15 @@ pub async fn update_comment(
 
     match comment {
         Some(c) => api_success(c),
-        None => ApiResponse::from(TopemsError::ResourceNotFound(
-            "评论不存在或无权修改".to_string(),
-        )),
+        None => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::from(TopemsError::ResourceNotFound(
+                "评论不存在或无权修改".to_string(),
+            ))
+        }
     }
 }
 
@@ -165,23 +235,53 @@ pub async fn update_comment(
 pub async fn delete_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+    let tenant_id = tenant_scope.tenant_id();
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
     let result = sqlx::query(
         r#"UPDATE core_comments SET deleted_at = NOW()
-           WHERE id = $1 AND author_id = $2 AND deleted_at IS NULL"#,
+           WHERE id = $1 AND author_id = $2 AND tenant_id = $3 AND deleted_at IS NULL"#,
     )
     .bind(id)
     .bind(&claims.sub)
-    .execute(&state.pool)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success(id.to_string()),
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "评论不存在或无权删除".to_string(),
-        )),
+        Ok(_) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::from(TopemsError::ResourceNotFound(
+                "评论不存在或无权删除".to_string(),
+            ))
+        }
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("删除评论失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除评论失败".to_string()))
         }
@@ -196,23 +296,49 @@ pub async fn delete_comment(
 pub async fn list_favorites(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Favorite>> {
-    let tenant_opt = resolve_tenant(&claims);
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.engagement.list_favorites",
+        "core_favorites",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"SELECT {} FROM core_favorites
-           WHERE user_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+           WHERE user_id = $1 AND {}
            ORDER BY created_at DESC"#,
-        FAVORITE_COLUMNS
+        FAVORITE_COLUMNS,
+        tenant_scope.sql_predicate("tenant_id", "$2")
     );
 
     let items: Vec<Favorite> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(&claims.sub)
-        .bind(tenant_opt)
-        .fetch_all(&state.pool)
+        .bind_tenant_scope(&tenant_scope)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("查询收藏列表失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("查询收藏列表失败".to_string()));
         }
@@ -225,6 +351,7 @@ pub async fn list_favorites(
 pub async fn add_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Json(req): Json<AddFavoriteRequest>,
 ) -> ApiResponse<Favorite> {
     if req.entity_type.trim().is_empty() || req.entity_id.trim().is_empty() {
@@ -233,7 +360,24 @@ pub async fn add_favorite(
         ));
     }
 
-    let tenant_id = resolve_tenant(&claims).unwrap_or_else(Uuid::nil);
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+    let tenant_id = tenant_scope.tenant_id();
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
     if let Err(e) = sqlx::query(
         r#"INSERT INTO core_favorites
              (tenant_id, user_id, entity_type, entity_id, entity_name)
@@ -245,9 +389,13 @@ pub async fn add_favorite(
     .bind(req.entity_type.trim())
     .bind(req.entity_id.trim())
     .bind(req.entity_name.trim())
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
+        drop(scope);
+        if let Some(txn) = guard.take() {
+            let _ = txn.rollback().await;
+        }
         tracing::error!("添加收藏失败: {}", e);
         return ApiResponse::from(TopemsError::Internal("添加收藏失败".to_string()));
     }
@@ -261,11 +409,15 @@ pub async fn add_favorite(
     .bind(&claims.sub)
     .bind(req.entity_type.trim())
     .bind(req.entity_id.trim())
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("读取收藏记录失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("读取收藏记录失败".to_string()));
         }
@@ -273,7 +425,13 @@ pub async fn add_favorite(
 
     match fav {
         Some(f) => api_success(f),
-        None => ApiResponse::from(TopemsError::Internal("收藏未保存".to_string())),
+        None => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::from(TopemsError::Internal("收藏未保存".to_string()))
+        }
     }
 }
 
@@ -281,20 +439,51 @@ pub async fn add_favorite(
 pub async fn remove_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let result = sqlx::query(r#"DELETE FROM core_favorites WHERE id = $1 AND user_id = $2"#)
-        .bind(id)
-        .bind(&claims.sub)
-        .execute(&state.pool)
-        .await;
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+    let tenant_id = tenant_scope.tenant_id();
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
+    let result =
+        sqlx::query(r#"DELETE FROM core_favorites WHERE id = $1 AND user_id = $2 AND tenant_id = $3"#)
+            .bind(id)
+            .bind(&claims.sub)
+            .bind(tenant_id)
+            .execute(&mut scope)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success(id.to_string()),
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "收藏不存在或无权删除".to_string(),
-        )),
+        Ok(_) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::from(TopemsError::ResourceNotFound(
+                "收藏不存在或无权删除".to_string(),
+            ))
+        }
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("删除收藏失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除收藏失败".to_string()))
         }
@@ -305,25 +494,53 @@ pub async fn remove_favorite(
 pub async fn check_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(cell): Extension<RlsTxnCell>,
     Query(q): Query<FavoriteCheckQuery>,
 ) -> ApiResponse<bool> {
-    let tenant_opt = resolve_tenant(&claims);
-    let exists: Option<bool> = match sqlx::query_scalar(
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.engagement.check_favorite",
+        "core_favorites",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("内部服务器错误".to_string()));
+        }
+    };
+
+    let sql = format!(
         r#"SELECT EXISTS(
              SELECT 1 FROM core_favorites
              WHERE user_id = $1 AND entity_type = $2 AND entity_id = $3
-               AND ($4::uuid IS NULL OR tenant_id = $4)
+               AND {}
            )"#,
-    )
-    .bind(&claims.sub)
-    .bind(q.entity_type)
-    .bind(q.entity_id)
-    .bind(tenant_opt)
-    .fetch_optional(&state.pool)
-    .await
+        tenant_scope.sql_predicate("tenant_id", "$4")
+    );
+
+    let exists: Option<bool> = match sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+        .bind(&claims.sub)
+        .bind(q.entity_type)
+        .bind(q.entity_id)
+        .bind_tenant_scope(&tenant_scope)
+        .fetch_optional(&mut scope)
+        .await
     {
         Ok(v) => v,
         Err(e) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
             tracing::error!("查询收藏状态失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("查询收藏状态失败".to_string()));
         }
