@@ -112,6 +112,9 @@ fn hash_token(token: &str) -> String {
 /// 失败口径（为什么记、怎么记）：
 /// - 参数缺失 / 用户不存在 / 账号禁用 / 密码错误 / 查询异常 五类都记 `status='failed'`，
 ///   用于撞库与暴力破解回溯；失败尝试不产生 session，写入成本低；
+/// - 失败发生在认证完成前，租户尚未确认 → 显式落平台哨兵
+///   [`topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID`]，
+///   并依赖 `status='failed'` 与成功登录（真实租户）区分，不再使用"裸 nil 兜底"；
 /// - 写失败已在 `record_login_event` 内输出 ERROR + 指标，这里显式消费 Result，
 ///   不再用 `let _ =` 静默丢弃，但不把审计故障升级成 500（避免审计库抖动导致全站无法登录）。
 async fn record_failed_login(
@@ -124,7 +127,7 @@ async fn record_failed_login(
 ) {
     if record_login_event(
         pool,
-        Uuid::nil(),
+        topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID,
         user_id,
         username,
         ip_address,
@@ -405,12 +408,15 @@ pub async fn login(
 
     // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
     let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    // 登录审计行的租户：解析失败时显式落平台哨兵（resolve_login_tenant 已保证正常路径
+    // 有真实租户，此分支仅防御解析异常，且不再是"静默 nil"）。
+    let audit_tenant_id =
+        tenant_uuid.unwrap_or(topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID);
     let tenant_ctx = tenant_id.clone();
-
-    // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let now = chrono::Utc::now();
     let exp = usize::try_from((now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp())
         .unwrap_or(0);
+    // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let claims = Claims {
         sub: user.id.to_string(),
         username: user.username.clone(),
@@ -503,17 +509,12 @@ pub async fn login(
 
         // 登录审计与 session 同事务（成功只记一条，不重复写）。
         //
-        // tenant_id 沿用历史契约 nil：core_login_logs 的列表/详情/删除与 RLS 均按
-        // nil 过滤，若此处改写真实租户会与既有读路径失配（租户列对齐列为已知债）。
-        // 但 RLS 的 WITH CHECK 只允许「nil 且会话上下文为 nil」或「真实租户且上下文一致」，
-        // 因此写审计前把事务上下文临时切回 nil，写完即提交（session/refresh 已先行落库）。
-        sqlx::query("SELECT set_config('app.tenant_id', '00000000-0000-0000-0000-000000000000', true)")
-            .execute(&mut *tx)
-            .await?;
-
+        // 登录已解析出真实租户（resolve_login_tenant 有默认租户兜底），审计行必须落
+        // 真实租户：写 nil 会让租户用户在自己的登录列表里看不到记录，并持续产出零租户行。
+        // 事务上下文本就是真实租户，无需为审计切回 nil。
         crate::modules::audit::insert_login_log(
             &mut *tx,
-            Uuid::nil(),
+            audit_tenant_id,
             Some(user.id),
             &user.username,
             ip_addr_opt,
