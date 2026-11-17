@@ -135,3 +135,15 @@
 - 迁移 `20261118112000_gis_map_layers_allow_all_strict.sql` + 同名 rollback，`status: to_apply`；克隆库六档演练（夹具 8 行）与回滚往返通过，详见收口文档 Batch C 章节。
 
 其余 allow_all 表（`iam.roles`、`bi.audit_logs` 等）**没有 `tenant_id`**，属全局元数据，不能套严格 B，本波次不动；含 `tenant_id IS NULL` 放行或 RLS 未启用且有真实数据的表仍被跨租户读路径/回填前置挡住，继续留在顺延矩阵。
+
+### 下一批候选与阻塞原因（Batch C 后重扫）
+
+| 候选表 | 现状 | 阻塞点 |
+|---|---|---|
+| `pdm.pdm_master_data_refs` | `tenant_id` NOT NULL、0 行；读 allow_all(SELECT) + 写 system-only | `svc/pdm/src/event_handlers/mod.rs` 的 INSERT 未绑定 `tenant_id`（注释仍写「无 tenant_id」），需先改代码再收严 |
+| `portal.portal_quick_actions` | `tenant_id` NOT NULL、0 行；ALL allow_all | `svc/portal/src/modules/quick_actions.rs` 按平台级共享配置读（块 D 登记），需先定「平台读通道」语义 |
+| `erp.dict_items` / `erp.dict_types` | 0 行，`tenant_id` 可空 | 需先确认是否存在平台/全局字典行（NULL 语义） |
+| `bi.audit_logs` / `rs.formulas` / `core.core_plugins` | 0 行，`tenant_id` 可空（部分有 …0001 默认） | 同上，NULL/默认租户语义未定 |
+| `iam.roles`（1 行）等 allow_all 无 `tenant_id` | 全局元数据 | 不适用严格 B；如需隔离只能另定「全局只读 + 系统写」 |
+
+上述均未在本波次改动，继续留待逐表定性。
