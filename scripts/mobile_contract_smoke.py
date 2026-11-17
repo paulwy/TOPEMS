@@ -13,6 +13,8 @@
   所有拒绝均发生在建立连接之前。
 
 用法: python3 scripts/mobile_contract_smoke.py [--dry-run]
+  本机无 8070 常驻服务时，用 scripts/mobile_smoke_precommit.sh 拉起隔离实例后实跑
+  （pre-commit 已接入该包装脚本，不再需要 LEFTHOOK_EXCLUDE 跳过）。
 """
 import base64
 import glob
@@ -38,6 +40,9 @@ LOCAL_DEFAULT_URL = "http://127.0.0.1:8070/api/mobile"
 MOBILE_URL = LOCAL_DEFAULT_URL   # 由 resolve_target() 覆盖
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
+# 冒烟 token 是超管：tenant 中间件要求超管显式选择租户（x-tenant-id），
+# 缺头会 400「缺少租户上下文」，使全部端点只测到门禁、测不到 handler。
+SMOKE_TENANT_ID = "00000000-0000-0000-0000-000000000001"
 
 EXIT_CONFIG = 2      # 配置非法
 EXIT_ENV = 3         # 运行环境/密钥/连通性不满足
@@ -380,7 +385,7 @@ def issue_token(target_env: str) -> str:
         "role": "admin", "roles": ["admin"], "permissions": [],
         "is_superuser": True, "exp": now + 3600, "iat": now,
         "email": None, "department": None,
-        "tenant_id": "00000000-0000-0000-0000-000000000001",
+        "tenant_id": SMOKE_TENANT_ID,
         "department_id": None, "position_id": None,
     }
     header = b64(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(",", ":")).encode())
@@ -449,7 +454,11 @@ def pre_create(token: str) -> None:
             req = urllib.request.Request(
                 MOBILE_URL + tmpl,
                 data=json.dumps(body).encode(),
-                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "X-Tenant-Id": SMOKE_TENANT_ID,
+                },
                 method="POST",
             )
             resp = urllib.request.urlopen(req, timeout=15)
@@ -478,7 +487,11 @@ def pre_create(token: str) -> None:
             req = urllib.request.Request(
                 MOBILE_URL + "/device/register",
                 data=json.dumps(body).encode(),
-                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "X-Tenant-Id": SMOKE_TENANT_ID,
+                },
                 method="POST",
             )
             urllib.request.urlopen(req, timeout=15)
@@ -502,7 +515,7 @@ def call(method: str, path: str, tmpl: str, token: str):
     if q:
         url += "?" + "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in q.items())
     body = None
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {"Authorization": f"Bearer {token}", "X-Tenant-Id": SMOKE_TENANT_ID}
     data_bytes = None
     if method in ("POST", "PUT", "PATCH"):
         # /task/batch/status：BatchStatusRequest{ids,status}，用预创建真任务 id（无真 id 时
@@ -559,25 +572,36 @@ def main():
         except Exception:
             pass
         # 判定
+        # 上游服务未接入：handler 显式声明依赖不可用（503「上游服务未接入」或
+        # 502「xx服务不可用」，均为转发上游失败时的降级契约），记 WARN 不阻塞
+        # （本地隔离栈不拉起上游服务）。
+        body_message = str(body.get("message") or "") if isinstance(body, dict) else ""
+        upstream_degraded = status in (502, 503) and (
+            body_message.startswith("上游服务未接入") or body_message.endswith("服务不可用")
+        )
         reason = None
         if status == -1:
             reason = "network_error"
         elif status == 404 and len(raw) == 0:
             reason = "route_missing"
+        elif upstream_degraded:
+            pass
         elif status >= 500 or body_code == 500:
             reason = "handler_error"
         verdict = "FAIL" if reason else "PASS"
         entry = {
             "method": method, "tmpl": tmpl, "path": path, "fname": fname,
             "status": status, "body_code": body_code, "verdict": verdict,
-            "reason": reason,
+            "reason": reason, "upstream_degraded": upstream_degraded,
         }
         groups.setdefault(fname, []).append(entry)
     # 报告
     total = len(eps)
     fails = [e for g in groups.values() for e in g if e["verdict"] == "FAIL"]
+    degraded = [e for g in groups.values() for e in g if e["upstream_degraded"]]
     warns = [e for g in groups.values() for e in g
-             if e["verdict"] == "PASS" and (e["status"] >= 400 or e["body_code"] not in (None, 200))]
+             if e["verdict"] == "PASS" and not e["upstream_degraded"]
+             and (e["status"] >= 400 or e["body_code"] not in (None, 200))]
     print(f"{'='*70}")
     for fname in sorted(groups):
         g = groups[fname]
@@ -593,6 +617,10 @@ def main():
         print(f"业务性非2xx(WARN, 不阻塞): {len(warns)}")
         for e in warns[:15]:
             print(f"  WARN {e['method']:6s} {e['tmpl']} -> http={e['status']} body={e['body_code']}")
+    if degraded:
+        print(f"上游未接入(WARN, 不阻塞): {len(degraded)}")
+        for e in degraded[:15]:
+            print(f"  WARN {e['method']:6s} {e['tmpl']} -> http={e['status']} (upstream_degraded)")
     sys.exit(1 if fails else 0)
 
 

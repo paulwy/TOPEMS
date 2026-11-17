@@ -450,9 +450,11 @@ pre-commit:
           node scripts/ci/check-i18n.cjs --mode=hardcode --strict
         fi
 
-    # [Gate MCS] Mobile 契约全量实跑回归（方向1固化，117 端点）
+    # [Gate MCS] Mobile 契约全量实跑回归（方向1固化，114 端点）
     # 触发：mobile 前端契约 / mobile BFF / shared-service-client 变更。
-    # 安全边界（2026-11-06，与 Gate WCS 同一口径）：默认只打本机/测试（WEB_SMOKE_ENV=local，8070）；
+    # 本机实跑：由 scripts/mobile_smoke_precommit.sh 拉起隔离 mobile（topems_test + 独立端口/redis）
+    #   并按 MOBILE_BASE_URL 实跑，结束后回收；本机 8070 是否常驻不再影响该门禁。
+    # 安全边界（2026-11-06，与 Gate WCS 同一口径）：只打本机/测试（WEB_SMOKE_ENV=local）；
     #   prod 仓库位/目标进程连 *_prod 默认拒绝；确需 prod 必须 ALLOW_PROD_SMOKE=1 +
     #   PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON + 显式 MOBILE_BASE_URL/JWT_SECRET，且 prod 只跑 GET（不写库）。
     #   fail-closed：目标不可达/缺密钥/漏配开关时明确失败并给出可操作提示，不再静默 SKIP。
@@ -462,15 +464,15 @@ pre-commit:
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/mobile/src/api/|svc/mobile/src/|lib/shared-service-client/src/)' || true)
         [ -z "$STAGED" ] && exit 0
         export WEB_SMOKE_ENV="${WEB_SMOKE_ENV:-local}"
-        if python3 scripts/mobile_contract_smoke.py > /tmp/mobile_smoke_precommit.log 2>&1; then
+        # 本机隔离实跑：scripts/mobile_smoke_precommit.sh 负责拉起/回收隔离 mobile（topems_test），
+        # 不再依赖本机 8070 常驻或 LEFTHOOK_EXCLUDE 跳过。
+        if bash scripts/mobile_smoke_precommit.sh > /tmp/mobile_smoke_precommit.log 2>&1; then
           printf '\033[32m[Gate MCS] PASS\033[0m 目标=%s（日志 /tmp/mobile_smoke_precommit.log）\n' "$WEB_SMOKE_ENV"
-          grep -E '^\[mobile-smoke\]|^总计:' /tmp/mobile_smoke_precommit.log | tail -3
+          grep -E '^\[MCS-local\]|^总计:' /tmp/mobile_smoke_precommit.log | tail -4
         else
           rc=$?
           printf '\033[31m[Gate MCS] BLOCKED (exit %s)\033[0m 目标=%s\n' "$rc" "$WEB_SMOKE_ENV"
-          head -8 /tmp/mobile_smoke_precommit.log
-          echo "  ..."
-          tail -6 /tmp/mobile_smoke_precommit.log
+          tail -20 /tmp/mobile_smoke_precommit.log
           exit "$rc"
         fi
 
