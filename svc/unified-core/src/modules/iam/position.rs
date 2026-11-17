@@ -3,6 +3,7 @@ use axum::{extract::Path, extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,29 +37,32 @@ pub struct UpdatePositionRequest {
 )]
 pub async fn list_positions(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
-
-    let rows = if claims.is_superuser {
-        sqlx::query(
-            r#"SELECT id, code, name, department_id, description FROM iam.positions ORDER BY name"#,
-        )
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default()
-    } else {
-        sqlx::query(
-            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"#,
-        )
-        .bind(tenant_id.unwrap_or_else(Uuid::nil))
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default()
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
     };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位列表事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位列表事务作用域失败",
+            ));
+        }
+    };
+
+    let rows = sqlx::query(
+        r#"SELECT id, code, name, department_id, description FROM iam.positions ORDER BY name"#,
+    )
+    .fetch_all(&mut scope)
+    .await
+    .unwrap_or_default();
 
     let result: Vec<serde_json::Value> = rows
         .into_iter()
@@ -150,30 +154,33 @@ pub async fn create_position(
 
 pub async fn get_position(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位详情事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位详情事务作用域失败",
+            ));
+        }
+    };
 
-    let row = if claims.is_superuser {
-        sqlx::query(
-            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#,
-        )
-        .bind(id)
-        .fetch_optional(&state.pool)
-        .await
-    } else {
-        sqlx::query(
-            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-        )
-        .bind(id)
-        .bind(tenant_id.unwrap_or_else(Uuid::nil))
-        .fetch_optional(&state.pool)
-        .await
-    }
+    let row = sqlx::query(
+        r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#,
+    )
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
     .ok()
     .flatten();
 
@@ -220,6 +227,7 @@ pub async fn get_position(
 pub async fn update_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePositionRequest>,
 ) -> Json<serde_json::Value> {
@@ -229,28 +237,38 @@ pub async fn update_position(
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or_else(Uuid::nil);
 
-    let exists = if claims.is_superuser {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位更新事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位更新事务作用域失败",
+            ));
+        }
+    };
+
+    let exists =
         sqlx::query(r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#)
             .bind(id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .ok()
-            .flatten()
-    } else {
-        sqlx::query(
-            r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .fetch_optional(&state.pool)
-        .await
-        .ok()
-        .flatten()
-    };
+            .flatten();
 
     if exists.is_none() {
         return Json(topems_shared_core::response::error_value(404, "岗位不存在"));
     }
+
+    drop(scope);
+    drop(guard);
 
     if let Some(name) = &req.name {
         let _ = sqlx::query(r#"UPDATE iam.positions SET name = $1 WHERE id = $2"#)
@@ -318,7 +336,7 @@ pub async fn update_position(
         }
     }
 
-    get_position(State(state), Extension(claims.clone()), Path(id)).await
+    get_position(State(state), Extension(txn_arc), Path(id)).await
 }
 
 pub async fn delete_position(
