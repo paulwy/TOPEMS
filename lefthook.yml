@@ -625,9 +625,15 @@ pre-push:
         # 全量测试会在 setup 阶段 30s×N 超时报 PoolTimedOut（实测 3 条 ≈92s，单跑 0.3s 通过）。
         # 已存在的环境变量不会被 dotenv 覆盖，从根 .env 派生并导出即可消除这类环境漂移。
         if [ -f .env ]; then
-          if [ -z "${TEST_DATABASE_URL:-}" ]; then TEST_DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
+          # 测试库 DSN 优先级：进程环境 > .env 的 TEST_DATABASE_URL > .env 的 MIGRATE_URL。
+          # #[sqlx::test] 读 DATABASE_URL 并要创建临时库，而 MIGRATE_URL 的 topems_prod 无
+          # CREATEDB（实测 42501 permission denied to create database），故 .env 提供
+          # TEST_DATABASE_URL（专用建库角色）时同时喂给 DATABASE_URL。
+          TEST_DSN=$(sed -nE 's/^TEST_DATABASE_URL=(.*)/\1/p' .env | head -1)
+          if [ -z "$TEST_DSN" ]; then TEST_DSN=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
+          if [ -z "${TEST_DATABASE_URL:-}" ]; then TEST_DATABASE_URL=$TEST_DSN; fi
           if [ -z "${REDIS_URL:-}" ]; then REDIS_URL=$(sed -nE 's/^REDIS_URL=(.*)/\1/p' .env | head -1); fi
-          if [ -z "${DATABASE_URL:-}" ]; then DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
+          if [ -z "${DATABASE_URL:-}" ]; then DATABASE_URL=$TEST_DSN; fi
           if [ -n "$TEST_DATABASE_URL" ]; then export TEST_DATABASE_URL; fi
           if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
           if [ -n "$DATABASE_URL" ]; then export DATABASE_URL; fi

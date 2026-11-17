@@ -294,6 +294,26 @@ openssl rand -base64 32
 
 `.env` 文件已配置为本地默认值，开箱即用。
 
+> **跑测试前额外一步**：`#[sqlx::test]` 会按 `DATABASE_URL` 创建临时测试库，需要角色带 `CREATEDB`；
+> 而 `svc/rd` 等遗留仓库测试直接写 `TEST_DATABASE_URL` 指向的库，需要该库有完整 schema。
+> 若 `MIGRATE_URL` 用的是无建库权限的角色（如 `topems_prod`），测试会报
+> `42501 permission denied to create database`。建议准备一个专用测试库与角色：
+>
+> ```bash
+> # 1) 建专用角色（CREATEDB 即可；不要给 BYPASSRLS，否则 crm 的 RLS 用例会被绕过而失败）
+> psql -d postgres -c "CREATE ROLE topems_test_runner LOGIN CREATEDB"
+> createdb -O topems_test_runner topems_test_runner
+> # 2) 同步结构（测试库需与迁移后的开发库一致，否则报 column does not exist / 类型不符）
+> export TEST_DATABASE_URL="<测试库 DSN>"
+> pg_dump --schema-only --no-owner --no-privileges -d topems | psql "$TEST_DATABASE_URL"
+> # 3) svc/rd 的仓库测试不带租户上下文，依赖属主身份绕过 RLS（CI 用超级用户同理）
+> psql "$TEST_DATABASE_URL" -c "ALTER TABLE rs.projects NO FORCE ROW LEVEL SECURITY"
+> # 4) .env 中追加 TEST_DATABASE_URL（格式见 .env.example），pre-push 会自动使用
+> ```
+>
+> pre-push 的 `cargo-test-workspace` 会优先使用 `.env` 的 `TEST_DATABASE_URL`
+> （优先级：进程环境 > `.env` 的 `TEST_DATABASE_URL` > `.env` 的 `MIGRATE_URL`），并同时喂给 `DATABASE_URL`。
+
 ### 启动数据库（方式一：本地安装，默认推荐）
 
 **macOS (Homebrew):**
