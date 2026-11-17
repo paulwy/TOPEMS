@@ -731,16 +731,21 @@ pub struct CreateWorkflowVersionRequest {
 )]
 pub async fn list_workflow_versions(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
 ) -> ApiResponse<Vec<WorkflowVersion>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化工作流版本列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化工作流版本列表事务作用域失败".to_string(),
+            ));
+        }
     };
     let versions = sqlx::query_as::<_, WorkflowVersion>(
         // public.core_workflow_versions.version 为 integer、created_by 为 uuid，
@@ -748,12 +753,11 @@ pub async fn list_workflow_versions(
         "SELECT id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at
          FROM public.core_workflow_versions
          WHERE workflow_id = $1 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) 
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL)
          ORDER BY created_at DESC",
     )
     .bind(workflow_id)
-    .bind(tenant_opt)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match versions {
@@ -886,28 +890,32 @@ pub async fn create_workflow_version(
 )]
 pub async fn get_workflow_version(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<WorkflowVersion> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化工作流版本详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化工作流版本详情事务作用域失败".to_string(),
+            ));
+        }
     };
     let version = sqlx::query_as::<_, WorkflowVersion>(
         // version integer / created_by uuid → 模型 String，显式 ::text 对齐解码
         "SELECT id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at
          FROM public.core_workflow_versions
          WHERE workflow_id = $1 AND id = $2 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) ",
     )
     .bind(workflow_id)
     .bind(version_id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match version {
