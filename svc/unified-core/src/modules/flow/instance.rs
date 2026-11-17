@@ -307,14 +307,6 @@ pub async fn create_instance(
     Json(payload): Json<CreateInstanceRequest>,
 ) -> ApiResponse<WorkflowInstance> {
     // 租户绑定对齐 nil 上下文惯例（超管/无 claims → None/SQL NULL；普通用户 → Some(claims.tenant_id)）。
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -325,6 +317,14 @@ pub async fn create_instance(
             tracing::error!("初始化创建实例事务作用域失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("创建工作流实例失败".to_string()));
         }
+    };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "INSERT INTO public.core_workflow_instances (workflow_id, title, initiator_id, variables, status, started_at, tenant_id) 
@@ -418,25 +418,27 @@ pub async fn start_instance(
 )]
 pub async fn approve_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例审批事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("审批工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances SET status = 'approved', completed_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -468,25 +470,27 @@ pub async fn approve_instance(
 )]
 pub async fn reject_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例拒绝事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("拒绝工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances SET status = 'rejected', completed_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -518,25 +522,27 @@ pub async fn reject_instance(
 )]
 pub async fn cancel_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例取消事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("取消工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances SET status = 'cancelled', completed_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -568,25 +574,27 @@ pub async fn cancel_instance(
 )]
 pub async fn resume_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例恢复事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("恢复工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances SET status = 'running', completed_at = NULL, updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -618,25 +626,27 @@ pub async fn resume_instance(
 )]
 pub async fn suspend_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例暂停事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("暂停工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances SET status = 'suspended', updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -797,17 +807,20 @@ pub struct RetryInstanceRequest {
 )]
 pub async fn retry_instance(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<RetryInstanceRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化实例重试事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("重试工作流实例失败".to_string()));
+        }
     };
     let node_id = payload.and_then(|p| p.node_id);
     let instance = sqlx::query_as::<_, WorkflowInstance>(
@@ -816,13 +829,12 @@ pub async fn retry_instance(
              current_node_id = COALESCE($2, current_node_id),
              completed_at = NULL,
              updated_at = NOW()
-         WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)
+         WHERE id = $1
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
     .bind(node_id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match instance {
