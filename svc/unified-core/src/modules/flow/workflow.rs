@@ -377,25 +377,27 @@ pub async fn delete_workflow(
 )]
 pub async fn publish_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化发布工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("发布工作流失败".to_string()));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET status = 'published', published_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
+         WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -427,25 +429,27 @@ pub async fn publish_workflow(
 )]
 pub async fn unpublish_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化取消发布事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("取消发布工作流失败".to_string()));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET status = 'draft', published_at = NULL, updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
+         WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -477,25 +481,27 @@ pub async fn unpublish_workflow(
 )]
 pub async fn activate_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化激活工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("激活工作流失败".to_string()));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET status = 'active', updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
+         WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -527,25 +533,27 @@ pub async fn activate_workflow(
 )]
 pub async fn deactivate_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化停用工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("停用工作流失败".to_string()));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET status = 'inactive', updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
+         WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -577,25 +585,27 @@ pub async fn deactivate_workflow(
 )]
 pub async fn deploy_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化部署工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("部署工作流失败".to_string()));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET status = 'deployed', updated_at = NOW() 
-         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2) 
+         WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
