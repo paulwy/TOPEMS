@@ -265,17 +265,20 @@ pub async fn create_workflow(
 )]
 pub async fn update_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateWorkflowRequest>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化更新工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新工作流失败".to_string()));
+        }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET 
@@ -284,7 +287,7 @@ pub async fn update_workflow(
          definition = COALESCE($3, definition), 
          status = COALESCE($4, status),
          updated_at = NOW()
-         WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id=$6) 
+         WHERE id = $5
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(payload.name)
@@ -292,8 +295,7 @@ pub async fn update_workflow(
     .bind(payload.definition)
     .bind(payload.status)
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -325,21 +327,23 @@ pub async fn update_workflow(
 )]
 pub async fn delete_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
     };
-    let result = sqlx::query("UPDATE public.core_workflows SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2)")
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化删除工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除工作流失败".to_string()));
+        }
+    };
+    let result = sqlx::query("UPDATE public.core_workflows SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
-        .bind(tenant_opt)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
