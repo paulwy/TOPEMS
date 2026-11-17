@@ -21,9 +21,22 @@ use crate::models::{
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant_scope::TenantScope;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+
+/// 字典写入的租户绑定：与请求中间件同源解析，禁止依赖 GUC 缺失时写 NULL。
+///
+/// - 普通租户 / 超管显式选择的租户 → 真实租户；
+/// - 服务身份（系统通道）→ 显式平台哨兵（`TenantScope` 已记录来源与计数）；
+/// - 普通用户缺租户 → 400，不降级为零租户。
+fn dict_write_tenant_id(claims: &Claims) -> Result<Uuid, (u16, String)> {
+    Ok(
+        TenantScope::from_claims(claims, "erp.dict.write", "erp.dict_types,erp.dict_items")?
+            .create_tenant_id(),
+    )
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BatchCreateDictItemRequest {
@@ -385,11 +398,15 @@ pub async fn create_dict_type(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let write_tenant = match dict_write_tenant_id(&claims) {
+        Ok(tenant) => tenant,
+        Err((_, msg)) => return ApiResponse::from(TopemsError::ValidationFailed(msg)),
+    };
 
     let result = sqlx::query_as::<_, DictType>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.dict_types (id, code, name, category, description, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+        VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8)
         RETURNING id, code, name, category, description, status, created_at, updated_at
         "#),
     )
@@ -400,6 +417,7 @@ pub async fn create_dict_type(
     .bind(&req.description)
     .bind(now)
     .bind(now)
+    .bind(write_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -872,11 +890,15 @@ pub async fn create_dict_item(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let sort_order = req.sort_order.unwrap_or(0);
+    let write_tenant = match dict_write_tenant_id(&claims) {
+        Ok(tenant) => tenant,
+        Err((_, msg)) => return ApiResponse::from(TopemsError::ValidationFailed(msg)),
+    };
 
     let result = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, $11)
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         "#),
     )
@@ -890,6 +912,7 @@ pub async fn create_dict_item(
     .bind(&req.extra_data)
     .bind(now)
     .bind(now)
+    .bind(write_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1210,6 +1233,10 @@ pub async fn batch_create_dict_items(
     };
     let mut created_items = Vec::new();
     let now = Utc::now();
+    let write_tenant = match dict_write_tenant_id(&claims) {
+        Ok(tenant) => tenant,
+        Err((_, msg)) => return ApiResponse::from(TopemsError::ValidationFailed(msg)),
+    };
 
     for item_req in req.items.iter() {
         let id = Uuid::new_v4();
@@ -1218,7 +1245,7 @@ pub async fn batch_create_dict_items(
         let result = sqlx::query_as::<_, DictItem>(
             only_own_schema_query!("erp", r#"
             INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, $11)
             RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
             "#),
         )
@@ -1232,6 +1259,7 @@ pub async fn batch_create_dict_items(
         .bind(&item_req.extra_data)
         .bind(now)
         .bind(now)
+        .bind(write_tenant)
         .fetch_one(&mut **txn)
         .await;
 

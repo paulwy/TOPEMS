@@ -1023,6 +1023,53 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 写校验（`topems_prod`，A 上下文）：本租户 INSERT 成功（A 可见 2）；插哨兵行 / 插 B 行均 `row-level security policy` 拒绝（42501）；UPDATE 哨兵行 0 行。
 回滚后六档全 3；清理夹具后再 up 成功（0 行六档全 0）；克隆库已回 allow_all 基线。
 
+## Batch E｜erp 字典 2 表 + rs.formulas 严格 B（2026-11-17 拍板）
+
+迁移：`database/migrations/20261118120000_dict_formula_rls_strict.sql`
+回滚：`database/rollback/20261118120000_dict_formula_rls_strict.rollback.sql`
+同批代码：`svc/erp/src/modules/dict.rs` 三处 INSERT、`svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs` 一处 INSERT。
+克隆库演练与回滚往返通过，manifest `status: to_apply`。
+
+### 1. 先消潜在 NULL 写点（代码）
+
+| 位置 | 原写法 | 现写法 |
+|---|---|---|
+| `dict.rs:399-420`（创建字典类型） | `NULLIF(current_setting('app.tenant_id', true), '')::UUID` | `TenantScope::from_claims(...).create_tenant_id()` 显式绑定，缺租户返回 400 |
+| `dict.rs:891-912`（创建字典项） | 同上 | 同上 |
+| `dict.rs:1234-1257`（批量创建字典项） | 同上 | 同上，循环外解析一次 |
+| `tenant_plugins.rs:1053-1085`（上传插件） | 同上（`scope_with` 后仍读 GUC） | 处理器新增 `Extension<Claims>`，`create_tenant_id()` 显式绑定；缺租户报错 |
+
+`create_tenant_id()` 的语义：普通租户/超管选择租户 → 真实租户；服务身份 → 显式平台哨兵；普通用户缺租户 → 拒绝。**不再存在「条件不满足悄悄写 NULL」**。
+
+### 2. 策略收严（无平台读）
+
+`erp.dict_types`、`erp.dict_items`、`rs.formulas`：动态清空既有策略 → ENABLE+FORCE → 唯一 `rls_tenant_isolation`（ALL，严格 B）→ 补 3 个 `tenant_id` 索引。`rs.formulas` 的两条 permissive（严格 + allow_all）改为仅严格。
+
+### 3. 读路径核查（执行前逐表确认）
+
+| 表 | 现有读路径 | 收紧后是否读不到本该看到的行 | 处理 |
+|---|---|---|---|
+| `erp.dict_types` / `erp.dict_items` | `svc/erp` 列表/详情走请求级 scope，无跨租户读取、无 unified-core 读取 | 否。租户只应看本租户行；超管也被中间件限定在所选租户 | 本批收严 |
+| `rs.formulas` | `svc/rd` 列表/详情走请求级 scope，仅靠 RLS 过滤 | 否。无跨租户/平台读分支 | 本批收严 |
+| `core.core_plugins` | `tenant_plugins.rs:134` 租户列表 JOIN 全局目录、`:449` uninstall 按 code 读、`:736/:855` install 子查询取 id | **是**。严格隔离后租户看不到他方发布的插件，列表/安装/卸载都会空 | **停下，不纳入**：需先定「全局目录走平台读/系统通道」方案 |
+| `bi.audit_logs` | 全仓无读者 | — | **登记 DROP 候选**，不写策略 |
+
+### 4. 六档演练读数（克隆库）
+
+3 表各哨兵/A/B 1 行夹具，`topems_prod` 角色：
+
+| 上下文 | up 前（allow_all） | up 后（严格 B） |
+|---|---|---|
+| 未设 GUC | 3 | 0 |
+| 空串 GUC | 3 | 0 |
+| 全零 GUC | 3 | 1 |
+| 租户 A（…0001） | 3 | 1 |
+| 租户 B（合成） | 3 | 1 |
+| A + `rls_system=on` | 3 | 3 |
+
+写校验（A 上下文）：本租户 INSERT 成功；插 B 行与插哨兵行均 42501；UPDATE B 行 0 行。
+down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档均 4；`dict_items`/`rs.formulas` 四档均 3）；清理后再 up 成功（0 行各档 0）；克隆库已回 allow_all 基线。
+
 ## 保持不动与仅登记
 
 - `erp.audit_logs`（13 行，t1=8 / t2=5）**保持不动**：`svc/erp/src/modules/audit.rs` 的列表/详情显式 `set_system_channel` 跨租户读，属平台跨租户审计视图；改租户作用域会改变 ERP 审计的产品语义，需产品确认后再排。
@@ -1030,6 +1077,6 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 
 ## 同窗口清单（更新）
 
-`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`、`20261118113000`
+`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`、`20261118112000`、`20261118113000`、`20261118120000`
 以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
-生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，**八条**迁移全部 `to_apply`。
+生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，**九条**迁移全部 `to_apply`。

@@ -142,11 +142,13 @@
 |---|---|---|
 | `pdm.pdm_master_data_refs` | `tenant_id` NOT NULL、0 行；读 allow_all(SELECT) + 写 system-only | **代码已修**（`b8560b889`，INSERT 经 `TenantScope::tenant()` 显式绑租户、缺失即拒绝）；策略收严仍待排 |
 | `portal.portal_quick_actions` | `tenant_id` NOT NULL、0 行；ALL allow_all | **已处理**：定性为平台语料，Batch D 迁移 `20261118113000` 收严 + 平台读（见收口文档 Batch D） |
-| `erp.dict_items` / `erp.dict_types` | 0 行，`tenant_id` 可空 | 需先确认是否存在平台/全局字典行（NULL 语义） |
-| `bi.audit_logs` / `rs.formulas` / `core.core_plugins` | 0 行，`tenant_id` 可空（部分有 …0001 默认） | 同上，NULL/默认租户语义未定 |
+| `erp.dict_items` / `erp.dict_types` | 0 行，`tenant_id` 可空 | **已处理**：Batch E 迁移 `20261118120000` 收严 + 同批代码消除潜在 NULL 写点 |
+| `rs.formulas` | 0 行，`tenant_id` 可空；严格 + allow_all 两条 permissive | **已处理**：Batch E 迁移 `20261118120000` 仅保留严格策略 |
+| `core.core_plugins` | 0 行，`tenant_id` 可空、默认 `…0001` | **停下待决策**：租户通道存在全局目录读取（list JOIN / uninstall / install 子查询），严格隔离会读不到他方发布行 |
+| `bi.audit_logs` | 0 行，`tenant_id` 可空、无默认 | **登记 DROP 候选**：全仓无读者、无写者，本波次不建策略、不删表 |
 | `iam.roles`（1 行）等 allow_all 无 `tenant_id` | 全局元数据 | 不适用严格 B；如需隔离只能另定「全局只读 + 系统写」 |
 
-上述均未在本波次改动，继续留待逐表定性。
+`pdm` 策略收严、`core.core_plugins`、`iam.roles` 等全局表仍未在本波次改动，继续留待逐表定性。
 
 ## 7. 状态更新（2026-11-17 决策 3 续推：Batch D + pdm 写入缺陷）
 
@@ -167,3 +169,11 @@
 | `core.core_plugins` | **否（正常路径）；表达式为潜在 NULL 写点** | `svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:1074-1082`：`scope_with(txn)` + `tenant_id = NULLIF(GUC,'')::UUID`；`runtime.rs:112-126`：`scope_system()` + 同一表达式（系统通道 GUC 为**全零 UUID**，写入平台行而非 NULL）；各 UPDATE（`tenant_plugins.rs:1276/1338/1400`、`versioning.rs:322`、`upgrade_workflow.rs:224`）均不改 `tenant_id` | **待定（但语义线索明确）**。`marketplace.rs:46-53` 声明该表是「全租户共享插件目录」，`tenant_id` 表示**发布方而非查看方**，读走 `scope_read_system`；按此 NULL 更像「无发布方」，但代码从不写 NULL，且列默认值是 `…0001`（发布方会被误记为租户1）。缺证据：产品对「平台自有插件」归属的定义，以及默认值 `…0001` 是否应改为全零 |
 
 **结论口径**：本批 5 张表**没有一张能给出「NULL＝X」的代码级证据**，因此全部 NULL 语义列 **待定**，不做猜测、不排序为平台语料或私有行；这也意味着它们**不进入**本轮收严批次。下一步若要推进，需先补齐上表「缺证据」列（产品语义或上游写入方），再决定「NULL 归一 + 平台读」还是「收严为净减少」。
+
+## 9. 决策落地（2026-11-17：不再挂起等证据）
+
+1. **潜在 NULL 写点已消（代码）**：`erp/dict.rs` 三处与 `tenant_plugins.rs` 一处改为 `TenantScope::from_claims(...).create_tenant_id()` 显式绑定；真实租户 / 服务身份显式哨兵 / 缺租户 400，SQL 中 `NULLIF(GUC)` 全部移除。`cargo check` 通过。
+2. **严格 B 已落 3 张表**：`erp.dict_types`、`erp.dict_items`、`rs.formulas` → Batch E 迁移 `20261118120000`（唯一 `rls_tenant_isolation`，无平台读，补 tenant_id 索引），回滚与克隆库六档 0/0/1/1/1/3、写校验、往返均通过。
+3. **`core.core_plugins` 停下**：读路径核查发现租户通道依赖全局目录（`tenant_plugins.rs:134` JOIN、`:449` uninstall、`:736/:855` install 子查询），严格隔离会让租户读不到他方发布行。按「有读不到本该看到的行就停下报」规则**未纳入本批**，需先定平台读/系统通道方案。
+4. **`bi.audit_logs` 登记 DROP 候选**：全仓无读者、无写者；本波次不建策略、不删表，等独立开窗。
+5. NULL 语义本身仍维持「待定」，但**不再阻塞写路径与隔离收严**：四张 0 行表不再依赖 NULL 语义即可安全收紧（三张已收，core 因读路径另议）。

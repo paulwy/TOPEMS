@@ -10,6 +10,7 @@ use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::middleware::tenant_scope::TenantScope;
 use topems_shared_core::locale::Locale;
 
 // ============================================================================
@@ -1052,6 +1053,7 @@ pub async fn get_available_plugins(
 pub async fn upload_plugin(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UploadPluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Uploading new plugin: {}", req.name);
@@ -1071,6 +1073,17 @@ pub async fn upload_plugin(
         }
     };
 
+    // 发布方租户显式绑定：与请求中间件同源解析，缺租户拒绝；服务身份绑平台哨兵。
+    // 禁止用 GUC 表达式在条件不满足时悄悄写 NULL。
+    let write_tenant = match TenantScope::from_claims(
+        &claims,
+        "plugin-registry.upload_plugin",
+        "core.core_plugins",
+    ) {
+        Ok(scope) => scope.create_tenant_id(),
+        Err((_, msg)) => return Json(CoreResponse::error(&msg)),
+    };
+
     let plugin_result: Result<Plugin, sqlx::Error> = sqlx::query_as(
         r#"
         INSERT INTO core.core_plugins (
@@ -1079,7 +1092,7 @@ pub async fn upload_plugin(
             dependencies, author_name, author_url, homepage_url,
             screenshots, tags, category, is_published, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, $17)
         RETURNING *
         "#,
     )
@@ -1099,6 +1112,7 @@ pub async fn upload_plugin(
     .bind(serde_json::to_value(&req.screenshots).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(serde_json::to_value(&req.tags).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(&req.category)
+    .bind(write_tenant)
     .fetch_one(&mut scope)
     .await;
 

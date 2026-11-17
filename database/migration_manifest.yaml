@@ -2154,3 +2154,19 @@ pending_forward_patches:
       - { kind: code, ref: "svc/portal/src/modules/quick_actions.rs:76-141", detail: "load_quick_actions 走 db.scope_read_system()，SQL 无租户谓词，块 D 注释声明「平台级、对所有租户可见」；全仓无该表 INSERT/UPDATE/DELETE（favorite 只写 IAM 用户偏好），行仅来自种子/运维 → 平台语料定性成立；无代码改动" }
       - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（夹具=哨兵/A/B 各 1 行，topems_prod 角色）", detail: "up 前六档均 3；up 后 未设 0 / 空串 0 / 全零 1 / A 2 / B 2 / A+system 3；A 上下文 own INSERT 成功（A_sees=2），插哨兵行/插 B 行均 42501，UPDATE 哨兵行 0 行；down 六档回 3；清理夹具后再 up 成功（0 行六档全 0）；克隆库已回 allow_all 基线" }
     note: "部署耦合：无（读路径走系统通道，收严不改变现有可见结果），无需与 svc/portal 同窗口。回滚文件 database/rollback/20261118113000_portal_quick_actions_platform_read_strict.rollback.sql：删除全部策略后按原名重建 portal_allow_all_portal_quick_actions 并断言 rls/force 保持开启；dev 的 fail-open 旧策略不回灌。可见范围属净减少（租户上下文＝哨兵行+本租户行）；种子约定：平台快捷入口必须写哨兵；生产 DDL/数据变更均未执行"
+
+  # ===== Batch E：erp 字典 2 表 + rs.formulas 严格 B（2026-11-18）=====
+  # 口径来源：迁移文件头 + docs/database/repo-wide-rls-pool-closure-2026-11-18.md「Batch E」
+  # 同批代码：svc/erp/src/modules/dict.rs 三处 INSERT、svc/plugin-registry .../tenant_plugins.rs 一处 INSERT
+  - version: "20261118120000"
+    file: "database/migrations/20261118120000_dict_formula_rls_strict.sql"
+    status: to_apply
+    effect: "erp.dict_types / erp.dict_items / rs.formulas 动态清空既有策略后重建唯一 rls_tenant_isolation（FOR ALL，严格 B，无平台读），重申 ENABLE/FORCE，补 3 个 tenant_id 索引；不改列、不改数据、不做 NULL 归一"
+    destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；3 次 DROP/CREATE POLICY 组 + 3 次 ENABLE + 3 次 FORCE RLS；3 次 CREATE INDEX IF NOT EXISTS；文件内无 BEGIN/COMMIT；含 destructive-gate: allow / ticket RESIDUAL-RLS-20261118"
+    evidence:
+      - { kind: data, ref: "topems_prod 与克隆库 count(*) 2026-11-17", detail: "3 表均 0 行、tenant_id 可空且无默认、NULL 行 0；前置断言对 NULL 行 RAISE 中止，>0 行仅 NOTICE 留痕（代码已显式绑定）" }
+      - { kind: catalog, ref: "topems_prod pg_policies/pg_indexes 2026-11-17", detail: "erp 两表各 1 条 allow_all（erp_allow_all_dict_types / erp_allow_all_dict_items）；rs.formulas 为 rls_tenant_isolation + rs_allow_all_formulas 两条 permissive OR；3 表均无 tenant_id 索引，RLS 已 ENABLE+FORCE" }
+      - { kind: code, ref: "svc/erp/src/modules/dict.rs:399-420,891-912,1234-1257；svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:1053-1085,1095,1115", detail: "潜在 NULL 写点全部改为 TenantScope::from_claims(...).create_tenant_id() 显式绑定（真实租户 / 服务身份显式哨兵 / 缺租户 400），SQL 占位符替换 NULLIF(GUC)；plugin upload 增加 Extension<Claims>" }
+      - { kind: code, ref: "读路径核查 2026-11-17", detail: "erp 字典与 rs.formulas 的列表/详情均走请求级 scope、无 unified-core 跨租户读取、无平台读分支，收紧不减少正常可见行；core.core_plugins 存在租户通道全局目录读取（tenant_plugins.rs:134 JOIN、:449 uninstall、:736/:855 install 子查询），本批排除并单独登记待决策；bi.audit_logs 全仓无读写，登记 DROP 候选、不写策略" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（3 表各哨兵/A/B 1 行夹具，topems_prod 角色）", detail: "up 后六档 3 表均 未设 0 / 空串 0 / 全零 1 / A 1 / B 1 / A+system 3；A 上下文 own INSERT 成功，插 B 行与插哨兵行均 42501，跨租户 UPDATE 0 行；down 后 allow_all 恢复（dict_types 含写校验新增行共 4 行，四档均 4；其余 3 行四档均 3）；清理后再 up 成功（0 行各档 0）；克隆库已回 allow_all 基线" }
+    note: "部署耦合：与 svc/erp、svc/rd 同窗口（代码绑定与策略同批）。回滚文件 database/rollback/20261118120000_dict_formula_rls_strict.rollback.sql：删除本批索引后按原名重建 allow_all（rs 同时保留严格策略还原基线两条）并断言策略数与 RLS/FORCE。core.core_plugins 本批未纳入（读路径依赖全局目录，收严会读不到他方发布行，需先定平台读方案）；bi.audit_logs 无读写登记 DROP 候选；生产零 DDL/零数据修复/零停服"
