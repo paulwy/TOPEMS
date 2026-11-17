@@ -10,6 +10,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -50,8 +51,20 @@ pub struct TaskQueryParams {
 )]
 pub async fn list_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string()));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -66,7 +79,7 @@ pub async fn list_tasks(
 
     let total: i64 = if !has_filters {
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_tasks")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0)
     } else {
@@ -84,7 +97,7 @@ pub async fn list_tasks(
         .bind(status.clone().unwrap_or_default())
         .bind(assignee_uuid)
         .bind(instance_uuid)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
 
         match result {
@@ -123,7 +136,7 @@ pub async fn list_tasks(
         )
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(v) => v,
@@ -167,7 +180,7 @@ pub async fn list_tasks(
         .bind(instance_uuid)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(v) => v,
@@ -200,8 +213,20 @@ pub async fn list_tasks(
 )]
 pub async fn get_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询任务失败".to_string()));
+        }
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
                   COALESCE(u.full_name, u.username) AS assignee_name,
@@ -224,7 +249,7 @@ pub async fn get_task(
            WHERE t.id = $1"#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -791,9 +816,10 @@ pub async fn batch_delegate(
 )]
 pub async fn my_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
-    list_tasks(State(state), Query(params)).await
+    list_tasks(State(state), Extension(txn_arc), Query(params)).await
 }
 
 #[utoipa::path(
@@ -812,10 +838,11 @@ pub async fn my_tasks(
 )]
 pub async fn my_pending_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(mut params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     params.status = Some("pending".to_string());
-    list_tasks(State(state), Query(params)).await
+    list_tasks(State(state), Extension(txn_arc), Query(params)).await
 }
 
 #[utoipa::path(
@@ -834,10 +861,11 @@ pub async fn my_pending_tasks(
 )]
 pub async fn my_completed_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(mut params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     params.status = Some("completed".to_string());
-    list_tasks(State(state), Query(params)).await
+    list_tasks(State(state), Extension(txn_arc), Query(params)).await
 }
 
 #[utoipa::path(
@@ -856,9 +884,10 @@ pub async fn my_completed_tasks(
 )]
 pub async fn candidate_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
-    list_tasks(State(state), Query(params)).await
+    list_tasks(State(state), Extension(txn_arc), Query(params)).await
 }
 
 #[utoipa::path(
@@ -877,14 +906,26 @@ pub async fn candidate_tasks(
 )]
 pub async fn get_task_count(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<i64> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务数量事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询任务数量失败".to_string()));
+        }
+    };
     let status = params.status.clone();
     let assignee_id = params.assignee_id.clone();
 
     let count_result = if status.is_none() && assignee_id.is_none() {
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_tasks")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
     } else {
         let assignee_uuid = assignee_id.and_then(|s| Uuid::parse_str(&s).ok());
@@ -896,7 +937,7 @@ pub async fn get_task_count(
         )
         .bind(status.clone().unwrap_or_default())
         .bind(assignee_uuid)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
     };
 
@@ -953,10 +994,11 @@ pub async fn get_task_stats(State(_state): State<AppState>) -> ApiResponse<TaskS
 )]
 pub async fn high_priority_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(mut params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     params.status = Some("pending".to_string());
-    list_tasks(State(state), Query(params)).await
+    list_tasks(State(state), Extension(txn_arc), Query(params)).await
 }
 
 #[utoipa::path(
@@ -975,7 +1017,8 @@ pub async fn high_priority_tasks(
 )]
 pub async fn overdue_tasks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
-    list_tasks(State(state), Query(params)).await
+    list_tasks(State(state), Extension(txn_arc), Query(params)).await
 }
