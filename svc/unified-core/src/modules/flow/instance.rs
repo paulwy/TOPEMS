@@ -303,6 +303,7 @@ pub async fn get_instance(
 pub async fn create_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateInstanceRequest>,
 ) -> ApiResponse<WorkflowInstance> {
     // 租户绑定对齐 nil 上下文惯例（超管/无 claims → None/SQL NULL；普通用户 → Some(claims.tenant_id)）。
@@ -313,6 +314,17 @@ pub async fn create_instance(
             .tenant_id
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建实例事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建工作流实例失败".to_string()));
+        }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "INSERT INTO public.core_workflow_instances (workflow_id, title, initiator_id, variables, status, started_at, tenant_id) 
@@ -325,7 +337,7 @@ pub async fn create_instance(
     .bind(payload.variables)
     .bind("running")
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
