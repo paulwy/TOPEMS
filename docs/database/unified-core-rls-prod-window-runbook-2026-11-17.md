@@ -30,6 +30,8 @@
 | 6 | `database/migrations/20261117235500_engagement_rls_strict.sql` | 是 | engagement 两表补 RLS：`flow.core_comments` / `flow.core_favorites`；此前 `rls=false` 且无策略，现重建唯一严格 `rls_tenant_isolation` |
 | — | 新二进制 | — | 必须同时包含：平台语料读路径（`ec4aff8e8`）、阶段一 4 笔、阶段三 `43eb4726d`、master-data 批次 3e（`1669a30aa6`）、engagement 请求事务改造 |
 
+> 口径核对：上表 6 个版本在 `database/rollback/` 均有同名 `.rollback.sql`；manifest 中 #2 `20261117180000` 状态为 `superseded`（生产口径，由 #3 `20261117220000` 承接，仅非生产库使用），其余 5 条为 `to_apply`。
+
 > 平台语料迁移头部要求读路径代码同窗口上线；生产当前二进制构建于 2026-11-16 23:39，**不含** `ec4aff8e8`（2026-11-17 08:00），因此必须换新二进制，不能只跑 DDL。
 > 五条待执行迁移：仅 #1 有业务 DML（481 行 UPDATE 归一）；#5 有 3 条 `WHERE tenant_id IS NULL` 的归一 UPDATE（生产三表 0 行，实际 0 行）；#3/#4/#6 纯 DDL。可放在同一停机窗口。
 > #4 与 master-data 代码改造硬耦合：只上迁移会让旧池直连代码读 0 行、写入因 `tenant_id NOT NULL` 失败；因此二进制必须含 `1669a30aa6`。
@@ -112,17 +114,20 @@ select 'mdm_dynamic',
  (select c.relrowsecurity from pg_class c where c.oid = to_regclass('public.schema_registry')) as schema_rls,
  (select c.relrowsecurity from pg_class c where c.oid = to_regclass('public.dynamic_data')) as data_rls;
 
--- 10) engagement 两表（迁移 #6 的前置：均应 0 行、rls=f/0 策略、tenant_id 非空）
+-- 10) engagement 两表（迁移 #6 的前置：均应 0 行、NULL 租户 0 行、无策略、rls=false）
 select 'engagement',
  (select count(*) from flow.core_comments) as comments_rows,
  (select count(*) from flow.core_favorites) as favorites_rows,
- (select c.relrowsecurity from pg_class c where c.oid = to_regclass('flow.core_comments')) as comments_rls,
- (select count(*) from pg_policies where schemaname='flow' and tablename in ('core_comments','core_favorites')) as policies;
+ (select count(*) from flow.core_comments where tenant_id is null)
+   + (select count(*) from flow.core_favorites where tenant_id is null) as null_rows,
+ (select count(*) from pg_policies where schemaname='flow' and tablename in ('core_comments','core_favorites')) as policies,
+ (select relrowsecurity from pg_class where oid = 'flow.core_comments'::regclass) as comments_rls,
+ (select relrowsecurity from pg_class where oid = 'flow.core_favorites'::regclass) as favorites_rls;
 "
 df -h /Users/xingzhai | tail -1
 ```
 
-2026-11-17 实测基线（可复述）：账本 `max=20261116180000`（699 条）；11 张 flow/monitor/search/alerts 表**全部 0 行**；段 A 四表 + `search_logs` = `f/f/0`；段 B 五表**已是严格**；`alerts`/`alert_rules` 各 1 条 allow_all；平台语料 NULL `77/397/3/4`、全零 `0/0/0/0`；`schema_registry`/`dynamic_data` 均 0 行、无 `tenant_id`、`rls=false`；第 5 条三表（`core_files`/`analytics_datasets`/`mdm_metadata_objects`）均 0 行、NULL 租户 0 行；engagement 两表（`flow.core_comments`/`flow.core_favorites`）均 0 行、`rls=false`、0 策略。
+2026-11-17 实测基线（可复述）：账本 `max=20261116180000`（699 条）；11 张 flow/monitor/search/alerts 表**全部 0 行**；段 A 四表 + `search_logs` = `f/f/0`；段 B 五表**已是严格**；`alerts`/`alert_rules` 各 1 条 allow_all；平台语料 NULL `77/397/3/4`、全零 `0/0/0/0`；`schema_registry`/`dynamic_data` 均 0 行、无 `tenant_id`、`rls=false`；第 5 条三表（`core_files`/`analytics_datasets`/`mdm_metadata_objects`）均 0 行、NULL 租户 0 行；engagement 两表（`flow.core_comments`/`flow.core_favorites`）均 0 行、NULL 租户 0 行、`rls=false`、0 策略。
 
 > 第 9 项若出现非 0 行，**不得进入窗口**：迁移 #4 的断言会中止，且历史行租户归属无法自动推断，需先另发数据迁移。
 > 第 7 项若出现非 0 行：迁移 #5 仍可执行（NULL 行会被归一为全零平台租户），但须先把行数记入窗口台账，并在 §8.1 复核归一后行数不丢。

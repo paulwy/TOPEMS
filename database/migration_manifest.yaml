@@ -1990,7 +1990,8 @@ pending_forward_patches:
 
   - version: "20261117180000"
     file: "database/migrations/20261117180000_unified_core_rls_strict.sql"
-    status: to_apply
+    status: superseded
+    status_scope: "生产口径：由 20261117220000 前向补丁替代；本文件仅保留给非生产库（克隆/测试），二者互斥"
     effect: "四张无 RLS 表（core_flow_rules/core_flow_variables/core_flow_variable_history/core_flow_delegates）加 ENABLE+FORCE RLS 与严格策略；flow 四表（core_workflows/core_workflow_versions/core_workflow_instances/core_workflow_tasks）+ monitor_settings 的宽松策略替换为严格 B 范式；alerts 的 public_allow_all_alerts 替换为严格 B 范式；search_logs 补 RLS+严格 B 范式；alert_rules 改为读放开/写仅系统通道（不补 tenant_id）"
     destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；10 次 ALTER TABLE ENABLE/FORCE RLS + 7 次 DROP POLICY + 15 次 CREATE POLICY；文件内无 BEGIN/COMMIT"
     evidence:
@@ -1999,7 +2000,7 @@ pending_forward_patches:
       - { kind: code, ref: "lib/shared-auth/src/middleware/tenant_scope.rs、lib/shared-db scope", detail: "系统身份以 app.rls_system='on' 显式表达；租户身份写入真实 app.tenant_id + rls_system='off'；set_config(...,true) 事务级，无连接池残留" }
       - { kind: rehearsal, ref: "2026-11-17 六档 GUC（未设置/空串/全零/A/B/系统）", detail: "topems_prod 角色实测：未设置与空串全表 0 行；全零仅平台行；A/B 各见 1 行；系统通道见全量（3/2）。跨租户 INSERT 被 42501 拒绝，同租户 INSERT 通过；alert_rules 普通租户写被拒、系统通道写通过" }
       - { kind: code, ref: "svc/search/src/handlers.rs:429、/suggestions、mcp.rs TOOL_SUGGEST", detail: "search_logs 写入显式绑定 claims 租户；两个读路径分别在请求事务与 scope_read_for_tenant 中执行，收紧后 suggestions 由跨租户聚合变为本租户聚合" }
-    note: "部署耦合：必须与 P3（monitor/instance/statistics/rule/variable/delegate 请求事务迁移 + core_flow_* 写入显式落 tenant_id）同一窗口；只上迁移会让仍走池直连的 flow 查询全变 0 行。alert_rules 取证归类为平台全局系统表（无 tenant_id / 无 SQL 读写 / 0 行 / 规则在内存），不补列；search_logs 归类为租户级，suggestions 语义变化需写入发布说明。生产执行改用 20261117220000 前向补丁（生产段 B 五表已由 M-2 batch06 收紧，本迁移 §2.4 会中止）"
+    note: "部署耦合：必须与 P3（monitor/instance/statistics/rule/variable/delegate 请求事务迁移 + core_flow_* 写入显式落 tenant_id）同一窗口；只上迁移会让仍走池直连的 flow 查询全变 0 行。alert_rules 取证归类为平台全局系统表（无 tenant_id / 无 SQL 读写 / 0 行 / 规则在内存），不补列；search_logs 归类为租户级，suggestions 语义变化需写入发布说明。生产不执行本文件：改用 20261117220000 前向补丁（生产段 B 五表已由 M-2 batch06 收紧，本迁移 §2.4 会中止）"
 
   - version: "20261117220000"
     file: "database/migrations/20261117220000_unified_core_rls_strict_prod.sql"
