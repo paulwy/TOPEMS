@@ -437,6 +437,11 @@
       "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
     },
     {
+      "file": "svc/unified-core/src/modules/flow/category.rs",
+      "function": "delete_category",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
       "file": "svc/unified-core/src/modules/flow/workflow.rs",
       "function": "delete_workflow",
       "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"

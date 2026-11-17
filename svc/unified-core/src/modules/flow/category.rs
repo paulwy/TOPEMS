@@ -20,6 +20,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -106,8 +107,20 @@ pub struct SortCategoriesRequest {
 
 pub async fn list_categories(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<CategoryListQuery>,
 ) -> ApiResponse<PaginatedResponse<WorkflowCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化查询流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询流程分类列表失败".to_string()));
+        }
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -122,7 +135,7 @@ pub async fn list_categories(
     )
     .bind(status.clone())
     .bind(keyword.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -145,7 +158,7 @@ pub async fn list_categories(
     .bind(keyword.clone())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -170,14 +183,26 @@ pub async fn list_categories(
 
 pub async fn get_category(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowCategory> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化查询流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询流程分类失败".to_string()));
+        }
+    };
     let row: Option<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
            FROM core_flow_categories WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -196,8 +221,20 @@ pub async fn get_category(
 pub async fn create_category(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateCategoryRequest>,
 ) -> ApiResponse<WorkflowCategory> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建流程分类失败".to_string()));
+        }
+    };
     if payload.name.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "分类名称不能为空".to_string(),
@@ -232,7 +269,7 @@ pub async fn create_category(
     .bind(status)
     .bind(payload.description)
     .bind(tenant_bind)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -250,15 +287,27 @@ pub async fn create_category(
 
 pub async fn update_category(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateCategoryRequest>,
 ) -> ApiResponse<WorkflowCategory> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化更新流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新流程分类失败".to_string()));
+        }
+    };
     let existing: Option<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
            FROM core_flow_categories WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -293,7 +342,7 @@ pub async fn update_category(
     .bind(sort_order)
     .bind(status)
     .bind(description)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -311,14 +360,26 @@ pub async fn update_category(
 
 pub async fn delete_category(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化删除流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除流程分类失败".to_string()));
+        }
+    };
     let res = sqlx::query(
         r#"UPDATE core_flow_categories SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match res {
@@ -335,14 +396,26 @@ pub async fn delete_category(
 
 pub async fn list_active_categories(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<WorkflowCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化查询启用流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询启用流程分类失败".to_string()));
+        }
+    };
     let rows: Vec<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
            FROM core_flow_categories
            WHERE deleted_at IS NULL AND status = 'active'
            ORDER BY sort_order ASC, created_at ASC"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -379,14 +452,26 @@ pub async fn get_category_workflows(
 
 pub async fn get_category_tree(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<WorkflowCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化查询流程分类树事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询流程分类树失败".to_string()));
+        }
+    };
     let rows: Vec<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
            FROM core_flow_categories
            WHERE deleted_at IS NULL
            ORDER BY sort_order ASC, created_at ASC"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -422,8 +507,20 @@ pub async fn get_category_tree(
 
 pub async fn sort_categories(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<SortCategoriesRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化排序流程分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("排序流程分类失败".to_string()));
+        }
+    };
     if payload.ids.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "分类 ID 列表不能为空".to_string(),
@@ -436,7 +533,7 @@ pub async fn sort_categories(
         )
         .bind(id)
         .bind(sort_order)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
         if let Err(e) = res {
             tracing::error!("排序流程分类失败: {}", e);
