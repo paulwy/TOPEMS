@@ -198,13 +198,22 @@ awk -F'\t' -v anchor="$ANCHOR" '
     rfile[v] = $2; rsec[v] = $3; rst[v] = $4; rcount[v]++
     next
   }
-  FILENAME == ARGV[2] { chk[$1] = $2; next }
+  FILENAME == ARGV[2] {
+    if (!($1 in chk)) sorder[++sn] = $1
+    chk[$1] = $2; chkcount[$1]++
+    next
+  }
   {
     dv[++dn] = $1; dfile[$1] = $2; dhash[$1] = $3
   }
   END {
-    missing = 0; mism = 0; sumbad = 0; summiss = 0; dups = 0
+    missing = 0; mism = 0; sumbad = 0; summiss = 0; dups = 0; sumdup = 0
     unp = 0; unapplied = 0
+    # checksums.txt 同一路径出现多行 = 被外部重复追加；生成器本身为截断重写，不会产生
+    for (i = 1; i <= sn; i++) {
+      r = sorder[i]
+      if (chkcount[r] > 1) { printf "checksum_duplicate\t%s\t%d 行\n", r, chkcount[r]; sumdup++ }
+    }
     for (i = 1; i <= rn; i++) {
       v = rorder[i]
       if (rcount[v] > 1) { printf "duplicate\t%s\t%s\n", v, rfile[v]; dups++ }
@@ -223,8 +232,8 @@ awk -F'\t' -v anchor="$ANCHOR" '
       if ((v + 0) > (anchor + 0)) { printf "unregistered_pending\t%s\tdatabase/migrations/%s\n", v, dfile[v]; unp++ }
       else { unapplied++ }
     }
-    printf "#SUMMARY\tregistered=%d\tdisk=%d\tanchor=%s\tmissing_on_disk=%d\tfile_mismatch=%d\tchecksum_mismatch=%d\tchecksum_missing=%d\tduplicate=%d\tunregistered_pending=%d\timplicit_applied=%d\n", \
-      rn, dn, anchor, missing, mism, sumbad, summiss, dups, unp, unapplied
+    printf "#SUMMARY\tregistered=%d\tdisk=%d\tanchor=%s\tmissing_on_disk=%d\tfile_mismatch=%d\tchecksum_mismatch=%d\tchecksum_missing=%d\tchecksum_duplicate=%d\tduplicate=%d\tunregistered_pending=%d\timplicit_applied=%d\n", \
+      rn, dn, anchor, missing, mism, sumbad, summiss, sumdup, dups, unp, unapplied
   }
 ' "$REG_TSV" "$SUM_TSV" "$DISK_TSV" > "$TMP_DIR/drift.tsv"
 
@@ -242,7 +251,7 @@ if (( DRIFT_ITEMS == 0 )); then
 fi
 
 log_drift "发现 $DRIFT_ITEMS 条漂移："
-for kind in missing_on_disk file_mismatch checksum_mismatch checksum_missing duplicate unregistered_pending; do
+for kind in missing_on_disk file_mismatch checksum_mismatch checksum_missing checksum_duplicate duplicate unregistered_pending; do
   rows="$(awk -F'\t' -v k="$kind" '$1 == k { printf "  %s  %s\n", $2, $3 }' "$TMP_DIR/drift.tsv")"
   [[ -z "$rows" ]] && continue
   echo ""
