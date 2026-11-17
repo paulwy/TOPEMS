@@ -638,29 +638,31 @@ pub async fn deploy_workflow(
 )]
 pub async fn rollback_workflow(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<RollbackWorkflowRequest>,
 ) -> ApiResponse<Workflow> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化回滚事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("回滚失败".to_string()));
+        }
     };
     // 1) 取目标版本 definition（to_version 可能命中多行，取最新一条）
     let target_definition = match sqlx::query_as::<_, (serde_json::Value,)>(
         "SELECT definition FROM public.core_workflow_versions
          WHERE workflow_id = $1 AND version = $2 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) 
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) 
          ORDER BY created_at DESC LIMIT 1",
     )
     .bind(workflow_id)
     .bind(&payload.to_version)
-    .bind(tenant_opt)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(t)) => t.0,
@@ -674,13 +676,12 @@ pub async fn rollback_workflow(
     // 2) 用目标版本定义覆盖工作流当前定义（主表 version 为整型计数，保持不动）
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET definition = $2, updated_at = NOW()
-         WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id=$3)
+         WHERE id = $1
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(workflow_id)
     .bind(&target_definition)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -694,23 +695,25 @@ pub async fn rollback_workflow(
     };
 
     // 3) 版本表激活状态：仅最新一条目标版本激活，其余全部置 false（唯一激活）
-    if let Err(e) = sqlx::query(
+    match sqlx::query(
         "UPDATE public.core_workflow_versions SET isactive = (id = (
             SELECT id FROM public.core_workflow_versions
             WHERE workflow_id = $1 AND version = $2 AND deleted_at IS NULL
             ORDER BY created_at DESC LIMIT 1
          ))
          WHERE workflow_id = $1 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) ",
     )
     .bind(workflow_id)
     .bind(&payload.to_version)
-    .bind(tenant_opt)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
-        tracing::error!("回滚切换版本激活状态失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("回滚失败".to_string()));
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("回滚切换版本激活状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("回滚失败".to_string()));
+        }
     }
 
     ApiResponse::success(workflow, "回滚成功")
