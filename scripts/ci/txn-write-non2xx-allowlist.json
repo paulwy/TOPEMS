@@ -437,6 +437,11 @@
       "reason": "RETURNING 空（fetch_optional 返回 None）：未发生写入，返回 404 属合法分支"
     },
     {
+      "file": "svc/unified-core/src/modules/flow/workflow.rs",
+      "function": "delete_workflow_version",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
       "file": "svc/unified-core/src/modules/menu/handlers.rs",
       "function": "create_group",
       "reason": "INSERT ... RETURNING：Err 表示插入失败，未产生写入，仅返回 500"

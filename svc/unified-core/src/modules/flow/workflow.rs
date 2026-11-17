@@ -1050,26 +1050,30 @@ pub async fn activate_workflow_version(
 )]
 pub async fn delete_workflow_version(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化删除工作流版本事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化删除工作流版本事务作用域失败".to_string(),
+            ));
+        }
     };
     let result = sqlx::query(
         "UPDATE public.core_workflow_versions SET deleted_at = NOW()
          WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) ",
     )
     .bind(version_id)
     .bind(workflow_id)
-    .bind(tenant_opt)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
