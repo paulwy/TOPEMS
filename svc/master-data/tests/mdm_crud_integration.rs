@@ -69,6 +69,40 @@ fn make_test_claims() -> Claims {
     }
 }
 
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant, RlsTxnCell};
+
+const TEST_TENANT: &str = "00000000-0000-0000-0000-000000000001";
+
+/// 测试请求事务句柄：开启事务并按 tenant_middleware 的方式设置租户 GUC。
+async fn test_txn_cell(state: &AppState) -> RlsTxnCell {
+    let mut txn = state.db.begin().await.ok();
+    if let Some(t) = txn.as_mut() {
+        let _ = sqlx::query(
+            "SELECT set_config('app.tenant_id', $1, true), set_config('app.rls_system', $2, true)",
+        )
+        .bind(TEST_TENANT)
+        .bind("on")
+        .execute(&mut **t)
+        .await;
+    }
+    Arc::new(tokio::sync::Mutex::new(txn))
+}
+
+/// 在请求租户上下文内执行 handler future（scope_with 依赖 task-local 上下文）。
+async fn in_request_scope<F, T>(fut: F) -> T
+where
+    F: std::future::Future<Output = T>,
+{
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant: uuid::Uuid::parse_str(TEST_TENANT).expect("valid tenant"),
+            system: true,
+        },
+        fut,
+    )
+    .await
+}
+
 /// ============ 质量规则 CRUD 测试 ============
 
 #[tokio::test]
@@ -85,7 +119,13 @@ async fn test_quality_rule_create_and_list() {
         parameters: Some(serde_json::json!({"pattern": "^C\\d{4,}$"})),
     };
 
-    let resp = quality_v51::create_quality_rule(State(state.clone()), Json(req)).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Json(req),
+    ))
+    .await;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -100,7 +140,12 @@ async fn test_quality_rule_create_and_list() {
     assert!(!rule.id.is_empty());
 
     // 列出所有规则，应包含新创建的规则
-    let list_resp = quality_v51::list_quality_rules(State(state.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let list_resp = in_request_scope(quality_v51::list_quality_rules(
+        State(state.clone()),
+        Extension(cell),
+    ))
+    .await;
     assert_eq!(list_resp.code, 200);
     assert!(list_resp.success);
 
@@ -124,11 +169,23 @@ async fn test_quality_rule_get_by_id() {
         severity: Some("error".to_string()),
         parameters: Some(serde_json::json!({"field": "name"})),
     };
-    let created = quality_v51::create_quality_rule(State(state.clone()), Json(create_req)).await;
+    let cell = test_txn_cell(&state).await;
+    let created = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Json(create_req),
+    ))
+    .await;
     let rule_id = created.data.unwrap().id;
 
     // 通过 ID 查询规则
-    let resp = quality_v51::get_quality_rule(State(state.clone()), Path(rule_id.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::get_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Path(rule_id.clone()),
+    ))
+    .await;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -141,10 +198,12 @@ async fn test_quality_rule_get_by_id() {
 async fn test_quality_rule_get_not_found() {
     let state = make_test_state();
 
-    let resp = quality_v51::get_quality_rule(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::get_quality_rule(
         State(state.clone()),
+        Extension(cell),
         Path("nonexistent-rule-id".to_string()),
-    )
+    ))
     .await;
 
     assert_eq!(resp.code, 404);
@@ -165,7 +224,13 @@ async fn test_quality_rule_update() {
         severity: Some("warning".to_string()),
         parameters: Some(serde_json::json!({"min": 0, "max": 1000000, "field": "price"})),
     };
-    let created = quality_v51::create_quality_rule(State(state.clone()), Json(create_req)).await;
+    let cell = test_txn_cell(&state).await;
+    let created = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Json(create_req),
+    ))
+    .await;
     let rule_id = created.data.unwrap().id;
 
     // 更新规则
@@ -176,11 +241,13 @@ async fn test_quality_rule_update() {
         parameters: Some(serde_json::json!({"min": 0, "max": 5000000, "field": "price"})),
         enabled: Some(false),
     };
-    let resp = quality_v51::update_quality_rule(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::update_quality_rule(
         State(state.clone()),
+        Extension(cell),
         Path(rule_id.clone()),
         Json(update_req),
-    )
+    ))
     .await;
 
     assert_eq!(resp.code, 200);
@@ -203,11 +270,13 @@ async fn test_quality_rule_update_not_found() {
         parameters: None,
         enabled: None,
     };
-    let resp = quality_v51::update_quality_rule(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::update_quality_rule(
         State(state.clone()),
+        Extension(cell),
         Path("nonexistent-rule-id".to_string()),
         Json(update_req),
-    )
+    ))
     .await;
 
     assert_eq!(resp.code, 404);
@@ -227,17 +296,34 @@ async fn test_quality_rule_delete() {
         severity: Some("warning".to_string()),
         parameters: None,
     };
-    let created = quality_v51::create_quality_rule(State(state.clone()), Json(create_req)).await;
+    let cell = test_txn_cell(&state).await;
+    let created = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Json(create_req),
+    ))
+    .await;
     let rule_id = created.data.unwrap().id;
 
     // 删除规则
-    let delete_resp =
-        quality_v51::delete_quality_rule(State(state.clone()), Path(rule_id.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let delete_resp = in_request_scope(quality_v51::delete_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Path(rule_id.clone()),
+    ))
+    .await;
     assert_eq!(delete_resp.code, 200);
     assert!(delete_resp.success);
 
     // 确认规则已被删除
-    let get_resp = quality_v51::get_quality_rule(State(state.clone()), Path(rule_id.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let get_resp = in_request_scope(quality_v51::get_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Path(rule_id.clone()),
+    ))
+    .await;
     assert_eq!(get_resp.code, 404);
 }
 
@@ -245,10 +331,12 @@ async fn test_quality_rule_delete() {
 async fn test_quality_rule_delete_not_found() {
     let state = make_test_state();
 
-    let resp = quality_v51::delete_quality_rule(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::delete_quality_rule(
         State(state.clone()),
+        Extension(cell),
         Path("nonexistent-rule-id".to_string()),
-    )
+    ))
     .await;
     assert_eq!(resp.code, 404);
     assert!(!resp.success);
@@ -266,11 +354,13 @@ async fn test_run_quality_check_format_rule() {
         entity_id: "C0001".to_string(),
         rule_ids: None,
     };
-    let resp = quality_v51::run_quality_check(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
+        Extension(cell),
         Extension(make_test_claims()),
         Json(req),
-    )
+    ))
     .await;
 
     assert_eq!(resp.code, 200);
@@ -293,11 +383,13 @@ async fn test_run_quality_check_range_rule_warns() {
         entity_id: "M0001".to_string(),
         rule_ids: None,
     };
-    let resp = quality_v51::run_quality_check(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
+        Extension(cell),
         Extension(make_test_claims()),
         Json(req),
-    )
+    ))
     .await;
 
     assert_eq!(resp.code, 200);
@@ -322,11 +414,13 @@ async fn test_list_quality_checks_with_filter() {
         entity_id: "C9999".to_string(),
         rule_ids: None,
     };
-    let _ = quality_v51::run_quality_check(
+    let cell = test_txn_cell(&state).await;
+    let _ = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
+        Extension(cell),
         Extension(make_test_claims()),
         Json(run_req),
-    )
+    ))
     .await;
 
     // 按实体类型过滤查询检查结果
@@ -338,7 +432,13 @@ async fn test_list_quality_checks_with_filter() {
         page: Some(1),
         page_size: Some(10),
     };
-    let resp = quality_v51::list_quality_checks(State(state.clone()), Query(query)).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::list_quality_checks(
+        State(state.clone()),
+        Extension(cell),
+        Query(query),
+    ))
+    .await;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -360,18 +460,22 @@ async fn test_get_quality_check_results_by_entity() {
         entity_id: "S0001".to_string(),
         rule_ids: None,
     };
-    let _ = quality_v51::run_quality_check(
+    let cell = test_txn_cell(&state).await;
+    let _ = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
+        Extension(cell),
         Extension(make_test_claims()),
         Json(run_req),
-    )
+    ))
     .await;
 
     // 查询指定实体的检查结果
-    let resp = quality_v51::get_quality_check_results(
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::get_quality_check_results(
         State(state.clone()),
+        Extension(cell),
         Path(("supplier".to_string(), "S0001".to_string())),
-    )
+    ))
     .await;
 
     assert_eq!(resp.code, 200);
@@ -391,7 +495,12 @@ async fn test_get_quality_check_results_by_entity() {
 async fn test_get_quality_score() {
     let state = make_test_state();
 
-    let resp = quality_v51::get_quality_score(State(state.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::get_quality_score(
+        State(state.clone()),
+        Extension(cell),
+    ))
+    .await;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -415,7 +524,12 @@ async fn test_get_quality_score() {
 async fn test_get_quality_dashboard() {
     let state = make_test_state();
 
-    let resp = quality_v51::get_quality_dashboard(State(state.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::get_quality_dashboard(
+        State(state.clone()),
+        Extension(cell),
+    ))
+    .await;
 
     assert_eq!(resp.code, 200);
     assert!(resp.success);
@@ -458,7 +572,13 @@ async fn test_quality_rule_with_various_severities() {
             severity: Some(sev.to_string()),
             parameters: None,
         };
-        let resp = quality_v51::create_quality_rule(State(state.clone()), Json(req)).await;
+        let cell = test_txn_cell(&state).await;
+        let resp = in_request_scope(quality_v51::create_quality_rule(
+            State(state.clone()),
+            Extension(cell),
+            Json(req),
+        ))
+        .await;
         assert_eq!(resp.code, 200);
         assert_eq!(resp.data.unwrap().severity, sev);
     }
@@ -477,7 +597,13 @@ async fn test_quality_rule_default_severity() {
         severity: None,
         parameters: None,
     };
-    let resp = quality_v51::create_quality_rule(State(state.clone()), Json(req)).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Json(req),
+    ))
+    .await;
     assert_eq!(resp.code, 200);
     assert_eq!(resp.data.unwrap().severity, "warning");
 }
@@ -488,7 +614,12 @@ async fn test_quality_rule_default_severity() {
 async fn test_duplicate_detection_insight() {
     let state = make_test_state();
 
-    let resp = quality_v51::get_quality_dashboard(State(state.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let resp = in_request_scope(quality_v51::get_quality_dashboard(
+        State(state.clone()),
+        Extension(cell),
+    ))
+    .await;
     let dashboard = resp.data.unwrap();
 
     // 找到重复检测洞察
@@ -597,12 +728,24 @@ async fn test_quality_rule_full_lifecycle() {
         severity: Some("error".to_string()),
         parameters: Some(serde_json::json!({"field": "code"})),
     };
-    let created = quality_v51::create_quality_rule(State(state.clone()), Json(create_req)).await;
+    let cell = test_txn_cell(&state).await;
+    let created = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Json(create_req),
+    ))
+    .await;
     assert_eq!(created.code, 200);
     let rule_id = created.data.unwrap().id;
 
     // 2. 读取规则
-    let fetched = quality_v51::get_quality_rule(State(state.clone()), Path(rule_id.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let fetched = in_request_scope(quality_v51::get_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Path(rule_id.clone()),
+    ))
+    .await;
     assert_eq!(fetched.code, 200);
     assert_eq!(fetched.data.unwrap().name, "生命周期测试规则");
 
@@ -614,11 +757,13 @@ async fn test_quality_rule_full_lifecycle() {
         parameters: None,
         enabled: Some(false),
     };
-    let updated = quality_v51::update_quality_rule(
+    let cell = test_txn_cell(&state).await;
+    let updated = in_request_scope(quality_v51::update_quality_rule(
         State(state.clone()),
+        Extension(cell),
         Path(rule_id.clone()),
         Json(update_req),
-    )
+    ))
     .await;
     assert_eq!(updated.code, 200);
     let updated_rule = updated.data.unwrap();
@@ -632,11 +777,13 @@ async fn test_quality_rule_full_lifecycle() {
         entity_id: "LE0001".to_string(),
         rule_ids: None,
     };
-    let checks = quality_v51::run_quality_check(
+    let cell = test_txn_cell(&state).await;
+    let checks = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
+        Extension(cell),
         Extension(make_test_claims()),
         Json(run_req),
-    )
+    ))
     .await
     .data
     .unwrap();
@@ -646,12 +793,22 @@ async fn test_quality_rule_full_lifecycle() {
     );
 
     // 5. 删除规则
-    let deleted =
-        quality_v51::delete_quality_rule(State(state.clone()), Path(rule_id.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let deleted = in_request_scope(quality_v51::delete_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Path(rule_id.clone()),
+    ))
+    .await;
     assert_eq!(deleted.code, 200);
 
     // 6. 确认规则已不存在
-    let not_found =
-        quality_v51::get_quality_rule(State(state.clone()), Path(rule_id.clone())).await;
+    let cell = test_txn_cell(&state).await;
+    let not_found = in_request_scope(quality_v51::get_quality_rule(
+        State(state.clone()),
+        Extension(cell),
+        Path(rule_id.clone()),
+    ))
+    .await;
     assert_eq!(not_found.code, 404);
 }

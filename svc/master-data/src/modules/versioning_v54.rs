@@ -11,8 +11,10 @@ use serde::Deserialize;
 use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
@@ -607,9 +609,22 @@ fn compute_diff(from: &serde_json::Value, to: &serde_json::Value) -> VersionDiff
 )]
 pub async fn create_snapshot(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSnapshotRequest>,
 ) -> ApiResponse<VersionSnapshot> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     // K1：版本号基于真表现有快照推导（不再读内存 Store）。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -618,7 +633,7 @@ pub async fn create_snapshot(
     )))
     .bind(&req.entity_type)
     .bind(&req.entity_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let existing: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
@@ -655,9 +670,11 @@ pub async fn create_snapshot(
     .bind(snapshot.created_at.to_rfc3339())
     .bind(&snapshot.comment)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入版本快照失败: {e}"));
     }
 
@@ -678,9 +695,11 @@ pub async fn create_snapshot(
     .bind(snapshot.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入审计事件失败: {e}"));
     }
 
@@ -703,9 +722,22 @@ pub async fn create_snapshot(
 )]
 pub async fn get_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<VersionQuery>,
 ) -> ApiResponse<VersionSnapshot> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     // K1：真表读取。
     let row = if let Some(ref ver) = params.version {
         sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -716,7 +748,7 @@ pub async fn get_version(
         .bind(&entity_type)
         .bind(&entity_id)
         .bind(ver)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
         .unwrap_or(None)
     } else {
@@ -727,7 +759,7 @@ pub async fn get_version(
         )))
         .bind(&entity_type)
         .bind(&entity_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
         .unwrap_or(None)
     };
@@ -750,10 +782,23 @@ pub async fn get_version(
 )]
 pub async fn diff_versions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<VersionDiffQuery>,
 ) -> ApiResponse<VersionDiff> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     run_version_diff(
-        &state,
+        &mut db_scope,
         &params.entity_type,
         &params.entity_id,
         &params.from_version,
@@ -765,8 +810,21 @@ pub async fn diff_versions(
 /// 扁平契约 `GET /version/diff`：查询参数全部可选；缺参时返回空差异，不抛 400。
 pub async fn diff_versions_compat(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<CompatVersionDiffQuery>,
 ) -> ApiResponse<VersionDiff> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let (Some(entity_type), Some(entity_id), Some(from_version), Some(to_version)) = (
         params.entity_type,
         params.entity_id,
@@ -784,12 +842,19 @@ pub async fn diff_versions_compat(
             "版本差异（参数缺失，返回空差异）",
         );
     };
-    run_version_diff(&state, &entity_type, &entity_id, &from_version, &to_version).await
+    run_version_diff(
+        &mut db_scope,
+        &entity_type,
+        &entity_id,
+        &from_version,
+        &to_version,
+    )
+    .await
 }
 
 /// 版本差异核心查询（严格参数版与扁平兼容版共用）。
 async fn run_version_diff(
-    state: &AppState,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     entity_type: &str,
     entity_id: &str,
     from_version: &str,
@@ -803,7 +868,7 @@ async fn run_version_diff(
     .bind(entity_type)
     .bind(entity_id)
     .bind(from_version)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *scope)
     .await
     .unwrap_or(None);
     let to_row = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -813,7 +878,7 @@ async fn run_version_diff(
     .bind(entity_type)
     .bind(entity_id)
     .bind(to_version)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *scope)
     .await
     .unwrap_or(None);
 
@@ -841,9 +906,22 @@ async fn run_version_diff(
 )]
 pub async fn restore_version(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RestoreVersionRequest>,
 ) -> ApiResponse<VersionSnapshot> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     // K1：目标版本从真表读取。
     let target_row = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -853,7 +931,7 @@ pub async fn restore_version(
     .bind(&req.entity_type)
     .bind(&req.entity_id)
     .bind(&req.version)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -868,7 +946,7 @@ pub async fn restore_version(
     )))
     .bind(&target.entity_type)
     .bind(&target.entity_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let existing: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
@@ -903,9 +981,11 @@ pub async fn restore_version(
     .bind(restored.created_at.to_rfc3339())
     .bind(&restored.comment)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写回版本快照失败: {e}"));
     }
 
@@ -926,9 +1006,11 @@ pub async fn restore_version(
     .bind(restored.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入审计事件失败: {e}"));
     }
 
@@ -957,9 +1039,22 @@ pub async fn restore_version(
 )]
 pub async fn list_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<VersionHistoryQuery>,
 ) -> ApiResponse<PaginatedResponse<VersionSnapshot>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -975,7 +1070,7 @@ pub async fn list_history(
     .bind(&entity_id)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
@@ -985,7 +1080,7 @@ pub async fn list_history(
     )
     .bind(&entity_type)
     .bind(&entity_id)
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1013,9 +1108,22 @@ pub async fn list_history(
 )]
 pub async fn create_branch(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBranchRequest>,
 ) -> ApiResponse<VersionBranch> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let branch_type = match req.branch_type.as_deref() {
         Some(t) => branch_type_from_str(t),
@@ -1049,9 +1157,11 @@ pub async fn create_branch(
     .bind(&branch.merged_by)
     .bind(&branch.status)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("创建分支失败: {e}"));
     }
 
@@ -1070,14 +1180,27 @@ pub async fn create_branch(
 )]
 pub async fn merge_branch(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<MergeBranchRequest>,
 ) -> ApiResponse<VersionBranch> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let source_exists: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM master_data.mdm_version_branches WHERE name = $1")
             .bind(&req.source_branch)
-            .fetch_one(&state.db)
+            .fetch_one(&mut db_scope)
             .await
             .unwrap_or(0);
     if source_exists == 0 {
@@ -1095,7 +1218,7 @@ pub async fn merge_branch(
     .bind("current_user")
     .bind(&req.target_branch)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1127,8 +1250,21 @@ pub async fn merge_branch(
 )]
 pub async fn query_audit_log(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<AuditLogQuery>,
 ) -> ApiResponse<PaginatedResponse<AuditEvent>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1150,7 +1286,7 @@ pub async fn query_audit_log(
     .bind(params.user_id.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
@@ -1168,7 +1304,7 @@ pub async fn query_audit_log(
     .bind(params.event_type.as_deref())
     .bind(params.category.as_deref())
     .bind(params.user_id.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1205,9 +1341,22 @@ pub async fn query_audit_log(
 )]
 pub async fn get_user_activity(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(user_id): Path<String>,
     Query(params): Query<UserActivityQuery>,
 ) -> ApiResponse<PaginatedResponse<AuditEvent>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1222,7 +1371,7 @@ pub async fn get_user_activity(
     .bind(params.event_type.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
@@ -1232,7 +1381,7 @@ pub async fn get_user_activity(
     )
     .bind(&user_id)
     .bind(params.event_type.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1270,9 +1419,22 @@ pub async fn get_user_activity(
 )]
 pub async fn get_entity_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<EntityHistoryQuery>,
 ) -> ApiResponse<PaginatedResponse<AuditEvent>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1288,7 +1450,7 @@ pub async fn get_entity_history(
     .bind(params.event_type.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
@@ -1299,7 +1461,7 @@ pub async fn get_entity_history(
     .bind(&entity_type)
     .bind(&entity_id)
     .bind(params.event_type.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1410,12 +1572,25 @@ pub async fn export_audit_log(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_compliance_audit(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ComplianceAuditQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events ORDER BY timestamp DESC"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let events: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
@@ -1478,9 +1653,22 @@ pub async fn get_compliance_audit(
 )]
 pub async fn grant_permission(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GrantPermissionRequest>,
 ) -> ApiResponse<DataPermission> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let perm = DataPermission {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1504,9 +1692,11 @@ pub async fn grant_permission(
     .bind(&perm.condition)
     .bind(perm.inherited)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("授予权限失败: {e}"));
     }
 
@@ -1528,14 +1718,27 @@ pub async fn grant_permission(
 )]
 pub async fn revoke_permission(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
         .bind(&id)
         .bind(tenant)
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         .unwrap_or_default();
 
@@ -1559,13 +1762,26 @@ pub async fn revoke_permission(
 )]
 pub async fn check_permission(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<CheckPermissionQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let assignment_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
     )))
     .bind(&params.user_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let user_roles: Vec<String> = assignment_rows
@@ -1577,7 +1793,7 @@ pub async fn check_permission(
     let role_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PERMISSION_ROLE_COLS} FROM master_data.mdm_permission_roles"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let roles: Vec<PermissionRole> = role_rows.iter().map(permission_role_from_row).collect();
@@ -1594,7 +1810,7 @@ pub async fn check_permission(
     let perm_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let perms: Vec<DataPermission> = perm_rows.iter().map(data_permission_from_row).collect();
@@ -1647,14 +1863,27 @@ pub async fn check_permission(
 )]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(user_id): Path<String>,
     Query(params): Query<UserPermissionsQuery>,
 ) -> ApiResponse<Vec<DataPermission>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let assignment_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
     )))
     .bind(&user_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let user_roles: Vec<String> = assignment_rows
@@ -1666,7 +1895,7 @@ pub async fn get_user_permissions(
     let role_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PERMISSION_ROLE_COLS} FROM master_data.mdm_permission_roles"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let roles: Vec<PermissionRole> = role_rows.iter().map(permission_role_from_row).collect();
@@ -1683,7 +1912,7 @@ pub async fn get_user_permissions(
     let perm_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let perms: Vec<DataPermission> = perm_rows.iter().map(data_permission_from_row).collect();
@@ -1726,8 +1955,21 @@ pub async fn get_user_permissions(
 )]
 pub async fn get_resource_permissions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ResourcePermissionsQuery>,
 ) -> ApiResponse<Vec<DataPermission>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions
          WHERE resource_type = COALESCE($1, resource_type)
@@ -1736,7 +1978,7 @@ pub async fn get_resource_permissions(
     )))
     .bind(params.resource_type.as_deref())
     .bind(params.action.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let filtered: Vec<DataPermission> = rows.iter().map(data_permission_from_row).collect();
@@ -1747,13 +1989,26 @@ pub async fn get_resource_permissions(
 /// 扁平契约 `GET /permissions/resource/{id}`：单条资源权限查询，不存在返回业务 404。
 pub async fn get_resource_permission(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<DataPermission> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions WHERE id = $1 LIMIT 1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1775,9 +2030,22 @@ pub async fn get_resource_permission(
 )]
 pub async fn create_role(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRoleRequest>,
 ) -> ApiResponse<PermissionRole> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
 
@@ -1799,9 +2067,11 @@ pub async fn create_role(
     .bind(&role.inherited_from)
     .bind(role.created_at.to_rfc3339())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("创建角色失败: {e}"));
     }
 
@@ -1820,9 +2090,22 @@ pub async fn create_role(
 )]
 pub async fn assign_role(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AssignRoleRequest>,
 ) -> ApiResponse<UserRoleAssignment> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
 
@@ -1842,9 +2125,11 @@ pub async fn assign_role(
     .bind(&assignment.role_id)
     .bind(assignment.assigned_at.to_rfc3339())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("分配角色失败: {e}"));
     }
 
@@ -1863,9 +2148,22 @@ pub async fn assign_role(
 )]
 pub async fn revoke_role(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RevokeRoleRequest>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let result = sqlx::query(
         "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3)",
@@ -1873,7 +2171,7 @@ pub async fn revoke_role(
     .bind(&req.user_id)
     .bind(&req.role_id)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .unwrap_or_default();
 

@@ -10,6 +10,7 @@ use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Js
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
@@ -164,13 +165,13 @@ struct GovernanceMaturity;
 
 impl GovernanceMaturity {
     async fn assess_maturity(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
     ) -> Result<MaturityAssessment, TopemsError> {
         let now = chrono::Utc::now();
-        let scores = fetch_dimension_scores(db).await?;
+        let scores = fetch_dimension_scores(scope).await?;
         let existing = scores.iter().find(|s| s.dimension == dimension);
         let current_level = existing
             .map(|s| s.maturity_level.clone())
@@ -204,7 +205,7 @@ impl GovernanceMaturity {
         .bind(serde_json::to_value(&assessment.recommendations).unwrap_or_default())
         .bind(assessment.assessed_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度评估失败: {e}")))?;
 
@@ -218,7 +219,7 @@ impl GovernanceMaturity {
         .bind(maturity_level_str(&assessment.current_level))
         .bind(now.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度历史失败: {e}")))?;
 
@@ -226,25 +227,27 @@ impl GovernanceMaturity {
     }
 
     async fn get_assessment(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         id: &str,
     ) -> Result<Option<MaturityAssessment>, TopemsError> {
         let row = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSESSMENT_COLS} FROM master_data.mdm_maturity_assessments WHERE id = $1"
         )))
         .bind(id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询成熟度评估失败: {e}")))?;
         Ok(row.map(|r| maturity_assessment_from_row(&r)))
     }
 
-    async fn get_dimension_scores(db: &sqlx::PgPool) -> Result<Vec<DimensionScore>, TopemsError> {
-        fetch_dimension_scores(db).await
+    async fn get_dimension_scores(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<Vec<DimensionScore>, TopemsError> {
+        fetch_dimension_scores(scope).await
     }
 
     async fn create_improvement_plan(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
@@ -272,15 +275,17 @@ impl GovernanceMaturity {
         .bind(&plan.due_date)
         .bind(&plan.status)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入改进计划失败: {e}")))?;
 
         Ok(plan)
     }
 
-    async fn track_progress(db: &sqlx::PgPool) -> Result<Vec<MaturityProgress>, TopemsError> {
-        let scores = fetch_dimension_scores(db).await?;
+    async fn track_progress(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<Vec<MaturityProgress>, TopemsError> {
+        let scores = fetch_dimension_scores(scope).await?;
         let mut progress = Vec::new();
         for score in scores.iter() {
             progress.push(MaturityProgress {
@@ -295,10 +300,10 @@ impl GovernanceMaturity {
     }
 
     async fn get_maturity_history(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         dimension: Option<&str>,
     ) -> Result<Vec<MaturityHistoryEntry>, TopemsError> {
-        let history = fetch_maturity_history(db).await?;
+        let history = fetch_maturity_history(scope).await?;
         Ok(match dimension {
             Some(d) => history
                 .iter()
@@ -309,8 +314,10 @@ impl GovernanceMaturity {
         })
     }
 
-    async fn get_benchmark(db: &sqlx::PgPool) -> Result<Vec<BenchmarkData>, TopemsError> {
-        let scores = fetch_dimension_scores(db).await?;
+    async fn get_benchmark(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<Vec<BenchmarkData>, TopemsError> {
+        let scores = fetch_dimension_scores(scope).await?;
         let benchmarks = scores
             .iter()
             .map(|s| {
@@ -419,7 +426,7 @@ struct MDMWorkflowEngine;
 
 impl MDMWorkflowEngine {
     async fn create_workflow(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         name: String,
         workflow_type: WorkflowType,
@@ -449,7 +456,7 @@ impl MDMWorkflowEngine {
         .bind(workflow.created_at.to_rfc3339())
         .bind(workflow.updated_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建工作流失败: {e}")))?;
 
@@ -457,10 +464,10 @@ impl MDMWorkflowEngine {
     }
 
     async fn start_workflow(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
-        let workflows = fetch_workflows(db).await?;
+        let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
             return Ok(None);
         };
@@ -475,10 +482,6 @@ impl MDMWorkflowEngine {
             first_step.started_at = Some(chrono::Utc::now());
         }
 
-        let mut tx = db
-            .begin()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
             "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
@@ -486,7 +489,7 @@ impl MDMWorkflowEngine {
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
@@ -500,21 +503,18 @@ impl MDMWorkflowEngine {
         .bind("system")
         .bind(Option::<String>::None)
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
-        tx.commit()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("提交事务失败: {e}")))?;
 
         Ok(Some(workflow))
     }
 
     async fn advance_step(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
-        let workflows = fetch_workflows(db).await?;
+        let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
             return Ok(None);
         };
@@ -545,10 +545,6 @@ impl MDMWorkflowEngine {
 
         workflow.updated_at = now;
 
-        let mut tx = db
-            .begin()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
             "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
@@ -556,30 +552,27 @@ impl MDMWorkflowEngine {
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
-        tx.commit()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("提交事务失败: {e}")))?;
 
         Ok(Some(workflow))
     }
 
     async fn get_workflow_status(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
-        let workflows = fetch_workflows(db).await?;
+        let workflows = fetch_workflows(scope).await?;
         Ok(workflows.into_iter().find(|w| w.id == workflow_id))
     }
 
     async fn list_workflows(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_type: Option<&str>,
         status: Option<&str>,
     ) -> Result<Vec<WorkflowV58>, TopemsError> {
-        let workflows = fetch_workflows(db).await?;
+        let workflows = fetch_workflows(scope).await?;
         Ok(workflows
             .into_iter()
             .filter(|w| {
@@ -598,16 +591,18 @@ impl MDMWorkflowEngine {
             .collect())
     }
 
-    async fn get_templates(db: &sqlx::PgPool) -> Result<Vec<WorkflowTemplate>, TopemsError> {
-        fetch_workflow_templates(db).await
+    async fn get_templates(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<Vec<WorkflowTemplate>, TopemsError> {
+        fetch_workflow_templates(scope).await
     }
 
     async fn approve_step(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
         step_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
-        let workflows = fetch_workflows(db).await?;
+        let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
             return Ok(None);
         };
@@ -628,10 +623,6 @@ impl MDMWorkflowEngine {
             .unwrap_or_else(|| "system".to_string());
         workflow.updated_at = now;
 
-        let mut tx = db
-            .begin()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
             "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
@@ -639,7 +630,7 @@ impl MDMWorkflowEngine {
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
@@ -653,22 +644,19 @@ impl MDMWorkflowEngine {
         .bind(&actor)
         .bind(Option::<String>::None)
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
-        tx.commit()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("提交事务失败: {e}")))?;
 
         Ok(Some(workflow))
     }
 
     async fn reject_step(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
         step_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
-        let workflows = fetch_workflows(db).await?;
+        let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
             return Ok(None);
         };
@@ -690,10 +678,6 @@ impl MDMWorkflowEngine {
         workflow.status = WorkflowStatus::Cancelled;
         workflow.updated_at = now;
 
-        let mut tx = db
-            .begin()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
             "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
@@ -701,7 +685,7 @@ impl MDMWorkflowEngine {
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
@@ -715,21 +699,18 @@ impl MDMWorkflowEngine {
         .bind(&actor)
         .bind(Option::<String>::None)
         .bind(workflow.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
-        tx.commit()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("提交事务失败: {e}")))?;
 
         Ok(Some(workflow))
     }
 
     async fn get_workflow_history(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
     ) -> Result<Vec<WorkflowHistoryEntry>, TopemsError> {
-        let history = fetch_workflow_history(db).await?;
+        let history = fetch_workflow_history(scope).await?;
         Ok(history
             .into_iter()
             .filter(|h| h.workflow_id == workflow_id)
@@ -834,7 +815,7 @@ struct DataProductManager;
 
 impl DataProductManager {
     async fn create_data_product(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         name: String,
         description: String,
@@ -872,7 +853,7 @@ impl DataProductManager {
         .bind(product.created_at.to_rfc3339())
         .bind(product.updated_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建数据产品失败: {e}")))?;
 
@@ -880,19 +861,19 @@ impl DataProductManager {
     }
 
     async fn get_data_product(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         id: &str,
     ) -> Result<Option<DataProduct>, TopemsError> {
-        let products = fetch_data_products(db).await?;
+        let products = fetch_data_products(scope).await?;
         Ok(products.into_iter().find(|p| p.id == id))
     }
 
     async fn list_data_products(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         domain: Option<&str>,
         status: Option<&str>,
     ) -> Result<Vec<DataProduct>, TopemsError> {
-        let products = fetch_data_products(db).await?;
+        let products = fetch_data_products(scope).await?;
         Ok(products
             .into_iter()
             .filter(|p| {
@@ -912,7 +893,7 @@ impl DataProductManager {
     }
 
     async fn update_contract(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         product_id: &str,
         schema: serde_json::Value,
         quality_requirements: Vec<String>,
@@ -930,10 +911,6 @@ impl DataProductManager {
             updated_at: now.clone(),
         };
 
-        let mut tx = db
-            .begin()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
         )))
@@ -944,7 +921,7 @@ impl DataProductManager {
         .bind(security_level_str(&contract.security_level))
         .bind(&contract.version)
         .bind(contract.updated_at.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据契约失败: {e}")))?;
         sqlx::query(
@@ -954,21 +931,18 @@ impl DataProductManager {
         .bind(product_id)
         .bind(serde_json::to_value(&contract).unwrap_or_default())
         .bind(now.to_rfc3339())
-        .execute(&mut *tx)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新数据产品失败: {e}")))?;
-        tx.commit()
-            .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("提交事务失败: {e}")))?;
 
         Ok(Some(contract))
     }
 
     async fn get_contract_status(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         product_id: &str,
     ) -> Result<Option<ContractStatus>, TopemsError> {
-        let products = fetch_data_products(db).await?;
+        let products = fetch_data_products(scope).await?;
         let Some(product) = products.iter().find(|p| p.id == product_id) else {
             return Ok(None);
         };
@@ -993,13 +967,13 @@ impl DataProductManager {
     }
 
     async fn expose_as_api(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         product_id: &str,
         auth_type: String,
         rate_limit: String,
     ) -> Result<Option<ApiExposure>, TopemsError> {
-        let Some(product) = Self::get_data_product(db, product_id).await? else {
+        let Some(product) = Self::get_data_product(scope, product_id).await? else {
             return Ok(None);
         };
         let exposure = ApiExposure {
@@ -1026,7 +1000,7 @@ impl DataProductManager {
         .bind(exposure.enabled)
         .bind(exposure.created_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入 API 暴露失败: {e}")))?;
 
@@ -1034,10 +1008,10 @@ impl DataProductManager {
     }
 
     async fn get_consumers(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         product_id: &str,
     ) -> Result<Vec<ConsumerInfo>, TopemsError> {
-        let products = fetch_data_products(db).await?;
+        let products = fetch_data_products(scope).await?;
         let Some(product) = products.iter().find(|p| p.id == product_id) else {
             return Ok(Vec::new());
         };
@@ -1055,10 +1029,10 @@ impl DataProductManager {
     }
 
     async fn get_product_lineage(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         product_id: &str,
     ) -> Result<ProductLineage, TopemsError> {
-        let products = fetch_data_products(db).await?;
+        let products = fetch_data_products(scope).await?;
         let product = products.iter().find(|p| p.id == product_id);
         let consumers = product.map(|p| p.consumers.clone()).unwrap_or_default();
 
@@ -1282,9 +1256,22 @@ pub struct ExposeApiRequest {
 )]
 pub async fn assess_maturity(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AssessMaturityRequest>,
 ) -> ApiResponse<MaturityAssessment> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
@@ -1296,8 +1283,9 @@ pub async fn assess_maturity(
         .and_then(parse_maturity_level)
         .unwrap_or(MaturityLevel::Optimized);
 
-    let result =
-        db_exec!(GovernanceMaturity::assess_maturity(&state.db, tenant, dimension, target).await);
+    let result = db_exec!(
+        GovernanceMaturity::assess_maturity(&mut db_scope, tenant, dimension, target).await
+    );
     ApiResponse::success(result, "成熟度评估完成")
 }
 
@@ -1313,15 +1301,28 @@ pub async fn assess_maturity(
 )]
 pub async fn get_assessment(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<GetAssessmentQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     if let Some(id) = params.id {
-        match db_exec!(GovernanceMaturity::get_assessment(&state.db, &id).await) {
+        match db_exec!(GovernanceMaturity::get_assessment(&mut db_scope, &id).await) {
             Some(a) => ApiResponse::success(serde_json::json!(a), "成熟度评估详情"),
             None => ApiResponse::not_found("未找到评估记录"),
         }
     } else {
-        let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
+        let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&mut db_scope).await);
         ApiResponse::success(
             serde_json::json!({"dimension_scores": scores}),
             "成熟度概览",
@@ -1341,8 +1342,21 @@ pub async fn get_assessment(
 )]
 pub async fn get_dimension_scores(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<DimensionScore>> {
-    let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&mut db_scope).await);
     ApiResponse::success(scores, "维度评分列表")
 }
 
@@ -1358,9 +1372,22 @@ pub async fn get_dimension_scores(
 )]
 pub async fn create_improvement_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ImprovementPlanRequest>,
 ) -> ApiResponse<ImprovementPlan> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
@@ -1373,7 +1400,7 @@ pub async fn create_improvement_plan(
 
     let plan = db_exec!(
         GovernanceMaturity::create_improvement_plan(
-            &state.db,
+            &mut db_scope,
             tenant,
             dimension,
             target,
@@ -1394,8 +1421,23 @@ pub async fn create_improvement_plan(
     ),
     tag = "governance_v58"
 )]
-pub async fn track_progress(State(state): State<AppState>) -> ApiResponse<Vec<MaturityProgress>> {
-    let progress = db_exec!(GovernanceMaturity::track_progress(&state.db).await);
+pub async fn track_progress(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<MaturityProgress>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let progress = db_exec!(GovernanceMaturity::track_progress(&mut db_scope).await);
     ApiResponse::success(progress, "成熟度进度")
 }
 
@@ -1411,10 +1453,23 @@ pub async fn track_progress(State(state): State<AppState>) -> ApiResponse<Vec<Ma
 )]
 pub async fn get_maturity_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<MaturityHistoryQuery>,
 ) -> ApiResponse<Vec<MaturityHistoryEntry>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let history = db_exec!(
-        GovernanceMaturity::get_maturity_history(&state.db, params.dimension.as_deref()).await
+        GovernanceMaturity::get_maturity_history(&mut db_scope, params.dimension.as_deref()).await
     );
     ApiResponse::success(history, "成熟度历史")
 }
@@ -1429,8 +1484,23 @@ pub async fn get_maturity_history(
     ),
     tag = "governance_v58"
 )]
-pub async fn get_benchmark(State(state): State<AppState>) -> ApiResponse<Vec<BenchmarkData>> {
-    let benchmark = db_exec!(GovernanceMaturity::get_benchmark(&state.db).await);
+pub async fn get_benchmark(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<BenchmarkData>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let benchmark = db_exec!(GovernanceMaturity::get_benchmark(&mut db_scope).await);
     ApiResponse::success(benchmark, "基准对比数据")
 }
 
@@ -1448,9 +1518,22 @@ pub async fn get_benchmark(State(state): State<AppState>) -> ApiResponse<Vec<Ben
 )]
 pub async fn create_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> ApiResponse<WorkflowV58> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
@@ -1480,7 +1563,8 @@ pub async fn create_workflow(
         .collect();
 
     let workflow = db_exec!(
-        MDMWorkflowEngine::create_workflow(&state.db, tenant, req.name, workflow_type, steps).await
+        MDMWorkflowEngine::create_workflow(&mut db_scope, tenant, req.name, workflow_type, steps)
+            .await
     );
     ApiResponse::success(workflow, "工作流已创建")
 }
@@ -1500,9 +1584,22 @@ pub async fn create_workflow(
 )]
 pub async fn start_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<WorkflowV58> {
-    match db_exec!(MDMWorkflowEngine::start_workflow(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    match db_exec!(MDMWorkflowEngine::start_workflow(&mut db_scope, &id).await) {
         Some(w) => ApiResponse::success(w, "工作流已启动"),
         None => ApiResponse::bad_request("工作流无法启动"),
     }
@@ -1523,10 +1620,23 @@ pub async fn start_workflow(
 )]
 pub async fn advance_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(_req): Json<AdvanceStepRequest>,
 ) -> ApiResponse<WorkflowV58> {
-    match db_exec!(MDMWorkflowEngine::advance_step(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    match db_exec!(MDMWorkflowEngine::advance_step(&mut db_scope, &id).await) {
         Some(w) => ApiResponse::success(w, "步骤已推进"),
         None => ApiResponse::bad_request("无法推进工作流"),
     }
@@ -1547,9 +1657,22 @@ pub async fn advance_step(
 )]
 pub async fn get_workflow_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<WorkflowV58> {
-    match db_exec!(MDMWorkflowEngine::get_workflow_status(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    match db_exec!(MDMWorkflowEngine::get_workflow_status(&mut db_scope, &id).await) {
         Some(w) => ApiResponse::success(w, "工作流状态"),
         None => ApiResponse::not_found("未找到工作流"),
     }
@@ -1567,11 +1690,24 @@ pub async fn get_workflow_status(
 )]
 pub async fn list_workflows(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListWorkflowsQuery>,
 ) -> ApiResponse<Vec<WorkflowV58>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let workflows = db_exec!(
         MDMWorkflowEngine::list_workflows(
-            &state.db,
+            &mut db_scope,
             params.workflow_type.as_deref(),
             params.status.as_deref()
         )
@@ -1592,8 +1728,21 @@ pub async fn list_workflows(
 )]
 pub async fn get_workflow_templates(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<WorkflowTemplate>> {
-    let templates = db_exec!(MDMWorkflowEngine::get_templates(&state.db).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let templates = db_exec!(MDMWorkflowEngine::get_templates(&mut db_scope).await);
     ApiResponse::success(templates, "工作流模板")
 }
 
@@ -1612,12 +1761,25 @@ pub async fn get_workflow_templates(
 )]
 pub async fn approve_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<ApproveStepRequest>,
 ) -> ApiResponse<WorkflowV58> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let (workflow_id, step_id) = parse_step_path(&id);
 
-    match db_exec!(MDMWorkflowEngine::approve_step(&state.db, &workflow_id, &step_id).await) {
+    match db_exec!(MDMWorkflowEngine::approve_step(&mut db_scope, &workflow_id, &step_id).await) {
         Some(w) => {
             ApiResponse::success(w, &req.comment.unwrap_or_else(|| "步骤已批准".to_string()))
         }
@@ -1640,12 +1802,25 @@ pub async fn approve_step(
 )]
 pub async fn reject_step(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<RejectStepRequest>,
 ) -> ApiResponse<WorkflowV58> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let (workflow_id, step_id) = parse_step_path(&id);
 
-    match db_exec!(MDMWorkflowEngine::reject_step(&state.db, &workflow_id, &step_id).await) {
+    match db_exec!(MDMWorkflowEngine::reject_step(&mut db_scope, &workflow_id, &step_id).await) {
         Some(w) => ApiResponse::success(w, &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string())),
         None => ApiResponse::bad_request("无法拒绝该步骤"),
     }
@@ -1653,9 +1828,22 @@ pub async fn reject_step(
 
 pub async fn get_workflow_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<WorkflowHistoryEntry>> {
-    let history = db_exec!(MDMWorkflowEngine::get_workflow_history(&state.db, &id).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let history = db_exec!(MDMWorkflowEngine::get_workflow_history(&mut db_scope, &id).await);
     ApiResponse::success(history, "工作流历史")
 }
 
@@ -1673,9 +1861,22 @@ pub async fn get_workflow_history(
 )]
 pub async fn create_data_product(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDataProductRequest>,
 ) -> ApiResponse<DataProduct> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let sla = req
         .sla_level
@@ -1685,7 +1886,7 @@ pub async fn create_data_product(
 
     let product = db_exec!(
         DataProductManager::create_data_product(
-            &state.db,
+            &mut db_scope,
             tenant,
             req.name,
             req.description,
@@ -1702,9 +1903,22 @@ pub async fn create_data_product(
 /// 与 mdm-v58/create_data_product 走同一管理器。
 pub async fn create_data_product_compat(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<DataProduct> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let name = req
         .get("name")
@@ -1734,7 +1948,7 @@ pub async fn create_data_product_compat(
 
     let product = db_exec!(
         DataProductManager::create_data_product(
-            &state.db,
+            &mut db_scope,
             tenant,
             name,
             description,
@@ -1762,9 +1976,22 @@ pub async fn create_data_product_compat(
 )]
 pub async fn get_data_product(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<DataProduct> {
-    match db_exec!(DataProductManager::get_data_product(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    match db_exec!(DataProductManager::get_data_product(&mut db_scope, &id).await) {
         Some(p) => ApiResponse::success(p, "数据产品详情"),
         None => ApiResponse::not_found("未找到数据产品"),
     }
@@ -1782,11 +2009,24 @@ pub async fn get_data_product(
 )]
 pub async fn list_data_products(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListDataProductsQuery>,
 ) -> ApiResponse<Vec<DataProduct>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let products = db_exec!(
         DataProductManager::list_data_products(
-            &state.db,
+            &mut db_scope,
             params.domain.as_deref(),
             params.status.as_deref()
         )
@@ -1810,9 +2050,22 @@ pub async fn list_data_products(
 )]
 pub async fn update_contract(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<UpdateContractRequest>,
 ) -> ApiResponse<DataContract> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let security = req
         .security_level
         .as_deref()
@@ -1831,7 +2084,7 @@ pub async fn update_contract(
 
     match db_exec!(
         DataProductManager::update_contract(
-            &state.db,
+            &mut db_scope,
             &id,
             req.schema,
             requirements,
@@ -1860,9 +2113,22 @@ pub async fn update_contract(
 )]
 pub async fn get_contract_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<ContractStatus> {
-    match db_exec!(DataProductManager::get_contract_status(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    match db_exec!(DataProductManager::get_contract_status(&mut db_scope, &id).await) {
         Some(s) => ApiResponse::success(s, "契约状态"),
         None => ApiResponse::not_found("未找到数据产品"),
     }
@@ -1883,15 +2149,29 @@ pub async fn get_contract_status(
 )]
 pub async fn expose_as_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ExposeApiRequest>,
 ) -> ApiResponse<ApiExposure> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let auth = req.auth_type.unwrap_or_else(|| "bearer".to_string());
     let rate = req.rate_limit.unwrap_or_else(|| "1000/min".to_string());
 
-    match db_exec!(DataProductManager::expose_as_api(&state.db, tenant, &id, auth, rate).await) {
+    match db_exec!(DataProductManager::expose_as_api(&mut db_scope, tenant, &id, auth, rate).await)
+    {
         Some(e) => ApiResponse::success(e, "API 已暴露"),
         None => ApiResponse::not_found("未找到数据产品"),
     }
@@ -1912,9 +2192,22 @@ pub async fn expose_as_api(
 )]
 pub async fn get_consumers(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<ConsumerInfo>> {
-    let consumers = db_exec!(DataProductManager::get_consumers(&state.db, &id).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let consumers = db_exec!(DataProductManager::get_consumers(&mut db_scope, &id).await);
     ApiResponse::success(consumers, "消费者列表")
 }
 
@@ -1933,9 +2226,22 @@ pub async fn get_consumers(
 )]
 pub async fn get_product_lineage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<ProductLineage> {
-    let lineage = db_exec!(DataProductManager::get_product_lineage(&state.db, &id).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let lineage = db_exec!(DataProductManager::get_product_lineage(&mut db_scope, &id).await);
     ApiResponse::success(lineage, "数据产品血缘")
 }
 
@@ -2229,35 +2535,37 @@ fn api_exposure_from_row(r: &sqlx::postgres::PgRow) -> ApiExposure {
 // ==================== K1 接真表：fetch 助手 ====================
 
 async fn fetch_maturity_assessments(
-    db: &sqlx::PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
 ) -> Result<Vec<MaturityAssessment>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {ASSESSMENT_COLS} FROM master_data.mdm_maturity_assessments"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询成熟度评估失败: {e}")))?;
     Ok(rows.iter().map(maturity_assessment_from_row).collect())
 }
 
-async fn fetch_dimension_scores(db: &sqlx::PgPool) -> Result<Vec<DimensionScore>, TopemsError> {
+async fn fetch_dimension_scores(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<DimensionScore>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DIMENSION_SCORE_COLS} FROM master_data.mdm_dimension_scores"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询维度得分失败: {e}")))?;
     Ok(rows.iter().map(dimension_score_from_row).collect())
 }
 
 async fn fetch_maturity_history(
-    db: &sqlx::PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
 ) -> Result<Vec<MaturityHistoryEntry>, TopemsError> {
     let rows = sqlx::query(
         // recorded_at 在 prod/test 均为 text（ISO-8601），按时间戳语义显式转换后解码。
         "SELECT id, dimension, score, level, recorded_at::timestamptz AS recorded_at FROM master_data.mdm_maturity_history",
     )
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询成熟度历史失败: {e}")))?;
     Ok(rows
@@ -2272,73 +2580,85 @@ async fn fetch_maturity_history(
         .collect())
 }
 
-async fn fetch_improvement_plans(db: &sqlx::PgPool) -> Result<Vec<ImprovementPlan>, TopemsError> {
+async fn fetch_improvement_plans(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<ImprovementPlan>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {IMPROVEMENT_PLAN_COLS} FROM master_data.mdm_improvement_plans"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询改进计划失败: {e}")))?;
     Ok(rows.iter().map(improvement_plan_from_row).collect())
 }
 
-async fn fetch_workflows(db: &sqlx::PgPool) -> Result<Vec<WorkflowV58>, TopemsError> {
+async fn fetch_workflows(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<WorkflowV58>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {WORKFLOW_COLS} FROM master_data.mdm_workflows"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流失败: {e}")))?;
     Ok(rows.iter().map(workflow_from_row).collect())
 }
 
-async fn fetch_workflow_templates(db: &sqlx::PgPool) -> Result<Vec<WorkflowTemplate>, TopemsError> {
+async fn fetch_workflow_templates(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<WorkflowTemplate>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {WORKFLOW_TEMPLATE_COLS} FROM master_data.mdm_workflow_templates"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流模板失败: {e}")))?;
     Ok(rows.iter().map(workflow_template_from_row).collect())
 }
 
 async fn fetch_workflow_history(
-    db: &sqlx::PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
 ) -> Result<Vec<WorkflowHistoryEntry>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {WORKFLOW_HISTORY_COLS} FROM master_data.mdm_workflow_history"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流历史失败: {e}")))?;
     Ok(rows.iter().map(workflow_history_from_row).collect())
 }
 
-async fn fetch_data_products(db: &sqlx::PgPool) -> Result<Vec<DataProduct>, TopemsError> {
+async fn fetch_data_products(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<DataProduct>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PRODUCT_COLS} FROM master_data.mdm_data_products"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询数据产品失败: {e}")))?;
     Ok(rows.iter().map(data_product_from_row).collect())
 }
 
-async fn fetch_data_contracts(db: &sqlx::PgPool) -> Result<Vec<DataContract>, TopemsError> {
+async fn fetch_data_contracts(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<DataContract>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_CONTRACT_COLS} FROM master_data.mdm_data_contracts"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询数据契约失败: {e}")))?;
     Ok(rows.iter().map(data_contract_from_row).collect())
 }
 
-async fn fetch_api_exposures(db: &sqlx::PgPool) -> Result<Vec<ApiExposure>, TopemsError> {
+async fn fetch_api_exposures(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<ApiExposure>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {API_EXPOSURE_COLS} FROM master_data.mdm_api_exposures"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询 API 暴露失败: {e}")))?;
     Ok(rows.iter().map(api_exposure_from_row).collect())

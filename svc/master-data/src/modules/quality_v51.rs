@@ -12,8 +12,10 @@ use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Js
 use serde::Deserialize;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
@@ -452,9 +454,22 @@ fn compute_score(checks: &[QualityCheckV51]) -> f64 {
 )]
 pub async fn run_quality_check(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunQualityCheckRequest>,
 ) -> ApiResponse<Vec<QualityCheckV51>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let rows = sqlx::query(
         "SELECT id, name, entity_type, rule_type, description, severity, parameters, enabled, created_at, updated_at
@@ -462,7 +477,7 @@ pub async fn run_quality_check(
          WHERE entity_type = $1 AND enabled = TRUE",
     )
     .bind(&req.entity_type)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let rules: Vec<QualityRule> = rows.iter().map(rule_row_to_api).collect();
@@ -521,9 +536,11 @@ pub async fn run_quality_check(
         .bind(&check.details)
         .bind(check.checked_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
+            drop(db_scope);
+            let _ = guard.take();
             return ApiResponse::server_error(&format!("写入质量检查失败: {e}"));
         }
     }
@@ -556,8 +573,21 @@ pub async fn run_quality_check(
 )]
 pub async fn list_quality_checks(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<QualityCheckQuery>,
 ) -> ApiResponse<PaginatedResponse<QualityCheckV51>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -577,7 +607,7 @@ pub async fn list_quality_checks(
     .bind(params.rule_id.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
@@ -593,7 +623,7 @@ pub async fn list_quality_checks(
     .bind(params.entity_id.as_deref())
     .bind(params.status.as_deref())
     .bind(params.rule_id.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -625,15 +655,28 @@ pub async fn list_quality_checks(
 )]
 pub async fn get_quality_check_results(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> ApiResponse<Vec<QualityCheckV51>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
          WHERE entity_type = $1 AND entity_id = $2 ORDER BY checked_at DESC"
     )))
     .bind(&entity_type)
     .bind(&entity_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
@@ -652,7 +695,22 @@ pub async fn get_quality_check_results(
         (status = 200, description = "质量规则列表", body = ApiResponse<Vec<QualityRule>>),
     ),
 )]
-pub async fn list_quality_rules(State(state): State<AppState>) -> ApiResponse<Vec<QualityRule>> {
+pub async fn list_quality_rules(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<QualityRule>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     // A 试点：直查关系表 master_data.mdm_quality_rules（不再走内存集合快照）。
     match sqlx::query(
         r#"SELECT id, name, entity_type, rule_type, description, severity,
@@ -660,7 +718,7 @@ pub async fn list_quality_rules(State(state): State<AppState>) -> ApiResponse<Ve
            FROM master_data.mdm_quality_rules
            ORDER BY updated_at DESC"#,
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     {
         Ok(rows) => {
@@ -685,8 +743,21 @@ pub async fn list_quality_rules(State(state): State<AppState>) -> ApiResponse<Ve
 )]
 pub async fn create_quality_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateQualityRuleRequest>,
 ) -> ApiResponse<QualityRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let id = uuid::Uuid::new_v4();
     let severity = req.severity.unwrap_or_else(|| "warning".to_string());
     let parameters = req.parameters.unwrap_or_default();
@@ -704,7 +775,7 @@ pub async fn create_quality_rule(
     .bind(&req.description)
     .bind(&severity)
     .bind(&parameters)
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     {
         Ok(row) => ApiResponse::success(rule_row_to_api(&row), "质量规则已创建"),
@@ -727,8 +798,21 @@ pub async fn create_quality_rule(
 
 pub async fn get_quality_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<QualityRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
         return ApiResponse::not_found("未找到质量规则");
     };
@@ -738,7 +822,7 @@ pub async fn get_quality_rule(
            FROM master_data.mdm_quality_rules WHERE id = $1"#,
     )
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(Some(row)) => ApiResponse::success(rule_row_to_api(&row), "质量规则详情"),
@@ -762,9 +846,22 @@ pub async fn get_quality_rule(
 
 pub async fn update_quality_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> ApiResponse<QualityRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
         return ApiResponse::not_found("未找到质量规则");
     };
@@ -786,7 +883,7 @@ pub async fn update_quality_rule(
     .bind(&req.severity)
     .bind(&req.parameters)
     .bind(req.enabled)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(Some(row)) => ApiResponse::success(rule_row_to_api(&row), "质量规则已更新"),
@@ -813,14 +910,27 @@ pub async fn update_quality_rule(
 )]
 pub async fn delete_quality_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
         return ApiResponse::not_found("未找到质量规则");
     };
     match sqlx::query("DELETE FROM master_data.mdm_quality_rules WHERE id = $1")
         .bind(id)
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
     {
         Ok(res) if res.rows_affected() > 0 => ApiResponse::success_no_data("质量规则已删除"),
@@ -844,11 +954,26 @@ pub async fn delete_quality_rule(
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_quality_score(State(state): State<AppState>) -> ApiResponse<QualityScore> {
+pub async fn get_quality_score(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<QualityScore> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let checks: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
@@ -913,11 +1038,26 @@ pub async fn get_quality_score(State(state): State<AppState>) -> ApiResponse<Qua
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse<QualityDashboard> {
+pub async fn get_quality_dashboard(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<QualityDashboard> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let check_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let checks: Vec<QualityCheckV51> = check_rows.iter().map(quality_check_from_row).collect();
@@ -925,7 +1065,7 @@ pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse
     let fix_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let fix_actions: Vec<AutoFixAction> = fix_rows.iter().map(auto_fix_from_row).collect();
@@ -933,7 +1073,7 @@ pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse
     let sugg_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUGGESTION_COLS} FROM master_data.mdm_governance_suggestions"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let suggestions: Vec<GovernanceSuggestion> =
@@ -942,7 +1082,7 @@ pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse
     let ins_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let insights: Vec<GovernanceInsight> = ins_rows.iter().map(insight_from_row).collect();
@@ -1001,9 +1141,22 @@ pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse
 )]
 pub async fn apply_auto_fix(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AutoFixRequest>,
 ) -> ApiResponse<AutoFixAction> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let strategy = req.strategy.as_deref().unwrap_or("normalize_text");
     let action_type = action_type_from_str(strategy);
@@ -1038,9 +1191,11 @@ pub async fn apply_auto_fix(
     .bind(fix_status_to_str(&action.status))
     .bind(action.applied_at.map(|t| t.to_rfc3339()))
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("自动修复失败: {e}"));
     }
 
@@ -1061,8 +1216,21 @@ pub async fn apply_auto_fix(
 )]
 pub async fn get_fix_actions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<FixActionQuery>,
 ) -> ApiResponse<PaginatedResponse<AutoFixAction>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1080,7 +1248,7 @@ pub async fn get_fix_actions(
     .bind(params.status.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<AutoFixAction> = rows.iter().map(auto_fix_from_row).collect();
@@ -1094,7 +1262,7 @@ pub async fn get_fix_actions(
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
     .bind(params.status.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1125,15 +1293,28 @@ pub async fn get_fix_actions(
 )]
 pub async fn revert_fix_action(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<RevertFixRequest>,
 ) -> ApiResponse<AutoFixAction> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let current: Option<String> =
         sqlx::query_scalar("SELECT status FROM master_data.mdm_auto_fix_actions WHERE id = $1")
             .bind(&id)
-            .fetch_optional(&state.db)
+            .fetch_optional(&mut db_scope)
             .await
             .unwrap_or(None);
 
@@ -1153,7 +1334,7 @@ pub async fn revert_fix_action(
     )))
     .bind(&id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1175,11 +1356,26 @@ pub async fn revert_fix_action(
     ),
     tag = "quality_v51"
 )]
-pub async fn get_fix_history(State(state): State<AppState>) -> ApiResponse<Vec<FixHistoryEntry>> {
+pub async fn get_fix_history(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<FixHistoryEntry>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions ORDER BY applied_at DESC"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let actions: Vec<AutoFixAction> = rows.iter().map(auto_fix_from_row).collect();
@@ -1215,9 +1411,22 @@ pub async fn get_fix_history(State(state): State<AppState>) -> ApiResponse<Vec<F
 )]
 pub async fn run_fix_workflow(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunFixWorkflowRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
 
@@ -1266,9 +1475,11 @@ pub async fn run_fix_workflow(
         .bind(fix_status_to_str(&action.status))
         .bind(action.applied_at.map(|t| t.to_rfc3339()))
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
+            drop(db_scope);
+            let _ = guard.take();
             return ApiResponse::server_error(&format!("执行修复工作流失败: {e}"));
         }
     }
@@ -1300,9 +1511,22 @@ pub async fn run_fix_workflow(
 )]
 pub async fn generate_suggestions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateSuggestionsRequest>,
 ) -> ApiResponse<Vec<GovernanceSuggestion>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
     let types = req
@@ -1345,9 +1569,11 @@ pub async fn generate_suggestions(
         .bind(suggestion_status_to_str(&s.status))
         .bind(s.created_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
+            drop(db_scope);
+            let _ = guard.take();
             return ApiResponse::server_error(&format!("生成治理建议失败: {e}"));
         }
     }
@@ -1369,8 +1595,21 @@ pub async fn generate_suggestions(
 )]
 pub async fn get_suggestions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SuggestionQuery>,
 ) -> ApiResponse<PaginatedResponse<GovernanceSuggestion>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1390,7 +1629,7 @@ pub async fn get_suggestions(
     .bind(params.status.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<GovernanceSuggestion> = rows.iter().map(suggestion_from_row).collect();
@@ -1406,7 +1645,7 @@ pub async fn get_suggestions(
     .bind(params.entity_id.as_deref())
     .bind(params.suggestion_type.as_deref())
     .bind(params.status.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
 
@@ -1437,16 +1676,29 @@ pub async fn get_suggestions(
 )]
 pub async fn approve_suggestion(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<ApproveSuggestionRequest>,
 ) -> ApiResponse<GovernanceSuggestion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let current: Option<String> = sqlx::query_scalar(
         "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
     )
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1465,7 +1717,7 @@ pub async fn approve_suggestion(
     )))
     .bind(&id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1492,16 +1744,29 @@ pub async fn approve_suggestion(
 )]
 pub async fn reject_suggestion(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<RejectSuggestionRequest>,
 ) -> ApiResponse<GovernanceSuggestion> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let tenant = tenant_of(&claims);
     let current: Option<String> = sqlx::query_scalar(
         "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
     )
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1520,7 +1785,7 @@ pub async fn reject_suggestion(
     )))
     .bind(&id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1544,11 +1809,24 @@ pub async fn reject_suggestion(
 )]
 pub async fn get_governance_insights(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<GovernanceInsight>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights ORDER BY affected_records DESC"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let items: Vec<GovernanceInsight> = rows.iter().map(insight_from_row).collect();
@@ -1573,17 +1851,43 @@ pub async fn get_governance_insights(
 )]
 pub async fn predict_quality_trend(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<PredictTrendRequest>,
 ) -> ApiResponse<Vec<QualityTrendPoint>> {
-    let trend = build_quality_trend(&state, req.entity_type, req.days.unwrap_or(30)).await;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let trend = build_quality_trend(&mut db_scope, req.entity_type, req.days.unwrap_or(30)).await;
     ApiResponse::success(trend, "质量趋势预测")
 }
 
 /// 扁平契约 `POST /ai/predict`：请求体宽松（空对象 `{}` 亦可），实体类型/天数给默认值后预测。
 pub async fn predict_quality_trend_compat(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Vec<QualityTrendPoint>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let entity_type = req
         .get("entity_type")
         .and_then(|v| v.as_str())
@@ -1594,7 +1898,7 @@ pub async fn predict_quality_trend_compat(
         .and_then(|v| v.as_i64())
         .map(|d| i32::try_from(d).unwrap_or(36500))
         .unwrap_or(30);
-    let trend = build_quality_trend(&state, entity_type, days).await;
+    let trend = build_quality_trend(&mut db_scope, entity_type, days).await;
     ApiResponse::success(trend, "质量趋势预测")
 }
 
@@ -1605,7 +1909,7 @@ pub async fn predict_quality_trend_compat(
 )]
 /// 质量趋势预测核心逻辑（严格参数版与扁平兼容版共用）。
 async fn build_quality_trend(
-    state: &AppState,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     entity_type: String,
     days: i32,
 ) -> Vec<QualityTrendPoint> {
@@ -1613,7 +1917,7 @@ async fn build_quality_trend(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1"
     )))
     .bind(&entity_type)
-    .fetch_all(&state.db)
+    .fetch_all(&mut *scope)
     .await
     .unwrap_or_default();
     let all_checks: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
