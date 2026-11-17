@@ -124,9 +124,9 @@ pub async fn list_datasets(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    // B 类：数据集列表允许"全局/公开"行；系统通道（服务令牌/超管）没有租户谓词。
-    // 普通用户缺租户即 400，不再出现 nil = 全量放行。
-    let scope = match TenantScope::from_claims(
+    // A 类：请求路径按 Claims 开事务作用域。普通租户只能看到自身行 + 平台级行（tenant_id IS NULL）；
+    // 服务令牌走系统通道（app.rls_system='on'）。缺租户的普通用户直接 400。
+    let tenant_scope = match TenantScope::from_claims(
         &claims,
         "analytics.bi.list_datasets",
         "bi.analytics_datasets",
@@ -136,11 +136,15 @@ pub async fn list_datasets(
             return ApiResponse::from(TopemsError::ValidationFailed(message));
         }
     };
-    let tenant_pred = if scope.is_system() {
-        "TRUE".to_string()
-    } else {
-        "(tenant_id IS NULL OR tenant_id = $6::uuid OR is_public = true)".to_string()
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取数据集列表失败");
+        }
     };
+    // 平台级数据集（tenant_id IS NULL）由 RLS 放行；租户自有数据集严格按租户隔离。
+    let tenant_pred = tenant_scope.sql_predicate("tenant_id", "$6");
 
     let query = format!(
         "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND {} ORDER BY created_at DESC LIMIT $4 OFFSET $5",
@@ -152,17 +156,13 @@ pub async fn list_datasets(
         .bind(params.data_source_id)
         .bind(page_size)
         .bind(offset)
-        .bind_tenant_scope(&scope)
-        .fetch_all(&state.pool)
+        .bind_tenant_scope(&tenant_scope)
+        .fetch_all(&mut db_scope)
         .await;
 
     match result {
         Ok(datasets) => {
-            let count_tenant_pred = if scope.is_system() {
-                "TRUE".to_string()
-            } else {
-                "(tenant_id IS NULL OR tenant_id = $4::uuid OR is_public = true)".to_string()
-            };
+            let count_tenant_pred = tenant_scope.sql_predicate("tenant_id", "$4");
             let total = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(format!(
                 "SELECT COUNT(*) FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND {}",
                 count_tenant_pred
@@ -170,8 +170,8 @@ pub async fn list_datasets(
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.status.as_deref())
             .bind(params.data_source_id)
-            .bind_tenant_scope(&scope)
-            .fetch_one(&state.pool)
+            .bind_tenant_scope(&tenant_scope)
+            .fetch_one(&mut db_scope)
             .await
             .unwrap_or(0);
 
@@ -201,13 +201,36 @@ pub async fn list_datasets(
 )]
 pub async fn get_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query_as::<_, Dataset>(
-        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
-    )
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.get_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开只读作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "获取数据集失败",
+            ));
+        }
+    };
+    let result = sqlx::query_as::<_, Dataset>(sqlx::AssertSqlSafe(format!(
+        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_one(&mut db_scope)
     .await;
 
     match result {
@@ -244,13 +267,34 @@ pub async fn get_dataset(
 )]
 pub async fn create_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDatasetRequest>,
 ) -> Json<serde_json::Value> {
     let owner_id = "system".to_string();
     let now = Utc::now();
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.create_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开写作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "创建数据集失败",
+            ));
+        }
+    };
 
     let result = sqlx::query(
-        r#"INSERT INTO bi.analytics_datasets (name, description, datasource_id, sql_query, fields, filters, config, status, is_public, owner_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id"#,
+        r#"INSERT INTO bi.analytics_datasets (name, description, datasource_id, sql_query, fields, filters, config, status, is_public, owner_id, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id"#,
     )
     .bind(req.name)
     .bind(req.description)
@@ -264,11 +308,19 @@ pub async fn create_dataset(
     .bind(owner_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .bind(tenant_scope.tenant_id())
+    .fetch_one(&mut db_scope)
     .await;
 
     match result {
         Ok(row) => {
+            if let Err(e) = db_scope.commit().await {
+                warn!("创建数据集提交失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "创建数据集失败",
+                ));
+            }
             let id: Uuid = row.get("id");
             info!("创建数据集成功: id={}", id);
             Json(serde_json::json!({
@@ -305,12 +357,34 @@ pub async fn create_dataset(
 )]
 pub async fn update_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDatasetRequest>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query(
-        r#"UPDATE bi.analytics_datasets SET name = COALESCE($1, name), description = COALESCE($2, description), sql_query = COALESCE($3, sql_query), fields = COALESCE($4, fields), filters = COALESCE($5, filters), config = COALESCE($6, config), is_public = COALESCE($7, is_public), updated_at = $8 WHERE id = $9"#,
-    )
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.update_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开写作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "更新数据集失败",
+            ));
+        }
+    };
+    let result = sqlx::query(sqlx::AssertSqlSafe(format!(
+        r#"UPDATE bi.analytics_datasets SET name = COALESCE($1, name), description = COALESCE($2, description), sql_query = COALESCE($3, sql_query), fields = COALESCE($4, fields), filters = COALESCE($5, filters), config = COALESCE($6, config), is_public = COALESCE($7, is_public), updated_at = $8 WHERE id = $9 AND {}"#,
+        tenant_scope.sql_predicate("tenant_id", "$10")
+    )))
     .bind(req.name)
     .bind(req.description)
     .bind(req.sql_query)
@@ -320,11 +394,25 @@ pub async fn update_dataset(
     .bind(req.is_public)
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .execute(&mut db_scope)
     .await;
 
     match result {
-        Ok(_) => {
+        Ok(done) => {
+            if done.rows_affected() == 0 {
+                return Json(topems_shared_core::response::error_value(
+                    404,
+                    "数据集不存在",
+                ));
+            }
+            if let Err(e) = db_scope.commit().await {
+                warn!("更新数据集提交失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "更新数据集失败",
+                ));
+            }
             info!("更新数据集成功: id={}", id);
             Json(serde_json::json!({
                 "success": true,
@@ -359,15 +447,53 @@ pub async fn update_dataset(
 )]
 pub async fn delete_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query("UPDATE bi.analytics_datasets SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.delete_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开写作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "删除数据集失败",
+            ));
+        }
+    };
+    let result = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "UPDATE bi.analytics_datasets SET deleted_at = NOW() WHERE id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
+    .bind(id)
+    .bind_tenant_scope(&tenant_scope)
+    .execute(&mut db_scope)
+    .await;
 
     match result {
-        Ok(_) => {
+        Ok(done) => {
+            if done.rows_affected() == 0 {
+                return Json(topems_shared_core::response::error_value(
+                    404,
+                    "数据集不存在",
+                ));
+            }
+            if let Err(e) = db_scope.commit().await {
+                warn!("删除数据集提交失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "删除数据集失败",
+                ));
+            }
             info!("删除数据集成功: id={}", id);
             Json(serde_json::json!({
                 "success": true,
@@ -399,19 +525,55 @@ pub async fn delete_dataset(
 )]
 pub async fn publish_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query(
-        "UPDATE bi.analytics_datasets SET status = 'published', published_at = $1, updated_at = $2 WHERE id = $3",
-    )
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.publish_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开写作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "发布数据集失败",
+            ));
+        }
+    };
+    let result = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "UPDATE bi.analytics_datasets SET status = 'published', published_at = $1, updated_at = $2 WHERE id = $3 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$4")
+    )))
     .bind(Utc::now())
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .execute(&mut db_scope)
     .await;
 
     match result {
-        Ok(_) => {
+        Ok(done) => {
+            if done.rows_affected() == 0 {
+                return Json(topems_shared_core::response::error_value(
+                    404,
+                    "数据集不存在",
+                ));
+            }
+            if let Err(e) = db_scope.commit().await {
+                warn!("发布数据集提交失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "发布数据集失败",
+                ));
+            }
             info!("发布数据集成功: id={}", id);
             Json(serde_json::json!({
                 "success": true,
@@ -443,19 +605,55 @@ pub async fn publish_dataset(
 )]
 pub async fn refresh_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query(
-        "UPDATE bi.analytics_datasets SET last_refreshed_at = $1, updated_at = $2 WHERE id = $3",
-    )
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.refresh_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开写作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "刷新数据集失败",
+            ));
+        }
+    };
+    let result = sqlx::query(sqlx::AssertSqlSafe(format!(
+        "UPDATE bi.analytics_datasets SET last_refreshed_at = $1, updated_at = $2 WHERE id = $3 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$4")
+    )))
     .bind(Utc::now())
     .bind(Utc::now())
     .bind(id)
-    .execute(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .execute(&mut db_scope)
     .await;
 
     match result {
-        Ok(_) => {
+        Ok(done) => {
+            if done.rows_affected() == 0 {
+                return Json(topems_shared_core::response::error_value(
+                    404,
+                    "数据集不存在",
+                ));
+            }
+            if let Err(e) = db_scope.commit().await {
+                warn!("刷新数据集提交失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "刷新数据集失败",
+                ));
+            }
             info!("刷新数据集成功: id={}", id);
             Json(serde_json::json!({
                 "success": true,
@@ -487,16 +685,40 @@ pub async fn refresh_dataset(
 )]
 pub async fn get_dataset_preview(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<LimitQuery>,
 ) -> Json<serde_json::Value> {
     let _limit = params.limit.unwrap_or(10);
 
-    let dataset = sqlx::query_as::<_, Dataset>(
-        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
-    )
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.get_dataset_preview",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开只读作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "获取数据集预览失败",
+            ));
+        }
+    };
+
+    let dataset = sqlx::query_as::<_, Dataset>(sqlx::AssertSqlSafe(format!(
+        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_one(&mut db_scope)
     .await;
 
     match dataset {
@@ -550,12 +772,34 @@ pub async fn query_dataset(
             }))
         }
     };
-    // 取已注册数据集的 sql_query（软删除过滤）
-    let sql_query: Option<String> = match sqlx::query_scalar(
-        "SELECT sql_query FROM bi.analytics_datasets WHERE id = $1 AND deleted_at IS NULL",
-    )
+    // 取已注册数据集的 sql_query（软删除过滤 + 租户隔离）
+    let tenant_scope = match TenantScope::from_claims(
+        &claims,
+        "analytics.bi.query_dataset",
+        "bi.analytics_datasets",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return Json(topems_shared_core::response::error_value(400, message));
+        }
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            warn!("打开只读作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询数据集配置失败",
+            ));
+        }
+    };
+    let sql_query: Option<String> = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+        "SELECT sql_query FROM bi.analytics_datasets WHERE id = $1 AND deleted_at IS NULL AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    )))
     .bind(dataset_id)
-    .fetch_optional(&state.pool)
+    .bind_tenant_scope(&tenant_scope)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,

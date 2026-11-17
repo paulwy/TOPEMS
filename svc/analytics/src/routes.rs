@@ -921,6 +921,14 @@ pub async fn reports_center_stats(
         }
     };
 
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &scope).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[analytics] 打开只读作用域失败: {}", e);
+            return ApiResponse::error(500, "内部服务器错误");
+        }
+    };
+
     let (total_users, active_users, total_roles, total_permissions, recent_activities) = sqlx::query_as::<_, (
         i64, i64, i64, i64, i64,
     )>(sqlx::AssertSqlSafe(format!(r#"
@@ -935,7 +943,7 @@ pub async fn reports_center_stats(
                AND {0}) AS recent_activities
     "#, scope.sql_predicate("tenant_id", "$1"))))
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await
     .unwrap_or((0, 0, 0, 0, 0));
 
@@ -945,7 +953,7 @@ pub async fn reports_center_stats(
     let org_stats = sqlx::query_as::<_, (i64, i64, i64, Option<chrono::DateTime<chrono::Utc>>)>(
         "SELECT companies, departments, employees, refreshed_at FROM bi.org_stats",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut db_scope)
     .await;
 
     let (total_companies, total_departments, total_employees, org_refreshed) = match org_stats {
@@ -994,7 +1002,7 @@ pub async fn reports_center_stats(
             scope.sql_predicate("tenant_id", "$1")
         )))
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut db_scope)
         .await
         .unwrap_or_default()
         .into_iter()
@@ -1032,7 +1040,7 @@ pub async fn reports_center_stats(
             scope.sql_predicate("tenant_id", "$1")
         )))
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut db_scope)
         .await
         .unwrap_or_default()
         .into_iter()
@@ -1063,7 +1071,7 @@ pub async fn reports_center_stats(
             scope.sql_predicate("tenant_id", "$1")
         )))
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut db_scope)
         .await
         .unwrap_or_default()
         .into_iter()
