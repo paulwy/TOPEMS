@@ -281,23 +281,25 @@ pub async fn get_task(
 )]
 pub async fn claim_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowTask> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务认领事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("认领任务失败".to_string()));
+        }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'claimed', claimed_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = 'claimed', claimed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -329,23 +331,25 @@ pub async fn claim_task(
 )]
 pub async fn unclaim_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowTask> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化取消认领事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("取消认领任务失败".to_string()));
+        }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'pending', claimed_at = NULL WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = 'pending', claimed_at = NULL WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -378,25 +382,27 @@ pub async fn unclaim_task(
 )]
 pub async fn approve_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> ApiResponse<WorkflowTask> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务审批事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("审批任务失败".to_string()));
+        }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -429,25 +435,27 @@ pub async fn approve_task(
 )]
 pub async fn reject_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> ApiResponse<WorkflowTask> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务拒绝事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("拒绝任务失败".to_string()));
+        }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'rejected', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = 'rejected', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -480,25 +488,27 @@ pub async fn reject_task(
 )]
 pub async fn complete_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> ApiResponse<WorkflowTask> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务完成事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("完成任务失败".to_string()));
+        }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -531,25 +541,27 @@ pub async fn complete_task(
 )]
 pub async fn delegate_task(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> ApiResponse<WorkflowTask> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化任务委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("委托任务失败".to_string()));
+        }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
-    .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
