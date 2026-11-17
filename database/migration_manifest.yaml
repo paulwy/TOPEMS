@@ -1999,4 +1999,15 @@ pending_forward_patches:
       - { kind: code, ref: "lib/shared-auth/src/middleware/tenant_scope.rs、lib/shared-db scope", detail: "系统身份以 app.rls_system='on' 显式表达；租户身份写入真实 app.tenant_id + rls_system='off'；set_config(...,true) 事务级，无连接池残留" }
       - { kind: rehearsal, ref: "2026-11-17 六档 GUC（未设置/空串/全零/A/B/系统）", detail: "topems_prod 角色实测：未设置与空串全表 0 行；全零仅平台行；A/B 各见 1 行；系统通道见全量（3/2）。跨租户 INSERT 被 42501 拒绝，同租户 INSERT 通过；alert_rules 普通租户写被拒、系统通道写通过" }
       - { kind: code, ref: "svc/search/src/handlers.rs:429、/suggestions、mcp.rs TOOL_SUGGEST", detail: "search_logs 写入显式绑定 claims 租户；两个读路径分别在请求事务与 scope_read_for_tenant 中执行，收紧后 suggestions 由跨租户聚合变为本租户聚合" }
-    note: "部署耦合：必须与 P3（monitor/instance/statistics/rule/variable/delegate 请求事务迁移 + core_flow_* 写入显式落 tenant_id）同一窗口；只上迁移会让仍走池直连的 flow 查询全变 0 行。alert_rules 取证归类为平台全局系统表（无 tenant_id / 无 SQL 读写 / 0 行 / 规则在内存），不补列；search_logs 归类为租户级，suggestions 语义变化需写入发布说明"
+    note: "部署耦合：必须与 P3（monitor/instance/statistics/rule/variable/delegate 请求事务迁移 + core_flow_* 写入显式落 tenant_id）同一窗口；只上迁移会让仍走池直连的 flow 查询全变 0 行。alert_rules 取证归类为平台全局系统表（无 tenant_id / 无 SQL 读写 / 0 行 / 规则在内存），不补列；search_logs 归类为租户级，suggestions 语义变化需写入发布说明。生产执行改用 20261117220000 前向补丁（生产段 B 五表已由 M-2 batch06 收紧，本迁移 §2.4 会中止）"
+
+  - version: "20261117220000"
+    file: "database/migrations/20261117220000_unified_core_rls_strict_prod.sql"
+    status: to_apply
+    effect: "生产前向补丁，替代 20261117180000 在生产执行：段 A/C/D/E 与原迁移一致；段 B 允许「宽松」或「已严格」两种输入，统一删除重建为 USING + WITH CHECK 全显式的严格 B 范式"
+    destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；5 次 ENABLE + 5 次 FORCE RLS、7 次 DROP POLICY、15 次 CREATE POLICY；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: catalog, ref: "topems_prod pg_class/pg_policies 2026-11-17", detail: "生产五表（core_workflows/core_workflow_versions/core_workflow_instances/core_workflow_tasks/monitor_settings）已由 M-2 batch06 收紧，qual 为 app.rls_system OR tenant_id 严格文本，无宽松分支；原迁移 §2.4 必然中止" }
+      - { kind: data, ref: "topems_prod 11 表 count(*)", detail: "全部 0 行；tenant_id NULL 行 0；平台语料 NULL 77/397/3/4、全零 0，补丁无 DML" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（先切生产形态：五表严格）", detail: "补丁 up 0.05 s、down 0.03 s；六档与 20261117180000 一致（未设置/空串 0，全零仅平台行，A/B 各 1，系统全量 3/3/2/2）；跨租户 INSERT 42501、系统通道写 alert_rules 通过；down 后段 B 保持严格、A/D 恢复无 RLS、alerts/alert_rules 恢复 allow_all" }
+    note: "回滚语义：段 B 保持严格、不降级（避免放松 batch06 成果）；A/C/D/E 恢复迁移前形态。必须与阶段三代码 43eb4726d、平台语料读路径 ec4aff8e8 同窗口"
