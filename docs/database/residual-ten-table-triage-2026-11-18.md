@@ -153,3 +153,17 @@
 - **`pdm.pdm_master_data_refs` 写入缺陷**：核实 INSERT 早已绑定 `tenant_id`（`89422132a`/`a75ef4dc1`），真正问题是过期注释误导台账。已按缺陷口径收口（`b8560b889`）：改为经 `TenantScope::tenant(event.tenant_id)` 严格解析后取 `tenant_id()`，nil/缺失在构造期拒绝、无兜底零；`cargo check` / `clippy -D warnings` 通过，`tenant_rejects_nil` 单测通过；生产只读复核列仍为 NOT NULL、无默认、0 行。**与表定性解耦**：无论该表最终定性如何，写入都必须显式绑租户。
 - **`portal.portal_quick_actions`**：定性为**平台语料**（读路径系统通道 + 无租户谓词 + 全仓无写代码 + 块 D 声明），Batch D 迁移 `20261118113000` + 回滚，`status: to_apply`；克隆库六档 0/0/1/2/2/3 与写校验通过，净减少声明见收口文档 Batch D。
 - 剩余 NULL 语义不明的表进入逐表证据链核查（erp 字典 / bi / rs / core），证据不足者列「待定」。
+
+## 8. 任务 3：NULL 语义逐表证据链（2026-11-17，生产只读核查）
+
+生产 `topems_prod` 只读读数：5 张表均 **0 行**、`tenant_id` 均**可空**、RLS/FORCE 均已开；策略均为 `*_allow_all_*`（`rs.formulas` 另有严格策略但被 allow_all 的 permissive OR 覆盖）。**0 行意味着没有任何观测到的 NULL 行**，以下判断只基于代码与 schema。
+
+| 表 | 是否有代码写 NULL | 写入点（全仓） | NULL 代表什么 |
+|---|---|---|---|
+| `erp.dict_types` | **否（正常路径）；表达式为潜在 NULL 写点** | `svc/erp/src/modules/dict.rs:391-392`：`INSERT ... tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID`，执行于请求事务（`:370` `RlsTxnCell` → `:403` `&mut **txn`）；另 `:568-570` 的 UPDATE 只做 `WHERE tenant_id = NULLIF(...)`，不写列 | **待定**。代码无任何「NULL＝平台/全局」分支；请求中间件对普通租户与服务身份都必设 GUC（真实租户或全零），故 HTTP 路径不会产生 NULL。若出现 NULL 只可能来自绕过 `tenant_middleware` 的直连/后台写入。缺证据：无历史 NULL 行、无种子/迁移写入、无产品语义说明 |
+| `erp.dict_items` | **否（正常路径）；同上为潜在 NULL 写点** | `svc/erp/src/modules/dict.rs:878-879`（单条创建）、`:1220-1221`（批量创建）同一 GUC 表达式；`:680`/`:1128` 软删、`:1036-1038` UPDATE 均不写 `tenant_id` | **待定**。同上；另注意批量创建与单条创建都依赖请求事务 GUC，若被复用到非请求作用域会静默写 NULL。缺证据同上 |
+| `bi.audit_logs` | **否（全仓无写入者）** | 全仓无 `INSERT/UPDATE/DELETE bi.audit_logs`；共享审计服务的 schema 白名单仅 `plugin_crm/plugin_mes/hrm/rs/erp/wms`（`lib/shared-db/src/audit.rs:539-552`）；统一审计写 `public.audit_logs`（`lib/shared-auth/src/security/audit_logger.rs:465`）；analytics 只读 `public.audit_logs`（`svc/analytics/src/routes.rs:942,1064`） | **待定**。既无写入代码也无种子，无法从代码推断 NULL 语义（是「未归属审计」还是「平台审计」）。缺证据：上游写入方来源（是否外部 ETL/BI 工具）、产品对 BI 审计归属的定义；需产品/数据血缘确认 |
+| `rs.formulas` | **否** | 唯一写点 `svc/rd/src/modules/formula.rs:227-240`，`.bind(tenant_id)` 为**具体 Uuid**：`:196-205` 取 claims 租户，超管回落 `00000000-…-0001`（非 NULL）；`:414`/`:692`/`:787` UPDATE 与 `:500` 软删均不改 `tenant_id`；全仓无 `INTO formulas` 其它写点 | **待定**。代码明确用「租户1」兜底超管数据而不是 NULL，说明 NULL 不是设计中的语义；但为何列可空、历史上是否有 NULL 行无记录。缺证据：历史数据来源与列可空的设计意图 |
+| `core.core_plugins` | **否（正常路径）；表达式为潜在 NULL 写点** | `svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs:1074-1082`：`scope_with(txn)` + `tenant_id = NULLIF(GUC,'')::UUID`；`runtime.rs:112-126`：`scope_system()` + 同一表达式（系统通道 GUC 为**全零 UUID**，写入平台行而非 NULL）；各 UPDATE（`tenant_plugins.rs:1276/1338/1400`、`versioning.rs:322`、`upgrade_workflow.rs:224`）均不改 `tenant_id` | **待定（但语义线索明确）**。`marketplace.rs:46-53` 声明该表是「全租户共享插件目录」，`tenant_id` 表示**发布方而非查看方**，读走 `scope_read_system`；按此 NULL 更像「无发布方」，但代码从不写 NULL，且列默认值是 `…0001`（发布方会被误记为租户1）。缺证据：产品对「平台自有插件」归属的定义，以及默认值 `…0001` 是否应改为全零 |
+
+**结论口径**：本批 5 张表**没有一张能给出「NULL＝X」的代码级证据**，因此全部 NULL 语义列 **待定**，不做猜测、不排序为平台语料或私有行；这也意味着它们**不进入**本轮收严批次。下一步若要推进，需先补齐上表「缺证据」列（产品语义或上游写入方），再决定「NULL 归一 + 平台读」还是「收严为净减少」。
