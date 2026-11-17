@@ -107,17 +107,20 @@ pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<Statis
         0.0
     };
 
-    let workflow_stats = sqlx::query_as::<_, WorkflowStat>(
+    // 列类型必须与 WorkflowStat 的 Rust 类型一一对应：sqlx 不能把 NUMERIC 解码为 f64，
+    // 否则 query_as 直接报错，再被 unwrap_or_default 吞成空列表（看板静默 0）。
+    // 因此完成率与平均时长显式转 float8；解码失败改为记录告警而非静默丢弃。
+    let workflow_stats = match sqlx::query_as::<_, WorkflowStat>(
         r#"SELECT 
             w.id::text AS workflow_id,
             w.name AS workflow_name,
             COUNT(i.id) AS instance_count,
-            CASE 
+            (CASE 
                 WHEN COUNT(i.id) > 0 
                 THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'completed')::numeric / COUNT(i.id)::numeric) * 100, 2)
                 ELSE 0 
-            END AS completion_rate,
-            0.0 AS avg_duration
+            END)::float8 AS completion_rate,
+            0.0::float8 AS avg_duration
         FROM public.core_workflows w
         LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
         GROUP BY w.id, w.name
@@ -126,7 +129,13 @@ pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<Statis
     )
     .fetch_all(&mut scope)
     .await
-    .unwrap_or_default();
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::warn!("查询工作流统计失败（返回空列表）: {}", e);
+            Vec::new()
+        }
+    };
 
     let monthly_data: Vec<MonthlyData> = Vec::new();
 
