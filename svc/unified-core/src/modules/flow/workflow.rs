@@ -210,8 +210,20 @@ pub async fn get_workflow(
 pub async fn create_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateWorkflowRequest>,
 ) -> ApiResponse<Workflow> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化创建工作流事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建工作流失败".to_string()));
+        }
+    };
     // 租户绑定对齐 nil 上下文惯例（与本文件其余写路径一致）：
     // 超管/无 claims → None（SQL NULL，命中 tenant_id IS NULL 分支）；普通用户 → Some(claims.tenant_id)。
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -235,7 +247,7 @@ pub async fn create_workflow(
     .bind(1)
     .bind(payload.created_by.or_else(|| Uuid::parse_str(&claims.sub).ok()))
     .bind(tenant_opt)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
