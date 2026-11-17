@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
-use topems_shared_db::scope::{Db, ScopedTxn};
+use topems_shared_db::scope::{Db, ScopedTxn, PLATFORM_TENANT_ID};
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -695,17 +695,17 @@ pub async fn update_sync_policy(
 
     // 租户绑定复制 middleware 的超管豁免语义：
     // - claims.is_superuser（超管，冒烟 test_admin 即此类）：middleware 跳过 claims.tenant_id、
-    //   将上下文置零 uuid，故 handler 绑 Some('...0001') 反而在零 uuid 上下文被
-    //   tenant_isolation_sync_policies 拒绝 → 超管一律绑 None（SQL NULL 公共行，
-    //   命中策略 `tenant_id IS NULL` 分支，零 uuid / NULL / 污染真实租户任何连接池
-    //   上下文都放行）。
+    //   将上下文置零 uuid，故 handler 绑真实租户反而在零 uuid 上下文被
+    //   rls_tenant_isolation 拒绝 → 超管一律绑 PLATFORM_TENANT_ID（全零哨兵公共行，
+    //   零 uuid 上下文命中严格策略的 tenant_id = 上下文分支）。
+    //   平台语料表已去掉 `tenant_id IS NULL` 放行，普通租户不再看到该公共行。
     // - 普通用户：绑 claims.tenant_id 解析值（Some(id)），解析失败回退 NULL。
     // 注意 ON CONFLICT (user_id) 仅更新业务列，不回写 tenant_id。
     let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
         .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
         .and_then(|c| {
             if c.is_superuser {
-                None
+                Some(PLATFORM_TENANT_ID)
             } else {
                 c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
             }

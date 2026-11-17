@@ -1,7 +1,9 @@
-//! 全局行（`tenant_id IS NULL`）监控。
+//! 全局行（`tenant_id IS NULL` 或平台哨兵）监控。
 //!
-//! 产品语义：`core_tenants` 是全局租户目录、`core_roles` 含全局角色，租户读路径
+//! 产品语义：`core_tenants` 是全局租户目录、`core_roles` 含平台角色模板，租户读路径
 //! 可见这些「无租户归属」行——这是有意设计，不是策略遗漏；它们只允许系统通道写入。
+//! `core_roles` 的平台模板已归一为全零哨兵租户（`PLATFORM_TENANT_ID`），采样 SQL
+//! 同步改为哨兵谓词，避免指标长期归零。
 //!
 //! 本模块定期统计两类全局行数量并暴露增量计数，供告警规则识别异常增长：
 //! - `iam_global_rows{entity="core_roles"|"core_tenants"}`：当前行数；
@@ -17,7 +19,7 @@ use topems_shared_db::scope::Db;
 const ENTITIES: [(&str, &str); 2] = [
     (
         "core_roles",
-        "SELECT COUNT(*) FROM public.core_roles WHERE tenant_id IS NULL",
+        "SELECT COUNT(*) FROM public.core_roles WHERE tenant_id = '00000000-0000-0000-0000-000000000000'::uuid",
     ),
     (
         "core_tenants",
@@ -35,7 +37,7 @@ fn rows_gauge() -> &'static IntGaugeVec {
     GLOBAL_ROWS.get_or_init(|| {
         register_int_gauge_vec!(
             "iam_global_rows",
-            "Rows with tenant_id IS NULL in global IAM tables (core_roles/core_tenants)",
+            "Rows with tenant_id IS NULL or platform sentinel in global IAM tables (core_roles/core_tenants)",
             &["entity"]
         )
         .expect("failed to register iam_global_rows")
@@ -47,7 +49,7 @@ fn added_counter() -> &'static IntCounterVec {
     GLOBAL_ROWS_ADDED.get_or_init(|| {
         register_int_counter_vec!(
             "iam_global_rows_added_total",
-            "Positive growth of tenant_id IS NULL rows in global IAM tables",
+            "Positive growth of tenant_id IS NULL or platform sentinel rows in global IAM tables",
             &["entity"]
         )
         .expect("failed to register iam_global_rows_added_total")

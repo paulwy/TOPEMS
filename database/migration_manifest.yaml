@@ -2101,3 +2101,31 @@ pending_forward_patches:
       - { kind: code, ref: "svc/hrm/src/modules/setup.rs:366-377、svc/qms/src/models/schema_defense.rs", detail: "hrm.initialization_logs 全仓仅一处 INSERT、无 SELECT；本批把该 INSERT 从 GUC 取租户改为显式绑定 claims 租户 tenant_uuid（与同函数 companies INSERT 一致，参数位 $1..$4 → $1..$5），避免 GUC 缺失写入 NULL；qms 两张表已被 schema_defense 列为幻影表并移除代码引用，无需改代码；无 compile-time sqlx 宏新增" }
       - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（3 表各 A/B/全零 1 行夹具，topems_prod 角色）", detail: "up 0.01 s；up 前六档合计 3/3/3、3/3/3、3/3/3、3/3/3、3/3/3、3/3/3（allow_all 无隔离）；up 后 未设 0/0/0、空串 0/0/0、全零 1/1/1、A 1/1/1、B 1/1/1、A+system 3/3/3；A 上下文 UPDATE/DELETE B 行各 0 行、B 行原值保留，INSERT tenant_id=B 或全零均 42501，INSERT 自有租户成功；down 复原 allow_all 且新建索引已删，六档回到 4/4/4；再 up 停严格态，夹具清理为 0/0/0" }
     note: "部署耦合：必须与 svc/hrm 本波次代码同窗口。只上迁移 → 旧代码从 GUC 取租户，在 FORCE RLS 下 GUC 缺失时写入失败（该 INSERT 为 best-effort，不阻断主流程）；只上代码 → 池直连仍可绕过。回滚文件 database/rollback/20261118103000_residual_loose_tables_rls_strict.rollback.sql：DROP 策略 + NO FORCE/DISABLE + DROP hrm 新索引 + 重建 3 条 allow_all。顺延矩阵（erp.audit_logs 跨租户读、finance 全局语料、public.core_roles/sessions/refresh_tokens/core_login_logs、mobile/pm 全局默认、core_operation_logs 平台视图、平台元数据保留、5 张无 tenant_id 的 qms 幻影表）见收口文档；零租户回填预案见 docs/database/zero-tenant-backfill-plan-2026-11-18.md，与 20261118090000/093000/100000/103000 同窗口"
+
+  # ===== Batch A：平台语料 5 表严格 RLS + 平台读分支（2026-11-18）=====
+  # 口径来源：迁移文件头 + docs/database/repo-wide-rls-pool-closure-2026-11-18.md「Batch A」
+  - version: "20261118110000"
+    file: "database/migrations/20261118110000_platform_corpus_rls_strict.sql"
+    status: to_apply
+    effect: "平台语料 5 表严格化：finance.core_finance_currencies / finance.core_finance_report_line_map / public.core_roles / pm.project_type_configs / mobile.sync_policies。NULL 租户归一为全零哨兵（共 74 行 = 8/48/16/1/1），删除 rls_global_read，5 表重建严格 rls_tenant_isolation（USING + WITH CHECK + ENABLE/FORCE）；前 4 表新增 rls_platform_read（FOR SELECT：哨兵行 AND 非空租户 GUC），实现「平台行 OR 本租户行」；mobile.sync_policies 不加平台读（超管公共行不再对普通租户可见，本波次唯一一处租户可见范围净减少）"
+    destructive_scan: "74 行 UPDATE（tenant_id NULL → 全零哨兵，仅这 5 表）；无 INSERT/DELETE/TRUNCATE；5 次 ENABLE + 5 次 FORCE RLS、动态 DROP POLICY（10 条）、9 次 CREATE POLICY（5 条隔离 + 4 条平台读）；无 CREATE INDEX（5 表均已有 tenant_id 前导索引/唯一键）；文件内无 BEGIN/COMMIT；含 destructive-gate: allow / ticket RESIDUAL-RLS-20261118"
+    evidence:
+      - { kind: data, ref: "topems_prod 与克隆库 m2_dryrun_20261116 count(*) 2026-11-17", detail: "5 表行数 16/48/17/1/1，其中 NULL 租户 8/48/16/1/1、租户1 自有 8/0/1/0/0；前置断言按基线精确校验 NULL 行数并要求哨兵行 0，任何漂移即 RAISE 中止（需重新定性）" }
+      - { kind: catalog, ref: "topems_prod 与克隆库 pg_policies/pg_class 2026-11-17", detail: "5 表均 rls=t force=t，各 2 条策略：rls_tenant_isolation(ALL，严格 B) + rls_global_read(SELECT，追加 tenant_id IS NULL)；无 allow_all；tenant_id 为 uuid 可空；索引：uk_core_finance_currencies_tenant_code、报表映射 tenant 索引、idx_core_roles_tenant、project_type_configs 唯一键、sync_policies tenant/user 索引" }
+      - { kind: code, ref: "svc/finance/src/modules/currencies.rs、services/finance/report.rs、svc/unified-core/src/modules/iam/role.rs、global_row_metrics.rs、svc/mobile/src/modules/offline_sync.rs", detail: "创建币种改绑 PLATFORM_TENANT_ID；报表两处 join 谓词与排序改哨兵；core_roles 列表/详情去 tenant_id IS NULL；core_roles 平台行采样改哨兵；mobile 超管 UPSERT 由 None 改 Some(PLATFORM_TENANT_ID)。project_type_config.rs 与 repository.rs 无需改动" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（topems_prod 角色六档，A=…0001/B=ffffffff…）", detail: "up 前 未设/空串/全零/B 均 8/48/16/1/1、A 16/48/17/1/1、A+system 16/48/17/1/1；up 后 未设/空串 0/0/0/0/0、全零 8/48/16/1/1、A 16/48/17/1/0、B 8/48/16/1/0、A+system 16/48/17/1/1；平台语料在 A/B 上下文仍可见（不变性通过）；A 上下文 INSERT 哨兵行 42501、UPDATE 平台行 0 行；全零上下文 INSERT 币种哨兵行成功（回滚）；down 复原 rls_global_read 与 NULL 行数，再 up 停严格态" }
+    note: "部署耦合：必须与 svc/finance、svc/unified-core、svc/mobile 本波次代码同窗口。只上迁移 → 旧代码写 NULL 平台行被 WITH CHECK 拒绝、core_roles 的 tenant_id IS NULL 谓词取不到模板；只上代码 → 池直连仍可绕过。回滚文件 database/rollback/20261118110000_platform_corpus_rls_strict.rollback.sql：DROP 平台读/隔离策略，重建 rls_tenant_isolation + rls_global_read，哨兵回退 NULL（8/48/16/1/1）。风险登记：mobile.sync_policies 公共行对普通租户不可见（修越权，业已拍板）；生产 DDL/数据变更均未执行"
+
+  # ===== Batch B：会话表系统通道定型 + 操作审计平台视图改系统通道（2026-11-18）=====
+  # 口径来源：迁移文件头 + docs/database/repo-wide-rls-pool-closure-2026-11-18.md「Batch B」
+  - version: "20261118111000"
+    file: "database/migrations/20261118111000_system_only_sessions_rls_finalize.sql"
+    status: to_apply
+    effect: "public.core_sessions / public.core_refresh_tokens 保持租户 0 + 仅系统通道，不加租户分支：动态删除既有 rls_system_only 后按规范形式重建（FOR ALL，USING/WITH CHECK = app.rls_system='on'）并重申 ENABLE/FORCE；断言无 app.tenant_id 分支；断言 core_login_logs 仍为 2 条策略（本批不改）；NOTICE 记录 core_operation_logs 严格策略由 20261118090000 落地"
+    destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；2 次 DROP/CREATE POLICY + 2 次 ENABLE + 2 次 FORCE RLS；文件内无 BEGIN/COMMIT；含 destructive-gate: allow / ticket RESIDUAL-RLS-20261118"
+    evidence:
+      - { kind: data, ref: "topems_prod 与克隆库 count(*) 2026-11-17", detail: "core_sessions 106 行、core_refresh_tokens 106 行，全部 tenant_id=…0001，无 NULL/全零；core_login_logs 137 行全零（回填 54 行另行排窗口）；core_operation_logs 0 行" }
+      - { kind: catalog, ref: "topems_prod 与克隆库 pg_policies 2026-11-17", detail: "sessions/refresh_tokens 均仅 1 条 rls_system_only(ALL)，USING/WITH CHECK 均只含 app.rls_system，无 app.tenant_id 分支；core_login_logs 为 rls_system_only + rls_tenant_read；core_operation_logs 已由 20261118090000 收为严格 rls_tenant_isolation" }
+      - { kind: code, ref: "svc/unified-core/src/modules/audit/handlers.rs", detail: "list_operation_logs / get_operation_log / get_operation_log_stats 三处在 claims_tenant_filter 为 None（超管/service）时于请求事务 scope 上显式 set_config('app.rls_system','on',true)，普通租户保持租户上下文 + 显式 tenant_id 谓词；auth.rs 的会话读写已在系统通道 + nil 租户，未改" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（sessions/refresh 用现存 106 行；op logs A/B 各 1 行临时夹具）", detail: "up 前后六档一致：未设 0/0/0、空串 0/0/0、全零 0/0/0、A 0/0/1、B 0/0/1、A+system 106/106/2；down 复原同一 system-only 定义，再 up 停定型态；夹具已清理，core_operation_logs 回 0 行" }
+    note: "部署耦合：handlers 的平台视图改造只依赖 20261118090000 的严格策略，迁移顺序（090000 < 111000）保证。回滚文件 database/rollback/20261118111000_system_only_sessions_rls_finalize.rollback.sql：按迁移前原样重建 rls_system_only 并断言无租户分支。erp.audit_logs 保持不动（平台跨租户审计视图，需产品确认）；qms 5 张无 tenant_id 幻影表仅登记 DROP 候选"

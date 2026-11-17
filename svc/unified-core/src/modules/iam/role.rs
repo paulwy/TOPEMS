@@ -132,7 +132,7 @@ pub async fn list_roles(
                 match state.db.scope_with(txn).await {
                     Ok(mut scope) => {
                         let result = sqlx::query_as::<_, RoleRow>(
-                        "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1 OR tenant_id IS NULL) ORDER BY created_at DESC",
+                        "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1 OR tenant_id = '00000000-0000-0000-0000-000000000000'::uuid) ORDER BY created_at DESC",
                     )
                     .bind(tenant_id)
                     .fetch_all(&mut scope)
@@ -407,7 +407,7 @@ pub async fn get_role(
     };
 
     let role = sqlx::query_as::<_, RoleRow>(
-        "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid OR tenant_id IS NULL)"
+        "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid OR tenant_id = '00000000-0000-0000-0000-000000000000'::uuid)"
     )
     .bind(role_uuid)
     .bind(tenant_filter)

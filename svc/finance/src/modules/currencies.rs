@@ -12,6 +12,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_db::scope::PLATFORM_TENANT_ID;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
@@ -226,9 +227,11 @@ pub async fn create_currency(
         return Json(ApiResponse::error("币种名称不能为空"));
     }
 
+    // 平台币种语料归属全零哨兵租户（不再写 SQL NULL）：读取由 rls_platform_read
+    // 放行「平台行 OR 本租户行」，未设/空串 GUC 一律不可见。
     let sql = format!(
         "INSERT INTO {} (tenant_id, code, name, symbol, exchange_rate, is_active) \
-         VALUES (NULL, $1, $2, $3, $4, $5) RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
+         VALUES ($6, $1, $2, $3, $4, $5) RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
     let mut guard = txn_arc.lock().await;
@@ -252,6 +255,7 @@ pub async fn create_currency(
         .bind(&req.symbol)
         .bind(req.exchange_rate)
         .bind(req.is_active)
+        .bind(PLATFORM_TENANT_ID)
         .fetch_one(&mut scope)
         .await;
     match result {

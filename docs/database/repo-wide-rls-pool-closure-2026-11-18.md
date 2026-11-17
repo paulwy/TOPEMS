@@ -867,7 +867,96 @@ WHERE p.schemaname NOT IN ('pg_catalog','information_schema');
 | `public.core_menus` / `core_menu_groups` / `core_tenants` | 452 / 130 / 1 | 平台元数据 | 有意保留 |
 | 5 张无 `tenant_id` 的 qms 幻影表 | 0 | 无租户列 | 登记为 DROP 候选（另开窗） |
 
-### 同窗口清单
+### 同窗口清单（历史）
 
 `20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`
 以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
+
+## Batch A｜平台语料 5 表严格 RLS + 平台读分支（2026-11-18 拍板）
+
+迁移：`database/migrations/20261118110000_platform_corpus_rls_strict.sql`
+回滚：`database/rollback/20261118110000_platform_corpus_rls_strict.rollback.sql`
+克隆库 `m2_dryrun_20261116` 六档演练与回滚往返通过，manifest `status: to_apply`。
+
+### 机制与不变性
+
+- 改动前：`rls_tenant_isolation`（严格 B）+ `rls_global_read`（SELECT 追加 `OR tenant_id IS NULL`）叠加。PG 按命令 OR 合并策略，导致未设/空串 GUC 也能读到平台行。
+- 改动后：NULL 归一为全零哨兵 `00000000-0000-0000-0000-000000000000`；删除 `rls_global_read`；前 4 表新增 `rls_platform_read`（FOR SELECT）：
+  ```sql
+  USING (
+    tenant_id = '00000000-0000-0000-0000-000000000000'::uuid
+    AND NULLIF(current_setting('app.tenant_id', true), '') IS NOT NULL
+  )
+  ```
+  读取谓词 = **平台行 OR 本租户行**；未设/空串 GUC 一律 0 行。
+- 数据变更：仅 5 表 74 行 `tenant_id` NULL → 哨兵（8/48/16/1/1），不删行、不改业务列，随迁移同一事务完成。
+- **唯一一处租户可见范围净减少**：`mobile.sync_policies` 不加平台读，超管公共行（1 行）不再对普通租户可见，属修越权；其余 4 表在 A/B 上下文可见范围不变（平台语料仍全可见）。
+
+### 每表改动前后各上下文可见行数对照
+
+列序：`currencies / report_line_map / core_roles / project_type_configs / sync_policies`
+
+| 上下文 | 改动前 | 改动后 | 说明 |
+|---|---|---|---|
+| 未设 GUC | 8/48/16/1/1 | **0/0/0/0/0** | 收掉的唯一 fail-open |
+| 空串 GUC | 8/48/16/1/1 | **0/0/0/0/0** | 同上 |
+| 全零 GUC | 8/48/16/1/1 | 8/48/16/1/1 | 平台上下文，不变 |
+| 租户 A（…0001） | 16/48/17/1/1 | **16/48/17/1/0** | 平台语料仍可见；sync 净减少 |
+| 租户 B（合成） | 8/48/16/1/1 | **8/48/16/1/0** | 平台语料仍可见；sync 净减少 |
+| A + `rls_system=on` | 16/48/17/1/1 | 16/48/17/1/1 | 系统通道不变 |
+
+写校验：A 上下文 INSERT 哨兵行 `42501`、UPDATE 平台行 0 行；全零上下文 INSERT 币种哨兵行成功（回滚）；A 上下文 `sync_policies` 0 行（预期净减少）。
+
+### 同批代码改动
+
+| 文件 | 改动 |
+|---|---|
+| `svc/finance/src/modules/currencies.rs` | 创建币种由 `VALUES (NULL, …)` 改绑 `PLATFORM_TENANT_ID`（平台语料语义不变，服务通道可写；租户上下文写入与今天一样被严格策略拒绝） |
+| `svc/finance/src/services/finance/report.rs` | 两处报表 join 谓词 `(tenant_id IS NULL OR tenant_id = $1)` → `(tenant_id = 哨兵 OR tenant_id = $1)`；排序 `tenant_id IS NOT NULL DESC` → `tenant_id <> 哨兵 DESC` |
+| `svc/unified-core/src/modules/iam/role.rs` | 列表（L135）/详情（L410）`OR tenant_id IS NULL` → `OR tenant_id = 哨兵` |
+| `svc/unified-core/src/modules/iam/global_row_metrics.rs` | `core_roles` 平台行采样改哨兵；`core_tenants` 保持 NULL；帮助文案同步 |
+| `svc/mobile/src/modules/offline_sync.rs` | 超管 UPSERT 由 `None`（SQL NULL）改 `Some(PLATFORM_TENANT_ID)`，零 GUC 上下文命中严格策略 WITH CHECK；普通用户仍绑真实租户 |
+
+不改：`project_type_config.rs`（读写均无显式 NULL 谓词，靠策略兜底）、`repository.rs`（函数无调用方）、`user/roles.rs` / `crud.rs` / `auth.rs`（策略兜底读）。
+
+部署耦合：必须与上述代码同窗口。只上迁移 → 旧代码写 NULL 平台行被 WITH CHECK 拒绝、`core_roles` 的 `tenant_id IS NULL` 谓词取不到模板；只上代码 → 池直连仍可绕过。
+
+## Batch B｜会话表系统通道定型 + 操作审计平台视图改系统通道（2026-11-18 拍板）
+
+迁移：`database/migrations/20261118111000_system_only_sessions_rls_finalize.sql`
+回滚：`database/rollback/20261118111000_system_only_sessions_rls_finalize.rollback.sql`
+克隆库六档演练与回滚往返通过，manifest `status: to_apply`。
+
+### 处理结论
+
+- `public.core_sessions`（106 行，全租户 1）、`public.core_refresh_tokens`（106 行，全租户 1）：**保持租户 0 + 仅系统通道，不加租户分支**。登录/刷新发生在租户上下文建立之前，`auth.rs` 已全部 `app.rls_system='on'` + nil 租户；「租户查看自有会话」属新增功能，不做。
+- 本迁移不加/删数据，只把 `rls_system_only` 钉成规范形式并断言无 `app.tenant_id` 分支、无 allow_all 回潮。
+- `public.core_login_logs`：**不出 DDL**。读策略已是严格 B（`rls_system_only` + `rls_tenant_read`），只等 54 行回填窗口；迁移内仅断言其 2 条策略未漂移。
+- `public.core_operation_logs`：严格策略已由 `20261118090000` 落地，本批不重复 DDL；同批把平台视图改系统通道：
+  `svc/unified-core/src/modules/audit/handlers.rs` 的列表/详情/统计三处，在 `claims_tenant_filter` 为 `None` 时于请求事务上显式 `set_config('app.rls_system','on',true)`，普通租户仍走租户上下文 + 显式 `tenant_id = $1`。
+
+### 六档演练读数（改动前后一致）
+
+列序：`core_sessions / core_refresh_tokens / core_operation_logs`（op logs 为 A/B 各 1 行临时夹具，演练后已清理）
+
+| 上下文 | 改动前 | 改动后 |
+|---|---|---|
+| 未设 GUC | 0/0/0 | 0/0/0 |
+| 空串 GUC | 0/0/0 | 0/0/0 |
+| 全零 GUC | 0/0/0 | 0/0/0 |
+| 租户 A（…0001） | 0/0/1 | 0/0/1 |
+| 租户 B（合成） | 0/0/1 | 0/0/1 |
+| A + `rls_system=on` | 106/106/2 | 106/106/2 |
+
+即：会话两表在租户上下文始终 0 行、系统通道全量；操作审计平台视图由代码切系统通道后与改动前读数一致。
+
+## 保持不动与仅登记
+
+- `erp.audit_logs`（13 行，t1=8 / t2=5）**保持不动**：`svc/erp/src/modules/audit.rs` 的列表/详情显式 `set_system_channel` 跨租户读，属平台跨租户审计视图；改租户作用域会改变 ERP 审计的产品语义，需产品确认后再排。
+- qms 5 张无 `tenant_id` 的幻影表：只登记 **DROP 候选**（另开窗），本波次不删、不建策略。
+
+## 同窗口清单（更新）
+
+`20261118090000`、`20261118093000`、`20261118100000`、`20261118103000`、`20261118110000`、`20261118111000`
+以及 `zero-tenant-backfill-plan-2026-11-18.md` 的 54 行回填，同一窗口执行，窗口待业务确认。
+生产零 DDL、零数据修复、零停服：本波次只提交代码与迁移文件，六条迁移全部 `to_apply`。

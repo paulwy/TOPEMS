@@ -109,3 +109,20 @@
 3. `core_operation_logs` 平台视图改系统通道，是否随 Batch B 一起排？
 
 确认后我再写迁移、回滚与克隆库演练；未确认前只保留本台账。生产零 DDL、零数据修复、零停服，已攒四条迁移维持 `to_apply`。
+
+## 5. 状态更新（2026-11-18 已拍板，迁移已出）
+
+三项确认结果：
+
+1. Batch A 平台语料 5 表同意，读取谓词定为「平台行 OR 本租户行」；`mobile.sync_policies` 的公共行不再对普通租户可见，**本次唯一一处租户可见范围净减少**（已在收口文档写明）。
+2. Batch B 的 `core_sessions`、`core_refresh_tokens` 保持租户 0 + 系统通道，**不加租户分支**；`core_login_logs` 不出 DDL，只等 54 行回填；`core_operation_logs` 平台视图改系统通道随本批排。
+3. `erp.audit_logs` 保持不动；qms 5 张幻影表仅登记 DROP 候选。
+
+已落地文件（均 `status: to_apply`，生产未执行）：
+
+- `database/migrations/20261118110000_platform_corpus_rls_strict.sql` + 同名 rollback：74 行 NULL→哨兵、去 `rls_global_read`、4 表新增 `rls_platform_read`。
+- `database/migrations/20261118111000_system_only_sessions_rls_finalize.sql` + 同名 rollback：两表 system-only 定型与断言。
+- 同批代码：finance currencies/report、unified-core role/global_row_metrics/audit handlers、mobile offline_sync。
+
+克隆库六档演练与逐表可见行数对照见
+`docs/database/repo-wide-rls-pool-closure-2026-11-18.md` 的 Batch A / Batch B 章节。

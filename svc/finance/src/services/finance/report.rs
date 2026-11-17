@@ -665,11 +665,11 @@ impl FinanceService {
                        mm.direction, mm.section, mm.include_unclosed_pl
                 FROM finance.core_finance_report_line_map mm
                 WHERE mm.report_type = 'balance_sheet'
-                  AND (mm.tenant_id IS NULL OR mm.tenant_id = $1)
+                  AND (mm.tenant_id = '00000000-0000-0000-0000-000000000000'::uuid OR mm.tenant_id = $1)
                   AND (mm.company_id IS NULL OR mm.company_id = $2)
                   AND mm.section IN ('asset', 'liability', 'equity')
                   AND a.code LIKE mm.match_value
-                ORDER BY (mm.tenant_id IS NOT NULL) DESC,
+                ORDER BY (mm.tenant_id <> '00000000-0000-0000-0000-000000000000'::uuid) DESC,
                          (mm.company_id IS NOT NULL) DESC,
                          length(mm.match_value) DESC,
                          mm.sort_no
@@ -777,11 +777,11 @@ impl FinanceService {
                 SELECT mm.line_code, mm.line_name, mm.line_level, mm.sort_no, mm.direction, mm.section
                 FROM finance.core_finance_report_line_map mm
                 WHERE mm.report_type = 'income_statement'
-                  AND (mm.tenant_id IS NULL OR mm.tenant_id = $1)
+                  AND (mm.tenant_id = '00000000-0000-0000-0000-000000000000'::uuid OR mm.tenant_id = $1)
                   AND (mm.company_id IS NULL OR mm.company_id = $2)
                   AND mm.section IN ('income', 'expense')
                   AND a.code LIKE mm.match_value
-                ORDER BY (mm.tenant_id IS NOT NULL) DESC,
+                ORDER BY (mm.tenant_id <> '00000000-0000-0000-0000-000000000000'::uuid) DESC,
                          (mm.company_id IS NOT NULL) DESC,
                          length(mm.match_value) DESC,
                          mm.sort_no
