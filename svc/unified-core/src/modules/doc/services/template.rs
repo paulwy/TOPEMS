@@ -1,4 +1,5 @@
 use sqlx::{PgPool, Postgres, Result, Transaction};
+use topems_shared_db::scope::ScopedTxn;
 use uuid::Uuid;
 
 use super::super::models::{CreateTemplateRequest, Template, UpdateTemplateRequest};
@@ -33,32 +34,26 @@ impl TemplateService {
         Ok(tx)
     }
 
-    pub async fn list_templates(&self, tenant_id: Option<Uuid>) -> Result<Vec<Template>> {
-        let mut tx = self.tenant_txn(tenant_id).await?;
+    pub async fn list_templates(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<Template>> {
         let rows = sqlx::query_as::<_, Template>(
-            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL ORDER BY name"#,
         )
-        .bind(tenant_id)
-        .fetch_all(&mut *tx)
+        .fetch_all(&mut *scope)
         .await?;
-        tx.commit().await?;
         Ok(rows)
     }
 
     pub async fn get_template(
         &self,
-        tenant_id: Option<Uuid>,
+        scope: &mut ScopedTxn<'_>,
         template_id: Uuid,
     ) -> Result<Option<Template>> {
-        let mut tx = self.tenant_txn(tenant_id).await?;
         let row = sqlx::query_as::<_, Template>(
-            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
+            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND id = $1"#,
         )
-        .bind(tenant_id)
         .bind(template_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut *scope)
         .await?;
-        tx.commit().await?;
         Ok(row)
     }
 
@@ -145,15 +140,12 @@ impl TemplateService {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn list_categories(&self, tenant_id: Option<Uuid>) -> Result<Vec<String>> {
-        let mut tx = self.tenant_txn(tenant_id).await?;
+    pub async fn list_categories(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<String>> {
         let rows = sqlx::query_scalar::<_, String>(
-            r#"SELECT DISTINCT category FROM core_doc_templates WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND category IS NOT NULL ORDER BY category"#,
+            r#"SELECT DISTINCT category FROM core_doc_templates WHERE deleted_at IS NULL AND category IS NOT NULL ORDER BY category"#,
         )
-        .bind(tenant_id)
-        .fetch_all(&mut *tx)
+        .fetch_all(&mut *scope)
         .await?;
-        tx.commit().await?;
         Ok(rows)
     }
 }

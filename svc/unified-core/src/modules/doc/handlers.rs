@@ -11,10 +11,12 @@ use crate::middleware::permission::require_permission;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{
     response::{ApiResponse, PaginatedResponse},
     TopemsError,
 };
+use topems_shared_db::scope::ScopedTxn;
 
 /// 开启请求级 RLS 事务：本事务内 `SET LOCAL app.tenant_id`，事务内所有语句共用同一连接。
 ///
@@ -37,66 +39,58 @@ async fn open_rls_txn(
 }
 
 async fn count_table_with_tenant(
-    conn: &mut sqlx::PgConnection,
+    scope: &mut ScopedTxn<'_>,
     table: &str,
-    tenant_id: Option<Uuid>,
 ) -> Result<i64, sqlx::Error> {
     let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM {}",
         table
     )))
-    .bind(tenant_id)
-    .fetch_one(conn)
+    .fetch_one(&mut *scope)
     .await?;
     Ok(v)
 }
 
 async fn count_table_with_tenant_and_status(
-    conn: &mut sqlx::PgConnection,
+    scope: &mut ScopedTxn<'_>,
     table: &str,
-    tenant_id: Option<Uuid>,
     status: &str,
 ) -> Result<i64, sqlx::Error> {
     let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
+        "SELECT COUNT(*) FROM {} WHERE status = $1",
         table
     )))
-    .bind(tenant_id)
     .bind(status)
-    .fetch_one(conn)
+    .fetch_one(&mut *scope)
     .await?;
     Ok(v)
 }
 
 async fn count_table_with_tenant_and_enabled(
-    conn: &mut sqlx::PgConnection,
+    scope: &mut ScopedTxn<'_>,
     table: &str,
-    tenant_id: Option<Uuid>,
     is_enabled: bool,
 ) -> Result<i64, sqlx::Error> {
     let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_enabled = $2",
+        "SELECT COUNT(*) FROM {} WHERE is_enabled = $1",
         table
     )))
-    .bind(tenant_id)
     .bind(is_enabled)
-    .fetch_one(conn)
+    .fetch_one(&mut *scope)
     .await?;
     Ok(v)
 }
 
 async fn count_table_with_tenant_and_condition(
-    conn: &mut sqlx::PgConnection,
+    scope: &mut ScopedTxn<'_>,
     table: &str,
-    tenant_id: Option<Uuid>,
     condition: &str,
 ) -> Result<i64, sqlx::Error> {
     let v: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
-        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND {}",
+        "SELECT COUNT(*) FROM {} WHERE {}",
         table, condition
     )))
-    .bind(tenant_id)
-    .fetch_one(conn)
+    .fetch_one(&mut *scope)
     .await?;
     Ok(v)
 }
@@ -113,16 +107,23 @@ async fn count_table_with_tenant_and_condition(
 )]
 pub async fn list_documents(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Document>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化文档列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化文档列表事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = DocumentService::new(state.pool.clone());
-    match service.list_documents(opt_tenant_id).await {
+    match service.list_documents(&mut scope).await {
         Ok(documents) => ApiResponse::success(documents, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_documents", e)),
     }
@@ -143,17 +144,24 @@ pub async fn list_documents(
 )]
 pub async fn get_document(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(document_id): Path<Uuid>,
 ) -> ApiResponse<Option<Document>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化文档详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化文档详情事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = DocumentService::new(state.pool.clone());
-    match service.get_document(opt_tenant_id, document_id).await {
+    match service.get_document(&mut scope, document_id).await {
         Ok(document) => ApiResponse::success(document, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_document", e)),
     }
@@ -250,16 +258,23 @@ pub async fn delete_document(
 )]
 pub async fn list_templates(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Template>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化模板列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化模板列表事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = TemplateService::new(state.pool.clone());
-    match service.list_templates(opt_tenant_id).await {
+    match service.list_templates(&mut scope).await {
         Ok(templates) => ApiResponse::success(templates, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_templates", e)),
     }
@@ -277,16 +292,23 @@ pub async fn list_templates(
 )]
 pub async fn list_template_categories(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<String>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化模板分类事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化模板分类事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = TemplateService::new(state.pool.clone());
-    match service.list_categories(opt_tenant_id).await {
+    match service.list_categories(&mut scope).await {
         Ok(categories) => ApiResponse::success(categories, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_template_categories", e)),
     }
@@ -307,17 +329,24 @@ pub async fn list_template_categories(
 )]
 pub async fn get_template(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(template_id): Path<Uuid>,
 ) -> ApiResponse<Option<Template>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化模板详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化模板详情事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = TemplateService::new(state.pool.clone());
-    match service.get_template(opt_tenant_id, template_id).await {
+    match service.get_template(&mut scope, template_id).await {
         Ok(template) => ApiResponse::success(template, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_template", e)),
     }
@@ -414,16 +443,23 @@ pub async fn delete_template(
 )]
 pub async fn list_folders(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<Folder>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化文件夹列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化文件夹列表事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = FolderService::new(state.pool.clone());
-    match service.list_folders(opt_tenant_id).await {
+    match service.list_folders(&mut scope).await {
         Ok(folders) => ApiResponse::success(folders, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_folders", e)),
     }
@@ -444,17 +480,24 @@ pub async fn list_folders(
 )]
 pub async fn get_folder(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(folder_id): Path<Uuid>,
 ) -> ApiResponse<Option<Folder>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化文件夹详情事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化文件夹详情事务作用域失败".to_string(),
+            ));
+        }
     };
     let service = FolderService::new(state.pool.clone());
-    match service.get_folder(opt_tenant_id, folder_id).await {
+    match service.get_folder(&mut scope, folder_id).await {
         Ok(folder) => ApiResponse::success(folder, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_folder", e)),
     }
@@ -564,63 +607,48 @@ pub struct DocDashboardStats {
 )]
 pub async fn get_dashboard_handler(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<DocDashboardStats> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
     };
-
-    // 所有 count 必须在同一请求级 RLS 事务内执行（SET LOCAL app.tenant_id），
-    // 否则从池里借到的连接 GUC 为空 → RLS fail-closed → 恒 0 行。
-    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("get_dashboard_handler 开启 RLS 事务失败: {}", e);
-            return ApiResponse::server_error("仪表盘统计失败");
+            tracing::error!("初始化文档仪表盘事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化文档仪表盘事务作用域失败".to_string(),
+            ));
         }
     };
 
-    let total_documents =
-        count_table_with_tenant(&mut *tx, "core_doc_documents", opt_tenant_id).await;
-    let published_documents = count_table_with_tenant_and_status(
-        &mut *tx,
-        "core_doc_documents",
-        opt_tenant_id,
-        "published",
-    )
-    .await;
+    let total_documents = count_table_with_tenant(&mut scope, "core_doc_documents").await;
+    let published_documents =
+        count_table_with_tenant_and_status(&mut scope, "core_doc_documents", "published").await;
     let draft_documents =
-        count_table_with_tenant_and_status(&mut *tx, "core_doc_documents", opt_tenant_id, "draft")
-            .await;
+        count_table_with_tenant_and_status(&mut scope, "core_doc_documents", "draft").await;
     let archived_documents = count_table_with_tenant_and_condition(
-        &mut *tx,
+        &mut scope,
         "core_doc_documents",
-        opt_tenant_id,
         "archived_at IS NOT NULL",
     )
     .await;
 
-    let total_folders = count_table_with_tenant(&mut *tx, "core_doc_folders", opt_tenant_id).await;
-    let total_templates =
-        count_table_with_tenant(&mut *tx, "core_doc_templates", opt_tenant_id).await;
+    let total_folders = count_table_with_tenant(&mut scope, "core_doc_folders").await;
+    let total_templates = count_table_with_tenant(&mut scope, "core_doc_templates").await;
     let active_templates =
-        count_table_with_tenant_and_enabled(&mut *tx, "core_doc_templates", opt_tenant_id, true)
-            .await;
+        count_table_with_tenant_and_enabled(&mut scope, "core_doc_templates", true).await;
 
     let this_month_created = count_table_with_tenant_and_condition(
-        &mut *tx,
+        &mut scope,
         "core_doc_documents",
-        opt_tenant_id,
         "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
     let this_month_updated = count_table_with_tenant_and_condition(
-        &mut *tx,
+        &mut scope,
         "core_doc_documents",
-        opt_tenant_id,
         "DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
@@ -653,11 +681,6 @@ pub async fn get_dashboard_handler(
             return ApiResponse::server_error("仪表盘统计失败");
         }
     };
-
-    if let Err(e) = tx.commit().await {
-        tracing::error!("get_dashboard_handler 提交事务失败: {}", e);
-        return ApiResponse::server_error("仪表盘统计失败");
-    }
 
     let stats = DocDashboardStats {
         total_documents,

@@ -1,4 +1,5 @@
 use sqlx::{PgPool, Postgres, Result, Transaction};
+use topems_shared_db::scope::ScopedTxn;
 use uuid::Uuid;
 
 use super::super::models::{CreateFolderRequest, Folder, UpdateFolderRequest};
@@ -33,32 +34,26 @@ impl FolderService {
         Ok(tx)
     }
 
-    pub async fn list_folders(&self, tenant_id: Option<Uuid>) -> Result<Vec<Folder>> {
-        let mut tx = self.tenant_txn(tenant_id).await?;
+    pub async fn list_folders(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<Folder>> {
         let rows = sqlx::query_as::<_, Folder>(
-            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM core_doc_folders WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM core_doc_folders WHERE deleted_at IS NULL ORDER BY name"#,
         )
-        .bind(tenant_id)
-        .fetch_all(&mut *tx)
+        .fetch_all(&mut *scope)
         .await?;
-        tx.commit().await?;
         Ok(rows)
     }
 
     pub async fn get_folder(
         &self,
-        tenant_id: Option<Uuid>,
+        scope: &mut ScopedTxn<'_>,
         folder_id: Uuid,
     ) -> Result<Option<Folder>> {
-        let mut tx = self.tenant_txn(tenant_id).await?;
         let row = sqlx::query_as::<_, Folder>(
-            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM core_doc_folders WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
+            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM core_doc_folders WHERE deleted_at IS NULL AND id = $1"#,
         )
-        .bind(tenant_id)
         .bind(folder_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut *scope)
         .await?;
-        tx.commit().await?;
         Ok(row)
     }
 
