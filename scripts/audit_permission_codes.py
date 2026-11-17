@@ -108,9 +108,38 @@ def project_env_value(key: str) -> str:
     return ''
 
 
+def resolve_dsn(dsn: str | None = None) -> Tuple[str, str]:
+    """按「显式 > 审计专用 > 项目 .env > 进程环境」顺序解析 DSN，并返回来源标签。
+
+    2026-11-17 修正：此前 ``DATABASE_URL`` 进程环境优先于项目 ``.env``。开发机/CI
+    常把 ``DATABASE_URL`` 指向测试库（如 ``topems_test_runner``），一旦该库的
+    ``core_permissions`` 缺列，脚本会静默降级到 SQL 扫描并输出严重失真的 DB 计数
+    （实测 12 vs 真实 1157）。审计的对象是项目库，故 ``.env`` 优先于进程环境；
+    显式 ``--dsn`` 与 ``TOPEMS_AUDIT_DSN`` 仍可覆盖。
+    """
+    if dsn:
+        return dsn, '--dsn'
+    audit_dsn = os.environ.get('TOPEMS_AUDIT_DSN')
+    if audit_dsn:
+        return audit_dsn, 'TOPEMS_AUDIT_DSN'
+    project_dsn = project_env_value('DATABASE_URL')
+    if project_dsn:
+        return project_dsn, '.env:DATABASE_URL'
+    env_dsn = os.environ.get('DATABASE_URL')
+    if env_dsn:
+        return env_dsn, 'env:DATABASE_URL'
+    return '', 'none'
+
+
+def dsn_dbname(target: str) -> str:
+    """从 DSN 提取库名用于报错（不泄露账号密码）。"""
+    tail = target.rsplit('/', 1)[-1] if target else ''
+    return tail.split('?', 1)[0] or '(unknown)'
+
+
 def collect_live_db(
     dsn: str | None = None, limit_per_code: int = 5
-) -> Tuple[Dict[str, List[Tuple[str, int]]] | None, str | None]:
+) -> Tuple[Dict[str, List[Tuple[str, int]]] | None, str | None, str]:
     """读取 core_permissions 表（运行时真实可用码）。
 
     批 26 口径变更：此前 db 集合来自 scan_codes('database/init') + scan_codes('database/migrations')，
@@ -118,16 +147,12 @@ def collect_live_db(
     会把「SQL-only（声明了但从未落库）」与「DB-only（历史迁移链建了但 SQL 无声明）」混进
     db_only，导致对账基线失真。现改为读 live DB；SQL 声明集单独作为漂移比对输出。
 
-    返回 (码集, 错误信息)。psql 不可用或连接失败时返回 (None, 原因)，调用方回退到 SQL 扫描。
+    返回 (码集, 错误信息, DSN 来源标签)。psql 不可用或连接失败时返回 (None, 原因, 来源)，
+    调用方回退到 SQL 扫描并在输出中显式标注降级。
     """
-    target = (
-        dsn
-        or os.environ.get('TOPEMS_AUDIT_DSN')
-        or os.environ.get('DATABASE_URL')
-        or project_env_value('DATABASE_URL')
-    )
+    target, source = resolve_dsn(dsn)
     if not target:
-        return None, '未提供 DSN（--dsn / TOPEMS_AUDIT_DSN / DATABASE_URL / .env 均无）'
+        return None, '未提供 DSN（--dsn / TOPEMS_AUDIT_DSN / .env / 进程环境均无）', source
     try:
         proc = subprocess.run(
             [  # 固定 psql 参数，无用户输入拼接
@@ -139,13 +164,14 @@ def collect_live_db(
             capture_output=True, text=True, timeout=60,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        return None, f'{type(exc).__name__}: {exc}'
+        return None, f'{source}: {type(exc).__name__}: {exc}', source
     if proc.returncode != 0:
-        return None, (proc.stderr or '').strip().split('\n')[0][:200]
+        first = (proc.stderr or '').strip().split('\n')[0][:200]
+        return None, f'{source} → {dsn_dbname(target)}: {first}', source
     codes = [line.strip() for line in proc.stdout.split('\n') if line.strip()]
     if not codes:
-        return None, 'core_permissions 查询返回 0 行'
-    return {code: [('live:public.core_permissions', 0)] for code in codes}, None
+        return None, f'{source} → {dsn_dbname(target)}: core_permissions 查询返回 0 行', source
+    return {code: [('live:public.core_permissions', 0)] for code in codes}, None, source
 
 
 def scan_sql_declared(limit_per_code: int = 5) -> Dict[str, List[Tuple[str, int]]]:
@@ -256,7 +282,7 @@ def main() -> int:
     # 批 39：SQL 声明基线拆为两路——
     #   sql_declared = database/init（现行声明，与 live DB 做漂移比对）
     #   sql_history  = database/migrations（历史回溯取证，独立输出，不计入声明基线）
-    live_db, live_err = collect_live_db(dsn=args.dsn, limit_per_code=args.limit)
+    live_db, live_err, dsn_source = collect_live_db(dsn=args.dsn, limit_per_code=args.limit)
     sql_declared = scan_sql_declared(args.limit)
     sql_history = scan_sql_history(args.limit)
     if live_db is not None:
@@ -272,6 +298,7 @@ def main() -> int:
     db_set, sql_set, hist_set = set(db), set(sql_declared), set(sql_history)
     report['db_source'] = db_source
     report['db_source_error'] = live_err
+    report['db_dsn_source'] = dsn_source
     report['code_drift'] = {
         'live_db_codes': len(db_set),
         'sql_declared_codes': len(sql_set),
@@ -296,8 +323,12 @@ def main() -> int:
     counts = report['counts']
     print('权限码三端对账')
     src = report.get('db_source')
-    hint = '（读 core_permissions 表）' if src == 'live' else f'（回退到 SQL 扫描：{report.get("db_source_error")}）'
-    print(f'  DB 来源：{src} {hint}')
+    print(f"  DSN 来源：{report.get('db_dsn_source')}")
+    if src == 'live':
+        print('  DB 来源：live（读 public.core_permissions）')
+    else:
+        print(f'  DB 来源：sql_fallback（{report.get("db_source_error")}）')
+        print('  WARN: DB 侧已降级为 SQL 文件扫描，不代表运行时真实可用码；不要用该 DB 计数做基线或门禁判据。')
     print(f"  FE {counts['fe']} | BE {counts['be']} | DB {counts['db']} | FE∩BE {counts['both_fe_be']}")
     drift = report.get('code_drift') or {}
     if drift:

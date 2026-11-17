@@ -58,10 +58,15 @@ debug = false
 strip = true
 
 [profile.dev]
-# 兜底：workspace Cargo.toml 中 opt-level=1 + debug=1 + strip="symbols" + codegen-units=256 为准
+# 兜底：workspace Cargo.toml 中 opt-level=1 + debug=1 + codegen-units=256 为准
+# [2026-11-17] 显式 strip="none"：旧配置 strip="symbols" 会同时作用于 proc-macro
+# 的 dylib，在 rustc 1.95 + macOS 26/27 上产出 "mis-aligned LINKEDIT string pool" 的
+# 非法 Mach-O，导致默认 cargo check 找不到 *_derive crate。
+# 注意：仅从 Cargo.toml 移除不够——$CARGO_HOME/config.toml 亦可能设置 dev strip，
+# 这里显式写 "none" 才能覆盖全局兜底，保证新克隆开箱即用。release 不受影响。
+strip = "none"
 opt-level = 1
 debug = 1
-strip = "symbols"
 
 [profile.test]
 opt-level = 1

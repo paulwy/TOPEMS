@@ -489,8 +489,15 @@ opt-level = 1
 incremental = true
 # 仅保留行号表：比 debug=2 节省 70%+ 符号体积，仍可 backtrace
 debug = 1
-# 去除私有符号表：不影响 panic backtrace，rlib 体积再减 30~50%
-strip = "symbols"
+# [2026-11-17] dev 必须 strip="none"：
+#   rustc 1.95 + macOS 26/27 下，strip 同时作用于 proc-macro 的 dylib，产出
+#   "mis-aligned LINKEDIT string pool" 的非法 Mach-O，使默认 `cargo check` 找不到
+#   serde_derive/zeroize_derive/thiserror_impl；换 target、换 toolchain 均无效。
+#   这不是本机特例，且 $CARGO_HOME/config.toml 也可能设置 dev strip，
+#   故在仓库内显式写 "none"（Cargo.toml + .cargo/config.toml 两处），新克隆开箱可用。
+#   release 的 strip=true 保持不变，只影响发布产物。
+#   如需在 dev 减体积，用 debug=0，不要恢复 strip。
+strip = "none"
 # 代码生成并行（多核机器加速）
 codegen-units = 256
 # dev 模式跳过 LTO（节省增量编译时间）
