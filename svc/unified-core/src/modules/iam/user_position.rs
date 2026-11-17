@@ -3,6 +3,7 @@ use axum::{extract::Path, extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -14,6 +15,27 @@ pub struct AssignPositionRequest {
 pub struct BatchAssignPositionsRequest {
     pub user_ids: Vec<Uuid>,
     pub position_id: Uuid,
+}
+
+fn user_positions_response(rows: Vec<sqlx::postgres::PgRow>) -> Json<serde_json::Value> {
+    let result: Vec<serde_json::Value> = rows
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.get::<uuid::Uuid, _>("id"),
+                "code": r.get::<String, _>("code"),
+                "name": r.get::<String, _>("name"),
+                "department_id": r.get::<Option<uuid::Uuid>, _>("department_id"),
+                "description": r.get::<Option<String>, _>("description"),
+            })
+        })
+        .collect();
+
+    Json(serde_json::json!({
+        "success": true,
+        "data": result,
+        "code": 200,
+    }))
 }
 
 pub async fn get_user_positions(
@@ -35,24 +57,7 @@ pub async fn get_user_positions(
     .await
     .unwrap_or_default();
 
-    let result: Vec<serde_json::Value> = rows
-        .into_iter()
-        .map(|r| {
-            serde_json::json!({
-                "id": r.get::<uuid::Uuid, _>("id"),
-                "code": r.get::<String, _>("code"),
-                "name": r.get::<String, _>("name"),
-                "department_id": r.get::<Option<uuid::Uuid>, _>("department_id"),
-                "description": r.get::<Option<String>, _>("description"),
-            })
-        })
-        .collect();
-
-    Json(serde_json::json!({
-        "success": true,
-        "data": result,
-        "code": 200,
-    }))
+    user_positions_response(rows)
 }
 
 pub async fn assign_position(
@@ -125,32 +130,53 @@ pub async fn batch_assign_positions(
 
 pub async fn unassign_position(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((user_id, position_id)): Path<(Uuid, Uuid)>,
 ) -> Json<serde_json::Value> {
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化取消岗位分配事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化取消岗位分配事务作用域失败",
+            ));
+        }
     };
     let result = sqlx::query(
         r#"
         DELETE FROM iam.user_positions
-        WHERE user_id = $1 AND position_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+        WHERE user_id = $1 AND position_id = $2
         "#,
     )
     .bind(user_id)
     .bind(position_id)
-    .bind(tenant_filter)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            get_user_positions(State(state), Extension(claims.clone()), Path(user_id)).await
+            let rows = sqlx::query(
+                r#"
+                SELECT p.id, p.code, p.name, p.department_id, p.description
+                FROM iam.positions p
+                JOIN iam.user_positions up ON p.id = up.position_id
+                WHERE up.user_id = $1
+                ORDER BY p.name
+                "#,
+            )
+            .bind(user_id)
+            .fetch_all(&mut scope)
+            .await
+            .unwrap_or_default();
+            user_positions_response(rows)
         }
         _ => Json(topems_shared_core::response::error_value(
             404,
