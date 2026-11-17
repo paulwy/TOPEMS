@@ -48,7 +48,10 @@ fn make_test_state() -> AppState {
     }
 }
 
-/// 构造测试用 Claims（超管，不绑定具体租户，保持原有查询语义）。
+/// 构造测试用 Claims（绑定测试租户）。
+/// 说明：`tenant_of` 对超管一律返回 None（读全量），写入会落全零租户，
+/// 在严格 RLS 下被 WITH CHECK 拒绝；因此测试用带租户的普通身份，
+/// 与真实请求一致（真实请求必带 x-tenant-id）。
 fn make_test_claims() -> Claims {
     Claims {
         sub: "00000000-0000-0000-0000-000000000000".to_string(),
@@ -56,12 +59,12 @@ fn make_test_claims() -> Claims {
         role: "admin".to_string(),
         roles: vec![],
         permissions: vec![],
-        is_superuser: true,
+        is_superuser: false,
         exp: 9999999999,
         iat: 0,
         email: None,
         department: None,
-        tenant_id: None,
+        tenant_id: Some(TEST_TENANT.to_string()),
         department_id: None,
         position_id: None,
         position_code: None,
@@ -103,6 +106,43 @@ where
     .await
 }
 
+/// 在测试事务内造一条质量规则（规则种子已从关系表下线，测试自备夹具）。
+/// 与后续查询共用同一请求事务，测试结束随事务回滚，不落库残留。
+async fn seed_quality_rule(state: &AppState, cell: &RlsTxnCell, entity_type: &str, rule_type: &str) {
+    let req = CreateQualityRuleRequest {
+        name: format!("测试夹具-{entity_type}-{rule_type}"),
+        entity_type: entity_type.to_string(),
+        rule_type: rule_type.to_string(),
+        description: "集成测试夹具".to_string(),
+        severity: Some("error".to_string()),
+        parameters: None,
+    };
+    let resp = in_request_scope(quality_v51::create_quality_rule(
+        State(state.clone()),
+        Extension(cell.clone()),
+        Json(req),
+    ))
+    .await;
+    assert_eq!(resp.code, 200, "质量规则夹具创建失败");
+}
+
+/// 在测试事务内造一条重复检测治理洞察（`mdm_governance_insights` 无写入 handler）。
+async fn seed_duplicate_insight(cell: &RlsTxnCell) {
+    let mut guard = cell.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        panic!("缺少请求事务上下文");
+    };
+    sqlx::query(
+        "INSERT INTO master_data.mdm_governance_insights \
+         (insight_type, severity, affected_records, trend_analysis, recommendations) \
+         VALUES ('duplicate_detection', 'warning', 7, '重复率较上周上升 2%', \
+                 '[\"合并重复客户记录\"]'::jsonb)",
+    )
+    .execute(&mut **txn)
+    .await
+    .expect("治理洞察夹具写入失败");
+}
+
 /// ============ 质量规则 CRUD 测试 ============
 
 #[tokio::test]
@@ -122,12 +162,12 @@ async fn test_quality_rule_create_and_list() {
     let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::create_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Json(req),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     assert!(resp.data.is_some());
 
@@ -140,10 +180,9 @@ async fn test_quality_rule_create_and_list() {
     assert!(!rule.id.is_empty());
 
     // 列出所有规则，应包含新创建的规则
-    let cell = test_txn_cell(&state).await;
     let list_resp = in_request_scope(quality_v51::list_quality_rules(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
     ))
     .await;
     assert_eq!(list_resp.code, 200);
@@ -172,22 +211,21 @@ async fn test_quality_rule_get_by_id() {
     let cell = test_txn_cell(&state).await;
     let created = in_request_scope(quality_v51::create_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Json(create_req),
     ))
     .await;
     let rule_id = created.data.unwrap().id;
 
     // 通过 ID 查询规则
-    let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::get_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     let rule = resp.data.unwrap();
     assert_eq!(rule.id, rule_id);
@@ -201,7 +239,7 @@ async fn test_quality_rule_get_not_found() {
     let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::get_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path("nonexistent-rule-id".to_string()),
     ))
     .await;
@@ -227,7 +265,7 @@ async fn test_quality_rule_update() {
     let cell = test_txn_cell(&state).await;
     let created = in_request_scope(quality_v51::create_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Json(create_req),
     ))
     .await;
@@ -241,16 +279,15 @@ async fn test_quality_rule_update() {
         parameters: Some(serde_json::json!({"min": 0, "max": 5000000, "field": "price"})),
         enabled: Some(false),
     };
-    let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::update_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
         Json(update_req),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     let updated = resp.data.unwrap();
     assert_eq!(updated.name, "测试-物料价格范围校验(已更新)");
@@ -273,7 +310,7 @@ async fn test_quality_rule_update_not_found() {
     let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::update_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path("nonexistent-rule-id".to_string()),
         Json(update_req),
     ))
@@ -299,17 +336,16 @@ async fn test_quality_rule_delete() {
     let cell = test_txn_cell(&state).await;
     let created = in_request_scope(quality_v51::create_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Json(create_req),
     ))
     .await;
     let rule_id = created.data.unwrap().id;
 
     // 删除规则
-    let cell = test_txn_cell(&state).await;
     let delete_resp = in_request_scope(quality_v51::delete_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
     ))
     .await;
@@ -317,10 +353,9 @@ async fn test_quality_rule_delete() {
     assert!(delete_resp.success);
 
     // 确认规则已被删除
-    let cell = test_txn_cell(&state).await;
     let get_resp = in_request_scope(quality_v51::get_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
     ))
     .await;
@@ -334,7 +369,7 @@ async fn test_quality_rule_delete_not_found() {
     let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::delete_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path("nonexistent-rule-id".to_string()),
     ))
     .await;
@@ -348,22 +383,23 @@ async fn test_quality_rule_delete_not_found() {
 async fn test_run_quality_check_format_rule() {
     let state = make_test_state();
 
-    // 对 customer 实体执行质量检查（种子数据中包含 format 规则）
+    // 对 customer 实体执行质量检查（format 规则由测试自备）
     let req = RunQualityCheckRequest {
         entity_type: "customer".to_string(),
         entity_id: "C0001".to_string(),
         rule_ids: None,
     };
     let cell = test_txn_cell(&state).await;
+    seed_quality_rule(&state, &cell, "customer", "format").await;
     let resp = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Extension(make_test_claims()),
         Json(req),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     let checks = resp.data.unwrap();
     assert!(!checks.is_empty(), "应至少有一条质量检查结果");
@@ -377,22 +413,23 @@ async fn test_run_quality_check_format_rule() {
 async fn test_run_quality_check_range_rule_warns() {
     let state = make_test_state();
 
-    // 对 material 实体执行质量检查（种子数据中包含 range 规则）
+    // 对 material 实体执行质量检查（range 规则由测试自备）
     let req = RunQualityCheckRequest {
         entity_type: "material".to_string(),
         entity_id: "M0001".to_string(),
         rule_ids: None,
     };
     let cell = test_txn_cell(&state).await;
+    seed_quality_rule(&state, &cell, "material", "range").await;
     let resp = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Extension(make_test_claims()),
         Json(req),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     let checks = resp.data.unwrap();
     assert!(!checks.is_empty());
 
@@ -415,9 +452,10 @@ async fn test_list_quality_checks_with_filter() {
         rule_ids: None,
     };
     let cell = test_txn_cell(&state).await;
+    seed_quality_rule(&state, &cell, "customer", "format").await;
     let _ = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Extension(make_test_claims()),
         Json(run_req),
     ))
@@ -432,15 +470,14 @@ async fn test_list_quality_checks_with_filter() {
         page: Some(1),
         page_size: Some(10),
     };
-    let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::list_quality_checks(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Query(query),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     let paginated = resp.data.unwrap();
     assert!(paginated.total > 0, "应能查询到刚执行的检查记录");
@@ -461,24 +498,24 @@ async fn test_get_quality_check_results_by_entity() {
         rule_ids: None,
     };
     let cell = test_txn_cell(&state).await;
+    seed_quality_rule(&state, &cell, "supplier", "format").await;
     let _ = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Extension(make_test_claims()),
         Json(run_req),
     ))
     .await;
 
     // 查询指定实体的检查结果
-    let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::get_quality_check_results(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(("supplier".to_string(), "S0001".to_string())),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     let results = resp.data.unwrap();
     assert!(!results.is_empty());
     assert!(
@@ -498,11 +535,11 @@ async fn test_get_quality_score() {
     let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::get_quality_score(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     let score = resp.data.unwrap();
 
@@ -525,13 +562,14 @@ async fn test_get_quality_dashboard() {
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
+    seed_duplicate_insight(&cell).await;
     let resp = in_request_scope(quality_v51::get_quality_dashboard(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
     ))
     .await;
 
-    assert_eq!(resp.code, 200);
+    assert_eq!(resp.code, 200, "run_quality_check 失败: {}", resp.message);
     assert!(resp.success);
     let dashboard = resp.data.unwrap();
 
@@ -575,7 +613,7 @@ async fn test_quality_rule_with_various_severities() {
         let cell = test_txn_cell(&state).await;
         let resp = in_request_scope(quality_v51::create_quality_rule(
             State(state.clone()),
-            Extension(cell),
+            Extension(cell.clone()),
             Json(req),
         ))
         .await;
@@ -600,7 +638,7 @@ async fn test_quality_rule_default_severity() {
     let cell = test_txn_cell(&state).await;
     let resp = in_request_scope(quality_v51::create_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Json(req),
     ))
     .await;
@@ -615,9 +653,10 @@ async fn test_duplicate_detection_insight() {
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
+    seed_duplicate_insight(&cell).await;
     let resp = in_request_scope(quality_v51::get_quality_dashboard(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
     ))
     .await;
     let dashboard = resp.data.unwrap();
@@ -731,7 +770,7 @@ async fn test_quality_rule_full_lifecycle() {
     let cell = test_txn_cell(&state).await;
     let created = in_request_scope(quality_v51::create_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Json(create_req),
     ))
     .await;
@@ -739,10 +778,9 @@ async fn test_quality_rule_full_lifecycle() {
     let rule_id = created.data.unwrap().id;
 
     // 2. 读取规则
-    let cell = test_txn_cell(&state).await;
     let fetched = in_request_scope(quality_v51::get_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
     ))
     .await;
@@ -757,10 +795,9 @@ async fn test_quality_rule_full_lifecycle() {
         parameters: None,
         enabled: Some(false),
     };
-    let cell = test_txn_cell(&state).await;
     let updated = in_request_scope(quality_v51::update_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
         Json(update_req),
     ))
@@ -777,10 +814,9 @@ async fn test_quality_rule_full_lifecycle() {
         entity_id: "LE0001".to_string(),
         rule_ids: None,
     };
-    let cell = test_txn_cell(&state).await;
     let checks = in_request_scope(quality_v51::run_quality_check(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Extension(make_test_claims()),
         Json(run_req),
     ))
@@ -793,20 +829,18 @@ async fn test_quality_rule_full_lifecycle() {
     );
 
     // 5. 删除规则
-    let cell = test_txn_cell(&state).await;
     let deleted = in_request_scope(quality_v51::delete_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
     ))
     .await;
     assert_eq!(deleted.code, 200);
 
     // 6. 确认规则已不存在
-    let cell = test_txn_cell(&state).await;
     let not_found = in_request_scope(quality_v51::get_quality_rule(
         State(state.clone()),
-        Extension(cell),
+        Extension(cell.clone()),
         Path(rule_id.clone()),
     ))
     .await;
