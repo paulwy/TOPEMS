@@ -2047,3 +2047,18 @@ pending_forward_patches:
       - { kind: code, ref: "svc/unified-core/src/modules/engagement/handlers.rs", detail: "6 个 handler 改 Extension<RlsTxnCell> + scope_with；读用 TenantScope::from_claims + sql_predicate + bind_tenant_scope；写用 require_tenant 显式绑定 tenant_id；错误与 404 分支 drop(scope) + guard.take() + rollback；数据库空串/全零租户均 fail-closed" }
       - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（A/B/全零 各 1 行夹具）", detail: "up 前两表六档均 3/3（无 RLS 全可见）；up 后未设 0/0、空串 0/0、全零 1/1、A 1/1、B 1/1、A+system 3/3；A 上下文读 B 行 0/0、写 B 行两表各 42501；down 后 rls=f/策略 0、六档回到 3/3；夹具清理后 0/0，克隆库停在 up 后严格态" }
     note: "部署耦合：必须与 engagement/handlers.rs 同一窗口。只上迁移 → 旧池直连代码在 FORCE RLS 下读 0 行、写 42501；只上代码 → 池直连仍可绕过。回滚文件 database/rollback/20261117235500_engagement_rls_strict.rollback.sql：DROP 策略 + NO FORCE/DISABLE + 恢复 tenant_id 可空"
+
+  # ===== allow_all 残留收口（2026-11-18，独立批，排在 scm 之后）=====
+  # 口径来源：迁移文件头 + docs/database/allow-all-residuals-classification-2026-11-18.md
+  - version: "20261118090000"
+    file: "database/migrations/20261118090000_allow_all_residuals_strict_and_deny.sql"
+    status: to_apply
+    effect: "public 层 5 张 public_allow_all_* 残留表分两类收口：A 类 core_operation_logs / subscriptions 动态清空旧策略后重建唯一严格 rls_tenant_isolation（USING + WITH CHECK + ENABLE/FORCE）；B 类 navigation_menu / pinned_apps / todos 删除 allow_all 后仅重申 ENABLE/FORCE、不留任何策略（拒绝为默认）；user_settings 不改动，后置断言校验其策略仍为 1 条"
+    destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；动态 DROP POLICY（5 表各 1 条）+ 2 次 CREATE POLICY + 5 次 ENABLE + 5 次 FORCE RLS；文件内无 BEGIN/COMMIT；含 destructive-gate: allow / ticket PLATFORM-CORPUS-20261117"
+    evidence:
+      - { kind: data, ref: "topems_prod 与克隆库 m2_dryrun_20261116 count(*) 2026-11-17", detail: "生产 6 表均 0 行；克隆库 up 前 core_operation_logs 残留 6 行（2026-11-17 12:31 engagement 探针审计流水，user_name=probe-tenant），迁移前置断言按预期 RAISE 中止；清理残留后 5 表 0 行" }
+      - { kind: catalog, ref: "topems_prod 与克隆库 pg_class/pg_policies 2026-11-17", detail: "两库 6 表均 rls=t force=t 且各 1 条 public_allow_all_<table>(ALL/true/true)；A 类 tenant_id NOT NULL 且无默认放行分支；B 类仅 id/deleted_at 两列；user_settings 有 user_id、无 tenant_id" }
+      - { kind: code, ref: "svc/unified-core/src/modules/audit/service.rs:26、svc/server/src/modules/subscription_module.rs:168", detail: "A 类写入均显式绑定 claims 租户；subscriptions 另有 ON CONFLICT (tenant_id) 幂等键，严格策略不改变语义" }
+      - { kind: code, ref: "全仓 grep 2026-11-18", detail: "(from|into|update|join)\\s+(public\\.)?(navigation_menu|pinned_apps|todos) 在 *.rs 中 0 命中；portal 的 todos 端点读写 portal.portal_todos，pinned_apps 读服务注册表 + 内存默认值、reorder 为回显空操作 → 删 allow_all 无读路径受损" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（A/B 各 1 行夹具，topems_prod 角色）", detail: "up 0.03 s；up 后六档 未设 0/0/0/0/0、空串 0/0/0/0/0、全零 0/0/0/0/0、A 1/1/0/0/0、B 1/1/0/0/0、A+system 2/2/0/0/0；A 上下文写 B 租户 core_operation_logs/subscriptions 各 42501、写 A 租户通过；骨架表三张在 A 与 system 上下文 INSERT 均 42501、DELETE 0 行；down 0.03 s 后恢复 allow_all，六档回到 3/2/2/2/2；夹具清理后 5 表 0 行，再 up 让克隆库停在严格态" }
+    note: "回滚文件 database/rollback/20261118090000_allow_all_residuals_strict_and_deny.rollback.sql：动态 DROP 后逐表重建 public_allow_all_<table> 并断言 RLS 仍开启。B 类为骨架表（无 tenant_id），将来落列后按那时的隔离维度（tenant_id / user_id）补策略；user_settings 的正确解是用户维度策略（需先定 app.user_id 之类 GUC 约定），本批只登记不改动。生产 DDL 未执行，等演练读数确认后另行开窗"
