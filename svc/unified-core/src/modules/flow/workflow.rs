@@ -950,21 +950,17 @@ pub async fn get_workflow_version(
 )]
 pub async fn activate_workflow_version(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<WorkflowVersion> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(tx) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
     };
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope_with(tx).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("激活版本开启事务失败: {}", e);
+            tracing::error!("初始化激活版本事务作用域失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
         }
     };
@@ -973,12 +969,11 @@ pub async fn activate_workflow_version(
     let exists = sqlx::query_scalar::<_, bool>(
         "SELECT EXISTS(SELECT 1 FROM public.core_workflow_versions
          WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) )",
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) )",
     )
     .bind(version_id)
     .bind(workflow_id)
-    .bind(tenant_opt)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     match exists {
@@ -995,36 +990,32 @@ pub async fn activate_workflow_version(
     }
 
     // 2. 同工作流其他版本置为非激活
-    if let Err(e) = sqlx::query("UPDATE public.core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) ")
+    match sqlx::query("UPDATE public.core_workflow_versions SET isactive = FALSE WHERE workflow_id = $1 AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL) ")
         .bind(workflow_id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
     {
-        tracing::error!("去激活其他版本失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("去激活其他版本失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
+        }
     }
 
     // 3. 激活目标版本
     let version = sqlx::query_as::<_, WorkflowVersion>(
         "UPDATE public.core_workflow_versions SET isactive = TRUE
          WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) 
+         AND EXISTS (SELECT 1 FROM public.core_workflows cw WHERE cw.id = public.core_workflow_versions.workflow_id AND cw.deleted_at IS NULL)
          RETURNING id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at",
     )
     .bind(version_id)
     .bind(workflow_id)
-    .bind(tenant_opt)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     match version {
-        Ok(v) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("提交激活版本事务失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
-            }
-            ApiResponse::success(v, "版本激活成功")
-        }
+        Ok(v) => ApiResponse::success(v, "版本激活成功"),
         Err(e) => {
             tracing::error!("激活工作流版本失败: {}", e);
             ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()))
