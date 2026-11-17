@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
@@ -102,8 +103,20 @@ pub async fn list_inspections(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
+    // 显式租户谓词：裸池连接上的 app.tenant_id 不可依赖，超管保持全量口径。
+    if !claims.is_superuser {
+        params.push(serde_json::Value::String(get_tenant_id(&claims).to_string()));
+        where_clause.push_str(" WHERE qi.tenant_id = $1::uuid");
+    }
+
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE qi.status = $1");
+        let idx = params.len() + 1;
+        let prefix = if where_clause.is_empty() {
+            " WHERE"
+        } else {
+            " AND"
+        };
+        where_clause.push_str(&format!("{} qi.status = ${}", prefix, idx));
         params.push(serde_json::Value::String(status));
     }
 
@@ -290,6 +303,7 @@ pub async fn list_inspections(
 )]
 pub async fn get_inspection(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<InspectionResponse> {
@@ -304,6 +318,32 @@ pub async fn get_inspection(
             return ApiResponse::bad_request("无效的检验记录ID");
         }
     };
+
+    // 详情按 id 直达，显式补租户归属校验，避免裸池连接残留 GUC 造成跨租户读。
+    if !claims.is_superuser {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        };
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("建立租户作用域失败: {}", e);
+                return ApiResponse::server_error("获取检验记录失败");
+            }
+        };
+        let own = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM quality_inspections WHERE id = $1 AND tenant_id = $2::uuid",
+        )
+        .bind(uuid)
+        .bind(get_tenant_id(&claims))
+        .fetch_one(&mut scope)
+        .await
+        .unwrap_or(0);
+        if own == 0 {
+            return ApiResponse::not_found("检验记录不存在");
+        }
+    }
 
     let result = sqlx::query!(
         r#"

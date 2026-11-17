@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -88,8 +89,20 @@ pub async fn list_patrols(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
+    // 显式租户谓词：裸池连接上的 app.tenant_id 不可依赖，超管保持全量口径。
+    if !claims.is_superuser {
+        params.push(serde_json::Value::String(get_tenant_id(&claims).to_string()));
+        where_clause.push_str(" WHERE qp.tenant_id = $1::uuid");
+    }
+
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE qp.status = $1");
+        let idx = params.len() + 1;
+        let prefix = if where_clause.is_empty() {
+            " WHERE"
+        } else {
+            " AND"
+        };
+        where_clause.push_str(&format!("{} qp.status = ${}", prefix, idx));
         params.push(serde_json::Value::String(status));
     }
 
@@ -230,6 +243,7 @@ pub async fn list_patrols(
 )]
 pub async fn get_patrol(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<PatrolResponse> {
@@ -244,6 +258,32 @@ pub async fn get_patrol(
             return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
+
+    // 详情按 id 直达，显式补租户归属校验，避免裸池连接残留 GUC 造成跨租户读。
+    if !claims.is_superuser {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        };
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("建立租户作用域失败: {}", e);
+                return ApiResponse::server_error("获取巡检记录失败");
+            }
+        };
+        let own = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM quality_patrols WHERE id = $1 AND tenant_id = $2::uuid",
+        )
+        .bind(uuid)
+        .bind(get_tenant_id(&claims))
+        .fetch_one(&mut scope)
+        .await
+        .unwrap_or(0);
+        if own == 0 {
+            return ApiResponse::not_found("巡检记录不存在");
+        }
+    }
 
     let result = sqlx::query!(
         r#"
@@ -554,6 +594,7 @@ pub struct PatrolItemResponse {
 )]
 pub async fn list_patrol_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(patrol_id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
@@ -568,6 +609,32 @@ pub async fn list_patrol_items(
             return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
+
+    // 明细表无 tenant_id，租户归属由父巡检记录决定。
+    if !claims.is_superuser {
+        let mut guard = txn_arc.lock().await;
+        let Some(txn) = guard.as_mut() else {
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        };
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("建立租户作用域失败: {}", e);
+                return ApiResponse::server_error("获取巡检明细失败");
+            }
+        };
+        let own = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM quality_patrols WHERE id = $1 AND tenant_id = $2::uuid",
+        )
+        .bind(patrol_uuid)
+        .bind(get_tenant_id(&claims))
+        .fetch_one(&mut scope)
+        .await
+        .unwrap_or(0);
+        if own == 0 {
+            return ApiResponse::not_found("巡检记录不存在");
+        }
+    }
 
     let result = sqlx::query!(
         r#"
