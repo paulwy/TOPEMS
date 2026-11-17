@@ -108,6 +108,17 @@ pub async fn ensure_company_scope(
         return Ok(());
     }
 
+    // 跨租户一律按「不存在」处理，不能只依赖 RLS 兜底：系统通道 / 裸连接上策略
+    // 不会过滤外租户行，而下方 scope 查询绑的是主体所属租户，若同一 user_id 在
+    // 对方租户存在 scope 行会被误放行。claims 缺租户或格式非法同样按不存在处理。
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok());
+    if claims_tenant != Some(company_tenant) {
+        return Err(CompanyScopeError::NotFound);
+    }
+
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(_) => return Err(CompanyScopeError::Forbidden),
