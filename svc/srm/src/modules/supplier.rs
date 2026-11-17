@@ -151,20 +151,34 @@ struct SrmSupplierRow {
     tenant_id: Option<Uuid>,
 }
 
-fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid) {
+fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid, tenant_id: Uuid) {
     tokio::spawn(async move {
+        let db = topems_shared_db::scope::Db::new(db, "srm, public, shared");
+        let mut scope = match db.scope_for_tenant(tenant_id).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::warn!(
+                    "[srm→mdm] 开启租户作用域失败: id={}, err={}",
+                    srm_supplier_id,
+                    e
+                );
+                return;
+            }
+        };
+
         let row = sqlx::query_as::<_, SrmSupplierRow>(only_own_schema_query!(
             "srm",
             r#"
                 SELECT supplier_no, name, legal_name, category, status, tax_id,
                        address, contact_person, phone, email, website, credit_rating,
                        risk_level, bank_name, bank_account, tenant_id
-                FROM srm.suppliers WHERE id = $1
+                FROM srm.suppliers WHERE id = $1 AND tenant_id = $2
             "#,
             "master_data"
         ))
         .bind(srm_supplier_id)
-        .fetch_optional(&db)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await;
 
         let row = match row {
@@ -199,7 +213,7 @@ fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid) {
                     "master_data"
                 ))
                 .bind(srm_cat)
-                .fetch_optional(&db)
+                .fetch_optional(&mut scope)
                 .await
                 .ok()
                 .flatten()
@@ -255,7 +269,7 @@ fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid) {
         .bind(&row.bank_account)
         .bind(row.tenant_id)
         .bind(srm_supplier_id)
-        .execute(&db)
+        .execute(&mut scope)
         .await;
 
         if let Err(e) = res {
@@ -276,8 +290,12 @@ fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid) {
             .bind(&row.supplier_no)
             .bind(e.to_string())
             .bind(row.tenant_id)
-            .execute(&db)
+            .execute(&mut scope)
             .await;
+        }
+
+        if let Err(e) = scope.commit().await {
+            tracing::warn!("[srm→mdm] 提交租户作用域失败: id={}, err={}", srm_supplier_id, e);
         }
     });
 }
@@ -285,6 +303,18 @@ fn spawn_srm_supplier_to_mdm(db: PgPool, srm_supplier_id: Uuid) {
 /// srm 软删 → mdm 软删（mdm 自建行不被软删）。
 fn spawn_srm_supplier_delete_to_mdm(db: PgPool, supplier_no: String, tenant_id: Uuid) {
     tokio::spawn(async move {
+        let db = topems_shared_db::scope::Db::new(db, "srm, public, shared");
+        let mut scope = match db.scope_for_tenant(tenant_id).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::warn!(
+                    "[srm→mdm] 开启租户作用域失败: supplier_no={}, err={}",
+                    supplier_no,
+                    e
+                );
+                return;
+            }
+        };
         let res = sqlx::query(only_own_schema_query!(
             "srm",
             r#"
@@ -298,11 +328,19 @@ fn spawn_srm_supplier_delete_to_mdm(db: PgPool, supplier_no: String, tenant_id: 
         ))
         .bind(&supplier_no)
         .bind(tenant_id)
-        .execute(&db)
+        .execute(&mut scope)
         .await;
         if let Err(e) = res {
             tracing::warn!(
                 "[srm→mdm] 软删 mdm_suppliers 失败: supplier_no={}, err={}",
+                supplier_no,
+                e
+            );
+        }
+
+        if let Err(e) = scope.commit().await {
+            tracing::warn!(
+                "[srm→mdm] 提交租户作用域失败: supplier_no={}, err={}",
                 supplier_no,
                 e
             );
@@ -559,7 +597,7 @@ pub async fn create_supplier(
             tracing::debug!("🗑️ 供应商缓存已清空（创建供应商）");
 
             // srm → mdm 反向同步（后台异步，失败落死信）
-            spawn_srm_supplier_to_mdm(state.db.clone(), id);
+            spawn_srm_supplier_to_mdm(state.db.clone(), id, tenant_id);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -859,7 +897,7 @@ pub async fn update_supplier(
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
 
             // srm → mdm 反向同步（后台异步，失败落死信）
-            spawn_srm_supplier_to_mdm(state.db.clone(), id);
+            spawn_srm_supplier_to_mdm(state.db.clone(), id, tenant_id);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
