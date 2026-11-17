@@ -13,6 +13,7 @@ use serde::Deserialize;
 use sqlx::Row;
 use std::collections::{HashMap, HashSet};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -359,7 +360,7 @@ struct LineageTracker;
 
 impl LineageTracker {
     async fn register(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         from_entity_type: String,
         from_entity_id: String,
@@ -377,7 +378,7 @@ impl LineageTracker {
         )))
         .bind(&from_entity_type)
         .bind(&from_entity_id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询上游节点失败: {e}")))?
         .map(|r| node_from_row(&r))
@@ -399,7 +400,7 @@ impl LineageTracker {
         )))
         .bind(&to_entity_type)
         .bind(&to_entity_id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询下游节点失败: {e}")))?
         .map(|r| node_from_row(&r))
@@ -430,7 +431,7 @@ impl LineageTracker {
             .bind(&node.description)
             .bind(node.created_at.to_rfc3339())
             .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘节点失败: {e}")))?;
         }
@@ -453,21 +454,21 @@ impl LineageTracker {
         .bind(edge_type_to_str(&edge.edge_type))
         .bind(&edge.transformation_description)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘边失败: {e}")))?;
 
         // 图谱整体重算（读全量节点/边 → upsert 默认图）。
-        refresh_graph(db, tenant).await?;
+        refresh_graph(&mut *scope, tenant).await?;
 
         Ok((from_node, to_node, edge))
     }
 
-    async fn get_graph(db: &sqlx::PgPool) -> LineageGraph {
+    async fn get_graph(scope: &mut topems_shared_db::scope::ScopedTxn<'_>) -> LineageGraph {
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {GRAPH_COLS} FROM master_data.mdm_lineage_graphs ORDER BY id LIMIT 1"
         )))
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .ok()
         .flatten()
@@ -481,12 +482,12 @@ impl LineageTracker {
     }
 
     async fn get_upstream(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         node_id: &str,
         depth: Option<i32>,
     ) -> Vec<LineageNode> {
-        let nodes = fetch_nodes(db).await;
-        let edges = fetch_edges(db).await;
+        let nodes = fetch_nodes(&mut *scope).await;
+        let edges = fetch_edges(&mut *scope).await;
 
         let max_depth = depth.unwrap_or(10);
         let mut visited = HashSet::new();
@@ -514,12 +515,12 @@ impl LineageTracker {
     }
 
     async fn get_downstream(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         node_id: &str,
         depth: Option<i32>,
     ) -> Vec<LineageNode> {
-        let nodes = fetch_nodes(db).await;
-        let edges = fetch_edges(db).await;
+        let nodes = fetch_nodes(&mut *scope).await;
+        let edges = fetch_edges(&mut *scope).await;
 
         let max_depth = depth.unwrap_or(10);
         let mut visited = HashSet::new();
@@ -546,8 +547,11 @@ impl LineageTracker {
         result
     }
 
-    async fn export_graph(db: &sqlx::PgPool, format: &str) -> Result<String, TopemsError> {
-        let graph = Self::get_graph(db).await;
+    async fn export_graph(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+        format: &str,
+    ) -> Result<String, TopemsError> {
+        let graph = Self::get_graph(&mut *scope).await;
 
         match format {
             "dot" => {
@@ -583,7 +587,7 @@ impl LineageTracker {
     }
 
     async fn delete_node(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         node_id: &str,
     ) -> Result<(), TopemsError> {
@@ -591,7 +595,7 @@ impl LineageTracker {
             "SELECT EXISTS (SELECT 1 FROM master_data.mdm_lineage_nodes WHERE id = $1)",
         )
         .bind(node_id)
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await
         .unwrap_or(false);
         if !exists {
@@ -601,7 +605,7 @@ impl LineageTracker {
         sqlx::query("DELETE FROM master_data.mdm_lineage_nodes WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
             .bind(node_id)
             .bind(tenant)
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘节点失败: {e}")))?;
         sqlx::query(
@@ -609,11 +613,11 @@ impl LineageTracker {
         )
         .bind(node_id)
         .bind(tenant)
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘边失败: {e}")))?;
 
-        refresh_graph(db, tenant).await?;
+        refresh_graph(&mut *scope, tenant).await?;
 
         Ok(())
     }
@@ -621,29 +625,32 @@ impl LineageTracker {
 
 // ==================== K1：图谱/节点/边 读取与重算助手 ====================
 
-async fn fetch_nodes(db: &sqlx::PgPool) -> Vec<LineageNode> {
+async fn fetch_nodes(scope: &mut topems_shared_db::scope::ScopedTxn<'_>) -> Vec<LineageNode> {
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map(|rows| rows.iter().map(node_from_row).collect())
     .unwrap_or_default()
 }
 
-async fn fetch_edges(db: &sqlx::PgPool) -> Vec<LineageEdge> {
+async fn fetch_edges(scope: &mut topems_shared_db::scope::ScopedTxn<'_>) -> Vec<LineageEdge> {
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {EDGE_COLS} FROM master_data.mdm_lineage_edges"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map(|rows| rows.iter().map(edge_from_row).collect())
     .unwrap_or_default()
 }
 
-async fn refresh_graph(db: &sqlx::PgPool, tenant: Option<uuid::Uuid>) -> Result<(), TopemsError> {
-    let nodes = fetch_nodes(db).await;
-    let edges = fetch_edges(db).await;
+async fn refresh_graph(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    tenant: Option<uuid::Uuid>,
+) -> Result<(), TopemsError> {
+    let nodes = fetch_nodes(&mut *scope).await;
+    let edges = fetch_edges(&mut *scope).await;
     let now = chrono::Utc::now().to_rfc3339();
     let graph = LineageGraph {
         nodes,
@@ -663,7 +670,7 @@ async fn refresh_graph(db: &sqlx::PgPool, tenant: Option<uuid::Uuid>) -> Result<
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(db)
+    .execute(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新血缘图谱失败: {e}")))?;
     Ok(())
@@ -732,12 +739,12 @@ impl ImpactAnalyzer {
         clippy::cast_possible_wrap
     )]
     async fn analyze(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         req: &ImpactAnalysisRequest,
     ) -> Result<ImpactAnalysisResult, TopemsError> {
-        let nodes = fetch_nodes(db).await;
-        let edges = fetch_edges(db).await;
+        let nodes = fetch_nodes(&mut *scope).await;
+        let edges = fetch_edges(&mut *scope).await;
 
         let target_node = nodes
             .iter()
@@ -842,19 +849,22 @@ impl ImpactAnalyzer {
         .bind(&data)
         .bind(result.analyzed_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入影响分析失败: {e}")))?;
 
         Ok(result)
     }
 
-    async fn get_report(db: &sqlx::PgPool, id: &str) -> Result<ImpactAnalysisResult, TopemsError> {
+    async fn get_report(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+        id: &str,
+    ) -> Result<ImpactAnalysisResult, TopemsError> {
         let row = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ANALYSIS_COLS} FROM master_data.mdm_impact_analyses WHERE id = $1"
         )))
         .bind(id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询影响分析失败: {e}")))?
         .ok_or_else(|| TopemsError::ResourceNotFound("未找到影响分析报告".to_string()))?;
@@ -863,14 +873,14 @@ impl ImpactAnalyzer {
     }
 
     async fn simulate(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
         change_type: ChangeType,
     ) -> Result<ImpactSimulation, TopemsError> {
-        let nodes = fetch_nodes(db).await;
-        let edges = fetch_edges(db).await;
+        let nodes = fetch_nodes(&mut *scope).await;
+        let edges = fetch_edges(&mut *scope).await;
 
         let target = nodes
             .iter()
@@ -938,7 +948,7 @@ impl ImpactAnalyzer {
         .bind(&data)
         .bind(&simulation.simulation_timestamp)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更模拟失败: {e}")))?;
 
@@ -946,12 +956,12 @@ impl ImpactAnalyzer {
     }
 
     async fn get_affected_scope(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         entity_type: String,
         entity_id: String,
     ) -> Result<serde_json::Value, TopemsError> {
-        let nodes = fetch_nodes(db).await;
-        let edges = fetch_edges(db).await;
+        let nodes = fetch_nodes(&mut *scope).await;
+        let edges = fetch_edges(&mut *scope).await;
 
         let target = nodes
             .iter()
@@ -1005,7 +1015,7 @@ struct ChangePropagator;
 
 impl ChangePropagator {
     async fn propagate(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
@@ -1031,7 +1041,7 @@ impl ChangePropagator {
              WHERE source_entity_type = $1"
         )))
         .bind(&entity_type)
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(rule_from_row).collect())
         .unwrap_or_default();
@@ -1066,7 +1076,7 @@ impl ChangePropagator {
         .bind(&event.new_value)
         .bind(event.triggered_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更事件失败: {e}")))?;
 
@@ -1085,7 +1095,7 @@ impl ChangePropagator {
             .bind(&log.status)
             .bind(log.propagated_at.to_rfc3339())
             .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入传播日志失败: {e}")))?;
         }
@@ -1093,18 +1103,18 @@ impl ChangePropagator {
         Ok((event, logs))
     }
 
-    async fn get_rules(db: &sqlx::PgPool) -> Vec<PropagationRule> {
+    async fn get_rules(scope: &mut topems_shared_db::scope::ScopedTxn<'_>) -> Vec<PropagationRule> {
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(rule_from_row).collect())
         .unwrap_or_default()
     }
 
     async fn add_rule(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         source_entity_type: String,
         target_entity_type: String,
@@ -1129,14 +1139,14 @@ impl ChangePropagator {
         .bind(&rule.condition)
         .bind(propagation_action_to_str(&rule.action))
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入传播规则失败: {e}")))?;
         Ok(rule)
     }
 
     async fn get_log(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Vec<PropagationLog> {
@@ -1155,21 +1165,21 @@ impl ChangePropagator {
         for b in &binds {
             q = q.bind(b);
         }
-        q.fetch_all(db)
+        q.fetch_all(&mut *scope)
             .await
             .map(|rows| rows.iter().map(log_from_row).collect())
             .unwrap_or_default()
     }
 
     async fn rollback(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         propagation_id: &str,
     ) -> Result<PropagationLog, TopemsError> {
         let existing = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {LOG_COLS} FROM master_data.mdm_propagation_logs WHERE id = $1"
         )))
         .bind(propagation_id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询传播记录失败: {e}")))?
         .map(|r| log_from_row(&r));
@@ -1186,7 +1196,7 @@ impl ChangePropagator {
         )
         .bind(propagation_id)
         .bind(&rollback_id)
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("回滚传播记录失败: {e}")))?;
 
@@ -1320,14 +1330,26 @@ pub struct RollbackPropagationRequest {
 )]
 pub async fn register_lineage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RegisterLineageRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let edge_type = edge_type_from_str(&req.edge_type);
 
     match LineageTracker::register(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.from_entity_type,
         req.from_entity_id,
@@ -1357,8 +1379,22 @@ pub async fn register_lineage(
     tag = "lineage_v52"
 )]
 
-pub async fn get_lineage_graph(State(state): State<AppState>) -> ApiResponse<LineageGraph> {
-    let graph = LineageTracker::get_graph(&state.db).await;
+pub async fn get_lineage_graph(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<LineageGraph> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let graph = LineageTracker::get_graph(&mut db_scope).await;
     ApiResponse::success(graph, "血缘图谱")
 }
 #[utoipa::path(
@@ -1375,9 +1411,21 @@ pub async fn get_lineage_graph(State(state): State<AppState>) -> ApiResponse<Lin
 
 pub async fn get_upstream(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, id)): Path<(String, String)>,
     Query(params): Query<LineageQuery>,
 ) -> ApiResponse<Vec<LineageNode>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：目标节点从真表查询。
     let target = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
@@ -1385,7 +1433,7 @@ pub async fn get_upstream(
     )))
     .bind(&entity_type)
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .ok()
     .flatten()
@@ -1396,7 +1444,7 @@ pub async fn get_upstream(
         None => return ApiResponse::not_found("未找到实体"),
     };
 
-    let upstream = LineageTracker::get_upstream(&state.db, &target.id, params.depth).await;
+    let upstream = LineageTracker::get_upstream(&mut db_scope, &target.id, params.depth).await;
     ApiResponse::success(upstream, "上游血缘节点")
 }
 #[utoipa::path(
@@ -1413,9 +1461,21 @@ pub async fn get_upstream(
 
 pub async fn get_downstream(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, id)): Path<(String, String)>,
     Query(params): Query<LineageQuery>,
 ) -> ApiResponse<Vec<LineageNode>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：目标节点从真表查询。
     let target = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
@@ -1423,7 +1483,7 @@ pub async fn get_downstream(
     )))
     .bind(&entity_type)
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .ok()
     .flatten()
@@ -1434,7 +1494,7 @@ pub async fn get_downstream(
         None => return ApiResponse::not_found("未找到实体"),
     };
 
-    let downstream = LineageTracker::get_downstream(&state.db, &target.id, params.depth).await;
+    let downstream = LineageTracker::get_downstream(&mut db_scope, &target.id, params.depth).await;
     ApiResponse::success(downstream, "下游血缘节点")
 }
 #[utoipa::path(
@@ -1447,10 +1507,22 @@ pub async fn get_downstream(
 
 pub async fn export_lineage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ExportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let format = params.format.unwrap_or_else(|| "json".to_string());
-    match LineageTracker::export_graph(&state.db, &format).await {
+    match LineageTracker::export_graph(&mut db_scope, &format).await {
         Ok(content) => {
             let content_type = match format.as_str() {
                 "dot" => "text/vnd.graphviz",
@@ -1472,10 +1544,22 @@ pub async fn export_lineage(
 /// 扁平契约 `POST /lineage/export`：与 GET export_lineage 同一导出管线，入参改为 JSON body。
 pub async fn export_lineage_post(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<LineageExportBody>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let format = req.format.unwrap_or_else(|| "json".to_string());
-    match LineageTracker::export_graph(&state.db, &format).await {
+    match LineageTracker::export_graph(&mut db_scope, &format).await {
         Ok(content) => {
             let content_type = match format.as_str() {
                 "dot" => "text/vnd.graphviz",
@@ -1498,7 +1582,7 @@ pub async fn export_lineage_post(
 pub async fn refresh_lineage(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant = tenant_of(&claims);
@@ -1528,7 +1612,7 @@ pub async fn refresh_lineage(
 pub async fn refresh_lineage_by_id(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1578,11 +1662,23 @@ pub async fn refresh_lineage_by_id(
 )]
 pub async fn delete_lineage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DeleteLineageRequest>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
-    match LineageTracker::delete_node(&state.db, tenant, &req.node_id).await {
+    match LineageTracker::delete_node(&mut db_scope, tenant, &req.node_id).await {
         Ok(()) => ApiResponse::success_no_data("血缘节点已删除"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1602,9 +1698,21 @@ pub async fn delete_lineage(
 )]
 pub async fn analyze_impact(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeImpactRequest>,
 ) -> ApiResponse<ImpactAnalysisResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let change_type = change_type_from_str(&req.change_type);
     let analysis_req = ImpactAnalysisRequest {
@@ -1614,7 +1722,7 @@ pub async fn analyze_impact(
         include_chain_reactions: req.include_chain_reactions,
     };
 
-    match ImpactAnalyzer::analyze(&state.db, tenant, &analysis_req).await {
+    match ImpactAnalyzer::analyze(&mut db_scope, tenant, &analysis_req).await {
         Ok(result) => ApiResponse::success(result, "影响分析完成"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1635,9 +1743,21 @@ pub async fn analyze_impact(
 )]
 pub async fn get_impact_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<ImpactAnalysisResult> {
-    match ImpactAnalyzer::get_report(&state.db, &id).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match ImpactAnalyzer::get_report(&mut db_scope, &id).await {
         Ok(report) => ApiResponse::success(report, "影响分析报告"),
         Err(e) => ApiResponse::from(e),
     }
@@ -1655,13 +1775,25 @@ pub async fn get_impact_report(
 )]
 pub async fn simulate_change(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SimulateChangeRequest>,
 ) -> ApiResponse<ImpactSimulation> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.entity_type,
         req.entity_id,
@@ -1686,9 +1818,22 @@ pub async fn simulate_change(
 )]
 pub async fn get_affected_scope(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<AffectedScopeQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    match ImpactAnalyzer::get_affected_scope(&state.db, params.entity_type, params.entity_id).await
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match ImpactAnalyzer::get_affected_scope(&mut db_scope, params.entity_type, params.entity_id)
+        .await
     {
         Ok(scope) => ApiResponse::success(scope, "受影响范围"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
@@ -1709,13 +1854,25 @@ pub async fn get_affected_scope(
 )]
 pub async fn propagate_change(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PropagateChangeRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let change_type = change_type_from_str(&req.change_type);
     match ChangePropagator::propagate(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.entity_type,
         req.entity_id,
@@ -1749,8 +1906,20 @@ pub async fn propagate_change(
 )]
 pub async fn get_propagation_rules(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<PropagationRule>> {
-    let rules = ChangePropagator::get_rules(&state.db).await;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let rules = ChangePropagator::get_rules(&mut db_scope).await;
     ApiResponse::success(rules, "传播规则列表")
 }
 
@@ -1766,13 +1935,25 @@ pub async fn get_propagation_rules(
 )]
 pub async fn add_propagation_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddPropagationRuleRequest>,
 ) -> ApiResponse<PropagationRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let action = propagation_action_from_str(&req.action);
     match ChangePropagator::add_rule(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.source_entity_type,
         req.target_entity_type,
@@ -1804,9 +1985,21 @@ pub async fn add_propagation_rule(
 )]
 pub async fn get_propagation_log(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<PropagationLogQuery>,
 ) -> ApiResponse<PaginatedResponse<PropagationLog>> {
-    let logs = ChangePropagator::get_log(&state.db, params.entity_type, params.entity_id).await;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let logs = ChangePropagator::get_log(&mut db_scope, params.entity_type, params.entity_id).await;
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1842,9 +2035,21 @@ pub async fn get_propagation_log(
 )]
 pub async fn rollback_propagation(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RollbackPropagationRequest>,
 ) -> ApiResponse<PropagationLog> {
-    match ChangePropagator::rollback(&state.db, &req.propagation_id).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match ChangePropagator::rollback(&mut db_scope, &req.propagation_id).await {
         Ok(log) => ApiResponse::success(log, "传播已回滚"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }

@@ -10,6 +10,7 @@ use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Js
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
@@ -129,80 +130,95 @@ fn tagged_entity_from_row(row: &sqlx::postgres::PgRow) -> TaggedEntity {
 const TAGGED_ENTITY_COLS: &str =
     "entity_type, entity_id, tag_ids, confidence, applied_at::timestamptz AS applied_at";
 
-async fn fetch_graph_nodes(db: &sqlx::PgPool) -> Result<Vec<GraphNodeV57>, TopemsError> {
+async fn fetch_graph_nodes(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<GraphNodeV57>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {GRAPH_NODE_COLS} FROM master_data.mdm_graph_nodes ORDER BY id"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询图谱节点失败: {e}")))?;
     Ok(rows.iter().map(graph_node_from_row).collect())
 }
 
-async fn fetch_graph_edges(db: &sqlx::PgPool) -> Result<Vec<GraphEdgeV57>, TopemsError> {
+async fn fetch_graph_edges(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<GraphEdgeV57>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {GRAPH_EDGE_COLS} FROM master_data.mdm_graph_edges"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询图谱边失败: {e}")))?;
     Ok(rows.iter().map(graph_edge_from_row).collect())
 }
 
-async fn fetch_graph_communities(db: &sqlx::PgPool) -> Result<Vec<GraphCommunity>, TopemsError> {
+async fn fetch_graph_communities(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<GraphCommunity>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {GRAPH_COMMUNITY_COLS} FROM master_data.mdm_graph_communities ORDER BY id"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询社区失败: {e}")))?;
     Ok(rows.iter().map(graph_community_from_row).collect())
 }
 
-async fn fetch_search_indexes(db: &sqlx::PgPool) -> Result<Vec<SearchIndex>, TopemsError> {
+async fn fetch_search_indexes(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<SearchIndex>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SEARCH_INDEX_COLS} FROM master_data.mdm_semantic_search_indexes ORDER BY id"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索索引失败: {e}")))?;
     Ok(rows.iter().map(search_index_from_row).collect())
 }
 
-async fn fetch_tags(db: &sqlx::PgPool) -> Result<Vec<Tag>, TopemsError> {
+async fn fetch_tags(scope: &mut topems_shared_db::ScopedTxn<'_>) -> Result<Vec<Tag>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {TAG_COLS} FROM master_data.mdm_tags ORDER BY id"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询标签失败: {e}")))?;
     Ok(rows.iter().map(tag_from_row).collect())
 }
 
-async fn fetch_tag_rules(db: &sqlx::PgPool) -> Result<Vec<TagRule>, TopemsError> {
+async fn fetch_tag_rules(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<TagRule>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {TAG_RULE_COLS} FROM master_data.mdm_tag_rules ORDER BY id"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询标签规则失败: {e}")))?;
     Ok(rows.iter().map(tag_rule_from_row).collect())
 }
 
-async fn fetch_tagged_entities(db: &sqlx::PgPool) -> Result<Vec<TaggedEntity>, TopemsError> {
+async fn fetch_tagged_entities(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+) -> Result<Vec<TaggedEntity>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {TAGGED_ENTITY_COLS} FROM master_data.mdm_tagged_entities"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询实体标签失败: {e}")))?;
     Ok(rows.iter().map(tagged_entity_from_row).collect())
 }
 
-async fn fetch_graph_node_properties(db: &sqlx::PgPool, id: &str) -> serde_json::Value {
+async fn fetch_graph_node_properties(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+    id: &str,
+) -> serde_json::Value {
     let row = sqlx::query("SELECT properties FROM master_data.mdm_graph_nodes WHERE id = $1")
         .bind(id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .ok()
         .flatten();
@@ -252,7 +268,7 @@ struct EnhancedKnowledgeGraph;
 impl EnhancedKnowledgeGraph {
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn add_node(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         mut node: GraphNodeV57,
     ) -> Result<GraphNodeV57, TopemsError> {
@@ -260,7 +276,7 @@ impl EnhancedKnowledgeGraph {
             "SELECT count(*)::bigint AS c FROM master_data.mdm_graph_edges WHERE source_id = $1 OR target_id = $1",
         )
         .bind(&node.id)
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("计算节点度失败: {e}")))?
         .get::<i64, _>("c");
@@ -281,7 +297,7 @@ impl EnhancedKnowledgeGraph {
         .bind(node.degree)
         .bind(&node.community_id)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱节点失败: {e}")))?;
 
@@ -289,7 +305,7 @@ impl EnhancedKnowledgeGraph {
     }
 
     async fn add_edge(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         edge: GraphEdgeV57,
     ) -> Result<GraphEdgeV57, TopemsError> {
@@ -305,18 +321,18 @@ impl EnhancedKnowledgeGraph {
         .bind(edge.weight)
         .bind(edge.confidence)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱边失败: {e}")))?;
 
         sqlx::query("UPDATE master_data.mdm_graph_nodes SET degree = degree + 1 WHERE id = $1")
             .bind(&edge.source_id)
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("更新节点度失败: {e}")))?;
         sqlx::query("UPDATE master_data.mdm_graph_nodes SET degree = degree + 1 WHERE id = $1")
             .bind(&edge.target_id)
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("更新节点度失败: {e}")))?;
 
@@ -324,10 +340,10 @@ impl EnhancedKnowledgeGraph {
     }
 
     async fn get_neighbors(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         node_id: &str,
     ) -> Result<Vec<GraphNodeV57>, TopemsError> {
-        let edges = fetch_graph_edges(db).await?;
+        let edges = fetch_graph_edges(&mut *scope).await?;
         let neighbor_ids: Vec<String> = edges
             .iter()
             .filter(|e| e.source_id == node_id || e.target_id == node_id)
@@ -340,7 +356,7 @@ impl EnhancedKnowledgeGraph {
             })
             .collect();
 
-        let nodes = fetch_graph_nodes(db).await?;
+        let nodes = fetch_graph_nodes(&mut *scope).await?;
         Ok(nodes
             .iter()
             .filter(|n| neighbor_ids.contains(&n.id))
@@ -349,16 +365,16 @@ impl EnhancedKnowledgeGraph {
     }
 
     async fn get_community(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         node_id: &str,
     ) -> Result<Option<GraphCommunity>, TopemsError> {
-        let nodes = fetch_graph_nodes(db).await?;
+        let nodes = fetch_graph_nodes(&mut *scope).await?;
         let node = nodes.iter().find(|n| n.id == node_id);
         let Some(community_id) = node.and_then(|n| n.community_id.clone()) else {
             return Ok(None);
         };
 
-        let communities = fetch_graph_communities(db).await?;
+        let communities = fetch_graph_communities(&mut *scope).await?;
         let matched = communities
             .iter()
             .find(|c| c.id == community_id)
@@ -372,11 +388,11 @@ impl EnhancedKnowledgeGraph {
     }
 
     async fn find_shortest_path(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         from_id: &str,
         to_id: &str,
     ) -> Result<Vec<String>, TopemsError> {
-        let edges = fetch_graph_edges(db).await?;
+        let edges = fetch_graph_edges(&mut *scope).await?;
         let mut adjacency: std::collections::HashMap<String, Vec<String>> =
             std::collections::HashMap::new();
         for edge in edges.iter() {
@@ -423,17 +439,17 @@ impl EnhancedKnowledgeGraph {
     }
 
     async fn get_subgraph(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         node_ids: &[String],
     ) -> Result<(Vec<GraphNodeV57>, Vec<GraphEdgeV57>), TopemsError> {
-        let nodes = fetch_graph_nodes(db).await?;
+        let nodes = fetch_graph_nodes(&mut *scope).await?;
         let sub_nodes: Vec<GraphNodeV57> = nodes
             .iter()
             .filter(|n| node_ids.contains(&n.id))
             .cloned()
             .collect();
 
-        let edges = fetch_graph_edges(db).await?;
+        let edges = fetch_graph_edges(&mut *scope).await?;
         let sub_edges: Vec<GraphEdgeV57> = edges
             .iter()
             .filter(|e| node_ids.contains(&e.source_id) && node_ids.contains(&e.target_id))
@@ -444,11 +460,11 @@ impl EnhancedKnowledgeGraph {
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn detect_communities(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
     ) -> Result<Vec<GraphCommunity>, TopemsError> {
-        let nodes = fetch_graph_nodes(db).await?;
-        let edges = fetch_graph_edges(db).await?;
+        let nodes = fetch_graph_nodes(&mut *scope).await?;
+        let edges = fetch_graph_edges(&mut *scope).await?;
 
         let mut node_community: std::collections::HashMap<String, String> =
             std::collections::HashMap::new();
@@ -500,7 +516,7 @@ impl EnhancedKnowledgeGraph {
             .bind(&community.algorithm)
             .bind(community.modularity)
             .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入社区失败: {e}")))?;
         }
@@ -513,7 +529,7 @@ impl EnhancedKnowledgeGraph {
                 )
                 .bind(&node.id)
                 .bind(format!("community_{cid}"))
-                .execute(db)
+                .execute(&mut *scope)
                 .await
                 .map_err(|e| TopemsError::BusinessLogic(format!("更新节点社区失败: {e}")))?;
             }
@@ -549,7 +565,7 @@ struct SemanticSearchEngine;
 
 impl SemanticSearchEngine {
     async fn index_entity(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
@@ -577,7 +593,7 @@ impl SemanticSearchEngine {
         .bind(&index.text)
         .bind(&index.metadata)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
 
@@ -585,11 +601,11 @@ impl SemanticSearchEngine {
     }
 
     async fn search_semantic(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         query_embeddings: &[f64],
         top_k: usize,
     ) -> Result<Vec<SearchResult>, TopemsError> {
-        let indexes = fetch_search_indexes(db).await?;
+        let indexes = fetch_search_indexes(&mut *scope).await?;
         let mut results: Vec<(SearchIndex, f64)> = indexes
             .iter()
             .map(|idx| {
@@ -614,16 +630,16 @@ impl SemanticSearchEngine {
     }
 
     async fn search_hybrid(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         query: &str,
         top_k: usize,
     ) -> Result<Vec<SearchResult>, TopemsError> {
         let query_embeddings = generate_simulated_embedding(query, "search_query");
-        let semantic_results = Self::search_semantic(db, &query_embeddings, top_k).await?;
+        let semantic_results = Self::search_semantic(&mut *scope, &query_embeddings, top_k).await?;
 
         let keywords: Vec<&str> = query.split_whitespace().collect();
 
-        let indexes = fetch_search_indexes(db).await?;
+        let indexes = fetch_search_indexes(&mut *scope).await?;
         let keyword_matches: Vec<SearchResult> = indexes
             .iter()
             .filter(|idx| {
@@ -657,14 +673,16 @@ impl SemanticSearchEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn reindex_all(db: &sqlx::PgPool) -> Result<i64, TopemsError> {
-        let indexes = fetch_search_indexes(db).await?;
+    async fn reindex_all(scope: &mut topems_shared_db::ScopedTxn<'_>) -> Result<i64, TopemsError> {
+        let indexes = fetch_search_indexes(&mut *scope).await?;
         Ok(indexes.len() as i64)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn get_search_stats(db: &sqlx::PgPool) -> Result<serde_json::Value, TopemsError> {
-        let indexes = fetch_search_indexes(db).await?;
+    async fn get_search_stats(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<serde_json::Value, TopemsError> {
+        let indexes = fetch_search_indexes(&mut *scope).await?;
         let total = indexes.len() as i64;
         let entity_types: Vec<String> = indexes
             .iter()
@@ -674,7 +692,7 @@ impl SemanticSearchEngine {
             .collect();
         let queries_count: i64 =
             sqlx::query("SELECT count(*)::bigint AS c FROM master_data.mdm_search_history")
-                .fetch_one(db)
+                .fetch_one(&mut *scope)
                 .await
                 .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索历史失败: {e}")))?
                 .get::<i64, _>("c");
@@ -686,18 +704,23 @@ impl SemanticSearchEngine {
         }))
     }
 
-    async fn remove_from_index(db: &sqlx::PgPool, index_id: &str) -> Result<bool, TopemsError> {
+    async fn remove_from_index(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+        index_id: &str,
+    ) -> Result<bool, TopemsError> {
         let res = sqlx::query("DELETE FROM master_data.mdm_semantic_search_indexes WHERE id = $1")
             .bind(index_id)
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("删除搜索索引失败: {e}")))?;
         Ok(res.rows_affected() > 0)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn get_index_size(db: &sqlx::PgPool) -> Result<i64, TopemsError> {
-        let indexes = fetch_search_indexes(db).await?;
+    async fn get_index_size(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<i64, TopemsError> {
+        let indexes = fetch_search_indexes(&mut *scope).await?;
         Ok(indexes.len() as i64)
     }
 }
@@ -738,7 +761,7 @@ struct SmartTagger;
 
 impl SmartTagger {
     async fn create_tag(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         mut tag: Tag,
     ) -> Result<Tag, TopemsError> {
@@ -753,7 +776,7 @@ impl SmartTagger {
         .bind(&tag.description)
         .bind(tag.usage_count)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入标签失败: {e}")))?;
 
@@ -761,14 +784,14 @@ impl SmartTagger {
     }
 
     async fn apply_tag(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
         tag_id: String,
     ) -> Result<TaggedEntity, TopemsError> {
         let now = chrono::Utc::now();
-        let tagged = fetch_tagged_entities(db).await?;
+        let tagged = fetch_tagged_entities(&mut *scope).await?;
         let mut tag_ids: Vec<String> = tagged
             .iter()
             .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
@@ -790,13 +813,13 @@ impl SmartTagger {
         .bind(1.0)
         .bind(now.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
 
         sqlx::query("UPDATE master_data.mdm_tags SET usage_count = usage_count + 1 WHERE id = $1")
             .bind(&tag_id)
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("更新标签计数失败: {e}")))?;
 
@@ -810,13 +833,13 @@ impl SmartTagger {
     }
 
     async fn auto_tag(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         entity_type: &str,
         entity_id: &str,
         data: &serde_json::Value,
     ) -> Result<Vec<String>, TopemsError> {
-        let rules = fetch_tag_rules(db).await?;
+        let rules = fetch_tag_rules(&mut *scope).await?;
         let auto_rules: Vec<TagRule> = rules.iter().filter(|r| r.auto_apply).cloned().collect();
 
         let mut applied_tags: Vec<String> = Vec::new();
@@ -828,7 +851,7 @@ impl SmartTagger {
 
         if !applied_tags.is_empty() {
             let now = chrono::Utc::now().to_rfc3339();
-            let tagged = fetch_tagged_entities(db).await?;
+            let tagged = fetch_tagged_entities(&mut *scope).await?;
             let mut tag_ids: Vec<String> = tagged
                 .iter()
                 .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
@@ -852,7 +875,7 @@ impl SmartTagger {
             .bind(0.9)
             .bind(&now)
             .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
 
@@ -861,7 +884,7 @@ impl SmartTagger {
                     "UPDATE master_data.mdm_tags SET usage_count = usage_count + 1 WHERE id = $1",
                 )
                 .bind(tag_id)
-                .execute(db)
+                .execute(&mut *scope)
                 .await
                 .map_err(|e| TopemsError::BusinessLogic(format!("更新标签计数失败: {e}")))?;
             }
@@ -871,18 +894,18 @@ impl SmartTagger {
     }
 
     async fn get_tags_for_entity(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         entity_type: &str,
         entity_id: &str,
     ) -> Result<Vec<Tag>, TopemsError> {
-        let tagged = fetch_tagged_entities(db).await?;
+        let tagged = fetch_tagged_entities(&mut *scope).await?;
         let entity_tags: Vec<String> = tagged
             .iter()
             .filter(|t| t.entity_type == entity_type && t.entity_id == entity_id)
             .flat_map(|t| t.tag_ids.clone())
             .collect();
 
-        let tags = fetch_tags(db).await?;
+        let tags = fetch_tags(&mut *scope).await?;
         Ok(tags
             .iter()
             .filter(|t| entity_tags.contains(&t.id))
@@ -891,10 +914,10 @@ impl SmartTagger {
     }
 
     async fn get_entities_by_tag(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tag_id: &str,
     ) -> Result<Vec<TaggedEntity>, TopemsError> {
-        let tagged = fetch_tagged_entities(db).await?;
+        let tagged = fetch_tagged_entities(&mut *scope).await?;
         Ok(tagged
             .iter()
             .filter(|t| t.tag_ids.contains(&tag_id.to_string()))
@@ -903,12 +926,12 @@ impl SmartTagger {
     }
 
     async fn remove_tag(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         entity_type: &str,
         entity_id: &str,
         tag_id: &str,
     ) -> Result<bool, TopemsError> {
-        let tagged = fetch_tagged_entities(db).await?;
+        let tagged = fetch_tagged_entities(&mut *scope).await?;
         let Some(entity) = tagged
             .iter()
             .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
@@ -934,15 +957,18 @@ impl SmartTagger {
         .bind(serde_json::to_value(&new_tag_ids).unwrap_or_default())
         .bind(entity.confidence)
         .bind(chrono::Utc::now().to_rfc3339())
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("移除实体标签失败: {e}")))?;
 
         Ok(true)
     }
 
-    async fn list_tags(db: &sqlx::PgPool, category: Option<&str>) -> Result<Vec<Tag>, TopemsError> {
-        let tags = fetch_tags(db).await?;
+    async fn list_tags(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+        category: Option<&str>,
+    ) -> Result<Vec<Tag>, TopemsError> {
+        let tags = fetch_tags(&mut *scope).await?;
         Ok(match category {
             Some(cat) => tags.iter().filter(|t| t.category == cat).cloned().collect(),
             None => tags,
@@ -950,9 +976,11 @@ impl SmartTagger {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn get_tag_stats(db: &sqlx::PgPool) -> Result<serde_json::Value, TopemsError> {
-        let tags = fetch_tags(db).await?;
-        let tagged = fetch_tagged_entities(db).await?;
+    async fn get_tag_stats(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+    ) -> Result<serde_json::Value, TopemsError> {
+        let tags = fetch_tags(&mut *scope).await?;
+        let tagged = fetch_tagged_entities(&mut *scope).await?;
 
         let total_tags = tags.len() as i64;
         let total_entities = tagged.len() as i64;
@@ -979,12 +1007,12 @@ impl SmartTagger {
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn suggest_tags(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         entity_type: &str,
         data: &serde_json::Value,
     ) -> Result<Vec<Tag>, TopemsError> {
-        let tags = fetch_tags(db).await?;
-        let rules = fetch_tag_rules(db).await?;
+        let tags = fetch_tags(&mut *scope).await?;
+        let rules = fetch_tag_rules(&mut *scope).await?;
 
         let mut scored_tags: Vec<(Tag, f64)> = Vec::new();
         for tag in tags.iter() {
@@ -1206,9 +1234,21 @@ pub struct SuggestQuery {
 )]
 pub async fn add_graph_node(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddGraphNodeRequest>,
 ) -> ApiResponse<GraphNodeV57> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let id = req.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let embeddings = generate_simulated_embedding(&req.label, &req.node_type);
@@ -1223,7 +1263,7 @@ pub async fn add_graph_node(
         community_id: None,
     };
 
-    let result = db_exec!(EnhancedKnowledgeGraph::add_node(&state.db, tenant, node).await);
+    let result = db_exec!(EnhancedKnowledgeGraph::add_node(&mut db_scope, tenant, node).await);
     ApiResponse::success(result, "图谱节点已创建")
 }
 
@@ -1239,9 +1279,21 @@ pub async fn add_graph_node(
 )]
 pub async fn add_graph_edge(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddGraphEdgeRequest>,
 ) -> ApiResponse<GraphEdgeV57> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let edge = GraphEdgeV57 {
         source_id: req.source_id,
@@ -1251,7 +1303,7 @@ pub async fn add_graph_edge(
         confidence: req.confidence.unwrap_or(1.0),
     };
 
-    let result = db_exec!(EnhancedKnowledgeGraph::add_edge(&state.db, tenant, edge).await);
+    let result = db_exec!(EnhancedKnowledgeGraph::add_edge(&mut db_scope, tenant, edge).await);
     ApiResponse::success(result, "图谱边已创建")
 }
 
@@ -1270,9 +1322,21 @@ pub async fn add_graph_edge(
 )]
 pub async fn get_neighbors(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<GraphNodeV57>> {
-    let neighbors = db_exec!(EnhancedKnowledgeGraph::get_neighbors(&state.db, &id).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let neighbors = db_exec!(EnhancedKnowledgeGraph::get_neighbors(&mut db_scope, &id).await);
     ApiResponse::success(neighbors, "邻居节点列表")
 }
 
@@ -1291,9 +1355,21 @@ pub async fn get_neighbors(
 )]
 pub async fn get_community(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    match db_exec!(EnhancedKnowledgeGraph::get_community(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match db_exec!(EnhancedKnowledgeGraph::get_community(&mut db_scope, &id).await) {
         Some(community) => ApiResponse::success(serde_json::json!(community), "社区信息"),
         None => ApiResponse::not_found("未找到社区信息"),
     }
@@ -1312,10 +1388,22 @@ pub async fn get_community(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn find_shortest_path_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<FindPathRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let path = db_exec!(
-        EnhancedKnowledgeGraph::find_shortest_path(&state.db, &req.from_id, &req.to_id).await
+        EnhancedKnowledgeGraph::find_shortest_path(&mut db_scope, &req.from_id, &req.to_id).await
     );
 
     if path.is_empty() {
@@ -1342,8 +1430,20 @@ pub async fn find_shortest_path_handler(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_subgraph(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SubgraphQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let node_ids: Vec<String> = params
         .node_ids
         .unwrap_or_else(String::new)
@@ -1356,7 +1456,8 @@ pub async fn get_subgraph(
         return ApiResponse::bad_request("请提供 node_ids 参数");
     }
 
-    let (nodes, edges) = db_exec!(EnhancedKnowledgeGraph::get_subgraph(&state.db, &node_ids).await);
+    let (nodes, edges) =
+        db_exec!(EnhancedKnowledgeGraph::get_subgraph(&mut db_scope, &node_ids).await);
 
     ApiResponse::success(
         serde_json::json!({
@@ -1381,10 +1482,23 @@ pub async fn get_subgraph(
 )]
 pub async fn detect_communities_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<GraphCommunity>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
-    let communities = db_exec!(EnhancedKnowledgeGraph::detect_communities(&state.db, tenant).await);
+    let communities =
+        db_exec!(EnhancedKnowledgeGraph::detect_communities(&mut db_scope, tenant).await);
     ApiResponse::success(communities, "社区检测完成")
 }
 
@@ -1402,14 +1516,26 @@ pub async fn detect_communities_handler(
 )]
 pub async fn index_entity(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<IndexEntityRequest>,
 ) -> ApiResponse<SearchIndex> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({}));
     let result = db_exec!(
         SemanticSearchEngine::index_entity(
-            &state.db,
+            &mut db_scope,
             tenant,
             req.entity_type,
             req.entity_id,
@@ -1435,14 +1561,27 @@ pub async fn index_entity(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_semantic_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SemanticSearchRequest>,
 ) -> ApiResponse<Vec<SearchResult>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let top_k = req.top_k.unwrap_or(10);
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
-    let results =
-        db_exec!(SemanticSearchEngine::search_semantic(&state.db, &query_embeddings, top_k).await);
+    let results = db_exec!(
+        SemanticSearchEngine::search_semantic(&mut db_scope, &query_embeddings, top_k).await
+    );
 
     // 写搜索历史真表
     let history_id = uuid::Uuid::new_v4().to_string();
@@ -1455,9 +1594,11 @@ pub async fn search_semantic_handler(
     .bind(results.len() as i64)
     .bind(chrono::Utc::now().to_rfc3339())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::from(TopemsError::internal("写入搜索历史失败", e));
     }
 
@@ -1477,12 +1618,25 @@ pub async fn search_semantic_handler(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_hybrid_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<HybridSearchRequest>,
 ) -> ApiResponse<Vec<SearchResult>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let top_k = req.top_k.unwrap_or(10);
-    let results = db_exec!(SemanticSearchEngine::search_hybrid(&state.db, &req.query, top_k).await);
+    let results =
+        db_exec!(SemanticSearchEngine::search_hybrid(&mut db_scope, &req.query, top_k).await);
 
     // 写搜索历史真表
     let history_id = uuid::Uuid::new_v4().to_string();
@@ -1495,9 +1649,11 @@ pub async fn search_hybrid_handler(
     .bind(results.len() as i64)
     .bind(chrono::Utc::now().to_rfc3339())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::from(TopemsError::internal("写入搜索历史失败", e));
     }
 
@@ -1516,9 +1672,21 @@ pub async fn search_hybrid_handler(
 )]
 pub async fn reindex_all(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(_req): Json<ReindexRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let count = db_exec!(SemanticSearchEngine::reindex_all(&state.db).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let count = db_exec!(SemanticSearchEngine::reindex_all(&mut db_scope).await);
 
     ApiResponse::success(
         serde_json::json!({
@@ -1539,8 +1707,22 @@ pub async fn reindex_all(
     ),
     tag = "semantic_v57"
 )]
-pub async fn get_search_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let stats = db_exec!(SemanticSearchEngine::get_search_stats(&state.db).await);
+pub async fn get_search_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let stats = db_exec!(SemanticSearchEngine::get_search_stats(&mut db_scope).await);
     ApiResponse::success(stats, "搜索统计")
 }
 
@@ -1559,9 +1741,21 @@ pub async fn get_search_stats(State(state): State<AppState>) -> ApiResponse<serd
 )]
 pub async fn remove_from_index(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let removed = db_exec!(SemanticSearchEngine::remove_from_index(&state.db, &id).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let removed = db_exec!(SemanticSearchEngine::remove_from_index(&mut db_scope, &id).await);
 
     if removed {
         ApiResponse::success(
@@ -1587,9 +1781,21 @@ pub async fn remove_from_index(
 )]
 pub async fn create_tag(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTagRequest>,
 ) -> ApiResponse<Tag> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let tag = Tag {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1600,7 +1806,7 @@ pub async fn create_tag(
         usage_count: 0,
     };
 
-    let result = db_exec!(SmartTagger::create_tag(&state.db, tenant, tag).await);
+    let result = db_exec!(SmartTagger::create_tag(&mut db_scope, tenant, tag).await);
     ApiResponse::success(result, "标签已创建")
 }
 
@@ -1616,13 +1822,25 @@ pub async fn create_tag(
 )]
 pub async fn apply_tag(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApplyTagRequest>,
 ) -> ApiResponse<TaggedEntity> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let result = db_exec!(
         SmartTagger::apply_tag(
-            &state.db,
+            &mut db_scope,
             tenant,
             req.entity_type,
             req.entity_id,
@@ -1647,13 +1865,25 @@ pub async fn apply_tag(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn auto_tag(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AutoTagRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let applied = db_exec!(
         SmartTagger::auto_tag(
-            &state.db,
+            &mut db_scope,
             tenant,
             &req.entity_type,
             &req.entity_id,
@@ -1689,10 +1919,22 @@ pub async fn auto_tag(
 )]
 pub async fn get_tags_for_entity(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> ApiResponse<Vec<Tag>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tags =
-        db_exec!(SmartTagger::get_tags_for_entity(&state.db, &entity_type, &entity_id).await);
+        db_exec!(SmartTagger::get_tags_for_entity(&mut db_scope, &entity_type, &entity_id).await);
     ApiResponse::success(tags, "实体标签列表")
 }
 
@@ -1711,9 +1953,21 @@ pub async fn get_tags_for_entity(
 )]
 pub async fn get_entities_by_tag(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(tag): Path<String>,
 ) -> ApiResponse<Vec<TaggedEntity>> {
-    let entities = db_exec!(SmartTagger::get_entities_by_tag(&state.db, &tag).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let entities = db_exec!(SmartTagger::get_entities_by_tag(&mut db_scope, &tag).await);
     ApiResponse::success(entities, "标签实体列表")
 }
 
@@ -1732,10 +1986,22 @@ pub async fn get_entities_by_tag(
 )]
 pub async fn remove_tag_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RemoveTagRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let removed = db_exec!(
-        SmartTagger::remove_tag(&state.db, &req.entity_type, &req.entity_id, &req.tag_id).await
+        SmartTagger::remove_tag(&mut db_scope, &req.entity_type, &req.entity_id, &req.tag_id).await
     );
 
     if removed {
@@ -1765,14 +2031,40 @@ pub async fn remove_tag_handler(
 )]
 pub async fn list_tags(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListTagsQuery>,
 ) -> ApiResponse<Vec<Tag>> {
-    let tags = db_exec!(SmartTagger::list_tags(&state.db, params.category.as_deref()).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let tags = db_exec!(SmartTagger::list_tags(&mut db_scope, params.category.as_deref()).await);
     ApiResponse::success(tags, "标签列表")
 }
 
-pub async fn get_tag_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let stats = db_exec!(SmartTagger::get_tag_stats(&state.db).await);
+pub async fn get_tag_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let stats = db_exec!(SmartTagger::get_tag_stats(&mut db_scope).await);
     ApiResponse::success(stats, "标签统计")
 }
 
@@ -1788,10 +2080,22 @@ pub async fn get_tag_stats(State(state): State<AppState>) -> ApiResponse<serde_j
 )]
 pub async fn suggest_tags(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SuggestQuery>,
 ) -> ApiResponse<Vec<Tag>> {
-    let data = fetch_graph_node_properties(&state.db, &params.id).await;
-    let tags = db_exec!(SmartTagger::suggest_tags(&state.db, &params.entity_type, &data).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let data = fetch_graph_node_properties(&mut db_scope, &params.id).await;
+    let tags = db_exec!(SmartTagger::suggest_tags(&mut db_scope, &params.entity_type, &data).await);
     ApiResponse::success(tags, "推荐标签")
 }
 

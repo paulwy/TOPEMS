@@ -8,9 +8,9 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Extension, Json};
 use serde::Deserialize;
-use sqlx::PgPool;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -91,7 +91,7 @@ struct GovernanceAIEngine;
 
 impl GovernanceAIEngine {
     async fn generate_suggestions(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         entity_type: &str,
         entity_id: &str,
@@ -159,25 +159,27 @@ impl GovernanceAIEngine {
             .bind(&sg.action)
             .bind(sg.created_at.to_rfc3339())
             .bind(tenant_id)
-            .execute(db)
+            .execute(&mut *scope)
             .await?;
         }
 
         Ok(suggestions)
     }
 
-    async fn get_suggestions(db: &PgPool) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
+    async fn get_suggestions(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at
              FROM master_data.mdm_ai_suggestions ORDER BY created_at DESC",
         )
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows.iter().map(ai_suggestion_from_row).collect())
     }
 
     async fn get_suggestion_by_entity(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         entity_type: &str,
         entity_id: &str,
     ) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
@@ -188,13 +190,13 @@ impl GovernanceAIEngine {
         )
         .bind(entity_type)
         .bind(entity_id)
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows.iter().map(ai_suggestion_from_row).collect())
     }
 
     async fn apply_suggestion(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
         let row = sqlx::query(
@@ -202,36 +204,38 @@ impl GovernanceAIEngine {
              FROM master_data.mdm_ai_suggestions WHERE id = $1",
         )
         .bind(id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await?;
         Ok(row.map(|r| ai_suggestion_from_row(&r)))
     }
 
     async fn dismiss_suggestion(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<Uuid>,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
         let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at")
             .bind(id)
             .bind(tenant)
-            .fetch_optional(db)
+            .fetch_optional(&mut *scope)
             .await?;
         Ok(row.map(|r| ai_suggestion_from_row(&r)))
     }
 
-    async fn get_models(db: &PgPool) -> Result<Vec<GovernanceModel>, TopemsError> {
+    async fn get_models(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<Vec<GovernanceModel>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, name, version, domain, accuracy, last_trained, features
              FROM master_data.mdm_ai_models ORDER BY name",
         )
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows.iter().map(ai_model_from_row).collect())
     }
 
     async fn train_model(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<Uuid>,
         model_id: &str,
     ) -> Result<Option<GovernanceModel>, TopemsError> {
@@ -245,7 +249,7 @@ impl GovernanceAIEngine {
         .bind(chrono::Utc::now().to_rfc3339())
         .bind(model_id)
         .bind(tenant)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await?;
         Ok(row.map(|r| ai_model_from_row(&r)))
     }
@@ -308,7 +312,7 @@ struct IntelligentMatcher;
 
 impl IntelligentMatcher {
     async fn create_match_rule(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         name: String,
         rule_type: MatchRuleType,
@@ -326,23 +330,25 @@ impl IntelligentMatcher {
         .bind(&field_config)
         .bind(threshold)
         .bind(tenant_id)
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await?;
         Ok(match_rule_from_row(&row))
     }
 
-    async fn get_match_rules(db: &PgPool) -> Result<Vec<MatchRule>, TopemsError> {
+    async fn get_match_rules(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<Vec<MatchRule>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, name, rule_type, field_config, threshold, enabled
              FROM master_data.mdm_match_rules ORDER BY name",
         )
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows.iter().map(match_rule_from_row).collect())
     }
 
     async fn match_entities(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         source_id: &str,
         target_id: &str,
@@ -352,7 +358,7 @@ impl IntelligentMatcher {
             "SELECT id, name, rule_type, field_config, threshold, enabled
              FROM master_data.mdm_match_rules WHERE enabled = TRUE ORDER BY name",
         )
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         let now = chrono::Utc::now();
         let mut results = Vec::new();
@@ -408,25 +414,27 @@ impl IntelligentMatcher {
             .bind(match_status_str(&mr.status))
             .bind(mr.matched_at.to_rfc3339())
             .bind(tenant_id)
-            .execute(db)
+            .execute(&mut *scope)
             .await?;
         }
 
         Ok(results)
     }
 
-    async fn get_match_results(db: &PgPool) -> Result<Vec<MatchResult>, TopemsError> {
+    async fn get_match_results(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<Vec<MatchResult>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, source_id, target_id, match_score, match_type, confidence, status, matched_at::timestamptz AS matched_at
              FROM master_data.mdm_match_results ORDER BY matched_at DESC",
         )
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows.iter().map(match_result_from_row).collect())
     }
 
     async fn manual_review(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<Uuid>,
         id: &str,
         status: MatchStatus,
@@ -440,25 +448,25 @@ impl IntelligentMatcher {
         .bind(match_status_str(&status))
         .bind(id)
         .bind(tenant)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await?;
         Ok(row.map(|r| match_result_from_row(&r)))
     }
 
     async fn confirm_match(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<Uuid>,
         id: &str,
     ) -> Result<Option<MatchResult>, TopemsError> {
-        Self::manual_review(db, tenant, id, MatchStatus::Confirmed).await
+        Self::manual_review(&mut *scope, tenant, id, MatchStatus::Confirmed).await
     }
 
     async fn reject_match(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<Uuid>,
         id: &str,
     ) -> Result<Option<MatchResult>, TopemsError> {
-        Self::manual_review(db, tenant, id, MatchStatus::Rejected).await
+        Self::manual_review(&mut *scope, tenant, id, MatchStatus::Rejected).await
     }
 
     #[allow(
@@ -467,9 +475,11 @@ impl IntelligentMatcher {
         clippy::cast_sign_loss,
         clippy::cast_possible_truncation
     )]
-    async fn get_match_stats(db: &PgPool) -> Result<MatchStats, TopemsError> {
+    async fn get_match_stats(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<MatchStats, TopemsError> {
         let rules_row = sqlx::query("SELECT COUNT(*) AS n FROM master_data.mdm_match_rules")
-            .fetch_one(db)
+            .fetch_one(&mut *scope)
             .await?;
         let results_row = sqlx::query(
             "SELECT
@@ -480,7 +490,7 @@ impl IntelligentMatcher {
                 COALESCE(AVG(match_score), 0.0) AS avg_score
              FROM master_data.mdm_match_results",
         )
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await?;
         Ok(MatchStats {
             total_rules: rules_row.get::<i64, _>("n") as usize,
@@ -546,7 +556,7 @@ struct AutoClassifier;
 
 impl AutoClassifier {
     async fn create_classifier(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         name: String,
         entity_type: String,
@@ -564,17 +574,19 @@ impl AutoClassifier {
         .bind(serde_json::to_value(&categories).unwrap_or_default())
         .bind(classification_algo_str(&algorithm))
         .bind(tenant_id)
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await?;
         Ok(classification_model_from_row(&row))
     }
 
-    async fn get_classifiers(db: &PgPool) -> Result<Vec<ClassificationModel>, TopemsError> {
+    async fn get_classifiers(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<Vec<ClassificationModel>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, name, entity_type, categories, algorithm, accuracy, status
              FROM master_data.mdm_classification_models ORDER BY name",
         )
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         Ok(rows.iter().map(classification_model_from_row).collect())
     }
@@ -647,7 +659,7 @@ impl AutoClassifier {
     }
 
     async fn get_classification(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         entity_id: &str,
     ) -> Result<Option<ClassificationResult>, TopemsError> {
         let row = sqlx::query(
@@ -655,20 +667,20 @@ impl AutoClassifier {
              FROM master_data.mdm_classification_results WHERE entity_id = $1 LIMIT 1",
         )
         .bind(entity_id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await?;
         Ok(row.map(|r| classification_result_from_row(&r)))
     }
 
     async fn get_entity_categories(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         entity_type: &str,
     ) -> Result<Vec<String>, TopemsError> {
         let rows = sqlx::query(
             "SELECT categories FROM master_data.mdm_classification_models WHERE entity_type = $1",
         )
         .bind(entity_type)
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await?;
         let mut categories = Vec::new();
         for r in &rows {
@@ -684,7 +696,7 @@ impl AutoClassifier {
     }
 
     async fn review_classification(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant: Option<Uuid>,
         id: &str,
         approved: bool,
@@ -701,7 +713,7 @@ impl AutoClassifier {
         .bind(approved)
         .bind(id)
         .bind(tenant)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await?;
         Ok(row.map(|r| classification_result_from_row(&r)))
     }
@@ -712,10 +724,12 @@ impl AutoClassifier {
         clippy::cast_sign_loss,
         clippy::cast_possible_truncation
     )]
-    async fn get_classification_stats(db: &PgPool) -> Result<ClassificationStats, TopemsError> {
+    async fn get_classification_stats(
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    ) -> Result<ClassificationStats, TopemsError> {
         let models_row =
             sqlx::query("SELECT COUNT(*) AS n FROM master_data.mdm_classification_models")
-                .fetch_one(db)
+                .fetch_one(&mut *scope)
                 .await?;
         let results_row = sqlx::query(
             "SELECT
@@ -723,11 +737,11 @@ impl AutoClassifier {
                 COALESCE(AVG(confidence), 0.0) AS avg_confidence
              FROM master_data.mdm_classification_results",
         )
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await?;
         let types_rows =
             sqlx::query("SELECT DISTINCT entity_type FROM master_data.mdm_classification_models")
-                .fetch_all(db)
+                .fetch_all(&mut *scope)
                 .await?;
         let entity_types: Vec<String> = types_rows
             .iter()
@@ -742,7 +756,7 @@ impl AutoClassifier {
     }
 
     async fn update_rules(
-        db: &PgPool,
+        scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
         tenant_id: Uuid,
         rules: Vec<serde_json::Value>,
     ) -> Result<Vec<serde_json::Value>, TopemsError> {
@@ -755,7 +769,7 @@ impl AutoClassifier {
         )
         .bind(&value)
         .bind(tenant_id)
-        .fetch_one(db)
+        .fetch_one(&mut *scope)
         .await?;
         Ok(row
             .get::<serde_json::Value, _>("rules")
@@ -938,12 +952,24 @@ pub struct UpdateRulesRequest {
 )]
 pub async fn analyze(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
 ) -> ApiResponse<Vec<GovernanceSuggestionV59>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let suggestions = db_exec!(
         GovernanceAIEngine::generate_suggestions(
-            &state.db,
+            &mut db_scope,
             req_tenant_uuid(&claims),
             &req.entity_type,
             &req.entity_id
@@ -962,14 +988,26 @@ pub async fn analyze(
 
 pub async fn get_suggestions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<GetSuggestionsQuery>,
 ) -> ApiResponse<Vec<GovernanceSuggestionV59>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     if let (Some(et), Some(eid)) = (&params.entity_type, &params.entity_id) {
         let suggestions =
-            db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&state.db, et, eid).await);
+            db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&mut db_scope, et, eid).await);
         ApiResponse::success(suggestions, "实体治理建议")
     } else {
-        let suggestions = db_exec!(GovernanceAIEngine::get_suggestions(&state.db).await);
+        let suggestions = db_exec!(GovernanceAIEngine::get_suggestions(&mut db_scope).await);
         ApiResponse::success(suggestions, "治理建议列表")
     }
 }
@@ -989,10 +1027,22 @@ pub async fn get_suggestions(
 )]
 pub async fn get_entity_suggestions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<GovernanceSuggestionV59>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let suggestions =
-        db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&state.db, "unknown", &id).await);
+        db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&mut db_scope, "unknown", &id).await);
     ApiResponse::success(suggestions, "实体治理建议")
 }
 
@@ -1011,9 +1061,21 @@ pub async fn get_entity_suggestions(
 )]
 pub async fn apply_suggestion(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<GovernanceSuggestionV59> {
-    match db_exec!(GovernanceAIEngine::apply_suggestion(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match db_exec!(GovernanceAIEngine::apply_suggestion(&mut db_scope, &id).await) {
         Some(s) => ApiResponse::success(s, "建议已应用"),
         None => ApiResponse::not_found("未找到建议"),
     }
@@ -1034,11 +1096,23 @@ pub async fn apply_suggestion(
 )]
 pub async fn dismiss_suggestion(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
-    match db_exec!(GovernanceAIEngine::dismiss_suggestion(&state.db, tenant, &id).await) {
+    match db_exec!(GovernanceAIEngine::dismiss_suggestion(&mut db_scope, tenant, &id).await) {
         Some(_) => ApiResponse::success((), "建议已忽略"),
         None => ApiResponse::success((), "建议已忽略"),
     }
@@ -1054,8 +1128,22 @@ pub async fn dismiss_suggestion(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_models(State(state): State<AppState>) -> ApiResponse<Vec<GovernanceModel>> {
-    let models = db_exec!(GovernanceAIEngine::get_models(&state.db).await);
+pub async fn get_models(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<GovernanceModel>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let models = db_exec!(GovernanceAIEngine::get_models(&mut db_scope).await);
     ApiResponse::success(models, "治理模型列表")
 }
 
@@ -1074,11 +1162,23 @@ pub async fn get_models(State(state): State<AppState>) -> ApiResponse<Vec<Govern
 )]
 pub async fn train_model(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<GovernanceModel> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
-    match db_exec!(GovernanceAIEngine::train_model(&state.db, tenant, &id).await) {
+    match db_exec!(GovernanceAIEngine::train_model(&mut db_scope, tenant, &id).await) {
         Some(m) => ApiResponse::success(m, "模型训练完成"),
         None => ApiResponse::not_found("未找到模型"),
     }
@@ -1098,9 +1198,21 @@ pub async fn train_model(
 )]
 pub async fn create_match_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMatchRuleRequest>,
 ) -> ApiResponse<MatchRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let rule_type = match parse_match_rule_type(&req.rule_type) {
         Some(r) => r,
         None => return ApiResponse::bad_request("无效的匹配规则类型"),
@@ -1110,7 +1222,7 @@ pub async fn create_match_rule(
 
     let rule = db_exec!(
         IntelligentMatcher::create_match_rule(
-            &state.db,
+            &mut db_scope,
             req_tenant_uuid(&claims),
             req.name,
             rule_type,
@@ -1132,8 +1244,22 @@ pub async fn create_match_rule(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_match_rules(State(state): State<AppState>) -> ApiResponse<Vec<MatchRule>> {
-    let rules = db_exec!(IntelligentMatcher::get_match_rules(&state.db).await);
+pub async fn get_match_rules(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<MatchRule>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let rules = db_exec!(IntelligentMatcher::get_match_rules(&mut db_scope).await);
     ApiResponse::success(rules, "匹配规则列表")
 }
 
@@ -1149,13 +1275,25 @@ pub async fn get_match_rules(State(state): State<AppState>) -> ApiResponse<Vec<M
 )]
 pub async fn match_entities(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<MatchEntitiesRequest>,
 ) -> ApiResponse<Vec<MatchResult>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let entity_type = req.entity_type.as_deref().unwrap_or("unknown");
     let results = db_exec!(
         IntelligentMatcher::match_entities(
-            &state.db,
+            &mut db_scope,
             req_tenant_uuid(&claims),
             &req.source_id,
             &req.target_id,
@@ -1176,8 +1314,22 @@ pub async fn match_entities(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_match_results(State(state): State<AppState>) -> ApiResponse<Vec<MatchResult>> {
-    let results = db_exec!(IntelligentMatcher::get_match_results(&state.db).await);
+pub async fn get_match_results(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<MatchResult>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let results = db_exec!(IntelligentMatcher::get_match_results(&mut db_scope).await);
     ApiResponse::success(results, "匹配结果列表")
 }
 
@@ -1196,17 +1348,29 @@ pub async fn get_match_results(State(state): State<AppState>) -> ApiResponse<Vec
 )]
 pub async fn review_match(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReviewMatchRequest>,
 ) -> ApiResponse<MatchResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let status = match parse_match_status(&req.action) {
         Some(s) => s,
         None => return ApiResponse::bad_request("无效的审核操作"),
     };
 
-    match db_exec!(IntelligentMatcher::manual_review(&state.db, tenant, &id, status).await) {
+    match db_exec!(IntelligentMatcher::manual_review(&mut db_scope, tenant, &id, status).await) {
         Some(r) => ApiResponse::success(r, "匹配审核完成"),
         None => ApiResponse::not_found("未找到匹配结果"),
     }
@@ -1227,11 +1391,23 @@ pub async fn review_match(
 )]
 pub async fn confirm_match(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<MatchResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
-    match db_exec!(IntelligentMatcher::confirm_match(&state.db, tenant, &id).await) {
+    match db_exec!(IntelligentMatcher::confirm_match(&mut db_scope, tenant, &id).await) {
         Some(r) => ApiResponse::success(r, "匹配已确认"),
         None => ApiResponse::not_found("未找到匹配结果"),
     }
@@ -1252,11 +1428,23 @@ pub async fn confirm_match(
 )]
 pub async fn reject_match(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<MatchResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
-    match db_exec!(IntelligentMatcher::reject_match(&state.db, tenant, &id).await) {
+    match db_exec!(IntelligentMatcher::reject_match(&mut db_scope, tenant, &id).await) {
         Some(r) => ApiResponse::success(r, "匹配已拒绝"),
         None => ApiResponse::not_found("未找到匹配结果"),
     }
@@ -1272,8 +1460,22 @@ pub async fn reject_match(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_match_stats(State(state): State<AppState>) -> ApiResponse<MatchStats> {
-    let stats = db_exec!(IntelligentMatcher::get_match_stats(&state.db).await);
+pub async fn get_match_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<MatchStats> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let stats = db_exec!(IntelligentMatcher::get_match_stats(&mut db_scope).await);
     ApiResponse::success(stats, "匹配统计")
 }
 
@@ -1291,9 +1493,21 @@ pub async fn get_match_stats(State(state): State<AppState>) -> ApiResponse<Match
 )]
 pub async fn create_classifier(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateClassifierRequest>,
 ) -> ApiResponse<ClassificationModel> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let algorithm = req
         .algorithm
         .as_deref()
@@ -1302,7 +1516,7 @@ pub async fn create_classifier(
 
     let model = db_exec!(
         AutoClassifier::create_classifier(
-            &state.db,
+            &mut db_scope,
             req_tenant_uuid(&claims),
             req.name,
             req.entity_type,
@@ -1326,8 +1540,20 @@ pub async fn create_classifier(
 )]
 pub async fn get_classifiers(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ClassificationModel>> {
-    let models = db_exec!(AutoClassifier::get_classifiers(&state.db).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let models = db_exec!(AutoClassifier::get_classifiers(&mut db_scope).await);
     ApiResponse::success(models, "分类器列表")
 }
 
@@ -1348,7 +1574,7 @@ pub async fn get_classifiers(
 pub async fn classify_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((entity_type, id)): Path<(String, String)>,
 ) -> ApiResponse<ClassificationResult> {
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
@@ -1387,9 +1613,21 @@ pub async fn classify_entity(
 )]
 pub async fn get_classification(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((_entity_type, id)): Path<(String, String)>,
 ) -> ApiResponse<ClassificationResult> {
-    match db_exec!(AutoClassifier::get_classification(&state.db, &id).await) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match db_exec!(AutoClassifier::get_classification(&mut db_scope, &id).await) {
         Some(r) => ApiResponse::success(r, "分类结果"),
         None => ApiResponse::not_found("未找到分类结果"),
     }
@@ -1410,9 +1648,22 @@ pub async fn get_classification(
 )]
 pub async fn get_entity_categories(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(entity_type): Path<String>,
 ) -> ApiResponse<Vec<String>> {
-    let categories = db_exec!(AutoClassifier::get_entity_categories(&state.db, &entity_type).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let categories =
+        db_exec!(AutoClassifier::get_entity_categories(&mut db_scope, &entity_type).await);
     ApiResponse::success(categories, "实体分类列表")
 }
 
@@ -1431,14 +1682,26 @@ pub async fn get_entity_categories(
 )]
 pub async fn review_classification(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReviewClassificationRequest>,
 ) -> ApiResponse<ClassificationResult> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     match db_exec!(
         AutoClassifier::review_classification(
-            &state.db,
+            &mut db_scope,
             tenant,
             &id,
             req.approved,
@@ -1463,8 +1726,20 @@ pub async fn review_classification(
 )]
 pub async fn get_classification_stats(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ClassificationStats> {
-    let stats = db_exec!(AutoClassifier::get_classification_stats(&state.db).await);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let stats = db_exec!(AutoClassifier::get_classification_stats(&mut db_scope).await);
     ApiResponse::success(stats, "分类统计")
 }
 
@@ -1483,13 +1758,25 @@ pub async fn get_classification_stats(
 )]
 pub async fn update_classifier_rules(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateRulesRequest>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let _ = id;
     let rules = db_exec!(
-        AutoClassifier::update_rules(&state.db, req_tenant_uuid(&claims), req.rules).await
+        AutoClassifier::update_rules(&mut db_scope, req_tenant_uuid(&claims), req.rules).await
     );
     ApiResponse::success(rules, "分类规则已更新")
 }
@@ -1594,66 +1881,78 @@ fn classification_result_from_row(r: &sqlx::postgres::PgRow) -> ClassificationRe
     }
 }
 
-async fn fetch_ai_suggestions(db: &PgPool) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
+async fn fetch_ai_suggestions(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AI_SUGGESTION_COLS} FROM master_data.mdm_ai_suggestions"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await?;
     Ok(rows.iter().map(ai_suggestion_from_row).collect())
 }
 
-async fn fetch_ai_models(db: &PgPool) -> Result<Vec<GovernanceModel>, TopemsError> {
+async fn fetch_ai_models(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<Vec<GovernanceModel>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AI_MODEL_COLS} FROM master_data.mdm_ai_models"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await?;
     Ok(rows.iter().map(ai_model_from_row).collect())
 }
 
-async fn fetch_match_rules(db: &PgPool) -> Result<Vec<MatchRule>, TopemsError> {
+async fn fetch_match_rules(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<Vec<MatchRule>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {MATCH_RULE_COLS} FROM master_data.mdm_match_rules"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await?;
     Ok(rows.iter().map(match_rule_from_row).collect())
 }
 
-async fn fetch_match_results(db: &PgPool) -> Result<Vec<MatchResult>, TopemsError> {
+async fn fetch_match_results(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<Vec<MatchResult>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {MATCH_RESULT_COLS} FROM master_data.mdm_match_results"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await?;
     Ok(rows.iter().map(match_result_from_row).collect())
 }
 
-async fn fetch_classification_models(db: &PgPool) -> Result<Vec<ClassificationModel>, TopemsError> {
+async fn fetch_classification_models(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<Vec<ClassificationModel>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CLASSIFICATION_MODEL_COLS} FROM master_data.mdm_classification_models"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await?;
     Ok(rows.iter().map(classification_model_from_row).collect())
 }
 
 async fn fetch_classification_results(
-    db: &PgPool,
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
 ) -> Result<Vec<ClassificationResult>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CLASSIFICATION_RESULT_COLS} FROM master_data.mdm_classification_results"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await?;
     Ok(rows.iter().map(classification_result_from_row).collect())
 }
 
-async fn fetch_classifier_rules(db: &PgPool) -> Result<Vec<serde_json::Value>, TopemsError> {
+async fn fetch_classifier_rules(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+) -> Result<Vec<serde_json::Value>, TopemsError> {
     let row =
         sqlx::query("SELECT rules FROM master_data.mdm_classifier_rules WHERE id = 'default'")
-            .fetch_optional(db)
+            .fetch_optional(&mut *scope)
             .await?;
     Ok(row
         .and_then(|r| r.get::<serde_json::Value, _>("rules").as_array().cloned())

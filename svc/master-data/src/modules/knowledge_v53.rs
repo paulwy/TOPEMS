@@ -13,6 +13,7 @@ use serde::Deserialize;
 use sqlx::Row;
 use std::collections::{HashMap, HashSet};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -354,31 +355,31 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
 
 // ==================== K1：真表读取与图谱重算助手 ====================
 
-async fn fetch_kg_nodes(db: &sqlx::PgPool) -> Vec<KGNode> {
+async fn fetch_kg_nodes(scope: &mut topems_shared_db::ScopedTxn<'_>) -> Vec<KGNode> {
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {KG_NODE_COLS} FROM master_data.mdm_kg_nodes"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map(|rows| rows.iter().map(kg_node_from_row).collect())
     .unwrap_or_default()
 }
 
-async fn fetch_kg_edges(db: &sqlx::PgPool) -> Vec<KGEdge> {
+async fn fetch_kg_edges(scope: &mut topems_shared_db::ScopedTxn<'_>) -> Vec<KGEdge> {
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {KG_EDGE_COLS} FROM master_data.mdm_kg_edges"
     )))
-    .fetch_all(db)
+    .fetch_all(&mut *scope)
     .await
     .map(|rows| rows.iter().map(kg_edge_from_row).collect())
     .unwrap_or_default()
 }
 
-async fn fetch_kg_graph(db: &sqlx::PgPool) -> Option<KnowledgeGraph> {
+async fn fetch_kg_graph(scope: &mut topems_shared_db::ScopedTxn<'_>) -> Option<KnowledgeGraph> {
     sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {KG_GRAPH_COLS} FROM master_data.mdm_kg_graphs ORDER BY id LIMIT 1"
     )))
-    .fetch_optional(db)
+    .fetch_optional(&mut *scope)
     .await
     .ok()
     .flatten()
@@ -386,11 +387,11 @@ async fn fetch_kg_graph(db: &sqlx::PgPool) -> Option<KnowledgeGraph> {
 }
 
 async fn refresh_kg_graph(
-    db: &sqlx::PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     tenant: Option<uuid::Uuid>,
 ) -> Result<(), TopemsError> {
-    let nodes = fetch_kg_nodes(db).await;
-    let edges = fetch_kg_edges(db).await;
+    let nodes = fetch_kg_nodes(&mut *scope).await;
+    let edges = fetch_kg_edges(&mut *scope).await;
     let now = chrono::Utc::now().to_rfc3339();
     let graph = KnowledgeGraph {
         nodes,
@@ -410,7 +411,7 @@ async fn refresh_kg_graph(
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(db)
+    .execute(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新知识图谱失败: {e}")))?;
     Ok(())
@@ -435,7 +436,7 @@ struct KnowledgeGraphEngine;
 
 impl KnowledgeGraphEngine {
     async fn add_node(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         label: String,
         node_type: KGNodeType,
@@ -461,17 +462,17 @@ impl KnowledgeGraphEngine {
         .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
         .bind(node.created_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱节点失败: {e}")))?;
 
-        refresh_kg_graph(db, tenant).await?;
+        refresh_kg_graph(&mut *scope, tenant).await?;
 
         Ok(node)
     }
 
     async fn add_edge(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         source_id: String,
         target_id: String,
@@ -479,7 +480,7 @@ impl KnowledgeGraphEngine {
         weight: Option<f64>,
         confidence: Option<f64>,
     ) -> Result<KGEdge, TopemsError> {
-        let nodes = fetch_kg_nodes(db).await;
+        let nodes = fetch_kg_nodes(&mut *scope).await;
         if !nodes.iter().any(|n| n.id == source_id) {
             return Err(TopemsError::ResourceNotFound(format!(
                 "源节点不存在: {}",
@@ -512,22 +513,22 @@ impl KnowledgeGraphEngine {
         .bind(edge.weight)
         .bind(edge.confidence)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱边失败: {e}")))?;
 
-        refresh_kg_graph(db, tenant).await?;
+        refresh_kg_graph(&mut *scope, tenant).await?;
 
         Ok(edge)
     }
 
     async fn get_subgraph(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         node_id: &str,
         depth: Option<i32>,
     ) -> Result<KnowledgeGraph, TopemsError> {
-        let nodes = fetch_kg_nodes(db).await;
-        let edges = fetch_kg_edges(db).await;
+        let nodes = fetch_kg_nodes(&mut *scope).await;
+        let edges = fetch_kg_edges(&mut *scope).await;
 
         let max_depth = depth.unwrap_or(3);
         let mut visited = HashSet::new();
@@ -571,12 +572,12 @@ impl KnowledgeGraphEngine {
     }
 
     async fn find_path(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         start_id: &str,
         end_id: &str,
     ) -> Result<Vec<KGEdge>, TopemsError> {
-        let nodes = fetch_kg_nodes(db).await;
-        let edges = fetch_kg_edges(db).await;
+        let nodes = fetch_kg_nodes(&mut *scope).await;
+        let edges = fetch_kg_edges(&mut *scope).await;
 
         if !nodes.iter().any(|n| n.id == start_id) {
             return Err(TopemsError::ResourceNotFound(format!(
@@ -623,11 +624,11 @@ impl KnowledgeGraphEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_similar(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         node_id: &str,
         limit: Option<i32>,
     ) -> Result<Vec<KGNode>, TopemsError> {
-        let nodes = fetch_kg_nodes(db).await;
+        let nodes = fetch_kg_nodes(&mut *scope).await;
         let target = nodes
             .iter()
             .find(|n| n.id == node_id)
@@ -665,8 +666,11 @@ impl KnowledgeGraphEngine {
         Ok(result)
     }
 
-    async fn export_graph(db: &sqlx::PgPool, format: &str) -> Result<String, TopemsError> {
-        let graph = fetch_kg_graph(db).await;
+    async fn export_graph(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+        format: &str,
+    ) -> Result<String, TopemsError> {
+        let graph = fetch_kg_graph(&mut *scope).await;
         let graph = match graph {
             Some(g) if !g.nodes.is_empty() || !g.edges.is_empty() => g,
             _ => return Err(TopemsError::BusinessLogic("没有可用的知识图谱".to_string())),
@@ -713,7 +717,7 @@ impl RecommendationEngine {
         clippy::cast_sign_loss
     )]
     async fn get_recommendations(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         user_id: &str,
         target_id: Option<String>,
@@ -724,14 +728,14 @@ impl RecommendationEngine {
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions WHERE user_id = $1"
         )))
         .bind(user_id)
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
         .unwrap_or_default();
         let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_from_row).collect())
         .unwrap_or_default();
@@ -841,7 +845,7 @@ impl RecommendationEngine {
             .bind(&rec.reason)
             .bind(recommendation_source_to_str(&rec.source))
             .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-            .execute(db)
+            .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入推荐记录失败: {e}")))?;
         }
@@ -850,7 +854,7 @@ impl RecommendationEngine {
     }
 
     async fn record_interaction(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         user_id: String,
         item_id: String,
@@ -874,7 +878,7 @@ impl RecommendationEngine {
         .bind(&record.interaction_type)
         .bind(&record.timestamp)
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入交互记录失败: {e}")))?;
         Ok(record)
@@ -882,14 +886,14 @@ impl RecommendationEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_similar_items(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         item_id: &str,
         limit: Option<i32>,
     ) -> Result<Vec<DataAsset>, TopemsError> {
         let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_from_row).collect())
         .unwrap_or_default();
@@ -926,18 +930,21 @@ impl RecommendationEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_popular_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
+    async fn get_popular_items(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+        limit: Option<i32>,
+    ) -> Vec<DataAsset> {
         let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_from_row).collect())
         .unwrap_or_default();
         let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
         .unwrap_or_default();
@@ -969,18 +976,21 @@ impl RecommendationEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_trending_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
+    async fn get_trending_items(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+        limit: Option<i32>,
+    ) -> Vec<DataAsset> {
         let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_from_row).collect())
         .unwrap_or_default();
         let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
         .unwrap_or_default();
@@ -1028,7 +1038,7 @@ struct AssetCatalogManager;
 
 impl AssetCatalogManager {
     async fn register_asset(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         name: String,
         asset_type: AssetType,
@@ -1068,12 +1078,12 @@ impl AssetCatalogManager {
         .bind(&asset.access_level)
         .bind(asset.updated_at.to_rfc3339())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据资产失败: {e}")))?;
 
         // 搜索索引同步落真表。
-        upsert_search_index(db, tenant, &asset, &description, &domain, &tags).await?;
+        upsert_search_index(&mut *scope, tenant, &asset, &description, &domain, &tags).await?;
 
         Ok(asset)
     }
@@ -1085,7 +1095,7 @@ impl AssetCatalogManager {
         clippy::cast_sign_loss
     )]
     async fn search_assets(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         query: Option<String>,
         asset_type: Option<AssetType>,
         domain: Option<String>,
@@ -1096,7 +1106,7 @@ impl AssetCatalogManager {
         let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_from_row).collect())
         .unwrap_or_default();
@@ -1137,12 +1147,15 @@ impl AssetCatalogManager {
         (items, total)
     }
 
-    async fn get_asset(db: &sqlx::PgPool, id: &str) -> Result<DataAsset, TopemsError> {
+    async fn get_asset(
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
+        id: &str,
+    ) -> Result<DataAsset, TopemsError> {
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets WHERE id = $1"
         )))
         .bind(id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询数据资产失败: {e}")))?
         .map(|r| asset_from_row(&r))
@@ -1150,7 +1163,7 @@ impl AssetCatalogManager {
     }
 
     async fn update_asset(
-        db: &sqlx::PgPool,
+        scope: &mut topems_shared_db::ScopedTxn<'_>,
         tenant: Option<uuid::Uuid>,
         id: &str,
         name: Option<String>,
@@ -1163,7 +1176,7 @@ impl AssetCatalogManager {
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets WHERE id = $1"
         )))
         .bind(id)
-        .fetch_optional(db)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询数据资产失败: {e}")))?
         .map(|r| asset_from_row(&r))
@@ -1201,13 +1214,13 @@ impl AssetCatalogManager {
         .bind(&asset.access_level)
         .bind(asset.updated_at.to_rfc3339())
         .bind(tenant)
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新数据资产失败: {e}")))?;
 
         // 搜索索引同步刷新。
         upsert_search_index(
-            db,
+            &mut *scope,
             tenant,
             &asset,
             &asset.description,
@@ -1219,11 +1232,11 @@ impl AssetCatalogManager {
         Ok(asset)
     }
 
-    async fn list_categories(db: &sqlx::PgPool) -> Vec<AssetCategory> {
+    async fn list_categories(scope: &mut topems_shared_db::ScopedTxn<'_>) -> Vec<AssetCategory> {
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_CATEGORY_COLS} FROM master_data.mdm_data_asset_categories"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_category_from_row).collect())
         .unwrap_or_default()
@@ -1234,11 +1247,11 @@ impl AssetCatalogManager {
         clippy::cast_possible_wrap,
         clippy::cast_precision_loss
     )]
-    async fn get_asset_stats(db: &sqlx::PgPool) -> AssetStats {
+    async fn get_asset_stats(scope: &mut topems_shared_db::ScopedTxn<'_>) -> AssetStats {
         let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
         )))
-        .fetch_all(db)
+        .fetch_all(&mut *scope)
         .await
         .map(|rows| rows.iter().map(asset_from_row).collect())
         .unwrap_or_default();
@@ -1281,7 +1294,7 @@ impl AssetCatalogManager {
 // ==================== K1：搜索索引同步助手 ====================
 
 async fn upsert_search_index(
-    db: &sqlx::PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     tenant: Option<uuid::Uuid>,
     asset: &DataAsset,
     description: &str,
@@ -1305,7 +1318,7 @@ async fn upsert_search_index(
         let existing: Vec<String> =
             sqlx::query("SELECT value FROM master_data.mdm_search_indexes WHERE key = $1")
                 .bind(&key)
-                .fetch_optional(db)
+                .fetch_optional(&mut *scope)
                 .await
                 .ok()
                 .flatten()
@@ -1325,7 +1338,7 @@ async fn upsert_search_index(
         .bind(&key)
         .bind(serde_json::to_value(&merged).unwrap_or_default())
         .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .execute(db)
+        .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
     }
@@ -1443,14 +1456,26 @@ pub struct UpdateAssetRequest {
 )]
 pub async fn add_kg_node(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddKGNodeRequest>,
 ) -> ApiResponse<KGNode> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let node_type = node_type_from_str(&req.node_type);
     let props = req.properties.unwrap_or_else(|| serde_json::json!({}));
 
-    match KnowledgeGraphEngine::add_node(&state.db, tenant, req.label, node_type, props).await {
+    match KnowledgeGraphEngine::add_node(&mut db_scope, tenant, req.label, node_type, props).await {
         Ok(node) => ApiResponse::success(node, "知识图谱节点已添加"),
         Err(e) => ApiResponse::server_error(&e.classify().1),
     }
@@ -1468,13 +1493,25 @@ pub async fn add_kg_node(
 )]
 pub async fn add_kg_edge(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddKGEdgeRequest>,
 ) -> ApiResponse<KGEdge> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let relation_type = relation_type_from_str(&req.relation_type);
     match KnowledgeGraphEngine::add_edge(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.source_id,
         req.target_id,
@@ -1501,10 +1538,22 @@ pub async fn add_kg_edge(
 
 pub async fn get_subgraph(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(node_id): Path<String>,
     Query(params): Query<SubgraphQuery>,
 ) -> ApiResponse<KnowledgeGraph> {
-    match KnowledgeGraphEngine::get_subgraph(&state.db, &node_id, params.depth).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match KnowledgeGraphEngine::get_subgraph(&mut db_scope, &node_id, params.depth).await {
         Ok(graph) => ApiResponse::success(graph, "子图谱"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1522,9 +1571,21 @@ pub async fn get_subgraph(
 )]
 pub async fn find_path(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<PathQuery>,
 ) -> ApiResponse<Vec<KGEdge>> {
-    match KnowledgeGraphEngine::find_path(&state.db, &params.start_id, &params.end_id).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match KnowledgeGraphEngine::find_path(&mut db_scope, &params.start_id, &params.end_id).await {
         Ok(path) => ApiResponse::success(path, "路径查找成功"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1545,10 +1606,22 @@ pub async fn find_path(
 )]
 pub async fn get_similar(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(node_id): Path<String>,
     Query(params): Query<SimilarQuery>,
 ) -> ApiResponse<Vec<KGNode>> {
-    match KnowledgeGraphEngine::get_similar(&state.db, &node_id, params.limit).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match KnowledgeGraphEngine::get_similar(&mut db_scope, &node_id, params.limit).await {
         Ok(nodes) => ApiResponse::success(nodes, "相似节点"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1566,10 +1639,22 @@ pub async fn get_similar(
 )]
 pub async fn export_kg(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ExportKGQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let format = params.format.unwrap_or_else(|| "json".to_string());
-    match KnowledgeGraphEngine::export_graph(&state.db, &format).await {
+    match KnowledgeGraphEngine::export_graph(&mut db_scope, &format).await {
         Ok(content) => {
             let content_type = match format.as_str() {
                 "dot" => "text/vnd.graphviz",
@@ -1605,13 +1690,25 @@ pub async fn export_kg(
 )]
 pub async fn get_recommendations(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Query(params): Query<RecommendationQuery>,
 ) -> ApiResponse<Vec<Recommendation>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     match RecommendationEngine::get_recommendations(
-        &state.db,
+        &mut db_scope,
         tenant,
         &user_id,
         params.target_id,
@@ -1636,13 +1733,25 @@ pub async fn get_recommendations(
 )]
 pub async fn record_interaction(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RecordInteractionRequest>,
 ) -> ApiResponse<InteractionRecord> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let interaction_type = req.interaction_type.unwrap_or_else(|| "view".to_string());
     match RecommendationEngine::record_interaction(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.user_id,
         req.item_id,
@@ -1670,10 +1779,22 @@ pub async fn record_interaction(
 )]
 pub async fn get_similar_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(item_id): Path<String>,
     Query(params): Query<SimilarItemsQuery>,
 ) -> ApiResponse<Vec<DataAsset>> {
-    match RecommendationEngine::get_similar_items(&state.db, &item_id, params.limit).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match RecommendationEngine::get_similar_items(&mut db_scope, &item_id, params.limit).await {
         Ok(items) => ApiResponse::success(items, "相似资产"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1691,9 +1812,21 @@ pub async fn get_similar_items(
 )]
 pub async fn get_trending_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<TrendingQuery>,
 ) -> ApiResponse<Vec<DataAsset>> {
-    let items = RecommendationEngine::get_trending_items(&state.db, params.limit).await;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let items = RecommendationEngine::get_trending_items(&mut db_scope, params.limit).await;
     ApiResponse::success(items, "趋势资产")
 }
 
@@ -1711,15 +1844,27 @@ pub async fn get_trending_items(
 )]
 pub async fn register_asset(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RegisterAssetRequest>,
 ) -> ApiResponse<DataAsset> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let asset_type = asset_type_from_str(&req.asset_type);
     let tags = req.tags.unwrap_or_default();
 
     match AssetCatalogManager::register_asset(
-        &state.db,
+        &mut db_scope,
         tenant,
         req.name,
         asset_type,
@@ -1747,8 +1892,20 @@ pub async fn register_asset(
 )]
 pub async fn search_assets(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SearchAssetsQuery>,
 ) -> ApiResponse<PaginatedResponse<DataAsset>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let asset_type = params.asset_type.as_ref().map(|t| asset_type_from_str(t));
     let tags = params
         .tags
@@ -1756,7 +1913,7 @@ pub async fn search_assets(
         .map(|t| t.split(',').map(|s| s.trim().to_string()).collect());
 
     let (items, total) = AssetCatalogManager::search_assets(
-        &state.db,
+        &mut db_scope,
         params.q,
         asset_type,
         params.domain,
@@ -1796,9 +1953,21 @@ pub async fn search_assets(
 )]
 pub async fn get_asset(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<DataAsset> {
-    match AssetCatalogManager::get_asset(&state.db, &id).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    match AssetCatalogManager::get_asset(&mut db_scope, &id).await {
         Ok(asset) => ApiResponse::success(asset, "资产详情"),
         Err(e) => ApiResponse::from(e),
     }
@@ -1819,13 +1988,25 @@ pub async fn get_asset(
 )]
 pub async fn update_asset(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateAssetRequest>,
 ) -> ApiResponse<DataAsset> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     match AssetCatalogManager::update_asset(
-        &state.db,
+        &mut db_scope,
         tenant,
         &id,
         req.name,
@@ -1851,8 +2032,22 @@ pub async fn update_asset(
     ),
     tag = "knowledge_v53"
 )]
-pub async fn list_categories(State(state): State<AppState>) -> ApiResponse<Vec<AssetCategory>> {
-    let categories = AssetCatalogManager::list_categories(&state.db).await;
+pub async fn list_categories(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<AssetCategory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let categories = AssetCatalogManager::list_categories(&mut db_scope).await;
     ApiResponse::success(categories, "资产分类列表")
 }
 
@@ -1866,8 +2061,22 @@ pub async fn list_categories(State(state): State<AppState>) -> ApiResponse<Vec<A
     ),
     tag = "knowledge_v53"
 )]
-pub async fn get_asset_stats(State(state): State<AppState>) -> ApiResponse<AssetStats> {
-    let stats = AssetCatalogManager::get_asset_stats(&state.db).await;
+pub async fn get_asset_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<AssetStats> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+    let stats = AssetCatalogManager::get_asset_stats(&mut db_scope).await;
     ApiResponse::success(stats, "资产统计")
 }
 
