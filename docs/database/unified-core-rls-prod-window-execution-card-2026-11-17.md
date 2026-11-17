@@ -3,7 +3,7 @@
 > 性质：**执行卡（可照着做）。本文档编写期间未执行任何生产动作**——不停服、不跑迁移、不换二进制、不重启、零写入；仅做过只读查询核对（`public.tenants` 表名、两库行数与策略读数）。
 > 对应 runbook：[unified-core-rls-prod-window-runbook-2026-11-17.md](./unified-core-rls-prod-window-runbook-2026-11-17.md)。冲突时以 runbook 为准并先修卡。
 > 目标库：`topems_prod`（127.0.0.1:5432）；服务：launchd `com.topems.server`，端口 **8099**。
-> 时间占位：`{{T0}}` = 计划停服时刻；T-60 / T0 / T0+… 均相对 T0。**具体时间待用户确认后填入第 1 节表格，执行人不得自行选时间。**
+> 时间（已确认）：`{{T0}}` = **2026-11-17 22:00（Asia/Shanghai）**；T-60 / T0 / T0+… 均相对 T0。T-60 准备段已于 2026-11-17 16:43 提前执行并留档。
 
 ## 0. 执行前提与角色
 
@@ -12,24 +12,24 @@
 | 授权 | 用户书面确认窗口时间与「可执行生产动作」；未确认前本卡只读 |
 | 执行人 | 1 人操作 + 1 人复核（复核人逐项核对预期读数并签字） |
 | 终端 | 全部命令在 `cd /Users/xingzhai/topems` 下执行 |
-| 留档目录 | `backups/uc-rls-window-{{T0}}/`（第 9 节清单） |
+| 留档目录 | `backups/uc-rls-window-20261117-2200/`（第 9 节清单） |
 | 总闸 | 任一「中止判据」命中 → 立即停手，按第 8 节判定「回滚到哪一格」 |
 | 禁止 | 手工补跑剩余 SQL、跳过任何校验、执行 `20261117180000`、未经允许 `push`/改代码 |
 
-## 1. 时间轴（时间待填）
+## 1. 时间轴（T0 = 2026-11-17 22:00 Asia/Shanghai）
 
 | 时点 | 动作 | 实际时刻 | 执行人 | 复核 |
 |---|---|---|---|---|
-| T-1440 | 窗口前 1 天：跑 §2 前置全量检查，结果留档 | 待填 | | |
-| T-60 | 本卡 §2：备份 + 快照 + 前置复检 + 二进制准备复核 | 待填 | | |
-| T-10 | 最终确认：前置全绿、备份 sha256 已落盘、新二进制 sha256 已记录 | 待填 | | |
-| T0 | §3 停服，记录停服时刻 | 待填 | | |
-| T0+1min | §4 迁移 #1 → #3 → #4 → #5 → #6 + 记账 | 待填 | | |
-| T0+2min | §5 二进制替换 | 待填 | | |
-| T0+3min | §6 起服 + 健康检查 | 待填 | | |
-| T0+5min | §6.3 窗口内验收（SQL + 端点 + 六档抽查） | 待填 | | |
-| T0+10min | §7 观察与收尾，签署执行记录 | 待填 | | |
-| T0+15min | 未触发回滚 → 窗口关闭；触发 → 走 §8 | 待填 | | |
+| T-1440 | 窗口前 1 天：跑 §2 前置全量检查，结果留档 | 未单独跑（由 T-60 提前段覆盖） | | |
+| T-60 | 本卡 §2：备份 + 快照 + 前置复检 + 二进制准备复核 | 2026-11-17 16:43 起（提前执行） | | |
+| T-10 | 最终确认：前置全绿、备份 sha256 已落盘、新二进制 sha256 已记录 | 2026-11-17 21:50 | | |
+| T0 | §3 停服，记录停服时刻 | 2026-11-17 22:00 | | |
+| T0+1min | §4 迁移 #1 → #3 → #4 → #5 → #6 + 记账 | 2026-11-17 22:01 | | |
+| T0+2min | §5 二进制替换 | 2026-11-17 22:02 | | |
+| T0+3min | §6 起服 + 健康检查 | 2026-11-17 22:03 | | |
+| T0+5min | §6.3 窗口内验收（SQL + 端点 + 六档抽查） | 2026-11-17 22:05 | | |
+| T0+10min | §7 观察与收尾，签署执行记录 | 2026-11-17 22:10 | | |
+| T0+15min | 未触发回滚 → 窗口关闭；触发 → 走 §8 | 2026-11-17 22:15 | | |
 
 预计纯停机 60–90 秒，预留 15 分钟处置余量；建议业务低峰（22:00–24:00）。
 
@@ -39,7 +39,7 @@
 
 ```bash
 cd /Users/xingzhai/topems
-TS={{T0:YYYYMMDD-HHMM}}                 # 待填，与 T0 同分钟
+TS=20261117-2200                       # 窗口标识（T0 = 2026-11-17 22:00）
 ARCH="backups/uc-rls-window-$TS"
 mkdir -p "$ARCH"
 date '+%Y-%m-%d %H:%M:%S %Z' | tee "$ARCH/window-start.txt"
@@ -108,7 +108,7 @@ git merge-base --is-ancestor 59e2d7965 HEAD && echo 59e2d7965-ok
 git merge-base --is-ancestor 2c914763e HEAD && echo 2c914763e-ok
 git merge-base --is-ancestor 3bb52aeb1 HEAD && echo 3bb52aeb1-ok
 git merge-base --is-ancestor 43eb4726d HEAD && echo 43eb4726d-ok
-git merge-base --is-ancestor 1669a30aa6 HEAD && echo 1669a30aa6-ok
+git merge-base --is-ancestor 1669a30aa HEAD && echo 1669a30aa-ok
 git status --short    # 必须为空（生产不基于脏树构建）
 ```
 
@@ -506,21 +506,19 @@ curl -s -o /dev/null -w 'ai-models %{http_code}\n'     "$BASE/api/ai/models"
 
 预期：全部 200；flow 列表 0 条（不得 500 / permission denied）；`dict` 非空（验证 `ec4aff8e8` 生效）；`ai/models` 4 条；`global-stats` 与 §2.3 记录的停服前基线逐字段一致。
 
-六档抽查（**只读**，必须用非超管应用角色；先只读取两个真实租户 ID）：
+六档抽查（**只读**，必须用非超管应用角色）。租户取值（T-60 已确认）：`TENANT_A = 00000000-0000-0000-0000-000000000001`（「默认租户」，`public.core_tenants` 唯一真实租户；`public.tenants` 为空）；`TENANT_B = ffffffff-ffff-4fff-8fff-ffffffffffff`（**不存在的合成 UUID**，仅作越权对照，生产无第二真实租户）。
 
 ```bash
-psql -d topems_prod -X -A -t -c "select id from public.tenants order by id limit 2;" | tee "$ARCH/tenants-sample.txt"
-# 将输出填入 {{TENANT_A}} / {{TENANT_B}}，然后逐档执行（每档新会话）
 P="select (select count(*) from flow.core_comments)||'/'||(select count(*) from flow.core_favorites)||'/'||(select count(*) from public.core_dict_types)||'/'||(select count(*) from public.core_dict_items);"
 PGOPTIONS="-c app.rls_system=off"                                       psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"   # 未设
 PGOPTIONS="-c app.tenant_id='' -c app.rls_system=off"                   psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"   # 空串
 PGOPTIONS="-c app.tenant_id=00000000-0000-0000-0000-000000000000 -c app.rls_system=off" psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"  # 全零
-PGOPTIONS="-c app.tenant_id={{TENANT_A}} -c app.rls_system=off"        psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"   # A
-PGOPTIONS="-c app.tenant_id={{TENANT_B}} -c app.rls_system=off"        psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"   # B
-PGOPTIONS="-c app.tenant_id={{TENANT_A}} -c app.rls_system=on"         psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"   # A+system
+PGOPTIONS="-c app.tenant_id=00000000-0000-0000-0000-000000000001 -c app.rls_system=off" psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"  # A
+PGOPTIONS="-c app.tenant_id=ffffffff-ffff-4fff-8fff-ffffffffffff -c app.rls_system=off" psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"  # B
+PGOPTIONS="-c app.tenant_id=00000000-0000-0000-0000-000000000001 -c app.rls_system=on"  psql "postgres://topems_prod@localhost:5432/topems_prod" -X -A -t -c "$P"  # A+system
 ```
 
-预期（comments/favorites/字典类型/字典项）：未设 `0/0/0/0`；空串 `0/0/0/0`；全零 `0/0/77/397`；A `0/0/<A 租户字典行>/<A 租户字典项>`；B 同理；A+system `0/0/77/397`（A/B 无平台语料时）。读数留档 `$ARCH/six-context.txt`。
+预期（comments/favorites/字典类型/字典项）：未设 `0/0/0/0`；空串 `0/0/0/0`；全零 `0/0/77/397`；A `0/0/0/0`；B `0/0/0/0`；A+system `0/0/77/397`。读数留档 `$ARCH/six-context.txt`。
 
 ## 7. 观察与收尾（T0+5min–T0+15min）
 
@@ -648,7 +646,7 @@ diff "$ARCH/policies-pre.tsv" "$ARCH/policies-after-rollback.tsv" | tee "$ARCH/p
 - 窗口内若有业务写入（验收期服务在线）：新行归属真实租户，不参与平台语料归一；回滚前后核对各自表行数增量即可。
 - 回滚后如仍异常：以 `$ARCH/topems_prod-pre.dump` 做全库恢复（`pg_restore --clean --if-exists`），该动作需用户二次确认，不在本卡自动执行。
 
-## 9. 留档清单（`backups/uc-rls-window-{{T0}}/`）
+## 9. 留档清单（`backups/uc-rls-window-20261117-2200/`）
 
 | 文件 | 内容 |
 |---|---|

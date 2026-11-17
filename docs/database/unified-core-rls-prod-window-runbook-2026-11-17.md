@@ -28,13 +28,13 @@
 | 4 | `database/migrations/20261117233000_master_data_schema_registry_rls.sql` | 是 | `public.schema_registry` / `public.dynamic_data` 补 `tenant_id NOT NULL` + 严格 B 范式 RLS；`name` 唯一键改租户内唯一 |
 | 5 | `database/migrations/20261117234000_legacy_permissive_rls_to_strict.sql` | 是 | 三张历史宽松策略表收紧：`public.core_files` / `bi.analytics_datasets` / `master_data.mdm_metadata_objects`；NULL 租户归一全零平台租户，重建唯一严格 `rls_tenant_isolation` |
 | 6 | `database/migrations/20261117235500_engagement_rls_strict.sql` | 是 | engagement 两表补 RLS：`flow.core_comments` / `flow.core_favorites`；此前 `rls=false` 且无策略，现重建唯一严格 `rls_tenant_isolation` |
-| — | 新二进制 | — | 必须同时包含：平台语料读路径（`ec4aff8e8`）、阶段一 4 笔、阶段三 `43eb4726d`、master-data 批次 3e（`1669a30aa6`）、engagement 请求事务改造 |
+| — | 新二进制 | — | 必须同时包含：平台语料读路径（`ec4aff8e8`）、阶段一 4 笔、阶段三 `43eb4726d`、master-data 批次 3e（`1669a30aa`）、engagement 请求事务改造 |
 
 > 口径核对：上表 6 个版本在 `database/rollback/` 均有同名 `.rollback.sql`；manifest 中 #2 `20261117180000` 状态为 `superseded`（生产口径，由 #3 `20261117220000` 承接，仅非生产库使用），其余 5 条为 `to_apply`。
 
 > 平台语料迁移头部要求读路径代码同窗口上线；生产当前二进制构建于 2026-11-16 23:39，**不含** `ec4aff8e8`（2026-11-17 08:00），因此必须换新二进制，不能只跑 DDL。
 > 五条待执行迁移：仅 #1 有业务 DML（481 行 UPDATE 归一）；#5 有 3 条 `WHERE tenant_id IS NULL` 的归一 UPDATE（生产三表 0 行，实际 0 行）；#3/#4/#6 纯 DDL。可放在同一停机窗口。
-> #4 与 master-data 代码改造硬耦合：只上迁移会让旧池直连代码读 0 行、写入因 `tenant_id NOT NULL` 失败；因此二进制必须含 `1669a30aa6`。
+> #4 与 master-data 代码改造硬耦合：只上迁移会让旧池直连代码读 0 行、写入因 `tenant_id NOT NULL` 失败；因此二进制必须含 `1669a30aa`。
 
 ## 2. 前置检查（窗口前 1 天 + 窗口前 10 分钟各跑一次）
 
@@ -187,7 +187,7 @@ sha256sum bin/topems-server.new
 | `ec4aff8e8` | 平台语料读路径（与 `20261117120000` 配套） |
 | `e112b39e7` / `59e2d7965` / `2c914763e` / `3bb52aeb1` | 阶段一：D-01 / D-02+D-03 / TenantScope (b) / statistics 系统通道 |
 | `43eb4726d` | 阶段三：flow 规则/变量/委托/监控请求事务迁移 |
-| `1669a30aa6` | master-data 批次 3e：`schema_registry` / `master_plugin` 请求事务 + `persist.rs` 系统通道（与 `20261117233000` 配套） |
+| `1669a30aa` | master-data 批次 3e：`schema_registry` / `master_plugin` 请求事务 + `persist.rs` 系统通道（与 `20261117233000` 配套） |
 
 ## 5. 停服（目标停机起点）
 
