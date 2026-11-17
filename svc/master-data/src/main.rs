@@ -38,8 +38,10 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("🚀 TOPEMS Master Data Service starting...");
 
-    // U4：注入持久化连接池（v51-v60 MDM 集合快照落库），幂等确保表存在。
-    modules::persist::init(ctx.db.clone()).await;
+    // U4：注入持久化 DB 句柄（v51-v60 MDM 集合快照落库），幂等确保表存在。
+    // 快照无租户上下文，persist 内部走显式系统通道（scope_system / scope_read_system）。
+    let app_db = topems_shared_db::Db::new(ctx.db.clone(), "master_data, public, shared");
+    modules::persist::init(app_db.clone()).await;
 
     // 初始化数据库表 + V69.3 Schema 防御（C-1：dict 自建 DDL 已移除，迁移权威唯一仲裁）
     if let Err(e) = schema_defense::run_schema_migration_and_verify(
@@ -53,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
     // 把 ServiceContext 转换为下游 modules 依赖的 legacy AppState（零改造）
     let app_state = AppState {
         db: ctx.db.clone(),
-        rls_db: topems_shared_db::Db::new(ctx.db.clone(), "master_data, public, shared"),
+        rls_db: app_db,
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::clone(&ctx.metrics),
         start_time: ctx.start_time,

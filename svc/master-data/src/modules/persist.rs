@@ -3,31 +3,41 @@
 //! 背景：10 个 MDM 模块原本以 `LazyLock<Mutex<Vec<T>>>` 内存 Store 运行，进程重启即失。
 //! 本模块提供一个与具体实体解耦的 JSONB 快照持久化能力：
 //!
-//! * [`init`] —— 服务启动时注入唯一 `PgPool`（幂等，仅首次生效），并确保表存在。
+//! * [`init`] —— 服务启动时注入唯一 [`Db`]（幂等，仅首次生效），并确保表存在。
 //! * [`save`] —— 把某模块某叶子集合整体 upsert 为一行 `master_data.mdm_collections`。
 //! * [`load`] —— 按 (module, entity) 读回并反序列化为集合。
 //!
 //! 设计原则：
-//! * **best-effort**：未注入连接池（如纯函数单测）或写库失败时只记 warn、不 panic、不
+//! * **best-effort**：未注入 [`Db`]（如纯函数单测）或写库失败时只记 warn、不 panic、不
 //!   改变既有内存行为——保证所有既有纯逻辑测试零改动通过。
 //! * **无接口契约影响**：持久化完全旁路在内存 Store 之外，handler 响应结构不变。
 //! * 落库语义：启动 load-on-boot 恢复快照；运行期由后台 flush 任务近实时回写。
 //!   B10 起 HTTP 写经 `flush_on_write` 中间件同步落库（写请求 ack 前已落库）；
 //!   本层为 best-effort 快照，非事务权威存储。
+//! * **无租户上下文**：本层是模块级全局快照（`mdm_collections` 无 tenant_id），
+//!   不属于任何请求链路，必须走显式系统通道（`scope_system` / `scope_read_system`），
+//!   不得用池直连——池连接没有 `app.rls_system`，严格 RLS 下会被策略 fail-closed。
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use sqlx::PgPool;
 use std::sync::OnceLock;
+use topems_shared_db::Db;
 
-static POOL: OnceLock<PgPool> = OnceLock::new();
+static DB: OnceLock<Db> = OnceLock::new();
 
-/// 注入服务唯一连接池。重复调用会被忽略（OnceLock）。
+/// 注入服务唯一 DB 句柄。重复调用会被忽略（OnceLock）。
 /// 同时确保 `master_data` schema 存在（表结构由迁移链权威创建，此处仅幂等兜底）。
-pub async fn init(pool: PgPool) {
-    if POOL.set(pool.clone()).is_err() {
+pub async fn init(db: Db) {
+    if DB.set(db.clone()).is_err() {
         return;
     }
+    let mut scope = match db.scope_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("[master-data] persist bootstrap 无法开启系统写通道: {e}");
+            return;
+        }
+    };
     // sqlx prepare 不支持一条语句多个命令，逐条执行（B10 修复 bootstrap 报错；
     // 迁移链 20261003000010_u4_master_data_collections.sql 为权威 DDL，此处为兜底）。
     // C-1：建表语句已移除（迁移权威唯一仲裁）；保留 schema/索引幂等兜底。
@@ -36,27 +46,40 @@ pub async fn init(pool: PgPool) {
         "CREATE INDEX IF NOT EXISTS mdm_collections_module_idx
             ON master_data.mdm_collections (module)",
     ] {
-        if let Err(e) = sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(&pool).await {
+        if let Err(e) = sqlx::query(sqlx::AssertSqlSafe(ddl))
+            .execute(&mut scope)
+            .await
+        {
             tracing::warn!("[master-data] persist 表 bootstrap 失败（将依赖迁移链）: {e}");
             break;
         }
     }
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("[master-data] persist bootstrap 提交失败: {e}");
+    }
 }
 
-/// 是否已注入连接池（即是否启用持久化）。
+/// 是否已注入 DB 句柄（即是否启用持久化）。
 pub fn enabled() -> bool {
-    POOL.get().is_some()
+    DB.get().is_some()
 }
 
 /// 把一个集合整体快照写库（upsert）。best-effort：失败仅记 warn。
 pub async fn save<T: Serialize>(module: &str, entity: &str, items: &T) {
-    let Some(pool) = POOL.get() else {
+    let Some(db) = DB.get() else {
         return;
     };
     let json = match serde_json::to_value(items) {
         Ok(v) => v,
         Err(e) => {
             tracing::warn!("[master-data] persist save 序列化失败 {module}/{entity}: {e}");
+            return;
+        }
+    };
+    let mut scope = match db.scope_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("[master-data] persist save 无法开启系统写通道 {module}/{entity}: {e}");
             return;
         }
     };
@@ -69,24 +92,40 @@ pub async fn save<T: Serialize>(module: &str, entity: &str, items: &T) {
     .bind(module)
     .bind(entity)
     .bind(json)
-    .execute(pool)
+    .execute(&mut scope)
     .await;
-    if let Err(e) = res {
-        tracing::warn!("[master-data] persist save 写库失败 {module}/{entity}: {e}");
+    match res {
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::warn!("[master-data] persist save 提交失败 {module}/{entity}: {e}");
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[master-data] persist save 写库失败 {module}/{entity}: {e}");
+            let _ = scope.rollback().await;
+        }
     }
 }
 
 /// 按 (module, entity) 读回集合并反序列化。无行或反序列化失败返回 None。
 pub async fn load<T: DeserializeOwned>(module: &str, entity: &str) -> Option<T> {
-    let pool = POOL.get()?;
+    let db = DB.get()?;
+    let mut scope = match db.scope_read_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::warn!("[master-data] persist load 无法开启系统读通道 {module}/{entity}: {e}");
+            return None;
+        }
+    };
     let row: Option<serde_json::Value> = sqlx::query_scalar(
         r#"SELECT data FROM master_data.mdm_collections WHERE module = $1 AND entity = $2"#,
     )
     .bind(module)
     .bind(entity)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await
     .ok()?;
+    let _ = scope.commit().await;
     let val = row?;
     serde_json::from_value::<T>(val).ok()
 }

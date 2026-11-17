@@ -19,15 +19,20 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
+    Extension,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::tenant_scope::TenantScope;
+use topems_shared_auth::middleware::BindTenantScope;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_read_scope, tenant_write_scope, AppState};
 
 // ============ 纯函数（无副作用，可单测） ============
 
@@ -165,33 +170,70 @@ pub struct ListDataQuery {
 )]
 pub async fn create_schema(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSchemaRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let table_name = format!("dynamic_{}", req.name.replace('-', "_"));
 
-    let schema = sqlx::query_as::<_, SchemaDefinition>(
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+    let tenant_id = scope.tenant_id().expect("write scope 必为租户通道");
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let schema = match sqlx::query_as::<_, SchemaDefinition>(
         r#"
-        INSERT INTO public.schema_registry (name, title, description, schema_json, table_name, is_active, version)
-        VALUES ($1, $2, $3, $4, $5, true, 1)
+        INSERT INTO public.schema_registry (tenant_id, name, title, description, schema_json, table_name, is_active, version)
+        VALUES ($1, $2, $3, $4, $5, $6, true, 1)
         RETURNING *
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.title)
     .bind(&req.description)
     .bind(&req.schema_json)
     .bind(&table_name)
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Failed to create schema: {}", e) })),
-        )
-    })?;
+    {
+        Ok(s) => s,
+        Err(e) => {
+            drop(db_scope);
+            let _ = guard.take();
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": format!("Failed to create schema: {}", e) })),
+            ));
+        }
+    };
 
     // 自动创建数据表
-    if let Err(e) = create_dynamic_table(&state.db, &table_name, &req.schema_json).await {
+    if let Err(e) = create_dynamic_table(&mut db_scope, &table_name, &req.schema_json).await {
         // 表创建失败不阻塞 Schema 注册，记录警告
         tracing::warn!("Failed to create dynamic table {}: {}", table_name, e);
     }
@@ -214,19 +256,57 @@ pub async fn create_schema(
 )]
 pub async fn get_schema(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema =
-        sqlx::query_as::<_, SchemaDefinition>("SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&state.db)
-            .await
-            .map_err(|e| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-                )
-            })?;
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.schema_registry.get",
+        "public.schema_registry",
+    ) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
+        "SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1 AND {}",
+        scope.sql_predicate("tenant_id", "$2")
+    );
+    let schema = sqlx::query_as::<_, SchemaDefinition>(sqlx::AssertSqlSafe(sql))
+        .bind(id)
+        .bind_tenant_scope(&scope)
+        .fetch_optional(&mut db_scope)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+            )
+        })?;
 
     match schema {
         Some(s) => Ok(Json(json!({
@@ -258,46 +338,88 @@ pub async fn get_schema(
 )]
 pub async fn list_schemas(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(q): Query<ListSchemaQuery>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let schemas = sqlx::query_as::<_, SchemaDefinition>(
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.schema_registry.list",
+        "public.schema_registry",
+    ) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
         r#"
         SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR title ILIKE '%' || $1 || '%')
           AND ($2::bool IS NULL OR is_active = $2)
+          AND {}
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
-    )
-    .bind(&q.search)
-    .bind(q.is_active)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-        )
-    })?;
+        scope.sql_predicate("tenant_id", "$5")
+    );
+    let schemas = sqlx::query_as::<_, SchemaDefinition>(sqlx::AssertSqlSafe(sql))
+        .bind(&q.search)
+        .bind(q.is_active)
+        .bind(page_size)
+        .bind(offset)
+        .bind_tenant_scope(&scope)
+        .fetch_all(&mut db_scope)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+            )
+        })?;
 
-    let total: i64 = sqlx::query_scalar(
+    let total_sql = format!(
         r#"
         SELECT COUNT(*) FROM public.schema_registry
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR title ILIKE '%' || $1 || '%')
           AND ($2::bool IS NULL OR is_active = $2)
+          AND {}
         "#,
-    )
-    .bind(&q.search)
-    .bind(q.is_active)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+        scope.sql_predicate("tenant_id", "$3")
+    );
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(total_sql))
+        .bind(&q.search)
+        .bind(q.is_active)
+        .bind_tenant_scope(&scope)
+        .fetch_one(&mut db_scope)
+        .await
+        .unwrap_or(0);
 
     Ok(Json(json!({
         "success": true,
@@ -323,10 +445,40 @@ pub async fn list_schemas(
 )]
 pub async fn update_schema(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSchemaRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema = sqlx::query_as::<_, SchemaDefinition>(
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
         r#"
         UPDATE public.schema_registry
         SET title = COALESCE($2, title),
@@ -336,22 +488,31 @@ pub async fn update_schema(
             version = version + 1,
             updated_at = NOW()
         WHERE id = $1
+          AND {}
         RETURNING *
         "#,
-    )
-    .bind(id)
-    .bind(&req.title)
-    .bind(&req.description)
-    .bind(&req.schema_json)
-    .bind(req.is_active)
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-        )
-    })?;
+        scope.sql_predicate("tenant_id", "$6")
+    );
+    let schema = match sqlx::query_as::<_, SchemaDefinition>(sqlx::AssertSqlSafe(sql))
+        .bind(id)
+        .bind(&req.title)
+        .bind(&req.description)
+        .bind(&req.schema_json)
+        .bind(req.is_active)
+        .bind_tenant_scope(&scope)
+        .fetch_optional(&mut db_scope)
+        .await
+    {
+        Ok(s) => s,
+        Err(e) => {
+            drop(db_scope);
+            let _ = guard.take();
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+            ));
+        }
+    };
 
     match schema {
         Some(s) => Ok(Json(json!({
@@ -378,18 +539,58 @@ pub async fn update_schema(
 )]
 pub async fn delete_schema(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let result = sqlx::query("DELETE FROM public.schema_registry WHERE id = $1")
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
+        "DELETE FROM public.schema_registry WHERE id = $1 AND {}",
+        scope.sql_predicate("tenant_id", "$2")
+    );
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .execute(&state.db)
+        .bind_tenant_scope(&scope)
+        .execute(&mut db_scope)
         .await
-        .map_err(|e| {
-            (
+    {
+        Ok(r) => r,
+        Err(e) => {
+            drop(db_scope);
+            let _ = guard.take();
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-            )
-        })?;
+            ));
+        }
+    };
 
     if result.rows_affected() == 0 {
         return Ok(Json(json!({
@@ -420,10 +621,40 @@ pub async fn delete_schema(
 )]
 pub async fn create_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(data): Json<Value>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema = match get_schema_def(&state.db, id).await {
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let schema = match get_schema_def(&mut db_scope, &scope, id).await {
         Ok(s) => s,
         Err((StatusCode::NOT_FOUND, _)) => {
             return Ok(Json(json!({
@@ -435,26 +666,35 @@ pub async fn create_data(
         }
         Err(e) => return Err(e),
     };
+    let tenant_id = scope.tenant_id().expect("write scope 必为租户通道");
     let record_id = Uuid::new_v4();
 
     // 使用 JSONB 存储动态数据
-    sqlx::query(
+    match sqlx::query(
         r#"
-        INSERT INTO public.dynamic_data (id, schema_id, data_json)
-        VALUES ($1, $2, $3)
+        INSERT INTO public.dynamic_data (id, tenant_id, schema_id, data_json)
+        VALUES ($1, $2, $3, $4)
         "#,
     )
     .bind(record_id)
+    .bind(tenant_id)
     .bind(id)
     .bind(&data)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Failed to create data: {}", e) })),
-        )
-    })?;
+    {
+        Ok(_) => {}
+        Err(e) => {
+            drop(db_scope);
+            let _ = guard.take();
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(
+                    json!({ "success": false, "message": format!("Failed to create data: {}", e) }),
+                ),
+            ));
+        }
+    }
 
     Ok(Json(json!({
         "success": true,
@@ -483,10 +723,44 @@ pub async fn create_data(
 )]
 pub async fn list_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Query(q): Query<ListDataQuery>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema = match get_schema_def(&state.db, id).await {
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.schema_registry.list_data",
+        "public.schema_registry",
+    ) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let schema = match get_schema_def(&mut db_scope, &scope, id).await {
         Ok(s) => s,
         Err((StatusCode::NOT_FOUND, _)) => {
             let page = q.page.unwrap_or(1).max(1);
@@ -511,41 +785,50 @@ pub async fn list_data(
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let records: Vec<(Uuid, Uuid, Value, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
+    let sql = format!(
         r#"
         SELECT id, schema_id, data_json, created_at, updated_at
         FROM public.dynamic_data
         WHERE schema_id = $1
           AND ($2::text IS NULL OR data_json::text ILIKE '%' || $2 || '%')
+          AND {}
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
-    )
-    .bind(id)
-    .bind(&q.search)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-        )
-    })?;
+        scope.sql_predicate("tenant_id", "$5")
+    );
+    let records: Vec<(Uuid, Uuid, Value, DateTime<Utc>, DateTime<Utc>)> =
+        sqlx::query_as(sqlx::AssertSqlSafe(sql))
+            .bind(id)
+            .bind(&q.search)
+            .bind(page_size)
+            .bind(offset)
+            .bind_tenant_scope(&scope)
+            .fetch_all(&mut db_scope)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+                )
+            })?;
 
-    let total: i64 = sqlx::query_scalar(
+    let total_sql = format!(
         r#"
         SELECT COUNT(*) FROM public.dynamic_data
         WHERE schema_id = $1
           AND ($2::text IS NULL OR data_json::text ILIKE '%' || $2 || '%')
+          AND {}
         "#,
-    )
-    .bind(id)
-    .bind(&q.search)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+        scope.sql_predicate("tenant_id", "$3")
+    );
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(total_sql))
+        .bind(id)
+        .bind(&q.search)
+        .bind_tenant_scope(&scope)
+        .fetch_one(&mut db_scope)
+        .await
+        .unwrap_or(0);
 
     let items: Vec<Value> = records
         .into_iter()
@@ -591,25 +874,63 @@ pub async fn list_data(
 )]
 pub async fn get_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let record: Option<(Uuid, Uuid, Value, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.schema_registry.get_data",
+        "public.dynamic_data",
+    ) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
         r#"
         SELECT id, schema_id, data_json, created_at, updated_at
         FROM public.dynamic_data
-        WHERE id = $1 AND schema_id = $2
+        WHERE id = $1 AND schema_id = $2 AND {}
         "#,
-    )
-    .bind(record_id)
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-        )
-    })?;
+        scope.sql_predicate("tenant_id", "$3")
+    );
+    let record: Option<(Uuid, Uuid, Value, DateTime<Utc>, DateTime<Utc>)> =
+        sqlx::query_as(sqlx::AssertSqlSafe(sql))
+            .bind(record_id)
+            .bind(id)
+            .bind_tenant_scope(&scope)
+            .fetch_optional(&mut db_scope)
+            .await
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+                )
+            })?;
 
     match record {
         Some((id, schema_id, data, created_at, updated_at)) => Ok(Json(json!({
@@ -646,27 +967,65 @@ pub async fn get_data(
 )]
 pub async fn update_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
     Json(data): Json<Value>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let result = sqlx::query(
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
         r#"
         UPDATE public.dynamic_data
         SET data_json = $3, updated_at = NOW()
-        WHERE id = $1 AND schema_id = $2
+        WHERE id = $1 AND schema_id = $2 AND {}
         "#,
-    )
-    .bind(record_id)
-    .bind(id)
-    .bind(&data)
-    .execute(&state.db)
-    .await
-    .map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-        )
-    })?;
+        scope.sql_predicate("tenant_id", "$4")
+    );
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(record_id)
+        .bind(id)
+        .bind(&data)
+        .bind_tenant_scope(&scope)
+        .execute(&mut db_scope)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            drop(db_scope);
+            let _ = guard.take();
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
+            ));
+        }
+    };
 
     if result.rows_affected() == 0 {
         return Ok(Json(json!({
@@ -701,19 +1060,59 @@ pub async fn update_data(
 )]
 pub async fn delete_data(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let result = sqlx::query("DELETE FROM public.dynamic_data WHERE id = $1 AND schema_id = $2")
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "success": false, "message": e.to_string() })),
+            ))
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "success": false, "message": "缺少请求事务上下文" })),
+        ));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "success": false, "message": "数据库上下文初始化失败" })),
+            ));
+        }
+    };
+
+    let sql = format!(
+        "DELETE FROM public.dynamic_data WHERE id = $1 AND schema_id = $2 AND {}",
+        scope.sql_predicate("tenant_id", "$3")
+    );
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(record_id)
         .bind(id)
-        .execute(&state.db)
+        .bind_tenant_scope(&scope)
+        .execute(&mut db_scope)
         .await
-        .map_err(|e| {
-            (
+    {
+        Ok(r) => r,
+        Err(e) => {
+            drop(db_scope);
+            let _ = guard.take();
+            return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({ "success": false, "message": format!("Database error: {}", e) })),
-            )
-        })?;
+            ));
+        }
+    };
 
     if result.rows_affected() == 0 {
         return Ok(Json(json!({
@@ -734,12 +1133,18 @@ pub async fn delete_data(
 // ============ 辅助函数 ============
 
 async fn get_schema_def(
-    pool: &PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+    tenant_scope: &TenantScope,
     id: Uuid,
 ) -> Result<SchemaDefinition, (StatusCode, Json<Value>)> {
-    sqlx::query_as::<_, SchemaDefinition>("SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
+    let sql = format!(
+        "SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1 AND {}",
+        tenant_scope.sql_predicate("tenant_id", "$2")
+    );
+    sqlx::query_as::<_, SchemaDefinition>(sqlx::AssertSqlSafe(sql))
         .bind(id)
-        .fetch_optional(pool)
+        .bind_tenant_scope(tenant_scope)
+        .fetch_optional(&mut *scope)
         .await
         .map_err(|e| {
             (
@@ -755,7 +1160,7 @@ async fn get_schema_def(
 
 /// 根据 Schema JSON 动态创建数据表
 async fn create_dynamic_table(
-    pool: &PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     table_name: &str,
     schema_json: &Value,
 ) -> Result<(), sqlx::Error> {
@@ -765,7 +1170,10 @@ async fn create_dynamic_table(
         .ok_or_else(|| sqlx::Error::Configuration("Schema JSON missing 'fields' array".into()))?;
 
     // 构建 CREATE TABLE 语句
-    let mut columns = vec!["id UUID PRIMARY KEY DEFAULT gen_random_uuid()".to_string()];
+    let mut columns = vec![
+        "id UUID PRIMARY KEY DEFAULT gen_random_uuid()".to_string(),
+        "tenant_id UUID NOT NULL".to_string(),
+    ];
 
     for field in fields {
         let name = field
@@ -801,7 +1209,9 @@ async fn create_dynamic_table(
         columns.join(", ")
     );
 
-    sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(sql))
+        .execute(&mut *scope)
+        .await?;
     Ok(())
 }
 

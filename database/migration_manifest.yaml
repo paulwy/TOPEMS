@@ -2011,3 +2011,15 @@ pending_forward_patches:
       - { kind: data, ref: "topems_prod 11 表 count(*)", detail: "全部 0 行；tenant_id NULL 行 0；平台语料 NULL 77/397/3/4、全零 0，补丁无 DML" }
       - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（先切生产形态：五表严格）", detail: "补丁 up 0.05 s、down 0.03 s；六档与 20261117180000 一致（未设置/空串 0，全零仅平台行，A/B 各 1，系统全量 3/3/2/2）；跨租户 INSERT 42501、系统通道写 alert_rules 通过；down 后段 B 保持严格、A/D 恢复无 RLS、alerts/alert_rules 恢复 allow_all" }
     note: "回滚语义：段 B 保持严格、不降级（避免放松 batch06 成果）；A/C/D/E 恢复迁移前形态。必须与阶段三代码 43eb4726d、平台语料读路径 ec4aff8e8 同窗口"
+
+  - version: "20261117233000"
+    file: "database/migrations/20261117233000_master_data_schema_registry_rls.sql"
+    status: to_apply
+    effect: "master-data 低代码动态 Schema/数据两表补 tenant_id 列并收紧为严格 B 范式 RLS；name 全局唯一改为租户内唯一；新增 (tenant_id, schema_id) 索引"
+    destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；2 次 ADD COLUMN、2 次 SET NOT NULL、1 次 DROP INDEX、2 次 CREATE INDEX、2 次 ENABLE + 2 次 FORCE RLS、2 次 CREATE POLICY；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: catalog, ref: "克隆库 m2_dryrun_20261116 与 topems_prod pg_class/pg_policies 2026-11-17", detail: "public.schema_registry 与 public.dynamic_data 均 rls=false、0 策略、无 tenant_id 列；schema_registry.name 为全局 UNIQUE" }
+      - { kind: data, ref: "克隆库与生产 count(*)", detail: "两表在克隆库与生产均为 0 行；建表迁移 20260725000001 无平台种子写入 → 判为漏隔离缺陷，非平台语料" }
+      - { kind: code, ref: "svc/master-data/src/modules/schema_registry.rs", detail: "10 个 handler 改为请求事务 scope_with，写入显式绑定 claims 租户，读路径保留显式 tenant_id 谓词；helper get_schema_def/create_dynamic_table 改收 ScopedTxn" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116", detail: "up 前两表 0 行；up 后 tenant_id NOT NULL + 严格策略；down 恢复无列/无 RLS/全局唯一索引" }
+    note: "部署耦合：必须与 schema_registry.rs 代码改造同窗口。只上迁移 → 池直连的旧代码读 0 行、写入因 tenant_id NOT NULL 失败；只上代码 → 池直连仍可绕过 RLS。回滚文件 database/rollback/20261117233000_master_data_schema_registry_rls.rollback.sql"

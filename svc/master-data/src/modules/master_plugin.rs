@@ -1,12 +1,15 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_read_scope, AppState};
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -131,15 +134,44 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<(
 
 /// 扁平契约 `GET /dashboard/recent`：最近更新的主数据对象（以元数据对象为代理来源），
 /// 空表或查询异常均返回空集合，绝不裸 500。
-pub async fn list_recent_activities(State(state): State<AppState>) -> ApiResponse<Value> {
+pub async fn list_recent_activities(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Value> {
     use sqlx::Row;
-    let rows = sqlx::query(
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.plugin.recent_list",
+        "master_data.mdm_metadata_objects",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let sql = format!(
         "SELECT id, name, object_type, owner, updated_at FROM master_data.mdm_metadata_objects
+         WHERE {}
          ORDER BY updated_at DESC LIMIT 10",
-    )
-    .fetch_all(&state.db)
-    .await
-    .unwrap_or_default();
+        scope.sql_predicate("tenant_id", "$1")
+    );
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind_tenant_scope(&scope)
+        .fetch_all(&mut db_scope)
+        .await
+        .unwrap_or_default();
     let items: Vec<Value> = rows
         .iter()
         .map(|r| {
@@ -161,17 +193,44 @@ pub async fn list_recent_activities(State(state): State<AppState>) -> ApiRespons
 /// 扁平契约 `GET /dashboard/recent/{id}`：单条最近记录查询，不存在返回业务 404。
 pub async fn get_recent_activity(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Value> {
     use sqlx::Row;
-    let row = sqlx::query(
+    let scope = match tenant_read_scope(
+        &claims,
+        "master-data.plugin.recent_get",
+        "master_data.mdm_metadata_objects",
+    ) {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::from(e),
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
+    let sql = format!(
         "SELECT id, name, object_type, owner, updated_at FROM master_data.mdm_metadata_objects
-         WHERE id = $1 LIMIT 1",
-    )
-    .bind(&id)
-    .fetch_optional(&state.db)
-    .await
-    .unwrap_or(None);
+         WHERE id = $1 AND {}
+         LIMIT 1",
+        scope.sql_predicate("tenant_id", "$2")
+    );
+    let row = sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(&id)
+        .bind_tenant_scope(&scope)
+        .fetch_optional(&mut db_scope)
+        .await
+        .unwrap_or(None);
 
     match row {
         Some(r) => ApiResponse::success(
