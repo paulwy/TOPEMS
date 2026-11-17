@@ -307,7 +307,7 @@ async fn reports_center_stats(
         }
     };
 
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &scope).await {
+    let mut db_scope = match topems_analytics::shared::open_read_scope(&state.db, &scope).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[analytics] 打开只读作用域失败: {}", e);

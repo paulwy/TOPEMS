@@ -211,7 +211,7 @@ pub async fn get_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
@@ -279,7 +279,7 @@ pub async fn create_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
@@ -368,7 +368,7 @@ pub async fn update_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
@@ -457,7 +457,7 @@ pub async fn delete_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
@@ -535,7 +535,7 @@ pub async fn publish_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
@@ -615,7 +615,7 @@ pub async fn refresh_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
@@ -698,7 +698,7 @@ pub async fn get_dataset_preview(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
@@ -780,7 +780,7 @@ pub async fn query_dataset(
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
-            return Json(topems_shared_core::response::error_value(400, message));
+            return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
     let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
