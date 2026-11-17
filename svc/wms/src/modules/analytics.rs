@@ -139,10 +139,23 @@ fn format_period(date: NaiveDate, group_by: &str) -> String {
 )]
 async fn get_inventory_turnover(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<InventoryTurnoverResponse> {
     // 租户严格解析（超管已由中间件写入 claims.tenant_id），不再降级为 NULL。
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    // 请求事务复用：裸池上没有 app.tenant_id，RLS fail-closed 会把行全过滤掉。
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("inventory_turnover 开启租户作用域失败: {}", e);
+            return ApiResponse::server_error("查询失败");
+        }
+    };
 
     let (start, end) = parse_date_range(&params);
     let group_by = params.group_by.as_deref().unwrap_or("month");
@@ -164,6 +177,7 @@ async fn get_inventory_turnover(
           AND status = 'completed'
           AND performed_at >= $1
           AND performed_at <= $2
+          AND tenant_id = $3::uuid
           {}
         GROUP BY period_date
         ORDER BY period_date
@@ -173,13 +187,14 @@ async fn get_inventory_turnover(
 
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(start.and_hms_opt(0, 0, 0).unwrap())
-        .bind(end.and_hms_opt(23, 59, 59).unwrap());
+        .bind(end.and_hms_opt(23, 59, 59).unwrap())
+        .bind(tenant);
 
     if let Some(wh_id) = &params.warehouse_id {
         query = query.bind(wh_id.parse::<Uuid>().unwrap_or(Uuid::nil()));
     }
 
-    let rows = match query.fetch_all(&state.db).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("inventory_turnover query error: {}", e);
@@ -188,11 +203,13 @@ async fn get_inventory_turnover(
     };
 
     // 计算平均库存（简化：用当前库存作为平均库存的近似）
-    let avg_inventory: f64 =
-        sqlx::query_scalar("SELECT COALESCE(AVG(quantity), 0) FROM wms.inventory")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0.0);
+    let avg_inventory: f64 = sqlx::query_scalar(
+        "SELECT COALESCE(AVG(quantity), 0) FROM wms.inventory WHERE tenant_id = $1::uuid",
+    )
+    .bind(tenant)
+    .fetch_one(&mut scope)
+    .await
+    .unwrap_or(0.0);
 
     let mut data = Vec::new();
     let mut total_turnover = 0.0;
@@ -270,6 +287,14 @@ async fn get_order_fulfillment(
         Ok(id) => id,
         Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant_id).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("order_fulfillment 开启租户作用域失败: {}", e);
+            return ApiResponse::server_error("查询失败");
+        }
+    };
 
     let (start, end) = parse_date_range(&params);
     let group_by = params.group_by.as_deref().unwrap_or("month");
@@ -317,7 +342,7 @@ async fn get_order_fulfillment(
         query = query.bind(wh_id.parse::<Uuid>().unwrap_or(Uuid::nil()));
     }
 
-    let rows = match query.fetch_all(&state.db).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("order_fulfillment query error: {}", e);
@@ -659,9 +684,22 @@ pub struct AbcAnalysisResponse {
 )]
 pub async fn get_abc_analysis(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<AbcAnalysisResponse> {
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("abc_analysis 开启租户作用域失败: {}", e);
+            return ApiResponse::server_error("查询失败");
+        }
+    };
+
     // 按物料汇总价值
     let result = sqlx::query(
         r#"
@@ -672,13 +710,15 @@ pub async fn get_abc_analysis(
             SUM(quantity) as total_qty
         FROM wms.inventory
         WHERE deleted_at IS NULL
+          AND tenant_id = $2::uuid
           AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
         GROUP BY material_code, material_name
         ORDER BY total_value DESC
         "#,
     )
     .bind(params.warehouse_id.as_deref())
-    .fetch_all(&state.db)
+    .bind(tenant)
+    .fetch_all(&mut scope)
     .await;
 
     let mut materials: Vec<(String, f64)> = Vec::new();
@@ -812,9 +852,22 @@ pub struct AgeParetoResponse {
 )]
 pub async fn get_age_pareto(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<AgeParetoResponse> {
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("age_pareto 开启租户作用域失败: {}", e);
+            return ApiResponse::server_error("查询失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -824,13 +877,15 @@ pub async fn get_age_pareto(
             MIN(COALESCE(production_date, created_at::date)) as earliest_date
         FROM wms.inventory
         WHERE deleted_at IS NULL
+          AND tenant_id = $2::uuid
           AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
         GROUP BY material_code, material_name
         ORDER BY total_value DESC
         "#,
     )
     .bind(params.warehouse_id.as_deref())
-    .fetch_all(&state.db)
+    .bind(tenant)
+    .fetch_all(&mut scope)
     .await;
 
     let mut items: Vec<(String, f64, i64)> = Vec::new(); // (age_bucket, value, days)
@@ -936,9 +991,22 @@ pub struct LocationUtilizationResponse {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_location_utilization(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> ApiResponse<LocationUtilizationResponse> {
+    let tenant = match resolve_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
+    };
+    let db = wms_db(&state.db);
+    let mut scope = match db.scope_read_for_tenant(tenant).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("location_utilization 开启租户作用域失败: {}", e);
+            return ApiResponse::server_error("查询失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -949,16 +1017,18 @@ pub async fn get_location_utilization(
             COALESCE(AVG(CASE WHEN l.capacity > 0 THEN l.current_quantity / l.capacity ELSE 0 END), 0) as avg_capacity_usage,
             COUNT(*) FILTER (WHERE l.current_quantity > 0 AND l.updated_at < NOW() - INTERVAL '90 days') as dead_stock_locations
         FROM wms.locations l
-        LEFT JOIN wms.warehouses w ON l.warehouse_id = w.id
+        LEFT JOIN wms.warehouses w ON l.warehouse_id = w.id AND w.tenant_id = $2::uuid
         WHERE l.deleted_at IS NULL
           AND l.is_active = true
+          AND l.tenant_id = $2::uuid
           AND ($1::uuid IS NULL OR l.warehouse_id = $1::uuid)
         GROUP BY l.warehouse_id, w.warehouse_name
         ORDER BY total_locations DESC
         "#,
     )
     .bind(params.warehouse_id.as_deref())
-    .fetch_all(&state.db)
+    .bind(tenant)
+    .fetch_all(&mut scope)
     .await;
 
     let mut data = Vec::new();
