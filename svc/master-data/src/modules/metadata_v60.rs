@@ -11,7 +11,9 @@ use serde::Deserialize;
 use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 use crate::shared::AppState;
 
@@ -452,9 +454,21 @@ pub struct BulkTransitionRequest {
 )]
 pub async fn create_metadata(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMetadataRequest>,
 ) -> ApiResponse<MetadataObject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let object_type = match parse_metadata_type(&req.object_type) {
         Some(t) => t,
@@ -490,9 +504,11 @@ pub async fn create_metadata(
     .bind(obj.created_at.to_rfc3339())
     .bind(obj.updated_at.to_rfc3339())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入元数据对象失败: {e}"));
     }
 
@@ -503,9 +519,21 @@ pub async fn create_metadata(
 /// 与 mdm-v60/create_metadata 落库路径保持一致。
 pub async fn create_metadata_compat(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<MetadataObject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let object_type = match req
         .get("object_type")
@@ -567,9 +595,11 @@ pub async fn create_metadata_compat(
     .bind(obj.created_at.to_rfc3339())
     .bind(obj.updated_at.to_rfc3339())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入元数据对象失败: {e}"));
     }
 
@@ -591,14 +621,26 @@ pub async fn create_metadata_compat(
 )]
 pub async fn get_metadata(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<MetadataObject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -620,8 +662,20 @@ pub async fn get_metadata(
 )]
 pub async fn list_metadata(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListMetadataQuery>,
 ) -> ApiResponse<Vec<MetadataObject>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表读取，可选 object_type 过滤。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
@@ -629,7 +683,7 @@ pub async fn list_metadata(
              ORDER BY updated_at DESC"
     )))
     .bind(params.object_type.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let list: Vec<MetadataObject> = rows.iter().map(metadata_from_row).collect();
@@ -648,8 +702,20 @@ pub async fn list_metadata(
 )]
 pub async fn search_metadata(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SearchMetadataQuery>,
 ) -> ApiResponse<Vec<MetadataObject>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表 LIKE 搜索。
     let pattern = format!("%{}%", params.q);
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -658,7 +724,7 @@ pub async fn search_metadata(
            ORDER BY created_at DESC"#,
     )))
     .bind(&pattern)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let results: Vec<MetadataObject> = match rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
@@ -671,8 +737,20 @@ pub async fn search_metadata(
 /// 扁平契约 `GET /metadata/search`：查询词可选，缺失时按空串匹配全量（与 mdm-v60 真表一致）。
 pub async fn search_metadata_compat(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<CompatSearchMetadataQuery>,
 ) -> ApiResponse<Vec<MetadataObject>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let pattern = format!("%{}%", params.q.unwrap_or_default());
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
@@ -680,7 +758,7 @@ pub async fn search_metadata_compat(
            ORDER BY created_at DESC"#,
     )))
     .bind(&pattern)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let results: Vec<MetadataObject> = match rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
@@ -705,10 +783,22 @@ pub async fn search_metadata_compat(
 )]
 pub async fn update_metadata(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateMetadataRequest>,
 ) -> ApiResponse<MetadataObject> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     // K1：真表更新（COALESCE 仅覆盖传入字段），updated_at 刷新。
     let tags_json = req
@@ -733,7 +823,7 @@ pub async fn update_metadata(
     .bind(&req.attributes)
     .bind(chrono::Utc::now().to_rfc3339())
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await;
 
     match res {
@@ -746,7 +836,7 @@ pub async fn update_metadata(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -771,15 +861,27 @@ pub async fn update_metadata(
 )]
 pub async fn delete_metadata(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     // K1：真表删除。
     let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
         .bind(&id)
         .bind(tenant)
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await;
 
     match res {
@@ -804,9 +906,21 @@ pub async fn delete_metadata(
 )]
 pub async fn add_attribute(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<AddAttributeRequest>,
 ) -> ApiResponse<MetadataAttribute> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：写真表 master_data.mdm_metadata_attributes。
     let attr = MetadataAttribute {
         id: uuid::Uuid::new_v4().to_string(),
@@ -828,9 +942,11 @@ pub async fn add_attribute(
     .bind(&attr.value)
     .bind(&attr.data_type)
     .bind(attr.is_required)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("添加属性失败: {e}"));
     }
 
@@ -855,8 +971,20 @@ pub async fn add_attribute(
 )]
 pub async fn add_tag(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AddTagRequest>,
 ) -> ApiResponse<MetadataTag> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：写真表 master_data.mdm_metadata_tags。
     let tag = MetadataTag {
         id: uuid::Uuid::new_v4().to_string(),
@@ -876,9 +1004,11 @@ pub async fn add_tag(
     .bind(&tag.color)
     .bind(&tag.description)
     .bind(tag.usage_count as i64)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("添加标签失败: {e}"));
     }
 
@@ -901,12 +1031,26 @@ pub async fn add_tag(
     clippy::cast_sign_loss,
     clippy::cast_possible_truncation
 )]
-pub async fn get_metadata_stats(State(state): State<AppState>) -> ApiResponse<MetadataStats> {
+pub async fn get_metadata_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<MetadataStats> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：数据源改真表（objects/attributes/tags），聚合逻辑保留。
     let obj_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects ORDER BY created_at DESC"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let objects: Vec<MetadataObject> = match obj_rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
@@ -915,10 +1059,10 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> ApiResponse<Me
 
     let attr_count =
         sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_attributes")
-            .fetch_one(&state.db)
+            .fetch_one(&mut db_scope)
             .await;
     let tag_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_tags")
-        .fetch_one(&state.db)
+        .fetch_one(&mut db_scope)
         .await;
     let (total_attributes, total_tags) = match (attr_count, tag_count) {
         (Ok(a), Ok(t)) => (a.get::<i64, _>("total"), t.get::<i64, _>("total")),
@@ -959,8 +1103,20 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> ApiResponse<Me
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn build_lineage_graph(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<BuildLineageGraphRequest>,
 ) -> ApiResponse<LineageGraph> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：算法照搬，写入真表（nodes/edges/graphs）。
     let now = chrono::Utc::now();
     let graph_id = uuid::Uuid::new_v4().to_string();
@@ -1024,9 +1180,11 @@ pub async fn build_lineage_graph(
         .bind(node.attributes.clone())
         .bind(node.level)
         .bind(node.position.clone())
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
+            drop(db_scope);
+            let _ = guard.take();
             return ApiResponse::server_error(&format!("写入血缘节点失败: {e}"));
         }
     }
@@ -1042,7 +1200,7 @@ pub async fn build_lineage_graph(
         .bind(transformation_type_str(&edge.transformation_type))
         .bind(edge.transformation_details.clone())
         .bind(edge.confidence)
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
             return ApiResponse::server_error(&format!("写入血缘边失败: {e}"));
@@ -1059,7 +1217,7 @@ pub async fn build_lineage_graph(
     .bind(serde_json::to_value(&graph.edges).unwrap_or(serde_json::json!([])))
     .bind(serde_json::to_value(&graph.root_ids).unwrap_or(serde_json::json!([])))
     .bind(graph.updated_at.to_rfc3339())
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
         return ApiResponse::server_error(&format!("写入血缘图谱失败: {e}"));
@@ -1080,14 +1238,26 @@ pub async fn build_lineage_graph(
 
 pub async fn get_lineage_graph(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<LineageGraph> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：读真表。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs WHERE id = $1 LIMIT 1"#,
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     match row {
         Ok(Some(r)) => ApiResponse::success(lineage_graph_from_row(&r), "血缘图谱"),
@@ -1108,10 +1278,22 @@ pub async fn get_lineage_graph(
 
 pub async fn get_upstream(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<LineageNodeV60>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
-    let result = upstream_downstream(&state, &id, true).await;
+    let result = upstream_downstream(&mut db_scope, &id, true).await;
     match result {
         Ok(nodes) => ApiResponse::success(nodes, "上游血缘节点"),
         Err(e) => ApiResponse::server_error(&format!("查询上游血缘失败: {e}")),
@@ -1130,10 +1312,22 @@ pub async fn get_upstream(
 
 pub async fn get_downstream(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<LineageNodeV60>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
-    let result = upstream_downstream(&state, &id, false).await;
+    let result = upstream_downstream(&mut db_scope, &id, false).await;
     match result {
         Ok(nodes) => ApiResponse::success(nodes, "下游血缘节点"),
         Err(e) => ApiResponse::server_error(&format!("查询下游血缘失败: {e}")),
@@ -1151,13 +1345,25 @@ pub async fn get_downstream(
 )]
 pub async fn get_path(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<GetPathRequest>,
 ) -> ApiResponse<Vec<LineageEdgeV60>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
     let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
@@ -1211,14 +1417,26 @@ pub async fn get_path(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_lineage_impact(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<LineageImpact> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表 + 复用 upstream/downstream 逻辑。
-    let downstream = match upstream_downstream(&state, &id, false).await {
+    let downstream = match upstream_downstream(&mut db_scope, &id, false).await {
         Ok(v) => v,
         Err(e) => return ApiResponse::server_error(&format!("查询下游血缘失败: {e}")),
     };
-    let upstream = match upstream_downstream(&state, &id, true).await {
+    let upstream = match upstream_downstream(&mut db_scope, &id, true).await {
         Ok(v) => v,
         Err(e) => return ApiResponse::server_error(&format!("查询上游血缘失败: {e}")),
     };
@@ -1251,12 +1469,26 @@ pub async fn get_lineage_impact(
     tag = "metadata_v60"
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse<LineageDashboard> {
+pub async fn get_lineage_dashboard(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<LineageDashboard> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表全量加载 + 聚合逻辑保留。
     let graph_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
         Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
@@ -1266,7 +1498,7 @@ pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse
     let node_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
         Ok(r) => r.iter().map(lineage_node_from_row).collect(),
@@ -1276,7 +1508,7 @@ pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse
     let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
@@ -1320,13 +1552,25 @@ pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse
 
 pub async fn export_lineage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ExportLineageQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表全量导出。
     let graph_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
         Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
@@ -1336,7 +1580,7 @@ pub async fn export_lineage(
     let node_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
         Ok(r) => r.iter().map(lineage_node_from_row).collect(),
@@ -1346,7 +1590,7 @@ pub async fn export_lineage(
     let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
@@ -1379,14 +1623,26 @@ pub async fn export_lineage(
 )]
 pub async fn get_current_stage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：读真表 mdm_lifecycle_stages。
     let row = sqlx::query(
         "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
     )
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     match row {
         Ok(Some(r)) => {
@@ -1412,9 +1668,21 @@ pub async fn get_current_stage(
 )]
 pub async fn transition_stage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<TransitionRequest>,
 ) -> ApiResponse<LifecycleHistory> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：写真表（UPSERT stages + INSERT history）。
     let new_stage = parse_lifecycle_stage(&req.new_stage).unwrap_or(LifecycleStage::Created);
     let now = chrono::Utc::now();
@@ -1423,7 +1691,7 @@ pub async fn transition_stage(
         "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
     )
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let from_stage = match from_row {
         Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
@@ -1448,9 +1716,11 @@ pub async fn transition_stage(
     )
     .bind(&id)
     .bind(lifecycle_stage_str(&new_stage))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("更新生命周期阶段失败: {e}"));
     }
 
@@ -1466,7 +1736,7 @@ pub async fn transition_stage(
     .bind(&history.reason)
     .bind(history.changed_at.to_rfc3339())
     .bind(&history.changed_by)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
         return ApiResponse::server_error(&format!("写入生命周期历史失败: {e}"));
@@ -1489,15 +1759,27 @@ pub async fn transition_stage(
 )]
 pub async fn get_lifecycle_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<LifecycleHistory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：读真表。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history
            WHERE entity_id = $1 ORDER BY changed_at DESC"#,
     )))
     .bind(&id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let history: Vec<LifecycleHistory> = match rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
@@ -1525,8 +1807,20 @@ pub async fn get_lifecycle_history(
 )]
 pub async fn create_policy(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePolicyRequest>,
 ) -> ApiResponse<LifecyclePolicy> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：写真表 master_data.mdm_lifecycle_policies。
     let policy = LifecyclePolicy {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1546,9 +1840,11 @@ pub async fn create_policy(
     .bind(policy.transitions.clone())
     .bind(policy.duration_days)
     .bind(serde_json::to_value(&policy.actions).unwrap_or(serde_json::json!([])))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("创建生命周期策略失败: {e}"));
     }
 
@@ -1566,15 +1862,27 @@ pub async fn create_policy(
 )]
 pub async fn get_policies(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<GetPoliciesQuery>,
 ) -> ApiResponse<Vec<LifecyclePolicy>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies
            WHERE ($1::text IS NULL OR entity_type = $1) ORDER BY entity_type"#,
     )))
     .bind(params.entity_type.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let policies: Vec<LifecyclePolicy> = match rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
@@ -1587,13 +1895,25 @@ pub async fn get_policies(
 /// 扁平契约 `GET /lifecycle/policies/{id}`：单条策略查询，不存在返回业务 404（非 catch-all）。
 pub async fn get_policy(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<LifecyclePolicy> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies WHERE id = $1 LIMIT 1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -1613,12 +1933,26 @@ pub async fn get_policy(
     ),
     tag = "metadata_v60"
 )]
-pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<LifecycleHistory>> {
+pub async fn auto_transition(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<LifecycleHistory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：读真表 policies + stages，逐 transition 执行（逻辑保留）。
     let policy_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies ORDER BY entity_type"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let policies: Vec<LifecyclePolicy> = match policy_rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
@@ -1628,7 +1962,7 @@ pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<L
     let stage_rows = sqlx::query(
         "SELECT entity_id, stage FROM master_data.mdm_lifecycle_stages ORDER BY entity_id",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let mut current: HashMap<String, LifecycleStage> = match stage_rows {
         Ok(r) => r
@@ -1681,9 +2015,11 @@ pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<L
                             )
                             .bind(&entity_id)
                             .bind(lifecycle_stage_str(&to_stage))
-                            .execute(&state.db)
+                            .execute(&mut db_scope)
                             .await
                             {
+                                drop(db_scope);
+                                let _ = guard.take();
                                 return ApiResponse::server_error(&format!(
                                     "更新生命周期阶段失败: {e}"
                                 ));
@@ -1701,7 +2037,7 @@ pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<L
                             .bind(&history.reason)
                             .bind(history.changed_at.to_rfc3339())
                             .bind(&history.changed_by)
-                            .execute(&state.db)
+                            .execute(&mut db_scope)
                             .await
                             {
                                 return ApiResponse::server_error(
@@ -1739,12 +2075,24 @@ pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<L
 )]
 pub async fn get_lifecycle_dashboard(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<LifecycleDashboard> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表全量加载 + 聚合逻辑保留。
     let stage_rows = sqlx::query(
         "SELECT entity_id, stage FROM master_data.mdm_lifecycle_stages ORDER BY entity_id",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let stages: Vec<(String, LifecycleStage)> = match stage_rows {
         Ok(r) => r
@@ -1762,13 +2110,13 @@ pub async fn get_lifecycle_dashboard(
 
     let policy_count =
         sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_lifecycle_policies")
-            .fetch_one(&state.db)
+            .fetch_one(&mut db_scope)
             .await;
 
     let hist_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history ORDER BY changed_at DESC"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let history: Vec<LifecycleHistory> = match hist_rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
@@ -1812,8 +2160,20 @@ pub async fn get_lifecycle_dashboard(
 )]
 pub async fn bulk_transition(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<BulkTransitionRequest>,
 ) -> ApiResponse<Vec<LifecycleHistory>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：循环执行生命周期流转（真表 UPSERT + history）。
     let target_stage = parse_lifecycle_stage(&req.target_stage).unwrap_or(LifecycleStage::Created);
     let reason = req.reason.unwrap_or_default();
@@ -1827,7 +2187,7 @@ pub async fn bulk_transition(
             "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
         )
         .bind(&entity_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await;
         let from_stage = match from_row {
             Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
@@ -1852,9 +2212,11 @@ pub async fn bulk_transition(
         )
         .bind(&entity_id)
         .bind(lifecycle_stage_str(&target_stage))
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
+            drop(db_scope);
+            let _ = guard.take();
             return ApiResponse::server_error(&format!("更新生命周期阶段失败: {e}"));
         }
 
@@ -1870,7 +2232,7 @@ pub async fn bulk_transition(
         .bind(&history.reason)
         .bind(history.changed_at.to_rfc3339())
         .bind(&history.changed_by)
-        .execute(&state.db)
+        .execute(&mut db_scope)
         .await
         {
             return ApiResponse::server_error(&format!("写入生命周期历史失败: {e}"));
@@ -1882,21 +2244,21 @@ pub async fn bulk_transition(
     ApiResponse::success(results, "批量生命周期流转完成")
 }
 async fn upstream_downstream(
-    state: &AppState,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     entity_id: &str,
     upstream: bool,
 ) -> Result<Vec<LineageNodeV60>, sqlx::Error> {
     let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut *scope)
     .await?;
     let edges: Vec<LineageEdgeV60> = edge_rows.iter().map(lineage_edge_from_row).collect();
 
     let node_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut *scope)
     .await?;
     let nodes: Vec<LineageNodeV60> = node_rows.iter().map(lineage_node_from_row).collect();
 

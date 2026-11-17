@@ -10,6 +10,7 @@ use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Js
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -691,9 +692,21 @@ pub struct SwitchRegionsRequest {
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn create_recovery_point(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRecoveryPointRequest>,
 ) -> ApiResponse<RecoveryPoint> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let snapshot_type = req
         .snapshot_type
@@ -732,7 +745,7 @@ pub async fn create_recovery_point(
     .bind(rp.created_at.to_rfc3339())
     .bind(rp.size_bytes)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入恢复点失败", e))
     {
@@ -760,12 +773,24 @@ pub async fn create_recovery_point(
 )]
 pub async fn list_recovery_points(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListRecoveryPointsQuery>,
 ) -> ApiResponse<PaginatedResponse<RecoveryPoint>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let points: Vec<RecoveryPoint> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(recovery_point_from_row).collect())
     .unwrap_or_default();
@@ -812,13 +837,25 @@ pub async fn list_recovery_points(
 /// 扁平契约 `GET /recovery/points/{id}`：单条恢复点查询，不存在返回业务 404。
 pub async fn get_recovery_point(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<RecoveryPoint> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1 LIMIT 1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -840,13 +877,25 @@ pub async fn get_recovery_point(
 )]
 pub async fn restore_from_point(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RestoreRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let point = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
     )))
     .bind(&req.recovery_point_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
     .map(|r| recovery_point_from_row(&r));
@@ -881,18 +930,32 @@ pub async fn restore_from_point(
     tag = "disaster_v56"
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_recovery_status(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
+pub async fn get_recovery_status(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let points: Vec<RecoveryPoint> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(recovery_point_from_row).collect())
     .unwrap_or_default();
     let plans: Vec<RecoveryPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(recovery_plan_from_row).collect())
     .unwrap_or_default();
@@ -955,9 +1018,21 @@ pub async fn get_recovery_status(State(state): State<AppState>) -> ApiResponse<s
 )]
 pub async fn create_recovery_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRecoveryPlanRequest>,
 ) -> ApiResponse<RecoveryPlan> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let priority = req
         .priority
@@ -1010,7 +1085,7 @@ pub async fn create_recovery_plan(
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
     .bind(recovery_plan_status_to_str(&plan.status))
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入恢复计划失败", e))
     {
@@ -1033,15 +1108,27 @@ pub async fn create_recovery_plan(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn execute_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExecutePlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
     )))
     .bind(&req.plan_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询恢复计划失败", e)))
     .map(|r| recovery_plan_from_row(&r));
@@ -1068,7 +1155,7 @@ pub async fn execute_plan(
     .bind(recovery_plan_status_to_str(&plan.status))
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新恢复计划失败", e))
     {
@@ -1110,13 +1197,25 @@ pub async fn execute_plan(
 )]
 pub async fn get_plan_progress(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询恢复计划失败", e)))
     .map(|r| recovery_plan_from_row(&r));
@@ -1163,8 +1262,20 @@ pub async fn get_plan_progress(
 )]
 pub async fn test_recovery(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<TestRecoveryRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let point_id = req
         .recovery_point_id
         .clone()
@@ -1176,7 +1287,7 @@ pub async fn test_recovery(
         db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points ORDER BY created_at LIMIT 1"
         )))
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
         .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
         .map(|r| recovery_point_from_row(&r))
@@ -1185,7 +1296,7 @@ pub async fn test_recovery(
             "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
         )))
         .bind(&point_id)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
         .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
         .map(|r| recovery_point_from_row(&r))
@@ -1229,9 +1340,21 @@ pub async fn test_recovery(
 )]
 pub async fn create_continuity_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContinuityPlanRequest>,
 ) -> ApiResponse<ContinuityPlan> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let strategy = req
         .recovery_strategy
@@ -1282,7 +1405,7 @@ pub async fn create_continuity_plan(
     .bind(Option::<String>::None)
     .bind(continuity_status_to_str(&plan.status))
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入连续性计划失败", e)) { return ApiResponse::from(e); }
 
@@ -1299,11 +1422,25 @@ pub async fn create_continuity_plan(
     ),
     tag = "disaster_v56"
 )]
-pub async fn list_plans(State(state): State<AppState>) -> ApiResponse<Vec<ContinuityPlan>> {
+pub async fn list_plans(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<ContinuityPlan>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
     .unwrap_or_default();
@@ -1325,13 +1462,25 @@ pub async fn list_plans(State(state): State<AppState>) -> ApiResponse<Vec<Contin
 )]
 pub async fn get_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<ContinuityPlan> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
@@ -1356,16 +1505,28 @@ pub async fn get_plan(
 )]
 pub async fn update_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateContinuityPlanRequest>,
 ) -> ApiResponse<ContinuityPlan> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
@@ -1407,7 +1568,7 @@ pub async fn update_plan(
     .bind(&plan.test_frequency)
     .bind(continuity_status_to_str(&plan.status))
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新连续性计划失败", e))
     {
@@ -1432,16 +1593,28 @@ pub async fn update_plan(
 )]
 pub async fn test_plan(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     _req: Json<TestPlanRequest>,
 ) -> ApiResponse<BCTest> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     )))
     .bind(&id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
@@ -1458,7 +1631,7 @@ pub async fn test_plan(
     .bind(now.to_rfc3339())
     .bind("tested")
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新连续性计划失败", e)) { return ApiResponse::from(e); }
 
@@ -1483,7 +1656,7 @@ pub async fn test_plan(
     .bind(bc_test.duration_minutes)
     .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入演练记录失败", e))
     {
@@ -1495,14 +1668,26 @@ pub async fn test_plan(
 
 pub async fn get_test_results(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<serde_json::Value>,
 ) -> ApiResponse<Vec<BCTest>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let plan_id = params.get("plan_id").and_then(|v| v.as_str());
 
     let tests: Vec<BCTest> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {BC_TEST_COLS} FROM master_data.mdm_bc_tests"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(bc_test_from_row).collect())
     .unwrap_or_default();
@@ -1539,12 +1724,24 @@ pub async fn get_test_results(
 )]
 pub async fn assess_impact(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ImpactQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
     .unwrap_or_default();
@@ -1620,18 +1817,32 @@ pub async fn assess_impact(
     clippy::cast_possible_truncation,
     clippy::cast_precision_loss
 )]
-pub async fn get_continuity_score(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
+pub async fn get_continuity_score(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
     .unwrap_or_default();
     let tests: Vec<BCTest> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {BC_TEST_COLS} FROM master_data.mdm_bc_tests"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(bc_test_from_row).collect())
     .unwrap_or_default();
@@ -1707,9 +1918,21 @@ pub async fn get_continuity_score(State(state): State<AppState>) -> ApiResponse<
 )]
 pub async fn configure_replication(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConfigureReplicationRequest>,
 ) -> ApiResponse<ReplicationConfig> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let mode = req
         .replication_mode
@@ -1738,7 +1961,7 @@ pub async fn configure_replication(
     .bind(config.lag_max_ms)
     .bind(replication_status_to_str(&config.status))
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入复制配置失败", e))
     {
@@ -1760,15 +1983,27 @@ pub async fn configure_replication(
 )]
 pub async fn start_replication(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
     )))
     .bind(&req.replication_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询复制配置失败", e)))
     .map(|r| replication_config_from_row(&r));
@@ -1782,7 +2017,7 @@ pub async fn start_replication(
     )
     .bind(&config.id)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("启动复制失败", e))
     {
@@ -1813,13 +2048,25 @@ pub async fn start_replication(
 )]
 pub async fn stop_replication(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
     )))
     .bind(&req.replication_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询复制配置失败", e)))
     .map(|r| replication_config_from_row(&r));
@@ -1832,7 +2079,7 @@ pub async fn stop_replication(
         "UPDATE master_data.mdm_replication_configs SET status = 'stopped' WHERE id = $1",
     )
     .bind(&config.id)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("停止复制失败", e))
     {
@@ -1861,18 +2108,30 @@ pub async fn stop_replication(
 )]
 pub async fn get_replication_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let configs: Vec<ReplicationConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(replication_config_from_row).collect())
     .unwrap_or_default();
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(region_config_from_row).collect())
     .unwrap_or_default();
@@ -1913,9 +2172,21 @@ pub async fn get_replication_status(
 )]
 pub async fn initiate_failover(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiateFailoverRequest>,
 ) -> ApiResponse<FailoverRecord> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let trigger = req
         .trigger
@@ -1952,7 +2223,7 @@ pub async fn initiate_failover(
     .bind(&failover.reason)
     .bind(failover_status_to_str(&failover.status))
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入故障转移记录失败", e))
     {
@@ -1977,17 +2248,29 @@ pub async fn initiate_failover(
 )]
 pub async fn complete_failover(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<CompleteFailoverRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let record = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE id = $1 OR id = $2"
     )))
     .bind(&id)
     .bind(&req.failover_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询故障转移记录失败", e)))
     .map(|r| failover_record_from_row(&r));
@@ -2003,7 +2286,7 @@ pub async fn complete_failover(
     .bind(&record.id)
     .bind(&completed_at)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return ApiResponse::from(e); }
 
@@ -2012,7 +2295,7 @@ pub async fn complete_failover(
     )
     .bind(&record.from_region)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return ApiResponse::from(e); }
     if let Err(e) = sqlx::query(
@@ -2020,7 +2303,7 @@ pub async fn complete_failover(
     )
     .bind(&record.to_region)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新目标地域失败", e)) { return ApiResponse::from(e); }
 
@@ -2049,11 +2332,23 @@ pub async fn complete_failover(
 )]
 pub async fn get_failover_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<FailoverRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let records: Vec<FailoverRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(failover_record_from_row).collect())
     .unwrap_or_default();
@@ -2072,15 +2367,27 @@ pub async fn get_failover_history(
 )]
 pub async fn switch_regions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SwitchRegionsRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let target = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1"
     )))
     .bind(&req.primary_region)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("查询地域失败", e)))
     .map(|r| region_config_from_row(&r));
@@ -2094,7 +2401,7 @@ pub async fn switch_regions(
     )
     .bind(&req.primary_region)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("重置地域主备失败", e))
     {
@@ -2105,14 +2412,14 @@ pub async fn switch_regions(
     )
     .bind(&req.primary_region)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return ApiResponse::from(e); }
 
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(region_config_from_row).collect())
     .unwrap_or_default();
@@ -2148,11 +2455,25 @@ pub async fn switch_regions(
     ),
     tag = "disaster_v56"
 )]
-pub async fn get_region_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
+pub async fn get_region_health(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .map(|rows| rows.iter().map(region_config_from_row).collect())
     .unwrap_or_default();

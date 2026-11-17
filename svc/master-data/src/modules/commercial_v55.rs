@@ -10,8 +10,10 @@ use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Js
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::TopemsError;
 
 use crate::shared::AppState;
 
@@ -494,9 +496,21 @@ pub struct SLAReportQuery {
 )]
 pub async fn create_api_product(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAPIProductRequest>,
 ) -> ApiResponse<APIProduct> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant = tenant_of(&claims);
     let tier = req
         .tier
@@ -530,9 +544,11 @@ pub async fn create_api_product(
     .bind(product.price_monthly)
     .bind(product.active)
     .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入 API 产品失败: {e}"));
     }
 
@@ -549,12 +565,26 @@ pub async fn create_api_product(
     ),
     tag = "commercial_v55"
 )]
-pub async fn list_api_products(State(state): State<AppState>) -> ApiResponse<Vec<APIProduct>> {
+pub async fn list_api_products(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<APIProduct>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表读取启用产品。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let active: Vec<APIProduct> = rows.iter().map(product_from_row).collect();
@@ -576,8 +606,20 @@ pub async fn list_api_products(State(state): State<AppState>) -> ApiResponse<Vec
 )]
 pub async fn get_api_product(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<APIProduct> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let id = match parse_uuid_or_400::<APIProduct>(&id, "id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -587,7 +629,7 @@ pub async fn get_api_product(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -609,8 +651,20 @@ pub async fn get_api_product(
 )]
 pub async fn subscribe_tenant(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SubscribeTenantRequest>,
 ) -> ApiResponse<Subscription> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let api_product_id =
         match parse_uuid_or_400::<Subscription>(&req.api_product_id, "api_product_id") {
             Ok(v) => v,
@@ -625,7 +679,7 @@ pub async fn subscribe_tenant(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1::uuid LIMIT 1"
     )))
     .bind(api_product_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -665,9 +719,11 @@ pub async fn subscribe_tenant(
     .bind(sub.starts_at)
     .bind(sub.expires_at)
     .bind(sub_status_to_str(&sub.status))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入订阅失败: {e}"));
     }
 
@@ -689,8 +745,20 @@ pub async fn subscribe_tenant(
 )]
 pub async fn get_subscription(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -700,7 +768,7 @@ pub async fn get_subscription(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"
     )))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
@@ -722,8 +790,20 @@ pub async fn get_subscription(
 )]
 pub async fn list_subscriptions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<UsageSummaryQuery>,
 ) -> ApiResponse<Vec<Subscription>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表读取，可选 tenant_id / api_product_id 过滤。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
@@ -733,7 +813,7 @@ pub async fn list_subscriptions(
     )))
     .bind(&params.tenant_id)
     .bind(&params.api_product_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await
     .unwrap_or_default();
     let filtered: Vec<Subscription> = rows.iter().map(subscription_from_row).collect();
@@ -756,9 +836,21 @@ pub async fn list_subscriptions(
 )]
 pub async fn cancel_subscription(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -772,7 +864,7 @@ pub async fn cancel_subscription(
     )))
     .bind(id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
@@ -799,10 +891,22 @@ pub async fn cancel_subscription(
 )]
 pub async fn upgrade_tier(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> ApiResponse<Subscription> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let id = match parse_uuid_or_400::<Subscription>(&id, "id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -813,7 +917,7 @@ pub async fn upgrade_tier(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     )))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
@@ -834,9 +938,11 @@ pub async fn upgrade_tier(
     .bind(product_tier_to_string(&new_tier))
     .bind(id)
     .bind(tenant)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("升级套餐失败: {e}"));
     }
 
@@ -844,7 +950,7 @@ pub async fn upgrade_tier(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     )))
     .bind(id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
@@ -868,8 +974,20 @@ pub async fn upgrade_tier(
 )]
 pub async fn record_usage(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<RecordUsageRequest>,
 ) -> ApiResponse<UsageRecord> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let tenant_id = match parse_uuid_or_400::<UsageRecord>(&req.tenant_id, "tenant_id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -899,9 +1017,11 @@ pub async fn record_usage(
     .bind(record.errors)
     .bind(record.data_transferred)
     .bind(record.recorded_at)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入使用记录失败: {e}"));
     }
 
@@ -920,8 +1040,20 @@ pub async fn record_usage(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_usage_summary(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<UsageSummaryQuery>,
 ) -> ApiResponse<UsageSummary> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let start_time =
         match parse_opt_time_or_400::<UsageSummary>(params.start_time.as_deref(), "start_time") {
             Ok(v) => v,
@@ -945,7 +1077,7 @@ pub async fn get_usage_summary(
     .bind(params.api_product_id.as_deref())
     .bind(start_time)
     .bind(end_time)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
 
     let rows = match query {
@@ -986,8 +1118,20 @@ pub async fn get_usage_summary(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn generate_bill(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<GenerateBillRequest>,
 ) -> ApiResponse<BillingRecord> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：数据源改真表（usage_records / rate_cards / api_products），逻辑保留。
     let tenant_id = match parse_uuid_or_400::<BillingRecord>(&req.tenant_id, "tenant_id") {
         Ok(v) => v,
@@ -1016,7 +1160,7 @@ pub async fn generate_bill(
     .bind(tenant_id)
     .bind(period_start_at)
     .bind(period_end_at)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let filtered: Vec<UsageRecord> = match usage_rows {
         Ok(r) => r.iter().map(usage_record_from_row).collect(),
@@ -1035,7 +1179,7 @@ pub async fn generate_bill(
     let rate_card_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier LIMIT 1"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let rate_cards: Vec<RateCard> = match rate_card_rows {
         Ok(r) => r.iter().map(rate_card_from_row).collect(),
@@ -1053,7 +1197,7 @@ pub async fn generate_bill(
     let product_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let products: Vec<APIProduct> = match product_rows {
         Ok(r) => r.iter().map(product_from_row).collect(),
@@ -1105,9 +1249,11 @@ pub async fn generate_bill(
     .bind(serde_json::to_value(&bill.usage_summary).unwrap_or(serde_json::json!({})))
     .bind(bill.total_amount)
     .bind(billing_status_to_str(&bill.status))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入账单失败: {e}"));
     }
 
@@ -1131,8 +1277,20 @@ pub async fn generate_bill(
 )]
 pub async fn get_billing_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<BillingHistoryQuery>,
 ) -> ApiResponse<PaginatedResponse<BillingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表分页（COALESCE 过滤 + LIMIT/OFFSET + 独立 COUNT）。
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1141,7 +1299,7 @@ pub async fn get_billing_history(
         "SELECT COUNT(*) AS total FROM master_data.mdm_billing_records WHERE ($1::text IS NULL OR tenant_id::text = $1)",
     )
     .bind(params.tenant_id.as_deref())
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await;
     let total: i64 = match count_rows {
         Ok(r) => r.get::<i64, _>("total"),
@@ -1157,7 +1315,7 @@ pub async fn get_billing_history(
     .bind(params.tenant_id.as_deref())
     .bind(page_size)
     .bind((page - 1) * page_size)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let items: Vec<BillingRecord> = match rows {
         Ok(r) => r.iter().map(billing_record_from_row).collect(),
@@ -1187,8 +1345,20 @@ pub async fn get_billing_history(
 )]
 pub async fn create_rate_card(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateRateCardRequest>,
 ) -> ApiResponse<RateCard> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：写真表 master_data.mdm_rate_cards。
     let card = RateCard {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1210,9 +1380,11 @@ pub async fn create_rate_card(
     .bind(card.cost_per_mb)
     .bind(card.overage_multiplier)
     .bind(&card.currency)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("创建费率卡失败: {e}"));
     }
 
@@ -1228,12 +1400,26 @@ pub async fn create_rate_card(
     ),
     tag = "commercial_v55"
 )]
-pub async fn get_rate_cards(State(state): State<AppState>) -> ApiResponse<Vec<RateCard>> {
+pub async fn get_rate_cards(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<Vec<RateCard>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：读真表。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let cards: Vec<RateCard> = match rows {
         Ok(r) => r.iter().map(rate_card_from_row).collect(),
@@ -1256,9 +1442,21 @@ pub async fn get_rate_cards(State(state): State<AppState>) -> ApiResponse<Vec<Ra
 )]
 pub async fn mark_bill_paid(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<BillingRecord> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let id = match parse_uuid_or_400::<BillingRecord>(&id, "id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -1272,7 +1470,7 @@ pub async fn mark_bill_paid(
     )))
     .bind(id)
     .bind(tenant)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
@@ -1296,8 +1494,20 @@ pub async fn mark_bill_paid(
 )]
 pub async fn configure_sla(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<ConfigureSLARequest>,
 ) -> ApiResponse<SLAConfig> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：写真表 master_data.mdm_sla_configs。
     let config = SLAConfig {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1319,9 +1529,11 @@ pub async fn configure_sla(
     .bind(&config.unit)
     .bind(config.penalty_per_min)
     .bind(config.measurement_window)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("配置 SLA 失败: {e}"));
     }
 
@@ -1340,8 +1552,20 @@ pub async fn configure_sla(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn measure_sla(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<MeasureSLARequest>,
 ) -> ApiResponse<SLAMeasurement> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let config_id = match parse_uuid_or_400::<SLAMeasurement>(&req.config_id, "config_id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -1355,7 +1579,7 @@ pub async fn measure_sla(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
     .bind(config_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let config = match config_row {
         Ok(Some(r)) => sla_config_from_row(&r),
@@ -1397,9 +1621,11 @@ pub async fn measure_sla(
     .bind(measurement.measured_at)
     .bind(measurement.window_start)
     .bind(measurement.window_end)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("写入 SLA 度量失败: {e}"));
     }
 
@@ -1418,15 +1644,27 @@ pub async fn measure_sla(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_sla_status(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SLAStatusQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：数据源改真表（configs + measurements），聚合逻辑保留。
     let config_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
            WHERE ($1::text IS NULL OR id::text = $1) ORDER BY metric"#,
     )))
     .bind(params.config_id.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
         Ok(r) => r.iter().map(sla_config_from_row).collect(),
@@ -1438,7 +1676,7 @@ pub async fn get_sla_status(
            WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY measured_at"#,
     )))
     .bind(params.tenant_id.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
@@ -1487,8 +1725,20 @@ pub async fn get_sla_status(
 )]
 pub async fn get_sla_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SLAHistoryQuery>,
 ) -> ApiResponse<Vec<SLAMeasurement>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let start_time = match parse_opt_time_or_400::<Vec<SLAMeasurement>>(
         params.start_time.as_deref(),
         "start_time",
@@ -1516,7 +1766,7 @@ pub async fn get_sla_history(
     .bind(params.config_id.as_deref())
     .bind(start_time)
     .bind(end_time)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let filtered: Vec<SLAMeasurement> = match rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
@@ -1542,8 +1792,20 @@ pub async fn get_sla_history(
 )]
 pub async fn calculate_penalty(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SLAPenaltyQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let config_id = match parse_uuid_or_400::<serde_json::Value>(&params.config_id, "config_id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -1557,7 +1819,7 @@ pub async fn calculate_penalty(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
     )))
     .bind(config_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let config = match config_row {
         Ok(Some(r)) => sla_config_from_row(&r),
@@ -1571,7 +1833,7 @@ pub async fn calculate_penalty(
     )))
     .bind(&params.config_id)
     .bind(tenant_id)
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let breached: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
@@ -1607,8 +1869,20 @@ pub async fn calculate_penalty(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn create_incident(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateSLAIncidentRequest>,
 ) -> ApiResponse<SLAIncident> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     let config_id = match parse_uuid_or_400::<SLAIncident>(&req.config_id, "config_id") {
         Ok(v) => v,
         Err(resp) => return resp,
@@ -1629,7 +1903,7 @@ pub async fn create_incident(
         "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1",
     )
     .bind(config_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
     let penalty_per_min = match config_row {
         Ok(Some(r)) => r.get::<f64, _>("penalty_per_min"),
@@ -1663,9 +1937,11 @@ pub async fn create_incident(
     .bind(impact_severity_to_str(&incident.impact_severity))
     .bind(incident.compensation_amount)
     .bind(incident_status_to_str(&incident.status))
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
+        drop(db_scope);
+        let _ = guard.take();
         return ApiResponse::server_error(&format!("创建 SLA 事故失败: {e}"));
     }
 
@@ -1683,8 +1959,20 @@ pub async fn create_incident(
 )]
 pub async fn get_incidents(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SLAIncidentsQuery>,
 ) -> ApiResponse<Vec<SLAIncident>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
@@ -1694,7 +1982,7 @@ pub async fn get_incidents(
     )))
     .bind(params.tenant_id.as_deref())
     .bind(params.status.as_deref())
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let filtered: Vec<SLAIncident> = match rows {
         Ok(r) => r.iter().map(sla_incident_from_row).collect(),
@@ -1720,13 +2008,25 @@ pub async fn get_incidents(
 )]
 pub async fn generate_sla_report(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<SLAReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
     // K1：数据源改真表（configs / measurements / incidents），逻辑保留。
     let config_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs ORDER BY metric"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
         Ok(r) => r.iter().map(sla_config_from_row).collect(),
@@ -1736,7 +2036,7 @@ pub async fn generate_sla_report(
     let meas_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements ORDER BY measured_at"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
@@ -1746,7 +2046,7 @@ pub async fn generate_sla_report(
     let incident_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents ORDER BY id"#,
     )))
-    .fetch_all(&state.db)
+    .fetch_all(&mut db_scope)
     .await;
     let incidents: Vec<SLAIncident> = match incident_rows {
         Ok(r) => r.iter().map(sla_incident_from_row).collect(),
