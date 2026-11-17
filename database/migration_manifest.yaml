@@ -2034,3 +2034,15 @@ pending_forward_patches:
       - { kind: catalog, ref: "topems_prod pg_class/pg_policies 2026-11-17", detail: "生产三表已是严格 B 范式（M-2 batch06 线下收紧），bi.analytics_datasets 同时残留两条严格策略；克隆库三表仍是四放行分支宽松策略 → 迁移对两种输入幂等" }
       - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（A/B/全零 各 1 行夹具）", detail: "up 前六档 core_files/datasets/mdm：未设 0/0/3、空串 0/0/3、全零 3/3/3、A 1/1/1、B 1/1/1、A+system 1/1/1；up 后：未设 0/0/0、空串 0/0/0、全零 1/1/1、A 1/1/1、B 1/1/1、A+system 3/3/3；全零上下文平台行 1/1/1（可见性未收掉）；A 上下文写 B 行 42501；down 后策略名恢复为 tenant_isolation_core_files / tenant_isolation_analytics_datasets / mdm_metadata_objects_tenant_policy；夹具清理后三表 0 行" }
     note: "回滚文件 database/rollback/20261117234000_legacy_permissive_rls_to_strict.rollback.sql：恢复三表历史宽松策略、移除新索引、恢复 mdm.tenant_id 可空；NULL→全零归一不回退（避免平台行重新失去归属）。读取端无需同改：list_files / dataset.rs / metadata_v60 / master_plugin 均已用请求事务 + 显式 tenant_id 谓词"
+
+  - version: "20261117235500"
+    file: "database/migrations/20261117235500_engagement_rls_strict.sql"
+    status: to_apply
+    effect: "engagement 两张表（flow.core_comments / flow.core_favorites）补 RLS：动态清空既有策略后重建唯一严格 rls_tenant_isolation（USING + WITH CHECK + ENABLE/FORCE）；tenant_id 幂等收敛 NOT NULL"
+    destructive_scan: "无 INSERT/UPDATE/DELETE/TRUNCATE；2 次 ENABLE + 2 次 FORCE RLS、动态 DROP POLICY、2 次 CREATE POLICY、幂等 SET NOT NULL；文件内无 BEGIN/COMMIT"
+    evidence:
+      - { kind: data, ref: "topems_prod 与克隆库 m2_dryrun_20261116 count(*)", detail: "迁移前两库两表均 0 行、tenant_id NULL 0 行；全仓 migrations 无 INSERT INTO flow.core_comments / flow.core_favorites → 无平台内置行，不做全零归一" }
+      - { kind: catalog, ref: "topems_prod 与克隆库 pg_class/pg_policies 2026-11-17", detail: "两表均 relrowsecurity=false、relforcerowsecurity=false、0 策略；tenant_id NOT NULL default '00000000-0000-0000-0000-000000000001'；既有 idx_core_comments_entity / idx_core_favorites_user / 唯一键已覆盖策略列，不新建索引" }
+      - { kind: code, ref: "svc/unified-core/src/modules/engagement/handlers.rs", detail: "6 个 handler 改 Extension<RlsTxnCell> + scope_with；读用 TenantScope::from_claims + sql_predicate + bind_tenant_scope；写用 require_tenant 显式绑定 tenant_id；错误与 404 分支 drop(scope) + guard.take() + rollback；数据库空串/全零租户均 fail-closed" }
+      - { kind: rehearsal, ref: "克隆库 m2_dryrun_20261116（A/B/全零 各 1 行夹具）", detail: "up 前两表六档均 3/3（无 RLS 全可见）；up 后未设 0/0、空串 0/0、全零 1/1、A 1/1、B 1/1、A+system 3/3；A 上下文读 B 行 0/0、写 B 行两表各 42501；down 后 rls=f/策略 0、六档回到 3/3；夹具清理后 0/0，克隆库停在 up 后严格态" }
+    note: "部署耦合：必须与 engagement/handlers.rs 同一窗口。只上迁移 → 旧池直连代码在 FORCE RLS 下读 0 行、写 42501；只上代码 → 池直连仍可绕过。回滚文件 database/rollback/20261117235500_engagement_rls_strict.rollback.sql：DROP 策略 + NO FORCE/DISABLE + 恢复 tenant_id 可空"
