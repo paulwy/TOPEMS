@@ -584,6 +584,7 @@ pub async fn delegate_task(
     request_body = TaskBatchRequest,
     responses(
         (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
+        (status = 500, description = "批量操作失败，整批已回滚"),
     ),
 )]
 #[allow(
@@ -609,6 +610,7 @@ pub async fn batch_approve(
     };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
+    let mut fatal_error: Option<(String, String)> = None;
 
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
@@ -632,10 +634,8 @@ pub async fn batch_approve(
                     }
                 }
                 Err(e) => {
-                    failed_tasks.push(TaskFailure {
-                        task_id: task_id_str.clone(),
-                        error: e.to_string(),
-                    });
+                    fatal_error = Some((task_id_str.clone(), e.to_string()));
+                    break;
                 }
             }
         } else {
@@ -644,6 +644,17 @@ pub async fn batch_approve(
                 error: "无效的任务ID".to_string(),
             });
         }
+    }
+
+    if let Some((task_id, error)) = fatal_error {
+        drop(scope);
+        if let Some(txn) = guard.take() {
+            let _ = txn.rollback().await;
+        }
+        tracing::error!(task_id = %task_id, error = %error, "批量操作写入失败，请求事务已整体回滚");
+        return ApiResponse::from(TopemsError::Internal(
+            "批量操作失败，已整体回滚".to_string(),
+        ));
     }
 
     ApiResponse::success(
@@ -664,6 +675,7 @@ pub async fn batch_approve(
     request_body = TaskBatchRequest,
     responses(
         (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
+        (status = 500, description = "批量操作失败，整批已回滚"),
     ),
 )]
 #[allow(
@@ -689,6 +701,7 @@ pub async fn batch_complete(
     };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
+    let mut fatal_error: Option<(String, String)> = None;
 
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
@@ -712,10 +725,8 @@ pub async fn batch_complete(
                     }
                 }
                 Err(e) => {
-                    failed_tasks.push(TaskFailure {
-                        task_id: task_id_str.clone(),
-                        error: e.to_string(),
-                    });
+                    fatal_error = Some((task_id_str.clone(), e.to_string()));
+                    break;
                 }
             }
         } else {
@@ -724,6 +735,17 @@ pub async fn batch_complete(
                 error: "无效的任务ID".to_string(),
             });
         }
+    }
+
+    if let Some((task_id, error)) = fatal_error {
+        drop(scope);
+        if let Some(txn) = guard.take() {
+            let _ = txn.rollback().await;
+        }
+        tracing::error!(task_id = %task_id, error = %error, "批量操作写入失败，请求事务已整体回滚");
+        return ApiResponse::from(TopemsError::Internal(
+            "批量操作失败，已整体回滚".to_string(),
+        ));
     }
 
     ApiResponse::success(
@@ -744,6 +766,7 @@ pub async fn batch_complete(
     request_body = TaskBatchRequest,
     responses(
         (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
+        (status = 500, description = "批量操作失败，整批已回滚"),
     ),
 )]
 #[allow(
@@ -769,6 +792,7 @@ pub async fn batch_delegate(
     };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
+    let mut fatal_error: Option<(String, String)> = None;
 
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
@@ -792,10 +816,8 @@ pub async fn batch_delegate(
                     }
                 }
                 Err(e) => {
-                    failed_tasks.push(TaskFailure {
-                        task_id: task_id_str.clone(),
-                        error: e.to_string(),
-                    });
+                    fatal_error = Some((task_id_str.clone(), e.to_string()));
+                    break;
                 }
             }
         } else {
@@ -804,6 +826,17 @@ pub async fn batch_delegate(
                 error: "无效的任务ID".to_string(),
             });
         }
+    }
+
+    if let Some((task_id, error)) = fatal_error {
+        drop(scope);
+        if let Some(txn) = guard.take() {
+            let _ = txn.rollback().await;
+        }
+        tracing::error!(task_id = %task_id, error = %error, "批量操作写入失败，请求事务已整体回滚");
+        return ApiResponse::from(TopemsError::Internal(
+            "批量操作失败，已整体回滚".to_string(),
+        ));
     }
 
     ApiResponse::success(
