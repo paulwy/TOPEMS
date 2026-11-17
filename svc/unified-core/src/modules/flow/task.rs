@@ -9,7 +9,6 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
-use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -594,16 +593,19 @@ pub async fn delegate_task(
 )]
 pub async fn batch_approve(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> ApiResponse<TaskBatchResult> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化批量审批事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("批量操作失败".to_string()));
+        }
     };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
@@ -611,12 +613,11 @@ pub async fn batch_approve(
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE public.core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
+                "UPDATE public.core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
             )
             .bind(task_id)
             .bind(&payload.comment)
-            .bind(tenant_opt)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
             match result {
@@ -672,16 +673,19 @@ pub async fn batch_approve(
 )]
 pub async fn batch_complete(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> ApiResponse<TaskBatchResult> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化批量完成任务事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("批量操作失败".to_string()));
+        }
     };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
@@ -689,12 +693,11 @@ pub async fn batch_complete(
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE public.core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
+                "UPDATE public.core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
             )
             .bind(task_id)
             .bind(&payload.comment)
-            .bind(tenant_opt)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
             match result {
@@ -750,16 +753,19 @@ pub async fn batch_complete(
 )]
 pub async fn batch_delegate(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> ApiResponse<TaskBatchResult> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化批量委托事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("批量操作失败".to_string()));
+        }
     };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
@@ -767,12 +773,11 @@ pub async fn batch_delegate(
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE public.core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
+                "UPDATE public.core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1",
             )
             .bind(task_id)
             .bind(&payload.comment)
-            .bind(tenant_opt)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
             match result {
