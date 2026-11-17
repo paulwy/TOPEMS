@@ -53,11 +53,17 @@ function fail(lines) {
 }
 
 // 空账本（无表 / 0 行 / 断言源全部未记账）统一出口：默认 FAILED，显式豁免时打醒目 WARN 放行。
-function emptyLedgerFailure(summary, detailLines, label, assertionCount) {
+function emptyLedgerFailure(summary, detailLines, label, assertionCount, source) {
+  const sourceLines = [
+    `  连接来源：${source}`,
+    "  提示：若该来源指向 pg_dump 结构副本（只同步了 schema、没执行迁移链），它天然没有迁移账本；",
+    "        请用 MIGRATION_DRIFT_DB_URL 显式指向迁移链完整的库，而不是改此处判定。",
+  ];
   if (!ALLOW_EMPTY_LEDGER) {
     fail([
       `${TAG} FAILED ${summary}`,
       `  目标库：${label}`,
+      ...sourceLines,
       ...detailLines,
       "  判定：K6 fail-closed —— 可连但无账本/账本为空一律失败，不再 NOTE 跳过并 PASS。",
       "  修复：把 MIGRATION_DRIFT_DB_URL / DATABASE_URL / .env 的 MIGRATE_URL 指向已建好迁移链的库",
@@ -69,6 +75,7 @@ function emptyLedgerFailure(summary, detailLines, label, assertionCount) {
   console.warn("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
   console.warn(`${TAG} WARN ${summary}`);
   console.warn(`  目标库：${label}`);
+  console.warn(`  连接来源：${source}`);
   for (const line of detailLines) console.warn(`  ${line.replace(/^ {2}/, "")}`);
   console.warn("  放行依据：MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1（显式豁免，仅限本地演练；CI 不得设置）");
   console.warn("  本次未执行任何结构断言，本结论不可用于发布判定。");
@@ -89,11 +96,15 @@ function readEnvMigrateUrl() {
 }
 
 function resolveDbUrl() {
-  return (
-    process.env.MIGRATION_DRIFT_DB_URL ||
-    process.env.DATABASE_URL ||
-    readEnvMigrateUrl()
-  );
+  if (process.env.MIGRATION_DRIFT_DB_URL) {
+    return { url: process.env.MIGRATION_DRIFT_DB_URL, source: "MIGRATION_DRIFT_DB_URL（环境变量）" };
+  }
+  if (process.env.DATABASE_URL) {
+    return { url: process.env.DATABASE_URL, source: "DATABASE_URL（环境变量/外层 shell 导出）" };
+  }
+  const fromEnvFile = readEnvMigrateUrl();
+  if (fromEnvFile) return { url: fromEnvFile, source: ".env 的 MIGRATE_URL" };
+  return { url: null, source: null };
 }
 
 function sanitizeUrl(url) {
@@ -258,7 +269,7 @@ function main() {
   const assertions = loadManifest();
   assertManifestAgainstMigrations(assertions);
 
-  const url = resolveDbUrl();
+  const { url, source } = resolveDbUrl();
   if (!url) {
     fail([
       `${TAG} FAILED 缺少数据库连接（fail-closed，不允许静默跳过）`,
@@ -271,7 +282,7 @@ function main() {
   }
 
   const label = dbLabel(url);
-  console.log(`${TAG} 目标库 ${label}（${sanitizeUrl(url)}）；断言 ${assertions.length} 项`);
+  console.log(`${TAG} 目标库 ${label}（${sanitizeUrl(url)}；来源 ${source}）；断言 ${assertions.length} 项`);
 
   let ledgerPresent;
   try {
@@ -299,6 +310,7 @@ function main() {
       ["  现状：to_regclass('_sqlx_migrations') IS NULL", "  含义：该库从未执行过迁移链，无法做任何记账-结构比对。"],
       label,
       assertions.length,
+      source,
     );
   }
 
@@ -318,6 +330,7 @@ function main() {
       [`  现状：表存在但记录数 = ${Number.isFinite(ledgerTotal) ? ledgerTotal : "未知"}`],
       label,
       assertions.length,
+      source,
     );
   }
 
@@ -358,6 +371,7 @@ function main() {
       ],
       label,
       assertions.length,
+      source,
     );
   }
 

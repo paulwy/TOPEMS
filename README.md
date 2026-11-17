@@ -314,6 +314,26 @@ openssl rand -base64 32
 > pre-push 的 `cargo-test-workspace` 会优先使用 `.env` 的 `TEST_DATABASE_URL`
 > （优先级：进程环境 > `.env` 的 `TEST_DATABASE_URL` > `.env` 的 `MIGRATE_URL`），并同时喂给 `DATABASE_URL`。
 
+### 迁移校验（pre-push `ledger-ddl-drift`）
+
+pre-push 会用 `scripts/migration/check-ledger-ddl-drift.mjs` 校验迁移账本与 DDL 是否一致。
+目标库 DSN 的解析顺序（前者优先，三级都取不到则 fail-closed）：
+
+1. `MIGRATION_DRIFT_DB_URL` —— 专用覆盖，推荐显式设置
+2. `DATABASE_URL` —— 含外层 shell / `~/.zshrc` 等导出的进程环境
+3. `.env` 的 `MIGRATE_URL`
+
+目标库必须由迁移链建起来（存在 `_sqlx_migrations` 账本）。若第 2 档的 `DATABASE_URL`
+指向 `pg_dump --schema-only` 结构副本（只同步 schema、没跑迁移），该库天然没有账本，
+门禁会报「账本为空」——这不是漏迁移，而是指错了库。此时用
+`MIGRATION_DRIFT_DB_URL=postgres://...` 显式指向迁移链完整的库，不要放宽判定。
+失败信息会打印实际命中的来源档位和目标库，便于自查。
+
+```bash
+# .env 中显式指定校验目标（与 MIGRATE_URL 使用同一个 DSN 即可）
+MIGRATION_DRIFT_DB_URL=<与 MIGRATE_URL 相同的 DSN>
+```
+
 ### 启动数据库（方式一：本地安装，默认推荐）
 
 **macOS (Homebrew):**
