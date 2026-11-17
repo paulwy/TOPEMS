@@ -250,6 +250,24 @@ pub async fn create_purchase_order(
         }
     };
 
+    // tenant_id 必须在请求事务内读取：commit 后走裸池没有 app.tenant_id，RLS fail-closed 会读空。
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
+        }
+    };
+    let tenant_id: Option<Uuid> =
+        sqlx::query_scalar("SELECT tenant_id FROM erp.purchase_orders WHERE id = $1")
+            .bind(purchase_order.id)
+            .fetch_optional(&mut scope)
+            .await
+            .ok()
+            .flatten();
+    drop(scope);
+
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
@@ -258,13 +276,6 @@ pub async fn create_purchase_order(
     }
     // D6：commit 成功后发布 PurchaseOrderCreated；失败入重试队列。
     if let Some(ref publisher) = state.event_publisher {
-        let tenant_id: Option<Uuid> =
-            sqlx::query_scalar("SELECT tenant_id FROM erp.purchase_orders WHERE id = $1")
-                .bind(purchase_order.id)
-                .fetch_optional(&state.db)
-                .await
-                .ok()
-                .flatten();
         let payload = PurchaseOrderCreatedPayload {
             order_id: purchase_order.id,
             order_no: purchase_order.order_no.clone(),
