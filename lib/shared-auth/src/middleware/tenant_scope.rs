@@ -7,9 +7,11 @@
 //! 本模块只提供两种**显式**通道：
 //! - [`TenantScope::Tenant`]：SQL 里出现 `tenant_id = $n`，且绑定的 UUID 不允许为
 //!   nil（构造期即报错，不存在"绑空了就放行"的可能）；
-//! - [`TenantScope::System`]：SQL 里**根本没有租户谓词**（生成 `TRUE` 且不绑定租户
+//! - [`TenantScope::System`]：SQL 里**显式出现系统通道判定**
+//!   （`COALESCE(current_setting('app.rls_system', true), 'off') = 'on'`，不绑定租户
 //!   参数），只能通过 [`TenantScope::system`] 构造，构造时强制落 `tracing::warn!`
-//!   与计数器，记录通道来源（超管 / 服务令牌）与目标表。
+//!   与计数器，记录通道来源（超管 / 服务令牌）与目标表。执行该 SQL 的连接必须由
+//!   请求事务显式打开系统通道；池直连（未设置 GUC）会 fail-closed 为 0 行。
 //!
 //! 调用方拿到的枚举字段是私有的，无法直接拼出 `Tenant(nil)`，也没有"传个 NULL"
 //! 的入口。
@@ -146,7 +148,9 @@ impl TenantScope {
     ///
     /// - 租户通道：`"tenant_id = $4::uuid"`，调用方随后用
     ///   [`BindTenantScope::bind_tenant_scope`] 绑定该 UUID；
-    /// - 系统通道：`"TRUE"` —— SQL 中**不存在**租户比较，也没有可被置空的参数。
+    /// - 系统通道：`"COALESCE(current_setting('app.rls_system', true), 'off') = 'on'"`——
+    ///   SQL 中显式表达系统通道，不再依赖 RLS 策略恰好 `TRUE` 放行；连接未设置该 GUC
+    ///   时谓词为 false，fail-closed。
     ///
     /// 约束：`placeholder` 必须是整条 SQL 中**最后一个**占位符。系统通道会整体去掉
     /// 该参数，若它后面还有 `$n+1` 之类的引用，Postgres 会因参数序号断档报错——这是
@@ -154,7 +158,9 @@ impl TenantScope {
     pub fn sql_predicate(&self, column: &str, placeholder: &str) -> String {
         match self.inner {
             ScopeInner::Tenant(_) => format!("{column} = {placeholder}::uuid"),
-            ScopeInner::System(_) => "TRUE".to_string(),
+            ScopeInner::System(_) => {
+                "COALESCE(current_setting('app.rls_system', true), 'off') = 'on'".to_string()
+            }
         }
     }
 
@@ -326,9 +332,12 @@ mod tests {
     }
 
     #[test]
-    fn sql_predicate_has_no_tenant_comparison_for_system() {
+    fn sql_predicate_uses_explicit_system_guc_for_system() {
         let system = TenantScope::system(SystemChannel::ServiceToken, "test", "test_table");
-        assert_eq!(system.sql_predicate("tenant_id", "$4"), "TRUE");
+        assert_eq!(
+            system.sql_predicate("tenant_id", "$4"),
+            "COALESCE(current_setting('app.rls_system', true), 'off') = 'on'"
+        );
         assert!(!system
             .sql_predicate("tenant_id", "$4")
             .contains("tenant_id"));

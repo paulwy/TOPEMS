@@ -47,6 +47,7 @@ pub struct InstanceQueryParams {
 pub async fn list_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -81,6 +82,18 @@ pub async fn list_instances(
 
     let workflow_uuid = workflow_id.and_then(|s| Uuid::parse_str(&s).ok());
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut db_scope = match state.db.scope_with(txn).await {
+        Ok(db_scope) => db_scope,
+        Err(e) => {
+            tracing::error!("初始化工作流实例列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string()));
+        }
+    };
+
     let total: i64 = if !has_filters {
         sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
             r#"SELECT COUNT(*) FROM public.core_workflow_instances
@@ -102,7 +115,7 @@ pub async fn list_instances(
         )))
         .bind(user_uuid)
         .bind_tenant_scope(&scope)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut db_scope)
         .await
         .unwrap_or(0)
     } else {
@@ -132,7 +145,7 @@ pub async fn list_instances(
         .bind(workflow_uuid)
         .bind(user_uuid)
         .bind_tenant_scope(&scope)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut db_scope)
         .await
         {
             Ok(v) => v,
@@ -172,7 +185,7 @@ pub async fn list_instances(
         .bind(page_size)
         .bind(offset)
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut db_scope)
         .await
         {
             Ok(v) => v,
@@ -221,7 +234,7 @@ pub async fn list_instances(
         .bind(page_size)
         .bind(offset)
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut db_scope)
         .await
         {
             Ok(v) => v,
@@ -703,11 +716,18 @@ pub async fn get_instance_details(
 pub async fn error_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("error".to_string());
-    list_instances(State(state), Extension(claims), Query(params)).await
+    list_instances(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await
 }
 
 #[utoipa::path(

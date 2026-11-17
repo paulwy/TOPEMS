@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -227,53 +228,88 @@ pub struct ForceActionRequest {
 pub async fn list_monitor_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
-    super::instance::list_instances(State(state), Extension(claims), Query(params)).await
+    super::instance::list_instances(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await
 }
 
 /// GET /monitor/instances/running
 pub async fn running_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("running".to_string());
-    super::instance::list_instances(State(state), Extension(claims), Query(params)).await
+    super::instance::list_instances(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await
 }
 
 /// GET /monitor/instances/completed
 pub async fn completed_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("completed".to_string());
-    super::instance::list_instances(State(state), Extension(claims), Query(params)).await
+    super::instance::list_instances(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await
 }
 
 /// GET /monitor/instances/rejected
 pub async fn rejected_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("rejected".to_string());
-    super::instance::list_instances(State(state), Extension(claims), Query(params)).await
+    super::instance::list_instances(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await
 }
 
 /// GET /monitor/instances/suspended
 pub async fn suspended_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<InstanceQueryParams>,
 ) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("suspended".to_string());
-    super::instance::list_instances(State(state), Extension(claims), Query(params)).await
+    super::instance::list_instances(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await
 }
 
 // ─── Handlers: Statistics ────────────────────────────────────────────────────
