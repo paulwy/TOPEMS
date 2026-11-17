@@ -11,6 +11,7 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use sqlx::types::Json as SqlJson;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
@@ -38,6 +39,7 @@ pub struct SupplierCategory {
 /// GET /api/master-data/supplier-categories —— 只读列表（未软删、按 sort_order/code 排序）。
 pub async fn list_supplier_categories(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<SupplierCategory>> {
     // B 类读路径：普通用户必须有租户；服务令牌/超管走显式系统通道（落日志 + 计数）。
@@ -49,6 +51,19 @@ pub async fn list_supplier_categories(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let rows: Result<Vec<SupplierCategory>, sqlx::Error> =
         sqlx::query_as(sqlx::AssertSqlSafe(format!(
             r#"SELECT id::text, code, name_zh, name_en, source_values, description,
@@ -60,7 +75,7 @@ pub async fn list_supplier_categories(
             scope.sql_predicate("tenant_id", "$1")
         )))
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.db)
+        .fetch_all(&mut db_scope)
         .await;
     match rows {
         Ok(v) => api_success(v),

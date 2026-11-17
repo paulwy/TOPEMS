@@ -495,6 +495,36 @@
       "file": "svc/wms/src/modules/sync_records.rs",
       "function": "create_sync_record",
       "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/master_data.rs",
+      "function": "delete_material",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/master_data.rs",
+      "function": "delete_uom",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/master_data.rs",
+      "function": "delete_sample",
+      "reason": "rows_affected()==0：0 行命中，未发生写入，返回 404 属合法分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/supplier_master.rs",
+      "function": "create_supplier",
+      "reason": "INSERT ... RETURNING：Ok(None) 表示未插入，未发生写入，返回 500 属失败分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/supplier_master.rs",
+      "function": "update_supplier",
+      "reason": "UPDATE ... RETURNING：Ok(None) 表示 0 行命中，未写入，返回 500 属失败分支"
+    },
+    {
+      "file": "svc/master-data/src/modules/supplier_master.rs",
+      "function": "delete_supplier",
+      "reason": "UPDATE ... RETURNING：Ok(None) 表示 0 行命中，未写入，返回 404"
     }
   ]
 }

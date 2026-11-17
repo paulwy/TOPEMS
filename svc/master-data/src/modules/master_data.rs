@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::locale::Locale;
@@ -103,6 +104,7 @@ pub struct MaterialListResponse {
 
 pub async fn list_materials(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MaterialQuery>,
@@ -122,6 +124,18 @@ pub async fn list_materials(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM master_data.materials
            WHERE deleted_at IS NULL
@@ -135,7 +149,7 @@ pub async fn list_materials(
     .bind(query.status.clone())
     .bind(query.search.clone())
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -167,7 +181,7 @@ pub async fn list_materials(
         .bind(page_size)
         .bind(offset)
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.db)
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -187,6 +201,7 @@ pub async fn list_materials(
 
 pub async fn get_material(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -203,6 +218,18 @@ pub async fn get_material(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1 AND {}"#,
         material_columns(&locale),
@@ -211,7 +238,7 @@ pub async fn get_material(
     let row: Option<Material> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind_tenant_scope(&scope)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -228,10 +255,24 @@ pub async fn get_material(
 
 pub async fn create_material(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialRequest>,
 ) -> ApiResponse<Material> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row: Option<Material> = match sqlx::query_as(
         r#"INSERT INTO master_data.materials
             (material_code, material_name, name_en, material_type, specification, unit, uom_id, status, description, tenant_id, created_by)
@@ -249,7 +290,7 @@ pub async fn create_material(
     .bind(&req.description)
     .bind(claims.tenant_id.as_deref().and_then(|s| s.parse::<Uuid>().ok()))
     .bind(claims.sub.parse::<Uuid>().ok())
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -269,6 +310,7 @@ pub async fn create_material(
 
 pub async fn update_material(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialRequest>,
@@ -278,6 +320,19 @@ pub async fn update_material(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row: Option<Material> = match sqlx::query_as(
         r#"UPDATE master_data.materials SET
              material_name = COALESCE($2, material_name),
@@ -303,7 +358,7 @@ pub async fn update_material(
     .bind(&req.status)
     .bind(&req.description)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -323,6 +378,7 @@ pub async fn update_material(
 
 pub async fn delete_material(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -331,12 +387,25 @@ pub async fn delete_material(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     match sqlx::query(
         "UPDATE master_data.materials SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind_tenant_scope(&scope)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
         Ok(r) => {
@@ -414,6 +483,7 @@ pub struct UomListResponse {
 
 pub async fn list_uoms(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Query(query): Query<UomQuery>,
@@ -429,6 +499,18 @@ pub async fn list_uoms(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM master_data.uoms
            WHERE deleted_at IS NULL
@@ -442,7 +524,7 @@ pub async fn list_uoms(
     .bind(query.status.clone())
     .bind(query.search.clone())
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -474,7 +556,7 @@ pub async fn list_uoms(
         .bind(page_size)
         .bind(offset)
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.db)
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -494,6 +576,7 @@ pub async fn list_uoms(
 
 pub async fn get_uom(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -506,6 +589,18 @@ pub async fn get_uom(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1 AND {}"#,
         uom_columns(&locale),
@@ -514,7 +609,7 @@ pub async fn get_uom(
     let row: Option<Uom> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind_tenant_scope(&scope)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -531,6 +626,7 @@ pub async fn get_uom(
 
 pub async fn create_uom(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateUomRequest>,
 ) -> ApiResponse<Uom> {
@@ -540,6 +636,19 @@ pub async fn create_uom(
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row: Option<Uom> = match sqlx::query_as(
         r#"INSERT INTO master_data.uoms
             (uom_code, uom_name, name_en, uom_type, category, status, description, tenant_id, created_by)
@@ -554,7 +663,7 @@ pub async fn create_uom(
     .bind(&status)
     .bind(&req.description)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -574,6 +683,7 @@ pub async fn create_uom(
 
 pub async fn update_uom(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateUomRequest>,
@@ -583,6 +693,19 @@ pub async fn update_uom(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row: Option<Uom> = match sqlx::query_as(
         r#"UPDATE master_data.uoms SET
              uom_name = COALESCE($2, uom_name),
@@ -604,7 +727,7 @@ pub async fn update_uom(
     .bind(&req.status)
     .bind(&req.description)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -624,6 +747,7 @@ pub async fn update_uom(
 
 pub async fn delete_uom(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -632,12 +756,25 @@ pub async fn delete_uom(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     match sqlx::query(
         "UPDATE master_data.uoms SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind_tenant_scope(&scope)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
         Ok(r) => {
@@ -715,6 +852,7 @@ pub struct SampleListResponse {
 
 pub async fn list_samples(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SampleQuery>,
@@ -731,6 +869,18 @@ pub async fn list_samples(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         r#"SELECT COUNT(*) FROM master_data.samples
            WHERE deleted_at IS NULL
@@ -744,7 +894,7 @@ pub async fn list_samples(
     .bind(query.status.clone())
     .bind(query.search.clone())
     .bind_tenant_scope(&scope)
-    .fetch_one(&state.db)
+    .fetch_one(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -776,7 +926,7 @@ pub async fn list_samples(
         .bind(page_size)
         .bind(offset)
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.db)
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -796,6 +946,7 @@ pub async fn list_samples(
 
 pub async fn get_sample(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -808,6 +959,18 @@ pub async fn get_sample(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1 AND {}"#,
         sample_columns(&locale),
@@ -816,7 +979,7 @@ pub async fn get_sample(
     let row: Option<Sample> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind_tenant_scope(&scope)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -833,6 +996,7 @@ pub async fn get_sample(
 
 pub async fn create_sample(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSampleRequest>,
 ) -> ApiResponse<Sample> {
@@ -842,6 +1006,19 @@ pub async fn create_sample(
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row: Option<Sample> = match sqlx::query_as(
         r#"INSERT INTO master_data.samples
             (sample_code, sample_name, name_en, sample_type, source, status, description, tenant_id, created_by)
@@ -856,7 +1033,7 @@ pub async fn create_sample(
     .bind(&status)
     .bind(&req.description)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -876,6 +1053,7 @@ pub async fn create_sample(
 
 pub async fn update_sample(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSampleRequest>,
@@ -885,6 +1063,19 @@ pub async fn update_sample(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let row: Option<Sample> = match sqlx::query_as(
         r#"UPDATE master_data.samples SET
              sample_name = COALESCE($2, sample_name),
@@ -906,7 +1097,7 @@ pub async fn update_sample(
     .bind(&req.status)
     .bind(&req.description)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await
     {
         Ok(v) => v,
@@ -926,6 +1117,7 @@ pub async fn update_sample(
 
 pub async fn delete_sample(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -934,12 +1126,25 @@ pub async fn delete_sample(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     match sqlx::query(
         "UPDATE master_data.samples SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind_tenant_scope(&scope)
-    .execute(&state.db)
+    .execute(&mut db_scope)
     .await
     {
         Ok(r) => {

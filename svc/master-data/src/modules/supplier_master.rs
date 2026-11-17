@@ -37,6 +37,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::BindTenantScope;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
@@ -119,6 +120,7 @@ const SUPPLIER_FILTER: &str = r#"deleted_at IS NULL
 /// GET /api/master-data/suppliers —— 分页只读列表（可选 keyword/status/category 过滤）
 pub async fn list_suppliers(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SupplierQuery>,
 ) -> ApiResponse<SupplierListResponse> {
@@ -136,6 +138,18 @@ pub async fn list_suppliers(
         Err(e) => return ApiResponse::from(e),
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let count_sql = format!(
         r#"SELECT COUNT(*) FROM master_data.mdm_suppliers
            WHERE {}
@@ -148,7 +162,7 @@ pub async fn list_suppliers(
         .bind(query.category.clone())
         .bind(query.keyword.clone())
         .bind_tenant_scope(&scope)
-        .fetch_one(&state.db)
+        .fetch_one(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -175,7 +189,7 @@ pub async fn list_suppliers(
         .bind(page_size)
         .bind(offset)
         .bind_tenant_scope(&scope)
-        .fetch_all(&state.db)
+        .fetch_all(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -196,6 +210,7 @@ pub async fn list_suppliers(
 /// GET /api/master-data/suppliers/:id —— 按主键读单条
 pub async fn get_supplier(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Supplier> {
@@ -208,6 +223,19 @@ pub async fn get_supplier(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     let sql = format!(
         r#"SELECT {} FROM master_data.mdm_suppliers
            WHERE deleted_at IS NULL AND id = $1
@@ -218,7 +246,7 @@ pub async fn get_supplier(
     let row: Option<Supplier> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind_tenant_scope(&scope)
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut db_scope)
         .await
     {
         Ok(v) => v,
@@ -295,7 +323,7 @@ pub struct UpdateSupplierRequest {
 /// 校验 category_code 在字典表中存在且启用；不存在则返回 400。
 /// 若 category_code 为 None（请求没给），直接放行——允许写入但留 NULL，不在 Rust 里硬编码中英文映射。
 async fn validate_category_code(
-    state: &AppState,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     category_code: &Option<String>,
 ) -> Result<(), TopemsError> {
     let code = match category_code {
@@ -308,7 +336,7 @@ async fn validate_category_code(
            LIMIT 1"#,
     )
     .bind(&code)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut *scope)
     .await
     .map_err(|e| {
         tracing::error!("校验供应商类别字典失败: {}", e);
@@ -339,6 +367,7 @@ fn map_write_error(e: sqlx::Error, ctx: &str) -> TopemsError {
 /// `source_system` 强制写死为 `'mdm'`，`source_id` 为 NULL（本接口直接在权威表建档）。
 pub async fn create_supplier(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSupplierRequest>,
 ) -> ApiResponse<Supplier> {
@@ -372,8 +401,20 @@ pub async fn create_supplier(
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "low".to_string());
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     // category_code 一致性：给了就查字典；不在字典里 → 400
-    if let Err(e) = validate_category_code(&state, &req.category_code).await {
+    if let Err(e) = validate_category_code(&mut db_scope, &req.category_code).await {
         return ApiResponse::from(e);
     }
 
@@ -426,7 +467,7 @@ pub async fn create_supplier(
     .bind(&req.name_en)
     .bind(req.lead_time_days)
     .bind(tenant_id)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match row {
@@ -462,7 +503,7 @@ pub async fn create_supplier(
                 "SELECT tenant_id FROM master_data.mdm_suppliers WHERE supplier_no = $1 AND deleted_at IS NULL",
             )
             .bind(&sno)
-            .fetch_optional(&db)
+            .fetch_optional(&mut db_scope)
             .await
             .ok()
             .flatten()
@@ -480,6 +521,7 @@ pub async fn create_supplier(
 /// PATCH /api/master-data/suppliers/:id —— 部分更新（只更新请求里给出的字段）。
 pub async fn update_supplier(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSupplierRequest>,
@@ -507,8 +549,20 @@ pub async fn update_supplier(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     // category_code 一致性：若请求给了新值，校验字典
-    if let Err(e) = validate_category_code(&state, &req.category_code).await {
+    if let Err(e) = validate_category_code(&mut db_scope, &req.category_code).await {
         return ApiResponse::from(e);
     }
 
@@ -566,7 +620,7 @@ pub async fn update_supplier(
     .bind(req.name_en)
     .bind(req.lead_time_days)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match row {
@@ -578,7 +632,7 @@ pub async fn update_supplier(
                 "SELECT tenant_id FROM master_data.mdm_suppliers WHERE supplier_no = $1 AND deleted_at IS NULL",
             )
             .bind(&sno)
-            .fetch_optional(&db)
+            .fetch_optional(&mut db_scope)
             .await
             .ok()
             .flatten()
@@ -616,6 +670,7 @@ pub async fn update_supplier(
 /// DELETE /api/master-data/suppliers/:id —— 软删（只置 deleted_at，绝不物理删除）。
 pub async fn delete_supplier(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
@@ -624,6 +679,19 @@ pub async fn delete_supplier(
         Ok(scope) => scope,
         Err(e) => return ApiResponse::from(e),
     };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
+    };
+    let mut db_scope = match state.rls_db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启租户作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
+        }
+    };
+
     // RETURNING 拿到 supplier_no + tenant_id，用于后台同步软删 scm/srm
     let deleted: Result<Option<(String, Option<Uuid>)>, sqlx::Error> = sqlx::query_as(
         r#"UPDATE master_data.mdm_suppliers
@@ -634,7 +702,7 @@ pub async fn delete_supplier(
     )
     .bind(id)
     .bind_tenant_scope(&scope)
-    .fetch_optional(&state.db)
+    .fetch_optional(&mut db_scope)
     .await;
 
     match deleted {
