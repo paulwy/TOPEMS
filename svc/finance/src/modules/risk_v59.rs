@@ -664,7 +664,6 @@ impl AntiFraudEngine {
         query.push_str(" ORDER BY detected_at DESC LIMIT 500");
 
         let mut q = sqlx::query_as::<_, FraudSignal>(sqlx::AssertSqlSafe(query));
-        q = q;
         if let Some(ref st) = signal_type {
             q = q.bind(st);
         }

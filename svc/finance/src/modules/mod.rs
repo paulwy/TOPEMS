@@ -2659,9 +2659,6 @@ async fn add_template_entry_handler(
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
-    if line.is_ok() {
-    } else {
-    }
     match line {
         Ok(l) => ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
@@ -2750,9 +2747,6 @@ async fn update_template_entry_handler(
         .bind(entry_id)
         .fetch_one(&mut scope)
         .await;
-    if line.is_ok() {
-    } else {
-    }
     match line {
         Ok(l) => ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
@@ -2885,9 +2879,6 @@ pub async fn reorder_template_entries_handler(
     .bind(template_id)
     .fetch_all(&mut scope)
     .await;
-    if lines.is_ok() {
-    } else {
-    }
     match lines {
         Ok(ls) => {
             let json_lines: Vec<serde_json::Value> = ls
@@ -3264,9 +3255,6 @@ pub async fn toggle_generation_rule_handler(
             .bind(rule_id)
             .fetch_one(&mut scope)
             .await;
-            if rule.is_ok() {
-            } else {
-            }
             match rule {
                 Ok(r) => {
                     let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
@@ -5758,10 +5746,6 @@ pub async fn update_opening_balance(
     .bind(period)
     .fetch_optional(&mut scope)
     .await;
-    if row.is_ok() {
-    } else {
-    }
-
     match row {
         Ok(Some((id, cid, code, name, p, debit, credit, tid, created_at, updated_at))) => {
             ApiResponse::success(
@@ -5807,10 +5791,6 @@ pub async fn delete_opening_balance(
     .bind(id)
     .execute(&mut scope)
     .await;
-    if res.is_ok() {
-    } else {
-    }
-
     match res {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(String::new(), "删除成功"),
         Ok(_) => ApiResponse::not_found("期初余额不存在"),
@@ -6045,10 +6025,6 @@ pub async fn create_opening_balances(
     .bind(now)
     .execute(&mut scope)
     .await;
-    if res.is_ok() {
-    } else {
-    }
-
     match res {
         Ok(_) => ApiResponse::success(
             serde_json::json!({"id": id, "company_id": company_id, "subject_code": subject_code, "period": period}),
@@ -6170,10 +6146,6 @@ pub async fn set_opening_balance(
     .bind(account_id)
     .execute(&mut scope)
     .await;
-    if res.is_ok() {
-    } else {
-    }
-
     match res {
         Ok(_) => ApiResponse::success(
             serde_json::json!({"id": id, "subject_code": subject_code, "period": period}),
@@ -6239,10 +6211,6 @@ pub async fn carry_forward_opening_balance(
     .bind(company_id)
     .execute(&mut scope)
     .await;
-    if res.is_ok() {
-    } else {
-    }
-
     match res {
         Ok(r) => ApiResponse::success(format!("结转成功，共 {} 条", r.rows_affected()), "结转成功"),
         Err(e) => {
@@ -6525,10 +6493,6 @@ pub async fn create_expense_approval(
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
-    if result.is_ok() {
-    } else {
-    }
-
     match result {
         Ok(row) => {
             let id: Uuid = row.try_get("id").unwrap_or_default();
@@ -6688,10 +6652,6 @@ pub async fn update_expense_approval(
     .bind(req.approver_name)
     .fetch_optional(&mut scope)
     .await;
-    if row.is_ok() {
-    } else {
-    }
-
     match row {
         Ok(Some(row)) => ApiResponse::success(
             serde_json::json!({
@@ -6756,10 +6716,6 @@ pub async fn delete_expense_approval(
     .bind(id_uuid)
     .execute(&mut scope)
     .await;
-    if result.is_ok() {
-    } else {
-    }
-
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "删除成功"),
         Ok(_) => ApiResponse::not_found("费用审批不存在"),
