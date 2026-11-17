@@ -153,7 +153,7 @@
 - **验证**：`cargo check -p topems-search --all-targets --offline` 通过。
 - **状态**：RESOLVED（口径 + 唯一写入点）。
 
-## K16 flow 变量写入不校验 `instance_id` / `task_id` / `workflow_id` 归属 —— OPEN（2026-11-17 登记，先不修）
+## K16 flow 变量写入不校验 `instance_id` / `task_id` / `workflow_id` 归属 —— 实例维度 RESOLVED（2026-11-17，提交 `5a66579f5`）；task/global 维度 OPEN
 
 - **位置**：
   - [svc/unified-core/src/modules/flow/variable.rs](../../svc/unified-core/src/modules/flow/variable.rs) `upsert_variable`（单键写入）与 `set_instance_variables_batch`（批量写入）调用链；
@@ -173,6 +173,33 @@
   2. 服务身份按显式租户写 → 200，跨租户写 → 404；
   3. 批量接口含 1 条越权 id → 整批回滚、无部分成功；
   4. 复跑 `check-txn-write-non2xx.py`、`cargo check -p topems-unified-core`、阶段三端点矩阵无 0 行回归。
-- **状态**：OPEN，先不修；不阻断当前窗口（生产 flow 表 0 行，无存量脏数据）。
+- **状态**：实例维度 RESOLVED（2026-11-17，提交 `5a66579f5`）；task/global 维度仍 OPEN（本轮未动，按同一修法后续处理）。不阻断当前窗口（生产 flow 表 0 行，无存量脏数据）。
+- **实际修法（2026-11-17）**：新增 `instance_owned_by_request(&mut ScopedTxn, Uuid)`，在同一请求事务内查 `public.core_workflow_instances`：`id=$1 AND deleted_at IS NULL AND (COALESCE(app.rls_system,'off')='on' OR tenant_id = (NULLIF(app.tenant_id,''))::uuid)`，与表策略同型、租户为空即 fail-closed。`set_instance_variable` 与 `set_instance_variables_batch` 在写前调用；失败返回 404「流程实例不存在」，不落任何行；批量在循环前一次性校验，项级失败仍走既有整批回滚。
+- **自测读数（克隆库 `m2_dryrun_20261116`）**：
+  1. 修复前复现：租户 B 直接插入 `tenant_id=B / instance_id=A` → `INSERT 0 1`（脏行可落）；
+  2. 归属谓词五档：GUC 未设 `0`、空串 `0`、A `1`、B `0`、系统通道（`rls_system=on` + B）`1` → B 走 404 分支，不再产生脏行；
+  3. `cargo check -p topems-unified-core --all-targets` 通过；全仓 `--all-targets` 0 error；`check-pool-direct-system-scope.py`、`check-txn-write-non2xx.py` 均 OK；
+  4. 夹具清零（`core_flow_variables` 中 `k16-%` 0 行、实例 0 行）。
+
+## K17 平台超管执行 `run_quality_check` 必 500（`tenant_of=None` 落全零租户，被严格 RLS 拒绝） —— OPEN（2026-11-17 登记，不修，不阻断）
+
+- **位置**：
+  - [svc/master-data/src/modules/quality_v51.rs](../../svc/master-data/src/modules/quality_v51.rs) `tenant_of()` 与 `run_quality_check()`；
+  - 端点：`POST /api/master-data/quality-v51/checks`（服务前缀 `/api/master-data`，模块 `create_routes()` 内 `/quality-v51` + `/checks`）。
+- **触发条件**（两者同时满足）：
+  1. 调用方 `claims.is_superuser = true`（平台超管，需带 `x-tenant-id` 才能进入租户作用域）；
+  2. 走 `run_quality_check` 的**写路径**（POST `/checks`），该路径会把结果写入 `master_data.mdm_quality_checks`。
+- **链路**：`tenant_of(&claims)` 对超管固定返回 `None` → 写入绑定 `tenant.unwrap_or_else(uuid::Uuid::nil)` → `tenant_id = 00000000-0000-0000-0000-000000000000`；而 `master_data.mdm_quality_checks` 在生产是 `ENABLE + FORCE` 严格策略（`app.rls_system='on' OR tenant_id = app.tenant_id`），请求 GUC 是所选真实租户 → 全零行命中 `WITH CHECK` 失败 → PG `42501`（`new row violates row-level security policy`）→ handler `ApiResponse::server_error` 返回 **500**。
+- **影响面**：
+  - 只影响该端点的超管写入：`POST /api/master-data/quality-v51/checks`。同模块 `GET /checks`（`list_quality_checks`）与 `GET /checks/{entity_type}/{entity_id}` 只读，不受影响；
+  - 普通租户用户（`is_superuser=false` 且 `tenant_id` 有值）不受影响，写入落本租户；
+  - 失败是 **fail-closed 幂等失败**：不产生脏行、不产生部分写入（写入前即被 RLS 拒绝），但调用方拿到 500 而非 4xx；
+  - 生产现状：`master_data.mdm_quality_checks` 0 行、`mdm_quality_rules` 0 行，暂无存量脏数据；超管当前也无法用它产出数据。
+- **风险**：功能可用性（超管看板/手动质检报 500）+ 语义错误（应为 4xx/按选定租户落库，而不是全零租户）。
+- **建议修法（未实施）**：
+  1. `tenant_of` 的「超管 → None」只适用于**读**；写入侧改为「超管必须显式选定租户」，即从 `claims.tenant_id` 取租户（`x-tenant-id` 中间件已强制要求），拿不到则 400；
+  2. 或超管写入走 `Db::scope_system()` 并显式绑定 `tenant_id = 选定租户`，同时把 `unwrap_or_else(nil)` 全量替换为 `ok_or(...)`，让「无租户」在编译期/运行期早失败；
+  3. 同步排查 `metadata_v60.rs` 等其它 `tenant.unwrap_or_else(nil)` 写入点（同类缺陷面，未登记为独立条目）。
+- **状态**：OPEN，仅登记，不改代码、不阻断当前窗口。
 
 
