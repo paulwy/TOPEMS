@@ -1015,6 +1015,7 @@ mod billing_scope_tests {
                VALUES ($1, 'Acme', $2, $3, $4, NOW() - INTERVAL '1 day',
                        CASE WHEN $4 = 'paid' THEN NOW() ELSE NULL END)"#,
         )
+        .bind(tenant)
         .bind(invoice_no)
         .bind(rust_decimal::Decimal::from(amount))
         .bind(status)
