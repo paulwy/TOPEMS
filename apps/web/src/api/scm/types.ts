@@ -200,26 +200,38 @@ export interface MrpPlanQueryParams extends PaginationParams {
 
 export interface MrpSuggestion {
   id: string;
-  plan_id: string;
-  product_code: string;
-  product_name: string;
+  suggestion_number?: string;
+  material_code: string;
+  material_name: string;
   specification?: string;
   unit?: string;
+  current_stock: number;
   required_quantity: number;
-  available_quantity: number;
   suggested_quantity: number;
-  suggestion_type: string;
-  due_date?: string;
   supplier_id?: string;
   supplier_name?: string;
+  lead_time_days?: number;
+  suggested_order_date?: string;
+  suggested_delivery_date?: string;
   status: string;
+  source_type?: string;
+  remarks?: string;
   created_at: string;
+  updated_at?: string;
+  /** 后端当前未生成建议类型，保留供既有行操作判断使用 */
+  suggestion_type?: string;
 }
 
 export interface MrpSuggestionQueryParams extends PaginationParams {
   plan_id?: string;
-  suggestion_type?: string;
   status?: string;
+}
+
+export interface MrpSuggestionListResponse {
+  suggestions: MrpSuggestion[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface MrpCalculationResult {
@@ -233,20 +245,26 @@ export interface MrpCalculationResult {
 }
 
 export interface MrpMaterialSummary {
-  product_code: string;
-  product_name: string;
+  material_code: string;
+  material_name: string;
   specification?: string;
   unit?: string;
-  total_demand: number;
-  total_supply: number;
-  net_demand: number;
-  safety_stock?: number;
-  category?: string;
+  total_required: number;
+  current_stock: number;
+  shortage: number;
+  suggestion_count: number;
+  suggested_total: number;
 }
 
 export interface MrpMaterialSummaryQueryParams {
   plan_id?: string;
-  category?: string;
+}
+
+export interface MrpMaterialSummaryListResponse {
+  summaries: MrpMaterialSummary[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 /**

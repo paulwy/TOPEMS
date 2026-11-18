@@ -18,16 +18,16 @@ export const mrpMaterialSummarySchema: EntitySchema = {
 
   fields: [
     {
-      name: 'product_code',
+      name: 'material_code',
       label: i18n.t('scm.mrp_suggestion.k1'),
       type: 'text',
       sortable: true,
       listWidth: 140,
       renderCell: (row: Record<string, unknown>) =>
-        React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.product_code ?? '')),
+        React.createElement(Box, { sx: { fontWeight: 500 } }, String(row.material_code ?? '')),
     },
     {
-      name: 'product_name',
+      name: 'material_name',
       label: i18n.t('scm.mrp_suggestion.k2'),
       type: 'text',
       listWidth: 160,
@@ -48,76 +48,53 @@ export const mrpMaterialSummarySchema: EntitySchema = {
       renderCell: (row: Record<string, unknown>) => (row.unit ? String(row.unit) : '-'),
     },
     {
-      name: 'total_demand',
+      name: 'total_required',
       label: i18n.t('scm.mrp_suggestion.k5'),
       type: 'number',
       align: 'right',
       listWidth: 100,
     },
     {
-      name: 'total_supply',
+      name: 'current_stock',
       label: i18n.t('scm.mrp_suggestion.k6'),
       type: 'number',
       align: 'right',
       listWidth: 100,
     },
     {
-      name: 'net_demand',
+      name: 'shortage',
       label: i18n.t('scm.mrp_suggestion.k7'),
       type: 'number',
       align: 'right',
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
-        const val = row.net_demand as number | undefined;
+        const val = row.shortage as number | undefined;
         const color = (val ?? 0) > 0 ? 'error.main' : 'success.main';
         return React.createElement(Box, { sx: { fontWeight: 500, color } }, val ?? 0);
       },
     },
     {
-      name: 'safety_stock',
-      label: i18n.t('scm.mrp_suggestion.k8'),
+      name: 'suggested_total',
+      label: i18n.t('scm.mrp_suggestion.k29'),
       type: 'number',
       align: 'right',
-      listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
-        row.safety_stock != null ? Number(row.safety_stock) : 0,
-    },
-    {
-      name: 'category',
-      label: i18n.t('scm.mrp_suggestion.k9'),
-      type: 'text',
-      listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => (row.category ? String(row.category) : '-'),
+      listWidth: 110,
     },
   ],
 
   list: {
     columns: [
-      'product_code',
-      'product_name',
+      'material_code',
+      'material_name',
       'specification',
       'unit',
-      'total_demand',
-      'total_supply',
-      'net_demand',
-      'safety_stock',
-      'category',
+      'total_required',
+      'current_stock',
+      'shortage',
+      'suggested_total',
     ],
-    searchFields: ['product_code', 'product_name'],
+    searchFields: ['material_code', 'material_name'],
     pageSize: 10,
-    filters: [
-      {
-        id: 'category',
-        label: i18n.t('scm.mrp_suggestion.k10'),
-        type: 'select',
-        options: [
-          { label: i18n.t('scm.mrp_suggestion.k11'), value: 'all' },
-          { label: i18n.t('shared.mrp_suggestion.a_1'), value: 'A' },
-          { label: i18n.t('shared.mrp_suggestion.b_2'), value: 'B' },
-          { label: i18n.t('shared.mrp_suggestion.c_3'), value: 'C' },
-        ],
-      },
-    ],
   },
 
   actions: ['detail'],
@@ -157,14 +134,14 @@ export const mrpSuggestionSchema: EntitySchema = {
 
   fields: [
     {
-      name: 'product_code',
+      name: 'material_code',
       label: i18n.t('scm.mrp_suggestion.k20'),
       type: 'text',
       sortable: true,
       listWidth: 140,
     },
     {
-      name: 'product_name',
+      name: 'material_name',
       label: i18n.t('scm.mrp_suggestion.k21'),
       type: 'text',
       listWidth: 160,
@@ -214,7 +191,7 @@ export const mrpSuggestionSchema: EntitySchema = {
       },
     },
     {
-      name: 'available_quantity',
+      name: 'current_stock',
       label: i18n.t('scm.mrp_suggestion.k28'),
       type: 'number',
       hideInForm: true,
@@ -235,14 +212,14 @@ export const mrpSuggestionSchema: EntitySchema = {
       },
     },
     {
-      name: 'due_date',
+      name: 'suggested_delivery_date',
       label: i18n.t('scm.mrp_suggestion.k30'),
       type: 'date',
       hideInForm: true,
       sortable: true,
       listWidth: 120,
       renderCell: (row: Record<string, unknown>) => {
-        const val = row.due_date as string | undefined;
+        const val = row.suggested_delivery_date as string | undefined;
         return val ? new Date(val).toLocaleDateString('zh-CN') : '-';
       },
     },
@@ -285,18 +262,18 @@ export const mrpSuggestionSchema: EntitySchema = {
 
   list: {
     columns: [
-      'product_code',
-      'product_name',
+      'material_code',
+      'material_name',
       'specification',
       'suggestion_type',
       'required_quantity',
-      'available_quantity',
+      'current_stock',
       'suggested_quantity',
-      'due_date',
+      'suggested_delivery_date',
       'supplier_name',
       'status',
     ],
-    searchFields: ['product_code', 'product_name', 'supplier_name'],
+    searchFields: ['material_code', 'material_name', 'supplier_name'],
     pageSize: 10,
     selectable: true,
     statusBadge: {

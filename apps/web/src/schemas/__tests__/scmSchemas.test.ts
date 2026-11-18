@@ -43,14 +43,14 @@ const SCHEMA_ROWS: Array<{
     schema: mrpSuggestionSchema,
     entity: 'mrpSuggestion',
     resource: 'mrpSuggestions',
-    fields: ['product_code', 'product_name', 'suggestion_type'],
+    fields: ['material_code', 'material_name', 'current_stock'],
   },
   {
     name: 'mrpMaterialSummary',
     schema: mrpMaterialSummarySchema,
     entity: 'mrpMaterialSummary',
     resource: 'mrpMaterialSummary',
-    fields: ['product_code', 'net_demand', 'safety_stock'],
+    fields: ['material_code', 'shortage', 'suggested_total'],
   },
   {
     name: 'purchaseOrder',

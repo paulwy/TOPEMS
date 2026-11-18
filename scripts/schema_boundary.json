@@ -149,7 +149,8 @@
       "schema": "scm",
       "search_path": "scm, public, shared",
       "allow": [
-        "master_data"
+        "master_data",
+        "wms"
       ]
     },
     "search": {

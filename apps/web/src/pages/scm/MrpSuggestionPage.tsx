@@ -23,7 +23,7 @@ const apiAdapter: CrudApiAdapter<MrpSuggestion> = {
   list: async (params) => {
     const response = await scmApi.mrpSuggestions.list(params as MrpSuggestionQueryParams);
     if (response.success && response.data) {
-      return { data: response.data.items || [], total: response.data.total || 0 };
+      return { data: response.data.suggestions || [], total: response.data.total || 0 };
     }
     return { data: [], total: 0 };
   },
@@ -42,13 +42,9 @@ const summaryApiAdapter: CrudApiAdapter<MrpMaterialSummary> = {
   list: async (params) => {
     const summaryParams: MrpMaterialSummaryQueryParams = {};
     if (params?.plan_id) summaryParams.plan_id = params.plan_id as string;
-    if (params?.category && params.category !== 'all') {
-      summaryParams.category = params.category as string;
-    }
     const response = await scmApi.mrpSuggestions.summary(summaryParams);
     if (response.success && response.data) {
-      const data = response.data as MrpMaterialSummary[];
-      return { data, total: data.length };
+      return { data: response.data.summaries || [], total: response.data.total || 0 };
     }
     return { data: [], total: 0 };
   },

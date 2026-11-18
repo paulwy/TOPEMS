@@ -312,7 +312,10 @@ describe('SCM mrpSuggestionApi', () => {
   });
 
   it('should call GET /mrp-suggestions for list', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+    mockApiClient.get.mockResolvedValue({
+      success: true,
+      data: { suggestions: [], total: 0, page: 1, page_size: 20 },
+    });
     await mrpSuggestionApi.list();
     expect(mockApiClient.get).toHaveBeenCalledWith('/mrp-suggestions', { params: undefined });
   });
@@ -324,7 +327,10 @@ describe('SCM mrpSuggestionApi', () => {
   });
 
   it('should call GET /mrp-suggestions/summary for summary', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: [] });
+    mockApiClient.get.mockResolvedValue({
+      success: true,
+      data: { summaries: [], total: 0, page: 1, page_size: 20 },
+    });
     await mrpSuggestionApi.summary();
     expect(mockApiClient.get).toHaveBeenCalledWith('/mrp-suggestions/summary', {
       params: undefined,

@@ -1,16 +1,17 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginatedResponse } from '../client';
+import type { ApiResponse } from '../client';
 import type {
   MrpSuggestion,
   MrpSuggestionQueryParams,
-  MrpMaterialSummary,
+  MrpSuggestionListResponse,
   MrpMaterialSummaryQueryParams,
+  MrpMaterialSummaryListResponse,
 } from './types';
 
 export const mrpSuggestionApi = {
   list: async (
     params?: MrpSuggestionQueryParams
-  ): Promise<ApiResponse<PaginatedResponse<MrpSuggestion>>> => {
+  ): Promise<ApiResponse<MrpSuggestionListResponse>> => {
     return apiClient.scm.get('/mrp-suggestions', { params });
   },
 
@@ -20,7 +21,7 @@ export const mrpSuggestionApi = {
 
   summary: async (
     params?: MrpMaterialSummaryQueryParams
-  ): Promise<ApiResponse<MrpMaterialSummary[]>> => {
+  ): Promise<ApiResponse<MrpMaterialSummaryListResponse>> => {
     return apiClient.scm.get('/mrp-suggestions/summary', { params });
   },
 };

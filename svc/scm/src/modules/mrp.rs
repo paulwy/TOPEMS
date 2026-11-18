@@ -571,7 +571,7 @@ pub async fn compute_mrp(
             gen_random_uuid(),
             $1 || '_' || ROW_NUMBER() OVER (),
             COALESCE(m.material_code, 'UNKNOWN'),
-            COALESCE(m.material_name, '未知物料'),
+            COALESCE(CASE WHEN $8 = 'en' THEN COALESCE(m.name_en, m.material_name) ELSE m.material_name END, '未知物料'),
             m.specification,
             m.unit,
             COALESCE(i.quantity, 0) as current_stock,
@@ -595,7 +595,7 @@ pub async fn compute_mrp(
             $3,
             $3,
             $7::uuid
-        FROM scm.materials m
+        FROM master_data.materials m
         LEFT JOIN (
             SELECT material_code, SUM(quantity) as total
             FROM scm.sales_order_items
@@ -614,11 +614,12 @@ pub async fn compute_mrp(
             GROUP BY material_code
         ) forecast ON m.material_code = forecast.material_code
         LEFT JOIN (
-            SELECT item_code, SUM(quantity) as quantity
-            FROM scm.wms_inventory_snapshots
+            SELECT material_code, SUM(available_quantity) as quantity
+            FROM wms.inventory
             WHERE tenant_id = $7::uuid
-            GROUP BY item_code
-        ) i ON m.material_code = i.item_code
+              AND deleted_at IS NULL
+            GROUP BY material_code
+        ) i ON m.material_code = i.material_code
         LEFT JOIN (
             SELECT DISTINCT ON (sp.material_code) sp.id as id,
                    CASE WHEN $8='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as name,
@@ -631,11 +632,13 @@ pub async fn compute_mrp(
         ) s ON m.material_code = s.material_code
         WHERE (COALESCE(sales_orders.total, 0) + COALESCE(forecast.total, 0)) > 0
           AND m.tenant_id = $7::uuid
+          AND m.deleted_at IS NULL
+          AND COALESCE(m.status, 'active') = 'active'
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
                   source_type, source_order_id, remarks, created_at, updated_at
-        "#),
+        "#, "master_data", "wms"),
     )
     .bind(&suggestion_number)
     .bind(safety_factor)
