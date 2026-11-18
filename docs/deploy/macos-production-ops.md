@@ -162,3 +162,173 @@ lsof -nP -iTCP:8099 -sTCP:LISTEN                                        # 期望
 - [ ] ④ 首次登录换密：已执行（回报时间：____）
 
 > 任一勾选结果回传后，airdeair 侧更新 `go-live-checklist §0.3` 对应项状态。
+
+---
+
+## 6. 离线备份仓（MacBook Pro，2026-11-18 落地）
+
+**定位**：仅作 Offsite 归档接收端，不承担任何计算/服务角色（该机 8 GB 内存，低于生产准入 ≥16 GB，且 SSH/屏幕共享未开启）。
+
+| 项目 | 内容 |
+|---|---|
+| 归档脚本 | `~/topems/backup-offsite.sh`（默认 copy；`--check` 前置检查；`--verify` 全量校验） |
+| 凭证 | `~/topems/.secrets/smb-mbp.env`（chmod 600，含 `SMB_URL`、可选 `REMOTE_SUBDIR`） |
+| 周归档 | launchd `com.topems.backup-offsite`，每周日 03:30 |
+| 月校验 | launchd `com.topems.backup-offsite-verify`，每月 1 日 04:00 |
+| 日志/索引 | `~/topems/backups-offsite/backup-offsite.log`、`offsite-index.csv` |
+| 远端布局 | `<共享目录>/topems-archive/topems_prod-YYYYMMDD-HHMMSS.dump` |
+
+**策略**：远端滚动保留最近 26 份（该机磁盘仅剩约 2 Gi，避免撑爆；本机 7 份日滚动由 `backup-topems.sh` 负责）；落盘用 `.part` + `mv` 原子写；归档前本机 `pg_restore --list` 验证、归档后比对 sha256 并再次验证远端副本可读。
+
+**手工操作**：
+```bash
+~/topems/backup-offsite.sh --check     # 凭证/挂载/容量
+~/topems/backup-offsite.sh             # 立即归档最新一份
+~/topems/backup-offsite.sh --verify    # 校验远端全部归档
+launchctl kickstart -k gui/$(id -u)/com.topems.backup-offsite
+```
+
+**季度恢复演练**（不动生产库）：
+```bash
+createdb -h 127.0.0.1 -U xingzhai topems_drill_restore
+pg_restore -h 127.0.0.1 -U xingzhai -d topems_drill_restore --no-owner 远端最新dump
+psql -h 127.0.0.1 -U xingzhai -d topems_drill_restore -c "select count(*) from iam.users;"
+dropdb -h 127.0.0.1 -U xingzhai topems_drill_restore
+```
+
+**实测记录**：2026-11-18 首次归档成功 — `topems_prod-20261118-030004.dump`（10 MB，sha256 `4d6810cf…2593`），远端 `share/topems-archive/` 已落地，`--verify` 回读可读；归档后自动卸载，无残留挂载。目标机剩余空间 1.9 Gi，按 26 份保留上限约占用 280 MB。
+
+---
+
+## 7. 整机备份方案（Time Machine，2026-11-18 勘察 + 待决策）
+
+### 7.1 现状勘察
+
+| 项目 | 实测 |
+|---|---|
+| Time Machine 目标 | 勘察时未配置（`tmutil destinationinfo` → No destinations）；**2026-11-18 已配置 MBP 的 `TOPEMS-TM`（§7.6）** |
+| 本地 APFS 快照 | **无**（`tmutil listlocalsnapshots /` 为空） |
+| 外置盘 | **无**（`/Volumes` 仅 Macintosh HD、Recovery；无 USB/雷雳存储） |
+| 生产机数据量 | 107 GiB / 228 GiB，可用 98 GiB |
+| MBP（`share` 共享） | 47 GiB 总，**可用 1.9 GiB** |
+
+结论：整机级恢复能力当前是**零**——只有数据库 dump + 配置快照，系统、brew 环境、nginx 证书、密钥、二进制一旦丢，只能手工重建。
+
+### 7.2 方案对比
+
+| 方案 | 介质 | 容量门槛 | 优点 | 代价/风险 | 结论 |
+|---|---|---|---|---|---|
+| **A. 外置 SSD（推荐）** | USB-C 1 TB，APFS（GUID） | ≥ 200 GiB | 快（USB 3.2 约 400–600 MB/s）、独立、可离线/异地携带、恢复可直接挂载 | 采购约 600–900 元 | **首选主力** |
+| B. TM 到 MBP（SMB） | 现有 `share` 共享 | ≥ 150 GiB 空闲（建议 2× 数据量） | 零硬件 | 需先清出 45 GiB+；笔记本睡眠/合盖断连；Wi-Fi 抖动下稀疏包易损；首次全量极慢 | 仅作第二副本，不作主力 |
+| C. 云备份（B2/Backblaze 等） | 公网 | 上行带宽 | 天然异地，防火/防盗/防勒索 | 首次上传 107 GiB 需数天；按月计费 | 长期补充 |
+| D. 配置快照（已落地） | MBP 共享 | 几 MB | 覆盖最痛的证书/密钥/plist/nginx/配置 | 不含数据文件 | **已执行**（§7.4） |
+
+### 7.3 必须守住的三条原则
+
+1. **TM 不能替代 `pg_dump`**：PostgreSQL 运行中数据文件持续写入，TM 的文件级快照对数据库是不一致的。数据库一致性继续由每日 dump + 季度恢复演练负责。
+2. **排除清单**（避免把 4.1 GiB 仓库里可重建的部分反复搬运）：
+   ```bash
+   tmutil addexclusion ~/topems/target
+   tmutil addexclusion ~/topems/dist
+   tmutil addexclusion ~/topems/node_modules
+   tmutil addexclusion ~/topems/apps/web/node_modules
+   tmutil addexclusion ~/topems/backups        # 已有离站副本
+   tmutil addexclusion ~/topems/backups-offsite
+   tmutil addexclusion ~/.cargo
+   tmutil addexclusion /opt/homebrew/var/postgresql@17   # 由 pg_dump 覆盖
+   ```
+3. **恢复顺序**：装系统 → `brew bundle` 还原依赖 → `pg_restore` 恢复 `topems_prod` → 从 TM/配置快照取回 `nginx.conf`、`servers/*.conf`、`com.topems.*.plist`、`.secrets/*` → 起 launchd → `smoke-prod` 验收。
+
+### 7.4 已落地部分（无需硬件）
+
+| 组件 | 说明 |
+|---|---|
+| `~/topems/backup-config.sh` | 打包 launchd plist、nginx 配置、`.secrets`/`secret`、config yaml、`_sqlx_migrations` 版本清单、系统/brew 环境信息 → `< 32 KB` tar.gz（600） |
+| `com.topems.backup-config` | 每周日 03:20 生成，保留最近 8 份 |
+| `backup-offsite.sh`（已扩展） | 周任务顺带把最新配置快照推到 `TOPEMS-TM/topems-archive/config/`，保留 8 份 |
+
+实测：2026-11-18 09:38 生成 `config-snapshot-20261118-093845.tar.gz`（28 KB），09:39 已落到 MBP。
+
+### 7.5 方案 A 执行清单（待采购后执行）
+
+```bash
+# 1) 磁盘工具格式化：APFS / GUID 分区，命名 TOPEMS-TM
+# 2) 设定目标（插上即用）
+sudo tmutil setdestination -ap /Volumes/TOPEMS-TM
+# 3) 排除项（见 §7.3）
+# 4) 首次全量 + 校验
+sudo tmutil startbackup --block
+tmutil latestbackup && tmutil listbackups | tail -3
+# 5) 验证可恢复性：随机挑一份快照，浏览确认 /opt/homebrew/etc/nginx 与 ~/topems/bin 在列
+```
+
+**容量建议**：1 TB（107 GiB 数据 + 增量 + 历史，留 3–5 倍余量最稳）。
+
+### 7.6 方案 B 已落地（MBP 作第二副本，2026-11-18）
+
+MBP 已在主卷新建可写共享 `TOPEMS-TM`（419 GiB 总 / **185 GiB 可用**，与只读的 `xingzhai` 主目录共享、47 GiB 的 `share` 卷分开）。实测配置：
+
+```bash
+# 目标（已设定，ID 2AB457B0-B7B3-47EF-8BA5-B96550A7B64E）
+tmutil destinationinfo
+sudo tmutil setdestination -ap "smb://xingzhai@192.168.110.213/TOPEMS-TM"
+# 注意：setdestination 需 root；本机自动化进程无「完全磁盘访问权限」会被 TCC 拦截（错误 80），必须在交互式终端执行
+```
+
+| 实测项 | 结果 |
+|---|---|
+| 稀疏包 | `TOPEMS-TM/星斋的Mac mini.sparsebundle` |
+| 首次全量规模 | `totalBytes` 147 GiB / `totalFiles` 188.5 万（排除清单之外仍有约 40 GiB 可再排） |
+| 链路吞吐 | Mac mini 有线（en0 千兆）+ MBP 5 GHz：SMB 裸写入 19.2 MB/s；Wi-Fi 2.4 GHz 时仅 3.6 MB/s |
+| 排除清单 | 8 项已 `addexclusion` 并逐项 `isexcluded` 核对为 `[Excluded]` |
+
+必须接受：MBP 合盖/睡眠即中断、Wi-Fi 抖动下稀疏包可能损坏需整份重建、首次全量在 10 Mbps 级链路下需数小时。因此它是**第二副本**，不能替代 §7.5 的外置盘，更不能替代每日 `pg_dump`。
+
+> 2026-11-18 实测补充：当本机在跑 `cargo-nextest --workspace`（14 个 rustc 并行、load ≈ 33）时，首次全量速率骤降到 0.2 MB/s，TM 自估剩余 30 小时。结论：**整机备份期间不要在宿主机上跑全量编译**，或先把备份暂停（`tmutil stopbackup`），待编译结束再 `tmutil startbackup --auto`。
+
+### 7.7 待决策
+
+| # | 决策 | 影响 | 建议 |
+|---|---|---|---|
+| 1 | 是否采购 1 TB 外置 SSD | 决定有无整机恢复能力 | **建议买**，这是唯一能真正补上整机缺口的路 |
+| 2 | 是否清 MBP 空间（≥150 GiB） | 决定能否做第二副本 | 非必需，优先级低于 1 |
+| 3 | 是否上云备份 | 异地容灾 | 有外置盘后可再评估 |
+
+---
+
+## 8. 局域网地址与 DHCP 静态绑定（2026-11-18）
+
+背景：生产机此前 Wi-Fi 与以太网同时在线，地址随 DHCP 漂移（无线 `192.168.110.147` → 有线 `192.168.110.61`），文档与运维命令里的地址随之失真。定案：两台设备都在路由器上做静态绑定，此后地址长期固定。
+
+| 设备 | 接口 | MAC | 固定地址 | 用途 |
+|---|---|---|---|---|
+| Mac mini（生产机） | en0 有线 | `d0:11:e5:cc:86:b7` | `192.168.110.61` | **生产主地址**（有线优先，长期固定） |
+| Mac mini | en1 Wi-Fi | `9e:32:b2:e3:21:24` | `192.168.110.147` | 备用链路（有线异常时可达，不与主地址冲突） |
+| MBP（离线备份仓） | Wi-Fi 5G | `f4:5c:89:8f:e2:87` | `192.168.110.213` | SMB / Time Machine 目标 |
+
+> 已在锐捷 EG210G-E（`192.168.110.1`，eWeb 后台 → 在线终端 → 终端行「未绑定/已绑定」→ 绑定为静态 IP）完成上述三条绑定，后台回显「配置成功」，三行状态均为**已绑定**（2026-11-18）。绑定的是各接口**当前地址**，因此 .147 现在归属无线口，有线主地址为 .61；文档与脚本一律以 **.61** 作为生产机局域网地址。
+
+**约束**
+
+- 生产服务全部绑定 `127.0.0.1`（8099 / 5432 / 6379 / 80 / 443），局域网地址变化**不影响**服务可用性，只影响外部访问与文档里的 ssh 命令。
+- `~/topems/.secrets/smb-mbp.env` 的 `SMB_HOST` 固定 `192.168.110.213`；主机名 `xingzhaimbp.lan` **不可解析**，勿用。
+- 历史文档中的 `192.168.110.115`、`192.168.3.129` 均为已停用地址，只作历史记录，不要按其执行。
+
+---
+
+## 附：bin 历史二进制清理（2026-11-18）
+
+- 清理前：`~/topems/bin` 84 个条目、15 GiB（72 份 199 MB 历史二进制 + 1 个 172 MB 遗留目录）
+- 策略：保留当前生产版本 `topems-server` + 最近 2 个回滚点 + `ai-docs` + `topems-server.sha256`，其余删除
+- 保留：`topems-server.bak-20261116-215033`、`topems-server-86dcd78-pre-restart-20261116.bak`
+- 释放：**14.7 GiB**；仓库 19 G → 4.1 G；数据盘可用 83 Gi → 98 Gi
+- 清单存档：`~/topems/backups-offsite/bin-cleanup-20261118.csv`（文件名含 git commit 短哈希，需要时可从 Git 重新构建）
+- 清理后校验：`/health` = healthy，PID 未变（49113），运行中的二进制路径未改
+- 遗留提示：`bin/topems-server.sha256` 内记录的是 2026-11-06 旧版本哈希（`c73c0dae…`），与当前 `6acb3c4d…` 不一致，无脚本引用，需要时手工刷新
+
+**已知环境限制（2026-11-18 实测）**：launchd 子进程在 SMB 挂载点上做目录遍历（`ls` 通配 / `find`）会被拒绝或返回空，但按精确文件名访问（`test -f`、`cp`、`pg_restore`）正常。因此：
+
+- 归档/校验的**份数与清单一律以本机索引** `~/topems/backups-offsite/offsite-index.csv` 为准，不依赖远端目录列举；
+- `--verify` 按索引逐份确认（名字精确 + 可读性），避免“遍历不到 → 误报 0 份全部可读”的假绿；
+- 清理过期归档用 `ls -t` 并兜底 `|| true`，列举不可用时跳过清理、只记日志，不判失败；
+- 脚本在 `set -euo pipefail` 下所有统计命令都带 `|| 默认值`，避免“空结果”被当成脚本失败。
