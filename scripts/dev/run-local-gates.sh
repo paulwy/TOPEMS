@@ -37,7 +37,7 @@ for arg in "$@"; do
     --strict) STRICT=1 ;;
     --force) FORCE=1 ;;
     -h|--help) sed -n '6,20p' "$0"; exit 0 ;;
-    *) echo "未知参数: $arg（见 --help）"; exit 2 ;;
+    *) echo "未知参数: ${arg}（见 --help）"; exit 2 ;;
   esac
 done
 
@@ -223,7 +223,7 @@ stage_db() {
   echo "  提示：domain-probe / web / mobile 契约实跑需运行中的服务，按需手动执行："
   echo "        bash scripts/dev/domain-probe.sh"
   echo "        bash scripts/mobile_smoke_precommit.sh"
-  echo "        python3 scripts/web_contract_smoke.py"
+  echo "        bash scripts/dev/web_smoke_precommit.sh   # 自建测试库+隔离 BFF；已有测试 BFF 可设 WEB_BFF_URL 直跑"
   echo
 }
 
