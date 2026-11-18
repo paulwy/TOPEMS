@@ -447,7 +447,8 @@ clean_project() {
         else
             local wt
             while IFS= read -r wt; do
-                [ -n "$wt" ] && du -xsh "$wt" 2>/dev/null
+                # du 遇到无权限子目录会返回非 0；set -e 下会直接中断分析（表现为 analyze 退出码 1）
+                [ -n "$wt" ] && { du -xsh "$wt" 2>/dev/null || true; }
             done <<< "$wt_paths"
         fi
         echo ""
