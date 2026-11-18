@@ -563,7 +563,7 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 | prod `~/topems/.env` | 单体进程运行配置 | 是（活跃） | **已更新**（`fba6af…`，len 64） |
 | prod `~/Library/LaunchAgents/com.topems.server.plist` | launchd 环境 | 是（活跃） | **已更新**，与 `.env` 前缀一致 |
 | prod `~/topems/.env.bak-20261030-151348` | 旧配置副本 | 是（旧值） | 已移入 `.secrets/retired-20261106/`（600） |
-| prod `com.topems.server.plist.bak-be08 / .bak-ehs-20261031 / .prev` | 旧 plist 副本 | 是（旧值） | 同上移入受限目录 |
+| prod `com.topems.server.plist.bak-be08 / .bak-ehs-20261031 / .prev` | 旧 plist 副本 | 是（旧值） | 2026-11-18 确认 `JWT_SECRET`/`JWT_REFRESH_SECRET` 在当前 `.env` 中均存在后，已逐文件移入废纸篓（可恢复） |
 | 其它 launchd 服务（nginx、logrotate、be08-*） | — | 否 | 无需处理 |
 | 仓库 `.env.production` / `.env.local` / `docker/.env` / `config/standalone.env` | 本地/容器开发 | 否（前缀均非 prod） | 无需处理（且均未被 git 跟踪） |
 | `config/env/*.template`、`config/production.yaml.example`、`.env.example` | 模板占位 | 否（`<SET_YOUR_OWN…>`） | 无需处理 |
@@ -577,7 +577,7 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 
 - 新密钥：`openssl rand -hex 32` 在主机内生成，**未打印**、未入仓库/文档；
 - 旧值留档：`~/topems/.secrets/jwt-secret-pre-rotate-20261106.txt`（目录 700、文件 600）；
-- 旧副本归档：`~/topems/.secrets/retired-20261106/`（3 个文件，600）；
+- 旧副本归档：`~/topems/.secrets/retired-20261106/`（3 个文件，600；三份旧 plist 已于 2026-11-18 移入废纸篓）；
 - 一致性核对：`env_prefix=fba6af env_len=64 plist_prefix=fba6af plist_len=64 consistency=SAME`，`plutil -lint=ok`。
 
 #### 9.2.3 重启与验证
@@ -623,7 +623,7 @@ prod 值（轮换前 `00bb**`，len 64）的**全部落点**（精确值反向�
 | prod `~/TOPEMS/.env`（600） | 单体进程运行配置 | **已更新**（`3829**`，len 64） |
 | `~/Library/LaunchAgents/com.topems.server.plist`（644） | launchd 环境 | **已更新**，与 `.env` 同前缀同长度 |
 | `~/TOPEMS/secret/jwt_refresh.txt`（600，`.git/info/exclude` 未入 git） | 装机时密钥落盘 | **已更新**（本轮新增确认的第三处活跃副本） |
-| `.secrets/retired-20261106/*.prev / *.bak-be08 / *.bak-ehs-20261031`（600） | 上一轮归档 plist | 保留（内含已失效旧值）；目录权限由 `755` 收紧为 **700** |
+| `.secrets/retired-20261106/*.prev / *.bak-be08 / *.bak-ehs-20261031`（600） | 上一轮归档 plist | 2026-11-18 已移入废纸篓（可恢复）；内含已失效旧值 |
 | 非 prod 值：`config/standalone.env`（`5871**`）、`deploy/docker/.env` 与 `.bak-20261015`（`56f8**`） | 开发/容器 | 无需处理（与 prod 值不同；主机未装 docker） |
 | `config/env/*.template`、`.env.example`、`.env.production.example` | 模板 | `<SET_ME…>` 占位，无真值 |
 | CI（`.github/workflows`）、`scripts/topems-docker.sh`、`topems.ps1`、`ports.ps1` | 生成/开发默认值 | 不含 prod 值 |
