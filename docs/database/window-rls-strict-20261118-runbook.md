@@ -37,6 +37,7 @@
 | 8 | 连接与锁基线 | `SELECT count(*) FROM pg_stat_activity WHERE datname='topems_prod'` | 无长事务、无 idle in transaction |
 | 9 | 策略基线 | `SELECT count(*) FROM pg_policies` | **1039**（与快照一致；不一致即说明快照后有人改过策略，停） |
 | 10 | 服务状态 | `/health` | 200 |
+| 11 | 运行二进制 sha256（**硬前置**） | `shasum -a 256 "$(plutil -extract ProgramArguments.0 raw ~/Library/LaunchAgents/com.topems.server.plist)"` | **`97484f3a66a65a0f384f0008cb65dbbd3e4355fcc19c8c6f2a3f668006729147`**；不相等**禁止**应用 `20261118160000`（见 §3.0） |
 
 > 注：`apply-forward` 没有 dry-run 参数。第 4 项用同参数执行时，脚本会在任何 DDL 前完成
 > 白名单/defer/破坏性校验并打印「待应用 14 条」；若打印条数不是 14，立即 `Ctrl-C`（尚未产生写入）
@@ -99,6 +100,34 @@
 ## 3. 单条应用命令
 
 在能连生产 socket 的主机执行（或按 `apply-forward.sh` 头注释使用 `--ssh-host` 模式）。
+
+### 3.0 开窗前硬前置：运行中的二进制必须已是新件
+
+`20261118160000` 改名后，旧二进制里这 12 张表的**裸名**会从 `flow` 落到 `public`。public 侧已
+FORCE RLS，而旧代码的 master 变更日志/审批写路径未带租户 GUC，会直接被策略拒绝；读路径也会
+换库。因此顺序必须是「停服 → 换入新二进制 → 应用迁移 → 起服」，不能反序。
+
+先执行下面这段；不通过就**不得**执行 §3 的任何迁移命令：
+
+```bash
+BIN="$(plutil -extract ProgramArguments.0 raw "$HOME/Library/LaunchAgents/com.topems.server.plist")"
+ACTUAL="$(shasum -a 256 "$BIN" | cut -d' ' -f1)"
+EXPECT=97484f3a66a65a0f384f0008cb65dbbd3e4355fcc19c8c6f2a3f668006729147
+if [[ "$ACTUAL" != "$EXPECT" ]]; then
+  echo "拒绝开窗：运行中的二进制 sha256=${ACTUAL}，期望 ${EXPECT}" >&2
+  echo "请先停服换入新件（/Users/xingzhai/topems-target-w160000/release/topems-server）再迁移。" >&2
+  exit 1
+fi
+```
+
+`SEARCH_PATH` 不需要同步调整：plist 当前是 `flow, mobile, rs, erp, public, iam, shared`。
+改名把这 12 个名字从 `flow` 移除后，裸名会自然落到后面的 `public`；而 `flow` 仍承载
+`core_comments` / `core_favorites` / `notifications` / `workflows` 等 flow-only 业务表，
+删除或后移 `flow` 会改变这些裸名的解析落点，反而引入新风险。
+
+该断言同样适用于 `20261118160000` 的补投命令
+（`apply-forward.sh --prod --apply-deferred 20261118160000 ...`，见执行记录 §7）：
+二进制不匹配时不得执行补投。
 
 ```bash
 export PROD_CHANGE_TICKET=RESIDUAL-RLS-20261118,TENANT-SELF-20261118
@@ -202,6 +231,9 @@ node scripts/migration/check-pending-ddl.mjs --post --db "$MIGRATE_URL" --expect
 
 任一命中，**立即停止后续迁移**，不要继续下一条：
 
+**开窗前硬前置（先于以下任一条）**：§3.0 的二进制 sha256 断言不通过，禁止应用
+`20261118160000`；此时连第一条迁移都不要执行。
+
 1. `apply-forward` 非 0 退出（失败/守卫拒绝/白名单外 pending）。单事务保证无半应用。
 2. 结构核验不符：应用前 `check-pending-ddl.mjs` 对 `20261118123000` / `20261118130000`
    的目标列已报 present，或 11 条 policy-only 的 RLS 指纹报 FAIL
@@ -209,7 +241,8 @@ node scripts/migration/check-pending-ddl.mjs --post --db "$MIGRATE_URL" --expect
    或应用后策略/列与上表预期不符。
    **账本行数、`success` 只登记不作为中止判据**（账本含导入行，见 §1 注）。
 3. 策略总数不是「上表预期策略总数」。
-4. 表数不是 1345。
+4. 表数不是 1345（`information_schema.tables` 口径；等价于 1344 张 `relkind in ('r','p')`
+   表 + 1 张视图，两者不可混用）。
 5. 任何非账本表行数变化（冻结窗口下预期为 0）。
 6. 出现第 15 条 pending（应为 `20261118124000` 且只应被 defer）。
 7. 破坏性预演行数超过文件内 `destructive-max-rows`。
