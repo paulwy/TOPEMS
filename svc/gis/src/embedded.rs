@@ -404,6 +404,19 @@ pub fn build_business_router(state: &AppState, rls_pool: sqlx::PgPool) -> Router
             "/devices/{id}/history",
             axum::routing::get(modules::device::get_device_history),
         )
+        // 离线同步：位置/证据批量上报与离线数据下载（sync.rs 原零挂载）
+        .route(
+            "/sync/positions/batch",
+            axum::routing::post(modules::sync::batch_upload_positions),
+        )
+        .route(
+            "/sync/evidence/batch",
+            axum::routing::post(modules::sync::batch_upload_evidence),
+        )
+        .route(
+            "/sync/offline-data",
+            axum::routing::post(modules::sync::download_offline_data),
+        )
         // Geofence endpoints：读接口依赖 Claims 扩展（租户过滤），必须与写接口一样走鉴权链，
         // 否则 axum 报 "Missing request extension: Claims" → 500
         .route(
