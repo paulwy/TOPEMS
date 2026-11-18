@@ -121,7 +121,7 @@ META_FILE="$OUT/baseline_${ANCHOR}.json"
 DRIFT_FILE="$OUT/prod_drift_${ANCHOR}.tsv"
 
 if [[ $FORCE -eq 0 && -e "$SCHEMA_FILE" ]]; then
-  echo "已存在 $SCHEMA_FILE（加 --force 覆盖）" >&2
+  echo "已存在 ${SCHEMA_FILE}（加 --force 覆盖）" >&2
   exit 2
 fi
 

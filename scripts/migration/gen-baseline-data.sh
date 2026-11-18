@@ -130,7 +130,7 @@ META_SCHEMA="$OUT/baseline_${ANCHOR}.json"
 DATA_FILE="$OUT/baseline_${ANCHOR}_data.sql.gz"
 META_FILE="$OUT/baseline_${ANCHOR}_data.json"
 if [[ $FORCE -eq 0 && -e "$DATA_FILE" ]]; then
-  echo "已存在 $DATA_FILE（加 --force 覆盖）" >&2; exit 2
+  echo "已存在 ${DATA_FILE}（加 --force 覆盖）" >&2; exit 2
 fi
 
 # ── 每表行数 ───────────────────────────────────────────────────────────────
