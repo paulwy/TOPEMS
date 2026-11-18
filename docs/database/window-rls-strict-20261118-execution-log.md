@@ -356,7 +356,7 @@ bash scripts/migration/apply-forward.sh --dsn "$DRILL_DSN" --prod \
 | `max(version)` | 20261118150000 → **20261118160000** |
 | 策略 `pg_policy` | **1050 不变** |
 | 表数 | **1345**（仅改名，不增减） |
-| flow 副本 | 11 张 `_deprecated_*`，均 0 行 |
+| flow 副本 | 12 张 `_deprecated_*`，均 0 行 |
 
 补投命令（守卫修复后）：
 
@@ -379,12 +379,92 @@ psql "$MIGRATE_URL" -X -v ON_ERROR_STOP=1 \
 开窗前必须复核：
 
 1. 账本 **718** / `max=20261118150000` / `pg_policy=1050` / 表 **1345**，与 6.7 一致。
-2. `20261027200000` **未**在本窗口先执行；若已执行，本迁移会全部跳过（账本仍 +1，但无改名）。
-3. 11 张 flow 副本仍为 0 行，且 `flow._deprecated_*` 均不存在。
+2. `20261027200000` 按 §7.6.1 的事实认定放行：账本已登记但物理未执行，不算「字面不满足」。
+3. 12 张 flow 副本仍为 0 行，且 `flow._deprecated_*` 均不存在。
 4. 守卫对 `pg_temp` 的误判已修复并回归（第 251/259 行不再 DENY）。
 5. 代码已同窗口上线：master/doc 显式 `public.` + 租户 GUC；确认无新增裸池写路径。
-6. `flow.core_doc_document_versions` 的处置已确认（保持现状或同窗口收敛），避免外键指向废弃表。
+6. `flow.core_doc_document_versions` 已按方案 A 并入本迁移（12 张），见 §7.7。
 7. 窗口后按仓库约定重生成基线并追加锚点 `20261118160000`，同时更新 `checksums.txt` 口径。
+
+### 7.6 两项输入的事实认定（2026-11-18 晚，只读）
+
+#### 7.6.1 `20261027200000`：按「账本已登记、物理未执行」放行
+
+结论：该版本不需要、也不允许在本窗口先行执行；`20261118160000` 不会因此跳过。
+
+- 账本事实：`version=20261027200000`、`success=t`、
+  `installed_on=2026-11-02 12:26:59.575639+08`；同一秒另有 56 行（合计 57 行，版本范围
+  `20260724000005..20261102180000`）为批量导入，不是本库逐条执行。
+- 物理事实：该迁移 104 张 DROP 目标中 `flow` 28/28、`iam` 36/36 仍存在，
+  仅 `mes` 0/36、`communication` 0/4 不存在；flow/iam 同名副本在 2026-11-05、2026-11-17
+  两份 schema 快照中均已存在。
+- 依赖事实：该文件不含 `flow.core_doc_document_versions`；其
+  `DROP TABLE flow.core_doc_documents CASCADE` 若执行，只会删除 versions 指向 documents 的
+  外键约束，versions 表本身保留。
+- 对本迁移的影响：`20261118160000` 的跳过条件是 `to_regclass('flow.<t>') IS NULL`，
+  与账本登记无关；11 张副本当前仍在且 0 行，因此照常改名，账本仍 +1。
+
+备案位置：`database/migration-exemptions.json` 条目
+`B20261118-20261027200000-ledger-imported`（approved）。
+
+#### 7.6.2 `core_doc_document_versions`：同窗口收敛（方案待批准）
+
+代码侧事实（只读核对，未改动）：`svc/unified-core/src/modules/doc/**` 的版本列表、版本详情、
+恢复三个端点全部显式 `public.`；版本读取 JOIN `public.core_doc_documents` 做租户校验；
+全仓无裸名 `core_doc_document_versions`。flow 副本已无读者，可安全改名。
+
+表侧事实（生产只读）：`public`/`flow` 两张副本均 0 行、均无 RLS/策略；`flow` 副本外键
+→ `flow.core_doc_documents`（`ON DELETE CASCADE`），无入向外键、无视图、无触发器。
+
+收敛含义：把 `flow.core_doc_document_versions` 一并改名为
+`flow._deprecated_core_doc_document_versions`，避免留下「活跃副本指向废弃父表」的状态。
+
+| 项 | A：并入 `20261118160000` | B：新增 `20261118170000` |
+|---|---|---|
+| 迁移内指纹 | 11 表 → 12 表，22 → **24** 条 flags（policy 定义仍 11 表，versions 为 `[]`） | `160000` 保持 **22** 条；新迁移 +2 条，合计 24 条 |
+| 账本 | 718 → **719** | 718 → **720** |
+| `max(version)` | `20261118160000` | `20261118170000` |
+| 事务/阶段 | 单事务、一次 apply、一个回滚 | 两事务、两次 apply；中间态副本仍指向废弃父表 |
+| 附加成本 | 已提交迁移受控修改 → `migration-exemptions.json` 登记 + `checksums.txt`/manifest 刷新 | 新增文件，无需 exemptions |
+
+建议采用 **A**：父表与子副本在同一事务内收敛，不产生中间态；窗口只多一次别名扩展，
+但少一次 apply/回滚链路。采用 A 需重跑隔离库预演（断言 22→24，`_deprecated_*` 11→12），
+已重跑，结果见 §7.7。
+两种做法都不改 public 侧；`public.core_doc_document_versions` 无 `tenant_id`、无 RLS
+属另一独立问题（当前靠 JOIN 父表做租户校验），不在本窗口处理。
+
+### 7.7 方案 A 落地与隔离库重演（2026-11-18 晚）
+
+改动面（均未提交、未 push）：
+
+- 迁移：4 处数组（存在性/快照、0 行断言、改名、后置断言）加 `core_doc_document_versions`，
+  快照计数与后置断言 `11→12`，注释与范围描述同步；回滚数组同步 12。
+- `database/checksums.txt`：仅该迁移一行更新为 `a4b27a99…`；
+  `bash scripts/migration/validate.sh` 复跑 `Errors 0 / Checksum errors 0`。
+- `database/migration_manifest.yaml`：`20261118160000` 条目同步 12 张与重演结果。
+- `database/migration-exemptions.json`：新增
+  `B20261118-20261118160000-doc-versions-converge`（approved），写明「从未在任何环境应用过」
+  的改前状态、修改目的与重演证据。
+- `gen-manifest.sh --check` 无漂移；`node scripts/check-migrations.mjs` PASS（豁免命中）。
+
+重演（`topems_window_drill_160000_3394`，锚点 `20261117235500` 基线恢复，走官方
+`apply-forward.sh --prod --apply-deferred`，验证后已 drop）：
+
+| 项 | 预演前 | APPLY 后 | ROLLBACK 后 |
+|---|---|---|---|
+| 账本行数 | 704 | **705** | **704** |
+| `max(version)` | 20261117235500 | **20261118160000** | 20261117235500 |
+| 表数 | 1345 | 1345 | 1345 |
+| 策略 `pg_policy` | 1039 | 1039 | 1039 |
+| 参考数据 10 表 | 4740 | 4740 | 4740 |
+| `flow._deprecated_*` | 0 | **12 张，均 0 行** | 0 |
+
+- 12 张 public 表的 `relrowsecurity`/`relforcerowsecurity` 共 **24 条 flags** 与策略定义逐字未变
+  （`core_doc_document_versions` 为 `false/false`、0 策略）。
+- 裸名 `core_doc_document_versions`：`flow → public`；flow-only 4 张仍在 `flow`。
+- 依赖对象（视图/触发器/外键/索引）归一 `_deprecated_` 后集合与定义完全一致。
+- 回滚后表/列/行数/RLS 策略/视图/函数/触发器/约束/索引与预演前逐项一致，裸名落点回到 `flow`。
+- 守卫预演 4 条临时表 DROP 全部 0 行，官方入口 exit 0。
 
 ---
 
