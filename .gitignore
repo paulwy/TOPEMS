@@ -369,5 +369,7 @@ backups/
 scripts/audit/type-only-*.json
 _shots/
 
-# 本地 swagger-ui 离线包（体积原因禁止提交进仓库，供 scripts/lib/swagger-ui.sh 探测）
+# swagger-ui 离线包：v5.32.6 已入库（无 GitHub/离线环境靠它确定性构建，sha256 由
+# scripts/lib/swagger-ui.sh 校验）；其他版本仍不提交，放本地即可。
 /vendor/swagger-ui-v*.zip
+!/vendor/swagger-ui-v5.32.6.zip

@@ -56,6 +56,10 @@ env:
   CARGO_INCREMENTAL: 0
   # cargo-nextest 配置（更快、并行测试）
   NEXTEST_EXECS: "FIFO"
+  # swagger-ui 离线包已入库（vendor/swagger-ui-v5.32.6.zip）：CI 强制走本地包，
+  # 禁止 utoipa-swagger-ui build.rs 回退 GitHub 在线下载（离线/无网 runner 可用）
+  SWAGGER_UI_DOWNLOAD_URL: file://${{ github.workspace }}/vendor/swagger-ui-v5.32.6.zip
+  TOPEMS_SWAGGER_UI_REQUIRED: "1"
   # Prevent OOM in Node.js test / coverage processes
   NODE_OPTIONS: '--max-old-space-size=4096'
 
@@ -226,6 +230,9 @@ jobs:
         with:
           components: rustfmt, clippy
           cache-prefix: "rust-lint-nightly-2026-07-01"
+
+      - name: Verify swagger-ui vendor archive
+        run: bash scripts/ci/check-swagger-ui-vendor.sh
 
       - name: Check code format
         run: cargo fmt --check --all

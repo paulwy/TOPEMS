@@ -16,6 +16,20 @@
 #
 # 用法：source 后在 cargo 命令前调用 topems_ensure_swagger_ui_archive || exit 1
 
+# 官方 v5.32.6 归档的 SHA256（校验本地包完整性：防半包、篡改、版本错配）。
+# 升级 Swagger UI 版本时，必须同步更新本常量（或临时用 TOPEMS_SWAGGER_UI_SHA256 覆盖）。
+TOPEMS_SWAGGER_UI_SHA256_DEFAULT="b3c07e091559b59a833f66547eb1fc18f2896f96e3f1f953e2f1efb328aa3394"
+
+_topems_swagger_ui_sha256() {
+    if command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" 2>/dev/null | awk '{print $1}'
+    elif command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" 2>/dev/null | awk '{print $1}'
+    else
+        return 1
+    fi
+}
+
 topems_swagger_ui_repo_root() {
     local here
     here="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -45,6 +59,22 @@ topems_ensure_swagger_ui_archive() {
     if [ "${#candidates[@]}" -gt 0 ]; then
         for candidate in "${candidates[@]}"; do
             if [ -f "$candidate" ]; then
+                local expected_sha actual_sha
+                expected_sha="${TOPEMS_SWAGGER_UI_SHA256:-$TOPEMS_SWAGGER_UI_SHA256_DEFAULT}"
+                if actual_sha="$(_topems_swagger_ui_sha256 "$candidate")" && [ -n "$actual_sha" ]; then
+                    if [ "$actual_sha" != "$expected_sha" ]; then
+                        cat >&2 <<EOF
+[swagger-ui] 离线包校验失败（SHA256 不匹配），已跳过: $candidate
+  期望: $expected_sha
+  实际: $actual_sha
+  若是主动升级 Swagger UI 版本，请同步更新 scripts/lib/swagger-ui.sh 的
+  TOPEMS_SWAGGER_UI_SHA256_DEFAULT（或设置 TOPEMS_SWAGGER_UI_SHA256 覆盖）。
+EOF
+                        continue
+                    fi
+                else
+                    echo "[swagger-ui] 警告：无 shasum/sha256sum，跳过完整性校验: $candidate" >&2
+                fi
                 SWAGGER_UI_DOWNLOAD_URL="file://$candidate"
                 export SWAGGER_UI_DOWNLOAD_URL
                 echo "[swagger-ui] 使用本地离线包: $candidate" >&2
@@ -61,7 +91,7 @@ topems_ensure_swagger_ui_archive() {
     - $repo_root/vendor/swagger-ui-v*.zip
     - $release_dir/vendor/swagger-ui-v*.zip
   解决方式（任选其一）:
-    1. 将 swagger-ui-v5.32.6.zip 放到 $repo_root/vendor/（不要提交进仓库）
+    1. 从仓库恢复已入库的包：git checkout -- vendor/swagger-ui-v5.32.6.zip
     2. 设置 TOPEMS_SWAGGER_UI_ARCHIVE=/绝对路径/swagger-ui-v5.32.6.zip
     3. 或直接设置 SWAGGER_UI_DOWNLOAD_URL=file:///绝对路径/swagger-ui-v5.32.6.zip
 EOF
@@ -75,7 +105,7 @@ EOF
     - $repo_root/vendor/swagger-ui-v*.zip
     - $release_dir/vendor/swagger-ui-v*.zip
   如需离线/确定性构建（推荐）:
-    1. 将 swagger-ui-v5.32.6.zip 放到 $repo_root/vendor/（不要提交进仓库）
+    1. 从仓库恢复已入库的包：git checkout -- vendor/swagger-ui-v5.32.6.zip
     2. 设置 TOPEMS_SWAGGER_UI_ARCHIVE=/绝对路径/swagger-ui-v5.32.6.zip
     3. 或在离线环境设置 TOPEMS_SWAGGER_UI_REQUIRED=1 让缺失直接失败
 EOF
