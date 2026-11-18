@@ -138,10 +138,12 @@ async fn l2_strict_mode_rejects_unregistered_column() {
         "需设置 BI_WHITELIST_ENFORCE=strict 运行本集成测试"
     );
 
-    let url = std::env::var("DATABASE_URL").expect("需设置 DATABASE_URL 运行本集成测试");
+    let url = std::env::var("TEST_DATABASE_URL").expect(
+        "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+    );
     let pool = sqlx::PgPool::connect(&url)
         .await
-        .expect("DATABASE_URL 连接失败");
+        .expect("TEST_DATABASE_URL 连接失败");
 
     // 确保 bi_datasets 存在（已迁移），但故意没有注册 malicious_col
     // 任何列（BI 表为 analytics_data）都未注册时 strict 模式应报错

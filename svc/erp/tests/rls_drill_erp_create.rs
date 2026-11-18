@@ -93,9 +93,12 @@ async fn scoped_tenant_of(pool: &PgPool, tenant: Uuid, table: &str, id: Uuid) ->
 #[tokio::test]
 #[ignore = "演练专用：需要已应用 M1/M2 的本地演练库 topems_rls_drill"]
 async fn erp_create_handlers_write_under_new_policies() {
-    let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        "postgres://topems_prod@localhost/topems_rls_drill?host=/tmp".to_string()
-    });
+    // 不再内置任何默认 DSN（原默认含生产角色 topems_prod）；演练库单独一个变量，
+    // 不复用 DATABASE_URL，避免任何环境把它指向生产库。
+    let url = std::env::var("RLS_DRILL_DATABASE_URL").expect(
+        "缺少环境变量 RLS_DRILL_DATABASE_URL：演练测试不再回退到默认连接串。\
+         请显式设置，例如 export RLS_DRILL_DATABASE_URL='postgres://topems_app@localhost/topems_rls_drill?host=/tmp'",
+    );
     // 与 ERP 生产连接一致：search_path = erp, public, shared（handler 的 SQL 不带 schema 前缀）
     let pool = PgPoolOptions::new()
         .max_connections(5)

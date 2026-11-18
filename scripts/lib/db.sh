@@ -4,7 +4,9 @@
 # =============================================
 
 parse_database_url() {
-    local db_url=${DATABASE_URL:-"postgres://topems:topems_secret@localhost:5432/topems"}  # 本机开发默认；生产经 DATABASE_URL 环境变量注入
+    # 本机默认走 socket 认证（不内嵌任何口令）：postgres:///topems 由当前 OS 用户连接；
+    # 生产/远端经 DATABASE_URL 显式注入，禁止把带口令的连接串写成默认值。
+    local db_url=${DATABASE_URL:-"postgres:///topems"}
     # 格式: postgres://user:password@host:port/database
     DB_USER=$(echo "$db_url" | sed -n 's|postgres://\([^:]*\):.*|\1|p')
     DB_PASSWORD=$(echo "$db_url" | sed -n 's|postgres://[^:]*:\([^@]*\)@.*|\1|p')

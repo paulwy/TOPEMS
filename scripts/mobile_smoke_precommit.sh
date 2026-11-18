@@ -14,7 +14,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT" || exit 1
 
-DB_URL="${MOBILE_SMOKE_DATABASE_URL:-postgres://topems:topems_secret@127.0.0.1:5432/topems_test}"
+DB_URL="${MOBILE_SMOKE_DATABASE_URL:-postgres:///topems_test}"
 PORT="${MOBILE_SMOKE_PORT:-18070}"
 REDIS_PORT="${MOBILE_SMOKE_REDIS_PORT:-16379}"
 MOBILE_LOG="/tmp/mobile_smoke_precommit.mobile.log"

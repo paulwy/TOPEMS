@@ -50,7 +50,7 @@ CLEAN=0
 SYNC_SNAPSHOT=0
 SKIP_COMPILE=0
 PREPARE=0
-DB_URL="${DATABASE_URL:-postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public}"
+DB_URL="${DATABASE_URL:-postgresql:///topems?options=-csearch_path=mes,public}"
 SNAPSHOT_SSH="${MES_SNAPSHOT_SSH:-}"
 SNAPSHOT_DB="${MES_SNAPSHOT_DB:-topems_prod}"
 SNAPSHOT_PG_BIN="${MES_SNAPSHOT_PG_BIN:-}"

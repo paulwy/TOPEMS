@@ -1391,11 +1391,13 @@ mod p2a_e2e_tests {
     /// 业务事件 → finance 生成含借贷分录的凭证 → 过账 → ledger / aux_balances 有行；
     /// 重放同一事件不产生重复凭证；缺科目时 fail-closed 不落半张凭证。
     ///
-    /// 运行：DATABASE_URL=... cargo test -p topems-finance --bin topems-finance -- --ignored p2a
+    /// 运行：TEST_DATABASE_URL=... cargo test -p topems-finance --bin topems-finance -- --ignored p2a
     #[tokio::test]
-    #[ignore = "需要真实数据库：DATABASE_URL"]
+    #[ignore = "需要真实测试库：TEST_DATABASE_URL"]
     async fn event_to_posted_voucher_is_balanced_and_idempotent() {
-        let url = std::env::var("DATABASE_URL").expect("DATABASE_URL 未设置");
+        let url = std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        );
         let pool = sqlx::PgPool::connect(&url).await.unwrap();
 
         let tenant_id = uuid::Uuid::new_v4();

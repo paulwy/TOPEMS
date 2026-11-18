@@ -261,7 +261,7 @@ _mes_db_url() {
     local url="${DATABASE_URL:-}"
     if [ -z "$url" ]; then
         load_env
-        url="${DATABASE_URL:-postgresql://topems_app:topems_app_secret@localhost:5432/topems}"
+        url="${DATABASE_URL:-postgresql:///topems}"
     fi
     if [[ "$url" != *"search_path"* ]]; then
         if [[ "$url" == *"?"* ]]; then

@@ -1793,10 +1793,13 @@ mod tests {
 
     // queue_email 落库路径需要真实 PgPool，离线 CI 下跳过；本地连库后 `cargo test -- --ignored` 可跑
     #[tokio::test]
-    #[ignore = "requires DATABASE_URL (core_email_queue)"]
+    #[ignore = "requires TEST_DATABASE_URL (core_email_queue)"]
     async fn test_queue_email_returns_id_and_stats_has_keys() {
+        let dsn = std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        );
         let pool = sqlx::postgres::PgPoolOptions::new()
-            .connect(&std::env::var("DATABASE_URL").unwrap_or_default())
+            .connect(&dsn)
             .await
             .unwrap();
         let db = Db::new(pool, "communication, public");

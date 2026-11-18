@@ -7,7 +7,7 @@
 # ==============================================================================
 set -euo pipefail
 
-PGURL="${DATABASE_URL:-postgres://topems:topems_secret@localhost:5432/topems}"
+PGURL="${DATABASE_URL:-postgres:///topems}"
 SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 MIGRATE_SCRIPT="$SCRIPT_DIR/scripts/migrate.sh"
 

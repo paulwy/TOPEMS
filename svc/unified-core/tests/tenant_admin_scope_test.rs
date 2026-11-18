@@ -313,7 +313,9 @@ async fn seed(pool: &PgPool, suffix: &str) -> Fixtures {
 #[tokio::test]
 #[ignore]
 async fn tenant_admin_scope_matrix() {
-    let db_url = std::env::var("DATABASE_URL").expect("需要 DATABASE_URL");
+    let db_url = std::env::var("TEST_DATABASE_URL").expect(
+        "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+    );
     let pool = PgPool::connect(&db_url).await.expect("连接数据库失败");
     let suffix = Uuid::new_v4().simple().to_string()[..8].to_string();
     let fx = seed(&pool, &suffix).await;
@@ -642,7 +644,9 @@ async fn tenant_admin_scope_matrix() {
 #[tokio::test]
 #[ignore = "需要本地真实库 + 运行中的服务"]
 async fn iam_role_create_duplicate_and_user_permission_cases() {
-    let db_url = std::env::var("DATABASE_URL").expect("需要 DATABASE_URL");
+    let db_url = std::env::var("TEST_DATABASE_URL").expect(
+        "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+    );
     let pool = PgPool::connect(&db_url).await.expect("连接数据库失败");
     let suffix = Uuid::new_v4().simple().to_string()[..8].to_string();
     let fx = seed(&pool, &suffix).await;
