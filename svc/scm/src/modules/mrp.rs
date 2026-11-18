@@ -598,8 +598,9 @@ pub async fn compute_mrp(
         FROM master_data.materials m
         LEFT JOIN (
             SELECT material_code, SUM(quantity) as total
-            FROM scm.sales_order_items
+            FROM erp.sales_order_items
             WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+              AND deleted_at IS NULL
               AND $4 = true
               AND tenant_id = $7::uuid
             GROUP BY material_code
@@ -638,7 +639,7 @@ pub async fn compute_mrp(
                   current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
                   source_type, source_order_id, remarks, created_at, updated_at
-        "#, "master_data", "wms"),
+        "#, "master_data", "wms", "erp"),
     )
     .bind(&suggestion_number)
     .bind(safety_factor)

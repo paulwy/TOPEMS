@@ -12,7 +12,9 @@ use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOrderRequest};
+use crate::models::material::{
+    CreateSalesOrderRequest, SalesOrder, SalesOrderItemInput, UpdateSalesOrderRequest,
+};
 use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales_order_status};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -64,6 +66,60 @@ fn dec_owned(v: f64) -> rust_decimal::Decimal {
 
 fn dec(v: Option<f64>) -> Option<rust_decimal::Decimal> {
     Some(dec_owned(v?))
+}
+
+/// 同步销售订单行项目：先软删旧行，再按入参重建。
+/// `items` 为空表示本次请求不涉及行项目（创建时即无行项目，更新时保留原行）。
+async fn replace_sales_order_items(
+    state: &ApiState,
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    sales_order_id: Uuid,
+    items: &[SalesOrderItemInput],
+) -> Result<(), TopemsError> {
+    if items.is_empty() {
+        return Ok(());
+    }
+
+    // 复用请求事务：与 purchase_order 的写法一致，避免裸事务计数上升。
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared");
+    let mut scope = db
+        .scope_with(&mut *txn)
+        .await
+        .map_err(|e| TopemsError::Internal(format!("开启请求事务作用域失败: {}", e)))?;
+
+    sqlx::query(only_own_schema_query!(
+        "erp",
+        "UPDATE erp.sales_order_items SET deleted_at = NOW(), updated_at = NOW() WHERE sales_order_id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(sales_order_id)
+    .execute(&mut scope)
+    .await
+    .map_err(|e| TopemsError::DatabaseQuery(e.to_string()))?;
+
+    for item in items {
+        let amount = item
+            .amount
+            .or_else(|| item.unit_price.map(|price| price * item.quantity));
+        sqlx::query(only_own_schema_query!(
+            "erp",
+            "INSERT INTO erp.sales_order_items (sales_order_id, material_code, material_name, specification, unit, quantity, unit_price, amount, remark, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
+        ))
+        .bind(sales_order_id)
+        .bind(&item.material_code)
+        .bind(&item.material_name)
+        .bind(&item.specification)
+        .bind(&item.unit)
+        .bind(dec_owned(item.quantity))
+        .bind(dec(item.unit_price))
+        .bind(dec(amount))
+        .bind(&item.remark)
+        .execute(&mut scope)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(e.to_string()))?;
+    }
+
+    drop(scope);
+    Ok(())
 }
 
 #[utoipa::path(
@@ -268,6 +324,14 @@ pub async fn create_sales_order(
 
     match result {
         Ok(Some(sales_order)) => {
+            if let Err(e) =
+                replace_sales_order_items(&state, txn, sales_order.id, &body.items).await
+            {
+                tracing::error!("创建销售订单行项目失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "创建销售订单行项目失败".to_string(),
+                ));
+            }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -376,6 +440,14 @@ pub async fn update_sales_order(
 
     match result {
         Ok(Some(sales_order)) => {
+            if let Err(e) =
+                replace_sales_order_items(&state, txn, sales_order.id, &body.items).await
+            {
+                tracing::error!("更新销售订单行项目失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "更新销售订单行项目失败".to_string(),
+                ));
+            }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -792,8 +864,23 @@ async fn batch_create_sales_orders(
         .bind(dec_owned(amounts.discount_amount)).bind(dec_owned(amounts.payable_amount))
         .bind(default_sales_order_status(req.status.clone())).bind(&req.remark)
         .fetch_optional(&mut **txn).await;
-        if let Ok(Some(o)) = result {
-            created.push(o);
+        match result {
+            Ok(Some(o)) => {
+                if let Err(e) = replace_sales_order_items(&state, txn, o.id, &req.items).await {
+                    tracing::error!("批量创建销售订单行项目失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "批量创建销售订单行项目失败".to_string(),
+                    ));
+                }
+                created.push(o);
+            }
+            Ok(None) => {}
+            Err(e) => {
+                tracing::error!("批量创建销售订单失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "批量创建销售订单失败".to_string(),
+                ));
+            }
         }
     }
     if let Some(t) = guard.take() {
@@ -838,8 +925,25 @@ async fn batch_update_sales_orders(
         .bind(dec(item.payload.tax_amount)).bind(dec(item.payload.discount_amount)).bind(dec(item.payload.payable_amount))
         .bind(&item.payload.status).bind(&item.payload.remark).bind(item.id)
         .fetch_optional(&mut **txn).await;
-        if let Ok(Some(o)) = result {
-            updated.push(o);
+        match result {
+            Ok(Some(o)) => {
+                if let Err(e) =
+                    replace_sales_order_items(&state, txn, o.id, &item.payload.items).await
+                {
+                    tracing::error!("批量更新销售订单行项目失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "批量更新销售订单行项目失败".to_string(),
+                    ));
+                }
+                updated.push(o);
+            }
+            Ok(None) => {}
+            Err(e) => {
+                tracing::error!("批量更新销售订单失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "批量更新销售订单失败".to_string(),
+                ));
+            }
         }
     }
     if let Some(t) = guard.take() {

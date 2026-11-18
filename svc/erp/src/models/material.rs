@@ -245,6 +245,18 @@ pub struct SalesOrder {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct SalesOrderItemInput {
+    pub material_code: String,
+    pub material_name: Option<String>,
+    pub specification: Option<String>,
+    pub unit: Option<String>,
+    pub quantity: f64,
+    pub unit_price: Option<f64>,
+    pub amount: Option<f64>,
+    pub remark: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateSalesOrderRequest {
     pub order_no: String,
     pub customer_id: Uuid,
@@ -256,6 +268,8 @@ pub struct CreateSalesOrderRequest {
     pub payable_amount: Option<f64>,
     pub status: Option<String>,
     pub remark: Option<String>,
+    #[serde(default)]
+    pub items: Vec<SalesOrderItemInput>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -268,6 +282,8 @@ pub struct UpdateSalesOrderRequest {
     pub payable_amount: Option<f64>,
     pub status: Option<String>,
     pub remark: Option<String>,
+    #[serde(default)]
+    pub items: Vec<SalesOrderItemInput>,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
@@ -906,6 +922,7 @@ mod tests {
             payable_amount: Some(5550.0),
             status: Some("draft".into()),
             remark: Some("新订单".into()),
+            items: vec![],
         };
         let v = serde_json::to_value(&r).unwrap();
         let r2: CreateSalesOrderRequest = serde_json::from_value(v).unwrap();
@@ -924,6 +941,7 @@ mod tests {
             payable_amount: Some(999.9),
             status: Some("shipped".into()),
             remark: Some("已发货".into()),
+            items: vec![],
         };
         let v = serde_json::to_value(&r).unwrap();
         let r2: UpdateSalesOrderRequest = serde_json::from_value(v).unwrap();
