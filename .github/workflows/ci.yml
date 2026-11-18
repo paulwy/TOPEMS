@@ -1136,6 +1136,13 @@ jobs:
           # 修复：node scripts/ci/gen-permissions.mjs --apply
           node scripts/ci/gen-permissions.mjs --check
 
+      # 防复发（2026-11-18）：权限码只能经 database/migrations 落库。
+      # 2026-10-26 生产首次启动由已删除的 iam::init_database 运行期自举写入 69 条伞码，
+      # 迁移链从未登记 → 空库克隆缺码、gen-permissions 与生产差集 61 条
+      #（已由 20261118125000_seed_module_umbrella_permissions.sql 收编）。
+      - name: Guard — no runtime INSERT INTO core_permissions (svc/**/*.rs)
+        run: node scripts/ci/check-no-runtime-permission-insert.mjs
+
       - name: Write Perm-Gate summary
         if: always()
         run: |
@@ -2023,6 +2030,14 @@ jobs:
         # 本地 lefthook migration-validate 仅拦"新增/改动迁移"；CI 全量兜底。
         # 注意：脚本对存量多职责/无 down 迁移为 warning 不阻断（STRICT_MODE 未开）。
         run: bash scripts/migration/validate.sh
+
+      # 防复发（2026-11-18）：live DB vs SQL 权限码差集门禁。
+      # 上一步已在 ephemeral 种子库全量应用 migrations，这里只读校验
+      # 「DB 有、init ∪ migrations 无字面量」必须为 0——运行期自举/手工种入
+      # 的未登记权限码会在此暴露（如 2026-10-26 的 69 条伞码）。
+      # 只读 SELECT，连接的是 job 内 postgres service，不使用生产凭据。
+      - name: Permission code audit — live DB vs SQL (read-only)
+        run: python3 scripts/audit_permission_codes.py --gate --dsn "$DATABASE_URL"
 
   # ==========================================================================
   # Desktop Build (P2-5: merged from desktop-build.yml)

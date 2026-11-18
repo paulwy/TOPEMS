@@ -27,7 +27,9 @@ SQL 声明基线口径（批 39 变更）：
   ③ rename       归一化（去 _/-）后同义的命名不一致组
   ④ fe_orphan    FE 引用但 BE 与 DB 都没有（真正的前端孤儿权限码）
 
-退出码恒为 0：本脚本只做对账报告，不拦截流水线。
+退出码：默认恒为 0（只做对账报告，不拦截流水线）；加 ``--gate`` 时改为门禁模式——
+live DB 不可用（禁止静默回退 SQL 扫描）或存在「live DB 有、init 与 migrations 均无字面量」
+的权限码即 exit 1。CI 用 ephemeral 种子库（迁移链空库全量应用）只读校验，不引入生产凭据。
 """
 from __future__ import annotations
 
@@ -269,6 +271,11 @@ def main() -> int:
     parser.add_argument('--summary', action='store_true', help='仅输出统计摘要（默认）')
     parser.add_argument('--limit', type=int, default=5, help='每个码保留的证据条数')
     parser.add_argument(
+        '--gate',
+        action='store_true',
+        help='门禁模式：live DB 不可用或存在「DB 有、SQL(init∪migrations) 无」的码时 exit 1',
+    )
+    parser.add_argument(
         '--dsn',
         default=None,
         help='数据库连接串（默认取 TOPEMS_AUDIT_DSN / DATABASE_URL / .env 的 DATABASE_URL）',
@@ -313,12 +320,31 @@ def main() -> int:
         'sql_history_orphan': sorted(hist_set - db_set - sql_set),
         # migrations 里仍在 live DB / init 中的码（即现行码的历史引入点）
         'sql_history_also_current': len(hist_set & (db_set | sql_set)),
+        # 防复发（2026-11-18）：live DB 有、但 init 与 migrations 都没有字面量的码。
+        # 非空即说明存在「运行期自举/手工种入」的未登记权限码（如 2026-10-26
+        # iam::init_database 写入的 69 条伞码），门禁模式下直接失败。
+        'db_only_not_in_any_sql': sorted(db_set - sql_set - hist_set),
     }
+
+    gate_problems: List[str] = []
+    if args.gate:
+        if db_source != 'live':
+            gate_problems.append(
+                f'live DB 不可用（{live_err}）；--gate 禁止回退 SQL 扫描，请检查 DSN'
+            )
+        unregistered = report['code_drift']['db_only_not_in_any_sql']
+        if unregistered:
+            preview = ', '.join(unregistered[:20])
+            gate_problems.append(
+                f'{len(unregistered)} 个权限码在 live DB 存在、但 init 与 migrations 均无字面量：'
+                f'{preview}{" …" if len(unregistered) > 20 else ""}'
+            )
+        report['gate'] = {'pass': not gate_problems, 'problems': gate_problems}
 
     if args.json:
         json.dump(report, sys.stdout, ensure_ascii=False, indent=2)
         sys.stdout.write('\n')
-        return 0
+        return 0 if not gate_problems else 1
 
     counts = report['counts']
     print('权限码三端对账')
@@ -343,6 +369,10 @@ def main() -> int:
                 f"其中仅历史、未在 init/live 的孤立字面量 {len(drift['sql_history_orphan'])} 条；"
                 f"仍为现行码的历史引入点 {drift['sql_history_also_current']} 条"
             )
+        print(
+            f"  未登记（live DB 有、init∪migrations 无字面量）: "
+            f"{len(drift['db_only_not_in_any_sql'])}"
+        )
     print(f"  ① be_only {counts['be_only']}   ② fe_only {counts['fe_only']}   ④ fe_orphan {counts['fe_orphan']}   db_only {counts['db_only']}")
     print(f"  ③ 命名不一致组 {counts['rename_groups']}")
     for group in report['rename_groups'][:20]:
@@ -353,6 +383,12 @@ def main() -> int:
         print('    - ' + ' vs '.join(parts))
     if report['module_distribution']['fe_orphan']:
         print('  ④ fe_orphan 模块分布（前 10）:', dict(list(report['module_distribution']['fe_orphan'].items())[:10]))
+    if gate_problems:
+        for problem in gate_problems:
+            print(f'GATE FAIL: {problem}', file=sys.stderr)
+        return 1
+    if args.gate:
+        print(f"GATE PASS：live DB {counts['db']} 个码均已由 database/init ∪ database/migrations 声明")
     return 0
 
 

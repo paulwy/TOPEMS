@@ -115,6 +115,18 @@ pre-commit:
           node scripts/ci/perm-matrix-toolkit.cjs ci-report
         fi
 
+    # [Gate PERM-SEED] 权限码只能经 database/migrations 落库（2026-11-18 防复发）
+    # 2026-10-26 生产首次启动由 iam::init_database 运行期自举写入 69 条伞码，迁移链
+    # 从未登记 → 空库克隆缺码、gen-permissions 与生产差集 61 条（已由
+    # 20261118125000_seed_module_umbrella_permissions.sql 收编）。
+    # 暂存含 svc/**/*.rs 时全量扫描；命中 INSERT INTO core_permissions 即阻断。
+    perm-seed-guard:
+      tags: permission database
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-no-runtime-permission-insert.mjs
+
     # [Gate M] Axum Layer Order Gate (dry-run)
     axum-layer:
       tags: rust axum layer
