@@ -23,16 +23,22 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::ScopedTxn;
 
 // ==================== 数据模型 ====================
 
 /// 审计日志统一条目
+///
+/// 三张来源表的 `id` / `user_id` 类型不一致（`audit_logs`、`core_login_logs` 为 uuid，
+/// `permission_audit_logs` 为 bigint / varchar），因此统一在 SQL 内 `::text` 收敛为
+/// 字符串，结构体不再绑定 Uuid，避免 `query_as` 解码失败被 `unwrap_or_default` 吞成空列表。
+/// 线上 JSON 形态不变（uuid 与 bigint 序列化后都是字符串）。
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct AuditLogEntry {
-    pub id: Uuid,
+    pub id: String,
     pub source: String,
     pub tenant_id: Option<Uuid>,
-    pub user_id: Option<Uuid>,
+    pub user_id: Option<String>,
     pub username: Option<String>,
     pub action: String,
     pub entity_type: Option<String>,
@@ -141,6 +147,38 @@ fn parse_datetime(value: Option<&str>) -> Option<DateTime<Utc>> {
     })
 }
 
+/// 子查询级 savepoint：语句失败只回滚到该点，不 abort 整条请求事务。
+///
+/// 请求事务由 `tenant_middleware` 持有，任一语句报错都会让整条事务进入 aborted 状态，
+/// 后续查询全部失败。审计统计一次要跑多个互相独立的子查询，必须逐个隔离。
+async fn sp_begin(scope: &mut ScopedTxn<'_>, name: &'static str) -> Result<(), sqlx::Error> {
+    sqlx::query(sqlx::AssertSqlSafe(format!("SAVEPOINT {name}")))
+        .execute(&mut *scope)
+        .await
+        .map(|_| ())
+}
+
+/// 子查询级 savepoint 收尾：成功则释放，失败则回滚到保存点后再释放。
+async fn sp_finish(scope: &mut ScopedTxn<'_>, name: &'static str, ok: bool) {
+    let stmt = if ok {
+        format!("RELEASE SAVEPOINT {name}")
+    } else {
+        format!("ROLLBACK TO SAVEPOINT {name}")
+    };
+    if let Err(e) = sqlx::query(sqlx::AssertSqlSafe(stmt))
+        .execute(&mut *scope)
+        .await
+    {
+        tracing::warn!(savepoint = name, error = %e, "审计子查询 savepoint 收尾失败");
+        return;
+    }
+    if !ok {
+        let _ = sqlx::query(sqlx::AssertSqlSafe(format!("RELEASE SAVEPOINT {name}")))
+            .execute(&mut *scope)
+            .await;
+    }
+}
+
 /// 查询审计日志
 pub async fn query_audit_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -169,7 +207,8 @@ pub async fn query_audit_logs(
 
     let (items, total) = match source {
         "permission_audit_logs" => {
-            let total: i64 = sqlx::query_scalar(
+            sp_begin(&mut scope, "sp_perm_total").await.ok();
+            let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM public.permission_audit_logs
                 WHERE ($1::text IS NULL OR user_id = $1::text)
@@ -181,33 +220,31 @@ pub async fn query_audit_logs(
                        OR COALESCE(new_value::text, '') ILIKE '%' || $5 || '%')
                 "#,
             )
-            .bind(
-                params
-                    .user_id
-                    .as_deref()
-                    .and_then(|s| Uuid::parse_str(s).ok()),
-            )
+            // 该表 user_id 为 varchar：按原始文本绑定，先解析 Uuid 会丢掉非 uuid 用户 id。
+            .bind(params.user_id.as_deref())
             .bind(params.action.as_deref())
             .bind(start_date)
             .bind(end_date)
             .bind(params.search.as_deref())
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_perm_total", total.is_ok()).await;
+            let total = total.unwrap_or(0);
 
-            let items: Vec<AuditLogEntry> = sqlx::query_as(
+            sp_begin(&mut scope, "sp_perm_items").await.ok();
+            let items = sqlx::query_as::<_, AuditLogEntry>(
                 r#"
                 SELECT
-                    id,
+                    id::text AS id,
                     'permission_audit_logs' AS source,
                     tenant_id,
-                    user_id,
+                    user_id::text AS user_id,
                     changed_by AS username,
                     action,
                     NULL::text AS entity_type,
                     NULL::uuid AS entity_id,
                     NULL::text AS resource,
-                    ip_address,
+                    host(ip_address) AS ip_address,
                     user_agent,
                     NULL::text AS status,
                     NULL::bool AS success,
@@ -229,12 +266,7 @@ pub async fn query_audit_logs(
                 LIMIT $6 OFFSET $7
                 "#,
             )
-            .bind(
-                params
-                    .user_id
-                    .as_deref()
-                    .and_then(|s| Uuid::parse_str(s).ok()),
-            )
+            .bind(params.user_id.as_deref())
             .bind(params.action.as_deref())
             .bind(start_date)
             .bind(end_date)
@@ -242,13 +274,18 @@ pub async fn query_audit_logs(
             .bind(page_size)
             .bind(offset)
             .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
+            .await;
+            sp_finish(&mut scope, "sp_perm_items", items.is_ok()).await;
+            let items = items.unwrap_or_else(|e| {
+                tracing::error!(source = "permission_audit_logs", error = %e, "审计列表行解码失败");
+                Vec::new()
+            });
 
             (items, total)
         }
         "login_logs" => {
-            let total: i64 = sqlx::query_scalar(
+            sp_begin(&mut scope, "sp_login_total").await.ok();
+            let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM public.core_login_logs
                 WHERE ($1::uuid IS NULL OR user_id = $1)
@@ -271,16 +308,18 @@ pub async fn query_audit_logs(
             .bind(start_date)
             .bind(end_date)
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_login_total", total.is_ok()).await;
+            let total = total.unwrap_or(0);
 
-            let items: Vec<AuditLogEntry> = sqlx::query_as(
+            sp_begin(&mut scope, "sp_login_items").await.ok();
+            let items = sqlx::query_as::<_, AuditLogEntry>(
                 r#"
                 SELECT
-                    id,
+                    id::text AS id,
                     'login_logs' AS source,
                     tenant_id,
-                    user_id,
+                    user_id::text AS user_id,
                     username,
                     'login' AS action,
                     NULL::text AS entity_type,
@@ -320,15 +359,20 @@ pub async fn query_audit_logs(
             .bind(page_size)
             .bind(offset)
             .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
+            .await;
+            sp_finish(&mut scope, "sp_login_items", items.is_ok()).await;
+            let items = items.unwrap_or_else(|e| {
+                tracing::error!(source = "login_logs", error = %e, "审计列表行解码失败");
+                Vec::new()
+            });
 
             (items, total)
         }
         _ => {
             // 复用函数入口已开启的作用域：此处再开一个会同时占用两条连接，
             // 嵌入模式共享池额度紧张时 acquire 超时 → 访问审计查询稳定 500。
-            let total: i64 = sqlx::query_scalar(
+            sp_begin(&mut scope, "sp_audit_total").await.ok();
+            let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM public.audit_logs
                 WHERE deleted_at IS NULL
@@ -353,18 +397,20 @@ pub async fn query_audit_logs(
             .bind(end_date)
             .bind(params.search.as_deref())
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_audit_total", total.is_ok()).await;
+            let total = total.unwrap_or(0);
 
-            let items: Vec<AuditLogEntry> = sqlx::query_as(
+            sp_begin(&mut scope, "sp_audit_items").await.ok();
+            let items = sqlx::query_as::<_, AuditLogEntry>(
                 r#"
                 SELECT
-                    id,
+                    id::text AS id,
                     'audit_logs' AS source,
                     NULL::uuid AS tenant_id,
                     -- v69 后 public.audit_logs.user_id 为 uuid；旧 text 正则守卫 user_id ~ '...'
                     -- 会触发 "operator does not exist: uuid ~ unknown"，导致行查询被 unwrap_or_default 吞成空列表。
-                    user_id,
+                    user_id::text AS user_id,
                     user_name AS username,
                     action,
                     entity_type,
@@ -408,8 +454,12 @@ pub async fn query_audit_logs(
             .bind(page_size)
             .bind(offset)
             .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
+            .await;
+            sp_finish(&mut scope, "sp_audit_items", items.is_ok()).await;
+            let items = items.unwrap_or_else(|e| {
+                tracing::error!(source = "audit_logs", error = %e, "审计列表行解码失败");
+                Vec::new()
+            });
 
             let _ = scope.commit().await;
 
@@ -461,21 +511,25 @@ pub async fn get_audit_log_stats(
 
     match source {
         "permission_audit_logs" => {
-            stats.total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_perm_total").await.ok();
+            let total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.permission_audit_logs WHERE ($1::timestamptz IS NULL OR changed_at >= $1) AND ($2::timestamptz IS NULL OR changed_at <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_perm_total", total.is_ok()).await;
+            stats.total = total.unwrap_or(0);
 
-            stats.today_total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_perm_today").await.ok();
+            let today = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.permission_audit_logs WHERE changed_at >= CURRENT_DATE",
             )
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_perm_today", today.is_ok()).await;
+            stats.today_total = today.unwrap_or(0);
 
             // 释放连接后再调用辅助查询（辅助函数内部自成作用域），
             // 否则单请求同时占用两条连接，小池下会 acquire 超时表现为请求挂死。
@@ -491,30 +545,37 @@ pub async fn get_audit_log_stats(
                 &txn_arc,
             )
             .await;
+            stats.by_user = load_permission_top_users(&state, &txn_arc).await;
         }
         "login_logs" => {
-            stats.total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_login_total").await.ok();
+            let total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.core_login_logs WHERE ($1::timestamptz IS NULL OR login_time >= $1) AND ($2::timestamptz IS NULL OR login_time <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_login_total", total.is_ok()).await;
+            stats.total = total.unwrap_or(0);
 
-            stats.today_total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_login_today").await.ok();
+            let today = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.core_login_logs WHERE login_time >= CURRENT_DATE",
             )
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_login_today", today.is_ok()).await;
+            stats.today_total = today.unwrap_or(0);
 
-            stats.success_total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_login_success").await.ok();
+            let success = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.core_login_logs WHERE status = 'success'",
             )
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_login_success", success.is_ok()).await;
+            stats.success_total = success.unwrap_or(0);
 
             stats.failure_total = stats.total - stats.success_total;
 
@@ -527,28 +588,34 @@ pub async fn get_audit_log_stats(
         _ => {
             // 复用函数入口已开启的作用域：此处再开一个会同时占用两条连接，
             // 嵌入模式共享池额度紧张时 acquire 超时 → 访问审计统计稳定 500。
-            stats.total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_audit_total").await.ok();
+            let total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_audit_total", total.is_ok()).await;
+            stats.total = total.unwrap_or(0);
 
-            stats.today_total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_audit_today").await.ok();
+            let today = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE",
             )
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_audit_today", today.is_ok()).await;
+            stats.today_total = today.unwrap_or(0);
 
-            stats.success_total = sqlx::query_scalar::<_, i64>(
+            sp_begin(&mut scope, "sp_stat_audit_success").await.ok();
+            let success = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE deleted_at IS NULL AND status = 'success'",
             )
             .fetch_one(&mut scope)
-            .await
-            .unwrap_or(0);
+            .await;
+            sp_finish(&mut scope, "sp_stat_audit_success", success.is_ok()).await;
+            stats.success_total = success.unwrap_or(0);
 
             let _ = scope.commit().await;
             drop(guard);
@@ -568,13 +635,8 @@ pub async fn get_audit_log_stats(
         }
     }
 
-    stats.by_source = ALLOWED_SOURCES
-        .iter()
-        .map(|s| AuditLogCount {
-            key: s.to_string(),
-            count: 0,
-        })
-        .collect();
+    // 三张来源表各自真实计数（此前硬编码 0，前端来源分布永远为空）。
+    stats.by_source = load_source_counts(&state, start_date, end_date, &txn_arc).await;
 
     stats.trend = load_trend(&state, source, start_date, end_date, &txn_arc).await;
 
@@ -589,7 +651,12 @@ async fn load_top_by_column(
     end_date: Option<DateTime<Utc>>,
     txn_arc: &RlsTxnCell,
 ) -> Vec<AuditLogCount> {
-    let date_col = if table.contains("login") {
+    // 三张来源表的时间列不同：permission 是 changed_at、登录是 login_time、其余 created_at。
+    // 此前只区分 login / 其他，permission 统计引用了不存在的 created_at 列，
+    // 语句报错后整条请求事务进入 aborted，连带 trend 等后续子查询全部失败。
+    let date_col = if table.contains("permission_audit_logs") {
+        "changed_at"
+    } else if table.contains("login") {
         "login_time"
     } else {
         "created_at"
@@ -616,50 +683,30 @@ async fn load_top_by_column(
         date_col = date_col,
         deleted_filter = deleted_filter,
     );
-    let rows = if table == "public.audit_logs" {
-        let db = state.db.clone();
-        let mut guard = txn_arc.lock().await;
-        let Some(txn) = guard.as_mut() else {
-            tracing::error!("rls txn missing: RLS 事务中间件未注入");
-            return Vec::new();
-        };
-        let mut scope = match db.scope_with(txn).await {
-            Ok(scope) => scope,
-            Err(e) => {
-                tracing::error!("数据库作用域创建失败: {}", e);
-                return Vec::new();
-            }
-        };
-        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
-            .bind(start_date)
-            .bind(end_date)
-            .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
-        let _ = scope.commit().await;
-        rows
-    } else {
-        let mut guard = txn_arc.lock().await;
-        let Some(txn) = guard.as_mut() else {
-            tracing::error!("rls txn missing: RLS 事务中间件未注入");
-            return Vec::new();
-        };
-        let mut scope = match state.db.scope_with(txn).await {
-            Ok(scope) => scope,
-            Err(e) => {
-                tracing::error!("数据库作用域创建失败: {}", e);
-                return Vec::new();
-            }
-        };
-        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
-            .bind(start_date)
-            .bind(end_date)
-            .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
-        let _ = scope.commit().await;
-        rows
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Vec::new();
     };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Vec::new();
+        }
+    };
+    sp_begin(&mut scope, "sp_top_by_column").await.ok();
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(start_date)
+        .bind(end_date)
+        .fetch_all(&mut scope)
+        .await;
+    sp_finish(&mut scope, "sp_top_by_column", rows.is_ok()).await;
+    let _ = scope.commit().await;
+    let rows = rows.unwrap_or_else(|e| {
+        tracing::warn!(table = table, column = column, error = %e, "审计 top 统计查询失败");
+        Vec::new()
+    });
     rows.into_iter()
         .map(|row| AuditLogCount {
             key: row.try_get::<String, _>("key").unwrap_or_default(),
@@ -682,6 +729,7 @@ async fn load_audit_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<Aud
             return Vec::new();
         }
     };
+    sp_begin(&mut scope, "sp_audit_top_users").await.ok();
     let rows = sqlx::query(
         r#"
         SELECT COALESCE(user_name, user_id::text, 'unknown') AS key, COUNT(*) AS count
@@ -694,9 +742,13 @@ async fn load_audit_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<Aud
         "#,
     )
     .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default();
+    .await;
+    sp_finish(&mut scope, "sp_audit_top_users", rows.is_ok()).await;
     let _ = scope.commit().await;
+    let rows = rows.unwrap_or_else(|e| {
+        tracing::warn!(error = %e, "审计 by_user 统计查询失败");
+        Vec::new()
+    });
     rows.into_iter()
         .map(|row| AuditLogCount {
             key: row.try_get::<String, _>("key").unwrap_or_default(),
@@ -718,6 +770,7 @@ async fn load_login_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<Aud
             return Vec::new();
         }
     };
+    sp_begin(&mut scope, "sp_login_top_users").await.ok();
     let rows = sqlx::query(
         r#"
         SELECT username AS key, COUNT(*) AS count
@@ -729,15 +782,118 @@ async fn load_login_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<Aud
         "#,
     )
     .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default();
+    .await;
+    sp_finish(&mut scope, "sp_login_top_users", rows.is_ok()).await;
     let _ = scope.commit().await;
+    let rows = rows.unwrap_or_else(|e| {
+        tracing::warn!(error = %e, "登录 by_user 统计查询失败");
+        Vec::new()
+    });
     rows.into_iter()
         .map(|row| AuditLogCount {
             key: row.try_get::<String, _>("key").unwrap_or_default(),
             count: row.try_get::<i64, _>("count").unwrap_or(0),
         })
         .collect()
+}
+
+/// permission_audit_logs 的操作人 top：该表没有 username，操作人是 changed_by。
+async fn load_permission_top_users(state: &AppState, txn_arc: &RlsTxnCell) -> Vec<AuditLogCount> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Vec::new();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Vec::new();
+        }
+    };
+    sp_begin(&mut scope, "sp_perm_top_users").await.ok();
+    let rows = sqlx::query(
+        r#"
+        SELECT COALESCE(changed_by, user_id::text, 'unknown') AS key, COUNT(*) AS count
+        FROM public.permission_audit_logs
+        WHERE changed_at >= NOW() - INTERVAL '30 days'
+        GROUP BY changed_by, user_id
+        ORDER BY count DESC
+        LIMIT 10
+        "#,
+    )
+    .fetch_all(&mut scope)
+    .await;
+    sp_finish(&mut scope, "sp_perm_top_users", rows.is_ok()).await;
+    let _ = scope.commit().await;
+    let rows = rows.unwrap_or_else(|e| {
+        tracing::warn!(error = %e, "权限 by_user 统计查询失败");
+        Vec::new()
+    });
+    rows.into_iter()
+        .map(|row| AuditLogCount {
+            key: row.try_get::<String, _>("key").unwrap_or_default(),
+            count: row.try_get::<i64, _>("count").unwrap_or(0),
+        })
+        .collect()
+}
+
+/// 三张来源表各自的真实计数（取代此前硬编码全 0）。
+async fn load_source_counts(
+    state: &AppState,
+    start_date: Option<DateTime<Utc>>,
+    end_date: Option<DateTime<Utc>>,
+    txn_arc: &RlsTxnCell,
+) -> Vec<AuditLogCount> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Vec::new();
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Vec::new();
+        }
+    };
+
+    let mut out = Vec::with_capacity(ALLOWED_SOURCES.len());
+    for (idx, source) in ALLOWED_SOURCES.iter().enumerate() {
+        let (table, date_col, deleted_filter) = match *source {
+            "permission_audit_logs" => ("public.permission_audit_logs", "changed_at", ""),
+            "login_logs" => ("public.core_login_logs", "login_time", ""),
+            _ => ("public.audit_logs", "created_at", "AND deleted_at IS NULL"),
+        };
+        let sql = format!(
+            "SELECT COUNT(*) FROM {table} \
+             WHERE ($1::timestamptz IS NULL OR {date_col} >= $1) \
+               AND ($2::timestamptz IS NULL OR {date_col} <= $2) {deleted_filter}"
+        );
+        let sp = match idx {
+            0 => "sp_by_source_0",
+            1 => "sp_by_source_1",
+            _ => "sp_by_source_2",
+        };
+        sp_begin(&mut scope, sp).await.ok();
+        let count = sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(start_date)
+            .bind(end_date)
+            .fetch_one(&mut scope)
+            .await
+            .and_then(|row| row.try_get::<i64, _>(0));
+        sp_finish(&mut scope, sp, count.is_ok()).await;
+        out.push(AuditLogCount {
+            key: (*source).to_string(),
+            count: count.unwrap_or_else(|e| {
+                tracing::warn!(source = *source, error = %e, "审计来源计数失败");
+                0
+            }),
+        });
+    }
+
+    let _ = scope.commit().await;
+    out
 }
 
 async fn load_trend(
@@ -749,7 +905,8 @@ async fn load_trend(
 ) -> Vec<AuditLogTrend> {
     let (table, date_col) = match source {
         "permission_audit_logs" => ("public.permission_audit_logs", "changed_at"),
-        "login_logs" => ("core_login_logs", "login_time"),
+        // 必须显式 public：嵌入模式 search_path 为 flow, public，裸名会命中无数据的 flow 副本。
+        "login_logs" => ("public.core_login_logs", "login_time"),
         _ => ("public.audit_logs", "created_at"),
     };
     // audit_logs 有软删列；permission_audit_logs / login_logs 无 deleted_at，保持原样
@@ -773,29 +930,7 @@ async fn load_trend(
         date_col = date_col,
         deleted_filter = deleted_filter,
     );
-    let rows = if table == "public.audit_logs" {
-        let db = state.db.clone();
-        let mut guard = txn_arc.lock().await;
-        let Some(txn) = guard.as_mut() else {
-            tracing::error!("rls txn missing: RLS 事务中间件未注入");
-            return Vec::new();
-        };
-        let mut scope = match db.scope_with(txn).await {
-            Ok(scope) => scope,
-            Err(e) => {
-                tracing::error!("数据库作用域创建失败: {}", e);
-                return Vec::new();
-            }
-        };
-        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
-            .bind(start_date)
-            .bind(end_date)
-            .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
-        let _ = scope.commit().await;
-        rows
-    } else {
+    let rows = {
         let mut guard = txn_arc.lock().await;
         let Some(txn) = guard.as_mut() else {
             tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -808,15 +943,20 @@ async fn load_trend(
                 return Vec::new();
             }
         };
+        sp_begin(&mut scope, "sp_trend").await.ok();
         let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(start_date)
             .bind(end_date)
             .fetch_all(&mut scope)
-            .await
-            .unwrap_or_default();
+            .await;
+        sp_finish(&mut scope, "sp_trend", rows.is_ok()).await;
         let _ = scope.commit().await;
         rows
     };
+    let rows = rows.unwrap_or_else(|e| {
+        tracing::warn!(source = source, error = %e, "审计趋势查询失败");
+        Vec::new()
+    });
     rows.into_iter()
         .map(|row| AuditLogTrend {
             date: row.try_get::<String, _>("date").unwrap_or_default(),

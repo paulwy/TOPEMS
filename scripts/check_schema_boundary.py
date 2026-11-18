@@ -277,7 +277,8 @@ def main():
     # iam 没有独立的 svc 目录（模块位于 svc/unified-core/src/modules/iam 下），
     # 其 schema 不会被上面的服务配置覆盖；这里显式登记为“已知 schema”，
     # 使全仓 iam.* 引用进入跨 schema 判定（不加入任何服务的 allowed，因此仍会报违规）。
-    known_schemas.add("iam")
+    # flow/doc_service/shared/plugin_* 同属“无独立服务目录或有独立部署”的盲区，一并纳入评估。
+    known_schemas.update({"iam", "flow", "doc_service", "shared", "plugin_mes", "plugin_erp"})
 
     # 无前缀引用检查（阶段1 逻辑隔离）：表归属静态映射 + 存量基线豁免
     table_owner, ambiguous = load_table_owner()
