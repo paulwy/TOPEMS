@@ -181,10 +181,7 @@ fn validate_approval_payload(action: &str, payload: Option<&Value>) -> Result<()
     }
 }
 
-fn payload_str(
-    obj: &serde_json::Map<String, Value>,
-    key: &str,
-) -> Result<String, ApprovalError> {
+fn payload_str(obj: &serde_json::Map<String, Value>, key: &str) -> Result<String, ApprovalError> {
     obj.get(key)
         .and_then(Value::as_str)
         .map(str::trim)
@@ -922,9 +919,8 @@ impl MasterDataService {
             )));
         }
 
-        let domain = IdMasterDataDomain::from_str(req.domain.trim()).map_err(|_| {
-            ApprovalError::Validation(format!("无效的主数据域: {}", req.domain))
-        })?;
+        let domain = IdMasterDataDomain::from_str(req.domain.trim())
+            .map_err(|_| ApprovalError::Validation(format!("无效的主数据域: {}", req.domain)))?;
 
         validate_approval_payload(&action, req.payload.as_ref())?;
 

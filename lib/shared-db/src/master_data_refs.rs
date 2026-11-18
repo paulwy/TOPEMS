@@ -362,7 +362,9 @@ impl MasterDataRefService {
         tenant_id: Uuid,
     ) -> Result<Option<MasterDataRef>, sqlx::Error> {
         let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let result = self.get_by_id_tx(&mut scope, master_data_id, tenant_id).await?;
+        let result = self
+            .get_by_id_tx(&mut scope, master_data_id, tenant_id)
+            .await?;
         scope.commit().await?;
         Ok(result)
     }

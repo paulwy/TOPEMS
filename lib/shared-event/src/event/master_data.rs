@@ -502,10 +502,7 @@ mod tests {
         assert_eq!(MasterDataDomain::Material.as_str(), "material");
         assert_eq!(MasterDataDomain::Organization.as_str(), "organization");
         assert_eq!(MasterDataDomain::Employee.as_str(), "employee");
-        assert_eq!(
-            MasterDataDomain::AccountSubject.as_str(),
-            "account_subject"
-        );
+        assert_eq!(MasterDataDomain::AccountSubject.as_str(), "account_subject");
     }
 
     #[test]
