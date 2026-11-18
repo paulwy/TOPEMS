@@ -466,6 +466,65 @@ psql "$MIGRATE_URL" -X -v ON_ERROR_STOP=1 \
 - 回滚后表/列/行数/RLS 策略/视图/函数/触发器/约束/索引与预演前逐项一致，裸名落点回到 `flow`。
 - 守卫预演 4 条临时表 DROP 全部 0 行，官方入口 exit 0。
 
+### 7.8 开窗前最后一段：新 HEAD 构建 + 复核 + 对新版迁移重演（19:00，只读/隔离）
+
+**HEAD**：`3706567be`（六 commit：`2f5184321`/`3f3acd77e`/`7c12c1981`/`a75fa390b`/`608d7defa`/`3706567be`），
+工作树仅 5 项与本窗口无关的他人改动。
+
+**构建**（独立 target 目录，未换入、未重启）：
+
+```
+SQLX_OFFLINE=true CARGO_PROFILE_RELEASE_STRIP=none \
+SWAGGER_UI_DOWNLOAD_URL=file:///tmp/swagger-ui-v5.32.6.zip \
+CARGO_TARGET_DIR=/Users/xingzhai/topems-target-w160000 \
+cargo build --release -p topems-server --offline
+```
+
+- 耗时 11m48s，`Finished release profile`；产物 Mach-O arm64。
+- 大小 **264,568,832** B，mtime **2026-11-18 19:03:17**，
+  sha256 **`97484f3a66a65a0f384f0008cb65dbbd3e4355fcc19c8c6f2a3f668006729147`**。
+- 串核对（`strings -a | grep -F -c`）：`public.core_mdm_approvals`=6、
+  `public.core_master_data_change_log`=3、`public.core_doc_document_versions`=6。
+- 现场未动：`bin/topems-server` 仍为 14:55、`c2b4cd54…`；服务 PID 35539 仍是旧件。
+
+**生产只读复核**（`default_transaction_read_only=on`）：
+
+| 项 | 实测 |
+|---|---|
+| 账本 / `max(version)` | **718** / **20261118150000** |
+| `20261118160000` | 账本中不存在 |
+| 表数 | **1345**（`information_schema.tables`；底层 1344 张表 + 1 视图） |
+| `pg_policy` / `pg_policies` | **1050** / **1050** |
+| 参考数据 10 表 | **4740** |
+| `flow._deprecated_*` | **0** |
+| 12 张 flow 副本 | 全部 0 行 |
+
+24 条 flags（12 表 × `relrowsecurity`/`relforcerowsecurity`）：11 张为 `true/true`，
+`core_doc_document_versions` 为 `false/false`（0 策略）；public 侧业务行仅
+`core_tenant_settings`=4、`core_tenant_users`=3，其余 0。
+
+**守卫与 pending**：
+- `check-destructive-sql.mjs` sha256 `df3ac605…`，来自 `bb77986bc`；
+  `--check-file --strict --approve-ticket=SHADOW-COPY-20261118,FLOW-SHADOW-20261118`
+  APPROVE，计划 4 条（第 79/124/261/270 行，均 `temp=true`、上限 0）。
+- 待应用 61 个版本；本窗口唯一目标是 `20261118160000`，其余（含 `20261118124000`）
+  全部保持 defer，走 `--apply-deferred` 单版本入口。
+
+**对新版迁移文件重演**（`topems_window_drill_160000_86286`，锚点 `20261117235500` 基线恢复）：
+
+- `apply-forward.sh --prod --apply-deferred 20261118160000` exit 0；回滚 exit 0。
+- APPLY：账本 704→**705**、`max=20261118160000`、表 1345、策略 1039、参考 4740 不变；
+  12 张 `_deprecated_*` 均 0 行；`public_12_rls_policy_exact`（24 条）通过；
+  裸名 `core_doc_document_versions` flow→public；依赖对象集合等价。
+- ROLLBACK：账本 705→**704**、`max=20261117235500`，表/列/行/RLS/视图/函数/触发器/
+  约束/索引逐项一致，裸名落点回到 flow。
+- 18 项 APPLY 断言 + 14 项 ROLLBACK 断言全部 true；验证后已 drop 该库。
+
+**中止判据**（命中任一条立即停手保现场，不自行回滚、不硬推）：开窗前读数偏离本表；
+守卫非 APPROVE 或计划多出非临时对象；apply 返回非 0、账本未到 719、`max` 未到
+`20261118160000`；24 条 flags/策略/表数/参考数据任一漂移；`_deprecated_*` 非 12 或非 0 行；
+`/health` 不通过或端口绑定不是 `127.0.0.1:8099`；二进制串核对缺失。
+
 ---
 
 ## 8. 独立复核（2026-11-18 15:48，只读，第二人复核）
