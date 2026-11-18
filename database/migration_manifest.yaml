@@ -30,12 +30,16 @@ scope: >-
 
 ledger_evidence:
   current_prod:
-    ledger_rows: 684
-    ledger_rows_14digit: 665
-    ledger_rows_legacy_3digit: 14
+    ledger_rows: 718
+    ledger_rows_14digit: 718
+    ledger_rows_legacy_3digit: 0
     failed_rows: 0
-    anchor: "20261115130000"
-    source: "docs/quality/prod-schema-drift-2026-11-09.md:§2.1；2026-11-15 生产账本只读复核（topems_prod，684 行 / max 20261115130000，failed 0）"
+    anchor: "20261118150000"
+    source: >-
+      docs/quality/prod-schema-drift-2026-11-09.md:§2.1；2026-11-15 生产账本只读复核
+      （684 行 / max 20261115130000，failed 0）；2026-11-18 RLS 严格化窗口执行后复核
+      （topems_prod 718 行 / max 20261118150000 / failed 0 / 14 位 718 / 旧 3 位 0；
+      见 docs/database/window-rls-strict-20261118-execution-log.md §6.7–§8）
   baseline_snapshot:
     file: "database/baseline/prod_ledger_20261105235700.sql"
     ledger_rows: 576
@@ -2221,22 +2225,25 @@ pending_forward_patches:
   # 本地创建时的只读核查结论与「生产另行开窗」约束见各文件头注释。
   - version: "20261118130000"
     file: "database/migrations/20261118130000_erp_holidays_platform_corpus.sql"
-    status: to_apply
+    status: applied
     effect: "erp.holidays 补 tenant_id uuid + ENABLE/FORCE RLS + rls_tenant_isolation(ALL, USING true→租户隔离) 与 rls_platform_read(SELECT)；平台行仅在租户 GUC 非空时放行，不重新引入 tenant_id IS NULL fail-open"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP TABLE；ALTER TABLE ADD COLUMN IF NOT EXISTS + ENABLE/FORCE RLS + CREATE POLICY；表 0 行"
     note: "代码侧「平台读」改造不在本迁移内；回滚按策略/列维度逆序（见文件尾 rollback 说明）"
+    applied: "2026-11-18 14:40:37 生产应用（RLS 严格化窗口第 12 条），账本 715→716；复核 erp.holidays 0 行、tenant_id 列在"
   - version: "20261118140000"
     file: "database/migrations/20261118140000_core_tenants_self_only.sql"
-    status: to_apply
+    status: applied
     effect: "public.core_tenants 回填 tenant_id = id（自指），读/写策略收为「系统通道或本租户行」；平台管理员访问租户目录改由代码显式系统通道（scope_with_system）"
     destructive_scan: "1 行 UPDATE 回填（tenant_id IS NULL 全局行 → 自指）+ 策略替换（DROP/CREATE POLICY）；无 DELETE/TRUNCATE/DROP TABLE；瞬时 ACCESS EXCLUSIVE"
-    note: "草案阶段，文件头注明「不申请上生产」，上窗口前需再次核对生产 core_tenants 行数与 tenant_id 分布"
+    note: "文件头原注「草案阶段，不申请上生产」；实际已在 2026-11-18 窗口内经破坏性放行（票据 TENANT-SELF-20261118）应用，窗口前复核生产 core_tenants 1 行、待回填 1 行"
+    applied: "2026-11-18 14:55:40 生产应用（破坏性放行，票据 TENANT-SELF-20261118），账本 716→717；实测回填 1 行（上限 10），复核 1 行 / 空值 0 / 自指 1"
   - version: "20261118150000"
     file: "database/migrations/20261118150000_batch0_active_residual_rls_strict.sql"
-    status: to_apply
+    status: applied
     effect: "批 0 剩余 3 张活表补严格 RLS：public.core_file_permissions / public.monitor_thresholds / public.core_users，先清既有策略再 ENABLE + FORCE + rls_tenant_isolation"
     destructive_scan: "DROP POLICY（策略替换，非数据）+ ENABLE/FORCE RLS + CREATE POLICY；无 DELETE/TRUNCATE/DROP TABLE；bi 8 张 / qms 3 张 / iam.core_tenant_plugins 已由 20261118093000、20261118100000、20261118124000 覆盖，不重复"
-    note: "文件头注明「本文件只出方案，生产另行开窗」"
+    note: "文件头原注「本文件只出方案，生产另行开窗」；实际已在 2026-11-18 窗口内应用，无破坏性放行"
+    applied: "2026-11-18 14:55:49 生产应用，账本 717→718；复核三表 relrowsecurity=t / relforcerowsecurity=t / 各 1 条策略，pg_policies 1050"
   - version: "20261118160000"
     file: "database/migrations/20261118160000_flow_shadow_copies_rename_deprecated.sql"
     status: to_apply
