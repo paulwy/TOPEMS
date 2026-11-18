@@ -20,8 +20,16 @@
  * 用法：
  *   node scripts/migration/check-ledger-ddl-drift.mjs
  *   MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1 node scripts/migration/check-ledger-ddl-drift.mjs  # 仅演练用
+ *   MIGRATION_DRIFT_ALLOW_SUPERUSER=1 node scripts/migration/check-ledger-ddl-drift.mjs    # 仅演练用
  *
  * 目标库解析顺序：MIGRATION_DRIFT_DB_URL → DATABASE_URL → .env 的 MIGRATE_URL。
+ *   - 连接串不含口令且未设置 PGPASSWORD/PGPASSFILE → 回落 socket
+ *     （postgresql:///<库名>，本机 peer 认证），并打印实际用的是哪个来源。
+ *   - 本机 pg_hba 把 127.0.0.1/32 改成 scram-sha-256 后，无口令 TCP 连接必然认证失败；
+ *     回落 socket 是本地默认路径，不再先撞认证再 fail-closed。
+ *   - 超级用户拒绝：连接成功后校验 current_user 的 rolsuper/rolbypassrls，命中即 FAILED。
+ *     这类连接会 BYPASSRLS，权限/RLS 类断言恒真（2026-11-19 假绿事故）；
+ *     仅本地演练可用 MIGRATION_DRIFT_ALLOW_SUPERUSER=1 显式豁免（CI 不得设置）。
  * 均缺失或不可连接 → fail-closed（exit 1），并打印启动/改指向 test 库的指引。
  */
 import fs from "node:fs";
@@ -43,6 +51,11 @@ const VALID_KINDS = new Set(["column_type", "constraint_absent", "index_exists",
 // K6 显式豁免开关：只允许演练场景使用，CI 不得设置。
 const ALLOW_EMPTY_LEDGER = /^(1|true|yes|on)$/i.test(
   String(process.env.MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER ?? "").trim(),
+);
+// 超级用户拒绝开关：socket 回落默认以 OS 用户连接（本机通常即 superuser + BYPASSRLS），
+// 这类连接会让权限/RLS 断言恒真，默认拒绝，仅本地演练可显式豁免。
+const ALLOW_SUPERUSER = /^(1|true|yes|on)$/i.test(
+  String(process.env.MIGRATION_DRIFT_ALLOW_SUPERUSER ?? "").trim(),
 );
 
 const startedAt = Date.now();
@@ -95,16 +108,58 @@ function readEnvMigrateUrl() {
   return null;
 }
 
+function parseUrl(url) {
+  try {
+    return new URL(url);
+  } catch {
+    return null;
+  }
+}
+
+// 口令来源：URL 内嵌口令、URL 的 password/passfile 参数，或 libpq 环境变量。
+function hasPasswordSource(url) {
+  const u = parseUrl(url);
+  if (u && (u.password || u.searchParams.get("password") || u.searchParams.get("passfile"))) {
+    return true;
+  }
+  return Boolean(process.env.PGPASSWORD || process.env.PGPASSFILE);
+}
+
+// authority 为空即 socket 形式：postgresql:///db
+function isSocketUrl(url) {
+  const u = parseUrl(url);
+  return Boolean(u) && !u.hostname && !u.port;
+}
+
+function socketFallbackUrl(url) {
+  const u = parseUrl(url);
+  const db = u && u.pathname && u.pathname !== "/" ? u.pathname.slice(1) : "";
+  const search = u && u.search ? u.search : "";
+  return `postgresql:///${db}${search}`;
+}
+
 function resolveDbUrl() {
+  let url = null;
+  let source = null;
   if (process.env.MIGRATION_DRIFT_DB_URL) {
-    return { url: process.env.MIGRATION_DRIFT_DB_URL, source: "MIGRATION_DRIFT_DB_URL（环境变量）" };
+    url = process.env.MIGRATION_DRIFT_DB_URL;
+    source = "MIGRATION_DRIFT_DB_URL（环境变量）";
+  } else if (process.env.DATABASE_URL) {
+    url = process.env.DATABASE_URL;
+    source = "DATABASE_URL（环境变量/外层 shell 导出）";
+  } else {
+    const fromEnvFile = readEnvMigrateUrl();
+    if (fromEnvFile) {
+      url = fromEnvFile;
+      source = ".env 的 MIGRATE_URL";
+    }
   }
-  if (process.env.DATABASE_URL) {
-    return { url: process.env.DATABASE_URL, source: "DATABASE_URL（环境变量/外层 shell 导出）" };
-  }
-  const fromEnvFile = readEnvMigrateUrl();
-  if (fromEnvFile) return { url: fromEnvFile, source: ".env 的 MIGRATE_URL" };
-  return { url: null, source: null };
+  if (!url) return { url: null, source: null };
+  if (isSocketUrl(url) || hasPasswordSource(url)) return { url, source };
+  return {
+    url: socketFallbackUrl(url),
+    source: `${source} → 无口令，回落 socket（peer 认证）`,
+  };
 }
 
 function sanitizeUrl(url) {
@@ -114,7 +169,10 @@ function sanitizeUrl(url) {
 function dbLabel(url) {
   try {
     const u = new URL(url);
-    return `${u.hostname}:${u.port || 5432}${u.pathname}`;
+    const db = u.pathname || "";
+    // socket 形式没有 hostname/port，别显示成「:5432/库名」误导。
+    if (!u.hostname && !u.port) return `socket:${db}`;
+    return `${u.hostname}:${u.port || 5432}${db}`;
   } catch {
     return "(无法解析的连接串)";
   }
@@ -284,23 +342,49 @@ function main() {
   const label = dbLabel(url);
   console.log(`${TAG} 目标库 ${label}（${sanitizeUrl(url)}；来源 ${source}）；断言 ${assertions.length} 项`);
 
-  let ledgerPresent;
+  let identity;
   try {
-    ledgerPresent = psql(
+    identity = psql(
       url,
-      "SELECT CASE WHEN to_regclass('_sqlx_migrations') IS NULL THEN 'absent' ELSE 'present' END",
+      "SELECT current_user || '|' || rolsuper::text || '|' || rolbypassrls::text || '|' || " +
+        "CASE WHEN to_regclass('_sqlx_migrations') IS NULL THEN 'absent' ELSE 'present' END " +
+        "FROM pg_roles WHERE rolname = current_user",
     );
   } catch (err) {
     fail([
       `${TAG} FAILED 数据库不可用（fail-closed）`,
-      `  目标库：${label}`,
+      `  目标库：${label}（来源 ${source}）`,
       `  原因：${connectivityFailureReason(err)}`,
       "  缺少什么：可连接的 PostgreSQL + psql（当前 PATH 需能找到 psql）。",
+      "  认证提示：本机 pg_hba 若为 127.0.0.1/32 scram-sha-256，TCP 连接必须带口令；",
+      "            无口令时本脚本已自动回落 socket（postgresql:///<库名>），走 peer 认证。",
       "  怎么起库：brew services start postgresql@18（仓库文档默认 @16）；PostgreSQL 未安装时 brew install postgresql@18。",
       "  确认 .env 的 MIGRATE_URL 指向本机库（示例：127.0.0.1:5432/topems）。",
       "  无本地库：export MIGRATION_DRIFT_DB_URL=<test 库连接串>（同 .env 的 MIGRATE_URL 格式）；无账本会 FAILED，仅显式豁免可放行。",
       `${TAG} 本门禁不可跳过；修好数据库后重跑 push。`,
     ]);
+  }
+
+  const [connUser, rolSuper, rolBypass, ledgerPresent] = identity.split("|");
+  const privileged = /^(t|true)$/i.test(rolSuper ?? "") || /^(t|true)$/i.test(rolBypass ?? "");
+  if (privileged) {
+    const detail = `current_user=${connUser} rolsuper=${rolSuper} rolbypassrls=${rolBypass}`;
+    if (!ALLOW_SUPERUSER) {
+      fail([
+        `${TAG} FAILED 该连接会 BYPASSRLS，校验恒真 —— 拒绝在特权角色上执行漂移门禁`,
+        `  目标库：${label}（来源 ${source}）`,
+        `  连接身份：${detail}`,
+        "  为什么拒绝：superuser / BYPASSRLS 角色绕过行级安全与权限检查，",
+        "              在这类连接上得到的绿灯不能代表普通业务角色（2026-11-19 假绿事故）。",
+        "  怎么改（任选其一）：",
+        "    1) 改用非特权角色并携带口令（连接串内嵌口令，或设置 PGPASSWORD）；",
+        "    2) socket 回落必然以 OS 用户连接（本机通常为超级用户），需显式配置带口令的连接串；",
+        "    3) 仅本地演练可显式豁免：MIGRATION_DRIFT_ALLOW_SUPERUSER=1（CI 不得设置）。",
+      ]);
+    }
+    console.warn(
+      `${TAG} WARN 特权连接已显式豁免（MIGRATION_DRIFT_ALLOW_SUPERUSER=1）：${detail}；结论不可用于发布判定`,
+    );
   }
 
   // K6：无账本表即失败，不再按「无需校验」放行。
