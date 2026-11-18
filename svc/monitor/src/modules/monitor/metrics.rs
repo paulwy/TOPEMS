@@ -4,15 +4,12 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::Row;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
-use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Serialize)]
@@ -430,117 +427,6 @@ pub(crate) fn get_memory_usage() -> (f64, f64, f64, f64) {
         0.0
     };
     (total_mb, used_mb, free_mb, usage_percent)
-}
-
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_possible_truncation,
-    clippy::cast_precision_loss
-)]
-pub async fn get_realtime_metrics(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<RlsTxnCell>,
-) -> ApiResponse<RealtimeMetricsResponse> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let now = chrono::Utc::now();
-    let (load_1m, load_5m, load_15m) = get_load_averages();
-    let cpu_cores: f64 = std::process::Command::new("sysctl")
-        .args(["-n", "hw.ncpu"])
-        .output()
-        .ok()
-        .and_then(|o| String::from_utf8(o.stdout).ok())
-        .and_then(|s| s.trim().parse().ok())
-        .unwrap_or(4.0);
-    let cpu_usage_percent = ((load_1m / cpu_cores) * 100.0).min(100.0);
-    let (total_mb, used_mb, free_mb, memory_usage_percent) = get_memory_usage();
-    let connections = state.metrics.get_active_connections();
-    let pool_stats = state.db.stats();
-    let pool_size = pool_stats.size;
-    let pool_idle = pool_stats.idle;
-    let active_conns = pool_size.saturating_sub(pool_idle as u32);
-    let total_requests = state.metrics.get_request_count();
-    let total_errors = state.metrics.get_error_count();
-    let uptime_secs = state.metrics.get_uptime_seconds();
-    let rps = if uptime_secs > 0 {
-        total_requests as f64 / uptime_secs as f64
-    } else {
-        0.0
-    };
-    let error_rate = if total_requests > 0 {
-        (total_errors as f64 / total_requests as f64) * 100.0
-    } else {
-        0.0
-    };
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return ApiResponse::from(TopemsError::internal(
-            "数据库事务上下文缺失：请求事务未注入",
-            sqlx::Error::Protocol("RLS 事务缺失".into()),
-        ));
-    };
-    let (active_alerts, critical_alerts, warning_alerts) = match state.db.scope_with(txn).await {
-        Ok(mut scope) => {
-            let fetched = sqlx::query(
-                "SELECT COUNT(*) FILTER (WHERE status='active') AS active,
-                COUNT(*) FILTER (WHERE status='active' AND severity='critical') AS critical,
-                COUNT(*) FILTER (WHERE status='active' AND severity='warning') AS warning
-         FROM public.alerts WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id=$1)",
-            )
-            .bind(tenant_id)
-            .fetch_one(&mut scope)
-            .await;
-            let _ = scope.commit().await;
-            match fetched {
-                Ok(row) => (
-                    row.try_get("active").unwrap_or(0),
-                    row.try_get("critical").unwrap_or(0),
-                    row.try_get("warning").unwrap_or(0),
-                ),
-                Err(_) => (0, 0, 0),
-            }
-        }
-        Err(_) => (0, 0, 0),
-    };
-    ApiResponse::success(
-        RealtimeMetricsResponse {
-            timestamp: now.to_rfc3339(),
-            cpu: CpuRealtime {
-                usage_percent: cpu_usage_percent,
-                load_1m,
-                load_5m,
-                load_15m,
-            },
-            memory: MemoryRealtime {
-                total_mb,
-                used_mb,
-                free_mb,
-                usage_percent: memory_usage_percent,
-            },
-            network: NetworkRealtime {
-                inbound_bps: 0,
-                outbound_bps: 0,
-                connections,
-            },
-            database: DatabaseRealtime {
-                active_connections: active_conns,
-                idle_connections: pool_idle,
-                queries_per_second: 0.0,
-                slow_queries_per_minute: 0.0,
-            },
-            requests: RequestsRealtime {
-                per_second: rps,
-                error_rate,
-                avg_response_time: 0.0,
-            },
-            alerts: AlertsRealtime {
-                active: active_alerts,
-                critical: critical_alerts,
-                warning: warning_alerts,
-            },
-        },
-        "获取实时指标成功",
-    )
 }
 
 #[utoipa::path(
