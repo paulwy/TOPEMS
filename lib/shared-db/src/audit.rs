@@ -1222,7 +1222,10 @@ mod tests {
         .await
         .expect("查询落点失败");
         let n: i64 = row.get(0);
-        assert_eq!(n, 1, "写入未落在 {schema}.audit_logs（可能落到了 search_path 影子表）");
+        assert_eq!(
+            n, 1,
+            "写入未落在 {schema}.audit_logs（可能落到了 search_path 影子表）"
+        );
 
         sqlx::query(sqlx::AssertSqlSafe(format!("DROP SCHEMA {schema} CASCADE")))
             .execute(&pool)

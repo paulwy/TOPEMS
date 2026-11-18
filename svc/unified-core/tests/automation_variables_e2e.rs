@@ -56,7 +56,6 @@ fn create_req(key: &str, value: &str) -> CreateVariableRequest {
     }
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {

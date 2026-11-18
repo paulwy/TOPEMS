@@ -3998,7 +3998,6 @@ mod p1_company_tests {
         .unwrap();
     }
 
-
     topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn default_company_created_once_per_tenant(pool: sqlx::PgPool) {

@@ -95,7 +95,6 @@ async fn insert_disc(pool: &sqlx::PgPool, material_code: &str, adjustment_status
     .execute(pool).await.unwrap();
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {

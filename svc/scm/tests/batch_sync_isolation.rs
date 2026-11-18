@@ -231,7 +231,6 @@ async fn count_logs(pool: &PgPool, tenant: Uuid, status: &str) -> i64 {
         .unwrap()
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn single_failure_does_not_poison_batch(pool: PgPool) {

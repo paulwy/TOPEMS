@@ -1275,7 +1275,6 @@ mod tests {
         id
     }
 
-
     topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn scan_only_produces_candidates_for_eligible_company_pair(pool: sqlx::PgPool) {

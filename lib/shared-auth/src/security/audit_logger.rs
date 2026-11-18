@@ -763,7 +763,6 @@ mod tests {
         assert_eq!(ctx.ip_address.as_deref(), Some("10.0.0.1"));
     }
 
-
     topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn test_save_audit_log_masks_password_and_persists_context(pool: sqlx::PgPool) {

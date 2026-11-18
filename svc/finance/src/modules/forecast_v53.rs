@@ -2000,7 +2000,6 @@ mod tests {
         .unwrap();
     }
 
-
     topems_test_support::sqlx_dsn_guard!();
     /// K5 回归：`finance.vouchers.entity_id` 为 text（生产实际形状），predict 必须能
     /// 命中真实历史凭证而不是 500，也不能回落到合成数据。

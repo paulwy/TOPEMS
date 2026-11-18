@@ -65,7 +65,6 @@ async fn insert_log(pool: &sqlx::PgPool, action: &str) -> uuid::Uuid {
     row.0
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {

@@ -67,7 +67,6 @@ fn reversed_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
     })
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn voucher_created_inserts_summary_row(pool: sqlx::PgPool) {

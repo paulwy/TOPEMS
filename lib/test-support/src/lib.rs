@@ -97,7 +97,9 @@ fn parse_dsn(raw: &str) -> Result<TestDsn, String> {
         .or_else(|| raw.strip_prefix("postgresql://"))
         .ok_or_else(|| "scheme 不是 postgres:// 或 postgresql://".to_string())?;
 
-    let (authority, path) = rest.split_once('/').ok_or_else(|| "缺少 /database".to_string())?;
+    let (authority, path) = rest
+        .split_once('/')
+        .ok_or_else(|| "缺少 /database".to_string())?;
     let (userinfo, hostport) = authority.rsplit_once('@').unwrap_or(("", authority));
     let user = userinfo.split(':').next().unwrap_or("").to_string();
     let (host, port) = hostport.rsplit_once(':').unwrap_or((hostport, "5432"));
@@ -199,8 +201,10 @@ mod tests {
 
     #[test]
     fn parses_standard_dsn() {
-        let d = parse_dsn("postgres://topems_test_runner@localhost:5433/topems_test_runner?sslmode=disable")
-            .expect("should parse");
+        let d = parse_dsn(
+            "postgres://topems_test_runner@localhost:5433/topems_test_runner?sslmode=disable",
+        )
+        .expect("should parse");
         assert_eq!(d.user, "topems_test_runner");
         assert_eq!(d.host, "localhost");
         assert_eq!(d.port, "5433");
@@ -209,13 +213,15 @@ mod tests {
 
     #[test]
     fn rejects_production_database() {
-        let d = parse_dsn("postgres://topems_test_runner@localhost:5432/topems_prod").expect("parse");
+        let d =
+            parse_dsn("postgres://topems_test_runner@localhost:5432/topems_prod").expect("parse");
         assert!(production_hit(&d).is_some());
     }
 
     #[test]
     fn accepts_runner_database() {
-        let d = parse_dsn("postgres://topems_test_runner@localhost:5432/topems_test_runner").expect("parse");
+        let d = parse_dsn("postgres://topems_test_runner@localhost:5432/topems_test_runner")
+            .expect("parse");
         assert!(production_hit(&d).is_none());
     }
 

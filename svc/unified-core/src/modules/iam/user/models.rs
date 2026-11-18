@@ -261,7 +261,6 @@ mod tests {
         assert_eq!(row.preference_value["lang"], "zh-CN");
     }
 
-
     topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn test_record_audit_log_redacts_password_and_fills_context(pool: sqlx::PgPool) {

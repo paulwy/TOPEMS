@@ -68,7 +68,6 @@ async fn body_of(pool: sqlx::PgPool, params: SuggestionQueryParams) -> Value {
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {

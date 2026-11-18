@@ -99,7 +99,6 @@ async fn call_list(pool: sqlx::PgPool, query: OperationLogQuery) -> OperationLog
     resp.data.unwrap()
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero_total(pool: sqlx::PgPool) {

@@ -57,7 +57,6 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     }
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn dashboard_aggregates_core_metrics(pool: sqlx::PgPool) {

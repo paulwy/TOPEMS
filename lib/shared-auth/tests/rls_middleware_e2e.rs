@@ -160,7 +160,6 @@ async fn get_body(app: &Router, claims: Option<Claims>) -> (StatusCode, Value) {
     (status, v)
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn tenant_middleware_filters_by_claims_tenant(pool: PgPool) {

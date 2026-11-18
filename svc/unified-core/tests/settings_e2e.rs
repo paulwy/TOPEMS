@@ -46,7 +46,6 @@ fn smtp_payload() -> SmtpConfig {
     }
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_api_keys_empty(pool: sqlx::PgPool) {

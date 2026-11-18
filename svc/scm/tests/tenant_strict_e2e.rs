@@ -99,7 +99,6 @@ async fn call_get_settings(
     .await
 }
 
-
 topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn get_settings_returns_only_current_tenant(pool: PgPool) {

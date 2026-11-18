@@ -268,7 +268,6 @@ mod tests {
     use super::*;
     use sqlx::postgres::PgPoolOptions;
 
-
     fn short_id() -> String {
         Uuid::new_v4().simple().to_string()[..12].to_string()
     }

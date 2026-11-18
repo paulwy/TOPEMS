@@ -1054,7 +1054,6 @@ mod rls_scope_tests {
         })
     }
 
-
     topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn opportunity_won_writes_billing_in_tenant_scope(pool: PgPool) {
