@@ -19,11 +19,22 @@
  *   1. 目标角色是否存在
  *   2. 关键表是否已授予该角色 SELECT
  *   3. 默认权限是否覆盖该角色（新增表自动授权）
+ *
+ * 特权连接拒绝（fail-closed）：
+ *   连接成功后先查 current_user 的 rolsuper / rolbypassrls，再查目标角色的同名属性；
+ *   任一为 true 即 FAILED —— superuser / BYPASSRLS 会绕过行级安全，权限与默认权限断言
+ *   恒真（2026-11-19 假绿事故）。仅本地演练可用
+ *   RLS_PERMISSIONS_ALLOW_SUPERUSER=1 显式豁免（CI 不得设置），启用时打印 WARN，
+ *   结论不可用于发布判定。
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+
+const ALLOW_PRIVILEGED = /^(1|true|yes|on)$/i.test(
+  String(process.env.RLS_PERMISSIONS_ALLOW_SUPERUSER ?? '').trim(),
+);
 
 function readEnvFile() {
   const envPath = path.join(__dirname, '..', '..', '.env');
@@ -183,15 +194,46 @@ function main() {
     console.log('ℹ️  未找到可用口令，先尝试无口令连接（~/.pgpass / peer）；失败时会提示配置方式。');
   }
   const roleSql = sqlLiteral(role);
+
+  // 0. 连接身份：superuser / BYPASSRLS 会让权限断言恒真，默认拒绝
+  const identity = psql(
+    url,
+    "SELECT current_user || '|' || r.rolsuper::text || '|' || r.rolbypassrls::text FROM pg_roles r WHERE r.rolname = current_user",
+  );
+  if (!identity.ok) {
+    console.error(`❌ 无法连接数据库或查询连接身份失败：${identity.err || '未知错误'}`);
+    if (/no password supplied|password authentication failed|fe_sendauth/i.test(identity.err || '')) {
+      printAuthHint(role);
+    }
+    console.error('   校验不会在数据库不可达时静默通过。');
+    process.exit(1);
+  }
+  const [connUser, connSuper, connBypass] = identity.out.split('|');
+  if (connSuper === 'true' || connBypass === 'true') {
+    if (!ALLOW_PRIVILEGED) {
+      console.error('❌ FAILED：该连接会 BYPASSRLS，校验恒真 —— 拒绝在特权角色上执行 RLS 权限校验');
+      console.error(`   连接来源：${source}`);
+      console.error(`   连接身份：current_user=${connUser} rolsuper=${connSuper} rolbypassrls=${connBypass}`);
+      console.error('   为什么拒绝：superuser / BYPASSRLS 绕过行级安全，has_table_privilege 与默认权限断言会恒真（假绿）。');
+      console.error('   怎么改：改用非特权角色连接（形如 postgres://<role>@host:5432/db，口令走 PGPASSWORD），');
+      console.error('           例如 topems_app（应用身份）或 topems_test_runner（测试身份）。');
+      console.error('   仅本地演练可显式豁免：RLS_PERMISSIONS_ALLOW_SUPERUSER=1（CI 不得设置，结论不可用于发布判定）。');
+      process.exit(1);
+    }
+    console.warn(
+      `⚠️  WARN：特权连接已显式豁免（RLS_PERMISSIONS_ALLOW_SUPERUSER=1）：current_user=${connUser} rolsuper=${connSuper} rolbypassrls=${connBypass}；结论不可用于发布判定`,
+    );
+  }
+  console.log(`[conn] 来源 ${source}；身份 current_user=${connUser}（rolsuper=${connSuper}，rolbypassrls=${connBypass}）`);
   console.log(`🔍 RLS权限校验（目标角色：${role}）`);
 
   const errors = [];
   const warnings = [];
 
-  // 1. 角色存在性 + 超级用户提示
+  // 1. 角色存在性 + 目标角色特权检查（目标与连接身份不一致时同样会让断言恒真）
   const roleCheck = psql(
     url,
-    `SELECT rolname || '|' || rolsuper::text FROM pg_roles WHERE rolname = '${roleSql}'`,
+    `SELECT rolname || '|' || rolsuper::text || '|' || rolbypassrls::text FROM pg_roles WHERE rolname = '${roleSql}'`,
   );
   if (!roleCheck.ok) {
     console.error(`❌ 无法连接数据库或查询角色失败：${roleCheck.err || '未知错误'}`);
@@ -204,9 +246,21 @@ function main() {
   if (roleCheck.out === '') {
     errors.push(`❌ 角色 ${role} 不存在！请为其创建角色并授予最小权限`);
   } else {
+    const [, roleSuper, roleBypass] = roleCheck.out.split('|');
     console.log(`✅ 角色 ${role} 存在`);
-    if (roleCheck.out.endsWith('|true')) {
-      warnings.push(`⚠️  角色 ${role} 是超级用户，权限校验恒真，门禁不具备约束力`);
+    if (roleSuper === 'true' || roleBypass === 'true') {
+      if (!ALLOW_PRIVILEGED) {
+        console.error('❌ FAILED：目标角色会 BYPASSRLS，校验恒真 —— 拒绝对该角色执行 RLS 权限校验');
+        console.error(`   连接来源：${source}`);
+        console.error(`   目标角色：${role} rolsuper=${roleSuper} rolbypassrls=${roleBypass}`);
+        console.error('   为什么拒绝：对该角色调用 has_table_privilege 会因 superuser / BYPASSRLS 恒为 true。');
+        console.error('   怎么改：目标角色改用非特权角色（如 topems_app / topems_test_runner）。');
+        console.error('   仅本地演练可显式豁免：RLS_PERMISSIONS_ALLOW_SUPERUSER=1（CI 不得设置，结论不可用于发布判定）。');
+        process.exit(1);
+      }
+      console.warn(
+        `⚠️  WARN：目标角色特权已显式豁免（RLS_PERMISSIONS_ALLOW_SUPERUSER=1）：${role} rolsuper=${roleSuper} rolbypassrls=${roleBypass}；结论不可用于发布判定`,
+      );
     }
   }
 
