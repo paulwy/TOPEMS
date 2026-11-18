@@ -85,7 +85,7 @@ check_environment() {
     fi
 
     # 检查数据库连接
-    if psql -U topems -d topems -c "SELECT 1" &> /dev/null; then
+    if psql -d "${PGDATABASE:-topems}" -c "SELECT 1" &> /dev/null; then
         echo -e "${GREEN}✓ 数据库连接正常${NC}"
     else
         echo -e "${RED}✗ 数据库连接失败${NC}"
