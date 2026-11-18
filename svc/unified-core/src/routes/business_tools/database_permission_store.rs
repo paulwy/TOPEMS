@@ -4,6 +4,15 @@
 //! Uses sqlx for database access and includes an in-memory cache for
 //! performance. This implementation is suitable for multi-instance deployments
 //! where permissions need to be shared across instances.
+//!
+//! 表名显式限定为 `iam.*`：嵌入模式会话 `search_path="flow, public"`、独立模式为
+//! `"public"`，裸名 `tool_permissions` 在两处都无法解析，`tenant_permissions` 则会
+//! 静默落到 `public` 影子表。权限表的权威定义在 `iam`。
+//!
+//! 已知缺陷（2026-11-18 只读核对生产快照）：`iam.tenant_permissions` /
+//! `iam.tool_permissions` 的 `id bigint NOT NULL` 没有默认值或 identity，本实现的
+//! INSERT 不提供 id，因此启用 database store 前需先补 id 生成（另开迁移）；
+//! 默认 Memory 存储不受影响。
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -208,7 +217,7 @@ impl DatabasePermissionStore {
     ) -> Result<i64, PermissionStoreError> {
         let record = sqlx::query!(
             r#"
-            INSERT INTO tenant_permissions (tenant_id, user_id, role, active)
+            INSERT INTO iam.tenant_permissions (tenant_id, user_id, role, active)
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
@@ -246,7 +255,7 @@ impl DatabasePermissionStore {
         for tool_perm in tool_permissions {
             sqlx::query!(
                 r#"
-                INSERT INTO tool_permissions 
+                INSERT INTO iam.tool_permissions 
                     (tenant_permission_id, tool_name, max_permission, allowed_operations, denied_operations)
                 VALUES ($1, $2, $3, $4, $5)
                 "#,
@@ -273,7 +282,7 @@ impl DatabasePermissionStore {
         let record = sqlx::query!(
             r#"
             SELECT id, tenant_id, user_id, role, active, created_at, updated_at
-            FROM tenant_permissions
+            FROM iam.tenant_permissions
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
             tenant_id,
@@ -290,7 +299,7 @@ impl DatabasePermissionStore {
         let tool_records = sqlx::query!(
             r#"
             SELECT tool_name, max_permission, allowed_operations, denied_operations
-            FROM tool_permissions
+            FROM iam.tool_permissions
             WHERE tenant_permission_id = $1
             "#,
             record.id,
@@ -326,7 +335,7 @@ impl DatabasePermissionStore {
     ) -> Result<(), PermissionStoreError> {
         let result = sqlx::query!(
             r#"
-            UPDATE tenant_permissions
+            UPDATE iam.tenant_permissions
             SET deleted_at = NOW(), active = FALSE
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
@@ -354,7 +363,7 @@ impl DatabasePermissionStore {
         let records = sqlx::query!(
             r#"
             SELECT id, tenant_id, user_id, role, active
-            FROM tenant_permissions
+            FROM iam.tenant_permissions
             WHERE tenant_id = $1 AND deleted_at IS NULL
             ORDER BY created_at DESC
             "#,
@@ -384,7 +393,7 @@ impl DatabasePermissionStore {
         let records = sqlx::query!(
             r#"
             SELECT id, tenant_id, user_id, role, active
-            FROM tenant_permissions
+            FROM iam.tenant_permissions
             WHERE user_id = $1 AND deleted_at IS NULL
             ORDER BY created_at DESC
             "#,
@@ -416,7 +425,7 @@ impl DatabasePermissionStore {
         let record = sqlx::query!(
             r#"
             SELECT COUNT(*) as count
-            FROM tenant_permissions
+            FROM iam.tenant_permissions
             WHERE deleted_at IS NULL
             "#,
         )
@@ -467,7 +476,7 @@ impl PermissionStore for DatabasePermissionStore {
         // Insert tenant permission
         let tenant_perm_id = sqlx::query!(
             r#"
-            INSERT INTO tenant_permissions (tenant_id, user_id, role, active)
+            INSERT INTO iam.tenant_permissions (tenant_id, user_id, role, active)
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
@@ -497,7 +506,7 @@ impl PermissionStore for DatabasePermissionStore {
         for tool_perm in &permission.tool_permissions {
             sqlx::query!(
                 r#"
-                INSERT INTO tool_permissions 
+                INSERT INTO iam.tool_permissions 
                     (tenant_permission_id, tool_name, max_permission, allowed_operations, denied_operations)
                 VALUES ($1, $2, $3, $4, $5)
                 "#,
@@ -562,7 +571,7 @@ impl PermissionStore for DatabasePermissionStore {
         // Update tenant permission
         let result = sqlx::query!(
             r#"
-            UPDATE tenant_permissions
+            UPDATE iam.tenant_permissions
             SET role = $1, active = $2, updated_at = NOW()
             WHERE tenant_id = $3 AND user_id = $4 AND deleted_at IS NULL
             RETURNING id
@@ -585,7 +594,7 @@ impl PermissionStore for DatabasePermissionStore {
         // Delete existing tool permissions
         sqlx::query!(
             r#"
-            DELETE FROM tool_permissions
+            DELETE FROM iam.tool_permissions
             WHERE tenant_permission_id = $1
             "#,
             record.id,
@@ -597,7 +606,7 @@ impl PermissionStore for DatabasePermissionStore {
         for tool_perm in &permission.tool_permissions {
             sqlx::query!(
                 r#"
-                INSERT INTO tool_permissions 
+                INSERT INTO iam.tool_permissions 
                     (tenant_permission_id, tool_name, max_permission, allowed_operations, denied_operations)
                 VALUES ($1, $2, $3, $4, $5)
                 "#,

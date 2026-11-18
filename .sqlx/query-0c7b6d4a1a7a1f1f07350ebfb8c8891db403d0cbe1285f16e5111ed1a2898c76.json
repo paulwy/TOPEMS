@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM iam.tool_permissions\n            WHERE tenant_permission_id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0c7b6d4a1a7a1f1f07350ebfb8c8891db403d0cbe1285f16e5111ed1a2898c76"
+}
