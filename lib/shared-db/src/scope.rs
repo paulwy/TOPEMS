@@ -302,6 +302,43 @@ impl Db {
         Ok(scope)
     }
 
+    /// 在给定事务内开一个**显式系统通道**作用域（平台目录/跨租户管理专用）。
+    ///
+    /// 与 [`Db::scope_with`] 的区别：不继承请求租户上下文，强制
+    /// `app.tenant_id = nil`、`app.rls_system = 'on'`。用于平台管理员在未选定
+    /// 目标租户时读写 `core_tenants` 等平台目录；调用方必须自行保证 SQL 已按
+    /// 目标 id/用户过滤，**禁止**用于租户业务数据查询。
+    pub async fn scope_with_system<'a>(
+        &self,
+        tx: &'a mut Transaction<'_, Postgres>,
+    ) -> sqlx::Result<ScopedTxn<'a>> {
+        let mut scope = ScopedTxn {
+            inner: TxRef::Borrowed(&mut **tx),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_explicit_tenant(Uuid::nil(), true).await?;
+        Ok(scope)
+    }
+
+    /// 在给定事务内开一个 **SAVEPOINT + 显式系统通道** 作用域。
+    ///
+    /// 语义同 [`Db::scope_with_system`]，提交 = RELEASE、回滚 = ROLLBACK TO；
+    /// 用于平台侧需要部分回滚的写入（如租户开通）。
+    pub async fn scope_savepoint_system<'a>(
+        &self,
+        tx: &'a mut Transaction<'_, Postgres>,
+    ) -> sqlx::Result<ScopedTxn<'a>> {
+        let savepoint = sqlx::Acquire::begin(tx).await?;
+        let mut scope = ScopedTxn {
+            inner: TxRef::Savepoint(savepoint),
+            search_path: Arc::clone(&self.search_path),
+        };
+        scope.apply_search_path().await?;
+        scope.apply_explicit_tenant(Uuid::nil(), true).await?;
+        Ok(scope)
+    }
+
     /// 在给定事务内开一个 SAVEPOINT 子事务作用域（逐行容错导入/批量操作）。
     ///
     /// `commit()` 释放保存点，`rollback()` 回滚到保存点，外层请求事务继续可用；

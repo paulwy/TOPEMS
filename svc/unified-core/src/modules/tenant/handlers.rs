@@ -33,7 +33,7 @@ pub async fn list_tenants(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户列表读作用域失败: {}", e);
@@ -181,7 +181,7 @@ pub async fn get_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -215,7 +215,7 @@ pub async fn get_tenant_by_code(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -249,7 +249,7 @@ pub async fn create_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create tenant: {}", e);
@@ -260,16 +260,20 @@ pub async fn create_tenant(
         }
     };
 
-    // tenant-system: core_tenants 的全局行 tenant_id 为 NULL，只允许系统通道写入。
-    // 此处走请求作用域：仅超管请求上下文会打开 `app.rls_system='on'`，
-    // 非超管即使持有 iam:tenant:write 也会被策略 WITH CHECK 拒绝（不放宽授权）。
+    // tenant-system: core_tenants 的平台行已回填为自指（tenant_id = id），新租户必须
+    // 同时写入 tenant_id，否则本租户在「仅自己」策略下自读为 0 行。
+    // 注意：认证中间件对超管 JWT 给的是 nil 租户 + `system=off`（只有 service token
+    // 才 `system=on`），因此这里必须显式使用 `scope_with_system()`，不能依赖请求上下文；
+    // 该路由本身由 iam:tenant:write 平台权限保护，系统通道不放宽授权。
+    let tenant_id = Uuid::new_v4();
     match sqlx::query_as::<_, Tenant>(
         r#"
-        INSERT INTO core_tenants (name, code, tenant_type, plan, license_type, license_expires_at, trial_expires_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO core_tenants (id, tenant_id, name, code, tenant_type, plan, license_type, license_expires_at, trial_expires_at)
+        VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.tenant_type)
@@ -578,7 +582,7 @@ pub async fn onboard_tenant(
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
     // SAVEPOINT：失败路径的 rollback 回滚到保存点，避免把半成品写入随请求事务一起提交。
-    let mut tx = match state.db.scope_savepoint(txn).await {
+    let mut tx = match state.db.scope_savepoint_system(txn).await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin onboarding transaction: {}", e);
@@ -590,14 +594,17 @@ pub async fn onboard_tenant(
     };
 
     // 1. Create the tenant row (mirrors create_tenant, status starts as trial).
-    // tenant-system: 全局租户行 tenant_id 为 NULL，只允许系统通道写入（同 create_tenant）。
+    // tenant-system: 新租户必须同时写 tenant_id = id，否则「仅自己」策略下自读为 0 行；
+    // 平台行写入走显式系统通道（同 create_tenant）。
+    let tenant_id = Uuid::new_v4();
     let tenant: Tenant = match sqlx::query_as::<_, Tenant>(
         r#"
-        INSERT INTO core_tenants (name, code, tenant_type, plan, license_type)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO core_tenants (id, tenant_id, name, code, tenant_type, plan, license_type)
+        VALUES ($1, $1, $2, $3, $4, $5, $6)
         RETURNING id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.tenant_type)
@@ -686,7 +693,7 @@ pub async fn update_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -759,7 +766,7 @@ pub async fn activate_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -800,7 +807,7 @@ pub async fn suspend_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -842,7 +849,7 @@ pub async fn get_tenant_quota(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -1064,7 +1071,7 @@ pub async fn delete_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户写作用域失败: {}", e);
@@ -1416,7 +1423,7 @@ pub async fn get_tenant_stats(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户统计读作用域失败: {}", e);
@@ -1500,7 +1507,7 @@ pub async fn get_usage_metrics(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户用量读作用域失败: {}", e);
@@ -1574,7 +1581,7 @@ pub async fn get_billing_info(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户计费读作用域失败: {}", e);
@@ -1718,7 +1725,7 @@ pub async fn get_my_tenants(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建我的租户读作用域失败: {}", e);
@@ -1785,7 +1792,7 @@ pub async fn switch_tenant(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户切换读作用域失败: {}", e);
@@ -1875,7 +1882,7 @@ pub async fn get_tenant_by_slug(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户读作用域失败: {}", e);
@@ -2077,7 +2084,7 @@ async fn tenant_features_read(
             "RLS 事务中间件未注入",
         ));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("读取租户特性失败", e)),
     };
@@ -2119,7 +2126,7 @@ async fn tenant_features_write(
             "RLS 事务中间件未注入",
         ));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("写入租户特性失败", e)),
     };
@@ -2418,7 +2425,7 @@ async fn ensure_tenant_exists(
             "RLS 事务缺失：请求事务未注入".into(),
         ));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::DatabaseQuery(format!("查询租户失败: {}", e))),
     };
@@ -3308,7 +3315,7 @@ async fn tenant_billing_default(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return serde_json::json!({"plan": "free", "status": "inactive"});
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户计费读作用域失败: {}", e);
@@ -3495,7 +3502,7 @@ pub async fn get_tenant_analytics_overview(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户分析读作用域失败: {}", e);
@@ -3564,7 +3571,7 @@ pub async fn get_tenant_usage(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户用量读作用域失败: {}", e);
@@ -3611,7 +3618,7 @@ pub async fn get_tenant_api_usage(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3661,7 +3668,7 @@ pub async fn get_tenant_activity(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3701,7 +3708,7 @@ pub async fn get_tenant_top_endpoints(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3740,7 +3747,7 @@ pub async fn get_tenant_user_stats(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户用户统计读作用域失败: {}", e);
@@ -3779,7 +3786,7 @@ pub async fn get_tenant_real_time(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建租户实时指标读作用域失败: {}", e);
@@ -3827,7 +3834,7 @@ pub async fn get_governance_trends(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[Tenant] 创建治理趋势读作用域失败: {}", e);
@@ -3884,7 +3891,7 @@ pub async fn collect_tenant_usage(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return Json(CoreResponse::error("数据库事务上下文缺失"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_with_system(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("数据库作用域创建失败: {}", e);
@@ -3920,7 +3927,7 @@ pub async fn collect_tenant_usage(
                 tracing::error!("rls txn missing: RLS 事务中间件未注入");
                 return Json(CoreResponse::error("数据库事务上下文缺失"));
             };
-            let mut scope = match state.db.scope_with(txn).await {
+            let mut scope = match state.db.scope_with_system(txn).await {
                 Ok(scope) => scope,
                 Err(e) => {
                     tracing::error!("[Tenant] 创建用量读作用域失败: {}", e);
