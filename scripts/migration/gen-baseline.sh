@@ -23,6 +23,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MIG_DIR="$ROOT/database/migrations"
 OUT="$ROOT/database/baseline"
+MANIFEST="$ROOT/database/migration_manifest.yaml"
 DSN=""
 CHAIN_DB=""
 FORCE=0
@@ -68,6 +69,22 @@ KNOWN_NOT_APPLIED=(
   20261105180000
 )
 
+# manifest 已逐条登记处置的版本（excluded/obsolete/superseded/forwarded/hold/to_apply）。
+# 与上面的定向迁移白名单取并集：仓库存在、账本不存在、version <= 锚点的迁移必须
+# 至少在一处登记，否则基线生成 fail-closed。清单来源见 database/migration_manifest.yaml。
+if [[ -f "$MANIFEST" ]]; then
+  while IFS= read -r v; do
+    [[ -n "$v" ]] && KNOWN_NOT_APPLIED+=("$v")
+  done < <(python3 - "$MANIFEST" <<'PY'
+import re, sys
+for line in open(sys.argv[1], encoding='utf-8'):
+    m = re.match(r'\s*-\s*version:\s*"(\d{14})"', line)
+    if m:
+        print(m.group(1))
+PY
+  )
+fi
+
 TABLE_SQL="SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')"
 
 ANCHOR="$(psql "$DSN" -tA -c "SELECT max(version) FROM _sqlx_migrations WHERE success")"
@@ -109,7 +126,7 @@ if [[ $FORCE -eq 0 && -e "$SCHEMA_FILE" ]]; then
 fi
 
 echo "== 导出 schema-only（anchor=${ANCHOR}, tables=${TABLES}, ledger=${LEDGER_ROWS}）"
-TMP="$(mktemp /tmp/topems_baseline.XXXXXX.sql)"
+TMP="$(mktemp /tmp/topems_baseline_XXXXXX)"
 "$PG_DUMP" "$DSN" --schema-only --no-owner --no-privileges -f "$TMP"
 gzip -9 -n -c "$TMP" > "$SCHEMA_FILE"
 rm -f "$TMP"

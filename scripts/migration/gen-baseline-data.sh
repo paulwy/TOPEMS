@@ -36,6 +36,7 @@ DSN=""
 SSH_TARGET=""
 SOURCE_DB=""
 ANCHOR=""
+TABLES_OVERRIDE=""
 FORCE=0
 
 TABLES=(
@@ -65,12 +66,18 @@ while [[ $# -gt 0 ]]; do
     --ssh) SSH_TARGET="$2"; shift 2 ;;
     --source-db) SOURCE_DB="$2"; shift 2 ;;
     --anchor) ANCHOR="$2"; shift 2 ;;
+    --tables) TABLES_OVERRIDE="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
     -h|--help) sed -n '2,35p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
+
+if [[ -n "$TABLES_OVERRIDE" ]]; then
+  IFS=',' read -r -a TABLES <<< "$TABLES_OVERRIDE"
+  [[ ${#TABLES[@]} -gt 0 ]] || { echo "--tables 不能为空" >&2; exit 2; }
+fi
 
 if [[ -n "$DSN" && -n "$SSH_TARGET" ]]; then
   echo "--dsn 与 --ssh 只能二选一" >&2; exit 2
@@ -150,20 +157,31 @@ if [[ -n "$PII_HITS" ]]; then
 fi
 
 # ── 脱敏审查 2：用户引用列必须全为 NULL（否则会引入人员标识） ──────────────
-USER_REFS="$(q "SELECT 'hrm.departments', count(*) FILTER (WHERE manager_id IS NOT NULL OR created_by IS NOT NULL OR updated_by IS NOT NULL) FROM hrm.departments
-UNION ALL SELECT 'hrm.positions', count(*) FILTER (WHERE created_by IS NOT NULL OR updated_by IS NOT NULL) FROM hrm.positions")" \
-  || die "用户引用列扫描失败（fail-closed）"
-BAD_REFS="$(printf '%s\n' "$USER_REFS" | awk -F'|' '$2+0 > 0 {print $1" ("$2")"}')"
-if [[ -n "$BAD_REFS" ]]; then
-  echo "纳入表存在非 NULL 的用户引用列（可能含人员标识），拒绝生成：" >&2
-  printf '  %s\n' "$BAD_REFS" >&2
-  exit 1
+# 仅检查本次实际纳入的表；--tables 已剔除的表不得触发误报。
+USER_REF_SQL=""
+if printf '%s\n' "${TABLES[@]}" | grep -qx 'hrm.departments'; then
+  USER_REF_SQL+="SELECT 'hrm.departments', count(*) FILTER (WHERE manager_id IS NOT NULL OR created_by IS NOT NULL OR updated_by IS NOT NULL) FROM hrm.departments"
 fi
-ok "脱敏审查通过：无 PII/凭据列，用户引用列全为 NULL"
+if printf '%s\n' "${TABLES[@]}" | grep -qx 'hrm.positions'; then
+  [[ -n "$USER_REF_SQL" ]] && USER_REF_SQL+=$'\nUNION ALL '
+  USER_REF_SQL+="SELECT 'hrm.positions', count(*) FILTER (WHERE created_by IS NOT NULL OR updated_by IS NOT NULL) FROM hrm.positions"
+fi
+if [[ -n "$USER_REF_SQL" ]]; then
+  USER_REFS="$(q "$USER_REF_SQL")" || die "用户引用列扫描失败（fail-closed）"
+  BAD_REFS="$(printf '%s\n' "$USER_REFS" | awk -F'|' '$2+0 > 0 {print $1" ("$2")"}')"
+  if [[ -n "$BAD_REFS" ]]; then
+    echo "纳入表存在非 NULL 的用户引用列（可能含人员标识），拒绝生成：" >&2
+    printf '  %s\n' "$BAD_REFS" >&2
+    exit 1
+  fi
+  ok "脱敏审查通过：无 PII/凭据列，用户引用列全为 NULL"
+else
+  ok "脱敏审查通过：纳入表无 PII/凭据列（未纳入 hrm 人员表，跳过用户引用列检查）"
+fi
 
 # ── 导出 data-only（只读） ─────────────────────────────────────────────────
 info "导出 data-only（anchor=${ANCHOR}, tables=${#TABLES[@]}, rows=${TOTAL_ROWS}）"
-TMP_SQL="$(mktemp /tmp/topems_refdata.XXXXXX.sql)"
+TMP_SQL="$(mktemp /tmp/topems_refdata_XXXXXX)"
 trap 'rm -f "$ROWCOUNTS" "$TMP_SQL"' EXIT
 
 TABLE_ARGS=""
