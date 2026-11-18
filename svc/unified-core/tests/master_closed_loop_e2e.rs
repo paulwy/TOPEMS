@@ -212,10 +212,7 @@ async fn master_ten_endpoints_form_closed_loop() {
     // 审批通过必须真正落变更，而不是只改审批状态
     let applied = server.get(&format!("/mdm/refs/{master_data_id}")).await;
     assert_eq!(applied.status_code(), StatusCode::OK);
-    assert_eq!(
-        applied.json::<Value>()["data"]["name"],
-        "E2E 会计科目-变更"
-    );
+    assert_eq!(applied.json::<Value>()["data"]["name"], "E2E 会计科目-变更");
 
     // 4) 把 ref 置为 pending_sync，触发对账写日志
     let updated = server

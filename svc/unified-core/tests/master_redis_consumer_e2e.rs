@@ -29,18 +29,23 @@ const REFS_TABLE: &str = "core_master_data_refs";
 async fn count_refs(pool: &PgPool, tenant_id: Uuid) -> i64 {
     let db = Db::new(pool.clone(), "public, shared");
     let mut scope = db.scope_for_tenant(tenant_id).await.expect("scope txn");
-    let count: i64 =
-        sqlx::query_scalar("SELECT count(*) FROM public.core_master_data_refs WHERE tenant_id = $1")
-            .bind(tenant_id)
-            .fetch_one(&mut scope)
-            .await
-            .expect("count refs");
+    let count: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM public.core_master_data_refs WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    .expect("count refs");
     scope.commit().await.expect("commit count");
     count
 }
 
 /// 行可能尚未落库，返回 None 避免在清理前 panic
-async fn fetch_ref_opt(pool: &PgPool, tenant_id: Uuid, master_data_id: &str) -> Option<(String, String, i32)> {
+async fn fetch_ref_opt(
+    pool: &PgPool,
+    tenant_id: Uuid,
+    master_data_id: &str,
+) -> Option<(String, String, i32)> {
     let db = Db::new(pool.clone(), "public, shared");
     let mut scope = db.scope_for_tenant(tenant_id).await.expect("scope txn");
     let row: Option<(String, String, i32)> = sqlx::query_as(
@@ -147,10 +152,7 @@ async fn redis_publish_twice_converges_to_one_ref_and_acks() {
         .query_async(&mut con)
         .await;
     if let Err(e) = &created {
-        assert!(
-            e.to_string().contains("BUSYGROUP"),
-            "预建消费组失败: {e}"
-        );
+        assert!(e.to_string().contains("BUSYGROUP"), "预建消费组失败: {e}");
     }
 
     // 真实订阅路径：EventSubscriber + 生产消费函数
@@ -256,10 +258,7 @@ async fn redis_publish_twice_converges_to_one_ref_and_acks() {
     cleanup_pg(&pool, tenant_id).await;
 
     assert!(second_ok, "第二次发布未被消费（version 未增长）");
-    assert_eq!(
-        ref_count, 1,
-        "同一实体连续发布两次后 refs 必须仍为 1 行"
-    );
+    assert_eq!(ref_count, 1, "同一实体连续发布两次后 refs 必须仍为 1 行");
     let (name, status, _version) = snapshot.expect("refs 行应存在");
     assert_eq!(name, "Redis 物料-变更");
     assert_eq!(status, "inactive");

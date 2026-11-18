@@ -26,17 +26,22 @@ const REFS_TABLE: &str = "core_master_data_refs";
 async fn count_refs(pool: &PgPool, tenant_id: Uuid) -> i64 {
     let db = Db::new(pool.clone(), "public, shared");
     let mut scope = db.scope_for_tenant(tenant_id).await.expect("scope txn");
-    let count: i64 =
-        sqlx::query_scalar("SELECT count(*) FROM public.core_master_data_refs WHERE tenant_id = $1")
-            .bind(tenant_id)
-            .fetch_one(&mut scope)
-            .await
-            .expect("count refs");
+    let count: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM public.core_master_data_refs WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&mut scope)
+    .await
+    .expect("count refs");
     scope.commit().await.expect("commit count");
     count
 }
 
-async fn fetch_ref(pool: &PgPool, tenant_id: Uuid, master_data_id: &str) -> (String, String, String, i32) {
+async fn fetch_ref(
+    pool: &PgPool,
+    tenant_id: Uuid,
+    master_data_id: &str,
+) -> (String, String, String, i32) {
     let db = Db::new(pool.clone(), "public, shared");
     let mut scope = db.scope_for_tenant(tenant_id).await.expect("scope txn");
     let row: (String, String, String, i32) = sqlx::query_as(
