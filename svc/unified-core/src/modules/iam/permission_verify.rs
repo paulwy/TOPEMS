@@ -1,8 +1,10 @@
+use crate::modules::iam::tenant_scope::{self, IamScope};
 use crate::AppState;
 use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -170,6 +172,7 @@ pub struct CheckResourcePermissionRequest {
 
 pub async fn check_resource_permission(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CheckResourcePermissionRequest>,
 ) -> Json<serde_json::Value> {
@@ -185,7 +188,9 @@ pub async fn check_resource_permission(
     };
 
     let has_permission = check_user_resource_permission(
-        &state.pool,
+        &state,
+        &txn_arc,
+        &claims,
         &user_id,
         &req.resource_type,
         &req.resource_id,
@@ -204,33 +209,125 @@ pub async fn check_resource_permission(
     }))
 }
 
+/// 资源级 ACL 判定顺序：用户例外优先于角色授予；角色授予先看平台级、再看本租户；
+/// 三层都没有命中则默认拒绝。
+///
+/// 平台级授予（`scope='platform'`，`tenant_id` 为 NULL）与租户级授予在读取时由 RLS
+/// 决定可见性：租户通道看不到平台行，系统通道两者都可见。两者对结果都是 allow，
+/// 因此合并为“任一命中即允许”。
+fn decide_resource_permission(
+    user_effect: Option<&str>,
+    platform_allowed: bool,
+    tenant_allowed: bool,
+) -> bool {
+    match user_effect {
+        Some("deny") => false,
+        Some(_) => true,
+        None => platform_allowed || tenant_allowed,
+    }
+}
+
+/// 资源级 ACL 判定查询。
+///
+/// 三个分支都必须带 `deleted_at IS NULL`：撤销写的是 `deleted_at`，软删后不可见。
+/// 用户例外按租户过滤（`$5` 为空时不限制），平台授予不按租户过滤（RLS 负责隔离），
+/// 租户授予必须命中 `$5` 指向的租户，没有租户上下文时租户分支恒为空。
+const RESOURCE_ACL_QUERY: &str = r#"
+        SELECT
+            (SELECT rp.effect
+               FROM iam.resource_permissions rp
+              WHERE rp.user_id = $1
+                AND rp.role_id IS NULL
+                AND rp.resource_type = $2
+                AND rp.resource_id = $3
+                AND rp.permission = $4
+                AND rp.deleted_at IS NULL
+                AND ($5::uuid IS NULL OR rp.tenant_id = $5::uuid)
+              ORDER BY (rp.effect = 'deny') DESC
+              LIMIT 1) AS user_effect,
+            EXISTS (
+                SELECT 1
+                  FROM iam.resource_permissions rp
+                  JOIN public.core_user_roles ur ON ur.role_id = rp.role_id
+                 WHERE ur.user_id = $1
+                   AND rp.resource_type = $2
+                   AND rp.resource_id = $3
+                   AND rp.permission = $4
+                   AND rp.effect = 'allow'
+                   AND rp.deleted_at IS NULL
+                   AND rp.scope = 'platform'
+            ) AS platform_allowed,
+            EXISTS (
+                SELECT 1
+                  FROM iam.resource_permissions rp
+                  JOIN public.core_user_roles ur ON ur.role_id = rp.role_id
+                 WHERE ur.user_id = $1
+                   AND rp.resource_type = $2
+                   AND rp.resource_id = $3
+                   AND rp.permission = $4
+                   AND rp.effect = 'allow'
+                   AND rp.deleted_at IS NULL
+                   AND rp.scope = 'tenant'
+                   AND rp.tenant_id = $5::uuid
+            ) AS tenant_allowed
+        "#;
+
 async fn check_user_resource_permission(
-    pool: &PgPool,
+    state: &AppState,
+    txn_arc: &RlsTxnCell,
+    claims: &Claims,
     user_id: &Uuid,
     resource_type: &str,
     resource_id: &Uuid,
     action: &str,
 ) -> bool {
-    let result: Result<(i64,), _> = sqlx::query_as(
-        r#"
-        SELECT COUNT(*)::int8 as count
-        FROM iam.resource_permissions rp
-        WHERE rp.user_id = $1
-          AND rp.resource_type = $2
-          AND rp.resource_id = $3
-          AND rp.permission = $4
-        "#,
-    )
-    .bind(user_id)
-    .bind(resource_type)
-    .bind(resource_id)
-    .bind(action)
-    .fetch_one(pool)
-    .await;
+    // `iam.resource_permissions` 是租户隔离表：裸池无 GUC 时策略 fail-closed，
+    // 判定恒为 false，必须复用与角色管理一致的作用域事务。
+    let mut guard = txn_arc.lock().await;
+    let scope_result = if claims.is_superuser {
+        state.db.scope_read_system().await
+    } else {
+        match tenant_scope::iam_read_scope(claims) {
+            Ok(IamScope::Tenant(_)) => {
+                let Some(txn) = guard.as_mut() else {
+                    tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                    return false;
+                };
+                state.db.scope_with(txn).await
+            }
+            _ => return false,
+        }
+    };
+    let mut scope = match scope_result {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("资源权限判定作用域创建失败: {}", e);
+            return false;
+        }
+    };
 
-    match result {
-        Ok((count,)) => count > 0,
-        Err(_) => false,
+    let tenant_filter = tenant_scope::tenant_uuid(claims).filter(|t| !t.is_nil());
+
+    let row: Result<(Option<String>, bool, bool), sqlx::Error> = sqlx::query_as(RESOURCE_ACL_QUERY)
+        .bind(user_id)
+        .bind(resource_type)
+        .bind(resource_id)
+        .bind(action)
+        .bind(tenant_filter)
+        .fetch_one(&mut scope)
+        .await;
+    let _ = scope.commit().await;
+
+    match row {
+        Ok((user_effect, platform_allowed, tenant_allowed)) => decide_resource_permission(
+            user_effect.as_deref(),
+            platform_allowed,
+            tenant_allowed,
+        ),
+        Err(e) => {
+            tracing::error!("资源权限判定查询失败: {}", e);
+            false
+        }
     }
 }
 
@@ -354,5 +451,48 @@ mod tests {
         let req: CheckResourcePermissionRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.resource_type, "customer");
         assert_eq!(req.action, "read");
+    }
+
+    #[test]
+    fn resource_acl_role_grant_only_allows() {
+        // 平台授予或租户授予任一命中即允许
+        assert!(decide_resource_permission(None, false, true));
+        assert!(decide_resource_permission(None, true, false));
+    }
+
+    #[test]
+    fn resource_acl_platform_scope_grant_allows() {
+        assert!(decide_resource_permission(None, true, false));
+    }
+
+    #[test]
+    fn resource_acl_tenant_scope_grant_allows() {
+        assert!(decide_resource_permission(None, false, true));
+    }
+
+    #[test]
+    fn resource_acl_user_allow_only_allows() {
+        assert!(decide_resource_permission(Some("allow"), false, false));
+    }
+
+    #[test]
+    fn resource_acl_user_deny_overrides_role_grant() {
+        assert!(!decide_resource_permission(Some("deny"), true, true));
+    }
+
+    #[test]
+    fn resource_acl_no_grant_falls_back_to_deny() {
+        assert!(!decide_resource_permission(None, false, false));
+    }
+
+    /// 软删契约：三条读取分支都必须过滤 `deleted_at IS NULL`，否则撤销后的授予
+    /// 仍然生效。这里对查询文本做静态断言（判定查询无法在无库单测中执行）。
+    #[test]
+    fn resource_acl_query_excludes_soft_deleted_rows() {
+        assert_eq!(
+            RESOURCE_ACL_QUERY.matches("rp.deleted_at IS NULL").count(),
+            3
+        );
+        assert!(!RESOURCE_ACL_QUERY.contains("is_active"));
     }
 }

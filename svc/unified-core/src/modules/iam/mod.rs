@@ -7,6 +7,7 @@ pub mod permission;
 pub mod permission_metadata;
 pub mod permission_verify;
 pub mod position;
+pub mod resource_permission;
 pub mod role;
 pub mod tenant_scope;
 pub mod user;

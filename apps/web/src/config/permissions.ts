@@ -1376,6 +1376,8 @@ export const CORE_PERMISSION_CODES: string[] = [
   'iam:permission:read',
   'iam:permission:update',
   'iam:read',
+  'iam:resource_acl:delete',
+  'iam:resource_acl:write',
   'iam:role:read',
   'iam:structure:read',
   'iam:tenant:read',

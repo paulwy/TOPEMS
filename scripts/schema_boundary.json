@@ -150,8 +150,12 @@
       "search_path": "scm, public, shared",
       "allow": [
         "master_data",
-        "wms"
-      ]
+        "wms",
+        "erp"
+      ],
+      "allow_notes": {
+        "erp": "只读：MRP 毛需求改读 ERP 销售订单行项目 erp.sales_order_items（2026-11-19 归属收口，ERP 为权威写者）；调用点经 only_own_schema_query!(..., \"master_data\", \"wms\", \"erp\") 显式声明。"
+      }
     },
     "search": {
       "schema": "public",
@@ -189,6 +193,7 @@
       "allow_files": {
         "svc/unified-core/src/modules/iam/auth.rs": ["iam.users"],
         "svc/unified-core/src/modules/iam/permission_verify.rs": ["iam.users", "iam.resource_permissions"],
+        "svc/unified-core/src/modules/iam/resource_permission.rs": ["iam.resource_permissions"],
         "svc/unified-core/src/modules/iam/position.rs": ["iam.positions", "iam.position_permissions", "iam.position_roles"],
         "svc/unified-core/src/modules/iam/tenant_scope.rs": ["iam.users"],
         "svc/unified-core/src/modules/iam/user/access_log.rs": ["iam.users"],

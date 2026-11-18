@@ -143,6 +143,29 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             require_any_permission(USER_DELETE_PERMS),
         ));
 
+    // 资源级 ACL 独立入口：用户例外不再复用「能改用户」的权限码。
+    // 授予/撤销角色资源授予仍走角色写/删权限；用户例外单独用
+    // iam:resource_acl:write / delete（租户管理员默认持有，平台管理员全量）。
+    let resource_acl_write = Router::new()
+        .route(
+            "/users/{user_id}/resource-permissions",
+            put(modules::iam::resource_permission::set_user_resource_exception),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("iam:resource_acl:write"),
+        ));
+
+    let resource_acl_delete = Router::new()
+        .route(
+            "/users/{user_id}/resource-permissions",
+            delete(modules::iam::resource_permission::remove_user_resource_exception),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("iam:resource_acl:delete"),
+        ));
+
     // 租户角色读：列表/详情/已授权限 + 可授权限目录（仅返回操作者自身权限集）。
     let tenant_role_read = Router::new()
         .route("/roles", get(modules::iam::role::list_roles))
@@ -167,6 +190,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/roles/{id}/permissions",
             post(modules::iam::role::add_role_permission),
         )
+        .route(
+            "/roles/{id}/resource-permissions",
+            post(modules::iam::resource_permission::grant_role_resource_permissions),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_any_permission(ROLE_WRITE_PERMS),
@@ -177,6 +204,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/roles/{id}/permissions/{permission_id}",
             delete(modules::iam::role::remove_role_permission),
+        )
+        .route(
+            "/roles/{id}/resource-permissions",
+            delete(modules::iam::resource_permission::revoke_role_resource_permissions),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -297,6 +328,8 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             .merge(tenant_user_read)
             .merge(tenant_user_write)
             .merge(tenant_user_delete)
+            .merge(resource_acl_write)
+            .merge(resource_acl_delete)
             .merge(tenant_role_read)
             .merge(tenant_role_write)
             .merge(tenant_role_delete),

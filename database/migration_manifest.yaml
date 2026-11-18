@@ -2355,3 +2355,14 @@ pending_forward_patches:
     destructive_scan: "DROP POLICY IF EXISTS（策略替换，非数据）+ ENABLE/FORCE RLS + CREATE POLICY + CREATE INDEX IF NOT EXISTS；无 DELETE/TRUNCATE/DROP TABLE"
     note: "隔离库演练：两表重置为无策略/RLS 关后应用，pg_policies 的 qual/with_check md5=ebc643cb801ddee08487f735dcba97f3，与生产逐字一致；回滚策略前后同形（不回退到无策略），仅删账本行"
 
+  # ===== 2026-11-19 批：iam.resource_permissions 授权闭环（角色批量授予 + 用户例外） =====
+  # 登记口径：2026-11-19 新写、尚未在任何环境应用（status: to_apply）。
+  # 生产只读事实：prod_cols.psv 中该表列以 id/resource_type/resource_id/user_id/permission/
+  # tenant_id/created_at/deleted_at 为主，本迁移只做新增，不改既有列语义。
+  - version: "20261119010000"
+    file: "database/migrations/20261119010000_iam_resource_permissions_role_grants.sql"
+    status: to_apply
+    effect: "复用 iam.resource_permissions 补齐授权闭环：新增 role_id（FK core_roles，ON DELETE CASCADE）、effect(allow/deny)、scope(platform/tenant)；tenant_id 放开 NOT NULL 以承载平台级授予；user_id 放开 NOT NULL；ADD COLUMN IF NOT EXISTS deleted_at 与生产对齐（生产已有则为 no-op）；CHECK 约束保证 user_id/role_id 二选一、effect/scope 取值合法、角色授予只允许 allow、platform 行 tenant_id 为空且 tenant 行非空；新增角色授予幂等唯一索引（tenant_id 用零 UUID 归一化）与 role_id 索引；补建 iam:resource_acl:write/delete 权限码并授予 tenant_admin/admin/superadmin"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP TABLE；ADD COLUMN IF NOT EXISTS（含 FK）/ALTER COLUMN DROP NOT NULL/ADD CONSTRAINT/CREATE INDEX IF NOT EXISTS；既有行（user_id 非空、effect 默认 allow、scope 默认 tenant）判定语义不变"
+    note: "回滚 database/rollback/20261119010000_iam_resource_permissions_role_grants.rollback.sql（存在角色授予或拒绝行时拒绝回滚，避免静默丢 ACL；deleted_at 列保留，避免删除生产既有审计；回滚末按 version 删自身账本行并断言 0 行）"
+
