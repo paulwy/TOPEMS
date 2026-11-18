@@ -6,7 +6,7 @@
 # 落点测试直接连生产库建/删 schema。本门禁扫描「可提交的环境模板/部署配置」与
 # 「Rust 内置默认值」，防止生产连接串再次被写成默认值。
 #
-# 只检查可提交文件；本机 .env 不参与（它不应入库）。
+# 只检查可提交文件 + 本机 .env；.env 虽不入库，但本地门禁必须拦住生产 DSN 常驻。
 # ==============================================================================
 set -euo pipefail
 
@@ -31,6 +31,7 @@ scan_env_template() {
 }
 
 for f in \
+  .env \
   .env.example \
   .env.production.example \
   config/env/_template.env.example \

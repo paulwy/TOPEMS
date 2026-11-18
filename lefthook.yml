@@ -237,12 +237,8 @@ pre-commit:
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^scripts/db/|^database/migrations/" || true)
         [ -z "$STAGED" ] && exit 0
-        # 本机 DB 使用 .env 中的自定义凭据；脚本内默认值（topems:topems_secret）与本机不一致，
-        # 故从 .env 的 MIGRATE_URL 派生 DATABASE_URL（已显式提供时不覆盖）
-        if [ -f .env ] && [ -z "${DATABASE_URL:-}" ]; then
-          DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1)
-          [ -n "$DATABASE_URL" ] && export DATABASE_URL
-        fi
+        # 不再从 MIGRATE_URL 隐式派生 DATABASE_URL：.env 的 MIGRATE_URL 已指向本地开发库，
+        # 生产窗口期由调用方显式注入；脚本自身也会拒绝任何命中生产特征的连接串。
         if [ -f "scripts/ci/check-rls-permissions.cjs" ]; then
           node scripts/ci/check-rls-permissions.cjs
         fi

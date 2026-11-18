@@ -4,10 +4,11 @@
  *
  * 口径：校验「实际运行角色」，不再写死 topems_app。
  * 角色解析优先级：
- *   1) 环境变量 MIGRATE_URL 的连接串用户名（部署/迁移同源身份，lefthook 即从此派生）
+ *   1) 环境变量 MIGRATE_URL 的连接串用户名（部署/迁移同源身份）
  *   2) 环境变量 DATABASE_URL 的连接串用户名（应用运行身份）
  *   3) 仓库根 .env 中的 MIGRATE_URL → DATABASE_URL
  * 解析不到角色、或数据库不可达时直接失败并以非 0 退出，不再静默通过。
+ * 任何来源命中生产库特征（库名 *prod* / production）时直接拒绝执行，绝不对生产库跑门禁。
  *
  * 检查项：
  *   1. 目标角色是否存在
@@ -49,6 +50,22 @@ function roleFromUrl(url) {
   }
 }
 
+function isProductionUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const db = decodeURIComponent((parsed.pathname || '').replace(/^\//, ''));
+    const host = parsed.hostname || '';
+    return /(^|_)prod($|_)/i.test(db) || /production/i.test(db) || /(^|\.)prod(\.|$)/i.test(host);
+  } catch {
+    return false;
+  }
+}
+
+function maskUrl(url) {
+  return String(url).replace(/(:\/\/[^:@/]+:)[^@]*@/, '$1***@');
+}
+
 function resolveTarget() {
   const envFile = readEnvFile();
   const candidates = [
@@ -59,7 +76,7 @@ function resolveTarget() {
   ];
   for (const [source, url] of candidates) {
     const role = roleFromUrl(url);
-    if (role) return { role, url };
+    if (role) return { role, url, source };
   }
   console.error('❌ 无法从 DATABASE_URL / MIGRATE_URL / .env 推导出实际运行角色。');
   console.error('   请设置 DATABASE_URL 或 MIGRATE_URL（形如 postgres://<role>@host:5432/db，密码走 PGPASSWORD），');
@@ -85,7 +102,13 @@ function psql(url, sql) {
 }
 
 function main() {
-  const { role, url } = resolveTarget();
+  const { role, url, source } = resolveTarget();
+  if (isProductionUrl(url)) {
+    console.error(`❌ 拒绝执行：${source} 命中生产库特征，RLS 门禁不会对生产库运行。`);
+    console.error(`   连接串：${maskUrl(url)}`);
+    console.error('   请显式设置 DATABASE_URL 指向本地/测试库；生产窗口期不得把生产 DSN 常驻在 .env。');
+    process.exit(1);
+  }
   const roleSql = sqlLiteral(role);
   console.log(`🔍 RLS权限校验（目标角色：${role}）`);
 
