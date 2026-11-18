@@ -2,7 +2,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use topems_shared_event::event::{
-    generate_master_data_id, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    master_data_id_for, MasterDataAction, MasterDataDomain, MasterDataEvent,
 };
 
 /// MDM 主数据事件发布服务 - PDM 物料领域
@@ -33,7 +33,8 @@ impl MdmEventService {
         action: MasterDataAction,
         changed_fields: Option<Vec<String>>,
     ) {
-        let master_data_id = generate_master_data_id(MasterDataDomain::Material);
+        // 稳定 ID：同一物料反复发布得到同一个 master_data_id
+        let master_data_id = master_data_id_for(MasterDataDomain::Material, material_id);
 
         let payload = json!({
             "id": material_id,
@@ -50,7 +51,7 @@ impl MdmEventService {
             MasterDataDomain::Material,
             action,
             master_data_id.clone(),
-            name.to_string(),
+            material_no.to_string(),
             "pdm",
             payload,
         );

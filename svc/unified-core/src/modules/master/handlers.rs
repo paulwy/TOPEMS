@@ -12,6 +12,7 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde::Deserialize;
+use serde_json::Value;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -20,7 +21,9 @@ use topems_shared_core::response::ApiResponse;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
-use topems_shared_core::id::{generate_master_data_id, MasterDataDomain as IdMasterDataDomain};
+use topems_shared_core::id::{
+    generate_master_data_id, parse_master_data_id, MasterDataDomain as IdMasterDataDomain,
+};
 use topems_shared_event::event::{MasterDataAction, MasterDataDomain, MasterDataEvent};
 
 use super::models::{
@@ -96,6 +99,114 @@ impl From<topems_shared_db::reconciliation_log::ReconciliationLog> for Reconcili
     }
 }
 
+/// 审批动作词表
+///
+/// 与 core_master_data_refs 的生命周期一一对应：新建、更新、软删除。
+const APPROVAL_ACTIONS: &[&str] = &["create", "update", "delete"];
+
+/// 审批可写状态（pending_sync/deleted 由同步/删除流程负责，不允许人工通过审批写入）
+const APPROVAL_WRITABLE_STATUSES: &[&str] = &["active", "inactive"];
+
+/// 审批创建/应用错误
+#[derive(Debug)]
+pub enum ApprovalError {
+    Validation(String),
+    NotFound(String),
+    Conflict(String),
+    Db(sqlx::Error),
+}
+
+impl From<sqlx::Error> for ApprovalError {
+    fn from(err: sqlx::Error) -> Self {
+        Self::Db(err)
+    }
+}
+
+/// 审批错误 → 统一错误桥接
+///
+/// 三类业务失败各自保留 HTTP 语义与机器可读码，避免一律 500：
+/// - `Validation`（payload 非法）→ 400 `VALIDATION_FAILED`
+/// - `NotFound`（审批单不存在）→ 404 `RESOURCE_NOT_FOUND`
+/// - `Conflict`（已处理/并发修改）→ 409 `RESOURCE_ALREADY_EXISTS`
+/// - `Db` → 500 `DATABASE_QUERY_ERROR`（细节只进服务端日志，不回传客户端）
+impl From<ApprovalError> for TopemsError {
+    fn from(err: ApprovalError) -> Self {
+        match err {
+            ApprovalError::Validation(msg) => TopemsError::ValidationFailed(msg),
+            ApprovalError::NotFound(msg) => TopemsError::ResourceNotFound(msg),
+            ApprovalError::Conflict(msg) => TopemsError::ResourceAlreadyExists(msg),
+            ApprovalError::Db(e) => {
+                tracing::error!("审批操作数据库失败: {}", e);
+                TopemsError::DatabaseQuery("审批操作数据库失败".to_string())
+            }
+        }
+    }
+}
+
+/// 校验审批 payload 与 action 的匹配关系
+fn validate_approval_payload(action: &str, payload: Option<&Value>) -> Result<(), ApprovalError> {
+    match action {
+        "delete" => Ok(()),
+        "create" => {
+            let obj = payload.and_then(Value::as_object).ok_or_else(|| {
+                ApprovalError::Validation("create 审批 payload 必须是对象".to_string())
+            })?;
+            payload_str(obj, "code")?;
+            payload_str(obj, "name")?;
+            payload_str(obj, "source_service")?;
+            validate_writable_status(obj.get("status"))?;
+            Ok(())
+        }
+        "update" => {
+            let obj = payload.and_then(Value::as_object).ok_or_else(|| {
+                ApprovalError::Validation("update 审批 payload 必须是对象".to_string())
+            })?;
+            let has_name = obj
+                .get("name")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .is_some_and(|v| !v.is_empty());
+            let has_status = obj.get("status").and_then(Value::as_str).is_some();
+            if !has_name && !has_status {
+                return Err(ApprovalError::Validation(
+                    "update 审批 payload 至少包含 name 或 status".to_string(),
+                ));
+            }
+            validate_writable_status(obj.get("status"))?;
+            Ok(())
+        }
+        _ => Err(ApprovalError::Validation(format!(
+            "不支持的审批动作: {action}"
+        ))),
+    }
+}
+
+fn payload_str(
+    obj: &serde_json::Map<String, Value>,
+    key: &str,
+) -> Result<String, ApprovalError> {
+    obj.get(key)
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(ToString::to_string)
+        .ok_or_else(|| ApprovalError::Validation(format!("审批 payload.{key} 不能为空")))
+}
+
+fn validate_writable_status(status: Option<&Value>) -> Result<(), ApprovalError> {
+    if let Some(value) = status {
+        let value = value.as_str().ok_or_else(|| {
+            ApprovalError::Validation("审批 payload.status 必须是字符串".to_string())
+        })?;
+        if !APPROVAL_WRITABLE_STATUSES.contains(&value) {
+            return Err(ApprovalError::Validation(format!(
+                "审批不可写入状态 {value}，仅支持 active/inactive"
+            )));
+        }
+    }
+    Ok(())
+}
+
 /// MDM 服务
 ///
 /// V284: 注入 MasterDataRefService（下沉 32 处 core 主数据引用表内联 SQL） +
@@ -112,7 +223,13 @@ impl MasterDataService {
         Self {
             ref_service: MasterDataRefService::new(Db::new(pool.clone(), "public, shared")),
             audit_service: AuditLogService::new(pool.clone()),
-            recon_service: ReconciliationLogService::new(Db::new(pool.clone(), "public, shared")),
+            // 本模块 refs 权威表在 public；默认 new() 指向 master_data.* 空副本，
+            // 会导致对账 INSERT...SELECT 读到 0 行、查询/标记落到另一张表。
+            recon_service: ReconciliationLogService::with_tables(
+                Db::new(pool.clone(), "public, shared"),
+                "public.core_mdm_reconciliation_log",
+                "public.core_master_data_refs",
+            ),
         }
     }
 
@@ -156,7 +273,8 @@ impl MasterDataService {
         let ref_data = MasterDataRef::from_request(tenant_id, &req, master_data_id.clone());
 
         self.ref_service
-            .insert_master_data_ref(
+            .insert_master_data_ref_tx(
+                scope,
                 &ref_data.master_data_id,
                 ref_data.tenant_id,
                 &ref_data.domain,
@@ -210,9 +328,11 @@ impl MasterDataService {
         operator: Option<String>,
     ) -> Result<MasterDataRef, sqlx::Error> {
         let existing = self
-            .get_ref(tenant_id, master_data_id)
+            .ref_service
+            .get_by_id_tx(scope, master_data_id, tenant_id)
             .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+            .map(MasterDataRef::from)
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         let mut changed_fields = Vec::new();
         let mut new_name = existing.name.clone();
@@ -233,7 +353,7 @@ impl MasterDataService {
 
         let updated: MasterDataRef = self
             .ref_service
-            .update_master_data_ref(master_data_id, tenant_id, &new_name, &new_status)
+            .update_master_data_ref_tx(scope, master_data_id, tenant_id, &new_name, &new_status)
             .await?
             .into();
 
@@ -258,8 +378,14 @@ impl MasterDataService {
             MasterDataAction::Updated
         };
 
-        self.log_change(scope, &updated, action, operator.clone(), req.attributes.clone())
-            .await?;
+        self.log_change(
+            scope,
+            &updated,
+            action,
+            operator.clone(),
+            req.attributes.clone(),
+        )
+        .await?;
         let _ = publish_master_data_event(&updated, action, operator, req.attributes).await;
 
         Ok(updated)
@@ -274,12 +400,14 @@ impl MasterDataService {
         operator: Option<String>,
     ) -> Result<bool, sqlx::Error> {
         let existing = self
-            .get_ref(tenant_id, master_data_id)
+            .ref_service
+            .get_by_id_tx(scope, master_data_id, tenant_id)
             .await?
-            .ok_or_else(|| sqlx::Error::RowNotFound)?;
+            .map(MasterDataRef::from)
+            .ok_or(sqlx::Error::RowNotFound)?;
 
         self.ref_service
-            .soft_delete_master_data_ref(master_data_id, tenant_id)
+            .soft_delete_master_data_ref_tx(scope, master_data_id, tenant_id)
             .await?;
 
         // V284: 关键写入路径审计
@@ -698,7 +826,7 @@ impl MasterDataService {
                 domain: domain.to_string(),
                 source_service: source.to_string(),
                 mdm_count,
-                source_count: mdm_count,
+                checked_count: mdm_count,
                 consistent: active_count,
                 inconsistent: pending_count,
                 status: status.to_string(),
@@ -717,8 +845,6 @@ impl MasterDataService {
             total_checked,
             consistent,
             inconsistent,
-            missing_in_mdm: 0,
-            missing_in_source: 0,
             details,
         })
     }
@@ -778,13 +904,52 @@ impl MasterDataService {
     // ==================== V31.0 变更审批 ====================
 
     /// 创建变更审批请求
+    ///
+    /// action 词表：create / update / delete；payload 只允许承载 refs 可写列
+    /// （code/name/status/source_service），不接受 attributes 等未落库字段。
     pub async fn create_approval(
         &self,
         scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         req: CreateApprovalRequest,
         requested_by: String,
-    ) -> Result<MasterDataApproval, sqlx::Error> {
+    ) -> Result<MasterDataApproval, ApprovalError> {
+        let action = req.action.trim().to_ascii_lowercase();
+        if !APPROVAL_ACTIONS.contains(&action.as_str()) {
+            return Err(ApprovalError::Validation(format!(
+                "不支持的审批动作 {}，仅支持 create/update/delete",
+                req.action
+            )));
+        }
+
+        let domain = IdMasterDataDomain::from_str(req.domain.trim()).map_err(|_| {
+            ApprovalError::Validation(format!("无效的主数据域: {}", req.domain))
+        })?;
+
+        validate_approval_payload(&action, req.payload.as_ref())?;
+
+        let raw_id = req.master_data_id.trim();
+        let master_data_id = if raw_id.is_empty() {
+            if action != "create" {
+                return Err(ApprovalError::Validation(
+                    "update/delete 审批必须提供 master_data_id".to_string(),
+                ));
+            }
+            generate_master_data_id(domain)
+        } else {
+            let Some((id_domain, _)) = parse_master_data_id(raw_id) else {
+                return Err(ApprovalError::Validation(format!(
+                    "master_data_id 格式非法: {raw_id}"
+                )));
+            };
+            if id_domain != domain {
+                return Err(ApprovalError::Validation(
+                    "master_data_id 前缀与 domain 不一致".to_string(),
+                ));
+            }
+            raw_id.to_string()
+        };
+
         let approval = sqlx::query_as::<_, MasterDataApproval>(
             r#"
             INSERT INTO public.core_mdm_approvals
@@ -795,9 +960,9 @@ impl MasterDataService {
             "#,
         )
         .bind(tenant_id)
-        .bind(&req.master_data_id)
+        .bind(&master_data_id)
         .bind(&req.domain)
-        .bind(&req.action)
+        .bind(&action)
         .bind(&requested_by)
         .bind(&req.payload)
         .fetch_one(&mut *scope)
@@ -806,8 +971,8 @@ impl MasterDataService {
         tracing::info!(
             "[MDM] 变更审批请求已创建: domain={}, master_data_id={}, action={}, requested_by={}",
             req.domain,
-            req.master_data_id,
-            req.action,
+            master_data_id,
+            action,
             requested_by
         );
 
@@ -815,6 +980,9 @@ impl MasterDataService {
     }
 
     /// 审批变更请求
+    ///
+    /// approved=true 时在同一事务内先应用变更到 core_master_data_refs，
+    /// 再更新审批状态；任一步失败整体回滚，审批单保持 pending。
     pub async fn review_approval(
         &self,
         scope: &mut ScopedTxn<'_>,
@@ -823,9 +991,34 @@ impl MasterDataService {
         approved: bool,
         reviewer: String,
         comment: Option<String>,
-    ) -> Result<MasterDataApproval, sqlx::Error> {
-        let status = if approved { "approved" } else { "rejected" };
+    ) -> Result<MasterDataApproval, ApprovalError> {
+        let current = sqlx::query_as::<_, MasterDataApproval>(
+            r#"
+            SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
+                   status, reviewed_by, reviewed_at, review_comment, payload
+            FROM public.core_mdm_approvals
+            WHERE id = $1 AND tenant_id = $2
+            FOR UPDATE
+            "#,
+        )
+        .bind(approval_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut *scope)
+        .await?
+        .ok_or_else(|| ApprovalError::NotFound("审批请求不存在".to_string()))?;
 
+        if current.status != "pending" {
+            return Err(ApprovalError::Conflict(format!(
+                "审批请求当前状态为 {}，不可重复处理",
+                current.status
+            )));
+        }
+
+        if approved {
+            self.apply_approval(scope, &current, &reviewer).await?;
+        }
+
+        let status = if approved { "approved" } else { "rejected" };
         let approval = sqlx::query_as::<_, MasterDataApproval>(
             r#"
             UPDATE public.core_mdm_approvals
@@ -842,7 +1035,7 @@ impl MasterDataService {
         .bind(tenant_id)
         .fetch_optional(&mut *scope)
         .await?
-        .ok_or_else(|| sqlx::Error::RowNotFound)?;
+        .ok_or_else(|| ApprovalError::Conflict("审批请求状态已被并发修改".to_string()))?;
 
         tracing::info!(
             "[MDM] 变更审批已处理: approval_id={}, status={}, reviewer={}",
@@ -852,6 +1045,213 @@ impl MasterDataService {
         );
 
         Ok(approval)
+    }
+
+    /// 把审批 payload 应用到 refs（仅 approved 分支调用）
+    async fn apply_approval(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        approval: &MasterDataApproval,
+        operator: &str,
+    ) -> Result<(), ApprovalError> {
+        let payload = approval.payload.as_ref();
+        let tenant_id = approval.tenant_id;
+
+        match approval.action.as_str() {
+            "create" => {
+                let obj = payload.and_then(Value::as_object).ok_or_else(|| {
+                    ApprovalError::Validation("create 审批 payload 必须是对象".to_string())
+                })?;
+                let code = payload_str(obj, "code")?;
+                let name = payload_str(obj, "name")?;
+                let source_service = payload_str(obj, "source_service")?;
+                let status = obj
+                    .get("status")
+                    .and_then(Value::as_str)
+                    .unwrap_or("active");
+
+                self.ref_service
+                    .insert_master_data_ref_tx(
+                        scope,
+                        &approval.master_data_id,
+                        tenant_id,
+                        &approval.domain,
+                        &code,
+                        &name,
+                        status,
+                        &source_service,
+                    )
+                    .await
+                    .map_err(|err| {
+                        if err
+                            .as_database_error()
+                            .is_some_and(|db| db.is_unique_violation())
+                        {
+                            ApprovalError::Conflict(format!(
+                                "主数据引用已存在: {}",
+                                approval.master_data_id
+                            ))
+                        } else {
+                            ApprovalError::Db(err)
+                        }
+                    })?;
+
+                let created: MasterDataRef = self
+                    .ref_service
+                    .get_by_id_tx(scope, &approval.master_data_id, tenant_id)
+                    .await?
+                    .map(MasterDataRef::from)
+                    .ok_or_else(|| ApprovalError::NotFound("主数据引用写入后不可见".to_string()))?;
+
+                self.audit_write(
+                    "approval_create",
+                    Some(approval.id),
+                    Some(operator),
+                    approval.payload.clone(),
+                    "success",
+                    None,
+                )
+                .await;
+                self.log_change(
+                    scope,
+                    &created,
+                    MasterDataAction::Created,
+                    Some(operator.to_string()),
+                    approval.payload.clone(),
+                )
+                .await?;
+                let _ = publish_master_data_event(
+                    &created,
+                    MasterDataAction::Created,
+                    Some(operator.to_string()),
+                    approval.payload.clone(),
+                )
+                .await;
+            }
+            "update" => {
+                let existing: MasterDataRef = self
+                    .ref_service
+                    .get_by_id_tx(scope, &approval.master_data_id, tenant_id)
+                    .await?
+                    .map(MasterDataRef::from)
+                    .ok_or_else(|| {
+                        ApprovalError::NotFound(format!(
+                            "主数据引用不存在: {}",
+                            approval.master_data_id
+                        ))
+                    })?;
+
+                let obj = payload.and_then(Value::as_object);
+                let new_name = obj
+                    .and_then(|o| o.get("name"))
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|v| !v.is_empty())
+                    .unwrap_or(&existing.name)
+                    .to_string();
+                let new_status = obj
+                    .and_then(|o| o.get("status"))
+                    .and_then(Value::as_str)
+                    .unwrap_or(&existing.status)
+                    .to_string();
+
+                let updated: MasterDataRef = self
+                    .ref_service
+                    .update_master_data_ref_tx(
+                        scope,
+                        &approval.master_data_id,
+                        tenant_id,
+                        &new_name,
+                        &new_status,
+                    )
+                    .await?
+                    .into();
+
+                let action = if updated.status != existing.status {
+                    if updated.status == "active" {
+                        MasterDataAction::Activated
+                    } else {
+                        MasterDataAction::Deactivated
+                    }
+                } else {
+                    MasterDataAction::Updated
+                };
+
+                self.audit_write(
+                    "approval_update",
+                    Some(approval.id),
+                    Some(operator),
+                    approval.payload.clone(),
+                    "success",
+                    None,
+                )
+                .await;
+                self.log_change(
+                    scope,
+                    &updated,
+                    action,
+                    Some(operator.to_string()),
+                    approval.payload.clone(),
+                )
+                .await?;
+                let _ = publish_master_data_event(
+                    &updated,
+                    action,
+                    Some(operator.to_string()),
+                    approval.payload.clone(),
+                )
+                .await;
+            }
+            "delete" => {
+                let existing: MasterDataRef = self
+                    .ref_service
+                    .get_by_id_tx(scope, &approval.master_data_id, tenant_id)
+                    .await?
+                    .map(MasterDataRef::from)
+                    .ok_or_else(|| {
+                        ApprovalError::NotFound(format!(
+                            "主数据引用不存在: {}",
+                            approval.master_data_id
+                        ))
+                    })?;
+
+                self.ref_service
+                    .soft_delete_master_data_ref_tx(scope, &approval.master_data_id, tenant_id)
+                    .await?;
+
+                self.audit_write(
+                    "approval_delete",
+                    Some(approval.id),
+                    Some(operator),
+                    approval.payload.clone(),
+                    "success",
+                    None,
+                )
+                .await;
+                self.log_change(
+                    scope,
+                    &existing,
+                    MasterDataAction::Deleted,
+                    Some(operator.to_string()),
+                    approval.payload.clone(),
+                )
+                .await?;
+                let _ = publish_master_data_event(
+                    &existing,
+                    MasterDataAction::Deleted,
+                    Some(operator.to_string()),
+                    approval.payload.clone(),
+                )
+                .await;
+            }
+            other => {
+                return Err(ApprovalError::Validation(format!(
+                    "不支持的审批动作: {other}"
+                )));
+            }
+        }
+
+        Ok(())
     }
 
     /// 查询待审批列表
@@ -1359,7 +1759,12 @@ pub async fn create_approval_handler(
         .await
     {
         Ok(approval) => ApiResponse::success(approval, "审批请求已创建"),
-        Err(e) => ApiResponse::from(TopemsError::internal("create_approval_handler", e)),
+        Err(ApprovalError::Validation(msg)) => ApiResponse::bad_request(&msg),
+        Err(ApprovalError::NotFound(msg)) => ApiResponse::not_found(&msg),
+        Err(ApprovalError::Conflict(msg)) => ApiResponse::conflict(&msg),
+        Err(ApprovalError::Db(e)) => {
+            ApiResponse::from(TopemsError::internal("create_approval_handler", e))
+        }
     }
 }
 
@@ -1407,8 +1812,12 @@ pub async fn review_approval_handler(
             };
             ApiResponse::success(approval, msg)
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("审批请求不存在或已处理"),
-        Err(e) => ApiResponse::from(TopemsError::internal("review_approval_handler", e)),
+        Err(ApprovalError::Validation(msg)) => ApiResponse::bad_request(&msg),
+        Err(ApprovalError::NotFound(msg)) => ApiResponse::not_found(&msg),
+        Err(ApprovalError::Conflict(msg)) => ApiResponse::conflict(&msg),
+        Err(ApprovalError::Db(e)) => {
+            ApiResponse::from(TopemsError::internal("review_approval_handler", e))
+        }
     }
 }
 

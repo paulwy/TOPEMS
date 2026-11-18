@@ -544,6 +544,9 @@ async fn main() -> anyhow::Result<()> {
         ),
     };
 
+    // 主数据事件消费者：按稳定 master_data_id 把各服务事件 UPSERT 到 core_master_data_refs
+    modules::master::consumer::spawn_master_data_consumer(state.pool.clone());
+
     // Spawn background task to cleanup timeout WebSocket connections
     let ws_state_cleanup = state.ws_state.clone();
     tokio::spawn(async move {

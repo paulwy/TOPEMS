@@ -301,6 +301,8 @@ pub struct StaleRecord {
 }
 
 /// 对账结果
+///
+/// 本期是 MDM 自洽检查（不拉取外部源服务），因此没有「源系统缺失」类指标。
 #[derive(Debug, Clone, Serialize)]
 pub struct ReconciliationResult {
     pub tenant_id: Uuid,
@@ -309,8 +311,6 @@ pub struct ReconciliationResult {
     pub total_checked: i64,
     pub consistent: i64,
     pub inconsistent: i64,
-    pub missing_in_mdm: i64,
-    pub missing_in_source: i64,
     pub details: Vec<ReconciliationDetail>,
 }
 
@@ -320,7 +320,8 @@ pub struct ReconciliationDetail {
     pub domain: String,
     pub source_service: String,
     pub mdm_count: i64,
-    pub source_count: i64,
+    /// 实际参与核对的记录数；自洽检查口径下等于 mdm_count
+    pub checked_count: i64,
     pub consistent: i64,
     pub inconsistent: i64,
     pub status: String,

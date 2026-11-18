@@ -60,6 +60,9 @@ topems-test-support = { path = "../../lib/test-support" }
 serde_urlencoded.workspace = true
 tempfile.workspace = true
 bytes.workspace = true
+axum-test.workspace = true
+# Redis 网络级消费测试：需要 XGROUP 预建组从 $ 开始、XPENDING 查 ACK、清理 stream/group
+redis = { workspace = true, features = ["tokio-comp"] }
 
 [[bin]]
 name = "topems-unified-core"

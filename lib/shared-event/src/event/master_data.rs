@@ -9,15 +9,20 @@ use std::str::FromStr;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
-/// master_data_id 生成器
+/// 由实体 UUID 派生稳定的 master_data_id。
 ///
-/// 生成格式：{prefix}-{timestamp}-{random}
-/// 例如：cust-20260722-abc123
+/// 同一实体反复发布必须得到同一个 ID，消费端才能按 master_data_id 收敛成一行。
+/// 格式与 `topems_shared_core::id::generate_master_data_id` 一致：`{prefix}-{uuid}`。
+pub fn master_data_id_for(domain: MasterDataDomain, entity_id: Uuid) -> String {
+    format!("{}-{}", domain.prefix(), entity_id)
+}
+
+/// 生成随机 master_data_id（仅用于没有实体 UUID 的临时场景）
+///
+/// 主数据事件生产路径禁止使用本函数：每次调用都会得到新 ID，
+/// 消费端会为同一实体写入多行。生产路径请用 [`master_data_id_for`]。
 pub fn generate_master_data_id(domain: MasterDataDomain) -> String {
-    let timestamp = Utc::now().format("%Y%m%d").to_string();
-    let uuid_str = Uuid::new_v4().to_string();
-    let random = uuid_str.split('-').next().unwrap_or("");
-    format!("{}-{}-{}", domain.prefix(), timestamp, random)
+    master_data_id_for(domain, Uuid::new_v4())
 }
 
 /// 解析 master_data_id 获取域信息
@@ -58,6 +63,18 @@ impl MasterDataDomain {
             MasterDataDomain::Organization => "org",
             MasterDataDomain::Employee => "emp",
             MasterDataDomain::AccountSubject => "acct",
+        }
+    }
+
+    /// 域的 snake_case 名称（与 `core_master_data_refs.domain` 落库值一致）
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            MasterDataDomain::Customer => "customer",
+            MasterDataDomain::Supplier => "supplier",
+            MasterDataDomain::Material => "material",
+            MasterDataDomain::Organization => "organization",
+            MasterDataDomain::Employee => "employee",
+            MasterDataDomain::AccountSubject => "account_subject",
         }
     }
 
@@ -459,6 +476,36 @@ mod tests {
         assert_eq!(MasterDataDomain::Organization.prefix(), "org");
         assert_eq!(MasterDataDomain::Employee.prefix(), "emp");
         assert_eq!(MasterDataDomain::AccountSubject.prefix(), "acct");
+    }
+
+    #[test]
+    fn test_master_data_id_for_is_stable() {
+        let entity_id = Uuid::new_v4();
+        let first = master_data_id_for(MasterDataDomain::Material, entity_id);
+        let second = master_data_id_for(MasterDataDomain::Material, entity_id);
+        assert_eq!(first, second, "同一实体必须得到同一个 master_data_id");
+        assert_eq!(first, format!("mat-{entity_id}"));
+        assert_ne!(
+            first,
+            master_data_id_for(MasterDataDomain::Material, Uuid::new_v4())
+        );
+        assert_eq!(
+            master_data_id_for(MasterDataDomain::AccountSubject, entity_id),
+            format!("acct-{entity_id}")
+        );
+    }
+
+    #[test]
+    fn test_domain_as_str() {
+        assert_eq!(MasterDataDomain::Customer.as_str(), "customer");
+        assert_eq!(MasterDataDomain::Supplier.as_str(), "supplier");
+        assert_eq!(MasterDataDomain::Material.as_str(), "material");
+        assert_eq!(MasterDataDomain::Organization.as_str(), "organization");
+        assert_eq!(MasterDataDomain::Employee.as_str(), "employee");
+        assert_eq!(
+            MasterDataDomain::AccountSubject.as_str(),
+            "account_subject"
+        );
     }
 
     #[test]

@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::scope::Db;
+use crate::scope::{Db, ScopedTxn};
 
 /// 主数据引用（core schema：含 version 列）
 ///
@@ -143,6 +143,37 @@ impl MasterDataRefService {
         status: &str,
         source_service: &str,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
+        self.insert_master_data_ref_tx(
+            &mut scope,
+            master_data_id,
+            tenant_id,
+            domain,
+            code,
+            name,
+            status,
+            source_service,
+        )
+        .await?;
+        scope.commit().await?;
+        Ok(())
+    }
+
+    /// 插入主数据引用（复用调用方事务）
+    ///
+    /// 与 [`Self::insert_master_data_ref`] 行为一致，但不自行开事务/提交，
+    /// 供请求事务内的「refs + 变更日志 + 审批状态」原子写入。
+    pub async fn insert_master_data_ref_tx(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        master_data_id: &str,
+        tenant_id: Uuid,
+        domain: &str,
+        code: &str,
+        name: &str,
+        status: &str,
+        source_service: &str,
+    ) -> Result<(), sqlx::Error> {
         let sql = format!(
             r#"
             INSERT INTO {}
@@ -151,7 +182,6 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
@@ -160,9 +190,81 @@ impl MasterDataRefService {
             .bind(name)
             .bind(status)
             .bind(source_service)
-            .execute(&mut scope)
+            .execute(&mut *scope)
             .await?;
+        Ok(())
+    }
+
+    /// 按 master_data_id UPSERT（core schema，事件消费路径）
+    ///
+    /// 同一实体的事件使用稳定 master_data_id，重复消费只会更新同一行。
+    pub async fn upsert_master_data_ref(
+        &self,
+        master_data_id: &str,
+        tenant_id: Uuid,
+        domain: &str,
+        code: &str,
+        name: &str,
+        status: Option<&str>,
+        source_service: &str,
+    ) -> Result<(), sqlx::Error> {
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
+        self.upsert_master_data_ref_tx(
+            &mut scope,
+            master_data_id,
+            tenant_id,
+            domain,
+            code,
+            name,
+            status,
+            source_service,
+        )
+        .await?;
         scope.commit().await?;
+        Ok(())
+    }
+
+    /// 按 master_data_id UPSERT（复用调用方事务）
+    ///
+    /// `status` 为 `None` 时：插入取 `active`，更新保留原状态。
+    pub async fn upsert_master_data_ref_tx(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        master_data_id: &str,
+        tenant_id: Uuid,
+        domain: &str,
+        code: &str,
+        name: &str,
+        status: Option<&str>,
+        source_service: &str,
+    ) -> Result<(), sqlx::Error> {
+        let sql = format!(
+            r#"
+            INSERT INTO {table}
+                (master_data_id, tenant_id, domain, code, name, status, version, source_service, last_synced_at, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, COALESCE($6, 'active'), 1, $7, NOW(), NOW(), NOW())
+            ON CONFLICT (master_data_id) DO UPDATE SET
+                domain = EXCLUDED.domain,
+                code = EXCLUDED.code,
+                name = EXCLUDED.name,
+                status = COALESCE($6, {table}.status),
+                source_service = EXCLUDED.source_service,
+                version = {table}.version + 1,
+                last_synced_at = NOW(),
+                updated_at = NOW()
+            "#,
+            table = self.table_name
+        );
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(master_data_id)
+            .bind(tenant_id)
+            .bind(domain)
+            .bind(code)
+            .bind(name)
+            .bind(status)
+            .bind(source_service)
+            .execute(&mut *scope)
+            .await?;
         Ok(())
     }
 
@@ -171,6 +273,23 @@ impl MasterDataRefService {
     /// 替代 unified-core/master/handlers.rs update_ref 内的 UPDATE ... RETURNING *。
     pub async fn update_master_data_ref(
         &self,
+        master_data_id: &str,
+        tenant_id: Uuid,
+        name: &str,
+        status: &str,
+    ) -> Result<MasterDataRef, sqlx::Error> {
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
+        let record = self
+            .update_master_data_ref_tx(&mut scope, master_data_id, tenant_id, name, status)
+            .await?;
+        scope.commit().await?;
+        Ok(record)
+    }
+
+    /// 更新主数据引用（复用调用方事务）
+    pub async fn update_master_data_ref_tx(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         master_data_id: &str,
         tenant_id: Uuid,
         name: &str,
@@ -186,15 +305,13 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let record = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(name)
             .bind(status)
             .bind(master_data_id)
             .bind(tenant_id)
-            .fetch_one(&mut scope)
+            .fetch_one(&mut *scope)
             .await?;
-        scope.commit().await?;
         Ok(record)
     }
 
@@ -206,6 +323,20 @@ impl MasterDataRefService {
         master_data_id: &str,
         tenant_id: Uuid,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
+        self.soft_delete_master_data_ref_tx(&mut scope, master_data_id, tenant_id)
+            .await?;
+        scope.commit().await?;
+        Ok(())
+    }
+
+    /// 软删除主数据引用（复用调用方事务）
+    pub async fn soft_delete_master_data_ref_tx(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        master_data_id: &str,
+        tenant_id: Uuid,
+    ) -> Result<(), sqlx::Error> {
         let sql = format!(
             r#"
             UPDATE {}
@@ -214,13 +345,11 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
-            .execute(&mut scope)
+            .execute(&mut *scope)
             .await?;
-        scope.commit().await?;
         Ok(())
     }
 
@@ -232,20 +361,30 @@ impl MasterDataRefService {
         master_data_id: &str,
         tenant_id: Uuid,
     ) -> Result<Option<MasterDataRef>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let result = self.get_by_id_tx(&mut scope, master_data_id, tenant_id).await?;
+        scope.commit().await?;
+        Ok(result)
+    }
+
+    /// 按 master_data_id + tenant_id 查询（复用调用方事务）
+    pub async fn get_by_id_tx(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        master_data_id: &str,
+        tenant_id: Uuid,
+    ) -> Result<Option<MasterDataRef>, sqlx::Error> {
         let sql = format!(
             r#"SELECT master_data_id, tenant_id, domain, code, name, status, version,
                       source_service, last_synced_at, created_at, updated_at
                FROM {} WHERE master_data_id = $1 AND tenant_id = $2"#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let result = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
-            .fetch_optional(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(result)
+            .fetch_optional(&mut *scope)
+            .await
     }
 
     /// 按 tenant_id + domain + code 查询

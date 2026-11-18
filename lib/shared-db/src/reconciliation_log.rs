@@ -138,15 +138,22 @@ impl ReconciliationLogService {
     ) -> Result<u64, sqlx::Error> {
         let sql = format!(
             r#"
-            INSERT INTO {} (tenant_id, domain, master_data_id, issue_type, description, detected_at, resolved)
-            SELECT $1, $2, master_data_id, 'pending_sync',
-                   format('主数据 %s 在域 %s 中处于待同步状态', master_data_id, $2),
+            INSERT INTO {log} (tenant_id, domain, master_data_id, issue_type, description, detected_at, resolved)
+            SELECT $1, $2, r.master_data_id, 'pending_sync',
+                   format('主数据 %s 在域 %s 中处于待同步状态', r.master_data_id, $2),
                    NOW(), false
-            FROM {}
-            WHERE tenant_id = $1 AND domain = $2 AND status = 'pending_sync'
+            FROM {refs} r
+            WHERE r.tenant_id = $1 AND r.domain = $2 AND r.status = 'pending_sync'
+              AND NOT EXISTS (
+                  SELECT 1 FROM {log} l
+                  WHERE l.tenant_id = $1 AND l.domain = $2
+                    AND l.master_data_id = r.master_data_id
+                    AND l.issue_type = 'pending_sync' AND l.resolved = false
+              )
             ON CONFLICT DO NOTHING
             "#,
-            self.table_name, self.refs_table_name
+            log = self.table_name,
+            refs = self.refs_table_name
         );
         let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let result = sqlx::query(sqlx::AssertSqlSafe(sql))

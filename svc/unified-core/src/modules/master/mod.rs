@@ -9,6 +9,7 @@
 //!
 //! 所有 CRUD 操作都会自动发布 MasterDataEvent 事件，通知下游服务同步。
 
+pub mod consumer;
 pub mod handlers;
 pub mod models;
 

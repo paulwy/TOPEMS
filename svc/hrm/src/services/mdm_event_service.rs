@@ -2,7 +2,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use topems_shared_event::event::{
-    generate_master_data_id, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    master_data_id_for, MasterDataAction, MasterDataDomain, MasterDataEvent,
 };
 
 /// MDM 主数据事件发布服务
@@ -34,7 +34,8 @@ impl MdmEventService {
         action: MasterDataAction,
         changed_fields: Option<Vec<String>>,
     ) {
-        let master_data_id = generate_master_data_id(MasterDataDomain::Employee);
+        // 稳定 ID：同一员工反复发布得到同一个 master_data_id
+        let master_data_id = master_data_id_for(MasterDataDomain::Employee, employee_id);
 
         let payload = json!({
             "id": employee_id,
@@ -106,7 +107,8 @@ impl MdmEventService {
         action: MasterDataAction,
         changed_fields: Option<Vec<String>>,
     ) {
-        let master_data_id = generate_master_data_id(MasterDataDomain::Organization);
+        // 稳定 ID：同一部门反复发布得到同一个 master_data_id
+        let master_data_id = master_data_id_for(MasterDataDomain::Organization, department_id);
 
         let payload = json!({
             "id": department_id,
@@ -124,7 +126,7 @@ impl MdmEventService {
             MasterDataDomain::Organization,
             action,
             master_data_id.clone(),
-            name.to_string(),
+            code.unwrap_or_default().to_string(),
             "hrm",
             payload,
         );
@@ -175,7 +177,8 @@ impl MdmEventService {
         status: &str,
         action: MasterDataAction,
     ) {
-        let master_data_id = generate_master_data_id(MasterDataDomain::Organization);
+        // 稳定 ID：同一公司反复发布得到同一个 master_data_id
+        let master_data_id = master_data_id_for(MasterDataDomain::Organization, org_id);
 
         let payload = json!({
             "id": org_id,
@@ -190,7 +193,7 @@ impl MdmEventService {
             MasterDataDomain::Organization,
             action,
             master_data_id.clone(),
-            name.to_string(),
+            code.to_string(),
             "hrm",
             payload,
         );

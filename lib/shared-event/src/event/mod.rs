@@ -74,8 +74,8 @@ pub use event_types::{
 };
 pub use lims_ehs_keys::{fnv1a_64, fnv1a_64_hex8, lims_abnormal_hazard_no};
 pub use master_data::{
-    generate_master_data_id, parse_master_data_id, validate_master_data_id, MasterDataAction,
-    MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef,
+    generate_master_data_id, master_data_id_for, parse_master_data_id, validate_master_data_id,
+    MasterDataAction, MasterDataDomain, MasterDataEvent, MasterDataPublisher, MasterDataRef,
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};
 pub use publisher::EventPublisher;

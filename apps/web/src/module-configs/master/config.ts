@@ -33,6 +33,7 @@ const MASTER_PATHS = {
   versioning: '/master/versioning',
   governance: '/master/governance',
   quality: '/master/quality',
+  closedLoop: '/master/closed-loop',
   knowledgeGraph: '/master/knowledge-graph',
   semanticSearch: '/master/semantic-search',
   disasterRecovery: '/master/disaster-recovery',
@@ -184,6 +185,19 @@ const qualityRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master-data:quality:read'],
   action: 'read',
 };
+const closedLoopRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.closedLoop,
+  element: lazyWithRetry(() => import('@/pages/master/MdmClosedLoopPage'), 'MdmClosedLoopPage'),
+  module: 'master',
+  code: 'master-closed-loop',
+  title: i18n.t('master.closedLoop.title'),
+  titleKey: 'master.closedLoop.title',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['system:read'],
+  action: 'read',
+};
+
 const governanceRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.governance,
   element: lazyWithRetry(
@@ -237,6 +251,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     versioningRoute,
     governanceRoute,
     qualityRoute,
+    closedLoopRoute,
     knowledgeGraphRoute,
     semanticSearchRoute,
     disasterRecoveryRoute,
@@ -361,6 +376,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.quality.desc'),
+    },
+    {
+      code: 'master-closed-loop',
+      label: i18n.t('master.closedLoop.title'),
+      labelKey: 'master.closedLoop.title',
+      icon: 'RefreshCw',
+      path: MASTER_PATHS.closedLoop,
+      permission: 'system:read',
+      order: 9,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.closedLoop.subtitle'),
     },
     {
       code: 'master-knowledge-graph',

@@ -2,7 +2,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use topems_shared_event::event::{
-    generate_master_data_id, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    master_data_id_for, MasterDataAction, MasterDataDomain, MasterDataEvent,
 };
 
 /// MDM 主数据事件发布服务 - SCM 供应商领域
@@ -23,6 +23,7 @@ impl MdmEventService {
     /// 发布供应商主数据变更事件
     pub async fn publish_supplier_event(
         &self,
+        tenant_id: Uuid,
         supplier_id: Uuid,
         code: &str,
         name: &str,
@@ -33,7 +34,8 @@ impl MdmEventService {
         action: MasterDataAction,
         changed_fields: Option<Vec<String>>,
     ) {
-        let master_data_id = generate_master_data_id(MasterDataDomain::Supplier);
+        // 稳定 ID：同一供应商反复发布得到同一个 master_data_id
+        let master_data_id = master_data_id_for(MasterDataDomain::Supplier, supplier_id);
 
         let payload = json!({
             "id": supplier_id,
@@ -47,11 +49,11 @@ impl MdmEventService {
         });
 
         let mut event = MasterDataEvent::new(
-            topems_shared_db::scope::PLATFORM_TENANT_ID, // SCM 事件无租户维度：显式平台通道常量
+            tenant_id,
             MasterDataDomain::Supplier,
             action,
             master_data_id.clone(),
-            name.to_string(),
+            code.to_string(),
             "scm",
             payload,
         );
@@ -133,6 +135,7 @@ mod tests {
         let result = tokio::time::timeout(
             std::time::Duration::from_secs(30),
             svc.publish_supplier_event(
+                Uuid::new_v4(),
                 supplier_id,
                 "SUP-001",
                 "Acme Corp",

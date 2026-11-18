@@ -528,6 +528,30 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             "/mdm/refs/by-code/{domain}/{code}",
             get(modules::master::handlers::get_ref_by_code_handler),
         )
+        .route(
+            "/mdm/approvals/pending",
+            get(modules::master::handlers::list_pending_approvals_handler),
+        )
+        .route(
+            "/mdm/approvals/history/{master_data_id}",
+            get(modules::master::handlers::list_approval_history_handler),
+        )
+        .route(
+            "/mdm/quality/report",
+            get(modules::master::handlers::get_quality_report_handler),
+        )
+        .route(
+            "/mdm/quality/duplicates",
+            get(modules::master::handlers::list_duplicates_handler),
+        )
+        .route(
+            "/mdm/quality/stale",
+            get(modules::master::handlers::list_stale_handler),
+        )
+        .route(
+            "/mdm/reconciliation/logs",
+            get(modules::master::handlers::list_reconciliation_logs_handler),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:read"),
@@ -542,6 +566,22 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             "/mdm/refs/{master_data_id}",
             put(modules::master::handlers::update_ref_handler)
                 .delete(modules::master::handlers::delete_ref_handler),
+        )
+        .route(
+            "/mdm/approvals",
+            post(modules::master::handlers::create_approval_handler),
+        )
+        .route(
+            "/mdm/approvals/{approval_id}/review",
+            post(modules::master::handlers::review_approval_handler),
+        )
+        .route(
+            "/mdm/reconciliation/run",
+            post(modules::master::handlers::run_reconciliation_handler),
+        )
+        .route(
+            "/mdm/reconciliation/logs/{issue_id}/resolve",
+            post(modules::master::handlers::resolve_reconciliation_issue_handler),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),

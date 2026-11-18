@@ -631,6 +631,9 @@ jobs:
         env:
           DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
           REDIS_URL: redis://localhost:6379/0
+          # master Redis 网络级消费测试：用独立 DB 隔离（该测试会 DEL mat 域 stream，
+          # 与并行测试共用的 /0 冲突）
+          TEST_REDIS_URL: redis://localhost:6379/1
           JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
           APP_ENV: test
         run: cargo nextest run --workspace --test-threads=4

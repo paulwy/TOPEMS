@@ -13,7 +13,7 @@ mod file;
 mod flow;
 // V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*），Portal BFF 统一承载用户服务域
 mod iam;
-mod master;
+pub mod master;
 mod migration;
 mod rate_limit_config;
 // V68.1 A2.1: routes/monitor.rs 旧适配层依赖 modules::monitor（已拆到 svc/monitor），这里不再载入

@@ -607,6 +607,8 @@ pub async fn create_supplier(
     if let Ok(supplier) = &result {
         let mdm_service = MdmEventService::new();
         let sid = supplier.id;
+        let event_tenant = tenant_opt.unwrap_or(Uuid::nil());
+        let scode = supplier.supplier_no.clone().unwrap_or_default();
         let sname = supplier.name.clone();
         let scontact_name = supplier.contact_name.clone();
         let scontact_phone = supplier.contact_phone.clone();
@@ -615,8 +617,9 @@ pub async fn create_supplier(
         tokio::spawn(async move {
             mdm_service
                 .publish_supplier_event(
+                    event_tenant,
                     sid,
-                    "",
+                    &scode,
                     &sname,
                     scontact_name.as_deref(),
                     scontact_phone.as_deref(),
@@ -929,6 +932,12 @@ pub async fn update_supplier(
     if let Ok(supplier) = &result {
         let mdm_service = MdmEventService::new();
         let sid = supplier.id;
+        let event_tenant = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil());
+        let scode = supplier.supplier_no.clone().unwrap_or_default();
         let sname = supplier.name.clone();
         let scontact_name = supplier.contact_name.clone();
         let scontact_phone = supplier.contact_phone.clone();
@@ -937,8 +946,9 @@ pub async fn update_supplier(
         tokio::spawn(async move {
             mdm_service
                 .publish_supplier_event(
+                    event_tenant,
                     sid,
-                    "",
+                    &scode,
                     &sname,
                     scontact_name.as_deref(),
                     scontact_phone.as_deref(),
@@ -1113,9 +1123,15 @@ pub async fn delete_supplier(
     // 发布 MDM 主数据事件
     if status_str_clone == "success" {
         let mdm_service = MdmEventService::new();
+        let event_tenant = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil());
         tokio::spawn(async move {
             mdm_service
                 .publish_supplier_event(
+                    event_tenant,
                     id,
                     "",
                     "",
