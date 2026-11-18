@@ -37,10 +37,29 @@ _clean_cov_remnants() {
 _acc_freed() {
     [ -e "$1" ] || return 0
     local k
-    k=$(du -sk "$1" 2>/dev/null | awk '{print $1}')
-    [ -n "$k" ] || k=0
+    k=$(_dir_kb "$1")
     _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + k))
     return 0
+}
+
+# 目录/文件占用（KB，整数）。一次 du 同时供"展示"和"释放统计"用，
+# 避免原来 du -sh 展示 + _acc_freed 再 du 一次的重复遍历（target 40G 时等于多扫一遍）。
+_dir_kb() {
+    [ -e "$1" ] || { echo 0; return 0; }
+    local k
+    k=$(du -sk "$1" 2>/dev/null | awk '{print $1}')
+    [ -n "$k" ] || k=0
+    echo "$k"
+    return 0
+}
+
+# KB → 人类可读（29G / 646M / 92K），替代 du -sh 的第二次扫描
+_fmt_kb() {
+    awk -v k="${1:-0}" 'BEGIN {
+        if (k >= 1048576)      printf "%.0fG", k / 1048576;
+        else if (k >= 1024)    printf "%.0fM", k / 1024;
+        else                   printf "%.0fK", k;
+    }'
 }
 
 # =============================================
@@ -624,21 +643,27 @@ clean_project() {
 
     # ── 空间基线（用于结束报告 target/ 前后对比；必须在终止进程之后测量，
     #     否则与运行中构建的并发写入竞争，baseline 会失真导致报告显示 0.0G）──
+    #    2026-11：只在真的会动 target 时测量（原先无条件执行：默认增量 clean 也要
+    #              先把 40G 的 target 扫一遍，纯属白付几十秒）。同时这份结果直接复用为
+    #              "本次释放"，不再第二次 du。
     local target_before_kb=0
-    [ -d "$PROJECT_ROOT/target" ] && target_before_kb=$(du -sk "$PROJECT_ROOT/target" 2>/dev/null | awk '{print $1}')
+    if [ "$clean_rust" = true ]; then
+        target_before_kb=$(_dir_kb "$PROJECT_ROOT/target")
+    fi
 
     if [ "$clean_rust" = true ]; then
         # target/ 完整清理
         local dir="$PROJECT_ROOT/target"
         if [ -d "$dir" ]; then
             local size
-            size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+            size=$(_fmt_kb "$target_before_kb")
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 Rust 编译产物: $dir ($size)"
             else
                 _assert_safe_path "$dir" || return 1
                 info "清理 Rust 编译产物（直接删除 target/，等效 cargo clean 且更快）..."
-                _acc_freed "$dir"
+                # 复用基线结果：一次 du 同时用于展示与释放统计（原先是 du -sh + _acc_freed 两次全扫）
+                _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + target_before_kb))
                 rm -rf "$dir"
                 success "已清理 target/ ($size)"
                 did_clean=true
@@ -657,7 +682,7 @@ clean_project() {
         if [ -z "$wt_list" ]; then
             detail "未发现可清理的独立 worktree，跳过"
         else
-            local wt wt_dir wt_size
+            local wt wt_dir wt_size wt_kb
             while IFS= read -r wt; do
                 [ -n "$wt" ] || continue
                 if [ "$clean_yes" = true ]; then
@@ -666,12 +691,13 @@ clean_project() {
                     wt_dir="$wt/target/debug/incremental"
                 fi
                 if [ -d "$wt_dir" ]; then
-                    wt_size=$(du -sh "$wt_dir" 2>/dev/null | awk '{print $1}')
+                    wt_kb=$(_dir_kb "$wt_dir")
+                    wt_size=$(_fmt_kb "$wt_kb")
                     if [ "$dry_run" = true ]; then
                         info "[DRY-RUN] 将删除 worktree 缓存: $wt_dir ($wt_size)"
                     else
                         _assert_safe_path "$wt_dir" || return 1
-                        _acc_freed "$wt_dir"
+                        _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + wt_kb))
                         rm -rf "$wt_dir"
                         detail "已删除 $wt_dir ($wt_size)"
                         did_clean=true
@@ -723,13 +749,16 @@ clean_project() {
         local debug_cleaned=false
         for dir in "${debug_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                local size
-                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                # 一次 du 同时供展示与释放统计（原先 du -sh + _acc_freed 各扫一遍；
+                # deps/incremental 动辄 20G+，满编后这里是最贵的重复扫描）
+                local size_kb size
+                size_kb=$(_dir_kb "$dir")
+                size=$(_fmt_kb "$size_kb")
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
                     _assert_safe_path "$dir" || return 1
-                    _acc_freed "$dir"
+                    _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + size_kb))
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -741,7 +770,7 @@ clean_project() {
             local debug_mode="Rust 增量缓存（debug+release incremental）"
             [ "$clean_debug_full" = true ] && debug_mode="debug 产物（增量+依赖+构建脚本+examples）"
             if [ "$debug_cleaned" = true ]; then
-                info "已清理 $debug_mode；target/release 产物与 target/debug 二进制保留"
+                info "已清理 ${debug_mode}；target/release 产物与 target/debug 二进制保留"
             else
                 detail "$debug_mode 无残留，跳过"
             fi
@@ -751,15 +780,16 @@ clean_project() {
     # ── --sccache：清空 sccache 编译缓存（下次构建冷启动）─────────
     if [ "$clean_sccache" = true ]; then
         local sccache_dir="$HOME/Library/Caches/Mozilla.sccache"
-        local sccache_size
-        sccache_size=$(du -sh "$sccache_dir" 2>/dev/null | awk '{print $1}')
-        if [ -n "$sccache_size" ] && [ "$sccache_size" != "0B" ]; then
+        local sccache_kb sccache_size
+        sccache_kb=$(_dir_kb "$sccache_dir")
+        sccache_size=$(_fmt_kb "$sccache_kb")
+        if [ "$sccache_kb" -gt 0 ]; then
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将清空 sccache 缓存: $sccache_dir ($sccache_size)"
             else
                 sccache --stop-server >/dev/null 2>&1 || true
                 _assert_safe_path "$sccache_dir" || return 1
-                _acc_freed "$sccache_dir"
+                _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + sccache_kb))
                 rm -rf "${sccache_dir:?}/"* 2>/dev/null
                 detail "已清空 sccache 编译缓存 ($sccache_size)"
                 did_clean=true
@@ -781,13 +811,14 @@ clean_project() {
         )
         for dir in "${fe_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                local size
-                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                local size_kb size
+                size_kb=$(_dir_kb "$dir")
+                size=$(_fmt_kb "$size_kb")
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
                     _assert_safe_path "$dir" || return 1
-                    _acc_freed "$dir"
+                    _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + size_kb))
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -832,13 +863,14 @@ clean_project() {
             done
             for dir in "${deep_dirs[@]}"; do
                 if [ -d "$dir" ]; then
-                    local size
-                    size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                    local size_kb size
+                    size_kb=$(_dir_kb "$dir")
+                    size=$(_fmt_kb "$size_kb")
                     if [ "$dry_run" = true ]; then
                         info "[DRY-RUN] 将删除: $dir ($size)"
                     else
                         _assert_safe_path "$dir" || return 1
-                        _acc_freed "$dir"
+                        _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + size_kb))
                         rm -rf "$dir"
                         detail "已删除 $dir ($size)"
                         did_clean=true
@@ -910,13 +942,14 @@ clean_project() {
         )
         for dir in "${system_cache_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                local size
-                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                local size_kb size
+                size_kb=$(_dir_kb "$dir")
+                size=$(_fmt_kb "$size_kb")
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除系统缓存: $dir ($size)"
                 else
                     _assert_safe_path "$dir" || return 1
-                    _acc_freed "$dir"
+                    _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + size_kb))
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -925,13 +958,14 @@ clean_project() {
         done
 
         if [ -d "$HOME/.cargo/registry" ]; then
-            local cargo_size
-            cargo_size=$(du -sh "$HOME/.cargo/registry" 2>/dev/null | awk '{print $1}')
+            local cargo_kb cargo_size
+            cargo_kb=$(_dir_kb "$HOME/.cargo/registry")
+            cargo_size=$(_fmt_kb "$cargo_kb")
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 Cargo registry: $HOME/.cargo/registry ($cargo_size)"
             else
                 _assert_safe_path "$HOME/.cargo/registry" || return 1
-                _acc_freed "$HOME/.cargo/registry"
+                _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + cargo_kb))
                 rm -rf "$HOME/.cargo/registry"
                 detail "已删除 Cargo registry ($cargo_size)"
                 did_clean=true
@@ -1029,14 +1063,18 @@ clean_project() {
         )
         for dir in "${log_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                local size
-                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                # 2026-11：原实现 _acc_freed "$dir" 把整个 logs/ 目录算成"已释放"，
+                # 但这里只删 *.log/*.out —— 未删除的内容被虚增进报表。改为只统计待删文件。
+                local logs_kb size
+                logs_kb=$(find "$dir" \( -name "*.log" -o -name "*.out" \) -type f -exec du -k {} + 2>/dev/null \
+                          | awk '{s+=$1} END{print s+0}')
+                size=$(_fmt_kb "$logs_kb")
                 if [ "$dry_run" = true ]; then
-                    info "[DRY-RUN] 将清空: $dir ($size)"
+                    info "[DRY-RUN] 将清空: $dir (${size}，仅 *.log / *.out)"
                 else
-                    _acc_freed "$dir"
+                    _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + logs_kb))
                     find "$dir" \( -name "*.log" -o -name "*.out" \) -type f -delete 2>/dev/null
-                    detail "已清空 $dir 下的日志（*.log / *.out）"
+                    detail "已清空 $dir 下的日志（*.log / *.out，${size}）"
                     did_clean=true
                 fi
             fi
@@ -1085,14 +1123,18 @@ clean_project() {
         success "清理完成！"
         echo ""
         # 空间报告：target/ 前后对比 + 磁盘可用
-        local target_after_kb=0
-        [ -d "$PROJECT_ROOT/target" ] && target_after_kb=$(du -sk "$PROJECT_ROOT/target" 2>/dev/null | awk '{print $1}')
-        local freed_kb=$(( target_before_kb - target_after_kb ))
-        [ "$freed_kb" -lt 0 ] && freed_kb=0
-        info "target/ 占用: $(awk -v b="$target_before_kb" 'BEGIN{printf "%.1fG", b/1024/1024}') → $(awk -v a="$target_after_kb" 'BEGIN{printf "%.1fG", a/1024/1024}')（本次节省 $(awk -v f="$freed_kb" 'BEGIN{printf "%.1fG", f/1024/1024}')）"
+        #   2026-11：只有 --rust 才需要再量一次 target（其它分支删的都是 target 之外的东西），
+        #            否则这里又会把 40G 的 target 白扫一遍。
+        if [ "$clean_rust" = true ]; then
+            local target_after_kb=0
+            [ -d "$PROJECT_ROOT/target" ] && target_after_kb=$(_dir_kb "$PROJECT_ROOT/target")
+            local freed_kb=$(( target_before_kb - target_after_kb ))
+            [ "$freed_kb" -lt 0 ] && freed_kb=0
+            info "target/ 占用: $(_fmt_kb "$target_before_kb") → $(_fmt_kb "$target_after_kb")（本次节省 $(_fmt_kb "$freed_kb")）"
+        fi
         local total_freed_kb="${_CLEAN_FREED_KB:-0}"
         if [ "$total_freed_kb" -gt 0 ]; then
-            info "本次清理合计释放: $(awk -v f="$total_freed_kb" 'BEGIN{printf "%.2fGB", f/1024/1024}')"
+            info "本次清理合计释放: $(_fmt_kb "$total_freed_kb")"
         fi
         local avail_kb
         avail_kb=$(df -k "$PROJECT_ROOT" 2>/dev/null | awk 'NR==2 {print $4}')

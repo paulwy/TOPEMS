@@ -89,7 +89,7 @@ build_service() {
         case "$mem_status" in
             2)
                 _restore_cargo_jobs
-                error "内存不足，无法安全编译 $service_name。请释放内存后重试，或使用 --skip-mem-check 跳过。"
+                error "内存不足，无法安全编译 ${service_name}。请释放内存后重试，或使用 --skip-mem-check 跳过。"
                 return 1
                 ;;
             1)
@@ -371,7 +371,7 @@ build_all_backend() {
                 _check_available_memory >/dev/null 2>&1
                 cur_mem=$?
                 if [ $cur_mem -eq 2 ]; then
-                    error "内存仍未恢复，跳过 $svc。"
+                    error "内存仍未恢复，跳过 ${svc}。"
                     build_failed=$((build_failed + 1))
                     failed_list="$failed_list $svc"
                     continue
@@ -570,7 +570,7 @@ build_all() {
         echo "  $0 run                             # 一键启动 DB+Redis+所有服务"
         return 0
     else
-        error "全量编译失败（后端=$backend_result 前端=$frontend_result）"
+        error "全量编译失败（后端=$backend_result 前端=${frontend_result}）"
         return 1
     fi
 }
@@ -624,7 +624,7 @@ test_frontend() {
                 shard_index="${arg#shard:}"
                 ;;
             *)
-                warning "未知参数: $arg（已忽略）"
+                warning "未知参数: ${arg}（已忽略）"
                 ;;
         esac
     done
@@ -663,7 +663,7 @@ test_frontend() {
     esac
 
     if [ -z "$script_name" ] || ! has_script "$script_name"; then
-        error "apps/web/package.json 未定义脚本: $script_name（可用: test, test:unit, test:component, test:smoke, test:coverage, test:shard:1..8）"
+        error "apps/web/package.json 未定义脚本: ${script_name}（可用: test, test:unit, test:component, test:smoke, test:coverage, test:shard:1..8）"
         return 1
     fi
 
@@ -718,7 +718,7 @@ test_frontend() {
         return 0
     fi
 
-    error "前端测试失败（exit=$rc）"
+    error "前端测试失败（exit=${rc}）"
     if [ -n "$test_files_line" ]; then detail "  $test_files_line"; fi
     if [ -n "$tests_line" ];      then detail "  $tests_line"; fi
     detail "失败摘要（日志末 40 行）:"
