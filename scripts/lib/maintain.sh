@@ -120,7 +120,9 @@ _collect_worktrees() {
 }
 
 # 运行态占用探测：lsof -a -d txt +D，覆盖 debug/release 与任意 worktree 的进程
-# 输出: 每个占用进程一行 "PID <pid> <可执行文件路径>"
+# 输出: 每个占用进程一行 "PID <pid>  <进程名>（持有 <n> 个文件）"
+#   2026-11：原实现按"进程×文件"逐行输出，满编一次就刷 300+ 行 .rmeta 路径，无法阅读；
+#            改为按 PID 聚合（只报数量与进程名），让"谁在用 target"一眼可辨。
 _runtime_busy_procs() {
     local t
     for t in "$@"; do
@@ -128,17 +130,26 @@ _runtime_busy_procs() {
         lsof -a -d txt +D "$t" -Fpn 2>/dev/null \
             | awk '
                 /^p/ { pid = substr($0, 2) }
-                /^n/ { name = substr($0, 2); if (pid != "") print "PID " pid "  " name }
+                /^n/ { if (pid != "") print pid "\t" substr($0, 2) }
               '
-    done | sort -u
+    done | sort -u \
+         | awk -F'\t' '{ c[$1]++ } END { for (p in c) printf "%s %d\n", p, c[p] }' \
+         | while read -r pid n; do
+             [ -n "$pid" ] || continue
+             printf 'PID %s  %s（持有 %s 个文件）\n' "$pid" "$(ps -o comm= -p "$pid" 2>/dev/null || echo '?')" "$n"
+           done
     return 0
 }
 
 # 磁盘空间守卫
-# 用法: _check_disk_space
+# 用法: _check_disk_space [need_gb] [场景标签]
+#   need_gb  本次操作预估所需空间（GiB）。给出时按"可用 < 所需"阻断——默认的
+#            DISK_BLOCK_GB=5 只够防"立刻写满"，挡不住冷编跑到一半 ENOSPC（release 20G / debug 30G）。
 # 返回: 0=磁盘充足, 1=磁盘不足（阻断）
 
 _check_disk_space() {
+    local need_gb="${1:-}"
+    local label="${2:-本次构建}"
     local avail_kb
     avail_kb=$(df -k "$PROJECT_ROOT" 2>/dev/null | awk 'NR==2 {print $4}')
     [ -z "$avail_kb" ] && return 0
@@ -146,6 +157,11 @@ _check_disk_space() {
     # 阈值可配置：DISK_BLOCK_GB（阻断）/ DISK_WARN_GB（警告），默认 5 / 10
     local block_gb="${DISK_BLOCK_GB:-5}"
     local warn_gb="${DISK_WARN_GB:-10}"
+    if [ -n "$need_gb" ] && [ "$avail_gb" -lt "$need_gb" ]; then
+        error "磁盘仅剩 ${avail_gb}GiB，低于${label}预估所需 ${need_gb}GiB（中途会 ENOSPC）"
+        error "  建议先: $0 clean --debug-full（保留 release 产物，释放最快）；跳过检查: --skip-disk-check"
+        return 1
+    fi
     if [ "$avail_gb" -lt "$block_gb" ]; then
         error "磁盘仅剩 ${avail_gb}GiB！即将满盘，请先执行: $0 clean-all（全量释放；日常增量: $0 clean）"
         return 1
@@ -285,6 +301,14 @@ clean_project() {
     local dry_run=false
     local preflight=false
     local prune_done=false
+    local clean_kill_cargo=false
+    local clean_no_kill=false
+
+    # IDE 编译保护模式（2026-11）：CLEAN_KILL_CARGO=1 强制终止 / =0 一律不终止（拒绝清理）/ 未设置=auto
+    case "${CLEAN_KILL_CARGO:-auto}" in
+        1|true|yes) clean_kill_cargo=true ;;
+        0|false|no) clean_no_kill=true ;;
+    esac
 
     for arg in "$@"; do
         case "$arg" in
@@ -301,6 +325,8 @@ clean_project() {
             --tmp-logs)          clean_tmp_logs=true ;;
             --include-worktrees) clean_include_worktrees=true ;;
             --yes|-y)            clean_yes=true ;;
+            --kill-cargo)        clean_kill_cargo=true ;;
+            --no-kill-cargo)     clean_no_kill=true ;;
             --ollama)            clean_ollama=true ;;
             --all)               clean_all=true ;;
             --deep)              clean_deep=true ;;
@@ -308,7 +334,7 @@ clean_project() {
             --preflight)         preflight=true ;;
             *)
                 error "未知参数: $arg"
-                echo "可用选项: --rust --debug --debug-full --sccache --analyze --sqlx --frontend --cache --system-cache --ollama --logs --tmp-logs --include-worktrees --yes --all --deep --dry-run --preflight"
+                echo "可用选项: --rust --debug --debug-full --sccache --analyze --sqlx --frontend --cache --system-cache --ollama --logs --tmp-logs --include-worktrees --kill-cargo --no-kill-cargo --yes --all --deep --dry-run --preflight"
                 return 1
                 ;;
         esac
@@ -463,6 +489,32 @@ clean_project() {
         clean_frontend=true
     fi
 
+    # ── IDE 编译保护（2026-11 磁盘清理评审）──────────────────────────────
+    #    rust/debug 分支会终止仓库内 cargo/rustc。若这些编译是 IDE（Trae/VS Code/Cursor/
+    #    rust-analyzer）拉起的，杀掉后 IDE 会全量重编，等于"清理反而更吃磁盘"，且打断开发。
+    #    默认：命中 IDE 编译即拒绝清理；--kill-cargo / CLEAN_KILL_CARGO=1 强制终止；
+    #          --no-kill-cargo / CLEAN_KILL_CARGO=0 任何后台编译一律不终止（直接拒绝）。
+    #    位置：放在 lsof 运行态守卫之前——IDE 编译往往同时持有 target 文件，先给出可读原因。
+    if [ "$dry_run" = false ] && { [ "$clean_rust" = true ] || [ "$clean_debug" = true ] || [ "$clean_debug_full" = true ]; }; then
+        local _bp _ide
+        _bp=$(_repo_build_procs)
+        if [ -n "$_bp" ]; then
+            _ide=$(printf '%s\n' "$_bp" | awk -F'\t' '$2 ~ /^IDE:/')
+            if [ "$clean_no_kill" = true ]; then
+                error "检测到本仓库有后台编译在跑，已拒绝清理（--no-kill-cargo / CLEAN_KILL_CARGO=0）："
+                printf '%s\n' "$_bp" | awk -F'\t' '{printf "    PID %s  来源 %s\n", $1, $2}' >&2
+                error "  请等编译结束，或去掉该开关后重试（--kill-cargo 可强制终止）"
+                return 1
+            fi
+            if [ -n "$_ide" ] && [ "$clean_kill_cargo" = false ]; then
+                error "检测到 IDE 正在编译本仓库，已拒绝清理（清 target 会打断编译并触发 IDE 全量重编）："
+                printf '%s\n' "$_ide" | awk -F'\t' '{printf "    PID %s  来源 %s\n", $1, $2}' >&2
+                error "  确认要终止 IDE 编译：加 --kill-cargo（或 CLEAN_KILL_CARGO=1）"
+                return 1
+            fi
+        fi
+    fi
+
     # ── D1/D2: 运行态占用检测（lsof -a -d txt +D，覆盖 debug/release 与任意 worktree）──
     #    命中即拒绝删除（fail-closed），并输出 PID 与进程路径，避免删除运行中服务的产物。
     local -a runtime_targets=()
@@ -540,7 +592,14 @@ clean_project() {
         warn "即将清理系统级缓存，这将影响其他应用并触发全量重新下载！"
         echo "  包括: pnpm 缓存、Cargo registry、IDE 缓存、SCCache 等"
         echo ""
-        read -r -p "确认继续？(y/N): " confirm
+        # 2026-11：原实现 read 在 stdin 非 TTY（EOF）时返回非 0，配合 topems.sh 的 set -e
+        #           会直接静默退出——用户既看不到提示，也不知道被拦。改为显式拒绝。
+        if [ ! -t 0 ]; then
+            error "非交互环境（stdin 非 TTY）执行 --system-cache 必须显式加 --yes；已拒绝执行。"
+            return 1
+        fi
+        local confirm=""
+        read -r -p "确认继续？(y/N): " confirm || true
         if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
             warn "已取消系统缓存清理。"
             clean_system_cache=false

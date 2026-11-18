@@ -67,7 +67,7 @@ TOPEMS 服务管理工具
                             --skip-compile   只做遮蔽检查（快排）
   check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志
-  build <服务> [--online|--offline|--dev|--skip-sqlx-check]  编译单个服务（场景: 改单个服务快速验证；默认离线优先 + 缓存新鲜度门禁）
+  build <服务> [--online|--offline|--dev|--skip-sqlx-check|--skip-disk-check]  编译单个服务（场景: 改单个服务快速验证；默认离线优先 + 缓存新鲜度门禁 + 磁盘守卫）
   build-all [选项]        全量编译所有服务（后端+前端）
                             --prepare         先刷新 sqlx 缓存（需要 DATABASE_URL）
                             --only-core       只编核心服务（iam=unified-core）
@@ -145,7 +145,8 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 清理（场景: 磁盘治理——日常增量 clean_target.sh → 显式定向 clean → 危险 --system-cache）:
   clean-all             全量清理，等价 clean --all（Rust target + 前端 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
                          执行前打印删除计划并交互确认；非 TTY 环境必须显式加 --yes
-                         可追加参数：--dry-run 预览 / --deep / --system-cache / --include-worktrees / --yes 等
+                         可追加参数：--dry-run 预览 / --deep / --system-cache / --include-worktrees / --kill-cargo / --yes 等
+                         命中 IDE（Trae/VS Code/rust-analyzer）编译时默认拒绝执行，防打断并触发 IDE 全量重编
   clean [选项]            清理编译产物、缓存、日志（默认增量：只清 debug 增量缓存，保留产物与依赖）
                             --rust         全量清理 Rust 编译产物 (target/ 含 release, 嵌套 target 残留) + 终止后台 cargo/rustc 进程
                             --sqlx         清理 SQLx 离线编译缓存 (.sqlx，已入库 git，默认不删；清理后需 sqlx prepare 重新生成)
@@ -162,11 +163,15 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
                             --include-worktrees 扫描独立 worktree（git worktree list + /private/tmp/topems-* + ~/topems-wt-*）
                                            默认只删各 worktree 的 target/debug/incremental；删整个 target 需同时加 --yes
                             --yes, -y      跳过 --all 交互确认（非 TTY 必需）；配合 --include-worktrees 时删整个 worktree target
+                            --kill-cargo   强制终止仓库内后台/IDE 编译（默认遇 IDE 编译即拒绝清理）
+                            --no-kill-cargo 任何后台编译都不终止，命中即拒绝清理（= CLEAN_KILL_CARGO=0）
                             --all          全量清理（Rust target + 前端 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
                             --analyze      磁盘占用分析（只读排行，含 worktree / docker / ollama 汇总，不删除任何文件）
                             --dry-run      预演模式，仅显示将删除的内容
                           环境变量: DISK_BLOCK_GB（阻断阈值，默认5）/ DISK_WARN_GB（警告阈值，默认10）
-                          清理提醒: 磁盘守卫在可用空间 < 阈值时自动拦截/提示（topems clean 释放）
+                                   CLEAN_KILL_CARGO（1 强制终止后台编译 / 0 一律不终止 / 未设置=遇 IDE 编译拒绝）
+                          磁盘守卫: 在 build / build-all / build-frontend / run / start-all / test-backend 入口自动检查；
+                                   构建入口按冷编所需判定（release 20GiB / debug 30GiB，BUILD_DISK_NEED_GB_* 覆盖）
 
 开发环境（场景: 环境自检/自举 + 最小开发环境）:
   dev                     启动最小开发环境 (macOS)（DB+Redis+iam+前端热更新；完整环境用 run）

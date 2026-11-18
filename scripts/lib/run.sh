@@ -117,6 +117,49 @@ run_cli() {
 # 清理/预检 公共工具函数（供 clean_project 和 _preflight_check 共用）
 # =============================================
 
+# 判定进程来源（沿父链最多 4 层识别 IDE），用于区分"自己终端编译"与"IDE/rust-analyzer 编译"
+# 输出: IDE:Trae | IDE:rust-analyzer | IDE:VS Code | IDE:Cursor | IDE:JetBrains | TERM
+_proc_origin() {
+    local pid="$1" depth=0 p cmd
+    p="$pid"
+    while [ "$depth" -lt 4 ]; do
+        p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+        if [ -z "$p" ]; then break; fi
+        if [ "$p" -le 1 ] 2>/dev/null; then break; fi
+        cmd=$(ps -o command= -p "$p" 2>/dev/null || true)
+        case "$cmd" in
+            *"Trae CN.app/Contents"*|*".trae-cn"*)  printf 'IDE:Trae\n'; return 0 ;;
+            *"rust-analyzer"*)                      printf 'IDE:rust-analyzer\n'; return 0 ;;
+            *"Visual Studio Code.app/Contents"*|*"Code Helper"*) printf 'IDE:VS Code\n'; return 0 ;;
+            *"Cursor.app/Contents"*)                printf 'IDE:Cursor\n'; return 0 ;;
+            *"JetBrains"*|*"IntelliJ"*|*"CLion"*|*"RustRover"*) printf 'IDE:JetBrains\n'; return 0 ;;
+        esac
+        depth=$((depth + 1))
+    done
+    printf 'TERM\n'
+}
+
+# 收集本仓库内后台编译进程（cargo/rustc，cwd 必须等于 PROJECT_ROOT 或位于其下）
+# 输出: 每行 "PID<TAB>来源"；来源由 _proc_origin 判定
+_repo_build_procs() {
+    local pids p2 cwd
+    # 覆盖: cargo test/build/bench/run/check/clippy/fmt（空格分隔）+ cargo-nextest/llvm-cov（连字符）+ rustc 编译进程
+    pids=$(ps aux | grep -v grep \
+        | grep -E "cargo (nextest )?(test|build|bench|run|check|clippy|fmt)|cargo-(llvm-cov|nextest|test|build|bench)|rustc" \
+        | awk '{print $2}')
+    [ -z "$pids" ] && return 0
+
+    # 2026-10-03：仅保留工作目录在本仓库的进程（防误杀其他项目/并行会话的编译）
+    # 2026-11：精确前缀匹配（cwd 必须等于 PROJECT_ROOT 或位于其下）；2026-11 追加来源标注
+    for p2 in $pids; do
+        cwd=$(lsof -a -p "$p2" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+        case "$cwd" in
+            "$PROJECT_ROOT"|"$PROJECT_ROOT"/*) printf '%s\t%s\n' "$p2" "$(_proc_origin "$p2")" ;;
+        esac
+    done
+    return 0
+}
+
 # kill 后台 cargo-(llvm-cov|test|bench|build) 进程
 # 用法: _kill_background_cargo [--dry-run]
 # 返回: 0=无进程（无动作）, 1=有动作（已终止或 dry-run 预览）
@@ -125,34 +168,19 @@ _kill_background_cargo() {
     local dry_run=false
     [ "$1" = "--dry-run" ] && dry_run=true
 
-    local cargo_pids
-    # 覆盖: cargo test/build/bench/run/check/clippy/fmt（空格分隔）+ cargo-nextest/llvm-cov（连字符）+ rustc 编译进程
-    cargo_pids=$(ps aux | grep -v grep \
-        | grep -E "cargo (nextest )?(test|build|bench|run|check|clippy|fmt)|cargo-(llvm-cov|nextest|test|build|bench)|rustc" \
-        | grep -v "grep" \
-        | awk '{print $2}' | tr '\n' ' ')
-
-    [ -z "$cargo_pids" ] && return 0
-
-    # 2026-10-03：仅保留工作目录在本仓库的进程（防误杀其他项目/并行会话的编译）
-    # 2026-11：精确前缀匹配（cwd 必须等于 PROJECT_ROOT 或位于其下），避免子串误命中
-    local filtered_pids=""
-    local p2 p2_cwd
-    for p2 in $cargo_pids; do
-        p2_cwd=$(lsof -a -p "$p2" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
-        case "$p2_cwd" in
-            "$PROJECT_ROOT"|"$PROJECT_ROOT"/*) filtered_pids="$filtered_pids $p2" ;;
-        esac
-    done
-    cargo_pids="${filtered_pids# }"
-    [ -z "$cargo_pids" ] && return 0
+    local rows cargo_pids
+    rows=$(_repo_build_procs)
+    [ -z "$rows" ] && return 0
+    cargo_pids=$(printf '%s\n' "$rows" | awk -F'\t' '{print $1}' | tr '\n' ' ')
 
     if $dry_run; then
-        info "[DRY-RUN] 将终止后台 cargo 进程: $cargo_pids"
+        info "[DRY-RUN] 将终止后台 cargo 进程（PID / 来源）:"
+        printf '%s\n' "$rows" | awk -F'\t' '{printf "    PID %s  %s\n", $1, $2}'
         return 1
     fi
 
     warn "检测到后台 cargo 进程（会持续膨胀 target 吃磁盘），自动终止: $cargo_pids"
+    printf '%s\n' "$rows" | awk -F'\t' '{printf "    PID %s  %s\n", $1, $2}'
     local p
     for p in $cargo_pids; do
         kill "$p" 2>/dev/null || true

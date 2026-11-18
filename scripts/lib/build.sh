@@ -16,6 +16,21 @@ build_service() {
     local service_path
     service_path=$(get_service_path "$service_name")
 
+    # 磁盘守卫（2026-11）：单服务构建原先没有预检入口（只有 build-all/run 系列有），
+    #   满盘时以 cargo "No space left on device" 收场。冷编预估 release 20GiB / debug 30GiB。
+    local _skip_disk=0
+    case " ${extra_opts[*]-} " in *" --skip-disk-check "*) _skip_disk=1 ;; esac
+    [ "${SKIP_DISK_CHECK:-0}" = "1" ] && _skip_disk=1
+    if [ "$_skip_disk" = 0 ]; then
+        local _need="${BUILD_DISK_NEED_GB_RELEASE:-20}" _label="release 冷编"
+        case " ${extra_opts[*]-} " in
+            *" --dev "*|*" --debug "*) _need="${BUILD_DISK_NEED_GB_DEBUG:-30}"; _label="debug 冷编" ;;
+        esac
+        _check_disk_space "$_need" "$_label" || return 1
+    else
+        detail "已跳过磁盘守卫（--skip-disk-check / SKIP_DISK_CHECK=1）"
+    fi
+
     topems_ensure_swagger_ui_archive || return 1
 
     # V70+ 保存/恢复 CARGO_BUILD_JOBS，避免污染后续构建
@@ -441,6 +456,14 @@ build_all_backend() {
 build_frontend() {
     local -a extra_opts=("$@")
     info "编译前端..."
+
+    # 磁盘守卫（2026-11）：前端构建（tsc + vite）也要落盘，满盘时同样会中途失败。
+    local _skip_disk=0
+    case " ${extra_opts[*]-} " in *" --skip-disk-check "*) _skip_disk=1 ;; esac
+    [ "${SKIP_DISK_CHECK:-0}" = "1" ] && _skip_disk=1
+    if [ "$_skip_disk" = 0 ]; then
+        _check_disk_space "${BUILD_DISK_NEED_GB_FRONTEND:-5}" "前端构建" || return 1
+    fi
 
     local pkg_cmd
     pkg_cmd=$(get_pkg_cmd) || return 1
