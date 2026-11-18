@@ -10,6 +10,11 @@
  * 解析不到角色、或数据库不可达时直接失败并以非 0 退出，不再静默通过。
  * 任何来源命中生产库特征（库名 *prod* / production）时直接拒绝执行，绝不对生产库跑门禁。
  *
+ * 口令解析（不打印、不入库）：环境变量 PGPASSWORD → 目标连接串内嵌口令 →
+ * 本地 .env 的 TEST_DATABASE_URL → .env 的 DATABASE_URL / MIGRATE_URL。
+ * 仅复用与目标角色一致的口令；都取不到时先尝试无口令连接（~/.pgpass / peer），
+ * 认证失败则输出可操作的中文配置指引，而不是裸的 fe_sendauth 报错。
+ *
  * 检查项：
  *   1. 目标角色是否存在
  *   2. 关键表是否已授予该角色 SELECT
@@ -66,6 +71,62 @@ function maskUrl(url) {
   return String(url).replace(/(:\/\/[^:@/]+:)[^@]*@/, '$1***@');
 }
 
+function passwordFromUrl(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const password = decodeURIComponent(parsed.password || '');
+    return password || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 解析数据库口令（只用于设置进程内 PGPASSWORD，不输出、不落盘）：
+ *   1) 环境变量 PGPASSWORD（CI/显式导出优先）
+ *   2) 目标连接串内嵌口令
+ *   3) 本地 .env 的 TEST_DATABASE_URL（测试库凭据统一来源）
+ *   4) 本地 .env 的 DATABASE_URL / MIGRATE_URL 内嵌口令
+ * 只复用与目标角色一致的口令：口令按角色存储，拿 A 角色的口令连 B 角色必然认证失败。
+ * 都取不到时返回 { credential: null, mismatched }；调用方仍会尝试连接
+ * （~/.pgpass、peer 等），真失败时再给出可操作的中文提示。
+ */
+function resolveDbPassword(envFile, targetUrl, targetRole) {
+  if (process.env.PGPASSWORD) {
+    return { credential: { password: process.env.PGPASSWORD, source: '环境变量 PGPASSWORD' }, mismatched: [] };
+  }
+  const fromTarget = passwordFromUrl(targetUrl);
+  if (fromTarget) {
+    return { credential: { password: fromTarget, source: '目标连接串内嵌口令' }, mismatched: [] };
+  }
+  const mismatched = [];
+  const candidates = [
+    ['.env TEST_DATABASE_URL', envFile.TEST_DATABASE_URL],
+    ['.env DATABASE_URL', envFile.DATABASE_URL],
+    ['.env MIGRATE_URL', envFile.MIGRATE_URL],
+  ];
+  for (const [source, url] of candidates) {
+    const password = passwordFromUrl(url);
+    if (!password) continue;
+    const role = roleFromUrl(url);
+    if (role && targetRole && role !== targetRole) {
+      mismatched.push(`${source}（角色 ${role}）`);
+      continue;
+    }
+    return { credential: { password, source }, mismatched };
+  }
+  return { credential: null, mismatched };
+}
+
+function printAuthHint(targetRole) {
+  console.error(`   👉 请为角色 ${targetRole} 配置数据库口令（口令不会被打印或写入仓库）：`);
+  console.error("      1) 当前 shell：export PGPASSWORD='<口令>'");
+  console.error(`      2) 仓库根 .env 的 DATABASE_URL / TEST_DATABASE_URL 带上该角色的口令`);
+  console.error('         （即连接串中的「用户名:口令@主机」段；角色必须与目标一致）');
+  console.error('         .env 已被 .gitignore 忽略，门禁只在本地读取，不会入库。');
+}
+
 function resolveTarget() {
   const envFile = readEnvFile();
   const candidates = [
@@ -79,8 +140,9 @@ function resolveTarget() {
     if (role) return { role, url, source };
   }
   console.error('❌ 无法从 DATABASE_URL / MIGRATE_URL / .env 推导出实际运行角色。');
-  console.error('   请设置 DATABASE_URL 或 MIGRATE_URL（形如 postgres://<role>@host:5432/db，密码走 PGPASSWORD），');
-  console.error('   或在仓库根 .env 中配置其一后重试。门禁不会在角色未知时静默通过。');
+  console.error('   请设置 DATABASE_URL 或 MIGRATE_URL（形如 postgres://<role>@host:5432/db），口令走 PGPASSWORD；')
+  console.error('   或在仓库根 .env 中配置 DATABASE_URL / TEST_DATABASE_URL（可含口令，角色需与目标一致）。')
+  console.error('   门禁不会在角色未知时静默通过。');
   process.exit(1);
 }
 
@@ -109,6 +171,17 @@ function main() {
     console.error('   请显式设置 DATABASE_URL 指向本地/测试库；生产窗口期不得把生产 DSN 常驻在 .env。');
     process.exit(1);
   }
+  const envFile = readEnvFile();
+  const { credential, mismatched } = resolveDbPassword(envFile, url, role);
+  if (credential) {
+    process.env.PGPASSWORD = credential.password;
+    console.log(`🔐 凭据来源：${credential.source}（口令不输出）`);
+  } else {
+    if (mismatched.length > 0) {
+      console.log(`ℹ️  .env 中的口令角色与目标角色 ${role} 不一致，未复用：${mismatched.join('、')}`);
+    }
+    console.log('ℹ️  未找到可用口令，先尝试无口令连接（~/.pgpass / peer）；失败时会提示配置方式。');
+  }
   const roleSql = sqlLiteral(role);
   console.log(`🔍 RLS权限校验（目标角色：${role}）`);
 
@@ -122,6 +195,9 @@ function main() {
   );
   if (!roleCheck.ok) {
     console.error(`❌ 无法连接数据库或查询角色失败：${roleCheck.err || '未知错误'}`);
+    if (/no password supplied|password authentication failed|fe_sendauth/i.test(roleCheck.err || '')) {
+      printAuthHint(role);
+    }
     console.error('   校验不会在数据库不可达时静默通过。');
     process.exit(1);
   }
