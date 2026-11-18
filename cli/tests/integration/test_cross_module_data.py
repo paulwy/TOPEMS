@@ -21,7 +21,7 @@ class TestCrossModuleDataConsistency:
                 port=int(os.getenv("POSTGRES_PORT", "5432")),
                 database=os.getenv("POSTGRES_DB", "topems"),
                 user=os.getenv("POSTGRES_USER", "topems"),
-                password=os.getenv("POSTGRES_PASSWORD", "topems_secret"),
+                password=os.getenv("POSTGRES_PASSWORD", ""),
                 connect_timeout=5
             )
             yield conn
@@ -299,7 +299,7 @@ class TestDataIntegrityConstraints:
                 port=int(os.getenv("POSTGRES_PORT", "5432")),
                 database=os.getenv("POSTGRES_DB", "topems"),
                 user=os.getenv("POSTGRES_USER", "topems"),
-                password=os.getenv("POSTGRES_PASSWORD", "topems_secret"),
+                password=os.getenv("POSTGRES_PASSWORD", ""),
                 connect_timeout=5
             )
             yield conn
@@ -397,7 +397,7 @@ class TestModuleDependencies:
                 port=int(os.getenv("POSTGRES_PORT", "5432")),
                 database=os.getenv("POSTGRES_DB", "topems"),
                 user=os.getenv("POSTGRES_USER", "topems"),
-                password=os.getenv("POSTGRES_PASSWORD", "topems_secret"),
+                password=os.getenv("POSTGRES_PASSWORD", ""),
                 connect_timeout=5
             )
             yield conn

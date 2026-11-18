@@ -39,6 +39,8 @@ config/standalone.env
 tests/e2e/.auth/
 # 本机凭据轮换快照 / 退役归档（JWT 密钥、plist 备份等，含明文，禁止入库）
 .secrets/
+# 本机明文口令暂存目录（曾出现 secret/pg.txt 存生产口令，禁止入库）
+secret/
 
 # Frontend
 frontend/node_modules/

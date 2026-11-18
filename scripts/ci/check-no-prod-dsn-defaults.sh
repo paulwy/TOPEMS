@@ -89,6 +89,22 @@ if [ -n "$pw_hits" ]; then
   violations=1
 fi
 
+# 4) 配置模板与部署样例（仅扫 git 已跟踪文件；未跟踪的本地 override 不入库也不阻断）：
+#    DSN 内嵌口令、POSTGRES_PASSWORD 写死字面量。${VAR} / CHANGE_ME 等占位视为合规。
+tmpl_files="$(git ls-files config deploy 2>/dev/null \
+  | grep -E '\.(toml|env|example|yml|yaml|sh)$' || true)"
+tmpl_hits=""
+if [ -n "$tmpl_files" ]; then
+  tmpl_hits="$(printf '%s\n' "$tmpl_files" | xargs grep -nE \
+    "://[^:/@\"' ]+:[^@\"'\$]{2,}@|^[[:space:]]*POSTGRES_PASSWORD=[^\"'\$[:space:]][^\"'[:space:]]*" 2>/dev/null \
+    | grep -vE '\$\{|CHANGE_ME|CHANGEME|<[^>]+>' || true)"
+fi
+if [ -n "$tmpl_hits" ]; then
+  echo "❌ 配置模板/部署样例里仍有明文口令：" >&2
+  printf '%s\n' "$tmpl_hits" | sed 's/^/    /' >&2
+  violations=1
+fi
+
 if [ "$violations" -ne 0 ]; then
   echo "" >&2
   echo "生产 DSN 不得作为默认值：请留空或注释，改为运行前显式注入；本地模板见 .env.example。" >&2

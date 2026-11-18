@@ -4,7 +4,7 @@
 # 用法：bash scripts/dev/ensure-bi-org-stats.sh [DATABASE_URL]
 set -euo pipefail
 
-DB="${1:-postgres://topems:topems_secret@localhost:5432/topems}"
+DB="${1:-postgres:///topems}"
 
 if psql "$DB" -tAc "SELECT 1 FROM pg_matviews WHERE schemaname='bi' AND matviewname='org_stats'" | grep -q 1; then
   echo "[ensure-bi-org-stats] 物化视图已存在，刷新快照"

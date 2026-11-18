@@ -13,7 +13,7 @@ DB_HOST=${DB_HOST:-localhost}
 DB_PORT=${DB_PORT:-5432}
 DB_NAME=${DB_NAME:-topems}
 DB_USER=${DB_USER:-topems}
-DB_PASSWORD=${DB_PASSWORD:-topems_secret}
+DB_PASSWORD="${DB_PASSWORD:?必须通过环境变量 DB_PASSWORD 注入数据库口令（模板不再提供默认口令）}"
 
 # 导出密码
 export PGPASSWORD=$DB_PASSWORD

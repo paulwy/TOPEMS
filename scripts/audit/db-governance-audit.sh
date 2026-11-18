@@ -3,7 +3,7 @@
 # 2026-11-03 P3 数据库治理启动：无 PK / 无二级索引 / CHECK / UNIQUE 缺失矩阵 + 无 PK 有数据表清单
 # 用法: bash scripts/audit/db-governance-audit.sh [db...]  默认 topems_prod topems topems_prepare
 set -euo pipefail
-DB_URL="postgres://topems:topems_secret@localhost:5432"
+DB_URL="${DB_URL:-postgres://}"  # 默认本机 socket 认证（拼成 postgres:///<db>），不内嵌口令；跨机审计时导出完整基址如 postgres://user@host:5432
 
 dbs=("$@"); [ ${#dbs[@]} -eq 0 ] && dbs=(topems_prod topems topems_prepare)
 

@@ -1,5 +1,5 @@
 [development]
-database_url = "postgres://topems_app:topems_app_secret@localhost:5433/topems"
+database_url = "postgres://topems_app@localhost:5433/topems"  # 无口令：按 pg_hba 认证；口令经环境注入
 timezone = "UTC"
 max_connections = 10
 
@@ -9,6 +9,6 @@ timezone = "UTC"
 max_connections = 50
 
 [test]
-database_url = "postgres://topems:topems_secret@localhost:5433/topems_test"
+database_url = "postgres://topems@localhost:5433/topems_test"
 timezone = "UTC"
 max_connections = 5

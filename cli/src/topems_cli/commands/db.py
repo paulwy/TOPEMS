@@ -18,7 +18,7 @@ def get_db_config():
         "host": os.getenv("POSTGRES_HOST", "localhost"),
         "port": os.getenv("POSTGRES_PORT", "5432"),
         "user": os.getenv("POSTGRES_USER", "topems"),
-        "password": os.getenv("POSTGRES_PASSWORD", "topems_secret"),
+        "password": os.getenv("POSTGRES_PASSWORD", ""),  # 无口令即走 socket/pg_hba，模板不内置口令
         "database": os.getenv("POSTGRES_DB", "topems"),
     }
 
@@ -26,7 +26,8 @@ def get_db_config():
 def get_connection_string():
     """获取数据库连接字符串"""
     cfg = get_db_config()
-    return f"postgresql://{cfg['user']}:{cfg['password']}@{cfg['host']}:{cfg['port']}/{cfg['database']}"
+    auth = f"{cfg['user']}:{cfg['password']}" if cfg["password"] else cfg["user"]
+    return f"postgresql://{auth}@{cfg['host']}:{cfg['port']}/{cfg['database']}"
 
 
 def run_psql(command: str, database: str = None) -> tuple:
@@ -35,7 +36,10 @@ def run_psql(command: str, database: str = None) -> tuple:
     db = database or cfg["database"]
     
     env = os.environ.copy()
-    env["PGPASSWORD"] = cfg["password"]
+    if cfg["password"]:
+        env["PGPASSWORD"] = cfg["password"]
+    else:
+        env.pop("PGPASSWORD", None)
     
     cmd = [
         "psql",
@@ -198,7 +202,10 @@ def db_backup(output_file: str = None):
     ]
     
     env = os.environ.copy()
-    env["PGPASSWORD"] = cfg["password"]
+    if cfg["password"]:
+        env["PGPASSWORD"] = cfg["password"]
+    else:
+        env.pop("PGPASSWORD", None)
     
     result = subprocess.run(cmd, env=env)
     
@@ -235,7 +242,10 @@ def db_restore(input_file: str):
     ]
     
     env = os.environ.copy()
-    env["PGPASSWORD"] = cfg["password"]
+    if cfg["password"]:
+        env["PGPASSWORD"] = cfg["password"]
+    else:
+        env.pop("PGPASSWORD", None)
     
     result = subprocess.run(cmd, env=env)
     

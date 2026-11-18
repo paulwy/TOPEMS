@@ -29,7 +29,8 @@ logging:
 
 # ===== 数据库配置 =====
 database:
-  url: postgres://topems:topems@localhost:5432/topems
+  # 口令不写进模板：部署时由密钥管理/环境变量注入（如 ${DATABASE_URL}）
+  url: postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}
   min_connections: 5
   max_connections: 20
   acquire_timeout: 30  # 获取连接超时（秒）

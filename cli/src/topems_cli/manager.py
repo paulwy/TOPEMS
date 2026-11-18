@@ -247,15 +247,15 @@ class ServiceManager:
             env[service.env_var] = str(service.port)
             env["SERVER_PORT"] = str(service.port)
             env["PORT"] = str(service.port)
-            # 与 db.py 保持一致：优先使用环境变量，回退到默认值
-            env.setdefault("DATABASE_URL", os.getenv(
-                "DATABASE_URL",
-                f"postgres://{os.getenv('POSTGRES_USER', 'topems')}:"
-                f"{os.getenv('POSTGRES_PASSWORD', 'topems_secret')}@"
-                f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
-                f"{os.getenv('POSTGRES_PORT', '5432')}/"
-                f"{os.getenv('POSTGRES_DB', 'topems')}",
-            ))
+            # 与 db.py 保持一致：优先使用环境变量；无口令时省略口令段走 socket/pg_hba，禁止内置口令默认值
+            _pw = os.getenv("POSTGRES_PASSWORD", "")
+            _user = os.getenv("POSTGRES_USER", "topems")
+            _host = os.getenv("POSTGRES_HOST", "localhost")
+            _port = os.getenv("POSTGRES_PORT", "5432")
+            _db = os.getenv("POSTGRES_DB", "topems")
+            _auth = f"{_user}:{_pw}" if _pw else _user
+            _default_dsn = f"postgres://{_auth}@{_host}:{_port}/{_db}"
+            env.setdefault("DATABASE_URL", os.getenv("DATABASE_URL", _default_dsn))
             
             with open(log_file, "w") as f:
                 process = subprocess.Popen(
