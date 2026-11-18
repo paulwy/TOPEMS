@@ -122,7 +122,15 @@ _collect_worktrees() {
         [ -n "$line" ] && raw+=("$line")
     done < <(git -C "$PROJECT_ROOT" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')
     for g in /private/tmp/topems-* "$HOME"/topems-wt-*; do
-        [ -d "$g" ] && raw+=("$g")
+        [ -d "$g" ] || continue
+        # 2026-11 P3：原来只按目录名 glob 收集，任何 /private/tmp/topems-* 目录都会被当 worktree
+        # （例如 /private/tmp/topems-audit-target 只是产物目录），配 --include-worktrees --yes 会被整目录删。
+        # 改为必须见到 git 工作树标记：普通 worktree 是 .git 文件（gitdir 指针），独立 clone 是 .git 目录。
+        if [ -f "$g/.git" ] || [ -d "$g/.git" ]; then
+            raw+=("$g")
+        else
+            detail "跳过 ${g}（无 .git，不是 git 工作树）"
+        fi
     done
     for p in "${raw[@]}"; do
         [ -d "$p" ] || continue
@@ -247,6 +255,11 @@ _acquire_build_lock() {
     if [ -f "$_BUILD_LOCK" ]; then
         local lock_pid
         lock_pid=$(cat "$_BUILD_LOCK" 2>/dev/null)
+        # 本进程已持有（clean-all 取锁后又进 clean_project，或重复调用）→ 直接成功，
+        # 否则会把自己的锁当成"另一个构建"而误报
+        if [ "$lock_pid" = "$$" ]; then
+            return 0
+        fi
         if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
             if [ "$force" = "true" ]; then
                 warn "构建锁被 PID=$lock_pid 占用，强制获取..."
@@ -508,6 +521,16 @@ clean_project() {
         clean_frontend=true
     fi
 
+    # ── 构建锁（2026-11 P3）────────────────────────────────────────────────
+    #    原来只有 clean-all 取锁；直接 `clean --rust/--debug/--sccache` 不取锁，
+    #    两个终端同时跑会和正在构建的 cargo 互相踩（先杀进程再 rm -rf，可能删掉
+    #    对方刚写出的产物，或与 cargo 的 package cache 锁死锁）。
+    if [ "$dry_run" = false ] && [ "$preflight" = false ]; then
+        if [ "$clean_rust" = true ] || [ "$clean_debug" = true ] || [ "$clean_debug_full" = true ] || [ "$clean_sccache" = true ]; then
+            _acquire_build_lock || return 1
+        fi
+    fi
+
     # ── IDE 编译保护（2026-11 磁盘清理评审）──────────────────────────────
     #    rust/debug 分支会终止仓库内 cargo/rustc。若这些编译是 IDE（Trae/VS Code/Cursor/
     #    rust-analyzer）拉起的，杀掉后 IDE 会全量重编，等于"清理反而更吃磁盘"，且打断开发。
@@ -583,7 +606,7 @@ clean_project() {
         warn "全量清理计划（--all）:"
         echo "  - Rust 编译产物: $PROJECT_ROOT/target"
         echo "  - 前端产物: apps/{web,desktop,mobile}/dist、coverage/、playwright-report/"
-        echo "  - 项目缓存: apps/web/.lighthouseci、cli/.venv、cli/.pytest_cache、node_modules/.cache"
+        echo "  - 项目缓存: apps/web/.lighthouseci、cli/.pytest_cache、node_modules/.cache（cli/.venv 保留，需 --deep 才删）"
         echo "  - 日志: logs/ 与仓库根目录 *.log / *.out"
         if [ "$clean_include_worktrees" = true ]; then
             echo "  - Worktree: 各 worktree 的 target/debug/incremental（整 target 需同时给 --include-worktrees --yes）"
@@ -850,12 +873,16 @@ clean_project() {
         if [ "$clean_deep" = true ]; then
             warn "--deep 模式: 将删除所有 node_modules 目录并 pnpm store prune"
             warn "  用于解决 dual @types/react 残留 / node_modules 与 lockfile 不一致等系统性问题"
+            # 2026-11 P3：cli/.venv 只在 --deep 删（普通 --cache 保留），
+            # 删后下次使用 core CLI 会自动重建并联网装依赖
             local deep_dirs=(
                 "$PROJECT_ROOT/node_modules"
                 "$PROJECT_ROOT/apps/web/node_modules"
                 "$PROJECT_ROOT/apps/desktop/node_modules"
                 "$PROJECT_ROOT/apps/mobile/node_modules"
+                "$PROJECT_ROOT/cli/.venv"
             )
+            [ -d "$PROJECT_ROOT/cli/.venv" ] && warn "  cli/.venv 将一并删除：下次用 core CLI 会重建 venv（需联网 pip）"
             # 补齐 packages/*/node_modules
             local pkg_dir
             for pkg_dir in "$PROJECT_ROOT/packages"/*/node_modules; do
@@ -895,12 +922,14 @@ clean_project() {
 
     # 项目级缓存（仅影响本项目，安全）
     if [ "$clean_cache" = true ]; then
+        # 2026-11 P3：cli/.venv 不再随 --cache 删除——它是 Python 工具链现场，
+        # 删掉后下次用 core CLI 要联网重建（pip 安装失败则 CLI 直接不可用）。改到 --deep。
         local project_cache_dirs=(
             "$PROJECT_ROOT/apps/web/.lighthouseci"
-            "$PROJECT_ROOT/cli/.venv"
             "$PROJECT_ROOT/cli/.pytest_cache"
             "$PROJECT_ROOT/apps/web/node_modules/.cache"
         )
+        [ -d "$PROJECT_ROOT/cli/.venv" ] && detail "保留 cli/.venv（Python CLI 现场，删后需联网重建；需清理请用 --deep）"
         for dir in "${project_cache_dirs[@]}"; do
             if [ -d "$dir" ]; then
                 local size

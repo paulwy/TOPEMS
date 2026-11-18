@@ -500,10 +500,22 @@ case "${1:-help}" in
         push_guard "${@:2}"
         ;;
     *)
-        # 未识别命令：提示后透传给 core CLI（防敲错命令名被静默吞掉）
-        if [ -f "$CLI_DIR/bin/topems" ]; then
+        # 未识别命令：仅在 core CLI 已就绪时透传（防敲错命令被静默吞掉）。
+        # 2026-11 P3：原来无论 CLI 是否安装都会进 run_cli，run_cli 会 `python3 -m venv` +
+        # 联网 pip install —— 一个拼错的命令就能触发几十秒建 venv/装包，甚至因无网失败。
+        if [ -f "$CLI_DIR/.venv/bin/activate" ]; then
             echo "提示: '$1' 不是 topems 内置命令，已透传给 core CLI (cli/bin/topems)" >&2
+            run_cli "$@"
+        elif [ -d "$CLI_DIR" ]; then
+            error "未知命令: $1"
+            error "core CLI 尚未初始化（cli/.venv 不存在），不自动创建 venv。"
+            echo "  安装: cd $CLI_DIR && python3 -m venv .venv && source .venv/bin/activate && python3 -m pip install -e ." >&2
+            echo "  查看内置命令: $0 help" >&2
+            exit 1
+        else
+            error "未知命令: $1（Python CLI 未安装）"
+            echo "  查看内置命令: $0 help" >&2
+            exit 1
         fi
-        run_cli "$@"
         ;;
 esac
