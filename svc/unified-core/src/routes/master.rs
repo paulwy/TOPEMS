@@ -360,6 +360,11 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             "/tenant/switch",
             post(modules::tenant::handlers::switch_tenant),
         )
+        // 一体化租户开通：租户 + 默认管理员 + 部门设置单事务写入
+        .route(
+            "/tenant/onboard",
+            post(modules::tenant::handlers::onboard_tenant),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("admin:iam:tenant:write"),

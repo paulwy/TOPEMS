@@ -47,7 +47,7 @@ mod openapi;
 // 如有需要未来 dashboard:read 权限请改在 plugin.yaml 或 iam/mod.rs init_permissions vec 中
 // 直接声明，不要走 "挂空壳路由触发 require_permission 中间件运行时注册" 模式。
 
-use axum::routing::{any, get, post};
+use axum::routing::{any, get, post, put};
 use axum::Router;
 
 use topems_shared_auth::auth::auth_middleware;
@@ -181,6 +181,42 @@ pub fn create_routes(
         // 现统一 nest 到 /file 之下，与 utoipa path 注解（/api/core/file/*）对齐。
         .nest("/file", file::file_routes(state))
         .merge(master::master_routes(state))
+        // API 版本配置管理（core_api_version_configs）：handler 齐全但从未挂载
+        .merge(
+            Router::new()
+                .route(
+                    "/versions",
+                    get(middleware::versioning::list_versions),
+                )
+                .route(
+                    "/versions/statistics",
+                    get(middleware::versioning::get_version_statistics),
+                )
+                .route(
+                    "/versions/{version}",
+                    get(middleware::versioning::get_version),
+                )
+                .layer(axum::middleware::from_fn_with_state(
+                    state.clone(),
+                    middleware::permission::require_permission("system:read"),
+                )),
+        )
+        .merge(
+            Router::new()
+                .route(
+                    "/versions",
+                    post(middleware::versioning::create_version),
+                )
+                .route(
+                    "/versions/{version}",
+                    put(middleware::versioning::update_version_status)
+                        .delete(middleware::versioning::delete_version),
+                )
+                .layer(axum::middleware::from_fn_with_state(
+                    state.clone(),
+                    middleware::permission::require_permission("system:write"),
+                )),
+        )
         .merge(feature_flag::feature_flag_routes(state))
         .merge(subscription::subscription_routes(state))
         // 限流/非重放配置管理（前端 admin RateLimitConfigPage 契约 /api/core/iam/v1/rate-limit/config[/anti-replay]）
