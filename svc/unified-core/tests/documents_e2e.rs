@@ -6,7 +6,7 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, tenant_claims, test_app_state, test_txn_cell};
+use app_state::{service_claims, super_claims, tenant_claims, test_app_state, test_txn_cell};
 use axum::extract::{Json, Path, State};
 use axum::Extension;
 use topems_shared_auth::middleware::tenant::{rls_request_tenant, scope_request_tenant};
@@ -45,6 +45,47 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             updated_at TIMESTAMPTZ DEFAULT NOW(),
             deleted_at TIMESTAMP
         )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+
+    // 测试库与生产同形：ENABLE + FORCE（FORCE 后表 owner 也受策略约束，不会「建表人天然绕过」）。
+    sqlx::query("ALTER TABLE public.core_doc_documents ENABLE ROW LEVEL SECURITY")
+        .execute(pool)
+        .await
+        .unwrap();
+    sqlx::query("ALTER TABLE public.core_doc_documents FORCE ROW LEVEL SECURITY")
+        .execute(pool)
+        .await
+        .unwrap();
+    // 策略按当前运行时 GUC 契约（app.tenant_id / app.rls_system）编写。
+    //
+    // TODO(rls-drift): authoritative 迁移 20260908000016_rls_enable_all.sql:3607 中
+    // public.core_doc_documents 的既有策略名为 `rls_tenant_isolation`，判定表达式为
+    //   current_setting('app.current_tenant_id', true) IS NULL
+    //   OR current_setting('app.current_tenant_id', true) = ''
+    //   OR tenant_id IS NULL
+    //   OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+    // （USING 与 WITH CHECK 相同）。而运行时 apply_explicit_tenant 只设置
+    // app.tenant_id 与 app.rls_system，`app.current_tenant_id` 永远未设置
+    // → 前两个分支恒真，旧策略在线上等价于「全量放行」。
+    // 影响：该表 RLS 实际不生效，隔离只能依赖 SQL 里的显式条件。
+    // 测试库若照抄该谓词，RLS 恒放行、等于没启用，因此这里按语义对齐而不复刻陈旧表达式。
+    // 已应用的迁移不改；生产实际策略定义由另一路只读核对，后续单独开迁移收敛。
+    // 与生产的差异：测试库由 sqlx::test 每次新建空库、策略在此内联创建；
+    // 生产策略来自迁移且该表仍是上述旧契约。除策略表达式外，ENABLE/FORCE 与生产一致。
+    sqlx::query(
+        r#"CREATE POLICY rls_tenant_isolation ON public.core_doc_documents
+            FOR ALL TO public
+            USING (
+                COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
+            )
+            WITH CHECK (
+                COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+                OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid
+            )"#,
     )
     .execute(pool)
     .await
@@ -98,15 +139,25 @@ const TENANT_B: &str = "00000000-0000-0000-0000-00000000000b";
 
 async fn insert_doc(pool: &sqlx::PgPool, tenant: &str, title: &str) -> uuid::Uuid {
     let id = uuid::Uuid::new_v4();
+    // 表已 FORCE RLS，种子写入必须在策略允许的租户 GUC 下执行（与业务写入同一条约束）。
+    let mut tx = pool.begin().await.unwrap();
+    sqlx::query(
+        "SELECT set_config('app.tenant_id', $1, true), set_config('app.rls_system', 'off', true)",
+    )
+    .bind(tenant)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
     sqlx::query(
         "INSERT INTO public.core_doc_documents (id, tenant_id, title, created_by) VALUES ($1, $2, $3, 'test')",
     )
     .bind(id)
     .bind(uuid::Uuid::parse_str(tenant).unwrap())
     .bind(title)
-    .execute(pool)
+    .execute(&mut *tx)
     .await
     .unwrap();
+    tx.commit().await.unwrap();
     id
 }
 
@@ -128,14 +179,16 @@ async fn list_empty_returns_empty(pool: sqlx::PgPool) {
 }
 
 #[sqlx::test(migrations = false)]
-async fn list_superuser_sees_all_tenants(pool: sqlx::PgPool) {
+async fn list_system_channel_sees_all_tenants(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     insert_doc(&pool, TENANT_A, "doc-a").await;
     insert_doc(&pool, TENANT_B, "doc-b").await;
 
     let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
+    // 跨租户全量读取属于系统通道；super_admin 未选租户时是 fail-closed（nil 租户），
+    // 只能看到 nil 租户的行，不能当作系统通道使用。
+    let claims = service_claims();
     let resp = scope_request_tenant(
         rls_request_tenant(&claims),
         list_documents(State(state), Extension(cell)),
@@ -196,7 +249,8 @@ async fn get_returns_document(pool: sqlx::PgPool) {
 
     let cell = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
+    // 文档属于 TENANT_A，按租户通道读取。
+    let claims = tenant_claims();
     let resp = scope_request_tenant(
         rls_request_tenant(&claims),
         get_document(State(state), Extension(cell), Path(id)),

@@ -118,6 +118,19 @@ pub fn super_claims() -> Claims {
     }
 }
 
+/// 服务身份 Claims：只有 service 身份走系统通道（`app.rls_system='on'`），可跨租户只读。
+/// 注意：`super_admin` 未显式选择租户时按 fail-closed 处理（见 `rls_request_tenant`），
+/// 不等于系统通道。
+pub fn service_claims() -> Claims {
+    Claims {
+        sub: "00000000-0000-0000-0000-000000000000".to_string(),
+        username: "test-service".to_string(),
+        role: "service".to_string(),
+        roles: vec!["service".to_string()],
+        ..super_claims()
+    }
+}
+
 /// 普通租户 Claims（handler 按 Uuid::nil() 过滤）。
 pub fn tenant_claims() -> Claims {
     Claims {
