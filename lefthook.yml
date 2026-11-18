@@ -323,6 +323,11 @@ pre-commit:
       tags: security secrets
       run: bash scripts/ci/check-sensitive-info.sh
 
+    # [Gate DSN] 禁止把生产 DSN 写成 DATABASE_URL 默认值（2026-11-18 生产写入事故）
+    no-prod-dsn-defaults:
+      tags: database security config
+      run: bash scripts/ci/check-no-prod-dsn-defaults.sh
+
     # [Gate PASSWD] 硬编码管理员/默认口令常量扫描（代码/配置，测试夹具与文档除外）
     hardcoded-passwords:
       tags: security secrets
@@ -518,17 +523,26 @@ pre-commit:
     #   prod 仓库位（TOPEMS_INSTANCE=prod 或 .env DATABASE_URL 指向 *_prod）默认拒绝；
     #   确需 prod 必须 ALLOW_PROD_SMOKE=1 + PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON。
     #   fail-closed：目标不可达/缺密钥/漏配开关时明确失败并给出可操作提示，不再静默 SKIP。
+    # 隔离实跑（2026-11-18）：未显式给 WEB_BFF_URL 时由
+    #   scripts/dev/web_smoke_precommit.sh 拉起「测试库 + 独立端口」BFF 再跑，
+    #   避免本机 8099 生产实例被目标位守卫判为 *_prod 而必然 BLOCKED；
+    #   CI 已自备测试 BFF 时直接设 WEB_BFF_URL 即可跳过拉起。
     web-contract-smoke:
       tags: web contract smoke
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/web/src/api/|apps/web/src/utils/apiPath.ts|svc/server/src/|lib/shared-service-client/src/)' || true)
         [ -z "$STAGED" ] && exit 0
         export WEB_SMOKE_ENV="${WEB_SMOKE_ENV:-local}"
-        if python3 scripts/web_contract_smoke.py > /tmp/web_smoke_precommit.log 2>&1; then
+        if [ -n "${WEB_BFF_URL:-}" ]; then
+          python3 scripts/web_contract_smoke.py > /tmp/web_smoke_precommit.log 2>&1
+        else
+          bash scripts/dev/web_smoke_precommit.sh > /tmp/web_smoke_precommit.log 2>&1
+        fi
+        rc=$?
+        if [ "$rc" -eq 0 ]; then
           printf '\033[32m[Gate WCS] PASS\033[0m 目标=%s（日志 /tmp/web_smoke_precommit.log）\n' "$WEB_SMOKE_ENV"
           grep -E '^\[web-smoke\]|^总计:' /tmp/web_smoke_precommit.log | tail -3
         else
-          rc=$?
           printf '\033[31m[Gate WCS] BLOCKED (exit %s)\033[0m 目标=%s\n' "$rc" "$WEB_SMOKE_ENV"
           head -8 /tmp/web_smoke_precommit.log
           echo "  ..."

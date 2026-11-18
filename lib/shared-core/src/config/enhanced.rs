@@ -58,8 +58,13 @@ impl DatabaseConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            url: env::var("DATABASE_URL").map_err(|e| {
-                TopemsError::ConfigValidation(format!("DATABASE_URL 环境变量未设置: {}", e))
+            url: env::var("DATABASE_URL").map_err(|_| {
+                TopemsError::ConfigValidation(
+                    "缺少环境变量 DATABASE_URL（不使用内置默认连接串，缺失即失败）。\
+                     设置示例：export DATABASE_URL='postgres://topems_app:topems_app_secret@localhost:5432/topems'；\
+                     本地模板见 .env.example「数据库配置」段，生产由部署单元显式注入"
+                        .to_string(),
+                )
             })?,
             max_connections: env::var("DB_MAX_CONNECTIONS")
                 .ok()

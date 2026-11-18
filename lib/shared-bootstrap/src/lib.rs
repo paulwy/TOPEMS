@@ -108,6 +108,37 @@ use topems_shared_observability::telemetry::{init_telemetry, telemetry_middlewar
 
 use topems_shared_event::event::{EventPublisher, RabbitMqSubscriber};
 
+/// DATABASE_URL 缺失时的统一 fail-fast 提示。
+///
+/// 2026-11-18 生产写入事故：`.env` 的 DATABASE_URL 默认指向 topems_prod，
+/// 未显式设变量的落点测试直接连生产库建/删 schema。自本版本起：
+/// **任何内置默认连接串都已移除，缺失即报错退出**。
+const DATABASE_URL_MISSING_MSG: &str = "\
+缺少环境变量 DATABASE_URL：为避免误连生产库，本进程不使用任何内置默认连接串，缺失即拒绝启动。
+
+  设置方式：export DATABASE_URL='postgres://<user>@<host>:5432/<database>'
+            标准写法需在 user 与 host 之间补 :<password>@
+  本地开发：连接串模板见仓库根目录 .env.example 的「数据库配置」段；
+            本机开发库通常为 postgres://topems_app:topems_app_secret@localhost:5432/topems
+  生产环境：由部署单元显式注入（macOS launchd: com.topems.server 的 EnvironmentVariables）
+  跑测试：  请设置 TEST_DATABASE_URL（测试不会回退到 DATABASE_URL）";
+
+/// 构造 DATABASE_URL 缺失错误（统一文案，避免各处报错信息不一致）。
+fn database_url_missing_error() -> anyhow::Error {
+    anyhow::anyhow!(DATABASE_URL_MISSING_MSG)
+}
+
+/// 读取并校验 DATABASE_URL：缺失或空白立即返回可操作错误。
+///
+/// 供服务入口（尤其是模块化单体）在创建任何连接池 / 启动降级模块之前调用，
+/// 确保「未设变量」时进程直接退出，而不是带着半可用状态继续监听。
+pub fn require_database_url() -> Result<String> {
+    match env::var("DATABASE_URL") {
+        Ok(v) if !v.trim().is_empty() => Ok(v),
+        _ => Err(database_url_missing_error()),
+    }
+}
+
 /// 优雅停机信号 future：合并 SIGTERM 与 Ctrl+C。
 ///
 /// 用法：
@@ -401,15 +432,12 @@ impl ServiceBootstrap {
 
     /// 创建数据库连接池
     async fn create_database_pool(&self) -> Result<sqlx::PgPool> {
-        let database_url =
-            env::var("DATABASE_URL").unwrap_or_else(|_| self.config.database.url.clone());
-        // [P3-5 2026-10-24] fail-fast 对齐：DATABASE_URL 缺失且配置兜底为空时显式报错，
-        // 不再静默回退到内置开发 DSN（凭据兜底已从 DatabaseConfig::default 移除）。
-        if database_url.is_empty() {
-            anyhow::bail!(
-                "DATABASE_URL 环境变量未设置，且 database.url 配置为空；请显式配置数据库连接串"
-            );
-        }
+        // 只接受「进程环境变量」或「调用方显式传入的配置」；两者都为空即 fail-fast。
+        let database_url = match env::var("DATABASE_URL") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ if !self.config.database.url.trim().is_empty() => self.config.database.url.clone(),
+            _ => return Err(database_url_missing_error()),
+        };
 
         let svc_tag = derive_service_tag(self.config.service_name);
         let per_service_key = format_db_max_connections_key(&svc_tag);
@@ -635,9 +663,10 @@ pub async fn quick_bootstrap_with_db(
     routes: Router,
     db_url: Option<&str>,
 ) -> Result<()> {
-    let database_url = db_url.map(|s| s.to_string()).unwrap_or_else(|| {
-        env::var("DATABASE_URL").expect("DATABASE_URL environment variable is required")
-    });
+    let database_url = match db_url {
+        Some(s) if !s.trim().is_empty() => s.to_string(),
+        _ => env::var("DATABASE_URL").map_err(|_| database_url_missing_error())?,
+    };
 
     let config = BootstrapConfig {
         service_name,
@@ -822,8 +851,8 @@ async fn bootstrap_service_inner(
     tracing::info!("🚀 {} 服务启动中...", config.name);
 
     let db_url = env::var("DATABASE_URL").map_err(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        anyhow::anyhow!("DATABASE_URL environment variable is required")
+        tracing::error!("缺少环境变量 DATABASE_URL");
+        database_url_missing_error()
     })?;
 
     // 模块化单体内每个 real_module 都经本函数独立建池：若沿用各模块硬编码的
@@ -969,9 +998,12 @@ where
     if with_master_data_refs {
         // master_data_refs 表已存在时无需重建；受限 DB 用户无 DDL 权限时仅记录（不阻塞启动）
         // schema 与表前缀都由调用方显式给出（均为 service_name），不经 search_path 解析。
-        if let Err(e) =
-            topems_shared_db::database::ensure_master_data_refs_table(pool, service_name, service_name)
-                .await
+        if let Err(e) = topems_shared_db::database::ensure_master_data_refs_table(
+            pool,
+            service_name,
+            service_name,
+        )
+        .await
         {
             tracing::error!(
                 "[{}] master_data_refs 表检查失败（非阻塞）: {:?}",
@@ -1684,6 +1716,17 @@ mod tests {
     use topems_shared_core::health::HealthStatus;
 
     static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    #[test]
+    fn database_url_missing_error_is_actionable() {
+        let msg = database_url_missing_error().to_string();
+        // 必须说清：缺哪个变量、怎么设、本地从哪拿模板、测试用哪个变量
+        assert!(msg.contains("DATABASE_URL"));
+        assert!(msg.contains("export DATABASE_URL"));
+        assert!(msg.contains(".env.example"));
+        assert!(msg.contains("TEST_DATABASE_URL"));
+        assert!(!msg.contains("topems_prod"));
+    }
 
     #[test]
     fn test_bootstrap_config_default() {

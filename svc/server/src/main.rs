@@ -161,6 +161,11 @@ async fn main() -> Result<()> {
     // bootstrap_service 内部也会 dotenv，但那时首个池已创建、预算分母已固化。
     let _ = dotenv::dotenv();
 
+    // 2026-11-18 生产写入事故防线：DATABASE_URL 缺失时必须启动即失败。
+    // 各 real_module 的 build 失败只会“降级运行”，进程仍会监听端口，等于半可用；
+    // 这里在创建任何池之前显式校验，避免误启动后连到非预期数据库。
+    topems_shared_bootstrap::require_database_url()?;
+
     // 监听端口：只解析一次并贯穿全进程（模块 build 需要知道宿主回环端口，
     // 如 search 投影回填访问同进程 erp 快照；HTTP bind 复用同一值）。
     // 未设置时显式告警并采用约定默认 8099（nginx 全 /api/* 代理目标），不静默；

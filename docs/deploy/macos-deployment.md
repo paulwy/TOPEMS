@@ -134,13 +134,50 @@ python3 scripts/web_contract_smoke.py
 
 **默认行为（无需任何变量）**
 
-- `WEB_SMOKE_ENV` 缺省为 `local`；web 目标为 `http://127.0.0.1:8099`，mobile 目标为
-  `http://127.0.0.1:8070/api/mobile`（均为本机/测试服务）；
+- `WEB_SMOKE_ENV` 缺省为 `local`；web 侧未显式给 `WEB_BFF_URL` 时由
+  `scripts/dev/web_smoke_precommit.sh` 拉起「测试库 + 独立端口」的隔离 BFF 再跑（2026-11-18 起；
+  不再默认打本机 8099，因为本机 8099 通常是连 `*_prod` 的生产实例，会被第 1b 层必然拦截），
+  mobile 目标为 `http://127.0.0.1:8070/api/mobile`；
 - 目标主机必须是 loopback（`127.0.0.1` / `localhost` / `::1`）；非 loopback 需 `WEB_SMOKE_ALLOW_REMOTE=1`；
 - pre-commit 钩子触发条件：web 侧为 `apps/web/src/api/`、`apps/web/src/utils/apiPath.ts`、`svc/server/src/`、
   `lib/shared-service-client/src/`；mobile 侧为 `apps/mobile/src/api/`、`svc/mobile/src/`、
   `lib/shared-service-client/src/`。目标不可达/缺密钥时**明确失败并阻断提交**，不再静默 SKIP
   （旧行为会掩盖对 prod 的写入，2026-11-06 已移除）。
+
+**本机隔离实跑（`scripts/dev/web_smoke_precommit.sh`，2026-11-18）**
+
+```bash
+# 提交时由 lefthook 自动调用（未设 WEB_BFF_URL 时）；也可手动跑/带参数：
+bash scripts/dev/web_smoke_precommit.sh            # 全量 4513 端点
+bash scripts/dev/web_smoke_precommit.sh --limit 20 # 快速抽查
+WEB_SMOKE_REFRESH_DB=1 bash scripts/dev/web_smoke_precommit.sh   # 重建测试库
+WEB_SMOKE_REBUILD=1 bash scripts/dev/web_smoke_precommit.sh      # 用独立 target 重建 BFF
+```
+
+- **测试库**：默认 `topems_web_smoke`（DSN `postgresql://<当前用户>@127.0.0.1:5432/topems_web_smoke`）。
+  缺库时按 `database/baseline/anchors.json` 的最新锚点恢复 schema/账本/参考数据，再 `scripts/migration/apply-forward.sh`
+  补到仓库 head；已在 head 则直接复用；只写测试库，不连生产。注意必须用带 host + 显式用户的 TCP DSN，
+  `postgresql:///db` 会被 sqlx 解析成角色 `anonymous` 而建池失败。
+- **端口**：隔离 BFF 默认 `18099`（`WEB_SMOKE_PORT` 可改，禁止 8099）；redis 默认 `16379`；下游
+  `*_SERVICE_URL` 全部指向不监听的 `18098`，转发类端点走 503/501 降级契约，不会把请求打到 8099。
+- **二进制**：默认复用 `target/debug/topems-server`（不抢别人的 cargo target 锁，源文件较新时提示）；
+  缺失或 `WEB_SMOKE_REBUILD=1` 时用独立 `CARGO_TARGET_DIR`（默认 `<repo>/target-web-smoke`，
+  磁盘 <10GiB 直接拒绝）构建。
+- **安全边界**：库名命中 `topems_prod` / `*_prod`、端口 8099、`TOPEMS_INSTANCE=prod` 一律拒绝；
+  生产进程/二进制/launchd 全程不触碰；脚本退出即回收 BFF/redis 进程。
+- **约束**：`TEST_DATABASE_URL` 必须显式（脚本内导出为测试库 DSN），不回退 `DATABASE_URL`。
+
+**CI 配置（避免再次因连生产而失败）**
+
+- CI 不启动生产实例：由 workflow 起 PostgreSQL service + 按上述基线/前向迁移建测试库，
+  再起 BFF 到 CI 内端口，然后：
+  - 方案 A（推荐，复用同一脚本）：不设 `WEB_BFF_URL`，直接 `bash scripts/dev/web_smoke_precommit.sh`，
+    由脚本自建测试库与 BFF（要求 CI runner 有 psql/redis-server/本机 PostgreSQL）；
+  - 方案 B（CI 已自备测试 BFF）：`WEB_BFF_URL=http://127.0.0.1:<CI端口> WEB_SMOKE_ENV=test JWT_SECRET=... python3 scripts/web_contract_smoke.py`，
+    lefthook 见到 `WEB_BFF_URL` 即跳过拉起；此时 BFF 进程的 `DATABASE_URL` 必须显式指向 `*_test`/非 `*_prod` 库，
+    否则第 1b 层仍会按目标位拦截。
+- 纯静态形状校验可用 `python3 scripts/web_contract_smoke.py --dry-run`（零网络、退出码 0），
+  但不能替代本门禁的实跑语义。
 
 **prod 拒绝层（识别机制 + 绕过条件，web / mobile 相同）**
 
@@ -166,7 +203,8 @@ python3 scripts/web_contract_smoke.py
 **为什么不会误伤本地开发与 CI**
 
 - 本地开发机：无 `TOPEMS_INSTANCE`、`DATABASE_URL` 指向 `topems` 等非 `_prod` 库 → 判定为 dev；目标监听进程的库名
-  非 prod 或读不到（`unknown`）时都不触发拒绝，web 默认本机 8099、mobile 默认本机 8070，行为与改造前一致；
+  非 prod 或读不到（`unknown`）时都不触发拒绝；web 未给 `WEB_BFF_URL` 时跑隔离实例（连测试库），
+  mobile 默认本机 8070；显式给 `WEB_BFF_URL` 时按给定目标判定；
 - CI：不设置 `WEB_SMOKE_ENV=prod`，用 `--dry-run` 做静态契约提取（退出码 0、零网络）；无服务时 `lsof` 无结果
   （目标位 `unknown`），普通跑法会在 2 秒内以 exit 3 明确报“目标不可达”而非挂死；无密钥时 exit 3 明确报
   “缺少 JWT_SECRET”，并提示改用 `--dry-run`。
