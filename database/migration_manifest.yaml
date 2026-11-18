@@ -2366,3 +2366,30 @@ pending_forward_patches:
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP TABLE；ADD COLUMN IF NOT EXISTS（含 FK）/ALTER COLUMN DROP NOT NULL/ADD CONSTRAINT/CREATE INDEX IF NOT EXISTS；既有行（user_id 非空、effect 默认 allow、scope 默认 tenant）判定语义不变"
     note: "回滚 database/rollback/20261119010000_iam_resource_permissions_role_grants.rollback.sql（存在角色授予或拒绝行时拒绝回滚，避免静默丢 ACL；deleted_at 列保留，避免删除生产既有审计；回滚末按 version 删自身账本行并断言 0 行）"
 
+  # ===== 2026-11-19 批：207 张删除候选表「先归档后 DROP」（草案，未应用） =====
+  # 登记口径：2026-11-19 新写、尚未在任何环境应用（status: to_apply）。
+  # 前置：docs/quality/dead-table-disposal-plan-2026-11-19.md §5 外部消费复核由 DBA 签署，且开窗后方可执行。
+  # 归档：archive.<drop_20261119_bN__schema__table>（结构 + 数据，保留 180 天）；归档校验失败即整事务回滚，DROP 不执行。
+  # 分两批：第二批须在第一批应用后观察 ≥7 天再放行。
+  - version: "20261119100000"
+    file: "database/migrations/20261119100000_drop_dead_tables_batch1.sql"
+    status: to_apply
+    effect: "批 1/2：19 张 0 行死表先归档到 archive 再 DROP（crm 1 / mes 4 / mobile 1 / pm 4 / rs 3 / shared 1 / tms 2 / wms 3）；同时快照 14 条 RLS 策略、1 个依赖视图 mes.v_tenant_backfill_gaps、60 条列默认值"
+    destructive_scan: "DROP VIEW ×1 + DROP TABLE ×19；无 DELETE/TRUNCATE/UPDATE；归档三方行数校验（源/归档/插入）失败即 RAISE EXCEPTION 回滚；会话闸门 app.drop_dead_tables_gate=batch-1"
+    note: "回滚 database/rollback/20261119100000_drop_dead_tables_batch1.rollback.sql；隔离库 topems_snap_20261118 演练：19 张归档 0 行 → DROP → 回滚后 19/19 表、14 策略、1 视图全部恢复"
+  - version: "20261119110000"
+    file: "database/migrations/20261119110000_drop_dead_tables_batch2.sql"
+    status: to_apply
+    effect: "批 2/2：188 张 0 行死表先归档再 DROP（public 125 / ehs 21 / lims 10 / master_data 7 / qms 6 / hrm 6 / gis 3 / finance 3 / erp 3 / scm 2 / bi 2）；快照 116 条 RLS 策略、30 条入向外键（来源均为候选表，依赖图封闭）、587 条列默认值、1 个 serial 序列 public.tenant_permissions_id_seq"
+    destructive_scan: "DROP CONSTRAINT(FK) ×30 + DROP TABLE ×188；无 DELETE/TRUNCATE/UPDATE；归档三方行数校验失败即 RAISE EXCEPTION 回滚；会话闸门 app.drop_dead_tables_gate=batch-2"
+    note: "回滚 database/rollback/20261119110000_drop_dead_tables_batch2.rollback.sql；隔离库演练：188 张归档 → DROP → 回滚后 188/188 表、30 外键、116 策略、tenant_permissions_id_seq 与 nextval 默认值恢复；第二批须在第一批观察 ≥7 天后放行"
+
+  # ===== 2026-11-19 批：ERP 销售订单行项目表（scm.sales_order_items 归属收口） =====
+  # 登记口径：由 ERP/SCM 会话在 05e86c3a7 提交迁移文件时漏登，此处按 to_apply 补登；不改动其他条目。
+  - version: "20261119120000"
+    file: "database/migrations/20261119120000_erp_sales_order_items.sql"
+    status: to_apply
+    effect: "新建 erp.sales_order_items（sales_order_id 外键 erp.sales_orders ON DELETE CASCADE、软删列、RLS ENABLE+FORCE、3 个索引）；scm.sales_order_items 仅加归档注释，不改数据、不 DROP、不删策略"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；CREATE TABLE IF NOT EXISTS + CREATE INDEX + ENABLE/FORCE RLS + COMMENT ON TABLE"
+    note: "回滚 database/rollback/20261119120000_erp_sales_order_items.rollback.sql（DROP 新表并清 scm 表注释；新表已有业务写入时会丢失行项目数据）；须与 svc/erp、svc/scm 同窗口上线"
+
