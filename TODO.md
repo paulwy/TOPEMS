@@ -103,6 +103,12 @@
 | §14.2 | 单一率校验 | 未做 | 用例绿 |
 | §17.3 | `200 + success:false` 分批改语义（先加响应头/错误码映射） | 545 处 | 每批计数下降且客户端兼容 |
 
+### E. 数据库漂移登记（待确认，不改契约）
+
+| ID | 现象 | 证据 / 复现（只读） | 状态 |
+|---|---|---|---|
+| DRIFT-01 | `mes.production_records.completed_quantity` 在本地 `topems` 实际为 `numeric`（无 typmod），迁移 `20260926120000_app_schema_tables.sql:1617` 与门禁断言要求 `numeric(12,2)` | `psql "postgresql:///topems" -tAc "select format_type(atttypid, atttypmod) from pg_attribute where attrelid='mes.production_records'::regclass and attname='completed_quantity'"` → `numeric`；`topems_web_smoke` 为 `numeric(12,2)`，生产快照 `fixtures/full_schema_contract.sql:17144` 亦为 `numeric(12,2)`；全仓迁移无后续 `ALTER ... TYPE` | **未定性**：尚无「迁移写错 / 契约写错 / 本地库手工改过」的结论。现状证据更像本地 `topems` 建库路径漂移，但未取证建库历史。**未改契约、未改迁移**；待确认来源后只修一侧。门禁复现：`MIGRATION_DRIFT_DB_URL=postgresql:///topems node scripts/migration/check-ledger-ddl-drift.mjs`（本地 socket 为超管，需 `MIGRATION_DRIFT_ALLOW_SUPERUSER=1` 才会跑到断言） |
+
 ---
 
 ## 2. 决策建议（用户已授权：一步到位 + 通用，每条只给一个结论）
