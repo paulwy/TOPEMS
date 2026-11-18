@@ -45,6 +45,8 @@
  *   `--check-file <path> --strict --approve-ticket=<ticket>[,<ticket>...] --plan-file=<json>`：
  *     --approve-ticket 支持逗号列表；文件内每个标记的 destructive-ticket 都必须被显式列出，
  *     任何未列出的票据仍然 DENY（不降低审批数量、不引入默认放行）。一致时输出待执行计划（含 max-rows / SQL）。
+ *     计划中 `temp=true` 仅表示预演可跳过行数统计（pg_temp.* 或本文件 CREATE TEMP TABLE 建出的对象）；
+ *     静态命中、标记与票据校验不因 temp 放宽。
  *   TRUNCATE 无任何运行时开关。
  *
  * 用法：
@@ -332,10 +334,53 @@ function explicitSchema(stmtCode) {
   return !!(t && t.includes('.'));
 }
 
+// --- 临时对象识别（仅用于破坏性预演的行数统计） -------------------------------
+// 口径：显式 pg_temp[.N] 前缀，或本文件内 CREATE [GLOBAL|LOCAL] TEMP[ORARY] TABLE 声明的名字。
+// 静态判定（命中、标记、票据）完全不使用该结果，避免放宽真实表的破坏性拦截。
+const TEMP_CREATE_RE =
+  /\bCREATE\s+(?:(?:GLOBAL|LOCAL)\s+)?(?:TEMP|TEMPORARY)\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("(?:[^"]|"")*"|[\w$]+)(?:\s*\.\s*("(?:[^"]|"")*"|[\w$]+))?/gi;
+
+function normIdent(s) {
+  return s.replace(/^"+|"+$/g, '').replace(/""/g, '"').toLowerCase();
+}
+
+function tempTablesIn(raw) {
+  const set = new Set();
+  for (const m of raw.matchAll(TEMP_CREATE_RE)) {
+    if (m[2]) {
+      const schema = normIdent(m[1]);
+      const name = normIdent(m[2]);
+      set.add(name);
+      set.add(`${schema}.${name}`);
+    } else {
+      set.add(normIdent(m[1]));
+    }
+  }
+  return set;
+}
+
+function isTempTarget(target, temps) {
+  if (!target) return false;
+  const parts = target.split('.').map(normIdent);
+  const name = parts[parts.length - 1];
+  const schema = parts.length > 1 ? parts[parts.length - 2] : null;
+  // 显式 schema 只认 pg_temp[N]；普通 schema 即使与临时表同名也不得豁免。
+  if (schema) return schema === 'pg_temp' || /^pg_temp_\d+$/.test(schema);
+  return temps.has(name);
+}
+
+function dmlTarget(stmtCode) {
+  const del = stmtCode.match(/^\s*DELETE\s+FROM\s+([\w".]+)/i);
+  if (del) return del[1];
+  const upd = stmtCode.match(/^\s*UPDATE\s+([\w".]+)\s+SET\b/i);
+  return upd ? upd[1] : null;
+}
+
 // --- 逐语句扫描 ---------------------------------------------------------------
 function scanFile(path, relPath) {
   const raw = readFileSync(path, 'utf-8');
   const stmts = splitStatements(raw);
+  const temps = tempTablesIn(raw);
   const codeLines = stmts.length === 0 ? [] : buildCodeLines(raw);
   const rawLines = raw.split('\n');
   const hits = [];
@@ -392,7 +437,8 @@ function scanFile(path, relPath) {
             .join('\n')
             .trim()
             .replace(/;\s*$/, ''),
-          table: null,
+          table: dmlTarget(stmtCode),
+          temp: isTempTarget(dmlTarget(stmtCode), temps),
         });
         break;
       }
@@ -437,6 +483,7 @@ function scanFile(path, relPath) {
           backup: marker['destructive-backup'],
           sql: null,
           table: targetTable(stmtCode),
+          temp: isTempTarget(targetTable(stmtCode), temps),
         });
         break;
       }
@@ -610,6 +657,7 @@ if (CHECK_FILE) {
               maxRows: a.maxRows,
               backup: a.backup,
               table: a.table,
+              temp: !!a.temp,
               sql: a.sql,
             })),
           },

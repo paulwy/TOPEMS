@@ -29,6 +29,8 @@
 #   PROD_CHANGE_TICKET 显式列出（逗号列表）；未列出的票据仍被拒绝。
 #   执行前在只读事务（ROLLBACK）内预演 DELETE/UPDATE 受影响行数、DROP 目标表行数，
 #   超过 destructive-max-rows（DROP 必须为 0）→ 拒绝执行；
+#   临时对象（pg_temp.* 或本文件 CREATE TEMP TABLE 建出的表）不参与行数统计，
+#   其余静态判定/标记/票据校验一律不变；
 #   预演在同一事务内先执行该语句之前的 DDL（保证同文件“先加列、后回填”可见），整段仍 ROLLBACK；
 #   计数用 `WITH __dg AS (<DML> RETURNING 1) SELECT count(*)`（子查询不允许直接放 UPDATE）；
 #   TRUNCATE 不提供任何开关。
@@ -411,6 +413,7 @@ fi
 # --- 破坏性语句执行前预演（只读事务 + ROLLBACK，不产生任何写入） -------------
 # 逐版本、逐语句：DELETE/UPDATE 统计受影响行数，DROP TABLE 统计目标表现存行数；
 # 任一超过标记 destructive-max-rows（DROP 必须为 0）即拒绝，且发生在任何 DDL 之前。
+# 临时对象（pg_temp.* / 本文件 CREATE TEMP TABLE）不计行数，静态判定仍按原规则。
 for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
   dg_plan="/tmp/topems_dg_plan_${v}.json"
   if [[ ! -f "$dg_plan" ]]; then
@@ -441,11 +444,21 @@ for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
       console.log("BEGIN;");
       if (prefix.trim()) console.log(prefix);
       if (s.kind === "DELETE" || s.kind === "UPDATE") {
-        const sql = s.sql.replace(/;\s*$/, "");
-        console.log(`WITH __dg AS (${sql} RETURNING 1) SELECT ${s.line} AS line, '${s.kind}' AS kind, ${Number(s.maxRows)} AS max_rows, count(*)::bigint AS n FROM __dg;`);
+        if (s.temp) {
+          // 临时对象：会话内自建自用，不计入业务行数（静态判定/票据仍按原规则）
+          console.log(`SELECT ${s.line} AS line, '${s.kind}' AS kind, ${Number(s.maxRows)} AS max_rows, 0::bigint AS n;`);
+        } else {
+          const sql = s.sql.replace(/;\s*$/, "");
+          console.log(`WITH __dg AS (${sql} RETURNING 1) SELECT ${s.line} AS line, '${s.kind}' AS kind, ${Number(s.maxRows)} AS max_rows, count(*)::bigint AS n FROM __dg;`);
+        }
       } else if (s.kind === "DROP TABLE") {
-        const t = q(s.table);
-        console.log(`SELECT ${s.line} AS line, 'DROP TABLE' AS kind, 0 AS max_rows, CASE WHEN to_regclass('${t}') IS NULL THEN 0 ELSE (xpath('/row/c/text()', query_to_xml('SELECT count(*) AS c FROM ${t}', false, true, '')))[1]::text::bigint END AS n;`);
+        if (s.temp) {
+          // 同上：pg_temp/本文件 CREATE TEMP TABLE 建出的对象不参与行数预演
+          console.log(`SELECT ${s.line} AS line, 'DROP TABLE' AS kind, 0 AS max_rows, 0::bigint AS n;`);
+        } else {
+          const t = q(s.table);
+          console.log(`SELECT ${s.line} AS line, 'DROP TABLE' AS kind, 0 AS max_rows, CASE WHEN to_regclass('${t}') IS NULL THEN 0 ELSE (xpath('/row/c/text()', query_to_xml('SELECT count(*) AS c FROM ${t}', false, true, '')))[1]::text::bigint END AS n;`);
+        }
       } else {
         console.log(`SELECT ${s.line} AS line, '${s.kind}' AS kind, ${Number(s.maxRows)} AS max_rows, 0::bigint AS n;`);
       }
