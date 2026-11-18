@@ -16,7 +16,7 @@ _clean_cov_remnants() {
     for cov_dir in "${cov_dirs[@]}"; do
         if [ -d "$cov_dir" ]; then
             local size
-            size=$(du -sh "$cov_dir" 2>/dev/null | awk '{print $1}')
+            size=$(du -xsh "$cov_dir" 2>/dev/null | awk '{print $1}')
             if $dry_run; then
                 info "[DRY-RUN] 将删除 coverage/target 残留: $cov_dir ($size)"
             else
@@ -47,7 +47,7 @@ _acc_freed() {
 _dir_kb() {
     [ -e "$1" ] || { echo 0; return 0; }
     local k
-    k=$(du -sk "$1" 2>/dev/null | awk '{print $1}')
+    k=$(du -xsk "$1" 2>/dev/null | awk '{print $1}')
     [ -n "$k" ] || k=0
     echo "$k"
     return 0
@@ -436,7 +436,7 @@ clean_project() {
             local d
             for d in "${analyze_uniq[@]}"; do
                 if [ -e "$d" ]; then
-                    du -sh "$d" 2>/dev/null
+                    du -xsh "$d" 2>/dev/null
                 fi
             done
         } | sort -rh | head -20
@@ -447,7 +447,7 @@ clean_project() {
         else
             local wt
             while IFS= read -r wt; do
-                [ -n "$wt" ] && du -sh "$wt" 2>/dev/null
+                [ -n "$wt" ] && du -xsh "$wt" 2>/dev/null
             done <<< "$wt_paths"
         fi
         echo ""
@@ -460,7 +460,7 @@ clean_project() {
         echo ""
         info "Ollama 占用汇总:"
         if [ -d "$HOME/.ollama" ]; then
-            du -sh "$HOME/.ollama" 2>/dev/null || true
+            du -xsh "$HOME/.ollama" 2>/dev/null || true
             local mcount
             mcount=$(ollama list 2>/dev/null | tail -n +2 | grep -c . 2>/dev/null || true)
             detail "  已安装模型数: ${mcount:-0}"
@@ -735,7 +735,7 @@ clean_project() {
         local sqlx_dir="$PROJECT_ROOT/.sqlx"
         if [ -d "$sqlx_dir" ]; then
             local sqlx_size
-            sqlx_size=$(du -sh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
+            sqlx_size=$(du -xsh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
             else
@@ -856,7 +856,7 @@ clean_project() {
         for dir in "${nm_cache_dirs[@]}"; do
             if [ -d "$dir" ]; then
                 local size
-                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                size=$(du -xsh "$dir" 2>/dev/null | awk '{print $1}')
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
@@ -933,7 +933,7 @@ clean_project() {
         for dir in "${project_cache_dirs[@]}"; do
             if [ -d "$dir" ]; then
                 local size
-                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                size=$(du -xsh "$dir" 2>/dev/null | awk '{print $1}')
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除项目缓存: $dir ($size)"
                 else
