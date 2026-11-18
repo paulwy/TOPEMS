@@ -47,6 +47,21 @@ interface DocumentWithFavorite extends FileMetadata {
   category?: string;
 }
 
+/** unified-core `/documents` 的原始文档结构（与 `public.core_doc_documents` 对齐）。 */
+interface DocApiDocument {
+  id: string;
+  title?: string;
+  file_name?: string | null;
+  folder_id?: string | null;
+  file_size?: number | null;
+  content_type?: string | null;
+  content?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string | null;
+  version?: number;
+}
+
 const DocumentCenterPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
@@ -64,6 +79,7 @@ const DocumentCenterPage: React.FC = () => {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [versionDoc, setVersionDoc] = useState<DocumentWithFavorite | null>(null);
+  const [previewVersion, setPreviewVersion] = useState<FileVersion | null>(null);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -71,6 +87,9 @@ const DocumentCenterPage: React.FC = () => {
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
+
+  const contentByteSize = (content?: string | null): number =>
+    content ? new TextEncoder().encode(content).length : 0;
 
   const getFileIcon = (contentType: string) => {
     if (contentType.includes('pdf')) {
@@ -110,8 +129,23 @@ const DocumentCenterPage: React.FC = () => {
     queryFn: async () => {
       const res = await docApi.list();
       if (res.success && res.data) {
-        const data = res.data;
-        const files = data.files ?? data.items ?? [];
+        // unified-core `/documents` 直接返回文档数组；文件服务返回分页对象。
+        // 两种形态都兼容，避免文档中心因契约差异整页空白。
+        const raw = res.data as unknown as
+          DocApiDocument[] | { files?: FileMetadata[]; items?: FileMetadata[]; total?: number };
+        const files: FileMetadata[] = Array.isArray(raw)
+          ? raw.map((doc) => ({
+              id: doc.id,
+              name: doc.title || doc.file_name || i18n.t('pages.document_center_page.k0'),
+              folder_id: doc.folder_id ?? null,
+              size: doc.file_size ?? contentByteSize(doc.content),
+              content_type: doc.content_type || 'text/html',
+              created_at: doc.created_at || '',
+              updated_at: doc.updated_at || '',
+              created_by: doc.created_by || '',
+              version: doc.version,
+            }))
+          : (raw.files ?? raw.items ?? []);
         const docs: DocumentWithFavorite[] = files.map((file) => ({
           ...file,
           is_favorite: false,
@@ -120,7 +154,10 @@ const DocumentCenterPage: React.FC = () => {
             ? i18n.t('pages.document_center_page.k1')
             : i18n.t('pages.document_center_page.k0'),
         }));
-        return { documents: docs, total: data.total ?? 0 };
+        return {
+          documents: docs,
+          total: Array.isArray(raw) ? files.length : (raw.total ?? files.length),
+        };
       }
       return { documents: [], total: 0 };
     },
@@ -385,6 +422,30 @@ const DocumentCenterPage: React.FC = () => {
 
   const handleRestoreVersion = (doc: DocumentWithFavorite, version: FileVersion) => {
     restoreVersionMutation.mutate({ fileId: doc.id, version: version.version });
+  };
+
+  const handleViewVersion = async (doc: DocumentWithFavorite, version: FileVersion) => {
+    // 列表已带正文快照，先即时展示；再用单版本详情接口刷新，保证看到的是权威数据。
+    setPreviewVersion(version);
+    try {
+      const res = await docApi.getVersion(doc.id, version.version);
+      if (res.success && res.data) {
+        setPreviewVersion(res.data);
+      } else {
+        addNotification({
+          title: i18n.t('pages.document_center_page.k6'),
+          message: res.message || i18n.t('pages.document_center_page.k59'),
+          type: 'error',
+        });
+      }
+    } catch (err) {
+      logger.error(i18n.t('pages.document_center_page.k59'), err);
+      addNotification({
+        title: i18n.t('pages.document_center_page.k6'),
+        message: i18n.t('pages.document_center_page.k59'),
+        type: 'error',
+      });
+    }
   };
 
   const filters = [
@@ -843,28 +904,26 @@ const DocumentCenterPage: React.FC = () => {
                           </IconButton>
                         </Tooltip>
                       )}
-                      {ver.download_url && (
-                        <Tooltip title={i18n.t('pages.document_center_page.k53')}>
+                      {versionDoc && (
+                        <Tooltip title={i18n.t('pages.document_center_page.k57')}>
                           <IconButton
                             size='small'
-                            onClick={() => {
-                              if (versionDoc) handleDownload(versionDoc);
-                            }}
-                            aria-label={i18n.t('pages.document_center_page.k54')}
+                            onClick={() => handleViewVersion(versionDoc, ver)}
+                            aria-label={i18n.t('pages.document_center_page.k57')}
                           >
-                            <Download size={16} />
+                            <Eye size={16} />
                           </IconButton>
                         </Tooltip>
                       )}
                     </Stack>
                   </Stack>
-                  {ver.change_note && (
+                  {ver.summary && (
                     <Typography
                       variant='body2'
                       color='text.secondary'
                       sx={{ mt: 1, mb: 0.5 }}
                     >
-                      {ver.change_note}
+                      {ver.summary}
                     </Typography>
                   )}
                   <Stack
@@ -908,7 +967,7 @@ const DocumentCenterPage: React.FC = () => {
                       variant='caption'
                       sx={{ color: 'grey.400' }}
                     >
-                      {formatFileSize(ver.size)}
+                      {formatFileSize(contentByteSize(ver.content))}
                     </Typography>
                   </Stack>
                 </Box>
@@ -918,6 +977,49 @@ const DocumentCenterPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowVersionHistory(false)}>
+            {i18n.t('pages.document_center_page.k56')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 版本内容查看对话框 */}
+      <Dialog
+        open={!!previewVersion}
+        onClose={() => setPreviewVersion(null)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>
+          {i18n.t('pages.document_center_page.k58')}
+          {previewVersion ? ` · v${previewVersion.version}` : ''}
+        </DialogTitle>
+        <DialogContent dividers>
+          {previewVersion?.content ? (
+            <Box
+              component='pre'
+              sx={{
+                m: 0,
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 2,
+                fontFamily: 'monospace',
+                fontSize: designTokens.typography.fontSize.scale['0.8rem'],
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                maxHeight: 480,
+                overflow: 'auto',
+              }}
+            >
+              {previewVersion.content}
+            </Box>
+          ) : (
+            <Typography sx={{ color: 'grey.500', py: 4, textAlign: 'center' }}>
+              {i18n.t('pages.document_center_page.k60')}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPreviewVersion(null)}>
             {i18n.t('pages.document_center_page.k56')}
           </Button>
         </DialogActions>

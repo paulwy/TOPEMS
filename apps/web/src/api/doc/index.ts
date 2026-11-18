@@ -49,16 +49,18 @@ export interface FileMetadata {
   version?: number;
 }
 
+/**
+ * 文档版本记录：字段与 unified-core `public.core_doc_document_versions` 一一对应。
+ * 版本表没有文件大小/下载地址概念，正文以 `content` 快照返回。
+ */
 export interface FileVersion {
   id: string;
-  file_id: string;
+  document_id: string;
   version: number;
-  size: number;
-  content_type: string;
-  created_at: string;
+  content: string;
+  summary: string | null;
   created_by: string;
-  change_note?: string;
-  download_url?: string;
+  created_at: string;
 }
 
 interface FileListResponse {

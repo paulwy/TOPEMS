@@ -6,41 +6,18 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::models::*;
-use super::services::{DocumentService, FolderService, TemplateService};
+use super::services::{DocumentService, FolderService, RestoreVersionResult, TemplateService};
 use crate::middleware::permission::require_permission;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::tenant_scope::TenantScope;
 use topems_shared_core::{
     response::{ApiResponse, PaginatedResponse},
     TopemsError,
 };
 use topems_shared_db::scope::ScopedTxn;
-
-/// 开启请求级 RLS 事务：本事务内 `SET LOCAL app.tenant_id`，事务内所有语句共用同一连接。
-///
-/// 与 `DocumentService::tenant_txn` 同范式：handler 没有 self，故作为模块级本地函数。
-/// 普通用户传真实租户（命中 `tenant_id = current_setting('app.tenant_id')` 分支）；
-/// superadmin / 无租户传 `None`（落到 nil UUID，命中策略里的全零旁路，可跨租户管理）。
-///
-/// 版本表一律显式写 `public.`：嵌入模式下会话级 search_path 为 `flow, public`，
-/// 而 `core_doc_document_versions` 的权威副本在 public；只靠裸表名会静默读到 flow 的
-/// 空同名副本。本函数仅服务文档版本三个只读/回写接口，均无 flow 业务表依赖。
-async fn open_rls_txn(
-    pool: &sqlx::PgPool,
-    tenant_id: Option<Uuid>,
-) -> Result<sqlx::Transaction<'static, sqlx::Postgres>, sqlx::Error> {
-    let mut tx = pool.begin().await?;
-    let rls_tenant = tenant_id
-        .map(|t| t.to_string())
-        .unwrap_or_else(|| Uuid::nil().to_string());
-    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant)
-        .execute(&mut *tx)
-        .await?;
-    Ok(tx)
-}
 
 async fn count_table_with_tenant(
     scope: &mut ScopedTxn<'_>,
@@ -218,7 +195,11 @@ pub async fn update_document(
 ) -> ApiResponse<Option<Document>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = DocumentService::new(state.pool.clone());
-    match service.update_document(tenant_id, document_id, req).await {
+    let updated_by = claims.username.clone();
+    match service
+        .update_document(tenant_id, document_id, req, &updated_by)
+        .await
+    {
         Ok(document) => ApiResponse::success(document, "更新成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("update_document", e)),
     }
@@ -627,32 +608,33 @@ pub async fn get_dashboard_handler(
         }
     };
 
-    let total_documents = count_table_with_tenant(&mut scope, "core_doc_documents").await;
+    let total_documents = count_table_with_tenant(&mut scope, "public.core_doc_documents").await;
     let published_documents =
-        count_table_with_tenant_and_status(&mut scope, "core_doc_documents", "published").await;
+        count_table_with_tenant_and_status(&mut scope, "public.core_doc_documents", "published")
+            .await;
     let draft_documents =
-        count_table_with_tenant_and_status(&mut scope, "core_doc_documents", "draft").await;
+        count_table_with_tenant_and_status(&mut scope, "public.core_doc_documents", "draft").await;
     let archived_documents = count_table_with_tenant_and_condition(
         &mut scope,
-        "core_doc_documents",
+        "public.core_doc_documents",
         "archived_at IS NOT NULL",
     )
     .await;
 
-    let total_folders = count_table_with_tenant(&mut scope, "core_doc_folders").await;
-    let total_templates = count_table_with_tenant(&mut scope, "core_doc_templates").await;
+    let total_folders = count_table_with_tenant(&mut scope, "public.core_doc_folders").await;
+    let total_templates = count_table_with_tenant(&mut scope, "public.core_doc_templates").await;
     let active_templates =
-        count_table_with_tenant_and_enabled(&mut scope, "core_doc_templates", true).await;
+        count_table_with_tenant_and_enabled(&mut scope, "public.core_doc_templates", true).await;
 
     let this_month_created = count_table_with_tenant_and_condition(
         &mut scope,
-        "core_doc_documents",
+        "public.core_doc_documents",
         "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
     let this_month_updated = count_table_with_tenant_and_condition(
         &mut scope,
-        "core_doc_documents",
+        "public.core_doc_documents",
         "DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
@@ -1082,39 +1064,20 @@ pub async fn list_document_versions(
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
 ) -> ApiResponse<Vec<DocumentVersion>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    // A/B 类读路径：普通用户按 Claims 租户过滤；超管/服务令牌走显式系统通道。
+    // 版本表本身没有 tenant_id 与 RLS，归属校验由 JOIN 文档表的谓词完成。
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.doc.list_document_versions",
+        "public.core_doc_document_versions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
     };
 
-    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("开启 RLS 事务失败: {}", e);
-            return ApiResponse::server_error("查询文档版本失败");
-        }
-    };
-
-    let versions = sqlx::query_as::<_, DocumentVersion>(
-        "SELECT id, document_id, version, content, summary, created_by, created_at
-         FROM public.core_doc_document_versions
-         WHERE document_id = $1
-         ORDER BY version DESC",
-    )
-    .bind(document_id)
-    .fetch_all(&mut *tx)
-    .await;
-
-    match versions {
-        Ok(v) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("提交事务失败: {}", e);
-                return ApiResponse::server_error("查询文档版本失败");
-            }
-            ApiResponse::success(v, "查询成功")
-        }
+    let service = DocumentService::new(state.pool.clone());
+    match service.list_versions(&scope, document_id).await {
+        Ok(versions) => ApiResponse::success(versions, "查询成功"),
         Err(e) => {
             tracing::error!("查询文档版本失败: {}", e);
             ApiResponse::server_error("查询文档版本失败")
@@ -1142,43 +1105,20 @@ pub async fn get_document_version(
     Extension(claims): Extension<Claims>,
     Path((document_id, version)): Path<(Uuid, i32)>,
 ) -> ApiResponse<DocumentVersion> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
+    let scope = match TenantScope::from_claims(
+        &claims,
+        "unified-core.doc.get_document_version",
+        "public.core_doc_document_versions",
+    ) {
+        Ok(scope) => scope,
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
     };
 
-    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
-        Ok(tx) => tx,
+    let service = DocumentService::new(state.pool.clone());
+    match service.get_version(&scope, document_id, version).await {
+        Ok(Some(v)) => ApiResponse::success(v, "查询成功"),
+        Ok(None) => ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
-            tracing::error!("开启 RLS 事务失败: {}", e);
-            return ApiResponse::server_error("查询文档版本失败");
-        }
-    };
-
-    let ver = sqlx::query_as::<_, DocumentVersion>(
-        "SELECT id, document_id, version, content, summary, created_by, created_at
-         FROM public.core_doc_document_versions
-         WHERE document_id = $1 AND version = $2",
-    )
-    .bind(document_id)
-    .bind(version)
-    .fetch_one(&mut *tx)
-    .await;
-
-    match ver {
-        Ok(v) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("提交事务失败: {}", e);
-                return ApiResponse::server_error("查询文档版本失败");
-            }
-            ApiResponse::success(v, "查询成功")
-        }
-        Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                return ApiResponse::not_found("文档版本不存在");
-            }
             tracing::error!("查询文档版本失败: {}", e);
             ApiResponse::server_error("查询文档版本失败")
         }
@@ -1205,62 +1145,34 @@ pub async fn restore_document_version(
     Extension(claims): Extension<Claims>,
     Path((document_id, version)): Path<(Uuid, i32)>,
 ) -> ApiResponse<Document> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_id)
-    };
-
-    // 读版本 + 更新文档必须在同一请求级 RLS 事务内，避免读到的版本与写回的文档跨连接、跨 RLS 上下文。
-    let mut tx = match open_rls_txn(&state.pool, opt_tenant_id).await {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("开启 RLS 事务失败: {}", e);
-            return ApiResponse::server_error("恢复文档版本失败");
-        }
-    };
-
-    let content = sqlx::query_scalar::<_, String>(
-        "SELECT content FROM public.core_doc_document_versions WHERE document_id = $1 AND version = $2",
-    )
-    .bind(document_id)
-    .bind(version)
-    .fetch_optional(&mut *tx)
-    .await;
-
-    let content = match content {
-        Ok(Some(c)) => c,
-        Ok(None) => return ApiResponse::not_found("文档版本不存在"),
-        Err(e) => {
-            tracing::error!("读取文档版本失败: {}", e);
-            return ApiResponse::server_error("恢复文档版本失败");
-        }
-    };
-
-    let doc = sqlx::query_as::<_, Document>(
-        "UPDATE public.core_doc_documents
-         SET content = $1, version = version + 1, updated_at = NOW()
-         WHERE id = $2
-         RETURNING id, folder_id, title, description, file_name, file_path, file_size, content_type, content, status, version, tags, template_id, tenant_id, created_by, created_at, updated_at, archived_at, archived_by, deleted_at",
-    )
-    .bind(content)
-    .bind(document_id)
-    .fetch_one(&mut *tx)
-    .await;
-
-    match doc {
-        Ok(d) => {
-            if let Err(e) = tx.commit().await {
-                tracing::error!("提交事务失败: {}", e);
-                return ApiResponse::server_error("恢复文档版本失败");
+    // C 类写路径：只允许租户内用户，缺失/非法租户直接 400，不做全量降级。
+    let tenant_id = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => match scope.tenant_id() {
+            Some(tenant_id) => tenant_id,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "缺少租户上下文".to_string(),
+                ))
             }
-            ApiResponse::success(d, "恢复成功")
-        }
+        },
+        Err((_, message)) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let service = DocumentService::new(state.pool.clone());
+    match service
+        .restore_version(
+            tenant_id,
+            document_id,
+            version,
+            Some(claims.sub.as_str()),
+            claims.username.as_str(),
+        )
+        .await
+    {
+        Ok(RestoreVersionResult::Restored(doc)) => ApiResponse::success(*doc, "恢复成功"),
+        Ok(RestoreVersionResult::DocumentNotFound) => ApiResponse::not_found("文档不存在"),
+        Ok(RestoreVersionResult::VersionNotFound) => ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                return ApiResponse::not_found("文档不存在");
-            }
             tracing::error!("恢复文档版本失败: {}", e);
             ApiResponse::server_error("恢复文档版本失败")
         }
