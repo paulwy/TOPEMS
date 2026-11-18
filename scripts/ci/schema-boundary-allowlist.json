@@ -15,6 +15,8 @@
     "svc/master-data/src/modules/persist.rs": "master-data 自身 schema（master_data）的持久化集合表 mdm_collections（bootstrap CREATE SCHEMA/TABLE + INSERT/SELECT，own schema 显式前缀访问）；schema_boundary.json 已登记 services/master-data.schema=master_data，属存量模式。【非临时】",
     "svc/analytics/src/modules/bi/dataset.rs": "analytics 服务 own schema=bi（schema_boundary.json 已配置 schema=bi, search_path=bi,public）；dataset.rs 显式 bi. 前缀对齐 DB 实际 schema（monolith 连 5432 库表在 bi schema），python 门禁已 PASS；待统一包裹 only_own_schema_query! 宏后撤销",
     "svc/analytics/src/modules/report/report.rs": "同 dataset.rs：analytics own schema=bi（schema_boundary.json 已配置）；report.rs 显式 bi. 前缀对齐 DB 实际 schema（reports 表在 bi schema），python 门禁 PASS；待统一包裹 only_own_schema_query! 宏后撤销",
-    "svc/ai/src/dsh/rag/mod.rs": "ai DSH RAG 向量检索读 core.knowledge_chunks/knowledge_documents（知识库归属 core，ai 消费；与 python gate 判定一致，登记对齐 cjs/py 双门禁）"
+    "svc/ai/src/dsh/rag/mod.rs": "ai DSH RAG 向量检索读 core.knowledge_chunks/knowledge_documents（知识库归属 core，ai 消费；与 python gate 判定一致，登记对齐 cjs/py 双门禁）",
+    "svc/analytics/src/main.rs": "analytics 用户口径以 iam.users 为唯一真相源（public.core_users 为 0 行孤儿镜像，已停止读取），经 public.core_tenant_users 落租户；iam 非 analytics own schema，属显式只读跨 schema 引用。【非临时，真相源】",
+    "svc/analytics/src/routes.rs": "同 main.rs：reports-center/stats 的用户总量/活跃/增长/角色分布统一改读 iam.users ⨝ public.core_tenant_users。【非临时，真相源】"
   }
 }

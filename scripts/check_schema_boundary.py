@@ -8,8 +8,9 @@ TOPEMS 编译时 Schema 边界门禁检查（CI 用）。
 
 事实源分工（与 scripts/ci/check-schema-boundary.cjs 的关系）：
   - 本脚本（PYTHON 门禁）：按【服务 → schema 归属】判定，事实源 = scripts/schema_boundary.json
-    （每个 service 的 schema / allow / search_path）。扫描 ALL SQL 字面量（含 only_own_schema_query!
-    宏包裹的），另做无前缀表名归属解析（scripts/schema_boundary_tables.json）。
+    （每个 service 的 schema / allow / allow_files / search_path）。扫描 ALL SQL 字面量（含
+    only_own_schema_query! 宏包裹的），另做无前缀表名归属解析（scripts/schema_boundary_tables.json）。
+    `allow_files` 可按仓库相对路径把跨 schema 放行收紧到具体文件与表（schema.table）。
   - scripts/ci/check-schema-boundary.cjs（NODE 门禁）：按【文件 → 裸 sqlx::query* 调用点】判定，
     事实源 = scripts/ci/schema-boundary-allowlist.json（per-file 基线）。只查未被宏包裹的裸调用。
   - 两者语义互补、不可互相替代；临时跨 schema 条目须在两处同时标注（schema_boundary.json 的
@@ -102,10 +103,39 @@ def extract_sql_strings(content):
     return sqls
 
 
+def strip_sql_line_comments(sql):
+    """去掉 SQL 行注释（`--` 到行尾），避免注释里的 schema.table 被误判为真实引用。
+
+    只在单引号字符串外识别 `--`；SQL 中的 '' 转义按一个字符处理。
+    """
+    out = []
+    for line in sql.split("\n"):
+        cut = len(line)
+        in_str = False
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            if in_str:
+                if ch == "'":
+                    if i + 1 < len(line) and line[i + 1] == "'":
+                        i += 2
+                        continue
+                    in_str = False
+            elif ch == "'":
+                in_str = True
+            elif ch == "-" and i + 1 < len(line) and line[i + 1] == "-":
+                cut = i
+                break
+            i += 1
+        out.append(line[:cut])
+    return "\n".join(out)
+
+
 def extract_schema_refs(sql):
     """从 SQL 提取可能的 schema.table 引用，返回 (schema, table) 列表。
     只提取"看起来像 schema 引用"的 x.y 结构（x 非 SQL 关键字/类型/常见别名，
     且未被本 SQL 声明为表别名）。"""
+    sql = strip_sql_line_comments(sql)
     refs = []
     # 该 SQL 中已声明的表别名（FROM/JOIN t [AS] a 或 FROM/JOIN schema.t [AS] a）
     # ——避免把别名当 schema。注意表名可带 schema 前缀（如 FROM mes.bom_items bi），
@@ -191,6 +221,7 @@ def service_schema_refs(service_dir, known_schemas):
 
 def extract_bare_table_refs(sql):
     """提取无前缀表名引用（FROM/JOIN/INTO/UPDATE/TABLE/REFERENCES 后的裸表名）。"""
+    sql = strip_sql_line_comments(sql)
     refs = set()
     for m in re.finditer(r'\b(?:from|join|into|update|table|references)\s+([a-z_][a-z0-9_]*)', sql, re.IGNORECASE):
         n = m.group(1).lower()
@@ -243,6 +274,10 @@ def main():
     for info in services.values():
         known_schemas.add(info["schema"])
         known_schemas.update(info.get("allow", []))
+    # iam 没有独立的 svc 目录（模块位于 svc/unified-core/src/modules/iam 下），
+    # 其 schema 不会被上面的服务配置覆盖；这里显式登记为“已知 schema”，
+    # 使全仓 iam.* 引用进入跨 schema 判定（不加入任何服务的 allowed，因此仍会报违规）。
+    known_schemas.add("iam")
 
     # 无前缀引用检查（阶段1 逻辑隔离）：表归属静态映射 + 存量基线豁免
     table_owner, ambiguous = load_table_owner()
@@ -260,6 +295,12 @@ def main():
         info = services[svc]
         own = info["schema"]
         allowed = set(default_shared) | {own} | set(info.get("allow", []))
+        # 按文件收紧的跨 schema 允许（键=仓库相对路径，值=schema 或 schema.table）。
+        # 用于把服务级 allow 下沉到具体调用点，避免整服务被放行。
+        file_allow = {
+            k.replace(os.sep, "/"): set(v)
+            for k, v in info.get("allow_files", {}).items()
+        }
         service_dir = os.path.join(ROOT, "svc", svc)
         if not os.path.isdir(service_dir):
             summary[svc] = {"status": "SKIP", "refs": 0, "bare_violations": 0, "bare_known": 0}
@@ -267,8 +308,12 @@ def main():
         refs = service_schema_refs(service_dir, known_schemas)
         bad = []
         for x, y, rel in refs:
-            if x not in allowed:
-                bad.append((x, y, rel))
+            if x in allowed:
+                continue
+            per_file = file_allow.get(rel.replace(os.sep, "/"), set())
+            if x in per_file or f"{x}.{y}" in per_file:
+                continue
+            bad.append((x, y, rel))
         if bad:
             violations.append((svc, bad))
 

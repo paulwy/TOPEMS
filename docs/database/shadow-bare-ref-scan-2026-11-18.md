@@ -1,0 +1,554 @@
+# 裸表名解析影子表：静态排查报告（2026-11-18）
+
+> 只读排查。表清单取自本地 `topems_prod` 的 `pg_class` 元数据；代码位置取自全仓 `svc/**/*.rs` 的 SQL 字面量。
+> 本轮不执行任何建表/删表/授权/数据写入；不提交、不 push。
+
+## 0. 结论摘要
+
+| 项 | 结果 |
+|---|---|
+| SQL 裸表名引用总数（FROM/JOIN/INSERT/UPDATE/DELETE） | 1618 |
+| A 确实命中影子表 | 1 组已修：`public.core_users`；另有 1 组高置信候选：`flow.core_master_data_change_log`（本轮只报） |
+| C 需要运行期确认 | 241 处 |
+| B1 固定解析到本服务 schema | 565 处 |
+| B2 表名唯一 | 812 处 |
+| 72 张待核实影子表中：零裸引用 | 61 张 |
+| 72 张待核实影子表中：有裸引用但经 `state.db` 落 public | 9 张 |
+| 72 张待核实影子表中：裸引用经裸池落到副本（DROP 阻塞） | 2 张 |
+
+**对「72 张能不能 DROP」的回答**：静态证据支持 **61 张可直接进入 DROP 候选**；9 张的副本本身无读者（引用经 `Db::scope_*` 的 `SET LOCAL search_path` 落到 public 权威表），可 DROP 但需先确认无裸池路径；**2 张必须先改代码**：`flow.core_mdm_approvals`、`flow.core_master_data_change_log`（`svc/unified-core/src/modules/master/handlers.rs` 的裸池写入）。
+
+## 1. 方法
+
+1. 从 `pg_class` 取全部非系统 schema 的表/视图（1012 个表名，240 个同名跨 schema）。
+2. 从代码提取每个服务实际生效的 search_path，而不是只看配置文件：
+   - 服务 `src/main.rs` 的 `set_var("SEARCH_PATH", ...)` 与 `Db::new(..., "...")`；
+   - 嵌入模式 `svc/server/src/modules/*_real_module.rs` 的 bootstrap / `Db::new`；
+   - `svc/unified-core/src/embedded.rs:50` 的 `flow, public`（嵌入进程池默认值）。
+3. 正则提取 SQL 中的未限定表名：`FROM|JOIN|INSERT INTO|UPDATE|DELETE FROM <name>`，排除 `schema.name`、CTE 名与函数调用。
+4. 按 search_path 顺序解析到首个命中 schema；再与「同一服务的其他运行路径」比对。
+
+判定口径：
+
+- **A 确实命中**：裸引用解析到的表是 0 行副本，且同名权威表有数据 / 代码路径明确应读另一 schema。
+- **B 无歧义**：表名只存在于一个 schema（B2），或在该服务所有运行路径下都固定解析到本服务 schema（B1）。
+- **C 需要运行期确认**：同一服务的两条运行路径解析结果不一致，或全部候选均为空表、无法用数据判定权威归属。
+
+## 2. A 档：确实命中影子表
+
+### 2.1 已修复：`public.core_users`（analytics）
+
+- 位置：`svc/analytics/src/main.rs`、`svc/analytics/src/routes.rs` 的 `reports_center_stats`。
+- 旧 SQL 裸读 `core_users`，在 `search_path=bi, public` 下命中 `public.core_users`（0 行孤儿镜像），四个用户口径恒为 0。
+- 新 SQL 改为 `iam.users ⨝ public.core_tenant_users`，全部显式 schema 前缀；`public.core_users` 不建写入链路。
+- 修复后全仓已无运行期裸读/裸写 `core_users`。
+
+### 2.2 新发现：`flow.core_master_data_change_log`（写读分裂，A 档候选）
+
+- `svc/unified-core/src/modules/master/handlers.rs:483` `INSERT INTO core_master_data_change_log ... .execute(&self.pool)`：走裸池。
+- `svc/unified-core/src/modules/master/handlers.rs:361` `SELECT ... FROM core_master_data_change_log ...`：走 `state.db` scope（`SET LOCAL search_path='public, shared'`）。
+- 嵌入部署池默认 `flow, public`（`embedded.rs:50`）；若该池最终采用此路径，写入落 `flow.core_master_data_change_log`（0 行），读取落 `public.core_master_data_change_log`（0 行）→ 变更历史永远为空。与 `core_users` 同类，只是方向相反。
+- **本轮不修**（按要求只出清单）。修复方式与 core_users 一致：统一走 `state.db` 并在 SQL 内显式 `public.`。
+
+### 2.3 `flow.core_mdm_approvals`
+
+- 5 处引用全部走 `MasterDataService::new(state.pool)` 的裸池，读写都在 flow；public 同名副本无读者。
+- 属「一致但落在副本」：若 flow 是 MDM 审批的权威 schema 则正常，否则是影子。需业务确认归属后再 DROP 任一副本。
+
+## 3. B 档：表名唯一 / 固定解析到本服务 schema
+
+- 表名唯一：812 处；固定解析到本服务 schema：565 处。
+- 这类引用不构成影子表歧义，不逐条列出。Top 表：
+
+  - `core_tenants`：29 处（flow,iam,public）
+  - `qa_lims_pt_plans`：26 处（lims,public）
+  - `equipment`：26 处（mes,public,rs）
+  - `qa_quality_issues`：24 处（唯一表名）
+  - `automation_runs`：24 处（唯一表名）
+  - `finance_voucher_template_lines`：23 处（唯一表名）
+  - `core_tenant_users`：22 处（flow,iam,public）
+  - `finance_voucher_templates`：21 处（finance,public）
+  - `production_orders`：21 处（唯一表名）
+  - `automation_rules`：21 处（唯一表名）
+  - `analytics_dashboards`：20 处（analytics,bi）
+  - `work_stations`：20 处（唯一表名）
+
+## 4. C 档：需要运行期确认
+
+共 241 处。按表聚合：
+
+- `core_tenants`：28 处（候选 schema：flow,iam,public）
+- `core_tenant_users`：22 处（候选 schema：flow,iam,public）
+- `finance_voucher_templates`：21 处（候选 schema：finance,public）
+- `cqrs_events`：10 处（候选 schema：finance,public）
+- `core_flow_delegates`：10 处（候选 schema：flow,public）
+- `core_flow_categories`：10 处（候选 schema：flow,public）
+- `core_flow_rules`：10 处（候选 schema：flow,public）
+- `financial_reports`：9 处（候选 schema：finance,public）
+- `core_operation_logs`：9 处（候选 schema：flow,public）
+- `core_faqs`：8 处（候选 schema：iam,portal,public）
+- `core_tenant_usage`：8 处（候选 schema：flow,iam,public）
+- `approvals`：8 处（候选 schema：flow,public）
+- `core_doc_documents`：7 处（候选 schema：doc_service,flow,public）
+- `core_flow_variables`：7 处（候选 schema：flow,public）
+- `core_guides`：6 处（候选 schema：iam,portal,public）
+- `core_tenant_modules`：6 处（候选 schema：flow,iam,public）
+- `core_doc_templates`：6 处（候选 schema：doc_service,flow,public）
+- `core_email_queue`：5 处（候选 schema：iam,public）
+- `qa_ehs_risks`：5 处（候选 schema：ehs,public）
+- `core_tenant_settings`：5 处（候选 schema：flow,iam,public）
+- `core_mdm_approvals`：5 处（候选 schema：flow,master_data,public）
+- `core_doc_folders`：5 处（候选 schema：doc_service,flow,public）
+- `qa_ehs_hazards`：4 处（候选 schema：ehs,public,qms）
+- `approval_records`：4 处（候选 schema：flow,public）
+- `core_master_data_change_log`：3 处（候选 schema：flow,master_data,public）
+- `core_doc_document_versions`：3 处（候选 schema：flow,public）
+- `core_migration_history`：3 处（候选 schema：flow,iam,public）
+- `qa_ehs_hazard_rectifications`：2 处（候选 schema：ehs,public）
+- `core_guide_lessons`：2 处（候选 schema：iam,portal,public）
+- `core_flow_variable_history`：2 处（候选 schema：flow,public）
+- `qa_ehs_accidents`：1 处（候选 schema：ehs,public）
+- `qa_ehs_trainings`：1 处（候选 schema：ehs,public）
+- `qa_ehs_inspection_plans`：1 处（候选 schema：ehs,public）
+- `qa_ehs_emergency_plans`：1 处（候选 schema：ehs,public）
+- `qa_ehs_hazardous_materials`：1 处（候选 schema：ehs,public）
+- `qa_ehs_hazard_verifications`：1 处（候选 schema：ehs,public）
+- `audit_logs`：1 处（候选 schema：bi,crm,ehs,erp,flow,gis,hrm,iam,lims,mes,plugin_mes,public,qms,rs,scm,shared,srm,wms）
+- `core_file_permissions`：1 处（候选 schema：flow,public）
+
+全量明细见附录 A。典型成因：
+
+- 同一服务在 standalone（`main.rs`）与嵌入（`server` module / `state.db`）下 search_path 不同，例如 `portal` 的 `Db::new(..., "public, portal")` 把 public 放在前面；
+- 同一模块内混用 `state.db`（scope 显式 SET LOCAL）与 `state.pool`（裸池），如 `master/handlers.rs`；
+- 两组同名表均为空表，无数据可判定权威归属。
+
+## 5. 72 张影子表逐表判定
+
+| 影子表 | 同名副本 | 裸引用 | 判定 | 依据 |
+|---|---|---:|---|---|
+| `flow.core_doc_documents` | doc_service,flow,public | 7 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_doc_folders` | doc_service,flow,public | 5 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_doc_templates` | doc_service,flow,public | 6 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_flow_categories` | flow,public | 10 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_master_data_change_log` | flow,master_data,public | 3 | 不可 DROP（A 档候选） | 写 `record_change` 走裸池（嵌入模式下可能=flow），读 `list_changes` 走 `state.db` scope（public）：写读分裂，与 core_users 同类 |
+| `flow.core_master_data_refs` | flow,master_data,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `flow.core_mdm_approvals` | flow,master_data,public | 5 | 不可 DROP | 5 处 INSERT/SELECT 走 `MasterDataService::new(state.pool)`（裸池）；嵌入模式池路径由 `embedded.rs`/build 顺序决定（默认 `flow, public`），可能落 flow 副本，需运行期确认 |
+| `flow.core_mdm_reconciliation_log` | flow,master_data,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `flow.core_menu_groups` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `flow.core_menus` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `flow.core_operation_logs` | flow,public | 9 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_tenant_modules` | flow,iam,public | 6 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_tenant_settings` | flow,iam,public | 5 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_tenant_usage` | flow,iam,public | 8 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_tenant_users` | flow,iam,public | 22 | 可 DROP（先确认） | 引用经 state.db/scope 的 SET LOCAL 落 public 权威表，副本无读者 |
+| `flow.core_workflow_instances` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `flow.core_workflow_versions` | flow,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `flow.core_workflows` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_billing_invoices` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_billing_plans` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_chat_members` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_chat_messages` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_chat_rooms` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_dashboard_refresh_log` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_dict_items` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_dict_types` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_email_queue` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_email_templates` | communication,iam | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_emails` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_faqs` | iam,portal,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_file_folders` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_files` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_guide_lessons` | iam,portal,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_guide_progress` | iam,portal,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_guides` | iam,portal,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_inter_module_sync` | iam,integration,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_login_logs` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_menu_groups` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_menus` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_migration_history` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_mobile_offline_records` | iam,mobile | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_notification_templates` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_notifications` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_plugin_categories` | core,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_plugin_instances` | core,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_plugin_permissions` | core,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_plugin_pricing` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_plugin_reviews` | core,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_plugins` | core,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_roles` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_subscriptions` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_tenant_modules` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_tenant_settings` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_tenant_usage` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_tenant_users` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_usage_records` |  | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_users` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_workflow_instances` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_workflow_tasks` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.core_workflows` | flow,iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `iam.tenant_permissions` | iam,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `plugin_erp.accounting_subjects` | finance,plugin_erp,plugin_finance | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.analytics_sync_records` | analytics,bi,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.conversion_executions` | integration,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.conversion_rules` | integration,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.core_ticket_activities` | public,ticket | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.core_ticket_comments` | public,ticket | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.core_ticket_sla_escalations` | public,ticket | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.core_ticket_sla_policies` | public,ticket | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.core_tickets` | public,ticket | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.pm_master_data_refs` | pm,public | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+| `public.qa_qms_sync_records` | public,qms | 0 | 可 DROP 候选 | 全仓无裸引用解析到该副本 |
+
+> 说明：`public.core_users` 原被 §12.1 归入 15 张租户表，本轮证明它是 0 行孤儿镜像（`iam.users` 才是真相源）。
+> 迁移 `20261118150000` 仍会对它启用 RLS（按要求本轮不动既定草案）；它现在已无读写方，建议后续并入 DROP 候选。
+
+## 6. 未覆盖面 / 风险
+
+1. **动态 SQL**：用 `format!` 拼接表名的语句无法静态解析；本轮正则只覆盖字面量表名。
+2. **`database/**.sql` 脚本**：仍有 215 处裸引用，集中在 `database/init/03_init_permissions.sql`（`core_menu_groups` 83、`core_roles` 58、`core_menus` 51、`core_users` 19 等）。这些脚本按 public 语义执行，是 public 权威表的写入/初始化链路，不影响 iam/flow 副本的 DROP。
+3. **外部工具/旧部署**：psql、备份恢复、BI 直连等不在全仓代码范围内。
+4. **Python 门禁盲区**：`scripts/check_schema_boundary.py` 的 `known_schemas` 不包含 `iam`，因此全仓 112 处 `iam.*` 引用不会被它识别（本次 analytics 新增 `iam.users` 仍 PASS）。Node 门禁已通过 allowlist 登记。若要把 `iam` 纳入 Python 门禁，需先清理其他服务的 `iam.*` 引用，属独立议题。
+
+## 7. REVOKE 方案（仅 topems_app，本轮不执行）
+
+目标：对 72 张影子表做幂等撤销，防止未来误授权。`topems_prod` 暂缓。
+
+```sql
+-- 幂等：表不存在时跳过，未授权时 REVOKE 也是 no-op
+DO $$
+DECLARE
+    t text;
+    tables text[] := ARRAY[
+        -- 由本报告第 5 节的 72 张清单生成
+        'flow.core_doc_documents', 'flow.core_doc_folders'
+        -- ...（其余 70 张）
+    ];
+BEGIN
+    FOREACH t IN ARRAY tables LOOP
+        IF to_regclass(t) IS NOT NULL THEN
+            EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE %s FROM topems_app', t);
+        END IF;
+    END LOOP;
+END $$;
+```
+
+- 当前事实：`topems_app` 为 NOLOGIN，且在 87 张表上的授权数为 0，因此该脚本现状为 no-op，只提供未来防护。
+
+## 附录 A：C 档全量明细
+
+### `approval_records`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/instance.rs:108` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:135` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:175` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:221` → ['flow', 'public']
+
+### `approvals`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/instance.rs:104` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:109` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:131` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:136` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:171` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:176` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:217` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/instance.rs:222` → ['flow', 'public']
+
+### `audit_logs`（候选：bi,crm,ehs,erp,flow,gis,hrm,iam,lims,mes,plugin_mes,public,qms,rs,scm,shared,srm,wms）
+- `svc/unified-core/tests/system_audit_e2e.rs:58` → ['flow', 'public'] [test]
+
+### `core_doc_document_versions`（候选：flow,public）
+- `svc/unified-core/src/modules/doc/handlers.rs:1098` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/handlers.rs:1158` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/handlers.rs:1221` → ['flow', 'public']
+
+### `core_doc_documents`（候选：doc_service,flow,public）
+- `svc/unified-core/src/modules/doc/handlers.rs:1238` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/document.rs:39` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/document.rs:52` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/document.rs:70` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/document.rs:101` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/document.rs:125` → ['flow', 'public']
+- `svc/unified-core/tests/documents_e2e.rs:59` → ['flow', 'public'] [test]
+
+### `core_doc_folders`（候选：doc_service,flow,public）
+- `svc/unified-core/src/modules/doc/services/folder.rs:39` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/folder.rs:52` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/folder.rs:69` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/folder.rs:96` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/folder.rs:123` → ['flow', 'public']
+
+### `core_doc_templates`（候选：doc_service,flow,public）
+- `svc/unified-core/src/modules/doc/services/template.rs:39` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/template.rs:52` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/template.rs:70` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/template.rs:100` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/template.rs:133` → ['flow', 'public']
+- `svc/unified-core/src/modules/doc/services/template.rs:145` → ['flow', 'public']
+
+### `core_email_queue`（候选：iam,public）
+- `svc/communication/src/mail.rs:1081` → ['public']
+- `svc/communication/src/mail.rs:1155` → ['public']
+- `svc/communication/src/mail.rs:1176` → ['public']
+- `svc/communication/src/mail.rs:1194` → ['public']
+- `svc/communication/src/mail.rs:1210` → ['public']
+
+### `core_faqs`（候选：iam,portal,public）
+- `svc/portal/src/modules/help/faq.rs:105` → ['public']
+- `svc/portal/src/modules/help/faq.rs:124` → ['public']
+- `svc/portal/src/modules/help/faq.rs:192` → ['public']
+- `svc/portal/src/modules/help/faq.rs:208` → ['public']
+- `svc/portal/src/modules/help/faq.rs:270` → ['public']
+- `svc/portal/src/modules/help/faq.rs:334` → ['public']
+- `svc/portal/src/modules/help/faq.rs:392` → ['public']
+- `svc/portal/src/modules/help/faq.rs:443` → ['public']
+
+### `core_file_permissions`（候选：flow,public）
+- `svc/unified-core/src/modules/file/manage.rs:1292` → ['flow', 'public']
+
+### `core_flow_categories`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/category.rs:131` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:150` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:202` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:260` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:307` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:332` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:378` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:414` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:470` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/category.rs:532` → ['flow', 'public']
+
+### `core_flow_delegates`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/delegate.rs:142` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:163` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:219` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:263` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:312` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:367` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:402` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:530` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:572` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/delegate.rs:649` → ['flow', 'public']
+
+### `core_flow_rules`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/rule.rs:149` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:170` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:226` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:275` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:326` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:385` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:436` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:477` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:522` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/rule.rs:610` → ['flow', 'public']
+
+### `core_flow_variable_history`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/variable.rs:142` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:596` → ['flow', 'public']
+
+### `core_flow_variables`（候选：flow,public）
+- `svc/unified-core/src/modules/flow/variable.rs:145` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:161` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:224` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:249` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:277` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:292` → ['flow', 'public']
+- `svc/unified-core/src/modules/flow/variable.rs:597` → ['flow', 'public']
+
+### `core_guide_lessons`（候选：iam,portal,public）
+- `svc/portal/src/modules/help/guide.rs:249` → ['public']
+- `svc/portal/src/modules/help/guide.rs:400` → ['public']
+
+### `core_guides`（候选：iam,portal,public）
+- `svc/portal/src/modules/help/guide.rs:142` → ['public']
+- `svc/portal/src/modules/help/guide.rs:161` → ['public']
+- `svc/portal/src/modules/help/guide.rs:229` → ['public']
+- `svc/portal/src/modules/help/guide.rs:318` → ['public']
+- `svc/portal/src/modules/help/guide.rs:423` → ['public']
+- `svc/portal/src/modules/help/guide.rs:466` → ['public']
+
+### `core_master_data_change_log`（候选：flow,master_data,public）
+- `svc/unified-core/src/modules/master/handlers.rs:361` → ['flow', 'public']
+- `svc/unified-core/src/modules/master/handlers.rs:384` → ['flow', 'public']
+- `svc/unified-core/src/modules/master/handlers.rs:483` → ['flow', 'public']
+
+### `core_mdm_approvals`（候选：flow,master_data,public）
+- `svc/unified-core/src/modules/master/handlers.rs:786` → ['flow', 'public']
+- `svc/unified-core/src/modules/master/handlers.rs:826` → ['flow', 'public']
+- `svc/unified-core/src/modules/master/handlers.rs:864` → ['flow', 'public']
+- `svc/unified-core/src/modules/master/handlers.rs:878` → ['flow', 'public']
+- `svc/unified-core/src/modules/master/handlers.rs:900` → ['flow', 'public']
+
+### `core_migration_history`（候选：flow,iam,public）
+- `svc/unified-core/src/modules/migration/service.rs:231` → ['flow', 'public']
+- `svc/unified-core/src/modules/migration/service.rs:260` → ['flow', 'public']
+- `svc/unified-core/src/modules/migration/service.rs:273` → ['flow', 'public']
+
+### `core_operation_logs`（候选：flow,public）
+- `svc/unified-core/src/modules/audit/handlers.rs:93` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/handlers.rs:135` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/handlers.rs:224` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/handlers.rs:280` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/handlers.rs:294` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/handlers.rs:310` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/service.rs:26` → ['flow', 'public']
+- `svc/unified-core/src/modules/audit/service.rs:72` → ['flow', 'public']
+- `svc/unified-core/tests/audit_e2e.rs:152` → ['flow', 'public'] [test]
+
+### `core_tenant_modules`（候选：flow,iam,public）
+- `svc/unified-core/src/modules/tenant/handlers.rs:521` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:539` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:947` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:989` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1041` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3541` → ['flow', 'public']
+
+### `core_tenant_settings`（候选：flow,iam,public）
+- `svc/unified-core/src/modules/settings/api_keys.rs:434` → ['flow', 'public']
+- `svc/unified-core/src/modules/settings/smtp.rs:98` → ['flow', 'public']
+- `svc/unified-core/src/modules/settings/smtp.rs:171` → ['flow', 'public']
+- `svc/unified-core/src/modules/settings/smtp.rs:200` → ['flow', 'public']
+- `svc/unified-core/src/modules/settings/smtp.rs:261` → ['flow', 'public']
+
+### `core_tenant_usage`（候选：flow,iam,public）
+- `svc/unified-core/src/modules/tenant/handlers.rs:874` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1462` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1474` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1537` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1549` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3521` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3585` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3848` → ['flow', 'public']
+
+### `core_tenant_users`（候选：flow,iam,public）
+- `svc/unified-core/src/modules/tenant/handlers.rs:371` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1132` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1146` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1159` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1172` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1185` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1197` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1209` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1221` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1233` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1294` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1347` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1391` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1444` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1452` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1527` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1670` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1737` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1803` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3533` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3761` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3797` → ['flow', 'public']
+
+### `core_tenants`（候选：flow,iam,public）
+- `svc/finance/tests/finance_service_tests.rs:28` → ['public'] [test]
+- `svc/pdm/tests/pdm_tests.rs:24` → ['public'] [test]
+- `svc/unified-core/src/modules/tenant/handlers.rs:54` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:67` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:79` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:91` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:103` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:114` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:125` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:136` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:147` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:153` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:191` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:225` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:271` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:602` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:705` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:778` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:819` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:859` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1081` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1592` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1736` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1818` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:1892` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:2091` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:2134` → ['flow', 'public']
+- `svc/unified-core/src/modules/tenant/handlers.rs:3326` → ['flow', 'public']
+
+### `cqrs_events`（候选：finance,public）
+- `svc/finance/src/domain/pg_event_store.rs:74` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:82` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:100` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:120` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:128` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:176` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:205` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:236` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:246` → ['finance', 'public']
+- `svc/finance/src/domain/pg_event_store.rs:322` → ['finance', 'public']
+
+### `finance_voucher_templates`（候选：finance,public）
+- `svc/finance/src/modules/mod.rs:2375` → ['finance', 'public']
+- `svc/finance/src/modules/mod.rs:2617` → ['finance', 'public']
+- `svc/finance/src/modules/mod.rs:2703` → ['finance', 'public']
+- `svc/finance/src/modules/mod.rs:2781` → ['finance', 'public']
+- `svc/finance/src/modules/mod.rs:2849` → ['finance', 'public']
+- `svc/finance/src/modules/voucher_template.rs:150` → ['finance', 'public']
+- `svc/finance/src/modules/voucher_template_entries.rs:105` → ['finance', 'public']
+- `svc/finance/src/modules/voucher_template_entries.rs:138` → ['finance', 'public']
+- `svc/finance/src/modules/voucher_template_entries.rs:214` → ['finance', 'public']
+- `svc/finance/src/modules/voucher_template_entries.rs:287` → ['finance', 'public']
+- `svc/finance/src/modules/voucher_template_entries.rs:334` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:105` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:163` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:226` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:305` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:326` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:410` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:429` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:448` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:456` → ['finance', 'public']
+- `svc/finance/src/services/finance/voucher_template.rs:464` → ['finance', 'public']
+
+### `financial_reports`（候选：finance,public）
+- `svc/finance/src/modules/financial_reports.rs:1254` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:1298` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:1342` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:1360` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:2040` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:2080` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:2122` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:2176` → ['finance', 'public']
+- `svc/finance/src/modules/financial_reports.rs:2216` → ['finance', 'public']
+
+### `qa_ehs_accidents`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:191` → ['ehs'] [test]
+
+### `qa_ehs_emergency_plans`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:285` → ['ehs'] [test]
+
+### `qa_ehs_hazard_rectifications`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:161` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:430` → ['ehs'] [test]
+
+### `qa_ehs_hazard_verifications`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:441` → ['ehs'] [test]
+
+### `qa_ehs_hazardous_materials`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:324` → ['ehs'] [test]
+
+### `qa_ehs_hazards`（候选：ehs,public,qms）
+- `svc/ehs/tests/ehs_tests.rs:103` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:138` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:417` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:451` → ['ehs'] [test]
+
+### `qa_ehs_inspection_plans`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:254` → ['ehs'] [test]
+
+### `qa_ehs_risks`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:69` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:366` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:379` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:387` → ['ehs'] [test]
+- `svc/ehs/tests/ehs_tests.rs:396` → ['ehs'] [test]
+
+### `qa_ehs_trainings`（候选：ehs,public）
+- `svc/ehs/tests/ehs_tests.rs:224` → ['ehs'] [test]

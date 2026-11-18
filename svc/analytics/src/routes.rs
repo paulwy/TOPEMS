@@ -901,19 +901,20 @@ pub async fn reports_center_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    // Dashboard summary stats — live counts from the real IAM/BI tables via the
-    // service search_path (bi, public): core_users / core_roles / core_permissions
-    // (public schema). The previously referenced iam_* / org_* tables do not exist
-    // in this database. Company/department/employee counts are intentionally NOT
-    // live: the analytics service (schema=bi) is not authorized to read hrm.* under
-    // the schema-boundary gate and bi has no org view, so they surface as an explicit
+    // Dashboard summary stats — 用户口径以 iam.users 为唯一真相源，经
+    // public.core_tenant_users 落到租户；public.core_users 是 0 行孤儿镜像，
+    // 不得再作为统计来源（无写入方，双写会再造一个不同步镜像）。
+    // 角色/权限仍取 public.core_roles / public.core_permissions（后者无 tenant_id）。
+    // NOTE: company/department/employee counts are intentionally NOT live. The
+    // analytics service (schema=bi) is not authorized to read hrm.* under the
+    // schema-boundary gate and bi has no org view, so they surface as an explicit
     // "not-connected" orgStatsStatus below (BE-02, plan C). Kept in sync with the
     // standalone-deploy copy in main.rs.
     // B 类：看板统计对 S2S 可达；普通用户必须有租户，服务令牌/超管走系统通道并落日志计数。
     let scope = match TenantScope::from_claims(
         &claims,
         "analytics.reports_center_stats",
-        "core_users,core_roles,audit_logs",
+        "iam.users,public.core_tenant_users,public.core_roles,public.audit_logs",
     ) {
         Ok(scope) => scope,
         Err((_, message)) => {
@@ -933,15 +934,27 @@ pub async fn reports_center_stats(
         i64, i64, i64, i64, i64,
     )>(sqlx::AssertSqlSafe(format!(r#"
         SELECT
-            (SELECT COUNT(*) FROM core_users WHERE {0}) AS total_users,
-            (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
-               AND {0}) AS active_users,
-            (SELECT COUNT(*) FROM core_roles WHERE {0}) AS total_roles,
+            (SELECT COUNT(DISTINCT u.id)
+               FROM iam.users u
+               JOIN public.core_tenant_users ctu
+                 ON ctu.user_id = u.id AND ctu.deleted_at IS NULL
+              WHERE u.deleted_at IS NULL AND {0}) AS total_users,
+            (SELECT COUNT(DISTINCT u.id)
+               FROM iam.users u
+               JOIN public.core_tenant_users ctu
+                 ON ctu.user_id = u.id AND ctu.deleted_at IS NULL
+              WHERE u.deleted_at IS NULL
+                AND u.last_login_at >= NOW() - INTERVAL '30 days'
+                AND {0}) AS active_users,
+            (SELECT COUNT(*) FROM public.core_roles WHERE {1}) AS total_roles,
             -- core_permissions is a shared global table (public.core_permissions has NO tenant_id column)
-            (SELECT COUNT(*) FROM core_permissions) AS total_permissions,
+            (SELECT COUNT(*) FROM public.core_permissions) AS total_permissions,
             (SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '7 days'
-               AND {0}) AS recent_activities
-    "#, scope.sql_predicate("tenant_id", "$1"))))
+               AND {1}) AS recent_activities
+    "#,
+        scope.sql_predicate("ctu.tenant_id", "$1"),
+        scope.sql_predicate("tenant_id", "$1"),
+    )))
     .bind_tenant_scope(&scope)
     .fetch_one(&mut db_scope)
     .await
@@ -970,9 +983,9 @@ pub async fn reports_center_stats(
         }
     };
 
-    // 近 6 个月真实用户增长（数据来源表：core_users）：
-    //   新增用户 = core_users.created_at 分月计数；
-    //   活跃用户 = core_users.last_login_at 分月计数。
+    // 近 6 个月真实用户增长（唯一真相源：iam.users，经 public.core_tenant_users 落租户）：
+    //   新增用户 = iam.users.created_at 分月计数；
+    //   活跃用户 = iam.users.last_login_at 分月计数。
     // 租户谓词与上方总量查询一致（app.tenant_id GUC / 超管空串）。
     // 查询失败返回空数组，绝不回退到随机假数据。
     let user_growth: Vec<serde_json::Value> = {
@@ -989,17 +1002,25 @@ pub async fn reports_center_stats(
             )
             SELECT
                 months.month AS month,
-                (SELECT COUNT(*) FROM core_users u
-                   WHERE to_char(u.created_at, 'YYYY-MM') = months.month
-                     AND {}) AS new_users,
-                (SELECT COUNT(*) FROM core_users u
-                   WHERE u.last_login_at IS NOT NULL
-                     AND to_char(u.last_login_at, 'YYYY-MM') = months.month
-                     AND {0}) AS active_users
+                (SELECT COUNT(DISTINCT u.id)
+                   FROM iam.users u
+                   JOIN public.core_tenant_users ctu
+                     ON ctu.user_id = u.id AND ctu.deleted_at IS NULL
+                  WHERE u.deleted_at IS NULL
+                    AND to_char(u.created_at, 'YYYY-MM') = months.month
+                    AND {0}) AS new_users,
+                (SELECT COUNT(DISTINCT u.id)
+                   FROM iam.users u
+                   JOIN public.core_tenant_users ctu
+                     ON ctu.user_id = u.id AND ctu.deleted_at IS NULL
+                  WHERE u.deleted_at IS NULL
+                    AND u.last_login_at IS NOT NULL
+                    AND to_char(u.last_login_at, 'YYYY-MM') = months.month
+                    AND {0}) AS active_users
             FROM months
             ORDER BY months.month
             "#,
-            scope.sql_predicate("tenant_id", "$1")
+            scope.sql_predicate("ctu.tenant_id", "$1")
         )))
         .bind_tenant_scope(&scope)
         .fetch_all(&mut db_scope)
@@ -1019,25 +1040,34 @@ pub async fn reports_center_stats(
         .collect()
     };
 
-    // Role distribution: 真实聚合（public.core_users 无 role 列，角色经
-    // core_user_roles ↔ core_roles 关联）。租户谓词与上方总量查询一致。
+    // Role distribution: 真实聚合（iam.users ⨝ public.core_tenant_users 落租户，
+    // 角色经 public.core_user_roles ↔ public.core_roles 关联）。
+    // core_roles 同时存在平台全局行（tenant_id IS NULL）与租户行，且启用了 FORCE RLS：
+    // 角色侧取「全局行 + 本租户行」，成员侧用 ctu.tenant_id 谓词限定本租户，
+    // 避免系统通道跨租户串算，也避免全局角色在租户视图里整行消失。
     // 旧版写死 3/12/8（系统管理员/部门经理/访客）占位已下线：查询失败回落空数组，
     // 绝不保留假数字。
     let role_distribution: Vec<serde_json::Value> = {
         use sqlx::Row as _;
         sqlx::query(sqlx::AssertSqlSafe(format!(
             r#"
-            SELECT r.name AS role_name, COUNT(u.id) AS user_count
-            FROM core_roles r
-            LEFT JOIN core_user_roles ur ON ur.role_id = r.id
-            LEFT JOIN core_users u ON u.id = ur.user_id AND u.deleted_at IS NULL
+            SELECT r.name AS role_name, COUNT(DISTINCT u.id) AS user_count
+            FROM public.core_roles r
+            LEFT JOIN public.core_user_roles ur ON ur.role_id = r.id
+            LEFT JOIN public.core_tenant_users ctu
+                   ON ctu.user_id = ur.user_id
+                  AND ctu.deleted_at IS NULL
+                  AND {1}
+            LEFT JOIN iam.users u
+                   ON u.id = ctu.user_id AND u.deleted_at IS NULL
             WHERE r.deleted_at IS NULL
-              AND {}
+              AND (r.tenant_id IS NULL OR {0})
             GROUP BY r.name
             ORDER BY user_count DESC, r.name
             LIMIT 10
             "#,
-            scope.sql_predicate("tenant_id", "$1")
+            scope.sql_predicate("r.tenant_id", "$1"),
+            scope.sql_predicate("ctu.tenant_id", "$1"),
         )))
         .bind_tenant_scope(&scope)
         .fetch_all(&mut db_scope)

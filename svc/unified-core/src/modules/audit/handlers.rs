@@ -387,8 +387,15 @@ pub async fn list_permission_changes(
 pub async fn get_permission_change(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    // public.permission_audit_logs.id 是 bigint（iam 副本是 uuid，且无写入者）。
+    // 明细接口按写入端落地的 public 表查询，id 必须按整数解析后再绑定。
+    let Ok(log_id) = id.trim().parse::<i64>() else {
+        return ApiResponse::from(TopemsError::ValidationFailed(
+            "权限变更记录 ID 必须为整数".to_string(),
+        ));
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -401,7 +408,7 @@ pub async fn get_permission_change(
             return ApiResponse::from(TopemsError::Internal("查询权限变更详情失败".to_string()));
         }
     };
-    match sqlx::query_as::<_, super::audit_query::AuditLogEntry>(
+    match sqlx::query(
         r#"
         SELECT
             id,
@@ -411,9 +418,9 @@ pub async fn get_permission_change(
             NULL::text AS username,
             action,
             NULL::text AS entity_type,
-            NULL::text AS entity_id,
+            NULL::uuid AS entity_id,
             NULL::text AS resource,
-            ip_address,
+            ip_address::text AS ip_address,
             user_agent,
             NULL::text AS status,
             NULL::bool AS success,
@@ -424,16 +431,37 @@ pub async fn get_permission_change(
                 'reason', NULL
             ) AS details,
             changed_at AS created_at
-        FROM iam.permission_audit_logs
-        WHERE id::text = $1::text
+        FROM public.permission_audit_logs
+        WHERE id = $1
         "#,
     )
-    .bind(id)
+    .bind(log_id)
     .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(entry)) => {
-            api_success(serde_json::to_value(entry).unwrap_or(serde_json::json!({})))
+        Ok(Some(row)) => {
+            // public 表与 iam 副本结构不同（id bigint / user_id varchar），
+            // 逐列显式取值，保持与统一审计响应一致的字符串 id 形态。
+            use sqlx::Row;
+            let entry = serde_json::json!({
+                "id": row.get::<i64, _>("id").to_string(),
+                "source": row.get::<String, _>("source"),
+                "tenant_id": row.get::<Option<Uuid>, _>("tenant_id").map(|v| v.to_string()),
+                "user_id": row.get::<Option<String>, _>("user_id"),
+                "username": row.get::<Option<String>, _>("username"),
+                "action": row.get::<String, _>("action"),
+                "entity_type": row.get::<Option<String>, _>("entity_type"),
+                "entity_id": row.get::<Option<Uuid>, _>("entity_id").map(|v| v.to_string()),
+                "resource": row.get::<Option<String>, _>("resource"),
+                "ip_address": row.get::<Option<String>, _>("ip_address"),
+                "user_agent": row.get::<Option<String>, _>("user_agent"),
+                "status": row.get::<Option<String>, _>("status"),
+                "success": row.get::<Option<bool>, _>("success"),
+                "error_message": row.get::<Option<String>, _>("error_message"),
+                "details": row.get::<Option<serde_json::Value>, _>("details"),
+                "created_at": row.get::<DateTime<Utc>, _>("created_at"),
+            });
+            api_success(entry)
         }
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "权限变更记录不存在".to_string(),

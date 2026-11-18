@@ -9,8 +9,8 @@ TOPEMS 统一审计层 (`svc/unified-core/src/modules/audit/`) 聚合了 **4 个
 
 | 数据源 Source           | 数据库表 Table              | 说明 Description                                            |
 | ----------------------- | --------------------------- | ----------------------------------------------------------- |
-| `audit_logs`            | `iam.audit_logs`            | HTTP 请求级审计日志（中间件自动记录）                       |
-| `permission_audit_logs` | `iam.permission_audit_logs` | 权限/角色变更审计日志                                       |
+| `audit_logs`            | `public.audit_logs`            | HTTP 请求级审计日志（中间件自动记录）                       |
+| `permission_audit_logs` | `public.permission_audit_logs` | 权限/角色变更审计日志                                       |
 | `login_logs`            | `core_login_logs`           | 用户登录日志（成功/失败、IP、UA）                           |
 | `operation_logs`        | `core_operation_logs`       | 业务写操作审计日志（`operation_audit_middleware` 自动记录） |
 
@@ -134,7 +134,7 @@ const blob: Blob = await operationAuditApi.exportOperationLogs({
 
 `scripts/audit/generate_audit_report.py` 是 **直连 PostgreSQL** 的审计报告生成器，
 不依赖服务在线：直接查询 `core_login_logs` / `core_operation_logs` /
-`iam.permission_audit_logs` 三张审计日志表，按时间范围聚合后通过 Jinja2 风格模板渲染
+`public.permission_audit_logs` 三张审计日志表，按时间范围聚合后通过 Jinja2 风格模板渲染
 Markdown / JSON 报告，并支持原始日志 CSV 导出。与上节 bash 脚本（走 HTTP API）互补，
 适用于离线分析、定期归档与外部审计交付场景。
 
@@ -217,7 +217,7 @@ python3 scripts/audit/generate_audit_report.py \
 | -------------------- | --------------------------- | ------------ | ------------------------ |
 | `login_logs`         | `core_login_logs`           | 10           | `login_logs.csv`         |
 | `operation_logs`     | `core_operation_logs`       | 15           | `operation_logs.csv`     |
-| `permission_changes` | `iam.permission_audit_logs` | 18           | `permission_changes.csv` |
+| `permission_changes` | `public.permission_audit_logs` | 18           | `permission_changes.csv` |
 
 CSV 约定：
 

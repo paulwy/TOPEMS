@@ -14,12 +14,22 @@
     "analytics": {
       "schema": "bi",
       "search_path": "bi, public",
-      "allow": []
+      "allow": [
+        "iam"
+      ],
+      "allow_notes": {
+        "iam": "只读：reports-center/stats 的用户总量/活跃/增长/角色分布以 iam.users 为唯一真相源，经 public.core_tenant_users 落租户；public.core_users 为 0 行孤儿镜像（2026-11-18 已停止读取）。"
+      }
     },
     "communication": {
       "schema": "communication",
       "search_path": "communication, public",
-      "allow": []
+      "allow": [
+        "iam"
+      ],
+      "allow_notes": {
+        "iam": "只读：邮件/通知按 user_id 取 email、tenant_id；调用点经 only_own_schema_query!(..., \"iam\") 显式声明。iam.users 是身份权威表（无 tenant_id，全局身份目录）。"
+      }
     },
     "crm": {
       "schema": "crm",
@@ -60,8 +70,12 @@
       "schema": "hrm",
       "search_path": "hrm, public, shared",
       "allow": [
-        "mobile"
-      ]
+        "mobile",
+        "iam"
+      ],
+      "allow_notes": {
+        "iam": "只读：员工开通前做用户名/邮箱占用预检；调用点经 only_own_schema_query!(..., \"iam\") 显式声明，权威去重仍由 IAM 建号端点负责。"
+      }
     },
     "integration": {
       "schema": "integration",
@@ -104,7 +118,12 @@
     "plugin-registry": {
       "schema": "core",
       "search_path": "core, public",
-      "allow": []
+      "allow": [
+        "iam"
+      ],
+      "allow_notes": {
+        "iam": "读写：iam.core_tenant_plugins 由 database/init/06_iam_schema.sql 定义（含 tenant_id），是租户-插件安装关系的定义表；public/core 同名副本无 tenant_id 且 0 行。"
+      }
     },
     "pm": {
       "schema": "pm",
@@ -135,7 +154,13 @@
     },
     "search": {
       "schema": "public",
-      "search_path": "public"
+      "search_path": "public",
+      "allow": [
+        "iam"
+      ],
+      "allow_notes": {
+        "iam": "只读：全局用户检索（身份目录按设计全局检索，不做租户过滤）；调用点经 only_own_schema_query!(..., \"iam\") 显式声明。"
+      }
     },
     "srm": {
       "schema": "srm",
@@ -159,7 +184,29 @@
       "search_path": "public",
       "allow": [
         "hrm"
-      ]
+      ],
+      "allow_files": {
+        "svc/unified-core/src/modules/iam/auth.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/permission_verify.rs": ["iam.users", "iam.resource_permissions"],
+        "svc/unified-core/src/modules/iam/position.rs": ["iam.positions", "iam.position_permissions", "iam.position_roles"],
+        "svc/unified-core/src/modules/iam/tenant_scope.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/access_log.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/batch.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/crud.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/profile.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/profile_ext.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/roles.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/status.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user/validation.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user_permission.rs": ["iam.users"],
+        "svc/unified-core/src/modules/iam/user_position.rs": ["iam.positions", "iam.user_positions", "iam.users"],
+        "svc/unified-core/src/modules/tenant/handlers.rs": ["iam.users"],
+        "svc/unified-core/src/modules/flow/task.rs": ["iam.users"],
+        "svc/unified-core/src/modules/flow/instance.rs": ["iam.users"]
+      },
+      "allow_notes": {
+        "iam": "IAM 模块宿主（svc/unified-core/src/modules/iam/**）：iam.users 是身份权威表，iam.positions/user_positions/position_*/resource_permissions 由 database/init/06_iam_schema.sql 定义；按文件逐表放行，不再整服务 allow iam。Node 门禁 EXTRA_OWNED_SCHEMAS 已把 iam 视为 unified-core 自有 schema。"
+      }
     },
     "wms": {
       "schema": "wms",
