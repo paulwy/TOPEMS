@@ -141,6 +141,14 @@ pub struct LoggingConfig {
     pub max_files: u32,
 }
 
+/// DATABASE_URL 缺失时的统一 fail-fast 提示（dev/test 不再回退到内置本地库）。
+const DATABASE_URL_MISSING_MSG: &str = concat!(
+    "缺少环境变量 DATABASE_URL：dev/test 不再回退到内置本地库，缺失即拒绝加载配置。\n",
+    "  设置方式：export DATABASE_URL='postgres://topems@localhost:5432/topems'\n",
+    "  跑测试：显式注入测试库 DSN（如 postgres://topems_test_runner@localhost:5432/topems_test_runner）\n",
+    "  模板见 .env.example；生产由部署单元显式注入",
+);
+
 #[derive(Clone)]
 pub struct Config {
     inner: Arc<RwLock<AppConfig>>,
@@ -159,6 +167,12 @@ impl Config {
     }
 
     async fn load_config_for_env(env: &str) -> Result<AppConfig, TopemsError> {
+        if std::env::var("DATABASE_URL")
+            .map(|v| v.trim().is_empty())
+            .unwrap_or(true)
+        {
+            return Err(TopemsError::Config(DATABASE_URL_MISSING_MSG.to_string()));
+        }
         match env {
             "production" => envy::from_env::<ProductionEnv>()
                 .map(|e| e.into())
@@ -220,7 +234,6 @@ impl Config {
 struct DevEnv {
     #[serde(default = "default_app_env")]
     app_env: String,
-    #[serde(default = "default_database_url")]
     database_url: String,
     #[serde(default = "default_db_host")]
     db_host: String,
@@ -341,7 +354,6 @@ struct DevEnv {
 struct TestEnv {
     #[serde(default = "default_app_env")]
     app_env: String,
-    #[serde(default = "default_test_database_url")]
     database_url: String,
     #[serde(default = "default_db_host")]
     db_host: String,
@@ -806,9 +818,11 @@ impl From<ProductionEnv> for AppConfig {
 fn default_app_env() -> String {
     "development".to_string()
 }
+#[cfg(test)]
 fn default_database_url() -> String {
     "postgres://topems:topems_dev@localhost:5432/topems_dev".to_string()
 }
+#[cfg(test)]
 fn default_test_database_url() -> String {
     "postgres://topems_test:topems_test_secret@localhost:5432/topems_test".to_string()
 }
@@ -1055,6 +1069,35 @@ fn default_cache_write_through() -> bool {
 mod tests {
     use super::*;
     use serial_test::serial;
+
+    const TEST_DATABASE_URL: &str =
+        "postgres://topems_test_runner@localhost:5432/topems_test_runner";
+
+    /// 显式注入/移除 DATABASE_URL，Drop 时恢复原值，避免测试间串味。
+    struct DatabaseUrlGuard(Option<String>);
+
+    impl DatabaseUrlGuard {
+        fn set(value: &str) -> Self {
+            let previous = std::env::var("DATABASE_URL").ok();
+            std::env::set_var("DATABASE_URL", value);
+            Self(previous)
+        }
+
+        fn remove() -> Self {
+            let previous = std::env::var("DATABASE_URL").ok();
+            std::env::remove_var("DATABASE_URL");
+            Self(previous)
+        }
+    }
+
+    impl Drop for DatabaseUrlGuard {
+        fn drop(&mut self) {
+            match self.0.take() {
+                Some(value) => std::env::set_var("DATABASE_URL", value),
+                None => std::env::remove_var("DATABASE_URL"),
+            }
+        }
+    }
 
     #[test]
     fn cache_config_default_values() {
@@ -1930,6 +1973,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_load_default_is_development() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -1943,6 +1987,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_load_test_env() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::set_var("APP_ENV", "test");
         }
@@ -1959,6 +2004,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_reload_dev_ok() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -1971,6 +2017,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_get_returns_appconfig() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -1982,6 +2029,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_get_database_auth_server_redis_invariants() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -2009,6 +2057,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_load_unknown_env_falls_back_to_devenv() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::set_var("APP_ENV", "staging");
         }
@@ -2027,6 +2076,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_get_returns_independent_clone() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -2041,6 +2091,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_get_redis_returns_configured() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -2056,6 +2107,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_get_auth_secret_fields() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -2074,6 +2126,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn config_get_server_returns_configured() {
+        let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
         }
@@ -2085,6 +2138,23 @@ mod tests {
         assert!(!server.rate_limit_enabled);
         assert_eq!(server.rate_limit_requests, 1000);
         assert_eq!(server.rate_limit_window_secs, 60);
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn config_load_fails_when_database_url_missing() {
+        let _db_guard = DatabaseUrlGuard::remove();
+        std::env::remove_var("APP_ENV");
+        let err = match Config::load().await {
+            Ok(_) => panic!("缺少 DATABASE_URL 时必须拒绝加载配置"),
+            Err(err) => err,
+        };
+        let msg = format!("{err:?}");
+        assert!(
+            msg.contains("DATABASE_URL"),
+            "错误信息应包含 DATABASE_URL，实际：{msg}"
+        );
+        assert!(msg.contains("缺失即拒绝"), "错误信息应可操作，实际：{msg}");
     }
 
     // ---------- From<DevEnv> 边界 ----------
