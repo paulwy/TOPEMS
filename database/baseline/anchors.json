@@ -15,6 +15,21 @@
       "data_table_count": 11,
       "data_rows": 2277,
       "migrations_manifest": "migrations_at_anchor.json"
+    },
+    {
+      "anchor_version": 20261117235500,
+      "generated_at_utc": "2026-11-18T03:53:00Z",
+      "schema_file": "prod_schema_20261117235500.sql.gz",
+      "ledger_file": "prod_ledger_20261117235500.sql",
+      "schema_sha256": "6e6c67938809c7bd464f82b5e2b2004c98273d96f75f29930a3647aca6cbb493",
+      "ledger_sha256": "164519ff57a8b4edfc7705ce6d8bc69d54ad5ba1b9cb0d30bd300d8f04458196",
+      "table_count": 1345,
+      "ledger_rows": 704,
+      "data_file": "baseline_20261117235500_data.sql.gz",
+      "data_sha256": "ab4919f101205feade9352807db347c64f245510daa71fb99ee8a68646fecef5",
+      "data_table_count": 10,
+      "data_rows": 4740,
+      "migrations_manifest": "migrations_at_anchor.json"
     }
   ]
 }

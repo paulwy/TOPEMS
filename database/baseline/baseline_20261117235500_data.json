@@ -1,0 +1,19 @@
+{
+  "anchor_version": 20261117235500,
+  "source_db": "topems_prod",
+  "source_host": "127.0.0.1/32",
+  "source_server_version": "18.4 (Homebrew)",
+  "generated_at_utc": "2026-11-18T03:54:12Z",
+  "table_count": 10,
+  "total_rows": 4740,
+  "tables": ["public.core_permissions","public.core_role_permissions","public.core_roles","public.core_tenants","public.core_menus","public.core_menu_groups","finance.core_finance_currencies","finance.core_finance_report_line_map","pm.project_type_configs","mobile.sync_policies"],
+  "row_counts": {"public.core_permissions": 1157,"public.core_role_permissions": 2917,"public.core_roles": 17,"public.core_tenants": 1,"public.core_menus": 452,"public.core_menu_groups": 130,"finance.core_finance_currencies": 16,"finance.core_finance_report_line_map": 48,"pm.project_type_configs": 1,"mobile.sync_policies": 1},
+  "restore_order": ["finance.core_finance_currencies","finance.core_finance_report_line_map","mobile.sync_policies","pm.project_type_configs","public.core_menu_groups","public.core_menus","public.core_permissions","public.core_roles","public.core_role_permissions","public.core_tenants"],
+  "data_file": "baseline_20261117235500_data.sql.gz",
+  "data_sha256": "ab4919f101205feade9352807db347c64f245510daa71fb99ee8a68646fecef5",
+  "pii_review": {
+    "method": "column-name regex (email/phone/address/name/id_card/password/secret/token) + user-ref columns must be NULL",
+    "checked_tables": 10,
+    "findings": []
+  }
+}
