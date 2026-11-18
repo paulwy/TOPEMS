@@ -59,24 +59,24 @@ async fn setup_schema(pool: &sqlx::PgPool) {
         .execute(pool)
         .await
         .unwrap();
-    // 策略按当前运行时 GUC 契约（app.tenant_id / app.rls_system）编写。
+    // 策略与线上实际定义同构（2026-11-18 只读核对）：
+    // public.core_doc_documents 的 relrowsecurity / relforcerowsecurity 均为 true，
+    // 策略名 `tenant_isolation_core_doc_documents`，判定为
+    //   COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+    //   OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
+    // （USING 与 WITH CHECK 相同），严格 fail-closed；全库已无
+    // `app.current_tenant_id` 消费者（命中 0 条）。
     //
-    // TODO(rls-drift): authoritative 迁移 20260908000016_rls_enable_all.sql:3607 中
-    // public.core_doc_documents 的既有策略名为 `rls_tenant_isolation`，判定表达式为
-    //   current_setting('app.current_tenant_id', true) IS NULL
-    //   OR current_setting('app.current_tenant_id', true) = ''
-    //   OR tenant_id IS NULL
-    //   OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-    // （USING 与 WITH CHECK 相同）。而运行时 apply_explicit_tenant 只设置
-    // app.tenant_id 与 app.rls_system，`app.current_tenant_id` 永远未设置
-    // → 前两个分支恒真，旧策略在线上等价于「全量放行」。
-    // 影响：该表 RLS 实际不生效，隔离只能依赖 SQL 里的显式条件。
-    // 测试库若照抄该谓词，RLS 恒放行、等于没启用，因此这里按语义对齐而不复刻陈旧表达式。
-    // 已应用的迁移不改；生产实际策略定义由另一路只读核对，后续单独开迁移收敛。
-    // 与生产的差异：测试库由 sqlx::test 每次新建空库、策略在此内联创建；
-    // 生产策略来自迁移且该表仍是上述旧契约。除策略表达式外，ENABLE/FORCE 与生产一致。
+    // 漂移在仓库迁移侧，不在线上：20260908000016_rls_enable_all.sql:3612 仍创建
+    // 基于 `app.current_tenant_id` 的 `rls_tenant_isolation`（未设置即放行），
+    // 20261015000076_rls_tenant_policy_batch_app.sql 又会追加一条
+    // 「tenant_id IS NULL / nil 租户也放行」的同名策略；两者都不含系统通道分支，
+    // 且 FOR ALL 策略按 OR 合并 → 重建库会回落到宽松版。
+    // 待办：补一条收敛迁移，使仓库重建结果与线上一致。
+    // 测试库由 sqlx::test 每次新建空库、策略在此内联创建，因此直接按线上定义建，
+    // 不复刻陈旧迁移表达式；ENABLE/FORCE 也与线上一致。
     sqlx::query(
-        r#"CREATE POLICY rls_tenant_isolation ON public.core_doc_documents
+        r#"CREATE POLICY tenant_isolation_core_doc_documents ON public.core_doc_documents
             FOR ALL TO public
             USING (
                 COALESCE(current_setting('app.rls_system', true), 'off') = 'on'

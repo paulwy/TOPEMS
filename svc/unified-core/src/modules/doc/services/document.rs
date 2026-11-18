@@ -87,8 +87,20 @@ impl DocumentService {
         // 隔离以显式租户条件为主路径，RLS 只作兜底：
         // 1) 显式条件不依赖 RLS 是否启用，测试库/误配置下仍能拦住跨租户读取；
         // 2) 系统通道（`app.rls_system='on'`）放行全量，与策略里的系统分支语义一致；
-        // 3) GUC 缺失时 NULLIF 后为 NULL → 条件不成立（fail-closed，不返回任何行），
-        //    而不是旧策略那种「未设置即全量」的放行。
+        // 3) GUC 缺失时 NULLIF 后为 NULL → 条件不成立（fail-closed，不返回任何行）。
+        //
+        // 线上策略已与本谓词同构（2026-11-18 只读核对）：public.core_doc_documents
+        // 的 relrowsecurity / relforcerowsecurity 均为 true，策略名
+        // `tenant_isolation_core_doc_documents`，判定为
+        //   COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+        //   OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
+        // 属于严格 fail-closed。
+        // 漂移在仓库迁移侧：20260908000016_rls_enable_all.sql 仍创建基于
+        // `app.current_tenant_id` 的旧契约策略（未设置即放行），
+        // 20261015000076_rls_tenant_policy_batch_app.sql 又会追加一条
+        // 「tenant_id IS NULL / nil 租户也放行」的同名策略，两者都不含系统通道分支，
+        // 且 FOR ALL 策略按 OR 合并 → 重建库会回落到宽松版。
+        // 待办：补一条收敛迁移，使仓库重建结果与线上一致。
         let rows = sqlx::query_as::<_, Document>(
             r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM public.core_doc_documents WHERE deleted_at IS NULL AND (COALESCE(current_setting('app.rls_system', true), 'off') = 'on' OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid) ORDER BY created_at DESC"#,
         )
