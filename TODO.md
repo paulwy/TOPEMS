@@ -142,6 +142,15 @@
 | P6 | wms B 路线（DEC-WMS-B-01/02/03） | 独立上线窗口 + 20 线程同 SKU 压测 + 业务方书面 p99/锁等待阈值，三项均未就绪（`repo-wide-rls-pool-closure-2026-11-18.md:253`） | 按既定 B 路线改造并压测 | 压测读数达书面阈值；可回退旧路径 |
 | P7 | 线下收紧的 RLS 策略回迁为正式迁移：按 [生产 vs 仓库全量差分普查](docs/database/rls-prod-vs-repo-census-2026-11-18.md) §3.2 的 318 张表逐表生成前向迁移（`DROP/ALTER POLICY tenant_isolation_*` → 严格 `rls_tenant_isolation`），不保留 `tenant_id IS NULL`、全零租户与空串 GUC 放行分支 | P7 只登记；实施需先完成 P1 口径对齐、55 张「生产 RLS 关闭」表访问路径确认；8 张 `erp` 合并报表族需业务定性（集团可见 vs 单租户） | 单独开窗，分批单事务 apply，每批 A/B 对抗查询 | 重建库策略集与线上严格口径一致；`bi.audit_logs` 的 allow_all 同步收紧；异常即回滚 |
 
+#### P7 归属结论（2026-11-19，只出草案）
+
+- **权限表权威归 `iam`**：`public.tool_permissions` 生产不存在；`public.tenant_permissions` 与 `iam` 副本均 0 行；代码已显式 `iam.` 前缀。
+- **批 0/1 复用既有迁移**：批 0 由 `20261118090000/093000/100000/103000/112000/113000/123000/124000` 覆盖 12/14；批 1 由 `20261102220000` 覆盖 11/11，不重写。
+- **新增仅两条**，版本接在仓库最大值之后：`20261119000001`（`iam` 两表 `id` 补 IDENTITY）、`20261119000002`（`public.core_file_permissions` / `public.monitor_thresholds` 严格 RLS 幂等兜底）。
+- **历史迁移受控修改**：`20261007000012_align_rebuild_selfheal.sql` 的 iam DROP 改为幂等建表，已登记 `database/migration-exemptions.json`；理由与改前事实见 [草案与演练文档](docs/database/iam-permission-ownership-drafts-2026-11-19.md)。
+- **窗口顺序**：`20261118160000` → `20261119000001` → `20261119000002`，单事务 apply；隔离库 `topems_scratch_20261119` 已演练 apply + rollback 并 drop。
+- 状态：**未应用生产、未开窗、未换二进制**。
+
 ### 3.1 第 0 波执行读数（2026-11-17，已完成）
 
 只读口径：本地 `topems_prod`（无远程生产凭据），全程 SELECT，无 DDL/写入。
