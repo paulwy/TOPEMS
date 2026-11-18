@@ -23,13 +23,16 @@ topems-pm=pm,shared,public
 topems-portal=portal,shared,public
 topems-qms=qms,shared,public
 topems-scm=scm,shared,public
-topems-search=search,shared,public
+# search 服务没有同名 schema（000_create_schemas.sql 未创建 search，库内也不存在）；
+# 其 SQL 只用到 public.search_*、限定的 iam.users，以及未限定的 core_files（权威归属 public）。
+topems-search=shared,public
 topems-srm=srm,shared,public
-# unified-core 运行时 SEARCH_PATH="flow, public"（svc/unified-core/src/embedded.rs）。
-# 此处仍保留 iam,shared,public：改为 flow,public 会让未限定的 core_flow_rules
-# 由 public 解析切到 flow（两处同名表并存），并改变 .sqlx 产物；
-# 需单独一轮重新 prepare，本窗口不动。
-topems-unified-core=iam,shared,public
+# unified-core 的未限定表跨多个 schema，按实际归属排序：
+#   iam.*   —— tenant_permissions / tool_permissions（public 下没有 tool_permissions）
+#   flow.*  —— approvals / core_flow_rules（与 public 同名，flow 为业务权威）
+# 运行时嵌入模式（svc/unified-core/src/embedded.rs）只设 "flow, public"，
+# 因此这里的 iam 前缀是 compile-time 补全：否则权限表无法解析、prepare 直接失败。
+topems-unified-core=iam,flow,shared,public
 topems-wms=wms,shared,public
 topems-shared-boundary=shared,public
 topems-shared-core=shared,public
