@@ -758,6 +758,7 @@ pub fn create_routes() -> Router<AppState> {
         // 这些路径不带 mdm-v5x/kg-v53 等版本前缀，与上面的 nest 互不重叠；handler 就近复用/新增，
         // 与版本化兄弟端点共用同一真表与 envelope 语义。
         .route("/continuity/plans", get(disaster_v56::list_plans))
+        .route("/continuity/tests", get(disaster_v56::get_test_results))
         .route(
             "/dashboard/recent",
             get(master_plugin::list_recent_activities),
