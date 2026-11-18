@@ -7,6 +7,12 @@ mod tests {
     use uuid::Uuid;
 
     /// 检查数据库是否可用
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        )
+    }
+
     async fn ensure_db_available() -> bool {
         tokio::net::TcpStream::connect("localhost:5432")
             .await
@@ -21,9 +27,7 @@ mod tests {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
             return;
         }
-        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
-        });
+        let database_url = test_database_url();
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -42,9 +46,7 @@ mod tests {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
             return;
         }
-        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
-        });
+        let database_url = test_database_url();
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -85,9 +87,7 @@ mod tests {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
             return;
         }
-        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
-        });
+        let database_url = test_database_url();
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -113,9 +113,7 @@ mod tests {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
             return;
         }
-        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
-        });
+        let database_url = test_database_url();
 
         let pool = PgPoolOptions::new()
             .max_connections(1)
@@ -149,9 +147,7 @@ mod tests {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
             return;
         }
-        let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
-        });
+        let database_url = test_database_url();
 
         let pool = PgPoolOptions::new()
             .max_connections(1)

@@ -1126,6 +1126,8 @@ mod tests {
         assert!(params.vehicle_type.is_none());
     }
 
+
+    topems_test_support::sqlx_dsn_guard!();
     /// K3：软删行不得出现在列表与总数里。
     #[sqlx::test(migrations = false)]
     async fn list_vehicle_requests_excludes_soft_deleted(pool: sqlx::PgPool) {

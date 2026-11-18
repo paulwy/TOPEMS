@@ -150,6 +150,8 @@ async fn scope_level(pool: &sqlx::PgPool, tenant: Uuid, user: Uuid) -> Option<St
     .unwrap()
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn single_company_tenant_backfill_and_multi_company_no_grant(pool: sqlx::PgPool) {
     setup_base_schema(&pool).await;

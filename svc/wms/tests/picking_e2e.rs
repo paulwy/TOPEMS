@@ -88,6 +88,8 @@ async fn list_body(pool: sqlx::PgPool, status: Option<String>) -> Value {
     serde_json::to_value(data).unwrap()
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

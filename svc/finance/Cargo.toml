@@ -36,6 +36,7 @@ csv.workspace = true
 strsim.workspace = true
 
 [dev-dependencies]
+topems-test-support = { path = "../../lib/test-support" }
 tokio = { workspace = true, features = ["test-util"] }
 rust_decimal = { version = "1.34", features = ["serde"] }
 

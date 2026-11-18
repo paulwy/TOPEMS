@@ -268,13 +268,18 @@ mod tests {
     use super::*;
     use sqlx::postgres::PgPoolOptions;
 
-    const DEFAULT_DB_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
 
     fn short_id() -> String {
         Uuid::new_v4().simple().to_string()[..12].to_string()
     }
 
     /// 本地 Postgres 不可用时跳过（与 `tests/ehs_tests.rs` 既有口径一致）。
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        )
+    }
+
     async fn test_db() -> Option<Db> {
         if tokio::net::TcpStream::connect("localhost:5432")
             .await
@@ -283,7 +288,7 @@ mod tests {
             eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
             return None;
         }
-        let url = std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DB_URL.to_string());
+        let url = test_database_url();
         match PgPoolOptions::new().max_connections(2).connect(&url).await {
             Ok(pool) => Some(Db::new(pool, "ehs, public, shared")),
             Err(e) => {

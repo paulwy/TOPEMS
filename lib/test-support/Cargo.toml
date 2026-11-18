@@ -1,0 +1,14 @@
+[package]
+name = "topems-test-support"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "测试期 DSN 安全守卫：#[sqlx::test] 只允许使用 TEST_DATABASE_URL，拒绝生产库"
+
+[lib]
+name = "topems_test_support"
+path = "src/lib.rs"
+
+[lints.rust]
+unknown_lints = "allow"

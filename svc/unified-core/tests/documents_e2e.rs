@@ -67,6 +67,8 @@ async fn insert_doc(pool: &sqlx::PgPool, tenant: &str, title: &str) -> uuid::Uui
     id
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

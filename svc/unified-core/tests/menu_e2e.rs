@@ -104,6 +104,8 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
         .unwrap()
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_groups_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

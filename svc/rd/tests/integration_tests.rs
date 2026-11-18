@@ -8,10 +8,14 @@ use uuid::Uuid;
 mod tests {
     use super::*;
 
-    const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        )
+    }
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
-        PgPool::connect(TEST_DATABASE_URL).await
+        PgPool::connect(&test_database_url()).await
     }
 
     /// 检查数据库是否可用

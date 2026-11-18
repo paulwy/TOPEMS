@@ -13,6 +13,7 @@ members = [
     "lib/shared-bootstrap",
     "lib/shared-mcp",
     "lib/shared-boundary",
+    "lib/test-support",
     # [示例] 按需引入示例；默认排除以加速 workspace grep 与增量编译
     # "examples/minimal-service",
     # [模块化单体] 统一入口服务（P0 架构优化，详见 docs/architecture/modular-monolith-design.md）

@@ -87,6 +87,8 @@ fn empty_op_query() -> OperationLogQuery {
     }
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn record_login_inserts_and_listable(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

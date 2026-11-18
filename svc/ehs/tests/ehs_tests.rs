@@ -4,9 +4,14 @@ use sqlx::postgres::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use uuid::Uuid;
 
+fn test_database_url() -> String {
+    std::env::var("TEST_DATABASE_URL").expect(
+        "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+    )
+}
+
 async fn create_test_pool() -> PgPool {
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = test_database_url();
 
     // 与 svc/ehs/src/main.rs 保持一致：SEARCH_PATH='ehs, public'，qa_ehs_* 归位到 ehs schema 后无前缀查询依赖该路径
     let pool = PgPoolOptions::new()

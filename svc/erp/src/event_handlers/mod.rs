@@ -1725,6 +1725,8 @@ mod rls_scope_tests {
         rows
     }
 
+
+    topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn mdm_ref_upsert_writes_in_tenant_scope(pool: PgPool) {
         setup(&pool).await;

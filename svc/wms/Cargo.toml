@@ -29,6 +29,7 @@ bigdecimal.workspace = true
 rust_decimal.workspace = true
 
 [dev-dependencies]
+topems-test-support = { path = "../../lib/test-support" }
 tokio = { workspace = true, features = ["full", "test-util"] }
 rust_decimal.workspace = true
 serde_urlencoded.workspace = true

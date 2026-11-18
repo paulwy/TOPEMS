@@ -9,9 +9,14 @@ use topems_finance::services::FinanceService;
 use topems_shared_core::error::TopemsError;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
+fn test_database_url() -> String {
+    std::env::var("TEST_DATABASE_URL").expect(
+        "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+    )
+}
+
 async fn create_test_pool() -> PgPool {
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = test_database_url();
 
     PgPool::connect(&database_url)
         .await

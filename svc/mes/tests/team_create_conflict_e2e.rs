@@ -88,6 +88,8 @@ async fn create(
 const TENANT_A: &str = "11111111-1111-1111-1111-111111111111";
 const TENANT_B: &str = "22222222-2222-2222-2222-222222222222";
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn create_team_conflict_returns_409(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

@@ -24,6 +24,8 @@ async fn setup_schema(pool: &PgPool) {
     .unwrap();
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn empty_table_yields_first_sequence(pool: PgPool) {
     setup_schema(&pool).await;

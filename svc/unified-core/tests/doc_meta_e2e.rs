@@ -82,6 +82,8 @@ fn folder_req(name: &str) -> CreateFolderRequest {
     }
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_templates_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

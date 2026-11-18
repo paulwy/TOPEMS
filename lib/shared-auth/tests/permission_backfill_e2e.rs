@@ -165,6 +165,8 @@ fn auth_state(pool: PgPool) -> AuthState {
         .with_permission_resolver(pool)
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn auth_middleware_backfills_permissions_and_keeps_tenant(pool: PgPool) {
     seed_grant_tables(&pool).await;

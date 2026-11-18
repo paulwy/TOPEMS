@@ -120,6 +120,8 @@ async fn tenant_of(pool: &PgPool, table: &str, id: Uuid) -> Option<Uuid> {
         .unwrap()
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn create_booking_succeeds_and_binds_tenant(pool: PgPool) {
     setup_schema(&pool).await;

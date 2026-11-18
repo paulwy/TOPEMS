@@ -397,6 +397,8 @@ mod company_scope_tests {
         id
     }
 
+
+    topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn missing_company_returns_not_found(pool: sqlx::PgPool) {
         setup(&pool).await;

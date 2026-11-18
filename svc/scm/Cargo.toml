@@ -222,3 +222,6 @@ cast_precision_loss = "deny"
 cast_possible_truncation = "deny"
 cast_possible_wrap = "deny"
 cast_sign_loss = "deny"
+
+[dev-dependencies]
+topems-test-support = { path = "../../lib/test-support" }

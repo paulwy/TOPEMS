@@ -83,6 +83,8 @@ async fn insert_config(pool: &sqlx::PgPool, material_category: &str, is_active: 
     .execute(pool).await.unwrap();
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

@@ -1038,6 +1038,8 @@ mod billing_scope_tests {
             .sum()
     }
 
+
+    topems_test_support::sqlx_dsn_guard!();
     #[sqlx::test(migrations = false)]
     async fn billing_analytics_is_tenant_scoped_and_fail_closed(pool: PgPool) {
         setup(&pool).await;

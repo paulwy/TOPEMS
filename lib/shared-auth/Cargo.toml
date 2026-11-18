@@ -46,6 +46,7 @@ parking_lot.workspace = true
 rand.workspace = true
 
 [dev-dependencies]
+topems-test-support = { path = "../test-support" }
 serial_test.workspace = true
 [lints.rust]
 unknown_lints = "allow"

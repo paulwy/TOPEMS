@@ -33,6 +33,7 @@ rand.workspace = true
 reqwest.workspace = true
 
 [dev-dependencies]
+topems-test-support = { path = "../../lib/test-support" }
 tokio = { workspace = true, features = ["full", "test-util"] }
 reqwest = { workspace = true, features = ["json"] }
 axum-test.workspace = true

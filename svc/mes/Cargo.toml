@@ -29,6 +29,7 @@ futures-util.workspace = true
 utoipa.workspace = true
 
 [dev-dependencies]
+topems-test-support = { path = "../../lib/test-support" }
 tower = { workspace = true }
 axum = { workspace = true }
 [lints.rust]

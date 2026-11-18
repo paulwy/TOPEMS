@@ -54,6 +54,8 @@ async fn ensure_crm_schema(pool: &PgPool) {
         .unwrap();
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[ignore]
 #[sqlx::test]
 async fn customer_isolated_by_tenant(pool: PgPool) {

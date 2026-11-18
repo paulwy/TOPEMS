@@ -285,11 +285,15 @@ mod tests {
     static DB_TEST_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
         std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
 
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        )
+    }
+
     async fn setup_test_db() -> PgPool {
-        // 支持 TEST_DATABASE_URL 环境变量覆盖（默认与项目约定一致），
-        // 便于本机/CI 使用各自实际凭据运行门禁。
-        let database_url = std::env::var("TEST_DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_owned());
+        // 必须显式提供测试库 DSN；不回退 DATABASE_URL，也不使用硬编码开发库。
+        let database_url = test_database_url();
         let pool = PgPool::connect(&database_url)
             .await
             .expect("Failed to connect to test database");

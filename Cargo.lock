@@ -5682,6 +5682,7 @@ dependencies = [
  "topems-shared-db",
  "topems-shared-event",
  "topems-shared-service-client",
+ "topems-test-support",
  "tracing",
  "utoipa",
  "uuid",
@@ -5741,6 +5742,7 @@ dependencies = [
  "topems-shared-db",
  "topems-shared-event",
  "topems-shared-service-client",
+ "topems-test-support",
  "tracing",
  "utoipa",
  "uuid",
@@ -5770,6 +5772,7 @@ dependencies = [
  "topems-shared-db",
  "topems-shared-event",
  "topems-shared-service-client",
+ "topems-test-support",
  "tracing",
  "utoipa",
  "uuid",
@@ -5927,6 +5930,7 @@ dependencies = [
  "topems-shared-db",
  "topems-shared-event",
  "topems-shared-service-client",
+ "topems-test-support",
  "tower",
  "tracing",
  "utoipa",
@@ -6181,6 +6185,7 @@ dependencies = [
  "topems-shared-core",
  "topems-shared-db",
  "topems-shared-event",
+ "topems-test-support",
  "tower-http",
  "tracing",
  "utoipa",
@@ -6340,6 +6345,7 @@ dependencies = [
  "topems-shared-core",
  "topems-shared-event",
  "topems-shared-observability",
+ "topems-test-support",
  "tower",
  "tracing",
  "uuid",
@@ -6562,6 +6568,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "topems-test-support"
+version = "0.1.0"
+
+[[package]]
 name = "topems-ticket"
 version = "0.1.0"
 dependencies = [
@@ -6645,6 +6655,7 @@ dependencies = [
  "topems-shared-db",
  "topems-shared-event",
  "topems-shared-observability",
+ "topems-test-support",
  "tracing",
  "url",
  "utoipa",
@@ -6674,6 +6685,7 @@ dependencies = [
  "topems-shared-core",
  "topems-shared-db",
  "topems-shared-event",
+ "topems-test-support",
  "tracing",
  "utoipa",
  "uuid",

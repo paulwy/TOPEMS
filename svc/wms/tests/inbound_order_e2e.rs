@@ -121,6 +121,8 @@ async fn insert_order(pool: &sqlx::PgPool, order_number: &str, status: &str) {
     .unwrap();
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

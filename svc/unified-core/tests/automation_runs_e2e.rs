@@ -123,6 +123,8 @@ async fn insert_run_with_content(
     row.0
 }
 
+
+topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_runs_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

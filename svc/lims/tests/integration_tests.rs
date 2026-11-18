@@ -10,10 +10,14 @@ mod tests {
     use super::*;
     use sqlx::Row;
 
-    const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        )
+    }
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
-        let pool = PgPool::connect(TEST_DATABASE_URL).await?;
+        let pool = PgPool::connect(&test_database_url()).await?;
         // 防御：运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
         models::run_schema_defense(&pool).await.ok();
         Ok(pool)
@@ -26,7 +30,7 @@ mod tests {
         {
             return false;
         }
-        match PgPool::connect(TEST_DATABASE_URL).await {
+        match PgPool::connect(&test_database_url()).await {
             Ok(pool) => sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'lims' AND table_name = 'instruments'",
             )

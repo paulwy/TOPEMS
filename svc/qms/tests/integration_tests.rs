@@ -11,7 +11,11 @@ mod tests {
     use super::*;
     use sqlx::Row;
 
-    const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL").expect(
+            "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
+        )
+    }
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
         // 与 svc/qms/src/main.rs 保持一致：SEARCH_PATH='qms, public'，qa_* 归位到 qms schema 后无前缀查询依赖该路径
@@ -24,7 +28,7 @@ mod tests {
                     Ok(())
                 })
             })
-            .connect(TEST_DATABASE_URL)
+            .connect(&test_database_url())
             .await
     }
 
