@@ -18,7 +18,10 @@ COPY lib ./lib
 COPY svc ./svc
 COPY tools ./tools
 COPY .sqlx ./.sqlx
+# swagger-ui 离线包（已入库）：避免 utoipa-swagger-ui build.rs 在容器内联网下载
+COPY vendor ./vendor
 ENV SQLX_OFFLINE=true
+ENV SWAGGER_UI_DOWNLOAD_URL=file:///app/vendor/swagger-ui-v5.32.6.zip
 
 # Build only unified-core to save time
 RUN --mount=type=cache,target=/root/.cargo/registry \
