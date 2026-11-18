@@ -1,10 +1,20 @@
-use axum::{extract::State, Extension, Json};
+use axum::routing::{get, post};
+use axum::{extract::State, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::{response::ApiResponse, TopemsError};
+
+pub fn create_routes() -> Router<crate::shared::AppState> {
+    Router::new()
+        .route("/reports", get(list_reports))
+        .route("/reports/{id}", get(get_report))
+        .route("/reports/generate", post(generate_report))
+        .route("/reports/{id}/approve", post(approve_report))
+        .route("/reports/{id}/export-pdf", get(export_report_pdf))
+}
 
 #[derive(Debug, Serialize)]
 pub struct InspectionReport {

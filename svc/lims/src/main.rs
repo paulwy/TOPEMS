@@ -349,6 +349,18 @@ async fn main() -> anyhow::Result<()> {
             "/lims/instruments/{id}/calibration",
             post(modules::instrument::calibrate),
         )
+        .route(
+            "/calibration-records",
+            post(modules::instrument::create_calibration_record),
+        )
+        .route(
+            "/calibration-schedules",
+            get(modules::instrument::get_calibration_schedule),
+        )
+        .route(
+            "/calibrations/overdue",
+            get(modules::instrument::get_overdue_calibrations),
+        )
         // Reagent
         .route(
             "/lims/reagents",

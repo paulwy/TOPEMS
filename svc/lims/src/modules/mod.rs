@@ -31,6 +31,7 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(inspection_task::create_routes())
         .merge(inspection_record::create_routes())
         .merge(instrument::create_routes())
+        .merge(report::create_routes())
         .merge(reagent::create_routes())
         .merge(statistics::create_routes())
         .merge(data_sync::create_routes())
