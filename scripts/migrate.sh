@@ -79,6 +79,28 @@ SKIP_CORE="${TOPEMS_MIGRATE_SKIP_CORE:-false}"
 ONLY_SERVICE="${TOPEMS_MIGRATE_ONLY:-}"
 DATABASE_URL="${DATABASE_URL:-}"
 
+# ----------------------------------------------------------------------------
+# 迁移专用连接串（只作用于本脚本发起的 psql / sqlx 进程）
+#
+# 强制 search_path=public：避免连接角色名恰好等于业务 schema（iam/mes/...）时，
+# 迁移中的未限定表名按 "$user" 落到该 schema（生产 iam.core_dashboard_refresh_log
+# 即由此产生）。不改 .env、不改迁移文件内容、不影响 _sqlx_migrations.checksum。
+# 调用方已在 URL 中显式给出 options 时不覆盖。
+# ----------------------------------------------------------------------------
+build_migration_url() {
+  local url="$1"
+  [[ -z "$url" ]] && { printf '%s' "$url"; return; }
+  case "$url" in
+    *"options="*|*"options%3D"*) printf '%s' "$url"; return ;;
+  esac
+  if [[ "$url" == *"?"* ]]; then
+    printf '%s&options=-csearch_path%%3Dpublic' "$url"
+  else
+    printf '%s?options=-csearch_path%%3Dpublic' "$url"
+  fi
+}
+MIGRATION_URL="$(build_migration_url "$DATABASE_URL")"
+
 # 迁移目录类型
 #   core  - 顶层平台迁移 (database/migrations)
 #   svc   - 服务级迁移 (svc/<name>/migrations)
@@ -355,7 +377,7 @@ list_migrations_in_dir() {
 # 校验 _sqlx_migrations 表是否可访问 (fallback 模式)
 # ----------------------------------------------------------------------------
 ensure_sqlx_migrations_table() {
-  if ! psql "$DATABASE_URL" -c "SELECT 1 FROM _sqlx_migrations LIMIT 1" >/dev/null 2>&1; then
+  if ! psql "$MIGRATION_URL" -c "SELECT 1 FROM _sqlx_migrations LIMIT 1" >/dev/null 2>&1; then
     log_info "创建 _sqlx_migrations 表..."
     local create_sql
     create_sql=$(cat <<'SQL'
@@ -371,7 +393,7 @@ CREATE TABLE IF NOT EXISTS _sqlx_migrations (
 );
 SQL
 )
-    if ! psql "$DATABASE_URL" -c "$create_sql" >/dev/null 2>&1; then
+    if ! psql "$MIGRATION_URL" -c "$create_sql" >/dev/null 2>&1; then
       log_error "无法创建 _sqlx_migrations 表"
       return 1
     fi
@@ -385,7 +407,7 @@ SQL
 is_migration_applied() {
   local version="$1"
   local count
-  count="$(psql "$DATABASE_URL" -t -A -c \
+  count="$(psql "$MIGRATION_URL" -t -A -c \
     "SELECT COUNT(*) FROM _sqlx_migrations WHERE version = '$version' AND success = true" \
     2>/dev/null | tr -d ' ')"
   [[ "${count:-0}" -gt 0 ]]
@@ -397,7 +419,7 @@ is_migration_applied() {
 record_migration() {
   local version="$1" description="$2"
   local out rc
-  out="$(psql "$DATABASE_URL" -c \
+  out="$(psql "$MIGRATION_URL" -c \
     "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time_ms) \
      VALUES ('$version', '$description', NOW(), true, decode('manual-via-migrate-sh', 'escape'), 0) \
      ON CONFLICT (version) DO NOTHING" 2>&1)"
@@ -423,14 +445,14 @@ check_stale_migration_state() {
   [[ "$DRY_RUN" == "true" ]] && return 0
 
   local applied
-  applied="$(psql "$DATABASE_URL" -t -A -c "SELECT count(*) FROM _sqlx_migrations;" 2>/dev/null || true)"
+  applied="$(psql "$MIGRATION_URL" -t -A -c "SELECT count(*) FROM _sqlx_migrations;" 2>/dev/null || true)"
   # 空库（表不存在）或 0 记录 → 全新环境，正常全量，不拦截
   [[ -z "$applied" || "$applied" == "0" ]] && return 0
 
   local files
   files="$(list_migrations_in_dir "$dir" | wc -l | tr -d ' ')"
   local max_record max_file
-  max_record="$(psql "$DATABASE_URL" -t -A -c "SELECT max(version) FROM _sqlx_migrations;" 2>/dev/null || true)"
+  max_record="$(psql "$MIGRATION_URL" -t -A -c "SELECT max(version) FROM _sqlx_migrations;" 2>/dev/null || true)"
   max_file="$(list_migrations_in_dir "$dir" | awk -F'\t' '{print $1}' | sort -n | tail -1)"
 
   if [[ -n "$applied" && "$applied" -lt "$files" ]]; then
@@ -468,7 +490,7 @@ run_migrations_with_sqlx() {
     return 0
   fi
 
-  if sqlx_cli migrate run --source "$dir" --database-url "$DATABASE_URL"; then
+  if sqlx_cli migrate run --source "$dir" --database-url "$MIGRATION_URL"; then
     log_ok "迁移目录 $name 完成"
     return 0
   else
@@ -511,7 +533,7 @@ run_migrations_with_psql() {
     fi
 
     log_detail "执行: $mname (version=$version)"
-    if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$file" >/dev/null 2>&1; then
+    if psql "$MIGRATION_URL" -v ON_ERROR_STOP=1 -f "$file" >/dev/null 2>&1; then
       if ! record_migration "$version" "$mname"; then
         log_error "迁移执行成功但记账失败，中止（防账实不一致重放）: $mname"
         dir_failed=$((dir_failed + 1))
@@ -544,7 +566,7 @@ run_migrations_with_psql() {
 status_with_sqlx() {
   local dir="$1" name="$2"
   log_step "状态: $name"
-  sqlx_cli migrate info --source "$dir" --database-url "$DATABASE_URL" 2>&1 || {
+  sqlx_cli migrate info --source "$dir" --database-url "$MIGRATION_URL" 2>&1 || {
     log_warn "无法获取 $name 状态 (sqlx-cli)"
   }
 }
@@ -556,7 +578,7 @@ status_with_psql() {
   local dir="$1" name="$2"
   log_step "状态: $name"
 
-  if ! psql "$DATABASE_URL" -c "SELECT 1 FROM _sqlx_migrations LIMIT 1" >/dev/null 2>&1; then
+  if ! psql "$MIGRATION_URL" -c "SELECT 1 FROM _sqlx_migrations LIMIT 1" >/dev/null 2>&1; then
     log_detail "  _sqlx_migrations 表不存在 - 全部待应用"
   fi
 
@@ -584,7 +606,7 @@ revert_with_sqlx() {
   fi
 
   log_step "回滚: $name"
-  if sqlx_cli migrate revert --source "$dir" --database-url "$DATABASE_URL"; then
+  if sqlx_cli migrate revert --source "$dir" --database-url "$MIGRATION_URL"; then
     log_ok "回滚成功: $name"
     return 0
   else

@@ -93,6 +93,17 @@
       ],
       "evidence": "dev topems（账本 max 20261114170000，无 20261115000000）：先用旧 18 表回滚恢复到演练前基线，18 条约束定义 diff 为空；再用 17 表新版 --single-transaction 应用，11 SKIP/6 重建、APPLY OK 17、VERIFY OK 17；六表 45 个目标值 accepted=t、__illegal_status__ accepted=f、NULL accepted=t；analytics 真实 INSERT status=completed 成功、非法值 23514 后 ROLLBACK，残留行 0；新回滚 17 条恢复目标定义后与基线 diff 为空；再次重放幂等 SKIP 17/重建 0，终态与首轮 wide 快照一致。prod 只读核验（2026-11-15）：_sqlx_migrations 679 行/max 20261114202000，目标约束 18/18 不存在；wms.purchase_order_snapshots 仅 3 列。validate.sh Errors 0 / Checksum errors 0。",
       "approved": true
+    },
+    {
+      "id": "B20261118-20261027200000-ledger-imported",
+      "date": "2026-11-18",
+      "committer": "air",
+      "reason": "20261027200000_core_schema_duplicates_cleanup.sql 在生产账本已记 success=true（installed_on=2026-11-02 12:26:59.575639+08，checksum 与 HEAD SHA-384 一致），但物理 schema 证明其 104 张 DROP 目标中 flow 28/28、iam 36/36 仍存在，仅 mes 0/36、communication 0/4 不存在；同秒另有 56 行账本记录（合计 57 行）为批量导入而非本库逐条执行。该文件属于『导入账本、物理未执行』，不是待重跑的前向迁移。处置：文件内容与 checksum 保持不动，不删除、不改写、不在任何缺少该账本行的环境重放；副本清理统一走 20261118160000_flow_shadow_copies_rename_deprecated.sql（RENAME，可回滚）。本登记为处置备案，不构成本文件的内容修改。",
+      "files": [
+        "20261027200000_core_schema_duplicates_cleanup.sql"
+      ],
+      "evidence": "生产 topems_prod 只读核验（2026-11-18）：_sqlx_migrations 704 行，version=20261027200000 success=t，installed_on=2026-11-02 12:26:59.575639+08，execution_time=38526625；同秒 57 行、版本范围 20260724000005..20261102180000，属批量导入。物理反证：DROP 目标 flow 28/28、iam 36/36 仍存在，mes 0/36、communication 0/4 不存在；flow/iam 同名副本在 2026-11-05 与 2026-11-17 两份 schema 快照中均已存在。依赖检查：无视图依赖，CASCADE 仅会删除 flow.core_doc_document_versions 指向 flow.core_doc_documents 的外键约束（versions 表本身保留）。替代方案 20261118160000 已在 topems_test_runner 以 BEGIN..ROLLBACK 演练通过（0 行前置断言、11 次 RENAME、策略快照比对、回滚干净）。validate.sh Errors 0 / Checksum errors 0。",
+      "approved": true
     }
   ]
 }

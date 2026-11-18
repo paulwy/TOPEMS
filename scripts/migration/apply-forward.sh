@@ -59,6 +59,11 @@
 #   远端 psql 走主机本地 socket（PGHOST 默认 /tmp）；迁移文件必须已投递且 sha256 一致。
 #   WINDOW_SSH_LOCAL_SIM=1 用于本地演练（ssh/scp 替换为本地执行/复制，不连 prod）。
 #
+# search_path 上锁：
+#   所有模式都把迁移进程的 search_path 固定为 public
+#   （URL DSN 追加 options=-csearch_path%3Dpublic；socket/SSH 用 PGOPTIONS）。
+#   只影响本脚本发起的 psql，不改 .env、不改迁移文件、不影响 checksum。
+#
 # 用法：
 #   bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 #     --anchor 20261105235700 --only 20261107000008,20261107000013 \
@@ -146,13 +151,43 @@ if [[ -n "$DEFER_APPLY_VERSION" ]]; then
 fi
 
 sq() { printf '%q' "$1"; }
+
+# ---------------------------------------------------------------------------
+# 迁移入口 search_path 上锁（只影响本脚本发起的 psql 进程）
+#
+# 迁移里的未限定表名默认按 "$user",public 解析；连接角色名恰好等于业务 schema
+# （iam/mes/...）时会落错库（生产 iam.core_dashboard_refresh_log 即由此产生）。
+# 这里强制 search_path=public：不改 .env、不改迁移文件、不影响 checksum。
+#   - URL 形式 DSN：追加 options=-csearch_path%3Dpublic；
+#   - conninfo / socket / SSH 模式：用 PGOPTIONS 传给远端 psql。
+# 调用方已显式给出 options 时不覆盖。
+# ---------------------------------------------------------------------------
+lock_dsn() {
+  local dsn="$1"
+  [[ -z "$dsn" ]] && { printf '%s' "$dsn"; return; }
+  case "$dsn" in
+    *"options="*|*"options%3D"*) printf '%s' "$dsn"; return ;;
+  esac
+  case "$dsn" in
+    postgres://*|postgresql://*)
+      case "$dsn" in
+        *\?*) printf '%s&options=-csearch_path%%3Dpublic' "$dsn" ;;
+        *)    printf '%s?options=-csearch_path%%3Dpublic' "$dsn" ;;
+      esac
+      ;;
+    *) printf '%s' "$dsn" ;;
+  esac
+}
+REMOTE_PGOPTIONS="${WINDOW_REMOTE_PGOPTIONS:--csearch_path=public}"
+export PGOPTIONS="${PGOPTIONS:+$PGOPTIONS }-csearch_path=public"
+
 remote_run() {
   local cmd="$1"
   if [[ "$LOCAL_SIM" == "1" ]]; then bash -c "$cmd"; else "$SSH_BIN" "$SSH_HOST" "$cmd"; fi
 }
 remote_psql() {
   local cmd
-  cmd="PGHOST=$(sq "$REMOTE_PGHOST") $(sq "$REMOTE_PSQL_BIN") -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
+  cmd="PGHOST=$(sq "$REMOTE_PGHOST") PGOPTIONS=$(sq "$REMOTE_PGOPTIONS") $(sq "$REMOTE_PSQL_BIN") -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
   local a
   for a in "$@"; do cmd+=" $(sq "$a")"; done
   remote_run "$cmd"
@@ -166,7 +201,7 @@ if [[ -n "$SSH_HOST" ]]; then
   psql_exec() { remote_psql "$@"; }
   psql_stdin() { remote_psql -q -tA -f -; }
 elif [[ -n "$DSN" ]]; then
-  PSQL=(psql "$DSN")
+  PSQL=(psql "$(lock_dsn "$DSN")")
   psql_exec() { "${PSQL[@]}" "$@"; }
   psql_stdin() { "${PSQL[@]}" -q -tA -v ON_ERROR_STOP=1 -f -; }
 elif [[ -n "$DB" ]]; then
@@ -444,7 +479,7 @@ for f in "${PENDING[@]}"; do
   v="${b%%_*}"
   desc="${b%.sql}"; desc="${desc#*_}"; desc="${desc//_/ }"
   hex="$(shasum -a 384 "$f" | awk '{print $1}')"
-  tmp="$(mktemp /tmp/topems_forward.XXXXXX.sql)"
+  tmp="$(mktemp /tmp/topems_forward_XXXXXX)"
   if [[ $SSH_MODE -eq 1 ]]; then
     remote_path="$REMOTE_MIG_DIR/$b"
     local_sha="$(shasum -a 256 "$f" | awk '{print $1}')"

@@ -18,15 +18,16 @@
 
 | 项 | 值 |
 |---|---|
-| 锚点（anchor） | `20261105235700`（14 位版本号 `YYYYMMDDHHMMSS`） |
-| 元数据 | `database/baseline/baseline_20261105235700.json` |
-| schema 资产 | `database/baseline/prod_schema_20261105235700.sql.gz`（sha256 见元数据） |
-| 账本资产 | `database/baseline/prod_ledger_20261105235700.sql`（sha256 见元数据） |
+| 锚点（anchor） | `20261117235500`（14 位版本号 `YYYYMMDDHHMMSS`） |
+| 元数据 | `database/baseline/baseline_20261117235500.json` |
+| schema 资产 | `database/baseline/prod_schema_20261117235500.sql.gz`（sha256 见元数据） |
+| 账本资产 | `database/baseline/prod_ledger_20261117235500.sql`（sha256 见元数据） |
 | 历史锚点列表 | `database/baseline/anchors.json`（单调不减） |
-| 锚点时刻迁移清单 | `database/baseline/migrations_at_anchor.json`（592 条，新增迁移豁免依据） |
-| 参考数据元数据 | `database/baseline/baseline_20261105235700_data.json` |
-| 参考数据资产 | `database/baseline/baseline_20261105235700_data.sql.gz`（sha256 见元数据） |
-| 基线规模 | 表 **1349** / 账本成功记录 **576** / 参考数据 **11 张表、2277 行** |
+| 锚点时刻迁移清单 | `database/baseline/migrations_at_anchor.json`（778 条，新增迁移豁免依据） |
+| 参考数据元数据 | `database/baseline/baseline_20261117235500_data.json` |
+| 参考数据资产 | `database/baseline/baseline_20261117235500_data.sql.gz`（sha256 见元数据） |
+| 基线规模 | 表 **1345** / 账本成功记录 **704** / 参考数据 **10 张表、4740 行** |
+| 上一锚点（保留追溯） | `20261105235700`：表 1349 / 账本 576 / 参考数据 11 张表 2277 行 |
 | 前向后终态（2026-11-08 实测） | 表 **1343**（净变更 −6，含前向合法 DROP）/ 账本 **623**（576 + 47 条前向）/ `max(version)=20261108090000` |
 
 锚点语义：**锚点及以前的所有 schema 变更已包含在 schema 快照中**，对应账本记录已写入 `_sqlx_migrations`；
@@ -34,6 +35,33 @@
 
 校验方式：`provision-env.sh` 启动时读取元数据，对 schema/ledger/data 计算 sha256，任一不匹配立即 exit 1，
 不会连接目标库。参考数据缺失或元数据缺失时同样失败（除非显式 `--no-reference-data`）。
+
+### 2.1 迁移入口的 `search_path` 上锁（2026-11-18）
+
+`scripts/migrate.sh` 与 `scripts/migration/apply-forward.sh` 现在会给**迁移进程**固定
+`search_path=public`：URL DSN 追加 `options=-csearch_path%3Dpublic`，socket/SSH 模式用
+`PGOPTIONS=-csearch_path=public`。只影响这两个脚本发起的 `psql` / `sqlx`，不改 `.env`、
+不改迁移文件、不影响 `_sqlx_migrations.checksum`。
+
+**等价性边界（必须知道，别踩）**：
+
+| 场景 | 是否等价 | 依据 |
+|---|---|---|
+| 当前锚点 `20261117235500` 之后的 15 条 pending | **等价** | 全部表名 schema 限定；无一条依赖 `$user` 解析 |
+| 全新库从 0 重放全链 | **不等价** | 迁移链里有 **78 处**未限定 `CREATE TABLE`（distinct 文件+表名对），默认 `"$user", public` 与 `public` 的落点不同 |
+
+生产快照已经证明「默认不是 public」：`core_dashboard_refresh_log` 只在 `iam`，`public` 不存在；
+6 张 `*_dashboard_snapshots` 在 `iam` 与 `public` 双份；`core_master_data_refs` 在
+`flow` / `master_data` / `public` 三份；`pm_master_data_refs` 在 `pm` 与 `public` 双份。
+这些重复表就是历史上连接角色名恰好等于业务 schema 时按 `$user` 落错库的产物。
+
+因此：**本仓库唯一受支持的供给路径是「恢复基线快照 + 前向迁移」**（见 §1），
+全链重放不在支持范围内；若将来要做全链重建，必须以 `search_path=public` 为准重新生成
+目标结构，并与历史 `iam` 副本做差异评审，不能假定与生产一致。
+
+另：`search-path` / `boundary-gate-py` 两道门禁禁止业务代码自行改 `search_path`，
+意味着「公共入口统一钉 search_path」不可行，裸名歧义只能逐处加 schema 限定。
+新增 SQL 前请先查 [裸名引用长期对照表](../database/shadow-bare-ref-scan-2026-11-18.md#01-长期对照表与门禁约束2026-11-18-补充)。
 
 ## 3. 使用（provision-env.sh）
 
@@ -147,6 +175,18 @@ git add database/baseline/
 git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参考数据资产"
 ```
 
+生成口径（2026-11-18 实测补充，务必按此执行）：
+
+- **源连接必须是超级用户或已补齐全表 SELECT 的角色**。`topems_prod` 角色对
+  `mes.tenant_backfill_quarantine` 无 SELECT，`pg_dump --schema-only` 在 `LOCK TABLE` 阶段直接失败
+  （报 `permission denied for table tenant_backfill_quarantine`）。只读探测该角色缺 SELECT 的表**仅此 1 张**；
+  生成时使用本机超级用户只读连接（`postgresql://xingzhai@127.0.0.1:5432/topems_prod`），仍只有 SELECT/LOCK，零写入。
+- `gen-baseline.sh` 的对齐白名单 = **16 条定向迁移 ∪ `database/migration_manifest.yaml` 已登记版本**
+  （2026-11-18 时共 59 条 version ≤ 锚点但不在 prod 账本的迁移全部有登记）。新增迁移若两者都未登记，生成会硬失败。
+- `--force` 覆盖既有锚点是显式确认参数，脚本不会自动覆盖；锚点文件一经入库视为不可变。
+- 参考数据范围由 `gen-baseline-data.sh --tables` 显式指定（默认 11 张历史清单）。当前锚点纳入 10 张，
+  逐表理由见 §9.1。
+
 要求：
 1. **锚点单调不减**；`anchors.json` 最新锚点必须等于最新 `baseline_*.json`。
 2. schema/ledger/data 的 sha256 必须与元数据一致（`check-baseline-integrity.mjs` 阻断）。
@@ -259,29 +299,32 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 
 ## 9. 参考数据基线（reference data）
 
-### 9.1 范围清单（纳入 11 张，2277 行）
+### 9.1 范围清单（当前锚点 `20261117235500`：纳入 10 张，4740 行）
 
 | 表 | 行数 | 判定 | 备注 |
 |---|---:|---|---|
-| `public.core_tenants` | 1 | 纳入 | 默认租户；`database_host/name` 为 NULL，无环境地址 |
-| `public.core_tenant_settings` | 4 | 纳入 | 仅邮件主题/发件人/开关，无凭据 |
-| `public.core_roles` | 15 | 纳入 | 角色定义 |
-| `public.core_permissions` | 986 | 纳入 | 权限点 |
-| `public.core_role_permissions` | 653 | 纳入 | 角色-权限映射（无人员） |
-| `public.core_menu_groups` | 122 | 纳入 | 菜单组 |
-| `public.core_menus` | 423 | 纳入 | 菜单/权限点导航 |
-| `public.core_dict_types` | 6 | 纳入 | 字典类型 |
-| `public.core_dict_items` | 24 | 纳入 | 字典项 |
-| `hrm.departments` | 23 | 纳入 | 标准组织树；`manager_id/created_by/updated_by` 全 NULL |
-| `hrm.positions` | 20 | 纳入 | 标准岗位；`created_by/updated_by` 全 NULL |
+| `public.core_permissions` | 1157 | 纳入（必须） | `audit_permission_codes.py --gate` 唯一数据依赖；20261118125000 种子目标 |
+| `public.core_role_permissions` | 2917 | 纳入 | 纯 `role_id`/`permission_id` 映射，无人员 |
+| `public.core_roles` | 17 | 纳入 | 125000 按 `name` 关联 admin/tenant_admin；110000 UPDATE 16 行 |
+| `public.core_tenants` | 1 | 纳入 | 140000 前置断言与 `tenant_id` 自指回填；`database_host`/`port` 全 NULL |
+| `public.core_menus` | 452 | 纳入 | 完整性校验关键表（行数 ≥ 1）；`group_id` 依赖下一行 |
+| `public.core_menu_groups` | 130 | 纳入 | `core_menus` 的 FK 父表 |
+| `finance.core_finance_currencies` | 16 | 纳入 | 110000 前置断言要求 NULL 租户行 = 8 |
+| `finance.core_finance_report_line_map` | 48 | 纳入 | 110000 前置断言要求 NULL 租户行 = 48 |
+| `pm.project_type_configs` | 1 | 纳入 | 110000 前置断言要求 NULL 租户行 = 1 |
+| `mobile.sync_policies` | 1 | 纳入 | 110000 前置断言要求 NULL 租户行 = 1；`user_id` 为不透明 UUID，非明文 PII |
+
+只带结构（不纳入数据）：
+- `public.core_tenant_settings` / `public.core_dict_types` / `public.core_dict_items`：当前均 0 行，无迁移依赖。
+- `hrm.departments` / `hrm.positions`：人员/组织域（`name`、`manager_id`、`salary_range` 等），当前 0 行；无迁移依赖，一律不带数据。
 
 排除（代表性）：
 - `iam.*` / `master_data.*` 的空表复制（roles/permissions/dict/uoms 均为 0 行）→ 无数据可快照；
   实际数据在 `public.core_*`。
-- `public.system_settings`（0 行）、`public.core_api_version_configs`（0 行）、`public.conversion_rules`（0 行）。
 - `iam.users` 等用户主体、`hrm.employees`、`hrm.companies`、`audit_logs`、业务单据、事件流、队列、缓存、
   `*_ledger` → 含 PII/业务/运行态，一律排除。
-- `public.core_faqs` / `public.core_guides`（各 12 行）→ 帮助内容，不影响登录与鉴权，未纳入。
+- 110000 还会 UPDATE `finance.*` / `pm.*` / `mobile.*` 之外的表，但只改 `tenant_id` 不改行数；
+  这些表的数据不参与本轮预演判据，保持空表。
 
 需确认项（已定）：
 - `iam.users` 初始管理员：**不纳入**（含账号与密码哈希，属 PII/凭据）；由 seeds/初始化流程创建。
@@ -289,10 +332,10 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 
 ### 9.2 脱敏审查
 
-- 列名正则（`email|phone|address|name|id_card|passport|ssn|bank|password|secret|token`）扫描 11 张表：0 命中。
-- 用户引用列强制校验：`hrm.departments.manager_id/created_by/updated_by`、`hrm.positions.created_by/updated_by`
-  必须全为 NULL（实测 23/23、20/20 NULL），否则脚本拒绝生成。
-- `core_tenant_settings` 仅 4 条非敏感键值（邮件主题/发件人/开关），无 SMTP 凭据。
+- 列名正则（`email|phone|address|name|id_card|passport|ssn|bank|password|secret|token`）扫描 10 张纳入表：0 命中。
+- 用户引用列强制校验：本次未纳入 `hrm.departments` / `hrm.positions`，脚本跳过该项并打印说明；
+  两张人员/组织表只带结构。
+- `core_tenant_settings` 当前 0 行，只带结构；即便未来有数据，也仅邮件主题/发件人/开关，不含 SMTP 凭据。
 - 结论：可纳入，无需额外脱敏。
 
 ### 9.3 幂等与冲突处理

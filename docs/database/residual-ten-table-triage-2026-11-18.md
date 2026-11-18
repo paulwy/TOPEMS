@@ -144,11 +144,12 @@
 | `portal.portal_quick_actions` | `tenant_id` NOT NULL、0 行；ALL allow_all | **已处理**：定性为平台语料，Batch D 迁移 `20261118113000` 收严 + 平台读（见收口文档 Batch D） |
 | `erp.dict_items` / `erp.dict_types` | 0 行，`tenant_id` 可空 | **已处理**：Batch E 迁移 `20261118120000` 收严 + 同批代码消除潜在 NULL 写点 |
 | `rs.formulas` | 0 行，`tenant_id` 可空；严格 + allow_all 两条 permissive | **已处理**：Batch E 迁移 `20261118120000` 仅保留严格策略 |
-| `core.core_plugins` | 0 行，`tenant_id` 可空、默认 `…0001` | **停下待决策**：租户通道存在全局目录读取（list JOIN / uninstall / install 子查询），严格隔离会读不到他方发布行 |
+| `core.core_plugins` | 0 行，`tenant_id` 可空、默认 `…0001` | **已处理**：Batch F 迁移 `20261118123000` 平台语料化（哨兵行 + 平台读，发布/下架/计数系统通道 + owner 校验） |
+| `iam.core_tenant_plugins` | 0 行，`tenant_id` NOT NULL；**RLS 关闭、0 策略**（fail-open） | **已处理**：Batch G 迁移 `20261118124000` 收为严格 B（仅本租户行），代码已显式绑租户 |
 | `bi.audit_logs` | 0 行，`tenant_id` 可空、无默认 | **登记 DROP 候选**：全仓无读者、无写者，本波次不建策略、不删表 |
 | `iam.roles`（1 行）等 allow_all 无 `tenant_id` | 全局元数据 | 不适用严格 B；如需隔离只能另定「全局只读 + 系统写」 |
 
-`pdm` 策略收严、`core.core_plugins`、`iam.roles` 等全局表仍未在本波次改动，继续留待逐表定性。
+`pdm` 策略收严、`iam.roles` 等全局表仍未在本波次改动，继续留待逐表定性；`core.core_tenant_plugins`（2 列遗留空壳，0 行，allow_all）与 `gis.track_positions`（RLS 关闭但有 allow_all，无 tenant_id）登记为下一轮候选/待补列。
 
 ## 7. 状态更新（2026-11-17 决策 3 续推：Batch D + pdm 写入缺陷）
 

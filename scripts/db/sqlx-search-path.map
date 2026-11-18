@@ -1,4 +1,6 @@
 # sqlx prepare 逐 package search_path（与运行时 SEARCH_PATH 对齐）
+# 注意：本文件仅被 scripts/dev/sqlx-prepare.sh 消费，只服务 sqlx prepare；
+#       不参与 migrate run、不参与运行时连接、不影响迁移 checksum。
 # 背景：monorepo 共用一份根 .sqlx，但 sqlx prepare 只用单连接；
 # 未限定 schema 的表名会按连接 search_path 解析，默认 "$user",public /
 # 或角色默认 mes,public 会命中本地影子表，生成与实际运行不一致的缓存。
@@ -23,6 +25,10 @@ topems-qms=qms,shared,public
 topems-scm=scm,shared,public
 topems-search=search,shared,public
 topems-srm=srm,shared,public
+# unified-core 运行时 SEARCH_PATH="flow, public"（svc/unified-core/src/embedded.rs）。
+# 此处仍保留 iam,shared,public：改为 flow,public 会让未限定的 core_flow_rules
+# 由 public 解析切到 flow（两处同名表并存），并改变 .sqlx 产物；
+# 需单独一轮重新 prepare，本窗口不动。
 topems-unified-core=iam,shared,public
 topems-wms=wms,shared,public
 topems-shared-boundary=shared,public

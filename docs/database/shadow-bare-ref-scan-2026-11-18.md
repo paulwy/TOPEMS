@@ -18,6 +18,30 @@
 
 **对「72 张能不能 DROP」的回答**：静态证据支持 **61 张可直接进入 DROP 候选**；9 张的副本本身无读者（引用经 `Db::scope_*` 的 `SET LOCAL search_path` 落到 public 权威表），可 DROP 但需先确认无裸池路径；**2 张必须先改代码**：`flow.core_mdm_approvals`、`flow.core_master_data_change_log`（`svc/unified-core/src/modules/master/handlers.rs` 的裸池写入）。
 
+## 0.1 长期对照表与门禁约束（2026-11-18 补充）
+
+**门禁事实（有意为之的约束，不是障碍）**：
+
+- `scripts/ci/check-search-path.mjs`（lefthook `search-path`，pre-commit）阻断 `svc/**` 里任何
+  `SET [LOCAL] search_path` 或 `set_config('search_path', ...)`。本轮在 `doc/handlers.rs` 试图
+  「在公共入口统一钉 `public`」时被直接拦下，最终改为把 3 处 `core_doc_document_versions`
+  逐条写成 `public.`。
+- `scripts/check_schema_boundary.py`（lefthook `boundary-gate-py`，CI 同名门禁）另行守护跨 schema
+  引用边界。两者共同确立：**模块 schema 作用域只能由 `Db::new(pool, "<search_path>")` 在事务内注入**，
+  业务代码不得自行改 `search_path`。
+
+**结论**：「在公共入口统一钉 `search_path`」这条治全类的路已经封死。今后同类
+「裸名解析到 flow / iam 空副本」的风险，**只能逐处加 schema 限定**（或改走 `Db` 作用域），
+不能再靠设置 `search_path` 兜底。
+
+**强制要求（长期有效）**：本文件的裸名引用清单（C 档 241 处；附录 A 38 张表 / 243 个代码位置；
+历史口径常被概括为「86 处」，以本文件分档明细为准）**升级为长期对照表**。任何新增 SQL
+提交前必须先查本表：
+
+1. 命中「同名跨 schema」的表，一律写全限定名（如 `public.core_doc_document_versions`）；
+2. 未命中的，也要能说明该表名在目标服务的所有运行路径下唯一；
+3. 新发现或新引入的裸名引用必须回填本表，**不得只改代码不更新清单**。
+
 ## 1. 方法
 
 1. 从 `pg_class` 取全部非系统 schema 的表/视图（1012 个表名，240 个同名跨 schema）。
@@ -233,6 +257,105 @@ END $$;
 ```
 
 - 当前事实：`topems_app` 为 NOLOGIN，且在 87 张表上的授权数为 0，因此该脚本现状为 no-op，只提供未来防护。
+
+## 8. 处置记录（Round E，2026-11-18）
+
+### 8.1 master 两表：代码改走租户作用域 + 显式 `public.`
+
+改动文件：`svc/unified-core/src/modules/master/handlers.rs`。
+
+- 8 处裸引用全部改为显式 `public.`（`core_master_data_change_log` 3 处、`core_mdm_approvals` 5 处）。
+- 原先直接跑在 `self.pool` 上的 3 条语句（`log_change` INSERT、`create_approval` INSERT、
+  `review_approval` UPDATE）改为接收 `&mut ScopedTxn`，由 handler 通过
+  `state.db.scope_with(txn)` 复用请求事务；`create_ref/update_ref/delete_ref` 与两个审批 handler
+  补挂 `RlsTxnCell`。5 条原本已走 `ScopedTxn` 的读语句保持作用域，仅补 `public.`。
+- 写路径均显式绑定 `tenant_id`（变更日志取 `ref_data.tenant_id`，审批取 claims 租户）；
+  读路径依赖请求事务内的 `app.tenant_id` GUC + public 表 RLS，不再依赖 `search_path` 偶然命中。
+
+**真实调用验证**（显式 `TEST_DATABASE_URL`，测试库 `topems_test_runner`；请求事务提交后再走读路径）：
+
+| 步骤 | 结果 |
+|---|---|
+| `create_ref_handler`（租户 `…0009`） | 成功；`public.core_master_data_change_log` 1 行、`tenant_id=…0009`；`flow` 同名副本 0 行 |
+| `list_changes_handler`（新请求事务） | 查回 1 条，`action=created`，`tenant_id=…0009` |
+| `create_approval_handler` → `list_pending_approvals_handler` → `review_approval_handler` | 均成功；审批落 public，待审批列表可查回，`flow` 副本 0 行 |
+| 清理后残余 | 5 张表（public/flow 变更日志 + public/flow 审批 + public 引用）合计 **0 行**；审计表同条件 0 行 |
+
+### 8.2 报告项 1：生产是「一直静默丢写」还是「从未被调用」
+
+**结论：生产从未成功调用过该路径；主数据变更功能实际处于未启用状态，不是持续静默丢数据。**
+
+只读核查 `topems_prod`：
+
+| 对象 | 行数 | `pg_stat_user_tables.n_tup_ins` |
+|---|---:|---:|
+| `public.core_master_data_change_log` | 0 | 0 |
+| `flow.core_master_data_change_log` | 0 | 0 |
+| `public.core_mdm_approvals` | 0 | 0 |
+| `flow.core_mdm_approvals` | 0 | 0 |
+| `public.core_master_data_refs` | 0 | 0 |
+
+补充事实：
+
+- `create_ref_handler` 已挂在路由上（`routes/master.rs:539`），但 `create_ref` 先写
+  `public.core_master_data_refs`；该表 0 行，说明请求从未走到变更日志写入，或写入前即失败。
+- 审批 4 个 handler **没有任何路由注册**（全仓仅定义，无 `routes/*.rs` 引用），审批功能从未对外暴露。
+- 修复前的实际形态不是「写入丢失」，而是**读写分叉**：裸池写落 `flow` 副本（无 RLS、可写成功），
+  读路径经 `state.db.scope_with` 落 `public`，因此即使被调用也表现为「刚写的查不到」。
+  本次改完后读写都在 `public` 同一租户作用域内。
+
+### 8.3 doc 三表 18 处：逐调用点确认租户 GUC 后只补 `public.`
+
+逐调用点核对结论：**18 处全部带租户 GUC，无需补 GUC，仅显式加 `public.`。**
+
+| 路径 | 调用点 | GUC 来源 |
+|---|---|---|
+| `list_*` / `get_*` / `list_categories`（documents/folders/templates） | handlers.rs 116、154、271、343、456、494 | `state.db.scope_with(request_txn)` → `SET LOCAL app.tenant_id` |
+| `create_*` / `update_*` / `delete_*`（documents/folders/templates） | services 各文件 `tenant_txn(Some(tenant_id))` | 事务内 `set_config('app.tenant_id', …, true)`（超管为 nil，命中策略旁路分支） |
+| `open_rls_txn` 三处（版本列表/详情/恢复） | handlers.rs 1088、1148、1212 | 事务内 `set_config('app.tenant_id', …, true)` |
+
+改动：`document.rs` 7 处、`folder.rs` 5 处、`template.rs` 6 处全部改为 `public.` 前缀；
+另发现同表漏计 1 处 —— `handlers.rs:1238` 恢复版本的 `UPDATE core_doc_documents`（同样经
+`open_rls_txn` 带 GUC），一并补 `public.`。行为不变，仅去掉对 `search_path` 的依赖。
+
+**未改动但需单列**：版本相关 3 个端点读写的 `core_doc_document_versions` 也在 `flow` 存在同名副本，
+且 `open_rls_txn` 不设 `search_path`，当前首命中 `flow` 副本（0 行）→ 生产上版本历史恒为空。
+该表不在本轮 11 张清理范围，按「不在没确认前改行为」未动，建议单独排期确认。
+
+### 8.4 11 张副本清理迁移（草案，单独登记，不进 RLS 窗口清单）
+
+- 正向：`database/migrations/20261118160000_flow_shadow_copies_rename_deprecated.sql`
+- 回滚：`database/rollback/20261118160000_flow_shadow_copies_rename_deprecated.rollback.sql`
+- `database/checksums.txt` 已按哈希序登记（manifest 生成器未运行）。
+- 干跑：在测试库 `topems_test_runner` 用 `BEGIN … ROLLBACK` 跑了正向脚本，11 张前置断言（0 行）、
+  改名、public 表/策略快照比对全部通过；回滚后 `flow` 原状、无 `_deprecated_` 残留。
+
+口径：
+
+- 仅处理 11 张：`core_doc_documents`、`core_doc_folders`、`core_doc_templates`、
+  `core_flow_categories`、`core_master_data_change_log`、`core_mdm_approvals`、
+  `core_operation_logs`、`core_tenant_modules`、`core_tenant_settings`、`core_tenant_usage`、
+  `core_tenant_users`；**不碰** `core_comments`、`core_favorites`、`notifications`、`workflows`。
+- `RENAME TO _deprecated_<原名>`，不 DROP；回滚改回原名。
+- 前置断言：副本存在时必须 0 行；不存在（含已被 `20261027200000` 清理）→ NOTICE 跳过。
+- 后置断言：11 张 public 同名表仍在；对每表快照比对 `relrowsecurity` / `relforcerowsecurity` /
+  全部策略（名称、命令、permissive、roles、USING、WITH CHECK）逐字未变；原名副本消失、
+  `_deprecated_<原名>` 存在。
+- **需代码同窗口上线**：本轮 master/doc 的显式 `public.` + 租户作用域必须先于/同时于迁移发布；
+  否则改名后旧代码的裸引用会落到 public，master 变更日志/审批写路径在无 GUC 时被 RLS 拒绝。
+- 与 RLS 窗口清单（`docs/database/window-rls-strict-20261118-runbook.md` 的 14 条）**分开登记**，
+  不计入该窗口的账本/策略数预期。
+- 已知冲突：仍挂在活动链上的 `20261027200000_core_schema_duplicates_cleanup.sql` 对同一批表使用
+  `DROP TABLE IF EXISTS … CASCADE`（还覆盖另外约 90 张 flow 副本）。若它先执行，本迁移自动跳过；
+  两者不应在同一窗口重复批准。
+
+### 8.5 报告项 2：回归一律显式 `TEST_DATABASE_URL`
+
+- `#[sqlx::test]` 会读取 shell 的 `DATABASE_URL` 建临时库；本机 `DATABASE_URL` 指向
+  `topems_prod`，存在把测试库建到生产实例的风险。
+- 自本轮起，所有回归/验证命令显式设置 `TEST_DATABASE_URL`（`topems_test_runner`），
+  并 `env -u DATABASE_URL` 启动；本轮实测即按此执行。
+- 既有 `audit_e2e` 的 4 个 `数据库作用域创建失败` 为改动前已存在的环境问题，与本轮改动无关。
 
 ## 附录 A：C 档全量明细
 
