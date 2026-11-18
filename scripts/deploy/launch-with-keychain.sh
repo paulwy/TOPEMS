@@ -24,11 +24,17 @@ for key in $KEYS; do
     continue  # 已有值，不覆盖
   fi
   svc="${PREFIX}-$(printf '%s' "$key" | tr '[:upper:]_' '[:lower:]-')"
-  if value="$(security find-generic-password -s "$svc" -w 2>/dev/null)"; then
-    if [ -n "$value" ]; then
-      export "${key}=${value}"
-      echo "[keychain] 已注入 ${key}（来源 ${svc}）"
+  value=""
+  # 优先 System Keychain（开机即已解锁，满足 launchd 早启动场景），回退登录钥匙串
+  for kc in /Library/Keychains/System.keychain ""; do
+    if value="$(security find-generic-password -s "$svc" -w ${kc:+"$kc"} 2>/dev/null)" && [ -n "$value" ]; then
+      break
     fi
+    value=""
+  done
+  if [ -n "$value" ]; then
+    export "${key}=${value}"
+    echo "[keychain] 已注入 ${key}（来源 ${svc}）"
   else
     echo "[keychain] 未取到 ${svc}，跳过 ${key}（服务继续启动）"
   fi

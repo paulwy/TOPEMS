@@ -47,6 +47,10 @@ bash scripts/dev/run-local-gates.sh --fast || RC=1
 echo "── 阶段 1b：PostgreSQL 认证策略 ──"
 bash scripts/ci/check-pg-auth-hardening.sh || RC=1
 
+# launchd 单元不得出现明文密钥（已迁 System Keychain + launch-with-keychain.sh 注入）
+echo "── 阶段 1c：launchd 明文密钥 ──"
+bash scripts/ci/check-launchd-secrets.sh || RC=1
+
 if [ "$FAST_ONLY" = "1" ]; then
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] fast-only，结束（RC=${RC}）"
   exit "$RC"
