@@ -37,7 +37,7 @@
 | 8 | 连接与锁基线 | `SELECT count(*) FROM pg_stat_activity WHERE datname='topems_prod'` | 无长事务、无 idle in transaction |
 | 9 | 策略基线 | `SELECT count(*) FROM pg_policies` | **1039**（与快照一致；不一致即说明快照后有人改过策略，停） |
 | 10 | 服务状态 | `/health` | 200 |
-| 11 | 运行二进制 sha256（**硬前置**） | `shasum -a 256 "$(plutil -extract ProgramArguments.0 raw ~/Library/LaunchAgents/com.topems.server.plist)"` | **`97484f3a66a65a0f384f0008cb65dbbd3e4355fcc19c8c6f2a3f668006729147`**；不相等**禁止**应用 `20261118160000`（见 §3.0） |
+| 11 | 运行二进制 sha256（**硬前置**） | `shasum -a 256 "$(plutil -extract ProgramArguments.0 raw ~/Library/LaunchAgents/com.topems.server.plist)"` | **`676287d355bd00051bf563d2d3a9ac6e4e07fbe22f85174236f430fb228913a5`**；构建自 `281d25e7b`（2026-11-19 独立 target 重建）；不相等**禁止**应用 `20261118160000`（见 §3.0） |
 
 > 注：`apply-forward` 没有 dry-run 参数。第 4 项用同参数执行时，脚本会在任何 DDL 前完成
 > 白名单/defer/破坏性校验并打印「待应用 14 条」；若打印条数不是 14，立即 `Ctrl-C`（尚未产生写入）
@@ -112,13 +112,21 @@ FORCE RLS，而旧代码的 master 变更日志/审批写路径未带租户 GUC�
 ```bash
 BIN="$(plutil -extract ProgramArguments.0 raw "$HOME/Library/LaunchAgents/com.topems.server.plist")"
 ACTUAL="$(shasum -a 256 "$BIN" | cut -d' ' -f1)"
-EXPECT=97484f3a66a65a0f384f0008cb65dbbd3e4355fcc19c8c6f2a3f668006729147
+# 构建自 commit 281d25e7bd5f704a40ec9ab03107086c043f3053（2026-11-19）
+EXPECT=676287d355bd00051bf563d2d3a9ac6e4e07fbe22f85174236f430fb228913a5
 if [[ "$ACTUAL" != "$EXPECT" ]]; then
   echo "拒绝开窗：运行中的二进制 sha256=${ACTUAL}，期望 ${EXPECT}" >&2
-  echo "请先停服换入新件（/Users/xingzhai/topems-target-w160000/release/topems-server）再迁移。" >&2
+  echo "请先停服换入新件（/Users/xingzhai/topems-target-281d25e7b-20261119/release/topems-server）再迁移。" >&2
   exit 1
 fi
 ```
+
+> **本次新件构建来源（2026-11-19，只重建未换件）**
+> - commit：`281d25e7bd5f704a40ec9ab03107086c043f3053`（`281d25e7b`）
+> - 产物：`/Users/xingzhai/topems-target-281d25e7b-20261119/release/topems-server`
+> - 构建：`SQLX_OFFLINE=true CARGO_PROFILE_RELEASE_STRIP=none cargo build --release -p topems-server --bin topems-server --offline`
+> - 结果：耗时 10m01s，Mach-O arm64，264,579,424 B，sha256 `676287d355bd00051bf563d2d3a9ac6e4e07fbe22f85174236f430fb228913a5`
+> - 换件后必须重新执行上面的断言；运行中二进制 sha 不等于 `EXPECT` 即视为「件比 HEAD 旧」，禁止开窗。
 
 `SEARCH_PATH` 不需要同步调整：plist 当前是 `flow, mobile, rs, erp, public, iam, shared`。
 改名把这 12 个名字从 `flow` 移除后，裸名会自然落到后面的 `public`；而 `flow` 仍承载
@@ -231,8 +239,9 @@ node scripts/migration/check-pending-ddl.mjs --post --db "$MIGRATE_URL" --expect
 
 任一命中，**立即停止后续迁移**，不要继续下一条：
 
-**开窗前硬前置（先于以下任一条）**：§3.0 的二进制 sha256 断言不通过，禁止应用
-`20261118160000`；此时连第一条迁移都不要执行。
+**开窗前硬前置（先于以下任一条）**：§3.0 的二进制 sha256 断言不通过（期望
+`676287d355bd00051bf563d2d3a9ac6e4e07fbe22f85174236f430fb228913a5`，构建自
+`281d25e7b`），禁止应用 `20261118160000`；此时连第一条迁移都不要执行。
 
 1. `apply-forward` 非 0 退出（失败/守卫拒绝/白名单外 pending）。单事务保证无半应用。
 2. 结构核验不符：应用前 `check-pending-ddl.mjs` 对 `20261118123000` / `20261118130000`
