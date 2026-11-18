@@ -13,12 +13,39 @@ id = "topems-jwt-secret"
 description = "JWT Secret"
 regex = '''JWT_SECRET\s*=\s*['"]([^'"]{32,})['"]'''
 tags = ["jwt", "secret"]
+[rules.allowlist]
+description = "排除脚本/示例中的开发默认口令与代码误捕（随机 hex 真实密钥不在豁免范围）"
+regexes = [
+  '''(?i)^topems-jwt-secret''',
+  '''(?i)^your[-_]''',
+  '''(?i)change[-_]in[-_]production''',
+  '''^this-is-a-very-long-secret-key-at-least-32-chars$''',
+  '''^<''',
+  # 代码误捕：含换行/空白或正则元字符
+  '''[\r\n\s]''',
+  '''[\[\]\(\)\{\}\\|^+*?]''',
+]
 
 [[rules]]
 id = "topems-database-url"
 description = "Database URL with credentials"
-regex = '''postgres://[^:]+:([^@]+)@'''
+# 收紧：口令段禁止跨空白/换行/斜杠，避免把后续 sed/代码行吞进 secret
+# （旧写法 [^@]+ 会跨行匹配，347 条里 20+ 条是正则/文档误捕）。
+regex = '''postgres(?:ql)?://[^:\s/]+:([^@\s/]+)@'''
 tags = ["database", "credentials"]
+[rules.allowlist]
+description = "排除占位符、开发默认口令与正则/文档误捕（真实口令不在豁免范围）"
+regexes = [
+  # 开发默认口令（docker-compose / 脚本 / 示例）
+  '''(?i)^(dev_password|topems|topems_dev|topems123|topems_test|postgres|pass|password|pw|placeholder|nobody|test|your_password|your-secure-password-here|POSTGRES_USER)$''',
+  # 环境变量/模板引用：${POSTGRES_PASSWORD:?...}、{{ ... }}、-topems}
+  '''^\$\{''',
+  '''^-topems\}''',
+  '''\{\{''',
+  # 正则/文档误捕：口令段含正则元字符或空白（真实口令不含这些形态）
+  '''[\[\]\(\)\{\}\\|^+*?]''',
+  '''\s''',
+]
 
 [[rules]]
 id = "topems-api-key"
@@ -36,14 +63,19 @@ paths = [
   '''\.sqlx/''',
   '''pnpm-lock\.yaml''',
   '''package-lock\.json''',
-  '''\.env''',
-  '''\.env\.''',
-  '''\.env-''',
+  # 仅豁免本机 .env 文件本身（通常是未跟踪的本地配置）。
+  # 曾用 `\.env` 宽匹配，连带把 .env.example / .env.bak / .env.*.example 一起豁免，
+  # 导致真实值（如 SMTP_PASSWORD）在历史里从未被扫到。示例/模板文件必须照常扫描，
+  # 占位符由下方 regexes 规则豁免，不再靠路径放行。
+  '''(^|/)\.env$''',
   '''tests/e2e/storageState\.json''',
   '''playwright-report/''',
   '''test-results/''',
   '''\.rustc_info\.json''',
   '''vendor/''',
+  # 脱敏的 gitleaks baseline 报告：Match 字段天然含 "postgresql://user:REDACTED@"
+  # 形态，属自引用误捕；该文件 Secret 全为 REDACTED，不含明文密钥。
+  '''^scripts/ci/gitleaks-baseline\.json$''',
   '''docs/''',
   '''apps/web/e2e/''',
   '''apps/web/storybook-static/''',

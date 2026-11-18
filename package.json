@@ -42,7 +42,12 @@
     "audit:unused:type-only": "python3 scripts/audit/type-only-scan.py",
     "facts": "node scripts/report/facts.mjs",
     "facts:check": "node scripts/report/facts.mjs --check docs/quality/facts-latest.json",
-    "check:ledger": "node scripts/ci/check-ledger-staleness.mjs"
+    "check:ledger": "node scripts/ci/check-ledger-staleness.mjs",
+    "drill:anchor": "bash scripts/dev/run-migration-drill.sh anchor",
+    "drill:zero": "bash scripts/dev/run-migration-drill.sh zero",
+    "verify:rust-full": "bash scripts/ci/verify-rust-full.sh",
+    "verify:web-full": "bash scripts/ci/verify-web-full.sh",
+    "verify:full": "bash scripts/ci/verify-full.sh"
   },
   "keywords": [
     "enterprise",
