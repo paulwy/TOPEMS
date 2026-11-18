@@ -241,7 +241,7 @@ pub async fn log_audit_event(
     req.user_agent = user_agent;
 
     // hrm.audit_logs 策略仅保留系统通道（fail-closed），写入必须显式系统作用域。
-    let service = SchemaAwareAuditLogService::new_system_channel(db, Some("hrm"));
+    let service = SchemaAwareAuditLogService::new_system_channel(db, "hrm");
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

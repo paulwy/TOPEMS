@@ -968,8 +968,10 @@ where
 {
     if with_master_data_refs {
         // master_data_refs 表已存在时无需重建；受限 DB 用户无 DDL 权限时仅记录（不阻塞启动）
+        // schema 与表前缀都由调用方显式给出（均为 service_name），不经 search_path 解析。
         if let Err(e) =
-            topems_shared_db::database::ensure_master_data_refs_table(pool, service_name).await
+            topems_shared_db::database::ensure_master_data_refs_table(pool, service_name, service_name)
+                .await
         {
             tracing::error!(
                 "[{}] master_data_refs 表检查失败（非阻塞）: {:?}",
@@ -2869,16 +2871,19 @@ mod tests {
             return;
         };
 
-        // 用唯一前缀避免与其他测试冲突，同时方便事后清理
+        // 用唯一前缀避免与其他测试冲突，同时方便事后清理。
+        // schema 现已由调用方显式给出（= service_name），测试需先建同名 schema。
         let prefix = "ut_v278_mref_ok";
-
-        // 确保测试前没有残留（失败忽略）
         let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
-            "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
+            "DROP SCHEMA IF EXISTS {} CASCADE",
             prefix
         )))
         .execute(&pool)
         .await;
+        sqlx::query(sqlx::AssertSqlSafe(format!("CREATE SCHEMA {}", prefix)))
+            .execute(&pool)
+            .await
+            .expect("创建测试 schema 失败");
 
         let res = default_init_db(&pool, prefix, true, |_p: &sqlx::PgPool| async move {
             Ok::<_, sqlx::Error>(())
@@ -2891,12 +2896,13 @@ mod tests {
         );
 
         // Ver: 表已创建（查询 information_schema）
+        // 落点必须是指定 schema（= service_name），不能落到 search_path 首位。
         let row = sqlx::query(
             "SELECT EXISTS (SELECT 1 FROM information_schema.tables \
-             WHERE table_schema NOT IN ('pg_catalog','information_schema') \
-             AND table_name = $1)",
+             WHERE table_schema = $2 AND table_name = $1)",
         )
         .bind(format!("{}_master_data_refs", prefix))
+        .bind(prefix)
         .fetch_one(&pool)
         .await
         .expect("查询表是否存在失败");
@@ -2907,9 +2913,9 @@ mod tests {
             prefix
         );
 
-        // 清理
+        // 清理（连 schema 一起删）
         let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
-            "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
+            "DROP SCHEMA IF EXISTS {} CASCADE",
             prefix
         )))
         .execute(&pool)
@@ -2976,13 +2982,18 @@ mod tests {
             return;
         };
 
+        // schema 由调用方显式给出（= service_name），测试先建同名 schema。
         let prefix = "ut_v278_idem";
         let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
-            "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
+            "DROP SCHEMA IF EXISTS {} CASCADE",
             prefix
         )))
         .execute(&pool)
         .await;
+        sqlx::query(sqlx::AssertSqlSafe(format!("CREATE SCHEMA {}", prefix)))
+            .execute(&pool)
+            .await
+            .expect("创建测试 schema 失败");
 
         // 第一次：建表 + 闭包 Ok
         let r1 = default_init_db(&pool, prefix, true, |_p: &sqlx::PgPool| async move {
@@ -3003,7 +3014,7 @@ mod tests {
         );
 
         let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
-            "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
+            "DROP SCHEMA IF EXISTS {} CASCADE",
             prefix
         )))
         .execute(&pool)

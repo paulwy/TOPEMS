@@ -36,7 +36,7 @@ impl TemplateService {
 
     pub async fn list_templates(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<Template>> {
         let rows = sqlx::query_as::<_, Template>(
-            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM public.core_doc_templates WHERE deleted_at IS NULL ORDER BY name"#,
         )
         .fetch_all(&mut *scope)
         .await?;
@@ -49,7 +49,7 @@ impl TemplateService {
         template_id: Uuid,
     ) -> Result<Option<Template>> {
         let row = sqlx::query_as::<_, Template>(
-            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND id = $1"#,
+            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM public.core_doc_templates WHERE deleted_at IS NULL AND id = $1"#,
         )
         .bind(template_id)
         .fetch_optional(&mut *scope)
@@ -67,7 +67,7 @@ impl TemplateService {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let template = sqlx::query_as::<_, Template>(
             r#"
-            INSERT INTO core_doc_templates (tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by)
+            INSERT INTO public.core_doc_templates (tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
             "#,
@@ -97,7 +97,7 @@ impl TemplateService {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let template = sqlx::query_as::<_, Template>(
             r#"
-            UPDATE core_doc_templates
+            UPDATE public.core_doc_templates
             SET name = COALESCE($2, name),
                 category = COALESCE($3, category),
                 description = COALESCE($4, description),
@@ -130,7 +130,7 @@ impl TemplateService {
     pub async fn delete_template(&self, tenant_id: Uuid, template_id: Uuid) -> Result<bool> {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let result = sqlx::query(
-            r#"UPDATE core_doc_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
+            r#"UPDATE public.core_doc_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -142,7 +142,7 @@ impl TemplateService {
 
     pub async fn list_categories(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<String>> {
         let rows = sqlx::query_scalar::<_, String>(
-            r#"SELECT DISTINCT category FROM core_doc_templates WHERE deleted_at IS NULL AND category IS NOT NULL ORDER BY category"#,
+            r#"SELECT DISTINCT category FROM public.core_doc_templates WHERE deleted_at IS NULL AND category IS NOT NULL ORDER BY category"#,
         )
         .fetch_all(&mut *scope)
         .await?;

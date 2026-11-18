@@ -36,7 +36,7 @@ impl DocumentService {
 
     pub async fn list_documents(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<Document>> {
         let rows = sqlx::query_as::<_, Document>(
-            r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM core_doc_documents WHERE deleted_at IS NULL ORDER BY created_at DESC"#,
+            r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM public.core_doc_documents WHERE deleted_at IS NULL ORDER BY created_at DESC"#,
         )
         .fetch_all(&mut *scope)
         .await?;
@@ -49,7 +49,7 @@ impl DocumentService {
         document_id: Uuid,
     ) -> Result<Option<Document>> {
         let row = sqlx::query_as::<_, Document>(
-            r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM core_doc_documents WHERE deleted_at IS NULL AND id = $1"#,
+            r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM public.core_doc_documents WHERE deleted_at IS NULL AND id = $1"#,
         )
         .bind(document_id)
         .fetch_optional(&mut *scope)
@@ -67,7 +67,7 @@ impl DocumentService {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let doc = sqlx::query_as::<_, Document>(
             r#"
-            INSERT INTO core_doc_documents (id, tenant_id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
+            INSERT INTO public.core_doc_documents (id, tenant_id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
             "#,
@@ -98,7 +98,7 @@ impl DocumentService {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let doc = sqlx::query_as::<_, Document>(
             r#"
-            UPDATE core_doc_documents
+            UPDATE public.core_doc_documents
             SET title = COALESCE($1, title), folder_id = COALESCE($2, folder_id),
                 content = COALESCE($3, content), tags = COALESCE($4, tags),
                 description = COALESCE($5, description), updated_at = NOW()
@@ -122,7 +122,7 @@ impl DocumentService {
     pub async fn delete_document(&self, tenant_id: Uuid, document_id: Uuid) -> Result<bool> {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let result = sqlx::query(
-            r#"UPDATE core_doc_documents SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
+            r#"UPDATE public.core_doc_documents SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(document_id)

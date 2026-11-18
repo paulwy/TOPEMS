@@ -102,7 +102,6 @@ impl From<topems_shared_db::reconciliation_log::ReconciliationLog> for Reconcili
 /// AuditLogService（关键写入路径审计，参考 svc/srm/services/audit.rs 模式）。
 /// V285: 注入 ReconciliationLogService（下沉 INSERT...SELECT 跨表写入 + 查询 + 标记解决 SQL）。
 pub struct MasterDataService {
-    pool: PgPool,
     ref_service: MasterDataRefService,
     audit_service: AuditLogService,
     recon_service: ReconciliationLogService,
@@ -114,7 +113,6 @@ impl MasterDataService {
             ref_service: MasterDataRefService::new(Db::new(pool.clone(), "public, shared")),
             audit_service: AuditLogService::new(pool.clone()),
             recon_service: ReconciliationLogService::new(Db::new(pool.clone(), "public, shared")),
-            pool,
         }
     }
 
@@ -146,6 +144,7 @@ impl MasterDataService {
     /// 创建主数据引用
     pub async fn create_ref(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         req: CreateMasterDataRefRequest,
         operator: Option<String>,
@@ -181,6 +180,7 @@ impl MasterDataService {
 
         // 记录变更日志
         self.log_change(
+            scope,
             &ref_data,
             MasterDataAction::Created,
             operator.clone(),
@@ -203,6 +203,7 @@ impl MasterDataService {
     /// 更新主数据引用
     pub async fn update_ref(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         master_data_id: &str,
         req: UpdateMasterDataRefRequest,
@@ -257,7 +258,7 @@ impl MasterDataService {
             MasterDataAction::Updated
         };
 
-        self.log_change(&updated, action, operator.clone(), req.attributes.clone())
+        self.log_change(scope, &updated, action, operator.clone(), req.attributes.clone())
             .await?;
         let _ = publish_master_data_event(&updated, action, operator, req.attributes).await;
 
@@ -267,6 +268,7 @@ impl MasterDataService {
     /// 删除主数据引用（软删除）
     pub async fn delete_ref(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         master_data_id: &str,
         operator: Option<String>,
@@ -285,7 +287,7 @@ impl MasterDataService {
             .await;
 
         let op_clone = operator.clone();
-        self.log_change(&existing, MasterDataAction::Deleted, operator, None)
+        self.log_change(scope, &existing, MasterDataAction::Deleted, operator, None)
             .await?;
         let _ =
             publish_master_data_event(&existing, MasterDataAction::Deleted, op_clone, None).await;
@@ -358,7 +360,7 @@ impl MasterDataService {
         let items = sqlx::query_as::<_, MasterDataChangeLog>(
             r#"
             SELECT id, master_data_id, tenant_id, action, source_service, operator, changed_fields, payload, created_at
-            FROM core_master_data_change_log
+            FROM public.core_master_data_change_log
             WHERE master_data_id = $1
             ORDER BY created_at DESC
             LIMIT $2
@@ -381,7 +383,7 @@ impl MasterDataService {
 
         let since = Utc::now() - Duration::hours(24);
         let recent: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_master_data_change_log WHERE created_at >= $1",
+            "SELECT COUNT(*) FROM public.core_master_data_change_log WHERE created_at >= $1",
         )
         .bind(since)
         .fetch_one(&mut *scope)
@@ -472,6 +474,7 @@ impl MasterDataService {
     /// 记录变更日志
     async fn log_change(
         &self,
+        scope: &mut ScopedTxn<'_>,
         ref_data: &MasterDataRef,
         action: MasterDataAction,
         operator: Option<String>,
@@ -480,7 +483,7 @@ impl MasterDataService {
         let action_str = format!("{:?}", action).to_lowercase();
         sqlx::query(
             r#"
-            INSERT INTO core_master_data_change_log
+            INSERT INTO public.core_master_data_change_log
                 (master_data_id, tenant_id, action, source_service, operator, payload, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, NOW())
             "#,
@@ -491,7 +494,7 @@ impl MasterDataService {
         .bind(&ref_data.source_service)
         .bind(operator)
         .bind(payload)
-        .execute(&self.pool)
+        .execute(&mut *scope)
         .await?;
         Ok(())
     }
@@ -777,13 +780,14 @@ impl MasterDataService {
     /// 创建变更审批请求
     pub async fn create_approval(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         req: CreateApprovalRequest,
         requested_by: String,
     ) -> Result<MasterDataApproval, sqlx::Error> {
         let approval = sqlx::query_as::<_, MasterDataApproval>(
             r#"
-            INSERT INTO core_mdm_approvals
+            INSERT INTO public.core_mdm_approvals
                 (tenant_id, master_data_id, domain, action, requested_by, requested_at, status, payload)
             VALUES ($1, $2, $3, $4, $5, NOW(), 'pending', $6)
             RETURNING id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
@@ -796,7 +800,7 @@ impl MasterDataService {
         .bind(&req.action)
         .bind(&requested_by)
         .bind(&req.payload)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *scope)
         .await?;
 
         tracing::info!(
@@ -813,6 +817,7 @@ impl MasterDataService {
     /// 审批变更请求
     pub async fn review_approval(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         approval_id: Uuid,
         approved: bool,
@@ -823,7 +828,7 @@ impl MasterDataService {
 
         let approval = sqlx::query_as::<_, MasterDataApproval>(
             r#"
-            UPDATE core_mdm_approvals
+            UPDATE public.core_mdm_approvals
             SET status = $1, reviewed_by = $2, reviewed_at = NOW(), review_comment = $3
             WHERE id = $4 AND tenant_id = $5 AND status = 'pending'
             RETURNING id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
@@ -835,7 +840,7 @@ impl MasterDataService {
         .bind(&comment)
         .bind(approval_id)
         .bind(tenant_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *scope)
         .await?
         .ok_or_else(|| sqlx::Error::RowNotFound)?;
 
@@ -861,7 +866,7 @@ impl MasterDataService {
                 r#"
                 SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                        status, reviewed_by, reviewed_at, review_comment, payload
-                FROM core_mdm_approvals
+                FROM public.core_mdm_approvals
                 WHERE status = 'pending' AND domain = $1
                 ORDER BY requested_at DESC LIMIT $2
                 "#,
@@ -875,7 +880,7 @@ impl MasterDataService {
                 r#"
                 SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                        status, reviewed_by, reviewed_at, review_comment, payload
-                FROM core_mdm_approvals
+                FROM public.core_mdm_approvals
                 WHERE status = 'pending'
                 ORDER BY requested_at DESC LIMIT $1
                 "#,
@@ -897,7 +902,7 @@ impl MasterDataService {
             r#"
             SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                    status, reviewed_by, reviewed_at, review_comment, payload
-            FROM core_mdm_approvals
+            FROM public.core_mdm_approvals
             WHERE master_data_id = $1
             ORDER BY requested_at DESC
             "#,
@@ -969,14 +974,31 @@ async fn publish_master_data_event(
 /// 创建主数据引用
 pub async fn create_ref_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMasterDataRefRequest>,
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据创建事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据创建事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.create_ref(tenant_id, req, Some(operator)).await {
+    match service
+        .create_ref(&mut scope, tenant_id, req, Some(operator))
+        .await
+    {
         Ok(r) => ApiResponse::success(r, "主数据引用创建成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("create_ref_handler", e)),
     }
@@ -985,6 +1007,7 @@ pub async fn create_ref_handler(
 /// 更新主数据引用
 pub async fn update_ref_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Json(req): Json<UpdateMasterDataRefRequest>,
@@ -992,9 +1015,22 @@ pub async fn update_ref_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据更新事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据更新事务作用域失败".to_string(),
+            ));
+        }
+    };
 
     match service
-        .update_ref(tenant_id, &master_data_id, req, Some(operator))
+        .update_ref(&mut scope, tenant_id, &master_data_id, req, Some(operator))
         .await
     {
         Ok(r) => ApiResponse::success(r, "主数据引用更新成功"),
@@ -1005,15 +1041,29 @@ pub async fn update_ref_handler(
 /// 删除主数据引用
 pub async fn delete_ref_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据删除事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据删除事务作用域失败".to_string(),
+            ));
+        }
+    };
 
     match service
-        .delete_ref(tenant_id, &master_data_id, Some(operator))
+        .delete_ref(&mut scope, tenant_id, &master_data_id, Some(operator))
         .await
     {
         Ok(b) => ApiResponse::success(b, "主数据引用已删除"),
@@ -1278,6 +1328,7 @@ pub struct ReconciliationLogQuery {
 /// 创建变更审批
 pub async fn create_approval_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateApprovalRequest>,
 ) -> ApiResponse<MasterDataApproval> {
@@ -1289,7 +1340,24 @@ pub async fn create_approval_handler(
         return ApiResponse::bad_request(&format!("域 {} 不需要审批", req.domain));
     }
 
-    match service.create_approval(tenant_id, req, requested_by).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据审批创建事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据审批创建事务作用域失败".to_string(),
+            ));
+        }
+    };
+
+    match service
+        .create_approval(&mut scope, tenant_id, req, requested_by)
+        .await
+    {
         Ok(approval) => ApiResponse::success(approval, "审批请求已创建"),
         Err(e) => ApiResponse::from(TopemsError::internal("create_approval_handler", e)),
     }
@@ -1298,6 +1366,7 @@ pub async fn create_approval_handler(
 /// 审批处理
 pub async fn review_approval_handler(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(approval_id): Path<Uuid>,
     Json(req): Json<ReviewApprovalRequest>,
@@ -1305,9 +1374,29 @@ pub async fn review_approval_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据审批处理事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据审批处理事务作用域失败".to_string(),
+            ));
+        }
+    };
 
     match service
-        .review_approval(tenant_id, approval_id, req.approved, reviewer, req.comment)
+        .review_approval(
+            &mut scope,
+            tenant_id,
+            approval_id,
+            req.approved,
+            reviewer,
+            req.comment,
+        )
         .await
     {
         Ok(approval) => {

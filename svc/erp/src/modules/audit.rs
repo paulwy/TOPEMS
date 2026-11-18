@@ -256,7 +256,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     req.user_agent = user_agent;
 
     // erp.audit_logs 策略仅保留系统通道（fail-closed），写入必须显式系统作用域。
-    let service = SchemaAwareAuditLogService::new_system_channel(db, Some("erp"));
+    let service = SchemaAwareAuditLogService::new_system_channel(db, "erp");
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

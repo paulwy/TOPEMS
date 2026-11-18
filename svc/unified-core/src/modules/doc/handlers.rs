@@ -23,6 +23,10 @@ use topems_shared_db::scope::ScopedTxn;
 /// 与 `DocumentService::tenant_txn` 同范式：handler 没有 self，故作为模块级本地函数。
 /// 普通用户传真实租户（命中 `tenant_id = current_setting('app.tenant_id')` 分支）；
 /// superadmin / 无租户传 `None`（落到 nil UUID，命中策略里的全零旁路，可跨租户管理）。
+///
+/// 版本表一律显式写 `public.`：嵌入模式下会话级 search_path 为 `flow, public`，
+/// 而 `core_doc_document_versions` 的权威副本在 public；只靠裸表名会静默读到 flow 的
+/// 空同名副本。本函数仅服务文档版本三个只读/回写接口，均无 flow 业务表依赖。
 async fn open_rls_txn(
     pool: &sqlx::PgPool,
     tenant_id: Option<Uuid>,
@@ -1095,7 +1099,7 @@ pub async fn list_document_versions(
 
     let versions = sqlx::query_as::<_, DocumentVersion>(
         "SELECT id, document_id, version, content, summary, created_by, created_at
-         FROM core_doc_document_versions
+         FROM public.core_doc_document_versions
          WHERE document_id = $1
          ORDER BY version DESC",
     )
@@ -1155,7 +1159,7 @@ pub async fn get_document_version(
 
     let ver = sqlx::query_as::<_, DocumentVersion>(
         "SELECT id, document_id, version, content, summary, created_by, created_at
-         FROM core_doc_document_versions
+         FROM public.core_doc_document_versions
          WHERE document_id = $1 AND version = $2",
     )
     .bind(document_id)
@@ -1218,7 +1222,7 @@ pub async fn restore_document_version(
     };
 
     let content = sqlx::query_scalar::<_, String>(
-        "SELECT content FROM core_doc_document_versions WHERE document_id = $1 AND version = $2",
+        "SELECT content FROM public.core_doc_document_versions WHERE document_id = $1 AND version = $2",
     )
     .bind(document_id)
     .bind(version)
@@ -1235,7 +1239,7 @@ pub async fn restore_document_version(
     };
 
     let doc = sqlx::query_as::<_, Document>(
-        "UPDATE core_doc_documents
+        "UPDATE public.core_doc_documents
          SET content = $1, version = version + 1, updated_at = NOW()
          WHERE id = $2
          RETURNING id, folder_id, title, description, file_name, file_path, file_size, content_type, content, status, version, tags, template_id, tenant_id, created_by, created_at, updated_at, archived_at, archived_by, deleted_at",

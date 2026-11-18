@@ -250,7 +250,7 @@ pub async fn log_audit_event(
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 
-    let service = SchemaAwareAuditLogService::new(db, Some("rs"));
+    let service = SchemaAwareAuditLogService::new(db, "rs");
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

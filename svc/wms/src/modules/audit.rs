@@ -92,8 +92,8 @@ pub async fn list_audit_logs(
         -- ip_address::text 把 inet 统一转 text（NULL 仍为 NULL，映射 Option<String>）。
         -- 真实写路径（log_audit_event→SchemaAwareAuditLogService）写入合规行不受影响。
         -- U12b: 读归位 wms 自有 schema（原误读 public.audit_logs 平台公共表，与写路径
-        -- SchemaAwareAuditLogService::new(db, None) 经 search_path=wms 解析到
-        -- wms.audit_logs 错位；对齐 mes/hrm/erp/rd/crm“读自己 schema audit_logs”模式）。
+        -- 旧版 new(db, None) 经 search_path=wms 解析到 wms.audit_logs 的错位历史；
+        -- 现写入目标由 new(db, "wms") 显式给出，对齐 mes/hrm/erp/rd/crm“读自己 schema”模式）。
         -- R-5 修复：wms.audit_logs.user_id 为 uuid 列，查询参数 user_id 绑定为 text，
         -- 直接 `user_id = $3` 触发 `operator does not exist: uuid = text`（外层 200/内层 code:500）。
         -- 对齐 crm 服务 audit 模块与 shared-db query_audit_logs 的既有写法：SELECT user_id::text、
@@ -273,7 +273,7 @@ pub async fn log_audit_event(
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 
-    let service = SchemaAwareAuditLogService::new(db, Some("wms"));
+    let service = SchemaAwareAuditLogService::new(db, "wms");
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

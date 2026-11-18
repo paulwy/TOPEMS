@@ -562,11 +562,12 @@ pub struct SchemaAwareAuditLogService {
     /// 仅用于 `ensure_table` 的 DDL 自愈（DDL 不受行策略约束）。
     pool: PgPool,
     db: Db,
-    /// Optional schema prefix. `None` means the service expects the
-    /// connection search_path to be set (used by wms / erp which write bare
-    /// `audit_logs` table names). `Some("plugin_crm")` means write
-    /// `plugin_crm.audit_logs`.
-    schema_prefix: Option<String>,
+    /// 必填 schema 前缀，写入 `{schema_prefix}.audit_logs`。
+    ///
+    /// 历史上这里是 `Option<String>`，`None` 会写裸 `audit_logs` 并按进程
+    /// `SEARCH_PATH` 解析（wms 曾因此落到 `wms.audit_logs`）。改为非 Option
+    /// 后由编译期强制每个调用方显式声明落点，不再有「靠 search_path 猜」的分支。
+    schema_prefix: String,
     /// 目标审计表是否只保留系统通道（`app.rls_system='on'`）。
     /// erp / crm / hrm 的 audit_logs 已收敛为仅系统通道，读写都必须显式走系统作用域。
     system_channel: bool,
@@ -586,23 +587,19 @@ pub async fn set_system_channel(
 }
 
 impl SchemaAwareAuditLogService {
-    pub fn new(pool: &PgPool, schema_prefix: Option<&str>) -> Self {
-        // 显式前缀直接拼 search_path；无前缀沿用进程 env `SEARCH_PATH`
-        // （bare `audit_logs` 由 search_path 解析，不能改写成 public）。
-        let search_path = match schema_prefix {
-            Some(p) => format!("{p}, public, shared"),
-            None => std::env::var("SEARCH_PATH").unwrap_or_else(|_| "public, shared".to_string()),
-        };
+    pub fn new(pool: &PgPool, schema_prefix: &str) -> Self {
+        // 前缀必填：写入目标固定为 `{schema_prefix}.audit_logs`，不再回退进程 env。
+        let search_path = format!("{schema_prefix}, public, shared");
         Self {
             pool: pool.clone(),
             db: Db::new(pool.clone(), search_path),
-            schema_prefix: schema_prefix.map(|s| s.to_string()),
+            schema_prefix: schema_prefix.to_string(),
             system_channel: false,
         }
     }
 
     /// 目标表的策略只保留系统通道时使用：读写都显式走系统作用域。
-    pub fn new_system_channel(pool: &PgPool, schema_prefix: Option<&str>) -> Self {
+    pub fn new_system_channel(pool: &PgPool, schema_prefix: &str) -> Self {
         Self {
             system_channel: true,
             ..Self::new(pool, schema_prefix)
@@ -625,12 +622,9 @@ impl SchemaAwareAuditLogService {
         }
     }
 
-    /// Render `{prefix}.audit_logs` or bare `audit_logs`.
+    /// Render `{prefix}.audit_logs`（前缀必填，不再生成裸表名）。
     fn table(&self) -> String {
-        match &self.schema_prefix {
-            Some(p) => format!("{}.audit_logs", p),
-            None => "audit_logs".to_string(),
-        }
+        format!("{}.audit_logs", self.schema_prefix)
     }
 
     /// Ensure the target audit_logs table exists with the full 15-column
@@ -638,10 +632,7 @@ impl SchemaAwareAuditLogService {
     /// can log it for schema/init traceability. Safe to re-run.
     pub async fn ensure_table(&self) -> Result<String, sqlx::Error> {
         let tbl = self.table();
-        let indexes_prefix = match &self.schema_prefix {
-            Some(p) => p.replace(['.', '-'], "_"),
-            None => "bare".to_string(),
-        };
+        let indexes_prefix = self.schema_prefix.replace(['.', '-'], "_");
         let ddl = format!(
             r#"
             CREATE TABLE IF NOT EXISTS {tbl} (
@@ -1189,5 +1180,53 @@ mod tests {
         assert_eq!(req.action, "upsert");
         assert_eq!(req.entity_type, "factory");
         assert_eq!(req.status, "success");
+    }
+
+    /// 真实调用验证：写入必须落在显式声明的 schema，不能靠 search_path 解析。
+    /// 需要 DATABASE_URL 指向测试库；缺失时跳过。
+    #[tokio::test]
+    async fn test_audit_write_lands_in_declared_schema() {
+        use sqlx::Row;
+
+        // 只认 TEST_DATABASE_URL：本测试会建 schema / 写行 / DROP，
+        // 绝不允许在 DATABASE_URL（默认可能指向生产）上执行。
+        let url = match std::env::var("TEST_DATABASE_URL") {
+            Ok(u) if !u.is_empty() => u,
+            _ => {
+                eprintln!("[SKIP] TEST_DATABASE_URL 未设置");
+                return;
+            }
+        };
+        let pool = sqlx::PgPool::connect(&url).await.expect("连接测试库失败");
+        let schema = "ut_audit_landing";
+        for stmt in [
+            format!("DROP SCHEMA IF EXISTS {schema} CASCADE"),
+            format!("CREATE SCHEMA {schema}"),
+        ] {
+            sqlx::query(sqlx::AssertSqlSafe(stmt))
+                .execute(&pool)
+                .await
+                .expect("schema 初始化失败");
+        }
+
+        let svc = SchemaAwareAuditLogService::new(&pool, schema);
+        svc.ensure_table().await.expect("ensure_table 失败");
+        let req = CreateAuditLogRequest::new("create".into(), "user".into(), "success".into());
+        let log = svc.create_audit_log(&req).await.expect("审计写入失败");
+        assert_eq!(log.action, "create");
+
+        let row = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT count(*) FROM {schema}.audit_logs"
+        )))
+        .fetch_one(&pool)
+        .await
+        .expect("查询落点失败");
+        let n: i64 = row.get(0);
+        assert_eq!(n, 1, "写入未落在 {schema}.audit_logs（可能落到了 search_path 影子表）");
+
+        sqlx::query(sqlx::AssertSqlSafe(format!("DROP SCHEMA {schema} CASCADE")))
+            .execute(&pool)
+            .await
+            .expect("清理失败");
     }
 }

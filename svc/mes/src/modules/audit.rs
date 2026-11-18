@@ -296,7 +296,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 
-    let service = SchemaAwareAuditLogService::new(db, Some("mes"));
+    let service = SchemaAwareAuditLogService::new(db, "mes");
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }
@@ -338,7 +338,7 @@ pub async fn log_approval_event(
         req = req.with_tenant_id(tid);
     }
 
-    let service = SchemaAwareAuditLogService::new(pool, Some("mes"));
+    let service = SchemaAwareAuditLogService::new(pool, "mes");
     service.create_audit_log(&req).await?;
     Ok(())
 }

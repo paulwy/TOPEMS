@@ -91,7 +91,7 @@ pub async fn list_audit_logs(
                user_id::text, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
         -- U12: 读归位 crm 自有 schema（原误读 public.audit_logs 平台公共表，与下方写路径
-        -- SchemaAwareAuditLogService::new(db, Some("crm")) 写入 crm.audit_logs 错位；
+        -- SchemaAwareAuditLogService::new(db, "crm") 写入 crm.audit_logs 错位；
         -- 对齐 mes/hrm/erp/rd 兄弟服务“读自己 schema audit_logs”的既有模式）。
         FROM crm.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
@@ -335,7 +335,7 @@ pub async fn log_audit_event_with_actor(
     req.user_agent = user_agent;
 
     // crm.audit_logs 策略仅保留系统通道（fail-closed），写入必须显式系统作用域。
-    let service = SchemaAwareAuditLogService::new_system_channel(db, Some("crm"));
+    let service = SchemaAwareAuditLogService::new_system_channel(db, "crm");
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

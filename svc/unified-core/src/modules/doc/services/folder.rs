@@ -36,7 +36,7 @@ impl FolderService {
 
     pub async fn list_folders(&self, scope: &mut ScopedTxn<'_>) -> Result<Vec<Folder>> {
         let rows = sqlx::query_as::<_, Folder>(
-            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM core_doc_folders WHERE deleted_at IS NULL ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM public.core_doc_folders WHERE deleted_at IS NULL ORDER BY name"#,
         )
         .fetch_all(&mut *scope)
         .await?;
@@ -49,7 +49,7 @@ impl FolderService {
         folder_id: Uuid,
     ) -> Result<Option<Folder>> {
         let row = sqlx::query_as::<_, Folder>(
-            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM core_doc_folders WHERE deleted_at IS NULL AND id = $1"#,
+            r#"SELECT id, tenant_id, name, parent_id, description, sort_order, is_enabled, created_by, created_at, updated_at FROM public.core_doc_folders WHERE deleted_at IS NULL AND id = $1"#,
         )
         .bind(folder_id)
         .fetch_optional(&mut *scope)
@@ -66,7 +66,7 @@ impl FolderService {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let folder = sqlx::query_as::<_, Folder>(
             r#"
-            INSERT INTO core_doc_folders (tenant_id, name, parent_id, description, sort_order, is_enabled, created_by)
+            INSERT INTO public.core_doc_folders (tenant_id, name, parent_id, description, sort_order, is_enabled, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             "#,
@@ -93,7 +93,7 @@ impl FolderService {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let folder = sqlx::query_as::<_, Folder>(
             r#"
-            UPDATE core_doc_folders
+            UPDATE public.core_doc_folders
             SET name = COALESCE($2, name),
                 parent_id = COALESCE($3, parent_id),
                 description = COALESCE($4, description),
@@ -120,7 +120,7 @@ impl FolderService {
     pub async fn delete_folder(&self, tenant_id: Uuid, folder_id: Uuid) -> Result<bool> {
         let mut tx = self.tenant_txn(Some(tenant_id)).await?;
         let result = sqlx::query(
-            r#"UPDATE core_doc_folders SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
+            r#"UPDATE public.core_doc_folders SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(folder_id)
