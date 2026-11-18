@@ -77,7 +77,7 @@ build_service() {
         case "$mem_status" in
             2)
                 _restore_cargo_jobs
-                error "内存不足，无法安全编译 $service_name。请释放内存后重试，或使用 --skip-mem-check 跳过。"
+                error "内存不足，无法安全编译 ${service_name}。请释放内存后重试，或使用 --skip-mem-check 跳过。"
                 return 1
                 ;;
             1)

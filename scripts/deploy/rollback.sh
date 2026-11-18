@@ -267,7 +267,7 @@ else
         if [ "$TARGET_STATE" = "active" ]; then
             print_ok "服务已启动"
         else
-            print_fail "服务未启动（topems.target=$TARGET_STATE），请检查日志"
+            print_fail "服务未启动（topems.target=${TARGET_STATE}），请检查日志"
         fi
     else
         print_info "systemd 不可用（非 Linux 生产环境），跳过服务状态检查"

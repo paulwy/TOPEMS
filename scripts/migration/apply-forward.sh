@@ -145,7 +145,7 @@ if [[ -n "$DEFER_APPLY_VERSION" ]]; then
   fi
   PROD_CHANGE_TICKET="$TICKET"
   if ! compgen -G "$MIG_DIR/${DEFER_APPLY_VERSION}_*.sql" > /dev/null; then
-    echo "拒绝：--apply-deferred 的版本 ${DEFER_APPLY_VERSION} 没有对应迁移文件（$MIG_DIR）" >&2
+    echo "拒绝：--apply-deferred 的版本 ${DEFER_APPLY_VERSION} 没有对应迁移文件（${MIG_DIR}）" >&2
     exit 2
   fi
 fi

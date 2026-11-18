@@ -242,7 +242,7 @@ wait_for_service() {
     port=$(get_service_port "$service_name")
     local elapsed=0
 
-    info "等待 $service_name 服务就绪（端口: $port，最多等待 ${MAX_WAIT}s）..."
+    info "等待 $service_name 服务就绪（端口: ${port}，最多等待 ${MAX_WAIT}s）..."
 
     while [ $elapsed -lt $MAX_WAIT ]; do
         if curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
@@ -332,11 +332,11 @@ run_service_tests() {
     # 检查服务是否就绪：--start-services 模式下未就绪 = 失败（服务本应由脚本启动）
     if ! curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
         if [ "$START_SERVICES" = true ]; then
-            error "$service_name 服务未运行（端口 $port）——--start-services 模式下未就绪视为失败"
+            error "$service_name 服务未运行（端口 ${port}）——--start-services 模式下未就绪视为失败"
             TOTAL_FAILED=$((TOTAL_FAILED + 1))
             return 1
         fi
-        warning "$service_name 服务未运行（端口 $port），跳过集成测试"
+        warning "$service_name 服务未运行（端口 ${port}），跳过集成测试"
         TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
         return 0
     fi

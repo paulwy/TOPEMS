@@ -326,7 +326,7 @@ for p in "${ALL_PKGS[@]}"; do
     [ "$p" == "$s" ] && skip=1 && break
   done
   if [ $skip -eq 1 ]; then
-    warn "跳过 $p（在 SKIP_PKGS 中）"
+    warn "跳过 ${p}（在 SKIP_PKGS 中）"
     continue
   fi
   dir="$(pkg_dir_of "$p" || true)"

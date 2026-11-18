@@ -202,7 +202,7 @@ start_scm_service() {
     done
 
     if health_ok "$BASE_URL/health"; then
-        ok "SCM 服务已就绪 (端口 $SCM_PORT，等待 ${waited}s)"
+        ok "SCM 服务已就绪 (端口 ${SCM_PORT}，等待 ${waited}s)"
         return 0
     else
         err "SCM 服务启动超时 (120s)"

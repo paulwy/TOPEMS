@@ -105,12 +105,12 @@ else
   # 先确认目标机可达，再在目标机上做权威 nginx -t + reload。
   # 账号需可执行 nginx -t / systemctl reload nginx（root 或 NOPASSWD sudo）。
   if ! ssh -o BatchMode=yes -o ConnectTimeout=10 "$TARGET" 'echo ok' >/dev/null 2>&1; then
-    echo "TARGET_UNREACHABLE ($TARGET——检查 SSH 免密与主机可达性)"; FAIL=1
+    echo "TARGET_UNREACHABLE (${TARGET}——检查 SSH 免密与主机可达性)"; FAIL=1
   else
     if ssh -o BatchMode=yes "$TARGET" 'nginx -t && systemctl reload nginx'; then
       echo "RELOAD_OK ($TARGET nginx -t 通过并已 reload)"
     else
-      echo "RELOAD_FAIL ($TARGET——nginx -t 或 systemctl reload 失败，见上方输出)"; FAIL=1
+      echo "RELOAD_FAIL (${TARGET}——nginx -t 或 systemctl reload 失败，见上方输出)"; FAIL=1
     fi
   fi
 fi

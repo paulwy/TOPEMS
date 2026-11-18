@@ -123,7 +123,7 @@ restart_service() {
     local attempt=1
     
     while [ $attempt -le $MAX_RESTART_ATTEMPTS ]; do
-        log "INFO" "尝试重启 $service_name（第 $attempt/$MAX_RESTART_ATTEMPTS 次）..."
+        log "INFO" "尝试重启 ${service_name}（第 $attempt/$MAX_RESTART_ATTEMPTS 次）..."
         
         if systemctl restart "$service_name" 2>/dev/null; then
             sleep "$RESTART_WAIT_TIME"
@@ -190,7 +190,7 @@ check_service() {
     
     # 检查健康检查端点
     if ! check_service_health "$port" "$health_path"; then
-        log "WARN" "$service_name 健康检查失败（端口: $port, 路径: $health_path）"
+        log "WARN" "$service_name 健康检查失败（端口: $port, 路径: ${health_path}）"
         send_alert "$service_name" "健康检查失败" "检查中"
         
         if [ "$auto_restart" = "true" ]; then

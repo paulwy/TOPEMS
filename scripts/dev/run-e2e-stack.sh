@@ -111,7 +111,7 @@ except Exception: print('')" 2>/dev/null || true)
 
 smoke() {
   login
-  info "运行 full-route-smoke（API_URL=$API_URL）..."
+  info "运行 full-route-smoke（API_URL=${API_URL}）..."
   ( cd apps/web && API_URL="$API_URL" pnpm exec playwright test e2e/ui/full-route-smoke.spec.ts --project=chromium --workers=1 --retries=0 )
 }
 

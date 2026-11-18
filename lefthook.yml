@@ -20,6 +20,12 @@ pre-commit:
       tags: shellcheck
       run: bash scripts/ci/check-shellcheck.sh --changed-only
 
+    # [Gate BP] bash 变量后紧跟中文标点：set -u 下标点字节会被并入变量名，
+    # 真实失败原因被掩盖成 unbound variable；shellcheck 不覆盖这一类。
+    bash-var-cjk-punct:
+      tags: shellcheck
+      run: python3 scripts/ci/check-bash-var-cjk-punct.py --changed-only
+
     # [Gate A] Frontend lint (eslint + prettier)
     frontend-lint:
       tags: frontend lint

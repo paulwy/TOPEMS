@@ -175,14 +175,14 @@ resolve_bin_or_die() {
     inner=$(find "$tmpdir" -type f -name topems-server | head -1)
     if [ -n "$inner" ]; then
       cp "$inner" "$LOCAL_BIN" && chmod +x "$LOCAL_BIN"
-      warn "未找到 $LOCAL_BIN，已自动回退使用历史 release 包：$(basename "$latest")"
+      warn "未找到 ${LOCAL_BIN}，已自动回退使用历史 release 包：$(basename "$latest")"
       warn "注意：该二进制可能不是当前 HEAD 的构建，上线前请确认版本"
       rm -rf "$tmpdir"
       return 0
     fi
     rm -rf "$tmpdir"
   fi
-  error "未找到二进制 $LOCAL_BIN，且无可回退的历史 release 包。请三选一：① 去掉 --skip-build 正常编译；② --bin <现成二进制绝对路径>；③ 先手动放置到 $LOCAL_BIN"
+  error "未找到二进制 ${LOCAL_BIN}，且无可回退的历史 release 包。请三选一：① 去掉 --skip-build 正常编译；② --bin <现成二进制绝对路径>；③ 先手动放置到 $LOCAL_BIN"
 }
 
 info "=== 步骤 1/5: 二进制解析与编译 ==="

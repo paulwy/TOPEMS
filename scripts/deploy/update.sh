@@ -82,7 +82,7 @@ run() {
 if [[ -n "$VERSION" ]]; then
     echo -e "${YELLOW}Updating to version: ${VERSION}${NC}"
     if [[ "$DRY_RUN" == "true" ]]; then
-        echo -e "${YELLOW}[dry-run]${NC} 跳过 git fetch/checkout/pull $VERSION（干跑不改 git 状态）"
+        echo -e "${YELLOW}[dry-run]${NC} 跳过 git fetch/checkout/pull ${VERSION}（干跑不改 git 状态）"
     else
         git fetch origin
         git checkout "$VERSION"

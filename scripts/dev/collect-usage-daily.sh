@@ -17,7 +17,7 @@ fi
 # 1. BFF 存活检查
 H=$(curl -s -m 3 -o /dev/null -w '%{http_code}' "$BASE/health" 2>/dev/null || echo 000)
 if [ "$H" != "200" ]; then
-  echo "  BFF 不在线（health=$H），跳过本次采集" >> "$LOG"
+  echo "  BFF 不在线（health=${H}），跳过本次采集" >> "$LOG"
   exit 0
 fi
 

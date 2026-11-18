@@ -111,7 +111,7 @@ run_module_test() {
 
     echo ""
     if [ $rc -ne 0 ]; then
-        echo -e "${RED}✗ ${module_upper} 模块测试失败（exit $rc）${NC}"
+        echo -e "${RED}✗ ${module_upper} 模块测试失败（exit ${rc}）${NC}"
         return 1
     fi
 }
