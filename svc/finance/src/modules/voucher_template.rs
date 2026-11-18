@@ -3,7 +3,6 @@ use axum::{
     http::HeaderMap,
     response::IntoResponse,
 };
-use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
@@ -120,63 +119,6 @@ pub async fn copy_template(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "复制成功",
         ),
-        Err(e) => crate::shared::err_resp(e),
-    }
-}
-
-pub async fn toggle_template(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
-
-    Path(template_id): Path<Uuid>,
-    Json(req): Json<ToggleTemplateRequest>,
-) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
-            "请求事务缺失".to_string(),
-        ));
-    };
-
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let new_status = if req.isactive { "active" } else { "inactive" };
-    let now = Utc::now();
-    let mut scope = match state.db.scope_with(txn).await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    let r = match sqlx::query(
-        only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
-    )
-    .bind(new_status)
-    .bind(now)
-    .bind(tenant_id)
-    .bind(template_id)
-    .execute(&mut scope)
-    .await
-    {
-        Ok(r) => r,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-    if r.rows_affected() == 0 {
-        return ApiResponse::not_found("凭证模板不存在");
-    }
-    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    match service
-        .get_voucher_template(tenant_id, template_id, txn)
-        .await
-    {
-        Ok(template) => {
-            let mut val = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
-            if let Some(obj) = val.as_object_mut() {
-                obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
-            }
-            ApiResponse::success(val, "切换成功")
-        }
         Err(e) => crate::shared::err_resp(e),
     }
 }
@@ -403,62 +345,6 @@ pub async fn import_template(
         ),
         Err(e) => crate::shared::err_resp(e),
     }
-}
-
-pub async fn toggle_generate_rule(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
-    Path(rule_id): Path<Uuid>,
-    Json(req): Json<ToggleRuleRequest>,
-) -> ApiResponse<serde_json::Value> {
-    let mut txn_guard = txn_arc.lock().await;
-    let Some(txn) = txn_guard.as_mut() else {
-        return ApiResponse::server_error("数据库事务上下文缺失");
-    };
-
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let new_status = if req.isactive { "active" } else { "inactive" };
-    let now = Utc::now();
-    let mut scope = match state.db.scope_with(txn).await {
-        Ok(s) => s,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    let r = match sqlx::query(
-        only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
-    )
-    .bind(new_status)
-    .bind(now)
-    .bind(tenant_id)
-    .bind(rule_id)
-    .execute(&mut scope)
-    .await
-    {
-        Ok(r) => r,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    if r.rows_affected() == 0 {
-        return ApiResponse::not_found("生成规则不存在");
-    }
-    let r: VoucherGenerationRule = match sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"),
-    )
-    .bind(tenant_id)
-    .bind(rule_id)
-    .fetch_one(&mut scope)
-    .await
-    {
-        Ok(r) => r,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    if let Err(e) = scope.commit().await {
-        return crate::shared::err_resp(e);
-    }
-    let mut val = serde_json::to_value(r).unwrap_or(serde_json::json!({}));
-    if let Some(obj) = val.as_object_mut() {
-        obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
-    }
-    ApiResponse::success(val, "切换成功")
 }
 
 // ========== 从源单据查询金额：sale/purchase/payment 三类型 + 兜底默认 ==========

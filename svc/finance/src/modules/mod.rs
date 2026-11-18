@@ -3545,37 +3545,6 @@ pub struct ReceivableQueryParams {
     pub customer_id: Option<String>,
 }
 
-pub async fn list_receivables_handler(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
-
-    Query(params): Query<ReceivableQueryParams>,
-) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
-            "请求事务缺失".to_string(),
-        ));
-    };
-
-    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let page = params.page.unwrap_or(1);
-    let page_size = params.page_size.unwrap_or(20);
-    let customer_id = params
-        .customer_id
-        .as_deref()
-        .and_then(|s| uuid::Uuid::parse_str(s).ok());
-    match service
-        .list_receivables(tenant_id, page, page_size, params.status, customer_id, txn)
-        .await
-    {
-        Ok(data) => ApiResponse::success(data, "查询成功"),
-        Err(e) => crate::shared::err_resp(e),
-    }
-}
-
 async fn get_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -3748,37 +3717,6 @@ pub struct PayableQueryParams {
     pub page_size: Option<i64>,
     pub status: Option<String>,
     pub supplier_id: Option<String>,
-}
-
-pub async fn list_payables_handler(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
-
-    Query(params): Query<PayableQueryParams>,
-) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
-            "请求事务缺失".to_string(),
-        ));
-    };
-
-    let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let page = params.page.unwrap_or(1);
-    let page_size = params.page_size.unwrap_or(20);
-    let supplier_id = params
-        .supplier_id
-        .as_deref()
-        .and_then(|s| uuid::Uuid::parse_str(s).ok());
-    match service
-        .list_payables(tenant_id, page, page_size, params.status, supplier_id, txn)
-        .await
-    {
-        Ok(data) => ApiResponse::success(data, "查询成功"),
-        Err(e) => crate::shared::err_resp(e),
-    }
 }
 
 async fn get_payable_handler(
