@@ -584,56 +584,6 @@ pub async fn get_execution_history(
     }))
 }
 
-pub async fn run_schedule(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
-) -> Json<serde_json::Value> {
-    info!("Running schedule: {}", id);
-
-    let now = chrono::Utc::now();
-
-    let mut tx = match begin_tenant_txn(&state.pool, &claims).await {
-        Ok(tx) => tx,
-        Err(e) => {
-            return Json(topems_shared_core::response::error_value(
-                500,
-                &format!("Failed to begin RLS txn: {}", e),
-            ))
-        }
-    };
-
-    let result = sqlx::query(
-        r#"
-        UPDATE report_schedules
-        SET last_run_at = $1, run_count = run_count + 1, updated_at = $2
-        WHERE id = $3
-        "#,
-    )
-    .bind(now)
-    .bind(now)
-    .bind(id)
-    .execute(&mut *tx)
-    .await;
-
-    match result {
-        Ok(_) => match tx.commit().await {
-            Ok(()) => Json(serde_json::json!({
-                "success": true,
-                "message": "Schedule execution triggered"
-            })),
-            Err(e) => Json(topems_shared_core::response::error_value(
-                500,
-                &format!("Failed to commit schedule: {}", e),
-            )),
-        },
-        Err(e) => Json(topems_shared_core::response::error_value(
-            500,
-            &format!("Failed to execute schedule: {}", e),
-        )),
-    }
-}
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["analytics:write"])),
