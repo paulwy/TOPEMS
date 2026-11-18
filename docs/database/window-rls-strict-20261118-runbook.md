@@ -10,8 +10,14 @@
 - 窗口版本：14 条（下表）。`20261118124000` **显式 defer**，本窗口不应用、保持 pending。
 - 唯一入口：`scripts/migration/apply-forward.sh --prod`。禁止 `sqlx migrate run`、禁止裸 `psql` 写账本。
 - 生产执行前不得有任何 DDL/DML；所有只读核查用 `SELECT` / `pg_dump --schema-only`。
-- 变更票据：`RESIDUAL-RLS-20261118`。`20261118110000`、`20261118123000` 含破坏性 DML，
-  必须逐版本 `--allow-destructive=<version>`，且票据与文件内 `destructive-ticket` 一致。
+- 变更票据：`RESIDUAL-RLS-20261118`。`20261118110000`、`20261118123000`、`20261118140000`
+  含破坏性 DML，必须逐版本 `--allow-destructive=<version>`，且票据与文件内 `destructive-ticket` 一致。
+  `20261118140000` 的标记票据是 **`TENANT-SELF-20261118`**（`core_tenants` 自指 UPDATE），
+  不在 `RESIDUAL-RLS-20261118` 内，因此 `PROD_CHANGE_TICKET` 必须写成逗号列表
+  `RESIDUAL-RLS-20261118,TENANT-SELF-20261118`。
+  > 事实记录（2026-11-18 窗口）：本条是窗口内第 13 条，实际执行时被 guard 以
+  > `L84 ticket=TENANT-SELF-20261118 已列出=RESIDUAL-RLS-20261118` 拒绝后才暴露；
+  > 本节是按当天真实结果补齐，不是预判。其他 12 条不受影响。
 - 窗口写冻结：执行前停止业务写入（或确认无活动写事务），否则「业务行数不变」判据不可判定。
 
 ## 1. 前置检查（全部通过才开窗）
@@ -95,7 +101,7 @@
 在能连生产 socket 的主机执行（或按 `apply-forward.sh` 头注释使用 `--ssh-host` 模式）。
 
 ```bash
-export PROD_CHANGE_TICKET=RESIDUAL-RLS-20261118
+export PROD_CHANGE_TICKET=RESIDUAL-RLS-20261118,TENANT-SELF-20261118
 cd /path/to/TOPEMS
 
 V=20261118090000
@@ -112,7 +118,7 @@ bash scripts/migration/apply-forward.sh --prod --db topems_prod \
   --anchor 20261117235500 --only "$V" --defer "$ONLY_DEFER"
 ```
 
-仅这两条额外加逐版本破坏性批准：
+以下三条额外加逐版本破坏性批准（`PROD_CHANGE_TICKET` 用上面的逗号列表，三条都能通过票据比对）：
 
 ```bash
 # 20261118110000
@@ -124,6 +130,11 @@ bash scripts/migration/apply-forward.sh --prod --db topems_prod \
 bash scripts/migration/apply-forward.sh --prod --db topems_prod \
   --anchor 20261117235500 --only 20261118123000 --defer "$(...)" \
   --allow-destructive=20261118123000
+
+# 20261118140000（ticket=TENANT-SELF-20261118；上限 10 行）
+bash scripts/migration/apply-forward.sh --prod --db topems_prod \
+  --anchor 20261117235500 --only 20261118140000 --defer "$(...)" \
+  --allow-destructive=20261118140000
 ```
 
 每条执行后立刻跑 §4 的核验，再进入下一条。

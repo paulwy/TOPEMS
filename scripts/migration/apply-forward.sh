@@ -299,6 +299,7 @@ DENY_RE='(^|_)(db[0-9]+_(test|5433)|5433_|test_)'
 PENDING=()
 PENDING_DG=()
 DENIED=()
+DENIED_DETAIL=()
 OUT_OF_MANIFEST=()
 DEFERRED=()
 APPLIED_ONLY=()
@@ -343,14 +344,19 @@ while IFS= read -r f; do
               --approve-ticket="${PROD_CHANGE_TICKET:-}" --plan-file="$dg_plan" >>"$guard_log" 2>&1; then
             PENDING_DG+=("$v")
           else
-            echo "-- $b 破坏性语句未获批准：" >&2
-            grep -E 'DENY|destructive-ticket' "$guard_log" >&2 || true
-            DENIED+=("$b [破坏性语句未获 --allow-destructive 批准]")
+            # 细节延后到 DENIED 摘要之后输出，避免日志先出现细节、后出现结论。
+            DENIED_DETAIL+=("-- $b 破坏性语句未获批准：")
+            while IFS= read -r gline; do DENIED_DETAIL+=("  $gline"); done \
+              < <(grep -E 'DENY|destructive-ticket' "$guard_log" 2>/dev/null || true)
+            tickets="$(sed -n 's/^--[[:space:]]*destructive-ticket:[[:space:]]*//p' "$f" | paste -sd, -)"
+            DENIED+=("$b [破坏性语句未获 --allow-destructive 批准；ticket=${tickets:-<未声明>}]")
             continue
           fi
         else
-          cnt="$(grep -c '^  L[0-9]' "$guard_log" 2>/dev/null || true)"
-          DENIED+=("$b [破坏性语句 ${cnt:-0} 条；需 --allow-destructive=$v]")
+          cnt="$(sed -n 's/.*含 \([0-9][0-9]*\) 条.*/\1/p' "$guard_log" 2>/dev/null | head -1 || true)"
+          if [[ -z "$cnt" || "$cnt" == "0" ]]; then crit="破坏性语句未获批准"; else crit="破坏性语句 ${cnt} 条"; fi
+          tickets="$(sed -n 's/^--[[:space:]]*destructive-ticket:[[:space:]]*//p' "$f" | paste -sd, -)"
+          DENIED+=("$b [${crit}；需 --allow-destructive=${v}；ticket=${tickets:-<未声明>}]")
           continue
         fi
       fi
@@ -361,6 +367,26 @@ while IFS= read -r f; do
   fi
   PENDING+=("$f")
 done < <(ls "$MIG_DIR"/*.sql | LC_ALL=C sort)
+
+# fail-closed：根因优先。DENIED（破坏性语句/定向命名/无法校验）是 --only 版本
+# “未被扫描到”的常见原因，必须先给一行摘要，再给原有细节，避免日志先冒出
+# “疑似扫描截断”把根因盖住。摘要逐条包含：判据、迁移文件、标记票据。
+if [[ ${#DENIED[@]} -gt 0 ]]; then
+  denied_brief="$(printf '%s; ' "${DENIED[@]}")"
+  echo "DENIED: prod 拒绝应用 ${#DENIED[@]} 条 pending 迁移：${denied_brief%; }" >&2
+  echo "== 拒绝：prod 检测到 ${#DENIED[@]} 条禁止直接应用的 pending 迁移" >&2
+  printf '  %s\n' "${DENIED[@]}" >&2
+  [[ ${#DENIED_DETAIL[@]} -gt 0 ]] && printf '%s\n' "${DENIED_DETAIL[@]}" >&2
+  cat >&2 <<'EOF'
+
+prod 迁移唯一入口 =「基线 + 前向迁移」，不得直接重放历史/定向迁移：
+  1) 先确认 prod 基线已恢复（database/baseline/prod_schema_<anchor>.sql.gz）
+  2) 仅应用 version > anchor 且带存在性守卫（to_regclass / IF EXISTS / DO$$ EXISTS）的前向迁移
+  3) 禁止在 prod 应用 dbNN_test / dbNN_5433 / test_* / 5433_* 定向迁移
+  4) 确需人工复核后临时放行：--allow-pending <version>（须在变更记录注明理由）
+EOF
+  exit 1
+fi
 
 # fail-closed：--only 的每个版本都必须被扫描到（已应用或进入待应用队列）。
 # 防止扫描环节被中断/截断后，把“一条都没看到”误判成“无待应用迁移”。
@@ -382,20 +408,6 @@ if [[ ${#OUT_OF_MANIFEST[@]} -gt 0 ]]; then
   echo "  本轮 --only: ${ONLY_RAW:-<未设置>}" >&2
   echo "  已评审 defer: ${DEFER_RAW:-<未设置>}" >&2
   echo "清单外迁移必须先评审并显式加入 --only 或 --defer；不允许提示后继续。" >&2
-  exit 1
-fi
-
-if [[ ${#DENIED[@]} -gt 0 ]]; then
-  echo "== 拒绝：prod 检测到 ${#DENIED[@]} 条禁止直接应用的 pending 迁移" >&2
-  printf '  %s\n' "${DENIED[@]}" >&2
-  cat >&2 <<'EOF'
-
-prod 迁移唯一入口 =「基线 + 前向迁移」，不得直接重放历史/定向迁移：
-  1) 先确认 prod 基线已恢复（database/baseline/prod_schema_<anchor>.sql.gz）
-  2) 仅应用 version > anchor 且带存在性守卫（to_regclass / IF EXISTS / DO$$ EXISTS）的前向迁移
-  3) 禁止在 prod 应用 dbNN_test / dbNN_5433 / test_* / 5433_* 定向迁移
-  4) 确需人工复核后临时放行：--allow-pending <version>（须在变更记录注明理由）
-EOF
   exit 1
 fi
 
