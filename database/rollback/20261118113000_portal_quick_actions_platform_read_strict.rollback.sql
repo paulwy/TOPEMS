@@ -50,4 +50,7 @@ BEGIN
     RAISE NOTICE '回滚完成：portal_quick_actions 已恢复 allow_all，RLS/FORCE 保持开启';
 END $$;
 
+-- 清理本迁移在账本中的登记行（幂等；按 version 精确匹配，不存在也不报错）
+DELETE FROM public._sqlx_migrations WHERE version = 20261118113000;
+
 COMMIT;

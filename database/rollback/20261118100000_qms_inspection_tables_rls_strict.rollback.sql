@@ -69,3 +69,6 @@ BEGIN
         RAISE NOTICE '回滚完成：% 已恢复无 RLS/无策略/无索引', t;
     END LOOP;
 END $$;
+
+-- 清理本迁移在账本中的登记行（幂等；按 version 精确匹配，不存在也不报错）
+DELETE FROM public._sqlx_migrations WHERE version = 20261118100000;

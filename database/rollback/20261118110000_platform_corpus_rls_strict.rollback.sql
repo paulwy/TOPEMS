@@ -137,3 +137,6 @@ BEGIN
     END LOOP;
     RAISE NOTICE '回滚完成：5 表恢复 strict B + rls_global_read，哨兵已回退为 NULL';
 END $$;
+
+-- 清理本迁移在账本中的登记行（幂等；按 version 精确匹配，不存在也不报错）
+DELETE FROM public._sqlx_migrations WHERE version = 20261118110000;

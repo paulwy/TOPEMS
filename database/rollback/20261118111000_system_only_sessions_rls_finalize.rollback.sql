@@ -65,3 +65,6 @@ BEGIN
 
     RAISE NOTICE '回滚完成：两表恢复迁移前 system-only 定义';
 END $$;
+
+-- 清理本迁移在账本中的登记行（幂等；按 version 精确匹配，不存在也不报错）
+DELETE FROM public._sqlx_migrations WHERE version = 20261118111000;
