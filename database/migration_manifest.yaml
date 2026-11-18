@@ -2247,6 +2247,6 @@ pending_forward_patches:
   - version: "20261118160000"
     file: "database/migrations/20261118160000_flow_shadow_copies_rename_deprecated.sql"
     status: to_apply
-    effect: "flow schema 11 张与 public 同名且 0 行的副本 RENAME 为 _deprecated_<原名>，保留可回滚路径；flow 独有的 core_comments/core_favorites/notifications/workflows 不动"
-    destructive_scan: "无 DROP TABLE 业务表；仅 RENAME（0 行断言 + 前置/后置断言）；DROP 只作用于迁移内临时表（_shadow_rename_plan、_shadow_public_policy_before）"
-    note: "幂等：副本不存在（含已被 20261027200000 直接 DROP 的情形）或已改名为 _deprecated_ 时跳过"
+    effect: "flow schema 12 张与 public 同名且 0 行的副本 RENAME 为 _deprecated_<原名>，保留可回滚路径；含 core_doc_document_versions（与父表同事务收敛，避免子副本外键改指废弃父表）；flow 独有的 core_comments/core_favorites/notifications/workflows 不动"
+    destructive_scan: "无 DROP TABLE 业务表；仅 RENAME（0 行断言 + 前置/后置断言，12 表 24 条 RLS 指纹）；DROP 只作用于迁移内临时表（_shadow_rename_plan、_shadow_public_policy_before）"
+    note: "幂等：副本不存在（含已被 20261027200000 直接 DROP 的情形）或已改名为 _deprecated_ 时跳过；2026-11-18 隔离库重演 PASS（账本 704→705→704，12 张 _deprecated_* 均 0 行）"

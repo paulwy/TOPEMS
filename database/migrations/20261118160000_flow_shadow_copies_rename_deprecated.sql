@@ -1,11 +1,11 @@
--- flow schema 11 张同名副本改名为 _deprecated_<原名>（不直接 DROP）
+-- flow schema 12 张同名副本改名为 _deprecated_<原名>（不直接 DROP）
 --
--- 范围：只处理下列 11 张与 public 同名的 flow 副本；不触碰
+-- 范围：只处理下列 12 张与 public 同名的 flow 副本（含 core_doc_document_versions）；不触碰
 --   flow.core_comments / flow.core_favorites / flow.notifications / flow.workflows
 --   （这 4 张只在 flow 存在，是业务表，不能清）。
 --
 -- 依据：docs/database/shadow-bare-ref-scan-2026-11-18.md 第 5 节；
---   2026-11-18 生产 topems_prod 只读核查：11 张 flow 副本均为 0 行，
+--   2026-11-18 生产 topems_prod 只读核查：12 张 flow 副本均为 0 行，
 --   列/类型/默认值/唯一键/主键与 public 同名表一致，且均未启用 RLS。
 --
 -- 口径：不直接 DROP，改为 RENAME TO _deprecated_<原名>，保留可回滚路径；
@@ -14,11 +14,17 @@
 -- 幂等：flow 副本不存在（含已被 20261027200000 直接 DROP 的情形）→ NOTICE 跳过；
 --   若 flow._deprecated_<原名> 已存在且原名不存在 → 视为已完成，跳过。
 --
--- 冲突提示：活动链 `20261027200000_core_schema_duplicates_cleanup.sql` 仍包含本 11 张的
+-- 冲突提示：活动链 `20261027200000_core_schema_duplicates_cleanup.sql` 仍包含本 12 张的
 --   `DROP TABLE IF EXISTS ... CASCADE`。该迁移若先于本迁移被执行，本迁移会自动跳过；
 --   两条迁移不要在同一窗口重复批准。
 --
--- 锁影响：11 次 ALTER TABLE ... RENAME（ACCESS EXCLUSIVE 瞬时；0 行表，毫秒级）。
+-- 版本表同窗口收敛：core_doc_document_versions 一并改名。
+--   代码侧版本三端点已全部显式 public. 并以 JOIN public.core_doc_documents 做租户校验，
+--   flow 副本无读者；若只改父表，versions 副本的外键会自动改指
+--   flow._deprecated_core_doc_documents，留下「活跃副本指向废弃父表」的中间状态。
+--   同事务改名可消除该状态；实测两副本均 0 行、无入向外键/视图/触发器。
+--
+-- 锁影响：12 次 ALTER TABLE ... RENAME（ACCESS EXCLUSIVE 瞬时；0 行表，毫秒级）。
 --   不改列、不改数据、不建/删策略，public 侧零 DDL。
 --
 -- 回滚：database/rollback/20261118160000_flow_shadow_copies_rename_deprecated.rollback.sql
@@ -42,6 +48,7 @@ BEGIN
         'core_doc_documents',
         'core_doc_folders',
         'core_doc_templates',
+        'core_doc_document_versions',
         'core_flow_categories',
         'core_master_data_change_log',
         'core_mdm_approvals',
@@ -94,6 +101,7 @@ SELECT c.relname,
        'core_doc_documents',
        'core_doc_folders',
        'core_doc_templates',
+       'core_doc_document_versions',
        'core_flow_categories',
        'core_master_data_change_log',
        'core_mdm_approvals',
@@ -128,6 +136,7 @@ BEGIN
         'core_doc_documents',
         'core_doc_folders',
         'core_doc_templates',
+        'core_doc_document_versions',
         'core_flow_categories',
         'core_master_data_change_log',
         'core_mdm_approvals',
@@ -166,6 +175,7 @@ BEGIN
         'core_doc_documents',
         'core_doc_folders',
         'core_doc_templates',
+        'core_doc_document_versions',
         'core_flow_categories',
         'core_master_data_change_log',
         'core_mdm_approvals',
@@ -224,8 +234,8 @@ BEGIN
     END LOOP;
 
     SELECT count(*) INTO n FROM _shadow_public_policy_before;
-    IF n <> 11 THEN
-        RAISE EXCEPTION '后置断言失败：public 快照表数 = %（期望 11）', n;
+    IF n <> 12 THEN
+        RAISE EXCEPTION '后置断言失败：public 快照表数 = %（期望 12）', n;
     END IF;
 
     FOR rec IN SELECT * FROM _shadow_rename_plan WHERE existed LOOP
@@ -237,7 +247,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    RAISE NOTICE '后置断言通过：11 张 public 表与策略未变，flow 副本已完成改名';
+    RAISE NOTICE '后置断言通过：12 张 public 表与策略未变，flow 副本已完成改名';
 END $$;
 
 -- destructive-gate: allow

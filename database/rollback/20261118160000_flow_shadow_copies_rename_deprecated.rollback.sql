@@ -13,6 +13,7 @@ BEGIN
         'core_doc_documents',
         'core_doc_folders',
         'core_doc_templates',
+        'core_doc_document_versions',
         'core_flow_categories',
         'core_master_data_change_log',
         'core_mdm_approvals',
