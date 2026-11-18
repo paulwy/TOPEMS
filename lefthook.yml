@@ -57,9 +57,11 @@ pre-commit:
       tags: frontend i18n hardcoded
       run: bash scripts/ci/check-hardcoded-precise.sh
 
-    # [Gate F/G/R] 重型检查（cargo test / clippy）已移至 pre-push hook，
-    # 避免 pre-commit 超时（cargo test --workspace 需 3-5min，clippy --all-targets 需 2-3min）。
-    # pre-push 已有 cargo-fmt-check + cargo-clippy-workspace，下方补充 cargo-test-workspace。
+    # [Gate F/G/R] 重型检查分工（2026-11-18 定稿）：
+    #   pre-commit  → 只跑秒级静态门禁，不碰 cargo
+    #   pre-push    → cargo fmt / check / clippy（增量，分~分钟级）
+    #   cargo test  → 不在任何 git 钩子里跑，走手动 / 夜间（run-nightly-gates.sh）
+    # 原因：增量 test 也需编译测试依赖，实测一次 push 内 target 涨 4G、磁盘 94% 未编完。
 
     # [Gate Contract] 前端契约静态门禁（防「前端封装但后端未挂载」回归）
     # 秒级、零外部依赖（BFF 无需在线）；挂载锚点 svc 豁免（实测锚点登记），
@@ -542,6 +544,25 @@ pre-push:
       tags: shellcheck
       run: bash scripts/ci/check-shellcheck.sh
 
+    # [Gate GL-FULL] gitleaks 全历史扫描（2026-11-18 接入）
+    # pre-commit 只扫暂存区增量，历史/本地新提交里的密钥只有这里能看见。
+    # 存量 120 条已冻结在 scripts/ci/gitleaks-baseline.json（脱敏报告：
+    # 占位符 / 测试默认口令 / 开发自签证书），新增命中仍阻断。
+    # 实测 44s（12642 commits / 1.10GB），fail-closed：gitleaks 或 baseline 缺失即失败。
+    gitleaks-full:
+      tags: security secrets
+      run: bash scripts/ci/check-gitleaks-full.sh
+
+    # [Gate MIG-DRILL] 迁移锚点演练（正式闸门，fail-closed）
+    # 从生产基线快照恢复隔离库，只应用 anchor 之后的前向迁移 + 静态校验 + 权限码审计。
+    # 仅当本次 push 触及 migrations/baseline 时运行（其余 push 秒级跳过）。
+    # 现状：唯一可用快照为 20261105235700，缺生产约束导致在 20261114100000 失败（MIG-002）；
+    # 新基线建成前本闸门对迁移类 push 为红——这正是待办 P1，不得用 --no-verify 绕过。
+    migration-drill-anchor:
+      tags: database migrations
+      glob: "{database/migrations/**,database/baseline/**}"
+      run: bash scripts/dev/run-migration-drill.sh anchor
+
     # [Gate B12/U9.5] 配置三方一致性（秒级）：services.yaml ↔ ports.env ↔ nginx map
     # 单一信源原则（V66.2）：任何服务/端口/路由变更导致漂移，push 直接阻断。
     config-consistency:
@@ -617,16 +638,29 @@ pre-push:
     cargo-clippy-workspace:
       tags: rust clippy
       run: bash scripts/ci/run-cargo-changed.sh clippy
-    # [V294 NEW / 2026-11-14 修订] cargo test — 增量门禁
+    # [V294 NEW / 2026-11-14 修订][2026-11-18 修订：移出 push 链路]
     # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）。
-    # 语义：本次 push 有 .rs 变更 → 对变更 crate 跑 cargo test --lib（必跑，不得放过）；
-    #       无 .rs 变更 → 才允许 SKIP；LEFTHOOK_RUN_HEAVY=1 保留为全量 --workspace --lib 通道。
-    # 背景：原实现未设置 LEFTHOOK_RUN_HEAVY 就无条件 SKIP，push 全绿但测试一次没跑（0.01s），
-    #       “CI 兜底”在账号侧不可用时不成立；改为变更 crate 本地必跑。
+    #
+    # 2026-11-18 变更原因（实测）：增量 test 仍须为变更 crate 编译测试依赖
+    #   （sqlx-postgres/redis/protobuf/prometheus 等），一次 push 内 target 76G→80G、
+    #   可用空间降到 12 GiB（94%）仍未编完，7 分钟超时都到不了测试执行阶段。
+    #   push 频率远高于全量编译成本，故 test 退出 push 链路：
+    #     - push 只跑 fmt / check / clippy（都是增量、秒~分级）
+    #     - test 走手动或夜间：见 docs/deploy/parallel-dev-guide.md §3.2
+    #
+    # 触发方式（任选）：
+    #   TOPEMS_PUSH_TEST=1 git push                 # 单次 push 带测试（原语义）
+    #   LEFTHOOK_RUN_HEAVY=1 bash scripts/dev/run-nightly-gates.sh   # 全量 --workspace --lib
+    #   bash scripts/dev/run-local-gates.sh --rust  # 本地门禁统一入口
     cargo-test-workspace:
       tags: rust test
       timeout: 3600s
       run: |
+        if [ -z "${TOPEMS_PUSH_TEST:-}" ]; then
+          printf '\033[33m[Gate T] SKIP\033[0m cargo test 已移出 push 链路（push 仍拦截 fmt/check/clippy）。\n'
+          printf '  需要测试时：TOPEMS_PUSH_TEST=1 git push  或  bash scripts/dev/run-local-gates.sh --rust\n'
+          exit 0
+        fi
         export SQLX_OFFLINE=true
         export RUST_TEST_THREADS=1
         # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，

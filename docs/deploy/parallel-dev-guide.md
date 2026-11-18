@@ -57,6 +57,36 @@ GitHub Actions **当前不可用**，任何 PR/推送都拿不到绿灯，**不�
 - 恢复 CI 需要：给计费账号设消费上限并绑卡（Linux 约 $0.008/分钟），或接入 self-hosted runner（自建 runner 不消耗 GitHub 分钟数，但需要一台 ≥8C/16G/200G 的 Linux 机器）
 - 本机云主机（2 vCPU / 3 GB / 9.7 GiB 可用）**不足以**充当 Linux 构建机，勿据此规划
 
+## 3.2 钩子分工：push 只跑静态与增量编译，test 走夜间
+
+2026-11-18 调整（原因见下），三个入口各管一段，避免每次 push 都触发全量编译：
+
+| 入口 | 内容 | 耗时量级 |
+|---|---|---|
+| `pre-commit` | 约 44 项秒级静态门禁（shellcheck/gitleaks/迁移/契约/前端） | 秒级 |
+| `pre-push` | shellcheck 全量、gitleaks 全历史、迁移闸门、`cargo fmt` / `check` / `clippy`（增量） | 分钟级 |
+| 夜间 / 手动 | `cargo test --workspace --lib` 全量 | 十几分钟～半小时 |
+
+调整原因（实测，不是估算）：增量 `cargo test` 也要为变更 crate 编译测试依赖（sqlx-postgres、redis、protobuf、prometheus 等）。一次 push 内 `target` 从 76G 涨到 80G、可用空间掉到 12 GiB（94%）仍没编完，钩子的 3600s 超时都碰不到测试执行阶段。push 频率远高于此成本。
+
+用法：
+
+```bash
+# 常规 push：不带 test（fmt/check/clippy 仍阻断）
+git push
+
+# 需要这次 push 带测试
+TOPEMS_PUSH_TEST=1 git push
+
+# 手动跑测试 / 分级门禁
+bash scripts/dev/run-local-gates.sh --rust
+
+# 夜间全量（默认 03:10 由 launchd 触发，日志 ~/Library/Logs/topems-nightly-gates.log）
+bash scripts/dev/run-nightly-gates.sh
+```
+
+`run-nightly-gates.sh` 内置磁盘安全阀：可用空间 < 40 GiB 时只记日志、不启动编译，等 target 体积问题解决后自动恢复执行。
+
 ## 4. 收尾与清理
 
 ```bash
