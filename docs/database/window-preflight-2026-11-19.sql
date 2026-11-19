@@ -1,544 +1,647 @@
 -- =============================================================================
--- 窗口前预检（只读）：TOPEMS 2026-11-19 两波窗口就绪包
--- 用法：
+-- 窗口前预检（只读）：TOPEMS R5 归档三批（2026-11-19 重算版）
+--
+-- 用法（非特权只读，日常/窗口前）：
 --   PGPASSFILE=$HOME/.pgpass psql "postgresql://topems_drift@127.0.0.1:5432/topems_prod" \
---     -f docs/database/window-preflight-2026-11-19.sql > preflight_$(date +%Y%m%d_%H%M%S).txt 2>&1
--- 说明：
---   * 以 topems_drift 非特权只读角色执行；不写生产。
---   * 目标清单（130000/131000）从迁移文件 v_targets/v_dropped 数组提取，内联在下方 TEMP 表中。
---   * 临时清单表只在会话内存在；构造阶段临时关闭 read-only，随后立即恢复。
---   * 表数据级断言（行数、NULL/零租户）topems_drift 无 schema USAGE，需 DBA 用特权只读会话执行
---     runbook §2.4 的 B 类清单。
+--     -f docs/database/window-preflight-2026-11-19.sql \
+--     > preflight_$(date +%Y%m%d_%H%M%S).txt 2>&1
+--
+-- 用法（DBA 特权只读，补齐 C16 行数门禁）：
+--   用同一文件、同一只读事务设置，换有 132 张表 SELECT 权限的只读账号执行。
+--
+-- 判读：
+--   * exit 0，且输出中不得出现 ERROR。
+--   * 第 9 节 C1–C15、C17 必须 PASS；C16 在 topems_drift 下为 NEEDS_DBA，
+--     必须由 DBA 特权只读会话复跑本文件后转为 PASS。
+--   * 本脚本不建临时表、不写任何生产对象；只查询 pg_catalog / pg_policies /
+--     pg_proc / pg_constraint 与账本。
+--   * 窗口前基线：prod 账本 721/721、max 20261119000002、failed 0。
 -- =============================================================================
 \set ON_ERROR_STOP on
-SET default_transaction_read_only = on;
 \pset pager off
+SET default_transaction_read_only = on;
+SET statement_timeout = '600s';
 
-\echo '== 0. 会话身份（必须是 topems_drift @ topems_prod，txn_read_only=on）=='
-SELECT current_user, current_database(), inet_server_addr(),
+\echo '== 0. 会话身份（只读）=='
+SELECT current_user,
+       current_database(),
+       coalesce(inet_server_addr()::text, 'local') AS server_addr,
        current_setting('transaction_read_only') AS txn_read_only;
 
-\echo '== 1. 账本水位 =='
+\echo '== 1. 账本水位与三条窗口版本 =='
 SELECT count(*) AS ledger_rows,
-       max(version) AS max_version,
        count(*) FILTER (WHERE success) AS success_rows,
-       count(*) FILTER (WHERE NOT success) AS failed_rows
+       count(*) FILTER (WHERE NOT success) AS failed_rows,
+       min(version) AS min_version,
+       max(version) AS max_version
 FROM _sqlx_migrations;
-SELECT version, success, installed_on
-FROM _sqlx_migrations ORDER BY version DESC LIMIT 5;
 
-\echo '== 2. 窗口 13 条是否已在生产账本（期望 0 行）=='
-SELECT version, success FROM _sqlx_migrations
-WHERE version IN (20261119010000,20261119100000,20261119110000,20261119120000,
-                  20261119130000,20261119131000,20261119140000,20261119141000,
-                  20261119150000,20261119151000,20261119160000,20261119161000,
-                  20261119170000)
+SELECT version,
+       success,
+       installed_on,
+       encode(checksum, 'hex') AS sha384
+FROM _sqlx_migrations
+WHERE version IN (20261119160000, 20261119180000, 20261119200000)
 ORDER BY version;
+-- 期望：0 行（三条均未应用）
 
-\echo '== 3. 表 / RLS / 策略总数 =='
+\echo '== 2. 全局表 / RLS / 策略基线（窗口前 1344 / 959 / 1050）=='
 SELECT count(*) FILTER (WHERE c.relkind IN ('r','p')) AS tables_rp,
-       count(*) FILTER (WHERE c.relkind = 'r') AS tables_r
-FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       count(*) FILTER (WHERE c.relkind IN ('r','p') AND c.relrowsecurity) AS rls_enabled,
+       count(*) FILTER (WHERE c.relkind IN ('r','p') AND c.relforcerowsecurity) AS rls_forced
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname NOT IN ('pg_catalog','information_schema');
 
-SELECT count(*) FILTER (WHERE c.relrowsecurity) AS rls_enabled,
-       count(*) FILTER (WHERE c.relforcerowsecurity) AS rls_forced
-FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema');
-
-SELECT count(*) AS policy_count FROM pg_policies
+SELECT count(*) AS policies
+FROM pg_policies
 WHERE schemaname NOT IN ('pg_catalog','information_schema');
 
-\echo '== 4. iam.core_tenant_plugins 状态（140000 前置）=='
-SELECT c.relrowsecurity, c.relforcerowsecurity
-FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-WHERE n.nspname='iam' AND c.relname='core_tenant_plugins';
+\echo '== 3. archive schema 与簿记表（窗口前应不存在）=='
+SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'archive') AS archive_schema_exists,
+       (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'archive' AND c.relkind = 'r') AS archive_tables;
 
-SELECT a.attname, a.attnotnull, format_type(a.atttypid,a.atttypmod) AS typ
-FROM pg_attribute a
-WHERE a.attrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='iam' AND c.relname='core_tenant_plugins') AND a.attnum > 0 AND NOT a.attisdropped
-ORDER BY a.attnum;
+\echo '== 4. 三批汇总（在位 / 缺失 / RLS / 策略 / 入向 FK / 外部 FK / 视图 / 触发器）=='
+WITH b(sch, tbl, wave) AS (
+  SELECT sch, tbl, 'W1' FROM (VALUES
+    ('doc','document_versions'),('doc','documents'),('doc','folders'),('doc','templates'),
+    ('doc_service','archives'),('doc_service','files'),('doc_service','folders'),('doc_service','templates'),
+    ('flow','notifications'),('flow','workflows'),('iam','permissions'),
+    ('mail','emails'),('mail','templates'),('notification','notifications'),
+    ('report','reports'),('storage','files')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W2' FROM (VALUES
+    ('analytics','analytics_comparison_analyses'),('analytics','analytics_comparison_results'),('analytics','analytics_dashboard_shares'),('analytics','analytics_dashboard_templates'),('analytics','analytics_dashboards'),('analytics','analytics_datasets'),('analytics','analytics_datasources'),('analytics','analytics_drilldown_history'),('analytics','analytics_drilldown_paths'),('analytics','analytics_row_level_permissions'),('analytics','analytics_self_service_reports'),('analytics','analytics_sync_records'),('analytics','analytics_widgets'),('analytics','report_schedules'),('analytics','report_subscriptions'),('analytics','report_templates'),('analytics','reports'),('communication','core_email_templates'),('doc_service','core_doc_documents'),('doc_service','core_doc_folders'),('doc_service','core_doc_templates'),('flow','approval_records'),('flow','approvals'),('flow','audit_logs'),('flow','core_file_folders'),('flow','core_file_permissions'),('flow','core_files'),('flow','core_flow_delegates'),('flow','core_flow_rules'),('flow','core_flow_variable_history'),('flow','core_flow_variables'),('flow','core_master_data_refs'),('flow','core_mdm_reconciliation_log'),('flow','core_migration_history'),('flow','core_workflow_instances'),('flow','core_workflow_tasks'),('flow','core_workflow_versions'),('flow','core_workflows'),('iam','audit_logs'),('iam','auth_sessions'),('iam','core_billing_invoices'),('iam','core_billing_plans'),('iam','core_chat_members'),('iam','core_chat_messages'),('iam','core_chat_rooms'),('iam','core_dashboard_refresh_log'),('iam','core_dict_items'),('iam','core_dict_types'),('iam','core_email_queue'),('iam','core_email_templates'),('iam','core_emails'),('iam','core_faqs'),('iam','core_file_folders'),('iam','core_files'),('iam','core_guide_lessons'),('iam','core_guide_progress'),('iam','core_guides'),('iam','core_inter_module_sync'),('iam','core_login_logs'),('iam','core_menu_groups'),('iam','core_menus'),('iam','core_migration_history'),('iam','core_mobile_offline_records'),('iam','core_notification_templates'),('iam','core_notifications'),('iam','core_plugin_categories'),('iam','core_plugin_instances'),('iam','core_plugin_permissions'),('iam','core_plugin_pricing'),('iam','core_plugin_reviews'),('iam','core_plugin_versions'),('iam','core_plugins'),('iam','core_subscriptions'),('iam','core_tenant_modules'),('iam','core_tenant_settings'),('iam','core_tenant_usage'),('iam','core_tenant_users'),('iam','core_usage_records'),('iam','core_workflow_instances'),('iam','core_workflow_tasks'),('iam','core_workflows'),('iam','crm_dashboard_snapshots'),('iam','data_permissions'),('iam','dynamic_data'),('iam','ehs_dashboard_snapshots'),('iam','hrm_dashboard_snapshots'),('iam','lims_dashboard_snapshots'),('iam','password_reset_tokens'),('iam','pdm_dashboard_snapshots'),('iam','permission_audit_logs'),('iam','permission_templates'),('iam','refresh_tokens'),('iam','schema_registry'),('iam','sessions'),('iam','tenant_users'),('iam','user_access_logs'),('iam','user_roles'),('iam','wms_dashboard_snapshots'),('plugin_erp','accounting_subjects'),('plugin_finance','difference_adjustments'),('plugin_finance','reconciliation_item_snapshots'),('plugin_finance','reconciliation_settlement_links'),('plugin_finance','reconciliation_snapshots'),('plugin_finance','settlement_snapshots'),('plugin_finance','source_amount_snapshots'),('plugin_mes','audit_logs'),('plugin_wms','purchase_order_snapshots'),('unified_core','documents')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W3' FROM (VALUES
+    ('flow','core_tenants'),('iam','core_tenants'),('iam','core_users'),
+    ('iam','core_user_roles'),
+    ('flow','_deprecated_core_tenant_modules'),('flow','_deprecated_core_tenant_settings'),
+    ('flow','_deprecated_core_tenant_usage'),('flow','_deprecated_core_tenant_users')
+  ) v(sch, tbl)
+),
+pres AS (
+  SELECT b.wave,
+         count(*) AS total,
+         count(c.oid) AS present,
+         count(*) FILTER (WHERE c.oid IS NOT NULL AND c.relrowsecurity) AS rls_tables,
+         count(*) FILTER (WHERE c.oid IS NOT NULL AND has_table_privilege(c.oid, 'SELECT')) AS readable
+  FROM b
+  LEFT JOIN pg_namespace n ON n.nspname = b.sch
+  LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = b.tbl AND c.relkind = 'r'
+  GROUP BY b.wave
+),
+pol AS (
+  SELECT b.wave, count(*) AS policies
+  FROM b
+  JOIN pg_policies p ON p.schemaname = b.sch AND p.tablename = b.tbl
+  GROUP BY b.wave
+),
+fk AS (
+  SELECT b.wave,
+         count(*) AS inbound_fk,
+         count(*) FILTER (WHERE NOT EXISTS (
+           SELECT 1
+           FROM pg_class rc
+           JOIN pg_namespace rn ON rn.oid = rc.relnamespace
+           JOIN b b2 ON b2.wave = b.wave AND b2.sch = rn.nspname AND b2.tbl = rc.relname
+           WHERE rc.oid = k.conrelid
+         )) AS external_fk
+  FROM b
+  JOIN pg_namespace tn ON tn.nspname = b.sch
+  JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+  JOIN pg_constraint k ON k.confrelid = t.oid AND k.contype = 'f'
+  GROUP BY b.wave
+),
+vw AS (
+  SELECT b.wave, count(DISTINCT v.oid) AS dependent_views
+  FROM b
+  JOIN pg_namespace tn ON tn.nspname = b.sch
+  JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+  JOIN pg_depend d ON d.refobjid = t.oid AND d.classid = 'pg_class'::regclass
+  JOIN pg_rewrite rw ON rw.oid = d.objid
+  JOIN pg_class v ON v.oid = rw.ev_class
+  WHERE v.relkind IN ('v','m') AND v.oid <> t.oid
+  GROUP BY b.wave
+),
+tg AS (
+  SELECT b.wave, count(*) AS triggers
+  FROM b
+  JOIN pg_namespace tn ON tn.nspname = b.sch
+  JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+  JOIN pg_trigger g ON g.tgrelid = t.oid AND NOT g.tgisinternal
+  GROUP BY b.wave
+)
+SELECT w.wave,
+       p.total,
+       p.present,
+       p.total - p.present AS missing,
+       p.rls_tables,
+       coalesce(pol.policies, 0) AS policies,
+       coalesce(fk.inbound_fk, 0) AS inbound_fk,
+       coalesce(fk.external_fk, 0) AS external_fk,
+       coalesce(vw.dependent_views, 0) AS dependent_views,
+       coalesce(tg.triggers, 0) AS triggers
+FROM (VALUES ('W1'), ('W2'), ('W3')) w(wave)
+LEFT JOIN pres p ON p.wave = w.wave
+LEFT JOIN pol ON pol.wave = w.wave
+LEFT JOIN fk  ON fk.wave  = w.wave
+LEFT JOIN vw  ON vw.wave  = w.wave
+LEFT JOIN tg  ON tg.wave  = w.wave
+ORDER BY w.wave;
+-- 期望：W1 16/16、W2 108/108、W3 8/8；W1/W2 external_fk=0；dependent_views 全 0；triggers 全 0
+-- W3 external_fk=8 是窗口前的正确值（7 来自 W2 + 1 core_tenant_plugins），W2 应用后应降为 0
+-- 窗口前 RLS/策略：W1 16/16、W2 30/31、W3 0/0
 
-SELECT policyname, cmd, qual, with_check FROM pg_policies
-WHERE schemaname='iam' AND tablename='core_tenant_plugins' ORDER BY policyname;
+\echo '== 4.5 缺失表（期望 0 行）=='
+WITH b(sch, tbl, wave) AS (
+  SELECT sch, tbl, 'W1' FROM (VALUES
+    ('doc','document_versions'),('doc','documents'),('doc','folders'),('doc','templates'),
+    ('doc_service','archives'),('doc_service','files'),('doc_service','folders'),('doc_service','templates'),
+    ('flow','notifications'),('flow','workflows'),('iam','permissions'),
+    ('mail','emails'),('mail','templates'),('notification','notifications'),
+    ('report','reports'),('storage','files')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W2' FROM (VALUES
+    ('analytics','analytics_comparison_analyses'),('analytics','analytics_comparison_results'),('analytics','analytics_dashboard_shares'),('analytics','analytics_dashboard_templates'),('analytics','analytics_dashboards'),('analytics','analytics_datasets'),('analytics','analytics_datasources'),('analytics','analytics_drilldown_history'),('analytics','analytics_drilldown_paths'),('analytics','analytics_row_level_permissions'),('analytics','analytics_self_service_reports'),('analytics','analytics_sync_records'),('analytics','analytics_widgets'),('analytics','report_schedules'),('analytics','report_subscriptions'),('analytics','report_templates'),('analytics','reports'),('communication','core_email_templates'),('doc_service','core_doc_documents'),('doc_service','core_doc_folders'),('doc_service','core_doc_templates'),('flow','approval_records'),('flow','approvals'),('flow','audit_logs'),('flow','core_file_folders'),('flow','core_file_permissions'),('flow','core_files'),('flow','core_flow_delegates'),('flow','core_flow_rules'),('flow','core_flow_variable_history'),('flow','core_flow_variables'),('flow','core_master_data_refs'),('flow','core_mdm_reconciliation_log'),('flow','core_migration_history'),('flow','core_workflow_instances'),('flow','core_workflow_tasks'),('flow','core_workflow_versions'),('flow','core_workflows'),('iam','audit_logs'),('iam','auth_sessions'),('iam','core_billing_invoices'),('iam','core_billing_plans'),('iam','core_chat_members'),('iam','core_chat_messages'),('iam','core_chat_rooms'),('iam','core_dashboard_refresh_log'),('iam','core_dict_items'),('iam','core_dict_types'),('iam','core_email_queue'),('iam','core_email_templates'),('iam','core_emails'),('iam','core_faqs'),('iam','core_file_folders'),('iam','core_files'),('iam','core_guide_lessons'),('iam','core_guide_progress'),('iam','core_guides'),('iam','core_inter_module_sync'),('iam','core_login_logs'),('iam','core_menu_groups'),('iam','core_menus'),('iam','core_migration_history'),('iam','core_mobile_offline_records'),('iam','core_notification_templates'),('iam','core_notifications'),('iam','core_plugin_categories'),('iam','core_plugin_instances'),('iam','core_plugin_permissions'),('iam','core_plugin_pricing'),('iam','core_plugin_reviews'),('iam','core_plugin_versions'),('iam','core_plugins'),('iam','core_subscriptions'),('iam','core_tenant_modules'),('iam','core_tenant_settings'),('iam','core_tenant_usage'),('iam','core_tenant_users'),('iam','core_usage_records'),('iam','core_workflow_instances'),('iam','core_workflow_tasks'),('iam','core_workflows'),('iam','crm_dashboard_snapshots'),('iam','data_permissions'),('iam','dynamic_data'),('iam','ehs_dashboard_snapshots'),('iam','hrm_dashboard_snapshots'),('iam','lims_dashboard_snapshots'),('iam','password_reset_tokens'),('iam','pdm_dashboard_snapshots'),('iam','permission_audit_logs'),('iam','permission_templates'),('iam','refresh_tokens'),('iam','schema_registry'),('iam','sessions'),('iam','tenant_users'),('iam','user_access_logs'),('iam','user_roles'),('iam','wms_dashboard_snapshots'),('plugin_erp','accounting_subjects'),('plugin_finance','difference_adjustments'),('plugin_finance','reconciliation_item_snapshots'),('plugin_finance','reconciliation_settlement_links'),('plugin_finance','reconciliation_snapshots'),('plugin_finance','settlement_snapshots'),('plugin_finance','source_amount_snapshots'),('plugin_mes','audit_logs'),('plugin_wms','purchase_order_snapshots'),('unified_core','documents')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W3' FROM (VALUES
+    ('flow','core_tenants'),('iam','core_tenants'),('iam','core_users'),
+    ('iam','core_user_roles'),
+    ('flow','_deprecated_core_tenant_modules'),('flow','_deprecated_core_tenant_settings'),
+    ('flow','_deprecated_core_tenant_usage'),('flow','_deprecated_core_tenant_users')
+  ) v(sch, tbl)
+)
+SELECT b.wave, b.sch, b.tbl
+FROM b
+LEFT JOIN pg_namespace n ON n.nspname = b.sch
+LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = b.tbl AND c.relkind = 'r'
+WHERE c.oid IS NULL
+ORDER BY 1, 2, 3;
 
-SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
-WHERE conrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='iam' AND c.relname='core_tenant_plugins') ORDER BY conname;
+\echo '== 5. W3 依赖面：分目标入向 FK（窗口前 8/1/4，W2 后 1/1/4）=='
+WITH w3t(sch, tbl, label) AS (VALUES
+  ('iam','core_tenants','iam.core_tenants'),
+  ('iam','core_users','iam.core_users'),
+  ('flow','core_tenants','flow.core_tenants')
+)
+SELECT w.label,
+       count(k.oid) AS inbound_fk
+FROM w3t w
+LEFT JOIN pg_namespace n ON n.nspname = w.sch
+LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = w.tbl AND c.relkind = 'r'
+LEFT JOIN pg_constraint k ON k.confrelid = c.oid AND k.contype = 'f'
+GROUP BY w.label
+ORDER BY w.label;
 
-SELECT indexname, indexdef FROM pg_indexes
-WHERE schemaname='iam' AND tablename='core_tenant_plugins' ORDER BY indexname;
-
-\echo '== 5. 第 1 波其余前置 =='
-\echo '-- 5.1 iam.resource_permissions（20261119010000 前置）'
-SELECT a.attname, a.attnotnull, format_type(a.atttypid,a.atttypmod) AS typ
-FROM pg_attribute a
-WHERE a.attrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='iam' AND c.relname='resource_permissions') AND a.attnum > 0 AND NOT a.attisdropped
-ORDER BY a.attnum;
-SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
-WHERE conrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='iam' AND c.relname='resource_permissions') ORDER BY conname;
-SELECT indexname FROM pg_indexes
-WHERE schemaname='iam' AND tablename='resource_permissions' ORDER BY indexname;
-SELECT code FROM public.core_permissions WHERE code LIKE 'iam:resource_acl:%' ORDER BY code;
-
-\echo '-- 5.2 erp.sales_orders / erp.sales_order_items（120000 前置）'
-SELECT (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='erp' AND c.relname='sales_orders') AS sales_orders_present,
-       (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='erp' AND c.relname='sales_order_items') AS sales_order_items_present;
-SELECT c.relrowsecurity, c.relforcerowsecurity
-FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='erp' AND c.relname='sales_orders';
-
--- 目标清单来自迁移文件自身的 v_targets / v_dropped 数组（提取命令见 runbook §2.3）
--- 临时清单表只在会话内存在，不写生产；构造期间关闭 read-only，构造完成后立即恢复。
-SET default_transaction_read_only = off;
-CREATE TEMP TABLE _pf_b1_targets(sch text, tbl text, legacy text);
-INSERT INTO _pf_b1_targets(sch,tbl,legacy) VALUES
-  ('bi','report_templates','tenant_isolation_report_templates'),
-  ('communication','notification_channels','tenant_isolation_notification_channels'),
-  ('crm','contacts','tenant_isolation_contacts'),
-  ('crm','customer_finance','tenant_isolation_customer_finance'),
-  ('crm','customer_tags','tenant_isolation_customer_tags'),
-  ('crm','interactions','tenant_isolation_interactions'),
-  ('crm','opportunities','tenant_isolation_opportunities'),
-  ('crm','tags','tenant_isolation_tags'),
-  ('erp','announcements','tenant_isolation_announcements'),
-  ('erp','assets','tenant_isolation_assets'),
-  ('erp','fin_reconciliations','tenant_isolation_fin_reconciliations'),
-  ('erp','inventory','tenant_isolation_inventory'),
-  ('erp','materials','tenant_isolation_materials'),
-  ('erp','purchase_orders','tenant_isolation_purchase_orders'),
-  ('erp','voucher_items','tenant_isolation_voucher_items'),
-  ('hrm','attendance_records','tenant_isolation_attendance_records'),
-  ('hrm','candidates','tenant_isolation_candidates'),
-  ('hrm','companies','tenant_isolation_companies'),
-  ('hrm','contract_renewals','tenant_isolation_contract_renewals'),
-  ('hrm','contracts','tenant_isolation_contracts'),
-  ('hrm','departments','tenant_isolation_departments'),
-  ('hrm','employees','tenant_isolation_employees'),
-  ('hrm','interviews','tenant_isolation_interviews'),
-  ('hrm','job_openings','tenant_isolation_job_openings'),
-  ('hrm','leave_records','tenant_isolation_leave_records'),
-  ('hrm','payroll_details','tenant_isolation_payroll_details'),
-  ('hrm','payroll_items','tenant_isolation_payroll_items'),
-  ('hrm','payroll_records','tenant_isolation_payroll_records'),
-  ('hrm','payroll_runs','tenant_isolation_payroll_runs'),
-  ('hrm','performance_goals','tenant_isolation_performance_goals'),
-  ('hrm','performance_records','tenant_isolation_performance_records'),
-  ('hrm','performance_reviews','tenant_isolation_performance_reviews'),
-  ('hrm','positions','tenant_isolation_positions'),
-  ('hrm','recruitment_applications','tenant_isolation_recruitment_applications'),
-  ('hrm','recruitment_records','tenant_isolation_recruitment_records'),
-  ('hrm','salary_adjustments','tenant_isolation_salary_adjustments'),
-  ('hrm','training_courses','tenant_isolation_training_courses'),
-  ('hrm','training_participants','tenant_isolation_training_participants'),
-  ('hrm','training_plans','tenant_isolation_training_plans'),
-  ('hrm','training_records','tenant_isolation_training_records'),
-  ('iam','permission_audit_logs','tenant_isolation_permission_audit_logs'),
-  ('iam','position_permissions','tenant_isolation_position_permissions'),
-  ('iam','position_roles','tenant_isolation_position_roles'),
-  ('iam','positions','tenant_isolation_positions'),
-  ('iam','resource_permissions','tenant_isolation_resource_permissions'),
-  ('iam','user_positions','tenant_isolation_user_positions'),
-  ('master_data','materials','tenant_isolation_materials'),
-  ('master_data','samples','tenant_isolation_samples'),
-  ('master_data','uoms','tenant_isolation_uoms'),
-  ('public','_archive_core_workflow_versions','tenant_isolation_core_workflow_versions'),
-  ('public','tenant_permissions','tenant_isolation_tenant_permissions'),
-  ('qms','qa_audit_findings','tenant_isolation_qa_audit_findings'),
-  ('qms','qa_audit_plans','tenant_isolation_qa_audit_plans'),
-  ('qms','qa_audit_tasks','tenant_isolation_qa_audit_tasks'),
-  ('qms','qa_corrective_action_items','tenant_isolation_qa_corrective_action_items'),
-  ('qms','qa_corrective_actions','tenant_isolation_qa_corrective_actions'),
-  ('qms','qa_eightd_audit_logs','tenant_isolation_qa_eightd_audit_logs'),
-  ('qms','qa_eightd_reports','tenant_isolation_qa_eightd_reports'),
-  ('qms','qa_fmea_analyses','tenant_isolation_qa_fmea_analyses'),
-  ('qms','qa_fmea_items','tenant_isolation_qa_fmea_items'),
-  ('qms','qa_inspection_audits','tenant_isolation_qa_inspection_audits'),
-  ('qms','qa_inspection_results','tenant_isolation_qa_inspection_results'),
-  ('qms','qa_qms_sync_records','tenant_isolation_qa_qms_sync_records'),
-  ('qms','qa_quality_costs','tenant_isolation_qa_quality_costs'),
-  ('qms','qa_quality_inspections','tenant_isolation_qa_quality_inspections'),
-  ('qms','qa_quality_issues','tenant_isolation_qa_quality_issues'),
-  ('qms','qa_spc_charts','tenant_isolation_qa_spc_charts'),
-  ('qms','qa_spc_data_points','tenant_isolation_qa_spc_data_points'),
-  ('qms','qa_standard_revisions','tenant_isolation_qa_standard_revisions'),
-  ('qms','qa_standards','tenant_isolation_qa_standards'),
-  ('rs','change_requests','tenant_isolation_change_requests')
-;
-
-CREATE TEMP TABLE _pf_b1_dropped(sch text, tbl text);
-INSERT INTO _pf_b1_dropped(sch,tbl) VALUES
-  ('erp','voucher_items'),
-  ('hrm','payroll_records'),
-  ('hrm','performance_records'),
-  ('hrm','recruitment_applications'),
-  ('hrm','recruitment_records'),
-  ('hrm','training_participants'),
-  ('public','tenant_permissions')
-;
-
-CREATE TEMP TABLE _pf_b2_targets(sch text, tbl text, legacy text, col text);
-INSERT INTO _pf_b2_targets(sch,tbl,legacy,col) VALUES
-  ('analytics','analytics_comparison_analyses','tenant_isolation_analytics_comparison_analyses','tenant_id'),
-  ('analytics','analytics_comparison_results','tenant_isolation_analytics_comparison_results','tenant_id'),
-  ('analytics','analytics_dashboard_shares','tenant_isolation_analytics_dashboard_shares','tenant_id'),
-  ('analytics','analytics_dashboard_templates','tenant_isolation_analytics_dashboard_templates','tenant_id'),
-  ('analytics','analytics_dashboards','tenant_isolation_analytics_dashboards','tenant_id'),
-  ('analytics','analytics_datasources','tenant_isolation_analytics_datasources','tenant_id'),
-  ('analytics','analytics_drilldown_history','tenant_isolation_analytics_drilldown_history','tenant_id'),
-  ('analytics','analytics_drilldown_paths','tenant_isolation_analytics_drilldown_paths','tenant_id'),
-  ('analytics','analytics_row_level_permissions','tenant_isolation_analytics_row_level_permissions','tenant_id'),
-  ('analytics','analytics_self_service_reports','tenant_isolation_analytics_self_service_reports','tenant_id'),
-  ('analytics','analytics_widgets','tenant_isolation_analytics_widgets','tenant_id'),
-  ('bi','analytics_dashboards','tenant_isolation_analytics_dashboards','tenant_id'),
-  ('bi','analytics_datasources','tenant_isolation_analytics_datasources','tenant_id'),
-  ('bi','analytics_widgets','tenant_isolation_analytics_widgets','tenant_id'),
-  ('communication','core_notification_deliveries','notification_deliveries_tenant_isolation','tenant_id'),
-  ('communication','core_notification_preferences','notification_preferences_tenant_isolation','tenant_id'),
-  ('communication','core_notification_subscriptions','notification_subscriptions_tenant_isolation','tenant_id'),
-  ('core','ai_conversations','tenant_isolation_ai_conversations','ai_conversations_tenant_isolation'),
-  ('core','ai_faqs','tenant_isolation_core_ai_faqs','tenant_id'),
-  ('core','user_preferences','tenant_isolation_user_preferences','tenant_id'),
-  ('crm','contracts','tenant_isolation_contracts','tenant_id'),
-  ('crm','customer_recommendations','tenant_isolation_customer_recommendations','tenant_id'),
-  ('crm','customer_segments','tenant_isolation_customer_segments','tenant_id'),
-  ('erp','bank_accounts','tenant_isolation_bank_accounts','tenant_id'),
-  ('erp','erp_production_orders','tenant_isolation','tenant_id'),
-  ('erp','inventory_items','tenant_isolation_inventory_items','tenant_id'),
-  ('hrm','hrm_cache_invalidation_logs','tenant_isolation','tenant_id'),
-  ('hrm','initialization_status','tenant_isolation_initialization_status','tenant_id'),
-  ('iam','data_permissions','tenant_isolation_data_permissions','tenant_id'),
-  ('iam','permission_templates','tenant_isolation_permission_templates','tenant_id'),
-  ('iam','tenant_users','tenant_isolation_tenant_users','tenant_id'),
-  ('master_data','mdm_ai_models','tenant_isolation_policy','tenant_isolation_mdm_ai_models'),
-  ('master_data','mdm_ai_suggestions','tenant_isolation_policy','tenant_isolation_mdm_ai_suggestions'),
-  ('master_data','mdm_api_exposures','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_api_products','mdm_api_products_tenant_policy','tenant_id'),
-  ('master_data','mdm_assets','mdm_assets_tenant_policy','tenant_id'),
-  ('master_data','mdm_audit_events','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_audit_export_logs','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_auto_fix_actions','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_bc_tests','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_change_events','mdm_change_events_tenant_policy','tenant_id'),
-  ('master_data','mdm_classification_models','tenant_isolation_policy','tenant_isolation_mdm_classification_models'),
-  ('master_data','mdm_classification_results','tenant_isolation_policy','tenant_isolation_mdm_classification_results'),
-  ('master_data','mdm_classifier_rules','tenant_isolation_policy','tenant_isolation_mdm_classifier_rules'),
-  ('master_data','mdm_continuity_plans','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_critical_functions','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_data_asset_categories','mdm_data_asset_categories_tenant_policy','tenant_id'),
-  ('master_data','mdm_data_contracts','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_data_permissions','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_data_products','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_dimension_scores','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_failover_records','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_fix_strategies','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_governance_insights','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_governance_suggestions','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_graph_communities','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_graph_edges','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_graph_nodes','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_impact_analyses','mdm_impact_analyses_tenant_policy','tenant_id'),
-  ('master_data','mdm_impact_simulations','mdm_impact_simulations_tenant_policy','tenant_id'),
-  ('master_data','mdm_improvement_plans','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_interactions','mdm_interactions_tenant_policy','tenant_id'),
-  ('master_data','mdm_kg_edges','mdm_kg_edges_tenant_policy','tenant_id'),
-  ('master_data','mdm_kg_graphs','mdm_kg_graphs_tenant_policy','tenant_id'),
-  ('master_data','mdm_kg_nodes','mdm_kg_nodes_tenant_policy','tenant_id'),
-  ('master_data','mdm_lifecycle_history','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_lifecycle_policies','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_lifecycle_stages','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_lineage_edges','mdm_lineage_edges_tenant_policy','tenant_id'),
-  ('master_data','mdm_lineage_graphs','mdm_lineage_graphs_tenant_policy','tenant_id'),
-  ('master_data','mdm_lineage_nodes','mdm_lineage_nodes_tenant_policy','tenant_id'),
-  ('master_data','mdm_match_results','tenant_isolation_policy','tenant_isolation_mdm_match_results'),
-  ('master_data','mdm_match_rules','tenant_isolation_policy','tenant_isolation_mdm_match_rules'),
-  ('master_data','mdm_maturity_assessments','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_maturity_history','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_metadata_attributes','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_metadata_tags','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_permission_roles','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_propagation_logs','mdm_propagation_logs_tenant_policy','tenant_id'),
-  ('master_data','mdm_propagation_rules','mdm_propagation_rules_tenant_policy','tenant_id'),
-  ('master_data','mdm_quality_checks','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_quality_loop_configs','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_rate_cards','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_recommendations','mdm_recommendations_tenant_policy','tenant_id'),
-  ('master_data','mdm_recovery_plans','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_recovery_points','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_region_configs','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_replication_configs','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_search_history','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_search_indexes','mdm_search_indexes_tenant_policy','tenant_id'),
-  ('master_data','mdm_semantic_search_indexes','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_sla_configs','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_supplier_categories','tenant_isolation_mdm_supplier_categories','tenant_id'),
-  ('master_data','mdm_suppliers','tenant_isolation_mdm_suppliers','tenant_id'),
-  ('master_data','mdm_sync_dead_letter','tenant_isolation_mdm_sync_dead_letter','tenant_id'),
-  ('master_data','mdm_tag_rules','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_tagged_entities','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_tags','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_user_role_assignments','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_v60_lineage_edges','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_v60_lineage_graphs','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_v60_lineage_nodes','tenant_isolation_policy','tenant_uid'),
-  ('master_data','mdm_version_branches','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_version_snapshots','mdm_version_snapshots_tenant_policy','tenant_id'),
-  ('master_data','mdm_workflow_history','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_workflow_templates','tenant_isolation_policy','tenant_id'),
-  ('master_data','mdm_workflows','tenant_isolation_policy','tenant_id'),
-  ('plugin_finance','accounting_subjects','tenant_isolation_accounting_subjects','tenant_id'),
-  ('plugin_finance','difference_adjustments','tenant_isolation_difference_adjustments','tenant_id'),
-  ('plugin_finance','reconciliation_item_snapshots','tenant_isolation_reconciliation_item_snapshots','tenant_id'),
-  ('plugin_finance','reconciliation_settlement_links','tenant_isolation_reconciliation_settlement_links','tenant_id'),
-  ('plugin_finance','reconciliation_snapshots','tenant_isolation_reconciliation_snapshots','tenant_id'),
-  ('plugin_finance','settlement_snapshots','tenant_isolation_settlement_snapshots','tenant_id'),
-  ('portal','portal_dashboard_stats','tenant_isolation_portal_dashboard_stats','tenant_id'),
-  ('portal','portal_notifications','tenant_isolation_portal_notifications','tenant_id'),
-  ('public','_archive_core_workflow_instances','tenant_isolation_core_workflow_instances','tenant_id'),
-  ('public','core_doc_documents','tenant_isolation_core_doc_documents','tenant_id'),
-  ('public','core_doc_folders','tenant_isolation_core_doc_folders','tenant_id'),
-  ('public','core_doc_templates','tenant_isolation_core_doc_templates','tenant_id'),
-  ('public','core_emails','tenant_isolation_core_emails','tenant_id'),
-  ('public','core_file_folders','tenant_isolation_core_file_folders','tenant_id'),
-  ('public','core_finance_accounts','tenant_isolation_core_finance_accounts','tenant_id'),
-  ('public','core_finance_vouchers','tenant_isolation_core_finance_vouchers','tenant_id'),
-  ('public','core_flow_categories','tenant_isolation_core_flow_categories','tenant_id'),
-  ('public','core_guide_lessons','tenant_isolation_core_guide_lessons','tenant_id'),
-  ('public','core_guide_progress','tenant_isolation_core_guide_progress','tenant_id'),
-  ('public','core_inter_module_sync','tenant_isolation_core_inter_module_sync','tenant_id'),
-  ('public','core_master_data_change_log','tenant_isolation_core_master_data_change_log','tenant_id'),
-  ('public','core_master_data_refs','tenant_isolation_core_master_data_refs','tenant_id'),
-  ('public','core_mdm_approvals','tenant_isolation_core_mdm_approvals','tenant_id'),
-  ('public','core_mdm_reconciliation_log','tenant_isolation_core_mdm_reconciliation_log','tenant_id'),
-  ('public','core_migration_history','tenant_isolation_core_migration_history','tenant_id'),
-  ('public','core_notification_templates','tenant_isolation_core_notification_templates','tenant_id'),
-  ('public','core_notifications','tenant_isolation_core_notifications','tenant_id'),
-  ('public','core_tenant_modules','tenant_isolation_core_tenant_modules','tenant_id'),
-  ('public','core_tenant_usage','tenant_isolation_core_tenant_usage','tenant_id'),
-  ('public','cqrs_events','tenant_isolation_cqrs_events','tenant_id'),
-  ('public','crm_dashboard_snapshots','tenant_isolation_crm_dashboard_snapshots','tenant_id'),
-  ('public','ehs_dashboard_snapshots','tenant_isolation_ehs_dashboard_snapshots','tenant_id'),
-  ('public','finance_voucher_templates','tenant_isolation_finance_voucher_templates','tenant_id'),
-  ('public','financial_reports','tenant_isolation_financial_reports','tenant_id'),
-  ('public','hrm_dashboard_snapshots','tenant_isolation_hrm_dashboard_snapshots','tenant_id'),
-  ('public','lims_dashboard_snapshots','tenant_isolation_lims_dashboard_snapshots','tenant_id'),
-  ('public','pdm_change_notices','tenant_isolation_pdm_change_notices','tenant_id'),
-  ('public','pdm_dashboard_snapshots','tenant_isolation_pdm_dashboard_snapshots','tenant_id'),
-  ('public','pdm_materials','tenant_isolation_pdm_materials','tenant_id'),
-  ('public','pdm_products','tenant_isolation_pdm_products','tenant_id'),
-  ('public','search_entity_projections','tenant_isolation_search_entity_projections','tenant_id'),
-  ('public','wms_dashboard_snapshots','tenant_isolation_wms_dashboard_snapshots','tenant_id'),
-  ('qms','qa_alert_messages','tenant_isolation_qa_alert_messages','tenant_id'),
-  ('qms','qa_alert_rules','tenant_isolation_qa_alert_rules','tenant_id'),
-  ('qms','qa_approval_events','tenant_isolation_qa_approval_events','tenant_id'),
-  ('qms','qa_apqp_phases','tenant_isolation_qa_apqp_phases','tenant_id'),
-  ('qms','qa_apqp_projects','tenant_isolation_qa_apqp_projects','tenant_id'),
-  ('qms','qa_apqp_risks','tenant_isolation_qa_apqp_risks','tenant_id'),
-  ('qms','qa_apqp_tasks','tenant_isolation_qa_apqp_tasks','tenant_id'),
-  ('rs','change_orders','tenant_isolation_change_orders','tenant_id'),
-  ('rs','material_tests','tenant_isolation_material_tests','tenant_id'),
-  ('rs','project_members','tenant_isolation_project_members','tenant_id'),
-  ('rs','project_milestones','tenant_isolation_project_milestones','tenant_id'),
-  ('rs','project_phases','tenant_isolation_project_phases','tenant_id'),
-  ('rs','projects','tenant_isolation_projects','tenant_id'),
-  ('rs','rs_experiments','tenant_isolation_rs_experiments','tenant_id'),
-  ('rs','rs_formulas','tenant_isolation_rs_formulas','tenant_id'),
-  ('rs','rs_projects','tenant_isolation_rs_projects','tenant_id'),
-  ('tms','carriers','tenant_isolation_carriers','tenant_id'),
-  ('tms','drivers','tenant_isolation_drivers','tenant_id')
-;
-
-CREATE TEMP TABLE _pf_b2_dropped(sch text, tbl text);
-INSERT INTO _pf_b2_dropped(sch,tbl) VALUES
-  ('public','core_file_folders'),
-  ('public','core_finance_vouchers'),
-  ('public','core_guide_lessons'),
-  ('public','core_guide_progress'),
-  ('public','core_inter_module_sync'),
-  ('public','core_mdm_reconciliation_log'),
-  ('public','cqrs_events'),
-  ('public','crm_dashboard_snapshots'),
-  ('public','ehs_dashboard_snapshots'),
-  ('public','finance_voucher_templates'),
-  ('public','financial_reports'),
-  ('public','hrm_dashboard_snapshots'),
-  ('public','lims_dashboard_snapshots'),
-  ('public','pdm_change_notices'),
-  ('public','pdm_dashboard_snapshots'),
-  ('public','pdm_materials'),
-  ('public','pdm_products'),
-  ('public','wms_dashboard_snapshots'),
-  ('tms','carriers'),
-  ('tms','drivers')
-;
-
--- 第 2 波：批 1 的 19 张（20261119100000）
-CREATE TEMP TABLE _pf_batch1(sch text, tbl text);
-INSERT INTO _pf_batch1(sch,tbl) VALUES
-  ('crm','crm_master_data_refs'), ('mes','dashboard_stats'), ('mes','financial_records'),
-  ('mes','material_requirement_items'), ('mes','supply_chain_orders'),
-  ('mobile','mobile_leave_applications'), ('pm','acceptances'), ('pm','documents'),
-  ('pm','pm_master_data_refs'), ('pm','service_integrations'), ('rs','equipment'),
-  ('rs','equipment_inspections'), ('rs','equipment_maintenance_records'),
-  ('shared','audit_logs'), ('tms','carriers'), ('tms','drivers'),
-  ('wms','transfer_items'), ('wms','transfers'), ('wms','wms_master_data_refs');
-
--- 第 2 波：零路径 16 张（20261119160000）
-CREATE TEMP TABLE _pf_zero(sch text, tbl text);
-INSERT INTO _pf_zero(sch,tbl) VALUES
-  ('doc','document_versions'), ('doc','documents'), ('doc','folders'), ('doc','templates'),
-  ('doc_service','archives'), ('doc_service','files'), ('doc_service','folders'), ('doc_service','templates'),
-  ('flow','notifications'), ('flow','workflows'), ('iam','permissions'),
-  ('mail','emails'), ('mail','templates'), ('notification','notifications'),
-  ('report','reports'), ('storage','files');
-
-SET default_transaction_read_only = on;
-
-\echo '-- 5.3 归一 batch1（20261119130000）：71 张目标前置读数'
-SELECT count(*) AS targets,
-       count(*) FILTER (WHERE present) AS present,
-       count(*) FILTER (WHERE NOT present AND known_dropped) AS missing_known_dropped,
-       count(*) FILTER (WHERE NOT present AND NOT known_dropped) AS missing_unexpected,
-       count(*) FILTER (WHERE present AND pols = 2) AS ok_two_policies,
-       count(*) FILTER (WHERE present AND pols <> 2) AS bad_policy_count
-FROM (
-  SELECT t.sch, t.tbl,
-         EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl) AS present,
-         (SELECT count(*) FROM pg_policies p WHERE p.schemaname=t.sch AND p.tablename=t.tbl) AS pols,
-         EXISTS (SELECT 1 FROM _pf_b1_dropped d WHERE d.sch=t.sch AND d.tbl=t.tbl) AS known_dropped
-  FROM _pf_b1_targets t
-) x;
-
-SELECT sch, tbl, pols AS policy_count
-FROM (
-  SELECT t.sch, t.tbl,
-         EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl) AS present,
-         (SELECT count(*) FROM pg_policies p WHERE p.schemaname=t.sch AND p.tablename=t.tbl) AS pols
-  FROM _pf_b1_targets t
-) x
-WHERE present AND pols <> 2 ORDER BY 1,2;
-
-\echo '-- 5.4 归一 batch2（20261119131000）：167 张目标前置读数'
-SELECT count(*) AS targets,
-       count(*) FILTER (WHERE present) AS present,
-       count(*) FILTER (WHERE NOT present AND known_dropped) AS missing_known_dropped,
-       count(*) FILTER (WHERE NOT present AND NOT known_dropped) AS missing_unexpected
-FROM (
-  SELECT t.sch, t.tbl,
-         EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl) AS present,
-         EXISTS (SELECT 1 FROM _pf_b2_dropped d WHERE d.sch=t.sch AND d.tbl=t.tbl) AS known_dropped
-  FROM _pf_b2_targets t
-) x;
-
-SELECT pols AS policy_count, count(*) AS tables
-FROM (
-  SELECT t.sch, t.tbl,
-         (SELECT count(*) FROM pg_policies p WHERE p.schemaname=t.sch AND p.tablename=t.tbl) AS pols
-  FROM _pf_b2_targets t
-  WHERE EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl)
-) x
-GROUP BY 1 ORDER BY 1;
-
-SELECT sch, tbl, pols AS policy_count
-FROM (
-  SELECT t.sch, t.tbl,
-         (SELECT count(*) FROM pg_policies p WHERE p.schemaname=t.sch AND p.tablename=t.tbl) AS pols
-  FROM _pf_b2_targets t
-  WHERE EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl)
-) x
-WHERE pols NOT IN (1,2) ORDER BY 1,2;
-
-\echo '-- 5.5 pdm.pdm_master_data_refs（150000 前置）'
-SELECT a.attname, a.attnotnull FROM pg_attribute a
-WHERE a.attrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pdm' AND c.relname='pdm_master_data_refs') AND a.attnum > 0 AND NOT a.attisdropped
-  AND a.attname = 'tenant_id';
-SELECT policyname, cmd, qual, with_check FROM pg_policies
-WHERE schemaname='pdm' AND tablename='pdm_master_data_refs' ORDER BY policyname;
-
-\echo '-- 5.6 mobile.oa_announcement_reads（151000 前置）'
-SELECT (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mobile' AND c.relname='oa_announcement_reads') AS tbl;
-SELECT a.attname, a.attnotnull, format_type(a.atttypid,a.atttypmod) AS typ
-FROM pg_attribute a
-WHERE a.attrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mobile' AND c.relname='oa_announcement_reads') AND a.attnum > 0 AND NOT a.attisdropped
-ORDER BY a.attnum;
-SELECT policyname, cmd, qual, with_check FROM pg_policies
-WHERE schemaname='mobile' AND tablename='oa_announcement_reads';
-
-\echo '-- 5.7 审计守卫（20261119141000 前置）'
-SELECT schemaname, tablename, policyname, cmd, qual, with_check FROM pg_policies
-WHERE (schemaname='public' AND tablename='core_login_logs')
-   OR (tablename IN ('audit_logs','audit_log') AND schemaname IN ('bi','flow','gis','iam','qms','shared'))
-ORDER BY schemaname, tablename, policyname;
-SELECT count(*) AS core_login_logs_policies FROM pg_policies
-WHERE schemaname='public' AND tablename='core_login_logs';
-
-\echo '-- 5.8 插件分类种子（20261119170000 前置）'
-SELECT (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='core' AND c.relname='core_plugin_categories') AS tbl;
-
-\echo '== 6. 第 2 波前置读数 =='
-\echo '-- 6.1 死表批 1：19 张现状（期望 present=19 / missing=0）'
-SELECT count(*) AS expected,
-       count(*) FILTER (WHERE EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl)) AS present,
-       count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl)) AS missing
-FROM _pf_batch1 t;
-SELECT sch, tbl FROM _pf_batch1 t
-WHERE NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl) ORDER BY 1,2;
-
-\echo '-- 6.2 零路径 16 张现状（期望 present=16 / missing=0）'
-SELECT count(*) AS expected,
-       count(*) FILTER (WHERE EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl)) AS present,
-       count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl)) AS missing
-FROM _pf_zero t;
-SELECT sch, tbl FROM _pf_zero t
-WHERE NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=t.sch AND c.relname=t.tbl) ORDER BY 1,2;
-
-\echo '-- 6.3 零路径 16 张：出入向 FK / 依赖视图（期望 0 / 0）'
-SELECT count(*) AS inbound_fks
+\echo '-- 5.1 W3 入向 FK 明细（窗口前 13 条 = 7 来自 W2 + 4 flow 引用方 + 1 core_user_roles + 1 core_tenant_plugins）'
+WITH w3t(sch, tbl) AS (VALUES
+  ('iam','core_tenants'), ('iam','core_users'), ('iam','core_user_roles'),
+  ('flow','core_tenants'),
+  ('flow','_deprecated_core_tenant_modules'), ('flow','_deprecated_core_tenant_settings'),
+  ('flow','_deprecated_core_tenant_usage'), ('flow','_deprecated_core_tenant_users')
+)
+SELECT format('%I.%I', rn.nspname, rc.relname) AS referencing_table,
+       k.conname,
+       format('%I.%I', tn.nspname, tc.relname) AS referenced_table
 FROM pg_constraint k
-JOIN pg_class tc ON tc.oid=k.confrelid JOIN pg_namespace tn ON tn.oid=tc.relnamespace
-JOIN _pf_zero z ON z.sch=tn.nspname AND z.tbl=tc.relname
-WHERE k.contype='f';
+JOIN pg_class tc ON tc.oid = k.confrelid
+JOIN pg_namespace tn ON tn.oid = tc.relnamespace
+JOIN w3t w ON w.sch = tn.nspname AND w.tbl = tc.relname
+JOIN pg_class rc ON rc.oid = k.conrelid
+JOIN pg_namespace rn ON rn.oid = rc.relnamespace
+WHERE k.contype = 'f'
+ORDER BY 1, 2;
 
-SELECT count(DISTINCT v.oid) AS dependent_views
-FROM pg_depend d
-JOIN pg_rewrite rw ON rw.oid=d.objid
-JOIN pg_class v ON v.oid=rw.ev_class
-JOIN pg_class t ON t.oid=d.refobjid JOIN pg_namespace tn ON tn.oid=t.relnamespace
-JOIN _pf_zero z ON z.sch=tn.nspname AND z.tbl=t.relname
-WHERE v.relkind IN ('v','m') AND v.oid <> t.oid;
+\echo '-- 5.2 public 权威表（4/4 必须存在）'
+SELECT v.sch, v.tbl,
+       EXISTS (SELECT 1 FROM pg_namespace n JOIN pg_class c ON c.relnamespace = n.oid
+               WHERE n.nspname = v.sch AND c.relname = v.tbl AND c.relkind = 'r') AS present
+FROM (VALUES
+  ('public','core_tenants'), ('public','core_users'),
+  ('public','core_user_roles'), ('public','core_tenant_plugins')
+) v(sch, tbl)
+ORDER BY 1, 2;
 
-\echo '-- 6.3a 死表批 1：入向 FK / 依赖视图（视图随表 DROP，回滚按 _view_snapshot 重建）'
-SELECT count(*) AS inbound_fks
+\echo '-- 5.3 iam.core_tenant_plugins 外键（窗口前必须指向 iam.core_tenants）'
+SELECT k.conname,
+       pg_get_constraintdef(k.oid) AS definition
 FROM pg_constraint k
-JOIN pg_class tc ON tc.oid=k.confrelid JOIN pg_namespace tn ON tn.oid=tc.relnamespace
-JOIN _pf_batch1 z ON z.sch=tn.nspname AND z.tbl=tc.relname
-WHERE k.contype='f';
+WHERE k.conrelid = (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = 'iam' AND c.relname = 'core_tenant_plugins')
+  AND k.contype = 'f'
+ORDER BY k.conname;
 
-SELECT DISTINCT vn.nspname AS view_schema, v.relname AS view_name, v.relkind::text AS kind
-FROM pg_depend d
-JOIN pg_rewrite rw ON rw.oid=d.objid
-JOIN pg_class v ON v.oid=rw.ev_class JOIN pg_namespace vn ON vn.oid=v.relnamespace
-JOIN pg_class t ON t.oid=d.refobjid JOIN pg_namespace tn ON tn.oid=t.relnamespace
-JOIN _pf_batch1 z ON z.sch=tn.nspname AND z.tbl=t.relname
-WHERE v.relkind IN ('v','m') AND v.oid <> t.oid
-ORDER BY 1,2;
+\echo '-- 5.4 finance.bootstrap_defaults() 引用面（窗口前 iam/flow/core_tenant_users/public 均须为 true）'
+SELECT p.oid::regprocedure AS function,
+       position('iam.core_tenants' in p.prosrc) > 0        AS refs_iam_tenants,
+       position('flow.core_tenants' in p.prosrc) > 0       AS refs_flow_tenants,
+       position('iam.core_tenant_users' in p.prosrc) > 0   AS refs_iam_tenant_users,
+       position('public.core_tenants' in p.prosrc) > 0     AS refs_public_tenants
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'finance' AND p.proname = 'bootstrap_defaults';
 
-\echo '-- 6.4 保留表 3 张现状（161000 前置）'
-SELECT schemaname, tablename, policyname, cmd, qual, with_check
-FROM pg_policies
-WHERE (schemaname, tablename) IN (VALUES
-  ('core','core_tenant_plugins'), ('portal','user_preferences'), ('iam','roles'))
-ORDER BY schemaname, tablename, policyname;
+\echo '-- 5.5 其他函数对三目标的引用（期望 0）'
+SELECT count(*) AS other_function_refs
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE (p.prosrc LIKE '%iam.core_tenants%'
+    OR p.prosrc LIKE '%iam.core_users%'
+    OR p.prosrc LIKE '%flow.core_tenants%')
+  AND NOT (n.nspname = 'finance' AND p.proname = 'bootstrap_defaults');
 
-SELECT n.nspname, c.relname, c.relrowsecurity, c.relforcerowsecurity
-FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE (n.nspname, c.relname) IN (VALUES
-  ('core','core_tenant_plugins'), ('portal','user_preferences'), ('iam','roles'))
-ORDER BY 1,2;
+\echo '== 6. W1/W2 批次外引用（external_fk 必须 0；W2 的 19 条 FK 必须全部在批次内）=='
+-- 明细已由第 4 节的 external_fk 汇总；此处给出 W2 批次内 FK 计数。
+WITH b(sch, tbl) AS (VALUES
+    ('analytics','analytics_comparison_analyses'),('analytics','analytics_comparison_results'),('analytics','analytics_dashboard_shares'),('analytics','analytics_dashboard_templates'),('analytics','analytics_dashboards'),('analytics','analytics_datasets'),('analytics','analytics_datasources'),('analytics','analytics_drilldown_history'),('analytics','analytics_drilldown_paths'),('analytics','analytics_row_level_permissions'),('analytics','analytics_self_service_reports'),('analytics','analytics_sync_records'),('analytics','analytics_widgets'),('analytics','report_schedules'),('analytics','report_subscriptions'),('analytics','report_templates'),('analytics','reports'),('communication','core_email_templates'),('doc_service','core_doc_documents'),('doc_service','core_doc_folders'),('doc_service','core_doc_templates'),('flow','approval_records'),('flow','approvals'),('flow','audit_logs'),('flow','core_file_folders'),('flow','core_file_permissions'),('flow','core_files'),('flow','core_flow_delegates'),('flow','core_flow_rules'),('flow','core_flow_variable_history'),('flow','core_flow_variables'),('flow','core_master_data_refs'),('flow','core_mdm_reconciliation_log'),('flow','core_migration_history'),('flow','core_workflow_instances'),('flow','core_workflow_tasks'),('flow','core_workflow_versions'),('flow','core_workflows'),('iam','audit_logs'),('iam','auth_sessions'),('iam','core_billing_invoices'),('iam','core_billing_plans'),('iam','core_chat_members'),('iam','core_chat_messages'),('iam','core_chat_rooms'),('iam','core_dashboard_refresh_log'),('iam','core_dict_items'),('iam','core_dict_types'),('iam','core_email_queue'),('iam','core_email_templates'),('iam','core_emails'),('iam','core_faqs'),('iam','core_file_folders'),('iam','core_files'),('iam','core_guide_lessons'),('iam','core_guide_progress'),('iam','core_guides'),('iam','core_inter_module_sync'),('iam','core_login_logs'),('iam','core_menu_groups'),('iam','core_menus'),('iam','core_migration_history'),('iam','core_mobile_offline_records'),('iam','core_notification_templates'),('iam','core_notifications'),('iam','core_plugin_categories'),('iam','core_plugin_instances'),('iam','core_plugin_permissions'),('iam','core_plugin_pricing'),('iam','core_plugin_reviews'),('iam','core_plugin_versions'),('iam','core_plugins'),('iam','core_subscriptions'),('iam','core_tenant_modules'),('iam','core_tenant_settings'),('iam','core_tenant_usage'),('iam','core_tenant_users'),('iam','core_usage_records'),('iam','core_workflow_instances'),('iam','core_workflow_tasks'),('iam','core_workflows'),('iam','crm_dashboard_snapshots'),('iam','data_permissions'),('iam','dynamic_data'),('iam','ehs_dashboard_snapshots'),('iam','hrm_dashboard_snapshots'),('iam','lims_dashboard_snapshots'),('iam','password_reset_tokens'),('iam','pdm_dashboard_snapshots'),('iam','permission_audit_logs'),('iam','permission_templates'),('iam','refresh_tokens'),('iam','schema_registry'),('iam','sessions'),('iam','tenant_users'),('iam','user_access_logs'),('iam','user_roles'),('iam','wms_dashboard_snapshots'),('plugin_erp','accounting_subjects'),('plugin_finance','difference_adjustments'),('plugin_finance','reconciliation_item_snapshots'),('plugin_finance','reconciliation_settlement_links'),('plugin_finance','reconciliation_snapshots'),('plugin_finance','settlement_snapshots'),('plugin_finance','source_amount_snapshots'),('plugin_mes','audit_logs'),('plugin_wms','purchase_order_snapshots'),('unified_core','documents')
+)
+SELECT count(*) AS inbound_fk_total,
+       count(*) FILTER (WHERE NOT EXISTS (
+         SELECT 1 FROM pg_class rc JOIN pg_namespace rn ON rn.oid = rc.relnamespace
+         JOIN b b2 ON b2.sch = rn.nspname AND b2.tbl = rc.relname
+         WHERE rc.oid = k.conrelid
+       )) AS inbound_fk_outside_batch
+FROM b
+JOIN pg_namespace tn ON tn.nspname = b.sch
+JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+JOIN pg_constraint k ON k.confrelid = t.oid AND k.contype = 'f';
+-- 期望：19 / 0
 
-\echo '-- 6.5 归档 schema 现状（第 2 波会写入）'
-SELECT (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='archive' AND c.relname='_drop_manifest') AS drop_manifest,
-       (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='archive' AND c.relname='_rls_policy_snapshot') AS rls_snapshot,
-       (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='archive' AND c.relname='_fk_snapshot') AS fk_snapshot,
-       (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='archive' AND c.relname='_view_snapshot') AS view_snapshot;
-SELECT count(*) AS archive_tables FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='archive' AND c.relkind='r';
+\echo '== 7. 行数门禁明细（每张必须 0；topems_drift 下显示 NO_PRIV，需 DBA 特权只读会话复跑）=='
+WITH b(sch, tbl, wave) AS (
+  SELECT sch, tbl, 'W1' FROM (VALUES
+    ('doc','document_versions'),('doc','documents'),('doc','folders'),('doc','templates'),
+    ('doc_service','archives'),('doc_service','files'),('doc_service','folders'),('doc_service','templates'),
+    ('flow','notifications'),('flow','workflows'),('iam','permissions'),
+    ('mail','emails'),('mail','templates'),('notification','notifications'),
+    ('report','reports'),('storage','files')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W2' FROM (VALUES
+    ('analytics','analytics_comparison_analyses'),('analytics','analytics_comparison_results'),('analytics','analytics_dashboard_shares'),('analytics','analytics_dashboard_templates'),('analytics','analytics_dashboards'),('analytics','analytics_datasets'),('analytics','analytics_datasources'),('analytics','analytics_drilldown_history'),('analytics','analytics_drilldown_paths'),('analytics','analytics_row_level_permissions'),('analytics','analytics_self_service_reports'),('analytics','analytics_sync_records'),('analytics','analytics_widgets'),('analytics','report_schedules'),('analytics','report_subscriptions'),('analytics','report_templates'),('analytics','reports'),('communication','core_email_templates'),('doc_service','core_doc_documents'),('doc_service','core_doc_folders'),('doc_service','core_doc_templates'),('flow','approval_records'),('flow','approvals'),('flow','audit_logs'),('flow','core_file_folders'),('flow','core_file_permissions'),('flow','core_files'),('flow','core_flow_delegates'),('flow','core_flow_rules'),('flow','core_flow_variable_history'),('flow','core_flow_variables'),('flow','core_master_data_refs'),('flow','core_mdm_reconciliation_log'),('flow','core_migration_history'),('flow','core_workflow_instances'),('flow','core_workflow_tasks'),('flow','core_workflow_versions'),('flow','core_workflows'),('iam','audit_logs'),('iam','auth_sessions'),('iam','core_billing_invoices'),('iam','core_billing_plans'),('iam','core_chat_members'),('iam','core_chat_messages'),('iam','core_chat_rooms'),('iam','core_dashboard_refresh_log'),('iam','core_dict_items'),('iam','core_dict_types'),('iam','core_email_queue'),('iam','core_email_templates'),('iam','core_emails'),('iam','core_faqs'),('iam','core_file_folders'),('iam','core_files'),('iam','core_guide_lessons'),('iam','core_guide_progress'),('iam','core_guides'),('iam','core_inter_module_sync'),('iam','core_login_logs'),('iam','core_menu_groups'),('iam','core_menus'),('iam','core_migration_history'),('iam','core_mobile_offline_records'),('iam','core_notification_templates'),('iam','core_notifications'),('iam','core_plugin_categories'),('iam','core_plugin_instances'),('iam','core_plugin_permissions'),('iam','core_plugin_pricing'),('iam','core_plugin_reviews'),('iam','core_plugin_versions'),('iam','core_plugins'),('iam','core_subscriptions'),('iam','core_tenant_modules'),('iam','core_tenant_settings'),('iam','core_tenant_usage'),('iam','core_tenant_users'),('iam','core_usage_records'),('iam','core_workflow_instances'),('iam','core_workflow_tasks'),('iam','core_workflows'),('iam','crm_dashboard_snapshots'),('iam','data_permissions'),('iam','dynamic_data'),('iam','ehs_dashboard_snapshots'),('iam','hrm_dashboard_snapshots'),('iam','lims_dashboard_snapshots'),('iam','password_reset_tokens'),('iam','pdm_dashboard_snapshots'),('iam','permission_audit_logs'),('iam','permission_templates'),('iam','refresh_tokens'),('iam','schema_registry'),('iam','sessions'),('iam','tenant_users'),('iam','user_access_logs'),('iam','user_roles'),('iam','wms_dashboard_snapshots'),('plugin_erp','accounting_subjects'),('plugin_finance','difference_adjustments'),('plugin_finance','reconciliation_item_snapshots'),('plugin_finance','reconciliation_settlement_links'),('plugin_finance','reconciliation_snapshots'),('plugin_finance','settlement_snapshots'),('plugin_finance','source_amount_snapshots'),('plugin_mes','audit_logs'),('plugin_wms','purchase_order_snapshots'),('unified_core','documents')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W3' FROM (VALUES
+    ('flow','core_tenants'),('iam','core_tenants'),('iam','core_users'),
+    ('iam','core_user_roles'),
+    ('flow','_deprecated_core_tenant_modules'),('flow','_deprecated_core_tenant_settings'),
+    ('flow','_deprecated_core_tenant_usage'),('flow','_deprecated_core_tenant_users')
+  ) v(sch, tbl)
+),
+x AS (
+  SELECT b.wave,
+         format('%I.%I', b.sch, b.tbl) AS object,
+         c.oid,
+         CASE
+           WHEN c.oid IS NULL THEN 'MISSING'
+           WHEN has_table_privilege(c.oid, 'SELECT') THEN 'READABLE'
+           ELSE 'NO_PRIV'
+         END AS access,
+         CASE
+           WHEN c.oid IS NULL THEN NULL
+           WHEN has_table_privilege(c.oid, 'SELECT')
+             THEN (xpath('/row/c/text()',
+                    query_to_xml(format('SELECT count(*) AS c FROM %I.%I', b.sch, b.tbl),
+                                 false, true, '')))[1]::text::bigint
+           ELSE NULL
+         END AS rows
+  FROM b
+  LEFT JOIN pg_namespace n ON n.nspname = b.sch
+  LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = b.tbl AND c.relkind = 'r'
+)
+SELECT wave, object, access, rows
+FROM x
+WHERE access <> 'READABLE' OR rows > 0
+ORDER BY wave, object;
+-- DBA 特权会话下期望：0 行（全部 READABLE 且 rows=0）
+-- topems_drift 下：132 行 NO_PRIV（预期）
+
+\echo '== 8. 环境变量 / 命令提醒（SQL 无法校验，开窗前人工确认）=='
+SELECT 'PGOPTIONS gate W1: -c app.drop_zero_path_tables_gate=zero-path-20261119' AS item
+UNION ALL SELECT 'PGOPTIONS gate W2: -c app.archive_legacy_copies_gate=legacy-copies-20261119'
+UNION ALL SELECT 'PGOPTIONS gate W3: -c app.tenant_unblock_archive_gate=tenant-unblock-20261119'
+UNION ALL SELECT 'PROD_CHANGE_TICKET W1: ZERO-PATH-20261119'
+UNION ALL SELECT 'PROD_CHANGE_TICKET W2: LEGACY-COPY-20261119'
+UNION ALL SELECT 'PROD_CHANGE_TICKET W3: TENANT-UNBLOCK-20261119'
+UNION ALL SELECT 'apply-forward.sh: --apply-deferred <version> --ticket <ticket> --allow-destructive=<version>'
+UNION ALL SELECT 'node: prod 主机必须可用，否则脚本 DENIED';
+
+\echo '== 9. 就绪门禁汇总（C1–C15、C17 必须 PASS；C16 特权会话下必须 PASS）=='
+WITH b(sch, tbl, wave) AS (
+  SELECT sch, tbl, 'W1' FROM (VALUES
+    ('doc','document_versions'),('doc','documents'),('doc','folders'),('doc','templates'),
+    ('doc_service','archives'),('doc_service','files'),('doc_service','folders'),('doc_service','templates'),
+    ('flow','notifications'),('flow','workflows'),('iam','permissions'),
+    ('mail','emails'),('mail','templates'),('notification','notifications'),
+    ('report','reports'),('storage','files')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W2' FROM (VALUES
+    ('analytics','analytics_comparison_analyses'),('analytics','analytics_comparison_results'),('analytics','analytics_dashboard_shares'),('analytics','analytics_dashboard_templates'),('analytics','analytics_dashboards'),('analytics','analytics_datasets'),('analytics','analytics_datasources'),('analytics','analytics_drilldown_history'),('analytics','analytics_drilldown_paths'),('analytics','analytics_row_level_permissions'),('analytics','analytics_self_service_reports'),('analytics','analytics_sync_records'),('analytics','analytics_widgets'),('analytics','report_schedules'),('analytics','report_subscriptions'),('analytics','report_templates'),('analytics','reports'),('communication','core_email_templates'),('doc_service','core_doc_documents'),('doc_service','core_doc_folders'),('doc_service','core_doc_templates'),('flow','approval_records'),('flow','approvals'),('flow','audit_logs'),('flow','core_file_folders'),('flow','core_file_permissions'),('flow','core_files'),('flow','core_flow_delegates'),('flow','core_flow_rules'),('flow','core_flow_variable_history'),('flow','core_flow_variables'),('flow','core_master_data_refs'),('flow','core_mdm_reconciliation_log'),('flow','core_migration_history'),('flow','core_workflow_instances'),('flow','core_workflow_tasks'),('flow','core_workflow_versions'),('flow','core_workflows'),('iam','audit_logs'),('iam','auth_sessions'),('iam','core_billing_invoices'),('iam','core_billing_plans'),('iam','core_chat_members'),('iam','core_chat_messages'),('iam','core_chat_rooms'),('iam','core_dashboard_refresh_log'),('iam','core_dict_items'),('iam','core_dict_types'),('iam','core_email_queue'),('iam','core_email_templates'),('iam','core_emails'),('iam','core_faqs'),('iam','core_file_folders'),('iam','core_files'),('iam','core_guide_lessons'),('iam','core_guide_progress'),('iam','core_guides'),('iam','core_inter_module_sync'),('iam','core_login_logs'),('iam','core_menu_groups'),('iam','core_menus'),('iam','core_migration_history'),('iam','core_mobile_offline_records'),('iam','core_notification_templates'),('iam','core_notifications'),('iam','core_plugin_categories'),('iam','core_plugin_instances'),('iam','core_plugin_permissions'),('iam','core_plugin_pricing'),('iam','core_plugin_reviews'),('iam','core_plugin_versions'),('iam','core_plugins'),('iam','core_subscriptions'),('iam','core_tenant_modules'),('iam','core_tenant_settings'),('iam','core_tenant_usage'),('iam','core_tenant_users'),('iam','core_usage_records'),('iam','core_workflow_instances'),('iam','core_workflow_tasks'),('iam','core_workflows'),('iam','crm_dashboard_snapshots'),('iam','data_permissions'),('iam','dynamic_data'),('iam','ehs_dashboard_snapshots'),('iam','hrm_dashboard_snapshots'),('iam','lims_dashboard_snapshots'),('iam','password_reset_tokens'),('iam','pdm_dashboard_snapshots'),('iam','permission_audit_logs'),('iam','permission_templates'),('iam','refresh_tokens'),('iam','schema_registry'),('iam','sessions'),('iam','tenant_users'),('iam','user_access_logs'),('iam','user_roles'),('iam','wms_dashboard_snapshots'),('plugin_erp','accounting_subjects'),('plugin_finance','difference_adjustments'),('plugin_finance','reconciliation_item_snapshots'),('plugin_finance','reconciliation_settlement_links'),('plugin_finance','reconciliation_snapshots'),('plugin_finance','settlement_snapshots'),('plugin_finance','source_amount_snapshots'),('plugin_mes','audit_logs'),('plugin_wms','purchase_order_snapshots'),('unified_core','documents')
+  ) v(sch, tbl)
+  UNION ALL
+  SELECT sch, tbl, 'W3' FROM (VALUES
+    ('flow','core_tenants'),('iam','core_tenants'),('iam','core_users'),
+    ('iam','core_user_roles'),
+    ('flow','_deprecated_core_tenant_modules'),('flow','_deprecated_core_tenant_settings'),
+    ('flow','_deprecated_core_tenant_usage'),('flow','_deprecated_core_tenant_users')
+  ) v(sch, tbl)
+),
+pres AS (
+  SELECT b.wave,
+         count(*) AS total,
+         count(c.oid) AS present,
+         count(*) FILTER (WHERE c.oid IS NOT NULL AND has_table_privilege(c.oid, 'SELECT')) AS readable
+  FROM b
+  LEFT JOIN pg_namespace n ON n.nspname = b.sch
+  LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = b.tbl AND c.relkind = 'r'
+  GROUP BY b.wave
+),
+pol AS (
+  SELECT b.wave, count(*) AS policies
+  FROM b
+  JOIN pg_policies p ON p.schemaname = b.sch AND p.tablename = b.tbl
+  GROUP BY b.wave
+),
+fk AS (
+  SELECT b.wave,
+         count(*) AS inbound_fk,
+         count(*) FILTER (WHERE NOT EXISTS (
+           SELECT 1 FROM pg_class rc
+           JOIN pg_namespace rn ON rn.oid = rc.relnamespace
+           JOIN b b2 ON b2.wave = b.wave AND b2.sch = rn.nspname AND b2.tbl = rc.relname
+           WHERE rc.oid = k.conrelid
+         )) AS external_fk
+  FROM b
+  JOIN pg_namespace tn ON tn.nspname = b.sch
+  JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+  JOIN pg_constraint k ON k.confrelid = t.oid AND k.contype = 'f'
+  GROUP BY b.wave
+),
+vw AS (
+  SELECT b.wave, count(DISTINCT v.oid) AS dependent_views
+  FROM b
+  JOIN pg_namespace tn ON tn.nspname = b.sch
+  JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+  JOIN pg_depend d ON d.refobjid = t.oid AND d.classid = 'pg_class'::regclass
+  JOIN pg_rewrite rw ON rw.oid = d.objid
+  JOIN pg_class v ON v.oid = rw.ev_class
+  WHERE v.relkind IN ('v','m') AND v.oid <> t.oid
+  GROUP BY b.wave
+),
+tg AS (
+  SELECT b.wave, count(*) AS triggers
+  FROM b
+  JOIN pg_namespace tn ON tn.nspname = b.sch
+  JOIN pg_class t ON t.relnamespace = tn.oid AND t.relname = b.tbl AND t.relkind = 'r'
+  JOIN pg_trigger g ON g.tgrelid = t.oid AND NOT g.tgisinternal
+  GROUP BY b.wave
+),
+rc AS (
+  SELECT b.wave,
+         count(*) AS total,
+         count(*) FILTER (WHERE c.oid IS NULL) AS missing,
+         count(*) FILTER (WHERE c.oid IS NOT NULL AND NOT has_table_privilege(c.oid, 'SELECT')) AS no_priv,
+         count(*) FILTER (WHERE c.oid IS NOT NULL AND has_table_privilege(c.oid, 'SELECT')
+           AND (CASE WHEN has_table_privilege(c.oid, 'SELECT')
+                     THEN (xpath('/row/c/text()',
+                            query_to_xml(format('SELECT count(*) AS c FROM %I.%I', b.sch, b.tbl),
+                                         false, true, '')))[1]::text::bigint
+                     ELSE 0 END) > 0) AS nonzero
+  FROM b
+  LEFT JOIN pg_namespace n ON n.nspname = b.sch
+  LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = b.tbl AND c.relkind = 'r'
+  GROUP BY b.wave
+),
+w3t(sch, tbl, label) AS (VALUES
+  ('iam','core_tenants','iam.core_tenants'),
+  ('iam','core_users','iam.core_users'),
+  ('flow','core_tenants','flow.core_tenants')
+),
+w3in AS (
+  SELECT w.label, count(k.oid) AS inbound_fk
+  FROM w3t w
+  LEFT JOIN pg_namespace n ON n.nspname = w.sch
+  LEFT JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = w.tbl AND c.relkind = 'r'
+  LEFT JOIN pg_constraint k ON k.confrelid = c.oid AND k.contype = 'f'
+  GROUP BY w.label
+),
+led AS (
+  SELECT
+    (SELECT count(*) FROM _sqlx_migrations) AS ledger_rows,
+    (SELECT count(*) FILTER (WHERE success) FROM _sqlx_migrations) AS ledger_success,
+    (SELECT count(*) FILTER (WHERE NOT success) FROM _sqlx_migrations) AS ledger_failed,
+    (SELECT max(version) FROM _sqlx_migrations) AS ledger_max,
+    (SELECT count(*) FROM _sqlx_migrations
+      WHERE version IN (20261119160000,20261119180000,20261119200000)) AS versions_present,
+    (SELECT count(*) FROM _sqlx_migrations
+      WHERE version IN (20261119160000,20261119180000,20261119200000) AND success) AS versions_success,
+    EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119160000 AND success) AS w1,
+    EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119180000 AND success) AS w2,
+    EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119200000 AND success) AS w3,
+    EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'archive') AS archive_schema,
+    (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'archive' AND c.relkind = 'r') AS archive_tables,
+    (SELECT count(*) FROM pg_class c
+      WHERE c.relkind IN ('r','p')
+        AND c.relnamespace NOT IN (SELECT oid FROM pg_namespace
+                                   WHERE nspname IN ('pg_catalog','information_schema'))) AS tables_rp,
+    (SELECT count(*) FROM pg_class c
+      WHERE c.relkind IN ('r','p') AND c.relrowsecurity
+        AND c.relnamespace NOT IN (SELECT oid FROM pg_namespace
+                                   WHERE nspname IN ('pg_catalog','information_schema'))) AS rls_enabled,
+    (SELECT count(*) FROM pg_policies
+      WHERE schemaname NOT IN ('pg_catalog','information_schema')) AS policies,
+    (SELECT count(*) FROM (VALUES
+        ('public','core_tenants'), ('public','core_users'),
+        ('public','core_user_roles'), ('public','core_tenant_plugins')
+      ) v(sch, tbl)
+      WHERE EXISTS (SELECT 1 FROM pg_namespace n JOIN pg_class c ON c.relnamespace = n.oid
+                    WHERE n.nspname = v.sch AND c.relname = v.tbl AND c.relkind = 'r')) AS auth_tables,
+    (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'finance' AND p.proname = 'bootstrap_defaults') AS fn_count,
+    (SELECT coalesce(bool_or(position('iam.core_tenants' in p.prosrc) > 0), false)
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'finance' AND p.proname = 'bootstrap_defaults') AS fn_iam,
+    (SELECT coalesce(bool_or(position('flow.core_tenants' in p.prosrc) > 0), false)
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'finance' AND p.proname = 'bootstrap_defaults') AS fn_flow,
+    (SELECT coalesce(bool_or(position('iam.core_tenant_users' in p.prosrc) > 0), false)
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'finance' AND p.proname = 'bootstrap_defaults') AS fn_tu,
+    (SELECT coalesce(bool_or(position('public.core_tenants' in p.prosrc) > 0), false)
+      FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'finance' AND p.proname = 'bootstrap_defaults') AS fn_pub,
+    (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE (p.prosrc LIKE '%iam.core_tenants%'
+          OR p.prosrc LIKE '%iam.core_users%'
+          OR p.prosrc LIKE '%flow.core_tenants%')
+        AND NOT (n.nspname = 'finance' AND p.proname = 'bootstrap_defaults')) AS other_fn_refs,
+    (SELECT pg_get_constraintdef(k.oid) FROM pg_constraint k
+      WHERE k.conrelid = (SELECT c.oid FROM pg_class c
+                          JOIN pg_namespace n ON n.oid = c.relnamespace
+                          WHERE n.nspname = 'iam' AND c.relname = 'core_tenant_plugins')
+        AND k.conname = 'core_tenant_plugins_tenant_id_fkey') AS plugin_fk_def
+)
+SELECT 'C1' AS id, '会话：topems_prod + 只读' AS item,
+       'db=topems_prod, ro=on' AS expected,
+       current_user || ' @ ' || current_database() || ' | ro=' ||
+       current_setting('transaction_read_only') AS actual,
+       CASE WHEN current_database() = 'topems_prod'
+                 AND current_setting('transaction_read_only') = 'on'
+            THEN 'PASS' ELSE 'FAIL' END AS status
+UNION ALL
+SELECT 'C2', '账本：721/721、max 20261119000002、failed 0',
+       '721/721/20261119000002/0',
+       led.ledger_rows || '/' || led.ledger_success || '/' ||
+       coalesce(led.ledger_max::text, '-') || '/' || led.ledger_failed,
+       CASE WHEN led.ledger_rows = 721 AND led.ledger_success = 721
+                 AND led.ledger_failed = 0 AND led.ledger_max = 20261119000002
+            THEN 'PASS' ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C3', '三条窗口版本均未应用', 'present=0',
+       'present=' || led.versions_present || ', success=' || led.versions_success,
+       CASE WHEN led.versions_present = 0 THEN 'PASS'
+            WHEN led.versions_success = led.versions_present THEN 'ALREADY_APPLIED'
+            ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C4', 'archive schema 不存在', 'absent',
+       CASE WHEN led.archive_schema THEN 'present' ELSE 'absent' END,
+       CASE WHEN NOT led.archive_schema THEN 'PASS' ELSE 'ALREADY_APPLIED' END
+FROM led
+UNION ALL
+SELECT 'C5', 'W1 16 张在位', '16/16',
+       coalesce((SELECT present::text FROM pres WHERE wave = 'W1'), '0') || '/16',
+       CASE WHEN led.w1 THEN 'ALREADY_APPLIED'
+            WHEN (SELECT present FROM pres WHERE wave = 'W1') = 16 THEN 'PASS'
+            ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C6', 'W2 108 张在位', '108/108',
+       coalesce((SELECT present::text FROM pres WHERE wave = 'W2'), '0') || '/108',
+       CASE WHEN led.w2 THEN 'ALREADY_APPLIED'
+            WHEN (SELECT present FROM pres WHERE wave = 'W2') = 108 THEN 'PASS'
+            ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C7', 'W3 8 张在位', '8/8',
+       coalesce((SELECT present::text FROM pres WHERE wave = 'W3'), '0') || '/8',
+       CASE WHEN led.w3 THEN 'ALREADY_APPLIED'
+            WHEN (SELECT present FROM pres WHERE wave = 'W3') = 8 THEN 'PASS'
+            ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C8', 'W1 批次外入向 FK / 依赖视图', '0 / 0',
+       coalesce((SELECT external_fk::text FROM fk WHERE wave = 'W1'), '0') || ' / ' ||
+       coalesce((SELECT dependent_views::text FROM vw WHERE wave = 'W1'), '0'),
+       CASE WHEN coalesce((SELECT external_fk FROM fk WHERE wave = 'W1'), 0) = 0
+                 AND coalesce((SELECT dependent_views FROM vw WHERE wave = 'W1'), 0) = 0
+            THEN 'PASS' ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C9', 'W2 入向 FK 19（全批次内）/ 视图 0 / 触发器 0', '19 / 0 / 0 / 0',
+       coalesce((SELECT inbound_fk::text FROM fk WHERE wave = 'W2'), '0') || ' / ' ||
+       coalesce((SELECT external_fk::text FROM fk WHERE wave = 'W2'), '0') || ' / ' ||
+       coalesce((SELECT dependent_views::text FROM vw WHERE wave = 'W2'), '0') || ' / ' ||
+       coalesce((SELECT triggers::text FROM tg WHERE wave = 'W2'), '0'),
+       CASE WHEN led.w2 THEN 'ALREADY_APPLIED'
+            WHEN coalesce((SELECT inbound_fk FROM fk WHERE wave = 'W2'), 0) = 19
+                 AND coalesce((SELECT external_fk FROM fk WHERE wave = 'W2'), 0) = 0
+                 AND coalesce((SELECT dependent_views FROM vw WHERE wave = 'W2'), 0) = 0
+                 AND coalesce((SELECT triggers FROM tg WHERE wave = 'W2'), 0) = 0
+            THEN 'PASS' ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C10', 'W3 分目标入向 FK（窗口前 8/1/4；W2 后 1/1/4）',
+       'pre 8/1/4；post-W2 1/1/4',
+       coalesce((SELECT inbound_fk::text FROM w3in WHERE label = 'iam.core_tenants'), '0') || ' / ' ||
+       coalesce((SELECT inbound_fk::text FROM w3in WHERE label = 'iam.core_users'), '0') || ' / ' ||
+       coalesce((SELECT inbound_fk::text FROM w3in WHERE label = 'flow.core_tenants'), '0'),
+       CASE
+         WHEN led.w3 THEN 'ALREADY_APPLIED'
+         WHEN led.w2 AND (SELECT inbound_fk FROM w3in WHERE label = 'iam.core_tenants') = 1
+                     AND (SELECT inbound_fk FROM w3in WHERE label = 'iam.core_users') = 1
+                     AND (SELECT inbound_fk FROM w3in WHERE label = 'flow.core_tenants') = 4
+           THEN 'PASS'
+         WHEN NOT led.w2 AND (SELECT inbound_fk FROM w3in WHERE label = 'iam.core_tenants') = 8
+                          AND (SELECT inbound_fk FROM w3in WHERE label = 'iam.core_users') = 1
+                          AND (SELECT inbound_fk FROM w3in WHERE label = 'flow.core_tenants') = 4
+           THEN 'PASS_PRE'
+         ELSE 'FAIL'
+       END
+FROM led
+UNION ALL
+SELECT 'C11', 'public 权威表 4/4 存在', '4/4',
+       led.auth_tables || '/4',
+       CASE WHEN led.auth_tables = 4 THEN 'PASS' ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C12', '插件 FK 指向 iam.core_tenants（窗口前）', 'REFERENCES iam.core_tenants(id)',
+       coalesce(led.plugin_fk_def, 'missing'),
+       CASE WHEN led.plugin_fk_def IS NULL THEN 'FAIL'
+            WHEN led.w3 THEN CASE WHEN led.plugin_fk_def LIKE '%iam.core_tenants%'
+                                  THEN 'FAIL' ELSE 'ALREADY_APPLIED' END
+            ELSE CASE WHEN led.plugin_fk_def LIKE '%iam.core_tenants%'
+                      THEN 'PASS' ELSE 'FAIL' END END
+FROM led
+UNION ALL
+SELECT 'C13', 'bootstrap_defaults 引用面（窗口前含 iam/flow/legacy_users/public）',
+       'pre: T/T/T/T；post-W3: F/F/F/T',
+       led.fn_count || ' fn; ' ||
+       led.fn_iam::text || '/' || led.fn_flow::text || '/' || led.fn_tu::text || '/' || led.fn_pub::text,
+       CASE WHEN led.fn_count <> 1 THEN 'FAIL'
+            WHEN led.w3 THEN CASE WHEN NOT led.fn_iam AND NOT led.fn_flow
+                                   AND NOT led.fn_tu AND led.fn_pub
+                                  THEN 'ALREADY_APPLIED' ELSE 'FAIL' END
+            ELSE CASE WHEN led.fn_iam AND led.fn_flow AND led.fn_tu AND led.fn_pub
+                      THEN 'PASS' ELSE 'FAIL' END END
+FROM led
+UNION ALL
+SELECT 'C14', '其他函数引用三目标', '0',
+       led.other_fn_refs::text,
+       CASE WHEN led.other_fn_refs = 0 THEN 'PASS' ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C15', '全局 RLS / 策略按波次递减',
+       'pre 959/1050；W1 943/1034；W1+W2 913/1003',
+       led.rls_enabled || '/' || led.policies,
+       CASE WHEN led.rls_enabled =
+                  959 - (CASE WHEN led.w1 THEN 16 ELSE 0 END)
+                      - (CASE WHEN led.w2 THEN 30 ELSE 0 END)
+                 AND led.policies =
+                  1050 - (CASE WHEN led.w1 THEN 16 ELSE 0 END)
+                       - (CASE WHEN led.w2 THEN 31 ELSE 0 END)
+            THEN 'PASS' ELSE 'FAIL' END
+FROM led
+UNION ALL
+SELECT 'C16', '132 张表行数为 0（DROP 硬闸门）', '0',
+       'readable=' || coalesce((SELECT sum(total - no_priv - missing) FROM rc), 0)
+         || ', no_priv=' || coalesce((SELECT sum(no_priv) FROM rc), 0)
+         || ', nonzero=' || coalesce((SELECT sum(nonzero) FROM rc), 0)
+         || ', missing=' || coalesce((SELECT sum(missing) FROM rc), 0),
+       CASE WHEN coalesce((SELECT sum(no_priv) FROM rc), 0) > 0 THEN 'NEEDS_DBA'
+            WHEN coalesce((SELECT sum(missing) FROM rc), 0) > 0 THEN 'FAIL'
+            WHEN coalesce((SELECT sum(nonzero) FROM rc), 0) > 0 THEN 'FAIL'
+            ELSE 'PASS' END
+FROM led
+UNION ALL
+SELECT 'C17', 'archive 表数符合已应用波次', '0→22→130→139',
+       led.archive_tables::text,
+       CASE WHEN led.archive_tables =
+                  16 * (CASE WHEN led.w1 THEN 1 ELSE 0 END)
+                + 108 * (CASE WHEN led.w2 THEN 1 ELSE 0 END)
+                + 8 * (CASE WHEN led.w3 THEN 1 ELSE 0 END)
+                + 6 * (CASE WHEN led.w1 OR led.w2 THEN 1 ELSE 0 END)
+                + 1 * (CASE WHEN led.w3 THEN 1 ELSE 0 END)
+            THEN 'PASS' ELSE 'FAIL' END
+FROM led;
+
+\echo '== 完：C1–C15、C17 必须 PASS；C16 在特权只读会话下必须 PASS =='
