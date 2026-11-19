@@ -29,7 +29,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         assert!(
             ensure_db_available().await,
@@ -41,7 +40,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_purchase_order_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -65,7 +63,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_purchase_item_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -90,7 +87,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_supplier_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -115,7 +111,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_supplier_evaluation_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -140,7 +135,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_purchase_order() {
         assert!(
             ensure_db_available().await,
@@ -190,7 +184,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_list_purchase_orders() {
         assert!(
             ensure_db_available().await,
@@ -221,7 +214,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_purchase_order_status_update() {
         assert!(
             ensure_db_available().await,
@@ -304,7 +296,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_supplier() {
         assert!(
             ensure_db_available().await,
@@ -343,7 +334,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log_table_exists() {
         assert!(
             ensure_db_available().await,

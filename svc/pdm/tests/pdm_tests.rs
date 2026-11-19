@@ -7,9 +7,15 @@ use uuid::Uuid;
 use topems_pdm::modules::product::Product;
 
 fn test_database_url() -> String {
-    std::env::var("TEST_DATABASE_URL").expect(
+    let url = std::env::var("TEST_DATABASE_URL").expect(
         "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
-    )
+    );
+    if url.contains("options=") {
+        return url;
+    }
+    let sep = if url.contains('?') { '&' } else { '?' };
+    // 与服务的 SEARCH_PATH 口径一致：裸表名按本模块 schema 解析，避免落在 public 下。
+    format!("{url}{sep}options=-csearch_path%3Dpdm%2Cpublic")
 }
 
 async fn create_test_pool() -> PgPool {
@@ -43,7 +49,6 @@ async fn ensure_db_available() -> bool {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_create_product() {
     assert!(
         ensure_db_available().await,
@@ -81,7 +86,6 @@ async fn test_create_product() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_get_product() {
     assert!(
         ensure_db_available().await,
@@ -119,7 +123,6 @@ async fn test_get_product() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_update_product() {
     assert!(
         ensure_db_available().await,
@@ -165,7 +168,6 @@ async fn test_update_product() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_delete_product() {
     assert!(
         ensure_db_available().await,
@@ -215,7 +217,6 @@ async fn test_delete_product() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_tenant_isolation() {
     assert!(
         ensure_db_available().await,
@@ -250,7 +251,6 @@ async fn test_tenant_isolation() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_list_products_with_pagination() {
     assert!(
         ensure_db_available().await,
@@ -283,7 +283,6 @@ async fn test_list_products_with_pagination() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_create_material() {
     assert!(
         ensure_db_available().await,
@@ -315,7 +314,6 @@ async fn test_create_material() {
 }
 
 #[tokio::test]
-#[ignore = "requires PostgreSQL"]
 async fn test_create_change_notice() {
     assert!(
         ensure_db_available().await,

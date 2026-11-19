@@ -12,9 +12,15 @@ mod tests {
     use super::*;
 
     fn test_database_url() -> String {
-        std::env::var("TEST_DATABASE_URL").expect(
+        let url = std::env::var("TEST_DATABASE_URL").expect(
             "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
-        )
+        );
+        if url.contains("options=") {
+            return url;
+        }
+        let sep = if url.contains('?') { '&' } else { '?' };
+        // 与服务的 SEARCH_PATH 口径一致：裸表名按本模块 schema 解析，避免落在 public 下。
+        format!("{url}{sep}options=-csearch_path%3Dmobile%2Cpublic")
     }
     const TEST_ORGANIZATION_ID: &str = "00000000-0000-0000-0000-000000000001";
 
@@ -30,7 +36,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         assert!(
             ensure_db_available().await,
@@ -41,7 +46,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_patrol_records_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -65,7 +69,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_mobile_tasks_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -90,7 +93,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_patrol_record() {
         assert!(
             ensure_db_available().await,
@@ -103,20 +105,21 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO mobile.patrol_records (id, title, location_lat, location_lng, patrol_type, status, checked_by, checked_at, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO mobile.patrol_records (id, tenant_id, title, location_lat, location_lng, patrol_type, status, checked_by, checked_at, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 title = EXCLUDED.title
             RETURNING id
             "#,
         )
         .bind(record_id)
+        .bind(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
         .bind(&title)
         .bind(31.2304)
         .bind(121.4737)
         .bind("routine")
         .bind("pending")
-        .bind("test_user")
+        .bind(Uuid::new_v4())
         .fetch_one(&pool)
         .await;
 
@@ -125,7 +128,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_list_patrol_records() {
         assert!(
             ensure_db_available().await,

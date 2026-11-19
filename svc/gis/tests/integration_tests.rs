@@ -9,9 +9,15 @@ mod tests {
 
     /// 检查数据库是否可用
     fn test_database_url() -> String {
-        std::env::var("TEST_DATABASE_URL").expect(
+        let url = std::env::var("TEST_DATABASE_URL").expect(
             "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
-        )
+        );
+        if url.contains("options=") {
+            return url;
+        }
+        let sep = if url.contains('?') { '&' } else { '?' };
+        // 与服务的 SEARCH_PATH 口径一致：裸表名按本模块 schema 解析，避免落在 public 下。
+        format!("{url}{sep}options=-csearch_path%3Dgis%2Cpublic")
     }
 
     async fn ensure_db_available() -> bool {
@@ -22,7 +28,6 @@ mod tests {
 
     // 测试数据库连接
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         assert!(
             ensure_db_available().await,
@@ -40,7 +45,6 @@ mod tests {
 
     // 测试厂区地图创建
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_factory_map() {
         assert!(
             ensure_db_available().await,
@@ -79,7 +83,6 @@ mod tests {
 
     // 测试设备位置创建
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_device_location() {
         assert!(
             ensure_db_available().await,
@@ -142,7 +145,6 @@ mod tests {
 
     // 测试管道创建
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_pipeline() {
         assert!(
             ensure_db_available().await,
@@ -208,7 +210,6 @@ mod tests {
 
     // 测试审计日志
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log() {
         assert!(
             ensure_db_available().await,
@@ -241,7 +242,6 @@ mod tests {
 
     // 测试GeoJSON导出
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_geojson_export() {
         assert!(
             ensure_db_available().await,

@@ -28,7 +28,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         assert!(
             ensure_db_available().await,
@@ -39,7 +38,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_customer_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -63,7 +61,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_contact_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -87,7 +84,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_opportunity_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -111,7 +107,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_interaction_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -135,7 +130,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_tag_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -163,7 +157,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_customer() {
         assert!(
             ensure_db_available().await,
@@ -201,7 +194,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_list_customers() {
         assert!(
             ensure_db_available().await,
@@ -232,7 +224,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_customer_status_update() {
         assert!(
             ensure_db_available().await,
@@ -301,7 +292,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_opportunity() {
         assert!(
             ensure_db_available().await,
@@ -364,7 +354,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log_table_exists() {
         assert!(
             ensure_db_available().await,

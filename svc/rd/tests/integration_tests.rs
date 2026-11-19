@@ -10,9 +10,15 @@ mod tests {
     use super::*;
 
     fn test_database_url() -> String {
-        std::env::var("TEST_DATABASE_URL").expect(
+        let url = std::env::var("TEST_DATABASE_URL").expect(
             "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
-        )
+        );
+        if url.contains("options=") {
+            return url;
+        }
+        let sep = if url.contains('?') { '&' } else { '?' };
+        // 与服务的 SEARCH_PATH 口径一致：裸表名按本模块 schema 解析，避免落在 public 下。
+        format!("{url}{sep}options=-csearch_path%3Drs%2Cpublic")
     }
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
@@ -28,7 +34,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
         assert!(
             ensure_db_available().await,
@@ -39,7 +44,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_projects_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -64,7 +68,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_experiments_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -88,7 +91,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_formulas_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -113,7 +115,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_project_phases_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -137,7 +138,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_project_milestones_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -162,7 +162,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_audit_logs_table_exists() {
         assert!(
             ensure_db_available().await,
@@ -187,7 +186,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_experiment() {
         assert!(
             ensure_db_available().await,
@@ -238,7 +236,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_formula() {
         assert!(
             ensure_db_available().await,
@@ -284,7 +281,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_create_project_phase() {
         assert!(
             ensure_db_available().await,
@@ -324,8 +320,8 @@ mod tests {
             r#"
             INSERT INTO rs.project_phases (
                 id, project_id, phase_number, name, description, status, progress,
-                created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+                tenant_id, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             RETURNING id
             "#,
         )
@@ -336,10 +332,11 @@ mod tests {
         .bind("项目立项调研阶段")
         .bind("pending")
         .bind(0)
+        .bind(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
         .fetch_one(&pool)
         .await;
 
-        assert!(result.is_ok(), "项目阶段创建应该成功");
+        assert!(result.is_ok(), "项目阶段创建应该成功: {:?}", result.err());
 
         // 清理测试数据
         let _ = sqlx::query("DELETE FROM rs.project_phases WHERE id = $1")
@@ -353,7 +350,6 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_audit_log_creation() {
         assert!(
             ensure_db_available().await,
@@ -389,7 +385,6 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore = "requires PostgreSQL"]
     async fn test_experiment_phase_advancement() {
         assert!(
             ensure_db_available().await,
@@ -443,7 +438,7 @@ mod tests {
         .bind("completed")
         .bind("测试实验员")
         .bind(chrono::Utc::now())
-        .bind("测试实验员")
+        .bind(Uuid::new_v4())
         .execute(&pool)
         .await
         .expect("创建测试试验失败");
