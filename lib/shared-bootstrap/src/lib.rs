@@ -23,7 +23,7 @@
 //!     legacy_prefixes: &["/api/v1/xxx", "/api/xxx"],
 //! };
 //! // Step 2: 统一初始化 telemetry / DB / Auth / Events
-//! let ctx = bootstrap_service(&config).await?;
+//! let ctx = bootstrap_service_with_search_path(&config, "public").await?;
 //! // Step 3a: 标准服务（80% 场景）→ build_application 装配 auth/rls/rate-limit/CORS/Prometheus
 //! let app = build_application(&ctx, &config, public_routes, protected_routes, Some(openapi_json));
 //! run(app).await?;
@@ -45,8 +45,8 @@
 //! | API | 用途 |
 //! |-----|------|
 //! | `ServiceConfig` | 单一真相源：名称/端口/env/DB连接/开关/路由前缀 |
-//! | `bootstrap_service(config)` | 统一初始化 telemetry + DB + AuthState + EventPublisher + Prometheus |
-//! | `ServiceContext` | `bootstrap_service` 返回值：db/auth_state/event_publisher/metrics/permission_center/start_time |
+//! | `bootstrap_service_with_search_path(config, path)` | 统一初始化 telemetry + DB + AuthState + EventPublisher + Prometheus；模块 search_path 显式声明 |
+//! | `ServiceContext` | `bootstrap_service_with_search_path` 返回值：db/auth_state/event_publisher/metrics/permission_center/start_time |
 //! | `build_application(ctx, config, public, protected, openapi)` | 自动装配 auth/rls/request-context/rate-limit/CORS/Prometheus/telemetry 中间件 |
 //! | `Application { router, port, name }` | Pattern C 用：手动组装 router 后传入 |
 //! | `resolve_port(config)` | 从环境变量解析端口，失败用 `config.port` 回退 |
@@ -54,7 +54,7 @@
 //! | `run(app)` | 绑定 `{bind_addr}:{port}`（默认回环），`axum::serve` 启动 |
 //!
 //! **警告**：V1 遗留的 `BootstrapConfig / AppState / ServiceBootstrap` 结构已被 Pattern B/C 取代，
-//! 仅保留向后兼容引用。新项目请使用 `ServiceConfig → bootstrap_service → build_application → run` 三段式。
+//! 仅保留向后兼容引用。新项目请使用 `ServiceConfig → bootstrap_service_with_search_path → build_application → run` 三段式（禁止进程级 SEARCH_PATH）。
 
 pub mod audit;
 
@@ -453,7 +453,8 @@ impl ServiceBootstrap {
             topems_shared_db::database::budget::reserve_pool("legacy-bootstrap", max_connections)?;
         let max_connections = reservation.granted();
 
-        let search_path = env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
+        // V1 遗留路径（无调用方）：基线固定 DEFAULT_SEARCH_PATH，不读进程级 SEARCH_PATH。
+        let search_path = topems_shared_db::database::DEFAULT_SEARCH_PATH.to_string();
 
         // 单租户部署（MULTI_TENANT_ENABLED != true）且配置了 DEFAULT_TENANT_ID 时，
         // 连接建立即固定租户上下文：FORCE RLS 下业务查询（service 层自建 pool，
@@ -770,15 +771,7 @@ pub struct Application {
 static SHARED_RUNTIME_POOL: tokio::sync::OnceCell<sqlx::PgPool> =
     tokio::sync::OnceCell::const_new();
 
-/// 初始化通用资源：telemetry、数据库连接池、metrics、auth_state、event_publisher
-///
-/// `search_path` 回退到进程级 `SEARCH_PATH`（兼容独立部署服务），嵌入模式模块应改用
-/// [`bootstrap_service_with_search_path`] 显式传入本模块作用域，避免进程级变量互相覆盖。
-pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext> {
-    bootstrap_service_inner(config, false, None).await
-}
-
-/// 同 [`bootstrap_service`]，但为模块自有池显式指定**会话基线** `search_path`。
+/// 为模块自有池显式指定**会话基线** `search_path`（本函数是唯一建池入口）。
 ///
 /// 嵌入模式统一走本入口：每个模块固定使用自己的 schema 集合，不写、不读进程级
 /// `SEARCH_PATH`，因此模块构建顺序不再影响任何模块的表解析语义。
@@ -795,7 +788,7 @@ pub async fn bootstrap_service_with_search_path(
 /// 由 `topems_shared_db::scope::Db::new(pool, "<module search_path>")` 在事务内
 /// `SET LOCAL` 提供。因此本函数不读取/不依赖全局 `SEARCH_PATH` 决定模块语义。
 ///
-/// 仅用于已迁移到 `ScopedTxn` 的模块；未迁移模块继续用 [`bootstrap_service`] 独立建池。
+/// 仅用于已迁移到 `ScopedTxn` 的模块；未迁移模块用 [`bootstrap_service_with_search_path`] 独立建池。
 pub async fn bootstrap_service_shared(config: &ServiceConfig) -> Result<ServiceContext> {
     bootstrap_service_inner(config, true, None).await
 }
@@ -869,9 +862,10 @@ async fn bootstrap_service_inner(
     };
 
     // 嵌入模式：显式传入；独立部署：保持 SEARCH_PATH 兼容路径（由各服务 main.rs 设置）。
+    // 不接受进程级 SEARCH_PATH：搜索路径只能由调用方显式声明（嵌入模块各用各的），
+    // 否则多模块共进程时互相覆盖会改变无前缀表的解析结果（历史 500 根因）。
     let module_search_path = explicit_search_path
         .map(str::to_owned)
-        .or_else(|| env::var("SEARCH_PATH").ok())
         .unwrap_or_else(|| topems_shared_db::database::DEFAULT_SEARCH_PATH.to_string());
 
     let db = if shared_pool {
@@ -1245,7 +1239,7 @@ pub async fn run(app: Application) -> Result<()> {
     tracing::info!("🔒 认证保护已启用");
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     // 优雅停机：SIGTERM/Ctrl+C → 停止接受新连接、排空在途请求。
-    // 本函数不持有 PgPool（连接池由调用方通过 bootstrap_service 拿到的 ctx.db 管理），
+    // 本函数不持有 PgPool（连接池由调用方通过 bootstrap_service_with_search_path 拿到的 ctx.db 管理），
     // HTTP 排空后直接返回；sqlx 连接随 runtime 结束关闭。
     axum::serve(listener, app.router)
         .with_graceful_shutdown(shutdown_signal())

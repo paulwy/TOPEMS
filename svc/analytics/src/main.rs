@@ -16,7 +16,8 @@ use axum::{
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
+    ServiceConfig,
 };
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
@@ -31,8 +32,6 @@ pub use topems_analytics::shared::*;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "bi, public, shared");
-
     let config = ServiceConfig {
         name: "topems-analytics",
         port: 8060,
@@ -46,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "bi, public, shared").await?;
     tracing::info!("🚀 TOPEMS Analytics Service starting...");
 
     // ── 模块级运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）──

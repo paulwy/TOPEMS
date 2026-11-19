@@ -18,8 +18,8 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service_with_search_path, build_application, create_health_state,
+    create_standard_health_routes, run, ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
@@ -34,8 +34,6 @@ use modules::openapi::MesApiDoc;
 #[tokio::main]
 #[allow(clippy::expect_used)]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "mes, public, shared");
-
     let config = ServiceConfig {
         name: "topems-mes",
         port: 8030,
@@ -47,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "mes, public, shared").await?;
 
     // Schema 防御：增量迁移 + 一致性自检（建表 DDL 已收敛至迁移链，D7）
     if let Err(e) = topems_shared_db::schema::run_schema_defense(

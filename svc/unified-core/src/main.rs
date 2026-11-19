@@ -20,7 +20,9 @@ use topems_shared_auth::security::{
     AuditLoggerConfig, AuditLoggerMiddleware, BodyLimitConfig, BodyLimitMiddleware,
     FieldEncryptionService, KeyManager, SecurityHeadersConfig, SecurityHeadersLayer,
 };
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service_with_search_path, resolve_port, run, Application, ServiceConfig,
+};
 use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_core::{
@@ -278,7 +280,6 @@ fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // 确保 core 服务使用 public schema 来访问 core_* 表
-    std::env::set_var("SEARCH_PATH", "public");
 
     let config = ServiceConfig {
         name: "topems-unified-core",
@@ -293,7 +294,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "public").await?;
 
     tracing::info!(
         "📦 Contains: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync"

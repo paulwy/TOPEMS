@@ -60,7 +60,6 @@ async fn budget_caps_concurrent_connections() {
     std::env::set_var("DB_TOTAL_CONNECTION_BUDGET", BUDGET.to_string());
     std::env::set_var("DB_EXPECTED_POOLS", POOLS.to_string());
     std::env::set_var("DB_APPLICATION_NAME", APP);
-    std::env::set_var("SEARCH_PATH", "public");
 
     // 负向：单池申请 100（模拟把 DB_MODULE_MAX_CONNECTIONS 调得很大），总额仍应被预算卡住。
     let mut pools = Vec::new();

@@ -571,6 +571,13 @@ pre-push:
       glob: "{Cargo.toml,deploy/docker/**,svc/**/Dockerfile,apps/**/Dockerfile,.dockerignore,scripts/ci/check-docker-build-context.py}"
       run: python3 scripts/ci/check-docker-build-context.py
 
+    # [Gate SPE] SEARCH_PATH 环境变量零容忍：禁止读写进程级 SEARCH_PATH
+    # 模块作用域必须经 bootstrap_service_with_search_path 显式声明，否则模块化单体内
+    # 后 build 的模块会覆盖先 build 的（历史 500 / 读错 schema 根因）。
+    search-path-env:
+      tags: rust config
+      run: node scripts/ci/check-search-path-env.mjs
+
     # [Gate AUDIT-INV] cargo audit 豁免项的"零暴露"前提机械校验（<0.3s，不调用 cargo）
     # ignore 是人工判断，会腐化：今天"ES 算法零使用"成立，明天加一行 Algorithm::ES256
     # 就失效而门禁仍绿。此闸门把每条豁免的前提（sqlite 未启用 / 无 ECDSA / rsa 仍为

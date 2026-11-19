@@ -61,8 +61,8 @@
 | W7-A | 按「外层 Scope + 内层迁移」继续收口业务裸池，逐服务提交 | 340 处（11-18 口径） | `check-pool-acquire.mjs` 该服务计数下降，行为等价测试绿 |
 | W7-B | 平台语料 5 表归一（币种、报表映射、角色模板、同步策略、项目类型），归入 DEC-15 | `docs/database/residual-ten-table-triage-2026-11-18.md:92` | 归一后租户仍可经平台通道读到 8/48/16/1 条 |
 | B43-09 | 非 HTTP 路径（定时任务/消息消费/CLI）中间件与租户上下文评估 | 未做 | 每类入口有租户上下文或显式豁免记录 |
-| W2-A1 | 移除剩余 3 处 `SEARCH_PATH` 环境读取 | `shared-bootstrap/lib.rs:428,845`、`shared-db/audit.rs:594` | 全仓 `env::var("SEARCH_PATH")` = 0 |
-| W2-A3 | 增 CI 规则禁止 `env::set_var` | 现为 0 处 | 规则上线并失败验证 |
+| W2-A1 ✅ | 移除 `SEARCH_PATH` 环境读取 | 实为 2 处（`shared-bootstrap/lib.rs` 的 legacy 入口与内层 fallback；`audit.rs` 那处已在此前改为必填 `schema_prefix` 消失）。已删除 legacy `bootstrap_service` 入口，内层只接受显式参数；17 个服务 main 全改 `bootstrap_service_with_search_path(&config, "<module path>")`；`embedded.rs` 显式传 `flow, public` | 全仓 `env::var("SEARCH_PATH")` = 0；`cargo check --workspace` 绿 |
+| W2-A3 ✅ | 增 CI 规则禁止 `SEARCH_PATH` 环境读写 | 新增 `scripts/ci/check-search-path-env.mjs`（零基线，扫 1879 文件 0 违规）；已接入 lefthook pre-push `[Gate SPE]` 与 CI `connection-governance` job；配套删掉 `connection_budget_it.rs` 里已失效的 `set_var` | 规则上线；构造一条 `set_var("SEARCH_PATH")` 能被拦下（`--root` 自测路径已留） |
 | W2-B1 | mes：裸表引用归零 | 316 | `check-schema-prefix` 该模块归零 |
 | W2-B2 | unified-core | 247 | 同上 |
 | W2-B3 | finance | 227 | 同上 |

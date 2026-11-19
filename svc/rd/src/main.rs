@@ -5,7 +5,7 @@ use topems_shared_auth::middleware::{
     require_module_access, require_module_write, require_permission,
 };
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, build_detailed_service_health,
+    bootstrap_service_with_search_path, build_application, build_detailed_service_health,
     build_simple_status_response, prometheus_metrics_handler, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::Config;
@@ -27,8 +27,6 @@ use modules::ApiState;
 async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
 
-    std::env::set_var("SEARCH_PATH", "rs, public");
-
     let config_app: Config = Config::load()
         .await
         .map_err(|e| anyhow::anyhow!(e.to_string()))?;
@@ -49,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "rs, public").await?;
     tracing::info!("🚀 TOPEMS-RD 科研研发管理系统启动...");
 
     // ── 自定义 Prometheus Gauge ─────────────────────────────────────

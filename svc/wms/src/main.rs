@@ -16,8 +16,8 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
-    default_init_db, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, create_health_state,
+    create_standard_health_routes, default_init_db, run, ServiceConfig,
 };
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -32,7 +32,6 @@ use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, Event
 #[tokio::main]
 async fn main() -> Result<()> {
     // 设置search_path环境变量（供lib使用）
-    std::env::set_var("SEARCH_PATH", "wms, public, shared");
 
     let config = ServiceConfig {
         name: "topems-wms",
@@ -45,7 +44,7 @@ async fn main() -> Result<()> {
         ..Default::default()
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "wms, public, shared").await?;
 
     if let Err(e) = default_init_db(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),

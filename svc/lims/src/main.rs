@@ -21,7 +21,8 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
+    ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
@@ -71,8 +72,6 @@ async fn init_cache<T: Clone + Send + Sync + 'static>(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "lims, public, shared");
-
     let config = ServiceConfig {
         name: "topems-lims",
         port: 8051,
@@ -86,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "lims, public, shared").await?;
 
     // 模块级数据库句柄：所有租户数据查询经 Db 作用域（事务级 search_path）
     // M-1：请求链路内禁止自开事务，handler 复用 tenant_middleware 的请求事务；

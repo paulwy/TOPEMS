@@ -14,7 +14,8 @@ use utoipa::OpenApi;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
+    ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
@@ -59,8 +60,6 @@ impl axum::extract::FromRef<AppState> for TypedServiceClient<WorkflowApi> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "qms, public, shared");
-
     let config = ServiceConfig {
         name: "topems-qms",
         port: 8050,
@@ -74,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "qms, public, shared").await?;
 
     // QMS 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
     if let Err(e) = modules::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await

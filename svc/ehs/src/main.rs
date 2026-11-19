@@ -15,7 +15,8 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
+    ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
@@ -33,8 +34,6 @@ use modules::ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ehs, public, shared");
-
     let config = ServiceConfig {
         name: "topems-ehs",
         port: 8052,
@@ -55,7 +54,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "ehs, public, shared").await?;
 
     // Schema 防御：增量补列 + 一致性校验（失败不阻塞启动；建表 DDL 已收敛至迁移链，D7）
     if let Err(e) = schema_defense::run(&ctx.db).await {

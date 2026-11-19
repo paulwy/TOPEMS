@@ -11,8 +11,8 @@ use utoipa::OpenApi;
 use uuid::Uuid;
 
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
-    default_init_db, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, create_health_state,
+    create_standard_health_routes, default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
@@ -35,8 +35,6 @@ use topems_shared_auth::middleware::{require_module_access, require_module_write
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("SEARCH_PATH", "crm, public, shared");
-
     let config = ServiceConfig {
         name: "topems-crm",
         port: 8029,
@@ -48,7 +46,7 @@ async fn main() -> Result<()> {
         ..Default::default()
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "crm, public, shared").await?;
 
     if let Err(e) = default_init_db(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),

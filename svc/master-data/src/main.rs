@@ -6,7 +6,8 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
+    ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
@@ -19,8 +20,6 @@ pub mod modules;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "master_data, public, shared");
-
     let config = ServiceConfig {
         name: "topems-master-data",
         port: 8090,
@@ -34,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "master_data, public, shared").await?;
 
     tracing::info!("🚀 TOPEMS Master Data Service starting...");
 

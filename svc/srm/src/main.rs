@@ -14,8 +14,8 @@ use utoipa::OpenApi;
 use prometheus::{default_registry, Gauge};
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
-    default_init_db, run, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, create_health_state,
+    create_standard_health_routes, default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -31,8 +31,6 @@ use modules::{
 
 #[tokio::main]
 async fn main() -> Result<(), TopemsError> {
-    env::set_var("SEARCH_PATH", "srm, public, shared");
-
     let config = ServiceConfig {
         name: "topems-srm",
         port: 8042,
@@ -66,7 +64,7 @@ async fn main() -> Result<(), TopemsError> {
 
     tracing::info!("🚀 TOPEMS-SRM 供应商关系管理系统启动中...");
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "srm, public, shared").await?;
 
     if let Err(e) = default_init_db(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),

@@ -13,8 +13,8 @@ use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
-    default_init_db, run, Application, ServiceConfig,
+    bootstrap_service_with_search_path, build_application, create_health_state,
+    create_standard_health_routes, default_init_db, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -28,7 +28,6 @@ use modules::{scm_plugin, ApiState};
 #[tokio::main]
 async fn main() -> Result<()> {
     // 设置search_path环境变量（供lib使用）
-    env::set_var("SEARCH_PATH", "scm, public, shared");
 
     let config = ServiceConfig {
         name: "topems-scm",
@@ -61,7 +60,7 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "scm, public, shared").await?;
 
     if let Err(e) = default_init_db(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),

@@ -262,6 +262,9 @@ jobs:
       - name: Search path gate
         run: node scripts/ci/check-search-path.mjs
 
+      - name: Search path env gate
+        run: node scripts/ci/check-search-path-env.mjs
+
       - name: Pool acquire gate
         run: node scripts/ci/check-pool-acquire.mjs
 

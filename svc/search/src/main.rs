@@ -4,7 +4,9 @@
 
 use axum::{routing::get, Router};
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service_with_search_path, build_application, run, ServiceConfig,
+};
 use topems_shared_db::scope::Db;
 
 mod handlers;
@@ -29,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "public").await?;
     tracing::info!("🚀 TOPEMS Search Service starting...");
 
     // 连接治理 B 试点：模块只拿到 Db（PgPool 私有），所有查询走事务级 search_path。

@@ -16,8 +16,8 @@ use crate::modules::settlement_center::models as settlement_models;
 use crate::modules::*;
 use crate::shared::AppState;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service_with_search_path, build_application, create_health_state,
+    create_standard_health_routes, run, ServiceConfig,
 };
 use topems_shared_db::database::create_migrate_pool;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
@@ -144,8 +144,6 @@ pub struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "finance, public, shared");
-
     let config = ServiceConfig {
         name: "topems-finance",
         port: 8011,
@@ -163,7 +161,7 @@ async fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_with_search_path(&config, "finance, public, shared").await?;
 
     // Finance 初始化（DDL 走 MIGRATE_URL owner 池，未配置回退运行时池）
     let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {

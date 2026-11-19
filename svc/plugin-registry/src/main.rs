@@ -25,8 +25,6 @@ pub use shared::{AppState, CoreResponse};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public");
-
     let config = ServiceConfig {
         name: "topems-plugin-registry",
         port: 8096,
