@@ -53,7 +53,29 @@ IDENTITY="//${SMB_USER}@${SMB_HOST}/${SMB_SHARE}"
 SMB_PATH="//${SMB_USER}:${SMB_PASS}@${SMB_HOST}/${SMB_SHARE}"
 
 # 只认本脚本自己的挂载点：Time Machine 会把同一共享挂到
-is_mounted() { mount | grep -q "^${IDENTITY} on ${MOUNT_POINT} " ; }
+# 只认本脚本自己的挂载点：Time Machine 会把同一共享挂到 /Volumes/.timemachine/…（nobrowse、
+# 属主受限），不能复用。另外本机 ~/topems 与 ~/TOPEMS 指向同一目录，mount 表里记录哪一种
+# 写法取决于挂载时传入的路径，因此用 inode 比对而非字符串比对。
+is_mounted() {
+  /usr/bin/python3 -c '
+import os, sys, subprocess
+ident, ours = sys.argv[1], sys.argv[2]
+try:
+    st_ours = os.stat(ours)
+except OSError:
+    sys.exit(1)
+for line in subprocess.run(["/sbin/mount"], capture_output=True, text=True).stdout.splitlines():
+    if line.startswith(ident + " on "):
+        mp = line.split(" on ", 1)[1].rsplit(" (", 1)[0]
+        try:
+            st = os.stat(mp)
+        except OSError:
+            continue
+        if (st.st_dev, st.st_ino) == (st_ours.st_dev, st_ours.st_ino):
+            sys.exit(0)
+sys.exit(1)
+' "$IDENTITY" "$MOUNT_POINT"
+}
 
 log "===== 开始（模式：${MODE}，目标：${SMB_USER}@${SMB_HOST}/${SMB_SHARE}）====="
 
@@ -131,7 +153,9 @@ LATEST=$(find "$BACKUP_DIR" -maxdepth 1 -name 'topems_prod-*.dump' -type f 2>/de
 [ -n "$LATEST" ] || fail "未找到任何 dump（${BACKUP_DIR}）"
 NAME=$(basename "$LATEST")
 
-# 归档前先验本机这份是否完好
+# 归档前先验本机这份是否完好：先看体积，再验可读性（0 字节/半截文件一律拒绝）
+SIZE=$(stat -f%z "$LATEST")
+[ "$SIZE" -ge 1048576 ] || fail "本机副本体积异常（${SIZE} bytes）：${NAME}，拒绝归档"
 pg_restore --list "$LATEST" >/dev/null 2>&1 || fail "本机副本不可读：${NAME}"
 
 DEST="${REMOTE_DIR}/${NAME}"

@@ -314,6 +314,26 @@ sudo tmutil setdestination -ap "smb://xingzhai@192.168.110.213/TOPEMS-TM"
 
 结论：整机级恢复能力回到**未覆盖**状态，`§7.3` 第 1 条原则（TM 不能替代 `pg_dump`）依然成立，数据库一致性仍由每日 dump 负责；整机缺口只能靠 §7.5 的外置 SSD 补上。
 
+### 7.9 本地 dump 链路修复（2026-11-19）
+
+TM 取消后，每日 `pg_dump` 成为唯一的数据保护手段，因此顺带修掉了它长期存在的隐性故障。
+
+**现象**：`com.topems.backup`（每日 03:00）长期以退出码 1 结束，2026-11-19 03:00 产出的 `topems_prod-20261119-030005.dump` 是 **0 字节**；`backup.err.log` 记录 `pg_dump: command not found` 与 `fe_sendauth: no password supplied`。
+
+**根因**：脚本用 `pg_dump -h localhost -U xingzhai`（TCP → `scram-sha-256`），而 launchd 环境既无口令也无 `~/.pgpass`；`set -e` 下 `pg_dump` 先创建目标文件再失败，于是留下空文件。
+
+**修复**：
+
+| 改动 | 说明 |
+|---|---|
+| 连接方式 | 改为 `pg_dump -d topems_prod`（Unix socket + peer），与 `pg_hba` 的 `local all all peer` 对齐，不依赖口令 |
+| 原子写入 | 先写 `<name>.partial`，`pg_restore --list` 可读 + 体积 ≥ 1 MiB 双校验通过后 `mv` 为正式文件；失败由 `trap` 清理，`backups/` 不会再出现 0 字节文件 |
+| 归档守卫 | `backup-offsite.sh` 取“最新 dump”时先校验体积 ≥ 1 MiB，再验可读性，坏文件一律拒绝归档 |
+| 挂载判断 | `is_mounted` 改用 inode 比对：本机 `~/topems` 与 `~/TOPEMS` 指向同一目录，`mount` 表记录哪种写法取决于挂载时传入路径，字符串比对会误判并触发 `mount error: File exists` |
+| 版本库 | `backup-topems.sh` 原先被 `.git/info/exclude` 排除（历史原因：含本地口令）；现已无口令，移出排除并入库存档 |
+
+**验证**：手工执行与 `launchctl kickstart -k gui/$(id -u)/com.topems.backup` 均成功，最新 dump `10,841,560 bytes`、`pg_restore --list` 通过、单元 `last exit code = 0`；当日 dump 已归档到 `TOPEMS-TM/topems-archive/`（10 MB）。保留策略 7 份正常轮转。
+
 ---
 
 ## 8. 局域网地址与 DHCP 静态绑定（2026-11-18）
