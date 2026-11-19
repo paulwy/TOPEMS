@@ -277,6 +277,9 @@ jobs:
       - name: Runtime DDL gate (only-decrease)
         run: node scripts/ci/check-runtime-ddl.mjs
 
+      - name: Module write parity gate (monolith vs standalone)
+        run: node scripts/ci/check-module-write-parity.mjs
+
       - name: Pool direct + system scope gate
         run: python3 scripts/ci/check-pool-direct-system-scope.py
 

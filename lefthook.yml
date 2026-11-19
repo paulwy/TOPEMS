@@ -581,6 +581,13 @@ pre-push:
       glob: "{Cargo.toml,deploy/docker/**,svc/**/Dockerfile,apps/**/Dockerfile,.dockerignore,scripts/ci/check-docker-build-context.py}"
       run: python3 scripts/ci/check-docker-build-context.py
 
+    # [Gate MWP] 单体/独立部署写门配平：独立部署有 require_module_write 时，
+    # 单体 *_real_module.rs 必须同步，防止 W1-3 的只读用户越权写入复现。
+    module-write-parity:
+      tags: rust config
+      glob: "{svc/*/src/main.rs,svc/server/src/modules/*_real_module.rs,scripts/ci/check-module-write-parity.mjs}"
+      run: node scripts/ci/check-module-write-parity.mjs
+
     # [Gate SPE] SEARCH_PATH 环境变量零容忍：禁止读写进程级 SEARCH_PATH
     # 模块作用域必须经 bootstrap_service_with_search_path 显式声明，否则模块化单体内
     # 后 build 的模块会覆盖先 build 的（历史 500 / 读错 schema 根因）。
