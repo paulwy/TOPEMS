@@ -50,8 +50,8 @@
 | A3 | 删 2 个 stale baseline key；重审 api allowlist 96→107；登记 `20261116180000`（已完成，见 §3.2） | `facts:check`、`check:ledger`、`gen-manifest --check` 三绿 |
 | A4 | API 闸门去 `--dry-run`（`lefthook.yml:325`），修 `check-api.cjs` 的 `--apply` 假绿，P6 解析器补裸简写/嵌套对象（已完成，见 §3.2） | `check-api.cjs` 的 P6 RED=0；闸门真实阻断，剩余红灯仅 p7（转 E1-4） |
 | A5 | 修 `audit_permission_codes.py`：DSN 优先级改为 `.env` 优先于进程环境，并在降级时显式告警（已完成，见 §3.1） | `DB 来源：live`、DB=1021，不再 `sql_fallback` |
-| A6 | 清掉文档死链与过期读数（README:227 的 17/83、§17.1 的 max_connections=2） | 全仓检索无失配 |
-| A7 | LEG-13 残余：核实 `ai_knowledge` 启动告警是否真实存在（mobile 内部调用已闭环） | 启动日志 + grep；有则登记新条目，无则关闭 |
+| A6 ✅ | 清掉文档死链与过期读数 | README:227 已改为实测「35 个一级模块、454 个二级菜单」（按 `module-configs/*/config.ts` 的 `navItems` 计数）；§17.1 的 `max_connections=2` 已在上一轮 TODO 重写中移除；`TODO_backup_20261107.md` 死链已删 | README 与 TODO 相对链接缺失 = 0；全仓 `17/83` 仅存于历史档 `docs/archive/ui-migration/ROOT-TODO-ui-v3-history.md`（留档不改） |
+| A7 ✅ | LEG-13 残余核实：`ai_knowledge` 启动告警 | 代码侧无该告警：模块完整接线（`svc/ai/src/routes.rs:1015-1047` 合并 `ai_knowledge::create_routes`，openapi 全量登记），handlers 中 501/Not Implemented = 0，无启动期 warn；`document_processor` 的两处 warn 是 embedding 重试日志，非“未实现”告警 | 结论：原告警不存在，LEG-13 残余关闭（无历史日志可复现，按代码事实判定） |
 | A8 | 生产 `core_permissions` 有 69 条模块级权限码（`ai:write`、`crm:write` 等）不在任何迁移中，由非迁移路径种入（初始化脚本 / 运行时补种 / 历史手工导入），「迁移是唯一源」当前不成立；查清种入路径并收敛到迁移 | 种入路径有结论并归档；收敛后 `node scripts/ci/gen-permissions.mjs --check` 的码集与生产全集一致 |
 
 ### B. 数据访问收口（按服务分批，行为等价）

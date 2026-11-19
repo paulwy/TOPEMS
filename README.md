@@ -224,7 +224,7 @@ topems/
 
 ### UI v3 快速访问
 
-UI v3（Industrial OS 新布局）已默认启用，包含 17 个一级模块、83 个二级菜单。
+UI v3（Industrial OS 新布局）已默认启用，包含 35 个一级模块、454 个二级菜单（以 `apps/web/src/module-configs/*/config.ts` 的 `navItems` 实测为准）。
 
 | 快捷键 | 功能 |
 |--------|------|
