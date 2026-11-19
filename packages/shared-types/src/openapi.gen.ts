@@ -45,8 +45,10 @@ export type $defs = _Defs;
  *      这类 key 在新 openapi.d.ts 中根本不存在，降级为 unknown —— 编译可通过，
  *      但参数类型精度下降（等价于 any 透传）。待重抽 spec 后可恢复精确类型。
  *
- * 统计：业务代码使用 78 个 unique operation key，42 个已存在于新 openapi.d.ts，
- *       本别名表补齐 36 个缺失 key。
+ * 统计（2026-11-19 更新）：业务代码使用 78 个 unique operation key，多数已存在于新 openapi.d.ts；
+ *       本别名表只保留 14 个缺失 key（wms 前缀映射 5、srm suppliers 5、unified-core virtual 4）。
+ *       monitor rules/slos、CRM、business_metric 及 _qa_batch_delete_history/_qa_delete_history
+ *       已被权威契约收录，对应别名已删除。
  */
 type _PrefixedAliases = {
   // === A 类：前缀差异，做真实类型映射 ===
@@ -56,7 +58,7 @@ type _PrefixedAliases = {
   wms_update_inventory: _Operations['update_inventory'];
   wms_delete_inventory: _Operations['delete_inventory'];
 
-  // === B 类：V285 未 extract 服务，降级为 unknown ===
+  // === B 类：权威契约仍未收录，降级为 unknown ===
 
   // -- SRM suppliers service spec 未 extract（openapi-aggregated.json srm paths=0） --
   srm_list_suppliers: unknown;
@@ -65,43 +67,12 @@ type _PrefixedAliases = {
   srm_update_supplier: unknown;
   srm_delete_supplier: unknown;
 
-  // -- Monitor 独立服务 rules/slos（只有 unified-core 的 monitor_records/types 已 extract） --
-  list_rules: unknown;
-  get_rule: unknown;
-  create_rule: unknown;
-  update_rule: unknown;
-  delete_rule: unknown;
-  list_slos: unknown;
-  get_slo: unknown;
-  create_slo: unknown;
-  update_slo: unknown;
-  delete_slo: unknown;
-
-  // -- CRM customers/contacts/opportunities（crm service spec 未重抽） --
-  create_customer: unknown;
-  get_customer: unknown;
-  list_customers: unknown;
-  create_contact: unknown;
-  list_contacts: unknown;
-  create_opportunity: unknown;
-  list_opportunities: unknown;
-
-  // -- V285 openapi-aggregated.json 中缺失的 unified-core virtual endpoints --
+  // -- unified-core virtual endpoints（openapi-aggregated.json 未收录）--
   // （qa history + doc CRUD，下划线前缀私有 operation）
   _qa_history: unknown;
-  _qa_batch_delete_history: unknown;
-  _qa_delete_history: unknown;
   _document_list: unknown;
   _document_get: unknown;
   _document_delete: unknown;
-
-  // -- 其它零散：business_metric CRUD（ehs service 中）--
-  // 注：accident/risk/alerts/employee 等 key 已存在于新 openapi.d.ts
-  create_business_metric: unknown;
-  get_business_metric: unknown;
-  list_business_metrics: unknown;
-  update_business_metric: unknown;
-  delete_business_metric: unknown;
 };
 
 /**
