@@ -94,7 +94,7 @@
 | W3-D | 合并 `schema/`、`schemas/`、`types.ts` | 三者并存 | 目录唯一 |
 | W4-A | `DataTable` 去重 | 4 个定义 | 1 个定义 |
 | W4-B | 表单字段重复实现收口 | — | 共享实现 |
-| W4-C | `StatusBadge` 去重 | 11 个定义 | 1 个定义 |
+| W4-C ✅（口径修正） | `StatusBadge` 去重 | 旧口径“11 个定义”已过期：Tailwind 5 份实现已由 `4f02796a2` 合一为 `components/common/StatusBadge.tsx` 单一渲染；`tms/mes/aps/qms/wms` 的 `StatusBadge` 全是薄包装（只提供各自 FSM/颜色/文案映射，内部 import common），不是重复实现；`ehs/EHSStatusBadge` 走 MUI `Chip` 体系，`packages/shared-components` 另有 MUI 主实现+11 个 typed 包装，均属另一设计体系 | Tailwind 侧单一实现 ✅；跨 MUI/Tailwind 体系不合并 |
 | W4-D | eslint 限制跨层 import 规则落地 | 未接线 | 规则生效 |
 | W5-B | 状态枚举单一源（前端/后端/DB CHECK 三处对齐） | 无生成物 | 三方一致校验通过 |
 | W5-C | 组织字段口径收敛 | `company_id` 404 / `org_id` 382 / `organization_id` 250 | 选定口径后计数只降 |
