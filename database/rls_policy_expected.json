@@ -2053,7 +2053,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_company_relations",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2071,7 +2071,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_consolidation_report_lines",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2089,7 +2089,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_consolidation_reports",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2107,7 +2107,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_consolidation_scope_companies",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2125,7 +2125,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_consolidation_scopes",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2233,7 +2233,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_elimination_candidates",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2251,7 +2251,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_elimination_rules",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
@@ -2405,7 +2405,7 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "tenant_isolation_internal_transactions",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
