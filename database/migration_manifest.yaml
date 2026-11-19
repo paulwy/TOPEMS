@@ -2466,3 +2466,12 @@ pending_forward_patches:
     destructive_scan: "仅 INSERT ... SELECT ... WHERE NOT EXISTS；无 UPDATE/DELETE/TRUNCATE/DROP；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119170000_seed_core_plugin_categories.rollback.sql（按 code 删除 9 条种子行，清账本行）；不改表结构、不建索引"
 
+  # ===== 2026-11-19 批：139 张归档候选中的 108 张历史 schema 副本 =====
+  # 依据：docs/quality/table-disposition-2026-11-19.md、docs/database/legacy-schema-copies-archive-2026-11-19.md
+  - version: "20261119180000"
+    file: "database/migrations/20261119180000_archive_legacy_schema_copies.sql"
+    status: to_apply
+    effect: "108 张历史 schema 副本先归档到 archive.drop_20261119_lc__<schema>__<table>（结构+数据，保留 180 天）再 DROP；逐表断言源/归档/插入行数三方相等；前置断言入向外键源表均在本批内、无依赖视图；闸门 app.archive_legacy_copies_gate=legacy-copies-20261119"
+    destructive_scan: "DROP TABLE ×108（destructive-gate: allow，LEGACY-COPY-20261119）；CREATE TABLE archive + INSERT ... SELECT + manifest/策略快照；无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119180000_archive_legacy_schema_copies.rollback.sql（按 archive._drop_manifest 重建 108 张表、数据、RLS、策略、默认值/序列/视图，保留归档表）；拆分依据：16 张已由 20261119160000 处理、12 张已被 20261118160000 改名、3 张因入向外键/函数引用未封闭拆出；生产执行需 DBA 外审签字后打开闸门"
+
