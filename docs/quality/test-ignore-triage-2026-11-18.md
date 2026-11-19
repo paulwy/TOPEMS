@@ -225,6 +225,17 @@ superuser 走 system channel 的断言失败
   `TEST_DATABASE_URL` 环境变量读取，缺失时 `expect` 失败。
 - 事故案例与使用说明：[docs/testing/test-dsn-safety-guard.md](../testing/test-dsn-safety-guard.md)。
 
+### 2026-11-19 补强（关闭剩余继承路径）
+
+- `lib/shared-bootstrap` 的测试夹具不再读 `DATABASE_URL`（无环境变量时直接 skip 的写法此前会把
+  push 钩子注入的生产 DSN 继承进来），改为 `topems_test_support::try_test_database_url()`：
+  只认 `TEST_DATABASE_URL`，未设置跳过，设置则执行同一套生产特征校验。
+- `lefthook.yml` 的 Gate T 取消 `MIGRATE_URL` 回退：`.env` 的 `MIGRATE_URL` 通常是 `topems_prod`，
+  缺失 `TEST_DATABASE_URL` 时现在直接 fail-closed；解析出的库名命中 `*prod*` 直接拒绝；
+  并**无条件**把 `DATABASE_URL` 覆盖为已校验的测试 DSN，防止调用者 shell 残留的生产 DSN 被继承。
+- 现状盘点：58 个 `#[sqlx::test]` 文件全部接入启动期守卫；28 个直接读 `TEST_DATABASE_URL` 的测试
+  使用专用测试变量，并在 lefthook / `verify-rust-full.sh` 注入点拒绝生产库。
+
 验证读数：
 
 - `env -u DATABASE_URL -u TEST_DATABASE_URL cargo test ...` →

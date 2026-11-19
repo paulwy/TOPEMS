@@ -39,6 +39,19 @@ pub fn test_database_url() -> String {
         .unwrap_or_else(|| panic_missing())
 }
 
+/// 供「有测试库则跑、无则跳过」的测试使用：未设置 `TEST_DATABASE_URL` 时返回 `None`；
+/// 设置时与 [`ensure_test_dsn`] 同样校验生产特征并覆盖 `DATABASE_URL`。
+///
+/// 与 [`test_database_url`] 的区别只在于缺失时跳过而非 panic，**不会**回退到 `DATABASE_URL`。
+pub fn try_test_database_url() -> Option<String> {
+    let raw = std::env::var(ENV_KEY)
+        .ok()
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())?;
+    validate_and_apply(&raw);
+    Some(raw)
+}
+
 /// 幂等地执行一次 DSN 校验，并强制覆盖 `DATABASE_URL`。
 pub fn ensure_test_dsn() {
     INIT.call_once(|| {
@@ -48,39 +61,43 @@ pub fn ensure_test_dsn() {
             .filter(|v| !v.is_empty())
             .unwrap_or_else(|| panic_missing());
 
-        let dsn = parse_dsn(&raw).unwrap_or_else(|reason| {
-            panic!(
-                "[test-dsn] 拒绝启动：无法解析 {SOURCE}（{reason}）。\n  实际值：{}\n  期望形如：postgres://topems_test_runner@localhost:5432/topems_test_runner",
-                mask_dsn(&raw)
-            )
-        });
-
-        if let Some(hit) = production_hit(&dsn) {
-            panic!(
-                "[test-dsn] 拒绝连接生产环境：{SOURCE} 命中生产特征（{hit}）。\n  \
-                 来源：{SOURCE}\n  实际值：{}\n  解析结果：user={} host={} port={} database={}\n  \
-                 请把 TEST_DATABASE_URL 指向专用测试库（例如 topems_test_runner），测试不会回退到 DATABASE_URL。",
-                mask_dsn(&raw),
-                dsn.user,
-                dsn.host,
-                dsn.port,
-                dsn.database
-            );
-        }
-
-        if dsn.database.eq_ignore_ascii_case("topems") {
-            eprintln!(
-                "[test-dsn] 警告：{SOURCE} 指向开发库 `{}`，建议改用专用测试库（如 topems_test_runner）。",
-                dsn.database
-            );
-        }
-
-        std::env::set_var("DATABASE_URL", &raw);
-        eprintln!(
-            "[test-dsn] DATABASE_URL ← {SOURCE}（user={} host={} port={} database={}）",
-            dsn.user, dsn.host, dsn.port, dsn.database
-        );
+        validate_and_apply(&raw);
     });
+}
+
+fn validate_and_apply(raw: &str) {
+    let dsn = parse_dsn(raw).unwrap_or_else(|reason| {
+        panic!(
+            "[test-dsn] 拒绝启动：无法解析 {SOURCE}（{reason}）。\n  实际值：{}\n  期望形如：postgres://topems_test_runner@localhost:5432/topems_test_runner",
+            mask_dsn(raw)
+        )
+    });
+
+    if let Some(hit) = production_hit(&dsn) {
+        panic!(
+            "[test-dsn] 拒绝连接生产环境：{SOURCE} 命中生产特征（{hit}）。\n  \
+             来源：{SOURCE}\n  实际值：{}\n  解析结果：user={} host={} port={} database={}\n  \
+             请把 TEST_DATABASE_URL 指向专用测试库（例如 topems_test_runner），测试不会回退到 DATABASE_URL。",
+            mask_dsn(raw),
+            dsn.user,
+            dsn.host,
+            dsn.port,
+            dsn.database
+        );
+    }
+
+    if dsn.database.eq_ignore_ascii_case("topems") {
+        eprintln!(
+            "[test-dsn] 警告：{SOURCE} 指向开发库 `{}`，建议改用专用测试库（如 topems_test_runner）。",
+            dsn.database
+        );
+    }
+
+    std::env::set_var("DATABASE_URL", raw);
+    eprintln!(
+        "[test-dsn] DATABASE_URL ← {SOURCE}（user={} host={} port={} database={}）",
+        dsn.user, dsn.host, dsn.port, dsn.database
+    );
 }
 
 fn panic_missing() -> ! {

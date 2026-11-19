@@ -687,26 +687,40 @@ pre-push:
         export SQLX_OFFLINE=true
         export RUST_TEST_THREADS=1
         # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，
-        # 故从 .env 派生 TEST_DATABASE_URL / REDIS_URL（已显式提供时不覆盖；.env 缺失则回退测试内默认值）
+        # 故从 .env 派生 TEST_DATABASE_URL / REDIS_URL（已显式提供时不覆盖；缺失则 fail-closed，无内置默认值）
         #
         # [2026-11-12] DATABASE_URL 也必须显式导出：sqlx::test 的 dotenv 从 crate 工作目录向上取
         # 最近一份 .env，被 gitignore 的 crate 级 svc/*/.env 会覆盖根 .env；若其端口不可达或口令陈旧，
         # 全量测试会在 setup 阶段 30s×N 超时报 PoolTimedOut（实测 3 条 ≈92s，单跑 0.3s 通过）。
         # 已存在的环境变量不会被 dotenv 覆盖，从根 .env 派生并导出即可消除这类环境漂移。
+        # 测试库 DSN 只认 TEST_DATABASE_URL（进程环境 > .env），**不回退** MIGRATE_URL：
+        # .env 的 MIGRATE_URL 通常是 topems_prod（生产库且无 CREATEDB），11-18 事故即由
+        # 测试进程继承生产 DSN 造成。缺失即 fail-closed，不猜、不跳。
+        TEST_DSN=""
         if [ -f .env ]; then
-          # 测试库 DSN 优先级：进程环境 > .env 的 TEST_DATABASE_URL > .env 的 MIGRATE_URL。
-          # #[sqlx::test] 读 DATABASE_URL 并要创建临时库，而 MIGRATE_URL 的 topems_prod 无
-          # CREATEDB（实测 42501 permission denied to create database），故 .env 提供
-          # TEST_DATABASE_URL（专用建库角色）时同时喂给 DATABASE_URL。
           TEST_DSN=$(sed -nE 's/^TEST_DATABASE_URL=(.*)/\1/p' .env | head -1)
-          if [ -z "$TEST_DSN" ]; then TEST_DSN=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
-          if [ -z "${TEST_DATABASE_URL:-}" ]; then TEST_DATABASE_URL=$TEST_DSN; fi
           if [ -z "${REDIS_URL:-}" ]; then REDIS_URL=$(sed -nE 's/^REDIS_URL=(.*)/\1/p' .env | head -1); fi
-          if [ -z "${DATABASE_URL:-}" ]; then DATABASE_URL=$TEST_DSN; fi
-          if [ -n "$TEST_DATABASE_URL" ]; then export TEST_DATABASE_URL; fi
-          if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
-          if [ -n "$DATABASE_URL" ]; then export DATABASE_URL; fi
         fi
+        if [ -z "${TEST_DATABASE_URL:-}" ]; then TEST_DATABASE_URL=$TEST_DSN; fi
+        if [ -z "${TEST_DATABASE_URL:-}" ]; then
+          printf '\033[31m[Gate T] FAIL\033[0m 未提供 TEST_DATABASE_URL（.env 中也没有）：测试不得回退到 DATABASE_URL / MIGRATE_URL。\n'
+          exit 1
+        fi
+        TEST_DBNAME=$(printf '%s' "$TEST_DATABASE_URL" | sed -E 's#.*/([^/?]+)(\?.*)?$#\1#')
+        case "$TEST_DBNAME" in
+          *prod*)
+            printf '\033[31m[Gate T] FAIL\033[0m TEST_DATABASE_URL 指向疑似生产库（%s），拒绝运行测试（生产零写入）。\n' "$TEST_DBNAME"
+            exit 1
+            ;;
+        esac
+        # sqlx::test 读 DATABASE_URL：无条件覆盖为已校验的测试 DSN，
+        # 防止调用者 shell 里残留的 DATABASE_URL（可能指向生产）被测试继承。
+        if [ -n "${DATABASE_URL:-}" ] && [ "${DATABASE_URL}" != "${TEST_DATABASE_URL}" ]; then
+          printf '\033[33m[Gate T] WARN\033[0m 忽略进程内 DATABASE_URL，统一使用 TEST_DATABASE_URL\n'
+        fi
+        DATABASE_URL=$TEST_DATABASE_URL
+        export TEST_DATABASE_URL DATABASE_URL
+        if [ -n "${REDIS_URL:-}" ]; then export REDIS_URL; fi
         if [ -n "${LEFTHOOK_RUN_HEAVY:-}" ]; then
           # 全量通道：仅显式 LEFTHOOK_RUN_HEAVY=1 时执行（耗时长）
           source scripts/lib/swagger-ui.sh

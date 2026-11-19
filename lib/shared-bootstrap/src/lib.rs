@@ -2828,16 +2828,14 @@ mod tests {
     //   错误类型 C：E=sqlx::Error（9 服务主流）
     //   错误类型 D：E=anyhow::Error（aps 特例）
     //
-    // 连接数据库：DATABASE_URL 缺失时自动 skip（不要在无 DB 环境下阻塞 dev）
+    // 连接数据库：TEST_DATABASE_URL 缺失时自动 skip（不要在无 DB 环境下阻塞 dev；禁止读取 DATABASE_URL）
 
     use sqlx::Row;
 
-    /// DATABASE_URL 缺失时跳过的通用标记（本地无 postgres 环境常见）
+    /// 数据库 DSN：只认 TEST_DATABASE_URL（经 test-support 校验生产特征并覆盖 DATABASE_URL），
+    /// 未设置时跳过。**绝不**读取 DATABASE_URL —— 它可能由 .env / push 钩子注入生产库。
     fn get_db_url_or_skip() -> Option<String> {
-        match std::env::var("DATABASE_URL") {
-            Ok(url) if !url.is_empty() => Some(url),
-            _ => None,
-        }
+        topems_test_support::try_test_database_url()
     }
 
     /// 创建一个用于单元测试的 PgPool，DB 中只临时存在测试对象
@@ -2860,7 +2858,7 @@ mod tests {
     async fn default_init_db_ok_case_no_master_refs() {
         let Some(pool) = mk_pool().await else {
             eprintln!(
-                "[SKIP] DATABASE_URL 未设置，default_init_db 真实验收被跳过（cargo test -p topems-shared-bootstrap 无需 DB）"
+                "[SKIP] TEST_DATABASE_URL 未设置，default_init_db 真实验收被跳过（cargo test -p topems-shared-bootstrap 无需 DB）"
             );
             return;
         };
@@ -2883,7 +2881,7 @@ mod tests {
     #[tokio::test]
     async fn default_init_db_err_swallowed_no_master_refs() {
         let Some(pool) = mk_pool().await else {
-            eprintln!("[SKIP] DATABASE_URL 未设置");
+            eprintln!("[SKIP] TEST_DATABASE_URL 未设置");
             return;
         };
 
@@ -2910,7 +2908,7 @@ mod tests {
     #[tokio::test]
     async fn default_init_db_ok_with_master_refs_creates_table() {
         let Some(pool) = mk_pool().await else {
-            eprintln!("[SKIP] DATABASE_URL 未设置");
+            eprintln!("[SKIP] TEST_DATABASE_URL 未设置");
             return;
         };
 
@@ -2971,7 +2969,7 @@ mod tests {
     #[tokio::test]
     async fn default_init_db_accepts_anyhow_error_type() {
         let Some(pool) = mk_pool().await else {
-            eprintln!("[SKIP] DATABASE_URL 未设置");
+            eprintln!("[SKIP] TEST_DATABASE_URL 未设置");
             return;
         };
 
@@ -3021,7 +3019,7 @@ mod tests {
     #[tokio::test]
     async fn default_init_db_repeated_runs_are_idempotent() {
         let Some(pool) = mk_pool().await else {
-            eprintln!("[SKIP] DATABASE_URL 未设置");
+            eprintln!("[SKIP] TEST_DATABASE_URL 未设置");
             return;
         };
 

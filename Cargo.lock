@@ -6398,6 +6398,7 @@ dependencies = [
  "topems-shared-db",
  "topems-shared-event",
  "topems-shared-observability",
+ "topems-test-support",
  "tracing",
  "uuid",
 ]
