@@ -20,7 +20,7 @@
 | prod 已应用但 dev 账本缺 | 29 条 |
 | 仅索引/策略不匹配（软告警） | 56 个版本（索引缺失或多库，多为 relocated 的伴生现象，未计入假 applied） |
 
-**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已按用户批准执行两批处置——第一批空壳回归重放 23 条（§12.2）、第二批 relocated 按 superseded 关闭 29 条（§12.3），**合计已处置 52 / 93**。剩余 40 条（DML 待评估 11 + unknown 非 DML 29）待处理，归总见 §12.4。所有对数据库的写入仅发生在第一批（dev `topems`），第二批为纯文档关闭。
+**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已完成三批处置——空壳回归重放 23 条（§12.2）、relocated 按 superseded 关闭 29 条（§12.3）、unknown 非 DML 定性为真缺 27 + no-op 2（§12.5），加上原 superseded 1 条，**合计已处置/关闭 55 / 93**。剩余 38 条（DML 待评估 11 + unknown 真缺 27）待处理，归总见 §12.4。数据库写入仅发生在第一批（dev `topems`），其余为只读核对与纯文档关闭。
 
 ---
 
@@ -215,7 +215,7 @@
 | 类别 | 条数 | 建议 | 是否可自动重放 |
 |---|---|---|---|
 | regression 空壳 | 24 | 按版本序重放对应 `ALTER TABLE ... ADD COLUMN` 文件；重放前后各跑一次列断言 | 是（幂等 DDL） |
-| unknown（无 DML） | 29 | 先只读确认对象应存在 → 重放；失败即停 | 是（均为 IF NOT EXISTS） |
+| unknown（无 DML） | 29 | **已定性（§12.5）：真缺 27（需补）+ no-op 2（关闭）**；真缺项待批准后按 §7.1 逐条补 | 部分 |
 | unknown（含 DML） | 6 | **先人工审阅 DML 影响行数与语义**，未确认前不重放 | 否 |
 | relocated | 33 | **已定：29 条非 DML 按 superseded 关闭、不重放（逐条见 §12.3）；4 条含 DML 留待评估** | 否 |
 | superseded | 1 | 标记 superseded，不重放 | 否 |
@@ -378,10 +378,58 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | 已完成重放（空壳回归，§12.2） | 23 | 全部 rc=0；`20261007140000` 因 DML 未做，计入下项 |
 | superseded 关闭（relocated 非 DML，§12.3） | 29 | 逐条落点见上表 |
 | DML 待评估（跨分类） | 11 | 1 regression + 4 relocated + 6 unknown |
-| 无法判定（unknown 非 DML） | 29 | 待只读确认后决定重放/关闭 |
+| unknown 定性：真缺（需补，§12.5） | 27 | 列/RLS/表缺失，待批准后按 §7.1 补 |
+| unknown 定性：no-op（构造性/被取代，§12.5） | 2 | `20261007000001`、`20261112095000`，已关闭 |
 | 其余：原 superseded | 1 | `20260918000011` |
 | **合计** | **93** | 与 §2 分类（24+33+35+1）一致 |
 
-> 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 待评估」，故此处「无法判定」记 29 条，避免重复计数。23+29+11+29+1 = 93。
+> 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 待评估」，故此处拆为 27 + 2 共 29 条，避免重复计数。23+29+11+27+2+1 = 93。
 >
-> **仍待处理：40 条** = DML 待评估 11 + unknown 非 DML 29。
+> **已处置/关闭：55 条** = 重放 23 + superseded 29 + no-op 2 + 原 superseded 1。
+>
+> **仍待处理：38 条** = DML 待评估 11 + unknown 真缺 27。
+
+### 12.5 unknown（非 DML）29 条逐条定性
+
+**方法（纯只读，2026-11-19）**：未写库、未动账本、未重放任何迁移。
+1. 对每个版本解析出的声明对象，用 `pg_class` 在 dev 按「声明 schema 是否存在 / 同名 relname 在其他 schema 是否存在」批量核对（230 个表），列对象另查 `pg_attribute`。
+2. 读取 prod 账本（`topems_drift`，只读）：29 条在 prod **均 success**（29/29），说明是 dev 侧未真正落地而非版本未发布。
+3. 对「对象不存在」的版本，再读迁移原文的守卫（`to_regclass` / `DO $$ ... IF EXISTS` / `IF NOT EXISTS`）与后续迁移的 `DROP/RENAME`，判定是否构造性 no-op 或被取代。
+
+**定性口径**：三选一——`relocated`（对象在他处）/ `no-op`（迁移本该跳过或被后续迁移取代）/ `真缺`（需补）。
+
+| 版本 | 文件 | 定性 | 依据 |
+|---|---|---|---|
+| 20260725000000 | business_base_tables.sql | 真缺（需补） | 13 对象全库无同名表（`crm.core_crm_customers`、`erp.core_erp_suppliers`、`finance.finance_*_v`、`finance.finance_u/v`）；另 39 对象已在 lims/qms/master_data/communication；DO$$ 只守类型/schema，不放行缺表。历史占位，§9 不建议整条重放 |
+| 20260725000003 | finance_account_voucher_add_fields.sql | 真缺（需补） | `public.voucher_status` 现有 `draft,submitted,approved,posted,rejected,cancelled`，**无 `reversed`** |
+| 20260909000001 | rls_event_chain_tenant.sql | 真缺（需补） | `crm.sales_orders`/`erp.vouchers`/`erp.voucher_items`/`wms.purchase_order_snapshots` 均在声明 schema 存在，**RLS 未启用** |
+| 20260909000003 | ticket_ext_attachments.sql | 真缺（需补） | `ticket.ticket_attachments` 存在，RLS 未启用 |
+| 20260909110001 | sales_invoices.sql | 真缺（需补） | `finance.erp_collection_records` 存在，RLS 未启用 |
+| 20260911000001 | async_task_queue.sql | 真缺（需补） | `integration.async_tasks` 存在，RLS 未启用 |
+| 20260911000005 | external_erp_staging_rls.sql | 真缺（需补） | `integration.external_erp_staging` 存在，RLS 未启用 |
+| 20260917000001 | mobile_oa_tables.sql | 真缺（需补） | `mobile.oa_announcement_reads` 存在，RLS 未启用 |
+| 20260920000086 | missing_columns_batch3.sql | 真缺（需补） | `lims.samples.sample_no` 列缺；`wms.inventory_alerts.rule_id`、`srm.bid_prices.tenant_id`、`erp.sys_db_changes.old_definition` 三表全库无同名 |
+| 20260921000107 | backend_i18n_batch8_bilingual_columns.sql | 真缺（需补） | `ehs.qa_ehs_hazard_factors`/`qa_ehs_hazardous_materials`/`qa_ehs_hazards`/`public.notification_channels` 的 `*_en` 列缺；`public.core_email_templates` 已 relocated 至 `iam`（1） |
+| 20261007000001 | crm_return_event_outbox.sql | **no-op（被取代）** | 本迁移建 `crm.return_event_outbox`，后续 `20261014000020_drop_dead_outbox_tables.sql` 明确 `DROP TABLE`（该迁移已 applied） |
+| 20261007000006 | rebuild_orphan_tables.sql | 真缺（需补） | 107 表已 relocated（`mes.*`/`public.*` → `iam` 等）；但 `analytics.analytics_*`（11）、`mes.dashboard_stats`/`financial_records`/`supply_chain_orders`、`public._archive_core_workflow_versions` 存在却 **RLS 未启用**；`_sqlx_test.databases` 为测试专用（非运行时） |
+| 20261007000009 | align_orphan_tables_selfheal3.sql | 真缺（需补） | 12 表已 relocated；`qms.qa_alert_messages`/`qa_apqp_projects`/`wms.replenishment_suggestions` 存在但 **RLS 未启用** |
+| 20261017000006 | ehs_env_compliance_assess_permits_cols.sql | 真缺（需补） | `ehs.qa_ehs_compliance_evaluations`/`qa_ehs_discharge_permits` 存在，5 列缺 |
+| 20261017000011 | ehs_disease_cases_cols.sql | 真缺（需补） | `ehs.qa_ehs_disease_cases` 存在，6 列缺 |
+| 20261017000012 | ehs_hazardous_material_cols.sql | 真缺（需补） | `ehs.qa_ehs_hazardous_materials`/`qa_ehs_msds` 存在，8 列缺 |
+| 20261018000006 | ai_conversations_copilot_cols.sql | 真缺（需补） | `core.ai_conversations` 存在，`module`/`messages`/`selected_records`/`context_data` 4 列缺 |
+| 20261023000009 | master_data_domain_rls.sql | 真缺（需补） | `master_data.materials`/`uoms`/`samples` 存在，RLS 未启用 |
+| 20261024000001 | p2_four_tables_tenant_rls.sql | 真缺（需补） | `finance.expense_approvals`/`ehs.qa_ehs_drill_evaluations` 存在但 RLS 未启用；`communication.core_notification_templates` 已 relocated 至 `iam`/`public`（2） |
+| 20261024000010 | crm_segments_tenant_rls.sql | 真缺（需补） | `crm.customer_segments`/`customer_recommendations` 存在，`tenant_id` 列缺 + RLS 未启用 |
+| 20261024000012 | srm_supplier_users.sql | 真缺（需补） | `srm.supplier_users` 当前不存在；唯一删除来源 `20261105100000` 在 dev 账本**不存在（未应用）**；本迁移 `to_regclass IS NULL → CREATE TABLE`，故按真缺 |
+| 20261027100000 | scenario_fix_contract_align.sql | 真缺（需补） | `portal.portal_todos` 存在，`service`/`status`/`description`/`assigned_to`/`completed_at` 等 8 列缺 |
+| 20261027110000 | mes_quality_standard_values_work_reports_tenant_id.sql | 真缺（需补） | `mes.quality_standard_values`/`work_reports` 存在，RLS 未启用 |
+| 20261027130000 | fix_ehs_columns_and_mdm_v55_types.sql | 真缺（需补） | `ehs.health_records` 等 11 表存在，15 列缺 |
+| 20261029175000 | schema_defense_columns_portal.sql | 真缺（需补） | `portal.*` 26 表存在，27 列缺 |
+| 20261029177000 | schema_defense_columns_sync.sql | 真缺（需补） | `integration.*`/`public.*` 6 表存在，96 列缺 |
+| 20261030171000 | fill_wms_outbound_orders_order_date.sql | 真缺（需补） | `wms.outbound_orders` 存在，`order_date` 列缺 |
+| 20261102220000 | rls_enable_biz_batch1.sql | 真缺（需补） | 21 表存在但 RLS 未启用；`lims.qa_lab_samples`/`qa_lab_tasks` 已 relocated 至 `public`（2） |
+| 20261112095000 | w7_b4_srm_supplier_users_restrictive.sql | **no-op（构造性）** | 文件内 `IF to_regclass('srm.supplier_users') IS NULL THEN RAISE NOTICE ... no-op`；自述表已由 `20261105100000` 删除 |
+
+**归总（29 条）**：`relocated` 0 条（无纯 relocated 版本）· `no-op` 2 条（已关闭）· `真缺（需补）` 27 条。
+
+> 说明：relocated 对象并非没有，而是**都与其他缺口混在同一版本**——主要分布在 `20260725000000`(39)、`20261007000006`(107)、`20261007000009`(12)、`20260921000107`(1)、`20261024000001`(2)、`20261102220000`(2)。这些版本按「存在可补缺口」归入真缺，避免把 RLS/列缺口误当已解决。
