@@ -53,26 +53,6 @@ export interface FileMetadata {
   updated_at: string;
 }
 
-interface FilePermission {
-  id: string;
-  file_id: string;
-  principal_type: 'user' | 'group' | 'department';
-  principal_id: string;
-  principal_name?: string;
-  permission: 'read' | 'write' | 'manage';
-  granted_by?: string;
-  granted_at?: string;
-  created_at: string;
-}
-
-interface FileStats {
-  total_files: number;
-  totalsize: number;
-  today_uploads: number;
-  storage_used: number;
-  storage_limit: number;
-}
-
 interface ListFilesQuery {
   page?: number;
   page_size?: number;
@@ -88,24 +68,15 @@ interface PagedResponse<T> {
   page_size: number;
 }
 
-interface ShareInfo {
-  file_id: string;
-  file_name: string;
-  shared_with: SharedWith[];
-}
-
-interface SharedWith {
-  id: string;
-  name: string;
-  type: 'user' | 'group' | 'department';
-  permission: 'read' | 'write' | 'manage';
-}
-
-interface ExportRequest {
-  ids?: string[];
-  format?: string;
-}
-
+/**
+ * 文件服务 API。
+ *
+ * 契约说明：后端 `svc/unified-core/src/modules/file/manage.rs` 中以下端点固定返回 501，
+ * 在实现前不在此导出，避免上层误用后拿到静默失败：
+ *   set_file_permissions / get_file_permissions / get_shared_files /
+ *   get_file_stats / export_files / search_files
+ * 列表检索请走 `list({ search })`（后端 list 已支持关键字过滤），不要调用 /files/search。
+ */
 export const fileApi = {
   // ==================== 核心 CRUD ====================
 
@@ -164,35 +135,6 @@ export const fileApi = {
 
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.file.delete<string>(`/files/${id}`);
-  },
-
-  // ==================== 分享与权限 ====================
-
-  async getPermissions(id: string): Promise<ApiResponse<FilePermission[]>> {
-    return apiClient.file.get<FilePermission[]>(`/files/${id}/permissions`);
-  },
-
-  async revokePermission(
-    id: string,
-    principal_type: string,
-    principal_id: string,
-    permission: string
-  ): Promise<ApiResponse<string>> {
-    return apiClient.file.delete<string>(
-      `/files/${id}/permissions/revoke/${principal_type}/${principal_id}/${permission}`
-    );
-  },
-
-  async getSharedFiles(): Promise<ApiResponse<ShareInfo[]>> {
-    return apiClient.file.get<ShareInfo[]>('/files/shared');
-  },
-
-  async getStats(): Promise<ApiResponse<FileStats>> {
-    return apiClient.file.get<FileStats>('/files/stats');
-  },
-
-  async export(request: ExportRequest): Promise<ApiResponse<unknown>> {
-    return apiClient.file.post('/files/export', request);
   },
 
   async health(): Promise<ApiResponse<string>> {

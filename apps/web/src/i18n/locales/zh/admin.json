@@ -3160,5 +3160,9 @@
   "migration_admin_page.service_status_title": "{{serviceName}} · 迁移状态",
   "permission_audit_page.load_access_logs_error": "加载访问控制日志失败：{{error}}",
   "permission_audit_page.load_permission_changes_error": "加载权限变更记录失败：{{error}}",
-  "tenant_settings_page.k0": "当前租户共有 {{v0}} 名成员，最多可添加 {{v1}}{{v2}} {{v3}}"
+  "tenant_settings_page.k0": "当前租户共有 {{v0}} 名成员，最多可添加 {{v1}}{{v2}} {{v3}}",
+  "admin.bank_account_management_page.error_load": "银行账户加载失败，请重试",
+  "admin.bank_account_management_page.error_create": "创建银行账户失败，请重试",
+  "admin.bank_account_management_page.error_update": "更新银行账户失败，请重试",
+  "admin.bank_account_management_page.error_delete": "删除银行账户失败，请重试"
 }

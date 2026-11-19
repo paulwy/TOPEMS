@@ -4719,5 +4719,9 @@
   "admin.system_settings_page.defaults.system_name": "TOPEMS Industrial Operating System",
   "admin.system_settings_page.defaults.company_name": "Example Technology Co., Ltd.",
   "admin.system_settings_page.defaults.address": "123 Example Road, Chaoyang District, Beijing",
-  "admin.system_settings_page.defaults.from_name": "TOPEMS System Notification"
+  "admin.system_settings_page.defaults.from_name": "TOPEMS System Notification",
+  "admin.bank_account_management_page.error_load": "Failed to load bank accounts, please retry",
+  "admin.bank_account_management_page.error_create": "Failed to create bank account, please retry",
+  "admin.bank_account_management_page.error_update": "Failed to update bank account, please retry",
+  "admin.bank_account_management_page.error_delete": "Failed to delete bank account, please retry"
 }

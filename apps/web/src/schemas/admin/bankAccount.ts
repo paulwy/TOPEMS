@@ -9,23 +9,6 @@ import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';
 
-const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  checking: i18n.t('admin.bank_account.k0'),
-  savings: i18n.t('admin.bank_account.k1'),
-  dedicated: i18n.t('admin.bank_account.k2'),
-  foreign: i18n.t('admin.bank_account.k3'),
-};
-
-const ACCOUNT_TYPE_COLORS: Record<
-  string,
-  'primary' | 'success' | 'secondary' | 'warning' | 'default'
-> = {
-  checking: 'primary',
-  savings: 'success',
-  dedicated: 'secondary',
-  foreign: 'warning',
-};
-
 const STATUS_LABELS: Record<string, string> = {
   active: i18n.t('admin.bank_account.k4'),
   frozen: i18n.t('admin.bank_account.k5'),
@@ -110,70 +93,6 @@ export const bankAccountSchema: EntitySchema = {
       type: 'text',
       listWidth: 150,
       showInList: false,
-    },
-    {
-      name: 'account_type',
-      label: i18n.t('schema:admin.bank_account.account_type.label'),
-      type: 'select',
-      required: true,
-      defaultValue: 'checking',
-      options: {
-        type: 'static',
-        options: [
-          {
-            value: 'checking',
-            label: i18n.t('schema:admin.bank_account.account_type.option.checking'),
-          },
-          {
-            value: 'savings',
-            label: i18n.t('schema:admin.bank_account.account_type.option.savings'),
-          },
-          {
-            value: 'dedicated',
-            label: i18n.t('schema:admin.bank_account.account_type.option.dedicated'),
-          },
-          {
-            value: 'foreign',
-            label: i18n.t('schema:admin.bank_account.account_type.option.foreign'),
-          },
-        ],
-      },
-      listWidth: 100,
-      renderCell: (row: Record<string, unknown>) => {
-        const accountType = String(row.account_type || '');
-        const label = ACCOUNT_TYPE_LABELS[accountType] || accountType;
-        const color = ACCOUNT_TYPE_COLORS[accountType] || 'default';
-        const colorMap: Record<string, string> = {
-          primary: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
-          success: `var(--color-success-main, ${designTokens.colors.success.dark})`,
-          secondary: `var(--color-secondary-main, ${designTokens.colors.secondary.main})`,
-          warning: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
-          default: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
-        };
-        const bgColorMap: Record<string, string> = {
-          primary: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
-          success: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-          secondary: 'var(--color-secondary-lighter, var(--color-grey-100))',
-          warning: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
-          default: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
-        };
-        return React.createElement(
-          'span',
-          {
-            style: {
-              display: 'inline-block',
-              padding: `${designTokens.spacing.xs} 8px`,
-              borderRadius: 12,
-              fontSize: 12,
-              fontWeight: 500,
-              backgroundColor: bgColorMap[color],
-              color: colorMap[color],
-            },
-          },
-          label
-        );
-      },
-      validation: [{ type: 'maxLength', value: 20 }],
     },
     {
       name: 'currency',
