@@ -2498,3 +2498,12 @@ pending_forward_patches:
     effect: "按「先解依赖、后归档」处理 8 张表：① iam.core_tenant_plugins 外键 iam.core_tenants -> public.core_tenants；② 归档并 DROP 5 张引用方（iam.core_user_roles + flow._deprecated_core_tenant_{modules,settings,usage,users}）；③ 改写 finance.bootstrap_defaults 只读 public.core_tenants + finance.core_finance_accounts（删除 iam/flow/iam.core_tenant_users 三个分支）；④ 归档并 DROP 3 张目标表（iam.core_tenants / iam.core_users / flow.core_tenants）；归档到 archive.drop_20261119_ub__<schema>__<table>，保留 180 天；新增 archive._fk_out_snapshot 记录出向外键；闸门 app.tenant_unblock_archive_gate=tenant-unblock-20261119"
     destructive_scan: "DROP TABLE ×8（destructive-gate: allow，TENANT-UNBLOCK-20261119）；CREATE TABLE archive + INSERT ... SELECT + manifest/策略/出向外键快照；ALTER TABLE 重指外键 + CREATE OR REPLACE FUNCTION；无 CASCADE DROP、无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119200000_unblock_and_archive_legacy_tenant_tables.rollback.sql（按 manifest 重建 8 张表、数据、默认值、出向外键；插件外键改回 iam.core_tenants；恢复旧函数体）；8 张表均 0 行、无 RLS/策略/视图/触发器/序列，策略快照预期零 diff；生产执行需 DBA 外审签字后打开闸门"
+
+  # ===== 2026-11-19 批：策略名漂移「不等价」集合中的等价子集（8 张 erp 合并报表表） =====
+  # 依据：docs/database/rls-policy-name-drift-executable-list-2026-11-19.md §4（实测更正：group_tenant_of 不入策略表达式）
+  - version: "20261119210000"
+    file: "database/migrations/20261119210000_rls_normalize_erp_consolidation_policy_rename.sql"
+    status: to_apply
+    effect: "8 张 erp 合并报表表（company_relations / consolidation_report_lines / consolidation_reports / consolidation_scope_companies / consolidation_scopes / elimination_candidates / elimination_rules / internal_transactions）把 tenant_isolation_<table> 改名为 rls_tenant_isolation；表达式不改（前置断言证明 using/with_check 逐字等于严格 B）"
+    destructive_scan: "仅 ALTER POLICY ... RENAME TO；无 DROP/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119210000_rls_normalize_erp_consolidation_policy_rename.rollback.sql（改回遗留名，不触碰表达式）；策略快照预期 8 张表的策略名变化，需随迁移同批重生成；erp.event_idempotency / core_login_logs / core_refresh_tokens / core_sessions / iam.roles / 3 张 allow_all / 9 张 platform·global 双策略表仅出方案，不进本迁移"
