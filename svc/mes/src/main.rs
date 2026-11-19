@@ -16,7 +16,7 @@ use topems_mes::{modules, AppState};
 use axum::routing::get;
 use utoipa::OpenApi;
 
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, create_health_state,
     create_standard_health_routes, run, ServiceConfig,
@@ -276,6 +276,7 @@ async fn main() -> anyhow::Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_module_write("mes")))
         .layer(axum::middleware::from_fn(require_module_access("mes")))
         .with_state(state);
 
