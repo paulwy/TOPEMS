@@ -931,9 +931,9 @@ fn parse_acl_list_query(
 
     let resource_id = match trim_query_value(&query.resource_id) {
         None => None,
-        Some(value) => Some(
-            Uuid::parse_str(&value).map_err(|_| json_error(400, "resource_id 格式错误"))?,
-        ),
+        Some(value) => {
+            Some(Uuid::parse_str(&value).map_err(|_| json_error(400, "resource_id 格式错误"))?)
+        }
     };
     if resource_id.is_some() && resource_type.is_none() {
         return Err(json_error(400, "resource_id 必须与 resource_type 同时提供"));
@@ -954,17 +954,15 @@ fn parse_acl_list_query(
 
     let scope = match trim_query_value(&query.scope).as_deref() {
         None => None,
-        Some(value) if value == PLATFORM_SCOPE || value == TENANT_SCOPE => {
-            Some(value.to_string())
-        }
+        Some(value) if value == PLATFORM_SCOPE || value == TENANT_SCOPE => Some(value.to_string()),
         Some(_) => return Err(json_error(400, "scope 必须为 platform 或 tenant")),
     };
 
     let tenant_id = match trim_query_value(&query.tenant_id) {
         None => None,
-        Some(value) => Some(
-            Uuid::parse_str(&value).map_err(|_| json_error(400, "tenant_id 格式错误"))?,
-        ),
+        Some(value) => {
+            Some(Uuid::parse_str(&value).map_err(|_| json_error(400, "tenant_id 格式错误"))?)
+        }
     };
 
     let subject_type = match trim_query_value(&query.subject_type).as_deref() {
