@@ -59,15 +59,26 @@ lint 直接中断。改为只覆盖使用 `minimatch.minimatch` 命名导出的 
 
 | 包 | 版本 | 条数 | 最高级别 | 引入链 | 处置 |
 |---|---|---|---|---|---|
-| zip | 8.6.0 | 8 | 9.1 critical（RUSTSEC-2026-0369） | tauri-plugin-stronghold → libsodium-sys-stable 1.24.3 → zip ^8 | 上游未发新版，登记接受 |
-| crypto-bigint | 0.5.5 | 1 | moderate | 同主仓 jwtn/p256 链 | 同主仓豁免口径 |
+| zip | ~~8.6.0~~ → 9.7.3 | ~~8~~ → **0** | 9.1 critical（RUSTSEC-2026-0369） | tauri-plugin-stronghold → stronghold-runtime → libsodium-sys-stable **1.24.6** → zip ^9.5 | **已修复**（见下） |
+| crypto-bigint | 0.5.5 | 1 | moderate | 同主仓 jwtn/p256 链 | 上游未发版，同主仓豁免口径 |
 | bincode | 1.3.3 | 1 | unmaintained | tauri 生态 | 随 tauri 滚动 |
 | chrono | 0.4.45 | 1 | informational | tauri 生态 | 随 tauri 滚动 |
 
-**为什么 zip 不修**：修复要求 `zip >= 9.0.0`，而 `libsodium-sys-stable` 约束 `^8`，且 1.24.3 已是
-当前兼容上限（`cargo update -p libsodium-sys-stable` → Locking 0 packages）。该 zip 仅用于
-**构建期解压固定的 libsodium 源码包**（归档来源固定、无外部输入），桌面端不解析用户提交的压缩包，
-实际利用面为空。待上游 stronghold/libsodium 生态切到 zip 9 后自动消除。
+**zip 8.6.0 已清零（本文件此前登记为"接受风险"，已推翻）**：修复要求 `zip >= 9.0.0`，此前
+`libsodium-sys-stable` 停 1.24.3（约束 `^8.6`）看似无解；实际上游 **1.24.4 起已切 `zip ^9.4`**，
+只是 `tauri-plugin-updater` 把锁里的 zip 压在 9.1.3，导致 `cargo update -p libsodium-sys-stable`
+报 "all possible versions conflict" 而非明确的版本不可用。正确顺序是**先升 zip 再升 libsodium**：
+
+```bash
+cd apps/desktop/src-tauri
+cargo update -p zip@9.1.3 --precise 9.7.3          # 解开 updater 的 9.1.3 锚点
+cargo update -p libsodium-sys-stable@1.24.3 --precise 1.24.6
+```
+
+结果：`zip 8.6.0` 整个条目被移除，锁里只剩 `zip 9.7.3`；连带 `cc 1.10→1.11.2`、
+`ureq 3.5.0→3.5.2`、`ureq-proto 0.6.5→0.7.1`，移除 `minisign-verify 0.2.5`、`typed-path 0.12.4`。
+**验证**：`libsodium-sys-stable 1.24.6` + `zip 9.7.3` 在独立临时 crate 中完整编译通过（4m17s，
+含 vendored libsodium C 编译），确认非"锁能解但编不过"。
 
 **已排除的错误做法**：对桌面锁 `cargo update` 全量刷新会带来 `syn 3.0.9→2.0.119`、
 `windows-sys 0.61.2→0.59.0` 等**解析回退**，既无安全收益又可能打挂桌面构建，已还原。
@@ -75,7 +86,15 @@ lint 直接中断。改为只覆盖使用 `minimatch.minimatch` 命名导出的 
 ## 7. GitHub 口径 28 → 5 的对应关系
 
 - 26 → 0：pnpm 工作区（第三、四节已闭环）。
-- 28 → 5 中剩余 5 条 = 桌面工具链 zip（critical/high）+ crypto-bigint + libsqlite3-sys（服务端约定豁免）。
+- 28 → 5 中的 1 critical + 3 high **即为桌面端 zip 8.6.0**，已于第六节清零（`zip 9.7.3`）。
+- 剩余项为**上游未发版导致无法解析，不是没做**，逐条证据：
+
+| advisory | 需要的修复版本 | 卡点 |
+|---|---|---|
+| RUSTSEC-2026-0387 crypto-bigint | `>= 0.7.6` | 需 `jsonwebtoken 12`（`p256 0.14` 已不再依赖 crypto-bigint）；但 jwtn 12 的 `rust_crypto` 后端要求 `rsa ^0.10`，生态里只有 `0.10.0-rc.20` 预发布版，`^0.10` 无法解析；改 `aws_lc_rs` 后端则需 cmake 构建 BoringSSL（本机无 cmake、CI 面风险） |
+| RUSTSEC-2023-0071 rsa（Marvin） | `>= 0.10.0` | 同上，被 jwtn 12 的预发布 rsa 卡住；且代码里 **RS256 真在用**（`lib/shared-auth/src/auth.rs` 验签先 RS256 后 HS256），不能靠删依赖绕过 |
+| RUSTSEC-2026-0459 libsqlite3-sys | `>= 0.39.0` | 需 rusqlite 0.41；`sqlx` 目前 crates.io 最新即 0.9.1，`sqlx-sqlite` 仍 pin `^0.30`，只能等 sqlx 发版 |
+
 - `tests/integration/package-lock.json`、`tests/e2e/package-lock.json` 被 `.gitignore` 忽略，
   **不在 GitHub 扫描面**；本地仍已刷新（integration 的 lock 过期锁在 vitest 2.1.9 且有结构损坏，
   package.json 早已是 `^4.1.11`，按 package.json 重生成后两处 `npm audit` 均 0 条）。
