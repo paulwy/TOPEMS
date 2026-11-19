@@ -847,14 +847,14 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "core_allow_all_core_tenant_plugins",
+          "name": "rls_system_only",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "true",
-          "with_check": "true"
+          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
+          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
         }
       ]
     },
@@ -1287,150 +1287,6 @@
           ],
           "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
           "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
-        }
-      ]
-    },
-    {
-      "schema": "doc",
-      "table": "document_versions",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_allow_all_document_versions",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc",
-      "table": "documents",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_allow_all_documents",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc",
-      "table": "folders",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_allow_all_folders",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc",
-      "table": "templates",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_allow_all_templates",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc_service",
-      "table": "archives",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_service_allow_all_archives",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc_service",
-      "table": "files",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_service_allow_all_files",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc_service",
-      "table": "folders",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_service_allow_all_folders",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "doc_service",
-      "table": "templates",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "doc_service_allow_all_templates",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
         }
       ]
     },
@@ -5011,42 +4867,6 @@
       ]
     },
     {
-      "schema": "flow",
-      "table": "notifications",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "flow_allow_all_notifications",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "flow",
-      "table": "workflows",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "flow_allow_all_workflows",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
       "schema": "gis",
       "table": "business_locations",
       "rls_enabled": true,
@@ -6038,24 +5858,6 @@
     },
     {
       "schema": "iam",
-      "table": "permissions",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "iam_allow_all_permissions",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "iam",
       "table": "position_permissions",
       "rls_enabled": true,
       "force_rls": true,
@@ -6133,14 +5935,24 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "iam_allow_all_roles",
-          "cmd": "ALL",
+          "name": "rls_global_read",
+          "cmd": "SELECT",
           "permissive": true,
           "roles": [
             "public"
           ],
           "using": "true",
-          "with_check": "true"
+          "with_check": ""
+        },
+        {
+          "name": "rls_system_write",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
+          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
         }
       ]
     },
@@ -7149,42 +6961,6 @@
           ],
           "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
           "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
-        }
-      ]
-    },
-    {
-      "schema": "mail",
-      "table": "emails",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "mail_allow_all_emails",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
-      "schema": "mail",
-      "table": "templates",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "mail_allow_all_templates",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
         }
       ]
     },
@@ -10051,24 +9827,6 @@
       ]
     },
     {
-      "schema": "notification",
-      "table": "notifications",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "notification_allow_all_notifications",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
       "schema": "pdm",
       "table": "module_settings",
       "rls_enabled": true,
@@ -11319,14 +11077,14 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "portal_allow_all_user_preferences",
+          "name": "rls_system_only",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "true",
-          "with_check": "true"
+          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
+          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
         }
       ]
     },
@@ -13063,24 +12821,6 @@
       ]
     },
     {
-      "schema": "report",
-      "table": "reports",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "report_allow_all_reports",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
-        }
-      ]
-    },
-    {
       "schema": "rs",
       "table": "audit_logs",
       "rls_enabled": true,
@@ -14337,24 +14077,6 @@
           ],
           "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
           "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
-        }
-      ]
-    },
-    {
-      "schema": "storage",
-      "table": "files",
-      "rls_enabled": true,
-      "force_rls": true,
-      "policies": [
-        {
-          "name": "storage_allow_all_files",
-          "cmd": "ALL",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": "true"
         }
       ]
     },

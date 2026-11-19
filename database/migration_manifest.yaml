@@ -2442,3 +2442,18 @@ pending_forward_patches:
     destructive_scan: "ADD COLUMN + UPDATE 回填 + SET NOT NULL + EXECUTE DROP POLICY 循环 + CREATE POLICY + CREATE INDEX；无 DELETE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT；含 destructive-gate: allow"
     note: "回滚 database/rollback/20261119151000_mobile_oa_announcement_reads_tenant_rls.rollback.sql（删策略/索引、DROP NOT NULL + DROP COLUMN tenant_id、重建 allow_all，清账本行）；须与 svc/mobile 同窗口上线"
 
+  # ===== 2026-11-19 批：27 张零运行期路径表终态处置 =====
+  # 依据：docs/database/zero-path-tables-disposition-2026-11-19.md
+  - version: "20261119160000"
+    file: "database/migrations/20261119160000_drop_zero_path_legacy_tables.sql"
+    status: to_apply
+    effect: "16 张零运行期路径遗留表先归档到 archive.drop_20261119_zp__<schema>__<table>（结构+数据，保留 180 天）再 DROP；逐表断言源/归档行数一致；前置断言无入向外键/依赖视图；闸门 app.drop_zero_path_tables_gate=zero-path-20261119"
+    destructive_scan: "DROP TABLE ×16（destructive-gate: allow，ZERO-PATH-20261119）；CREATE TABLE archive + INSERT ... SELECT + manifest/策略快照；无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119160000_drop_zero_path_legacy_tables.rollback.sql（按 archive._drop_manifest 重建 16 张表、数据、RLS、策略、默认值/序列/视图，保留归档表）；生产执行需 DBA 外审签字后打开闸门"
+  - version: "20261119161000"
+    file: "database/migrations/20261119161000_zero_path_retained_tables_policy_fix.sql"
+    status: to_apply
+    effect: "3 张确认保留的零路径表消除 allow-all：core.core_tenant_plugins 与 portal.user_preferences → rls_system_only(ALL，仅 app.rls_system='on')；iam.roles → rls_global_read(SELECT true) + rls_system_write(ALL，仅系统通道)；均 ENABLE+FORCE"
+    destructive_scan: "EXECUTE DROP POLICY 循环（动态）+ CREATE POLICY + ENABLE/FORCE；先写 archive._rls_policy_snapshot 快照；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119161000_zero_path_retained_tables_policy_fix.rollback.sql（删除新策略、按 archive._rls_policy_snapshot 恢复原策略，清账本行）"
+
