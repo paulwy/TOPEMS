@@ -470,6 +470,13 @@ psql "postgresql://topems_prod@127.0.0.1:5432/topems_prod" \
 
 **必须带 `app.rls_system=on`，否则假 PASS**：132 张中 **46 张是 FORCE RLS**（18 张 `allow_all` + 28 张 `tenant_isolation`）。`topems_prod` 是表 owner，但 FORCE RLS 对 owner 同样生效，且它非 BYPASSRLS；不设置该 GUC 时，28 张 `tenant_isolation` 表的 `count(*)` 会被策略过滤为 0，C16 会误判 PASS。破坏性预演段已改为**由脚本自行注入** `SET app.rls_system='on'` 与文件声明的 `app.*_gate`（无需 `PGOPTIONS`）；但 apply 段在 prod 仍不自行注入（`--drill-gate-guc-auto` 仅限演练），因此开窗执行 `apply-forward.sh` 时仍必须在 `PGOPTIONS` 里带上 `-c app.rls_system=on`（与各波 gate GUC 并列）。
 
+复跑时机（结论有保鲜期）：
+
+- **窗口前 24 小时内**：DBA 用上面同一命令做一次准入判定，作为「是否动库」的前置结论。
+- **开窗前 30 分钟**：再按同一命令复跑一次确认。
+- **两次都 `C16 PASS`**（132 张全部 `READABLE` 且 `rows=0`，第 7 节例外查询 0 行）才允许动库；两次之间任何一次不是 PASS，即推迟窗口，不得用另一次的 PASS 抵消。
+- 两次判定之间若发生任何写入、DDL 或权限变更，前一次结论自动失效，必须按上述时机重新复跑。
+
 DBA 回报格式（一条消息）：
 
 1. 一行结论：`C16 PASS` 或 `C16 NOT PASS`。
