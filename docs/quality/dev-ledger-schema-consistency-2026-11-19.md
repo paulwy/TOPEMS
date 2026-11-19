@@ -17,10 +17,14 @@
 | **对象存在但账本无记录** | **15 个版本 / 66 个对象**；其中 6 个版本在 prod 账本已记为 applied |
 | 账本有记录但仓库无文件 | 1 条：`20261103000005` |
 | checksum 与文件不一致 | 1 条：`20261007000012`（dev 应用的是旧版文件） |
-| prod 已应用但 dev 账本缺 | 29 条 |
+| prod 已应用但 dev 账本缺 | 29 条（其中 `20261105100000` 为 prod-only，已定性登记，勿重复当缺口，见 §12.9） |
 | 仅索引/策略不匹配（软告警） | 56 个版本（索引缺失或多库，多为 relocated 的伴生现象，未计入假 applied） |
 
 **执行状态（2026-11-19 更新）**：§2 为初始审计清单；已完成六批处置——空壳回归重放 23 条（§12.2）、relocated 按 superseded 关闭 29 条（§12.3）、unknown 非 DML 定性（§12.5）、真缺 27 条执行（§12.6）、DML 11 条收尾（§12.8：原样重放 7 + RLS 定向补丁 3 + superseded 1）、`20261024000012` 按 superseded 关闭（§12.9：`srm.supplier_users` 在 prod 建后由 `20261105100000` 删除，dev 无表即 P4 终态），加上原 superseded 1 条，**合计已处置/关闭 93 / 93，全部收口**。归总见 §12.4/§12.9。
+
+**已知差异登记（后续复核请勿重复当缺口）**
+- `20261105100000`（P4 首删）：**prod-only 迁移**。prod 账本 success（2026-11-05 01:51）；dev 账本**从未记录**（不是删行），20261105 当日仅此一个缺口。dev 侧 11 张目标表已全不存在（P4 终态），但 18 条重指向 FK 只有 11 条，原样重放会 `P4_FK_ABORT`。定性依据见 §12.9。
+- 因此 §6「prod 已应用但 dev 账本缺 29 条」中的 `20261105100000` 属预期差异，不再列入待办。
 
 ---
 
@@ -206,7 +210,7 @@
 20261105100000 20261105235600 20261105235700 20261108091000 20261108135000 20261109160300 20261110110200 20261110120100 20261110210000 20261112190000 20261113100000 20261114120000 20261114201000 20261114202000 20261115000000 20261115110000 20261115120000 20261115141500 20261115142000 20261115142400 20261115142500 20261117120000 20261117220000 20261118090000 20261118110000 20261118112000 20261118113000 20261118125000 20261118150000
 ```
 
-其中 6 条的对象已在 dev 出现（见 §3）；其余 23 条需先确认 dev 是否真的缺对象，再决定“补账本”还是“应用到 dev”。
+其中 6 条的对象已在 dev 出现（见 §3）；其余 23 条需先确认 dev 是否真的缺对象，再决定“补账本”还是“应用到 dev”。**注**：`20261105100000` 属 prod-only 迁移，dev 从未记账为预期差异，已登记于 §0/§12.9，勿重复当缺口。
 
 ---
 
@@ -215,9 +219,9 @@
 | 类别 | 条数 | 建议 | 是否可自动重放 |
 |---|---|---|---|
 | regression 空壳 | 24 | 按版本序重放对应 `ALTER TABLE ... ADD COLUMN` 文件；重放前后各跑一次列断言 | 是（幂等 DDL） |
-| unknown（无 DML） | 29 | **已定性并执行（§12.5/§12.6）：真缺 27 → 已补齐 22 / superseded 关闭 4 / 暂不动 1；no-op 2 已关闭** | 是 |
-| unknown（含 DML） | 6 | **先人工审阅 DML 影响行数与语义**，未确认前不重放 | 否 |
-| relocated | 33 | **已定：29 条非 DML 按 superseded 关闭、不重放（逐条见 §12.3）；4 条含 DML 留待评估** | 否 |
+| unknown（无 DML） | 29 | **已定性并执行（§12.5/§12.6/§12.9）：真缺 27 → 已补齐 22 / superseded 关闭 5；no-op 2 已关闭** | 是 |
+| unknown（含 DML） | 6 | **已处置（§12.8）：重放 3 + RLS 定向补丁 3** | 是 |
+| relocated | 33 | **已定：29 条非 DML 按 superseded 关闭、不重放（逐条见 §12.3）；4 条含 DML 已处置（重放 3 + superseded 1，见 §12.8/§12.9）** | 否 |
 | superseded | 1 | 标记 superseded，不重放 | 否 |
 | 漏记账本（prod 已记） | 6 | 核对对象后补账本行（checksum = 当前文件 sha384），不执行迁移 | 否 |
 | checksum 漂移 | 1 | 审阅 diff 后重放新文件或补前向补丁 | 否（需先审阅） |
@@ -326,7 +330,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 
 ### 12.3 第二批：已迁 schema（29 条按 superseded 关闭，不重放）
 
-**结论**：用户于 2026-11-19 确认按选项 A 收尾——29 条 relocated（非 DML）全部按 **superseded 关闭**，**不重放、不在 `public.*` 建任何表、不改账本行**；4 条含 DML 的 relocated 版本继续留在 DML 待评估清单，不在本轮处理。
+**结论**：用户于 2026-11-19 确认按选项 A 收尾——29 条 relocated（非 DML）全部按 **superseded 关闭**，**不重放、不在 `public.*` 建任何表、不改账本行**；4 条含 DML 的 relocated 版本当轮暂缓，后续已在 §12.8/§12.9 收口（重放 3 + superseded 1）。
 
 **判定依据与来源**（只读，2026-11-19）：
 1. `_sqlx_migrations` 中这些版本 `success=true`，且 **prod 账本同版本已 applied**——说明两侧都执行过，问题只是对象落点在别的 schema。
@@ -367,7 +371,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | 7 | 007_communication.sql | `public.core_chat_rooms`/`core_chat_members`/`core_chat_messages`/`core_email_templates` | `iam`（email_templates 另在 `communication`） | relocated → iam，superseded |
 | 9 | 009_sync.sql | `public.core_mobile_offline_records` | `iam`,`mobile` | relocated → iam/mobile，superseded |
 
-**本轮明确不动（4 条 relocated 含 DML）**：`20260917000008`、`20260918000019`、`20260920000080`、`20261021000001`，继续留在 §9 DML 待评估清单。
+**当轮暂缓的 4 条 relocated 含 DML**：`20260917000008`、`20260918000019`、`20260920000080`、`20261021000001`；已在 §12.8/§12.9 收口（重放 3 + superseded 1）。
 
 > 本次收尾**未连接数据库做任何写入**；上述落点核对均为只读 `pg_class` 查询。账本保持第一批完成态（693 行 / success 693 / failed 0 / max `20261119000002`）。
 
@@ -385,7 +389,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | 其余：原 superseded | 1 | `20260918000011` |
 | **合计** | **93** | 与 §2 分类（24+33+35+1）一致 |
 
-> 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 待评估」，故此处拆为 22 + 4 + 1 + 2 共 29 条，避免重复计数。23+29+11+22+4+1+2+1 = 93。
+> 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 11 条清单」（§12.7–§12.9），故此处拆为 22 + 4 + 1 + 2 共 29 条，避免重复计数。23+29+11+22+4+1+2+1 = 93。
 >
 > **已处置/关闭：93 条** = 重放 23 + superseded 29 + 真缺已补齐 22 + 真缺 superseded 4 + `20261024000012` superseded 1 + no-op 2 + 原 superseded 1 + DML 11。
 >
@@ -598,12 +602,13 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 - 对 dev：迁移因 `to_regclass IS NULL` 走 `NOTICE + RETURN` 的 no-op 分支，账本已记 success（installed 11-19 11:32）；效果自洽，但 dev 的「表不存在」并非 P4 所致，而是 `20261024000012` 在 dev 从未真正建表。
 - 关键约束：若现在补建该表，`20261112095000` 已记成功、不会重跑 → 表上只会留下 `20261024000012` 的 PERMISSIVE 策略（且 `supplier_scope_supplier_users` 含 `app.supplier_id IS NULL` 放行），与 W7-B4 的 fail-closed + RESTRICTIVE 目标相反。
 
-**处置建议：`20261024000012` 按 superseded 关闭（不补建）**
+**处置结论：`20261024000012` 按 superseded 关闭（不补建）**，四条依据：
 
-1. prod 生命周期完整：10-26 建表 → 11-05 P4 删除；删除依据为 0 行、0 入站 FK、运行时引用 0、依赖视图 0（`docs/quality/prod-governance-baseline-2026-11-04.md` §直接 DROP）。
-2. dev 无表即 P4 终态；补建会让 dev 回退到 prod 已废弃的形态，之后再被 P4 删除一次。
-3. 代码无运行时引用：全仓 `*.rs/ts/tsx/js/go/py/java/yaml` 中除 `migration_manifest.yaml` 外无 `supplier_users` 命中。
-4. 补建会与已 applied 的 `20261112095000` 形成策略缺口（见上），除非再重跑该迁移，属于扩大范围。
-5. `20261105100000` 的账本空洞保持「prod-only、dev 未记账」现状并记录在案；若后续要做 dev/prod 账本对齐，另立任务以 no-op 方式补记（本轮不做）。
+1. **prod 生命周期完整**：10-26 建表 → 11-05 由 `20261105100000` 删除；删除前提为 0 行、0 入站 FK、运行时引用 0、依赖视图 0（`docs/quality/prod-governance-baseline-2026-11-04.md` §直接 DROP），prod 账本两版本均 success。
+2. **dev 无表即 P4 终态**：P4 的 11 张目标表在 dev 全部不存在，与终态一致；补建会让 dev 回退到 prod 已废弃的形态，之后还要再删一次。
+3. **运行时代码零引用**：全仓 `*.rs/ts/tsx/js/go/py/java/yaml` 中除 `migration_manifest.yaml` 外无 `supplier_users` 命中。
+4. **补建会与已 no-op 的 `20261112095000` 形成策略缺口**：该迁移已 applied 不会重跑，建表后只会留下 `20261024000012` 的 PERMISSIVE 策略（`supplier_scope_supplier_users` 含 `app.supplier_id IS NULL` 放行），与 W7-B4 的 fail-closed + RESTRICTIVE 目标相反。
+
+**已知差异登记**：`20261105100000` 保持「prod-only、dev 未记账」现状并登记于 §0，后续复核不再当缺口重查。若将来要做 dev/prod 账本对齐，另立任务以 no-op 方式补记（本轮不做，账本保持 693 行）。
 
 **本轮读数**：dev 账本 `693 / 693 success / 0 failed / max 20261119000002`；prod 账本 `721 / 721 / max 20261119000002`（只读）；未 push，未碰 `topems_prod` 与 `topems_snap_*`。
