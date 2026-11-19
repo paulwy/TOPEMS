@@ -35,6 +35,13 @@ vi.mock('@/api/plugin', () => ({
   },
 }));
 
+// pluginManager 内部用 marketplace 的 pluginAxios 拉 /api/plugin/navigation-config，
+// 不 mock 会走真实网络并等超时（每个异步用例 ~20s）。用 404 让其走本地 fallback。
+const navigationConfigGetMock = vi.fn();
+vi.mock('@/api/plugin/marketplace', () => ({
+  pluginAxios: { get: navigationConfigGetMock },
+}));
+
 vi.mock('@/utils/logger', () => {
   const loggerStub = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
   return {
@@ -80,6 +87,9 @@ async function freshModule(): Promise<typeof import('../pluginManager')> {
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  navigationConfigGetMock.mockRejectedValue(
+    Object.assign(new Error('navigation-config not implemented'), { response: { status: 404 } })
+  );
   localStorage.clear();
   registeredModules.clear();
   await freshModule();
