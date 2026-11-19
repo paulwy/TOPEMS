@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 #[cfg(feature = "http_endpoint_tests")]
 use rust_decimal::Decimal;
 #[cfg(feature = "http_endpoint_tests")]
@@ -31,10 +32,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
@@ -42,10 +43,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_warehouse_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -68,10 +69,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_inventory_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -94,10 +95,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_inbound_order_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -120,10 +121,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_outbound_order_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -146,10 +147,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_location_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -172,10 +173,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_transfer_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -198,10 +199,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_warehouse_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
@@ -296,10 +297,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_location_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
@@ -385,10 +386,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_inventory_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
@@ -463,10 +464,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_transaction_rollback_on_failure() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
@@ -508,10 +509,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_transaction_commit_on_success() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
@@ -561,10 +562,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_tenant_isolation_rls() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let org_id_1 = Uuid::new_v4();
@@ -650,10 +651,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_inbound_order_transaction() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();
@@ -737,10 +738,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_outbound_order_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let warehouse_id = Uuid::new_v4();

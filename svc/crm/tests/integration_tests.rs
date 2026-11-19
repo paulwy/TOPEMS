@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 // CRM 服务集成测试
 #![allow(dead_code)]
 
@@ -29,10 +30,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
@@ -40,10 +41,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_customer_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'customers')")
@@ -64,10 +65,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_contact_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'contacts')")
@@ -88,10 +89,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_opportunity_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'opportunities')")
@@ -112,10 +113,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_interaction_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'interactions')")
@@ -136,10 +137,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_tag_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'tags')")
@@ -164,10 +165,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_customer() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let org_id = test_org_id();
 
@@ -202,10 +203,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_list_customers() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query_as::<_, CustomerRow>(
@@ -233,10 +234,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_customer_status_update() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let org_id = test_org_id();
 
@@ -302,10 +303,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_opportunity() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let org_id = test_org_id();
 
@@ -365,10 +366,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_audit_log_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'crm_audit_logs')")

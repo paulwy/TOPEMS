@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 // LIMS 服务集成测试
 
 use sqlx::PgPool;
@@ -44,20 +45,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_database_connection() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
     async fn test_instrument_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let inst_id = Uuid::new_v4();
         let org_id = Uuid::new_v4();
@@ -95,10 +96,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_inspection_record_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let rec_id = Uuid::new_v4();
         let org_id = Uuid::new_v4();
@@ -151,10 +152,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_instrument_calibration_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let cal_id = Uuid::new_v4();
         let inst_id = Uuid::new_v4();
@@ -199,10 +200,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_inspection_task_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let task_id = Uuid::new_v4();
         let org_id = Uuid::new_v4();
@@ -254,10 +255,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_lims_schema_table_count() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         let count: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'lims'",

@@ -39,6 +39,7 @@ name = "topems-rd"
 path = "src/main.rs"
 
 [features]
+db-tests = []
 http_endpoint_tests = []
 [lints.rust]
 unknown_lints = "allow"

@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 use chrono::Utc;
 use sqlx::postgres::PgPool;
 use sqlx::postgres::PgPoolOptions;
@@ -56,10 +57,10 @@ async fn ensure_db_available() -> bool {
 
 #[tokio::test]
 async fn test_create_risk() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -90,10 +91,10 @@ async fn test_create_risk() {
 
 #[tokio::test]
 async fn test_create_hazard() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -122,10 +123,10 @@ async fn test_create_hazard() {
 
 #[tokio::test]
 async fn test_create_hazard_rectification() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -178,10 +179,10 @@ async fn test_create_hazard_rectification() {
 
 #[tokio::test]
 async fn test_create_accident() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -211,10 +212,10 @@ async fn test_create_accident() {
 
 #[tokio::test]
 async fn test_create_training() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -241,10 +242,10 @@ async fn test_create_training() {
 
 #[tokio::test]
 async fn test_create_inspection_plan() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -272,10 +273,10 @@ async fn test_create_inspection_plan() {
 
 #[tokio::test]
 async fn test_create_emergency_plan() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -311,10 +312,10 @@ async fn test_create_emergency_plan() {
 
 #[tokio::test]
 async fn test_create_hazardous_material() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -353,10 +354,10 @@ async fn test_create_hazardous_material() {
 
 #[tokio::test]
 async fn test_risk_lifecycle() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 
@@ -404,10 +405,10 @@ async fn test_risk_lifecycle() {
 
 #[tokio::test]
 async fn test_hazard_workflow() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let _tenant_id = create_test_tenant(&pool).await;
 

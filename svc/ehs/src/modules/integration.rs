@@ -265,6 +265,7 @@ async fn persist_integration_alert(
 
 #[cfg(test)]
 mod tests {
+    #![cfg(feature = "db-tests")]
     use super::*;
     use sqlx::postgres::PgPoolOptions;
 
@@ -279,22 +280,14 @@ mod tests {
         )
     }
 
-    async fn test_db() -> Option<Db> {
-        if tokio::net::TcpStream::connect("localhost:5432")
-            .await
-            .is_err()
-        {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return None;
-        }
+    async fn test_db() -> Db {
         let url = test_database_url();
-        match PgPoolOptions::new().max_connections(2).connect(&url).await {
-            Ok(pool) => Some(Db::new(pool, "ehs, public, shared")),
-            Err(e) => {
-                eprintln!("⏭ 跳过: 连接测试数据库失败: {e}");
-                None
-            }
-        }
+        let pool = PgPoolOptions::new()
+            .max_connections(2)
+            .connect(&url)
+            .await
+            .expect("需要本地 PostgreSQL 且已执行迁移；禁止静默跳过");
+        Db::new(pool, "ehs, public, shared")
     }
 
     fn hazard_req(tenant: Option<String>, hazard_no: &str) -> CreateIntegrationHazardRequest {
@@ -330,7 +323,7 @@ mod tests {
     /// 合法租户：两个端点均成功写入，且落库行 tenant_id 与请求租户一致。
     #[tokio::test]
     async fn valid_tenant_is_persisted_with_explicit_tenant_id() {
-        let Some(db) = test_db().await else { return };
+        let db = test_db().await;
         let tenant_id = Uuid::new_v4();
         let hazard_no = format!("IT-HZ-{}", short_id());
         let alert_no = format!("IT-AL-{}", short_id());
@@ -391,7 +384,7 @@ mod tests {
     /// 缺失/非法租户：两个端点均 400，且不产生任何业务行。
     #[tokio::test]
     async fn missing_or_invalid_tenant_returns_400_without_write() {
-        let Some(db) = test_db().await else { return };
+        let db = test_db().await;
         let hazard_no = format!("IT-HZ-REJ-{}", short_id());
         let alert_no = format!("IT-AL-REJ-{}", short_id());
         let invalid: Vec<Option<String>> = vec![
@@ -460,7 +453,7 @@ mod tests {
     /// 各自成行；编号长度不超 64。
     #[tokio::test]
     async fn lims_abnormal_shared_key_is_idempotent_and_item_scoped() {
-        let Some(db) = test_db().await else { return };
+        let db = test_db().await;
 
         let tenant_id = Uuid::new_v4();
         let task_id = Uuid::new_v4();

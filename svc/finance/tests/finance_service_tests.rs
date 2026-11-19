@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::postgres::PgPool;
@@ -48,10 +49,10 @@ async fn ensure_db_available() -> bool {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_create_account() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
@@ -85,10 +86,10 @@ async fn test_create_account() {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_get_account() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
@@ -125,10 +126,10 @@ async fn test_get_account() {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_voucher_lifecycle() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
@@ -227,10 +228,10 @@ async fn test_voucher_lifecycle() {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_period_management() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
@@ -260,10 +261,10 @@ async fn test_period_management() {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_auxiliary_account() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(
@@ -296,10 +297,10 @@ async fn test_auxiliary_account() {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_account_balance_report_unposted_not_in_totals() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let company_id = Uuid::new_v4();
@@ -422,10 +423,10 @@ async fn test_account_balance_report_unposted_not_in_totals() {
 #[tokio::test]
 #[ignore = "requires PostgreSQL"]
 async fn test_nil_tenant_rejected_on_business_reads() {
-    if !ensure_db_available().await {
-        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-        return;
-    }
+    assert!(
+        ensure_db_available().await,
+        "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+    );
     let pool = create_test_pool().await;
     let service = FinanceService::new(
         topems_shared_db::scope::Db::new(pool.clone(), "finance, public, shared"),

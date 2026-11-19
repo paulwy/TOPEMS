@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 // QMS 服务集成测试
 
 #[cfg(feature = "http_endpoint_tests")]
@@ -42,10 +43,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_database_connection() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
@@ -53,10 +54,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_quality_issues_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -79,10 +80,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_quality_inspections_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -105,10 +106,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_corrective_actions_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -131,10 +132,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_standards_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -157,10 +158,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_quality_issue_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let issue_id = Uuid::new_v4();
@@ -272,10 +273,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_quality_standard_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let standard_id = Uuid::new_v4();
@@ -358,10 +359,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_create_corrective_action_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let action_id = Uuid::new_v4();
@@ -437,10 +438,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_transaction_rollback_on_failure() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let issue_id = Uuid::new_v4();
@@ -483,10 +484,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_transaction_commit_on_success() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let issue_id = Uuid::new_v4();
@@ -535,10 +536,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_tenant_isolation_rls() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let tenant_id_1 = Uuid::new_v4();
@@ -630,10 +631,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_quality_issue_status_transitions() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let issue_id = Uuid::new_v4();
@@ -696,10 +697,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_quality_issue_severity_levels() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let severities = vec!["critical", "high", "medium", "low"];
@@ -753,10 +754,10 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_quality_inspection_crud() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let inspection_id = Uuid::new_v4();

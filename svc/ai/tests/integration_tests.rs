@@ -1,3 +1,4 @@
+#![cfg(feature = "db-tests")]
 // AI 服务集成测试
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #![allow(unused_imports)]
@@ -29,20 +30,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_database_connection() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
     async fn test_documents_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'documents')")
@@ -62,10 +63,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_qa_history_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'qa_history')")
@@ -85,10 +86,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_analysis_results_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'analysis_results')")
@@ -108,10 +109,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_document_chunks_table_exists() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'ai' AND table_name = 'document_chunks')")
@@ -131,10 +132,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_document() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = match setup_test_pool().await {
             Ok(p) => p,
             Err(e) => {
@@ -174,10 +175,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_documents() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -206,10 +207,10 @@ mod tests {
     /// 覆盖迁移 20261024000015/16 之后的 admin 端点契约（list/create/update/delete）。
     #[tokio::test]
     async fn test_faq_admin_crud_roundtrip() {
-        if !ensure_db_available().await {
-            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
-            return;
-        }
+        assert!(
+            ensure_db_available().await,
+            "需要本地 PostgreSQL(localhost:5432) 且已执行迁移；禁止静默跳过"
+        );
         let pool = setup_test_pool().await.unwrap();
         // 表不存在（库未应用 20261024000015）时跳过而非失败
         let table_ok = sqlx::query(
