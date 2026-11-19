@@ -259,3 +259,40 @@ workflow 增强 + supply-chain 契约），导致三轮 push 被远端覆盖（`
    origin/main 再推；并行大改动（如 workflow/supply-chain）尤其要错开推送窗口。
 6. **rebase 被未提交改动阻塞**：`git status` 有 M 时先 `git stash push`（或提交），
    rebase 完成后再 `git stash pop`；`??` 未跟踪文件（子目录 Cargo.lock 等）不阻塞 rebase。
+
+## 2026-11-19 并发提交碰撞登记（同 worktree 共享 index）
+
+与 `357a31de4` 同类的第二次碰撞（该次的详细登记在
+[API_IAM_RESOURCE_ACL_READ_DRAFT.md §11.2](../api/API_IAM_RESOURCE_ACL_READ_DRAFT.md)）：
+两条会话在同一 worktree 并行，`git add` 到 `git commit` 之间共享 index 被对方抢占。
+本文件作为统一登记处，后续同类事件按同一表格格式追加。
+
+### 3ba39dc00
+
+- **事实**：本批 6 个文件在 `git commit` 时被同 worktree 的另一条 session 抢占，被一并
+  提交进 `3ba39dc00 feat(backup): 新增恢复演练脚本并完成首次演练`；该 commit 随后被其
+  作者重写（先前观测到的 `e411cf25e` 已不在历史中）。
+- **影响**：提交信息与实际内容不符；内容本身完整自洽；未 amend、未 force，历史未改写。
+- **处置**：保持现状，不改写历史；实际文件归属如下。
+
+| 文件 | 归属 |
+|---|---|
+| `database/migrations/20261119233000_iam_legacy_permission_convergence.sql`（补 2 组 destructive 标记，SQL 零改动） | 本线（IAM 权限码收敛） |
+| `database/checksums.txt`（按新字节重生成该迁移 SHA-256） | 本线 |
+| `database/migration-exemptions.json`（新增 `B20261119-iam-perm-destructive-markers`） | 本线 |
+| `scripts/ci/check-destructive-sql.mjs`（补标记模板最小示例） | 本线 |
+| `docs/database/window-readiness-2026-11-19.md` | 本线 |
+| `docs/database/window-preflight-2026-11-19.sql` | 本线 |
+| `docs/deploy/macos-production-ops.md` | 另一条线（恢复演练） |
+| `scripts/dev/restore-drill.sh` | 另一条线（恢复演练） |
+
+> 回滚文件 `database/rollback/20261119233000_iam_legacy_permission_convergence.rollback.sql`
+> 本次未改动，已随 `414155a1c` 入库。
+
+### 防再发
+
+- 同一 worktree 内多线并行时，`git add` 到 `git commit` 的窗口要短：暂存后立即提交，
+  中间不穿插编辑与验证。
+- 优先用路径限定提交 `git commit <paths>`（自带暂存），绕开共享 index 被另一条线抢占。
+- 提交后立刻 `git show --stat HEAD` 核对清单；发现被吞并时按上表登记实际归属，
+  不改写历史（不 amend、不 force）。
