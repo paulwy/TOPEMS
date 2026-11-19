@@ -20,7 +20,7 @@
 | prod 已应用但 dev 账本缺 | 29 条 |
 | 仅索引/策略不匹配（软告警） | 56 个版本（索引缺失或多库，多为 relocated 的伴生现象，未计入假 applied） |
 
-**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已完成五批处置——空壳回归重放 23 条（§12.2）、relocated 按 superseded 关闭 29 条（§12.3）、unknown 非 DML 定性（§12.5）、真缺 27 条执行（§12.6：已补齐 22 / superseded 关闭 4 / 暂不动 1）、DML 11 条收尾（§12.8：原样重放 7 + RLS 定向补丁 3 + superseded 1），加上原 superseded 1 条，**合计已处置/关闭 92 / 93**。剩余仅 `20261024000012` 1 条（等 `20261105100000` 账本空洞定论）。归总见 §12.4/§12.8。
+**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已完成六批处置——空壳回归重放 23 条（§12.2）、relocated 按 superseded 关闭 29 条（§12.3）、unknown 非 DML 定性（§12.5）、真缺 27 条执行（§12.6）、DML 11 条收尾（§12.8：原样重放 7 + RLS 定向补丁 3 + superseded 1）、`20261024000012` 按 superseded 关闭（§12.9：`srm.supplier_users` 在 prod 建后由 `20261105100000` 删除，dev 无表即 P4 终态），加上原 superseded 1 条，**合计已处置/关闭 93 / 93，全部收口**。归总见 §12.4/§12.9。
 
 ---
 
@@ -375,21 +375,21 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 
 | 处置 | 条数 | 备注 |
 |---|---:|---|
-| 已完成重放（空壳回归，§12.2） | 23 | 全部 rc=0；`20261007140000` 因 DML 未做，计入下项 |
+| 已完成重放（空壳回归，§12.2） | 23 | 全部 rc=0；`20261007140000` 见 §12.8 |
 | superseded 关闭（relocated 非 DML，§12.3） | 29 | 逐条落点见上表 |
 | DML 已收尾（跨分类，§12.8） | 11 | 原样重放 7（含 2 条先过前置断言）+ RLS 定向补丁 3 + superseded 1；账本 checksum 均按文件 sha384 |
 | unknown 真缺：已补齐（§12.6） | 22 | 19 条断言全清 + 3 条仅剩 relocated 残留（`20260921000107`、`20261024000001`、`20261102220000`） |
 | unknown 真缺 → superseded 关闭（§12.6） | 4 | `20260725000000`（13 历史占位）、`20261007000006`、`20261007000009`、`20260920000086`（3 表 prod 亦无） |
-| unknown 真缺：暂不动（§12.6） | 1 | `20261024000012`（`srm.supplier_users`，等 `20261105100000` 账本空洞定论） |
+| unknown 真缺 → superseded 关闭（§12.9） | 1 | `20261024000012`（`srm.supplier_users`：prod 建后由 `20261105100000` 删除，dev 无表即 P4 终态） |
 | unknown 定性：no-op（构造性/被取代，§12.5） | 2 | `20261007000001`、`20261112095000`，已关闭 |
 | 其余：原 superseded | 1 | `20260918000011` |
 | **合计** | **93** | 与 §2 分类（24+33+35+1）一致 |
 
 > 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 待评估」，故此处拆为 22 + 4 + 1 + 2 共 29 条，避免重复计数。23+29+11+22+4+1+2+1 = 93。
 >
-> **已处置/关闭：92 条** = 重放 23 + superseded 29 + 真缺已补齐 22 + 真缺 superseded 4 + no-op 2 + 原 superseded 1 + DML 11。
+> **已处置/关闭：93 条** = 重放 23 + superseded 29 + 真缺已补齐 22 + 真缺 superseded 4 + `20261024000012` superseded 1 + no-op 2 + 原 superseded 1 + DML 11。
 >
-> **仍待处理：1 条** = `20261024000012`（暂不动，等 `20261105100000` 账本空洞定论）。
+> **仍待处理：0 条**；93 条全部收口。
 
 ### 12.5 unknown（非 DML）29 条逐条定性
 
@@ -422,7 +422,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | 20261023000009 | master_data_domain_rls.sql | 真缺（需补） | `master_data.materials`/`uoms`/`samples` 存在，RLS 未启用 |
 | 20261024000001 | p2_four_tables_tenant_rls.sql | 真缺（需补） | `finance.expense_approvals`/`ehs.qa_ehs_drill_evaluations` 存在但 RLS 未启用；`communication.core_notification_templates` 已 relocated 至 `iam`/`public`（2） |
 | 20261024000010 | crm_segments_tenant_rls.sql | 真缺（需补） | `crm.customer_segments`/`customer_recommendations` 存在，`tenant_id` 列缺 + RLS 未启用 |
-| 20261024000012 | srm_supplier_users.sql | 真缺（需补） | `srm.supplier_users` 当前不存在；唯一删除来源 `20261105100000` 在 dev 账本**不存在（未应用）**；本迁移 `to_regclass IS NULL → CREATE TABLE`，故按真缺 |
+| 20261024000012 | srm_supplier_users.sql | **superseded 关闭（§12.9）** | prod 10-24 建表、11-05 由 `20261105100000` 删除；dev 无表即 P4 终态，`20261112095000` 已按无表 no-op；补建会回退到废弃形态 |
 | 20261027100000 | scenario_fix_contract_align.sql | 真缺（需补） | `portal.portal_todos` 存在，`service`/`status`/`description`/`assigned_to`/`completed_at` 等 8 列缺 |
 | 20261027110000 | mes_quality_standard_values_work_reports_tenant_id.sql | 真缺（需补） | `mes.quality_standard_values`/`work_reports` 存在，RLS 未启用 |
 | 20261027130000 | fix_ehs_columns_and_mdm_v55_types.sql | 真缺（需补） | `ehs.health_records` 等 11 表存在，15 列缺 |
@@ -432,7 +432,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | 20261102220000 | rls_enable_biz_batch1.sql | 真缺（需补） | 21 表存在但 RLS 未启用；`lims.qa_lab_samples`/`qa_lab_tasks` 已 relocated 至 `public`（2） |
 | 20261112095000 | w7_b4_srm_supplier_users_restrictive.sql | **no-op（构造性）** | 文件内 `IF to_regclass('srm.supplier_users') IS NULL THEN RAISE NOTICE ... no-op`；自述表已由 `20261105100000` 删除 |
 
-**归总（29 条）**：`relocated` 0 条（无纯 relocated 版本）· `no-op` 2 条（已关闭）· `真缺（需补）` 27 条。
+**归总（29 条）**：`relocated` 0 条（无纯 relocated 版本）· `no-op` 2 条（已关闭）· 真缺 27 条（补齐 26；`20261024000012` 经 §12.9 复核后按 superseded 关闭）。
 
 > 说明：relocated 对象并非没有，而是**都与其他缺口混在同一版本**——主要分布在 `20260725000000`(39)、`20261007000006`(107)、`20261007000009`(12)、`20260921000107`(1)、`20261024000001`(2)、`20261102220000`(2)。这些版本按「存在可补缺口」归入真缺，避免把 RLS/列缺口误当已解决。
 
@@ -466,7 +466,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | `20261023000009` | §7.1 重放 | 全清 |
 | `20261024000001` | §7.1 重放 | 仅剩 `communication.core_notification_templates` relocated 残留 |
 | `20261024000010` | §7.1 重放 | 全清 |
-| `20261024000012` | **暂不动** | `srm.supplier_users` 仍缺，等 `20261105100000` 账本空洞定论 |
+| `20261024000012` | **superseded 关闭** | 无表即 P4 终态（§12.9） |
 | `20261027100000` | §7.1 重放 | 全清 |
 | `20261027110000` | §7.1 重放 | 全清 |
 | `20261027130000` | §7.1 重放 | 全清 |
@@ -487,16 +487,15 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 
 | 状态 | 条数 |
 |---|---:|
-| 已关闭/已补齐 | **81** |
+| 已关闭/已补齐 | **93** |
 | ├ 空壳回归重放 | 23 |
 | ├ relocated superseded 关闭 | 29 |
 | ├ 真缺已补齐（含 relocated 残留） | 22 |
-| ├ 真缺 superseded 关闭 | 4 |
+| ├ 真缺 superseded 关闭 | 5 |
 | ├ no-op 关闭 | 2 |
-| └ 原 superseded | 1 |
-| 仍待处理 | **12** |
-| ├ DML 待评估 | 11 |
-| └ 暂不动 `20261024000012` | 1 |
+| ├ 原 superseded | 1 |
+| └ DML 收尾 | 11 |
+| 仍待处理 | **0** |
 
 ### 12.7 DML 11 条只读评估（2026-11-19，未写库）
 
@@ -566,4 +565,45 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 
 **`20260918000019` 按 superseded 关闭的理由**：①30 组中 25 组的 `public` 源表已清理，`IF EXISTS` 构造性跳过；②其余 4 组目标表比源多 1 列（`qms.qa_qms_sync_records` 14v13、`ticket.core_ticket_activities` 9v8、`ticket.core_ticket_comments` 9v8、`ticket.core_tickets` 20v19），`INSERT ... SELECT *` 解析期列数不匹配必失败；③`lims.qa_lab_tasks` 会重建重复 relocated 表。数据搬运已完成，故不重放。
 
-**最终读数**：账本 `693 行 / success 693 / failed 0 / max 20261119000002`（未新增版本）。93 条中 92 条已处置/关闭，唯一未决为 `20261024000012`。全流程仅动 dev 库 `topems`，未 push，未连接 `topems_prod` 与 `topems_snap_*`。
+**最终读数**：账本 `693 行 / success 693 / failed 0 / max 20261119000002`（未新增版本）。93 条中 92 条在本批处置/关闭，剩 `20261024000012` 由 §12.9 收口。全流程仅动 dev 库 `topems`，未 push，未连接 `topems_prod` 与 `topems_snap_*`。
+
+### 12.9 `20261105100000` 账本空洞与 `20261024000012` 收口（2026-11-19，只读）
+
+> 本轮只读：未写库、未重放、未动账本。dev 用于对象核对，prod 仅用 `topems_drift` 查账本。
+
+**Q1：文件存在，且确实 DROP 了 `srm.supplier_users`**
+
+- 文件：[20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql](file:///Users/xingzhai/TOPEMS/database/migrations/20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql)，P4「prod 反向表收敛」首批 11 张。
+- 第 51–62 行：`IF to_regclass('srm.supplier_users') IS NOT NULL` → 断言 0 行、0 入站 FK → `DROP TABLE srm.supplier_users`（不带 CASCADE）。
+- 同文件另删 `core.core_plugin_pricing`、`finance.core_finance_account_opening_balances` 与 8 张 `public` 影子表，并把 18 条 FK 重指向 `iam`/`mobile`/`ehs` 权威表；末尾终态校验要求 11 张表全不存在、18 条 FK 全部改指。
+
+**Q2：dev 账本为什么没有——从未记录，不是被删行**
+
+- dev `_sqlx_migrations` 无该行；20261105 当日版本仅有这一个缺口（`20261104150000` → `20261105130000`）。
+- 初始审计 §6 已把它列入「prod 已应用但 dev 账本缺 29 条」，该清单形成于任何重放之前；93 条假 applied 名单中从未包含它。
+- `database/migration-exemptions.json` 的 `B20261111-w7b4-supplier-users-guard` 原文：「生产账本内 `20261105100000` 已 DROP TABLE `srm.supplier_users`，而开发库未升级到 P4、该表仍存在」「该版本在 prod 账本内、本地开发库账本内没有」——写于 2026-11-11，早于本系列处置。
+- prod 账本（`topems_drift` 只读）：`20261105100000` success，`installed_on = 2026-11-05 01:51`；`20261024000012` success（10-26 建表）；`20261112095000` success（11-11 no-op）。
+- 结论：属 **prod-only 迁移，dev 侧从未记账**；不是行被删。
+
+**dev 对象现状（也解释了为何不能简单补跑）**
+
+- P4 的 11 张目标表在 dev **全部不存在**（含 `srm.supplier_users`），与 P4 终态一致。
+- 但 P4 末尾要求 18 条 FK 全部指向权威表，dev 实际只有 **11 条**；原样重放会在 `P4 VERIFY: expected 18 re-pointed FKs, got 11` 处失败。`scripts/migration/rebuild-verify-classified.sh` 也已把它标注为 `P4_FK_ABORT`。
+- 时间线补充：11-11 的开发克隆（`topems_w7_reh_20261111`，账本 578）当时表仍存在；当前 dev 已不存在。仓库内唯一 DROP 来源就是 `20261105100000`，而它从未在 dev 记账 → 这次消失无法由任何已记账迁移解释，只能归为账本外操作（人工清理或库重建）。
+
+**Q3：与 `20261112095000` 自述是否自洽**
+
+- 自述：「已于 `20261105100000` 在生产删除，但仍存在于未升级到 P4 的开发库」。
+- 对 prod：准确（账本与 P4 原文一致）。
+- 对 dev：迁移因 `to_regclass IS NULL` 走 `NOTICE + RETURN` 的 no-op 分支，账本已记 success（installed 11-19 11:32）；效果自洽，但 dev 的「表不存在」并非 P4 所致，而是 `20261024000012` 在 dev 从未真正建表。
+- 关键约束：若现在补建该表，`20261112095000` 已记成功、不会重跑 → 表上只会留下 `20261024000012` 的 PERMISSIVE 策略（且 `supplier_scope_supplier_users` 含 `app.supplier_id IS NULL` 放行），与 W7-B4 的 fail-closed + RESTRICTIVE 目标相反。
+
+**处置建议：`20261024000012` 按 superseded 关闭（不补建）**
+
+1. prod 生命周期完整：10-26 建表 → 11-05 P4 删除；删除依据为 0 行、0 入站 FK、运行时引用 0、依赖视图 0（`docs/quality/prod-governance-baseline-2026-11-04.md` §直接 DROP）。
+2. dev 无表即 P4 终态；补建会让 dev 回退到 prod 已废弃的形态，之后再被 P4 删除一次。
+3. 代码无运行时引用：全仓 `*.rs/ts/tsx/js/go/py/java/yaml` 中除 `migration_manifest.yaml` 外无 `supplier_users` 命中。
+4. 补建会与已 applied 的 `20261112095000` 形成策略缺口（见上），除非再重跑该迁移，属于扩大范围。
+5. `20261105100000` 的账本空洞保持「prod-only、dev 未记账」现状并记录在案；若后续要做 dev/prod 账本对齐，另立任务以 no-op 方式补记（本轮不做）。
+
+**本轮读数**：dev 账本 `693 / 693 success / 0 failed / max 20261119000002`；prod 账本 `721 / 721 / max 20261119000002`（只读）；未 push，未碰 `topems_prod` 与 `topems_snap_*`。
