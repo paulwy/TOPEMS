@@ -2537,3 +2537,11 @@ pending_forward_patches:
     effect: "以 format_type（含 typmod）为判据，对齐 mes 4 列：production_orders/production_records.completed_quantity -> numeric(12,2)，process_flows/quality_standards.version -> integer。修复 20260928120000 仅比较 information_schema.data_type、把无精度 numeric 误判为已对齐而跳过 ALTER 的漏口"
     destructive_scan: "4 处 ALTER COLUMN TYPE（ACCESS EXCLUSIVE 锁，numeric 加精度会重写表）；无 DROP/TRUNCATE/INSERT/UPDATE/DELETE；表或列不存在时跳过；文件内无 BEGIN/COMMIT"
     note: "可直接重复执行（列已对齐则零 ALTER）。回滚 database/rollback/20261120090000_mes_column_typmod_align.rollback.sql（只能回到无约束 numeric/varchar，且不回退已四舍五入的小数位，文件中已声明）"
+
+  # ===== 2026-11-20：CRM 菜单权限码别名修复（W1-2c 首个实测缺口） =====
+  - version: "20261120100000"
+    file: "database/migrations/20261120100000_menu_crm_permission_alias_fix.sql"
+    status: to_apply
+    effect: "把 3 个 CRM 菜单的 permissions.permission 从 core_permissions 不存在的别名（crm:scoring:read / crm:segmentation:read / crm:funnel:read）改为后端 security 与权限表实际使用的 crm:customer_scoring:read / crm:customer_segmentation:read / crm:sales_funnel:read；按 code+旧码匹配、不限 tenant_id（覆盖 tenant_id IS NULL 的全局行与租户副本）"
+    destructive_scan: "仅 UPDATE public/iam.core_menus 的 permissions jsonb 与 updated_at（3 行/库）；无 INSERT/DELETE/TRUNCATE、无 DDL；表不存在跳过；文件内无 BEGIN/COMMIT"
+    note: "根因：20261102190000_fix_menu_crm_permission.sql 只处理 tenant_id=000…001，而模块菜单是 tenant_id IS NULL 的全局行（20261110100100 归 NULL 后），UPDATE 命中 0 行；且该迁移只覆盖分群，评分/漏斗从未修复。回滚 database/rollback/20261120100000_menu_crm_permission_alias_fix.rollback.sql（恢复旧别名，会使菜单权限判定重新失效，仅应急）"

@@ -32,7 +32,7 @@
 | `cargo clippy --workspace --all-targets` | 绿（4 crate / 8 处已修，2026-11-17） | 见 §3.2 |
 | `facts:check` | **绿：62 项一致**（同日核销：`schema_prefix` 基线 306→287 条、`request-txn` 基线 26 项 erp `bare_txn` 351→350；观测值按当前代码重建） | `node scripts/report/facts.mjs --check docs/quality/facts-latest.json` |
 | `check:ledger` | **绿：4 本全部 OK**（`schema-prefix` / `request-txn` / `tenant-context` / `txn-write-non2xx` 均 stale 0、unregistered 0） | `node scripts/ci/check-ledger-staleness.mjs` |
-| `gen-manifest --check` | 绿：`registered=196 disk=789 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0`、`checksum_mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
+| `gen-manifest --check` | 绿：`registered=197 disk=790 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0`、`checksum_mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
 | API 审计闸门 | 绿（2026-11-17：P6 RED=0、p7 `not_legal=0`；`lefthook.yml` 已去 `--dry-run`） | 见 §3.2 |
 | 权限对账脚本 | 绿：`DB 来源：live`、DB=1021、FE 1060 / BE 624 / ∩195、db_only 0、命名不一致组 0 | `python3 scripts/audit_permission_codes.py`；见 §3.1 |
 | GitHub Actions | **红，唯一原因 = 账号计费**（`The job was not started because recent account payments have failed...`，job 未启动，非代码） | `gh api repos/paulwy/TOPEMS/actions/runs/<id>/jobs`；见 §7.4 |
@@ -104,7 +104,7 @@
 | W6-D | a11y 与 design-tokens 之外，补 i18n/decode 接线 | 部分接线 | 门禁覆盖 |
 | W1-2a ✅ | 修脚本后重出权限快照 | 脚本已恢复 live DB（`.env:DATABASE_URL`、`DB 来源：live`、`error=None`）；新快照 `docs/quality/permission-codes-snapshot-20261120.json`：FE 1060 / BE 624 / DB 1021 / ∩195、be_only 429 / fe_only 865 / fe_orphan 32 / db_only 0。连跑两次文件 SHA-256 完全一致（`3b560437…4386db`） | 快照可重跑一致 ✅ |
 | W1-2b | 仅后端存在的权限码分流（补录/白名单） | 481 | 交集上升，0 删除 |
-| W1-2c | 菜单权限码与后端 `security` 精确对齐 | 交集 195 / FE 1060（BE 624；be_only 429、fe_only 865、fe_orphan 32） | 匹配率 100%，非超管 403 实测 |
+| W1-2c | 菜单权限码与后端 `security` 对齐 | 已修 3 个实测坏码（`20261120100000`）：CRM 评分/分群/漏斗菜单原引用 `crm:scoring:read`/`crm:segmentation:read`/`crm:funnel:read`，这三个码在 `core_permissions` 不存在；改为后端 `security` 实际声明的 `crm:customer_scoring:read`/`crm:customer_segmentation:read`/`crm:sales_funnel:read`。根因是旧修复 `20261102190000` 写死 `tenant_id=000…001`，而这批是 `tenant_id IS NULL` 的全局菜单，UPDATE 命中 0 行。本机 dev 菜单 distinct 189：修复前菜单∩后端字面量 94，修复后 97；其余 92 均能在 `core_permissions` 找到，但后端无直接字面量（模块级/动态判定），需逐码定性 | 菜单引用码 100% 存在于 `core_permissions`（dev `menu_not_in_db=0`）；后端 `security` 字面量匹配率与「非超管 403」实测仍待逐码推进 |
 | W1-2d ✅ | 仅 DB 存在的权限码分流 | `db_only=0`、`未登记（live DB 有、init∪migrations 无）=0`，`sql_history_also_current=1021`；A8 收敛后 DB 1021 条全部在迁移中有字面量，无需删除 | 删除前有全仓检索证据 ✅（本轮结论：无需删除） |
 | W1-3a | erp/scm/srm/wms/mes 路由级权限验收（原“17 服务零权限”已不成立，29/29 服务已有声明） | 需逐路由核对 | 非超管 200 / 无权限 403 |
 | W1-3b | hrm/crm/pdm/pm/rd/tms/gis/mobile | 同上 | mobile 个人接口保持 auth-only |
