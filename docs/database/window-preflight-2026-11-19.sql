@@ -287,8 +287,9 @@ JOIN pg_constraint k ON k.confrelid = t.oid AND k.contype = 'f';
 -- 假 PASS 风险：132 张中 46 张为 FORCE RLS（18 张 allow_all + 28 张 tenant_isolation）；
 --           owner 同样受 FORCE 约束，非 BYPASSRLS 且不带 app.rls_system=on 时，
 --           28 张 tenant_isolation 的 count(*) 会被策略过滤成 0。
---           apply-forward.sh 的 apply 段(:578) 注入该 GUC，破坏性预演段(:525) 未注入，
---           开窗执行 apply-forward.sh 时必须在 PGOPTIONS 中自行带上 -c app.rls_system=on。
+--           apply-forward.sh 的破坏性预演段现已自行注入 app.rls_system=on 与文件声明的
+--           app.*_gate；但 apply 段在 prod 不自行注入（--drill-gate-guc-auto 仅限演练），
+--           开窗执行 apply-forward.sh 时仍必须在 PGOPTIONS 中带上 -c app.rls_system=on。
 -- 回报格式：一行结论（C16 PASS / C16 NOT PASS）+ 本节输出原文（或 NO_PRIV 行数统计）
 --           + 实际执行命令与时间戳。
 \echo '== 7. 行数门禁明细（每张必须 0；topems_drift 下显示 NO_PRIV，需 DBA 用 topems_prod 只读复跑）=='

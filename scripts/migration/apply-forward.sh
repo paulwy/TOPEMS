@@ -75,6 +75,17 @@
 #   否则 FORCE RLS 会把 public.core_roles 等平台模板行过滤掉，导致种子/授权类迁移
 #   在演练里假失败（实测 20261118125000 断言 admin 绑定 0 条）。
 #
+# 破坏性预演在 prod 与 drill 两种模式都执行：
+#   prod 侧走 --allow-destructive + ticket 批准后生成计划；drill 侧（隔离库）对文件
+#   自带 destructive-ticket 的语句自动批准并生成同一份计划，随后同样执行行数预演。
+#   为什么 drill 也要跑：若只在 prod 跑，行数闸门（尤其是 FORCE RLS 下的可见行）
+#   在开窗前从未被演练过，演练通过不能证明窗口会通过。无标记的破坏性语句无法生成
+#   计划（没有 destructive-max-rows），prod 直接拒绝，drill 只提示并继续。
+#   预演不是只读事务：它必须真实执行 DML 再由 ROLLBACK 撤销，因此不能强制
+#   default_transaction_read_only=on。改为在生成预演 SQL 时拒绝无法回滚/会脱离
+#   事务的语句（COMMIT/ROLLBACK、nextval、CREATE INDEX CONCURRENTLY、VACUUM、
+#   ALTER SYSTEM、CREATE/DROP DATABASE 等），由 node 生成器 fail-closed 中止。
+#
 # 用法：
 #   bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 #     --anchor 20261105235700 --only 20261107000008,20261107000013 \
@@ -407,6 +418,25 @@ while IFS= read -r f; do
       DENIED+=("$b [无法校验：node 缺失，拒绝在 prod 应用]")
       continue
     fi
+  elif [[ $GATE_GUC_AUTO -eq 1 ]]; then
+    # 演练模式也必须做破坏性预演：否则 drill 只执行 DDL、从不校验行数闸门，
+    # 「预演能看见被 RLS 过滤的行 / 能拦住非空表」在开窗前无法被演练证明。
+    # 隔离库允许自动批准文件自身声明的 ticket；无标记的破坏性语句无法生成计划
+    # （没有 destructive-max-rows），prod 侧会直接拒绝，这里只提示并保持演练可重放。
+    if command -v node >/dev/null 2>&1; then
+      guard_log="/tmp/topems_guard_${v}.log"
+      if ! node "$ROOT/scripts/ci/check-destructive-sql.mjs" --check-file "$f" --strict >"$guard_log" 2>&1; then
+        tickets="$(sed -n 's/^--[[:space:]]*destructive-ticket:[[:space:]]*//p' "$f" | paste -sd, -)"
+        dg_plan="/tmp/topems_dg_plan_${v}.json"
+        if [[ -n "$tickets" ]] && node "$ROOT/scripts/ci/check-destructive-sql.mjs" --check-file "$f" --strict \
+            --approve-ticket="$tickets" --plan-file="$dg_plan" >>"$guard_log" 2>&1; then
+          PENDING_DG+=("$v")
+          echo "   演练预演：$b 已纳入破坏性行数预演（ticket=${tickets}）"
+        else
+          echo "   演练提示：$b 含无豁免标记的破坏性语句，跳过预演（prod 会拒绝；演练继续）" >&2
+        fi
+      fi
+    fi
   fi
   PENDING+=("$f")
 done < <(ls "$MIG_DIR"/*.sql | LC_ALL=C sort)
@@ -465,10 +495,12 @@ if [[ ${#PENDING[@]} -eq 0 ]]; then
   exit 0
 fi
 
-# --- 破坏性语句执行前预演（只读事务 + ROLLBACK，不产生任何写入） -------------
+# --- 破坏性语句执行前预演（事务 + 必然 ROLLBACK，不提交任何写入） -------------
 # 逐版本、逐语句：DELETE/UPDATE 统计受影响行数，DROP TABLE 统计目标表现存行数；
 # 任一超过标记 destructive-max-rows（DROP 必须为 0）即拒绝，且发生在任何 DDL 之前。
 # 临时对象（pg_temp.* / 本文件 CREATE TEMP TABLE）不计行数，静态判定仍按原规则。
+# 注意：预演不是只读的（必须执行 DML 才能拿到真实行数），因此只保证「必然 ROLLBACK」，
+# 并拒绝无法回滚/会逃出事务的语句；不要改成 default_transaction_read_only=on。
 for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
   dg_plan="/tmp/topems_dg_plan_${v}.json"
   if [[ ! -f "$dg_plan" ]]; then
@@ -494,8 +526,38 @@ for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
     const plan = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
     const src = fs.readFileSync(process.argv[3], "utf8").split("\n");
     const q = (s) => String(s).replace(/'/g, "''");
+    // 预演会真实执行「破坏性语句之前的 DDL + 本条 DML」，再整体 ROLLBACK。
+    // 语法上无法回滚、或会脱离当前事务的语句必须在这里拒绝，否则一次预演就会
+    // 留下生产副作用（sequence 前进、事务提前结束、并发 DDL 等）。
+    // 去注释/字符串后匹配，避免文档性文字误报；不做完整 SQL 解析（fail-closed 优先）。
+    const strip = (s) => String(s)
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/--[^\n]*/g, " ")
+      .replace(/'(?:[^']|'')*'/g, "''");
+    const UNSAFE = [
+      [/\bCOMMIT\b/i, "COMMIT 会提前结束预演事务，后续语句将在事务外真实执行"],
+      [/\bROLLBACK\b/i, "ROLLBACK 会提前结束预演事务，后续语句将在事务外真实执行"],
+      [/\bVACUUM\b/i, "VACUUM 不能在事务内执行且不可回滚"],
+      [/\bnextval\s*\(/i, "nextval 推进 sequence，ROLLBACK 不会回退"],
+      [/\bCREATE\s+(?:UNIQUE\s+)?INDEX\s+CONCURRENTLY\b/i, "CREATE INDEX CONCURRENTLY 不能在事务内执行"],
+      [/\bDROP\s+INDEX\s+CONCURRENTLY\b/i, "DROP INDEX CONCURRENTLY 不能在事务内执行"],
+      [/\bREINDEX\b[^;]*\bCONCURRENTLY\b/i, "REINDEX CONCURRENTLY 不能在事务内执行"],
+      [/\b(?:CREATE|DROP)\s+DATABASE\b/i, "CREATE/DROP DATABASE 不能在事务内执行"],
+      [/\bALTER\s+SYSTEM\b/i, "ALTER SYSTEM 不能在事务内执行且不可回滚"],
+    ];
+    const assertSafe = (text, line) => {
+      const t = strip(text);
+      for (const [re, why] of UNSAFE) {
+        if (re.test(t)) {
+          console.error(`UNSAFE: 预演将在第 ${line} 行语句前执行到「${why}」`);
+          process.exit(3);
+        }
+      }
+    };
     for (const s of plan.statements) {
       const prefix = src.slice(0, Math.max(0, s.line - 1)).join("\n");
+      assertSafe(prefix, s.line);
+      assertSafe(s.sql, s.line);
       console.log("BEGIN;");
       if (prefix.trim()) console.log(prefix);
       if (s.kind === "DELETE" || s.kind === "UPDATE") {
@@ -520,13 +582,38 @@ for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
       console.log("ROLLBACK;");
     }
 DG_GEN_JS
+  preflight_body="/tmp/topems_dg_preflight_${v}.body.sql"
+  if ! node "$node_gen_js" "$dg_plan" "$mig_file" > "$preflight_body"; then
+    rm -f "$node_gen_js" "$preflight_body"
+    echo "== 拒绝：版本 $v 预演包含不可回滚语句，已中止（未产生任何写入）" >&2
+    exit 1
+  fi
+  # 与 apply 段(:583-584) 同一来源、同一函数：
+  #   1) 系统通道：缺 app.rls_system=on 时 FORCE RLS 会把 tenant_isolation 表的
+  #      count(*) 过滤成 0，行数闸门恒真（假 PASS）；
+  #   2) 闸门 GUC：调用方不传 PGOPTIONS 时也能从迁移文件自身抽出 app.*_gate，
+  #      否则预演里的闸门断言会先于行数统计失败（假失败）。
+  prelude="$(gate_guc_prelude "$mig_file")"
   {
-    # 与 apply 段(:578) 对齐：预演会话必须显式打开系统通道。否则 FORCE RLS
-    # 会把 tenant_isolation 表的 count(*) 过滤成 0，行数闸门恒真（假 PASS）。
     printf "SET app.rls_system = 'on';\n"
-    node "$node_gen_js" "$dg_plan" "$mig_file"
+    [[ -n "$prelude" ]] && printf '%s\n' "$prelude"
+    cat "$preflight_body"
   } > "$preflight_sql"
-  rm -f "$node_gen_js"
+  rm -f "$node_gen_js" "$preflight_body"
+  # 回归守卫：预演 SQL 必须以系统通道开头，且包含文件声明的每一条闸门 GUC。
+  # 防止后续重构把注入静默删掉（本脚本没有单测，这里做运行时 fail-closed）。
+  if [[ "$(head -1 "$preflight_sql")" != "SET app.rls_system = 'on';" ]]; then
+    echo "== 拒绝：版本 $v 预演 SQL 缺少系统通道注入（回归）" >&2
+    exit 1
+  fi
+  if [[ -n "$prelude" ]]; then
+    while IFS= read -r pline; do
+      grep -Fqx "$pline" "$preflight_sql" || {
+        echo "== 拒绝：版本 $v 预演 SQL 缺少闸门 GUC「${pline}」（回归）" >&2
+        exit 1
+      }
+    done <<< "$prelude"
+  fi
   dg_rows="$(psql_stdin < "$preflight_sql")" || {
     echo "== 拒绝：版本 $v 破坏性预演失败（未产生任何写入）" >&2
     exit 1

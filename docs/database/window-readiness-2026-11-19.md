@@ -71,7 +71,10 @@
 
 ### 1.4 迁移脚本闸门（实测）
 
-- `apply-forward.sh` 在 DDL 前对每条 `DROP TABLE` 做只读预演，目标表行数必须为 0（`destructive-max-rows=0`）；票据不能绕过行数闸门。
+- `apply-forward.sh` 在 DDL 前对每条破坏性语句做行数预演，超过 `destructive-max-rows`（`DROP TABLE` 必须为 0）即拒绝；票据不能绕过行数闸门。
+- 预演**不是只读事务**：它必须真实执行 DML 再 `ROLLBACK`，因此脚本拒绝会逃出事务或不可回滚的语句（`COMMIT`/`ROLLBACK`、`nextval`、`CREATE/DROP INDEX CONCURRENTLY`、`VACUUM`、`ALTER SYSTEM`、`CREATE/DROP DATABASE`），由预演生成器 fail-closed 中止。
+- 预演会话自行注入 `SET app.rls_system='on'` 与迁移文件声明的全部 `app.*_gate`：调用方不传 `PGOPTIONS` 也能看到 FORCE RLS 后的真实行数、通过闸门断言。prod 与 drill 两种模式都执行预演；drill 对文件自带 `destructive-ticket` 自动批准（隔离库），无标记的破坏性语句只提示、不阻断演练。
+- apply 段在 prod 仍不自行注入 GUC（`--drill-gate-guc-auto` 仅限演练）；开窗执行时 `PGOPTIONS` 必须自己带上 `-c app.rls_system=on` 与对应闸门 GUC。
 - `--apply-deferred` 只接受单个 14 位版本，必须同时带 `--ticket`，不可与 `--anchor/--only/--defer` 组合。
 - `--allow-destructive=<version>` 必须同时设置 `PROD_CHANGE_TICKET`，且票据与文件内 `destructive-ticket` 一致。
 - prod 模式缺 `node` 时直接 DENIED，不会降级放行。
@@ -395,7 +398,7 @@ psql "postgresql://topems_prod@127.0.0.1:5432/topems_prod" \
 - **C16 PASS**：132 张全部 `READABLE` 且 `rows=0`，第 7 节例外查询输出 0 行。
 - **未通过**（任一即算，需原样回报）：出现任何 `NO_PRIV`；任一表 `rows > 0`；或缺少 `app.rls_system=on` 导致 28 张 `tenant_isolation` 表被过滤成 0。
 
-**必须带 `app.rls_system=on`，否则假 PASS**：132 张中 **46 张是 FORCE RLS**（18 张 `allow_all` + 28 张 `tenant_isolation`）。`topems_prod` 是表 owner，但 FORCE RLS 对 owner 同样生效，且它非 BYPASSRLS；不设置该 GUC 时，28 张 `tenant_isolation` 表的 `count(*)` 会被策略过滤为 0，C16 会误判 PASS。`apply-forward.sh` 的 apply 段已注入该 GUC（`scripts/migration/apply-forward.sh:578`），破坏性预演段（`:525`）没有注入，因此开窗执行 `apply-forward.sh` 时必须在 `PGOPTIONS` 里自己带上 `-c app.rls_system=on`（与各波 gate GUC 并列）。
+**必须带 `app.rls_system=on`，否则假 PASS**：132 张中 **46 张是 FORCE RLS**（18 张 `allow_all` + 28 张 `tenant_isolation`）。`topems_prod` 是表 owner，但 FORCE RLS 对 owner 同样生效，且它非 BYPASSRLS；不设置该 GUC 时，28 张 `tenant_isolation` 表的 `count(*)` 会被策略过滤为 0，C16 会误判 PASS。破坏性预演段已改为**由脚本自行注入** `SET app.rls_system='on'` 与文件声明的 `app.*_gate`（无需 `PGOPTIONS`）；但 apply 段在 prod 仍不自行注入（`--drill-gate-guc-auto` 仅限演练），因此开窗执行 `apply-forward.sh` 时仍必须在 `PGOPTIONS` 里带上 `-c app.rls_system=on`（与各波 gate GUC 并列）。
 
 DBA 回报格式（一条消息）：
 
