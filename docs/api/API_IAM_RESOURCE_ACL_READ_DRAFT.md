@@ -263,7 +263,12 @@ RLS 现状（`database/rls_policy_expected.json`）：`iam.resource_permissions`
 
 两条线同时 `git commit`，对方把本任务已暂存的迁移文件一并带走。经确认**不做历史改写**：不 amend、不拆分该提交。后端实现另起 `bad6d1c03`（三个 GET 端点 + 作用域收敛 + OpenAPI 契约）。
 
-### 11.3 尚未提交
+### 11.3 跨线最小修复（finance 模块）
 
-`apps/web/src/config/permissions.ts`（由迁移自动重生成）尚未提交，原因是仓库当前存在一个与本任务无关的既有类型错误：`apps/web/src/api/finance/account.ts` 引用 `AdaptedQuery<'list_accounts'>`，而 HEAD 的 `packages/shared-types/src/generated/openapi.d.ts` 已无 `list_accounts`。全量 `frontend-typecheck` 因此失败，需另行决定处置方式后再随前端批次提交。
+`apps/web/src/config/permissions.ts`（由本任务迁移自动重生成）提交前暴露了一个与本任务无关的既有类型错误：
+
+- 文件与行：`apps/web/src/api/finance/account.ts` 第 25 行（修复前），`accountApi.list` 的参数类型 union 成员 `AdaptedQuery<'list_accounts'>`。
+- 原因：HEAD 的 `packages/shared-types/src/generated/openapi.d.ts` 已无 `list_accounts` operation，`AdaptedQuery` 的泛型约束因此不满足，`frontend-typecheck` 全量失败。
+- 处置：经用户确认，仅删除该失效 union 成员及随之不再使用的 `AdaptedQuery` 导入；不改任何运行期逻辑，不清理 finance 模块其他内容。
+- 影响范围：类型级、可逆；`accountApi.list` 的内联参数类型保持不变。
 
