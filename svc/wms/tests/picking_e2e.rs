@@ -2,6 +2,7 @@
 //! P1 补测（2026-10-18）：wms picking 模块集成测试。
 //! 复用 wave_pick 基建（同 wave_picks 表 + RLS txn 模式）；
 //! 覆盖 list_picking_lists（空/计数）、get_picking_list、picking_statistics、picking_strategies。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;

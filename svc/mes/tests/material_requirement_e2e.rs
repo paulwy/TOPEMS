@@ -1,5 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-08）：mes material_requirement list handler 集成测试。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;
@@ -11,6 +12,7 @@ use serde_json::{json, Value};
 use topems_mes::modules::material_requirement::{
     list_material_requirements, ListMaterialRequirementsQuery,
 };
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS mes")
@@ -53,11 +55,19 @@ async fn body_of(pool: sqlx::PgPool) -> Value {
     let state = test_app_state(pool);
     let claims = super_claims();
     let q: ListMaterialRequirementsQuery = serde_json::from_value(json!({})).unwrap();
-    let resp = list_material_requirements(
-        State(state),
-        Extension(txn_cell),
-        Extension(claims),
-        Query(q),
+    // 生产环境由 auth_middleware 写入 task-local 租户上下文；直调 handler 必须显式补上，
+    // 否则 scope_with 会按 fail-closed 拒绝执行（RLS context missing）。
+    let resp = scope_request_tenant(
+        RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: false,
+        },
+        list_material_requirements(
+            State(state),
+            Extension(txn_cell),
+            Extension(claims),
+            Query(q),
+        ),
     )
     .await;
     serde_json::to_value(

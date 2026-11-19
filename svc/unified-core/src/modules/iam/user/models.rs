@@ -180,6 +180,7 @@ pub(crate) struct PreferenceRow {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
+    #![cfg(feature = "db-tests")]
     use super::*;
 
     #[test]

@@ -2,11 +2,12 @@
 //! P1 补测（2026-10-07）：wms outbound_order list handler 集成测试。
 //! 复用超管权限放行路径（check_module_permission 对 is_superuser 直接 Ok），
 //! RLS 事务 Arc（pool.begin）构造，wms schema 最小建表（对齐 list SELECT 24 列）。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, empty_params, super_claims};
+use api_state::{api_state, empty_params, tenant_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
@@ -31,7 +32,8 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             created_at TIMESTAMPTZ DEFAULT NOW(),
             expected_ship_date TIMESTAMPTZ,
             actual_ship_date TIMESTAMPTZ,
-            total_value FLOAT8 DEFAULT 0,
+            -- total_value 是 NUMERIC：模型字段为 Option<Decimal>，FLOAT8 会解码失败（mismatched types）
+            total_value NUMERIC(18,2) DEFAULT 0,
             status TEXT DEFAULT 'pending',
             notes TEXT,
             sales_order_id UUID,
@@ -61,12 +63,18 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
 
     let state = api_state(pool);
-    let claims = super_claims();
-    let resp = list_outbound_orders(
-        State(state),
-        Extension(claims),
-        Query(empty_params()),
-        Extension(txn_arc),
+    let claims = tenant_claims();
+    let resp = topems_shared_auth::middleware::tenant::scope_request_tenant(
+        topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: false,
+        },
+        list_outbound_orders(
+            State(state),
+            Extension(claims),
+            Query(empty_params()),
+            Extension(txn_arc),
+        ),
     )
     .await;
     let body: Value = resp
@@ -92,12 +100,18 @@ async fn list_returns_inserted_row(pool: sqlx::PgPool) {
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
 
     let state = api_state(pool);
-    let claims = super_claims();
-    let resp = list_outbound_orders(
-        State(state),
-        Extension(claims),
-        Query(empty_params()),
-        Extension(txn_arc),
+    let claims = tenant_claims();
+    let resp = topems_shared_auth::middleware::tenant::scope_request_tenant(
+        topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: false,
+        },
+        list_outbound_orders(
+            State(state),
+            Extension(claims),
+            Query(empty_params()),
+            Extension(txn_arc),
+        ),
     )
     .await;
     let body: Value = resp
@@ -129,7 +143,7 @@ async fn list_filters_by_status(pool: sqlx::PgPool) {
     let mut params = empty_params();
     params.status = Some("shipped".to_string());
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = list_outbound_orders(
         State(state),
         Extension(claims),

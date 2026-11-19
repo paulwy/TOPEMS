@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-18）：unified-core system_audit 模块集成测试。
 //! 覆盖 list_audit_logs / get_audit_log / export_audit_logs / get_audit_stats。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;

@@ -2,6 +2,7 @@
 //! P1 补测（2026-10-07）：doc templates/folders handler 集成测试。
 //! 复用 AppState 工厂；覆盖 list/create/get（templates）+ list/create（folders）。
 //! 建表自建（无 FK）。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;

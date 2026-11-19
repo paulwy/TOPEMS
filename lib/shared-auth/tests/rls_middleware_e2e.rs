@@ -5,6 +5,7 @@
 //! → handler 经 Extension 提取 txn → `&mut **txn` 查询 → RLS 过滤。
 //! 此前该链路仅以 DB 层手动模拟（crm rls_isolation_test）；本测试直接驱动
 //! 真实中间件代码，补"中间件 → handler"缺口。
+#![cfg(feature = "db-tests")]
 
 use axum::{
     body::Body,

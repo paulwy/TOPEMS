@@ -3,6 +3,7 @@
 //! 覆盖 handle_event 的 VoucherCreated/Posted/Reversed 分支与 rebuild 清空，
 //! 用 sqlx::test 临时库 + finance schema 手动建表（DDL 对齐
 //! database/migrations/20261007000022_create_finance_mv_summary_tables.sql）。
+#![cfg(feature = "db-tests")]
 
 use topems_finance::domain::events::{
     FinanceDomainEvent, VoucherCreatedEvent, VoucherPostedEvent, VoucherReversedEvent,

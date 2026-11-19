@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-08）：mes work_order list handler 集成测试。
 //! handler SQL 带 schema 前缀（FROM mes.work_orders），测试库建 mes schema + 表。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;

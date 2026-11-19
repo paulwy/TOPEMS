@@ -2,11 +2,12 @@
 //! P1 补测（2026-10-07）：automation 模块集成测试（0/618 盲区）。
 //! 复用 AppState 工厂；覆盖 list/create/get/enable/disable/delete 全 handler。
 //! 建表自建（迁移无 DDL），列名对齐 AutomationRule FromRow。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{tenant_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
 use topems_unified_core::modules::automation::{
@@ -70,7 +71,7 @@ fn create_req(name: &str, code: &str) -> CreateRuleRequest {
 
 async fn create_via_handler(pool: sqlx::PgPool, name: &str, code: &str) -> AutomationRule {
     let state = test_app_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = create_rule(
         State(state),
         Extension(claims),
@@ -96,7 +97,7 @@ async fn create_applies_defaults(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
     let state = test_app_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = create_rule(
         State(state),
         Extension(claims),
@@ -109,7 +110,8 @@ async fn create_applies_defaults(pool: sqlx::PgPool) {
     assert_eq!(rule.status, "draft");
     assert_eq!(
         rule.created_by,
-        Some(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
+        // 与 tenant_claims().sub 对齐（超管 sub 为 ...0001，租户用户为 ...0002）
+        Some(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000002").unwrap())
     );
 }
 

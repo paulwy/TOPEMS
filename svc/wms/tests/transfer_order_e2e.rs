@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms transfer_order list handler 集成测试。
 //! 复用 common/api_state.rs 工厂；覆盖空表/有数据/status 过滤。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;

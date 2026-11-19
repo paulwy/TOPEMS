@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-18）：unified-core audit 模块集成测试。
 //! 覆盖 record_login / list_login_logs / list_operation_logs。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;
@@ -8,10 +9,27 @@ mod app_state;
 use app_state::{super_claims, test_app_state, test_txn_cell};
 use axum::extract::{Query, State};
 use axum::Extension;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_unified_core::modules::audit::handlers::list_operation_logs;
 use topems_unified_core::modules::audit::login_log_handlers::{list_login_logs, record_login};
 use topems_unified_core::modules::audit::models::{OperationLogListResponse, OperationLogQuery};
 use topems_unified_core::modules::audit::{LoginLogQuery, RecordLoginRequest};
+
+/// 直调 handler 时必须补上 auth_middleware 在生产写入的 task-local 租户上下文，
+/// 否则 scope 创建会按 fail-closed 拒绝（"数据库作用域创建失败"/"内部服务器错误"）。
+async fn with_tenant<F, T>(fut: F) -> T
+where
+    F: std::future::Future<Output = T>,
+{
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: false,
+        },
+        fut,
+    )
+    .await
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -109,12 +127,12 @@ async fn record_login_inserts_and_listable(pool: sqlx::PgPool) {
     );
     assert_eq!(created.data.as_ref().unwrap().username, "alice");
 
-    let resp = list_login_logs(
+    let resp = with_tenant(list_login_logs(
         Extension(test_txn_cell(&pool).await),
         State(state),
         Extension(super_claims()),
         Query(empty_login_query()),
-    )
+    ))
     .await;
     let body = resp.data.expect("list failed");
     assert_eq!(body.total, 1);
@@ -127,12 +145,12 @@ async fn operation_logs_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_operation_logs(
+    let resp = with_tenant(list_operation_logs(
         Extension(txn),
         State(state),
         Extension(super_claims()),
         Query(empty_op_query()),
-    )
+    ))
     .await;
     assert!(
         resp.success,
@@ -157,12 +175,12 @@ async fn operation_logs_with_data_lists_one(pool: sqlx::PgPool) {
 
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_operation_logs(
+    let resp = with_tenant(list_operation_logs(
         Extension(txn),
         State(state),
         Extension(super_claims()),
         Query(empty_op_query()),
-    )
+    ))
     .await;
     assert!(
         resp.success,
@@ -253,11 +271,11 @@ async fn audit_query_excludes_soft_deleted_rows(pool: sqlx::PgPool) {
 
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let resp = query_audit_logs(
+    let resp = with_tenant(query_audit_logs(
         Extension(txn.clone()),
         State(state.clone()),
         Query(empty_audit_query()),
-    )
+    ))
     .await;
     assert!(resp.success, "query_audit_logs failed: {:?}", resp.message);
     let body = resp.data.expect("data missing");
@@ -268,7 +286,12 @@ async fn audit_query_excludes_soft_deleted_rows(pool: sqlx::PgPool) {
         "软删行 delete_project 不应返回"
     );
 
-    let stats = get_audit_log_stats(Extension(txn), State(state), Query(empty_audit_query())).await;
+    let stats = with_tenant(get_audit_log_stats(
+        Extension(txn),
+        State(state),
+        Query(empty_audit_query()),
+    ))
+    .await;
     assert!(
         stats.success,
         "get_audit_log_stats failed: {:?}",

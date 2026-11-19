@@ -3,6 +3,7 @@
 //! 复用 common/api_state.rs 工厂；覆盖 list/create/get/update/delete。
 //! 注意：写类 handler 成功分支会 guard.take() + commit 消费事务，
 //! 故每次 handler 调用前需 fresh_txn() 重建 txn_arc。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;

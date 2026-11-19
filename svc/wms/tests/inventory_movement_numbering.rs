@@ -2,6 +2,7 @@
 //! P1 补测（2026-10-07）：inventory_movement 移动单号生成规则。
 //! 覆盖 MV-YYYYMMDD-NNNNNN 格式、同 tenant 序号递增、跨 tenant 隔离。
 //! sqlx::test 临时库 + 最小建表（对齐 wms.inventory_movements 关键列）。
+#![cfg(feature = "db-tests")]
 
 use sqlx::PgPool;
 use topems_wms::modules::inventory_movement::generate_movement_no;

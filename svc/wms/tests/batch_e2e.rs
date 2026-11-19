@@ -1,5 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms batch list_batches handler 集成测试。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;

@@ -951,6 +951,7 @@ mod tests {
 
 #[cfg(test)]
 mod billing_scope_tests {
+    #![cfg(feature = "db-tests")]
     #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
     use super::*;

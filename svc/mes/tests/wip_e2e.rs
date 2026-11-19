@@ -1,5 +1,6 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-08）：mes wip list handler 集成测试（LEFT JOIN 2 表）。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;
@@ -9,6 +10,7 @@ use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::{json, Value};
 use topems_mes::modules::wip::{list_wips, ListWipsQuery};
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -64,11 +66,18 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
         json!({})
     })
     .unwrap();
-    let resp = list_wips(
-        State(state),
-        Extension(txn_cell),
-        Extension(claims),
-        Query(q),
+    // 直调 handler 缺少 auth_middleware 写入的 task-local 租户上下文；补上后 scope 才允许执行。
+    let resp = scope_request_tenant(
+        RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: false,
+        },
+        list_wips(
+            State(state),
+            Extension(txn_cell),
+            Extension(claims),
+            Query(q),
+        ),
     )
     .await;
     serde_json::to_value(

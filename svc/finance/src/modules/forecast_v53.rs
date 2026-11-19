@@ -1712,6 +1712,7 @@ pub fn create_routes() -> Router<AppState> {
 
 #[cfg(test)]
 mod tests {
+    #![cfg(feature = "db-tests")]
     use super::*;
     use serde::Serialize;
     use serde_json::Value;

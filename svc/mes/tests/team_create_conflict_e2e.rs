@@ -2,6 +2,7 @@
 //! `create_team` 唯一键冲突（SQLSTATE 23505）→ 409 的回归测试。
 //!
 //! 表形状对齐 20261114 收敛后的 `mes.teams`：`UNIQUE NULLS NOT DISTINCT (tenant_id, team_code)`。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;
@@ -69,20 +70,26 @@ async fn create(
     let mut claims = super_claims();
     claims.tenant_id = Some(tenant.to_string());
     let txn_cell = app_state::request_txn_cell(&state.pool).await;
-    scope_request_tenant(
+    let resp = scope_request_tenant(
         RlsRequestTenant {
             tenant: Uuid::parse_str(tenant).unwrap(),
             system: false,
         },
         create_team(
-            State(state),
-            Extension(txn_cell),
+            State(state.clone()),
+            Extension(txn_cell.clone()),
             Extension(claims),
             HeaderMap::new(),
             axum::Json(req(team_code)),
         ),
     )
-    .await
+    .await;
+    // 生产由 tenant_middleware 负责提交；直调 handler 必须显式 commit，
+    // 否则请求事务随 Arc drop 回滚，第二次创建看不到第一次的行，永远撞不出 23505。
+    if let Some(txn) = txn_cell.lock().await.take() {
+        txn.commit().await.expect("提交测试请求事务失败");
+    }
+    resp
 }
 
 const TENANT_A: &str = "11111111-1111-1111-1111-111111111111";

@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-18）：wms analytics 模块集成测试。
 //! 覆盖 get_dashboard_summary（跨 6 表聚合：仓库/库存/出入库/告警/库位利用率）。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;

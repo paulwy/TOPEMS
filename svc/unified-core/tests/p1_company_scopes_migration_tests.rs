@@ -6,6 +6,7 @@
 //!   - 单公司租户一次性回填（read/write/consolidate）且在职用户零遗漏；
 //!   - 多公司租户不自动授予；0 公司租户不建 scope、不报错；
 //!   - 重复 code、非法 access_level、跨租户公司引用均被数据库拒绝。
+#![cfg(feature = "db-tests")]
 
 use std::borrow::Cow;
 use uuid::Uuid;

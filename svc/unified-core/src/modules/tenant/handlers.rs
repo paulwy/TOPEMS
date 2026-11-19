@@ -3959,6 +3959,7 @@ pub async fn collect_tenant_usage(
 
 #[cfg(test)]
 mod p1_company_tests {
+    #![cfg(feature = "db-tests")]
     #![allow(clippy::unwrap_used, clippy::expect_used)]
 
     use super::ensure_default_company;

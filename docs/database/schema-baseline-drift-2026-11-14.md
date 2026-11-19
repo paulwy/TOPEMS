@@ -388,12 +388,16 @@ dev 实测受影响 16 张表（各多 1 条 `tenant_isolation_<table>`）：
 
 1. `qms.qa_alert_messages` 的 `tenant_isolation_qa_alert_messages` 在同名策略上定义不同
    （prod 为复合 fail-open 表达式，dev 为旧式 fail-open）。两侧都 fail-open，语义等价，属既有环境漂移。
-2. 列级漂移（按「表+列名」逐列比对 56 张表）：dev **缺 29 列 / 7 表**——`integration.integration_sync_logs`(7)、
+2. ~~列级漂移（按「表+列名」逐列比对 56 张表）：dev **缺 29 列 / 7 表**——`integration.integration_sync_logs`(7)、
    `mes.production_records`(9)、`finance.reconciliation_snapshots`(4)、`mes.equipment`(3)、
    `mes.production_orders`(3)、`erp.erp_master_data_refs`(2：`id`、`deleted_at`)、`mes.work_stations`(1)；
    dev **多 39 列 / 10 表**——`erp.expenses`(15)、`portal.portal_announcements`(10)、`erp.vehicle_requests`(5)、
    `ehs.health_records`(2)、`erp.meeting_bookings`(2) 等。典型：dev 的 `erp.meeting_rooms` 为
-   `name varchar(200)` / `location varchar(200)` / `facilities jsonb`，prod 为 `varchar(255)` / `varchar(255)` / `text[]`。
+   `name varchar(200)` / `location varchar(200)` / `facilities jsonb`，prod 为 `varchar(255)` / `varchar(255)` / `text[]`。~~
+
+   > **⚠️ 失效来源（2026-11-15 标注）**：上述 29/39 口径来自**未登记的 56 表子集**，该子集清单不在任何文档或脚本中，**不可复现**，数字与判断**已作废**。全库实测（`information_schema.columns` 全量逐列比对，1327 张公共表）为：prod 有 dev 无 524 列、dev 有 prod 无 1224 列、两侧定义不一致 1593 列，另有序表独有 172 张。逐列归属与处置见
+   > [column-drift-attribution-2026-11-15.md](column-drift-attribution-2026-11-15.md)。
+   > 本处点名的 7 张表差异客观存在，但其 29 列并非完整差集：其中 11 列确认为 A（补 dev），3 列待表族定权后归 A，2 列为族内待定，其余落 C/D。
 3. `status` CHECK 约束：**prod 的 18 条在 dev 上逐条一致（18/18 命中）**；dev 另有 6 条更严的约束
    （`erp.company_relations`、`erp.elimination_rules`、`mes.process_route_steps`、`mes.process_routes`、
    `mes.production_processes`、`mes.quality_standards`），来自 dev 独有迁移 `20261114100000` 的扩张口径，属「dev 更严」，不影响对齐。

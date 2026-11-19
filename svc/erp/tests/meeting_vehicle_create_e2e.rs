@@ -5,6 +5,7 @@
 //! `create_vehicle_request` 曾用 `SELECT id, plate_number, status` 却按 `Vehicle`（12 列）映射，
 //! 运行期报 `no column found for name: capacity/brand`，接口 500。
 //! 本用例钉住修好后的行为：显式完整投影 + code 200 + 关联 id 与 tenant_id 正确。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;

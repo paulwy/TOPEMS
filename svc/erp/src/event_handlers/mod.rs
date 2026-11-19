@@ -1652,6 +1652,7 @@ pub async fn start_event_subscribers(
 
 #[cfg(test)]
 mod rls_scope_tests {
+    #![cfg(feature = "db-tests")]
     #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
     use super::*;

@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 use crate::models::customer::{CreateCustomerRequest, Customer};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -39,6 +40,14 @@ async fn ensure_crm_schema(pool: &PgPool) {
             revenue         DOUBLE PRECISION,
             source          TEXT,
             status          TEXT,
+            -- 以下 4 列由后续迁移补入（模型与写路径已依赖），fixture 必须与生产 DDL 对齐，
+            -- 否则 SELECT * / RETURNING 会 42703 缺列：
+            --   name_en   ← 20260921000099_backend_i18n_batch2_bilingual_columns
+            --   fax/notes/postal_code ← 20261007000010_align_missing_columns_selfheal4
+            name_en         VARCHAR(255),
+            fax             VARCHAR(50),
+            notes           TEXT,
+            postal_code     VARCHAR(20),
             approval_status TEXT DEFAULT 'none',
             created_at      TIMESTAMPTZ DEFAULT NOW(),
             updated_at      TIMESTAMPTZ DEFAULT NOW(),
@@ -55,7 +64,6 @@ async fn ensure_crm_schema(pool: &PgPool) {
 }
 
 topems_test_support::sqlx_dsn_guard!();
-#[ignore = "需要真实 PostgreSQL（sqlx::test 建库；无凭据/无库时无法运行）"]
 #[sqlx::test]
 async fn customer_isolated_by_tenant(pool: PgPool) {
     ensure_crm_schema(&pool).await;
@@ -131,7 +139,6 @@ async fn create_customer_for(pool: &PgPool, tenant_id: Uuid, name: &str) -> Cust
     .unwrap()
 }
 
-#[ignore = "需要真实 PostgreSQL（sqlx::test 建库；无凭据/无库时无法运行）"]
 #[sqlx::test]
 async fn rls_txn_context_isolates_tenant(pool: PgPool) {
     ensure_crm_schema(&pool).await;

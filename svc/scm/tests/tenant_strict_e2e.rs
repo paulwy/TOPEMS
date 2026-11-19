@@ -1,6 +1,7 @@
 //! 租户上下文严格化的 handler 级验证：
 //! - 缺少 tenant_id 的 claims → 400「缺少租户上下文」
 //! - 正常 claims → 查询只返回该租户的数据（不再有 nil=全量 回退）
+#![cfg(feature = "db-tests")]
 
 use axum::extract::{Path, State};
 use axum::Extension;

@@ -2,11 +2,12 @@
 //! P1 补测（2026-10-18）：wms labor 模块集成测试。
 //! 覆盖 list_labor_shifts（空/计数）、create_labor_shift、list_labor_efficiency（wave_picks 聚合）。
 //! 建表自建：labor_shifts + wave_picks（efficiency 数据源）。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, empty_params, super_claims};
+use api_state::{api_state, empty_params, tenant_claims};
 use axum::extract::{Json, Query, State};
 use axum::Extension;
 use serde_json::Value;
@@ -96,7 +97,7 @@ async fn shifts_body(pool: sqlx::PgPool) -> Value {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = list_labor_shifts(
         State(state),
         Extension(claims),
@@ -145,12 +146,18 @@ async fn create_shift_creates(pool: sqlx::PgPool) {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool.clone());
-    let claims = super_claims();
-    let resp = create_labor_shift(
-        State(state),
-        Extension(claims),
-        Extension(txn_arc),
-        Json(req),
+    let claims = tenant_claims();
+    let resp = topems_shared_auth::middleware::tenant::scope_request_tenant(
+        topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: false,
+        },
+        create_labor_shift(
+            State(state),
+            Extension(claims),
+            Extension(txn_arc),
+            Json(req),
+        ),
     )
     .await;
     let data = resp
@@ -192,7 +199,7 @@ async fn efficiency_computes_from_wave_picks(pool: sqlx::PgPool) {
     let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let params = LaborQuery {
         date_from: None,
         date_to: None,

@@ -4,6 +4,7 @@
 //! K1（2026-11-16）：handler 走 `Db::scope_with(txn)`，无租户上下文按设计报错，
 //! 因此用例必须像中间件一样先注入 task-local 租户上下文（`scope_request_tenant`），
 //! 并插入第二个租户的数据证明列表只返回本租户行。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;

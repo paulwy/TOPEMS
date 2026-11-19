@@ -330,6 +330,7 @@ pub struct ConsolidationListParams {
 
 #[cfg(test)]
 mod company_scope_tests {
+    #![cfg(feature = "db-tests")]
     #![allow(clippy::unwrap_used, clippy::expect_used)]
 
     use super::{ensure_company_scope, CompanyAccess, CompanyScopeError};

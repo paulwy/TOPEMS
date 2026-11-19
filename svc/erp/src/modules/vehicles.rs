@@ -1020,6 +1020,7 @@ pub async fn get_vehicle_requests(
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
+    #![cfg(feature = "db-tests")]
     use super::*;
 
     /// 建表：`purpose` 可空（对齐生产库历史形状），`deleted_at` 用于软删过滤用例。

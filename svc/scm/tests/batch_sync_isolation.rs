@@ -5,7 +5,7 @@
 //!   * 失败条的重试计数是在 `ROLLBACK TO SAVEPOINT` 之后的可用事务里更新的；
 //!   * 返回体如实区分成功 / 待重试 / 最终失败；
 //!   * 全成功路径行为不变。
-
+#![cfg(feature = "db-tests")]
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use axum::extract::State;

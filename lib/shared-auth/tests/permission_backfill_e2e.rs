@@ -7,6 +7,7 @@
 //! - 回填后写入的 `RlsRequestTenant` 与 token 租户一致、普通用户不误入系统通道；
 //! - 解析失败（DB 不可用）按 fail-closed 返回 503，而不是静默空权限 403。
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "db-tests")]
 
 use axum::{
     body::Body,
@@ -307,20 +308,41 @@ async fn auth_middleware_fails_closed_when_resolver_errors(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = false)]
-async fn auth_middleware_superuser_uses_system_channel(pool: PgPool) {
+async fn auth_middleware_superuser_stays_in_tenant_scope(pool: PgPool) {
     seed_grant_tables(&pool).await;
-    let mut claims = make_claims(Uuid::new_v4(), Uuid::new_v4());
+    let tenant = Uuid::new_v4();
+    let mut claims = make_claims(Uuid::new_v4(), tenant);
     claims.is_superuser = true;
 
     let token = claims.encode_compact(TEST_SECRET).unwrap();
     let (status, body) = call(&build_app(auth_state(pool)), &token).await;
 
     assert_eq!(status, StatusCode::OK);
-    // 超管短路：不查授权表，RLS 走系统通道（nil tenant + system=true）。
-    assert_eq!(body["rls_system"], true);
+    // d6175f315（2026-11-17）起「禁止静默零租户兜底」：超管带显式 tenant_id 时
+    // 必须留在租户作用域，系统通道只授予显式服务令牌（is_service_claims）。
+    assert_eq!(
+        body["rls_system"], false,
+        "超管不得因 is_superuser 自动进入系统通道"
+    );
     assert_eq!(
         body["rls_tenant"],
-        Uuid::nil().to_string(),
-        "超管应进入系统通道而非 token 租户"
+        tenant.to_string(),
+        "超管必须跟随 token 的显式租户，而不是落 nil 租户"
     );
+}
+
+#[sqlx::test(migrations = false)]
+async fn auth_middleware_superuser_without_tenant_fails_closed(pool: PgPool) {
+    seed_grant_tables(&pool).await;
+    let mut claims = make_claims(Uuid::new_v4(), Uuid::new_v4());
+    claims.is_superuser = true;
+    claims.tenant_id = None;
+
+    let token = claims.encode_compact(TEST_SECRET).unwrap();
+    let (status, body) = call(&build_app(auth_state(pool)), &token).await;
+
+    assert_eq!(status, StatusCode::OK);
+    // 无租户 + 非服务令牌 → nil 租户且不开系统通道，由策略 fail-closed 拦截。
+    assert_eq!(body["rls_system"], false);
+    assert_eq!(body["rls_tenant"], Uuid::nil().to_string());
 }

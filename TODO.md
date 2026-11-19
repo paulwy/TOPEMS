@@ -78,7 +78,7 @@
 | ID | 任务 | 当前读数 | 验收 |
 |---|---|---|---|
 | C1 ✅ | 为裸 `#[ignore]` 补原因或删失效用例 | 实测裸注解 380 处 / 47 文件（文档旧口径 378）；全部补成 `#[ignore = "<原因>"]`：385 条 HTTP 集成（需本地服务运行，服务不可用则 skip）、8 条网关 8099 端到端、3 条 `sqlx::test` 需真实 PostgreSQL。失效用例判定：这些文件自带 `service_available()` / `sqlx_dsn_guard!` 前置守卫，属「可运行但需外部依赖」而非死代码，故补因不删 | 全仓裸 `#[ignore]` = 0（已带原因 535 处）；新增门禁 `scripts/ci/check-test-ignore-reason.mjs` 零基线、构造裸注解探针 exit 1；`cargo check --workspace --all-targets` 绿；`cargo fmt --all --check` 绿 |
-| C2 | “需要 PostgreSQL”用例改显式 feature/CI 服务 | 113 处 | CI 实际执行数上升 |
+| C2 🟡 | “需要 PostgreSQL”用例改显式 feature/CI 服务 | 8 个含有 `sqlx_dsn_guard!()` 的 crate 新增 `db-tests` feature：47 个集成测试文件加 `#![cfg(feature = "db-tests")]`、10 个 src 内 `mod tests` 改 `cfg(all(test, feature="db-tests"))`；默认 `cargo test` 不再编译/启动这些需要 DSN 的用例（此前守卫会在进程启动即 panic）。本机以 `TEST_DATABASE_URL` 实跑暴露 8 处真实缺陷并已修：crm RLS fixture 缺 name_en/fax/notes/postal_code；crm/uc 权限测试与超管系统通道断言过期（按 d6175f315 口径改为租户作用域）；mes material_requirement/wip、mes team、uc audit、wms labor 缺 task-local 租户上下文；wms audit 断言查错表（public↔wms）；mes team 冲突测试未提交请求事务（永远撞不出 23505）；wms outbound fixture `total_value` 用 FLOAT8 与 Decimal 解码不兼容 | 5 个 crate 全绿（crm 1055 / shared-auth 248 / scm 471 / erp 1819 / finance 2201 passed）；wms / mes / unified-core 仍有 ~11 例随全量运行失败（需下一轮按同一手法逐套件收敛），故 CI job 暂不启用 |
 | C3 | 清理环境缺失即 early-return 的伪绿写法 | 约 60 处 | 缺服务时红灯 |
 | C4 | 合并 CI 中 `cargo-test` 与 `rust-test` 两套冗余 job | `ci.yml:496/544` | 单一路径 |
 | C5 | 拆分超慢用例文件 | `PluginManager.test.ts` 233.9s | 单文件 <30s |

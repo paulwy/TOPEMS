@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms sync_records list handler 集成测试。
 //! 超管 Claims tenant_id=None → 查询用全零 UUID 匹配，insert 需 tenant_id=nil。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;

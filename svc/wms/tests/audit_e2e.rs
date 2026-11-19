@@ -2,6 +2,7 @@
 //! P1 补测（2026-10-18）：wms audit 模块集成测试。
 //! 覆盖 list_audit_logs（空/计数）、get_audit_log、log_audit_event（写库）。
 //! 建表对齐 AuditLog FromRow（SELECT 15 列，其余列可空）。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/api_state.rs"]
 mod api_state;
@@ -53,7 +54,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .execute(pool)
     .await
     .unwrap();
-    // log_audit_event 经 SchemaAware 解析 bare `audit_logs` 到 search_path 首表（测试库默认 public）。
+    // 保留 public 同名表：历史断言兼容用；log_audit_event 实际写 wms.audit_logs。
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS public.audit_logs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -195,13 +196,15 @@ async fn log_event_creates_row(pool: sqlx::PgPool) {
     )
     .await;
 
-    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.audit_logs")
+    // SchemaAwareAuditLogService::new(pool, "wms") 显式写 `wms.audit_logs`（前缀必填，
+    // 不再靠 search_path 猜）；断言必须指向落点表，不能查 public 同名副本。
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM wms.audit_logs")
         .fetch_one(&pool)
         .await
         .unwrap();
     assert_eq!(count, 1);
     let (action, user_name): (String, Option<String>) =
-        sqlx::query_as("SELECT action, user_name FROM public.audit_logs")
+        sqlx::query_as("SELECT action, user_name FROM wms.audit_logs")
             .fetch_one(&pool)
             .await
             .unwrap();

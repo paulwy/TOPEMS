@@ -3,6 +3,7 @@
 //! 复用 AppState 工厂；覆盖 list_runs（空/计数/状态过滤）、get_run（存在/不存在）、
 //! retry_run、cancel_run（运行中/非运行中）、purge_runs。
 //! 建表自建，列名对齐 AutomationRun FromRow。
+#![cfg(feature = "db-tests")]
 
 #[path = "common/app_state.rs"]
 mod app_state;
