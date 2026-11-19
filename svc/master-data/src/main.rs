@@ -4,7 +4,7 @@ use std::sync::Arc;
 use axum::{extract::State, routing::get, Router};
 use utoipa::OpenApi;
 
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
     ServiceConfig,
@@ -67,6 +67,9 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(require_module_write(
+            "master-data",
+        )))
         .layer(axum::middleware::from_fn(require_module_access(
             "master-data",
         )))

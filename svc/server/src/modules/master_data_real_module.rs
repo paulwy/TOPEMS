@@ -12,7 +12,7 @@ use axum::Router;
 use std::sync::Arc;
 use topems_master_data::modules;
 use topems_master_data::shared::AppState;
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_event::event::EventPublisher;
@@ -74,6 +74,9 @@ impl MasterDataRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
+            .layer(axum::middleware::from_fn(require_module_write(
+                "master-data",
+            )))
             .layer(axum::middleware::from_fn(require_module_access(
                 "master-data",
             )))

@@ -109,6 +109,7 @@
 | W1-3a | erp/scm/srm/wms/mes 路由级权限验收（原“17 服务零权限”已不成立，29/29 服务已有声明） | 需逐路由核对 | 非超管 200 / 无权限 403 |
 | W1-3b | hrm/crm/pdm/pm/rd/tms/gis/mobile | 同上 | mobile 个人接口保持 auth-only |
 | W1-3c | integration/monitor/ticket/master-data | 同上 | monitor 收紧需核真实用户 |
+| W1-3 ✅（本轮运行期验收） | 非超管矩阵 + 写门根因修复 | 单体 :8099 真实登录实测：`w13_reader` 仅授各模块读码时，CRM/ERP/SCM/WMS/QMS/EHS/HRM/PM 读 200；未授权模块 403；EHS/QMS 合法写载荷曾 200 并真实落库，根因是单体 `topems-server` 的 `*_real_module` 只挂 `require_module_access`、绕过独立部署 `main.rs` 的写门。已在 EHS/QMS/TMS/LIMS/master-data 的单体挂载点与独立部署入口同时补 `require_module_write`；复测 EHS/QMS 合法写 403（`需要 ehs:admin`/`qms:admin`），TMS/LIMS 写 403，读均 200，admin 写仍 200。探针数据已按主键删除，`w13-*-probe` 计数 0 | 读 200/写 403 可复现 ✅；SRM/MES/PDM/RD/GIS/Mobile/Integration/Monitor/Ticket 待补矩阵 |
 | W1-4a | DB 菜单分组映射到 10 个域组并被前端消费 | `GlobalLayoutV3.tsx` 无 `group_id` 消费 | 菜单接口返回 10 组；`?menu_authority=config` 可回退 |
 | §14.1 | 财务期初余额 4 项遗留（f64 路径、币种符号、签名等） | 未动 | 逐项用例绿 |
 | §14.2 | 单一率校验 | 未做 | 用例绿 |

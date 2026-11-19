@@ -19,7 +19,7 @@ use axum::{
 };
 use utoipa::OpenApi;
 
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, prometheus_metrics_handler, run,
     ServiceConfig,
@@ -445,6 +445,7 @@ async fn main() -> anyhow::Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
+        .layer(axum::middleware::from_fn(require_module_write("lims")))
         .layer(axum::middleware::from_fn(require_module_access("lims")))
         .with_state(api_state.clone());
 
