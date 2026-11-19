@@ -98,3 +98,24 @@ cargo update -p libsodium-sys-stable@1.24.3 --precise 1.24.6
 - `tests/integration/package-lock.json`、`tests/e2e/package-lock.json` 被 `.gitignore` 忽略，
   **不在 GitHub 扫描面**；本地仍已刷新（integration 的 lock 过期锁在 vitest 2.1.9 且有结构损坏，
   package.json 早已是 `^4.1.11`，按 package.json 重生成后两处 `npm audit` 均 0 条）。
+
+## 8. 连带发现的构建链隐患（与依赖版本无关，同批修复）
+
+排查依赖时发现 `Docker Build` workflow **最近所有 run 都是 failure**，但失败原因与代码无关：
+
+- **表面原因**：GitHub 账号计费/额度问题，job 根本没启动
+  （`The job was not started because recent account payments have failed or your spending limit
+  needs to be increased`）。需要账号侧处理，代码改不动。
+- **但掩盖了一个真 bug**：计费恢复后第一批镜像会**全红**。`Cargo.toml` 里有
+  `[patch.crates-io] rsa = { path = "vendor/rsa" }`（Marvin 私有补丁），而
+  `deploy/docker/Dockerfile.server` 只 COPY 了 `Cargo.toml/Cargo.lock/lib/svc/apps/database/config`，
+  注释还写着"本镜像不 COPY vendor/"——那条注释针对的是 swagger-ui 的 zip，却把 rsa 补丁的
+  path 依赖一起漏了。实测把 `vendor/rsa` 移走后 `cargo metadata` 直接
+  `failed to load source for dependency "rsa"`，镜像构建必失败。
+- **为什么长期没暴露**：Docker workflow 自该补丁落地（`a81b48f7f`）后就没真正跑起来过，
+  CI 静默失败成了"绿灯"。
+- **修复**：`Dockerfile.server` 增加 `COPY vendor/ ./vendor/`；另两个 Rust Dockerfile
+  （`Dockerfile.service`、`svc/unified-core/Dockerfile`）本来就 COPY vendor，无需改动。
+- **防复发**：新增 `scripts/ci/check-docker-build-context.py`（pre-push 门禁
+  `docker-build-context`）——自动解析 `[patch.*]` 的 path 依赖，逐一断言每个 Rust
+  Dockerfile 的 COPY 覆盖它，且未被 `.dockerignore` 排除。反向验证：删掉 `COPY vendor` 行即报红。

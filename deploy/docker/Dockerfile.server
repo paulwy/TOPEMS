@@ -16,8 +16,14 @@ COPY apps/ ./apps/
 COPY database/ ./database/
 COPY config/ ./config/
 
-# 注意：本镜像不 COPY vendor/ —— svc/server 显式关闭了 unified-core 的 `swagger-ui`
-# feature（见 svc/server/Cargo.toml 注释），构建期不会触发 utoipa-swagger-ui 的下载逻辑。
+# vendor/ 必须复制：Cargo.toml 的 [patch.crates-io] rsa = { path = "vendor/rsa" }
+# 指向它（Marvin Attack implicit rejection 私有补丁）。缺失时 cargo 在解析阶段直接
+# 报 "failed to load source for dependency `rsa`"，镜像构建必失败。
+COPY vendor/ ./vendor/
+
+# 说明：vendor/swagger-ui-*.zip 不会被使用——svc/server 显式关闭了 unified-core 的
+# `swagger-ui` feature（见 svc/server/Cargo.toml 注释），构建期不触发 utoipa-swagger-ui
+# 的下载/解压逻辑；该 zip 仅对开启该 feature 的本地/其他构建有用。
 
 # 编译模块化单体二进制（release，stripped 由运行时处理）
 RUN cargo build --release -p topems-server --bin topems-server

@@ -53,3 +53,21 @@
 - `cargo check --workspace` 通过（补丁版 rsa 全仓库编译）。
 - `cargo audit --db /tmp/rustsec-advisory-db`：0 vulnerability，4 allowed warnings
   （unmaintained/unsound，另行跟踪）。
+
+## 机械校验（2026-11-19 新增，取代"文档承诺"）
+
+此前每一条豁免都只靠"文档里写着零暴露"保证——这属于**人工判断**，会随代码演进腐化：
+只要有人加一行 `Algorithm::ES256`、或在某个 Cargo.toml 的 sqlx 特性里加上 `sqlite`，
+对应的 advisory 立刻变成真实风险，而 `cargo audit` 仍因 ignore 全绿。
+
+现由 `scripts/ci/check-rust-audit-invariants.py` 把每条豁免的前提变成断言（pre-push 与
+CI `rust-audit` job 都要过）：
+
+| 不变量 | 对应 ignore | 断言内容 |
+|---|---|---|
+| `sqlite-off` | RUSTSEC-2026-0459 | 任何 Cargo.toml 的 sqlx 特性都不含 sqlite；源码无 `sqlx::sqlite` / `SqlitePool` / `SqliteConnectOptions` |
+| `no-ecdsa` | RUSTSEC-2026-0387 | 源码无 `Algorithm::ES256/ES384/EdDSA`，无 `p256::`/`p384::`/`k256::` 直接引用 |
+| `rsa-vendored` | RUSTSEC-2023-0071 | `[patch.crates-io] rsa` 指向存在目录，且 `Cargo.lock` 中 rsa 条目无 `source`（确为本地补丁版） |
+| `registry-sync` | 全部 | `.cargo/audit.toml` 的 ignore 集合与本表 ID 严格双向一致（新增/删除都必须同步） |
+
+任一不变量被打破 → push/CI 直接失败，强制回头复核：要么恢复零暴露，要么移除 ignore 并真正升级依赖。

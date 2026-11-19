@@ -561,6 +561,24 @@ pre-push:
       tags: shellcheck
       run: bash scripts/ci/check-shellcheck.sh
 
+    # [Gate DOCKER-CTX] Docker 构建上下文 vs Cargo patch 路径（<0.1s）
+    # 事故：Cargo.toml [patch.crates-io] rsa = { path = "vendor/rsa" }（Marvin 私有补丁）
+    # 是解析期强依赖，但 Dockerfile.server 曾"不 COPY vendor/"（那条注释只针对 swagger-ui
+    # 的 zip）。缺 vendor/ 时 cargo 解析即失败，镜像必挂；因 Docker Build workflow 当时
+    # 被账号计费卡住从未真正启动，问题长期未暴露。此闸门把两者对齐成静态阻断。
+    docker-build-context:
+      tags: config docker
+      glob: "{Cargo.toml,deploy/docker/**,svc/**/Dockerfile,apps/**/Dockerfile,.dockerignore,scripts/ci/check-docker-build-context.py}"
+      run: python3 scripts/ci/check-docker-build-context.py
+
+    # [Gate AUDIT-INV] cargo audit 豁免项的"零暴露"前提机械校验（<0.3s，不调用 cargo）
+    # ignore 是人工判断，会腐化：今天"ES 算法零使用"成立，明天加一行 Algorithm::ES256
+    # 就失效而门禁仍绿。此闸门把每条豁免的前提（sqlite 未启用 / 无 ECDSA / rsa 仍为
+    # vendor 补丁版 / 登记表与 audit.toml 双向一致）变成断言，前提不成立即阻断。
+    rust-audit-invariants:
+      tags: security
+      run: python3 scripts/ci/check-rust-audit-invariants.py
+
     # [Gate GL-FULL] gitleaks 全历史扫描（2026-11-18 接入；2026-11-19 口径与 CI 对齐）
     # pre-commit 只扫暂存区增量，历史/本地新提交里的密钥只有这里能看见。
     # 存量已冻结在 scripts/ci/gitleaks-baseline.json（脱敏报告：

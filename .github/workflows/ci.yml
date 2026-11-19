@@ -735,6 +735,12 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
 
+      # 豁免前提的机械校验：放在 cargo audit 之前（<1s，纯静态）。
+      # 没有这一步，ignore 会腐化——代码里一旦出现 ES256 或启用 sqlite 特性，
+      # cargo audit 仍因 ignore 而全绿，豁免变成"永久静音"。
+      - name: Verify audit-ignore invariants
+        run: python3 scripts/ci/check-rust-audit-invariants.py
+
       - name: Run cargo audit (security scan)
         run: |
           echo "## Rust Security Audit (cargo-audit)" >> $GITHUB_STEP_SUMMARY
