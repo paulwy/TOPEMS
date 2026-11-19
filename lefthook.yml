@@ -570,20 +570,21 @@ pre-push:
       run: bash scripts/ci/check-gitleaks-full.sh
 
     # [Gate MIG-DRILL] 迁移锚点演练（正式闸门，fail-closed）
-    # 从生产基线快照恢复隔离库，只应用 anchor 之后的前向迁移 + 静态校验 + 权限码审计。
-    # 仅当本次 push 触及 migrations/baseline 时运行（其余 push 秒级跳过）。
-    # 超管豁免（显式配置，不是随手可关的开关）：
-    #   该门禁验证的是「迁移链可应用性」，不验证隔离/RLS；anchor 基线快照含
-    #   CREATE EXTENSION vector 等仅超级用户可执行的操作，非特权角色无法在新库恢复
-    #   基线（实测 permission denied to create extension）。因此这里显式传
-    #   MIGRATION_DRILL_ALLOW_SUPERUSER=1；超管身份不影响本门禁结论的有效性。
-    #   该豁免仅限本门禁；ledger-ddl-drift 仍强制非特权连接（topems_gate），不得借道。
-    # 现状：快照 20261117235500 上的 14 条前向演练全绿（约 55s）；
+    # 从生产基线快照恢复隔离库，只应用 anchor 之后的前向迁移 + 静态校验 + 权限码审计
+    # + [5/5] 策略期望快照比对（database/rls_policy_expected.json vs 实测 pg_policies/pg_class）。
+    # 仅当本次 push 触及 migrations/baseline/快照/门禁脚本时运行（其余 push 秒级跳过）。
+    # 连接：优先 .env TEST_DATABASE_URL 的非特权角色（需 CREATEDB）；模板库
+    #   topems_drill_template 预装扩展（bootstrap-migration-drill-template.sh 一次性创建），
+    #   因此不再需要 superuser 豁免；脚本自身仍拒绝 superuser/BYPASSRLS 连接。
+    # 快照更新：只随迁移一起用
+    #   MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor
+    #   生成后 review git diff 再提交；不得为过门禁直接刷新快照。
+    # 现状：anchor 20261117235500 上 22 条前向迁移 + 快照比对全绿；
     # 本闸门 fail-closed，不得用 --no-verify 绕过。
     migration-drill-anchor:
       tags: database migrations
-      glob: "{database/migrations/**,database/baseline/**}"
-      run: MIGRATION_DRILL_ALLOW_SUPERUSER=1 bash scripts/dev/run-migration-drill.sh anchor
+      glob: "{database/migrations/**,database/baseline/**,database/rls_policy_expected.json,scripts/ci/check-rls-policy-snapshot.mjs,scripts/ci/gen-rls-policy-snapshot.mjs,scripts/ci/lib/rls-policy-snapshot.mjs,scripts/dev/run-migration-drill.sh,scripts/migration/apply-forward.sh}"
+      run: bash scripts/dev/run-migration-drill.sh anchor
 
     # [Gate B12/U9.5] 配置三方一致性（秒级）：services.yaml ↔ ports.env ↔ nginx map
     # 单一信源原则（V66.2）：任何服务/端口/路由变更导致漂移，push 直接阻断。

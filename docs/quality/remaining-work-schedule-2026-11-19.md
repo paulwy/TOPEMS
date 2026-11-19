@@ -482,10 +482,59 @@ sed -i '' '/^127\.0\.0\.1:5432:topems_prod:topems_drift:/d' ~/.pgpass
 - 新增一条宽松策略（`USING (true)`）→ 必须 FAILED。
 - 空快照/快照格式错误 → 必须 FAILED（不得静默 0 条通过）。
 
+**落地结果（2026-11-19）**
+
+| 项 | 路径 / 接入点 | 说明 |
+|---|---|---|
+| 期望快照 | `database/rls_policy_expected.json` | 版本化；从 HEAD 迁移链的隔离演练库生成，不由生产反导。当前 842 表 / 853 策略 |
+| 比对门禁 | `scripts/ci/check-rls-policy-snapshot.mjs` | 连库比对 `pg_policies` / `pg_class`；多/少表、多/少策略、表达式、`ENABLE`/`FORCE` 变化一律 exit 1 |
+| 快照生成 | `scripts/ci/gen-rls-policy-snapshot.mjs` | 独立入口；`--write` 落盘，`--out` 可指定路径；拒绝空快照 |
+| 共享实现 | `scripts/ci/lib/rls-policy-snapshot.mjs` | DSN 解析、非特权校验、策略查询、逐项比对 |
+| pre-push 接入 | `lefthook.yml` → `migration-drill-anchor` 的 `[5/5]` | 演练应用完前向迁移后，用同一个非特权演练库跑比对；glob 已纳入快照与三个门禁脚本 |
+| 手动生产审计 | `RLS_POLICY_DB_URL=... PGPASSFILE=... node scripts/ci/check-rls-policy-snapshot.mjs` | 本机用 `topems_drift` + `~/.pgpass`；只读，不写生产 |
+
+**快照粒度**
+
+- 表级：`schema`、`table`、`rls_enabled`（`relrowsecurity`）、`force_rls`（`relforcerowsecurity`）。
+- 策略级：`name`、`cmd`（`polcmd`）、`permissive`、`roles`（排序后数组）、`using`（`qual`）、`with_check`。
+- 表达式归一化：`btrim` + 连续空白折叠为单空格，保证同一 PG 版本内稳定；输出按 schema/table/policy 排序，diff 可读。
+- 覆盖面：所有非系统 schema 中「启用/强制 RLS 或存在策略」的普通表/分区表；快照外的实测表也算失败，防止新增宽松策略绕过。
+- 账本与 checksum 不参与判定；`20261114180000` 的反例由实测策略直接暴露。
+
+**更新流程（只随迁移一起）**
+
+```bash
+# 1) 在 HEAD 干净检出的演练库上重新生成（非特权连接，自动跑 [5/5] 复核）
+MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor
+# 2) 逐条 review 快照 diff，确认每条变化都能对应同批迁移
+git diff database/rls_policy_expected.json
+# 3) 与迁移同一提交入库
+```
+
+不得为了让门禁变绿而直接刷新快照；`MIGRATION_DRILL_SKIP_POLICY_SNAPSHOT_CHECK=1` 只用于快照更新/排障，不得进入常规提交。
+
+**门禁失败样例（真实输出，非特权 `topems_drift`）**
+
+```text
+[Gate RLS-SNAP] 目标库 127.0.0.1:5432/topems_prod（来源 RLS_POLICY_DB_URL，current_user=topems_drift，rolsuper=false，rolbypassrls=false）
+[Gate RLS-SNAP] 快照 ...：表 842 / 策略 853；实测：表 960 / 策略 1050
+[Gate RLS-SNAP] FAILED 488 项不一致（展示前 50 项）
+  - analytics.analytics_comparison_analyses :: policy:rls_tenant_isolation
+      期望: 存在
+      实际: 缺失
+  - analytics.analytics_comparison_analyses :: policy:tenant_isolation_analytics_comparison_analyses
+      期望: （快照无此策略）
+      实际: 多出策略
+exit=1
+```
+
+该失败是发布窗口前的预期差异：本机 `topems_prod` 尚未应用归一/死表迁移，仍保留 `tenant_isolation_<table>` 旧形状；演练侧（HEAD 迁移链终态）比对为 PASS。两类结论分开使用，不得把生产审计的 FAIL 用快照刷新掩盖。
+
 **当前状态**
 
-- 设计已拍定并纳入强制巡检口径；脚本与快照尚未落地（本轮只完成 B/C 与文档口径）。
+- 脚本、快照、pre-push 接入与手动审计入口均已落地；演练侧 `[5/5]` 零豁免通过。
 - 现有 `scripts/ci/check-rls-policy-shape.sh` 是静态形状检查，不替代实测快照比对。
+- 生产审计的 488 项差异属于 R2/R3 窗口待应用迁移，窗口后复跑应以 0 项收敛。
 
 ---
 

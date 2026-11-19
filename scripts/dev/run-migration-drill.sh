@@ -31,10 +31,20 @@
 #     仅本地演练可用 MIGRATION_DRILL_ALLOW_SUPERUSER=1 显式豁免（CI 不得设置）。
 #
 # 干净检出：脚本在 HEAD 创建独立 git worktree，迁移/基线/校验脚本全部从该检出读取，
-#   不扫描共享工作树里其他会话在途的迁移。仅把本脚本与 apply-forward.sh 两个受测脚本
-#   覆盖进 worktree（否则 HEAD 版本还没有闸门 GUC 注入逻辑）；数据库资产仍全部来自 HEAD。
+#   不扫描共享工作树里其他会话在途的迁移。仅把本脚本、apply-forward.sh 与
+#   策略快照门禁脚本覆盖进 worktree（否则 HEAD 版本还没有这些逻辑）；数据库资产仍全部来自 HEAD。
 #   闸门 GUC（如 app.drop_dead_tables_gate）由 apply-forward.sh --drill-gate-guc-auto
 #   按迁移文件语义逐文件注入，prod/SSH 模式拒绝该参数。
+#
+# 策略快照门禁（§6.3）：
+#   [5/5] 用同一个非特权演练库比对 database/rls_policy_expected.json 与实测
+#   pg_policies / pg_class；多/少表、多/少策略、表达式、ENABLE/FORCE 变化一律失败。
+#   - 快照更新入口（只随迁移一起用）：
+#       MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor
+#     生成后逐条 review git diff，与同批迁移一起提交；不得为过门禁直接刷新快照。
+#   - 更新/排障时可显式跳过比对：MIGRATION_DRILL_SKIP_POLICY_SNAPSHOT_CHECK=1
+#   - 该步骤只验证「迁移链终态 = 快照」，不验证生产库；生产发布前用 topems_drift
+#     手动跑 scripts/ci/check-rls-policy-snapshot.mjs（见 §6.3）。
 #
 # 用法：
 #   bash scripts/dev/run-migration-drill.sh anchor [--anchor 20261115130000]
@@ -183,9 +193,18 @@ if ! git -C "$SOURCE_ROOT" worktree add --detach --quiet "$DRILL_WORKTREE" "$HEA
     rm -rf "$DRILL_WORKTREE"
     exit 1
 fi
-# 仅覆盖两个受测脚本；迁移/基线/校验脚本仍全部来自 HEAD。
+# 仅覆盖受测脚本；迁移/基线/校验资产仍全部来自 HEAD。
 cp "$SOURCE_ROOT/scripts/dev/run-migration-drill.sh" "$DRILL_WORKTREE/scripts/dev/run-migration-drill.sh"
 cp "$SOURCE_ROOT/scripts/migration/apply-forward.sh" "$DRILL_WORKTREE/scripts/migration/apply-forward.sh"
+for f in \
+    scripts/ci/check-rls-policy-snapshot.mjs \
+    scripts/ci/gen-rls-policy-snapshot.mjs \
+    scripts/ci/lib/rls-policy-snapshot.mjs; do
+    if [[ -f "$SOURCE_ROOT/$f" ]]; then
+        mkdir -p "$DRILL_WORKTREE/$(dirname "$f")"
+        cp "$SOURCE_ROOT/$f" "$DRILL_WORKTREE/$f"
+    fi
+done
 ROOT="$DRILL_WORKTREE"
 cd "$ROOT"
 echo "[worktree] HEAD ${HEAD_SHA} → ${DRILL_WORKTREE}；迁移/基线/校验只读该检出"
@@ -374,7 +393,7 @@ if [[ -n "$SHA_SCHEMA" ]]; then
     [[ "$ACTUAL" == "$SHA_SCHEMA" ]] || { echo "FAIL: ${SCHEMA_GZ} sha256 不匹配（期望 ${SHA_SCHEMA}，实际 ${ACTUAL}）" >&2; exit 1; }
 fi
 
-echo "[1/4] 恢复基线快照（anchor=${ANCHOR}）"
+echo "[1/5] 恢复基线快照（anchor=${ANCHOR}）"
 phase
 # 基线 pg_dump 末尾有 COMMENT ON EXTENSION；扩展由 bootstrap 以特权角色预装，
 # 演练角色不是扩属主，COMMENT 会报 "must be owner of extension"。
@@ -388,18 +407,18 @@ LEDGER_MAX="$(psql "$DSN" -tAc "SELECT max(version) FROM _sqlx_migrations WHERE 
 [[ "$LEDGER_MAX" == "$ANCHOR" ]] || { echo "FAIL: 账本 max(version)=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
 phase_end "恢复基线"
 
-echo "[2/4] 前向迁移（apply-forward.sh，只应用 version > ${ANCHOR}）"
+echo "[2/5] 前向迁移（apply-forward.sh，只应用 version > ${ANCHOR}）"
 phase
 bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto || { echo "FAIL: 前向迁移失败" >&2; exit 1; }
 phase_end "前向迁移"
 
-echo "[3/4] 迁移静态校验 + 权限码审计"
+echo "[3/5] 迁移静态校验 + 权限码审计"
 phase
 DATABASE_URL="$DSN" bash scripts/migration/validate.sh || { echo "FAIL: validate.sh 失败" >&2; exit 1; }
 python3 scripts/audit_permission_codes.py --gate --dsn "$DSN" || { echo "FAIL: audit --gate 失败" >&2; exit 1; }
 phase_end "静态校验 + 审计"
 
-echo "[4/4] up-down-up 重放（重建隔离库 → 基线 + 前向重放）"
+echo "[4/5] up-down-up 重放（重建隔离库 → 基线 + 前向重放）"
 phase
 # 整库重建而不是 DROP SCHEMA：基线快照含 _sqlx_test/ai/... 多个 schema，
 # 只删 public 会让快照里的 CREATE SCHEMA 撞车。
@@ -415,6 +434,22 @@ gzip -dc "$DATA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null
 restore_forced_rls || { echo "FAIL: 重放前恢复 FORCE RLS 失败" >&2; exit 1; }
 bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto >/dev/null || { echo "FAIL: 重放前向迁移失败" >&2; exit 1; }
 phase_end "up-down-up"
+
+echo "[5/5] 策略期望快照（非特权连接 + 实测 pg_policies/pg_class）"
+phase
+SNAPSHOT_FILE="$SOURCE_ROOT/database/rls_policy_expected.json"
+if [[ "${MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT:-}" =~ ^(1|true|TRUE|True|yes|YES|on|ON)$ ]]; then
+    # 只随迁移一起更新：写入后必须 review diff，并与同批迁移一起提交。
+    node scripts/ci/gen-rls-policy-snapshot.mjs --dsn "$DSN" --write --out "$SNAPSHOT_FILE" \
+        || { echo "FAIL: 策略快照生成失败" >&2; exit 1; }
+fi
+if [[ "${MIGRATION_DRILL_SKIP_POLICY_SNAPSHOT_CHECK:-}" =~ ^(1|true|TRUE|True|yes|YES|on|ON)$ ]]; then
+    echo "SKIP: 已显式跳过策略快照比对（MIGRATION_DRILL_SKIP_POLICY_SNAPSHOT_CHECK=1，仅限快照更新/排障）"
+else
+    node scripts/ci/check-rls-policy-snapshot.mjs --dsn "$DSN" --snapshot "$SNAPSHOT_FILE" \
+        || { echo "FAIL: 策略快照比对失败" >&2; exit 1; }
+fi
+phase_end "策略快照"
 
 for dir in "${SVC_DIRS[@]:-}"; do
     [[ -z "$dir" ]] && continue
