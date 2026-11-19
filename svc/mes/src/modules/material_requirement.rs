@@ -176,7 +176,7 @@ pub async fn list_material_requirements(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM material_requirements{}",
+        "SELECT COUNT(*) as total FROM mes.material_requirements{}",
         where_clause
     );
 
@@ -202,7 +202,7 @@ pub async fn list_material_requirements(
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
             status, source_type, remark, created_at, updated_at
-        FROM material_requirements
+        FROM mes.material_requirements
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -350,7 +350,7 @@ pub async fn get_material_requirement(
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
             status, source_type, remark, created_at, updated_at
-        FROM material_requirements
+        FROM mes.material_requirements
         WHERE id = $1
         "#,
         uuid,
@@ -456,7 +456,7 @@ pub async fn create_material_requirement(
 
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO material_requirements (
+        INSERT INTO mes.material_requirements (
             mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
             required_date, priority, source_type, remark, tenant_id
@@ -572,7 +572,7 @@ pub async fn update_material_requirement(
 
     let result = sqlx::query_unchecked!(
         r#"
-        UPDATE material_requirements
+        UPDATE mes.material_requirements
         SET 
             required_quantity = COALESCE($1, required_quantity),
             available_quantity = COALESCE($2, available_quantity),
@@ -678,7 +678,7 @@ pub async fn delete_material_requirement(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM material_requirements WHERE id = $1
+        DELETE FROM mes.material_requirements WHERE id = $1
         "#,
         uuid,
     )
@@ -760,7 +760,7 @@ pub async fn calculate_requirements(
     let order_result = sqlx::query!(
         r#"
         SELECT order_number AS order_no, product_code, product_name, quantity
-        FROM production_orders
+        FROM mes.production_orders
         WHERE id = $1
         "#,
         order_uuid,
@@ -788,8 +788,8 @@ pub async fn calculate_requirements(
     let bom_items_result = sqlx::query!(
         r#"
         SELECT bi.material_code, bi.material_name, bi.specification, bi.unit, bi.quantity
-        FROM bom_items bi
-        JOIN material_boms mb ON bi.bom_id = mb.id
+        FROM mes.bom_items bi
+        JOIN mes.material_boms mb ON bi.bom_id = mb.id
         WHERE mb.product_code = $1
         "#,
         order.product_code,
@@ -808,7 +808,7 @@ pub async fn calculate_requirements(
 
                 let insert_result = sqlx::query_unchecked!(
                     r#"
-                    INSERT INTO material_requirements (
+                    INSERT INTO mes.material_requirements (
                         mrp_no, order_id, order_number, product_code, product_name,
                         material_code, material_name, specification, unit, required_quantity,
                         required_date, priority, source_type, status, tenant_id
@@ -922,7 +922,7 @@ pub async fn confirm_requirement(
 
     let result = sqlx::query!(
         r#"
-        UPDATE material_requirements
+        UPDATE mes.material_requirements
         SET status = 'confirmed', updated_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -1027,7 +1027,7 @@ pub async fn release_requirement(
 
     let result = sqlx::query!(
         r#"
-        UPDATE material_requirements
+        UPDATE mes.material_requirements
         SET status = 'released', updated_at = NOW()
         WHERE id = $1
         RETURNING *

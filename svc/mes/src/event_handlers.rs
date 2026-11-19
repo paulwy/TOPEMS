@@ -89,7 +89,7 @@ async fn handle_erp_production_order_dispatched(db: &Db, event: Event) -> Result
     // source_order_id 列为 uuid（见 bootstrap/mod.rs 与 model），须直接绑定 Uuid，
     // 不能 .to_string() 转 text——否则触发 `operator does not exist: uuid = text`（R-1）。
     let existing: Option<Uuid> = sqlx::query_scalar(
-        "SELECT source_order_id FROM production_orders \
+        "SELECT source_order_id FROM mes.production_orders \
          WHERE source_order_id = $1 AND tenant_id = $2::uuid LIMIT 1",
     )
     .bind(payload.erp_order_id)
@@ -121,7 +121,7 @@ async fn handle_erp_production_order_dispatched(db: &Db, event: Event) -> Result
     let quantity_i32 = payload.quantity.unwrap_or(0.0).trunc() as i32;
 
     sqlx::query(
-        r#"INSERT INTO production_orders (
+        r#"INSERT INTO mes.production_orders (
                order_number, order_no, product_name, product_code, quantity,
                status, source_order_id, source_order_number,
                planned_start_date, planned_end_date, workshop_id, notes,

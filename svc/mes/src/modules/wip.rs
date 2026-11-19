@@ -76,7 +76,7 @@ async fn stub_wip_transfer_detail(
     let row = sqlx::query(
         r#"SELECT id, transfer_no, wip_id, from_process_id, from_work_station_id,
                   to_process_id, to_work_station_id, quantity, transfer_time, operator, transfer_type, notes
-           FROM wip_transfers WHERE id = $1"#,
+           FROM mes.wip_transfers WHERE id = $1"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -304,7 +304,7 @@ pub async fn list_wips(
         params.push(serde_json::Value::String(pattern));
     }
 
-    let count_sql = format!("SELECT COUNT(*) as total FROM wips w{}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) as total FROM mes.wips w{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
@@ -331,9 +331,9 @@ pub async fn list_wips(
             w.operator, w.notes, w.created_at, w.updated_at,
             pp.process_name as process_name,
             ws.station_name as work_station_name
-        FROM wips w
-        LEFT JOIN production_processes pp ON w.current_process_id = pp.id
-        LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
+        FROM mes.wips w
+        LEFT JOIN mes.production_processes pp ON w.current_process_id = pp.id
+        LEFT JOIN mes.work_stations ws ON w.current_work_station_id = ws.id
         {}
         ORDER BY w.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -482,7 +482,7 @@ pub async fn create_wip(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
+            r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
             tenant_id,
         )
@@ -506,7 +506,7 @@ pub async fn create_wip(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO wips (
+        INSERT INTO mes.wips (
             wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
             status, batch_no, start_time, last_transfer_time, operator, notes,
@@ -626,9 +626,9 @@ pub async fn get_wip(
             w.operator, w.notes, w.created_at, w.updated_at,
             pp.process_name as process_name,
             ws.station_name as work_station_name
-        FROM wips w
-        LEFT JOIN production_processes pp ON w.current_process_id = pp.id
-        LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
+        FROM mes.wips w
+        LEFT JOIN mes.production_processes pp ON w.current_process_id = pp.id
+        LEFT JOIN mes.work_stations ws ON w.current_work_station_id = ws.id
         WHERE w.id = $1
         "#,
         id,
@@ -715,7 +715,7 @@ pub async fn update_wip(
 
     let result = sqlx::query!(
         r#"
-        UPDATE wips SET
+        UPDATE mes.wips SET
             quantity = COALESCE($2, quantity),
             status = COALESCE($3, status),
             batch_no = COALESCE($4, batch_no),
@@ -825,7 +825,7 @@ pub async fn delete_wip(
 
     let result = sqlx::query!(
         r#"
-        UPDATE wips SET deleted_at = NOW()
+        UPDATE mes.wips SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('completed', 'cancelled')
         "#,
         id,
@@ -906,7 +906,7 @@ pub async fn transfer_wip(
     };
 
     let wip = sqlx::query!(
-        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT quantity, status FROM mes.wips WHERE deleted_at IS NULL AND id = $1"#,
         req.wip_id
     )
     .fetch_optional(&mut scope)
@@ -926,12 +926,13 @@ pub async fn transfer_wip(
     };
 
     // 子表从父行继承租户。
-    let wip_tenant: Option<Uuid> = sqlx::query_scalar("SELECT tenant_id FROM wips WHERE id = $1")
-        .bind(req.wip_id)
-        .fetch_optional(&mut scope)
-        .await
-        .ok()
-        .flatten();
+    let wip_tenant: Option<Uuid> =
+        sqlx::query_scalar("SELECT tenant_id FROM mes.wips WHERE id = $1")
+            .bind(req.wip_id)
+            .fetch_optional(&mut scope)
+            .await
+            .ok()
+            .flatten();
 
     let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
@@ -941,7 +942,7 @@ pub async fn transfer_wip(
 
     let transfer_result = sqlx::query!(
         r#"
-        INSERT INTO wip_transfers (
+        INSERT INTO mes.wip_transfers (
             transfer_no, wip_id,
             from_process_id, from_work_station_id,
             to_process_id, to_work_station_id,
@@ -982,7 +983,7 @@ pub async fn transfer_wip(
 
     let _ = sqlx::query!(
         r#"
-        UPDATE wips SET
+        UPDATE mes.wips SET
             current_process_id = COALESCE($2, current_process_id),
             current_work_station_id = COALESCE($3, current_work_station_id),
             last_transfer_time = $4,
@@ -999,7 +1000,7 @@ pub async fn transfer_wip(
 
     let from_process_name = if let Some(pid) = req.from_process_id {
         sqlx::query!(
-            "SELECT process_name AS name FROM production_processes WHERE id = $1",
+            "SELECT process_name AS name FROM mes.production_processes WHERE id = $1",
             pid
         )
         .fetch_optional(&mut scope)
@@ -1013,7 +1014,7 @@ pub async fn transfer_wip(
 
     let to_process_name = if let Some(pid) = req.to_process_id {
         sqlx::query!(
-            "SELECT process_name AS name FROM production_processes WHERE id = $1",
+            "SELECT process_name AS name FROM mes.production_processes WHERE id = $1",
             pid
         )
         .fetch_optional(&mut scope)
@@ -1027,7 +1028,7 @@ pub async fn transfer_wip(
 
     let from_workstation_name = if let Some(wid) = req.from_work_station_id {
         sqlx::query!(
-            "SELECT station_name AS name FROM work_stations WHERE id = $1",
+            "SELECT station_name AS name FROM mes.work_stations WHERE id = $1",
             wid
         )
         .fetch_optional(&mut scope)
@@ -1041,7 +1042,7 @@ pub async fn transfer_wip(
 
     let to_workstation_name = if let Some(wid) = req.to_work_station_id {
         sqlx::query!(
-            "SELECT station_name AS name FROM work_stations WHERE id = $1",
+            "SELECT station_name AS name FROM mes.work_stations WHERE id = $1",
             wid
         )
         .fetch_optional(&mut scope)
@@ -1130,11 +1131,11 @@ pub async fn list_wip_transfers(
             tp.process_name as to_process_name,
             fws.station_name as from_work_station_name,
             tws.station_name as to_work_station_name
-        FROM wip_transfers wt
-        LEFT JOIN production_processes fp ON wt.from_process_id = fp.id
-        LEFT JOIN production_processes tp ON wt.to_process_id = tp.id
-        LEFT JOIN work_stations fws ON wt.from_work_station_id = fws.id
-        LEFT JOIN work_stations tws ON wt.to_work_station_id = tws.id
+        FROM mes.wip_transfers wt
+        LEFT JOIN mes.production_processes fp ON wt.from_process_id = fp.id
+        LEFT JOIN mes.production_processes tp ON wt.to_process_id = tp.id
+        LEFT JOIN mes.work_stations fws ON wt.from_work_station_id = fws.id
+        LEFT JOIN mes.work_stations tws ON wt.to_work_station_id = tws.id
         WHERE wt.wip_id = $1
         ORDER BY wt.transfer_time DESC
         "#,
@@ -1216,7 +1217,7 @@ pub async fn get_wip_statistics(
         SELECT 
             COUNT(*) as total_wip,
             COALESCE(SUM(quantity), 0) as total_quantity
-        FROM wips
+        FROM mes.wips
         WHERE status = 'in_progress'
         "#,
     )
@@ -1242,7 +1243,7 @@ pub async fn get_wip_statistics(
             status,
             COUNT(*) as count,
             COALESCE(SUM(quantity), 0) as quantity
-        FROM wips
+        FROM mes.wips
         GROUP BY status
         ORDER BY status
         "#,
@@ -1275,8 +1276,8 @@ pub async fn get_wip_statistics(
             pp.process_name as process_name,
             COUNT(*) as count,
             COALESCE(SUM(w.quantity), 0) as quantity
-        FROM wips w
-        LEFT JOIN production_processes pp ON w.current_process_id = pp.id
+        FROM mes.wips w
+        LEFT JOIN mes.production_processes pp ON w.current_process_id = pp.id
         WHERE w.status = 'in_progress'
         GROUP BY w.current_process_id, pp.process_name
         ORDER BY quantity DESC

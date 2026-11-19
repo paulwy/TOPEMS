@@ -1,0 +1,233 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO mes.equipment_inspections (\n            equipment_id, equipment_code, equipment_name,\n            inspector, inspection_date, location,\n            temperature, vibration, noiselevel,\n            status, items, abnormalities, remarks, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)\n        RETURNING *\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "equipment_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "equipment_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "equipment_code",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "equipment_code"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "equipment_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "equipment_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "inspector",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "inspector"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "inspection_date",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "inspection_date"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "location",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "location"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "temperature",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "temperature"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "vibration",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "vibration"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "noiselevel",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "noiselevel"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "status",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "items",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "items"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "abnormalities",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "abnormalities"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "remarks",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "remarks"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "deleted_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_inspections",
+            "name": "deleted_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Numeric",
+        "Numeric",
+        "Numeric",
+        "Varchar",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "731f2b1c82160caf6debcf796e5d96c69ac559488eb90a392106b5ac4fe8ccf9"
+}

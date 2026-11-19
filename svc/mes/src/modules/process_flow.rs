@@ -268,7 +268,7 @@ pub async fn list_process_flows(
     let tenant_uuid = get_tenant_id(&claims);
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM process_flows pf{}",
+        "SELECT COUNT(*) as total FROM mes.process_flows pf{}",
         where_clause
     );
 
@@ -295,8 +295,8 @@ pub async fn list_process_flows(
             pf.route_id, pf.production_line, pf.capacity::numeric, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
-        FROM process_flows pf
-        LEFT JOIN process_routes pr ON pf.route_id = pr.id
+        FROM mes.process_flows pf
+        LEFT JOIN mes.process_routes pr ON pf.route_id = pr.id
         {}
         ORDER BY pf.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -427,8 +427,8 @@ pub async fn get_process_flow(
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
-        FROM process_flows pf
-        LEFT JOIN process_routes pr ON pf.route_id = pr.id
+        FROM mes.process_flows pf
+        LEFT JOIN mes.process_routes pr ON pf.route_id = pr.id
         WHERE pf.id = $1
         "#,
         uuid,
@@ -507,7 +507,7 @@ pub async fn create_process_flow(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO process_flows (
+        INSERT INTO mes.process_flows (
             code, name, description, version, route_id,
             production_line, capacity, unit, tenant_id
         )
@@ -626,7 +626,7 @@ pub async fn update_process_flow(
 
     let result = sqlx::query_as::<_, ProcessFlowUpdateRow>(
         r#"
-        UPDATE process_flows
+        UPDATE mes.process_flows
         SET 
             name = COALESCE($1, name),
             description = COALESCE($2, description),
@@ -728,7 +728,7 @@ pub async fn delete_process_flow(
 
     let result = sqlx::query(
         r#"
-        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -805,9 +805,9 @@ pub async fn get_flow_steps(
             pfs.quality_check_required, pfs.description, pfs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM process_flow_steps pfs
-        LEFT JOIN production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
+        FROM mes.process_flow_steps pfs
+        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id
+        LEFT JOIN mes.work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -920,7 +920,7 @@ pub async fn add_flow_step(
 
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO process_flow_steps (
+        INSERT INTO mes.process_flow_steps (
             flow_id, process_id, sequence, work_station_id,
             equipment_ids, standard_time, wait_time, transfer_time,
             quality_check_required, description, tenant_id
@@ -950,7 +950,7 @@ pub async fn add_flow_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1 AND tenant_id = $2::uuid
+                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1 AND tenant_id = $2::uuid
                 "#,
                 process_uuid,
                 tenant_id,
@@ -1066,7 +1066,7 @@ pub async fn update_flow_step(
 
     let result = sqlx::query_as::<_, FlowStepRow>(
         r#"
-        UPDATE process_flow_steps
+        UPDATE mes.process_flow_steps
         SET
             sequence = COALESCE($1::int4, sequence),
             work_station_id = COALESCE($2::uuid, work_station_id),
@@ -1099,7 +1099,7 @@ pub async fn update_flow_step(
         Ok(Some(s)) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1
                 "#,
                 s.process_id,
             )
@@ -1187,7 +1187,7 @@ pub async fn remove_flow_step(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM process_flow_steps WHERE id = $1
+        DELETE FROM mes.process_flow_steps WHERE id = $1
         "#,
         step_uuid,
     )
@@ -1265,7 +1265,7 @@ pub async fn reorder_flow_steps(
     for (idx, step_uuid) in body.step_ids.iter().enumerate() {
         match sqlx::query!(
             r#"
-            UPDATE process_flow_steps
+            UPDATE mes.process_flow_steps
             SET sequence = $1
             WHERE id = $2 AND flow_id = $3
             "#,
@@ -1313,9 +1313,9 @@ pub async fn reorder_flow_steps(
             pfs.quality_check_required, pfs.description, pfs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM process_flow_steps pfs
-        LEFT JOIN production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
+        FROM mes.process_flow_steps pfs
+        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id
+        LEFT JOIN mes.work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -1412,7 +1412,7 @@ pub async fn analyze_capacity(
 
     let flow_result = sqlx::query!(
         r#"
-        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid
+        SELECT id, name, capacity FROM mes.process_flows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid
         "#,
         flow_uuid,
         get_tenant_id(&claims),
@@ -1436,8 +1436,8 @@ pub async fn analyze_capacity(
         SELECT 
             pfs.id, pfs.sequence, pfs.standard_time,
             pp.process_name as process_name
-        FROM process_flow_steps pfs
-        LEFT JOIN production_processes pp ON pfs.process_id = pp.id
+        FROM mes.process_flow_steps pfs
+        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,

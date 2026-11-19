@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO mes.material_issue_items (\n                issue_id, material_id, material_code, material_name,\n                unit, planned_quantity, actual_quantity, batch_no, notes, tenant_id\n            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Numeric",
+        "Numeric",
+        "Varchar",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d79b6fdb1bf2e0e61cd6dbe3604a0113c3352ef8d754e5fb7f21b4700ff1bebe"
+}

@@ -145,13 +145,13 @@ async fn main() -> anyhow::Result<()> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM capacities
+                    'total', (SELECT COUNT(*) FROM mes.capacities
                               WHERE tenant_id = $1::uuid),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
-                    SELECT c.* FROM capacities c
+                    SELECT c.* FROM mes.capacities c
                     WHERE c.tenant_id = $1::uuid
                     ORDER BY c.capacity_date DESC
                     LIMIT 10 OFFSET 0

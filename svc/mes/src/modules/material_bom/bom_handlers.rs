@@ -83,7 +83,7 @@ pub async fn list_material_boms(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM material_boms{}",
+        "SELECT COUNT(*) as total FROM mes.material_boms{}",
         where_clause
     );
 
@@ -107,7 +107,7 @@ pub async fn list_material_boms(
         SELECT 
             id, bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at
-        FROM material_boms
+        FROM mes.material_boms
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -226,7 +226,7 @@ pub async fn create_material_bom(
 
     let bom_result = sqlx::query!(
         r#"
-        INSERT INTO material_boms (
+        INSERT INTO mes.material_boms (
             bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $7, $8)
@@ -259,7 +259,7 @@ pub async fn create_material_bom(
     for (idx, item) in req.items.iter().enumerate() {
         let item_result = sqlx::query!(
             r#"
-            INSERT INTO bom_items (
+            INSERT INTO mes.bom_items (
                 bom_id, material_id, material_code, material_name,
                 specification, unit, quantity, loss_rate, sequence, notes, tenant_id
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -385,7 +385,7 @@ pub async fn get_material_bom(
         SELECT 
             id, bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at
-        FROM material_boms
+        FROM mes.material_boms
         WHERE id = $1
         "#,
         id,
@@ -407,7 +407,7 @@ pub async fn get_material_bom(
         SELECT 
             id, bom_id, material_id, material_code, material_name,
             specification, unit, quantity, loss_rate, sequence, notes
-        FROM bom_items
+        FROM mes.bom_items
         WHERE bom_id = $1
         ORDER BY sequence ASC
         "#,
@@ -506,7 +506,7 @@ pub async fn update_material_bom(
 
     let bom_result = sqlx::query!(
         r#"
-        UPDATE material_boms SET
+        UPDATE mes.material_boms SET
             version = COALESCE($2, version),
             status = COALESCE($3, status),
             description = COALESCE($4, description),
@@ -539,13 +539,13 @@ pub async fn update_material_bom(
     };
 
     if let Some(items) = req.items {
-        let _ = sqlx::query!("DELETE FROM bom_items WHERE bom_id = $1", id)
+        let _ = sqlx::query!("DELETE FROM mes.bom_items WHERE bom_id = $1", id)
             .execute(&mut scope)
             .await;
 
         // 子表从父行继承租户：以父行当前租户为准（服务身份更新他人租户行时也不会写出 nil 子行）。
         let parent_tenant: Option<Uuid> =
-            sqlx::query_scalar("SELECT tenant_id FROM material_boms WHERE id = $1")
+            sqlx::query_scalar("SELECT tenant_id FROM mes.material_boms WHERE id = $1")
                 .bind(id)
                 .fetch_optional(&mut scope)
                 .await
@@ -556,7 +556,7 @@ pub async fn update_material_bom(
         for (idx, item) in items.iter().enumerate() {
             let _ = sqlx::query!(
                 r#"
-                INSERT INTO bom_items (
+                INSERT INTO mes.bom_items (
                     bom_id, material_id, material_code, material_name,
                     specification, unit, quantity, loss_rate, sequence, notes, tenant_id
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -639,7 +639,7 @@ pub async fn delete_material_bom(
 
     let result = sqlx::query!(
         r#"
-        UPDATE material_boms SET deleted_at = NOW()
+        UPDATE mes.material_boms SET deleted_at = NOW()
         WHERE id = $1 AND status = 'draft'
         "#,
         id,

@@ -132,7 +132,7 @@ pub async fn list_plans(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
-        FROM production_plans
+        FROM mes.production_plans
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -152,7 +152,7 @@ pub async fn list_plans(
         Ok(plans) => {
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM production_plans
+                SELECT COUNT(*) FROM mes.production_plans
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -206,7 +206,7 @@ pub async fn get_plan(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
-        FROM production_plans
+        FROM mes.production_plans
         WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -239,7 +239,7 @@ pub async fn create_plan(
 
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
-        INSERT INTO production_plans
+        INSERT INTO mes.production_plans
             (id, plan_no, plan_name, plan_type, start_date, end_date, status,
              product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11, $12, $13)
@@ -284,7 +284,7 @@ pub async fn update_plan(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
-        FROM production_plans
+        FROM mes.production_plans
         WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -312,7 +312,7 @@ pub async fn update_plan(
 
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
-        UPDATE production_plans SET
+        UPDATE mes.production_plans SET
             plan_name = $1, plan_type = $2, start_date = $3, end_date = $4,
             status = $5, product_id = $6, product_name = $7, target_quantity = $8,
             notes = $9, updated_at = $10
@@ -355,7 +355,7 @@ pub async fn delete_plan(
         Err(resp) => return resp,
     };
 
-    let result = sqlx::query("DELETE FROM production_plans WHERE id = $1 AND tenant_id = $2")
+    let result = sqlx::query("DELETE FROM mes.production_plans WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&state.pool)
@@ -396,7 +396,7 @@ pub async fn submit_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2::uuid",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -414,7 +414,7 @@ pub async fn submit_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE mes.production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
@@ -453,7 +453,7 @@ pub async fn approve_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2::uuid",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -471,7 +471,7 @@ pub async fn approve_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE mes.production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
@@ -510,7 +510,7 @@ pub async fn reject_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2::uuid",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -528,7 +528,7 @@ pub async fn reject_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE mes.production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)

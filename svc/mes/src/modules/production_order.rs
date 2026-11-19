@@ -340,7 +340,7 @@ pub async fn list_production_orders(
     };
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM production_orders{}",
+        "SELECT COUNT(*) as total FROM mes.production_orders{}",
         where_clause
     );
 
@@ -369,7 +369,7 @@ pub async fn list_production_orders(
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM production_orders
+        FROM mes.production_orders
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -536,7 +536,7 @@ pub async fn create_production_order(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO production_orders (
+        INSERT INTO mes.production_orders (
             order_number, order_no, product_name, product_code,
             quantity, completed_quantity, status,
             planned_start_date, planned_end_date, workshop_id, notes,
@@ -702,7 +702,7 @@ pub async fn create_order_from_erp(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO production_orders (
+        INSERT INTO mes.production_orders (
             order_number, order_no, product_name, product_code, quantity,
             status, source_order_id, source_order_number,
             planned_start_date, planned_end_date, workshop_id, notes,
@@ -828,7 +828,7 @@ pub async fn get_production_order(
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM production_orders
+        FROM mes.production_orders
         WHERE id = $1 AND deleted_at IS NULL
           AND tenant_id = $2::uuid
         "#,
@@ -965,7 +965,7 @@ pub async fn update_production_order(
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
-        UPDATE production_orders SET
+        UPDATE mes.production_orders SET
             product_name = COALESCE($2, product_name),
             product_code = COALESCE($3, product_code),
             quantity = COALESCE($4, quantity),
@@ -1087,7 +1087,7 @@ pub async fn delete_production_order(
 
     let result = sqlx::query(
         r#"
-        UPDATE production_orders SET deleted_at = NOW()
+        UPDATE mes.production_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled') AND deleted_at IS NULL
           AND tenant_id = $2::uuid
         "#,
@@ -1166,7 +1166,7 @@ pub async fn start_production_order(
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
-        UPDATE production_orders SET
+        UPDATE mes.production_orders SET
             status = 'in_progress',
             actual_start_date = $2,
             updated_at = $3
@@ -1278,7 +1278,7 @@ pub async fn complete_production_order(
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
-        UPDATE production_orders SET
+        UPDATE mes.production_orders SET
             status = 'completed',
             completed_quantity = quantity,
             actual_end_date = $2,
@@ -1391,7 +1391,7 @@ pub async fn cancel_production_order(
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
-        UPDATE production_orders SET
+        UPDATE mes.production_orders SET
             status = 'cancelled',
             updated_at = $2
         WHERE id = $1 AND status IN ('pending', 'released', 'paused') AND tenant_id = $3::uuid
@@ -1501,7 +1501,7 @@ pub async fn release_production_order(
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
-        UPDATE production_orders SET
+        UPDATE mes.production_orders SET
             status = 'released',
             updated_at = $2
         WHERE id = $1 AND status = 'pending' AND tenant_id = $3::uuid

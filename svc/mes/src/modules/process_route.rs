@@ -240,7 +240,7 @@ pub async fn list_process_routes(
     };
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM process_routes pr{}",
+        "SELECT COUNT(*) as total FROM mes.process_routes pr{}",
         where_clause
     );
 
@@ -265,7 +265,7 @@ pub async fn list_process_routes(
         SELECT 
             pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
             pr.created_at, pr.updated_at
-        FROM process_routes pr
+        FROM mes.process_routes pr
         {}
         ORDER BY pr.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -397,7 +397,7 @@ pub async fn get_process_route(
         SELECT 
             pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
             pr.created_at, pr.updated_at
-        FROM process_routes pr
+        FROM mes.process_routes pr
         WHERE pr.id = $1
         "#,
         uuid,
@@ -412,7 +412,7 @@ pub async fn get_process_route(
                 SELECT 
                     COALESCE(SUM(prs.estimated_time_minutes), 0) as total_estimated_time_minutes,
                     COUNT(prs.id) as process_count
-                FROM process_route_steps prs
+                FROM mes.process_route_steps prs
                 WHERE prs.route_id = $1
                 "#,
             )
@@ -491,7 +491,7 @@ pub async fn create_process_route(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO process_routes (route_code, route_name, description, tenant_id)
+        INSERT INTO mes.process_routes (route_code, route_name, description, tenant_id)
         VALUES ($1, $2, $3, $4)
         RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
@@ -603,7 +603,7 @@ pub async fn update_process_route(
 
     let result = sqlx::query_as::<_, ProcessRouteUpdateRow>(
         r#"
-        UPDATE process_routes
+        UPDATE mes.process_routes
         SET 
             route_name = COALESCE($1, route_name),
             description = COALESCE($2, description),
@@ -710,7 +710,7 @@ pub async fn delete_process_route(
 
     let result = sqlx::query(
         r#"
-        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.process_routes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -807,9 +807,9 @@ pub async fn get_route_steps(
             NULL::text AS description, prs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM process_route_steps prs
-        LEFT JOIN production_processes pp ON prs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pp.work_station_id = ws.id
+        FROM mes.process_route_steps prs
+        LEFT JOIN mes.production_processes pp ON prs.process_id = pp.id
+        LEFT JOIN mes.work_stations ws ON pp.work_station_id = ws.id
         WHERE prs.route_id = $1
         ORDER BY prs.sequence ASC
         "#,
@@ -907,7 +907,7 @@ pub async fn add_route_step(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO process_route_steps (
+        INSERT INTO mes.process_route_steps (
             route_id, process_id, sequence, estimated_time_minutes, tenant_id
         )
         VALUES ($1, $2, $3, $4, $5)
@@ -928,7 +928,7 @@ pub async fn add_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1 AND tenant_id = $2::uuid
+                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1 AND tenant_id = $2::uuid
                 "#,
                 process_uuid,
                 tenant_id,
@@ -1044,7 +1044,7 @@ pub async fn update_route_step(
 
     let result = sqlx::query_as::<_, ProcessRouteStepUpdateRow>(
         r#"
-        UPDATE process_route_steps
+        UPDATE mes.process_route_steps
         SET 
             sequence = COALESCE($1, sequence),
             estimated_time_minutes = COALESCE($2, estimated_time_minutes)
@@ -1065,7 +1065,7 @@ pub async fn update_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1
                 "#,
                 s.process_id,
             )
@@ -1144,7 +1144,7 @@ pub async fn remove_route_step(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM process_route_steps WHERE id = $1
+        DELETE FROM mes.process_route_steps WHERE id = $1
         "#,
         step_uuid,
     )
@@ -1233,7 +1233,7 @@ pub async fn reorder_route_steps(
     for (idx, step_uuid) in step_ids.iter().enumerate() {
         match sqlx::query(
             r#"
-            UPDATE process_route_steps
+            UPDATE mes.process_route_steps
             SET sequence = $1
             WHERE id = $2 AND route_id = $3 AND tenant_id = $4::uuid
             "#,
@@ -1280,9 +1280,9 @@ pub async fn reorder_route_steps(
             NULL::text AS description, prs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM process_route_steps prs
-        LEFT JOIN production_processes pp ON prs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pp.work_station_id = ws.id
+        FROM mes.process_route_steps prs
+        LEFT JOIN mes.production_processes pp ON prs.process_id = pp.id
+        LEFT JOIN mes.work_stations ws ON pp.work_station_id = ws.id
         WHERE prs.route_id = $1
         ORDER BY prs.sequence ASC
         "#,

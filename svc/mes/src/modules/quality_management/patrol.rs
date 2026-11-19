@@ -126,7 +126,7 @@ pub async fn list_patrols(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM quality_patrols qp{}",
+        "SELECT COUNT(*) as total FROM mes.quality_patrols qp{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
@@ -150,7 +150,7 @@ pub async fn list_patrols(
             qp.workstation_name, qp.inspector, qp.patrol_time,
             qp.status, qp.result, qp.findings, qp.memo,
             qp.created_at, qp.updated_at
-        FROM quality_patrols qp
+        FROM mes.quality_patrols qp
         {}
         ORDER BY qp.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -275,7 +275,7 @@ pub async fn get_patrol(
             }
         };
         let own = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM quality_patrols WHERE id = $1 AND tenant_id = $2::uuid",
+            "SELECT COUNT(*) FROM mes.quality_patrols WHERE id = $1 AND tenant_id = $2::uuid",
         )
         .bind(uuid)
         .bind(get_tenant_id(&claims))
@@ -294,7 +294,7 @@ pub async fn get_patrol(
             qp.workstation_name, qp.inspector, qp.patrol_time,
             qp.status, qp.result, qp.findings, qp.memo,
             qp.created_at, qp.updated_at
-        FROM quality_patrols qp
+        FROM mes.quality_patrols qp
         WHERE qp.id = $1
         "#,
         uuid,
@@ -354,7 +354,7 @@ pub async fn create_patrol(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO quality_patrols (
+        INSERT INTO mes.quality_patrols (
             patrol_no, production_line, workstation_id, workstation_name,
             inspector, patrol_time, status, result, findings, memo, tenant_id
         )
@@ -462,7 +462,7 @@ pub async fn update_patrol(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_as::<_, PatrolUpdateRow>(
         r#"
-        UPDATE quality_patrols
+        UPDATE mes.quality_patrols
         SET
             production_line = COALESCE($1, production_line),
             workstation_id = COALESCE($2, workstation_id),
@@ -544,7 +544,7 @@ pub async fn delete_patrol(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_patrols SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)
@@ -626,7 +626,7 @@ pub async fn list_patrol_items(
             }
         };
         let own = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM quality_patrols WHERE id = $1 AND tenant_id = $2::uuid",
+            "SELECT COUNT(*) FROM mes.quality_patrols WHERE id = $1 AND tenant_id = $2::uuid",
         )
         .bind(patrol_uuid)
         .bind(get_tenant_id(&claims))
@@ -643,7 +643,7 @@ pub async fn list_patrol_items(
         SELECT
             qpi.id, qpi.patrol_id, qpi.item_name, qpi.standard,
             qpi.actual_value, qpi.status, qpi.remark
-        FROM quality_patrol_items qpi
+        FROM mes.quality_patrol_items qpi
         WHERE qpi.patrol_id = $1
         ORDER BY qpi.created_at ASC
         "#,
@@ -701,7 +701,7 @@ pub async fn add_patrol_item(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO quality_patrol_items (
+        INSERT INTO mes.quality_patrol_items (
             patrol_id, item_name, standard, actual_value, status, remark, tenant_id
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -793,7 +793,7 @@ pub async fn update_patrol_item(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_as::<_, PatrolItemUpdateRow>(
         r#"
-        UPDATE quality_patrol_items
+        UPDATE mes.quality_patrol_items
         SET
             item_name = COALESCE($1, item_name),
             standard = COALESCE($2, standard),
@@ -856,7 +856,7 @@ pub async fn delete_patrol_item(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)

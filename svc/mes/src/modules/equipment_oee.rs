@@ -351,7 +351,7 @@ pub async fn list_oee_records(
     };
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
+        "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN mes.equipment e ON oee.equipment_id = e.id{}",
         where_clause
     );
 
@@ -381,7 +381,7 @@ pub async fn list_oee_records(
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM mes.equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
         {}
         ORDER BY oee.record_date DESC
         LIMIT ${} OFFSET ${}
@@ -543,7 +543,7 @@ pub async fn create_oee_record(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO equipment_oee (
+        INSERT INTO mes.equipment_oee (
             equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
             ideal_cycle_time, actual_output, good_output, defective_output,
@@ -588,7 +588,7 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND tenant_id = $2::uuid"#,
+        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM mes.equipment WHERE id = $1 AND tenant_id = $2::uuid"#,
         req.equipment_id,
         tenant_id,
     )
@@ -678,7 +678,7 @@ pub async fn get_oee_record(
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM mes.equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
             AND e.tenant_id = $2::uuid
         WHERE oee.id = $1
           AND oee.tenant_id = $2::uuid
@@ -830,7 +830,7 @@ pub async fn update_oee_record(
 
     let result = sqlx::query_as::<_, OeeRecordUpdateRow>(
         r#"
-        UPDATE equipment_oee SET
+        UPDATE mes.equipment_oee SET
             planned_production_time = COALESCE($2, planned_production_time),
             actual_run_time = COALESCE($3, actual_run_time),
             downtime = COALESCE($4, downtime),
@@ -961,7 +961,7 @@ pub async fn delete_oee_record(
     };
 
     let result = sqlx::query(
-        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid"#,
+        r#"UPDATE mes.equipment_oee SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -1049,7 +1049,7 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.quality_rate), 0) as avg_quality_rate,
             COALESCE(AVG(oee.oee), 0) as avg_oee
         FROM mes.equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
           AND e.tenant_id = $4::uuid
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
@@ -1089,7 +1089,7 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.quality_rate), 0) as quality,
             COALESCE(AVG(oee.oee), 0) as oee
         FROM mes.equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
           AND e.tenant_id = $2::uuid
         WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
           AND ($1::uuid IS NULL OR e.id = $1)
@@ -1160,8 +1160,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
             COALESCE(AVG(oee.oee), 0) as oee
-        FROM equipment e
-        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
+        FROM mes.equipment e
+        LEFT JOIN mes.equipment_oee oee ON e.id = oee.equipment_id
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
           AND oee.tenant_id = $4::uuid
@@ -1271,8 +1271,8 @@ pub async fn get_equipment_efficiency_analysis(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
             e.status
-        FROM equipment e
-        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
+        FROM mes.equipment e
+        LEFT JOIN mes.equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
           AND oee.tenant_id = $2::uuid
         WHERE e.id = $1

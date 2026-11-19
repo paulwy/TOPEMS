@@ -157,7 +157,7 @@ pub async fn list_forecasts(
                forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
                method, confidence_level::float8,
                notes, status, tenant_id, created_at, updated_at
-        FROM demand_forecasts
+        FROM mes.demand_forecasts
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR forecast_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -181,7 +181,7 @@ pub async fn list_forecasts(
         Ok(forecasts) => {
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM demand_forecasts
+                SELECT COUNT(*) FROM mes.demand_forecasts
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR forecast_no ILIKE $2 OR product_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -241,7 +241,7 @@ pub async fn get_forecast(
                forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
                method, confidence_level::float8,
                notes, status, tenant_id, created_at, updated_at
-        FROM demand_forecasts
+        FROM mes.demand_forecasts
         WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -275,7 +275,7 @@ pub async fn create_forecast(
 
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
-        INSERT INTO demand_forecasts
+        INSERT INTO mes.demand_forecasts
             (id, forecast_no, product_id, product_name, forecast_period, forecast_date,
              forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
              notes, status, tenant_id, created_at, updated_at)
@@ -322,7 +322,7 @@ pub async fn update_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -349,7 +349,7 @@ pub async fn update_forecast(
 
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
-        UPDATE demand_forecasts SET
+        UPDATE mes.demand_forecasts SET
             product_name = $1, forecast_period = $2, forecast_date = $3,
             forecast_quantity = $4, actual_quantity = $5, accuracy_rate = $6,
             method = $7, confidence_level = $8, notes = $9, status = $10, updated_at = $11
@@ -395,7 +395,7 @@ pub async fn delete_forecast(
         Err(resp) => return resp,
     };
 
-    let result = sqlx::query("DELETE FROM demand_forecasts WHERE id = $1 AND tenant_id = $2")
+    let result = sqlx::query("DELETE FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&state.pool)
@@ -436,7 +436,7 @@ pub async fn calculate_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -459,7 +459,7 @@ pub async fn calculate_forecast(
 
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
-        UPDATE demand_forecasts SET
+        UPDATE mes.demand_forecasts SET
             forecast_quantity = $1, accuracy_rate = $2, status = 'calculated', updated_at = $3
         WHERE id = $4 AND tenant_id = $5
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
@@ -506,7 +506,7 @@ pub async fn validate_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -530,7 +530,7 @@ pub async fn validate_forecast(
     let now = Utc::now();
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
-        UPDATE demand_forecasts SET status = 'validated', updated_at = $1
+        UPDATE mes.demand_forecasts SET status = 'validated', updated_at = $1
         WHERE id = $2 AND tenant_id = $3
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
                   forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
@@ -574,7 +574,7 @@ pub async fn adopt_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -593,7 +593,7 @@ pub async fn adopt_forecast(
     let now = Utc::now();
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
-        UPDATE demand_forecasts SET status = 'adopted', updated_at = $1
+        UPDATE mes.demand_forecasts SET status = 'adopted', updated_at = $1
         WHERE id = $2 AND tenant_id = $3
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
                   forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,

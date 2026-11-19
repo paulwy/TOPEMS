@@ -504,7 +504,7 @@ pub async fn create_production_schedule(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
+            r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1 AND tenant_id = $2::uuid"#,
             order_id,
             tenant_id
         )
@@ -521,7 +521,7 @@ pub async fn create_production_schedule(
     let order_no_arg = order_no_flat;
     let result = sqlx::query!(
         r#"
-        INSERT INTO production_schedules (
+        INSERT INTO mes.production_schedules (
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
@@ -764,7 +764,7 @@ pub async fn update_production_schedule(
 
     let result = sqlx::query_as::<_, ProductionScheduleRow>(
         r#"
-        UPDATE production_schedules SET
+        UPDATE mes.production_schedules SET
             work_station_id = COALESCE($2, work_station_id),
             equipment_id = COALESCE($3, equipment_id),
             process_id = COALESCE($4, process_id),
@@ -895,7 +895,7 @@ pub async fn delete_production_schedule(
 
     let result = sqlx::query(
         r#"
-        UPDATE production_schedules SET deleted_at = NOW()
+        UPDATE mes.production_schedules SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled') AND tenant_id = $2::uuid
         "#,
     )
@@ -975,7 +975,7 @@ pub async fn adjust_schedule(
     for schedule_id in &req.schedule_ids {
         let result = sqlx::query(
             r#"
-            UPDATE production_schedules SET
+            UPDATE mes.production_schedules SET
                 work_station_id = COALESCE($2, work_station_id),
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
@@ -1327,7 +1327,7 @@ async fn transition_schedule(
 
     let now = Utc::now();
     let updated = sqlx::query(
-        "UPDATE production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
+        "UPDATE mes.production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
     )
     .bind(to_status)
     .bind(&comment)

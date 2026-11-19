@@ -271,7 +271,10 @@ pub async fn list_equipment(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-    let count_sql = format!("SELECT COUNT(*) as total FROM equipment{}", where_clause);
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM mes.equipment{}",
+        where_clause
+    );
 
     let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
@@ -296,7 +299,7 @@ pub async fn list_equipment(
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
-        FROM equipment
+        FROM mes.equipment
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -405,7 +408,7 @@ pub async fn create_equipment(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO equipment (
+        INSERT INTO mes.equipment (
             equipment_code, equipment_name, model, manufacturer, status,
             location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
@@ -494,7 +497,7 @@ pub async fn get_equipment(
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
-        FROM equipment
+        FROM mes.equipment
         WHERE id = $1
           AND tenant_id = $2::uuid
         "#,
@@ -562,7 +565,7 @@ pub async fn update_equipment(
 
     let result = sqlx::query(
         r#"
-        UPDATE equipment SET
+        UPDATE mes.equipment SET
             equipment_name = COALESCE($2, equipment_name),
             model = COALESCE($3, model),
             manufacturer = COALESCE($4, manufacturer),
@@ -662,7 +665,7 @@ pub async fn delete_equipment(
 
     let result = sqlx::query(
         r#"
-        UPDATE equipment SET deleted_at = NOW()
+        UPDATE mes.equipment SET deleted_at = NOW()
         WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
@@ -739,7 +742,7 @@ pub async fn maintenance_equipment(
 
     let result = sqlx::query(
         r#"
-        UPDATE equipment SET
+        UPDATE mes.equipment SET
             status = 'maintenance',
             last_maintenance_date = $2,
             next_maintenance_date = $3,
@@ -821,7 +824,7 @@ pub async fn get_equipment_statistics(
             SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
             SUM(CASE WHEN status = 'fault' THEN 1 ELSE 0 END) as fault_count,
             SUM(CASE WHEN next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
-        FROM equipment
+        FROM mes.equipment
         "#,
     )
     .fetch_one(&mut scope)
@@ -947,8 +950,8 @@ pub async fn list_maintenances(
             m.maintenance_type, m.description, m.maintainer,
             m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,
             m.created_at, m.updated_at
-        FROM equipment_maintenance_records m
-        LEFT JOIN equipment e ON m.equipment_id = e.id
+        FROM mes.equipment_maintenance_records m
+        LEFT JOIN mes.equipment e ON m.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR m.equipment_id = $1)
         ORDER BY m.created_at DESC
         LIMIT $2 OFFSET $3
@@ -991,7 +994,7 @@ pub async fn list_maintenances(
 
     let total_result = sqlx::query_scalar!(
         r#"
-        SELECT COUNT(*) FROM equipment_maintenance_records
+        SELECT COUNT(*) FROM mes.equipment_maintenance_records
         WHERE ($1::uuid IS NULL OR equipment_id = $1)
         "#,
         params.equipment_id,
@@ -1065,7 +1068,7 @@ pub async fn create_maintenance(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO equipment_maintenance_records (
+        INSERT INTO mes.equipment_maintenance_records (
             equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12)
@@ -1111,7 +1114,7 @@ pub async fn create_maintenance(
     let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid",
+        "SELECT equipment_name FROM mes.equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid",
         equipment_id,
         tenant_id,
     )
@@ -1121,7 +1124,7 @@ pub async fn create_maintenance(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid",
+        "SELECT equipment_code FROM mes.equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid",
         equipment_id,
         tenant_id,
     )
@@ -1219,7 +1222,7 @@ pub async fn update_maintenance_status(
 
     let result = sqlx::query_as::<_, MaintenanceStatusRow>(
         r#"
-        UPDATE equipment_maintenance_records SET
+        UPDATE mes.equipment_maintenance_records SET
             status = $2,
             result = COALESCE($3, result),
             updated_at = $4
@@ -1260,7 +1263,7 @@ pub async fn update_maintenance_status(
     let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM mes.equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
     .fetch_optional(&mut scope)
@@ -1269,7 +1272,7 @@ pub async fn update_maintenance_status(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_code FROM mes.equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
     .fetch_optional(&mut scope)
@@ -1400,7 +1403,7 @@ pub async fn list_inspections(
 
     let count_result = sqlx::query_scalar!(
         r#"
-        SELECT COUNT(*) FROM equipment_inspections
+        SELECT COUNT(*) FROM mes.equipment_inspections
         WHERE ($1::uuid IS NULL OR equipment_id = $1)
           AND EXISTS (
               SELECT 1 FROM mes.equipment e WHERE e.id = equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL
@@ -1428,7 +1431,7 @@ pub async fn list_inspections(
             ei.temperature, ei.vibration, ei.noiselevel,
             ei.status, ei.items, ei.abnormalities, ei.remarks,
             ei.created_at
-        FROM equipment_inspections ei
+        FROM mes.equipment_inspections ei
         WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)
           AND EXISTS (
               SELECT 1 FROM mes.equipment e WHERE e.id = ei.equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL
@@ -1545,7 +1548,7 @@ pub async fn create_inspection(
     };
 
     let equipment_info = sqlx::query!(
-        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"#,
+        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM mes.equipment WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"#,
         equipment_uuid,
         tenant_id,
     )
@@ -1573,7 +1576,7 @@ pub async fn create_inspection(
 
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO equipment_inspections (
+        INSERT INTO mes.equipment_inspections (
             equipment_id, equipment_code, equipment_name,
             inspector, inspection_date, location,
             temperature, vibration, noiselevel,

@@ -58,7 +58,7 @@ pub async fn create_material_return(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&mut scope)
@@ -74,7 +74,7 @@ pub async fn create_material_return(
     let order_no_arg = order_no_flat;
     let return_result = sqlx::query!(
         r#"
-        INSERT INTO material_returns (
+        INSERT INTO mes.material_returns (
             return_no, order_id, order_no, status,
             warehouse_id, operator_id, notes, created_at, updated_at, tenant_id
         ) VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $7, $8)
@@ -107,7 +107,7 @@ pub async fn create_material_return(
     for item in &req.items {
         let _ = sqlx::query!(
             r#"
-            INSERT INTO material_return_items (
+            INSERT INTO mes.material_return_items (
                 return_id, material_id, material_code, material_name,
                 unit, quantity, reason, batch_no, notes, tenant_id
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -218,7 +218,7 @@ pub async fn list_material_returns(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM material_returns{}",
+        "SELECT COUNT(*) as total FROM mes.material_returns{}",
         where_clause
     );
 
@@ -243,7 +243,7 @@ pub async fn list_material_returns(
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
             created_at, updated_at
-        FROM material_returns
+        FROM mes.material_returns
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -367,7 +367,7 @@ pub async fn get_material_return(
         SELECT id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
             created_at, updated_at
-        FROM material_returns
+        FROM mes.material_returns
         WHERE id = $1
         "#,
         id,
@@ -388,7 +388,7 @@ pub async fn get_material_return(
         r#"
         SELECT id, return_id, material_id, material_code, material_name,
             unit, quantity, reason, batch_no, notes
-        FROM material_return_items
+        FROM mes.material_return_items
         WHERE return_id = $1
         ORDER BY id ASC
         "#,
@@ -465,7 +465,7 @@ pub async fn update_material_return(
 
     let result = sqlx::query!(
         r#"
-        UPDATE material_returns SET
+        UPDATE mes.material_returns SET
             status = COALESCE($2, status),
             warehouse_id = COALESCE($3, warehouse_id),
             operator_id = COALESCE($4, operator_id),
@@ -548,12 +548,15 @@ pub async fn delete_material_return(
         }
     };
 
-    let _ = sqlx::query!("DELETE FROM material_return_items WHERE return_id = $1", id)
-        .execute(&mut scope)
-        .await;
+    let _ = sqlx::query!(
+        "DELETE FROM mes.material_return_items WHERE return_id = $1",
+        id
+    )
+    .execute(&mut scope)
+    .await;
 
     let result = sqlx::query!(
-        "UPDATE material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
+        "UPDATE mes.material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
         id
     )
     .execute(&mut scope)

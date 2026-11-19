@@ -1,0 +1,172 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,\n            pf.route_id, pf.production_line, pf.capacity, pf.unit,\n            pf.created_at, pf.updated_at,\n            pr.route_name as route_name\n        FROM mes.process_flows pf\n        LEFT JOIN mes.process_routes pr ON pf.route_id = pr.id\n        WHERE pf.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "code",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "code"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "version"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "status",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "route_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "route_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "production_line",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "production_line"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "capacity",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "capacity"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "unit",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "unit"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "process_flows",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "route_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "process_routes",
+            "name": "route_name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "71dd9cc48a91cfbd4acff4422594f40d4ace42a82c22d64a669a786690bfe84f"
+}

@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1 AND tenant_id = $2::uuid\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_processes",
+            "name": "process_name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "process_no",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_processes",
+            "name": "process_code"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "e1823b3aa932e1db76a1b58b58b344f6cc2853fbcb55e87793ebcefe29c721fe"
+}

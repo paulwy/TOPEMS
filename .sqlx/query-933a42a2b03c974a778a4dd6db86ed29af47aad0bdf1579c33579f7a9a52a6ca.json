@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*) FROM mes.equipment_inspections\n        WHERE ($1::uuid IS NULL OR equipment_id = $1)\n          AND EXISTS (\n              SELECT 1 FROM mes.equipment e WHERE e.id = equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL\n          )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "933a42a2b03c974a778a4dd6db86ed29af47aad0bdf1579c33579f7a9a52a6ca"
+}

@@ -238,7 +238,7 @@ async fn list_workshops(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
-    let count_sql = format!("SELECT COUNT(*) FROM workshops {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM mes.workshops {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
@@ -255,7 +255,7 @@ async fn list_workshops(
     };
     let mut fetch_sql = format!(
         "SELECT id, code, name, location, manager, status, description, created_at, updated_at \
-         FROM workshops {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM mes.workshops {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let _ = &mut fetch_sql;
@@ -317,7 +317,7 @@ async fn get_workshop(
     };
     let row = sqlx::query(
         "SELECT id, code, name, location, manager, status, description, created_at, updated_at \
-         FROM workshops WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.workshops WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -372,7 +372,7 @@ async fn create_workshop(
         }
     };
     let result = sqlx::query(
-        "INSERT INTO workshops (code, name, location, manager, status, description, tenant_id) \
+        "INSERT INTO mes.workshops (code, name, location, manager, status, description, tenant_id) \
          VALUES ($1, $2, $3, $4, COALESCE($5, 'active'), $6, $7) RETURNING id",
     )
     .bind(&req.code)
@@ -432,7 +432,7 @@ async fn update_workshop(
         }
     };
     let result = sqlx::query(
-        "UPDATE workshops SET \
+        "UPDATE mes.workshops SET \
          name = COALESCE($2, name), location = COALESCE($3, location), \
          manager = COALESCE($4, manager), status = COALESCE($5, status), \
          description = COALESCE($6, description), updated_at = NOW() \
@@ -486,7 +486,7 @@ async fn delete_workshop(
             return ApiResponse::server_error("车间删除失败");
         }
     };
-    let result = sqlx::query("UPDATE workshops SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE mes.workshops SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut scope)
         .await;
@@ -549,7 +549,7 @@ async fn list_production_lines(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
-    let count_sql = format!("SELECT COUNT(*) FROM production_lines {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM mes.production_lines {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
@@ -566,7 +566,7 @@ async fn list_production_lines(
     };
     let fetch_sql = format!(
         "SELECT id, code, name, workshop_id, description, status, created_at, updated_at \
-         FROM production_lines {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM mes.production_lines {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
@@ -628,7 +628,7 @@ async fn get_production_line(
     };
     let row = sqlx::query(
         "SELECT id, code, name, workshop_id, description, status, created_at, updated_at \
-         FROM production_lines WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.production_lines WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -684,7 +684,7 @@ async fn create_production_line(
         }
     };
     let result = sqlx::query(
-        "INSERT INTO production_lines (code, name, workshop_id, description, status, tenant_id) \
+        "INSERT INTO mes.production_lines (code, name, workshop_id, description, status, tenant_id) \
          VALUES ($1, $2, $3, $4, COALESCE($5, 'active'), $6) RETURNING id",
     )
     .bind(&req.code)
@@ -745,7 +745,7 @@ async fn update_production_line(
         }
     };
     let result = sqlx::query(
-        "UPDATE production_lines SET \
+        "UPDATE mes.production_lines SET \
          name = COALESCE($2, name), workshop_id = COALESCE($3, workshop_id), \
          description = COALESCE($4, description), status = COALESCE($5, status), \
          updated_at = NOW() \
@@ -800,7 +800,7 @@ async fn delete_production_line(
             return ApiResponse::server_error("产线删除失败");
         }
     };
-    let result = sqlx::query("UPDATE production_lines SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE mes.production_lines SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut scope)
         .await;
@@ -861,7 +861,7 @@ async fn list_shifts(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
-    let count_sql = format!("SELECT COUNT(*) FROM shifts {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM mes.shifts {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
@@ -878,7 +878,7 @@ async fn list_shifts(
     };
     let fetch_sql = format!(
         "SELECT id, code, name, start_time, end_time, is_overnight, status, description, created_at, updated_at \
-         FROM shifts {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM mes.shifts {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
@@ -940,7 +940,7 @@ async fn get_shift(
     };
     let row = sqlx::query(
         "SELECT id, code, name, start_time, end_time, is_overnight, status, description, created_at, updated_at \
-         FROM shifts WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.shifts WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -996,7 +996,7 @@ async fn create_shift(
         }
     };
     let result = sqlx::query(
-        "INSERT INTO shifts (code, name, start_time, end_time, is_overnight, status, description, tenant_id) \
+        "INSERT INTO mes.shifts (code, name, start_time, end_time, is_overnight, status, description, tenant_id) \
          VALUES ($1, $2, $3, $4, COALESCE($5, FALSE), COALESCE($6, 'active'), $7, $8) RETURNING id",
     )
     .bind(&req.code)
@@ -1057,7 +1057,7 @@ async fn update_shift(
         }
     };
     let result = sqlx::query(
-        "UPDATE shifts SET \
+        "UPDATE mes.shifts SET \
          name = COALESCE($2, name), start_time = COALESCE($3, start_time), \
          end_time = COALESCE($4, end_time), is_overnight = COALESCE($5, is_overnight), \
          status = COALESCE($6, status), description = COALESCE($7, description), \
@@ -1113,7 +1113,7 @@ async fn delete_shift(
             return ApiResponse::server_error("班次删除失败");
         }
     };
-    let result = sqlx::query("UPDATE shifts SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE mes.shifts SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut scope)
         .await;
@@ -1176,7 +1176,7 @@ async fn list_work_calendars(
             " AND (name ILIKE $2 OR code ILIKE $2)"
         });
     }
-    let count_sql = format!("SELECT COUNT(*) FROM work_calendars {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM mes.work_calendars {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
@@ -1193,7 +1193,7 @@ async fn list_work_calendars(
     };
     let fetch_sql = format!(
         "SELECT id, code, name, calendar_type, work_date, shift_id, is_working, remark, created_at, updated_at \
-         FROM work_calendars {where_sql} ORDER BY work_date DESC LIMIT {page_size} OFFSET {}",
+         FROM mes.work_calendars {where_sql} ORDER BY work_date DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
@@ -1257,7 +1257,7 @@ async fn get_work_calendar(
     };
     let row = sqlx::query(
         "SELECT id, code, name, calendar_type, work_date, shift_id, is_working, remark, created_at, updated_at \
-         FROM work_calendars WHERE id = $1 AND deleted_at IS NULL",
+         FROM mes.work_calendars WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -1315,7 +1315,7 @@ async fn create_work_calendar(
         }
     };
     let result = sqlx::query(
-        "INSERT INTO work_calendars (code, name, calendar_type, work_date, shift_id, is_working, remark, tenant_id) \
+        "INSERT INTO mes.work_calendars (code, name, calendar_type, work_date, shift_id, is_working, remark, tenant_id) \
          VALUES ($1, $2, COALESCE($3, 'workday'), $4, $5, COALESCE($6, TRUE), $7, $8) RETURNING id",
     )
     .bind(&req.code)
@@ -1378,7 +1378,7 @@ async fn update_work_calendar(
         }
     };
     let result = sqlx::query(
-        "UPDATE work_calendars SET \
+        "UPDATE mes.work_calendars SET \
          name = COALESCE($2, name), calendar_type = COALESCE($3, calendar_type), \
          work_date = COALESCE($4, work_date), shift_id = COALESCE($5, shift_id), \
          is_working = COALESCE($6, is_working), remark = COALESCE($7, remark), \
@@ -1436,7 +1436,7 @@ async fn delete_work_calendar(
             return ApiResponse::server_error("日历删除失败");
         }
     };
-    let result = sqlx::query("UPDATE work_calendars SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE mes.work_calendars SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut scope)
         .await;

@@ -242,7 +242,7 @@ pub async fn list_teams(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-    let count_sql = format!("SELECT COUNT(*) as total FROM teams t{}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) as total FROM mes.teams t{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
@@ -267,8 +267,8 @@ pub async fn list_teams(
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
             t.created_at, t.updated_at,
             COALESCE(ws.station_name, '') as work_station_name
-        FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
+        FROM mes.teams t
+        LEFT JOIN mes.work_stations ws ON t.work_station_id = ws.id
         {}
         ORDER BY t.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -402,8 +402,8 @@ pub async fn get_team(
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
             t.created_at, t.updated_at,
             ws.station_name as work_station_name
-        FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
+        FROM mes.teams t
+        LEFT JOIN mes.work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
           AND t.deleted_at IS NULL
           AND t.tenant_id = $2::uuid
@@ -487,7 +487,7 @@ pub async fn create_team(
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
-        INSERT INTO teams (
+        INSERT INTO mes.teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at, tenant_id
@@ -533,7 +533,7 @@ pub async fn create_team(
             let emp_uuid_arg = emp_uuid.as_ref().map(|u| u.to_string());
             let _ = sqlx::query(
                 r#"
-                    INSERT INTO team_members (
+                    INSERT INTO mes.team_members (
                         team_id, employee_id, employee_name, employee_code, position, join_date, tenant_id
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                     "#,
@@ -551,8 +551,8 @@ pub async fn create_team(
 
         let _ = sqlx::query(
             r#"
-            UPDATE teams SET member_count = (
-                SELECT COUNT(*) FROM team_members WHERE team_id = $1
+            UPDATE mes.teams SET member_count = (
+                SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1
             ), updated_at = $2 WHERE id = $1
               AND tenant_id = $3::uuid
             "#,
@@ -626,7 +626,7 @@ pub async fn update_team(
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
-        UPDATE teams SET
+        UPDATE mes.teams SET
             team_name = COALESCE($2, team_name),
             team_type = COALESCE($3, team_type),
             work_station_id = COALESCE($4, work_station_id),
@@ -722,7 +722,7 @@ pub async fn delete_team(
 
     let result = sqlx::query(
         r#"
-        UPDATE teams SET deleted_at = NOW()
+        UPDATE mes.teams SET deleted_at = NOW()
         WHERE id = $1
           AND tenant_id = $2::uuid
         "#,
@@ -800,10 +800,10 @@ pub async fn get_team_members(
         SELECT 
             tm.id, tm.team_id, tm.employee_id, tm.employee_name, tm.employee_code,
             tm.position, tm.join_date, tm.status
-        FROM team_members tm
+        FROM mes.team_members tm
         WHERE tm.team_id = $1 AND tm.status = 'active'
           AND EXISTS (
-              SELECT 1 FROM teams t
+              SELECT 1 FROM mes.teams t
               WHERE t.id = tm.team_id AND t.deleted_at IS NULL
                 AND t.tenant_id = $2::uuid
           )
@@ -881,7 +881,7 @@ pub async fn add_team_member(
     // 先校验目标班组归属本租户，防止跨租户写入。
     let team_exists = sqlx::query_scalar::<_, Uuid>(
         r#"
-        SELECT id FROM teams
+        SELECT id FROM mes.teams
         WHERE id = $1 AND deleted_at IS NULL
           AND tenant_id = $2::uuid
         "#,
@@ -906,7 +906,7 @@ pub async fn add_team_member(
     // team_members 写入租户从班组行继承（teams.tenant_id），与校验条件一致。
     let result = sqlx::query_as::<_, TeamMemberRow>(
         r#"
-        INSERT INTO team_members (
+        INSERT INTO mes.team_members (
             team_id, employee_id, employee_name, employee_code, position, join_date, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING 
@@ -935,8 +935,8 @@ pub async fn add_team_member(
 
     let _ = sqlx::query(
         r#"
-        UPDATE teams SET member_count = (
-            SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
+        UPDATE mes.teams SET member_count = (
+            SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1 AND status = 'active'
         ), updated_at = $2 WHERE id = $1
           AND tenant_id = $3::uuid
         "#,
@@ -1010,10 +1010,10 @@ pub async fn remove_team_member(
 
     let result = sqlx::query(
         r#"
-        UPDATE team_members SET status = 'inactive'
+        UPDATE mes.team_members SET status = 'inactive'
         WHERE id = $1 AND team_id = $2
           AND EXISTS (
-              SELECT 1 FROM teams t
+              SELECT 1 FROM mes.teams t
               WHERE t.id = $2
                 AND t.tenant_id = $3::uuid
           )
@@ -1037,8 +1037,8 @@ pub async fn remove_team_member(
     if result.rows_affected() > 0 {
         let _ = sqlx::query(
             r#"
-            UPDATE teams SET member_count = (
-                SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
+            UPDATE mes.teams SET member_count = (
+                SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1 AND status = 'active'
             ), updated_at = $2 WHERE id = $1
               AND tenant_id = $3::uuid
             "#,

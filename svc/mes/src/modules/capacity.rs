@@ -165,7 +165,7 @@ pub async fn list_capacities(
         SELECT id, work_center_id, work_center_name, capacity_date,
                available_hours::float8, used_hours::float8, utilization_rate::float8,
                status, tenant_id, created_at::timestamptz, updated_at::timestamptz
-        FROM capacities
+        FROM mes.capacities
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR work_center_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -187,7 +187,7 @@ pub async fn list_capacities(
         Ok(capacities) => {
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM capacities
+                SELECT COUNT(*) FROM mes.capacities
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR work_center_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -258,7 +258,7 @@ pub async fn get_capacity(
         SELECT id, work_center_id, work_center_name, capacity_date,
                available_hours::float8, used_hours::float8, utilization_rate::float8,
                status, tenant_id, created_at::timestamptz, updated_at::timestamptz
-        FROM capacities
+        FROM mes.capacities
         WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -294,7 +294,7 @@ pub async fn create_capacity(
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        INSERT INTO capacities
+        INSERT INTO mes.capacities
             (id, work_center_id, work_center_name, capacity_date, available_hours,
              used_hours, utilization_rate, status, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -356,12 +356,13 @@ pub async fn update_capacity(
 ) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
-    let existing =
-        sqlx::query_as::<_, Capacity>("SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .fetch_optional(&state.pool)
-            .await;
+    let existing = sqlx::query_as::<_, Capacity>(
+        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let existing = match existing {
         Ok(Some(c)) => c,
@@ -379,7 +380,7 @@ pub async fn update_capacity(
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        UPDATE capacities SET
+        UPDATE mes.capacities SET
             work_center_name = $1, capacity_date = $2, available_hours = $3,
             used_hours = $4, utilization_rate = $5, status = $6, updated_at = $7
         WHERE id = $8 AND tenant_id = $9
@@ -441,7 +442,7 @@ pub async fn delete_capacity(
         Err(resp) => return resp,
     };
 
-    let result = sqlx::query("DELETE FROM capacities WHERE id = $1 AND tenant_id = $2")
+    let result = sqlx::query("DELETE FROM mes.capacities WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&state.pool)
@@ -503,7 +504,7 @@ pub async fn allocate_capacity(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -535,7 +536,7 @@ pub async fn allocate_capacity(
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        UPDATE capacities SET
+        UPDATE mes.capacities SET
             used_hours = $1, utilization_rate = $2, status = 'allocated', updated_at = $3
         WHERE id = $4 AND tenant_id = $5
         RETURNING id, work_center_id, work_center_name, capacity_date,
@@ -582,7 +583,7 @@ pub async fn release_capacity(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -606,7 +607,7 @@ pub async fn release_capacity(
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        UPDATE capacities SET
+        UPDATE mes.capacities SET
             used_hours = $1, utilization_rate = $2, status = 'released', updated_at = $3
         WHERE id = $4 AND tenant_id = $5
         RETURNING id, work_center_id, work_center_name, capacity_date,
@@ -652,7 +653,7 @@ pub async fn maintenance_capacity(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -680,7 +681,7 @@ pub async fn maintenance_capacity(
     let now = Utc::now();
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        UPDATE capacities SET status = $1, updated_at = $2
+        UPDATE mes.capacities SET status = $1, updated_at = $2
         WHERE id = $3 AND tenant_id = $4
         RETURNING id, work_center_id, work_center_name, capacity_date,
                   available_hours::float8, used_hours::float8, utilization_rate::float8,
@@ -773,7 +774,7 @@ pub async fn submit_capacity(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -792,7 +793,7 @@ pub async fn submit_capacity(
     let now = Utc::now();
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        UPDATE capacities SET
+        UPDATE mes.capacities SET
             status = 'allocated', updated_at = $1
         WHERE id = $2 AND tenant_id = $3
         RETURNING id, work_center_id, work_center_name, capacity_date,

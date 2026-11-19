@@ -1,0 +1,261 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO mes.equipment_oee (\n            equipment_id, record_date,\n            planned_production_time, actual_run_time, downtime,\n            ideal_cycle_time, actual_output, good_output, defective_output,\n            availability, performance, quality_rate, oee,\n            shift, operator, notes, created_at, updated_at, tenant_id\n        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17, $18)\n        RETURNING\n            id, equipment_id, record_date,\n            planned_production_time, actual_run_time, downtime,\n            ideal_cycle_time, actual_output, good_output, defective_output,\n            availability, performance, quality_rate, oee,\n            shift, operator, notes, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "equipment_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "equipment_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "record_date",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "record_date"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "planned_production_time",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "planned_production_time"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "actual_run_time",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "actual_run_time"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "downtime",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "downtime"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "ideal_cycle_time",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "ideal_cycle_time"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "actual_output",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "actual_output"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "good_output",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "good_output"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "defective_output",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "defective_output"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "availability",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "availability"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "performance",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "performance"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "quality_rate",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "quality_rate"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "oee",
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "oee"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "shift",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "shift"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "operator",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "operator"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "notes",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "notes"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "e6875c7df6432b5ffb62ba193234e7875a05619a6dfa3055700192fb4aa8f6f0"
+}

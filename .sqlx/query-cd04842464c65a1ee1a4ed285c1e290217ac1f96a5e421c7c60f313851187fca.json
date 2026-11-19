@@ -1,0 +1,143 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            prs.id, prs.route_id, prs.process_id, prs.sequence,\n            prs.estimated_time_minutes, pp.work_station_id,\n            NULL::text AS description, prs.created_at,\n            pp.process_name as process_name, pp.process_code as process_code,\n            ws.station_name as work_station_name\n        FROM mes.process_route_steps prs\n        LEFT JOIN mes.production_processes pp ON prs.process_id = pp.id\n        LEFT JOIN mes.work_stations ws ON pp.work_station_id = ws.id\n        WHERE prs.route_id = $1\n        ORDER BY prs.sequence ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "process_route_steps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "route_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "process_route_steps",
+            "name": "route_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "process_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "process_route_steps",
+            "name": "process_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "sequence",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "process_route_steps",
+            "name": "sequence"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "estimated_time_minutes",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "process_route_steps",
+            "name": "estimated_time_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "work_station_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "production_processes",
+            "name": "work_station_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "description",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "process_route_steps",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "process_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_processes",
+            "name": "process_name"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "process_code",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_processes",
+            "name": "process_code"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "work_station_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "work_stations",
+            "name": "station_name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      null,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "cd04842464c65a1ee1a4ed285c1e290217ac1f96a5e421c7c60f313851187fca"
+}

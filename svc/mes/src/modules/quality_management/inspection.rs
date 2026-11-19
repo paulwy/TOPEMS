@@ -150,7 +150,7 @@ pub async fn list_inspections(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM quality_inspections qi{}",
+        "SELECT COUNT(*) as total FROM mes.quality_inspections qi{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
@@ -176,7 +176,7 @@ pub async fn list_inspections(
             qi.unqualified_quantity, qi.qualification_rate,
             qi.inspector, qi.inspection_time, qi.status, qi.result, qi.memo,
             qi.created_at, qi.updated_at
-        FROM quality_inspections qi
+        FROM mes.quality_inspections qi
         {}
         ORDER BY qi.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -335,7 +335,7 @@ pub async fn get_inspection(
             }
         };
         let own = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM quality_inspections WHERE id = $1 AND tenant_id = $2::uuid",
+            "SELECT COUNT(*) FROM mes.quality_inspections WHERE id = $1 AND tenant_id = $2::uuid",
         )
         .bind(uuid)
         .bind(get_tenant_id(&claims))
@@ -356,7 +356,7 @@ pub async fn get_inspection(
             qi.unqualified_quantity, qi.qualification_rate,
             qi.inspector, qi.inspection_time, qi.status, qi.result, qi.memo,
             qi.created_at, qi.updated_at
-        FROM quality_inspections qi
+        FROM mes.quality_inspections qi
         WHERE qi.id = $1
         "#,
         uuid,
@@ -434,7 +434,7 @@ pub async fn create_inspection(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_unchecked!(
         r#"
-            INSERT INTO quality_inspections (
+            INSERT INTO mes.quality_inspections (
             inspection_no, order_id, order_number, product_code, product_name,
             process_id, process_name, inspection_type, quantity,
             qualified_quantity, unqualified_quantity, qualification_rate,
@@ -569,7 +569,7 @@ pub async fn update_inspection(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_as::<_, InspectionUpdateRow>(
         r#"
-            UPDATE quality_inspections
+            UPDATE mes.quality_inspections
         SET
             qualified_quantity = COALESCE($1, qualified_quantity),
             unqualified_quantity = COALESCE($2, unqualified_quantity),
@@ -660,7 +660,7 @@ pub async fn delete_inspection(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)

@@ -229,7 +229,7 @@ pub async fn get_today_production_output(
     };
 
     let output: Option<BigDecimal> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(output_quantity), 0) FROM work_reports \
+        "SELECT COALESCE(SUM(output_quantity), 0) FROM mes.work_reports \
          WHERE reporter_name = $1 AND created_at >= CURRENT_DATE \
            AND tenant_id = $2::uuid",
     )
@@ -331,7 +331,7 @@ pub async fn list_work_reports(
     let tenant_uuid = get_tenant_id(&claims);
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM work_reports wr{}",
+        "SELECT COUNT(*) as total FROM mes.work_reports wr{}",
         where_clause
     );
 
@@ -360,7 +360,7 @@ pub async fn list_work_reports(
             wr.output_quantity, wr.defect_quantity, wr.labor_hours, wr.remark,
             wr.status, wr.approved_by, wr.approved_at, wr.approval_remark,
             wr.created_at, wr.updated_at
-        FROM work_reports wr
+        FROM mes.work_reports wr
         {}
         ORDER BY wr.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -533,7 +533,7 @@ pub async fn get_work_report(
             wr.output_quantity, wr.defect_quantity, wr.labor_hours, wr.remark,
             wr.status, wr.approved_by, wr.approved_at, wr.approval_remark,
             wr.created_at, wr.updated_at
-        FROM work_reports wr
+        FROM mes.work_reports wr
         WHERE wr.id = $1
         "#,
         uuid,
@@ -658,7 +658,7 @@ pub async fn create_work_report(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO work_reports (
+        INSERT INTO mes.work_reports (
             report_no, work_order_id, work_order_no, order_id, order_no,
             work_station_id, work_station_name,
             reporter_name, report_date, shift,
@@ -699,7 +699,7 @@ pub async fn create_work_report(
             // 既多占一条连接，也与请求上下文脱节；改为一并复用当前事务，spawn 内只发事件。
             let erp_order_id: Option<Uuid> = match r.work_order_id {
                 Some(mes_order_id) => sqlx::query_scalar::<_, Option<Uuid>>(
-                    "SELECT source_order_id FROM production_orders WHERE id = $1",
+                    "SELECT source_order_id FROM mes.production_orders WHERE id = $1",
                 )
                 .bind(mes_order_id)
                 .fetch_optional(&mut scope)
@@ -874,7 +874,7 @@ pub async fn update_work_report(
 
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
-        UPDATE work_reports
+        UPDATE mes.work_reports
         SET
             work_order_id = COALESCE($1, work_order_id),
             work_order_no = COALESCE($2, work_order_no),
@@ -1010,7 +1010,7 @@ pub async fn delete_work_report(
 
     let result = sqlx::query(
         r#"
-        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
+        UPDATE mes.work_reports SET deleted_at = NOW() WHERE id = $1
           AND tenant_id = $2::uuid
         "#,
     )
@@ -1084,7 +1084,7 @@ pub async fn approve_work_report(
 
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
-        UPDATE work_reports
+        UPDATE mes.work_reports
         SET
             status = 'approved',
             approved_by = $1::uuid,
@@ -1201,7 +1201,7 @@ pub async fn reject_work_report(
 
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
-        UPDATE work_reports
+        UPDATE mes.work_reports
         SET
             status = 'rejected',
             approved_by = $1::uuid,

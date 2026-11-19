@@ -169,7 +169,7 @@ pub async fn list_standards(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM quality_standards qs{}",
+        "SELECT COUNT(*) as total FROM mes.quality_standards qs{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
@@ -193,7 +193,7 @@ pub async fn list_standards(
             qs.inspection_type, qs.status, qs.version::text,
             qs.effective_date, qs.description,
             qs.created_at, qs.updated_at
-        FROM quality_standards qs
+        FROM mes.quality_standards qs
         {}
         ORDER BY qs.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -231,7 +231,7 @@ pub async fn list_standards(
             SELECT
                 qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
-            FROM quality_standard_values qsv
+            FROM mes.quality_standard_values qsv
             WHERE qsv.standard_id = ANY($1)
             "#,
             &standard_ids,
@@ -367,7 +367,7 @@ pub async fn get_standard(
             qs.inspection_type, qs.status, qs.version,
             qs.effective_date, qs.description,
             qs.created_at, qs.updated_at
-        FROM quality_standards qs
+        FROM mes.quality_standards qs
         WHERE qs.id = $1
         "#,
         uuid,
@@ -391,7 +391,7 @@ pub async fn get_standard(
         SELECT
             qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
             qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
-        FROM quality_standard_values qsv
+        FROM mes.quality_standard_values qsv
         WHERE qsv.standard_id = $1
         "#,
         uuid,
@@ -482,7 +482,7 @@ pub async fn create_standard(
     let tenant_id = get_tenant_id(&claims);
     let standard_result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO quality_standards (
+        INSERT INTO mes.quality_standards (
             code, name, product_code, product_name, inspection_type,
             status, version, effective_date, description, tenant_id
         )
@@ -529,7 +529,7 @@ pub async fn create_standard(
 
             let value_result = sqlx::query!(
                 r#"
-                INSERT INTO quality_standard_values (
+                INSERT INTO mes.quality_standard_values (
                     standard_id, item_name, lower_limit, upper_limit,
                     unit, inspection_method, remark, tenant_id
                 )
@@ -649,7 +649,7 @@ pub async fn update_standard(
 
     let standard_result = sqlx::query_as::<_, StandardUpdateRow>(
         r#"
-        UPDATE quality_standards
+        UPDATE mes.quality_standards
         SET
             code = COALESCE($1, code),
             name = COALESCE($2, name),
@@ -701,7 +701,7 @@ pub async fn update_standard(
     if let Some(standard_values) = &body.standard_values {
         let delete_result = sqlx::query!(
             r#"
-            UPDATE quality_standard_values SET deleted_at = NOW() WHERE standard_id = $1
+            UPDATE mes.quality_standard_values SET deleted_at = NOW() WHERE standard_id = $1
             "#,
             uuid,
         )
@@ -724,7 +724,7 @@ pub async fn update_standard(
 
             let value_result = sqlx::query!(
                 r#"
-                INSERT INTO quality_standard_values (
+                INSERT INTO mes.quality_standard_values (
                     standard_id, item_name, lower_limit, upper_limit,
                     unit, inspection_method, remark, tenant_id
                 )
@@ -770,7 +770,7 @@ pub async fn update_standard(
             SELECT
                 qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
-            FROM quality_standard_values qsv
+            FROM mes.quality_standard_values qsv
             WHERE qsv.standard_id = $1
             "#,
             uuid,
@@ -856,7 +856,7 @@ pub async fn delete_standard(
 
     let result = sqlx::query(
         r#"
-        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
         "#,
     )
     .bind(uuid)

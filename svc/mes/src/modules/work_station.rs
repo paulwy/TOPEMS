@@ -248,7 +248,7 @@ pub async fn list_work_stations(
     let tenant_uuid = get_tenant_id(&claims);
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM work_stations ws{}",
+        "SELECT COUNT(*) as total FROM mes.work_stations ws{}",
         where_clause
     );
 
@@ -277,9 +277,9 @@ pub async fn list_work_stations(
             e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
-        FROM work_stations ws
-        LEFT JOIN equipment e ON ws.equipment_id = e.id
-        LEFT JOIN production_processes pp ON ws.process_id = pp.id
+        FROM mes.work_stations ws
+        LEFT JOIN mes.equipment e ON ws.equipment_id = e.id
+        LEFT JOIN mes.production_processes pp ON ws.process_id = pp.id
         {}
         ORDER BY ws.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -375,7 +375,7 @@ pub async fn create_work_station(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO work_stations (
+        INSERT INTO mes.work_stations (
             station_no, station_name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
             created_at, updated_at, tenant_id
@@ -462,9 +462,9 @@ pub async fn get_work_station(
             e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
-        FROM work_stations ws
-        LEFT JOIN equipment e ON ws.equipment_id = e.id
-        LEFT JOIN production_processes pp ON ws.process_id = pp.id
+        FROM mes.work_stations ws
+        LEFT JOIN mes.equipment e ON ws.equipment_id = e.id
+        LEFT JOIN mes.production_processes pp ON ws.process_id = pp.id
         WHERE ws.id = $1
         "#,
     )
@@ -528,7 +528,7 @@ pub async fn update_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE work_stations SET
+        UPDATE mes.work_stations SET
             station_name = COALESCE($2, station_name),
             workshop_id = COALESCE($3, workshop_id),
             location = COALESCE($4, location),
@@ -607,7 +607,7 @@ pub async fn delete_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE work_stations SET deleted_at = NOW()
+        UPDATE mes.work_stations SET deleted_at = NOW()
         WHERE id = $1
           AND tenant_id = $2::uuid
         "#,
@@ -678,7 +678,7 @@ pub async fn activate_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE work_stations SET
+        UPDATE mes.work_stations SET
             status = 'active',
             updated_at = $2
         WHERE id = $1
@@ -755,7 +755,7 @@ pub async fn deactivate_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE work_stations SET
+        UPDATE mes.work_stations SET
             status = 'inactive',
             updated_at = $2
         WHERE id = $1 AND status = 'active'

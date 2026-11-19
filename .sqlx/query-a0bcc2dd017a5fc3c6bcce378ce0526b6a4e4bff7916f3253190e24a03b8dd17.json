@@ -1,0 +1,112 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,\n            qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark\n        FROM mes.quality_standard_values qsv\n        WHERE qsv.standard_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "standard_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "standard_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "item_name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "item_name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "lower_limit",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "lower_limit"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "upper_limit",
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "upper_limit"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "unit",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "unit"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "inspection_method",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "inspection_method"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "remark",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quality_standard_values",
+            "name": "remark"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "a0bcc2dd017a5fc3c6bcce378ce0526b6a4e4bff7916f3253190e24a03b8dd17"
+}
