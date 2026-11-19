@@ -20,7 +20,7 @@
 | prod 已应用但 dev 账本缺 | 29 条 |
 | 仅索引/策略不匹配（软告警） | 56 个版本（索引缺失或多库，多为 relocated 的伴生现象，未计入假 applied） |
 
-**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已完成四批处置——空壳回归重放 23 条（§12.2）、relocated 按 superseded 关闭 29 条（§12.3）、unknown 非 DML 定性（§12.5）、真缺 27 条执行（§12.6：已补齐 22 / superseded 关闭 4 / 暂不动 1），加上原 superseded 1 条，**合计已处置/关闭 81 / 93**。剩余 12 条（DML 待评估 11 + 暂不动 `20261024000012` 1）待处理，归总见 §12.4/§12.6。
+**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已完成五批处置——空壳回归重放 23 条（§12.2）、relocated 按 superseded 关闭 29 条（§12.3）、unknown 非 DML 定性（§12.5）、真缺 27 条执行（§12.6：已补齐 22 / superseded 关闭 4 / 暂不动 1）、DML 11 条收尾（§12.8：原样重放 7 + RLS 定向补丁 3 + superseded 1），加上原 superseded 1 条，**合计已处置/关闭 92 / 93**。剩余仅 `20261024000012` 1 条（等 `20261105100000` 账本空洞定论）。归总见 §12.4/§12.8。
 
 ---
 
@@ -377,7 +377,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 |---|---:|---|
 | 已完成重放（空壳回归，§12.2） | 23 | 全部 rc=0；`20261007140000` 因 DML 未做，计入下项 |
 | superseded 关闭（relocated 非 DML，§12.3） | 29 | 逐条落点见上表 |
-| DML 待评估（跨分类） | 11 | 1 regression + 4 relocated + 6 unknown；**已只读评估（§12.7）：可直接重放 8 / 需前置断言 2 / 不宜重放 1**，本轮未动库 |
+| DML 已收尾（跨分类，§12.8） | 11 | 原样重放 7（含 2 条先过前置断言）+ RLS 定向补丁 3 + superseded 1；账本 checksum 均按文件 sha384 |
 | unknown 真缺：已补齐（§12.6） | 22 | 19 条断言全清 + 3 条仅剩 relocated 残留（`20260921000107`、`20261024000001`、`20261102220000`） |
 | unknown 真缺 → superseded 关闭（§12.6） | 4 | `20260725000000`（13 历史占位）、`20261007000006`、`20261007000009`、`20260920000086`（3 表 prod 亦无） |
 | unknown 真缺：暂不动（§12.6） | 1 | `20261024000012`（`srm.supplier_users`，等 `20261105100000` 账本空洞定论） |
@@ -387,9 +387,9 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 
 > 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 待评估」，故此处拆为 22 + 4 + 1 + 2 共 29 条，避免重复计数。23+29+11+22+4+1+2+1 = 93。
 >
-> **已处置/关闭：81 条** = 重放 23 + superseded 29 + 真缺已补齐 22 + 真缺 superseded 4 + no-op 2 + 原 superseded 1。
+> **已处置/关闭：92 条** = 重放 23 + superseded 29 + 真缺已补齐 22 + 真缺 superseded 4 + no-op 2 + 原 superseded 1 + DML 11。
 >
-> **仍待处理：12 条** = DML 待评估 11 + 暂不动 1（`20261024000012`）。
+> **仍待处理：1 条** = `20261024000012`（暂不动，等 `20261105100000` 账本空洞定论）。
 
 ### 12.5 unknown（非 DML）29 条逐条定性
 
@@ -539,3 +539,31 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 - 结论：该版本的数据搬运已完成，建议按 **superseded 关闭**。若确需重放，最小改写为：跳过全部 copy 块（只保留 DDL），或为每组改成显式列清单并在 `WHERE` 前加「源/目标列数相等」守卫。
 
 **dev 现表读数（只读）**：`flow.core_workflows`/`public.core_workflows`/`public.core_users`/`mobile.mobile_users`/`mes.work_stations`/`bi.reports`/`ai.ai_models`/`qms.qa_eightd_reports`/`core.ai_faqs` 均存在且 0 行；`master_data.mdm_asset_categories` 与 `public.core_finance_currencies` 不存在（前者由 `20261015000062` 自建，后者由 `20261021000001` 自建）。
+
+### 12.8 DML 11 条执行收尾（2026-11-19，dev）
+
+**备份**：`/tmp/topems_pre_dmlfix_20261119150956.dump`（4.2 MB，sha256 `e1aa0ad2901de7d70641a62022e387d1b5b35b0dc3396bad70c1c55123b070bc`）；回滚方式 `pg_restore --clean --if-exists -d topems <dump>`。
+
+**执行方式**：逐条 `DELETE FROM _sqlx_migrations WHERE version=<v> AND success` → `apply-forward.sh --db topems --apply-deferred <v> --ticket DEV-CONSISTENCY-20261119` → 断言；失败即停、不现场改写迁移文件。
+
+| 版本 | 动作 | 断言结果 |
+|---|---|---|
+| `20260917000008` | 原样重放 | `flow.core_workflows.tenant_id/code`、`flow.core_workflow_tasks.priority/due_time/claimed_at` 全部就位；两流程表 0 行 |
+| `20260920000080` | 原样重放 | 现存的 `public/core/rs` 流程表补 `tenant_id/code`，现存 `equipment` 表补 `equipment_no` |
+| `20261007000018` | 原样重放 | `hrm.hrm_cache_invalidation_logs` RLS `t/t` + `tenant_isolation` 1 条 |
+| `20261007000020` | RLS 定向补丁 | 唯一索引 `(source_type,source_id,tenant_id)` 定义核对一致；RLS `t/t` + 策略 1 条 |
+| `20261007000021` | RLS 定向补丁 | 唯一索引 `(source_type,source_inspection_id)` 定义核对一致；RLS `t/t` + 策略 1 条 |
+| `20261007230000` | RLS 定向补丁 | 唯一索引 `(source_type,source_hazard_id)` 定义核对一致；RLS `t/t` + 策略 1 条 |
+| `20261015000062` | 原样重放 | 8 张 mdm 表 RLS `t/t` 各 1 条策略；`mdm_asset_categories` 已建 |
+| `20261024000015` | 原样重放 | `core.ai_faqs` 15 条（5 个 module）；RLS `t/t` + 策略 1 条 |
+| `20261007140000` | 临时默认值 + 原样重放 | 6 条种子各 1 行（core_users/mobile_users/work_stations/reports/ai_models/qa_eightd_reports）；默认值已撤除 |
+| `20261021000001` | 原样重放 | 16 行（8 行 NULL tenant + 8 行 default tenant）；唯一约束 1 条 |
+| `20260918000019` | superseded 关闭 | 不重放，理由见下 |
+
+**3 条改走 RLS 定向补丁的原因**：原样重放报 `ERROR: relation "…_source_uniq" already exists`。根因是同名唯一索引已存在但为 index-only（`pg_class.relkind='i'`，未登记为约束），迁移守卫只查 `pg_constraint`，于是再次 `ADD CONSTRAINT` 撞索引名。落补丁前逐条核对 `pg_indexes` 的定义列与迁移原文一致（见上表），补丁只含 `ENABLE/FORCE ROW LEVEL SECURITY` + `tenant_isolation` 策略（谓词逐字取自原文），唯一性沿用既有索引。三条账本 checksum 按文件 sha384 回写：`578769d0…d3ab`（20）、`a2d6aae8…b78d`（21）、`64b002a0…39ed`（230000）。
+
+**`20261007140000` 的临时补丁与撤除**：dev `ai.ai_models` 有 6 列 NOT NULL 且无默认值（`pricing` jsonb、`capabilities` jsonb、`temperature`/`top_p`/`frequency_penalty`/`presence_penalty` numeric），种子 INSERT 未提供这些列 → 首次重放 1030 行报 not-null，事务整体回滚。重放前临时 `SET DEFAULT`（`'{}'::jsonb`、`'[]'::jsonb`、0.7、1、0、0），成功后立即对 6 列 `DROP DEFAULT`；`information_schema.columns` 复核 `column_default` 全为 `<none>`，未留下迁移之外的结构偏差。
+
+**`20260918000019` 按 superseded 关闭的理由**：①30 组中 25 组的 `public` 源表已清理，`IF EXISTS` 构造性跳过；②其余 4 组目标表比源多 1 列（`qms.qa_qms_sync_records` 14v13、`ticket.core_ticket_activities` 9v8、`ticket.core_ticket_comments` 9v8、`ticket.core_tickets` 20v19），`INSERT ... SELECT *` 解析期列数不匹配必失败；③`lims.qa_lab_tasks` 会重建重复 relocated 表。数据搬运已完成，故不重放。
+
+**最终读数**：账本 `693 行 / success 693 / failed 0 / max 20261119000002`（未新增版本）。93 条中 92 条已处置/关闭，唯一未决为 `20261024000012`。全流程仅动 dev 库 `topems`，未 push，未连接 `topems_prod` 与 `topems_snap_*`。
