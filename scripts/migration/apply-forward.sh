@@ -27,13 +27,23 @@
 #   --allow-destructive=<version>  仅对该版本生效（不支持逗号/通配）；
 #   必须设置 PROD_CHANGE_TICKET，且文件内每个标记的 destructive-ticket 都必须被
 #   PROD_CHANGE_TICKET 显式列出（逗号列表）；未列出的票据仍被拒绝。
-#   执行前在只读事务（ROLLBACK）内预演 DELETE/UPDATE 受影响行数、DROP 目标表行数，
+#   预演按版本推进（2026-11-20）：版本 N 的预演只在其前面所有 pending 版本都已应用之后
+#   执行，因此预演看到的是「N 之前的迁移全部生效」的真实基线（例如 20261118160000
+#   改名后的 flow._deprecated_* 表），而不是 anchor 的旧状态。
+#   每个版本在事务（必然 ROLLBACK）内预演 DELETE/UPDATE 受影响行数、DROP 目标表行数，
 #   超过 destructive-max-rows（DROP 必须为 0）→ 拒绝执行；
 #   临时对象（pg_temp.* 或本文件 CREATE TEMP TABLE 建出的表）不参与行数统计，
 #   其余静态判定/标记/票据校验一律不变；
 #   预演在同一事务内先执行该语句之前的 DDL（保证同文件“先加列、后回填”可见），整段仍 ROLLBACK；
 #   计数用 `WITH __dg AS (<DML> RETURNING 1) SELECT count(*)`（子查询不允许直接放 UPDATE）；
 #   TRUNCATE 不提供任何开关。
+#
+# 中途失败语义（2026-11-20）：
+#   预演与逐版本应用交错执行。任一版本预演被拒（行数超限 / 不可回滚语句 / 前置断言失败）
+#   即停在该版本：该版本不应用，已应用的前序版本保持已落账（不欺骗、不回滚）。
+#   脚本输出「已应用清单 + 未应用清单 + 逆序回滚入口」，退出码 1。
+#   不采用「先整体预演一遍再应用」：预演依赖前序版本已落地的真实基线，整体预演只能看到
+#   anchor 状态，会把 20261119200000 依赖 flow._deprecated_* 的失败原样复现。
 #
 # 锚点下移拦截：
 #   --anchor 不得低于账本 max(success)；prod 下必须与账本 max 完全一致，否则拒绝。
@@ -496,31 +506,31 @@ if [[ ${#PENDING[@]} -eq 0 ]]; then
   exit 0
 fi
 
-# --- 破坏性语句执行前预演（事务 + 必然 ROLLBACK，不提交任何写入） -------------
+# --- 破坏性语句预演（事务 + 必然 ROLLBACK，不提交任何写入） -------------------
 # 逐版本、逐语句：DELETE/UPDATE 统计受影响行数，DROP TABLE 统计目标表现存行数；
-# 任一超过标记 destructive-max-rows（DROP 必须为 0）即拒绝，且发生在任何 DDL 之前。
+# 任一超过标记 destructive-max-rows（DROP 必须为 0）即拒绝。
+# 调用时机由应用循环控制：必须在该版本之前所有 pending 已应用之后，否则前置断言
+# 只能看到 anchor 旧状态（2026-11-20 20261119200000 依赖 flow._deprecated_* 事故）。
 # 临时对象（pg_temp.* / 本文件 CREATE TEMP TABLE）不计行数，静态判定仍按原规则。
 # 注意：预演不是只读的（必须执行 DML 才能拿到真实行数），因此只保证「必然 ROLLBACK」，
 # 并拒绝无法回滚/会逃出事务的语句；不要改成 default_transaction_read_only=on。
-for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
+run_preflight() {
+  local v="$1" mig_file="$2"
+  local dg_plan preflight_sql node_gen_js preflight_body prelude dg_rows pline
+  local dg_line dg_kind dg_max dg_n
   dg_plan="/tmp/topems_dg_plan_${v}.json"
   if [[ ! -f "$dg_plan" ]]; then
     echo "== 拒绝：版本 $v 缺少破坏性预演计划 $dg_plan" >&2
-    exit 1
+    return 1
   fi
   preflight_sql="/tmp/topems_dg_preflight_${v}.sql"
-  mig_file="$(ls "$MIG_DIR"/"${v}"_*.sql 2>/dev/null | head -1)"
-  if [[ -z "$mig_file" ]]; then
-    echo "== 拒绝：版本 $v 找不到迁移文件，无法构造预演" >&2
-    exit 1
-  fi
   # 预演要点（2026-11-09）：
   #   1) DML 必须用 `WITH __dg AS (<DML> RETURNING 1) SELECT count(*)`；
   #      原先写成 `SELECT ... FROM (<UPDATE ...>)`，PostgreSQL 不允子查询里出现 UPDATE，
   #      任何带标记的 DML 都会在预演阶段语法报错（已实测）。
   #   2) 预演需在同一只读事务内先执行「该语句之前的 DDL」，
   #      否则「先 ADD COLUMN、后 UPDATE」的迁移会因列不存在而误判失败。
-  #      每段用独立 BEGIN/ROLLBACK 包裹，整段仍是只读（不落任何写入）。
+  #      每段用独立 BEGIN/ROLLBACK 包裹，整段必然 ROLLBACK（不落任何写入）。
   node_gen_js="/tmp/topems_dg_gen_${v}.mjs"
   cat > "$node_gen_js" <<'DG_GEN_JS'
     import fs from "node:fs";
@@ -591,10 +601,10 @@ DG_GEN_JS
   preflight_body="/tmp/topems_dg_preflight_${v}.body.sql"
   if ! node "$node_gen_js" "$dg_plan" "$mig_file" > "$preflight_body"; then
     rm -f "$node_gen_js" "$preflight_body"
-    echo "== 拒绝：版本 $v 预演包含不可回滚语句，已中止（未产生任何写入）" >&2
-    exit 1
+    echo "== 拒绝：版本 $v 预演包含不可回滚语句，已中止（该版本未应用）" >&2
+    return 1
   fi
-  # 与 apply 段(:583-584) 同一来源、同一函数：
+  # 与 apply 段同一来源、同一函数：
   #   1) 系统通道：缺 app.rls_system=on 时 FORCE RLS 会把 tenant_isolation 表的
   #      count(*) 过滤成 0，行数闸门恒真（假 PASS）；
   #   2) 闸门 GUC：调用方不传 PGOPTIONS 时也能从迁移文件自身抽出 app.*_gate，
@@ -610,29 +620,57 @@ DG_GEN_JS
   # 防止后续重构把注入静默删掉（本脚本没有单测，这里做运行时 fail-closed）。
   if [[ "$(head -1 "$preflight_sql")" != "SET app.rls_system = 'on';" ]]; then
     echo "== 拒绝：版本 $v 预演 SQL 缺少系统通道注入（回归）" >&2
-    exit 1
+    return 1
   fi
   if [[ -n "$prelude" ]]; then
     while IFS= read -r pline; do
       grep -Fqx "$pline" "$preflight_sql" || {
         echo "== 拒绝：版本 $v 预演 SQL 缺少闸门 GUC「${pline}」（回归）" >&2
-        exit 1
+        return 1
       }
     done <<< "$prelude"
   fi
   dg_rows="$(psql_stdin < "$preflight_sql")" || {
-    echo "== 拒绝：版本 $v 破坏性预演失败（未产生任何写入）" >&2
-    exit 1
+    echo "== 拒绝：版本 $v 破坏性预演失败（前置断言不满足或预演无法回滚；该版本未应用）" >&2
+    return 1
   }
   while IFS='|' read -r dg_line dg_kind dg_max dg_n; do
     [[ -n "${dg_line:-}" ]] || continue
     if (( 10#${dg_n:-0} > 10#${dg_max:-0} )); then
-      echo "== 拒绝：版本 $v 第 ${dg_line} 行 ${dg_kind} 预演影响 ${dg_n} 行 > 允许 ${dg_max} 行（未产生任何写入）" >&2
-      exit 1
+      echo "== 拒绝：版本 $v 第 ${dg_line} 行 ${dg_kind} 预演影响 ${dg_n} 行 > 允许 ${dg_max} 行（该版本未应用）" >&2
+      return 1
     fi
     echo "   预演 OK：版本 $v 第 ${dg_line} 行 ${dg_kind} → ${dg_n} 行（上限 ${dg_max}）"
   done <<< "$dg_rows"
-done
+}
+
+# 中途失败状态（2026-11-20）：预演与应用按版本交错推进，任一预演被拒即停在该版本。
+# 已应用版本保持已落账，未应用版本逐条列明，并给出逆序回滚入口。
+APPLIED_VERSIONS=()
+REMAINING_VERSIONS=()
+for f in "${PENDING[@]}"; do REMAINING_VERSIONS+=("$(basename "$f" | cut -d_ -f1)"); done
+
+abort_partial_state() {
+  local failed_v="$1" i rb rel
+  echo "== 中止：版本 $failed_v 破坏性预演被拒绝；该版本未应用，后续版本未执行" >&2
+  if [[ ${#APPLIED_VERSIONS[@]} -gt 0 ]]; then
+    echo "   已应用（${#APPLIED_VERSIONS[@]}）：${APPLIED_VERSIONS[*]}" >&2
+    echo "   回滚入口（逆序逐条执行；回滚前先核对账本与窗口前备份）：" >&2
+    for ((i=${#APPLIED_VERSIONS[@]}-1; i>=0; i--)); do
+      rb="$( (ls "$ROOT/database/rollback/${APPLIED_VERSIONS[$i]}"_*.rollback.sql 2>/dev/null || true) | head -1 )"
+      if [[ -n "$rb" ]]; then
+        rel="${rb#"$ROOT"/}"
+        echo "     psql \"\$DSN\" -v ON_ERROR_STOP=1 -f $rel" >&2
+      else
+        echo "     ${APPLIED_VERSIONS[$i]}：未找到回滚文件，需人工恢复（见 migration manifest）" >&2
+      fi
+    done
+  else
+    echo "   已应用（0）：无（本次未提交任何写入）" >&2
+  fi
+  echo "   未应用（${#REMAINING_VERSIONS[@]}）：${REMAINING_VERSIONS[*]}" >&2
+  echo "   重跑方式：修复后从同一 anchor 重跑本脚本，已应用版本会由账本自然跳过。" >&2
+}
 
 if [[ -n "$DEFER_APPLY_VERSION" ]]; then
   echo "== 待应用 ${#PENDING[@]} 条（DEFER 补投 version=${DEFER_APPLY_VERSION}，ticket=${TICKET}，账本水位=${LEDGER_MAX}）"
@@ -644,6 +682,15 @@ for f in "${PENDING[@]}"; do
   b="$(basename "$f")"
   v="${b%%_*}"
   desc="${b%.sql}"; desc="${desc#*_}"; desc="${desc//_/ }"
+  echo "-- $b"
+  # 预演必须排在此前所有 pending 已应用之后：预演里的前置断言看到的是真实基线，
+  # 而不是 anchor 旧状态（2026-11-20 20261119200000 依赖 flow._deprecated_* 事故）。
+  if contains "$v" ${PENDING_DG[@]+"${PENDING_DG[@]}"}; then
+    if ! run_preflight "$v" "$f"; then
+      abort_partial_state "$v"
+      exit 1
+    fi
+  fi
   hex="$(shasum -a 384 "$f" | awk '{print $1}')"
   tmp="$(mktemp /tmp/topems_forward_XXXXXX)"
   if [[ $SSH_MODE -eq 1 ]]; then
@@ -662,7 +709,6 @@ for f in "${PENDING[@]}"; do
       printf '\\i %s\n' "$remote_path"
       printf "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (%s, '%s', NOW(), true, decode('%s','hex'), 0);\n" "$v" "$desc" "$hex"
     } > "$tmp"
-    echo "-- $b"
     if ! psql_exec --single-transaction -v ON_ERROR_STOP=1 -f - < "$tmp" > /tmp/topems_forward_last.log 2>&1; then
       echo "   FAILED" >&2
       tail -5 /tmp/topems_forward_last.log >&2
@@ -679,7 +725,6 @@ for f in "${PENDING[@]}"; do
       printf '\\i %s\n' "$f"
       printf "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (%s, '%s', NOW(), true, decode('%s','hex'), 0);\n" "$v" "$desc" "$hex"
     } > "$tmp"
-    echo "-- $b"
     if ! psql_exec --single-transaction -v ON_ERROR_STOP=1 -f "$tmp" > /tmp/topems_forward_last.log 2>&1; then
       echo "   FAILED" >&2
       tail -5 /tmp/topems_forward_last.log >&2
@@ -689,6 +734,8 @@ for f in "${PENDING[@]}"; do
     fi
   fi
   rm -f "$tmp"
+  APPLIED_VERSIONS+=("$v")
+  REMAINING_VERSIONS=("${REMAINING_VERSIONS[@]:1}")
 done
 
 echo "== OK：应用 ${#PENDING[@]} 条，无失败"

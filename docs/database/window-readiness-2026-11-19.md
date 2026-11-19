@@ -72,6 +72,8 @@
 ### 1.4 迁移脚本闸门（实测）
 
 - `apply-forward.sh` 在 DDL 前对每条破坏性语句做行数预演，超过 `destructive-max-rows`（`DROP TABLE` 必须为 0）即拒绝；票据不能绕过行数闸门。
+- **预演按版本推进**：版本 N 的预演只在其前面所有 pending 版本都已应用之后执行，因此预演里看到的是「N 之前的迁移全部生效」的真实基线（例如 `20261118160000` 改名后的 `flow._deprecated_*`），而不是 anchor 的旧状态。
+- **中途失败语义**：任一版本预演被拒（行数超限 / 不可回滚语句 / 前置断言失败）即停在该版本——该版本不应用，已应用的前序版本保持已落账；脚本输出「已应用清单 + 未应用清单 + 逆序回滚入口」，退出码 1。不采用「先整体预演一遍再应用」：整体预演只能看到 anchor 状态，会复现 `20261119200000` 的前置断言失败。
 - 预演**不是只读事务**：它必须真实执行 DML 再 `ROLLBACK`，因此脚本拒绝会逃出事务或不可回滚的语句（`COMMIT`/`ROLLBACK`、`nextval`、`CREATE/DROP INDEX CONCURRENTLY`、`VACUUM`、`ALTER SYSTEM`、`CREATE/DROP DATABASE`），由预演生成器 fail-closed 中止；临时表的 `ON COMMIT` 子句（`DROP`/`PRESERVE ROWS`/`DELETE ROWS`）不结束事务，检测前先剔除。
 - 预演会话自行注入 `SET app.rls_system='on'` 与迁移文件声明的全部 `app.*_gate`：调用方不传 `PGOPTIONS` 也能看到 FORCE RLS 后的真实行数、通过闸门断言。prod 与 drill 两种模式都执行预演；drill 对文件自带 `destructive-ticket` 自动批准（隔离库），无标记的破坏性语句只提示、不阻断演练。
 - apply 段在 prod 仍不自行注入 GUC（`--drill-gate-guc-auto` 仅限演练）；开窗执行时 `PGOPTIONS` 必须自己带上 `-c app.rls_system=on` 与对应闸门 GUC。
