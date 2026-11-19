@@ -377,7 +377,7 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 |---|---:|---|
 | 已完成重放（空壳回归，§12.2） | 23 | 全部 rc=0；`20261007140000` 因 DML 未做，计入下项 |
 | superseded 关闭（relocated 非 DML，§12.3） | 29 | 逐条落点见上表 |
-| DML 待评估（跨分类） | 11 | 1 regression + 4 relocated + 6 unknown；**本轮未动** |
+| DML 待评估（跨分类） | 11 | 1 regression + 4 relocated + 6 unknown；**已只读评估（§12.7）：可直接重放 8 / 需前置断言 2 / 不宜重放 1**，本轮未动库 |
 | unknown 真缺：已补齐（§12.6） | 22 | 19 条断言全清 + 3 条仅剩 relocated 残留（`20260921000107`、`20261024000001`、`20261102220000`） |
 | unknown 真缺 → superseded 关闭（§12.6） | 4 | `20260725000000`（13 历史占位）、`20261007000006`、`20261007000009`、`20260920000086`（3 表 prod 亦无） |
 | unknown 真缺：暂不动（§12.6） | 1 | `20261024000012`（`srm.supplier_users`，等 `20261105100000` 账本空洞定论） |
@@ -497,3 +497,45 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 | 仍待处理 | **12** |
 | ├ DML 待评估 | 11 |
 | └ 暂不动 `20261024000012` | 1 |
+
+### 12.7 DML 11 条只读评估（2026-11-19，未写库）
+
+> 本轮仅只读评估：未重放、未改账本、未写业务表。依据为迁移原文 + dev 现表状态（`pg_class`/`pg_attribute`/`pg_constraint`/行数）。
+
+**先修正一个口径**：11 条中有 **5 条实际没有任何可执行 DML**，只是注释/文档里提到 `INSERT`（被审计器按文本命中误纳入「含 DML」）。这 5 条本质是纯 DDL，重放风险与 DML 无关。
+
+| # | 版本 | 真实 DML（目标 / 口径） | 幂等兜底 | 分档 |
+|---|---|---|---|---|
+| 1 | `20260917000008` | `INSERT INTO flow.core_workflows ← public.core_workflows` 全列拷贝 | `ON CONFLICT (id) DO NOTHING`；两表现均 0 行，PK=id | **可直接重放** |
+| 2 | `20260918000019` | 30 组 `INSERT INTO qms/ticket/lims.X SELECT * FROM public.X` | 每组 `IF EXISTS(public 源表)` + `WHERE NOT EXISTS(目标任意行)` | **不宜重放（superseded）** |
+| 3 | `20260920000080` | 无（仅注释） | 纯条件 `ALTER ... ADD COLUMN IF NOT EXISTS` | **可直接重放** |
+| 4 | `20261007000018` | 无（仅注释） | `CREATE TABLE IF NOT EXISTS` | **可直接重放** |
+| 5 | `20261007000020` | 无（仅注释） | `CREATE TABLE IF NOT EXISTS` + 唯一约束 | **可直接重放** |
+| 6 | `20261007000021` | 无（仅注释） | `CREATE TABLE IF NOT EXISTS` | **可直接重放** |
+| 7 | `20261007140000` | 6 行固定 id 种子：`public.core_users`、`mobile.mobile_users`、`mes.work_stations`、`bi.reports`、`ai.ai_models`、`qms.qa_eightd_reports` 各 1 行 | `ON CONFLICT (id) DO NOTHING`；6 表现均 0 行 | **需前置断言** |
+| 8 | `20261007230000` | 无（仅注释） | `CREATE TABLE IF NOT EXISTS` | **可直接重放** |
+| 9 | `20261015000062` | 8 表种子 `INSERT ... ON CONFLICT (id)/(key)` | 同文件先 `CREATE TABLE IF NOT EXISTS`（含 `mdm_asset_categories`）；PK 均在 | **可直接重放** |
+| 10 | `20261021000001` | 8+8 行币种种子（NULL tenant 与 default tenant 各一份），`WHERE NOT EXISTS(tenant_id, code)` | `WHERE NOT EXISTS`；`UNIQUE(tenant_id,code)` 对 NULL 不去重，但 WHERE 兜底 | **需前置断言** |
+| 11 | `20261024000015` | 15 行 FAQ 种子，`WHERE NOT EXISTS(tenant_id, module, question)` | `WHERE NOT EXISTS`；`core.ai_faqs` 现 0 行 | **可直接重放** |
+
+**分档归总**：可直接重放 **8** · 需前置断言/改写 **2** · 不宜重放 **1**。
+
+**第 2 档前置条件 / 最小改写**
+
+- `20261007140000`（需前置断言）
+  - 断言：`public.core_users` 中不存在 `username='test_admin'` 或 `email='smoke@test.local'` 且 `id<>'e91e2228-ab9d-4ac3-99f4-fdcd9c723f21'` 的行。原因：该表除 PK(id) 外还有 `UNIQUE(username)`、`UNIQUE(email)`，`ON CONFLICT (id)` 覆盖不到这两条。当前该表 0 行 → 满足。
+  - 其余 5 张目标表只需 PK(id)，现均 0 行。
+
+- `20261021000001`（需前置断言 / 可选改写）
+  - 断言：`public.core_finance_currencies` 不存在，或存在但为空。当前**不存在** → 满足。
+  - 原因：`CREATE TABLE IF NOT EXISTS` 只建 `id`，随后 `ADD COLUMN "code" VARCHAR(10) NOT NULL`；若表已有行且无 `code`，会因 NOT NULL 直接失败。
+  - 最小改写：`ADD COLUMN code VARCHAR(10)`（可空）→ 回填/种子 → `ALTER COLUMN code SET NOT NULL`。
+
+**第 3 档：`20260918000019` 为什么不宜重放**
+
+- 30 组里 **25 组的 `public` 源表已不存在**（数据迁移完成后被清理），被 `IF EXISTS(源表)` 守卫跳过，属预期的 no-op。
+- 剩 5 组源表存在，其中 **4 组目标表比源多 1 列**（`qms.qa_qms_sync_records` 14 vs 13、`ticket.core_ticket_activities` 9 vs 8、`ticket.core_ticket_comments` 9 vs 8、`ticket.core_tickets` 20 vs 19）。`INSERT INTO 目标 SELECT * FROM 源` 在解析期就要求列数一致，即使 `WHERE NOT EXISTS` 过滤掉全部行仍会报「target columns / expressions」错误。
+- 第 5 组 `lims.qa_lab_tasks` 源表存在（18 列），重放会用 `CREATE TABLE ... (LIKE public.qa_lab_tasks)` 造出一个**新的 lims 重复表**，与「已 relocated 到 public」的既定处置冲突。
+- 结论：该版本的数据搬运已完成，建议按 **superseded 关闭**。若确需重放，最小改写为：跳过全部 copy 块（只保留 DDL），或为每组改成显式列清单并在 `WHERE` 前加「源/目标列数相等」守卫。
+
+**dev 现表读数（只读）**：`flow.core_workflows`/`public.core_workflows`/`public.core_users`/`mobile.mobile_users`/`mes.work_stations`/`bi.reports`/`ai.ai_models`/`qms.qa_eightd_reports`/`core.ai_faqs` 均存在且 0 行；`master_data.mdm_asset_categories` 与 `public.core_finance_currencies` 不存在（前者由 `20261015000062` 自建，后者由 `20261021000001` 自建）。
