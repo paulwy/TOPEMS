@@ -158,7 +158,7 @@ T-0（任一不过即停止开窗）：
 1. prod 主机检出目录内三份迁移文件 sha384 与 §2 完全一致；三份回滚文件 sha256 与 §2 一致。
 2. `git status --porcelain database/migrations database/rollback` 为空（除已跟踪的三份文件外无额外文件）。
 3. `PGPASSFILE=$HOME/.pgpass MIGRATION_DRIFT_DB_URL=postgresql://topems_drift@127.0.0.1:5432/topems_prod node scripts/migration/check-ledger-ddl-drift.mjs` 输出 PASS、exit 0。
-4. `window-preflight-2026-11-19.sql` 在 `topems_drift` 下 exit 0、无 `ERROR`，C1–C9/C11–C15/C17 全 PASS，C10 为 `PASS_PRE`；C16 为 `NEEDS_DBA`，须由 DBA 特权只读会话用同一文件复跑并转 PASS（132 张表行数全 0）。
+4. `window-preflight-2026-11-19.sql` 在 `topems_drift` 下 exit 0、无 `ERROR`，C1–C9/C11–C15/C17 全 PASS，C10 为 `PASS_PRE`；C16 为 `NEEDS_DBA`，按 §4.6 由 DBA 用 `topems_prod` 只读复跑并转 PASS。
 
 ### 4.2 W1：`20261119160000`（16 张，零路径）
 
@@ -303,6 +303,33 @@ WHERE n.nspname='finance' AND p.proname='bootstrap_defaults';
 
 表总数变化说明：W1 `-16 +16 +6 = +6`；W2 `-108 +108 = 0`；W3 `-8 +8 +1 = +1`。
 
+### 4.6 C16 交接：DBA 用 `topems_prod` 只读复跑（路径 A）
+
+C16 不能用 `topems_drift` 完成：它对 132 张表覆盖 **0/132**、15 个 schema 的 USAGE **0/15**。已确认的合规候选只有 `topems_prod`（`rolsuper=f`、`rolbypassrls=f`、有 LOGIN、132/132 覆盖、15/15 schema USAGE）。**不能用 `topems` / `xingzhai`**：二者为 superuser（`xingzhai` 还带 BYPASSRLS），会让权限判定与行数校验恒真。
+
+完整可复制命令：
+
+```bash
+PGPASSFILE=<DBA 的 pgpass> \
+PGOPTIONS="-c default_transaction_read_only=on -c app.rls_system=on" \
+psql "postgresql://topems_prod@127.0.0.1:5432/topems_prod" \
+  -f docs/database/window-preflight-2026-11-19.sql \
+  > preflight_c16_$(date +%Y%m%d_%H%M%S).txt 2>&1
+```
+
+判定口径：
+
+- **C16 PASS**：132 张全部 `READABLE` 且 `rows=0`，第 7 节例外查询输出 0 行。
+- **未通过**（任一即算，需原样回报）：出现任何 `NO_PRIV`；任一表 `rows > 0`；或缺少 `app.rls_system=on` 导致 28 张 `tenant_isolation` 表被过滤成 0。
+
+**必须带 `app.rls_system=on`，否则假 PASS**：132 张中 **46 张是 FORCE RLS**（18 张 `allow_all` + 28 张 `tenant_isolation`）。`topems_prod` 是表 owner，但 FORCE RLS 对 owner 同样生效，且它非 BYPASSRLS；不设置该 GUC 时，28 张 `tenant_isolation` 表的 `count(*)` 会被策略过滤为 0，C16 会误判 PASS。`apply-forward.sh` 的 apply 段已注入该 GUC（`scripts/migration/apply-forward.sh:578`），破坏性预演段（`:525`）没有注入，因此开窗执行 `apply-forward.sh` 时必须在 `PGOPTIONS` 里自己带上 `-c app.rls_system=on`（与各波 gate GUC 并列）。
+
+DBA 回报格式（一条消息）：
+
+1. 一行结论：`C16 PASS` 或 `C16 NOT PASS`。
+2. 第 7 节输出原文；若权限不足，给出 `NO_PRIV` 行数统计。
+3. 实际执行命令（pgpass 路径可脱敏）与时间戳。
+
 ---
 
 ## 5. 风险分级与回滚后状态
@@ -334,7 +361,7 @@ WHERE n.nspname='finance' AND p.proname='bootstrap_defaults';
 ## 6. 开窗执行顺序（照抄）
 
 1. T-0 四项门禁（§4.1）全过。
-2. DBA 用同一 preflight 文件、特权只读账号复跑第 7 节，132 张全部 READABLE 且 0 行，C16 转 PASS。
+2. 按 §4.6 的命令由 DBA 用 `topems_prod` 只读复跑，132 张全部 READABLE 且 0 行，C16 转 PASS。
 3. W1：执行命令 → 跑 §4.2 五条验收 → 记录输出。
 4. W2：执行命令 → 跑 §4.3 验收 + `1/1/4` 确认 → 记录输出。
 5. W3：执行命令 → 跑 §4.4 五条验收 → 记录输出。
