@@ -2475,7 +2475,6 @@ pending_forward_patches:
     destructive_scan: "DROP TABLE ×108（destructive-gate: allow，LEGACY-COPY-20261119）；CREATE TABLE archive + INSERT ... SELECT + manifest/策略快照；无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119180000_archive_legacy_schema_copies.rollback.sql（按 archive._drop_manifest 重建 108 张表、数据、RLS、策略、默认值/序列/视图，保留归档表）；拆分依据：16 张已由 20261119160000 处理、12 张已被 20261118160000 改名、3 张因入向外键/函数引用未封闭拆出；生产执行需 DBA 外审签字后打开闸门"
 
-
   # ===== 2026-11-19 finance U8 导入建表收口 =====
   # 依据：docs/database/code-schema-gap-2026-11-15.md §5（A 类整表缺失）、§7.2 第 3 条
   - version: "20261119190000"
@@ -2490,3 +2489,12 @@ pending_forward_patches:
     effect: "DROP 窄 status 约束并按 7 值重建（通用三态 active/inactive/archived + 导入生命周期 processing/completed/failed/rolled_back），避免建表后 u8 导入落库撞 23514 check_violation"
     destructive_scan: "DROP CONSTRAINT IF EXISTS + ADD CONSTRAINT（仅约束，无表/数据变更）；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119190100_finance_u8_import_records_status_relax.rollback.sql（恢复 dev 原样窄三态）；处置模式对齐 database/migrations-wip/20261006000001_scm_sync_records_status_relax.sql"
+
+  # ===== 2026-11-19 批：3 张依赖未封闭遗留租户表解依赖 + 归档（方案 A：收口 public.core_tenants） =====
+  # 依据：docs/database/legacy-tenant-tables-unblock-plan-2026-11-19.md
+  - version: "20261119200000"
+    file: "database/migrations/20261119200000_unblock_and_archive_legacy_tenant_tables.sql"
+    status: to_apply
+    effect: "按「先解依赖、后归档」处理 8 张表：① iam.core_tenant_plugins 外键 iam.core_tenants -> public.core_tenants；② 归档并 DROP 5 张引用方（iam.core_user_roles + flow._deprecated_core_tenant_{modules,settings,usage,users}）；③ 改写 finance.bootstrap_defaults 只读 public.core_tenants + finance.core_finance_accounts（删除 iam/flow/iam.core_tenant_users 三个分支）；④ 归档并 DROP 3 张目标表（iam.core_tenants / iam.core_users / flow.core_tenants）；归档到 archive.drop_20261119_ub__<schema>__<table>，保留 180 天；新增 archive._fk_out_snapshot 记录出向外键；闸门 app.tenant_unblock_archive_gate=tenant-unblock-20261119"
+    destructive_scan: "DROP TABLE ×8（destructive-gate: allow，TENANT-UNBLOCK-20261119）；CREATE TABLE archive + INSERT ... SELECT + manifest/策略/出向外键快照；ALTER TABLE 重指外键 + CREATE OR REPLACE FUNCTION；无 CASCADE DROP、无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119200000_unblock_and_archive_legacy_tenant_tables.rollback.sql（按 manifest 重建 8 张表、数据、默认值、出向外键；插件外键改回 iam.core_tenants；恢复旧函数体）；8 张表均 0 行、无 RLS/策略/视图/触发器/序列，策略快照预期零 diff；生产执行需 DBA 外审签字后打开闸门"
