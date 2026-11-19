@@ -9,7 +9,7 @@
 | 编号 | 事项 | 结论 | 待决 |
 |---|---|---|---|
 | 1 | 策略名漂移归一 | **「同表同义仅改名」配对 = 0**（生产 1050 vs 契约 1032，同名不同义 393）；真问题是 80 张表严格+遗留并存、216 张只有遗留名、37 条 `USING(true)`。归一=每表收敛到一条 `rls_tenant_isolation`，删除遗留名而不是改名 | 见 §2.5 |
-| 2 | DRIFT-01 `mes.production_records.completed_quantity` | **生产与仓库契约一致（`numeric(12,2)`），漂移发生在本机 dev 库 `topems`，属误报**；不改契约、不改生产 | 见 §1.5 |
+| 2 | DRIFT-01 `mes.production_records.completed_quantity` | **已定性并修复（判据漏口，2026-11-20）**：根因是判据不看 typmod；新增 `20261120090000` 兜底迁移。生产实测本就 `numeric(12,2)`，故该迁移在生产为幂等对齐（no-op）；dev 漂移已重放修复作交叉验证 | 见 §1.6 |
 | 3 | erp 八张合并报表表 RLS | **不需要改生产策略**：仓库 `group_tenant_of` 对合法租户与生产等值判定完全等价，唯一实质差异是生产多一条 `app.rls_system` 系统通道；合并域无后台任务、只有 ERP HTTP handler | 见 §3.4 |
 
 ---
@@ -93,6 +93,31 @@
 1. **本地 dev 库如何修**：重放 `20261105160000` 及其后迁移，或直接从生产快照重建 `topems`。这一步涉及本地写库，本轮不做。
 2. **两位小数是否够用**（业务口径）：当前 API 用 `f64`、解码用 `BigDecimal`、生产契约为 2 位小数；如果业务需要 3 位以上（如按克/毫升计量的工序），才需要同时改契约与生产，属业务决策，本文不选边。
 3. **`20261029200000` 的收窄是否需要在文档里标记为历史**：它当前被后续迁移覆盖，不建议修改已应用迁移；是否在迁移目录加只读注释另行决定。
+
+### 1.6 四档裁决归位（2026-11-20）
+
+裁决口径：以生产实测为基线，按语义分档——等价→归一；现存更严→维持并记录；现存更松→立项收紧；无法判定→挂起列待办。
+
+| 侧 | 实测（`pg_attribute` / `format_type`） | 相对生产基线 | 档位 | 动作 |
+|---|---|---|---|---|
+| 生产 `topems_prod` | `numeric(12,2)` | 基线 | — | 不动 |
+| 仓库契约 | `numeric(12,2)`（`scripts/ci/data/prod_cols.psv:9003`、`fixtures/full_schema_contract.sql:17144`） | 等价 | **等价→归一** | 维持，无契约改动 |
+| 本机 dev `topems` | 修复前 `integer`；修复后 `numeric(12,2)` | 环境漂移，非策略松紧 | 环境问题，按 dev 对账处理 | 重放 `20261105160000`（票 `DRIFT01-DEV-20261120`），未改契约/生产 |
+
+判定依据：
+
+- 生产只读实测：`PGOPTIONS='-cdefault_transaction_read_only=on' psql postgresql://topems_drift@127.0.0.1:5432/topems_prod -Atc "select format_type(atttypid,atttypmod) from pg_attribute where attrelid='mes.production_records'::regclass and attname='completed_quantity'"` → `numeric(12,2)`。
+- 契约两侧一致：迁移 `20260928120000` 声明目标、`20261105160000` 幂等回补，基线证据两处均为 `numeric(12,2)`。
+- dev 漂移可复现且无损：`production_records` 0 行（`pg_dump -t` 已备份）；重放后实测 `numeric(12,2)`，账本 `success=t`。
+- 判据漏口（根因）：`20260928120000_mes_schema_type_align.sql` 以 `information_schema.data_type <> 'numeric'` 判定，该字段不含 typmod，无精度 `numeric` 与 `numeric(12,2)` 同为 `numeric`，导致误判「已对齐」跳过 ALTER。
+- 判据修复：新增前向兜底迁移 `20261120090000_mes_column_typmod_align.sql`，以 `format_type`（含 typmod）为判据对齐同 4 列，表/列缺失用 `to_regclass` 跳过、已对齐零 ALTER。验证：事务内改回无精度 → 执行迁移 → 恢复 `numeric(12,2)` → ROLLBACK 通过；`topems_test_full` 应用 1 条、重跑 0 条。
+- 因此 DRIFT-01 按「判据修复、生产 no-op」关闭：缺陷在判据而不在生产数据——生产实测本已是 `numeric(12,2)`，该兜底迁移在生产为**幂等对齐**（no-op 语义），不构成生产数据或结构变更；dev 重放 `20261105160000` 与兜底迁移互为交叉验证。不属于「更严/更松/无法判定」三档中的任何一档。
+
+§1.5 三个待决点的处置：
+
+1. dev 修复：已按 §7.1 重放 `20261105160000` 完成（本文 §1.6），不再挂待办。
+2. 两位小数是否够用：生产与契约已一致，属业务口径；当前无证据要求扩展，**维持两位**，若未来业务提出再单独立项。
+3. `20261029200000` 收窄的历史标记：不改已应用迁移，保留现状；其效果已被 `20261105160000` 覆盖。
 
 ---
 
