@@ -12,6 +12,7 @@ export const IAM_PATHS = {
   user: '/iam/user',
   role: '/iam/role',
   permission: '/iam/permission',
+  resourceAcl: '/iam/resource-acl',
   companyStructure: '/iam/company-structure',
 } as const;
 export interface DashboardPageProps {}
@@ -29,6 +30,12 @@ interface RoleManagementPageProps {
 }
 
 interface PermissionManagementPageProps {}
+
+interface ResourceAclPageProps {
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, unknown>;
+}
 
 interface CompanyStructurePageProps {
   page?: number;
@@ -91,6 +98,19 @@ const permissionManagementRoute: RouteConfigV2<PermissionManagementPageProps> = 
   group: 'master',
 };
 
+const resourceAclRoute: RouteConfigV2<ResourceAclPageProps> = {
+  path: IAM_PATHS.resourceAcl,
+  element: lazyWithRetry(() => import('@/pages/iam/ResourceAclPage'), 'ResourceAclPage'),
+  module: 'iam',
+  title: i18n.t('iam.nav.iam-resource-acl'),
+  titleKey: 'iam.nav.iam-resource-acl',
+  code: 'iam-resource-acl',
+  requiredPermissions: ['iam:resource_acl:read'],
+  action: 'read',
+  template: 'list',
+  group: 'master',
+};
+
 const companyStructureRoute: RouteConfigV2<CompanyStructurePageProps> = {
   path: IAM_PATHS.companyStructure,
   element: lazyWithRetry(() => import('@/pages/iam/CompanyStructurePage'), 'CompanyStructurePage'),
@@ -123,6 +143,7 @@ export const iamModuleConfig: RouteModuleConfig = {
     userManagementRoute,
     roleManagementRoute,
     permissionManagementRoute,
+    resourceAclRoute,
     companyStructureRoute,
   ],
 };
@@ -188,6 +209,18 @@ export const iamNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: false,
       description: i18n.t('iam.nav.iam-permission_desc'),
+    },
+    {
+      code: 'iam-resource-acl',
+      label: i18n.t('iam.nav.iam-resource-acl'),
+      labelKey: 'iam.nav.iam-resource-acl',
+      icon: 'ShieldCheck',
+      path: IAM_PATHS.resourceAcl,
+      permission: 'iam:resource_acl:read',
+      order: 13,
+      group: 'master',
+      showInTabs: true,
+      description: i18n.t('iam.nav.iam-resource-acl_desc'),
     },
     {
       code: 'iam-company-structure',

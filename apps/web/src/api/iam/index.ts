@@ -2,19 +2,23 @@ import { authModuleApi } from './auth';
 import { userApi } from './user';
 import { roleApi } from './role';
 import { permissionApi } from './permission';
+import { resourceAclApi } from './resourceAcl';
 
 export * from './types';
+export * from './resourceAcl';
 
 export { authModuleApi } from './auth';
 export { userApi } from './user';
 export { roleApi } from './role';
 export { permissionApi } from './permission';
+export { resourceAclApi } from './resourceAcl';
 
 export const authApi = {
   auth: authModuleApi,
   users: userApi,
   roles: roleApi,
   permissions: permissionApi,
+  resourceAcl: resourceAclApi,
 
   register: authModuleApi.register,
   login: authModuleApi.login,
