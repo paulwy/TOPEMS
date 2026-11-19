@@ -1,5 +1,5 @@
 -- =============================================================================
--- 窗口前预检（只读）：TOPEMS R5 归档三批（2026-11-19 重算版）
+-- 窗口前预检（只读）：TOPEMS R5 归档三批 + IAM 严格 RLS（2026-11-19 重算版）
 --
 -- 用法（非特权只读，日常/窗口前）：
 --   PGPASSFILE=$HOME/.pgpass psql "postgresql://topems_drift@127.0.0.1:5432/topems_prod" \
@@ -11,7 +11,7 @@
 --
 -- 判读：
 --   * exit 0，且输出中不得出现 ERROR。
---   * 第 9 节 C1–C15、C17 必须 PASS、第 7.5 节 C18 必须 PASS；C16 在 topems_drift 下为 NEEDS_DBA，
+--   * 第 9 节 C1–C15、C17、C19 必须 PASS、第 7.5 节 C18 必须 PASS；C16 在 topems_drift 下为 NEEDS_DBA，
 --     必须由 DBA 特权只读会话复跑本文件后转为 PASS。
 --   * 本脚本不建临时表、不写任何生产对象；只查询 pg_catalog / pg_policies /
 --     pg_proc / pg_constraint 与账本。
@@ -28,7 +28,7 @@ SELECT current_user,
        coalesce(inet_server_addr()::text, 'local') AS server_addr,
        current_setting('transaction_read_only') AS txn_read_only;
 
-\echo '== 1. 账本水位与四条窗口版本 =='
+\echo '== 1. 账本水位与五条窗口版本 =='
 SELECT count(*) AS ledger_rows,
        count(*) FILTER (WHERE success) AS success_rows,
        count(*) FILTER (WHERE NOT success) AS failed_rows,
@@ -41,9 +41,9 @@ SELECT version,
        installed_on,
        encode(checksum, 'hex') AS sha384
 FROM _sqlx_migrations
-WHERE version IN (20261119160000, 20261119180000, 20261119200000, 20261119233000)
+WHERE version IN (20261119160000, 20261119180000, 20261119200000, 20261119233000, 20261119140000)
 ORDER BY version;
--- 期望：0 行（四条均未应用）
+-- 期望：0 行（五条均未应用）
 
 \echo '== 2. 全局表 / RLS / 策略基线（窗口前 1344 / 959 / 1050）=='
 SELECT count(*) FILTER (WHERE c.relkind IN ('r','p')) AS tables_rp,
@@ -380,6 +380,35 @@ SELECT 'C18' AS id,
 FROM c;
 -- 期望：PASS；若 W4 已应用则本节 FAIL（同时第 1 节会出现该版本），属正常「已开窗」状态
 
+\echo '== 7.6 W5 iam.core_tenant_plugins 窗口前状态（C19：存在 + tenant_id NOT NULL + RLS f/f + 0 策略）=='
+WITH w5t AS (
+  SELECT c.oid,
+         c.relrowsecurity,
+         c.relforcerowsecurity,
+         (SELECT count(*) FROM pg_policies p
+           WHERE p.schemaname = 'iam' AND p.tablename = 'core_tenant_plugins') AS policies,
+         (SELECT count(*) FROM information_schema.columns col
+           WHERE col.table_schema = 'iam' AND col.table_name = 'core_tenant_plugins'
+             AND col.column_name = 'tenant_id' AND col.is_nullable = 'NO') AS tenant_notnull
+  FROM pg_namespace n
+  JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = 'core_tenant_plugins' AND c.relkind = 'r'
+  WHERE n.nspname = 'iam'
+)
+SELECT 'C19' AS id,
+       'W5 iam.core_tenant_plugins 窗口前状态（RLS 关闭、0 策略）' AS item,
+       'present, tenant_id NOT NULL, rls=f/f, policies=0' AS expect,
+       CASE WHEN w5t.oid IS NULL THEN 'MISSING'
+            ELSE 'present; tenant_id_notnull=' || w5t.tenant_notnull::text
+              || '; rls=' || w5t.relrowsecurity::text || '/' || w5t.relforcerowsecurity::text
+              || '; policies=' || w5t.policies::text END AS actual,
+       CASE WHEN w5t.oid IS NULL THEN 'FAIL'
+            WHEN w5t.relrowsecurity OR w5t.relforcerowsecurity THEN 'ALREADY_APPLIED'
+            WHEN w5t.policies = 0 AND w5t.tenant_notnull = 1 THEN 'PASS'
+            ELSE 'FAIL' END AS status
+FROM (VALUES (1)) v(x)
+LEFT JOIN w5t ON true;
+-- 期望：PASS；若 W5 已应用则 ALREADY_APPLIED（同时第 1 节会出现该版本）
+
 \echo '== 8. 环境变量 / 命令提醒（SQL 无法校验，开窗前人工确认）=='
 SELECT 'PGOPTIONS gate W1: -c app.drop_zero_path_tables_gate=zero-path-20261119' AS item
 UNION ALL SELECT 'PGOPTIONS gate W2: -c app.archive_legacy_copies_gate=legacy-copies-20261119'
@@ -388,10 +417,11 @@ UNION ALL SELECT 'PROD_CHANGE_TICKET W1: ZERO-PATH-20261119'
 UNION ALL SELECT 'PROD_CHANGE_TICKET W2: LEGACY-COPY-20261119'
 UNION ALL SELECT 'PROD_CHANGE_TICKET W3: TENANT-UNBLOCK-20261119'
 UNION ALL SELECT 'PROD_CHANGE_TICKET W4: IAM-PERM-20261119（无闸门 GUC，需 --allow-destructive=20261119233000）'
+UNION ALL SELECT 'PROD_CHANGE_TICKET W5: RESIDUAL-RLS-20261118（无闸门 GUC，不需要 --allow-destructive）'
 UNION ALL SELECT 'apply-forward.sh: --apply-deferred <version> --ticket <ticket> --allow-destructive=<version>'
 UNION ALL SELECT 'node: prod 主机必须可用，否则脚本 DENIED';
 
-\echo '== 9. 就绪门禁汇总（C1–C15、C17 必须 PASS；C18 见 7.5；C16 特权会话下必须 PASS）=='
+\echo '== 9. 就绪门禁汇总（C1–C15、C17、C19 必须 PASS；C18 见 7.5；C16 特权会话下必须 PASS）=='
 WITH b(sch, tbl, wave) AS (
   SELECT sch, tbl, 'W1' FROM (VALUES
     ('doc','document_versions'),('doc','documents'),('doc','folders'),('doc','templates'),
@@ -498,12 +528,13 @@ led AS (
     (SELECT count(*) FILTER (WHERE NOT success) FROM _sqlx_migrations) AS ledger_failed,
     (SELECT max(version) FROM _sqlx_migrations) AS ledger_max,
     (SELECT count(*) FROM _sqlx_migrations
-      WHERE version IN (20261119160000,20261119180000,20261119200000)) AS versions_present,
+      WHERE version IN (20261119160000,20261119180000,20261119200000,20261119233000,20261119140000)) AS versions_present,
     (SELECT count(*) FROM _sqlx_migrations
-      WHERE version IN (20261119160000,20261119180000,20261119200000) AND success) AS versions_success,
+      WHERE version IN (20261119160000,20261119180000,20261119200000,20261119233000,20261119140000) AND success) AS versions_success,
     EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119160000 AND success) AS w1,
     EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119180000 AND success) AS w2,
     EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119200000 AND success) AS w3,
+    EXISTS (SELECT 1 FROM _sqlx_migrations WHERE version = 20261119140000 AND success) AS w5,
     EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'archive') AS archive_schema,
     (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = 'archive' AND c.relkind = 'r') AS archive_tables,
@@ -547,6 +578,19 @@ led AS (
                           JOIN pg_namespace n ON n.oid = c.relnamespace
                           WHERE n.nspname = 'iam' AND c.relname = 'core_tenant_plugins')
         AND k.conname = 'core_tenant_plugins_tenant_id_fkey') AS plugin_fk_def
+),
+w5s AS (
+  SELECT c.oid,
+         c.relrowsecurity,
+         c.relforcerowsecurity,
+         (SELECT count(*) FROM pg_policies p
+           WHERE p.schemaname = 'iam' AND p.tablename = 'core_tenant_plugins') AS policies,
+         (SELECT count(*) FROM information_schema.columns col
+           WHERE col.table_schema = 'iam' AND col.table_name = 'core_tenant_plugins'
+             AND col.column_name = 'tenant_id' AND col.is_nullable = 'NO') AS tenant_notnull
+  FROM pg_namespace n
+  JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = 'core_tenant_plugins' AND c.relkind = 'r'
+  WHERE n.nspname = 'iam'
 )
 SELECT 'C1' AS id, '会话：topems_prod + 只读' AS item,
        'db=topems_prod, ro=on' AS expected,
@@ -565,7 +609,7 @@ SELECT 'C2', '账本：721/721、max 20261119000002、failed 0',
             THEN 'PASS' ELSE 'FAIL' END
 FROM led
 UNION ALL
-SELECT 'C3', '四条窗口版本均未应用', 'present=0',
+SELECT 'C3', '五条窗口版本均未应用', 'present=0',
        'present=' || led.versions_present || ', success=' || led.versions_success,
        CASE WHEN led.versions_present = 0 THEN 'PASS'
             WHEN led.versions_success = led.versions_present THEN 'ALREADY_APPLIED'
@@ -670,14 +714,16 @@ SELECT 'C14', '其他函数引用三目标', '0',
 FROM led
 UNION ALL
 SELECT 'C15', '全局 RLS / 策略按波次递减',
-       'pre 959/1050；W1 943/1034；W1+W2 913/1003',
+       'pre 959/1050；W1 943/1034；W1+W2 913/1003；W5 +1/+1',
        led.rls_enabled || '/' || led.policies,
        CASE WHEN led.rls_enabled =
                   959 - (CASE WHEN led.w1 THEN 16 ELSE 0 END)
                       - (CASE WHEN led.w2 THEN 30 ELSE 0 END)
+                      + (CASE WHEN led.w5 THEN 1 ELSE 0 END)
                  AND led.policies =
                   1050 - (CASE WHEN led.w1 THEN 16 ELSE 0 END)
                        - (CASE WHEN led.w2 THEN 31 ELSE 0 END)
+                       + (CASE WHEN led.w5 THEN 1 ELSE 0 END)
             THEN 'PASS' ELSE 'FAIL' END
 FROM led
 UNION ALL
@@ -701,6 +747,19 @@ SELECT 'C17', 'archive 表数符合已应用波次', '0→22→130→139',
                 + 6 * (CASE WHEN led.w1 OR led.w2 THEN 1 ELSE 0 END)
                 + 1 * (CASE WHEN led.w3 THEN 1 ELSE 0 END)
             THEN 'PASS' ELSE 'FAIL' END
-FROM led;
+FROM led
+UNION ALL
+SELECT 'C19', 'W5 iam.core_tenant_plugins 窗口前状态（RLS 关闭、0 策略）',
+       'present, tenant_id NOT NULL, rls=f/f, policies=0',
+       CASE WHEN w5s.oid IS NULL THEN 'MISSING'
+            ELSE 'present; tenant_id_notnull=' || w5s.tenant_notnull::text
+              || '; rls=' || w5s.relrowsecurity::text || '/' || w5s.relforcerowsecurity::text
+              || '; policies=' || w5s.policies::text END,
+       CASE WHEN w5s.oid IS NULL THEN 'FAIL'
+            WHEN w5s.relrowsecurity OR w5s.relforcerowsecurity THEN 'ALREADY_APPLIED'
+            WHEN w5s.policies = 0 AND w5s.tenant_notnull = 1 THEN 'PASS'
+            ELSE 'FAIL' END
+FROM (VALUES (1)) v(x)
+LEFT JOIN w5s ON true;
 
-\echo '== 完：C1–C15、C17 与 7.5 的 C18 必须 PASS；C16 在特权只读会话下必须 PASS =='
+\echo '== 完：C1–C15、C17、C19 与 7.5 的 C18 必须 PASS；C16 在特权只读会话下必须 PASS =='
