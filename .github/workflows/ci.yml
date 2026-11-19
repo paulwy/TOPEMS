@@ -1992,7 +1992,9 @@ jobs:
       DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
     services:
       postgres:
-        image: postgres:16-alpine
+        # baseline schema 含 CREATE EXTENSION vector；本 job 已改为基线恢复 + 前向，
+        # 必须用带 pgvector 的镜像（postgres:16-alpine 无 vector）。
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: topems_test
           POSTGRES_PASSWORD: topems_test_secret
@@ -2078,21 +2080,41 @@ jobs:
           done
           echo "✅ All migration tests passed" >> $GITHUB_STEP_SUMMARY
 
-      - name: Verify top-level migration chain on empty database
-        # 2026-09-25: 空库验证闭环（commit 498c274de）后固化——
-        # 顶层 database/migrations 在全新空库全量应用 0 错误（等价 CI 新环境可用性）。
-        # 防迁移链依赖线上遗留表/列/角色（本地半迁移库会掩盖，svc up-down-up 不覆盖顶层链）。
-        # 2026-10-06 (C-2): 升级为新空库守卫 ensure-empty-db-prereqs.sh（探活 + 补列 + 自动重放）。
-        # 2026-10-07 (A2, commit a617e7fb7): **守卫内建进迁移文件本身**（v69 public. 前缀、
-        #   U6/R3/R4 列存在守卫、1005000001/0002 影子表骨架前缀、u3b DROP 顺序）；
-        #   脚本层补列兜底移除（防掩盖新缺陷），ensure-empty-db-prereqs.sh 降级为纯链验证：
-        #   失败即真实链缺陷 + 断言记录数 = 文件数（300/300，防 5432 曾 280 vs 300 缺口复发）。
+      - name: Restore baseline snapshot and apply forward migrations
+        # 2026-11-20: 「零库全量链」不再作为判据。历史链序不闭合：
+        #   20260902000002 DROP public.qa_lab_tasks → 20261005000004 加 FK 指向它
+        #   → 20261007000009 才重建；绕过后又断在 20261102220000（lims.qa_lab_samples
+        #   已在 20261003000002 删除）。历史迁移不可改（破坏已应用库 sqlx checksum）。
+        # 新环境真实路径 = baseline 快照 + 前向迁移（与 drill:anchor 同口径）。
+        # 这里重建 topems_test 后按该路径落库，供后续 validate / 权限审计 / 菜单门禁读取。
         run: |
-          PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d topems_test -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" || true
-          MIGRATE_URL="$DATABASE_URL" bash scripts/ensure-empty-db-prereqs.sh
+          set -euo pipefail
+          ANCHOR="$(python3 -c "import json; d=json.load(open('database/baseline/anchors.json')); print(max(a['anchor_version'] for a in d['anchors']))")"
+          echo "baseline anchor=${ANCHOR}"
+          SCHEMA="database/baseline/prod_schema_${ANCHOR}.sql.gz"
+          LEDGER="database/baseline/prod_ledger_${ANCHOR}.sql"
+          DATA="database/baseline/baseline_${ANCHOR}_data.sql.gz"
+          for f in "$SCHEMA" "$LEDGER" "$DATA"; do
+            test -f "$f" || { echo "FAIL: 缺基线资产 $f" >&2; exit 1; }
+          done
+
+          # 基线含多个 schema；重建整库，避免上一步 service 迁移残留造成 CREATE SCHEMA 冲突。
+          PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d postgres -v ON_ERROR_STOP=1 \
+            -c "DROP DATABASE IF EXISTS topems_test WITH (FORCE);"
+          PGPASSWORD=topems_test_secret createdb -h localhost -U topems_test topems_test
+
+          # pg_dump 末尾 COMMENT ON EXTENSION 需要扩展属主；扩展由镜像预装，仅过滤该元数据。
+          gzip -dc "$SCHEMA" | grep -v '^COMMENT ON EXTENSION ' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$LEDGER"
+          gzip -dc "$DATA" | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+
+          LEDGER_MAX="$(psql "$DATABASE_URL" -Atc "SELECT max(version) FROM _sqlx_migrations WHERE success")"
+          test "$LEDGER_MAX" = "$ANCHOR" || { echo "FAIL: 账本 max=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
+
+          bash scripts/migration/apply-forward.sh --dsn "$DATABASE_URL" --drill-gate-guc-auto
 
       - name: Run migration validation (validate.sh 三方核对 + schema drift)
-        # B14 接线（2026-10-12）：空库守卫之外补 validate.sh 静态核对——
+        # B14 接线（2026-10-12）：baseline 恢复 + 前向迁移之后补 validate.sh 静态核对——
         # 文件名/版本顺序/幂等/单职责/checksums（磁盘↔checksums.txt↔台账）
         # + 带 DATABASE_URL 时的 _sqlx_migrations schema drift 核对。
         # 本地 lefthook migration-validate 仅拦"新增/改动迁移"；CI 全量兜底。
@@ -2100,12 +2122,17 @@ jobs:
         run: bash scripts/migration/validate.sh
 
       # 防复发（2026-11-18）：live DB vs SQL 权限码差集门禁。
-      # 上一步已在 ephemeral 种子库全量应用 migrations，这里只读校验
+      # 上一步已恢复 baseline 并应用前向迁移，这里只读校验
       # 「DB 有、init ∪ migrations 无字面量」必须为 0——运行期自举/手工种入
       # 的未登记权限码会在此暴露（如 2026-10-26 的 69 条伞码）。
       # 只读 SELECT，连接的是 job 内 postgres service，不使用生产凭据。
       - name: Permission code audit — live DB vs SQL (read-only)
         run: python3 scripts/audit_permission_codes.py --gate --dsn "$DATABASE_URL"
+
+      - name: Menu permission code integrity (read-only)
+        # 菜单 permissions->>'permission' 必须全部存在于 core_permissions.code；
+        # 静态 menu-health-gate 只看代码侧 Route×NavItem，发现不了库内数据漂移。
+        run: node scripts/ci/check-menu-permission-codes.mjs --dsn "$DATABASE_URL"
 
   # ==========================================================================
   # Desktop Build (P2-5: merged from desktop-build.yml)
