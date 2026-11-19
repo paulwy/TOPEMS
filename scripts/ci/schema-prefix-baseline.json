@@ -1,26 +1,10 @@
 {
-  "generated": "2026-11-16",
+  "generated": "2026-11-19",
   "note": "既存裸表名基线。规则见 docs/database/connection-governance.md「C. schema 前缀规则」；新增条目必须人工 review（优先改成显式 schema 前缀，而不是加进基线）。",
   "entries": [
     {
       "file": "svc/ai/src/handlers/ai_handlers.rs",
       "table": "orders"
-    },
-    {
-      "file": "svc/analytics/src/main.rs",
-      "table": "core_permissions"
-    },
-    {
-      "file": "svc/analytics/src/main.rs",
-      "table": "core_roles"
-    },
-    {
-      "file": "svc/analytics/src/main.rs",
-      "table": "core_user_roles"
-    },
-    {
-      "file": "svc/analytics/src/main.rs",
-      "table": "core_users"
     },
     {
       "file": "svc/analytics/src/modules/bi/comparison_analysis.rs",
@@ -161,22 +145,6 @@
     {
       "file": "svc/analytics/src/modules/report/template.rs",
       "table": "report_templates"
-    },
-    {
-      "file": "svc/analytics/src/routes.rs",
-      "table": "core_permissions"
-    },
-    {
-      "file": "svc/analytics/src/routes.rs",
-      "table": "core_roles"
-    },
-    {
-      "file": "svc/analytics/src/routes.rs",
-      "table": "core_user_roles"
-    },
-    {
-      "file": "svc/analytics/src/routes.rs",
-      "table": "core_users"
     },
     {
       "file": "svc/communication/src/im_location.rs",
@@ -409,10 +377,6 @@
     {
       "file": "svc/finance/src/modules/voucher_template.rs",
       "table": "finance_voucher_generation_rules"
-    },
-    {
-      "file": "svc/finance/src/modules/voucher_template.rs",
-      "table": "finance_voucher_templates"
     },
     {
       "file": "svc/finance/src/modules/voucher_template_entries.rs",
@@ -1115,36 +1079,12 @@
       "table": "automation_variables"
     },
     {
-      "file": "svc/unified-core/src/modules/doc/handlers.rs",
-      "table": "core_doc_document_versions"
-    },
-    {
-      "file": "svc/unified-core/src/modules/doc/handlers.rs",
-      "table": "core_doc_documents"
-    },
-    {
-      "file": "svc/unified-core/src/modules/doc/services/document.rs",
-      "table": "core_doc_documents"
-    },
-    {
-      "file": "svc/unified-core/src/modules/doc/services/folder.rs",
-      "table": "core_doc_folders"
-    },
-    {
-      "file": "svc/unified-core/src/modules/doc/services/template.rs",
-      "table": "core_doc_templates"
-    },
-    {
       "file": "svc/unified-core/src/modules/engagement/handlers.rs",
       "table": "core_comments"
     },
     {
       "file": "svc/unified-core/src/modules/engagement/handlers.rs",
       "table": "core_favorites"
-    },
-    {
-      "file": "svc/unified-core/src/modules/file/manage.rs",
-      "table": "core_file_permissions"
     },
     {
       "file": "svc/unified-core/src/modules/flow/category.rs",
@@ -1173,14 +1113,6 @@
     {
       "file": "svc/unified-core/src/modules/flow/variable.rs",
       "table": "core_flow_variables"
-    },
-    {
-      "file": "svc/unified-core/src/modules/master/handlers.rs",
-      "table": "core_master_data_change_log"
-    },
-    {
-      "file": "svc/unified-core/src/modules/master/handlers.rs",
-      "table": "core_mdm_approvals"
     },
     {
       "file": "svc/unified-core/src/modules/migration/service.rs",
@@ -1213,14 +1145,6 @@
     {
       "file": "svc/unified-core/src/routes/business_tools/database_audit_log_store.rs",
       "table": "permission_audit_logs"
-    },
-    {
-      "file": "svc/unified-core/src/routes/business_tools/database_permission_store.rs",
-      "table": "tenant_permissions"
-    },
-    {
-      "file": "svc/unified-core/src/routes/business_tools/database_permission_store.rs",
-      "table": "tool_permissions"
     },
     {
       "file": "svc/wms/src/modules/serial_number.rs",

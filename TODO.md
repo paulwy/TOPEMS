@@ -6,7 +6,7 @@
 > 逐条判定、读数与复现命令：[项目审计与实施方案-2026-11-17](docs/quality/项目审计与实施方案-2026-11-17.md)。
 > 该轮只改本文件与新增审计文档；未改代码、未提交、未推送、未触碰生产。
 > 2026-11-19 增补：新增 §1.F「前端真实性与交互纠错」F1–F11（依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)）；**只登记，未开工**。
-> 2026-11-19 治理：§0.1 阻断读数按当日实测重写（`facts:check` 13 项、`check:ledger` 2 本仍红；`gen-manifest --check`、clippy、API 闸门、权限对账均为绿）；DEC-14 核销；C6 前置由「等 DEC-14」改为「等账号计费恢复」；F 批证据重定位到 HEAD `7b1134282`，其中 F9 由「3 个 501 入口」修正为「6 个 501 端点、UI 无调用点」；新增 §7 仓库卫生记录。
+> 2026-11-19 治理：§0.1 阻断读数按当日实测重写并核销（`facts:check` 13 项漂移与 `check:ledger` 2 本账本已核销为绿；`gen-manifest --check`、clippy、API 闸门、权限对账亦为绿）；DEC-14 核销；C6 前置由「等 DEC-14」改为「等账号计费恢复」；F 批证据重定位到 HEAD `7b1134282`，其中 F9 由「3 个 501 入口」修正为「6 个 501 端点、UI 无调用点」；新增 §7 仓库卫生记录。
 
 > **维护约定（2026-11-19 定稿，口径见 [聚合产物与 TODO 入库策略](docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md)）**
 > 1. **维护者**：当批任务的提交者负责更新；跨批只允许新增条目或删除已完成条目，不做批量重排。
@@ -30,8 +30,8 @@
 |---|---|---|
 | 默认 `cargo check` | 绿（2026-11-17 修复：dev `strip="none"` 覆盖全局同级配置） | `cargo check --workspace`；见 §3.1 |
 | `cargo clippy --workspace --all-targets` | 绿（4 crate / 8 处已修，2026-11-17） | 见 §3.2 |
-| `facts:check` | **红，13 项**（`schema_prefix` 19 个 stale key、`request-txn` 1 处可核销未更新、扫描观测值随代码演进：files 1431→1433、violations 1536→1460） | `node scripts/report/facts.mjs --check docs/quality/facts-latest.json` |
-| `check:ledger` | **红，2 本**：`scripts/ci/schema-prefix-baseline.json` 19 条陈旧未核销；`scripts/ci/request-txn-baseline.json` 1 处可核销（erp `bare_txn` 351→350） | `node scripts/ci/check-ledger-staleness.mjs` |
+| `facts:check` | **绿：62 项一致**（同日核销：`schema_prefix` 基线 306→287 条、`request-txn` 基线 26 项 erp `bare_txn` 351→350；观测值按当前代码重建） | `node scripts/report/facts.mjs --check docs/quality/facts-latest.json` |
+| `check:ledger` | **绿：4 本全部 OK**（`schema-prefix` / `request-txn` / `tenant-context` / `txn-write-non2xx` 均 stale 0、unregistered 0） | `node scripts/ci/check-ledger-staleness.mjs` |
 | `gen-manifest --check` | 绿：`registered=191 disk=784 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
 | API 审计闸门 | 绿（2026-11-17：P6 RED=0、p7 `not_legal=0`；`lefthook.yml` 已去 `--dry-run`） | 见 §3.2 |
 | 权限对账脚本 | 绿：`DB 来源：live`、DB=1021 | `scripts/audit_permission_codes.py`；见 §3.1 |
@@ -431,4 +431,4 @@
 ### 7.5 CI 红的唯一原因与发布判据
 
 - 所有 workflow 的 job 注解均为 `The job was not started because recent account payments have failed or your spending limit needs to be increased`：**job 未启动**，与代码无关，只能账号侧处理（Settings → Billing & plans）。
-- 计费恢复前，发布判据改为：**本地 pre-push 门禁全绿 + `gitleaks-full` PASS + drill `[5/5]` PASS**；CI 绿不可作为依据。计费恢复后执行 C6 建立基线，并补齐 §0.1 中 `facts:check` / `check:ledger` 两项红。
+- 计费恢复前，发布判据改为：**本地 pre-push 门禁全绿 + `gitleaks-full` PASS + drill `[5/5]` PASS**；CI 绿不可作为依据。计费恢复后执行 C6 建立基线即可；§0.1 中 `facts:check` / `check:ledger` 两项已于 2026-11-19 核销为绿。

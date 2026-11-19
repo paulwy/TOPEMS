@@ -1,70 +1,22 @@
 {
-  "generated_at": "2026-11-17T16:25:20.028Z",
-  "root": "/Users/xingzhai/TOPEMS",
+  "generated_at": "2026-11-19T08:54:48.415Z",
+  "root": "/Users/air/TOPEMS",
   "txn": {
     "total": {
-      "bare_txn": 1656,
+      "bare_txn": 1655,
       "own_txn": 0
     },
     "services": {
-      "ai": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "communication": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
       "crm": {
         "bare_txn": 196,
         "own_txn": 0
       },
       "erp": {
-        "bare_txn": 351,
-        "own_txn": 0
-      },
-      "finance": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "gis": {
-        "bare_txn": 0,
+        "bare_txn": 350,
         "own_txn": 0
       },
       "hrm": {
         "bare_txn": 232,
-        "own_txn": 0
-      },
-      "integration": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "lims": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "mes": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "mobile": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "monitor": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "plugin-registry": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "pm": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "portal": {
-        "bare_txn": 0,
         "own_txn": 0
       },
       "rd": {
@@ -75,28 +27,8 @@
         "bare_txn": 211,
         "own_txn": 0
       },
-      "search": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "server": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
       "srm": {
         "bare_txn": 211,
-        "own_txn": 0
-      },
-      "ticket": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "tms": {
-        "bare_txn": 0,
-        "own_txn": 0
-      },
-      "unified-core": {
-        "bare_txn": 0,
         "own_txn": 0
       },
       "wms": {
@@ -111,16 +43,16 @@
     "gate_exit_ok": true
   },
   "schema_prefix": {
-    "scanned_files": 1431,
-    "sql_literals": 6505,
-    "violations": 1536,
+    "scanned_files": 1433,
+    "sql_literals": 6518,
+    "violations": 1460,
     "by_level": {
       "AMBIGUOUS": 0,
       "CROSS_SCHEMA": 0,
-      "SEARCH_PATH_DEPENDENT": 872,
-      "UNKNOWN": 664
+      "SEARCH_PATH_DEPENDENT": 827,
+      "UNKNOWN": 633
     },
-    "baseline_keys": 306,
+    "baseline_keys": 287,
     "new_violations": 0,
     "stale_keys": 0,
     "stale_samples": [],
@@ -209,5 +141,5 @@
     },
     "tenants_in_prod": 1
   },
-  "fingerprint": "9f14c25a5e0fe73e66d427d19c6c4c1a3b289442033bcb17892c5bb7ad0b562e"
+  "fingerprint": "8815f25bb61cf77f6d4ef2d3df01504a271b89bbc3599804e033c12bee8d5878"
 }
