@@ -549,6 +549,7 @@ jobs:
   # will switch to blocking after N consecutive green runs.
   # ──────────────────────────────────────────────────────────────────────────
   cargo-test:
+    # 保留 job id/name 以兼容既有分支保护；口径已收敛为 doctest（见下方步骤注释）。
     name: Cargo Test (V251 blocking)
     needs: changes
     if: needs.changes.outputs.rust == 'true'
@@ -586,10 +587,12 @@ jobs:
           until pg_isready -h localhost -p 5432 -U topems_test; do
             sleep 1
           done
-      - name: Run tests
-        # V278: topems-shared-core testing 模块写 tmp/openapi/*.json 到 workspace 根
-        # topems-shared-bootstrap default_init_db 依赖 DATABASE_URL 真实验收
-        run: cargo test --workspace 2>&1 | tee /tmp/cargo-test-output.log
+      - name: Run doctests only
+        # C4: workspace 的单元/集成用例由 rust-test（nextest）单一路径覆盖；
+        # nextest 不执行 doctest，故本 job 收敛为 doctest 专用，避免全量重复跑。
+        # V278: topems-shared-core testing 模块写 tmp/openapi/*.json 到 workspace 根；
+        # topems-shared-bootstrap default_init_db 依赖 DATABASE_URL 真实验收。
+        run: cargo test --workspace --doc 2>&1 | tee /tmp/cargo-test-output.log
       - name: Test summary
         if: always()
         run: |

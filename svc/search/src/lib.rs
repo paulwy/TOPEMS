@@ -25,10 +25,11 @@
 //! ## 使用示例
 //!
 //! ```no_run
-//! use topems_search::handlers::search_routes;
+//! use topems_search::handlers::search_handler;
 //!
-//! let app = search_routes();
-//! // 挂载到 Axum 应用
+//! // 路由组装见 `svc/search/src/main.rs`：
+//! // Router::new().route("/api/search", axum::routing::get(search_handler))
+//! let _handler = search_handler;
 //! ```
 
 pub mod handlers;
