@@ -36,9 +36,11 @@
 #   闸门 GUC（如 app.drop_dead_tables_gate）由 apply-forward.sh --drill-gate-guc-auto
 #   按迁移文件语义逐文件注入，prod/SSH 模式拒绝该参数。
 #
-# 策略快照门禁（§6.3）：
-#   [5/5] 用同一个非特权演练库比对 database/rls_policy_expected.json 与实测
+# 策略快照门禁（§6.3）与菜单权限码门禁（W1-2c）：
+#   [5/6] 用同一个非特权演练库比对 database/rls_policy_expected.json 与实测
 #   pg_policies / pg_class；多/少表、多/少策略、表达式、ENABLE/FORCE 变化一律失败。
+#   [6/6] core_menus.permissions->>'permission' 必须全部存在于 core_permissions.code，
+#   防止菜单引用不存在的权限码（W1-2c 的 crm:* 别名漂移）。
 #   - 快照更新入口（只随迁移一起用）：
 #       MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor
 #     生成后逐条 review git diff，与同批迁移一起提交；不得为过门禁直接刷新快照。
@@ -198,6 +200,7 @@ cp "$SOURCE_ROOT/scripts/dev/run-migration-drill.sh" "$DRILL_WORKTREE/scripts/de
 cp "$SOURCE_ROOT/scripts/migration/apply-forward.sh" "$DRILL_WORKTREE/scripts/migration/apply-forward.sh"
 for f in \
     scripts/ci/check-rls-policy-snapshot.mjs \
+    scripts/ci/check-menu-permission-codes.mjs \
     scripts/ci/gen-rls-policy-snapshot.mjs \
     scripts/ci/lib/rls-policy-snapshot.mjs; do
     if [[ -f "$SOURCE_ROOT/$f" ]]; then
@@ -393,7 +396,7 @@ if [[ -n "$SHA_SCHEMA" ]]; then
     [[ "$ACTUAL" == "$SHA_SCHEMA" ]] || { echo "FAIL: ${SCHEMA_GZ} sha256 不匹配（期望 ${SHA_SCHEMA}，实际 ${ACTUAL}）" >&2; exit 1; }
 fi
 
-echo "[1/5] 恢复基线快照（anchor=${ANCHOR}）"
+echo "[1/6] 恢复基线快照（anchor=${ANCHOR}）"
 phase
 # 基线 pg_dump 末尾有 COMMENT ON EXTENSION；扩展由 bootstrap 以特权角色预装，
 # 演练角色不是扩属主，COMMENT 会报 "must be owner of extension"。
@@ -407,18 +410,18 @@ LEDGER_MAX="$(psql "$DSN" -tAc "SELECT max(version) FROM _sqlx_migrations WHERE 
 [[ "$LEDGER_MAX" == "$ANCHOR" ]] || { echo "FAIL: 账本 max(version)=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
 phase_end "恢复基线"
 
-echo "[2/5] 前向迁移（apply-forward.sh，只应用 version > ${ANCHOR}）"
+echo "[2/6] 前向迁移（apply-forward.sh，只应用 version > ${ANCHOR}）"
 phase
 bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto || { echo "FAIL: 前向迁移失败" >&2; exit 1; }
 phase_end "前向迁移"
 
-echo "[3/5] 迁移静态校验 + 权限码审计"
+echo "[3/6] 迁移静态校验 + 权限码审计"
 phase
 DATABASE_URL="$DSN" bash scripts/migration/validate.sh || { echo "FAIL: validate.sh 失败" >&2; exit 1; }
 python3 scripts/audit_permission_codes.py --gate --dsn "$DSN" || { echo "FAIL: audit --gate 失败" >&2; exit 1; }
 phase_end "静态校验 + 审计"
 
-echo "[4/5] up-down-up 重放（重建隔离库 → 基线 + 前向重放）"
+echo "[4/6] up-down-up 重放（重建隔离库 → 基线 + 前向重放）"
 phase
 # 整库重建而不是 DROP SCHEMA：基线快照含 _sqlx_test/ai/... 多个 schema，
 # 只删 public 会让快照里的 CREATE SCHEMA 撞车。
@@ -435,7 +438,7 @@ restore_forced_rls || { echo "FAIL: 重放前恢复 FORCE RLS 失败" >&2; exit 
 bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto >/dev/null || { echo "FAIL: 重放前向迁移失败" >&2; exit 1; }
 phase_end "up-down-up"
 
-echo "[5/5] 策略期望快照（非特权连接 + 实测 pg_policies/pg_class）"
+echo "[5/6] 策略期望快照（非特权连接 + 实测 pg_policies/pg_class）"
 phase
 SNAPSHOT_FILE="$SOURCE_ROOT/database/rls_policy_expected.json"
 if [[ "${MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT:-}" =~ ^(1|true|TRUE|True|yes|YES|on|ON)$ ]]; then
@@ -450,6 +453,12 @@ else
         || { echo "FAIL: 策略快照比对失败" >&2; exit 1; }
 fi
 phase_end "策略快照"
+
+echo "[6/6] 菜单权限码完整性（core_menus → core_permissions）"
+phase
+node scripts/ci/check-menu-permission-codes.mjs --dsn "$DSN" \
+    || { echo "FAIL: 菜单权限码完整性校验失败（菜单引用了 permissions 表中不存在的码）" >&2; exit 1; }
+phase_end "菜单权限码"
 
 for dir in "${SVC_DIRS[@]:-}"; do
     [[ -z "$dir" ]] && continue

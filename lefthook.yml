@@ -624,7 +624,7 @@ pre-push:
     # 本闸门 fail-closed，不得用 --no-verify 绕过。
     migration-drill-anchor:
       tags: database migrations
-      glob: "{database/migrations/**,database/baseline/**,database/rls_policy_expected.json,scripts/ci/check-rls-policy-snapshot.mjs,scripts/ci/gen-rls-policy-snapshot.mjs,scripts/ci/lib/rls-policy-snapshot.mjs,scripts/dev/run-migration-drill.sh,scripts/migration/apply-forward.sh}"
+      glob: "{database/migrations/**,database/baseline/**,database/rls_policy_expected.json,scripts/ci/check-rls-policy-snapshot.mjs,scripts/ci/check-menu-permission-codes.mjs,scripts/ci/gen-rls-policy-snapshot.mjs,scripts/ci/lib/rls-policy-snapshot.mjs,scripts/dev/run-migration-drill.sh,scripts/migration/apply-forward.sh}"
       run: bash scripts/dev/run-migration-drill.sh anchor
 
     # [Gate B12/U9.5] 配置三方一致性（秒级）：services.yaml ↔ ports.env ↔ nginx map

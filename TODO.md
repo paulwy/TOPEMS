@@ -104,7 +104,7 @@
 | W6-D | a11y 与 design-tokens 之外，补 i18n/decode 接线 | 部分接线 | 门禁覆盖 |
 | W1-2a ✅ | 修脚本后重出权限快照 | 脚本已恢复 live DB（`.env:DATABASE_URL`、`DB 来源：live`、`error=None`）；新快照 `docs/quality/permission-codes-snapshot-20261120.json`：FE 1060 / BE 624 / DB 1021 / ∩195、be_only 429 / fe_only 865 / fe_orphan 32 / db_only 0。连跑两次文件 SHA-256 完全一致（`3b560437…4386db`） | 快照可重跑一致 ✅ |
 | W1-2b | 仅后端存在的权限码分流（补录/白名单） | 481 | 交集上升，0 删除 |
-| W1-2c ✅ | 菜单权限码与后端 `security` 对齐（口径已澄清） | 3 条真坏码已由 `20261120100000` 修复（评分/分群/漏斗引用 `core_permissions` 不存在的别名）；修复后 dev 189 条菜单码 `menu_not_in_db=0`。剩余 92 条（菜单∩后端字面量 97/189）经逐条核验：全部在 `core_permissions` 存在且已授予角色（零授权仅上述 3 条），后端这些模块走 `require_module_access(<module>)`——拥有任意 `<module>:` 前缀权限即放行，菜单码本身满足该判据，故不存在「菜单可见但后端 403」的错配。把 92 条都加逐端点 `security` 属权限模型细化（W1-3a 范畴），不是本次修复项 | 菜单引用码 100% 存在于权限表且零授权码=0 ✅；逐端点非超管 403 验收归 W1-3a/b/c |
+| W1-2c ✅ | 菜单权限码与后端 `security` 对齐（口径已澄清） | 3 条真坏码已由 `20261120100000` 修复（评分/分群/漏斗引用 `core_permissions` 不存在的别名）；修复后 dev 189 条菜单码 `menu_not_in_db=0`。剩余 92 条（菜单∩后端字面量 97/189）经逐条核验：全部在 `core_permissions` 存在且已授予角色（零授权仅上述 3 条），后端这些模块走 `require_module_access(<module>)`——拥有任意 `<module>:` 前缀权限即放行，菜单码本身满足该判据，故不存在「菜单可见但后端 403」的错配。把 92 条都加逐端点 `security` 属权限模型细化（W1-3a 范畴），不是本次修复项。防复发门禁已补：新增 `scripts/ci/check-menu-permission-codes.mjs`（`core_menus.permissions->>'permission'` 必须全部存在于 `core_permissions.code`），接入迁移演练 `[6/6]` 与 pre-push `migration-drill-anchor` 的触发路径；演练实跑 `[6/6] PASS: 341 个菜单权限码均存在`，dev 现库因账本停在 `20261115141100`、尚未应用 `20261120100000` 而被判红（3 条旧别名），属预期未迁移状态 | 菜单引用码 100% 存在于权限表且零授权码=0 ✅；逐端点非超管 403 验收归 W1-3a/b/c |
 | W1-2d ✅ | 仅 DB 存在的权限码分流 | `db_only=0`、`未登记（live DB 有、init∪migrations 无）=0`，`sql_history_also_current=1021`；A8 收敛后 DB 1021 条全部在迁移中有字面量，无需删除 | 删除前有全仓检索证据 ✅（本轮结论：无需删除） |
 | W1-3a | erp/scm/srm/wms/mes 路由级权限验收（原“17 服务零权限”已不成立，29/29 服务已有声明） | 需逐路由核对 | 非超管 200 / 无权限 403 |
 | W1-3b | hrm/crm/pdm/pm/rd/tms/gis/mobile | 同上 | mobile 个人接口保持 auth-only |
@@ -418,7 +418,7 @@
 
 - 根因：`pg_policies.qual/with_check` 由 `pg_get_expr` 渲染，输出受**会话 `search_path`** 影响；本机 `mes,public` → 裸名，演练/CI 固定 `pg_catalog` → `mes.process_flows`。语义与 OID 相同，纯文本差异。
 - 口径：生成器 `scripts/ci/lib/rls-policy-snapshot.mjs` 统一注入 `PGOPTIONS="-c search_path=pg_catalog"`；快照按限定名入库；`finance_u8_import_records` 的 2 条新策略保留；**不手工改快照文本**。
-- 复核：`MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor` → `[5/5] Gate RLS-SNAP PASS`（798 表 / 810 策略）；改后只读重跑 61s 亦 PASS。
+- 复核：`MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor` → `[5/6] Gate RLS-SNAP PASS`（798 表 / 810 策略）；改后只读重跑 61s 亦 PASS。2026-11-20 新增 `[6/6] Gate MENU-PERM`，演练总耗时 83s，341 个菜单码 PASS。
 
 ### 7.4 分支与历史卫生
 
