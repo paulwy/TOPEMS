@@ -157,6 +157,24 @@
 - **窗口顺序**：`20261118160000` → `20261119000001` → `20261119000002`，单事务 apply；隔离库 `topems_scratch_20261119` 已演练 apply + rollback 并 drop。
 - 状态：**未应用生产、未开窗、未换二进制**。
 
+#### P7-RLS-EMPTY-GUC 实证（2026-11-19，只读）
+
+- **76 张是重放中间态，不是终态**：本地 `topems_web_smoke`（720 条迁移，`max=20261118160000`）中，普查列的 76 张表**均已收紧为严格 B 范式**，含 `= ''` 分支的计数为 0；全库 958 张策略表含该分支的也为 0。差异来源是 `2026111x` 起的 fail-closed 系列（如 `20261114202000_erp_crm_portal_rls_fail_closed_8.sql`）。
+- **318 张同理，修正为 0**：普查的仓库侧（1181 条/1031 表）取自 `20261115142500` 前后快照，未含此后 21 个策略收紧迁移；用终态（1051 条/958 表）对生产镜像 `topems_prod` 重算，仓库更宽松 = **0 张**，318 张中 317 张已严格、`bi.audit_logs` 两侧同为 `USING (true)`。中间态对照 `m2_dryrun_20261116` = 290 张，可复现。
+- **代码侧无显式空串**：所有设置点 bind `Uuid` 字符串；唯一空串来源 `rls_tenant_value`（superuser）被转成 `RESET app.tenant_id`（`svc/unified-core/src/middleware/tenant_rls.rs:217`、`:319`），不是 `SET ''`。
+- **真实风险在策略侧**：PG18 实测 `SET` / `SET LOCAL`（含 COMMIT/ROLLBACK）/ `RESET` 之后，`current_setting('app.tenant_id', true)` 返回 `''` 而非 NULL；池化连接复用后多数读到 `''`，宽松策略即可在正常路径整表放行。
+- **代码触达**：76 张中 A=67（有 SQL 引用）、B=1（`erp.voucher_items` 仅 i18n）、C=8 无任何代码路径（`iam` 6 张 `*_dashboard_snapshots`、`master_data.mdm_critical_functions`、`public._archive_core_workflow_versions`）。
+- **风险等级**：当前仓库终态 / 生产快照 **低**；历史或回退态 **高**。
+- **后续（未动手）**：策略侧删除 `= ''` / `tenant_id IS NULL` / 全零分支并加 CI 形态门禁；不建议只在 GUC 设置侧拒绝空串（覆盖不了池化隐式 `''` 与第三方客户端）。
+- 文档：[RLS 空串 GUC 可达性实证](docs/database/rls-empty-guc-reachability-2026-11-19.md)。
+
+#### OpenAPI 聚合产物入库策略（2026-11-19，待评估）
+
+- **现状**：`docs/api/openapi-aggregated.yaml` 仓库版 12216 行（聚合 3 个服务 / 116 个端点）；本轮重新生成后为 98525 行（27 个服务 / 3003 个端点、1018 个 Schema），单文件增量约 +97049 行。
+- **问题**：产物随覆盖服务数线性膨胀，评审不可读、合并冲突高发，任何服务 `api-docs` 变动都会产生巨量 diff。
+- **待评估**：停止把聚合产物纳入版本库，改由 CI 在发布流水线中生成并作为构建产物发布；仓库只保留生成脚本（`scripts/openapi/generate.sh`、`scripts/openapi/aggregate.py`）与基线。
+- **状态**：本轮未提交该 yaml（工作区已回退到 HEAD），仅登记待办。
+
 ### 3.1 第 0 波执行读数（2026-11-17，已完成）
 
 只读口径：本地 `topems_prod`（无远程生产凭据），全程 SELECT，无 DDL/写入。
