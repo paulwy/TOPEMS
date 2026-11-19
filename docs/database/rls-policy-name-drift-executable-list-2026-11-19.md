@@ -302,9 +302,9 @@
 另有 9 张「平台可见 vs 本租户可见」双策略表退出批 1（`rls_platform_read` / `rls_global_read`）：
 `core.core_plugins`、`erp.holidays`、`finance.core_finance_currencies`、`finance.core_finance_report_line_map`、`pm.project_type_configs`、`portal.portal_quick_actions`、`public.core_roles`、`public.core_menu_groups`、`public.core_menus`。两条策略语义不同，删任一条都会改变可见行。
 
-### 4.3 单列待办（本批不动）
+### 4.3 单列待办（已处置）
 
-- `finance.finance_u8_import_records`：存在两条**定义逐字相同**的策略（`rls_tenant_isolation` 与 `tenant_isolation_finance_u8_import_records`，均为 ALL / PERMISSIVE / PUBLIC、同表达式）。系 `20261119190000` 为对齐 dev 刻意保留；去重在「删一条 PERMISSIVE 同义策略」意义上等价，但不在漂移清单范围，登记为单列小改，独立迁移处理。
+- `finance.finance_u8_import_records`（**已处置**）：`20261119190000` 为对齐 dev 建表时创建了两条策略 `rls_tenant_isolation` 与 `tenant_isolation_finance_u8_import_records`。实测核对（生产只读口径 `database/rls_policy_expected.json`）：表 `ENABLE` + `FORCE`，两条均 `cmd=ALL` / `PERMISSIVE` / `roles=PUBLIC`，`polqual` 与 `polwithcheck` **逐字相同**，表达式为「tenant 未设置 / 空串 / 全零 / `tenant_id` 为空 / 租户匹配」的宽松版（非严格 B）。PERMISSIVE 之间为 OR 关系，删除重复项不改变可见性、不收紧也不放宽。处置：`20261119230000_rls_dedupe_finance_u8_import_records_policy.sql` 仅删除遗留名副本，保留 `rls_tenant_isolation`，表达式零改动；回滚只重建被删策略。演练 write/check 双模式 `[5/5]` 均为 798 表 / 809 策略，快照 diff 仅该表第二条策略的 10 行删除。
 
 - 37 张 `*_allow_all_*`（`USING(true)`）：另立定性（见 `rls-using-true-triage-2026-11-19.md`），不并入本清单。
 
