@@ -704,6 +704,7 @@ pub async fn list_bidding_suppliers(
     put,
     security(("BearerAuth" = ["srm:bidding:write"])),
     path = "/biddings/{id}/suppliers",
+    request_body = SetBiddingSuppliersRequest,
     params(
 ("id" = String, Path, description = "id")
     ),

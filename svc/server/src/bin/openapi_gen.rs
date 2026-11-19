@@ -40,11 +40,24 @@ fn merge_paths(
             let final_path = normalize_path(path, domain);
             // 同路径按 method 合并（base 已有 method 保留，新增 method 并入）：
             // 此前"base 优先整体跳过"会吞掉给已有路径补的新 method（如 POST /tickets/{id}/sla）
+            // 已有 method 仍以 base 为准，但 requestBody 缺失时用注解补齐：
+            // 否则补了 request_body 注解重跑生成器，契约里依旧没有请求体。
             base.entry(final_path)
                 .and_modify(|v| {
                     if let (Some(b), Some(d)) = (v.as_object_mut(), ops.as_object()) {
                         for (m, op) in d {
-                            b.entry(m.clone()).or_insert_with(|| op.clone());
+                            match b.get_mut(m) {
+                                Some(Value::Object(existing)) => {
+                                    if let Some(rb) = op.get("requestBody") {
+                                        existing
+                                            .entry("requestBody".to_string())
+                                            .or_insert_with(|| rb.clone());
+                                    }
+                                }
+                                _ => {
+                                    b.insert(m.clone(), op.clone());
+                                }
+                            }
                         }
                     }
                 })

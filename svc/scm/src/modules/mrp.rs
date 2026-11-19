@@ -988,14 +988,14 @@ pub async fn material_requirement_summary(
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct DemandForecastImportItem {
     pub material_code: String,
     pub quantity: f64,
     pub forecast_date: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct DemandForecastImportRequest {
     pub items: Vec<DemandForecastImportItem>,
 }
@@ -1004,6 +1004,7 @@ pub struct DemandForecastImportRequest {
     post,
     security(("BearerAuth" = ["scm:purchase_order:write"])),
     path = "/mrp/demand-forecasts/import",
+    request_body = DemandForecastImportRequest,
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 400, description = "Bad request"),

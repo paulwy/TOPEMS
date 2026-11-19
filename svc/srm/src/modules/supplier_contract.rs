@@ -605,6 +605,7 @@ pub async fn get_contract_terms(
     post,
     security(("BearerAuth" = ["srm:supplier_contract:write"])),
     path = "/supplier-contracts/{id}/terms",
+    request_body = CreateContractTermsRequest,
     params(
 ("id" = String, Path, description = "id")
     ),
