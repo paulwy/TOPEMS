@@ -520,7 +520,12 @@ for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
       console.log("ROLLBACK;");
     }
 DG_GEN_JS
-  node "$node_gen_js" "$dg_plan" "$mig_file" > "$preflight_sql"
+  {
+    # 与 apply 段(:578) 对齐：预演会话必须显式打开系统通道。否则 FORCE RLS
+    # 会把 tenant_isolation 表的 count(*) 过滤成 0，行数闸门恒真（假 PASS）。
+    printf "SET app.rls_system = 'on';\n"
+    node "$node_gen_js" "$dg_plan" "$mig_file"
+  } > "$preflight_sql"
   rm -f "$node_gen_js"
   dg_rows="$(psql_stdin < "$preflight_sql")" || {
     echo "== 拒绝：版本 $v 破坏性预演失败（未产生任何写入）" >&2
