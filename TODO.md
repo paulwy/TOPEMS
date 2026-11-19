@@ -24,7 +24,7 @@
 | 说明 | 旧版本引用的 `docs/archive/misc/TODO_backup_20261107.md` 实际不存在，已从本文件移除该死链 |
 | 2026-11-19 增补 | 新增 §1.F 前端真实性 F1–F11（11 条，**未开工**）；依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)，无既有条目重复 |
 
-### 0.1 当前阻断读数（2026-11-19 实测，HEAD `7b1134282`）
+### 0.1 当前阻断读数（2026-11-19 实测，HEAD `38c064dd3`）
 
 | 项 | 读数 | 来源 / 命令 |
 |---|---|---|
@@ -119,7 +119,7 @@
 |---|---|---|---|
 | DRIFT-01 | `mes.production_records.completed_quantity` 在本地 `topems` 实际为 `numeric`（无 typmod），迁移 `20260926120000_app_schema_tables.sql:1617` 与门禁断言要求 `numeric(12,2)` | `psql "postgresql:///topems" -tAc "select format_type(atttypid, atttypmod) from pg_attribute where attrelid='mes.production_records'::regclass and attname='completed_quantity'"` → `numeric`；`topems_web_smoke` 为 `numeric(12,2)`，生产快照 `fixtures/full_schema_contract.sql:17144` 亦为 `numeric(12,2)`；全仓迁移无后续 `ALTER ... TYPE` | **未定性**：尚无「迁移写错 / 契约写错 / 本地库手工改过」的结论。现状证据更像本地 `topems` 建库路径漂移，但未取证建库历史。**未改契约、未改迁移**；待确认来源后只修一侧。门禁复现：`MIGRATION_DRIFT_DB_URL=postgresql:///topems node scripts/migration/check-ledger-ddl-drift.mjs`（本地 socket 为超管，需 `MIGRATION_DRIFT_ALLOW_SUPERUSER=1` 才会跑到断言） |
 
-### F. 前端真实性与交互纠错（2026-11-19 评估增补；批次 1 已完工，F1/F9 留批次 2）
+### F. 前端真实性与交互纠错（2026-11-19 评估增补；批次 1 + 批次 2 全部完工：F1–F12 均 ✅）
 
 > 依据：[主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md) §2.1/§2.2/§2.3。
 > 冲突核查：与 W3-B/W3-C（结构去重）、W4-*（组件去重）、§17.3（后端 `200+success:false` 语义）均无重叠；本条只做前端数据源与提示语义纠偏，不动接口契约、不加服务。
