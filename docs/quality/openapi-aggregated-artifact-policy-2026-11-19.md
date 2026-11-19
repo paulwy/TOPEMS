@@ -377,3 +377,23 @@ gh run view <run-id> | grep -A2 ANNOTATIONS
 # TODO 与 facts
 wc -l TODO.md; node scripts/report/facts.mjs
 ```
+
+## 8. 落地记录（2026-11-19）
+
+按方案 B 实施，分三批提交（本轮之前）：
+
+| commit | 内容 |
+| --- | --- |
+| `3e8e69fe2` | `gen-types` 自动选源改为「本地聚合 → 权威 `openapi.json` → 手写 YAML」；棘轮新增 `--allow-missing`；lefthook 本地跳过缺失产物 |
+| `27d5d7aed` | 聚合 `json`/`yaml` 移出索引（工作区文件保留未删除）、加入 `.gitignore`、删除 LFS 规则、移除大文件豁免 |
+| `f179a3bdd` | 新增 tag/手动触发的生成 workflow、`make-manifest.mjs`（commit/计数/sha256）、README 获取与应急口径 |
+
+本批同时落定：`TODO.md` 维护约定（§4.3 四条纪律）与 `facts-latest.json` 的 TODO 读数；
+`docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md` 入库，消除 §1.F 悬空链接。
+
+尚未闭环：
+
+- **GitHub Actions 因计费问题作业不启动**，`openapi-aggregated.yml` 尚未实跑；计费恢复后需先用 `workflow_dispatch` 跑一次，核对 manifest 的 commit/计数/sha256 与棘轮结果。
+- 历史 LFS blob 保留在仓库历史中（未重写历史），仅停止新增。
+- 前端 `openapi.d.ts` 尚未用权威契约重生成，需单独提交（预期 schema 数量上升）。
+

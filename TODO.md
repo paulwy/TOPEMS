@@ -2,9 +2,16 @@
 
 > 本文件只保留**未完成 / 待确认 / 实施中**事项；已完成条目核销后删除，判定依据见审计文档，不再复述原文。
 > 状态口径：`未完成`（有明确剩余动作）/ `待确认`（需业务或用户拍板）/ `实施中`（当前批次已开工）/ `受阻`（依赖未满足）。
-> 最近治理：**2026-11-17 全项目审计后清理**。审计基线 `a82d97512`（本地 main 领先 origin/main 187 个提交，均未推送）。
+> 最近治理：**2026-11-17 全项目审计后清理**。审计基线 `a82d97512`（本地与 origin/main 的差距以 `git rev-list --count origin/main..main` 为准）。
 > 逐条判定、读数与复现命令：[项目审计与实施方案-2026-11-17](docs/quality/项目审计与实施方案-2026-11-17.md)。
-> 本轮只改本文件与新增审计文档；未改代码、未提交、未推送、未触碰生产。
+> 该轮只改本文件与新增审计文档；未改代码、未提交、未推送、未触碰生产。
+> 2026-11-19 增补：新增 §1.F「前端真实性与交互纠错」F1–F11（依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)）；**只登记，未开工**。
+
+> **维护约定（2026-11-19 定稿，口径见 [聚合产物与 TODO 入库策略](docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md)）**
+> 1. **维护者**：当批任务的提交者负责更新；跨批只允许新增条目或删除已完成条目，不做批量重排。
+> 2. **同批更新**：条目状态与实际代码在同一提交内变更；引用的评估/设计文档必须先入库，禁止悬空链接。
+> 3. **与 facts 同步**：改变行数或一级章节数后，同批更新 `docs/quality/facts-latest.json` 的 `docs.todo_lines` / `docs.todo_h2_sections`。
+> 4. **归档**：已完成条目累计超过 50 行时压缩进 `docs/archive/TODO-archive-<date>.md`，本文件只保留未完成项。
 
 ## 0. 治理记录（2026-11-17）
 
@@ -14,6 +21,7 @@
 | 清理后结构 | 3 个执行分类（可立即做 / 需拍板 / 需生产窗口）+ 执行次序（§4）+ 已关闭条目索引 + 执行纪律 |
 | 历史备份 | `docs/archive/misc/TODO_backup_20260828.md`、`docs/archive/TODO-archive-2026-10-31.md`、`docs/archive/TODO-archive-2026-11-03.md`、`docs/archive/roadmap-history/*` |
 | 说明 | 旧版本引用的 `docs/archive/misc/TODO_backup_20261107.md` 实际不存在，已从本文件移除该死链 |
+| 2026-11-19 增补 | 新增 §1.F 前端真实性 F1–F11（11 条，**未开工**）；依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)，无既有条目重复 |
 
 ### 0.1 当前阻断读数（必须先修）
 
@@ -108,6 +116,30 @@
 | ID | 现象 | 证据 / 复现（只读） | 状态 |
 |---|---|---|---|
 | DRIFT-01 | `mes.production_records.completed_quantity` 在本地 `topems` 实际为 `numeric`（无 typmod），迁移 `20260926120000_app_schema_tables.sql:1617` 与门禁断言要求 `numeric(12,2)` | `psql "postgresql:///topems" -tAc "select format_type(atttypid, atttypmod) from pg_attribute where attrelid='mes.production_records'::regclass and attname='completed_quantity'"` → `numeric`；`topems_web_smoke` 为 `numeric(12,2)`，生产快照 `fixtures/full_schema_contract.sql:17144` 亦为 `numeric(12,2)`；全仓迁移无后续 `ALTER ... TYPE` | **未定性**：尚无「迁移写错 / 契约写错 / 本地库手工改过」的结论。现状证据更像本地 `topems` 建库路径漂移，但未取证建库历史。**未改契约、未改迁移**；待确认来源后只修一侧。门禁复现：`MIGRATION_DRIFT_DB_URL=postgresql:///topems node scripts/migration/check-ledger-ddl-drift.mjs`（本地 socket 为超管，需 `MIGRATION_DRIFT_ALLOW_SUPERUSER=1` 才会跑到断言） |
+
+### F. 前端真实性与交互纠错（2026-11-19 评估增补，只登记未开工）
+
+> 依据：[主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md) §2.1/§2.2/§2.3。
+> 冲突核查：与 W3-B/W3-C（结构去重）、W4-*（组件去重）、§17.3（后端 `200+success:false` 语义）均无重叠；本条只做前端数据源与提示语义纠偏，不动接口契约、不加服务。
+> 批次：1 = 去 mock + 提示纠错（零后端改动）；2 = 接线/隐藏既有能力（依赖后端现状）。
+> 纪律：每条独立验收；不得以“优化”合并。
+
+| ID | 批次 | 任务 | 当前证据（HEAD `b95700640`） | 验收 |
+|---|---|---|---|---|
+| F1 | 2 | 银行账户管理页接真实 API（去掉纯 mock CRUD） | `pages/admin/BankAccountManagementPage.tsx:29/65/101-117` 全内存；真实接口 `svc/erp/src/modules/bank_account.rs:28` 与 `api/erp/bankAccount.ts` 已存在；路由 `module-configs/admin/config.ts:196` | 列表/新增/编辑/删除全部走 `/api/erp/bank-accounts`；断网显示错误态；页面内 `mockBankAccounts` 归零 |
+| F2 | 1 | CRM 三个 Redesign 页去 mock 兜底 | `CrmCustomer/CrmContract/CrmOpportunityRedesignPage.tsx` 均 `setIsMockData(true)` 后返回 `mock*`（如 `CrmCustomerRedesignPage.tsx:315`） | 三页 mock 常量归零；API 失败显示错误与重试，不再回退假数据 |
+| F3 | 1 | WMS 盘点页去 mock 兜底 | `WmsStocktakePage.tsx:314` `let filtered = mockStocktakes`，`:600` mock 横幅 | `mockStocktakes` 归零；失败态显式报错 |
+| F4 | 1 | MES 工单页：去 mock + 修正删除失败提示 | `MesWorkOrderPage.tsx:268/284` mock 兜底；`:278` `onError` 仍 `pushToast('success', 删除成功)` | mock 归零；删除失败提示错误且不再出现成功文案 |
+| F5 | 1 | ERP 采购单页：去 mock + 修正删除失败提示 | `PurchaseOrderPage.tsx:301/317` mock 兜底；`:311` `onError` 仍提示成功 | 同上 |
+| F6 | 1 | 监控告警规则页去 mock 适配器 | `MonitorAlertRulesPage.tsx:251` `mockApiAdapter` | 改真实 API 适配器；`mockApiAdapter` 归零 |
+| F7 | 1 | OA 公告页失败提示纠错 | `AnnouncementPage.tsx:194/209` `onError` 内提示成功 | 失败提示错误；更新/删除失败不出现成功文案 |
+| F8 | 1 | 工作流审批页失败提示纠错 | `WorkflowApprovalsPage.tsx:244/264` 同上 | 同上 |
+| F9 | 2 | 文件中心 3 个 501 入口先隐藏（后端补齐后再放开） | 前端 `api/file/index.ts:187/191/195` 已接线；后端 `unified-core/src/modules/file/manage.rs:1201/1220/1245` 501 | 3 个入口不可见或禁用，调用点前端归零；待后端实现后单独恢复 |
+| F10 | 1 | IAM 权限定义写入口隐藏（权限为迁移种子，后端固定 501） | `api/iam/permission.ts:13/20/24` 对应 `iam/permission.rs:194/210/224` 501 | 权限页只读；新增/编辑/删除按钮与调用点归零 |
+| F11 | 1 | 增加前端 mock 回归门禁 | 现无规则；8 页 mock 可复发 | 生产构建路径禁止 mock 兜底（仅允许 `import.meta.env.DEV`）；CI 扫描违规即红，并用一条构造用例验证能拦住 |
+
+> 本批刻意不包含：EHS 职业健康域（需业务拍板，见评估 §2.5）、AI 用量计量/MES 成本/GIS 轨迹/SRM 条款（后端半成品，见 §2.4）、文件中心与合并报表的后端实现。
+> 门禁影响：`facts:check` 当前已红 11 项（`docs.todo_lines` 325→365 等多因代码演进）；本批只新增 `todo_lines` 一项漂移，快照重建需与 `schema-prefix` 19 个 stale key 一并处理，不在本批范围内。
 
 ---
 
