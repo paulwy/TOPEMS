@@ -298,3 +298,37 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
 - 未执行迁移、未修改账本、未调用 `apply-forward`。
 - 本文与审计脚本均未改动 `TODO.md` 及两份未跟踪文档。
 
+
+---
+
+## 12. 执行记录（2026-11-19 14:31–14:33，仅 dev `topems`）
+
+### 12.1 备份
+
+- 文件：`/tmp/topems_pre_devfix_20261119143121.dump`（4.1 MB，`pg_dump -Fc`）
+- sha256：`d147cc77cab733b66fe3c7c8bb5134c4ec453e3b606de100fd259c926e3b5b8c`
+- 恢复命令：`pg_restore -d topems --clean --if-exists /tmp/topems_pre_devfix_20261119143121.dump`
+
+### 12.2 第一批：空壳回归（实际 23 条）
+
+- 执行方式：逐条 `DELETE FROM _sqlx_migrations WHERE version=<v> AND success` → `apply-forward.sh --db topems --apply-deferred <v> --ticket DEV-CONSISTENCY-20261119`，全部 rc=0。
+- 版本：`20260901000024 20260918000014 20260918000033 20260918000034 20260920000094 20260921000103 20260923000003 20261007000004 20261007000010 20261017000001 20261017000008 20261017000015 20261018000004 20261020000020 20261026120000 20261026230000 20261027140000 20261027150000 20261028000000 20261029173000 20261029176000 20261029200000 20261030162000`
+- 未执行：`20261007140000`（含 DML，按“11 条 DML 一律不动”排除，故 24 条中实做 23 条）。
+- 账本：693 行，success 693 / failed 0；23 个版本均重新记账。
+- 断言语义复核：21/23 已无核心缺失；2 条残留属**迁移自带守卫**，不是假 applied：
+  - `20261007000004`：`DO $$ ... IF EXISTS (pg_class ...) THEN ALTER ...`，`flow.core_master_data_*` 等表不存在时按设计跳过。
+  - `20261029173000`：`ALTER TABLE IF EXISTS "public"/"analytics"."reports" ...`，表不存在时按设计跳过。
+- 抽样验证输出：
+  - `ehs.health_records` 列：`id,deleted_at,record_no,department,position,workplace,hazard_factors,allergy_history,contact_info,check_type,check_date,result,remarks,chronic_diseases,emergency_contact,emergency_phone,employee_id,employee_name,status,created_at,updated_at,tenant_id,birth_date,blood_type,medical_history`（24 列）
+  - `iam.user_roles` 列：`id,deleted_at,user_id,role_id,tenant_id,granted_by,granted_at,expires_at`（8 列）
+  - `bi.report_status`：`draft,published,archived,pending,scheduled,cancelled`（6 值）
+  - 行为验证：`BEGIN; INSERT INTO ehs.health_records(id,tenant_id,record_no) VALUES (gen_random_uuid(),gen_random_uuid(),'VERIFY-001'); SELECT ...; ROLLBACK;` → `INSERT 0 1` / `VERIFY-001`，事务回滚，无残留。
+
+### 12.3 第二批：已迁 schema（33 条，未执行，待确认）
+
+- 其中 4 条在“11 条 DML 一律不动”清单内：`20260917000008`、`20260918000019`、`20260920000080`、`20261021000001`。
+- 其余 29 条若重放，会在原 schema 新建 **29 张同名重复表**（同名对象已存在于 `iam`/`ai`/`qms`/`lims` 等），例如：
+  - `010_billing.sql` → `public.core_billing_plans`（现存在于 `iam`）
+  - `20260907000001` → `public.supply_chain_orders`、`public.production_plans`
+  - `20260724000003` → `public.core_dashboard_refresh_log`（现存在于 `iam`）
+- 风险：空表可能与现有 schema 同名，若代码以未限定名查询会被 `public` 空表遮蔽；与本文件 §7 “relocated = superseded，不重放”的建议一致，故**暂停执行并等待确认**。
