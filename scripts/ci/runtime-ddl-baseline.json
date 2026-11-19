@@ -1,0 +1,415 @@
+{
+  "generated": "2026-11-19",
+  "note": "运行期 DDL 只减不增基线（TODO W2-D1）。度量：tables/columns = TABLE_DEFS 声明数；ddl = SQL 字面量中的 CREATE TABLE|CREATE INDEX|CREATE SCHEMA|ALTER TABLE|DROP TABLE；callers = run_schema_migration_and_verify 调用次数。仅允许在下降后 --update-baseline 核销。",
+  "totals": {
+    "files": 67,
+    "tables": 648,
+    "columns": 8210,
+    "ddl": 272,
+    "callers": 20
+  },
+  "files": {
+    "lib/shared-db/src/audit.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 6,
+      "callers": 0
+    },
+    "lib/shared-db/src/database/mod.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 1,
+      "callers": 0
+    },
+    "lib/shared-db/src/rls.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 2,
+      "callers": 0
+    },
+    "lib/shared-db/src/schema.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 3,
+      "callers": 0
+    },
+    "svc/ai/src/dsh/governance/guard.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/ai/src/dsh/mcp/security.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/ai/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/ai/src/schema_defense.rs": {
+      "tables": 4,
+      "columns": 54,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/ai/src/services/db.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 22,
+      "callers": 0
+    },
+    "svc/analytics/src/models/schema_defense.rs": {
+      "tables": 4,
+      "columns": 56,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/analytics/src/modules/bi/mod.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/analytics/src/modules/report/mod.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/communication/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/communication/src/schema_defense.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/crm/src/schema_defense.rs": {
+      "tables": 12,
+      "columns": 223,
+      "ddl": 4,
+      "callers": 0
+    },
+    "svc/ehs/src/models/mod.rs": {
+      "tables": 43,
+      "columns": 581,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/ehs/src/schema_defense.rs": {
+      "tables": 43,
+      "columns": 581,
+      "ddl": 0,
+      "callers": 0
+    },
+    "svc/erp/src/modules/db_structure.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 3,
+      "callers": 0
+    },
+    "svc/erp/src/schema_defense.rs": {
+      "tables": 25,
+      "columns": 423,
+      "ddl": 3,
+      "callers": 0
+    },
+    "svc/finance/src/models/schema_defense.rs": {
+      "tables": 66,
+      "columns": 563,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/finance/src/modules/decision_v60.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 32,
+      "callers": 0
+    },
+    "svc/finance/src/modules/reports_v57.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 21,
+      "callers": 0
+    },
+    "svc/finance/src/modules/risk_v54.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 22,
+      "callers": 0
+    },
+    "svc/finance/src/modules/risk_v59.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 28,
+      "callers": 0
+    },
+    "svc/finance/src/modules/settlement_v55.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 20,
+      "callers": 0
+    },
+    "svc/finance/src/modules/tax_v56.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 22,
+      "callers": 0
+    },
+    "svc/finance/src/modules/treasury_v58.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 25,
+      "callers": 0
+    },
+    "svc/finance/src/services/finance/database.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 12,
+      "callers": 0
+    },
+    "svc/finance/src/services/mod.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/gis/src/db/schema.rs": {
+      "tables": 20,
+      "columns": 224,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/hrm/src/schema_defense.rs": {
+      "tables": 28,
+      "columns": 501,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/integration/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/integration/src/schema_defense.rs": {
+      "tables": 8,
+      "columns": 121,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/lims/src/models/mod.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/lims/src/models/schema_defense.rs": {
+      "tables": 42,
+      "columns": 516,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/master-data/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/master-data/src/modules/persist.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/master-data/src/modules/schema_registry.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/master-data/src/schema_defense.rs": {
+      "tables": 5,
+      "columns": 51,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/mes/src/models/schema_defense.rs": {
+      "tables": 14,
+      "columns": 356,
+      "ddl": 0,
+      "callers": 0
+    },
+    "svc/mobile/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/mobile/src/schema_defense.rs": {
+      "tables": 23,
+      "columns": 268,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/pdm/src/models/schema_defense.rs": {
+      "tables": 18,
+      "columns": 213,
+      "ddl": 0,
+      "callers": 0
+    },
+    "svc/plugin-registry/src/modules/plugin/mod.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/plugin-registry/src/schema_defense.rs": {
+      "tables": 8,
+      "columns": 89,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/pm/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/pm/src/schema_defense.rs": {
+      "tables": 18,
+      "columns": 234,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/portal/src/embedded.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/portal/src/models/schema_defense.rs": {
+      "tables": 115,
+      "columns": 728,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/portal/src/modules/gateway_security.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/qms/src/models/schema_defense.rs": {
+      "tables": 30,
+      "columns": 406,
+      "ddl": 0,
+      "callers": 0
+    },
+    "svc/rd/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/rd/src/schema_defense.rs": {
+      "tables": 6,
+      "columns": 91,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/scm/src/schema_defense.rs": {
+      "tables": 27,
+      "columns": 418,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/server/src/modules/ai_real_module.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/server/src/modules/master_data_real_module.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/server/src/modules/rd_real_module.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/server/src/modules/tms_real_module.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/srm/src/schema_defense.rs": {
+      "tables": 16,
+      "columns": 205,
+      "ddl": 4,
+      "callers": 0
+    },
+    "svc/ticket/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/ticket/src/schema_defense.rs": {
+      "tables": 7,
+      "columns": 77,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/tms/src/models/schema_defense.rs": {
+      "tables": 5,
+      "columns": 57,
+      "ddl": 2,
+      "callers": 0
+    },
+    "svc/unified-core/src/embedded.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/unified-core/src/main.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 0,
+      "callers": 1
+    },
+    "svc/unified-core/src/middleware/input_validation.rs": {
+      "tables": 0,
+      "columns": 0,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/unified-core/src/schema_defense.rs": {
+      "tables": 28,
+      "columns": 274,
+      "ddl": 1,
+      "callers": 0
+    },
+    "svc/wms/src/schema_defense.rs": {
+      "tables": 33,
+      "columns": 900,
+      "ddl": 2,
+      "callers": 0
+    }
+  }
+}

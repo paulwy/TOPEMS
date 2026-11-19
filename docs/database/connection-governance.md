@@ -1157,3 +1157,34 @@ node scripts/ci/check-search-path.mjs --update-baseline
    重生成基线；
 3. `git diff` 必须只新增预期的 `文件::表名` 条目，`git add` 后随同一 commit 提交；
 4. CI（`connection-governance` job）与 pre-commit 都会跑全量/增量校验，基线膨胀同样会进 review。
+
+### C.7 运行期 DDL 只减不增门禁（`scripts/ci/check-runtime-ddl.mjs`，W2-D1）
+
+规则：服务启动期的 `CREATE SCHEMA` / `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE` / `DROP TABLE`
+只能存在于 `database/migrations/`；收口完成前，存量按文件冻结，**只减不增**。
+
+度量（每个 Rust 文件，排除 `tests/`、`*_test.rs` 与 `#[cfg(test)] mod`）：
+
+| 指标 | 含义 |
+| --- | --- |
+| `tables` / `columns` | 该文件 `TABLE_DEFS` 声明的表数 / 列数（按结构解析，不依赖换行格式） |
+| `ddl` | SQL 字符串字面量里的 DDL 语句数（`CREATE TABLE` / `CREATE INDEX` / `CREATE SCHEMA` / `ALTER TABLE` / `DROP TABLE`） |
+| `callers` | 调用 `run_schema_migration_and_verify(` 的次数（不含函数定义本身） |
+
+- 基线 `scripts/ci/runtime-ddl-baseline.json`（2026-11-20 建档）：
+
+  | 指标 | 现值 | 说明 |
+  | --- | --- | --- |
+  | 文件数 | 67 | 含 `lib/shared-db` 的 DDL 引擎与各服务 `schema_defense` |
+  | `tables` | 648 | 其中 portal 115、finance 66、ehs 43×2（`models/mod.rs` 与 `schema_defense.rs` 重复声明）、lims 42 |
+  | `columns` | 8210 | 同上 |
+  | `ddl` | 272 | 以 `ALTER TABLE ... ADD COLUMN` 为主 |
+  | `callers` | 20 | 审计文档口径「56 文件调用」含 26 个定义文件与测试文件，本门禁只计运行期调用点 |
+
+- 任一指标上升（或出现新的含 DDL 文件）→ exit 1；下降只提示，`--update-baseline` 核销
+  （与 `check-request-txn.mjs` 同一口径）。既有基线存在上升时 `--update-baseline` 会被拒绝。
+- 接入：pre-commit `runtime-ddl`（`--changed-only`，`svc/`、`lib/` 或门禁自身变更时触发）；
+  CI `Runtime DDL gate (only-decrease)`（全量，位于 `connection-governance` job）。
+- 收口路径（W2-D2/D3）：逐服务把 `TABLE_DEFS` 对应的建表/加列写进 `database/migrations/`，
+  删除 `schema_defense` 中的 DDL 入口，每删一批在同一提交里 `--update-baseline` 核销。
+  `ehs` 的两份重复 `TABLE_DEFS` 属待合并项。

@@ -63,14 +63,14 @@
 | B43-09 | 非 HTTP 路径（定时任务/消息消费/CLI）中间件与租户上下文评估 | 未做 | 每类入口有租户上下文或显式豁免记录 |
 | W2-A1 ✅ | 移除 `SEARCH_PATH` 环境读取 | 实为 2 处（`shared-bootstrap/lib.rs` 的 legacy 入口与内层 fallback；`audit.rs` 那处已在此前改为必填 `schema_prefix` 消失）。已删除 legacy `bootstrap_service` 入口，内层只接受显式参数；17 个服务 main 全改 `bootstrap_service_with_search_path(&config, "<module path>")`；`embedded.rs` 显式传 `flow, public` | 全仓 `env::var("SEARCH_PATH")` = 0；`cargo check --workspace` 绿 |
 | W2-A3 ✅ | 增 CI 规则禁止 `SEARCH_PATH` 环境读写 | 新增 `scripts/ci/check-search-path-env.mjs`（零基线，扫 1879 文件 0 违规）；已接入 lefthook pre-push `[Gate SPE]` 与 CI `connection-governance` job；配套删掉 `connection_budget_it.rs` 里已失效的 `set_var` | 规则上线；构造一条 `set_var("SEARCH_PATH")` 能被拦下（`--root` 自测路径已留） |
-| W2-B1 | mes：裸表引用归零 | 316 | `check-schema-prefix` 该模块归零 |
+| W2-B1 ✅ | mes：裸表引用归零 | 316 → 0（2026-11-20，25 文件；基线移除 62 条，`.sqlx` 新增 99 条） | `check-schema-prefix` 该模块归零 |
 | W2-B2 | unified-core | 247 | 同上 |
 | W2-B3 | finance | 227 | 同上 |
 | W2-B4 | lims + analytics | 174 / 167 | 同上 |
 | W2-B5 | pdm + erp | 152 / 105 | 同上 |
 | W2-B6 | integration 46 + communication 44 + portal 19 + rd 16 + pm 10 + monitor 5 + 小模块 8 | 合计 1536 | 同上 |
 | W2-C1..C3 | finance 停止直连 `erp.opening_balances`（改经 erp 接口/共享读视图） | 8 处（`finance/modules/mod.rs` 5564~6118） | 该 grep 归零，期初余额口径测试绿 |
-| W2-D1..D3 | 运行期 DDL 收口：先加“零运行时 DDL”断言，再逐服务迁移 | 56 文件调用 `run_schema_migration_and_verify`；`TABLE_DEFS` 606 条 | 断言上线，`TABLE_DEFS` 只减不增 |
+| W2-D1..D3 | 运行期 DDL 收口：先加“零运行时 DDL”断言，再逐服务迁移 | W2-D1 ✅ 2026-11-20：`scripts/ci/check-runtime-ddl.mjs` + `runtime-ddl-baseline.json`（67 文件 / 648 表 / 8210 列 / 272 条 DDL / 20 个运行期调用点），pre-commit+CI 已接线；W2-D2/D3 未开工 | 断言上线；`TABLE_DEFS` 只减不增 |
 | W2-§12.6 | WS 消费组默认值按服务区分（机制已有，默认名仍相同） | `ws_event_bridge.rs:164` | 默认值不同，双实例互不抢占 |
 
 ### C. 测试与 CI 可信化

@@ -430,6 +430,16 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-schema-prefix.mjs --changed-only
 
+    # [Gate RDDL] 运行期 DDL 只减不增（W2-D1）：服务启动期 CREATE/ALTER/DROP 与
+    # TABLE_DEFS 声明数按文件冻结在 scripts/ci/runtime-ddl-baseline.json；
+    # 任一项上升即阻断，下降需 --update-baseline 核销。DDL 正确入口是 database/migrations/。
+    runtime-ddl:
+      tags: database rust schema
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$|^scripts/ci/check-runtime-ddl\.mjs$|^scripts/ci/runtime-ddl-baseline\.json$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-runtime-ddl.mjs --changed-only
+
     # [Gate SPX] search_path 自设语句门禁：业务代码禁止 SQL 内 SET search_path /
     # set_config('search_path', ...)（作用域统一由 Db 的事务级 SET LOCAL 注入）。
     # 既存违规按 scripts/ci/search-path-baseline.json 放行；新增阻断。

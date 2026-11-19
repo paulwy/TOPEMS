@@ -274,6 +274,9 @@ jobs:
       - name: Request txn gate
         run: node scripts/ci/check-request-txn.mjs
 
+      - name: Runtime DDL gate (only-decrease)
+        run: node scripts/ci/check-runtime-ddl.mjs
+
       - name: Pool direct + system scope gate
         run: python3 scripts/ci/check-pool-direct-system-scope.py
 
