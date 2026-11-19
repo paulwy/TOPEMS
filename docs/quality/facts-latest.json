@@ -45,14 +45,14 @@
   "schema_prefix": {
     "scanned_files": 1433,
     "sql_literals": 6521,
-    "violations": 1460,
+    "violations": 1144,
     "by_level": {
       "AMBIGUOUS": 0,
       "CROSS_SCHEMA": 0,
-      "SEARCH_PATH_DEPENDENT": 827,
-      "UNKNOWN": 633
+      "SEARCH_PATH_DEPENDENT": 604,
+      "UNKNOWN": 540
     },
-    "baseline_keys": 287,
+    "baseline_keys": 225,
     "new_violations": 0,
     "stale_keys": 0,
     "stale_samples": [],
