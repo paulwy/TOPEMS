@@ -9733,14 +9733,14 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "mobile_allow_all_oa_announcement_reads",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "true",
-          "with_check": "true"
+          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
+          "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
         }
       ]
     },
@@ -10219,24 +10219,14 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "pdm_master_data_refs_read",
-          "cmd": "SELECT",
-          "permissive": true,
-          "roles": [
-            "public"
-          ],
-          "using": "true",
-          "with_check": ""
-        },
-        {
-          "name": "pdm_master_data_refs_write",
+          "name": "rls_tenant_isolation",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
-          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
+          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
+          "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
         }
       ]
     },

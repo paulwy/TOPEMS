@@ -7,6 +7,7 @@ use axum::Extension;
 use axum::Json;
 use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -1629,6 +1630,7 @@ pub async fn get_announcement(
 pub async fn mark_announcement_read(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     // 数据库作用域（事务级 search_path）。
@@ -1645,13 +1647,19 @@ pub async fn mark_announcement_read(
             return ApiResponse::server_error("数据库作用域创建失败");
         }
     };
-    let user_id = "default_user".to_string();
+    // 认证主体：user_id 取 token sub，tenant_id 取 token 声明；缺失即失败（不回落零租户）。
+    let user_id = claims.sub.clone();
+    let Ok(tenant_id) = Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or_default()) else {
+        tracing::error!("announcement read rejected: claims 缺少有效 tenant_id");
+        return ApiResponse::unauthorized("缺少租户上下文");
+    };
     let _ = sqlx::query(only_own_schema_query!(
         "mobile",
-        "INSERT INTO mobile.oa_announcement_reads (announcement_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+        "INSERT INTO mobile.oa_announcement_reads (announcement_id, user_id, tenant_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
     ))
     .bind(id)
     .bind(&user_id)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 

@@ -502,3 +502,14 @@
 - 保留：131（portal 预留 111、迁移种子 19、外键依赖 1）
 - 归档候选：139
 - 删除候选：207
+
+## 补充登记（非零 SQL 引用，2026-11-19 追加）
+
+本清单主表口径为「全仓 Rust 源码零 SQL 引用」，以下表不满足该前提，但有运行期读路径，故单列登记，避免与主表混算。
+
+| 表 | 处置 | 依据 | 行数 | 终态 |
+|---|---|---|---:|---|
+| `gis.track_positions` | 删除候选 | 只读路径 `svc/gis/src/modules/sync.rs:355`；全仓无 INSERT/UPDATE（批量上报写 `gis.device_location_records`，`sync.rs:158-163`）；`deploy/`、`scripts/` 无写入配置；无 `pg_cron`/`cron.schedule`；无动态表名拼接；基线快照无 `COPY` 块 = 0 行；无 `tenant_id`；`gis_allow_all_track_positions` 挂在未启用 RLS 的表上（`relrowsecurity=false`，策略不生效） | 0 | 不启用 RLS，随死表批次删除 |
+
+> 依据详见 `docs/database/rls-using-true-triage-2026-11-19.md` §3 P3。
+

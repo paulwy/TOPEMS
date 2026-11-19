@@ -52,15 +52,15 @@
 | 15 | `gis.audit_log` | GIS / 审计 | 审计服务动态 SQL 前缀 | 审计写入器（系统通道） | 删除候选* | 有意 fail-open | 已登记并受守卫 |
 | 16 | `gis.audit_logs` | GIS / 审计 | 审计服务动态 SQL 前缀 | 审计写入器（系统通道） | 删除候选* | 有意 fail-open | 已登记并受守卫 |
 | 17 | `gis.geofence_alerts` | GIS | — | 无 | 删除候选 | 真漏配 | 零引用、生产 0 行；无 `tenant_id` |
-| 18 | `gis.track_positions` | GIS | 只读：`svc/gis/src/modules/sync.rs:355`（按 `track_id` 批量读） | 无（仓内无 INSERT/UPDATE） | 未登记 | 真漏配（**P3**） | 位置轨迹属敏感数据；`relrowsecurity=false`，策略完全未生效，任意租户可读写全部行 |
+| 18 | `gis.track_positions` | GIS | 只读：`svc/gis/src/modules/sync.rs:355`（按 `track_id` 批量读） | 无（仓内无 INSERT/UPDATE） | 删除候选（随死表批次） | 已处置（不启用 RLS） | 位置轨迹属敏感数据；`relrowsecurity=false`，策略完全未生效。写入来源复核：仓内零写入、部署/脚本/定时任务/动态拼接均查无、基线 0 行 → 按 P3 口径登记删除候选，见 §3 P3 |
 | 19 | `iam.audit_logs` | 身份权限 / 审计 | 审计服务动态 SQL 前缀 | 审计写入器（系统通道） | 归档候选 | 有意 fail-open | 已登记并受守卫 |
 | 20 | `iam.permissions` | 身份权限（遗留） | —（运行期用 `public.core_permissions`：`svc/unified-core/src/modules/iam/permission_verify.rs:151-153`） | 无 | 归档候选 | 真漏配 | 遗留全局权限目录；无 `tenant_id`、无路径 |
 | 21 | `iam.roles` | 身份权限（遗留） | —（运行期用 `public.core_roles` / `iam.position_roles`） | 无 | 未登记 | 真漏配 | 遗留角色目录；无 `tenant_id`、无路径；若确认长期保留应改登记为有意放行 |
 | 22 | `mail.emails` | 邮件（遗留） | —（仅前端类型引用，无 SQL） | 无 | 归档候选 | 真漏配 | 历史 schema 副本 |
 | 23 | `mail.templates` | 邮件（遗留） | — | 无 | 归档候选 | 真漏配 | 零引用 |
-| 24 | `mobile.oa_announcement_reads` | 移动端 | 写：`svc/mobile/src/modules/oa.rs:1649-1654`（`only_own_schema_query!("mobile", ...)` 普通租户连接） | 租户侧 OA 已读上报（**非系统通道**） | 未登记 | 真漏配（**P2**） | 有写入路径且 allow-all；`user_id` 硬编码 `"default_user"`，功能未闭环；无 `tenant_id`，跨租户可读写已读回执 |
+| 24 | `mobile.oa_announcement_reads` | 移动端 | 写：`svc/mobile/src/modules/oa.rs:1630-1668`（`only_own_schema_query!("mobile", ...)` 普通租户连接，写入取认证主体） | 租户侧 OA 已读上报（**非系统通道**） | 未登记 | 已修复（**P2**，`20261119151000`） | 已补 `tenant_id`（回填自公告/用户主体）并 `SET NOT NULL`、严格 B 收紧、`(tenant_id,user_id)` 索引；`user_id` 改为 token `sub`，不再硬编码 |
 | 25 | `notification.notifications` | 通知（遗留） | —（权威表 `public.core_notifications`） | 无 | 归档候选 | 真漏配 | 历史 schema 副本 |
-| 26 | `pdm.pdm_master_data_refs` | 产品数据 | 写：`svc/pdm/src/event_handlers/mod.rs:271-281`（`scope_system()`，显式 `tenant_id`）；读：无租户谓词 | 系统通道（事件处理器） | 未登记 | 真漏配（**P1**） | 唯一「有 `tenant_id` + SELECT allow-all」组合：任意租户可读到其他租户的主数据引用关系；写入本身安全 |
+| 26 | `pdm.pdm_master_data_refs` | 产品数据 | 写：`svc/pdm/src/event_handlers/mod.rs:255-300`（`scope_system()`，显式 `tenant_id`）；读：全仓无代码路径 | 系统通道（事件处理器） | 未登记 | 已修复（**P1**，`20261119150000`） | 已删除 `read(SELECT true)` + `write(系统通道)` 两条策略，收敛为 `rls_tenant_isolation`(ALL，严格 B)；无读代码路径，收紧不影响运行 |
 | 27 | `pm.service_integrations` | 项目管理 | —（仅 OpenAPI 标签，无 SQL） | 无 | 删除候选 | 真漏配 | 零引用、无 `tenant_id` |
 | 28 | `portal.user_preferences` | 门户 | —（门户设置经 HTTP 转 IAM，无本表 SQL） | 无 | 保留 | 真漏配 | 预留表；无 `tenant_id`、无路径；启用前须补租户列或登记为个人级放行 |
 | 29 | `public.alert_rules` | 公共 / 监控 | —（`svc/monitor/.../alerts.rs` 仅 OpenAPI 标签，无 SQL） | 无 | 删除候选 | 真漏配 | SELECT-only 策略 + 零引用 + 无 `tenant_id`，随表删除 |
@@ -80,7 +80,7 @@
 | 组 | 数量 | 表 |
 |---|---|---|
 | A. 有意 fail-open（已登记 / 逻辑成立） | **7** | 6 张共享审计表 + `erp.core_erp_materials` |
-| B. 真漏配且**有活路径**（需处置） | **3** | `pdm.pdm_master_data_refs`、`mobile.oa_announcement_reads`、`gis.track_positions` |
+| B. 真漏配且**有活路径**（需处置，本轮已全部收口） | **3** | `pdm.pdm_master_data_refs`、`mobile.oa_announcement_reads`、`gis.track_positions` |
 | C. 真漏配但**无运行期路径**（随处置，不单独收紧） | **27** | 其余全部（含 doc/doc_service/mail/storage/flow/notification/report 遗留副本、iam 遗留目录、qms 4 张遗留表、3 张删除候选公共表、2 张保留/未登记表） |
 | 合计 | **37** | 有意 fail-open 7 / 真漏配 30 |
 
@@ -94,19 +94,21 @@
 
 ### P1 `pdm.pdm_master_data_refs` —— 跨租户读泄漏，且已有租户列
 
-- 现状：`pdm_master_data_refs_read`（`SELECT`，`USING(true)`），表有 `tenant_id`；写入走 `scope_system()` 系统通道，安全。
+- 状态：**已实施**（`database/migrations/20261119150000_pdm_master_data_refs_rls_strict_forward.sql`，回滚 `database/rollback/20261119150000_pdm_master_data_refs_rls_strict_forward.rollback.sql`）。
+- 迁移前实测策略为两条：`pdm_master_data_refs_read`（SELECT/`true`）与 `pdm_master_data_refs_write`（ALL/仅 `app.rls_system='on'`）；迁移后收敛为 1 条 `rls_tenant_isolation`（ALL，严格 B）。
+- 读路径复核：全仓除事件处理器写入（`scope_system()`，系统通道）外无该表 SELECT，故不存在「收紧后读空集」风险，未新增 `scope_with` 调用。
+
+- 迁移前现状：`pdm_master_data_refs_read`（`SELECT`，`USING(true)`），表有 `tenant_id`；写入走 `scope_system()` 系统通道，安全。
 - 风险：任意租户连接 `SELECT` 可读到全部租户的主数据引用映射（物料/产品 → 主数据 ID），可用于推断他租户的产品结构。
-- 建议：删除读策略，改为 canonical strict B：
+- 迁移实现（已落盘）：删除两条原策略，改为 canonical strict B：
 
 ```sql
-DROP POLICY pdm_master_data_refs_read ON pdm.pdm_master_data_refs;
 CREATE POLICY rls_tenant_isolation ON pdm.pdm_master_data_refs
   FOR ALL
   USING (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)
           OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)))
   WITH CHECK (((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)
           OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
-ALTER TABLE pdm.pdm_master_data_refs FORCE ROW LEVEL SECURITY;
 ```
 
 - 验证：`relrowsecurity/relforcerowsecurity=true`；`pg_policy` 恰好 1 条；以租户 A 的 GUC 查询只返回 A 行（跨租户 0 行）；
@@ -114,22 +116,28 @@ ALTER TABLE pdm.pdm_master_data_refs FORCE ROW LEVEL SECURITY;
 
 ### P2 `mobile.oa_announcement_reads` —— 有租户侧写入，无租户列
 
-- 现状：写入口 `svc/mobile/src/modules/oa.rs:1649`（普通租户连接），`INSERT ... ON CONFLICT DO NOTHING`；`user_id` 硬编码
+- 状态：**已实施**（`database/migrations/20261119151000_mobile_oa_announcement_reads_tenant_rls.sql`，回滚 `database/rollback/20261119151000_mobile_oa_announcement_reads_tenant_rls.rollback.sql`），按「功能保留」方案（下方建议 1）。
+- 回填可追溯：优先 `mobile.oa_announcements.tenant_id`，剩余再按 `user_id` 从 `public.core_users.tenant_id` 推；迁移内 `RAISE EXCEPTION` 断言 0 行 NULL 后才 `SET NOT NULL`。
+- 代码：`svc/mobile/src/modules/oa.rs:mark_announcement_read` 改用认证主体 `Claims`（`user_id = sub`、`tenant_id = claims.tenant_id`，缺失即 401），不再硬编码 `"default_user"`；事务仍为中间件已设 `app.tenant_id` 的请求级 `scope_with`。
+
+- 迁移前现状：写入口 `svc/mobile/src/modules/oa.rs:1649`（普通租户连接），`INSERT ... ON CONFLICT DO NOTHING`；`user_id` 硬编码
   `"default_user"`；策略为 ALL/`true`；无 `tenant_id`。
 - 风险：任何租户可读/写/删所有租户的公告已读回执，形成跨租户个人信息泄漏与状态污染；且 `default_user` 说明功能未闭环。
-- 建议（二选一，优先前者）：
-  1. 功能保留：迁移补 `tenant_id NOT NULL` + 回填，再按 P1 的 strict B 收紧，并把 `user_id` 改为真实登录用户；
-  2. 功能未上线：删除该写入口，表随处置归档（当前无 disposition 登记，需补登）。
+- 方案选择：采用方案 1（功能保留）——迁移补 `tenant_id NOT NULL` + 回填，按 P1 的 strict B 收紧，`user_id` 改为真实登录用户。
 - 验证：跨租户 `SELECT` 0 行、跨租户 `INSERT` 被 `WITH CHECK` 拒绝；同租户上报幂等（`ON CONFLICT`）不回归。
 
 ### P3 `gis.track_positions` —— 策略存在但 RLS 未启用（最隐蔽）
 
-- 现状：`pg_class.relrowsecurity=false`、`relforcerowsecurity=false`，`gis_allow_all_track_positions` 实际不生效；读路径
-  `svc/gis/src/modules/sync.rs:355`，仓内无写路径；无 `tenant_id`。
-- 风险：轨迹/位置属高敏数据。一旦表内有数据（含外部 ETL/设备直写），任意租户连接可全量读取，且 ALL 策略若被启用也是全放行。
-- 建议：先确认写入来源与数据量（仓内零写路径，需排查 ETL/设备网关）；若无写入且 0 行 → 随处置下线；若确认保留 →
-  补 `tenant_id`（或 `device_id` 归属表）后 `ENABLE`+`FORCE` RLS 并落 strict B，禁止只改策略不启 RLS。
-- 验证：`relrowsecurity=true` 且 `pg_policy` 有 1 条；非系统连接跨租户 0 行；设备上报链路在系统通道下不受影响。
+- 结论：**不启用 RLS，登记为删除候选，随死表批次处理**（未生成 DDL 迁移）。
+- 迁移前现状：`pg_class.relrowsecurity=false`、`relforcerowsecurity=false`，`gis_allow_all_track_positions` 实际不生效；无 `tenant_id`。
+- 写入来源复核（按用户口径逐项给证据）：
+  - 仓库代码：唯一命中为只读 `svc/gis/src/modules/sync.rs:355`；批量位置上报写的是 `gis.device_location_records`（`svc/gis/src/modules/sync.rs:158-163`），**非本表**；全仓无 `INSERT INTO gis.track_positions` / `UPDATE gis.track_positions`。
+  - 部署配置：`deploy/` 全目录检索 `track_positions` —— **查无**。
+  - 脚本与定时任务：`scripts/` 仅 `scripts/schema_boundary_tables.json:385`（表归属声明）与 `scripts/ci/data/prod_cols.psv:5208-5218`（列采集），无写入；`database/`、`deploy/`、`scripts/` 检索 `pg_cron` / `cron.schedule` —— **查无**。
+  - 外部采集/动态拼接：`format!` / `quote_ident` 动态表名在 `svc/gis`、`svc/mobile`、`svc/pdm` —— **查无**。
+  - 数据量：基线数据快照 `baseline_20261117235500_data.sql.gz` 无 `COPY gis.track_positions` 块 → **0 行**。
+- 因此：既无写入方、表内 0 行，按口径不启用 RLS（避免把不确定读写锁死），随死表批次删除；`gis_allow_all_track_positions` 悬空策略随表一并消失。
+
 
 ### 低风险但建议登记（不收紧）
 
@@ -139,11 +147,26 @@ ALTER TABLE pdm.pdm_master_data_refs FORCE ROW LEVEL SECURITY;
 
 ---
 
-## 4. 实施顺序与验收
+## 4. 实施与验收（本轮已落地）
 
-1. **P1** 单独一个迁移（最小面、已有租户列、收益最高）；
-2. **P2** 先决策「补列收紧」还是「删功能归档」，再动迁移；
-3. **P3** 先查写入来源，再决定「启用 RLS + 补列」或「随表下线」；
-4. 27 张无路径表不新建收紧迁移，跟随 `table-disposition` 的归档/删除批次处理；
-5. 所有收紧迁移必须走 `scripts/dev/run-migration-drill.sh anchor`（干净 worktree、非特权连接、`PASS: drill:anchor`），
+1. **P1**：`20261119150000_pdm_master_data_refs_rls_strict_forward.sql`（单独迁移，最小面、已有租户列）。
+2. **P2**：`20261119151000_mobile_oa_announcement_reads_tenant_rls.sql` + `svc/mobile/src/modules/oa.rs` 主体修复（选择「补列收紧」）。
+3. **P3**：不生成 DDL，登记删除候选（见 §3 P3 与 `docs/quality/table-disposition-2026-11-19.md` 补充登记）。
+4. 27 张无路径表不新建收紧迁移，跟随 `table-disposition` 的归档/删除批次处理。
+5. 所有收紧迁移均走 `scripts/dev/run-migration-drill.sh anchor`（干净 worktree、非特权连接、`PASS: drill:anchor`），
    并保持「表存在 → 严格断言；表缺失 → 仅白名单跳过，名单外 RAISE」的既有守卫口径。
+
+## 5. 验证方法
+
+| 对象 | 验证 | 期望 |
+|---|---|---|
+| P1 策略 | `SELECT policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname='pdm' AND tablename='pdm_master_data_refs'` | 仅 1 条 `rls_tenant_isolation`，`cmd=ALL`，`qual/with_check` 同时含 `app.rls_system` 与 `app.tenant_id` |
+| P1 开关 | `SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE oid='pdm.pdm_master_data_refs'::regclass` | `t / t` |
+| P1 隔离 | 非特权连接 `SET LOCAL app.tenant_id='<租户A>'` 后 `SELECT count(*)` | 只返回租户 A 行；换成其他租户 → 0 行；`app.rls_system='on'` → 全量可见 |
+| P2 列 | `SELECT is_nullable FROM information_schema.columns WHERE table_schema='mobile' AND table_name='oa_announcement_reads' AND column_name='tenant_id'` | `NO` |
+| P2 策略 | 同 P1 的策略查询（schema=`mobile`） | 仅 1 条 `rls_tenant_isolation` |
+| P2 隔离 | 租户 A 下 `INSERT ... (tenant_id=B)` | 被 `WITH CHECK` 拒绝；同租户重复上报 `ON CONFLICT DO NOTHING` 不报错 |
+| P2 索引 | `to_regclass('mobile.idx_oa_announcement_reads_tenant_user')` | 非空 |
+| P3 | `SELECT relrowsecurity FROM pg_class WHERE oid='gis.track_positions'::regclass` | 保持 `false`（不启用，随死表批次删除） |
+| 全局 | `bash scripts/dev/run-migration-drill.sh anchor` | `PASS: drill:anchor`，`[conn] topems_test_runner / rolsuper=false / rolbypassrls=false`，`[5/5]` 快照比对通过 |
+

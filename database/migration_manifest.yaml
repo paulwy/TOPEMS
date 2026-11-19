@@ -2427,3 +2427,18 @@ pending_forward_patches:
     destructive_scan: "无 DDL/DML；仅 DO 块读 pg_policies/pg_class；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119141000_rls_intentional_policies_guard.rollback.sql（空操作，仅清账本行）；负向演练已验证：把 rls_tenant_read 改成 ALL 时守卫按预期 RAISE，事务回滚后仍为 SELECT"
 
+  # ===== 2026-11-19 批：37 条 USING(true) 定性中的 P1/P2 收口 =====
+  # 依据：docs/database/rls-using-true-triage-2026-11-19.md §3 P1/P2。
+  - version: "20261119150000"
+    file: "database/migrations/20261119150000_pdm_master_data_refs_rls_strict_forward.sql"
+    status: to_apply
+    effect: "pdm.pdm_master_data_refs 动态清空 2 条原策略（read SELECT true + write 系统通道）→ ENABLE + FORCE → rls_tenant_isolation(ALL，严格 B)；不改列/数据/索引；全仓无该表 SELECT 代码路径，收紧不影响运行"
+    destructive_scan: "EXECUTE DROP POLICY 循环（动态，生产 2 条）+ CREATE POLICY + ENABLE/FORCE；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT；含 destructive-gate: allow"
+    note: "回滚 database/rollback/20261119150000_pdm_master_data_refs_rls_strict_forward.rollback.sql（删策略、按原 qual/with_check 重建 read(SELECT true) + write(系统通道)，RLS/FORCE 保持开启，清账本行）"
+  - version: "20261119151000"
+    file: "database/migrations/20261119151000_mobile_oa_announcement_reads_tenant_rls.sql"
+    status: to_apply
+    effect: "mobile.oa_announcement_reads 补 tenant_id（先按公告回填、再从 core_users 兜底，断言 0 NULL 后 SET NOT NULL）→ 清空 allow_all 策略 → 保持 ENABLE+FORCE → rls_tenant_isolation(ALL，严格 B) → 建 (tenant_id, user_id) 索引；配套代码 oa.rs 改取认证主体"
+    destructive_scan: "ADD COLUMN + UPDATE 回填 + SET NOT NULL + EXECUTE DROP POLICY 循环 + CREATE POLICY + CREATE INDEX；无 DELETE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT；含 destructive-gate: allow"
+    note: "回滚 database/rollback/20261119151000_mobile_oa_announcement_reads_tenant_rls.rollback.sql（删策略/索引、DROP NOT NULL + DROP COLUMN tenant_id、重建 allow_all，清账本行）；须与 svc/mobile 同窗口上线"
+
