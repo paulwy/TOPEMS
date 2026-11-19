@@ -566,3 +566,111 @@ sqlx 测试框架此前直接连过生产库，证据链：
 根因防护：pre-commit 门禁 `no-prod-dsn-defaults`（`scripts/ci/check-no-prod-dsn-defaults.sh`）
 禁止可提交文件把生产 DSN 写成默认值；`svc/erp/tests/rls_drill_erp_create.rs` 已移除内置的
 `postgres://topems_prod@...` 默认回退，缺失 `DATABASE_URL` 时直接报错。
+
+---
+
+## 9. 第 1 波开窗前审计（2026-11-19，只读）
+
+> 目的：释放用户设定的停止条件——逐张点名「与 11-15 快照相比消失的表」并给出删除出处。
+> 结论：3 个对象全部有出处，其中 `_sqlx_test.databases` 的出处就是 §8.1 的清理记录，窗口放行。
+
+### 9.1 逐对象点名（更正：不是 12 张，是 3 个）
+
+此前口头报告的「少 12 张」是两次清单使用了不同 locale 排序后做 `comm` 造成的误读。
+改用 `LC_ALL=C` 并统一为 `relkind in ('r','p','v','m')` 口径后：
+
+- 11-15 CI 快照（`scripts/ci/data/prod_cols.psv`）：**1349** 个对象；
+- 当前生产：**1346** 个对象；
+- 差集恰好 3 个，且没有「当前有、快照没有」的新增对象。
+
+| # | 对象 | 类型 | 当前 | 删除出处 |
+|---:|---|---|---|---|
+| 1 | `crm.core_crm_customers` | 表 | 不存在 | `database/migrations/20261115130000_drop_shell_tables_crm_erp_2.sql` L130（账本 `success=t`，`installed_on=2026-11-15 12:45:29+08`） |
+| 2 | `erp.core_erp_suppliers` | 表 | 不存在 | 同上 L143 |
+| 3 | `_sqlx_test.databases` | 表 | 不存在（`_sqlx_test` schema 整体不存在） | **§8.1 记录的测试连接污染清理**（2026-11-18 15:40 手工删除 `topems_prod` 的 `_sqlx_test` schema；非迁移） |
+
+补充：`bi.org_stats`（物化视图 `m`）、`mes.v_tenant_backfill_gaps`（视图 `v`）**仍然存在**，
+只是不在 `relkind in ('r','p')` 口径内。当前三种口径读数：
+`r,p` = **1344**、`information_schema.tables` = **1345**（1344 表 + 1 视图）、`r,p,v,m` = **1346**。
+
+### 9.2 三条目标迁移与 `_sqlx_test` 无关
+
+`grep -c '_sqlx_test'` 结果（0 即无引用）：
+
+| 文件 | 命中 |
+|---|---:|
+| `20261118160000_flow_shadow_copies_rename_deprecated.sql` | 0 |
+| `20261119000001_iam_permission_identity_guard.sql` | 0 |
+| `20261119000002_public_file_monitor_rls_strict.sql` | 0 |
+| 对应 3 个 rollback 文件 | 均 0 |
+
+结论：`_sqlx_test` schema 的消失不进入这三条迁移的依赖链，不影响 apply 与 rollback。
+
+### 9.3 测试 DSN 现状（只读排查配置与脚本，未跑测试）
+
+| 来源 | 指向 |
+|---|---|
+| `.env` `DATABASE_URL` | `postgres://topems@localhost:5432/topems` |
+| `.env` `MIGRATE_URL` | `postgresql:///topems` |
+| `.env` `TEST_DATABASE_URL` | `topems_test_runner` |
+| `.github/workflows/ci.yml` | `topems_test` / `topems_defense` |
+| `.github/workflows/ai-tests.yml` | `topems_ai` |
+| `.github/workflows/e2e*.yml` | `topems_e2e` |
+
+- 当前没有任何可提交配置把 `topems_prod` 写成测试库默认值；`scripts/ci/check-no-prod-dsn-defaults.sh`
+  已在 pre-commit 中拦截此类默认值。
+- 风险点在于**环境继承**：`#[sqlx::test]` 用例（如 `svc/unified-core/tests/documents_e2e.rs`）
+  运行时读取调用者环境的 `DATABASE_URL`；`scripts/test/run-iam-tests.sh`、`run-core-tests.sh`
+  不覆盖该变量。若调用者手工 export 生产 DSN，测试仍会落到生产。
+- 结论：**11-18 之后确有测试进程连过 `topems_prod` 镜像**（§8.1 已记录并清理过一次）。
+  这是独立的卫生问题，本次窗口不处理；建议单独立项：测试入口强制校验 DSN 非 prod。
+
+---
+
+## 10. 第 1 波窗口执行记录（2026-11-19）
+
+> 执行源：`281d25e7b` 的 `git archive` 干净检出 `/Users/xingzhai/topems-window-281d25e7b`（无 `.git`，
+> 该目录内 `> 20261118150000` 的迁移恰好只有 3 条目标版本）。共享工作树中 4 条未提交迁移未参与。
+> 生产写入仅限下列 3 条迁移。
+
+### 10.1 备份与换件
+
+| 项 | 值 |
+|---|---|
+| 全量备份 | `/Users/xingzhai/topems-prod-backup-20261119/topems_prod_pre_window_20261119-043356.dump`（10M，`pg_restore -l` 8335 对象 / 57 schema） |
+| 备份 sha256 | `c60b2d3b799a2b6d2bdf03a101473948382bafa3d9b78dced679936ba53f4219` |
+| 旧件备份 | `/Users/xingzhai/topems/bin/topems-server.bak-20261119-043413`，sha256 `c2b4cd54…ab7c`，269,180,176 B |
+| 新件 sha256 | `676287d355bd00051bf563d2d3a9ac6e4e07fbe22f85174236f430fb228913a5`，264,579,424 B（断言通过） |
+| 停服 | `launchctl bootout` exit 0；8099 无监听；无 topems-server 进程 |
+
+### 10.2 逐条结果
+
+| # | 版本 | 结果 | 登记时间 | 账本 | 策略 | 表数(r,p) | 参考数据 |
+|---:|---|---|---|---:|---:|---:|---:|
+| 1 | `20261118160000` | 成功 | 04:34:25 | 719 | 1050 | 1344 | 5172 |
+| 2 | `20261119000001` | 成功 | 04:34:34 | 720 | 1050 | 1344 | 5172 |
+| 3 | `20261119000002` | 成功 | 04:34:45 | 721 | 1050 | 1344 | 5172 |
+
+关键断言：
+
+- `20261118160000`：12 张 `flow._deprecated_*` 全部生成、逐张 0 行；12 个原名已从 `flow` 移除；
+  迁移内置后置断言「12 张 public 表与策略未变」通过。
+- `20261119000001`：`iam.tenant_permissions` / `tool_permissions` 的 `id` 均为 `attidentity='d'`，
+  两表 0 行。
+- `20261119000002`：两表 `relrowsecurity=true` / `relforcerowsecurity=true`，策略
+  `rls_tenant_isolation` 带 USING 与 WITH CHECK；两个索引存在。
+
+### 10.3 起服
+
+- `launchctl bootstrap` / `kickstart` 均 exit 0；约 5s 后 `/health` 200。
+- `lsof`：`topems-server` PID 79765 监听 `127.0.0.1:8099`。
+- `/api/server/health`：`status=ok`，modules=31。
+- 运行二进制 sha256 = `676287d3…13a5`。
+- 最终读数：账本 **721**、`max=20261119000002`、策略 **1050**、表 **1344**、参考数据 **5172**、
+  `flow` 下 `_deprecated_*` **12** 张。
+
+### 10.4 回退资产
+
+- 旧件：`/Users/xingzhai/topems/bin/topems-server.bak-20261119-043413`
+- 全量备份：上述 dump
+- 单条回滚：`database/rollback/` 下三条同名 rollback（未使用）
