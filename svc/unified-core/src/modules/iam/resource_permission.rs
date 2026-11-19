@@ -71,7 +71,8 @@ fn parse_batch(payload: &serde_json::Value) -> Result<ResourceBatch, Json<serde_
         let raw = value
             .as_str()
             .ok_or_else(|| json_error(400, "resource_ids 元素必须为字符串"))?;
-        let id = Uuid::parse_str(raw).map_err(|_| json_error(400, "resource_ids 含无效的资源ID"))?;
+        let id =
+            Uuid::parse_str(raw).map_err(|_| json_error(400, "resource_ids 含无效的资源ID"))?;
         if !resource_ids.contains(&id) {
             resource_ids.push(id);
         }

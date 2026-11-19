@@ -319,11 +319,9 @@ async fn check_user_resource_permission(
     let _ = scope.commit().await;
 
     match row {
-        Ok((user_effect, platform_allowed, tenant_allowed)) => decide_resource_permission(
-            user_effect.as_deref(),
-            platform_allowed,
-            tenant_allowed,
-        ),
+        Ok((user_effect, platform_allowed, tenant_allowed)) => {
+            decide_resource_permission(user_effect.as_deref(), platform_allowed, tenant_allowed)
+        }
         Err(e) => {
             tracing::error!("资源权限判定查询失败: {}", e);
             false
