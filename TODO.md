@@ -102,10 +102,10 @@
 | W6-B | `docs/modules/` 补到 28 篇 | 仅 3 篇 | 28 篇 |
 | W6-C | 重建 `openapi-aggregated.yaml` 并纳入 DDL | yaml 8-27 / json 11-16 | 两者同版 |
 | W6-D | a11y 与 design-tokens 之外，补 i18n/decode 接线 | 部分接线 | 门禁覆盖 |
-| W1-2a | 修脚本后重出权限快照 | `docs/quality/permission-codes-snapshot-20261116.json` | 快照可重跑一致 |
+| W1-2a ✅ | 修脚本后重出权限快照 | 脚本已恢复 live DB（`.env:DATABASE_URL`、`DB 来源：live`、`error=None`）；新快照 `docs/quality/permission-codes-snapshot-20261120.json`：FE 1060 / BE 624 / DB 1021 / ∩195、be_only 429 / fe_only 865 / fe_orphan 32 / db_only 0。连跑两次文件 SHA-256 完全一致（`3b560437…4386db`） | 快照可重跑一致 ✅ |
 | W1-2b | 仅后端存在的权限码分流（补录/白名单） | 481 | 交集上升，0 删除 |
-| W1-2c | 菜单权限码与后端 `security` 精确对齐 | 交集 138 / FE 445 | 匹配率 100%，非超管 403 实测 |
-| W1-2d | 仅 DB 存在的权限码分流 | `public.core_permissions` 1157 行 | 删除前有全仓检索证据 |
+| W1-2c | 菜单权限码与后端 `security` 精确对齐 | 交集 195 / FE 1060（BE 624；be_only 429、fe_only 865、fe_orphan 32） | 匹配率 100%，非超管 403 实测 |
+| W1-2d ✅ | 仅 DB 存在的权限码分流 | `db_only=0`、`未登记（live DB 有、init∪migrations 无）=0`，`sql_history_also_current=1021`；A8 收敛后 DB 1021 条全部在迁移中有字面量，无需删除 | 删除前有全仓检索证据 ✅（本轮结论：无需删除） |
 | W1-3a | erp/scm/srm/wms/mes 路由级权限验收（原“17 服务零权限”已不成立，29/29 服务已有声明） | 需逐路由核对 | 非超管 200 / 无权限 403 |
 | W1-3b | hrm/crm/pdm/pm/rd/tms/gis/mobile | 同上 | mobile 个人接口保持 auth-only |
 | W1-3c | integration/monitor/ticket/master-data | 同上 | monitor 收紧需核真实用户 |
