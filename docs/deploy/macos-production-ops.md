@@ -206,7 +206,7 @@ dropdb -h 127.0.0.1 -U xingzhai topems_drill_restore
 
 | 项目 | 实测 |
 |---|---|
-| Time Machine 目标 | 勘察时未配置（`tmutil destinationinfo` → No destinations）；**2026-11-18 已配置 MBP 的 `TOPEMS-TM`（§7.6）** |
+| Time Machine 目标 | 勘察时未配置（`tmutil destinationinfo` → No destinations）；2026-11-18 曾配置 MBP 的 `TOPEMS-TM`（§7.6）；**2026-11-19 已取消该目的地并删除其备份数据（§7.8），当前回到 No destinations** |
 | 本地 APFS 快照 | **无**（`tmutil listlocalsnapshots /` 为空） |
 | 外置盘 | **无**（`/Volumes` 仅 Macintosh HD、Recovery；无 USB/雷雳存储） |
 | 生产机数据量 | 107 GiB / 228 GiB，可用 98 GiB |
@@ -264,7 +264,11 @@ tmutil latestbackup && tmutil listbackups | tail -3
 
 **容量建议**：1 TB（107 GiB 数据 + 增量 + 历史，留 3–5 倍余量最稳）。
 
-### 7.6 方案 B 已落地（MBP 作第二副本，2026-11-18）
+### 7.6 方案 B 已落地后被取消（MBP 作第二副本，2026-11-18 配置 → 2026-11-19 取消）
+
+> **2026-11-19 状态：已取消。** 该目的地连同 64 GiB 稀疏包一并删除，当前 `tmutil destinationinfo` 为 No destinations、`AutoBackup = 0`、无本地 APFS 快照、无 `.timemachine` 挂载残留。历史配置过程保留在下方，仅作复盘。
+>
+> 保留项：SMB 共享 `TOPEMS-TM` 未删除，其中 `topems-archive/`（每日 `pg_dump` 归档 + 配置快照，实测 1 GiB）继续作为离机备份使用，`backup-offsite.sh` 链路不受影响。
 
 MBP 已在主卷新建可写共享 `TOPEMS-TM`（419 GiB 总 / **185 GiB 可用**，与只读的 `xingzhai` 主目录共享、47 GiB 的 `share` 卷分开）。实测配置：
 
@@ -294,6 +298,22 @@ sudo tmutil setdestination -ap "smb://xingzhai@192.168.110.213/TOPEMS-TM"
 | 2 | 是否清 MBP 空间（≥150 GiB） | 决定能否做第二副本 | 非必需，优先级低于 1 |
 | 3 | 是否上云备份 | 异地容灾 | 有外置盘后可再评估 |
 
+### 7.8 2026-11-19 取消 TM 到 MBP 的记录
+
+用户决定不再用 MBP 承载整机 Time Machine，执行结果：
+
+| 项目 | 处理 |
+|---|---|
+| 目的地 `TOPEMS-TM`（ID `2AB457B0-B7B3-47EF-8BA5-B96550A7B64E`） | 已移除；`tmutil destinationinfo` → `No destinations configured` |
+| 自动备份 | `AutoBackup = 0`，备份频率改为「手动」 |
+| 备份数据 `星斋的Mac mini.sparsebundle` | 已删除（64 GiB），共享根目录仅剩 `topems-archive/` |
+| 本地快照 / 挂载 | `tmutil listlocalsnapshots /` 为空；`.timemachine` 挂载 0 条 |
+| SMB 共享 `TOPEMS-TM` | **保留**，`topems-archive/`（每日 dump + 配置快照，1 GiB）继续供 `backup-offsite.sh` 使用 |
+
+执行路径注意：`tmutil removedestination` / `tmutil disable` 在 macOS 15 上要求调用进程具备**完全磁盘访问权限**，root 权限不足，会返回错误 80（本机此前多次尝试均因此失败）。配置文件 `/Library/Preferences/com.apple.TimeMachine.plist` 带 `com.apple.macl` 扩展属性，同样拒绝非授权进程读写，`defaults write` 会报 “Could not write domain”。最终通过「系统设置 → 通用 → 时间机器」界面移除，该进程具备相应授权。
+
+结论：整机级恢复能力回到**未覆盖**状态，`§7.3` 第 1 条原则（TM 不能替代 `pg_dump`）依然成立，数据库一致性仍由每日 dump 负责；整机缺口只能靠 §7.5 的外置 SSD 补上。
+
 ---
 
 ## 8. 局域网地址与 DHCP 静态绑定（2026-11-18）
@@ -304,7 +324,7 @@ sudo tmutil setdestination -ap "smb://xingzhai@192.168.110.213/TOPEMS-TM"
 |---|---|---|---|---|
 | Mac mini（生产机） | en0 有线 | `d0:11:e5:cc:86:b7` | `192.168.110.61` | **生产主地址**（有线优先，长期固定） |
 | Mac mini | en1 Wi-Fi | `9e:32:b2:e3:21:24` | `192.168.110.147` | 备用链路（有线异常时可达，不与主地址冲突） |
-| MBP（离线备份仓） | Wi-Fi 5G | `f4:5c:89:8f:e2:87` | `192.168.110.213` | SMB / Time Machine 目标 |
+| MBP（离线备份仓） | Wi-Fi 5G | `f4:5c:89:8f:e2:87` | `192.168.110.213` | SMB `topems-archive`（每日 dump + 配置快照；TM 已于 2026-11-19 取消，见 §7.8） |
 
 > 已在锐捷 EG210G-E（`192.168.110.1`，eWeb 后台 → 在线终端 → 终端行「未绑定/已绑定」→ 绑定为静态 IP）完成上述三条绑定，后台回显「配置成功」，三行状态均为**已绑定**（2026-11-18）。绑定的是各接口**当前地址**，因此 .147 现在归属无线口，有线主地址为 .61；文档与脚本一律以 **.61** 作为生产机局域网地址。
 
