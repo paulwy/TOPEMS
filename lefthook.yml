@@ -560,14 +560,24 @@ pre-push:
       tags: shellcheck
       run: bash scripts/ci/check-shellcheck.sh
 
-    # [Gate GL-FULL] gitleaks 全历史扫描（2026-11-18 接入）
+    # [Gate GL-FULL] gitleaks 全历史扫描（2026-11-18 接入；2026-11-19 口径与 CI 对齐）
     # pre-commit 只扫暂存区增量，历史/本地新提交里的密钥只有这里能看见。
-    # 存量 120 条已冻结在 scripts/ci/gitleaks-baseline.json（脱敏报告：
+    # 存量已冻结在 scripts/ci/gitleaks-baseline.json（脱敏报告：
     # 占位符 / 测试默认口令 / 开发自签证书），新增命中仍阻断。
-    # 实测约 60s（12642 commits / 1.10GB），fail-closed：gitleaks 或 baseline 缺失即失败。
+    #
+    # 扫描范围：显式 --log-opts="--remotes"，只扫远端可达 ref（origin/*），
+    # 与 CI 干净克隆（fetch-depth: 0，只有 origin 分支）完全一致。
+    # 理由：本机保留了历史重写前的本地分支（backup/audit-batch-pre-rebase、
+    # feature/v286|v287、feature/merge-iam-admin 等），同一份内容在这些分支上是
+    # 重写前的旧 SHA；baseline 登记的却是 origin 侧重写后的 SHA。gitleaks 的
+    # 基线指纹含 commit，于是同一内容会被误判成"新增"（实测 36 条假红，全部来自
+    # 这些本地分支，本轮 8 条 commit 零命中）。这些重复历史在 CI 上不存在。
+    # 注意这是"范围对齐"不是"降低要求"：baseline / 脱敏 / fail-closed /
+    # 新增即阻断 全部不变，远端历史上任何新增密钥仍会拦住本次 push。
+    # 实测约 40–60s（远端 ref 约 8.9k commits / 1.1GB），fail-closed。
     gitleaks-full:
       tags: security secrets
-      run: bash scripts/ci/check-gitleaks-full.sh
+      run: GITLEAKS_LOG_OPTS="--remotes" bash scripts/ci/check-gitleaks-full.sh
 
     # [Gate MIG-DRILL] 迁移锚点演练（正式闸门，fail-closed）
     # 从生产基线快照恢复隔离库，只应用 anchor 之后的前向迁移 + 静态校验 + 权限码审计

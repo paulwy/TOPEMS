@@ -6,6 +6,15 @@
 # 只扫暂存增量；CI secret-scan 用 checkout fetch-depth: 0 扫全历史。两者口径
 # 不一致 → 历史提交/未暂存文件中的密钥本地永远看不到（假绿）。
 #
+# 扫描范围（2026-11-19 对齐 CI）：本脚本显式传 `--log-opts="--remotes"`，只扫
+# 远端可达 ref（origin/*），与 CI 干净克隆（fetch-depth: 0，仅 origin 分支）口径
+# 一致。原因：本机保留了历史重写前的本地分支（backup/audit-batch-pre-rebase、
+# feature/v286|v287、feature/merge-iam-admin 等），同一份内容在这些分支上是
+# 重写前的旧 SHA，而 baseline 登记的是 origin 侧重写后的 SHA；gitleaks 的基线
+# 指纹包含 commit，于是同一内容会被判成"新增"。这些重复历史在 CI 上不存在，
+# 纳入扫描只会制造本地假红。故按 ref 范围对齐，而非放宽命中判定：
+# baseline、脱敏、fail-closed、新增即阻断 全部保持不变。
+#
 # fail-closed：gitleaks 未安装、不在 git 仓库、扫描器异常 一律非 0 退出；
 # 不提供 SKIP 开关（除非显式设置 LEFTHOOK_SKIP，由 lefthook 统一处理）。
 #
@@ -34,15 +43,17 @@ if [[ ! -f "$BASELINE" ]]; then
 fi
 
 START=$(date +%s)
-echo "[secret] gitleaks 全历史扫描（CI 口径 fetch-depth: 0；baseline 冻结存量，输出已脱敏）"
+# 扫描范围由调用方显式给定；缺省与 CI 对齐为 --remotes（只扫远端可达 ref）。
+LOG_OPTS="${GITLEAKS_LOG_OPTS:---remotes}"
+echo "[secret] gitleaks 扫描（CI 口径：fetch-depth: 0 + log-opts=${LOG_OPTS}；baseline 冻结存量，输出已脱敏）"
 
 set +e
 if gitleaks git --help >/dev/null 2>&1; then
-    gitleaks git --redact --no-banner --exit-code 1 --baseline-path "$BASELINE" .
+    gitleaks git --redact --no-banner --exit-code 1 --log-opts="$LOG_OPTS" --baseline-path "$BASELINE" .
     RC=$?
 else
     # 兼容 gitleaks < 8.19（无 git 子命令）
-    gitleaks detect --source . --redact --no-banner --exit-code 1 --baseline-path "$BASELINE"
+    gitleaks detect --source . --redact --no-banner --exit-code 1 --log-opts="$LOG_OPTS" --baseline-path "$BASELINE"
     RC=$?
 fi
 set -e
