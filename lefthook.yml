@@ -82,16 +82,17 @@ pre-commit:
     # [Gate OA] OpenAPI 契约 ↔ 文档同步（W6-C，2026-11-07 接线）
     # 双门禁：
     #   ① 权威 docs/api/openapi.json 的 live 覆盖（基线 docs/api/openapi-baseline-gaps.json）
-    #   ② 聚合 docs/api/openapi-aggregated.json 的计数棘轮（scripts/ci/openapi-aggregated-baseline.json）
-    # 存量缺口已冻结进基线（coverage 1861 missing/1075 extra；aggregated 3788/735），
-    # 仅当新增路由未同步进文档时阻断；重生成入口: ./scripts/openapi/generate.sh --extract
+    #   ② 聚合产物的计数棘轮（基线 scripts/ci/openapi-aggregated-baseline.json）
+    # 聚合产物自 2026-11-19 起不再入库（见 docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md），
+    # 本地默认 --allow-missing 跳过；CI 由 .github/workflows/openapi-aggregated.yml 先生成再跑同一棘轮。
+    # 重生成入口: ./scripts/openapi/generate.sh --extract --output-dir /tmp/openapi
     openapi-gate:
       tags: contract api openapi
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$|^docs/api/openapi|^scripts/openapi/|^scripts/ci/check-openapi|^scripts/dev/extract-live-routes\.py$' || true)
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-openapi-coverage.cjs
-        node scripts/ci/check-openapi-aggregated.cjs
+        node scripts/ci/check-openapi-aggregated.cjs --allow-missing
 
     # [Gate A11Y] aria-label 覆盖率（W6-D，2026-11-07 接线）
     # 存量 47 条 / 17 文件已冻结在 scripts/ci/a11y-baseline.json，

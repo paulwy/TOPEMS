@@ -6,9 +6,10 @@
  *       消除手写 DTO 与后端 schema 的类型漂移。
  *
  * 用法：
- *   node scripts/openapi/gen-types.mjs                    # 自动选择输入源（优先聚合 JSON，回退到手写 YAML）
+ *   node scripts/openapi/gen-types.mjs                    # 自动选择输入源（聚合 JSON → 权威 openapi.json → 手写 YAML）
  *   node scripts/openapi/gen-types.mjs --input <file>      # 指定输入文件
- *   node scripts/openapi/gen-types.mjs --aggregated        # 强制使用聚合 JSON
+ *   node scripts/openapi/gen-types.mjs --aggregated        # 强制使用聚合 JSON（本地存在时）
+ *   node scripts/openapi/gen-types.mjs --authoritative     # 强制使用权威 docs/api/openapi.json
  *   node scripts/openapi/gen-types.mjs --yaml              # 强制使用手写 YAML
  *   node scripts/openapi/gen-types.mjs --output <dir>      # 指定输出目录
  *   node scripts/openapi/gen-types.mjs --validate          # 生成前验证 OpenAPI 规范
@@ -55,6 +56,7 @@ const log = {
 const args = process.argv.slice(2);
 let inputPath = null;
 let useAggregated = false;
+let useAuthoritative = false;
 let forceYaml = false;
 let validate = false;
 let outputDir = resolve(ROOT_DIR, 'packages/shared-types/src/generated');
@@ -64,14 +66,16 @@ function printHelp() {
 
 选项:
   --input <file>     指定 OpenAPI 输入文件 (JSON/YAML)
-  --aggregated       强制使用 docs/api/openapi-aggregated.json
+  --aggregated       强制使用 docs/api/openapi-aggregated.json（本地存在时）
+  --authoritative    强制使用权威 docs/api/openapi.json
   --yaml             强制使用手写 docs/api/openapi.yaml
   --output <dir>     TS 类型输出目录 (默认: packages/shared-types/src/generated)
   --validate         生成前验证 OpenAPI 规范有效性
   -h, --help         显示帮助
 
 默认行为:
-  自动选择输入源：优先聚合 JSON（如有内容），回退到手写 YAML
+  自动选择输入源：本地聚合 JSON（如有内容）→ 权威 docs/api/openapi.json → 手写 YAML
+  （2026-11-19 起聚合产物不再入库，权威 openapi.json 是默认来源）
 
 示例:
   node scripts/openapi/gen-types.mjs                        # 自动选择输入源
@@ -87,6 +91,8 @@ for (let i = 0; i < args.length; i++) {
     inputPath = args[++i];
   } else if (args[i] === '--aggregated') {
     useAggregated = true;
+  } else if (args[i] === '--authoritative') {
+    useAuthoritative = true;
   } else if (args[i] === '--yaml') {
     forceYaml = true;
   } else if (args[i] === '--output' && args[i + 1]) {
@@ -100,51 +106,54 @@ for (let i = 0; i < args.length; i++) {
 }
 
 const aggregatedPath = resolve(ROOT_DIR, 'docs/api/openapi-aggregated.json');
+const authoritativePath = resolve(ROOT_DIR, 'docs/api/openapi.json');
 const yamlPath = resolve(ROOT_DIR, 'docs/api/openapi.yaml');
 
 // 确定输入文件
 if (!inputPath) {
   if (useAggregated) {
     inputPath = aggregatedPath;
+    log.info('强制使用: 聚合 JSON');
+  } else if (useAuthoritative) {
+    inputPath = authoritativePath;
+    log.info('强制使用: 权威 openapi.json');
   } else if (forceYaml) {
     inputPath = yamlPath;
   } else {
-    // 自动选择：优先聚合 JSON（有实际内容时），回退到手写 YAML
+    // 自动选择：本地聚合 JSON（有实际内容时）→ 权威 openapi.json → 手写 YAML。
+    // 2026-11-19 起聚合产物不再入库，权威 openapi.json 是默认来源；
+    // 本地若留有聚合产物（CI 下载/本地生成），仍优先使用，便于临时核对。
     const aggregatedExists = existsSync(aggregatedPath);
+    const authoritativeExists = existsSync(authoritativePath);
     const yamlExists = existsSync(yamlPath);
 
-    if (aggregatedExists) {
-      try {
-        const aggContent = JSON.parse(readFileSync(aggregatedPath, 'utf-8'));
-        const hasContent =
-          Object.keys(aggContent.paths || {}).length > 0 ||
-          Object.keys(aggContent.components?.schemas || {}).length > 0;
-        if (hasContent) {
-          inputPath = aggregatedPath;
-          log.info('自动选择: 聚合 JSON（有实际内容）');
-        } else if (yamlExists) {
-          inputPath = yamlPath;
-          log.warn('聚合 JSON 为空骨架，回退到手写 YAML');
-        } else {
-          inputPath = aggregatedPath;
-          log.warn('聚合 JSON 为空且无手写 YAML，将使用空骨架');
-        }
-      } catch {
-        if (yamlExists) {
-          inputPath = yamlPath;
-          log.warn('聚合 JSON 解析失败，回退到手写 YAML');
-        } else {
-          inputPath = aggregatedPath;
-        }
-      }
+    if (aggregatedExists && aggregatedHasContent()) {
+      inputPath = aggregatedPath;
+      log.info('自动选择: 本地聚合 JSON（有实际内容）');
+    } else if (authoritativeExists) {
+      inputPath = authoritativePath;
+      log.info('自动选择: 权威 docs/api/openapi.json');
     } else if (yamlExists) {
       inputPath = yamlPath;
-      log.info('自动选择: 手写 YAML（无聚合 JSON）');
+      log.info('自动选择: 手写 YAML（无聚合 JSON 与权威 openapi.json）');
     } else {
       log.error('未找到任何 OpenAPI 输入文件');
-      log.error(`  期望位置: ${aggregatedPath} 或 ${yamlPath}`);
+      log.error(`  期望位置: ${aggregatedPath}、${authoritativePath} 或 ${yamlPath}`);
       process.exit(1);
     }
+  }
+}
+
+function aggregatedHasContent() {
+  try {
+    const aggContent = JSON.parse(readFileSync(aggregatedPath, 'utf-8'));
+    return (
+      Object.keys(aggContent.paths || {}).length > 0 ||
+      Object.keys(aggContent.components?.schemas || {}).length > 0
+    );
+  } catch {
+    log.warn('本地聚合 JSON 解析失败，改用权威 openapi.json');
+    return false;
   }
 }
 

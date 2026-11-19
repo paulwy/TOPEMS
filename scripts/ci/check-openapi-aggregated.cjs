@@ -22,6 +22,12 @@
  *   node scripts/ci/check-openapi-aggregated.cjs --update-baseline
  *   node scripts/ci/check-openapi-aggregated.cjs --live-csv /tmp/routes.csv
  *   node scripts/ci/check-openapi-aggregated.cjs --aggregated-path /tmp/agg.json
+ *   node scripts/ci/check-openapi-aggregated.cjs --allow-missing  # 产物不存在时跳过（本地用；CI 不传）
+ *
+ * 产物来源（2026-11-19 起不再入库）：
+ *   - CI artifact: gh run download -n openapi-aggregated-<sha> -D /tmp/openapi
+ *   - Release 附件: gh release download <tag> -p 'openapi-aggregated*.json*'
+ *   - 本地生成:    ./scripts/openapi/generate.sh --extract --output-dir /tmp/openapi
  */
 
 'use strict';
@@ -41,6 +47,7 @@ let aggregatedPath = DEFAULT_AGGREGATED;
 let baselinePath = DEFAULT_BASELINE;
 let updateBaseline = false;
 let reportOnly = false;
+let allowMissing = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--live-csv' && args[i + 1]) liveCsvPath = args[++i];
@@ -48,8 +55,11 @@ for (let i = 0; i < args.length; i++) {
   else if (args[i] === '--baseline-path' && args[i + 1]) baselinePath = args[++i];
   else if (args[i] === '--update-baseline') updateBaseline = true;
   else if (args[i] === '--report-only') reportOnly = true;
+  else if (args[i] === '--allow-missing') allowMissing = true;
   else if (args[i] === '--help') {
-    console.log('用法: node scripts/ci/check-openapi-aggregated.cjs [--report-only|--update-baseline|--live-csv <path>]');
+    console.log(
+      '用法: node scripts/ci/check-openapi-aggregated.cjs [--report-only|--update-baseline|--live-csv <path>|--aggregated-path <path>|--allow-missing]'
+    );
     process.exit(0);
   }
 }
@@ -150,6 +160,30 @@ function loadAggregatedPaths() {
 }
 
 function main() {
+  if (!fs.existsSync(aggregatedPath)) {
+    const rel = aggregatedPath.startsWith(REPO_ROOT)
+      ? path.relative(REPO_ROOT, aggregatedPath)
+      : aggregatedPath;
+    const hint = [
+      `聚合 OpenAPI 产物不存在: ${rel}`,
+      '  自 2026-11-19 起该产物不再入库（见 docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md）。',
+      '  获取或生成方式：',
+      '    CI 产物:  gh run download -n openapi-aggregated-<sha> -D /tmp/openapi',
+      '    Release :  gh release download <tag> -p "openapi-aggregated*.json*"',
+      '    本地生成:  ./scripts/openapi/generate.sh --extract --output-dir /tmp/openapi',
+      '  然后重跑: node scripts/ci/check-openapi-aggregated.cjs --aggregated-path <产物路径>',
+    ].join('\n');
+    if (allowMissing) {
+      console.log(
+        `[SKIP] 聚合产物不存在（自 2026-11-19 起不再入库），跳过棘轮：${rel}\n` +
+          '       需要时用 --aggregated-path <file> 指定产物；获取方式见 docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md'
+      );
+      return 0;
+    }
+    console.error(hint);
+    return reportOnly ? 0 : 1;
+  }
+
   const live = loadLiveRoutes();
   const documented = loadAggregatedPaths();
 
