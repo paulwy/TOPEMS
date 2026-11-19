@@ -855,3 +855,12 @@ pre-push:
         fi
         node scripts/ci/check-decode-contract.mjs "$CATALOG"
         printf '\033[32m[Gate DC] OK\033[0m 已用 %s 完成解码契约扫描（report-only；high 命中需人工复核）。\n' "$CATALOG"
+
+    # [Gate FM] 前端 mock 兜底门禁：生产路径禁止 API 失败回退假数据
+    # 存量债务按 scripts/ci/frontend-mock-fallback-baseline.json 放行；新增阻断、陈旧必核销。
+    frontend-mock-fallback:
+      tags: frontend
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^apps/web/src/.*\.(ts|tsx)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-frontend-mock-fallback.mjs

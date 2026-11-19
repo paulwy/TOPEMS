@@ -167,138 +167,35 @@ const PurchaseOrderPage: React.FC = () => {
     }, 4000);
   };
 
-  // Mock 数据
-  const mockOrders: PurchaseOrder[] = useMemo(
-    () => [
-      {
-        id: '1',
-        order_no: 'PO-2026-0914-001',
-        supplier_name: t('erp.demo.supplier_precision'),
-        supplier_code: 'SUP-001',
-        total_amount: 125000,
-        currency: 'CNY',
-        status: 'pending_approval',
-        priority: 'high',
-        buyer: t('erp.demo.owner_zhang'),
-        department: t('erp.purchase_order.department.purchase'),
-        created_at: '2026-09-14 09:30',
-        expected_date: '2026-09-25',
-        items_count: 5,
-        remark: t('erp.demo.remark_urgent'),
-      },
-      {
-        id: '2',
-        order_no: 'PO-2026-0914-002',
-        supplier_name: t('erp.demo.supplier_jiangsu'),
-        supplier_code: 'SUP-002',
-        total_amount: 86500,
-        currency: 'CNY',
-        status: 'approved',
-        priority: 'medium',
-        buyer: t('erp.demo.owner_li'),
-        department: t('erp.purchase_order.department.purchase'),
-        created_at: '2026-09-13 14:20',
-        expected_date: '2026-09-28',
-        items_count: 8,
-      },
-      {
-        id: '3',
-        order_no: 'PO-2026-0914-003',
-        supplier_name: t('erp.demo.supplier_zhejiang'),
-        supplier_code: 'SUP-003',
-        total_amount: 45200,
-        currency: 'CNY',
-        status: 'ordered',
-        priority: 'low',
-        buyer: t('erp.demo.owner_wang'),
-        department: t('erp.purchase_order.department.production'),
-        created_at: '2026-09-12 10:15',
-        expected_date: '2026-09-22',
-        items_count: 12,
-      },
-      {
-        id: '4',
-        order_no: 'PO-2026-0914-004',
-        supplier_name: t('erp.demo.supplier_guangdong'),
-        supplier_code: 'SUP-004',
-        total_amount: 230000,
-        currency: 'CNY',
-        status: 'received',
-        priority: 'high',
-        buyer: t('erp.demo.buyer_zhao'),
-        department: t('erp.purchase_order.department.purchase'),
-        created_at: '2026-09-10 16:45',
-        expected_date: '2026-09-20',
-        items_count: 3,
-      },
-      {
-        id: '5',
-        order_no: 'PO-2026-0914-005',
-        supplier_name: t('erp.demo.supplier_beijing'),
-        supplier_code: 'SUP-005',
-        total_amount: 8500,
-        currency: 'CNY',
-        status: 'rejected',
-        priority: 'low',
-        buyer: t('erp.demo.buyer_sun'),
-        department: t('erp.purchase_order.department.admin'),
-        created_at: '2026-09-11 11:30',
-        expected_date: '2026-09-18',
-        items_count: 20,
-        remark: t('erp.demo.remark_overbudget'),
-      },
-      {
-        id: '6',
-        order_no: 'PO-2026-0914-006',
-        supplier_name: t('erp.demo.supplier_shandong'),
-        supplier_code: 'SUP-006',
-        total_amount: 32000,
-        currency: 'CNY',
-        status: 'draft',
-        priority: 'medium',
-        buyer: t('erp.demo.buyer_zhou'),
-        department: t('erp.purchase_order.department.production'),
-        created_at: '2026-09-14 15:00',
-        expected_date: '2026-09-30',
-        items_count: 6,
-      },
-    ],
-    [t]
-  );
-
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...QUERY_KEY, activeTab, debouncedSearch, departmentFilter],
     queryFn: async () => {
-      try {
-        const response = await erpApi.purchaseOrders.list({ page: 1, pageSize: 50 });
-        if (response.success && response.data) {
-          const apiOrders: ApiPurchaseOrder[] = response.data.orders || [];
-          return apiOrders.map((o): PurchaseOrder => ({
-            id: o.id,
-            order_no: o.order_number,
-            supplier_name: o.supplier_name,
-            supplier_code: o.supplier_id,
-            total_amount: o.total_amount,
-            currency: o.currency || 'CNY',
-            status:
-              o.status === 'pending'
-                ? 'pending_approval'
-                : o.status === 'partially_received'
-                  ? 'received'
-                  : (o.status as PurchaseOrder['status']),
-            priority: 'medium',
-            buyer: o.created_by || '—',
-            department: t('erp.purchase_order.department.unassigned'),
-            created_at: o.created_at,
-            expected_date: o.expected_date || o.order_date,
-            items_count: 0,
-            remark: o.remark,
-          }));
-        }
-      } catch (_e) {
-        // API 不可用时使用 mock 数据
+      const response = await erpApi.purchaseOrders.list({ page: 1, pageSize: 50 });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || t('erp.purchase_order.error.load'));
       }
-      return mockOrders;
+      const apiOrders: ApiPurchaseOrder[] = response.data.orders || [];
+      return apiOrders.map((o): PurchaseOrder => ({
+        id: o.id,
+        order_no: o.order_number,
+        supplier_name: o.supplier_name,
+        supplier_code: o.supplier_id,
+        total_amount: o.total_amount,
+        currency: o.currency || 'CNY',
+        status:
+          o.status === 'pending'
+            ? 'pending_approval'
+            : o.status === 'partially_received'
+              ? 'received'
+              : (o.status as PurchaseOrder['status']),
+        priority: 'medium',
+        buyer: o.created_by || '—',
+        department: t('erp.purchase_order.department.unassigned'),
+        created_at: o.created_at,
+        expected_date: o.expected_date || o.order_date,
+        items_count: 0,
+        remark: o.remark,
+      }));
     },
   });
 
@@ -308,13 +205,17 @@ const PurchaseOrderPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('erp.purchase_order.toast.deleted'));
     },
-    onError: () => {
+    onError: (err) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', t('erp.purchase_order.toast.deleted'));
+      pushToast(
+        'error',
+        t('erp.purchase_order.toast.delete_failed') +
+          (err instanceof Error && err.message ? `: ${err.message}` : '')
+      );
     },
   });
 
-  const orders = data || mockOrders;
+  const orders = data ?? [];
 
   // 供应商选项（从现有列表数据去重，供新建弹窗选择）
   const supplierOptions = useMemo(() => {

@@ -724,5 +724,8 @@
   "workflow.demo.wf_dept_rd": "R&D Dept",
   "workflow.demo.wf_dept_sales": "Sales Dept",
   "workflow.demo.wf_dept_legal": "Legal Dept",
-  "workflow.demo.wf_dept_production": "Production Dept"
+  "workflow.demo.wf_dept_production": "Production Dept",
+  "workflow.workflow_approvals_page.error_load": "Failed to load approval tasks, please retry",
+  "workflow.workflow_approvals_page.toast.approve_failed": "Failed to approve, please retry",
+  "workflow.workflow_approvals_page.toast.reject_failed": "Failed to reject, please retry"
 }

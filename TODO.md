@@ -119,7 +119,7 @@
 |---|---|---|---|
 | DRIFT-01 | `mes.production_records.completed_quantity` 在本地 `topems` 实际为 `numeric`（无 typmod），迁移 `20260926120000_app_schema_tables.sql:1617` 与门禁断言要求 `numeric(12,2)` | `psql "postgresql:///topems" -tAc "select format_type(atttypid, atttypmod) from pg_attribute where attrelid='mes.production_records'::regclass and attname='completed_quantity'"` → `numeric`；`topems_web_smoke` 为 `numeric(12,2)`，生产快照 `fixtures/full_schema_contract.sql:17144` 亦为 `numeric(12,2)`；全仓迁移无后续 `ALTER ... TYPE` | **未定性**：尚无「迁移写错 / 契约写错 / 本地库手工改过」的结论。现状证据更像本地 `topems` 建库路径漂移，但未取证建库历史。**未改契约、未改迁移**；待确认来源后只修一侧。门禁复现：`MIGRATION_DRIFT_DB_URL=postgresql:///topems node scripts/migration/check-ledger-ddl-drift.mjs`（本地 socket 为超管，需 `MIGRATION_DRIFT_ALLOW_SUPERUSER=1` 才会跑到断言） |
 
-### F. 前端真实性与交互纠错（2026-11-19 评估增补，只登记未开工）
+### F. 前端真实性与交互纠错（2026-11-19 评估增补；批次 1 已完工，F1/F9 留批次 2）
 
 > 依据：[主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md) §2.1/§2.2/§2.3。
 > 冲突核查：与 W3-B/W3-C（结构去重）、W4-*（组件去重）、§17.3（后端 `200+success:false` 语义）均无重叠；本条只做前端数据源与提示语义纠偏，不动接口契约、不加服务。
@@ -129,19 +129,20 @@
 | ID | 批次 | 任务 | 当前证据（2026-11-19 复核，HEAD `7b1134282`） | 验收 |
 |---|---|---|---|---|
 | F1 | 2 | 银行账户管理页接真实 API（去掉纯 mock CRUD） | `pages/admin/BankAccountManagementPage.tsx:29`（`mockBankAccounts` 常量）、`:65`（列表 `[...mockBankAccounts]`）、`:101/106/109`（新增/编辑全内存）；后端 `svc/erp/src/modules/bank_account.rs` 已含 `bank-accounts` 路由；路由注册 `module-configs/admin/config.ts` | 列表/新增/编辑/删除全部走 `/api/erp/bank-accounts`；断网显示错误态；页面内 `mockBankAccounts` 归零 |
-| F2 | 1 | CRM 三个 Redesign 页去 mock 兜底 | `CrmCustomerRedesignPage.tsx:146/311`、`CrmContractRedesignPage.tsx:121`、`CrmOpportunityRedesignPage.tsx:130/292/295`（`setIsMockData(true)` 后返回 `mock*`） | 三页 mock 常量归零；API 失败显示错误与重试，不再回退假数据 |
-| F3 | 1 | WMS 盘点页去 mock 兜底 | `WmsStocktakePage.tsx:175`（`mockStocktakes`）、`:314`（`let filtered = mockStocktakes`）、`:379/411`（落库失败仍提示「已降级为本地模拟数据」） | `mockStocktakes` 归零；失败态显式报错 |
-| F4 | 1 | MES 工单页：去 mock + 修正删除失败提示 | `MesWorkOrderPage.tsx:151`（`mockOrders`）、`:268`（失败返回 mock）、`:284`（`data || mockOrders`）；`:276` 成功分支与 `:280` **`onError` 内仍是 `toast_deleted`** | mock 归零；删除失败提示错误且不再出现成功文案 |
-| F5 | 1 | ERP 采购单页：去 mock + 修正删除失败提示 | `PurchaseOrderPage.tsx:171`（`mockOrders`）、`:301`、`:317`；`:309` 成功与 `:313` **`onError` 内仍是 `toast.deleted`** | 同上 |
-| F6 | 1 | 监控告警规则页去 mock 适配器 | `MonitorAlertRulesPage.tsx:251`（`mockApiAdapter` 定义）、`:606`（`apiAdapter={mockApiAdapter}`） | 改真实 API 适配器；`mockApiAdapter` 归零 |
-| F7 | 1 | OA 公告页失败提示纠错 | `AnnouncementPage.tsx:190/194-197`、`:207/209-211`（`onError` 内仍 `pushToast('success', k45/k46)`） | 失败提示错误；更新/删除失败不出现成功文案 |
-| F8 | 1 | 工作流审批页失败提示纠错 | `WorkflowApprovalsPage.tsx:240/244-247`、`:258/264-267`（同上，k5 / k19） | 同上 |
+| F2 | 1 ✅ | CRM 三个 Redesign 页去 mock 兜底 | `CrmCustomerRedesignPage.tsx:146/311`、`CrmContractRedesignPage.tsx:121`、`CrmOpportunityRedesignPage.tsx:130/292/295`（`setIsMockData(true)` 后返回 `mock*`） | 三页 mock 常量归零；API 失败显示错误与重试，不再回退假数据 |
+| F3 | 1 ✅ | WMS 盘点页去 mock 兜底 | `WmsStocktakePage.tsx:175`（`mockStocktakes`）、`:314`（`let filtered = mockStocktakes`）、`:379/411`（落库失败仍提示「已降级为本地模拟数据」） | `mockStocktakes` 归零；失败态显式报错 |
+| F4 | 1 ✅ | MES 工单页：去 mock + 修正删除失败提示 | `MesWorkOrderPage.tsx:151`（`mockOrders`）、`:268`（失败返回 mock）、`:284`（`data || mockOrders`）；`:276` 成功分支与 `:280` **`onError` 内仍是 `toast_deleted`** | mock 归零；删除失败提示错误且不再出现成功文案 |
+| F5 | 1 ✅ | ERP 采购单页：去 mock + 修正删除失败提示 | `PurchaseOrderPage.tsx:171`（`mockOrders`）、`:301`、`:317`；`:309` 成功与 `:313` **`onError` 内仍是 `toast.deleted`** | 同上 |
+| F6 | 1 ✅ | 监控告警规则页去 mock 适配器 | `MonitorAlertRulesPage.tsx:251`（`mockApiAdapter` 定义）、`:606`（`apiAdapter={mockApiAdapter}`） | 改真实 API 适配器；`mockApiAdapter` 归零 |
+| F7 | 1 ✅ | OA 公告页失败提示纠错 | `AnnouncementPage.tsx:190/194-197`、`:207/209-211`（`onError` 内仍 `pushToast('success', k45/k46)`） | 失败提示错误；更新/删除失败不出现成功文案 |
+| F8 | 1 ✅ | 工作流审批页失败提示纠错 | `WorkflowApprovalsPage.tsx:240/244-247`、`:258/264-267`（同上，k5 / k19） | 同上 |
 | F9 | 2 | 文件中心 501 端点回收（**范围已修正**） | 后端 `svc/unified-core/src/modules/file/manage.rs` **6 个 handler 返回 501**：`set_file_permissions:1167`、`get_file_permissions:1186`、`get_shared_files:1203`、`get_file_stats:1222`、`export_files:1247`、`search_files:1265`；前端 API 层已定义 `getPermissions:171`、`getSharedFiles:186`、`getStats:190`、`export:194`、`copy:204`、`move:211`，但**全仓 `fileApi.*` 调用点 = 0**（原「3 个入口已接线」不成立） | 6 个端点在前端 API 层标注「暂不可用」或暂不导出；后端实现后单批放开；UI 层保持零调用点 |
-| F10 | 1 | IAM 权限定义写入口隐藏（权限为迁移种子，后端固定 501） | 前端 `api/iam/permission.ts:13/20/24`（create/update/delete）；后端 `svc/unified-core/src/modules/iam/permission.rs:183-210`（`PUT/DELETE /permissions/{id}` 明确 501，注释「权限定义为系统种子数据」） | 权限页只读；新增/编辑/删除按钮与调用点归零 |
-| F11 | 1 | 增加前端 mock 回归门禁 | 现无规则（`scripts/ci/` 下无 `*mock*` 脚本）；8 页 mock 可复发 | 生产构建路径禁止 mock 兜底（仅允许 `import.meta.env.DEV`）；CI 扫描违规即红，并用一条构造用例验证能拦住 |
+| F10 | 1 ✅ | IAM 权限定义写入口隐藏（权限为迁移种子，后端固定 501） | 前端 `api/iam/permission.ts:13/20/24`（create/update/delete）；后端 `svc/unified-core/src/modules/iam/permission.rs:183-210`（`PUT/DELETE /permissions/{id}` 明确 501，注释「权限定义为系统种子数据」） | 权限页只读；新增/编辑/删除按钮与调用点归零 |
+| F11 | 1 ✅ | 增加前端 mock 回归门禁 | 现无规则（`scripts/ci/` 下无 `*mock*` 脚本）；8 页 mock 可复发 | 生产构建路径禁止 mock 兜底（仅允许 `import.meta.env.DEV`）；CI 扫描违规即红，并用一条构造用例验证能拦住 |
+| F12 | 1 | 存量 mock 兜底清理（门禁基线上线时登记） | `node scripts/ci/check-frontend-mock-fallback.mjs` 报 18 处 / 12 文件：`AiPromptLibraryPage.tsx:199`、`Bi/ReportBuilderPage.tsx:114/117`、`ErpSalesOrderRedesignPage.tsx`(copy 2 + state 2)、`HrmAttendanceRedesignPage.tsx`/`HrmEmployeeRedesignPage.tsx`/`HrmPerformanceRedesignPage.tsx`(各 state 2)、`MobileQualityPage.tsx:129/178`、`Qms{Audit,EightD,Inspection,Nonconformance}RedesignPage`(copy + state) | 逐页去 mock 兜底，基线条目核销到 0；门禁保持只减不增 |
 
 > 本批刻意不包含：EHS 职业健康域（需业务拍板，见评估 §2.5）、AI 用量计量/MES 成本/GIS 轨迹/SRM 条款（后端半成品，见 §2.4）、文件中心与合并报表的后端实现。
-> 门禁影响：`facts:check` 当前已红 11 项（`docs.todo_lines` 325→365 等多因代码演进）；本批只新增 `todo_lines` 一项漂移，快照重建需与 `schema-prefix` 19 个 stale key 一并处理，不在本批范围内。
+> 门禁影响：`facts:check` 已于 2026-11-19 核销为绿（62 项一致）；本批新增 F12 与状态标记只改变 `todo_lines`，提交前重新生成 `docs/quality/facts-latest.json` 即可保持一致。
 
 ---
 

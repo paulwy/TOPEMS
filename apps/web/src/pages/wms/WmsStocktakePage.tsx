@@ -130,8 +130,6 @@ const mapApiStocktakes = (apiRecords: ApiStockTakeCompat[]): StocktakeOrder[] =>
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockStocktakes
-
 const buildStatusConfig = (t: (k: string) => string) => ({
   draft: {
     label: t('wms.stocktake_page.status_draft'),
@@ -172,82 +170,6 @@ const WmsStocktakePage: React.FC = () => {
   const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
   const typeConfig = useMemo(() => buildTypeConfig(t), [t]);
 
-  const mockStocktakes: StocktakeOrder[] = [
-    {
-      id: '1',
-      order_no: 'ST202609001',
-      title: t('wms.demo.st_title_1'),
-      warehouse: t('wms.stocktake_page.wh_raw_material'),
-      status: 'in_progress',
-      type: 'cycle',
-      total_items: 156,
-      counted_items: 89,
-      discrepancy_items: 3,
-      creator: t('wms.demo.creator_zhang'),
-      start_date: '2026-09-10',
-      created_at: '2026-09-09 10:00:00',
-    },
-    {
-      id: '2',
-      order_no: 'ST202609002',
-      title: t('wms.demo.st_title_2'),
-      warehouse: t('wms.stocktake_page.wh_finished'),
-      status: 'draft',
-      type: 'full',
-      total_items: 245,
-      counted_items: 0,
-      discrepancy_items: 0,
-      creator: t('wms.demo.creator_li'),
-      start_date: '2026-09-20',
-      created_at: '2026-09-12 14:30:00',
-    },
-    {
-      id: '3',
-      order_no: 'ST202608001',
-      title: t('wms.demo.st_title_3'),
-      warehouse: t('wms.stocktake_page.wh_semi_finished'),
-      status: 'completed',
-      type: 'partial',
-      total_items: 89,
-      counted_items: 89,
-      discrepancy_items: 5,
-      creator: t('wms.demo.creator_wang'),
-      start_date: '2026-08-15',
-      end_date: '2026-08-18',
-      created_at: '2026-08-10 09:00:00',
-    },
-    {
-      id: '4',
-      order_no: 'ST202608002',
-      title: t('wms.demo.st_title_4'),
-      warehouse: t('wms.stocktake_page.wh_raw_material'),
-      status: 'completed',
-      type: 'partial',
-      total_items: 45,
-      counted_items: 45,
-      discrepancy_items: 1,
-      creator: t('wms.demo.creator_zhao'),
-      start_date: '2026-08-20',
-      end_date: '2026-08-21',
-      created_at: '2026-08-15 11:20:00',
-    },
-    {
-      id: '5',
-      order_no: 'ST202607001',
-      title: t('wms.demo.st_title_5'),
-      warehouse: t('wms.stocktake_page.filter_all_warehouse'),
-      status: 'cancelled',
-      type: 'full',
-      total_items: 500,
-      counted_items: 0,
-      discrepancy_items: 0,
-      creator: t('wms.demo.creator_zhang'),
-      start_date: '2026-07-01',
-      end_date: '2026-07-05',
-      created_at: '2026-06-25 16:00:00',
-    },
-  ];
-
   const [activeTab, setActiveTab] = useState<StocktakeTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -260,7 +182,6 @@ const WmsStocktakePage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StocktakeOrder | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -303,25 +224,13 @@ const WmsStocktakePage: React.FC = () => {
           total = dataObj.total || apiRecords.length;
         }
         if (Array.isArray(apiRecords)) {
-          setIsMockData(false);
           return { orders: mapApiStocktakes(apiRecords), total };
         }
       } catch (e) {
-        console.warn('[WMS Stocktake] API unavailable, using mock data:', e);
-        setIsMockData(true);
+        const detail = e instanceof Error && e.message ? `: ${e.message}` : '';
+        throw new Error(t('wms.stocktake_page.error_load') + detail);
       }
-      // Mock fallback：本地分页
-      let filtered = mockStocktakes;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (r) => r.order_no.includes(debouncedSearch) || r.warehouse.includes(debouncedSearch)
-        );
-      }
-      if (warehouseFilter !== 'all') {
-        filtered = filtered.filter((r) => r.warehouse === warehouseFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { orders: filtered.slice(start, start + pageSize), total: filtered.length };
+      throw new Error(t('wms.stocktake_page.error_load'));
     },
   });
 
@@ -335,7 +244,7 @@ const WmsStocktakePage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await stockTakeApi.delete(id);
       return id;
     },
     onSuccess: () => {
@@ -350,37 +259,19 @@ const WmsStocktakePage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<StocktakeOrder>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        await stockTakeApi.create({
-          order_no: data.order_no,
-          warehouse: data.warehouse,
-          status: data.status,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          type: data.type,
-        } as unknown as CreateStockTakeRequest);
-      } catch (e) {
-        console.warn('[WMS Stocktake] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      await stockTakeApi.create({
+        order_no: data.order_no,
+        warehouse: data.warehouse,
+        status: data.status,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        type: data.type,
+      } as unknown as CreateStockTakeRequest);
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t('wms.stocktake_page.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('wms.stocktake_page.toast_create_success'));
-      }
+      pushToast('success', t('wms.stocktake_page.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('wms.stocktake_page.toast_create_error'));
@@ -389,30 +280,16 @@ const WmsStocktakePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<StocktakeOrder> }) => {
-      let apiFailed = false;
-      try {
-        await stockTakeApi.update(id, {
-          status: data.status,
-          end_date: data.end_date,
-        } as unknown as Partial<ApiStockTake>);
-      } catch (e) {
-        console.warn('[WMS Stocktake] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      await stockTakeApi.update(id, {
+        status: data.status,
+        end_date: data.end_date,
+      } as unknown as Partial<ApiStockTake>);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast(
-          'warning',
-          t('wms.stocktake_page.mock_update_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('wms.stocktake_page.toast_update_success'));
-      }
+      pushToast('success', t('wms.stocktake_page.toast_update_success'));
     },
     onError: () => {
       pushToast('error', t('wms.stocktake_page.toast_update_error'));
@@ -597,21 +474,6 @@ const WmsStocktakePage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('wms.stocktake_page.demo_banner')}
-        </div>
-      )}
       <ListPageTemplate<StocktakeOrder>
         header={{
           title: t('wms.stocktake_page.title'),

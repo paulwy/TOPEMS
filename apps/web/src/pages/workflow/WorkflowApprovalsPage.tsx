@@ -134,102 +134,18 @@ const WorkflowApprovalsPage: React.FC = () => {
   };
 
   // Mock 数据（API 不可用时使用）
-  const mockTasks: ApprovalTask[] = useMemo(
-    () => [
-      {
-        id: '1',
-        title: t('workflow.demo.wf_title_1'),
-        workflowName: t('workflow.demo.wf_name_purchase'),
-        workflowType: t('workflow.demo.wf_type_purchase'),
-        initiator: t('workflow.demo.wf_person_zhang'),
-        receivedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        priority: 'high',
-        status: 'pending',
-        instanceId: 'inst-001',
-        nodeName: t('workflow.demo.wf_node_dept_manager'),
-        description: t('workflow.demo.wf_desc_1'),
-        amount: 50000,
-        department: t('workflow.demo.wf_dept_purchase'),
-      },
-      {
-        id: '2',
-        title: t('workflow.demo.wf_title_2'),
-        workflowName: t('workflow.demo.wf_name_leave'),
-        workflowType: t('workflow.demo.wf_type_hr'),
-        initiator: t('workflow.demo.wf_person_li'),
-        receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        priority: 'medium',
-        status: 'pending',
-        instanceId: 'inst-002',
-        nodeName: t('workflow.demo.wf_node_direct_supervisor'),
-        description: t('workflow.demo.wf_desc_2'),
-        department: t('workflow.demo.wf_dept_rd'),
-      },
-      {
-        id: '3',
-        title: t('workflow.demo.wf_title_3'),
-        workflowName: t('workflow.demo.wf_name_expense'),
-        workflowType: t('workflow.demo.wf_type_finance'),
-        initiator: t('workflow.demo.wf_person_wang'),
-        receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-        priority: 'low',
-        status: 'pending',
-        instanceId: 'inst-003',
-        nodeName: t('workflow.demo.wf_node_finance_audit'),
-        description: t('workflow.demo.wf_desc_3'),
-        amount: 2350,
-        department: t('workflow.demo.wf_dept_sales'),
-      },
-      {
-        id: '4',
-        title: t('workflow.demo.wf_title_4'),
-        workflowName: t('workflow.demo.wf_name_contract'),
-        workflowType: t('workflow.demo.wf_type_legal'),
-        initiator: t('workflow.demo.wf_person_zhao'),
-        receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        priority: 'high',
-        status: 'approved',
-        instanceId: 'inst-004',
-        nodeName: t('workflow.demo.wf_node_gm'),
-        description: t('workflow.demo.wf_desc_4'),
-        amount: 500000,
-        department: t('workflow.demo.wf_dept_legal'),
-      },
-      {
-        id: '5',
-        title: t('workflow.demo.wf_title_5'),
-        workflowName: t('workflow.demo.wf_name_purchase'),
-        workflowType: t('workflow.demo.wf_type_purchase'),
-        initiator: t('workflow.demo.wf_person_sun'),
-        receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        priority: 'medium',
-        status: 'rejected',
-        instanceId: 'inst-005',
-        nodeName: t('workflow.demo.wf_node_finance_director'),
-        description: t('workflow.demo.wf_desc_5'),
-        amount: 800000,
-        department: t('workflow.demo.wf_dept_production'),
-      },
-    ],
-    [t]
-  );
-
   const { data, isLoading, error, refetch } = useQuery<ApprovalTask[]>({
     queryKey: [...QUERY_KEY, activeTab, debouncedSearch, priorityFilter],
     queryFn: async () => {
-      try {
-        const response = await approvalTaskApi.listApprovalTasks({
-          status: activeTab === 'all' ? undefined : activeTab,
-          page: 1,
-          pageSize: 50,
-        });
-        if (response.success && response.data) {
-          return response.data.items || [];
-        }
-      } catch (_e) {
-        // API 不可用时使用 mock 数据
+      const response = await approvalTaskApi.listApprovalTasks({
+        status: activeTab === 'all' ? undefined : activeTab,
+        page: 1,
+        pageSize: 50,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || t('workflow.workflow_approvals_page.error_load'));
       }
-      return mockTasks;
+      return response.data.items || [];
     },
   });
 
@@ -241,12 +157,12 @@ const WorkflowApprovalsPage: React.FC = () => {
       setDetailDrawerOpen(false);
       setSelectedTask(null);
     },
-    onError: (_err: Error) => {
-      // Mock 模式下直接更新本地状态
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', t('workflow.approval_timeline.k5'));
-      setDetailDrawerOpen(false);
-      setSelectedTask(null);
+    onError: (err: Error) => {
+      pushToast(
+        'error',
+        t('workflow.workflow_approvals_page.toast.approve_failed') +
+          (err?.message ? `: ${err.message}` : '')
+      );
     },
   });
 
@@ -261,18 +177,16 @@ const WorkflowApprovalsPage: React.FC = () => {
       setDetailDrawerOpen(false);
       setSelectedTask(null);
     },
-    onError: (_err: Error) => {
-      // Mock 模式下直接更新本地状态
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', t('workflow.workflow_approvals_page.k19'));
-      setRejectDialogOpen(false);
-      setRejectReason('');
-      setDetailDrawerOpen(false);
-      setSelectedTask(null);
+    onError: (err: Error) => {
+      pushToast(
+        'error',
+        t('workflow.workflow_approvals_page.toast.reject_failed') +
+          (err?.message ? `: ${err.message}` : '')
+      );
     },
   });
 
-  const tasks = data || mockTasks;
+  const tasks = data ?? [];
 
   // 按 Tab 筛选
   const filteredTasks = useMemo(() => {

@@ -4,13 +4,32 @@ import { renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 
 import MonitorAlertRulesPage from '../MonitorAlertRulesPage';
 
-// CrudPage 包装页：页面内部用 initialMockRules 状态作为 mockApiAdapter.list 数据源，
-// 同时 useQuery 调 monitorApi.ruleTyped.list()（被页面 try/catch 吞掉），mock 成空响应即可。
-// CrudPage mock 渲染 alertRuleSchema.title（告警规则）为 <h1>，行字段渲染 cell-<field>-<ri>。
+// CrudPage 包装页：adapter 直接调 monitorApi.ruleTyped.list()（GET /api/monitor/rules），
+// 返回的 AlertRuleRecord 映射成页面 AlertRule（condition.field→metric_name 等）。
+// CrudPage 渲染 alertRuleSchema.title（告警规则）为 <h1>，行字段渲染 cell-<field>-<ri>。
+const mockRecords = vi.hoisted(() => [
+  {
+    id: 'rule-1',
+    tenant_id: 't1',
+    name: 'CPU 使用率过高',
+    description: null,
+    service_name: 'cpu',
+    severity: 'critical',
+    condition: { field: 'cpu_usage', operator: '>', value: 90 },
+    actions: [{ action_type: 'email', config: {} }],
+    enabled: true,
+    created_at: '2026-01-01',
+    updated_at: '2026-01-02',
+  },
+]);
+
 vi.mock('@/api/monitor', () => ({
   monitorApi: {
     ruleTyped: {
-      list: vi.fn().mockResolvedValue({ success: true, code: 0, data: {} }),
+      list: vi.fn().mockResolvedValue({ success: true, code: 0, data: mockRecords }),
+      create: vi.fn().mockResolvedValue({ success: true, code: 0, data: mockRecords[0] }),
+      update: vi.fn().mockResolvedValue({ success: true, code: 0, data: mockRecords[0] }),
+      delete: vi.fn().mockResolvedValue({ success: true, code: 0, data: { id: 'rule-1' } }),
     },
   },
 }));
@@ -26,7 +45,7 @@ describe('MonitorAlertRulesPage', () => {
     expect(await screen.findByRole('heading', { name: '告警规则' })).toBeInTheDocument();
   });
 
-  it('renders built-in rule rows（initialMockRules）', async () => {
+  it('renders rule rows from GET /api/monitor/rules', async () => {
     renderWithProviders(<MonitorAlertRulesPage />);
 
     await waitFor(() => {

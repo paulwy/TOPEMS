@@ -1,0 +1,61 @@
+{
+  "generated": "2026-11-19",
+  "scope": "apps/web/src（非测试）",
+  "note": "存量 mock 兜底债务清单：只减不增，修一处核销一处",
+  "entries": {
+    "apps/web/src/pages/ai/AiPromptLibraryPage.tsx::mock-fallback-return": {
+      "count": 1
+    },
+    "apps/web/src/pages/bi/ReportBuilderPage.tsx::mock-fallback-return": {
+      "count": 2
+    },
+    "apps/web/src/pages/erp/ErpSalesOrderRedesignPage.tsx::mock-fallback-copy": {
+      "count": 2
+    },
+    "apps/web/src/pages/erp/ErpSalesOrderRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/hrm/HrmAttendanceRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/hrm/HrmEmployeeRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/hrm/HrmPerformanceRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/mobile/MobileQualityPage.tsx::mock-fallback-return": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsAuditRedesignPage.tsx::mock-fallback-copy": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsAuditRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsEightDRedesignPage.tsx::mock-fallback-copy": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsEightDRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx::mock-fallback-copy": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsNonconformanceRedesignPage.tsx::mock-fallback-copy": {
+      "count": 2
+    },
+    "apps/web/src/pages/qms/QmsNonconformanceRedesignPage.tsx::mock-state": {
+      "count": 2
+    },
+    "apps/web/src/pages/report/ReportPage/index.tsx::mock-fallback-return": {
+      "count": 1
+    },
+    "apps/web/src/utils/ai/testGenerator.ts::mock-fallback-return": {
+      "count": 1
+    }
+  }
+}

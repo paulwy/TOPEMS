@@ -1,6 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { CreatePermissionRequest, Permission, UpdatePermissionRequest } from './types';
+import type { Permission } from './types';
 
 export const permissionApi = {
   listPermissions: async (): Promise<ApiResponse<Permission[]>> => {
@@ -9,20 +9,8 @@ export const permissionApi = {
     return apiClient.iam.get<Permission[]>('/permissions/grantable');
   },
 
-  createPermission: async (data: CreatePermissionRequest): Promise<ApiResponse<Permission>> => {
-    return apiClient.iam.post<Permission>('/permissions', data);
-  },
-
-  updatePermission: async (
-    permissionId: string,
-    data: UpdatePermissionRequest
-  ): Promise<ApiResponse<Permission>> => {
-    return apiClient.iam.put<Permission>(`/permissions/${permissionId}`, data);
-  },
-
-  deletePermission: async (permissionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete<string>(`/permissions/${permissionId}`);
-  },
+  // 权限定义为迁移种子数据：后端 PUT/DELETE /permissions/{id} 与 POST /permissions 固定 501
+  // （见 svc/unified-core/src/modules/iam/permission.rs:183-210），前端不暴露写方法。
 };
 
 export default permissionApi;

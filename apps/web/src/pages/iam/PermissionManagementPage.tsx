@@ -19,34 +19,16 @@ const apiAdapter: CrudApiAdapter<Permission> = {
     const items = res.data ?? [];
     return { data: items, total: items.length };
   },
-  create: async (data) => {
-    const res = await authApi.createPermission({
-      name: data.name as string,
-      code: data.code as string,
-      category: data.category as string,
-      module: data.category as string,
-      description: data.description as string | undefined,
-    });
-    if (res.success === false) {
-      throw new Error(res.message || i18n.t('iam.permission_management_page.k1'));
-    }
-    return (res.data ?? {}) as Permission;
+  // 只读页（CrudPage readOnly）：写入口已隐藏；以下方法仅为满足适配器接口，
+  // 不发任何网络请求——权限定义由迁移种子维护（后端写接口固定 501）。
+  create: async () => {
+    throw new Error(i18n.t('iam.permission_management_page.k1'));
   },
-  update: async (id, data) => {
-    const res = await authApi.updatePermission(id, {
-      name: data.name as string | undefined,
-      description: data.description as string | undefined,
-    });
-    if (res.success === false) {
-      throw new Error(res.message || i18n.t('iam.permission_management_page.k2'));
-    }
-    return (res.data ?? {}) as Permission;
+  update: async () => {
+    throw new Error(i18n.t('iam.permission_management_page.k2'));
   },
-  delete: async (id) => {
-    const res = await authApi.deletePermission(id);
-    if (res.success === false) {
-      throw new Error(res.message || i18n.t('iam.permission_management_page.k3'));
-    }
+  delete: async () => {
+    throw new Error(i18n.t('iam.permission_management_page.k3'));
   },
 };
 

@@ -98,88 +98,22 @@ const AnnouncementPage: React.FC = () => {
     }, 4000);
   };
 
-  // Mock 数据
-  const mockAnnouncements: Announcement[] = useMemo(
-    () => [
-      {
-        id: '1',
-        title: t('oa.demo.ann_title_1'),
-        content: t('oa.demo.ann_content_1'),
-        author: t('oa.demo.ann_author_hr'),
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-        category: 'notice',
-        status: 'published',
-        priority: 'high',
-        views: 328,
-      },
-      {
-        id: '2',
-        title: t('oa.demo.ann_title_2'),
-        content: t('oa.demo.ann_content_2'),
-        author: t('oa.demo.ann_author_sec'),
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-        category: 'policy',
-        status: 'published',
-        priority: 'normal',
-        views: 156,
-      },
-      {
-        id: '3',
-        title: t('oa.demo.ann_title_3'),
-        content: t('oa.demo.ann_content_3'),
-        author: t('oa.demo.ann_author_union'),
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-        category: 'activity',
-        status: 'published',
-        priority: 'normal',
-        views: 89,
-      },
-      {
-        id: '4',
-        title: t('oa.demo.ann_title_4'),
-        content: t('oa.demo.ann_content_4'),
-        author: t('oa.demo.ann_author_hr'),
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-        category: 'policy',
-        status: 'draft',
-        priority: 'low',
-        views: 0,
-      },
-      {
-        id: '5',
-        title: t('oa.demo.ann_title_5'),
-        content: t('oa.demo.ann_content_5'),
-        author: t('oa.demo.ann_author_it'),
-        created_at: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
-        category: 'announcement',
-        status: 'published',
-        priority: 'high',
-        views: 512,
-      },
-    ],
-    [t]
-  );
-
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...QUERY_KEY, activeTab, debouncedSearch, categoryFilter],
     queryFn: async () => {
-      try {
-        const response = await announcementApi.list({ page: 1, pageSize: 50 });
-        if (response.success && Array.isArray(response.data?.items)) {
-          return response.data.items.map((a) => ({
-            id: a.id,
-            title: a.title,
-            content: a.content,
-            author: a.author ?? '-',
-            created_at: a.created_at,
-            category: a.priority ?? 'normal',
-            status: a.status,
-          }));
-        }
-      } catch (_e) {
-        // API 不可用时使用 mock 数据
+      const response = await announcementApi.list({ page: 1, pageSize: 50 });
+      if (!response.success || !Array.isArray(response.data?.items)) {
+        throw new Error(response.message || t('oa.announcement_page.error_load'));
       }
-      return mockAnnouncements;
+      return response.data.items.map((a) => ({
+        id: a.id,
+        title: a.title,
+        content: a.content,
+        author: a.author ?? '-',
+        created_at: a.created_at,
+        category: a.priority ?? 'normal',
+        status: a.status,
+      }));
     },
   });
 
@@ -191,12 +125,12 @@ const AnnouncementPage: React.FC = () => {
       setCreateModalOpen(false);
       setFormData({ title: '', content: '', category: 'notice', priority: 'normal' });
     },
-    onError: () => {
-      // Mock 模式下直接成功
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', t('oa.announcement_page.k45'));
-      setCreateModalOpen(false);
-      setFormData({ title: '', content: '', category: 'notice', priority: 'normal' });
+    onError: (err) => {
+      pushToast(
+        'error',
+        t('oa.announcement_page.toast.create_failed') +
+          (err instanceof Error && err.message ? `: ${err.message}` : '')
+      );
     },
   });
 
@@ -206,13 +140,16 @@ const AnnouncementPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('oa.announcement_page.k46'));
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', t('oa.announcement_page.k46'));
+    onError: (err) => {
+      pushToast(
+        'error',
+        t('oa.announcement_page.toast.delete_failed') +
+          (err instanceof Error && err.message ? `: ${err.message}` : '')
+      );
     },
   });
 
-  const announcements = data || mockAnnouncements;
+  const announcements = data ?? [];
 
   // 筛选
   const filteredAnnouncements = useMemo(() => {

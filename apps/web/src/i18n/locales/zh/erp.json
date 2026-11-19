@@ -3219,5 +3219,7 @@
   "erp.demo.remark_urgent": "紧急采购，需尽快审批",
   "erp.demo.remark_overbudget": "预算超标，已驳回",
   "erp.purchase_order.department.unassigned": "未分配",
-  "erp.nav.erp-sales-orders_desc": "销售订单"
+  "erp.nav.erp-sales-orders_desc": "销售订单",
+  "erp.purchase_order.toast.delete_failed": "删除采购订单失败，请重试",
+  "erp.purchase_order.error.load": "采购订单加载失败，请重试"
 }

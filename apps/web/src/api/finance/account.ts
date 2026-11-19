@@ -9,7 +9,6 @@ import { apiClient } from '../client';
 import {
   toOpenApiParams,
   toOpenApiRequestBody,
-  type AdaptedQuery,
   type AdaptedRequestBody,
   type TypedApiResponse,
   type TypedPaginatedResponse,
@@ -17,22 +16,20 @@ import {
 
 export const accountApi = {
   /**
-   * V72.5 第二批 绑定样板：list_accounts operation（openapi: GET /finance/accounts）
-   * Query Params 经 AdaptedQuery<'list_accounts'> 适配为 camelCase，运行时 adaptReverse → snake_case
+   * V72.5 第二批 绑定样板：GET /finance/accounts 列表。
+   * 注意：后端 `list_accounts`（svc/finance/src/modules/mod.rs:346）未打 `#[utoipa::path]`，
+   * 生成物 operations 里没有该 operation，故此处用显式参数类型收口；待注解补齐后切回
+   * AdaptedQuery<'list_accounts'>。见 TODO.md W6-E2。
    */
-  list: async (
-    params?:
-      | AdaptedQuery<'list_accounts'>
-      | {
-          category?: string;
-          parentId?: string;
-          level?: number;
-          status?: string;
-          keyword?: string;
-          page?: number;
-          page_size?: number;
-        }
-  ): Promise<TypedPaginatedResponse<Account>> => {
+  list: async (params?: {
+    category?: string;
+    parentId?: string;
+    level?: number;
+    status?: string;
+    keyword?: string;
+    page?: number;
+    page_size?: number;
+  }): Promise<TypedPaginatedResponse<Account>> => {
     return apiClient.finance.get('/accounts', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
     });

@@ -125,8 +125,6 @@ const mapApiCustomers = (apiCustomers: ApiCustomer[]): Customer[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockCustomers
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -142,89 +140,6 @@ const formatAmount = (value: number, t: (key: string) => string) => {
 const CrmCustomerRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  const mockCustomers: Customer[] = [
-    {
-      id: '1',
-      customer_no: 'CUS001',
-      customer_name: t('crm.demo.company_a_name'),
-      industry: t('crm.demo.industry_electronics'),
-      level: 'A',
-      status: 'active',
-      contact_person: t('crm.demo.contact_wang'),
-      contact_phone: '138****1234',
-      email: 'wang@shanghai-tech.com',
-      address: t('crm.demo.address_a'),
-      total_order_amount: 2560000,
-      order_count: 15,
-      owner: t('crm.demo.owner_zhang'),
-      created_at: '2025-01-15 10:00:00',
-    },
-    {
-      id: '2',
-      customer_no: 'CUS002',
-      customer_name: t('crm.demo.company_b_name'),
-      industry: t('crm.demo.industry_trading'),
-      level: 'A',
-      status: 'active',
-      contact_person: t('crm.demo.contact_li'),
-      contact_phone: '139****5678',
-      email: 'li@bj-trade.com',
-      address: t('crm.demo.address_b'),
-      total_order_amount: 1890000,
-      order_count: 12,
-      owner: t('crm.demo.owner_li'),
-      created_at: '2025-02-20 14:30:00',
-    },
-    {
-      id: '3',
-      customer_no: 'CUS003',
-      customer_name: t('crm.demo.company_c_name'),
-      industry: t('crm.demo.industry_electronics'),
-      level: 'B',
-      status: 'active',
-      contact_person: t('crm.demo.contact_manager_zhang'),
-      contact_phone: '137****9012',
-      email: 'zhang@sz-elec.com',
-      address: t('crm.demo.address_c'),
-      total_order_amount: 860000,
-      order_count: 8,
-      owner: t('crm.demo.owner_zhang'),
-      created_at: '2025-03-10 09:15:00',
-    },
-    {
-      id: '4',
-      customer_no: 'CUS004',
-      customer_name: t('crm.demo.company_d_name'),
-      industry: t('crm.demo.industry_machinery'),
-      level: 'B',
-      status: 'potential',
-      contact_person: t('crm.demo.contact_chen'),
-      contact_phone: '136****3456',
-      email: 'chen@gz-manu.com',
-      address: t('crm.demo.address_d'),
-      total_order_amount: 0,
-      order_count: 0,
-      owner: t('crm.demo.owner_wang'),
-      created_at: '2026-08-01 11:00:00',
-    },
-    {
-      id: '5',
-      customer_no: 'CUS005',
-      customer_name: t('crm.demo.company_e_name'),
-      industry: t('crm.demo.industry_machinery'),
-      level: 'C',
-      status: 'inactive',
-      contact_person: t('crm.demo.contact_liu'),
-      contact_phone: '135****7890',
-      email: 'liu@cd-equip.com',
-      address: t('crm.demo.address_e'),
-      total_order_amount: 120000,
-      order_count: 3,
-      owner: t('crm.demo.owner_li'),
-      created_at: '2025-06-05 16:45:00',
-    },
-  ];
 
   const levelConfig = {
     A: { label: t('crm.customer_list_page.badge_level_a'), variant: 'error' as const, icon: Star },
@@ -259,7 +174,6 @@ const CrmCustomerRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -302,30 +216,13 @@ const CrmCustomerRedesignPage: React.FC = () => {
           total = dataObj.total || apiCustomers.length;
         }
         if (Array.isArray(apiCustomers)) {
-          setIsMockData(false);
           return { customers: mapApiCustomers(apiCustomers), total };
         }
       } catch (e) {
-        // API 不可用时 fallback 到 Mock 数据（本地分页）
-        console.warn('[CRM Customers] API unavailable, using mock data:', e);
-        setIsMockData(true);
+        const detail = e instanceof Error && e.message ? `: ${e.message}` : '';
+        throw new Error(t('crm.customer_list_page.error_load') + detail);
       }
-      // Mock fallback：本地分页
-      setIsMockData(true);
-      let filtered = mockCustomers;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (c) =>
-            c.customer_name.includes(debouncedSearch) ||
-            c.customer_no.includes(debouncedSearch) ||
-            c.contact_person.includes(debouncedSearch)
-        );
-      }
-      if (levelFilter !== 'all') {
-        filtered = filtered.filter((c) => c.level === levelFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { customers: filtered.slice(start, start + pageSize), total: filtered.length };
+      throw new Error(t('crm.customer_list_page.error_load'));
     },
   });
 
@@ -338,15 +235,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      try {
-        await customerApi.delete(id);
-      } catch (e) {
-        console.warn('[CRM Customers] Delete API unavailable, using mock delete:', e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return id;
-    },
+    mutationFn: (id: string) => customerApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
@@ -359,44 +248,25 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Customer>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
-        const payload = {
-          name: data.customer_name || '',
-          code: data.customer_no,
-          // 后端 CreateCustomerRequest.customer_type 为必填 String，缺省给合理默认值 enterprise
-          customer_type: data.customer_type || 'enterprise',
-          phone: data.contact_phone,
-          email: data.email,
-          address: data.address,
-          industry: data.industry,
-          rating: data.level,
-          status: (data.status as string) || 'active',
-        };
-        await customerApi.create(payload);
-      } catch (e) {
-        console.warn('[CRM Customers] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        // 进入本地演示态，列表顶部展示 mock_banner
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
+      const payload = {
+        name: data.customer_name || '',
+        code: data.customer_no,
+        // 后端 CreateCustomerRequest.customer_type 为必填 String，缺省给合理默认值 enterprise
+        customer_type: data.customer_type || 'enterprise',
+        phone: data.contact_phone,
+        email: data.email,
+        address: data.address,
+        industry: data.industry,
+        rating: data.level,
+        status: (data.status as string) || 'active',
+      };
+      await customerApi.create(payload);
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t('crm.customer_list_page.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('crm.customer_list_page.toast_create_success'));
-      }
+      pushToast('success', t('crm.customer_list_page.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('crm.customer_list_page.toast_create_fail'));
@@ -405,21 +275,16 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Customer> }) => {
-      try {
-        await customerApi.update(id, {
-          name: data.customer_name,
-          customer_type: data.customer_type,
-          phone: data.contact_phone,
-          email: data.email,
-          address: data.address,
-          industry: data.industry,
-          rating: data.level,
-          status: data.status,
-        });
-      } catch (e) {
-        console.warn('[CRM Customers] Update API unavailable, using mock update:', e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await customerApi.update(id, {
+        name: data.customer_name,
+        customer_type: data.customer_type,
+        phone: data.contact_phone,
+        email: data.email,
+        address: data.address,
+        industry: data.industry,
+        rating: data.level,
+        status: data.status,
+      });
       return { id, data };
     },
     onSuccess: () => {
@@ -574,21 +439,6 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('crm.customer_list_page.mock_banner')}
-        </div>
-      )}
       <ListPageTemplate<Customer>
         header={{
           title: t('crm.customer_list_page.title'),

@@ -118,8 +118,6 @@ const mapApiContracts = (apiContracts: RawApiContract[]): Contract[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockContracts
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -136,79 +134,6 @@ const CrmContractRedesignPage: React.FC = () => {
     }
     return `¥${value.toLocaleString('zh-CN')}`;
   };
-
-  const mockContracts: Contract[] = [
-    {
-      id: '1',
-      contract_no: 'CON202609001',
-      title: t('crm.demo.contract_1_title'),
-      customer_name: t('crm.demo.company_a_name'),
-      type: 'sales',
-      status: 'active',
-      amount: 2560000,
-      start_date: '2026-01-01',
-      end_date: '2026-12-31',
-      owner: t('crm.demo.owner_zhang'),
-      sign_date: '2026-01-05',
-      created_at: '2026-01-05 10:00:00',
-    },
-    {
-      id: '2',
-      contract_no: 'CON202609002',
-      title: t('crm.demo.contract_2_title'),
-      customer_name: t('crm.demo.company_b_name'),
-      type: 'framework',
-      status: 'pending',
-      amount: 1280000,
-      start_date: '2026-10-01',
-      end_date: '2027-09-30',
-      owner: t('crm.demo.owner_li'),
-      sign_date: '',
-      created_at: '2026-09-01 14:30:00',
-    },
-    {
-      id: '3',
-      contract_no: 'CON202608001',
-      title: t('crm.demo.contract_3_title'),
-      customer_name: t('crm.demo.company_c_name'),
-      type: 'service',
-      status: 'active',
-      amount: 350000,
-      start_date: '2026-08-01',
-      end_date: '2027-07-31',
-      owner: t('crm.demo.owner_zhang'),
-      sign_date: '2026-08-05',
-      created_at: '2026-08-05 09:15:00',
-    },
-    {
-      id: '4',
-      contract_no: 'CON202512001',
-      title: t('crm.demo.contract_4_title'),
-      customer_name: t('crm.demo.company_d_name'),
-      type: 'sales',
-      status: 'completed',
-      amount: 256000,
-      start_date: '2025-12-01',
-      end_date: '2026-06-30',
-      owner: t('crm.demo.owner_wang'),
-      sign_date: '2025-12-10',
-      created_at: '2025-12-10 11:00:00',
-    },
-    {
-      id: '5',
-      contract_no: 'CON202506001',
-      title: t('crm.demo.contract_5_title'),
-      customer_name: t('crm.demo.company_e_name'),
-      type: 'sales',
-      status: 'expired',
-      amount: 89000,
-      start_date: '2025-06-01',
-      end_date: '2026-05-31',
-      owner: t('crm.demo.owner_li'),
-      sign_date: '2025-06-15',
-      created_at: '2025-06-15 16:45:00',
-    },
-  ];
 
   const typeConfig = {
     sales: { label: t('crm.contract_redesign.type_sales'), variant: 'success' as const },
@@ -238,7 +163,6 @@ const CrmContractRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Contract | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -282,25 +206,13 @@ const CrmContractRedesignPage: React.FC = () => {
           total = obj.total || apiContracts.length;
         }
         if (Array.isArray(apiContracts)) {
-          setIsMockData(false);
           return { contracts: mapApiContracts(apiContracts), total };
         }
       } catch (e) {
-        console.warn('[CRM Contracts] API unavailable, using mock data:', e);
-        setIsMockData(true);
+        const detail = e instanceof Error && e.message ? `: ${e.message}` : '';
+        throw new Error(t('crm.contract_redesign.error_load') + detail);
       }
-      // Mock fallback：本地分页
-      let filtered = mockContracts;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (c) => c.contract_no.includes(debouncedSearch) || c.title.includes(debouncedSearch)
-        );
-      }
-      if (typeFilter !== 'all') {
-        filtered = filtered.filter((c) => c.type === typeFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { contracts: filtered.slice(start, start + pageSize), total: filtered.length };
+      throw new Error(t('crm.contract_redesign.error_load'));
     },
   });
 
@@ -314,7 +226,7 @@ const CrmContractRedesignPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await apiClient.crm.delete(`/contracts/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -329,41 +241,23 @@ const CrmContractRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Contract>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        await apiClient.crm.post('/contracts', {
-          contract_no: data.contract_no,
-          title: data.title,
-          customer_name: data.customer_name,
-          amount: data.amount,
-          status: data.status,
-          sign_date: data.sign_date,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          owner: data.owner,
-          type: data.type,
-        });
-      } catch (e) {
-        console.warn('[CRM Contracts] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      await apiClient.crm.post('/contracts', {
+        contract_no: data.contract_no,
+        title: data.title,
+        customer_name: data.customer_name,
+        amount: data.amount,
+        status: data.status,
+        sign_date: data.sign_date,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        owner: data.owner,
+        type: data.type,
+      });
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t('crm.contract_redesign.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('crm.contract_redesign.toast_create_success'));
-      }
+      pushToast('success', t('crm.contract_redesign.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('crm.contract_redesign.toast_create_fail'));
@@ -372,27 +266,13 @@ const CrmContractRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Contract> }) => {
-      let apiFailed = false;
-      try {
-        await apiClient.crm.put(`/contracts/${id}`, data);
-      } catch (e) {
-        console.warn('[CRM Contracts] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      await apiClient.crm.put(`/contracts/${id}`, data);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast(
-          'warning',
-          t('crm.contract_redesign.mock_update_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('crm.contract_redesign.toast_update_success'));
-      }
+      pushToast('success', t('crm.contract_redesign.toast_update_success'));
     },
     onError: () => {
       pushToast('error', t('crm.contract_redesign.toast_update_fail'));
@@ -544,21 +424,6 @@ const CrmContractRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('crm.contract_redesign.mock_banner')}
-        </div>
-      )}
       <ListPageTemplate<Contract>
         header={{
           title: t('crm.contract_redesign.title'),

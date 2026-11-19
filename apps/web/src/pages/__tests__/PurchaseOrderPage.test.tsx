@@ -163,14 +163,16 @@ describe('PurchaseOrderPage（批次5）', () => {
     ]);
   });
 
-  it('falls back to built-in mock orders (6 rows) when API returns success:false', async () => {
+  it('shows error state (no mock fallback) when API returns success:false', async () => {
     vi.mocked(erpApi.purchaseOrders.list).mockResolvedValueOnce({ success: false });
 
     render(<PurchaseOrderPage />);
 
     await waitFor(() => {
       const props = mockListPage.mock.calls[mockListPage.mock.calls.length - 1][0];
-      expect(props.data).toHaveLength(6);
+      // 不再回退假数据：列表为空，且把错误交给 ListPageTemplate 展示
+      expect(props.data).toHaveLength(0);
+      expect(props.error).toBe('erp.purchase_order.error.load');
     });
   });
 });

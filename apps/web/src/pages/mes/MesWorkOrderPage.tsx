@@ -147,125 +147,32 @@ const MesWorkOrderPage: React.FC = () => {
     }, 4000);
   };
 
-  // Mock 数据
-  const mockOrders: WorkOrder[] = useMemo(
-    () => [
-      {
-        id: '1',
-        order_no: 'WO-2026-0914-001',
-        product_name: t('mes.demo.product_gear'),
-        product_code: 'PG-001',
-        quantity: 500,
-        completed_quantity: 320,
-        status: 'in_progress',
-        priority: 'high',
-        workshop: t('mes.work_order_page.workshop_1'),
-        production_line: t('mes.work_order_page.line_a'),
-        operator: t('mes.demo.operator_zhang'),
-        planned_start: '2026-09-14 08:00',
-        planned_end: '2026-09-15 18:00',
-        actual_start: '2026-09-14 08:15',
-        remark: t('mes.demo.remark_urgent'),
-      },
-      {
-        id: '2',
-        order_no: 'WO-2026-0914-002',
-        product_name: t('mes.demo.product_shell'),
-        product_code: 'SS-002',
-        quantity: 1000,
-        completed_quantity: 1000,
-        status: 'completed',
-        priority: 'medium',
-        workshop: t('mes.work_order_page.workshop_2'),
-        production_line: t('mes.work_order_page.line_b'),
-        operator: t('mes.demo.operator_li'),
-        planned_start: '2026-09-13 08:00',
-        planned_end: '2026-09-14 18:00',
-        actual_start: '2026-09-13 08:00',
-        actual_end: '2026-09-14 16:30',
-      },
-      {
-        id: '3',
-        order_no: 'WO-2026-0914-003',
-        product_name: t('mes.demo.product_rotor'),
-        product_code: 'MR-003',
-        quantity: 200,
-        completed_quantity: 0,
-        status: 'pending',
-        priority: 'low',
-        workshop: t('mes.work_order_page.workshop_1'),
-        production_line: t('mes.work_order_page.line_c'),
-        operator: t('mes.demo.operator_wang'),
-        planned_start: '2026-09-16 08:00',
-        planned_end: '2026-09-17 18:00',
-      },
-      {
-        id: '4',
-        order_no: 'WO-2026-0914-004',
-        product_name: t('mes.demo.product_bracket'),
-        product_code: 'AL-004',
-        quantity: 800,
-        completed_quantity: 450,
-        status: 'paused',
-        priority: 'medium',
-        workshop: t('mes.work_order_page.workshop_3'),
-        production_line: t('mes.work_order_page.line_a'),
-        operator: t('mes.demo.operator_zhao'),
-        planned_start: '2026-09-14 08:00',
-        planned_end: '2026-09-15 18:00',
-        actual_start: '2026-09-14 09:00',
-        remark: t('mes.demo.remark_breakdown'),
-      },
-      {
-        id: '5',
-        order_no: 'WO-2026-0914-005',
-        product_name: t('mes.demo.product_connector'),
-        product_code: 'PL-005',
-        quantity: 2000,
-        completed_quantity: 0,
-        status: 'cancelled',
-        priority: 'low',
-        workshop: t('mes.work_order_page.workshop_2'),
-        production_line: t('mes.work_order_page.line_c'),
-        operator: t('mes.demo.operator_sun'),
-        planned_start: '2026-09-15 08:00',
-        planned_end: '2026-09-16 18:00',
-        remark: t('mes.demo.remark_cancelled'),
-      },
-    ],
-    [t]
-  );
-
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...QUERY_KEY, activeTab, debouncedSearch, workshopFilter],
     queryFn: async () => {
-      try {
-        const response = await mesApi.workOrders.list({ page: 1, pageSize: 50 });
-        if (response.success && response.data) {
-          const apiOrders: ApiWorkOrder[] = response.data.work_orders || [];
-          return apiOrders.map((o): WorkOrder => ({
-            id: o.id,
-            order_no: o.work_order_no,
-            product_name: o.process_name || o.order_number || '—',
-            product_code: o.order_number || '—',
-            quantity: o.quantity,
-            completed_quantity: o.completed_quantity || 0,
-            status: o.status as WorkOrder['status'],
-            priority: (o.priority as WorkOrder['priority']) || 'medium',
-            workshop: o.work_station_name || '—',
-            production_line: o.process_name || '—',
-            operator: o.team_name || '—',
-            planned_start: o.planned_start_time || '',
-            planned_end: o.planned_end_time || '',
-            actual_start: o.actual_start_time,
-            actual_end: o.actual_end_time,
-            remark: o.remark,
-          }));
-        }
-      } catch (_e) {
-        // API 不可用时使用 mock 数据
+      const response = await mesApi.workOrders.list({ page: 1, pageSize: 50 });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || t('mes.work_order_page.error_load'));
       }
-      return mockOrders;
+      const apiOrders: ApiWorkOrder[] = response.data.work_orders || [];
+      return apiOrders.map((o): WorkOrder => ({
+        id: o.id,
+        order_no: o.work_order_no,
+        product_name: o.process_name || o.order_number || '—',
+        product_code: o.order_number || '—',
+        quantity: o.quantity,
+        completed_quantity: o.completed_quantity || 0,
+        status: o.status as WorkOrder['status'],
+        priority: (o.priority as WorkOrder['priority']) || 'medium',
+        workshop: o.work_station_name || '—',
+        production_line: o.process_name || '—',
+        operator: o.team_name || '—',
+        planned_start: o.planned_start_time || '',
+        planned_end: o.planned_end_time || '',
+        actual_start: o.actual_start_time,
+        actual_end: o.actual_end_time,
+        remark: o.remark,
+      }));
     },
   });
 
@@ -275,13 +182,17 @@ const MesWorkOrderPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('mes.work_order_page.toast_deleted'));
     },
-    onError: () => {
+    onError: (err) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-      pushToast('success', t('mes.work_order_page.toast_deleted'));
+      pushToast(
+        'error',
+        t('mes.work_order_page.toast_delete_failed') +
+          (err instanceof Error && err.message ? `: ${err.message}` : '')
+      );
     },
   });
 
-  const orders = data || mockOrders;
+  const orders = data ?? [];
 
   // 筛选
   const filteredOrders = useMemo(() => {

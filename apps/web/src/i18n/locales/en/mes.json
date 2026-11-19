@@ -2984,5 +2984,7 @@
   "mes.masterData.deleteSuccess": "Deleted successfully",
   "mes.masterData.deleteFailed": "Delete failed",
   "mes.capacity.empty": "No capacity data yet",
-  "mes.masterData.empty": "No master data yet"
+  "mes.masterData.empty": "No master data yet",
+  "mes.work_order_page.toast_delete_failed": "Failed to delete work order, please retry",
+  "mes.work_order_page.error_load": "Failed to load work orders, please retry"
 }

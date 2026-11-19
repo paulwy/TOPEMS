@@ -55,9 +55,6 @@ export const adminApi = {
   removeRolePermission: roleApi.removeRolePermission,
 
   listPermissions: permissionApi.listPermissions,
-  createPermission: permissionApi.createPermission,
-  updatePermission: permissionApi.updatePermission,
-  deletePermission: permissionApi.deletePermission,
 
   listTenants: tenantApi.listTenants,
   getTenant: tenantApi.getTenant,

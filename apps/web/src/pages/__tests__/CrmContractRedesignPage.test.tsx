@@ -5,7 +5,7 @@ import CrmContractRedesignPage from '../crm/CrmContractRedesignPage';
 import { apiClient } from '@/api/client';
 
 // CrmContractRedesignPage：redesign 形态（19 hooks）——useQuery（apiClient.get）+ 3 mutations
-// + ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环（delete 无 API 调用）——按真实行为断言
+// + ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环（DELETE /contracts/{id}）——按真实行为断言
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
@@ -156,6 +156,7 @@ vi.mock('@/api/client', () => ({
       get: vi.fn().mockResolvedValue({ data: { list: mockContracts, total: 2 } }),
       post: vi.fn().mockResolvedValue({ data: { success: true } }),
       put: vi.fn().mockResolvedValue({ data: { success: true } }),
+      delete: vi.fn().mockResolvedValue({ data: { success: true } }),
     },
   },
 }));
@@ -244,7 +245,7 @@ describe('CrmContractRedesignPage（redesign 形态：ListPageTemplate + 4 StatT
     expect(getByText('crm.contract_redesign.btn_create')).toBeInTheDocument();
   });
 
-  it('删除确认闭环：确认后 invalidate + toast（delete 无 API 调用）', async () => {
+  it('删除确认闭环：确认后调用 DELETE /contracts/{id} + invalidate + toast', async () => {
     render(<CrmContractRedesignPage />);
     await screen.findByTestId('list-page-template');
 
@@ -257,6 +258,7 @@ describe('CrmContractRedesignPage（redesign 形态：ListPageTemplate + 4 StatT
 
     fireEvent.click(screen.getByText('crm.contract_redesign.btn_confirm_delete'));
     await waitFor(() => {
+      expect(apiClient.crm.delete).toHaveBeenCalledWith('/contracts/con-1');
       expect(mockInvalidate).toHaveBeenCalled();
     });
   });

@@ -1496,6 +1496,9 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: pnpm --filter topems-portal typecheck
 
+      - name: Frontend mock fallback gate
+        run: node scripts/ci/check-frontend-mock-fallback.mjs
+
       - name: Run type check for all shared packages
         run: |
           set -o pipefail

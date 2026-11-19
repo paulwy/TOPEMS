@@ -5,7 +5,7 @@ import WmsStocktakePage from '../wms/WmsStocktakePage';
 import { stockTakeApi } from '@/api/wms/stocktake';
 
 // WmsStocktakePage：redesign 组件库形态（38 hooks）——useQuery（服务端分页，data.orders）
-// + 3 mutations（delete mutationFn 仅 setTimeout 500ms 不调 API；create/update 调 stockTakeApi）
+// + 3 mutations（delete 调 DELETE /stock-takes/{id}；create/update 调 stockTakeApi）
 // + ListPageTemplate（header/toolbar/footer 4 StatTile）+ Tabs + Modal（创建/删除确认）+ Drawer
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -169,6 +169,7 @@ vi.mock('@/api/wms/stocktake', () => ({
     list: vi.fn().mockResolvedValue({ success: true, data: { list: mockOrders, total: 2 } }),
     create: vi.fn().mockResolvedValue({ success: true }),
     update: vi.fn().mockResolvedValue({ success: true }),
+    delete: vi.fn().mockResolvedValue({ success: true }),
   },
 }));
 
@@ -270,7 +271,7 @@ describe('WmsStocktakePage（redesign 形态：ListPageTemplate + 4 StatTile + T
     expect(getByText('wms.stocktake_page.action_new')).toBeInTheDocument();
   });
 
-  it('删除确认闭环：确认后 mutationFn 完成 + invalidate + toast（不调 API）', async () => {
+  it('删除确认闭环：确认后调用 DELETE /stock-takes/{id} + invalidate + toast', async () => {
     render(<WmsStocktakePage />);
     await screen.findByTestId('list-page-template');
 
@@ -283,9 +284,8 @@ describe('WmsStocktakePage（redesign 形态：ListPageTemplate + 4 StatTile + T
     expect(screen.getAllByTestId('modal').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByText('wms.stocktake_page.button_confirm_delete'));
     await waitFor(() => {
+      expect(stockTakeApi.delete).toHaveBeenCalledWith('st-1');
       expect(mockInvalidate).toHaveBeenCalled();
-      // delete mutationFn 仅 setTimeout 500ms——不调 stockTakeApi
-      expect(stockTakeApi.delete).toBeUndefined();
     });
     await waitFor(() => {
       expect(screen.getByText('wms.stocktake_page.toast_delete_success')).toBeInTheDocument();

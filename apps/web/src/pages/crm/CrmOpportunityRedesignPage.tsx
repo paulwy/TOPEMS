@@ -108,8 +108,6 @@ const mapApiOpportunities = (apiOpportunities: RawApiOpportunity[]): Opportunity
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockOpportunities
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -126,74 +124,6 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     }
     return `¥${value.toLocaleString('zh-CN')}`;
   };
-
-  const mockOpportunities: Opportunity[] = [
-    {
-      id: '1',
-      opp_no: 'OPP202609001',
-      name: t('crm.demo.opp_1_name'),
-      customer_name: t('crm.demo.company_a_name'),
-      stage: 'proposal',
-      amount: 560000,
-      expected_date: '2026-09-30',
-      probability: 60,
-      owner: t('crm.demo.owner_zhang'),
-      source: 'referral',
-      created_at: '2026-09-01 10:00:00',
-    },
-    {
-      id: '2',
-      opp_no: 'OPP202609002',
-      name: t('crm.demo.opp_2_name'),
-      customer_name: t('crm.demo.company_b_name'),
-      stage: 'negotiation',
-      amount: 1280000,
-      expected_date: '2026-09-25',
-      probability: 80,
-      owner: t('crm.demo.owner_li'),
-      source: 'website',
-      created_at: '2026-08-20 14:30:00',
-    },
-    {
-      id: '3',
-      opp_no: 'OPP202609003',
-      name: t('crm.demo.opp_3_name'),
-      customer_name: t('crm.demo.company_c_name'),
-      stage: 'qualified',
-      amount: 350000,
-      expected_date: '2026-10-15',
-      probability: 40,
-      owner: t('crm.demo.owner_zhang'),
-      source: 'exhibition',
-      created_at: '2026-09-05 09:15:00',
-    },
-    {
-      id: '4',
-      opp_no: 'OPP202608001',
-      name: t('crm.demo.opp_4_name'),
-      customer_name: t('crm.demo.company_d_name'),
-      stage: 'won',
-      amount: 256000,
-      expected_date: '2026-08-28',
-      probability: 100,
-      owner: t('crm.demo.owner_wang'),
-      source: 'cold_call',
-      created_at: '2026-08-10 11:00:00',
-    },
-    {
-      id: '5',
-      opp_no: 'OPP202608002',
-      name: t('crm.demo.opp_5_name'),
-      customer_name: t('crm.demo.company_e_name'),
-      stage: 'lost',
-      amount: 89000,
-      expected_date: '2026-08-15',
-      probability: 0,
-      owner: t('crm.demo.owner_li'),
-      source: 'other',
-      created_at: '2026-08-01 16:45:00',
-    },
-  ];
 
   const stageConfig = {
     lead: { label: t('crm.opportunity_redesign.stage_lead'), variant: 'default' as const, step: 1 },
@@ -239,7 +169,6 @@ const CrmOpportunityRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Opportunity | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -284,25 +213,13 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           total = dataObj.total || apiOpportunities.length;
         }
         if (Array.isArray(apiOpportunities)) {
-          setIsMockData(false);
           return { opportunities: mapApiOpportunities(apiOpportunities), total };
         }
       } catch (e) {
-        console.warn('[CRM Opportunities] API unavailable, using mock data:', e);
-        setIsMockData(true);
+        const detail = e instanceof Error && e.message ? `: ${e.message}` : '';
+        throw new Error(t('crm.opportunity_redesign.error_load') + detail);
       }
-      // Mock fallback：本地分页
-      let filtered = mockOpportunities;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (o) => o.name.includes(debouncedSearch) || o.customer_name.includes(debouncedSearch)
-        );
-      }
-      if (stageFilter !== 'all') {
-        filtered = filtered.filter((o) => o.stage === stageFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { opportunities: filtered.slice(start, start + pageSize), total: filtered.length };
+      throw new Error(t('crm.opportunity_redesign.error_load'));
     },
   });
 
@@ -315,15 +232,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      try {
-        await opportunityApi.delete(id);
-      } catch (e) {
-        console.warn('[CRM Opportunities] Delete API unavailable, using mock delete:', e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return id;
-    },
+    mutationFn: (id: string) => opportunityApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setDeleteTarget(null);
@@ -336,45 +245,24 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Opportunity>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        // 请求体含 API 契约外的扩展字段（customer_name/amount/stage 等），
-        // 先赋变量再传参：保持现有 payload 形状不变，由结构类型兼容承载
-        const payload = {
-          name: data.name || '',
-          customer_name: data.customer_name,
-          amount: data.amount,
-          stage: data.stage,
-          expected_date: data.expected_date,
-          win_rate: data.probability,
-          owner: data.owner,
-          source: data.source,
-        };
-        await opportunityApi.create(payload);
-      } catch (e) {
-        console.warn('[CRM Opportunities] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      // 请求体含 API 契约外的扩展字段（customer_name/amount/stage 等），
+      // 先赋变量再传参：保持现有 payload 形状不变，由结构类型兼容承载
+      const payload = {
+        name: data.name || '',
+        customer_name: data.customer_name,
+        amount: data.amount,
+        stage: data.stage,
+        expected_date: data.expected_date,
+        win_rate: data.probability,
+        owner: data.owner,
+        source: data.source,
+      };
+      await opportunityApi.create(payload);
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t(
-            'crm.opportunity_redesign.mock_create_fallback',
-            '⚠️ 已降级为本地模拟数据，未写入数据库'
-          )
-        );
-      } else {
-        pushToast('success', t('crm.opportunity_redesign.toast_create_success'));
-      }
+      pushToast('success', t('crm.opportunity_redesign.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('crm.opportunity_redesign.toast_create_fail'));
@@ -383,40 +271,23 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Opportunity> }) => {
-      let apiFailed = false;
-      try {
-        const payload = {
-          name: data.name,
-          customer_name: data.customer_name,
-          amount: data.amount,
-          stage: data.stage,
-          expected_date: data.expected_date,
-          win_rate: data.probability,
-          owner: data.owner,
-          source: data.source,
-        };
-        await opportunityApi.update(id, payload);
-      } catch (e) {
-        console.warn('[CRM Opportunities] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      const payload = {
+        name: data.name,
+        customer_name: data.customer_name,
+        amount: data.amount,
+        stage: data.stage,
+        expected_date: data.expected_date,
+        win_rate: data.probability,
+        owner: data.owner,
+        source: data.source,
+      };
+      await opportunityApi.update(id, payload);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast(
-          'warning',
-          t(
-            'crm.opportunity_redesign.mock_update_fallback',
-            '⚠️ 已降级为本地模拟数据，未写入数据库'
-          )
-        );
-      } else {
-        pushToast('success', t('crm.opportunity_redesign.toast_update_success'));
-      }
+      pushToast('success', t('crm.opportunity_redesign.toast_update_success'));
     },
     onError: () => {
       pushToast('error', t('crm.opportunity_redesign.toast_update_fail'));
@@ -572,21 +443,6 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('crm.opportunity_redesign.mock_banner')}
-        </div>
-      )}
       <ListPageTemplate<Opportunity>
         header={{
           title: t('crm.opportunity_redesign.title'),

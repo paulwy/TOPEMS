@@ -2422,5 +2422,6 @@
   "wms.demo.creator_zhao": "Zhao Liu",
   "wms.nav.wms-inbound-orders": "Inbound Orders",
   "wms.nav.wms-outbound-orders": "Outbound Orders",
-  "wms.nav.wms-stocktake": "Stocktake"
+  "wms.nav.wms-stocktake": "Stocktake",
+  "wms.stocktake_page.error_load": "Failed to load stocktake orders"
 }

@@ -104,5 +104,8 @@
   "oa.demo.ann_content_4": "为进一步规范公司考勤管理，提高工作效率，人力资源部拟对现有考勤制度进行优化。现将征求意见稿发布如下，请各部门组织员工讨论，并于 10 月 15 日前将意见反馈至人力资源部。",
   "oa.demo.ann_title_5": "关于启用新 OA 系统的公告",
   "oa.demo.ann_content_5": "为提升办公效率，公司将于 2026 年 10 月 1 日正式启用新 OA 系统。旧系统将于 9 月 30 日 24:00 停止使用。\n\n新系统访问地址：https://oa.topems.com\n登录账号：工号\n初始密码：身份证后六位\n\n请大家及时登录并修改密码。如有问题请联系 IT 支持。",
-  "oa.demo.ann_author_it": "IT 部门"
+  "oa.demo.ann_author_it": "IT 部门",
+  "oa.announcement_page.error_load": "公告加载失败，请重试",
+  "oa.announcement_page.toast.create_failed": "公告发布失败，请重试",
+  "oa.announcement_page.toast.delete_failed": "删除公告失败，请重试"
 }

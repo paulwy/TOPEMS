@@ -406,5 +406,8 @@
   "workflow.demo.wf_dept_rd": "研发部",
   "workflow.demo.wf_dept_sales": "销售部",
   "workflow.demo.wf_dept_legal": "法务部",
-  "workflow.demo.wf_dept_production": "生产部"
+  "workflow.demo.wf_dept_production": "生产部",
+  "workflow.workflow_approvals_page.error_load": "审批任务加载失败，请重试",
+  "workflow.workflow_approvals_page.toast.approve_failed": "审批通过失败，请重试",
+  "workflow.workflow_approvals_page.toast.reject_failed": "驳回失败，请重试"
 }

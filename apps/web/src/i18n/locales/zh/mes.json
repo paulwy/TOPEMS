@@ -1712,5 +1712,7 @@
     }
   },
   "mes.capacity.empty": "暂无产能数据",
-  "mes.masterData.empty": "暂无主数据"
+  "mes.masterData.empty": "暂无主数据",
+  "mes.work_order_page.toast_delete_failed": "删除工单失败，请重试",
+  "mes.work_order_page.error_load": "工单加载失败，请重试"
 }

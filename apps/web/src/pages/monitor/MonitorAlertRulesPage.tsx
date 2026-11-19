@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Chip, Switch } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -7,6 +6,7 @@ import { alertRuleSchema } from '@/schemas/monitor';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { useNotificationStore } from '@/store';
 import { monitorApi } from '@/api/monitor';
+import type { AlertRuleRecord, AlertRuleCreateRequest } from '@/api/monitor/metrics';
 import {
   Settings,
   Copy,
@@ -89,205 +89,99 @@ const getChannelConfig = (): Record<string, { label: string; icon: React.ReactNo
     icon: <MessageSquare size={14} />,
   },
 });
-const initialMockRules: AlertRule[] = [
-  {
-    id: '1',
-    name: i18n.t('pages.monitor_alert_rules_page.cpu_0'),
-    metric_type: 'cpu',
-    metric_name: 'cpu_usage',
-    condition: '>',
-    threshold: '85',
-    unit: '%',
-    severity: 'critical',
-    channels: ['email', 'push', 'wechat'],
-    enabled: true,
-    last_triggered_at: '2024-01-20 14:32:00',
-    trigger_count_today: 3,
-    created_at: '2024-01-01',
-    updated_at: '2024-01-15',
-  },
-  {
-    id: '2',
-    name: i18n.t('monitor.monitor_alert_rules_page.k11'),
-    metric_type: 'memory',
-    metric_name: 'memory_usage',
-    condition: '>',
-    threshold: '90',
-    unit: '%',
-    severity: 'warning',
-    channels: ['email', 'push'],
-    enabled: true,
-    last_triggered_at: '2024-01-20 10:15:00',
-    trigger_count_today: 5,
-    created_at: '2024-01-02',
-    updated_at: '2024-01-18',
-  },
-  {
-    id: '3',
-    name: i18n.t('monitor.monitor_alert_rules_page.k12'),
-    metric_type: 'disk',
-    metric_name: 'disk_usage',
-    condition: '>',
-    threshold: '80',
-    unit: '%',
-    severity: 'critical',
-    channels: ['email', 'sms'],
-    enabled: true,
-    last_triggered_at: '2024-01-19 22:45:00',
-    trigger_count_today: 0,
-    created_at: '2024-01-03',
-    updated_at: '2024-01-12',
-  },
-  {
-    id: '4',
-    name: i18n.t('monitor.monitor_alert_rules_page.k13'),
-    metric_type: 'network',
-    metric_name: 'network_bandwidth',
-    condition: '>',
-    threshold: '75',
-    unit: '%',
-    severity: 'warning',
-    channels: ['push'],
-    enabled: false,
-    last_triggered_at: null,
-    trigger_count_today: 0,
-    created_at: '2024-01-05',
-    updated_at: '2024-01-10',
-  },
-  {
-    id: '5',
-    name: i18n.t('monitor.monitor_alert_rules_page.k14'),
-    metric_type: 'database',
-    metric_name: 'db_connections',
-    condition: '>',
-    threshold: '500',
-    unit: i18n.t('monitor.monitor_alert_rules_page.k15'),
-    severity: 'critical',
-    channels: ['email', 'push', 'wechat'],
-    enabled: true,
-    last_triggered_at: '2024-01-20 09:20:00',
-    trigger_count_today: 2,
-    created_at: '2024-01-08',
-    updated_at: '2024-01-19',
-  },
-  {
-    id: '6',
-    name: i18n.t('pages.monitor_alert_rules_page.api_1'),
-    metric_type: 'api',
-    metric_name: 'api_response_time',
-    condition: '>',
-    threshold: '500',
-    unit: 'ms',
-    severity: 'warning',
-    channels: ['email', 'wechat'],
-    enabled: true,
-    last_triggered_at: '2024-01-20 16:40:00',
-    trigger_count_today: 8,
-    created_at: '2024-01-10',
-    updated_at: '2024-01-20',
-  },
-  {
-    id: '7',
-    name: i18n.t('pages.monitor_alert_rules_page.api_2'),
-    metric_type: 'api',
-    metric_name: 'api_error_rate',
-    condition: '>',
-    threshold: '5',
-    unit: '%',
-    severity: 'critical',
-    channels: ['email', 'sms', 'push'],
-    enabled: true,
-    last_triggered_at: '2024-01-20 11:05:00',
-    trigger_count_today: 1,
-    created_at: '2024-01-12',
-    updated_at: '2024-01-17',
-  },
-  {
-    id: '8',
-    name: i18n.t('pages.monitor_alert_rules_page.cpu_3'),
-    metric_type: 'cpu',
-    metric_name: 'cpu_load',
-    condition: '>',
-    threshold: '95',
-    unit: '%',
-    severity: 'info',
-    channels: ['push'],
-    enabled: false,
-    last_triggered_at: null,
-    trigger_count_today: 0,
-    created_at: '2024-01-15',
-    updated_at: '2024-01-16',
-  },
-  {
-    id: '9',
-    name: i18n.t('monitor.monitor_alert_rules_page.k16'),
-    metric_type: 'database',
-    metric_name: 'db_slow_queries',
-    condition: '>',
-    threshold: '10',
-    unit: i18n.t('monitor.monitor_alert_rules_page.k17'),
-    severity: 'warning',
-    channels: ['email', 'wechat'],
-    enabled: true,
-    last_triggered_at: '2024-01-20 13:50:00',
-    trigger_count_today: 4,
-    created_at: '2024-01-18',
-    updated_at: '2024-01-20',
-  },
-];
 const MonitorAlertRulesPage: React.FC = () => {
-  const {} = useQuery({
-    queryKey: ['monitor', 'alertRules'],
-    queryFn: async () => {
-      try {
-        return await monitorApi.ruleTyped.list();
-      } catch {
-        return {};
-      }
-    },
-  });
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [rules, setRules] = useState<AlertRule[]>(initialMockRules);
-  const mockApiAdapter: CrudApiAdapter<AlertRule> = {
+  const [rules, setRules] = useState<AlertRule[]>([]);
+  const mapRecord = (r: AlertRuleRecord): AlertRule => ({
+    id: r.id,
+    name: r.name,
+    metric_type: r.condition?.comparison_type || 'threshold',
+    metric_name: r.condition?.field || '',
+    condition: `${r.condition?.operator || ''} ${String(r.condition?.value ?? '')}`.trim(),
+    threshold: String(r.condition?.value ?? ''),
+    unit: '',
+    severity: r.severity,
+    channels: (r.actions || []).map((a) => a.action_type),
+    enabled: r.enabled,
+    last_triggered_at: null,
+    trigger_count_today: 0,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  });
+
+  const toCreateRequest = (data: Partial<AlertRule>): AlertRuleCreateRequest => ({
+    name: data.name || '',
+    description: data.condition ?? null,
+    service_name: data.metric_type ?? null,
+    severity: data.severity || 'warning',
+    condition: {
+      field: data.metric_name || '',
+      operator: (data.condition || '').split(' ')[0] || '>',
+      value: data.threshold ?? '',
+    },
+    actions: (data.channels || []).map((c) => ({ action_type: c, config: {} })),
+    enabled: data.enabled ?? true,
+  });
+
+  const fetchRules = async (): Promise<AlertRule[]> => {
+    const res = await monitorApi.ruleTyped.list();
+    if (!res.success || !Array.isArray(res.data)) {
+      throw new Error(res.message || i18n.t('monitor.monitor_alert_rules_page.error_load'));
+    }
+    const rows = (res.data as unknown as AlertRuleRecord[]).map(mapRecord);
+    setRules(rows);
+    return rows;
+  };
+
+  const apiAdapter: CrudApiAdapter<AlertRule> = {
     list: async () => {
-      return { data: rules, total: rules.length };
+      const rows = await fetchRules();
+      return { data: rows, total: rows.length };
     },
     create: async (data) => {
-      const newRule: AlertRule = {
-        ...(data as AlertRule),
-        id: String(Date.now()),
-        created_at: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString().split('T')[0],
-      };
-      setRules([...rules, newRule]);
-      return newRule;
+      const res = await monitorApi.ruleTyped.create(toCreateRequest(data));
+      if (!res.success) {
+        throw new Error(res.message || i18n.t('monitor.monitor_alert_rules_page.error_save'));
+      }
+      await fetchRules();
+      return mapRecord(res.data as unknown as AlertRuleRecord);
     },
     update: async (id, data) => {
-      setRules(
-        rules.map((r) =>
-          r.id === id ? { ...r, ...data, updated_at: new Date().toISOString().split('T')[0] } : r
-        )
-      );
-      return { ...rules.find((r) => r.id === id), ...data } as AlertRule;
+      const res = await monitorApi.ruleTyped.update(id, toCreateRequest(data));
+      if (!res.success) {
+        throw new Error(res.message || i18n.t('monitor.monitor_alert_rules_page.error_save'));
+      }
+      await fetchRules();
+      return mapRecord(res.data as unknown as AlertRuleRecord);
     },
     delete: async (id) => {
-      setRules(rules.filter((r) => r.id !== id));
+      const res = await monitorApi.ruleTyped.delete(id);
+      if (!res.success) {
+        throw new Error(res.message || i18n.t('monitor.monitor_alert_rules_page.error_save'));
+      }
+      await fetchRules();
     },
   };
   const handleToggleStatus = useCallback(
-    (ruleId: string) => {
+    async (ruleId: string) => {
       const rule = rules.find((r) => r.id === ruleId);
       if (!rule) return;
       const action = rule.enabled
         ? i18n.t('monitor.monitor_alert_rules_page.k19')
         : i18n.t('monitor.monitor_alert_rules_page.k18');
-      setRules(
-        rules.map((r) =>
-          r.id === ruleId
-            ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] }
-            : r
-        )
-      );
+      const res = await monitorApi.ruleTyped.update(ruleId, {
+        ...toCreateRequest(rule),
+        enabled: !rule.enabled,
+      });
+      if (!res.success) {
+        addNotification({
+          title: i18n.t('monitor.monitor_alert_rules_page.k20'),
+          message: res.message || i18n.t('monitor.monitor_alert_rules_page.error_save'),
+          type: 'error',
+        });
+        return;
+      }
+      await fetchRules();
       addNotification({
         title: i18n.t('monitor.monitor_alert_rules_page.k20'),
         message: `${i18n.t('pages.monitor_alert_rules_page.k4')}${action}${i18n.t('pages.monitor_alert_rules_page.k5')}`,
@@ -297,24 +191,28 @@ const MonitorAlertRulesPage: React.FC = () => {
     [rules, addNotification]
   );
   const handleCopy = useCallback(
-    (ruleId: string) => {
+    async (ruleId: string) => {
       const rule = rules.find((r) => r.id === ruleId);
-      if (rule) {
-        const newRule: AlertRule = {
-          ...rule,
-          id: String(Date.now()),
-          name: `${rule.name}${i18n.t('pages.monitor_alert_rules_page.k6')}`,
-          enabled: false,
-          created_at: new Date().toISOString().split('T')[0],
-          updated_at: new Date().toISOString().split('T')[0],
-        };
-        setRules([...rules, newRule]);
+      if (!rule) return;
+      const res = await monitorApi.ruleTyped.create({
+        ...toCreateRequest(rule),
+        name: `${rule.name}${i18n.t('pages.monitor_alert_rules_page.k6')}`,
+        enabled: false,
+      });
+      if (!res.success) {
         addNotification({
           title: i18n.t('monitor.monitor_alert_rules_page.k21'),
-          message: i18n.t('monitor.monitor_alert_rules_page.k22'),
-          type: 'success',
+          message: res.message || i18n.t('monitor.monitor_alert_rules_page.error_save'),
+          type: 'error',
         });
+        return;
       }
+      await fetchRules();
+      addNotification({
+        title: i18n.t('monitor.monitor_alert_rules_page.k21'),
+        message: i18n.t('monitor.monitor_alert_rules_page.k22'),
+        type: 'success',
+      });
     },
     [rules, addNotification]
   );
@@ -603,7 +501,7 @@ const MonitorAlertRulesPage: React.FC = () => {
     >
       <CrudPage
         schema={alertRuleSchema}
-        apiAdapter={mockApiAdapter as unknown as CrudApiAdapter}
+        apiAdapter={apiAdapter as unknown as CrudApiAdapter}
         breadcrumbs={[
           { label: i18n.t('monitor.monitor_alert_rules_page.k35') },
           { label: i18n.t('monitor.monitor_alert_rules_page.k34') },

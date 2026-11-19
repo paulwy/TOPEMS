@@ -1388,5 +1388,8 @@
   "crm.opportunity_redesign.toast_delete_success": "Opportunity deleted successfully",
   "crm.opportunity_redesign.toast_update_fail": "Opportunity update failed",
   "crm.opportunity_redesign.toast_update_success": "Opportunity updated successfully",
-  "crm.tags.empty": "No customer tags yet"
+  "crm.tags.empty": "No customer tags yet",
+  "crm.customer_list_page.error_load": "Failed to load customers",
+  "crm.contract_redesign.error_load": "Failed to load contracts",
+  "crm.opportunity_redesign.error_load": "Failed to load opportunities"
 }

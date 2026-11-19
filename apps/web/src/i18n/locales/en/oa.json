@@ -156,5 +156,8 @@
   "oa.demo.ann_content_4": "To further standardize the company's attendance management and improve efficiency, the Human Resources Dept plans to optimize the current attendance policy. The draft is now released for comments. Please have all departments organize discussions and send feedback to Human Resources before October 15.",
   "oa.demo.ann_title_5": "Announcement on Launching the New OA System",
   "oa.demo.ann_content_5": "To improve office efficiency, the company will officially launch the new OA system on October 1, 2026. The old system will be shut down at 24:00 on September 30. New system address: https://oa.topems.com\nLogin account: Employee number\nInitial password: Last six digits of ID card\n\nPlease log in promptly and change your password. Contact IT support if you have any issues.",
-  "oa.demo.ann_author_it": "IT Dept"
+  "oa.demo.ann_author_it": "IT Dept",
+  "oa.announcement_page.error_load": "Failed to load announcements, please retry",
+  "oa.announcement_page.toast.create_failed": "Failed to publish announcement, please retry",
+  "oa.announcement_page.toast.delete_failed": "Failed to delete announcement, please retry"
 }
