@@ -383,11 +383,17 @@ ALTER POLICY rls_tenant_isolation ON "<schema>"."<table>"
 但归一迁移的账本已记过、不会重跑，于是它们**永久漏归一**（保留遗留策略名 / 重复策略），且没有任何断言会提示。
 守卫版把「跳过」限制在同一批次的已知删除名单内，并在名单外的缺失上即时报错，因此能同时容纳两种回滚顺序。
 
-### 6.5 验收
+### 6.5 同源撞车的另一处：审计守卫 4 张
+
+同一链内 `20261119141000_rls_intentional_policies_guard` 也按「6 张共享审计表必须存在」断言，其中 4 张已被死表清理删除：
+`bi.audit_logs`、`gis.audit_logs`、`gis.audit_log`、`qms.audit_logs`。该守卫按同一套三条规则改造（命中名单 NOTICE 跳过并累计、
+名单外缺失 RAISE、表存在时 fail-open 断言严格度不变）；保留的 `flow.audit_logs`、`iam.audit_logs` 断言不变。
+
+### 6.6 验收
 
 - 走门禁同一路径 `bash scripts/dev/run-migration-drill.sh anchor`：干净 worktree、模板库 `topems_drill_template`、非特权连接
   （`[conn]` 显示 `topems_test_runner`、`rolsuper=false`、`rolbypassrls=false`），尾行 `PASS: drill:anchor`。
-- 演练日志应包含 27 条跳过 `NOTICE`（批 1 ×7、批 2 ×20）与最终策略计数，后置断言全部通过。
+- 演练日志应包含 31 条跳过 `NOTICE`（批 1 ×7、批 2 ×20、审计守卫 ×4）与最终策略计数，后置断言全部通过。
 
 ---
 

@@ -141,6 +141,17 @@
       ],
       "evidence": "手工演练库 topems_test_runner（非特权 rolsuper=f/rolbypassrls=f，基线 1039 策略）逐条应用：批1 目标 71 张、跳过 0（表均存在），postcheck 71；批2 precheck 159→归一 159、multi 8、postcheck 167；前向补丁后策略 1039→961。回滚在同一库 BEGIN..ROLLBACK 内逆序执行：rollback2 159+8、rollback1 71，全部 NOTICE 无 ERROR，exit 0，回滚后库仍为 961（未留痕）。静态：validate.sh Errors 0 / Checksum errors 0；gen-manifest.sh --check 无漂移（checksum_mismatch=0、checksum_missing=0、unregistered_pending=0）；check-destructive-sql.mjs --strict 四文件 OK。门禁同路径 scripts/dev/run-migration-drill.sh anchor（干净 worktree / topems_drill_template / 非特权）在本次提交后复跑，结果见回报。",
       "approved": true
+    },
+    {
+      "id": "B20261119-audit-guard-dead-table-skip",
+      "date": "2026-11-19",
+      "committer": "topmap163",
+      "reason": "20261119141000 同为未应用前向迁移（manifest 记 prod 账本 max=20261119000002）。migration-drill-anchor 复跑显示其第 25 行守卫在干净链路失败：6 张共享审计表中 bi.audit_logs、gis.audit_logs、gis.audit_log、qms.audit_logs 已被同批死表清理 20261119100000/20261119110000 删除，属与批1/批2 归一相同的『清单撞车』。按同一套三条规则加存在性守卫：命中已知删除名单 NOTICE 跳过并累计，缺失但不在名单 RAISE，表存在时 fail-open 断言严格度不变。不改版本号、不改已推送历史。",
+      "files": [
+        "20261119141000_rls_intentional_policies_guard.sql"
+      ],
+      "evidence": "静态：validate.sh Errors 0 / Checksum errors 0；gen-manifest.sh --check 无漂移。死表交集经脚本比对两份 DROP 清单确认（4/6 命中，flow.audit_logs、iam.audit_logs 未命中、断言保留）。修复后门禁同路径 scripts/dev/run-migration-drill.sh anchor 复跑结果见本次回报。",
+      "approved": true
     }
   ]
 }

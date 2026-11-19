@@ -10,6 +10,10 @@
 --      写入，代码注释「仅系统通道」）。不变量：策略保持 ALL + USING(true)；被收紧即报错，强制复核。
 --
 -- 本迁移只读 pg_catalog，不改变任何策略/数据。可反复执行。
+-- 死表清单撞车（2026-11-19）：6 张审计表中 4 张已被同批死表清理 20261119100000/20261119110000 删除
+--   （bi.audit_logs、gis.audit_logs、gis.audit_log、qms.audit_logs），链内先删表后本守卫。
+-- 存在性守卫：命中 v_dropped → NOTICE 跳过并累计；缺失但不在名单 → RAISE EXCEPTION（清单变更须立刻暴露）；
+--   表存在 → 原有 fail-open 断言严格度不变。
 -- 回滚：database/rollback/20261119141000_rls_intentional_policies_guard.rollback.sql（空操作）
 
 DO $$
@@ -66,6 +70,14 @@ DECLARE
     v_cmd text;
     v_qual text;
     v_rls boolean;
+    v_skip int := 0;
+    v_total int := 6;
+    v_dropped text[] := ARRAY[
+        'bi.audit_logs',
+        'gis.audit_logs',
+        'gis.audit_log',
+        'qms.audit_logs'
+    ];
 BEGIN
     FOREACH v_item IN ARRAY v_items LOOP
         v_schema := split_part(v_item, '.', 1);
@@ -73,7 +85,12 @@ BEGIN
         v_policy := split_part(v_item, '|', 2);
 
         IF to_regclass(format('%I.%I', v_schema, v_table)) IS NULL THEN
-            RAISE EXCEPTION '守卫失败：审计表 %.% 不存在', v_schema, v_table;
+            IF (v_schema || '.' || v_table) = ANY(v_dropped) THEN
+                v_skip := v_skip + 1;
+                RAISE NOTICE '守卫跳过：%.% 已被前序死表迁移删除（累计 %/% 张）', v_schema, v_table, v_skip, v_total;
+                CONTINUE;
+            END IF;
+            RAISE EXCEPTION '守卫失败：审计表 %.% 不存在，且不在已知死表删除名单（4 张）内；若刚调整 20261119100000/20261119110000 的死表清单，请同步本守卫', v_schema, v_table;
         END IF;
 
         SELECT cmd, qual INTO v_cmd, v_qual FROM pg_policies
@@ -91,5 +108,5 @@ BEGIN
         END IF;
     END LOOP;
 
-    RAISE NOTICE '守卫通过：6 张共享审计表保持有意 fail-open（ALL/USING(true)），写入方仅系统通道';
+    RAISE NOTICE '守卫通过：6 张审计表中存在 % 张、跳过 % 张（已删除），保持有意 fail-open（ALL/USING(true)），写入方仅系统通道', v_total - v_skip, v_skip;
 END $$;
