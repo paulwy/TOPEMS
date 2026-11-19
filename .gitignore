@@ -375,3 +375,8 @@ _shots/
 # scripts/lib/swagger-ui.sh 校验）；其他版本仍不提交，放本地即可。
 /vendor/swagger-ui-v*.zip
 !/vendor/swagger-ui-v5.32.6.zip
+
+# OpenAPI 聚合产物不再入库（2026-11-19）：由 CI 生成后作为 artifact / Release 附件发布。
+# 见 docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md
+/docs/api/openapi-aggregated.json
+/docs/api/openapi-aggregated.yaml
