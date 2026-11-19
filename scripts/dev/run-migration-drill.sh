@@ -74,34 +74,7 @@ case "$TEMPLATE_DB" in
 esac
 ALLOW_SUPERUSER="${MIGRATION_DRILL_ALLOW_SUPERUSER:-}"
 
-# ---- 连接串解析：MIGRATION_DRILL_DB_URL → TEST_DATABASE_URL → DATABASE_URL → .env MIGRATE_URL → socket 默认 ----
-read_env_migrate_url() {
-    local f="$SOURCE_ROOT/.env" line
-    [[ -f "$f" ]] || return 0
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        if [[ "$line" =~ ^[[:space:]]*MIGRATE_URL=(.*)$ ]]; then
-            line="${BASH_REMATCH[1]}"
-            line="${line%\"}"; line="${line#\"}"
-            line="${line%\'}"; line="${line#\'}"
-            printf '%s\n' "$line"
-            return 0
-        fi
-    done < "$f"
-}
-
-read_env_value() {
-    local key="$1" f="$SOURCE_ROOT/.env" line
-    [[ -f "$f" ]] || return 0
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        if [[ "$line" =~ ^[[:space:]]*${key}=(.*)$ ]]; then
-            line="${BASH_REMATCH[1]}"
-            line="${line%\"}"; line="${line#\"}"
-            line="${line%\'}"; line="${line#\'}"
-            printf '%s\n' "$line"
-            return 0
-        fi
-    done < "$f"
-}
+# ---- 连接串解析：MIGRATION_DRILL_DB_URL → TEST_DATABASE_URL（均为显式环境变量，无回落默认）----
 
 sanitize_dsn() {
     printf '%s' "$1" | sed -E 's#(://[^:/@]+):[^@/]*@#\1:***@#'
@@ -124,21 +97,9 @@ elif [[ -n "${TEST_DATABASE_URL:-}" ]]; then
     BASE_DSN="$TEST_DATABASE_URL"
     DSN_SOURCE="TEST_DATABASE_URL（环境变量）"
 else
-    BASE_DSN="$(read_env_value TEST_DATABASE_URL)"
-    if [[ -n "$BASE_DSN" ]]; then
-        DSN_SOURCE=".env 的 TEST_DATABASE_URL"
-    elif [[ -n "${DATABASE_URL:-}" ]]; then
-        BASE_DSN="$DATABASE_URL"
-        DSN_SOURCE="DATABASE_URL（环境变量/外层 shell 导出）"
-    else
-        BASE_DSN="$(read_env_migrate_url)"
-        if [[ -n "$BASE_DSN" ]]; then
-            DSN_SOURCE=".env 的 MIGRATE_URL"
-        else
-            BASE_DSN="postgresql:///postgres"
-            DSN_SOURCE="缺省 socket（peer 认证）"
-        fi
-    fi
+    echo "FAIL: 未提供演练 DSN。必须显式设置 MIGRATION_DRILL_DB_URL（优先）或 TEST_DATABASE_URL；" >&2
+    echo "      本脚本不再回落到 .env / DATABASE_URL / postgresql:///postgres。" >&2
+    exit 1
 fi
 
 if [[ ! "$BASE_DSN" =~ ^[A-Za-z0-9+.-]+:// ]]; then
@@ -148,9 +109,9 @@ if [[ ! "$BASE_DSN" =~ ^[A-Za-z0-9+.-]+:// ]]; then
 fi
 
 if ! url_is_socket "$BASE_DSN" && ! url_has_password "$BASE_DSN"; then
-    echo "[info] ${DSN_SOURCE} 未携带口令（且未设置 PGPASSWORD/PGPASSFILE）→ 回落 unix socket（peer 认证）"
-    BASE_DSN="postgresql:///postgres"
-    DSN_SOURCE="${DSN_SOURCE} → 无口令，回落 socket（peer 认证）"
+    echo "FAIL: ${DSN_SOURCE} 未携带口令（且未设置 PGPASSWORD/PGPASSFILE）。" >&2
+    echo "      本脚本不再自动回落 unix socket；请补齐口令或直接给出 socket DSN。" >&2
+    exit 1
 fi
 
 # 只替换库名：连接参数（角色/口令/host/query）沿用 BASE_DSN，演练库名由脚本强制。

@@ -151,7 +151,9 @@ KNOWN_JSON="$(printf '%s\n' "${KNOWN_NOT_APPLIED[@]}" | LC_ALL=C sort | awk 'BEG
 # 可选：与对照链库的表差集（漂移清单）
 DRIFT_JSON="null"
 if [[ -n "$CHAIN_DB" ]]; then
-  psql -h "${PGHOST:-/tmp}" -U "${PGUSER:-air}" -d "$CHAIN_DB" -tA -c "SELECT n.nspname||'.'||c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast') ORDER BY 1" > /tmp/topems_prod_tables.txt
+  : "${PGHOST:?生成对照链差集需要显式 PGHOST（不再回落到 /tmp socket）}"
+  : "${PGUSER:?生成对照链差集需要显式 PGUSER（不再回落到内置用户）}"
+  psql -h "$PGHOST" -U "$PGUSER" -d "$CHAIN_DB" -tA -c "SELECT n.nspname||'.'||c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast') ORDER BY 1" > /tmp/topems_prod_tables.txt
   psql "$DSN" -tA -c "SELECT n.nspname||'.'||c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast') ORDER BY 1" > /tmp/topems_prod_tables.src.txt
   { echo -e "direction\ttable"; comm -23 <(LC_ALL=C sort -u /tmp/topems_prod_tables.src.txt) <(LC_ALL=C sort -u /tmp/topems_prod_tables.txt) | sed 's/^/prod_only\t/'; comm -13 <(LC_ALL=C sort -u /tmp/topems_prod_tables.src.txt) <(LC_ALL=C sort -u /tmp/topems_prod_tables.txt) | sed 's/^/chain_only\t/'; } > "$DRIFT_FILE"
   P_ONLY="$(grep -c $'^prod_only\t' "$DRIFT_FILE" || true)"

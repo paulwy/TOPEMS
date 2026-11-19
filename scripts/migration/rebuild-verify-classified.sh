@@ -37,8 +37,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PGHOST="${PGHOST:-/tmp}"
-PGUSER="${PGUSER:-air}"
+: "${PGHOST:?必须显式设置 PGHOST（不再回落到 /tmp socket）}"
+: "${PGUSER:?必须显式设置 PGUSER（不再回落到内置用户）}"
 PSQL="${PSQL:-psql}"
 MIG_DIR="$ROOT/database/migrations"
 

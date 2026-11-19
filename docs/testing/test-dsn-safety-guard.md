@@ -97,6 +97,40 @@ fn test_database_url() -> String {
 
 缺失环境变量时直接失败，不再静默回退到开发库。
 
+## 迁移侧同口径（D-9，2026-11-20）
+
+测试侧只认 `TEST_DATABASE_URL`；迁移侧只认调用方显式给出的连接（`--dsn` / 既有显式变量），
+两侧都**不再有 socket 回落与内置默认值**，缺参数即失败。
+
+### 改动清单
+
+| 文件 | 改动 |
+| --- | --- |
+| [scripts/migration/apply-forward.sh](../../scripts/migration/apply-forward.sh) | `--db` 模式要求显式 `PGHOST`/`PGUSER`，删除 `/tmp` 与内置用户的回落 |
+| [scripts/dev/run-migration-drill.sh](../../scripts/dev/run-migration-drill.sh) | DSN 只认 `MIGRATION_DRILL_DB_URL` → `TEST_DATABASE_URL`；删除 `.env`/`DATABASE_URL`/`postgresql:///postgres` 回落与「无口令即转 socket」分支 |
+| [scripts/migration/check-pending-ddl.mjs](../../scripts/migration/check-pending-ddl.mjs) | 删除 `.env` 的 `MIGRATE_URL` 回落；`--db`/`MIGRATION_DDL_DB_URL`/`DATABASE_URL` 缺失即退出 2 |
+| [scripts/migration/rebuild-from-baseline.sh](../../scripts/migration/rebuild-from-baseline.sh) | `PGHOST`/`PGUSER` 改为必填 |
+| [scripts/migration/rebuild-verify-classified.sh](../../scripts/migration/rebuild-verify-classified.sh) | `PGHOST`/`PGUSER` 改为必填 |
+| [scripts/migration/gen-baseline.sh](../../scripts/migration/gen-baseline.sh) | 对照链差集要求显式 `PGHOST`/`PGUSER` |
+| [scripts/db/drop-shadow-tables-step2.sh](../../scripts/db/drop-shadow-tables-step2.sh) | 删除内置 DSN 默认值，`DSN` 必填 |
+| [scripts/test/run-iam-tests.sh](../../scripts/test/run-iam-tests.sh) | 探活改用 `TEST_DATABASE_URL`，未设置即失败 |
+| [scripts/test/run-core-tests.sh](../../scripts/test/run-core-tests.sh) | 探活改用 `TEST_DATABASE_URL`，未设置即失败 |
+| [scripts/ci/check-no-prod-dsn-defaults.sh](../../scripts/ci/check-no-prod-dsn-defaults.sh) | 新增第 5 段：扫描迁移/测试入口的 `PGHOST/PGUSER/PGDATABASE` 回落与内置 DSN 默认值，命中即失败 |
+
+### 不在本次范围
+
+| 文件 | 原因 |
+| --- | --- |
+| `scripts/dev/web_smoke_precommit.sh`、`scripts/mobile_smoke_precommit.sh` | 使用专用 smoke 库，已有非生产边界；不连测试库也不连生产 |
+| `scripts/db/provision-env.sh` | 建库/授权工具，socket 是其显式入参；调用 `apply-forward --db` 时已显式传 `PGHOST`/`PGUSER` |
+| `scripts/lib/common.sh`、`scripts/lib/db.sh` 等开发运行时助手 | 面向本地开发库，不属于测试/迁移入口 |
+
+### CI 与本地同一判定
+
+- CI 由 workflow 显式导出 `TEST_DATABASE_URL`；本地由 `.env` 或 shell 导出同名变量。
+- 两条路径都走同一个 `sqlx_dsn_guard!()` 启动期校验；缺失或命中生产特征同样是硬失败。
+- 迁移脚本在两种环境下同样只接受显式 DSN/连接参数，不再存在「本地有默认、CI 没有」的分叉。
+
 ## 已知残留
 
 - 大量非 `#[sqlx::test]` 的集成测试仍有 `if !ensure_db_available() { return; }` 之类的

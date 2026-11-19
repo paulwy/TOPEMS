@@ -85,7 +85,12 @@ check_environment() {
     fi
 
     # 检查数据库连接
-    if psql -d "${PGDATABASE:-topems}" -c "SELECT 1" &> /dev/null; then
+    # D-9：测试库只认 TEST_DATABASE_URL，不回落到 PGDATABASE/DATABASE_URL/本地 topems。
+    if [ -z "${TEST_DATABASE_URL:-}" ]; then
+        echo -e "${RED}✗ 未设置 TEST_DATABASE_URL（测试库 DSN 必须显式提供）${NC}"
+        exit 1
+    fi
+    if psql "$TEST_DATABASE_URL" -c "SELECT 1" &> /dev/null; then
         echo -e "${GREEN}✓ 数据库连接正常${NC}"
     else
         echo -e "${RED}✗ 数据库连接失败${NC}"

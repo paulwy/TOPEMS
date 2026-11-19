@@ -15,7 +15,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DSN="${DSN:-postgresql:///topems?host=/tmp&user=air}"
+: "${DSN:?必须显式设置 DSN（如 postgresql://<角色>@127.0.0.1:5432/topems）；不提供内置默认连接串}"
 MANIFEST="${MANIFEST:-$REPO_ROOT/scripts/db/shadow-tables-step2.tsv}"
 SNAPSHOT_ROOT="${SNAPSHOT_ROOT:-/Users/air/topems-db-snapshots/20261115-step2}"
 DRILL_DB="${DRILL_DB:-topems_rollback_drill}"

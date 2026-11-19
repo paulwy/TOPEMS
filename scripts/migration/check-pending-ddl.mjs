@@ -25,7 +25,7 @@
  *   node scripts/migration/check-pending-ddl.mjs --versions 20261014000000 --db ...
  *   node scripts/migration/check-pending-ddl.mjs --anchor ... --expect-policies 1039
  *
- * 目标库解析：--db → MIGRATION_DDL_DB_URL → DATABASE_URL → .env 的 MIGRATE_URL。
+ * 目标库解析：--db → MIGRATION_DDL_DB_URL → DATABASE_URL（均为显式来源，无 .env 回落）。
  * 全程 default_transaction_read_only=on，只读。
  *
  * 退出码：0 全部 PASS/SKIP-DEFERRED；1 存在 FAIL；2 参数/连接错误。
@@ -70,13 +70,7 @@ function resolveDb(explicit) {
   if (explicit) return explicit;
   if (process.env.MIGRATION_DDL_DB_URL) return process.env.MIGRATION_DDL_DB_URL;
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  const envFile = path.join(REPO_ROOT, ".env");
-  if (fs.existsSync(envFile)) {
-    for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
-      const m = /^\s*MIGRATE_URL\s*=\s*(.+)\s*$/.exec(line);
-      if (m) return m[1].replace(/^["']|["']$/g, "");
-    }
-  }
+  // D-9：不再从 .env 的 MIGRATE_URL 回落；缺显式连接即失败。
   return "";
 }
 
@@ -256,7 +250,7 @@ function setsEqual(a, b) {
 const opts = parseArgs(process.argv.slice(2));
 const db = resolveDb(opts.db);
 if (!db) {
-  console.error(`${TAG} 缺少数据库连接：--db / MIGRATION_DDL_DB_URL / DATABASE_URL / .env MIGRATE_URL`);
+  console.error(`${TAG} 缺少数据库连接：--db / MIGRATION_DDL_DB_URL / DATABASE_URL（不再从 .env 回落）`);
   process.exit(2);
 }
 

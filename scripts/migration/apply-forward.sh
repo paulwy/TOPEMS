@@ -241,7 +241,10 @@ elif [[ -n "$DSN" ]]; then
   psql_exec() { "${PSQL[@]}" "$@"; }
   psql_stdin() { "${PSQL[@]}" -q -tA -v ON_ERROR_STOP=1 -f -; }
 elif [[ -n "$DB" ]]; then
-  PSQL=(psql -h "${PGHOST:-/tmp}" -U "${PGUSER:-air}" -d "$DB")
+  # D-9：--db 模式不再回落到 /tmp socket 与内置用户，必须显式给出连接参数。
+  : "${PGHOST:?--db 模式必须显式设置 PGHOST（不再回落到 /tmp）；或改用 --dsn}"
+  : "${PGUSER:?--db 模式必须显式设置 PGUSER（不再回落到内置用户）；或改用 --dsn}"
+  PSQL=(psql -h "$PGHOST" -U "$PGUSER" -d "$DB")
   psql_exec() { "${PSQL[@]}" "$@"; }
   psql_stdin() { "${PSQL[@]}" -q -tA -v ON_ERROR_STOP=1 -f -; }
 else

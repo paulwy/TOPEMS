@@ -106,6 +106,18 @@ if [ -n "$tmpl_hits" ]; then
   violations=1
 fi
 
+# 5) D-9：测试/迁移入口不得内置 socket 回落或本地库默认值
+#    测试只认 TEST_DATABASE_URL；迁移只认调用方显式给出的 DSN/连接参数。
+#    范围：迁移脚本、演练脚本、测试入口。专用 smoke 库（web/mobile）自带非生产边界，不在此列。
+dsn_default_hits="$(grep -rnE '\$\{(PGHOST|PGUSER|PGDATABASE):-|\$\{[A-Za-z0-9_]*(DSN|DATABASE_URL|MIGRATE_URL)[^}]*:-\s*"?postgres(ql)?://' \
+  scripts/migration scripts/dev/run-migration-drill.sh scripts/test scripts/ci/verify-rust-full.sh \
+  --include='*.sh' 2>/dev/null || true)"
+if [ -n "$dsn_default_hits" ]; then
+  echo "❌ 测试/迁移入口仍内置 socket 回落或本地库默认值（D-9）：" >&2
+  printf '%s\n' "$dsn_default_hits" | sed 's/^/    /' >&2
+  violations=1
+fi
+
 if [ "$violations" -ne 0 ]; then
   echo "" >&2
   echo "生产 DSN 不得作为默认值：请留空或注释，改为运行前显式注入；本地模板见 .env.example。" >&2

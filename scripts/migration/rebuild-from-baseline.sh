@@ -46,8 +46,8 @@ SCHEMA_FILE="$(meta 'schema_file')"
 LEDGER_FILE="$(meta 'ledger_file')"
 BASE_DIR="$(dirname "$META")"
 
-PGHOST="${PGHOST:-/tmp}"
-PGUSER="${PGUSER:-air}"
+: "${PGHOST:?必须显式设置 PGHOST（不再回落到 /tmp socket）}"
+: "${PGUSER:?必须显式设置 PGUSER（不再回落到内置用户）}"
 PSQL=(psql -h "$PGHOST" -U "$PGUSER")
 export PGHOST PGUSER
 
