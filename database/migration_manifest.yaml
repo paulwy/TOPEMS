@@ -1756,57 +1756,57 @@ pending_forward_patches:
   # prod 一律 to_apply：本批为 DML 回填，不含 DDL/删除。
   - version: "20261115140000"
     file: "database/migrations/20261115140000_family_assets_to_erp_assets.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: excluded
+    ledger_evidence: "prod 账本无此版本；生产源表 public.assets 不存在（to_regclass=NULL），目标 erp.assets 0 行 —— 真没上"
     effect: "public.assets → erp.assets 数据迁移（31 列全同，1 行已存在且逐列一致，DO 块断言行数相等）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用；回滚 database/rollback/20261115140000_family_assets_to_erp_assets.rollback.sql（空操作 SELECT 1）"
   - version: "20261115140100"
     file: "database/migrations/20261115140100_family_employees_to_hrm_employees.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: excluded
+    ledger_evidence: "prod 账本无此版本；生产源表 public.employees 不存在，hrm.employees 1 行为生产自有 —— 真没上"
     effect: "public.employees → hrm.employees（41 列同名，19 行一致）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用；回滚为空操作"
   - version: "20261115140200"
     file: "database/migrations/20261115140200_family_mail_emails_to_core_emails.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: obsolete
+    ledger_evidence: "prod 账本无此版本；生产 mail.emails 0 行、public.core_emails 0 行，迁移效果为空 —— 真没上"
     effect: "mail.emails → public.core_emails（13 列）：from_address→from_email、to_addresses jsonb 数组 string_agg→to_email、body_html→html_body、cc/bcc jsonb→text[]、is_read=false"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用（23 行）；回滚按源 id 删除"
   - version: "20261115140300"
     file: "database/migrations/20261115140300_family_erp_connections_to_integration.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: excluded
+    ledger_evidence: "prod 账本无此版本；生产源表 public.erp_connections 不存在，目标 integration.erp_connections 0 行 —— 真没上"
     effect: "public.erp_connections → integration.erp_connections（16 列同名，38 行）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用"
   - version: "20261115140400"
     file: "database/migrations/20261115140400_family_erp_mappings_to_integration.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: excluded
+    ledger_evidence: "prod 账本无此版本；生产源表 public.erp_mappings 不存在，目标 integration.erp_mappings 0 行 —— 真没上"
     effect: "public.erp_mappings → integration.erp_mappings（15 列同名，31 行）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用"
   - version: "20261115140500"
     file: "database/migrations/20261115140500_family_external_erp_sync_logs_to_integration.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: excluded
+    ledger_evidence: "prod 账本无此版本；生产源表 public.external_erp_sync_logs 不存在，目标 integration.external_erp_sync_logs 0 行 —— 真没上"
     effect: "public.external_erp_sync_logs → integration.external_erp_sync_logs（13 列同名，315 行）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用"
   - version: "20261115140600"
     file: "database/migrations/20261115140600_family_storage_files_to_core_files.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: obsolete
+    ledger_evidence: "prod 账本无此版本；生产 storage.files 0 行、public.core_files 0 行；本迁移创建的 public.migration_quarantine_rows / migration_column_rewrites 在生产不存在（决定性指纹）—— 真没上"
     effect: "storage.files → public.core_files（43 行）：filename→name、storage_path→path、file_size→size、owner_id→uploader_id、content_type→mime_type、parent_id→folder_id；status deleted→archived（8 行，删除语义由 deleted_at 承载）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING；本迁移创建 public.migration_quarantine_rows / public.migration_column_rewrites（IF NOT EXISTS）"
     note: "dev 已应用（2026-11-15 修正映射后重跑，43 行）；每行 status 改写写入 migration_column_rewrites（8 条 old_value=deleted），事后可复原"
   - version: "20261115140700"
     file: "database/migrations/20261115140700_family_doc_service_files_to_core_files.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: obsolete
+    ledger_evidence: "prod 账本无此版本；生产 doc_service.files 0 行、public.core_files 0 行；migration_quarantine_rows / migration_column_rewrites 不存在（决定性指纹）—— 真没上"
     effect: "doc_service.files → public.core_files（9 行 id 全部被 storage.files 覆盖且更旧 → 外层去重后插入 0）；created_by 仅当其本身是合法 UUID 文本时按真实值写入 uploader_id，否则该行（目标中尚不存在时）写入 migration_quarantine_rows，不兜底 admin"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT DO NOTHING"
     note: "dev 已应用（按 owner 裁决 ③ 重跑：去除 admin 兜底；隔离 0 条——9 行均已被 storage 版本覆盖，无需补操作人）"
@@ -1843,15 +1843,15 @@ pending_forward_patches:
       - "RLS/claims/缓存影响面核查通过"
   - version: "20261115141000"
     file: "database/migrations/20261115141000_family_core_workflows_to_public.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: obsolete
+    ledger_evidence: "prod 账本无此版本；生产 flow.core_workflows 0 行、public.core_workflows 0 行，迁移效果为空 —— 真没上"
     effect: "flow.core_workflows → public.core_workflows（14 列同名，20 行；同 id 行 updated_at 全部更新，以本表为准）"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT (id) DO NOTHING"
     note: "dev 已应用"
   - version: "20261115141100"
     file: "database/migrations/20261115141100_family_flow_workflows_to_public.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: obsolete
+    ledger_evidence: "prod 账本无此版本；生产 flow.workflows 0 行、public.core_workflows 0 行，迁移效果为空 —— 真没上"
     effect: "flow.workflows → public.core_workflows（18 行 id 全部被覆盖且更旧 → 外层去重后插入 0）；is_active→status active/inactive；created_by 为 NULL 且目标 NOT NULL 的行写入隔离表，有真实值则按真实值迁移，不兜底 admin"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP；仅 INSERT ... ON CONFLICT DO NOTHING"
     note: "dev 已应用（按 owner 裁决 ③ 重跑：去除 admin 兜底；隔离 0 条——18 行均已被 flow.core_workflows 的新版本覆盖，不涉及操作人补全）"
@@ -2286,8 +2286,10 @@ pending_forward_patches:
     note: "部署耦合：与 svc/plugin-registry 同窗口（代码与策略同批）。回滚文件 database/rollback/20261118123000_core_plugins_platform_catalog.rollback.sql：删两条策略并重建 allow_all、删三索引/三列/FK、恢复 tenant_id 默认 …0001，断言策略数与 RLS/FORCE。租户下线时平台行保留、owner 置空并写 last_owner_tenant_id / unpublished_at（本批只提供列与口径，租户删除链路按此接入）；生产零 DDL/零数据修复/零停服"
   - version: "20261118124000"
     file: "database/migrations/20261118124000_iam_tenant_plugins_rls_strict.sql"
-    status: applied
-    ledger_evidence: "implicit（version <= 20261118150000，方案 C 视为已承接）"
+    status: superseded
+    superseded_by: "20261119140000"
+    ledger_evidence: "prod _sqlx_migrations 实测无此版本（721 行 / max 20261119000002 / failed 0，2026-11-19 只读）；iam.core_tenant_plugins 0 行、relrowsecurity=f、0 策略 —— 未落生产"
+    verification_2026_11_19: "版本低于账本水位，按『不得 in-place 重放』不原地补投；已由 20261119140000_iam_core_tenant_plugins_rls_strict_forward.sql 前向承载（DDL 等价、幂等）。--apply-deferred 仅作应急手段，本次不走"
     effect: "iam.core_tenant_plugins 严格 B 范式：动态清空既有策略（生产 0 条）→ ENABLE + FORCE → rls_tenant_isolation(FOR ALL，USING/WITH CHECK = 系统通道 OR 本租户)；不改列、不改数据、不加索引，断言唯一约束与既有索引"
     destructive_scan: "无 DELETE/TRUNCATE/UPDATE/INSERT；1 次 DROP POLICY 组（0 条）+ 1 次 CREATE POLICY + 1 次 ENABLE + 1 次 FORCE RLS；文件内不自带事务控制；含 destructive-gate: allow / ticket RESIDUAL-RLS-20261118"
     evidence:
@@ -2392,4 +2394,36 @@ pending_forward_patches:
     effect: "新建 erp.sales_order_items（sales_order_id 外键 erp.sales_orders ON DELETE CASCADE、软删列、RLS ENABLE+FORCE、3 个索引）；scm.sales_order_items 仅加归档注释，不改数据、不 DROP、不删策略"
     destructive_scan: "无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；CREATE TABLE IF NOT EXISTS + CREATE INDEX + ENABLE/FORCE RLS + COMMENT ON TABLE"
     note: "回滚 database/rollback/20261119120000_erp_sales_order_items.rollback.sql（DROP 新表并清 scm 表注释；新表已有业务写入时会丢失行项目数据）；须与 svc/erp、svc/scm 同窗口上线"
+
+  # ===== 2026-11-19 批：RLS 策略名归一（草案，未应用、未开窗） =====
+  # 依据：docs/database/rls-normalization-draft-2026-11-19.md
+  # 前置：docs/database/readonly-triage-strategy-drift-drif01-erp-rls-2026-11-19.md §2 的实测范围。
+  # 说明：批 1 删除与 canonical 逐字相同的遗留策略（不改变可见行）；批 2 把只有遗留名的表归一为 rls_tenant_isolation。
+  # 均不含 BEGIN/COMMIT，由 apply-forward.sh 包裹单事务；文件内带前置/后置断言。
+  - version: "20261119130000"
+    file: "database/migrations/20261119130000_rls_normalize_batch1_drop_duplicate_legacy.sql"
+    status: to_apply
+    effect: "批 1：71 张「canonical + 遗留并存」表删除遗留策略 tenant_isolation_<t>；每表恰好 2 条 → 1 条 rls_tenant_isolation；排除 9 张平台读语义表与 37 张 fail-open"
+    destructive_scan: "DROP POLICY ×71；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119130000_rls_normalize_batch1_drop_duplicate_legacy.rollback.sql（按原 qual/with_check 逐表重建遗留策略）；前置断言 canonical 存在且含 rls_system + FORCE，后置断言每表只剩 1 条"
+  - version: "20261119131000"
+    file: "database/migrations/20261119131000_rls_normalize_batch2_rename_legacy.sql"
+    status: to_apply
+    effect: "批 2：167 张「只有遗留名」表归一为 rls_tenant_isolation（159 张 ALTER POLICY 改名 + 改严格 B 表达式；8 张多策略合并为先 DROP 遗留再 CREATE 严格策略）；排除 37 fail-open、8 张 erp 合并表、erp.event_idempotency、public.core_refresh_tokens/sessions、public.core_login_logs"
+    destructive_scan: "DROP POLICY ×16 + ALTER POLICY ×318 + CREATE POLICY ×8；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119131000_rls_normalize_batch2_rename_legacy.rollback.sql（还原原策略名与表达式；8 张多策略按原 polcmd 逐条重建）；热点表 core.ai_faqs(15)/mdm_sync_dead_letter(4)/mdm_suppliers(1)/ai_conversations(1) 需低峰窗口；其中 10 张 mdm_* 表租户列为 tenant_uid（非 tenant_id），表达式按 tenant_uid 生成"
+
+  # ===== 2026-11-19 批：前向补丁 + 有意策略守卫 =====
+  - version: "20261119140000"
+    file: "database/migrations/20261119140000_iam_core_tenant_plugins_rls_strict_forward.sql"
+    status: to_apply
+    effect: "取代 20261118124000：iam.core_tenant_plugins 动态清空策略 → ENABLE + FORCE → rls_tenant_isolation(ALL，严格 B)；DDL 等价、幂等可重跑；不改列/数据/索引"
+    destructive_scan: "无 DELETE/UPDATE/TRUNCATE/INSERT；EXECUTE DROP POLICY 循环（动态，生产 0 条）+ CREATE POLICY + ENABLE/FORCE；文件内无 BEGIN/COMMIT；含 destructive-gate: allow"
+    note: "回滚 database/rollback/20261119140000_iam_core_tenant_plugins_rls_strict_forward.rollback.sql（删策略、NO FORCE + DISABLE、断言 0 策略/RLS 关闭）；--apply-deferred 仅应急，本次常规扫描收取"
+  - version: "20261119141000"
+    file: "database/migrations/20261119141000_rls_intentional_policies_guard.sql"
+    status: to_apply
+    effect: "纯断言守卫（无 DDL）：钉住 public.core_login_logs 有意双策略（rls_system_only=ALL / rls_tenant_read=SELECT）与 6 张共享审计表有意 fail-open（ALL/USING(true)）；租户策略被改为 ALL 或审计策略被收紧即 RAISE"
+    destructive_scan: "无 DDL/DML；仅 DO 块读 pg_policies/pg_class；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119141000_rls_intentional_policies_guard.rollback.sql（空操作，仅清账本行）；负向演练已验证：把 rls_tenant_read 改成 ALL 时守卫按预期 RAISE，事务回滚后仍为 SELECT"
 
