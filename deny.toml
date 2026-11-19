@@ -28,11 +28,16 @@ yanked = "deny"
 # RUSTSEC-2026-0253（lru 0.16.4, informational unsound）：经 async-graphql 传递锁定，
 #   触发需 catch_unwind + panic 落在 Drop 路径（本仓无此用法）；2026-10-07 快照比对确认仅此 1 条
 #   informational，随 async-graphql 升级滚动消除（P3-8 2026-10-24 登记接受）。
+# RUSTSEC-2026-0459（libsqlite3-sys 0.30.1, CVE-2026-119375）：链 sqlx →（可选）sqlx-sqlite
+#   → libsqlite3-sys；本仓 sqlx 仅启用 postgres 特性，全仓无 crate 启用 sqlite，
+#   该 crate 仅解析进 lock、不编译不链接；无 sqlite 文件读写路径。解除需上游 sqlx 改用
+#   libsqlite3-sys >=0.39（下游 0.9.1 仍精确锁定 0.30.1）。
 ignore = [
   "RUSTSEC-2023-0071",
   "RUSTSEC-2024-0370",
   "RUSTSEC-2026-0192",
   "RUSTSEC-2026-0253",
+  "RUSTSEC-2026-0459",
 ]
 
 # ────────────────────────────────────────────────────────────────────────────

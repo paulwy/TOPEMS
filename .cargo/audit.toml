@@ -28,5 +28,19 @@
 #      存在，运行时不被触达，实际利用面为空；
 #   3. 2026-10-28 复核：lib/shared-auth/src/auth.rs 无任何 ES 算法使用。
 #      待未来启用 ES 算法或 jsonwebtoken 生态滚动升级时消除。
+#
+# RUSTSEC-2026-0459（libsqlite3-sys 0.30.1，CVE-2026-119375 SQLite 未初始化页缓存内存）
+# 忽略理由：
+#   1. 引入链 sqlx 0.9.1 →（可选后端）sqlx-sqlite → libsqlite3-sys；本仓 sqlx 仅启用
+#      postgres 特性（runtime-tokio/postgres/chrono/uuid/macros/bigdecimal/rust_decimal），
+#      全仓无任何 crate 启用 sqlite 特性（tools/migration-sdk 亦注释"仅 postgres 避免 sqlite 冲突"）；
+#   2. 该 crate 仅被解析进 Cargo.lock，不参与编译、不链接进任何二进制，实际利用面为空；
+#   3. 攻击条件是本地打开攻击者构造的 SQLite 库文件 + 同名 -wal 文件，本仓无 sqlite 读写路径；
+#   4. 解除需 sqlx 升级到改用 libsqlite3-sys >=0.39 的版本（下游 0.9.1 仍精确锁定 0.30.1，尚未发布）。
 [advisories]
-ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0253", "RUSTSEC-2026-0387"]
+ignore = [
+    "RUSTSEC-2023-0071",
+    "RUSTSEC-2026-0253",
+    "RUSTSEC-2026-0387",
+    "RUSTSEC-2026-0459",
+]

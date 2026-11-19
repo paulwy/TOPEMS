@@ -102,10 +102,11 @@ export const openingBalanceApi = {
   async import(
     data: CreateOpeningBalanceRequest[]
   ): Promise<ApiResponse<{ success_count: number; failed_count: number; errors: string[] }>> {
-    return apiClient.finance.post<{ success_count: number; failed_count: number; errors: string[] }>(
-      '/accounts/opening-balances/batch',
-      data
-    );
+    return apiClient.finance.post<{
+      success_count: number;
+      failed_count: number;
+      errors: string[];
+    }>('/accounts/opening-balances/batch', data);
   },
 
   async carryForward(data: CarryForwardRequest): Promise<ApiResponse<{ rows_affected: number }>> {

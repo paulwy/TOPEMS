@@ -8,6 +8,19 @@
 | RUSTSEC-2023-0071 | 2026-10-22 | rsa 0.9.x | Timing side-channel（Marvin Attack） | 见下 | `vendor/rsa` 私有补丁（implicit rejection） |
 | RUSTSEC-2026-0253 | 2026-10-07 | lru 0.16.4 | unsound（catch_unwind+panic Drop 路径） | 本仓无触发用法，随 async-graphql 滚动消除 | — |
 | RUSTSEC-2026-0387 | 2026-10-28 | crypto-bigint 0.5.5 | Timing（常数时间操作差异） | ES 算法零使用（仅 RS256/HS256/None），见下 | 待 jsonwebtoken 滚动升级 |
+| RUSTSEC-2026-0459 | 2026-11-19 | libsqlite3-sys 0.30.1 | SQLite 未初始化页缓存内存读取（CVE-2026-119375） | sqlite 后端未启用，仅 lock 惰性解析、不编译不链接，见下 | 待 sqlx 改用 libsqlite3-sys >=0.39 |
+
+## RUSTSEC-2026-0459 详细理由（libsqlite3-sys 0.30.1，2026-11-19）
+
+- **引入链**：`sqlx 0.9.1` →（可选后端）`sqlx-sqlite 0.9.1` → `libsqlite3-sys 0.30.1`。
+- **实际利用面为空**：`Cargo.toml` 中 sqlx 仅启用 `postgres` 特性
+  （runtime-tokio / postgres / chrono / uuid / macros / bigdecimal / rust_decimal）；
+  全仓无任何 crate 启用 `sqlite` 特性（`tools/migration-sdk` 亦注明「仅 postgres 避免 sqlite 冲突」）。
+  该 crate 仅被解析进 `Cargo.lock`，**不参与编译、不链接进任何二进制**。
+- **触发条件**：本地打开攻击者构造的 SQLite 库文件与其同名 `-wal` 文件（页大小不一致），
+  属本地文件攻击；本仓无任何 sqlite 读写路径。
+- **解除路径**：下游 `sqlx 0.9.1` 精确锁定 `sqlx-sqlite =0.9.1`（进而锁定 0.30.1），
+  需 sqlx 发布改用 `libsqlite3-sys >=0.39` 的版本后才可消除；当前无可用的同 minor 修复。
 
 ## RUSTSEC-2023-0071 详细理由
 
