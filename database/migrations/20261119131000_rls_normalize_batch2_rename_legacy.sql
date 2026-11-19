@@ -23,7 +23,8 @@
 --   3) 表存在 → 前置断言、归一 DDL 与后置断言保持原严格度，一条不放宽。
 -- 状态：草案，未应用、未开窗。
 
-SET search_path = pg_catalog, pg_temp;
+-- 须含 public：apply-forward.sh 在同一会话/事务内紧跟 INSERT INTO _sqlx_migrations（非 schema 限定）
+SET search_path = pg_catalog, public, pg_temp;
 SET lock_timeout = '5s';
 SET statement_timeout = '300s';
 
