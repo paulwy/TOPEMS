@@ -54,7 +54,8 @@ pub async fn list_accounts(/* ... */) -> impl IntoResponse { /* ... */ }
 ./scripts/openapi/generate.sh --extract --extract-services crm --output-dir /tmp/openapi-out
 ```
 
-输出：`docs/api/openapi-aggregated.json`（聚合后的统一文档）
+输出：`<output-dir>/openapi-aggregated.json`（默认 `docs/api/`，该路径已 `.gitignore`，**不再入库**；
+建议显式指定 `--output-dir /tmp/openapi`，避免污染工作区）
 
 ### Step 3: 生成前端 TypeScript 类型
 
@@ -101,8 +102,9 @@ grep -c '"[A-Z][a-zA-Z]*":' packages/shared-types/src/generated/openapi.d.ts
 |------|------|
 | `scripts/openapi/generate.sh` | 统一生成入口（提取/聚合/类型） |
 | `scripts/openapi/aggregate.py` | 多服务 spec 聚合（纯 python3） |
-| `scripts/openapi/gen-types.mjs` | OpenAPI JSON → TypeScript 类型生成 |
-| `docs/api/openapi-aggregated.json` | 聚合后的 OpenAPI 文档（主输出） |
+| `scripts/openapi/gen-types.mjs` | OpenAPI JSON → TypeScript 类型生成（自动选源：本地聚合 → 权威 `openapi.json` → 手写 YAML） |
+| `scripts/openapi/make-manifest.mjs` | 为聚合产物生成 manifest（commit / 计数 / sha256） |
+| `docs/api/openapi-aggregated.json` | 聚合后的 OpenAPI 文档（**产物，不入库**；CI 发布 artifact / Release 附件） |
 | `packages/shared-types/src/generated/openapi.d.ts` | 前端 TS 类型（前端引用源） |
 
 ## 生成门禁与分批策略（W6-C，2026-11-07）
@@ -115,7 +117,10 @@ grep -c '"[A-Z][a-zA-Z]*":' packages/shared-types/src/generated/openapi.d.ts
 | 检查 | 脚本 | 基线 | 语义 |
 |---|---|---|---|
 | 权威产物覆盖 | `scripts/ci/check-openapi-coverage.cjs` | `docs/api/openapi-baseline-gaps.json` | live 路由 ↔ `docs/api/openapi.json`，基线只降不升 |
-| 聚合产物棘轮 | `scripts/ci/check-openapi-aggregated.cjs` | `scripts/ci/openapi-aggregated-baseline.json` | live 路由 ↔ `docs/api/openapi-aggregated.json`，missing/extra 计数只降不升 |
+| 聚合产物棘轮 | `scripts/ci/check-openapi-aggregated.cjs` | `scripts/ci/openapi-aggregated-baseline.json` | live 路由 ↔ 聚合产物，missing/extra 计数只降不升 |
+
+聚合产物自 2026-11-19 起不再入库：本地门禁以 `--allow-missing` 运行（产物不存在时跳过），
+CI 由 `.github/workflows/openapi-aggregated.yml` 先生成再跑同一棘轮（不传 `--allow-missing`）。
 
 重生成后收紧基线：
 
@@ -125,32 +130,44 @@ node scripts/ci/check-openapi-coverage.cjs --gen-baseline
 node scripts/ci/check-openapi-aggregated.cjs --update-baseline
 ```
 
-### 当前漂移规模（2026-11-07 实测）
+### 当前漂移读数
+
+实时读数以门禁输出为准（基线文件：`docs/api/openapi-baseline-gaps.json`、
+`scripts/ci/openapi-aggregated-baseline.json`）。2026-11-19 本地实测：
 
 | 指标 | 值 |
 |---|---|
-| live 路由（方法×路径，静态抽取） | 3,926 |
-| `docs/api/openapi.json` 覆盖 | 3,140 方法项（missing 1,861 / extra 1,075，已入基线） |
-| `docs/api/openapi-aggregated.json` 覆盖 | 873 方法项（missing 3,788 / extra 735，已入棘轮基线） |
-| 聚合产物最后更新 | 2026-09-06（YAML 2026-08-23） |
-| 用本地已有 spec 预演重生成 | paths 716 → 1,446（+730），schema 527 → 410（-117，旧产物含过期 schema），单文件约 1.2MB |
+| live 路由（方法×路径） | 3,968 |
+| 权威 `docs/api/openapi.json` | 2,463 paths / 821 schemas（missing 1,908 / extra 992，已入基线） |
+| 聚合产物 | 3,007 方法项（missing 3,088 / extra 2,127，已入棘轮基线） |
 
-结论：一次性全量重生成是**单文件大 diff**（约 +730 paths / 数量级数千行），不是上千个文件；
-按「产物单独提交、可逐字复核生成时间与命令」的方式推进，不混入业务代码提交。
+（2026-11-07 的历史读数已移除，避免与当前基线混淆。）
 
-### 分批推进建议
+### 产物发布与获取（2026-11-19 起）
 
-| 批次 | 服务组 | 说明 |
+聚合产物不再入库，由 `.github/workflows/openapi-aggregated.yml` 在 **tag（`v*`）与手动触发** 时生成：
+
+| 渠道 | 名称 | 保留期 |
 |---|---|---|
-| B1 | unified-core、monitor、plugin-registry、search、communication、integration、mobile | 平台/治理面，schema 变更最频繁 |
-| B2 | erp、finance、hrm、pm、crm、mes、pdm | 业务主域，path 增量最大 |
-| B3 | scm、wms、srm、qms、lims、ehs、rd | 供应链/质量域 |
-| B4 | bi/analytics、portal、gis、ticket、feedback、master-data、tms | 分析与入口域 |
+| Actions artifact | `openapi-aggregated-<commit-sha>` | 90 天 |
+| Release 附件 | `openapi-aggregated.json` + `openapi-aggregated.manifest.json` | 永久（随 tag） |
 
-每批完成后：`generate.sh --extract`（可先用 `--extract-services` 预演单批）→ 单独提交
-`docs/api/openapi-aggregated.{json,yaml}` → 收紧两份基线 → 记录本批 missing/extra 变化。
-注意：`aggregate.py` 以输入目录全量重建聚合产物，分批推进时每批仍需提供全量 spec，
-或在后续为 `aggregate.py` 增加「合并既有产物」开关（本批未实现，避免与生成物一起变更）。
+manifest 字段：`commit`、`generated_at`、`generator`、`paths`、`operations`、`schemas`、
+`sha256`（以及 `files[]` 内各文件哈希）。获取与校验：
+
+```bash
+gh run download -n openapi-aggregated-<sha> -D /tmp/openapi
+shasum -a 256 /tmp/openapi/openapi-aggregated.json   # 与 manifest.sha256 比对
+node scripts/ci/check-openapi-aggregated.cjs --aggregated-path /tmp/openapi/openapi-aggregated.json
+```
+
+CI 不可用时（如 Actions 计费停摆）应急口径——本地生成后手工上传：
+
+```bash
+./scripts/openapi/generate.sh --extract --output-dir /tmp/openapi
+node scripts/openapi/make-manifest.mjs --artifact /tmp/openapi/openapi-aggregated.json
+gh release upload <tag> /tmp/openapi/openapi-aggregated.json /tmp/openapi/openapi-aggregated.manifest.json
+```
 
 ## 历史验证
 

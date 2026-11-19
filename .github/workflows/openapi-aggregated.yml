@@ -1,0 +1,80 @@
+name: OpenAPI Aggregated Artifact
+
+# 聚合 OpenAPI 产物自 2026-11-19 起不再入库（见
+# docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md）。
+# 本工作流负责生成并发布：
+#   1) GitHub Actions artifact（90 天，按 commit 命名）
+#   2) tag 推送时上传到对应 GitHub Release（永久）
+#   3) manifest.json：commit / 计数 / sha256，供获取方校验一致性
+#
+# 触发：仅 tag（v*）与手动，不做日更 —— 全量 --extract 约 2 小时。
+# CI 不可用时的应急口径：本地生成后 `gh release upload`，见 scripts/openapi/README.md。
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: openapi-aggregated-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTC_WRAPPER: sccache
+  SCCACHE_DIR: ${{ github.workspace }}/.sccache
+  SCCACHE_CACHE_SIZE: "50G"
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  generate:
+    name: Generate aggregated OpenAPI + manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: openapi-aggregated
+
+      - name: Generate aggregated OpenAPI
+        run: ./scripts/openapi/generate.sh --extract --output-dir "$RUNNER_TEMP/openapi"
+
+      - name: Write manifest
+        run: |
+          node scripts/openapi/make-manifest.mjs \
+            --artifact "$RUNNER_TEMP/openapi/openapi-aggregated.json" \
+            --out "$RUNNER_TEMP/openapi/openapi-aggregated.manifest.json"
+
+      - name: Ratchet check on freshly generated artifact
+        run: |
+          node scripts/ci/check-openapi-aggregated.cjs \
+            --aggregated-path "$RUNNER_TEMP/openapi/openapi-aggregated.json"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: openapi-aggregated-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/openapi/openapi-aggregated.json
+            ${{ runner.temp }}/openapi/openapi-aggregated.manifest.json
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish to GitHub Release (tag only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --verify-tag --title "$TAG" \
+              --notes "OpenAPI aggregated artifact for $TAG (see manifest.json for commit/sha256)."
+          gh release upload "$TAG" \
+            "$RUNNER_TEMP/openapi/openapi-aggregated.json" \
+            "$RUNNER_TEMP/openapi/openapi-aggregated.manifest.json" \
+            --clobber
