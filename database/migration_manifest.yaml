@@ -2515,3 +2515,11 @@ pending_forward_patches:
     effect: "新增 iam:resource_acl:read 权限码（level=1）并授予 tenant_admin / admin / superadmin；供三个只读 ACL 端点使用，读范围仍由 iam_acl_read_scope 收敛"
     destructive_scan: "仅 INSERT public.core_permissions + public.core_role_permissions（均带 NOT EXISTS 去重）；无 ALTER/DROP/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119220000_iam_resource_acl_read_permission.rollback.sql（按 code 精确删除角色关联与权限行，并断言 version=20261119220000 账本零残留）；无表结构/RLS/策略快照变化"
+
+  # ===== 2026-11-19 批：finance_u8_import_records 同义策略去重（清单 §4.3 单列待办） =====
+  - version: "20261119230000"
+    file: "database/migrations/20261119230000_rls_dedupe_finance_u8_import_records_policy.sql"
+    status: to_apply
+    effect: "删除 finance.finance_u8_import_records 上多余的 tenant_isolation_finance_u8_import_records；保留 rls_tenant_isolation。两条策略实测 cmd=ALL / PERMISSIVE / roles=PUBLIC 且 using=with_check 逐字相同，PERMISSIVE 间为 OR，删除不改变可见性，不收紧也不放宽"
+    destructive_scan: "仅 DROP POLICY 一条；无 DROP TABLE/COLUMN、无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119230000_rls_dedupe_finance_u8_import_records_policy.rollback.sql（只重建被删策略，不动保留策略）；策略快照预期该表策略数 2→1（总策略 810→809），需随迁移同批重生成"
