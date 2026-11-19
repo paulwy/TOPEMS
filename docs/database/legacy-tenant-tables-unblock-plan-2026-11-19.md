@@ -1,12 +1,12 @@
 # 3 张依赖未封闭表解依赖方案（iam.core_tenants / iam.core_users / flow.core_tenants）
 
 - 日期：2026-11-19
-- 范围：只出方案与迁移草案，**不写迁移文件、不应用、不 push**；待业务口径拍板后落迁移并跑 `run-migration-drill.sh anchor`。
+- 范围：~~只出方案与迁移草案~~ → **已按选项 A 落地**：迁移文件 `20261119200000_unblock_and_archive_legacy_tenant_tables.sql` 已提交，anchor 演练 `[5/5]` PASS（见 §5），并已落 dev（账本 success）。
 - 前提：`20261119180000`（108 张历史 schema 副本归档）已应用。本文所有“现存引用”均指该迁移**之后**的状态。
 
-## 0. 结论与待拍板
+## 0. 结论（已拍板并落地：选项 A）
 
-三张表都能做到“零 CASCADE 归档”，但 `iam.core_tenants` 与 `flow.core_tenants` 被运行期函数 `finance.bootstrap_defaults()` 读取，**必须先定业务口径**：
+三张表都能做到“零 CASCADE 归档”，但 `iam.core_tenants` 与 `flow.core_tenants` 被运行期函数 `finance.bootstrap_defaults()` 读取，**需先定业务口径**。用户已确认**选项 A（收口 `public` 权威表）**，迁移已落地。
 
 | 选项 | 做法 | 代价 / 影响 | 本轮能否归档 |
 |---|---|---|---|
@@ -112,7 +112,7 @@ ALTER TABLE flow.core_tenants RENAME TO _deprecated_core_tenants;
 - 代价：需要下一轮再改函数才能归档；期间 `_deprecated_` 表不能被清理。
 - 另注：改名后嵌入模式未限定的 `core_tenants` 立即回落到 `public`，与该组其它表的现状一致。
 
-## 4. 迁移草案（只写不应用；待拍板后落文件）
+## 4. 迁移（已落地：`20261119200000_unblock_and_archive_legacy_tenant_tables.sql`）
 
 ### 4.1 选项 A：`20261119200000_unblock_and_archive_legacy_tenant_tables.sql`
 
@@ -145,14 +145,30 @@ DROP 一律按显式 schema 字面量（`DROP TABLE IF EXISTS iam.%I`）不使�
 
 选项 B 不产生归档表，本批 `_drop_manifest` 只有 `iam.core_user_roles`/`iam.core_users` 2 行。
 
-## 5. 演练与快照计划（落迁移后执行）
+## 5. 演练与快照（已执行）
 
-- `bash scripts/dev/run-migration-drill.sh anchor`，必须 `[5/5]` PASS。
-- 本批 8 张表均无 RLS、无策略，因此 `database/rls_policy_expected.json` **预期零 diff**；仍按 `MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1` 重生成并逐条核对，确认表/策略仍为 797/808。
-- 迁移文件落库后同步：`migration_manifest.yaml`、`checksums.txt`、回滚文件、本方案文档的“已落地”标注。
+- `bash scripts/dev/run-migration-drill.sh anchor`：**`[5/5]` PASS**（anchor=20261117235500，75s，2026-11-19）。
+- `MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1` 重生成：表 798 / 策略 809，与实测完全一致，**零 diff**（本批 8 张表均无 RLS、无策略）。
+- 已同步：`migration_manifest.yaml`、`checksums.txt`、回滚文件，以及本文档的“已落地”标注；dev 账本 success（见 §7）。
 
-## 6. 本轮不做
+## 6. 范围与边界
 
-- 不修改 `finance.bootstrap_defaults()`、不创建迁移文件、不跑演练（等待选项 A/B 拍板）。
+- 已修改 `finance.bootstrap_defaults()`（选项 A 函数体，去掉 iam/flow/`iam.core_tenant_users` 三个分支）；迁移文件、回滚、演练均已完成并落 dev。
 - 不动 `TODO.md`、`docs/api/openapi-aggregated.json`、未跟踪评估文档；不 push。
 - 5 张引用方中，`iam.core_tenant_plugins` **不归档**（活跃业务表，只改外键）；其余 4 张照常归档。
+
+## 7. dev 落地记录（2026-11-19）
+
+- 备份：`/tmp/topems_pre_r5_b3_20261119184254.dump`（sha256 `f265dafb…79c81`）。
+- 执行：`PROD_CHANGE_TICKET=R5-ARCHIVE-B3-20261119`、`PGOPTIONS=-c app.tenant_unblock_archive_gate=tenant-unblock-20261119`、`--allow-destructive=20261119200000`；rc=0。
+- 账本：`20261119200000 | success`，`696 行 / 696 success / max=20261119200000`；checksum `c1309183…f2ea6` = 文件 sha384 ✓。
+- 断言：
+  1. 归档 **8 张**（3 目标 + `iam.core_user_roles` + 4 张 `flow._deprecated_core_tenant_*`），`archive.drop_20261119_ub__*` 各 0 行 ✓
+  2. 8 张原表残留 0 ✓
+  3. `iam.core_tenant_plugins` 保留，外键 `core_tenant_plugins_tenant_id_fkey` → `public.core_tenants` ✓
+  4. `finance.bootstrap_defaults()` 仅引用 `public.core_tenants`，不含 `iam.core_tenants` / `flow.core_tenants` / `iam.core_tenant_users` ✓
+  5. `archive` 表数 130 → 139（+8 归档 +1 `_fk_out_snapshot` 簿记）✓
+  6. dev 业务表 1395 → 1396（-8 原表 +8 归档 +1 簿记）✓
+- 演练：check / write 双模式均 `[5/5]` PASS（表 798 / 策略 809，零 diff）。
+- 口径说明：前一轮预报告写「归档 7 张」是漏算 `iam.core_user_roles`；`iam.core_tenant_users` 已由批次① 以 `drop_20261119_lc__iam__core_tenant_users` 归档，故本批清单为 8 张。
+- 预期外 diff：无。
