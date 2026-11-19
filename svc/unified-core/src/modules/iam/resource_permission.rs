@@ -11,9 +11,13 @@
 use crate::modules::iam::tenant_scope::{self, IamScope};
 use crate::AppState;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Extension, Json,
 };
+use chrono::{DateTime, SecondsFormat, Utc};
+use serde::Deserialize;
+use sqlx::Row;
+use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
@@ -779,6 +783,536 @@ pub async fn remove_user_resource_exception(
             "requested": batch.resource_ids.len() * batch.actions.len()
         }
     }))
+}
+
+// ---------------------------------------------------------------------------
+// 资源级 ACL 只读查询
+// ---------------------------------------------------------------------------
+//
+// 三个端点共用同构返回：只列「已配置的授权行」，不做生效合并，也不替代
+// `permission_verify::check_resource_permission` 的运行时判定。
+// 读作用域与写路径同源（`tenant_scope::iam_acl_read_scope`）：
+//   * Platform -> `scope_read_system`，可见 platform + 全部 tenant 行；
+//   * Tenant   -> 请求事务 `scope_with`，RLS + 显式 tenant_id 双重收敛。
+
+const ACL_DEFAULT_PAGE_SIZE: i64 = 20;
+const ACL_MAX_PAGE_SIZE: i64 = 200;
+
+// 固定 SQL：过滤条件全部走 $n 绑定，不做字符串拼接（仓库禁止动态 SQL）。
+const ACL_COUNT_SQL: &str = r#"
+    SELECT COUNT(*)::bigint
+      FROM iam.resource_permissions rp
+     WHERE rp.deleted_at IS NULL
+       AND ($1::uuid IS NULL OR rp.role_id = $1)
+       AND ($2::uuid IS NULL OR rp.user_id = $2)
+       AND ($3::text IS NULL OR rp.resource_type = $3)
+       AND ($4::uuid IS NULL OR rp.resource_id = $4)
+       AND ($5::text IS NULL OR rp.permission = $5)
+       AND ($6::text IS NULL OR rp.effect = $6)
+       AND ($7::text IS NULL OR rp.scope = $7)
+       AND ($8::uuid IS NULL OR rp.tenant_id = $8)
+       AND (
+           $9::text IS NULL
+           OR ($9 = 'role' AND rp.role_id IS NOT NULL)
+           OR ($9 = 'user' AND rp.user_id IS NOT NULL)
+       )
+"#;
+
+const ACL_ROWS_SQL: &str = r#"
+    SELECT rp.id,
+           rp.resource_type,
+           rp.resource_id,
+           rp.role_id,
+           rp.user_id,
+           rp.permission,
+           rp.effect,
+           rp.scope,
+           rp.tenant_id,
+           rp.created_at,
+           r.name AS role_name,
+           t.name AS tenant_name
+      FROM iam.resource_permissions rp
+      LEFT JOIN public.core_roles r ON r.id = rp.role_id
+      LEFT JOIN public.core_tenants t ON t.id = rp.tenant_id
+     WHERE rp.deleted_at IS NULL
+       AND ($1::uuid IS NULL OR rp.role_id = $1)
+       AND ($2::uuid IS NULL OR rp.user_id = $2)
+       AND ($3::text IS NULL OR rp.resource_type = $3)
+       AND ($4::uuid IS NULL OR rp.resource_id = $4)
+       AND ($5::text IS NULL OR rp.permission = $5)
+       AND ($6::text IS NULL OR rp.effect = $6)
+       AND ($7::text IS NULL OR rp.scope = $7)
+       AND ($8::uuid IS NULL OR rp.tenant_id = $8)
+       AND (
+           $9::text IS NULL
+           OR ($9 = 'role' AND rp.role_id IS NOT NULL)
+           OR ($9 = 'user' AND rp.user_id IS NOT NULL)
+       )
+     ORDER BY rp.created_at DESC, rp.id DESC
+     LIMIT $10 OFFSET $11
+"#;
+
+#[derive(Debug, Default, Deserialize)]
+pub struct ResourceAclListQuery {
+    page: Option<String>,
+    page_size: Option<String>,
+    resource_type: Option<String>,
+    resource_id: Option<String>,
+    permission: Option<String>,
+    effect: Option<String>,
+    scope: Option<String>,
+    tenant_id: Option<String>,
+    subject_type: Option<String>,
+}
+
+enum AclSubject {
+    Any,
+    Role(Uuid),
+    User(Uuid),
+}
+
+struct AclListFilter {
+    role_id: Option<Uuid>,
+    user_id: Option<Uuid>,
+    resource_type: Option<String>,
+    resource_id: Option<Uuid>,
+    permission: Option<String>,
+    effect: Option<String>,
+    scope: Option<String>,
+    tenant_id: Option<Uuid>,
+    subject_type: Option<String>,
+    page: i64,
+    page_size: i64,
+}
+
+fn trim_query_value(value: &Option<String>) -> Option<String> {
+    value
+        .as_deref()
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(str::to_string)
+}
+
+fn parse_query_i64(
+    name: &str,
+    raw: &Option<String>,
+    default: i64,
+) -> Result<i64, Json<serde_json::Value>> {
+    match trim_query_value(raw) {
+        None => Ok(default),
+        Some(value) => value
+            .parse::<i64>()
+            .map_err(|_| json_error(400, &format!("{} 必须为整数", name))),
+    }
+}
+
+fn parse_acl_list_query(
+    query: &ResourceAclListQuery,
+    subject: AclSubject,
+) -> Result<AclListFilter, Json<serde_json::Value>> {
+    let page = parse_query_i64("page", &query.page, 1)?;
+    if page < 1 {
+        return Err(json_error(400, "page 必须大于等于 1"));
+    }
+    let page_size = parse_query_i64("page_size", &query.page_size, ACL_DEFAULT_PAGE_SIZE)?;
+    if !(1..=ACL_MAX_PAGE_SIZE).contains(&page_size) {
+        return Err(json_error(
+            400,
+            &format!("page_size 必须在 1 到 {} 之间", ACL_MAX_PAGE_SIZE),
+        ));
+    }
+
+    let resource_type = trim_query_value(&query.resource_type);
+    if let Some(value) = &resource_type {
+        if !is_valid_token(value, 64) {
+            return Err(json_error(400, "resource_type 格式错误"));
+        }
+    }
+
+    let resource_id = match trim_query_value(&query.resource_id) {
+        None => None,
+        Some(value) => Some(
+            Uuid::parse_str(&value).map_err(|_| json_error(400, "resource_id 格式错误"))?,
+        ),
+    };
+    if resource_id.is_some() && resource_type.is_none() {
+        return Err(json_error(400, "resource_id 必须与 resource_type 同时提供"));
+    }
+
+    let permission = trim_query_value(&query.permission);
+    if let Some(value) = &permission {
+        if !is_valid_token(value, 128) {
+            return Err(json_error(400, "permission 格式错误"));
+        }
+    }
+
+    let effect = match trim_query_value(&query.effect).as_deref() {
+        None => None,
+        Some(value @ ("allow" | "deny")) => Some(value.to_string()),
+        Some(_) => return Err(json_error(400, "effect 必须为 allow 或 deny")),
+    };
+
+    let scope = match trim_query_value(&query.scope).as_deref() {
+        None => None,
+        Some(value) if value == PLATFORM_SCOPE || value == TENANT_SCOPE => {
+            Some(value.to_string())
+        }
+        Some(_) => return Err(json_error(400, "scope 必须为 platform 或 tenant")),
+    };
+
+    let tenant_id = match trim_query_value(&query.tenant_id) {
+        None => None,
+        Some(value) => Some(
+            Uuid::parse_str(&value).map_err(|_| json_error(400, "tenant_id 格式错误"))?,
+        ),
+    };
+
+    let subject_type = match trim_query_value(&query.subject_type).as_deref() {
+        None => None,
+        Some(value @ ("role" | "user")) => Some(value.to_string()),
+        Some(_) => return Err(json_error(400, "subject_type 必须为 role 或 user")),
+    };
+
+    let (role_id, user_id) = match subject {
+        AclSubject::Any => (None, None),
+        AclSubject::Role(id) => (Some(id), None),
+        AclSubject::User(id) => (None, Some(id)),
+    };
+
+    Ok(AclListFilter {
+        role_id,
+        user_id,
+        resource_type,
+        resource_id,
+        permission,
+        effect,
+        scope,
+        tenant_id,
+        subject_type,
+        page,
+        page_size,
+    })
+}
+
+fn acl_row_to_json(
+    row: &sqlx::postgres::PgRow,
+    user_names: &HashMap<Uuid, String>,
+) -> Result<serde_json::Value, sqlx::Error> {
+    let role_id: Option<Uuid> = row.try_get("role_id")?;
+    let user_id: Option<Uuid> = row.try_get("user_id")?;
+    let resource_id: Option<Uuid> = row.try_get("resource_id")?;
+    let created_at: Option<DateTime<Utc>> = row.try_get("created_at")?;
+
+    let role_name: Option<String> = row.try_get("role_name")?;
+
+    let subject_type = if role_id.is_some() { "role" } else { "user" };
+    let subject_name = if role_id.is_some() {
+        role_name
+    } else {
+        user_id.and_then(|id| user_names.get(&id).cloned())
+    };
+
+    Ok(serde_json::json!({
+        "id": row.try_get::<Uuid, _>("id")?,
+        "resource_type": row.try_get::<String, _>("resource_type")?,
+        "resource_id": resource_id,
+        "subject_type": subject_type,
+        "subject_id": role_id.or(user_id),
+        "subject_name": subject_name,
+        "permission": row.try_get::<String, _>("permission")?,
+        "effect": row.try_get::<String, _>("effect")?,
+        "scope": row.try_get::<String, _>("scope")?,
+        "tenant_id": row.try_get::<Option<Uuid>, _>("tenant_id")?,
+        "tenant_name": row.try_get::<Option<String>, _>("tenant_name")?,
+        "created_at": created_at
+            .map(|value| value.to_rfc3339_opts(SecondsFormat::Millis, true)),
+    }))
+}
+
+async fn run_acl_list(
+    state: &AppState,
+    txn_arc: &RlsTxnCell,
+    scope: IamScope,
+    filter: AclListFilter,
+) -> Json<serde_json::Value> {
+    // 租户作用域强制本租户；平台作用域才允许可选的 tenant_id 审计过滤。
+    let tenant_filter = match scope {
+        IamScope::Platform => filter.tenant_id,
+        IamScope::Tenant(tenant) => Some(tenant),
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let tx_result = match scope {
+        IamScope::Platform => state.db.scope_read_system().await,
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with(txn).await
+        }
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始资源授权查询事务失败: {}", e);
+            return json_error(500, &format!("查询资源授权失败: {}", e));
+        }
+    };
+
+    let total: i64 = match sqlx::query_scalar(ACL_COUNT_SQL)
+        .bind(filter.role_id)
+        .bind(filter.user_id)
+        .bind(filter.resource_type.as_deref())
+        .bind(filter.resource_id)
+        .bind(filter.permission.as_deref())
+        .bind(filter.effect.as_deref())
+        .bind(filter.scope.as_deref())
+        .bind(tenant_filter)
+        .bind(filter.subject_type.as_deref())
+        .fetch_one(&mut tx)
+        .await
+    {
+        Ok(total) => total,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("统计资源授权失败: {}", e);
+            return json_error(500, &format!("查询资源授权失败: {}", e));
+        }
+    };
+
+    let offset = (filter.page - 1) * filter.page_size;
+    let rows = match sqlx::query(ACL_ROWS_SQL)
+        .bind(filter.role_id)
+        .bind(filter.user_id)
+        .bind(filter.resource_type.as_deref())
+        .bind(filter.resource_id)
+        .bind(filter.permission.as_deref())
+        .bind(filter.effect.as_deref())
+        .bind(filter.scope.as_deref())
+        .bind(tenant_filter)
+        .bind(filter.subject_type.as_deref())
+        .bind(filter.page_size)
+        .bind(offset)
+        .fetch_all(&mut tx)
+        .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("查询资源授权失败: {}", e);
+            return json_error(500, &format!("查询资源授权失败: {}", e));
+        }
+    };
+
+    let mut user_ids: Vec<Uuid> = rows
+        .iter()
+        .filter_map(|row| row.try_get::<Option<Uuid>, _>("user_id").ok().flatten())
+        .collect();
+    user_ids.sort_unstable();
+    user_ids.dedup();
+    let user_names = match tenant_scope::lookup_user_display_names(&mut tx, &user_ids).await {
+        Ok(names) => names,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            tracing::error!("解析资源授权用户显示名失败: {}", e);
+            return json_error(500, &format!("查询资源授权失败: {}", e));
+        }
+    };
+
+    let mut items = Vec::with_capacity(rows.len());
+    for row in &rows {
+        match acl_row_to_json(row, &user_names) {
+            Ok(item) => items.push(item),
+            Err(e) => {
+                let _ = tx.rollback().await;
+                tracing::error!("解码资源授权行失败: {}", e);
+                return json_error(500, &format!("查询资源授权失败: {}", e));
+            }
+        }
+    }
+
+    if let Err(e) = tx.commit().await {
+        tracing::error!("提交资源授权查询事务失败: {}", e);
+        return json_error(500, &format!("查询资源授权失败: {}", e));
+    }
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取资源授权列表成功",
+        "data": {
+            "items": items,
+            "total": total,
+            "page": filter.page,
+            "page_size": filter.page_size,
+            "total_pages": topems_shared_core::response::total_pages_of(total, filter.page_size)
+        }
+    }))
+}
+
+/// GET /iam/roles/{id}/resource-permissions — 查询角色持有的资源级授予。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:resource_acl:read"])),
+    path = "/roles/{id}/resource-permissions",
+    tag = "IAM-ResourceAcl",
+    params(
+        ("id" = String, Path, description = "角色 ID"),
+        ("page" = Option<i64>, Query, description = "页码，从 1 开始"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，1-200"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID，需同时提供 resource_type"),
+        ("permission" = Option<String>, Query, description = "动作标识"),
+        ("scope" = Option<String>, Query, description = "platform 或 tenant"),
+        ("tenant_id" = Option<String>, Query, description = "平台作用域下按租户过滤，租户作用域忽略"),
+    ),
+    responses(
+        (status = 200, description = "角色资源授权列表"),
+        (status = 400, description = "参数错误"),
+        (status = 403, description = "缺少租户上下文"),
+        (status = 404, description = "角色不存在"),
+    )
+)]
+pub async fn list_role_resource_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(role_id): Path<String>,
+    Query(query): Query<ResourceAclListQuery>,
+) -> Json<serde_json::Value> {
+    let role_uuid = match Uuid::parse_str(&role_id) {
+        Ok(id) => id,
+        Err(_) => return json_error(400, "无效的角色ID格式"),
+    };
+    let filter = match parse_acl_list_query(&query, AclSubject::Role(role_uuid)) {
+        Ok(filter) => filter,
+        Err(resp) => return resp,
+    };
+    let scope = match tenant_scope::iam_acl_read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法查询资源权限"),
+    };
+    match tenant_scope::check_role_target(&state.db, &txn_arc, scope, role_uuid).await {
+        Ok(tenant_scope::RoleTarget::Ok) => {}
+        Ok(tenant_scope::RoleTarget::NotFound) => return json_error(404, "角色不存在"),
+        Err(e) => {
+            tracing::error!("查询角色资源授权前校验角色失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    }
+    run_acl_list(&state, &txn_arc, scope, filter).await
+}
+
+/// GET /iam/users/{user_id}/resource-permissions — 查询用户的显式资源例外。
+///
+/// 只返回直接配置在用户上的 allow/deny 行，不展开角色派生授权。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:resource_acl:read"])),
+    path = "/users/{user_id}/resource-permissions",
+    tag = "IAM-ResourceAcl",
+    params(
+        ("user_id" = String, Path, description = "用户 ID"),
+        ("page" = Option<i64>, Query, description = "页码，从 1 开始"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，1-200"),
+        ("resource_type" = Option<String>, Query, description = "资源类型"),
+        ("resource_id" = Option<String>, Query, description = "资源 ID，需同时提供 resource_type"),
+        ("permission" = Option<String>, Query, description = "动作标识"),
+        ("effect" = Option<String>, Query, description = "allow 或 deny"),
+        ("scope" = Option<String>, Query, description = "platform 或 tenant"),
+        ("tenant_id" = Option<String>, Query, description = "平台作用域下按租户过滤，租户作用域忽略"),
+    ),
+    responses(
+        (status = 200, description = "用户资源例外列表"),
+        (status = 400, description = "参数错误"),
+        (status = 403, description = "缺少租户上下文"),
+        (status = 404, description = "用户不存在"),
+    )
+)]
+pub async fn list_user_resource_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(user_id): Path<String>,
+    Query(query): Query<ResourceAclListQuery>,
+) -> Json<serde_json::Value> {
+    let user_uuid = match Uuid::parse_str(&user_id) {
+        Ok(id) => id,
+        Err(_) => return json_error(400, "无效的用户ID格式"),
+    };
+    let filter = match parse_acl_list_query(&query, AclSubject::User(user_uuid)) {
+        Ok(filter) => filter,
+        Err(resp) => return resp,
+    };
+    let scope = match tenant_scope::iam_acl_read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法查询资源权限"),
+    };
+    match tenant_scope::check_user_target(
+        &state.db,
+        &txn_arc,
+        scope,
+        user_uuid,
+        claims.is_superuser,
+    )
+    .await
+    {
+        // 读场景允许平台管理员查看超管授权；写路径仍禁止修改超管例外。
+        Ok(tenant_scope::UserTarget::Ok | tenant_scope::UserTarget::Superuser) => {}
+        Ok(tenant_scope::UserTarget::NotFound) => return json_error(404, "用户不存在"),
+        Err(e) => {
+            tracing::error!("查询用户资源例外前校验用户失败: {}", e);
+            return json_error(500, &format!("查询用户失败: {}", e));
+        }
+    }
+    run_acl_list(&state, &txn_arc, scope, filter).await
+}
+
+/// GET /iam/resource-permissions — 按资源反查所有授权主体。
+///
+/// `resource_type` 与 `resource_id` 必须同时提供，避免无界全表扫描。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:resource_acl:read"])),
+    path = "/resource-permissions",
+    tag = "IAM-ResourceAcl",
+    params(
+        ("resource_type" = String, Query, description = "资源类型，必填"),
+        ("resource_id" = String, Query, description = "资源 ID，必填"),
+        ("subject_type" = Option<String>, Query, description = "role 或 user"),
+        ("permission" = Option<String>, Query, description = "动作标识"),
+        ("scope" = Option<String>, Query, description = "platform 或 tenant"),
+        ("tenant_id" = Option<String>, Query, description = "平台作用域下按租户过滤，租户作用域忽略"),
+        ("page" = Option<i64>, Query, description = "页码，从 1 开始"),
+        ("page_size" = Option<i64>, Query, description = "每页条数，1-200"),
+    ),
+    responses(
+        (status = 200, description = "资源授权主体列表"),
+        (status = 400, description = "参数错误"),
+        (status = 403, description = "缺少租户上下文"),
+    )
+)]
+pub async fn list_resource_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<ResourceAclListQuery>,
+) -> Json<serde_json::Value> {
+    if trim_query_value(&query.resource_type).is_none() {
+        return json_error(400, "resource_type 不能为空");
+    }
+    if trim_query_value(&query.resource_id).is_none() {
+        return json_error(400, "resource_id 不能为空");
+    }
+    let filter = match parse_acl_list_query(&query, AclSubject::Any) {
+        Ok(filter) => filter,
+        Err(resp) => return resp,
+    };
+    let scope = match tenant_scope::iam_acl_read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => return json_error(403, "缺少租户上下文，无法查询资源权限"),
+    };
+    run_acl_list(&state, &txn_arc, scope, filter).await
 }
 
 #[cfg(test)]

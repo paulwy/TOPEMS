@@ -5,9 +5,10 @@
 //! 显式 tenant_id / core_tenant_users 谓词承担；DB RLS 只是纵深防御。
 
 use axum::{http::StatusCode, Json};
+use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
-use topems_shared_db::scope::Db;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
 pub const TENANT_USER_READ: &str = "tenant:iam:user:read";
@@ -72,6 +73,46 @@ pub fn iam_read_scope(claims: &Claims) -> Result<IamScope, ScopeError> {
             .map(IamScope::Tenant)
             .ok_or(ScopeError::MissingTenant)
     }
+}
+
+/// 资源级 ACL 只读作用域：与写入路径同源判定。
+///
+/// 不能复用 `iam_read_scope`（它只认超管），否则持有 `admin:iam:write` 的平台
+/// 管理员会被收敛到租户作用域，读到的范围反而小于写入范围。
+pub fn iam_acl_read_scope(claims: &Claims) -> Result<IamScope, ScopeError> {
+    iam_write_scope(claims, "iam:resource_acl:read")
+}
+
+/// 资源授权列表解析用户显示名。
+///
+/// SQL 放在本文件：unified-core 只有少数文件被授权读 `iam.users`
+/// （见 `scripts/schema_boundary.json` 的 allow_files）。
+pub async fn lookup_user_display_names(
+    txn: &mut ScopedTxn<'_>,
+    user_ids: &[Uuid],
+) -> Result<HashMap<Uuid, String>, sqlx::Error> {
+    if user_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    let rows = sqlx::query_as::<_, (Uuid, String, Option<String>)>(
+        "SELECT id, username, full_name
+           FROM iam.users
+          WHERE id = ANY($1)
+            AND deleted_at IS NULL",
+    )
+    .bind(user_ids)
+    .fetch_all(&mut *txn)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|(id, username, full_name)| {
+            let name = full_name
+                .filter(|value| !value.trim().is_empty())
+                .unwrap_or(username);
+            (id, name)
+        })
+        .collect())
 }
 
 /// 写/删作用域：持有平台码或超管 -> 平台；否则必须有租户。

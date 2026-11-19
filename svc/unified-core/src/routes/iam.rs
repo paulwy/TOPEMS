@@ -166,6 +166,26 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             require_permission("iam:resource_acl:delete"),
         ));
 
+    // 资源级 ACL 只读入口：授权查询 / 按资源反查。
+    // 作用域与写路径同源：平台管理员全量，租户管理员收敛到本租户。
+    let resource_acl_read = Router::new()
+        .route(
+            "/roles/{id}/resource-permissions",
+            get(modules::iam::resource_permission::list_role_resource_permissions),
+        )
+        .route(
+            "/users/{user_id}/resource-permissions",
+            get(modules::iam::resource_permission::list_user_resource_permissions),
+        )
+        .route(
+            "/resource-permissions",
+            get(modules::iam::resource_permission::list_resource_permissions),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("iam:resource_acl:read"),
+        ));
+
     // 租户角色读：列表/详情/已授权限 + 可授权限目录（仅返回操作者自身权限集）。
     let tenant_role_read = Router::new()
         .route("/roles", get(modules::iam::role::list_roles))
@@ -330,6 +350,7 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             .merge(tenant_user_delete)
             .merge(resource_acl_write)
             .merge(resource_acl_delete)
+            .merge(resource_acl_read)
             .merge(tenant_role_read)
             .merge(tenant_role_write)
             .merge(tenant_role_delete),
