@@ -80,7 +80,7 @@ async fn auth_request(
 // ==================== ERP-001: 查看采购订单列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_001_list_purchase_orders() {
     tracing::info!("测试 ERP-001: 查看采购订单列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -98,7 +98,7 @@ async fn test_erp_001_list_purchase_orders() {
 // ==================== ERP-002: 创建采购订单 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_002_create_purchase_order() {
     tracing::info!("测试 ERP-002: 创建采购订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -132,7 +132,7 @@ async fn test_erp_002_create_purchase_order() {
 // ==================== ERP-003: 查看销售订单列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_003_list_sales_orders() {
     tracing::info!("测试 ERP-003: 查看销售订单列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -150,7 +150,7 @@ async fn test_erp_003_list_sales_orders() {
 // ==================== ERP-004: 创建销售订单 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_004_create_sales_order() {
     tracing::info!("测试 ERP-004: 创建销售订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -179,7 +179,7 @@ async fn test_erp_004_create_sales_order() {
 // ==================== ERP-005: 查看库存 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_005_view_inventory() {
     tracing::info!("测试 ERP-005: 查看库存");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -197,7 +197,7 @@ async fn test_erp_005_view_inventory() {
 // ==================== ERP-006: 库存盘点 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_006_stocktaking() {
     tracing::info!("测试 ERP-006: 库存盘点");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -224,7 +224,7 @@ async fn test_erp_006_stocktaking() {
 // ==================== ERP-007: 查看财务数据 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_007_view_finance() {
     tracing::info!("测试 ERP-007: 查看财务数据");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -242,7 +242,7 @@ async fn test_erp_007_view_finance() {
 // ==================== ERP-008: 普通用户查看财务 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_erp_008_employee_view_finance() {
     tracing::info!("测试 ERP-008: 普通用户查看财务");
     match login("test_employee", "admin123").await {
@@ -263,7 +263,7 @@ async fn test_erp_008_employee_view_finance() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_erp_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  ERP 权限测试套件 (8个用例)");

@@ -92,7 +92,7 @@ async fn auth_request(
 // ==================== PM-001: 查看项目列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_001_list_projects() {
     tracing::info!("测试 PM-001: 查看项目列表");
 
@@ -116,7 +116,7 @@ async fn test_pm_001_list_projects() {
 // ==================== PM-002: 创建项目 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_002_create_project() {
     tracing::info!("测试 PM-002: 创建项目");
 
@@ -158,7 +158,7 @@ async fn test_pm_002_create_project() {
 // ==================== PM-003: 更新项目 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_003_update_project() {
     tracing::info!("测试 PM-003: 更新项目");
 
@@ -200,7 +200,7 @@ async fn test_pm_003_update_project() {
 // ==================== PM-004: 删除项目 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_004_delete_project() {
     tracing::info!("测试 PM-004: 删除项目");
 
@@ -249,7 +249,7 @@ async fn test_pm_004_delete_project() {
 // ==================== PM-005: 查看项目详情 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_005_view_project_detail() {
     tracing::info!("测试 PM-005: 查看项目详情");
 
@@ -291,7 +291,7 @@ async fn test_pm_005_view_project_detail() {
 // ==================== PM-006: 非成员访问项目 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_006_non_member_access() {
     tracing::info!("测试 PM-006: 非成员访问项目");
 
@@ -329,7 +329,7 @@ async fn test_pm_006_non_member_access() {
 // ==================== PM-007: 添加项目成员 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_007_add_member() {
     tracing::info!("测试 PM-007: 添加项目成员");
 
@@ -382,7 +382,7 @@ async fn test_pm_007_add_member() {
 // ==================== PM-008: 移除项目成员 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_008_remove_member() {
     tracing::info!("测试 PM-008: 移除项目成员");
 
@@ -454,7 +454,7 @@ async fn test_pm_008_remove_member() {
 // ==================== PM-009: 创建任务 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_009_create_task() {
     tracing::info!("测试 PM-009: 创建任务");
 
@@ -503,7 +503,7 @@ async fn test_pm_009_create_task() {
 // ==================== PM-010: 分配任务 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_010_assign_task() {
     tracing::info!("测试 PM-010: 分配任务");
 
@@ -561,7 +561,7 @@ async fn test_pm_010_assign_task() {
 // ==================== PM-011: 更新任务状态 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_011_update_task_status() {
     tracing::info!("测试 PM-011: 更新任务状态");
 
@@ -603,7 +603,7 @@ async fn test_pm_011_update_task_status() {
 // ==================== PM-012: 删除任务 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_pm_012_delete_task() {
     tracing::info!("测试 PM-012: 删除任务");
 
@@ -652,7 +652,7 @@ async fn test_pm_012_delete_task() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_pm_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  PM 权限测试套件");

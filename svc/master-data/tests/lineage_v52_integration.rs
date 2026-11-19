@@ -18,7 +18,7 @@ const V52_PREFIX: &str = "/api/master-data/api/master/lineage-v52";
 
 /// 1. 注册血缘关系
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_register_lineage() {
     if !common::service_available().await {
         return;
@@ -51,7 +51,7 @@ async fn test_register_lineage() {
 
 /// 2. 获取血缘图谱
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_lineage_graph() {
     if !common::service_available().await {
         return;
@@ -71,7 +71,7 @@ async fn test_get_lineage_graph() {
 
 /// 3. 获取上游血缘
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_upstream() {
     if !common::service_available().await {
         return;
@@ -94,7 +94,7 @@ async fn test_get_upstream() {
 
 /// 4. 获取下游血缘
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_downstream() {
     if !common::service_available().await {
         return;
@@ -117,7 +117,7 @@ async fn test_get_downstream() {
 
 /// 5. 导出血缘图谱
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_export_lineage() {
     if !common::service_available().await {
         return;
@@ -137,7 +137,7 @@ async fn test_export_lineage() {
 
 /// 6. 影响分析
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_analyze_impact() {
     if !common::service_available().await {
         return;
@@ -169,7 +169,7 @@ async fn test_analyze_impact() {
 
 /// 7. 删除血缘节点
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_delete_lineage() {
     if !common::service_available().await {
         return;
@@ -209,7 +209,7 @@ async fn test_delete_lineage() {
 
 /// 8. 获取传播规则列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_propagation_rules() {
     if !common::service_available().await {
         return;
@@ -228,7 +228,7 @@ async fn test_get_propagation_rules() {
 
 /// 9. 添加传播规则
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_propagation_rule() {
     if !common::service_available().await {
         return;
@@ -259,7 +259,7 @@ async fn test_add_propagation_rule() {
 
 /// 10. 变更传播
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_propagate_change() {
     if !common::service_available().await {
         return;

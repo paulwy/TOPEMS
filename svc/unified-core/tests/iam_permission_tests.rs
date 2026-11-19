@@ -104,7 +104,7 @@ async fn auth_request(
 // ==================== IAM-001: 超级管理员查看用户列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_001_superuser_list_users() {
     tracing::info!("测试 IAM-001: 超级管理员查看用户列表");
 
@@ -136,7 +136,7 @@ async fn test_iam_001_superuser_list_users() {
 // ==================== IAM-002: 普通用户查看用户列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_002_employee_list_users() {
     tracing::info!("测试 IAM-002: 普通用户查看用户列表");
 
@@ -168,7 +168,7 @@ async fn test_iam_002_employee_list_users() {
 // ==================== IAM-003: 管理员创建用户 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_003_admin_create_user() {
     tracing::info!("测试 IAM-003: 管理员创建用户");
 
@@ -211,7 +211,7 @@ async fn test_iam_003_admin_create_user() {
 // ==================== IAM-004: 无权限用户创建用户 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_004_unauthorized_create_user() {
     tracing::info!("测试 IAM-004: 无权限用户创建用户");
 
@@ -248,7 +248,7 @@ async fn test_iam_004_unauthorized_create_user() {
 // ==================== IAM-005: 管理员删除用户 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_005_admin_delete_user() {
     tracing::info!("测试 IAM-005: 管理员删除用户");
 
@@ -307,7 +307,7 @@ async fn test_iam_005_admin_delete_user() {
 // ==================== IAM-006: 超级管理员分配角色 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_006_superuser_assign_role() {
     tracing::info!("测试 IAM-006: 超级管理员分配角色");
 
@@ -389,7 +389,7 @@ async fn test_iam_006_superuser_assign_role() {
 // ==================== IAM-007: 跨租户用户访问 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_007_cross_tenant_access() {
     tracing::info!("测试 IAM-007: 跨租户用户访问");
 
@@ -427,7 +427,7 @@ async fn test_iam_007_cross_tenant_access() {
 // ==================== IAM-008: 用户修改自己密码 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_008_user_change_own_password() {
     tracing::info!("测试 IAM-008: 用户修改自己密码");
 
@@ -474,7 +474,7 @@ async fn test_iam_008_user_change_own_password() {
 // ==================== IAM-009: 用户修改他人密码 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_009_user_change_others_password() {
     tracing::info!("测试 IAM-009: 用户修改他人密码");
 
@@ -512,7 +512,7 @@ async fn test_iam_009_user_change_others_password() {
 // ==================== 角色管理测试 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_list_roles() {
     tracing::info!("测试: 查看角色列表");
 
@@ -534,7 +534,7 @@ async fn test_iam_list_roles() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_list_permissions() {
     tracing::info!("测试: 查看权限列表");
 
@@ -558,7 +558,7 @@ async fn test_iam_list_permissions() {
 // ==================== 测试运行器 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_iam_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  IAM 权限测试套件");

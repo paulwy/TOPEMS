@@ -16,7 +16,7 @@ const BASE_PATH: &str = "/api/master-data/api/master/mdm-v55";
 
 /// 1. 创建 API 产品
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_api_product() {
     if !common::service_available().await {
         return;
@@ -45,7 +45,7 @@ async fn test_create_api_product() {
 
 /// 2. 获取 API 产品列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_api_products() {
     if !common::service_available().await {
         return;
@@ -64,7 +64,7 @@ async fn test_list_api_products() {
 
 /// 3. 租户订阅
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_subscribe_tenant() {
     if !common::service_available().await {
         return;
@@ -95,7 +95,7 @@ async fn test_subscribe_tenant() {
 
 /// 4. 获取订阅列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_subscriptions() {
     if !common::service_available().await {
         return;
@@ -118,7 +118,7 @@ async fn test_list_subscriptions() {
 
 /// 5. 记录使用量
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_record_usage() {
     if !common::service_available().await {
         return;
@@ -152,7 +152,7 @@ async fn test_record_usage() {
 
 /// 6. 获取使用量汇总
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_usage_summary() {
     if !common::service_available().await {
         return;
@@ -178,7 +178,7 @@ async fn test_get_usage_summary() {
 
 /// 7. 生成账单
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_generate_bill() {
     if !common::service_available().await {
         return;
@@ -203,7 +203,7 @@ async fn test_generate_bill() {
 
 /// 8. 创建费率卡
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_rate_card() {
     if !common::service_available().await {
         return;
@@ -230,7 +230,7 @@ async fn test_create_rate_card() {
 
 /// 9. 配置 SLA
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_configure_sla() {
     if !common::service_available().await {
         return;
@@ -257,7 +257,7 @@ async fn test_configure_sla() {
 
 /// 10. 获取 SLA 状态
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_sla_status() {
     if !common::service_available().await {
         return;

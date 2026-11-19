@@ -18,7 +18,7 @@ const BASE_PATH: &str = "/api/master-data/api/master/mdm-v58";
 
 /// 1. 评估治理成熟度
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_assess_maturity() {
     if !common::service_available().await {
         return;
@@ -48,7 +48,7 @@ async fn test_assess_maturity() {
 
 /// 2. 获取维度评分
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_dimension_scores() {
     if !common::service_available().await {
         return;
@@ -67,7 +67,7 @@ async fn test_get_dimension_scores() {
 
 /// 3. 创建改进计划
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_improvement_plan() {
     if !common::service_available().await {
         return;
@@ -103,7 +103,7 @@ async fn test_create_improvement_plan() {
 
 /// 4. 创建工作流
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_workflow() {
     if !common::service_available().await {
         return;
@@ -136,7 +136,7 @@ async fn test_create_workflow() {
 
 /// 5. 获取工作流模板
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_workflow_templates() {
     if !common::service_available().await {
         return;
@@ -155,7 +155,7 @@ async fn test_get_workflow_templates() {
 
 /// 6. 列出工作流
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_workflows() {
     if !common::service_available().await {
         return;
@@ -174,7 +174,7 @@ async fn test_list_workflows() {
 
 /// 7. 创建数据产品
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_data_product() {
     if !common::service_available().await {
         return;
@@ -204,7 +204,7 @@ async fn test_create_data_product() {
 
 /// 8. 列出数据产品
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_data_products() {
     if !common::service_available().await {
         return;
@@ -223,7 +223,7 @@ async fn test_list_data_products() {
 
 /// 9. 获取成熟度进度
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_track_progress() {
     if !common::service_available().await {
         return;
@@ -242,7 +242,7 @@ async fn test_track_progress() {
 
 /// 10. 获取基准对比数据
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_benchmark() {
     if !common::service_available().await {
         return;

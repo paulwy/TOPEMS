@@ -10,7 +10,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_pool() {
     if !common::service_available().await {
         return;
@@ -34,7 +34,7 @@ async fn test_create_pool() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_pools() {
     if !common::service_available().await {
         return;
@@ -52,7 +52,7 @@ async fn test_list_pools() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_allocate_funds() {
     if !common::service_available().await {
         return;
@@ -102,7 +102,7 @@ async fn test_allocate_funds() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_forecast_scenario() {
     if !common::service_available().await {
         return;
@@ -131,7 +131,7 @@ async fn test_create_forecast_scenario() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_forecast_scenarios() {
     if !common::service_available().await {
         return;
@@ -151,7 +151,7 @@ async fn test_list_forecast_scenarios() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_liquidity_snapshot() {
     if !common::service_available().await {
         return;

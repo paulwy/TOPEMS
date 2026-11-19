@@ -11,7 +11,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_reconcile_single() {
     if !common::service_available().await {
         return;
@@ -55,7 +55,7 @@ async fn test_reconcile_single() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_reconcile_results() {
     if !common::service_available().await {
         return;
@@ -75,7 +75,7 @@ async fn test_get_reconcile_results() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_reconcile_rule() {
     if !common::service_available().await {
         return;
@@ -102,7 +102,7 @@ async fn test_create_reconcile_rule() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_recognize_invoice() {
     if !common::service_available().await {
         return;
@@ -142,7 +142,7 @@ async fn test_recognize_invoice() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_invoices() {
     if !common::service_available().await {
         return;
@@ -160,7 +160,7 @@ async fn test_list_invoices() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_initiate_payment() {
     if !common::service_available().await {
         return;
@@ -192,7 +192,7 @@ async fn test_initiate_payment() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_payment_methods() {
     if !common::service_available().await {
         return;

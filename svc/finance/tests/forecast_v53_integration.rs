@@ -20,7 +20,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_predict_cash_flow() {
     if !common::service_available().await {
         return;
@@ -47,7 +47,7 @@ async fn test_predict_cash_flow() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_cash_flow_predictions() {
     if !common::service_available().await {
         return;
@@ -66,7 +66,7 @@ async fn test_get_cash_flow_predictions() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_retrain_model() {
     if !common::service_available().await {
         return;
@@ -89,7 +89,7 @@ async fn test_retrain_model() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_prediction_accuracy() {
     if !common::service_available().await {
         return;
@@ -108,7 +108,7 @@ async fn test_get_prediction_accuracy() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_analyze_budget() {
     if !common::service_available().await {
         return;
@@ -152,7 +152,7 @@ async fn test_analyze_budget() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_budget_variance() {
     if !common::service_available().await {
         return;
@@ -171,7 +171,7 @@ async fn test_get_budget_variance() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_budget_report() {
     if !common::service_available().await {
         return;
@@ -190,7 +190,7 @@ async fn test_get_budget_report() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_detect_budget_anomalies() {
     if !common::service_available().await {
         return;
@@ -214,7 +214,7 @@ async fn test_detect_budget_anomalies() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_budget_trends() {
     if !common::service_available().await {
         return;

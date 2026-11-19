@@ -77,7 +77,7 @@
 
 | ID | 任务 | 当前读数 | 验收 |
 |---|---|---|---|
-| C1 | 为裸 `#[ignore]` 补原因或删失效用例 | 378 处无原因 | `grep` 无裸 ignore |
+| C1 ✅ | 为裸 `#[ignore]` 补原因或删失效用例 | 实测裸注解 380 处 / 47 文件（文档旧口径 378）；全部补成 `#[ignore = "<原因>"]`：385 条 HTTP 集成（需本地服务运行，服务不可用则 skip）、8 条网关 8099 端到端、3 条 `sqlx::test` 需真实 PostgreSQL。失效用例判定：这些文件自带 `service_available()` / `sqlx_dsn_guard!` 前置守卫，属「可运行但需外部依赖」而非死代码，故补因不删 | 全仓裸 `#[ignore]` = 0（已带原因 535 处）；新增门禁 `scripts/ci/check-test-ignore-reason.mjs` 零基线、构造裸注解探针 exit 1；`cargo check --workspace --all-targets` 绿；`cargo fmt --all --check` 绿 |
 | C2 | “需要 PostgreSQL”用例改显式 feature/CI 服务 | 113 处 | CI 实际执行数上升 |
 | C3 | 清理环境缺失即 early-return 的伪绿写法 | 约 60 处 | 缺服务时红灯 |
 | C4 | 合并 CI 中 `cargo-test` 与 `rust-test` 两套冗余 job | `ci.yml:496/544` | 单一路径 |

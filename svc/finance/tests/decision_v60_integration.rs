@@ -5,7 +5,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_health_check() {
     if !common::service_available().await {
         return;
@@ -23,7 +23,7 @@ async fn test_health_check() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_scenario() {
     if !common::service_available().await {
         return;
@@ -65,7 +65,7 @@ async fn test_create_scenario() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_scenarios() {
     if !common::service_available().await {
         return;
@@ -85,7 +85,7 @@ async fn test_list_scenarios() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_evaluate_scenario() {
     if !common::service_available().await {
         return;
@@ -141,7 +141,7 @@ async fn test_evaluate_scenario() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_decision_result() {
     if !common::service_available().await {
         return;
@@ -188,7 +188,7 @@ async fn test_get_decision_result() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_decision_history() {
     if !common::service_available().await {
         return;

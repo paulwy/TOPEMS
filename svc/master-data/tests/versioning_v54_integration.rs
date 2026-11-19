@@ -16,7 +16,7 @@ const BASE_PATH: &str = "/api/master-data/api/master/mdm-v54";
 
 /// 1. 创建版本快照
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_snapshot() {
     if !common::service_available().await {
         return;
@@ -53,7 +53,7 @@ async fn test_create_snapshot() {
 
 /// 2. 获取版本快照
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_version() {
     if !common::service_available().await {
         return;
@@ -76,7 +76,7 @@ async fn test_get_version() {
 
 /// 3. 版本差异对比
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_diff_versions() {
     if !common::service_available().await {
         return;
@@ -138,7 +138,7 @@ async fn test_diff_versions() {
 
 /// 4. 恢复版本
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_restore_version() {
     if !common::service_available().await {
         return;
@@ -166,7 +166,7 @@ async fn test_restore_version() {
 
 /// 5. 查询审计日志
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_query_audit_log() {
     if !common::service_available().await {
         return;
@@ -190,7 +190,7 @@ async fn test_query_audit_log() {
 
 /// 6. 创建分支
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_branch() {
     if !common::service_available().await {
         return;
@@ -215,7 +215,7 @@ async fn test_create_branch() {
 
 /// 7. 合并分支
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_merge_branch() {
     if !common::service_available().await {
         return;
@@ -238,7 +238,7 @@ async fn test_merge_branch() {
 
 /// 8. 授予权限
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_grant_permission() {
     if !common::service_available().await {
         return;
@@ -270,7 +270,7 @@ async fn test_grant_permission() {
 
 /// 9. 权限检查
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_check_permission() {
     if !common::service_available().await {
         return;
@@ -296,7 +296,7 @@ async fn test_check_permission() {
 
 /// 10. 创建角色
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_role() {
     if !common::service_available().await {
         return;

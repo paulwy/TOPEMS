@@ -18,7 +18,7 @@ const V51_PREFIX: &str = "/api/master-data/api/master/quality-v51";
 
 /// 1. 创建质量规则
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_quality_rule() {
     if !common::service_available().await {
         return;
@@ -54,7 +54,7 @@ async fn test_create_quality_rule() {
 
 /// 2. 获取质量规则列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_quality_rules() {
     if !common::service_available().await {
         return;
@@ -73,7 +73,7 @@ async fn test_list_quality_rules() {
 
 /// 3. 获取单个质量规则
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_quality_rule() {
     if !common::service_available().await {
         return;
@@ -107,7 +107,7 @@ async fn test_get_quality_rule() {
 
 /// 4. 更新质量规则
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_update_quality_rule() {
     if !common::service_available().await {
         return;
@@ -153,7 +153,7 @@ async fn test_update_quality_rule() {
 
 /// 5. 删除质量规则
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_delete_quality_rule() {
     if !common::service_available().await {
         return;
@@ -191,7 +191,7 @@ async fn test_delete_quality_rule() {
 
 /// 6. 执行质量检查
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_run_quality_check() {
     if !common::service_available().await {
         return;
@@ -215,7 +215,7 @@ async fn test_run_quality_check() {
 
 /// 7. 获取质量检查列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_quality_checks() {
     if !common::service_available().await {
         return;
@@ -235,7 +235,7 @@ async fn test_list_quality_checks() {
 
 /// 8. 获取质量仪表盘
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_quality_dashboard() {
     if !common::service_available().await {
         return;
@@ -256,7 +256,7 @@ async fn test_get_quality_dashboard() {
 
 /// 9. 生成 AI 治理建议
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_generate_ai_suggestions() {
     if !common::service_available().await {
         return;
@@ -281,7 +281,7 @@ async fn test_generate_ai_suggestions() {
 
 /// 10. 获取质量评分
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_quality_score() {
     if !common::service_available().await {
         return;

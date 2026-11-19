@@ -11,7 +11,7 @@ use serde_json::json;
 // ==================== Fraud 反欺诈测试 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_fraud_analyze_transaction() {
     if !common::service_available().await {
         return;
@@ -41,7 +41,7 @@ async fn test_fraud_analyze_transaction() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_fraud_get_signals() {
     if !common::service_available().await {
         return;
@@ -59,7 +59,7 @@ async fn test_fraud_get_signals() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_fraud_create_device() {
     if !common::service_available().await {
         return;
@@ -90,7 +90,7 @@ async fn test_fraud_create_device() {
 // ==================== Credit 信用评分测试 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_credit_calculate_score() {
     if !common::service_available().await {
         return;
@@ -119,7 +119,7 @@ async fn test_credit_calculate_score() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_credit_get_models() {
     if !common::service_available().await {
         return;
@@ -137,7 +137,7 @@ async fn test_credit_get_models() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_credit_create_model() {
     if !common::service_available().await {
         return;

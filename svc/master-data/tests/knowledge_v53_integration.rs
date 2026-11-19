@@ -18,7 +18,7 @@ const V53_PREFIX: &str = "/api/master-data/api/master/kg-v53";
 
 /// 1. 添加知识图谱节点
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_kg_node() {
     if !common::service_available().await {
         return;
@@ -50,7 +50,7 @@ async fn test_add_kg_node() {
 
 /// 2. 添加知识图谱边
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_kg_edge() {
     if !common::service_available().await {
         return;
@@ -98,7 +98,7 @@ async fn test_add_kg_edge() {
 
 /// 3. 获取子图谱
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_subgraph() {
     if !common::service_available().await {
         return;
@@ -122,7 +122,7 @@ async fn test_get_subgraph() {
 
 /// 4. 查找路径
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_find_path() {
     if !common::service_available().await {
         return;
@@ -148,7 +148,7 @@ async fn test_find_path() {
 
 /// 5. 获取相似节点
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_similar_nodes() {
     if !common::service_available().await {
         return;
@@ -171,7 +171,7 @@ async fn test_get_similar_nodes() {
 
 /// 6. 导出知识图谱
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_export_kg() {
     if !common::service_available().await {
         return;
@@ -191,7 +191,7 @@ async fn test_export_kg() {
 
 /// 7. 注册数据资产
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_register_asset() {
     if !common::service_available().await {
         return;
@@ -221,7 +221,7 @@ async fn test_register_asset() {
 
 /// 8. 搜索数据资产
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_search_assets() {
     if !common::service_available().await {
         return;
@@ -245,7 +245,7 @@ async fn test_search_assets() {
 
 /// 9. 获取资产统计
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_asset_stats() {
     if !common::service_available().await {
         return;
@@ -266,7 +266,7 @@ async fn test_get_asset_stats() {
 
 /// 10. 获取资产分类列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_categories() {
     if !common::service_available().await {
         return;
@@ -285,7 +285,7 @@ async fn test_list_categories() {
 
 /// 11. 获取推荐结果
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_recommendations() {
     if !common::service_available().await {
         return;
@@ -308,7 +308,7 @@ async fn test_get_recommendations() {
 
 /// 12. 记录用户交互
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_record_interaction() {
     if !common::service_available().await {
         return;

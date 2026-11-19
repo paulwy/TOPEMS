@@ -311,7 +311,7 @@ async fn seed(pool: &PgPool, suffix: &str) -> Fixtures {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要真实 PostgreSQL（sqlx::test 建库；无凭据/无库时无法运行）"]
 async fn tenant_admin_scope_matrix() {
     let db_url = std::env::var("TEST_DATABASE_URL").expect(
         "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",

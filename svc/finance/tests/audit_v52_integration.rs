@@ -22,7 +22,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_audit_rule() {
     if !common::service_available().await {
         return;
@@ -50,7 +50,7 @@ async fn test_create_audit_rule() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_audit_rules() {
     if !common::service_available().await {
         return;
@@ -67,7 +67,7 @@ async fn test_list_audit_rules() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_update_audit_rule() {
     if !common::service_available().await {
         return;
@@ -115,7 +115,7 @@ async fn test_update_audit_rule() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_delete_audit_rule() {
     if !common::service_available().await {
         return;
@@ -153,7 +153,7 @@ async fn test_delete_audit_rule() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_audit_findings() {
     if !common::service_available().await {
         return;
@@ -170,7 +170,7 @@ async fn test_list_audit_findings() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_run_audit() {
     if !common::service_available().await {
         return;
@@ -191,7 +191,7 @@ async fn test_run_audit() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_detect_anomalies() {
     if !common::service_available().await {
         return;
@@ -215,7 +215,7 @@ async fn test_detect_anomalies() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_anomaly_alerts() {
     if !common::service_available().await {
         return;
@@ -232,7 +232,7 @@ async fn test_get_anomaly_alerts() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_alert_config() {
     if !common::service_available().await {
         return;
@@ -262,7 +262,7 @@ async fn test_create_alert_config() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_alerts() {
     if !common::service_available().await {
         return;

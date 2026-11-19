@@ -92,7 +92,7 @@ async fn auth_request(
 // ==================== DOC-001: 查看文档列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_001_list_documents() {
     tracing::info!("测试 DOC-001: 查看文档列表");
 
@@ -116,7 +116,7 @@ async fn test_doc_001_list_documents() {
 // ==================== DOC-002: 创建文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_002_create_document() {
     tracing::info!("测试 DOC-002: 创建文档");
 
@@ -153,7 +153,7 @@ async fn test_doc_002_create_document() {
 // ==================== DOC-003: 编辑他人文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_003_edit_others_document() {
     tracing::info!("测试 DOC-003: 编辑他人文档");
 
@@ -201,7 +201,7 @@ async fn test_doc_003_edit_others_document() {
 // ==================== DOC-004: 删除文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_004_delete_document() {
     tracing::info!("测试 DOC-004: 删除文档");
 
@@ -252,7 +252,7 @@ async fn test_doc_004_delete_document() {
 // ==================== DOC-005: 发布文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_005_publish_document() {
     tracing::info!("测试 DOC-005: 发布文档");
 
@@ -300,7 +300,7 @@ async fn test_doc_005_publish_document() {
 // ==================== DOC-006: 归档文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_006_archive_document() {
     tracing::info!("测试 DOC-006: 归档文档");
 
@@ -343,7 +343,7 @@ async fn test_doc_006_archive_document() {
 // ==================== DOC-007: 使用模板生成文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_007_generate_from_template() {
     tracing::info!("测试 DOC-007: 使用模板生成文档");
 
@@ -386,7 +386,7 @@ async fn test_doc_007_generate_from_template() {
 // ==================== DOC-008: 跨公司访问文档 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_doc_008_cross_company_access() {
     tracing::info!("测试 DOC-008: 跨公司访问文档");
 
@@ -424,7 +424,7 @@ async fn test_doc_008_cross_company_access() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_doc_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  Doc 权限测试套件");

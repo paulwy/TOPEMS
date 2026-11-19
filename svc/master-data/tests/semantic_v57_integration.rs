@@ -18,7 +18,7 @@ const BASE_PATH: &str = "/api/master-data/api/master/mdm-v57";
 
 /// 1. 创建图谱节点
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_graph_node() {
     if !common::service_available().await {
         return;
@@ -48,7 +48,7 @@ async fn test_add_graph_node() {
 
 /// 2. 创建图谱边
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_graph_edge() {
     if !common::service_available().await {
         return;
@@ -77,7 +77,7 @@ async fn test_add_graph_edge() {
 
 /// 3. 获取节点邻居
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_neighbors() {
     if !common::service_available().await {
         return;
@@ -100,7 +100,7 @@ async fn test_get_neighbors() {
 
 /// 4. 语义搜索
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_search_semantic() {
     if !common::service_available().await {
         return;
@@ -131,7 +131,7 @@ async fn test_search_semantic() {
 
 /// 5. 混合搜索
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_search_hybrid() {
     if !common::service_available().await {
         return;
@@ -155,7 +155,7 @@ async fn test_search_hybrid() {
 
 /// 6. 创建标签
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_tag() {
     if !common::service_available().await {
         return;
@@ -183,7 +183,7 @@ async fn test_create_tag() {
 
 /// 7. 获取搜索统计
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_search_stats() {
     if !common::service_available().await {
         return;
@@ -203,7 +203,7 @@ async fn test_get_search_stats() {
 
 /// 8. 列出所有标签
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_tags() {
     if !common::service_available().await {
         return;
@@ -222,7 +222,7 @@ async fn test_list_tags() {
 
 /// 9. 计算图嵌入
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_compute_embeddings() {
     if !common::service_available().await {
         return;
@@ -250,7 +250,7 @@ async fn test_compute_embeddings() {
 
 /// 10. 检测社区
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_detect_communities() {
     if !common::service_available().await {
         return;

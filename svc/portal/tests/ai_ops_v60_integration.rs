@@ -84,7 +84,7 @@ async fn login_and_get_token(client: &Client) -> Option<String> {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_portal_health_check_reachable() {
     if !check_portal_available().await {
         return;
@@ -107,7 +107,7 @@ async fn test_portal_health_check_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_routing_rules_reachable() {
     if !check_portal_available().await {
         return;
@@ -142,7 +142,7 @@ async fn test_get_routing_rules_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_routing_rule_reachable() {
     if !check_portal_available().await {
         return;
@@ -186,7 +186,7 @@ async fn test_create_routing_rule_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_cache_policies_reachable() {
     if !check_portal_available().await {
         return;
@@ -221,7 +221,7 @@ async fn test_get_cache_policies_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_cache_policy_reachable() {
     if !check_portal_available().await {
         return;
@@ -265,7 +265,7 @@ async fn test_create_cache_policy_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_cache_stats_reachable() {
     if !check_portal_available().await {
         return;
@@ -300,7 +300,7 @@ async fn test_get_cache_stats_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_health_checks_reachable() {
     if !check_portal_available().await {
         return;
@@ -335,7 +335,7 @@ async fn test_get_health_checks_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_health_summary_reachable() {
     if !check_portal_available().await {
         return;
@@ -370,7 +370,7 @@ async fn test_get_health_summary_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_route_stats_reachable() {
     if !check_portal_available().await {
         return;
@@ -405,7 +405,7 @@ async fn test_get_route_stats_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_simulate_routing_reachable() {
     if !check_portal_available().await {
         return;

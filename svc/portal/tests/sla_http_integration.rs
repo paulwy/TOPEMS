@@ -71,7 +71,7 @@ async fn login_and_get_token(client: &Client) -> Option<String> {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_health_check_reachable() {
     if !check_service_available().await {
         return;
@@ -94,7 +94,7 @@ async fn test_health_check_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_iam_health_check_reachable() {
     if !check_service_available().await {
         return;
@@ -117,7 +117,7 @@ async fn test_iam_health_check_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_login_success() {
     if !check_service_available().await {
         return;
@@ -130,7 +130,7 @@ async fn test_login_success() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_sla_policies_list_reachable() {
     if !check_service_available().await {
         return;
@@ -162,7 +162,7 @@ async fn test_sla_policies_list_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_sla_stats_reachable() {
     if !check_service_available().await {
         return;

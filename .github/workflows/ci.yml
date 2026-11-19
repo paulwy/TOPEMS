@@ -234,6 +234,9 @@ jobs:
       - name: Verify swagger-ui vendor archive
         run: bash scripts/ci/check-swagger-ui-vendor.sh
 
+      - name: Test ignore reason gate
+        run: node scripts/ci/check-test-ignore-reason.mjs
+
       - name: Check code format
         run: cargo fmt --check --all
 

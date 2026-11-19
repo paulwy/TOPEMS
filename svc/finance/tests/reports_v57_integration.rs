@@ -9,7 +9,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_generate_report() {
     if !common::service_available().await {
         return;
@@ -35,7 +35,7 @@ async fn test_generate_report() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_reports() {
     if !common::service_available().await {
         return;
@@ -53,7 +53,7 @@ async fn test_list_reports() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_template() {
     if !common::service_available().await {
         return;
@@ -83,7 +83,7 @@ async fn test_create_template() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_templates() {
     if !common::service_available().await {
         return;
@@ -103,7 +103,7 @@ async fn test_list_templates() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_analyze() {
     if !common::service_available().await {
         return;
@@ -130,7 +130,7 @@ async fn test_analyze() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_generate_forecast() {
     if !common::service_available().await {
         return;

@@ -80,7 +80,7 @@ async fn auth_request(
 // ==================== AI-001: AI 对话 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
 async fn test_ai_001_chat() {
     tracing::info!("测试 AI-001: AI 对话");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -107,7 +107,7 @@ async fn test_ai_001_chat() {
 // ==================== AI-002: 文档摘要 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
 async fn test_ai_002_summarize() {
     tracing::info!("测试 AI-002: 文档摘要");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -134,7 +134,7 @@ async fn test_ai_002_summarize() {
 // ==================== AI-003: 生成报告 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
 async fn test_ai_003_generate_report() {
     tracing::info!("测试 AI-003: 生成报告");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -162,7 +162,7 @@ async fn test_ai_003_generate_report() {
 // ==================== AI-004: AI 模型管理 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
 async fn test_ai_004_model_management() {
     tracing::info!("测试 AI-004: AI 模型管理");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -180,7 +180,7 @@ async fn test_ai_004_model_management() {
 // ==================== AI-005: AI 配置 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
 async fn test_ai_005_settings() {
     tracing::info!("测试 AI-005: AI 配置");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -198,7 +198,7 @@ async fn test_ai_005_settings() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
 async fn run_all_ai_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  AI 权限测试套件 (5个用例)");

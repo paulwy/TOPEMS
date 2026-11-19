@@ -55,7 +55,7 @@ async fn ensure_crm_schema(pool: &PgPool) {
 }
 
 topems_test_support::sqlx_dsn_guard!();
-#[ignore]
+#[ignore = "需要真实 PostgreSQL（sqlx::test 建库；无凭据/无库时无法运行）"]
 #[sqlx::test]
 async fn customer_isolated_by_tenant(pool: PgPool) {
     ensure_crm_schema(&pool).await;
@@ -131,7 +131,7 @@ async fn create_customer_for(pool: &PgPool, tenant_id: Uuid, name: &str) -> Cust
     .unwrap()
 }
 
-#[ignore]
+#[ignore = "需要真实 PostgreSQL（sqlx::test 建库；无凭据/无库时无法运行）"]
 #[sqlx::test]
 async fn rls_txn_context_isolates_tenant(pool: PgPool) {
     ensure_crm_schema(&pool).await;

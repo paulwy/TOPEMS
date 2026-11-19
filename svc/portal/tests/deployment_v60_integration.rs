@@ -84,7 +84,7 @@ async fn login_and_get_token(client: &Client) -> Option<String> {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_portal_health_check_reachable() {
     if !check_portal_available().await {
         return;
@@ -107,7 +107,7 @@ async fn test_portal_health_check_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_deployments_reachable() {
     if !check_portal_available().await {
         return;
@@ -142,7 +142,7 @@ async fn test_list_deployments_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_deployment_reachable() {
     if !check_portal_available().await {
         return;
@@ -184,7 +184,7 @@ async fn test_create_deployment_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_configs_reachable() {
     if !check_portal_available().await {
         return;
@@ -219,7 +219,7 @@ async fn test_list_configs_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_config_reachable() {
     if !check_portal_available().await {
         return;
@@ -262,7 +262,7 @@ async fn test_create_config_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_rollback_policies_reachable() {
     if !check_portal_available().await {
         return;
@@ -297,7 +297,7 @@ async fn test_get_rollback_policies_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_rollback_policy_reachable() {
     if !check_portal_available().await {
         return;
@@ -341,7 +341,7 @@ async fn test_create_rollback_policy_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_deployment_history_reachable() {
     if !check_portal_available().await {
         return;
@@ -376,7 +376,7 @@ async fn test_get_deployment_history_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_rollback_status_reachable() {
     if !check_portal_available().await {
         return;
@@ -411,7 +411,7 @@ async fn test_get_rollback_status_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_environment_reachable() {
     if !check_portal_available().await {
         return;

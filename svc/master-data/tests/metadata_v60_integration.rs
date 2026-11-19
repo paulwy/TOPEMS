@@ -11,7 +11,7 @@ use serde_json::json;
 
 /// 1. 创建元数据
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_metadata() {
     if !common::service_available().await {
         return;
@@ -47,7 +47,7 @@ async fn test_create_metadata() {
 
 /// 2. 获取元数据列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_metadata() {
     if !common::service_available().await {
         return;
@@ -66,7 +66,7 @@ async fn test_list_metadata() {
 
 /// 3. 获取单个元数据
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_metadata_by_id() {
     if !common::service_available().await {
         return;
@@ -99,7 +99,7 @@ async fn test_get_metadata_by_id() {
 
 /// 4. 搜索元数据
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_search_metadata() {
     if !common::service_available().await {
         return;
@@ -118,7 +118,7 @@ async fn test_search_metadata() {
 
 /// 5. 更新元数据
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_update_metadata() {
     if !common::service_available().await {
         return;
@@ -161,7 +161,7 @@ async fn test_update_metadata() {
 
 /// 6. 删除元数据
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_delete_metadata() {
     if !common::service_available().await {
         return;
@@ -198,7 +198,7 @@ async fn test_delete_metadata() {
 
 /// 7. 获取元数据统计
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_metadata_stats() {
     if !common::service_available().await {
         return;
@@ -221,7 +221,7 @@ async fn test_get_metadata_stats() {
 
 /// 8. 添加元数据属性（子资源测试）
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_metadata_attribute() {
     if !common::service_available().await {
         return;
@@ -267,7 +267,7 @@ async fn test_add_metadata_attribute() {
 
 /// 9. 添加元数据标签
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_add_metadata_tag() {
     if !common::service_available().await {
         return;
@@ -293,7 +293,7 @@ async fn test_add_metadata_tag() {
 
 /// 10. 按类型过滤元数据列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_metadata_by_type() {
     if !common::service_available().await {
         return;

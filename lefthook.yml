@@ -578,6 +578,11 @@ pre-push:
       tags: rust config
       run: node scripts/ci/check-search-path-env.mjs
 
+    # [Gate IGR] 测试 #[ignore] 必须带原因（C1：裸 ignore 半年后没人知道该修还是该删）
+    test-ignore-reason:
+      tags: rust
+      run: node scripts/ci/check-test-ignore-reason.mjs
+
     # [Gate AUDIT-INV] cargo audit 豁免项的"零暴露"前提机械校验（<0.3s，不调用 cargo）
     # ignore 是人工判断，会腐化：今天"ES 算法零使用"成立，明天加一行 Algorithm::ES256
     # 就失效而门禁仍绿。此闸门把每条豁免的前提（sqlite 未启用 / 无 ECDSA / rsa 仍为

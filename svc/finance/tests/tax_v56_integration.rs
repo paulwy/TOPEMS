@@ -11,7 +11,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_generate_tax_form() {
     if !common::service_available().await {
         return;
@@ -42,7 +42,7 @@ async fn test_generate_tax_form() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_tax_forms() {
     if !common::service_available().await {
         return;
@@ -60,7 +60,7 @@ async fn test_get_tax_forms() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_calculate_tax() {
     if !common::service_available().await {
         return;
@@ -91,7 +91,7 @@ async fn test_calculate_tax() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_tax_rates() {
     if !common::service_available().await {
         return;
@@ -109,7 +109,7 @@ async fn test_get_tax_rates() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_lookup_tax_rate() {
     if !common::service_available().await {
         return;
@@ -133,7 +133,7 @@ async fn test_lookup_tax_rate() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_tax_plan() {
     if !common::service_available().await {
         return;
@@ -159,7 +159,7 @@ async fn test_create_tax_plan() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_analyze_scenario() {
     if !common::service_available().await {
         return;
@@ -190,7 +190,7 @@ async fn test_analyze_scenario() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_tax_compliance() {
     if !common::service_available().await {
         return;

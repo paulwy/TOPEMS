@@ -92,7 +92,7 @@ async fn auth_request(
 // ==================== NOTIF-001: 查看通知列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_001_list_notifications() {
     tracing::info!("测试 NOTIF-001: 查看通知列表");
 
@@ -123,7 +123,7 @@ async fn test_notif_001_list_notifications() {
 // ==================== NOTIF-002: 查看未读通知 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_002_list_unread() {
     tracing::info!("测试 NOTIF-002: 查看未读通知");
 
@@ -154,7 +154,7 @@ async fn test_notif_002_list_unread() {
 // ==================== NOTIF-003: 标记通知已读 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_003_mark_read() {
     tracing::info!("测试 NOTIF-003: 标记通知已读");
 
@@ -207,7 +207,7 @@ async fn test_notif_003_mark_read() {
 // ==================== NOTIF-004: 全部标记已读 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_004_mark_all_read() {
     tracing::info!("测试 NOTIF-004: 全部标记已读");
 
@@ -237,7 +237,7 @@ async fn test_notif_004_mark_all_read() {
 // ==================== NOTIF-005: 发送通知 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_005_send_notification() {
     tracing::info!("测试 NOTIF-005: 发送通知");
 
@@ -277,7 +277,7 @@ async fn test_notif_005_send_notification() {
 // ==================== NOTIF-006: 广播通知 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_006_broadcast_notification() {
     tracing::info!("测试 NOTIF-006: 广播通知");
 
@@ -316,7 +316,7 @@ async fn test_notif_006_broadcast_notification() {
 // ==================== NOTIF-007: 访问他人通知 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_notif_007_access_others_notification() {
     tracing::info!("测试 NOTIF-007: 访问他人通知");
 
@@ -356,7 +356,7 @@ async fn test_notif_007_access_others_notification() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_notification_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  Notification 权限测试套件");

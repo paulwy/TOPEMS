@@ -16,7 +16,7 @@ const BASE_PATH: &str = "/api/master-data/api/master/mdm-v56";
 
 /// 1. 创建恢复点
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_recovery_point() {
     if !common::service_available().await {
         return;
@@ -47,7 +47,7 @@ async fn test_create_recovery_point() {
 
 /// 2. 获取恢复点列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_recovery_points() {
     if !common::service_available().await {
         return;
@@ -71,7 +71,7 @@ async fn test_list_recovery_points() {
 
 /// 3. 从恢复点恢复
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_restore_from_point() {
     if !common::service_available().await {
         return;
@@ -106,7 +106,7 @@ async fn test_restore_from_point() {
 
 /// 4. 获取灾难恢复状态
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_recovery_status() {
     if !common::service_available().await {
         return;
@@ -125,7 +125,7 @@ async fn test_get_recovery_status() {
 
 /// 5. 创建恢复计划
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_recovery_plan() {
     if !common::service_available().await {
         return;
@@ -165,7 +165,7 @@ async fn test_create_recovery_plan() {
 
 /// 6. 创建连续性计划
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_continuity_plan() {
     if !common::service_available().await {
         return;
@@ -204,7 +204,7 @@ async fn test_create_continuity_plan() {
 
 /// 7. 获取连续性计划列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_list_continuity_plans() {
     if !common::service_available().await {
         return;
@@ -223,7 +223,7 @@ async fn test_list_continuity_plans() {
 
 /// 8. 影响评估
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_assess_impact() {
     if !common::service_available().await {
         return;
@@ -250,7 +250,7 @@ async fn test_assess_impact() {
 
 /// 9. 配置复制
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_configure_replication() {
     if !common::service_available().await {
         return;
@@ -277,7 +277,7 @@ async fn test_configure_replication() {
 
 /// 10. 获取地域健康状态
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_region_health() {
     if !common::service_available().await {
         return;

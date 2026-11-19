@@ -84,7 +84,7 @@ async fn login_and_get_token(client: &Client) -> Option<String> {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_finance_health_check_reachable() {
     if !check_finance_available().await {
         return;
@@ -107,7 +107,7 @@ async fn test_finance_health_check_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_finance_accounts_reachable() {
     if !check_finance_available().await {
         return;
@@ -142,7 +142,7 @@ async fn test_finance_accounts_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_finance_vouchers_reachable() {
     if !check_finance_available().await {
         return;
@@ -177,7 +177,7 @@ async fn test_finance_vouchers_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_finance_detailed_health_reachable() {
     if !check_finance_available().await {
         return;
@@ -207,7 +207,7 @@ async fn test_finance_detailed_health_reachable() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_finance_api_info_reachable() {
     if !check_finance_available().await {
         return;

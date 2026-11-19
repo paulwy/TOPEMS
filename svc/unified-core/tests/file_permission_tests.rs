@@ -95,7 +95,7 @@ async fn auth_request(
 // ==================== FILE-001: 上传文件 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_001_upload_file() {
     tracing::info!("测试 FILE-001: 上传文件");
 
@@ -130,7 +130,7 @@ async fn test_file_001_upload_file() {
 // ==================== FILE-002: 批量上传文件 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_002_batch_upload() {
     tracing::info!("测试 FILE-002: 批量上传文件");
 
@@ -165,7 +165,7 @@ async fn test_file_002_batch_upload() {
 // ==================== FILE-003: 下载文件 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_003_download_file() {
     tracing::info!("测试 FILE-003: 下载文件");
 
@@ -208,7 +208,7 @@ async fn test_file_003_download_file() {
 // ==================== FILE-004: 下载他人私有文件 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_004_download_private_file() {
     tracing::info!("测试 FILE-004: 下载他人私有文件");
 
@@ -248,7 +248,7 @@ async fn test_file_004_download_private_file() {
 // ==================== FILE-005: 删除文件 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_005_delete_file() {
     tracing::info!("测试 FILE-005: 删除文件");
 
@@ -299,7 +299,7 @@ async fn test_file_005_delete_file() {
 // ==================== FILE-006: 移动文件 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_006_move_file() {
     tracing::info!("测试 FILE-006: 移动文件");
 
@@ -342,7 +342,7 @@ async fn test_file_006_move_file() {
 // ==================== FILE-007: 创建文件夹 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_007_create_folder() {
     tracing::info!("测试 FILE-007: 创建文件夹");
 
@@ -380,7 +380,7 @@ async fn test_file_007_create_folder() {
 // ==================== FILE-008: 删除文件夹 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_file_008_delete_folder() {
     tracing::info!("测试 FILE-008: 删除文件夹");
 
@@ -431,7 +431,7 @@ async fn test_file_008_delete_folder() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_file_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  File 权限测试套件");

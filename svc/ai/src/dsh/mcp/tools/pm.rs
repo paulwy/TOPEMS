@@ -763,7 +763,7 @@ mod tests {
 
     /// 端到端测试：真实 PM 服务（需网关 8099 运行，-p ignore）
     #[tokio::test]
-    #[ignore]
+    #[ignore = "需要网关 8099 运行（真实服务端到端；离线环境按 skip）"]
     async fn test_e2e_pm_real_service() {
         // 模块化单体统一入口为网关 8099（含 dev 模拟认证）
         std::env::set_var("PM_SERVICE_URL", "http://localhost:8099");

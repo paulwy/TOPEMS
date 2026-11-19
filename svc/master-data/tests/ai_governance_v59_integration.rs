@@ -18,7 +18,7 @@ const BASE_PATH: &str = "/api/master-data/api/master/mdm-v59";
 
 /// 1. 数据治理分析
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_analyze_governance() {
     if !common::service_available().await {
         return;
@@ -46,7 +46,7 @@ async fn test_analyze_governance() {
 
 /// 2. 获取治理建议列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_suggestions() {
     if !common::service_available().await {
         return;
@@ -69,7 +69,7 @@ async fn test_get_suggestions() {
 
 /// 3. 获取治理模型列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_models() {
     if !common::service_available().await {
         return;
@@ -88,7 +88,7 @@ async fn test_get_models() {
 
 /// 4. 创建匹配规则
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_match_rule() {
     if !common::service_available().await {
         return;
@@ -119,7 +119,7 @@ async fn test_create_match_rule() {
 
 /// 5. 获取匹配规则列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_match_rules() {
     if !common::service_available().await {
         return;
@@ -138,7 +138,7 @@ async fn test_get_match_rules() {
 
 /// 6. 实体匹配
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_match_entities() {
     if !common::service_available().await {
         return;
@@ -167,7 +167,7 @@ async fn test_match_entities() {
 
 /// 7. 获取匹配结果
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_match_results() {
     if !common::service_available().await {
         return;
@@ -186,7 +186,7 @@ async fn test_get_match_results() {
 
 /// 8. 创建分类器
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_classifier() {
     if !common::service_available().await {
         return;
@@ -215,7 +215,7 @@ async fn test_create_classifier() {
 
 /// 9. 获取分类器列表
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_classifiers() {
     if !common::service_available().await {
         return;
@@ -234,7 +234,7 @@ async fn test_get_classifiers() {
 
 /// 10. 获取分类统计
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_classification_stats() {
     if !common::service_available().await {
         return;

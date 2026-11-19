@@ -11,7 +11,7 @@ use common::TestContext;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_risk_dashboard() {
     if !common::service_available().await {
         return;
@@ -34,7 +34,7 @@ async fn test_get_risk_dashboard() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_risk_alerts() {
     if !common::service_available().await {
         return;
@@ -52,7 +52,7 @@ async fn test_get_risk_alerts() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_score_transaction() {
     if !common::service_available().await {
         return;
@@ -89,7 +89,7 @@ async fn test_score_transaction() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_fraud_rules() {
     if !common::service_available().await {
         return;
@@ -107,7 +107,7 @@ async fn test_get_fraud_rules() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_compliance_review() {
     if !common::service_available().await {
         return;
@@ -132,7 +132,7 @@ async fn test_compliance_review() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_get_compliance_results() {
     if !common::service_available().await {
         return;
@@ -152,7 +152,7 @@ async fn test_get_compliance_results() {
 }
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_create_compliance_workflow() {
     if !common::service_available().await {
         return;

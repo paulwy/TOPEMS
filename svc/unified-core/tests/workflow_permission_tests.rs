@@ -99,7 +99,7 @@ async fn auth_request(
 // ==================== WF-001: 查看工作流列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_001_list_workflows() {
     tracing::info!("测试 WF-001: 查看工作流列表");
 
@@ -119,7 +119,7 @@ async fn test_wf_001_list_workflows() {
 // ==================== WF-002: 创建工作流 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_002_create_workflow() {
     tracing::info!("测试 WF-002: 创建工作流");
 
@@ -159,7 +159,7 @@ async fn test_wf_002_create_workflow() {
 // ==================== WF-003: 删除工作流 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_003_delete_workflow() {
     tracing::info!("测试 WF-003: 删除工作流");
 
@@ -202,7 +202,7 @@ async fn test_wf_003_delete_workflow() {
 // ==================== WF-004: 发布工作流 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_004_publish_workflow() {
     tracing::info!("测试 WF-004: 发布工作流");
 
@@ -251,7 +251,7 @@ async fn test_wf_004_publish_workflow() {
 // ==================== WF-005: 发起审批流程 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_005_start_approval() {
     tracing::info!("测试 WF-005: 发起审批流程");
 
@@ -295,7 +295,7 @@ async fn test_wf_005_start_approval() {
 // ==================== WF-006: 审批人批准流程 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_006_approve_workflow() {
     tracing::info!("测试 WF-006: 审批人批准流程");
 
@@ -342,7 +342,7 @@ async fn test_wf_006_approve_workflow() {
 // ==================== WF-007: 非审批人批准流程 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_007_unauthorized_approve() {
     tracing::info!("测试 WF-007: 非审批人批准流程");
 
@@ -385,7 +385,7 @@ async fn test_wf_007_unauthorized_approve() {
 // ==================== WF-008: 查看待审批列表 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn test_wf_008_list_pending_approvals() {
     tracing::info!("测试 WF-008: 查看待审批列表");
 
@@ -409,7 +409,7 @@ async fn test_wf_008_list_pending_approvals() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
+#[ignore = "需要本地服务运行（HTTP 集成测试；服务不可用则 skip）"]
 async fn run_all_workflow_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  Workflow 权限测试套件");
