@@ -20,7 +20,7 @@
 | prod 已应用但 dev 账本缺 | 29 条 |
 | 仅索引/策略不匹配（软告警） | 56 个版本（索引缺失或多库，多为 relocated 的伴生现象，未计入假 applied） |
 
-**未执行任何修复**。按“执行前先给清单”的要求，本文只交付清单、分类与重放方案；所有建议均为待批准状态。
+**执行状态（2026-11-19 更新）**：§2 为初始审计清单；已按用户批准执行两批处置——第一批空壳回归重放 23 条（§12.2）、第二批 relocated 按 superseded 关闭 29 条（§12.3），**合计已处置 52 / 93**。剩余 40 条（DML 待评估 11 + unknown 非 DML 29）待处理，归总见 §12.4。所有对数据库的写入仅发生在第一批（dev `topems`），第二批为纯文档关闭。
 
 ---
 
@@ -217,7 +217,7 @@
 | regression 空壳 | 24 | 按版本序重放对应 `ALTER TABLE ... ADD COLUMN` 文件；重放前后各跑一次列断言 | 是（幂等 DDL） |
 | unknown（无 DML） | 29 | 先只读确认对象应存在 → 重放；失败即停 | 是（均为 IF NOT EXISTS） |
 | unknown（含 DML） | 6 | **先人工审阅 DML 影响行数与语义**，未确认前不重放 | 否 |
-| relocated | 33 | 标记 superseded，不重放；如应用仍读旧 schema 再评估兼容视图 | 否 |
+| relocated | 33 | **已定：29 条非 DML 按 superseded 关闭、不重放（逐条见 §12.3）；4 条含 DML 留待评估** | 否 |
 | superseded | 1 | 标记 superseded，不重放 | 否 |
 | 漏记账本（prod 已记） | 6 | 核对对象后补账本行（checksum = 当前文件 sha384），不执行迁移 | 否 |
 | checksum 漂移 | 1 | 审阅 diff 后重放新文件或补前向补丁 | 否（需先审阅） |
@@ -324,11 +324,64 @@ node /tmp/audit_dev_ledger.mjs && python3 /tmp/classify2.py
   - `bi.report_status`：`draft,published,archived,pending,scheduled,cancelled`（6 值）
   - 行为验证：`BEGIN; INSERT INTO ehs.health_records(id,tenant_id,record_no) VALUES (gen_random_uuid(),gen_random_uuid(),'VERIFY-001'); SELECT ...; ROLLBACK;` → `INSERT 0 1` / `VERIFY-001`，事务回滚，无残留。
 
-### 12.3 第二批：已迁 schema（33 条，未执行，待确认）
+### 12.3 第二批：已迁 schema（29 条按 superseded 关闭，不重放）
 
-- 其中 4 条在“11 条 DML 一律不动”清单内：`20260917000008`、`20260918000019`、`20260920000080`、`20261021000001`。
-- 其余 29 条若重放，会在原 schema 新建 **29 张同名重复表**（同名对象已存在于 `iam`/`ai`/`qms`/`lims` 等），例如：
-  - `010_billing.sql` → `public.core_billing_plans`（现存在于 `iam`）
-  - `20260907000001` → `public.supply_chain_orders`、`public.production_plans`
-  - `20260724000003` → `public.core_dashboard_refresh_log`（现存在于 `iam`）
-- 风险：空表可能与现有 schema 同名，若代码以未限定名查询会被 `public` 空表遮蔽；与本文件 §7 “relocated = superseded，不重放”的建议一致，故**暂停执行并等待确认**。
+**结论**：用户于 2026-11-19 确认按选项 A 收尾——29 条 relocated（非 DML）全部按 **superseded 关闭**，**不重放、不在 `public.*` 建任何表、不改账本行**；4 条含 DML 的 relocated 版本继续留在 DML 待评估清单，不在本轮处理。
+
+**判定依据与来源**（只读，2026-11-19）：
+1. `_sqlx_migrations` 中这些版本 `success=true`，且 **prod 账本同版本已 applied**——说明两侧都执行过，问题只是对象落点在别的 schema。
+2. 在 dev 目录中按「同名 relname 跨 schema」检索 `pg_class`：迁移声明要写到 `public.<x>`（或 `hrm/erp/qms/lims/master_data/communication/rs` 等）的对象，实际已在 `iam`/`ai`/`flow`/`mes`/`analytics,bi`/`qms` 等 schema 存在。
+3. 因此重放只会在原 schema 造出同名空表；若代码以未限定名查询会被 `public` 空表遮蔽，等价于数据“看起来丢了”。与 §7「relocated = superseded，不重放」一致。
+
+**逐条关闭清单（29 条）**
+
+| 版本 | 文件 | 迁移声明对象（应存在处） | 实际落点（只读核对） | 判定 |
+|---|---|---|---|---|
+| 10 | 010_billing.sql | `public.core_billing_plans`/`core_subscriptions`/`core_billing_invoices`/`core_usage_records`/`core_plugin_pricing` | `iam`（5 表） | relocated → iam，superseded |
+| 20260724000003 | 20260724000003_create_dashboard_tables.sql | `public.core_dashboard_refresh_log` | `iam` | relocated → iam，superseded |
+| 20260825000000 | 20260825000000_rebuild_permission_tables.sql | `public.tool_permissions` | `iam` | relocated → iam，superseded |
+| 20260827000000 | 20260827000000_v448_permission_tables.sql | `public.tool_permissions`（8 对象） | `iam` | relocated → iam，superseded |
+| 20260831190850 | 20260831190850_restore_legacy_vectors.sql | `hrm.vectors` | `ai` | relocated → ai，superseded |
+| 20260907000001 | 20260907000001_erp_public_business_tables.sql | `public.production_plans`/`supply_chain_orders`/`financial_records`/`dashboard_stats`/`inspection_records` | `mes`（前 4）/`lims`,`scm`（inspection_records） | relocated → mes/lims/scm，superseded |
+| 20260908000009 | 20260908000009_missing_tables.sql | `qms.qa_lab_samples`/`qa_lab_tasks` | `public` | relocated → public，superseded |
+| 20260909090002 | 20260909090002_ticket_core_tickets_rls.sql | `ticket.core_tickets`（RLS 启用） | `ticket`/`public`（表存在；仅 RLS 未启用） | 对象已在权威 schema，RLS 项按 superseded 关闭 |
+| 20260916000001 | 20260916000001_crm_contracts.sql | `crm.contracts` | `hrm`,`pm` | relocated → hrm/pm，superseded |
+| 20260918000021 | 20260918000021_add_analytics_tenant_id.sql | `rs.analytics_*`（13 表 `tenant_id`） | `analytics`,`bi` | relocated → analytics/bi，superseded |
+| 20260918000022 | 20260918000022_align_reports_tables.sql | `rs.reports`（50 列） | `analytics`,`bi`,`report` | relocated → analytics/bi/report，superseded |
+| 20260918000049 | 20260918000049_scm_supplier_no_documents.sql | `erp.documents` | `ai`,`doc`,`mobile`,`pm`,`unified_core` | relocated → 多 schema，superseded |
+| 20260920000083 | 20260920000083_tenant_id_batch.sql | `portal.core_faqs`/`core_guide_lessons`/`core_guides`.`tenant_id` | `iam`,`public` | relocated → iam/public，superseded |
+| 20260921000099 | 20260921000099_backend_i18n_batch2_bilingual_columns.sql | `master_data.core_dict_types`/`core_dict_items`.`name_en` | `iam`,`public` | relocated → iam/public，superseded |
+| 20260923150000 | 20260923150000_flow_public_tenant_rls.sql | `public.core_workflow_instances`/`core_workflow_tasks`（RLS） | `flow`,`iam`,`public` | relocated → flow/iam，superseded |
+| 20260923160000 | 20260923160000_flow_remaining_tables_tenant_rls.sql | `public.core_workflows`/`core_workflow_versions`/`approvals`/`approval_records`（RLS） | `flow`,`iam` | relocated → flow/iam，superseded |
+| 20260926120000 | 20260926120000_app_schema_tables.sql | `lims.qa_lab_samples`/`qa_lab_tasks` | `public` | relocated → public，superseded |
+| 20261007000011 | 20261007000011_align_missing_columns_selfheal5.sql | `public.core_emails` 等 8 表列 | `public`（同名表存在且 8 个抽样列均已齐全） | 复核后断言已满足，无需重放 |
+| 20261007000013 | 20261007000013_align_missing_columns_selfheal6.sql | `plugin_finance.accounting_subjects` | `finance`,`plugin_erp` | relocated → finance/plugin_erp，superseded |
+| 20261013000000 | 20261013000000_align_runtime_contract_v2.sql | `communication.core_notification_templates`.`priority`/`data` | `iam`,`public` | relocated → iam/public，superseded |
+| 20261015000074 | 20261015000074_k1_missing_table_baselines.sql | `public.cqrs_projection_progress`/`report_schedules`/`report_templates`/`reports` | `finance`/`analytics`,`bi`/`report` | relocated → 多 schema，superseded |
+| 20261019000001 | 20261019000001_notification_templates_tenant_id.sql | `communication.core_notification_templates`.`tenant_id` | `iam`,`public` | relocated → iam/public，superseded |
+| 20261024000011 | 20261024000011_gis_devices_token.sql | `gis.devices`.`device_token` | `mobile` | relocated → mobile，superseded |
+| 20261027200000 | 20261027200000_core_schema_duplicates_cleanup.sql | `public.core_flow_variables`/`core_flow_rules`/`core_flow_delegates`/`core_flow_variable_history` | `flow`（另 `public` 有同名副本） | relocated → flow，superseded |
+| 20261029120000 | 20261029120000_schema_defense_orphan_tables_to_authoritative.sql | `public.core_comments`/`core_favorites` | `flow` | relocated → flow，superseded |
+| 20261029179000 | 20261029179000_schema_defense_columns_fix.sql | `public.analysis_results`/`document_chunks`/`maps`/`pipelines`/`qa_history`/`crm_erp_sync` 等（11） | `ai`,`gis`,`integration` | relocated → ai/gis/integration，superseded |
+| 20261029185000 | 20261029185000_schema_defense_align_columns.sql | `mes.qa_sampling_plans`.`inspection_level`/`sample_size` | `qms`,`public` | relocated → qms/public，superseded |
+| 7 | 007_communication.sql | `public.core_chat_rooms`/`core_chat_members`/`core_chat_messages`/`core_email_templates` | `iam`（email_templates 另在 `communication`） | relocated → iam，superseded |
+| 9 | 009_sync.sql | `public.core_mobile_offline_records` | `iam`,`mobile` | relocated → iam/mobile，superseded |
+
+**本轮明确不动（4 条 relocated 含 DML）**：`20260917000008`、`20260918000019`、`20260920000080`、`20261021000001`，继续留在 §9 DML 待评估清单。
+
+> 本次收尾**未连接数据库做任何写入**；上述落点核对均为只读 `pg_class` 查询。账本保持第一批完成态（693 行 / success 693 / failed 0 / max `20261119000002`）。
+
+### 12.4 「假 applied」93 条处置归总
+
+| 处置 | 条数 | 备注 |
+|---|---:|---|
+| 已完成重放（空壳回归，§12.2） | 23 | 全部 rc=0；`20261007140000` 因 DML 未做，计入下项 |
+| superseded 关闭（relocated 非 DML，§12.3） | 29 | 逐条落点见上表 |
+| DML 待评估（跨分类） | 11 | 1 regression + 4 relocated + 6 unknown |
+| 无法判定（unknown 非 DML） | 29 | 待只读确认后决定重放/关闭 |
+| 其余：原 superseded | 1 | `20260918000011` |
+| **合计** | **93** | 与 §2 分类（24+33+35+1）一致 |
+
+> 口径说明：§2 的 unknown 共 35 条，其中 6 条含 DML 已单列进「DML 待评估」，故此处「无法判定」记 29 条，避免重复计数。23+29+11+29+1 = 93。
+>
+> **仍待处理：40 条** = DML 待评估 11 + unknown 非 DML 29。
