@@ -6,6 +6,7 @@
 > 逐条判定、读数与复现命令：[项目审计与实施方案-2026-11-17](docs/quality/项目审计与实施方案-2026-11-17.md)。
 > 该轮只改本文件与新增审计文档；未改代码、未提交、未推送、未触碰生产。
 > 2026-11-19 增补：新增 §1.F「前端真实性与交互纠错」F1–F11（依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)）；**只登记，未开工**。
+> 2026-11-19 治理：§0.1 阻断读数按当日实测重写（`facts:check` 13 项、`check:ledger` 2 本仍红；`gen-manifest --check`、clippy、API 闸门、权限对账均为绿）；DEC-14 核销；C6 前置由「等 DEC-14」改为「等账号计费恢复」；F 批证据重定位到 HEAD `7b1134282`，其中 F9 由「3 个 501 入口」修正为「6 个 501 端点、UI 无调用点」；新增 §7 仓库卫生记录。
 
 > **维护约定（2026-11-19 定稿，口径见 [聚合产物与 TODO 入库策略](docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md)）**
 > 1. **维护者**：当批任务的提交者负责更新；跨批只允许新增条目或删除已完成条目，不做批量重排。
@@ -23,17 +24,18 @@
 | 说明 | 旧版本引用的 `docs/archive/misc/TODO_backup_20261107.md` 实际不存在，已从本文件移除该死链 |
 | 2026-11-19 增补 | 新增 §1.F 前端真实性 F1–F11（11 条，**未开工**）；依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)，无既有条目重复 |
 
-### 0.1 当前阻断读数（必须先修）
+### 0.1 当前阻断读数（2026-11-19 实测，HEAD `7b1134282`）
 
-| 项 | 读数 | 来源 |
+| 项 | 读数 | 来源 / 命令 |
 |---|---|---|
-| 默认 `cargo check` | 已修复（2026-11-17） | dev `strip="none"` 覆盖全局同级配置；见 §3.1 |
-| `cargo clippy --workspace --all-targets` | 3 crate / 6 处 error | `crm/analytics.rs:274`、`ai/prompt_handlers.rs:297,299`、`master-data/dict/handlers.rs:190,627` |
-| `facts:check` | 红，12 项漂移（含本次 TODO 重写导致的 2 项） | 见审计 §2.4 |
-| `check:ledger` | 红，2 个 stale baseline key | `portal\|help\|core_faqs`、`portal\|help\|core_guides` |
-| `gen-manifest --check` | 红，1 条迁移未登记 | `20261116180000` |
-| API 审计闸门 | `--dry-run` 不阻断，实跑 P6 RED=8 | `lefthook.yml:325` |
-| 权限对账脚本 | 已修复（2026-11-17）：DB=1021 live | `scripts/audit_permission_codes.py` |
+| 默认 `cargo check` | 绿（2026-11-17 修复：dev `strip="none"` 覆盖全局同级配置） | `cargo check --workspace`；见 §3.1 |
+| `cargo clippy --workspace --all-targets` | 绿（4 crate / 8 处已修，2026-11-17） | 见 §3.2 |
+| `facts:check` | **红，13 项**（`schema_prefix` 19 个 stale key、`request-txn` 1 处可核销未更新、扫描观测值随代码演进：files 1431→1433、violations 1536→1460） | `node scripts/report/facts.mjs --check docs/quality/facts-latest.json` |
+| `check:ledger` | **红，2 本**：`scripts/ci/schema-prefix-baseline.json` 19 条陈旧未核销；`scripts/ci/request-txn-baseline.json` 1 处可核销（erp `bare_txn` 351→350） | `node scripts/ci/check-ledger-staleness.mjs` |
+| `gen-manifest --check` | 绿：`registered=191 disk=784 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
+| API 审计闸门 | 绿（2026-11-17：P6 RED=0、p7 `not_legal=0`；`lefthook.yml` 已去 `--dry-run`） | 见 §3.2 |
+| 权限对账脚本 | 绿：`DB 来源：live`、DB=1021 | `scripts/audit_permission_codes.py`；见 §3.1 |
+| GitHub Actions | **红，唯一原因 = 账号计费**（`The job was not started because recent account payments have failed...`，job 未启动，非代码） | `gh api repos/paulwy/TOPEMS/actions/runs/<id>/jobs`；见 §7.4 |
 
 ---
 
@@ -80,7 +82,7 @@
 | C3 | 清理环境缺失即 early-return 的伪绿写法 | 约 60 处 | 缺服务时红灯 |
 | C4 | 合并 CI 中 `cargo-test` 与 `rust-test` 两套冗余 job | `ci.yml:496/544` | 单一路径 |
 | C5 | 拆分超慢用例文件 | `PluginManager.test.ts` 233.9s | 单文件 <30s |
-| C6 | 首次建立 CI 基线（依赖 DEC-14 推送决策） | CI 从未跑过这 187 个提交 | 一次全绿 run |
+| C6 | 首次建立 CI 基线 | CI 从未跑过（job 因**账号计费**未启动，非代码） | 一次全绿 run |
 
 ### D. 前端结构与文档
 
@@ -124,19 +126,19 @@
 > 批次：1 = 去 mock + 提示纠错（零后端改动）；2 = 接线/隐藏既有能力（依赖后端现状）。
 > 纪律：每条独立验收；不得以“优化”合并。
 
-| ID | 批次 | 任务 | 当前证据（HEAD `b95700640`） | 验收 |
+| ID | 批次 | 任务 | 当前证据（2026-11-19 复核，HEAD `7b1134282`） | 验收 |
 |---|---|---|---|---|
-| F1 | 2 | 银行账户管理页接真实 API（去掉纯 mock CRUD） | `pages/admin/BankAccountManagementPage.tsx:29/65/101-117` 全内存；真实接口 `svc/erp/src/modules/bank_account.rs:28` 与 `api/erp/bankAccount.ts` 已存在；路由 `module-configs/admin/config.ts:196` | 列表/新增/编辑/删除全部走 `/api/erp/bank-accounts`；断网显示错误态；页面内 `mockBankAccounts` 归零 |
-| F2 | 1 | CRM 三个 Redesign 页去 mock 兜底 | `CrmCustomer/CrmContract/CrmOpportunityRedesignPage.tsx` 均 `setIsMockData(true)` 后返回 `mock*`（如 `CrmCustomerRedesignPage.tsx:315`） | 三页 mock 常量归零；API 失败显示错误与重试，不再回退假数据 |
-| F3 | 1 | WMS 盘点页去 mock 兜底 | `WmsStocktakePage.tsx:314` `let filtered = mockStocktakes`，`:600` mock 横幅 | `mockStocktakes` 归零；失败态显式报错 |
-| F4 | 1 | MES 工单页：去 mock + 修正删除失败提示 | `MesWorkOrderPage.tsx:268/284` mock 兜底；`:278` `onError` 仍 `pushToast('success', 删除成功)` | mock 归零；删除失败提示错误且不再出现成功文案 |
-| F5 | 1 | ERP 采购单页：去 mock + 修正删除失败提示 | `PurchaseOrderPage.tsx:301/317` mock 兜底；`:311` `onError` 仍提示成功 | 同上 |
-| F6 | 1 | 监控告警规则页去 mock 适配器 | `MonitorAlertRulesPage.tsx:251` `mockApiAdapter` | 改真实 API 适配器；`mockApiAdapter` 归零 |
-| F7 | 1 | OA 公告页失败提示纠错 | `AnnouncementPage.tsx:194/209` `onError` 内提示成功 | 失败提示错误；更新/删除失败不出现成功文案 |
-| F8 | 1 | 工作流审批页失败提示纠错 | `WorkflowApprovalsPage.tsx:244/264` 同上 | 同上 |
-| F9 | 2 | 文件中心 3 个 501 入口先隐藏（后端补齐后再放开） | 前端 `api/file/index.ts:187/191/195` 已接线；后端 `unified-core/src/modules/file/manage.rs:1201/1220/1245` 501 | 3 个入口不可见或禁用，调用点前端归零；待后端实现后单独恢复 |
-| F10 | 1 | IAM 权限定义写入口隐藏（权限为迁移种子，后端固定 501） | `api/iam/permission.ts:13/20/24` 对应 `iam/permission.rs:194/210/224` 501 | 权限页只读；新增/编辑/删除按钮与调用点归零 |
-| F11 | 1 | 增加前端 mock 回归门禁 | 现无规则；8 页 mock 可复发 | 生产构建路径禁止 mock 兜底（仅允许 `import.meta.env.DEV`）；CI 扫描违规即红，并用一条构造用例验证能拦住 |
+| F1 | 2 | 银行账户管理页接真实 API（去掉纯 mock CRUD） | `pages/admin/BankAccountManagementPage.tsx:29`（`mockBankAccounts` 常量）、`:65`（列表 `[...mockBankAccounts]`）、`:101/106/109`（新增/编辑全内存）；后端 `svc/erp/src/modules/bank_account.rs` 已含 `bank-accounts` 路由；路由注册 `module-configs/admin/config.ts` | 列表/新增/编辑/删除全部走 `/api/erp/bank-accounts`；断网显示错误态；页面内 `mockBankAccounts` 归零 |
+| F2 | 1 | CRM 三个 Redesign 页去 mock 兜底 | `CrmCustomerRedesignPage.tsx:146/311`、`CrmContractRedesignPage.tsx:121`、`CrmOpportunityRedesignPage.tsx:130/292/295`（`setIsMockData(true)` 后返回 `mock*`） | 三页 mock 常量归零；API 失败显示错误与重试，不再回退假数据 |
+| F3 | 1 | WMS 盘点页去 mock 兜底 | `WmsStocktakePage.tsx:175`（`mockStocktakes`）、`:314`（`let filtered = mockStocktakes`）、`:379/411`（落库失败仍提示「已降级为本地模拟数据」） | `mockStocktakes` 归零；失败态显式报错 |
+| F4 | 1 | MES 工单页：去 mock + 修正删除失败提示 | `MesWorkOrderPage.tsx:151`（`mockOrders`）、`:268`（失败返回 mock）、`:284`（`data || mockOrders`）；`:276` 成功分支与 `:280` **`onError` 内仍是 `toast_deleted`** | mock 归零；删除失败提示错误且不再出现成功文案 |
+| F5 | 1 | ERP 采购单页：去 mock + 修正删除失败提示 | `PurchaseOrderPage.tsx:171`（`mockOrders`）、`:301`、`:317`；`:309` 成功与 `:313` **`onError` 内仍是 `toast.deleted`** | 同上 |
+| F6 | 1 | 监控告警规则页去 mock 适配器 | `MonitorAlertRulesPage.tsx:251`（`mockApiAdapter` 定义）、`:606`（`apiAdapter={mockApiAdapter}`） | 改真实 API 适配器；`mockApiAdapter` 归零 |
+| F7 | 1 | OA 公告页失败提示纠错 | `AnnouncementPage.tsx:190/194-197`、`:207/209-211`（`onError` 内仍 `pushToast('success', k45/k46)`） | 失败提示错误；更新/删除失败不出现成功文案 |
+| F8 | 1 | 工作流审批页失败提示纠错 | `WorkflowApprovalsPage.tsx:240/244-247`、`:258/264-267`（同上，k5 / k19） | 同上 |
+| F9 | 2 | 文件中心 501 端点回收（**范围已修正**） | 后端 `svc/unified-core/src/modules/file/manage.rs` **6 个 handler 返回 501**：`set_file_permissions:1167`、`get_file_permissions:1186`、`get_shared_files:1203`、`get_file_stats:1222`、`export_files:1247`、`search_files:1265`；前端 API 层已定义 `getPermissions:171`、`getSharedFiles:186`、`getStats:190`、`export:194`、`copy:204`、`move:211`，但**全仓 `fileApi.*` 调用点 = 0**（原「3 个入口已接线」不成立） | 6 个端点在前端 API 层标注「暂不可用」或暂不导出；后端实现后单批放开；UI 层保持零调用点 |
+| F10 | 1 | IAM 权限定义写入口隐藏（权限为迁移种子，后端固定 501） | 前端 `api/iam/permission.ts:13/20/24`（create/update/delete）；后端 `svc/unified-core/src/modules/iam/permission.rs:183-210`（`PUT/DELETE /permissions/{id}` 明确 501，注释「权限定义为系统种子数据」） | 权限页只读；新增/编辑/删除按钮与调用点归零 |
+| F11 | 1 | 增加前端 mock 回归门禁 | 现无规则（`scripts/ci/` 下无 `*mock*` 脚本）；8 页 mock 可复发 | 生产构建路径禁止 mock 兜底（仅允许 `import.meta.env.DEV`）；CI 扫描违规即红，并用一条构造用例验证能拦住 |
 
 > 本批刻意不包含：EHS 职业健康域（需业务拍板，见评估 §2.5）、AI 用量计量/MES 成本/GIS 轨迹/SRM 条款（后端半成品，见 §2.4）、文件中心与合并报表的后端实现。
 > 门禁影响：`facts:check` 当前已红 11 项（`docs.todo_lines` 325→365 等多因代码演进）；本批只新增 `todo_lines` 一项漂移，快照重建需与 `schema-prefix` 19 个 stale key 一并处理，不在本批范围内。
@@ -146,7 +148,7 @@
 ## 2. 决策建议（用户已授权：一步到位 + 通用，每条只给一个结论）
 
 > 授权口径：不再逐条回问，按「一次改到终态、不新增分叉/例外、其他服务可照抄」给唯一方案并实施。
-> DEC-04 按原注明方式（不阻塞步骤）一并定案。凡涉及对外动作的只有 DEC-14，单独写了风险与时机。
+> DEC-04 按原注明方式（不阻塞步骤）一并定案。DEC-14（对外推送）已于 2026-11-19 完成，移入 §5。
 
 | ID | 推荐结论 | 一步到位 + 通用 | 影响面 | 验证判据 | 解除阻塞 | 风险 / 时机 |
 |---|---|---|---|---|---|---|
@@ -163,7 +165,6 @@
 | DEC-11 | lims 那 1 行软删，登记为测试残留（取证无业务外键引用） | 零租户业务行归零；平台语料表明确豁免 | lims 1 行 + 登记表 | lims 零租户=0；列表接口无变化 | E5-3 | 低 |
 | DEC-12 | 三项一次收紧：`core_tenants` 仅系统通道读；`iam.core_permissions` 删表（public 唯一源）；`membership.is_default` 加部分唯一索引 | 消除影子表与双源，约束交给 DB；其他 schema 照抄「单源 + 约束」 | migration；`fixtures/full_schema_contract.sql:11774`（建表）、`:36008/:36016`（约束）、`:56029`（FK 改指 public）；运行代码零引用 | `iam.core_permissions` 不存在；对账 DB=1021 不变；同租户第二个 default 冲突 | E5-2 | FK 改指需单事务；先克隆演练 |
 | DEC-13 | 不删 QMS 3 表（`svc/qms` 2 个文件引用），补严格 RLS + FORCE，纳入 P1 首批 | 与 qms 其他表同范式，不迁 schema | `qms.qa_inspection_items/plans` 已有 `tenant_id`，当前 rls=false、策略 0；同族第 3 表一并处理 | 3 表 rls/force=true，策略含 `app.rls_system`+`app.tenant_id`；0 行不变 | E5-2 首批 | 低 |
-| DEC-14 | 推送 187 个提交，按「先修门禁、再推存量」：A1/A2/A3 绿后一次 push，随即盯首次 CI | 建立可信 CI 基线，结束本地领先 187 的分叉；不做 force push | `origin/main`、CI 配额 | push 后 CI 一次全绿或仅剩已登记红项；`git rev-list --count origin/main..HEAD`=0 | E2-6 | 对外动作：CI 首跑可能红，需 1 个修复窗口；建议第 1 波完成后工作日白天执行，回退用 revert |
 | DEC-15 | 平台语料 5 表归一为哨兵租户 + 平台通道读，不保留 `rls_global_read` | 平台数据只有一种表达；其他平台表照抄 | 5 表数据 + finance/public/mobile/pm 读路径；沿用 `20261118110000` 草稿 | 租户仍读到 8/48/16/1；未设 GUC 读到 0；A/B 对抗通过 | E3-15、E5-2 | 读路径漏改会空列表；先补回归用例 |
 
 ---
@@ -256,7 +257,7 @@
 
 第 2 波 测试与 CI
   A1/A2 ─► C1 ─► C2 ─► C3        C4（ci.yml）   C5（前端）独立
-  A1~A4 绿 + C4 + DEC-14 ─► C6 首次 CI 基线
+  A1~A4 绿 + C4 ─► C6 首次 CI 基线（阻塞于账号计费，非代码）
 
 第 3 波 数据面（跨服务并行，同服务服务锁互斥）
   W2-A1 ─► W2-A3
@@ -297,7 +298,7 @@
 | E2-3 | C3 清 early-return 伪绿 | C2 | — | 缺 PG 时红灯 |
 | E2-4 | C4 合并 `cargo-test`/`rust-test` | 无 | — | `ci.yml` 单一路径 |
 | E2-5 | C5 拆 `PluginManager.test.ts` | 无 | — | 单文件 <30s |
-| E2-6 | C6 首次 CI 基线 | E1-1..E1-3、E2-4 | DEC-14 | CI 一次全绿 run 并留链接 |
+| E2-6 | C6 首次 CI 基线 | E1-1..E1-3、E2-4、**GitHub 账号计费恢复** | — | CI 一次全绿 run 并留链接 |
 | E3-1 | W2-A1 去 3 处 `SEARCH_PATH` 读取 | A1 | — | `env::var("SEARCH_PATH")`=0 |
 | E3-2 | W2-A3 CI 禁 `set_var` | E3-1 | — | 规则上线并做一次失败验证 |
 | E3-3 | W2-B1 mes 前缀归零 | A2 | — | mes violations=0 |
@@ -381,6 +382,7 @@
 | LEG-03 / LEG-11 / LEG-12 | 并入 | 分别对应 W2-D1..D3、A3、W6-C，不再单列 |
 | B43-10 | 转纪律 | iam 禁动区约定写入 §6 |
 | B43-14 / DEC-M2-01 | 并入 | 分别对应 P1 的 A/B 对抗验证与 P1 剩余策略收紧 |
+| DEC-14 | 已完成 | 2026-11-19 分 4 批推送完毕，`origin/main..HEAD`=0；「CI 一次全绿」未达成，原因转 C6 |
 
 ---
 
@@ -394,3 +396,39 @@
 6. **iam 禁动区**（B43-10）：`unified-core/iam` 的写入路径不得绕过 `iam_write_scope` + `check_role_write_target`；无拍板不入场。
 7. **占位不合并**：本文件中每个 ID 对应一件可独立验收的事；执行时可拆批，但不得把两件事合并成一条“优化”。
 8. **每批留证**：提交信息写明批次 ID 与 before/after 读数；涉及数据库的批次附只读核对 SQL 与结果。
+
+## 7. 仓库卫生记录（2026-11-19，已完成，留证不重开）
+
+> 依据：`docs/security/dependabot-local-audit-20261119.md` §6–§9、`docs/security/audit-ignore-registry.md`。本节只记录已关闭动作与可复现命令，不再作为待办。
+
+### 7.1 依赖漏洞（GitHub 口径归零）
+
+- Dependabot open alerts：**0**（`gh api 'repos/paulwy/TOPEMS/dependabot/alerts?state=open&per_page=100' --jq 'length'`）。
+- 桌面端 `zip 8.6.0` 曾有 1 critical + 4 high：升级顺序是先 `zip@9.1.3 → 9.7.3`，再 `libsodium-sys-stable@1.24.3 → 1.24.6`；反序会报 `all possible versions conflict`（`tauri-plugin-updater` 把锁锚在 9.1.3）。
+- 三条 Rust advisory 仍在上游未发版状态（`crypto-bigint 0.5.5`、`rsa 0.9.10` 已 vendor 私有补丁、`libsqlite3-sys 0.30.1` 全仓零特性未编译），逐条证据见审计文档 §7。
+
+### 7.2 构建链根因与守卫
+
+- `deploy/docker/Dockerfile.server` 漏 COPY `vendor/`，而 `[patch.crates-io] rsa = { path = "vendor/rsa" }` 是解析期强依赖 → 镜像必失败；已补 `COPY vendor/ ./vendor/`。
+- 新增两道可机械验证的门禁：`scripts/ci/check-docker-build-context.py`（pre-push `docker-build-context`）与 `scripts/ci/check-rust-audit-invariants.py`（pre-push `rust-audit-invariants` + CI `rust-audit` step）；两套均做过反向验证（删行/注入探针即红）。
+
+### 7.3 RLS 策略快照口径（以限定名为准）
+
+- 根因：`pg_policies.qual/with_check` 由 `pg_get_expr` 渲染，输出受**会话 `search_path`** 影响；本机 `mes,public` → 裸名，演练/CI 固定 `pg_catalog` → `mes.process_flows`。语义与 OID 相同，纯文本差异。
+- 口径：生成器 `scripts/ci/lib/rls-policy-snapshot.mjs` 统一注入 `PGOPTIONS="-c search_path=pg_catalog"`；快照按限定名入库；`finance_u8_import_records` 的 2 条新策略保留；**不手工改快照文本**。
+- 复核：`MIGRATION_DRILL_WRITE_POLICY_SNAPSHOT=1 bash scripts/dev/run-migration-drill.sh anchor` → `[5/5] Gate RLS-SNAP PASS`（798 表 / 810 策略）；改后只读重跑 61s 亦 PASS。
+
+### 7.4 分支与历史卫生
+
+| 项 | 结果 | 可还原性 |
+|---|---|---|
+| 本地分支 | 15 → 3（`main`、`w7-b4-wms-rls-window-runbook`、`wcs-save-20261012`） | `~/TOPEMS-local-branches-archive-20261119.bundle`（177M，`git bundle verify` 通过） |
+| 远端分支 | 31 → 3（`main`、`fix/i18n-placeholder-cleanup`、`w7-b4-wms-rls-window-runbook`） | `~/TOPEMS-remote-branches-archive-20261119.bundle`（128M，同样 verify 通过） |
+| 判定依据 | 12 个 `--merged origin/main`；9 个 `git cherry` 未合入=0；6 个重写前备份（落后 7235 个提交）经业务确认后删除 | 删前均已打包 |
+| 仓库体积 | `git gc --prune=now` 后 `.git` 339M → 232M；整仓 5.4G（`node_modules` 1.7G / `releases` 1.6G / `target` 1.4G） | — |
+| 密钥扫描 | `gitleaks-full`（CI 口径 `--remotes`）8893 commits / 773MB / 51s，`no leaks found` | — |
+
+### 7.5 CI 红的唯一原因与发布判据
+
+- 所有 workflow 的 job 注解均为 `The job was not started because recent account payments have failed or your spending limit needs to be increased`：**job 未启动**，与代码无关，只能账号侧处理（Settings → Billing & plans）。
+- 计费恢复前，发布判据改为：**本地 pre-push 门禁全绿 + `gitleaks-full` PASS + drill `[5/5]` PASS**；CI 绿不可作为依据。计费恢复后执行 C6 建立基线，并补齐 §0.1 中 `facts:check` / `check:ledger` 两项红。
