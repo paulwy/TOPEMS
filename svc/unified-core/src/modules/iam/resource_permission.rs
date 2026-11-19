@@ -1154,7 +1154,7 @@ async fn run_acl_list(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["unified-core:iam:resource_acl:read"])),
-    path = "/roles/{id}/resource-permissions",
+    path = "/iam/roles/{id}/resource-permissions",
     tag = "IAM-ResourceAcl",
     params(
         ("id" = String, Path, description = "角色 ID"),
@@ -1209,7 +1209,7 @@ pub async fn list_role_resource_permissions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["unified-core:iam:resource_acl:read"])),
-    path = "/users/{user_id}/resource-permissions",
+    path = "/iam/users/{user_id}/resource-permissions",
     tag = "IAM-ResourceAcl",
     params(
         ("user_id" = String, Path, description = "用户 ID"),
@@ -1274,7 +1274,7 @@ pub async fn list_user_resource_permissions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["unified-core:iam:resource_acl:read"])),
-    path = "/resource-permissions",
+    path = "/iam/resource-permissions",
     tag = "IAM-ResourceAcl",
     params(
         ("resource_type" = String, Query, description = "资源类型，必填"),
