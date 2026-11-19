@@ -184,10 +184,7 @@ pub fn create_routes(
         // API 版本配置管理（core_api_version_configs）：handler 齐全但从未挂载
         .merge(
             Router::new()
-                .route(
-                    "/versions",
-                    get(middleware::versioning::list_versions),
-                )
+                .route("/versions", get(middleware::versioning::list_versions))
                 .route(
                     "/versions/statistics",
                     get(middleware::versioning::get_version_statistics),
@@ -203,10 +200,7 @@ pub fn create_routes(
         )
         .merge(
             Router::new()
-                .route(
-                    "/versions",
-                    post(middleware::versioning::create_version),
-                )
+                .route("/versions", post(middleware::versioning::create_version))
                 .route(
                     "/versions/{version}",
                     put(middleware::versioning::update_version_status)

@@ -66,11 +66,21 @@
 #   （URL DSN 追加 options=-csearch_path%3Dpublic；socket/SSH 用 PGOPTIONS）。
 #   只影响本脚本发起的 psql，不改 .env、不改迁移文件、不影响 checksum。
 #
+# 演练专用闸门 GUC（不用于 prod / SSH）：
+#   --drill-gate-guc-auto
+#   迁移文件里显式要求 `current_setting('app.xxx', true)` 比较某个值时，按文件语义
+#   注入 `SET app.xxx = '<value>';` 后再 `\i` 该文件。仅用于隔离库演练，prod 拒绝。
+#   同时注入系统通道 `SET app.rls_system = 'on';`：prod 迁移由特权会话执行（绕过 RLS），
+#   演练按要求走非特权连接，必须用既有系统通道等价还原「迁移能看见平台行」的语义；
+#   否则 FORCE RLS 会把 public.core_roles 等平台模板行过滤掉，导致种子/授权类迁移
+#   在演练里假失败（实测 20261118125000 断言 admin 绑定 0 条）。
+#
 # 用法：
 #   bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 #     --anchor 20261105235700 --only 20261107000008,20261107000013 \
 #     --defer 20261105235800,20261106000000,...
 #   bash scripts/migration/apply-forward.sh --dsn "$DSN" --anchor 20261105235700
+#   bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto
 #   bash scripts/migration/apply-forward.sh --db topems --apply-deferred 20261114100000 \
 #     --ticket CHG-2026-1114
 #   WINDOW_SSH_LOCAL_SIM=1 bash scripts/migration/apply-forward.sh \
@@ -101,6 +111,7 @@ REMOTE_PGHOST="${WINDOW_REMOTE_PGHOST:-/tmp}"
 LOCAL_SIM="${WINDOW_SSH_LOCAL_SIM:-0}"
 SSH_BIN="${WINDOW_SSH_BIN:-ssh}"
 REMOTE_PSQL_BIN="${WINDOW_REMOTE_PSQL_BIN:-/opt/homebrew/bin/psql}"
+GATE_GUC_AUTO=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -117,7 +128,8 @@ while [[ $# -gt 0 ]]; do
     --ssh-host) SSH_HOST="$2"; shift 2 ;;
     --remote-db) REMOTE_DB="$2"; shift 2 ;;
     --remote-mig-dir) REMOTE_MIG_DIR="$2"; shift 2 ;;
-    -h|--help) sed -n '2,75p' "$0"; exit 0 ;;
+    --drill-gate-guc-auto) GATE_GUC_AUTO=1; shift ;;
+    -h|--help) sed -n '2,82p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -214,6 +226,37 @@ else
   echo "需要 --dsn / --db，或 --ssh-host + --remote-db + --remote-mig-dir" >&2
   exit 2
 fi
+
+if [[ $GATE_GUC_AUTO -eq 1 ]]; then
+  if [[ $PROD -eq 1 ]]; then
+    echo "拒绝：--drill-gate-guc-auto 仅用于隔离库演练，prod 模式禁止自动注入闸门 GUC" >&2
+    exit 2
+  fi
+  if [[ $SSH_MODE -eq 1 ]]; then
+    echo "拒绝：--drill-gate-guc-auto 不支持 SSH 模式（无法在远端按文件注入 SET）" >&2
+    exit 2
+  fi
+fi
+
+gate_guc_prelude() {
+  local f="$1"
+  python3 - "$f" <<'PY'
+import re, sys
+sql = open(sys.argv[1], encoding="utf-8").read()
+# 只识别显式闸门：coalesce(current_setting('app.x', true), '') <> 'value'
+pairs = re.findall(
+    r"current_setting\(\s*'([A-Za-z_][A-Za-z0-9_.]*)'\s*,\s*true\s*\)"
+    r"\s*,\s*''\s*\)\s*<>\s*'([^']*)'",
+    sql,
+)
+seen = set()
+for guc, value in pairs:
+    if (guc, value) in seen:
+        continue
+    seen.add((guc, value))
+    print("SET %s = '%s';" % (guc, value.replace("'", "''")))
+PY
+}
 
 if [[ -z "$ANCHOR" ]]; then
   ANCHOR="$(psql_exec -tA -c "SELECT max(version) FROM _sqlx_migrations WHERE success")"
@@ -531,6 +574,10 @@ for f in "${PENDING[@]}"; do
     fi
   else
     {
+      if [[ $GATE_GUC_AUTO -eq 1 ]]; then
+        printf "SET app.rls_system = 'on';\n"
+        gate_guc_prelude "$f"
+      fi
       printf '\\i %s\n' "$f"
       printf "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES (%s, '%s', NOW(), true, decode('%s','hex'), 0);\n" "$v" "$desc" "$hex"
     } > "$tmp"

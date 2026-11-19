@@ -20,7 +20,8 @@
 # fail-closed：缺 psql/createdb/dropdb/sqlx、连不上 PG、建库失败、任一步失败
 #             均非 0；库名强制 topems_migration_drill_<pid>，绝不触碰生产库。
 #
-# 连接解析：MIGRATION_DRILL_DB_URL → DATABASE_URL → .env 的 MIGRATE_URL → 缺省 socket。
+# 连接解析：MIGRATION_DRILL_DB_URL → TEST_DATABASE_URL → DATABASE_URL → .env 的 MIGRATE_URL → 缺省 socket。
+#   - TEST_DATABASE_URL 优先于 DATABASE_URL，用于把演练固定到非特权测试角色（需 CREATEDB）。
 #   - 连接串无口令且未设置 PGPASSWORD/PGPASSFILE → 回落 socket
 #     （postgresql:///<库名>，本机 peer 认证），并打印实际用的来源。
 #   - 本机 pg_hba 把 127.0.0.1/32 改成 scram-sha-256 后，无口令 TCP 连接必然失败；
@@ -28,6 +29,12 @@
 #   - 连接成功后校验 current_user 的 rolsuper/rolbypassrls，命中即失败：
 #     这类连接会 BYPASSRLS，演练里的权限/RLS 校验恒真（2026-11-19 假绿事故）。
 #     仅本地演练可用 MIGRATION_DRILL_ALLOW_SUPERUSER=1 显式豁免（CI 不得设置）。
+#
+# 干净检出：脚本在 HEAD 创建独立 git worktree，迁移/基线/校验脚本全部从该检出读取，
+#   不扫描共享工作树里其他会话在途的迁移。仅把本脚本与 apply-forward.sh 两个受测脚本
+#   覆盖进 worktree（否则 HEAD 版本还没有闸门 GUC 注入逻辑）；数据库资产仍全部来自 HEAD。
+#   闸门 GUC（如 app.drop_dead_tables_gate）由 apply-forward.sh --drill-gate-guc-auto
+#   按迁移文件语义逐文件注入，prod/SSH 模式拒绝该参数。
 #
 # 用法：
 #   bash scripts/dev/run-migration-drill.sh anchor [--anchor 20261115130000]
@@ -38,6 +45,7 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -z "$ROOT" ]]; then echo "FAIL: 不在 git 仓库内" >&2; exit 1; fi
+SOURCE_ROOT="$ROOT"
 cd "$ROOT"
 
 MODE="${1:-}"
@@ -48,14 +56,32 @@ MODE="${1:-}"
 shift
 
 DB="topems_migration_drill_$$"
+TEMPLATE_DB="${MIGRATION_DRILL_TEMPLATE_DB:-topems_drill_template}"
+case "$TEMPLATE_DB" in
+    *topems_prod*) echo "FAIL: 拒绝：演练模板库不得指向 topems_prod" >&2; exit 1 ;;
+esac
 ALLOW_SUPERUSER="${MIGRATION_DRILL_ALLOW_SUPERUSER:-}"
 
-# ---- 连接串解析：MIGRATION_DRILL_DB_URL → DATABASE_URL → .env MIGRATE_URL → socket 默认 ----
+# ---- 连接串解析：MIGRATION_DRILL_DB_URL → TEST_DATABASE_URL → DATABASE_URL → .env MIGRATE_URL → socket 默认 ----
 read_env_migrate_url() {
-    local f="$ROOT/.env" line
+    local f="$SOURCE_ROOT/.env" line
     [[ -f "$f" ]] || return 0
     while IFS= read -r line || [[ -n "$line" ]]; do
         if [[ "$line" =~ ^[[:space:]]*MIGRATE_URL=(.*)$ ]]; then
+            line="${BASH_REMATCH[1]}"
+            line="${line%\"}"; line="${line#\"}"
+            line="${line%\'}"; line="${line#\'}"
+            printf '%s\n' "$line"
+            return 0
+        fi
+    done < "$f"
+}
+
+read_env_value() {
+    local key="$1" f="$SOURCE_ROOT/.env" line
+    [[ -f "$f" ]] || return 0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$line" =~ ^[[:space:]]*${key}=(.*)$ ]]; then
             line="${BASH_REMATCH[1]}"
             line="${line%\"}"; line="${line#\"}"
             line="${line%\'}"; line="${line#\'}"
@@ -82,16 +108,24 @@ url_is_socket() {
 if [[ -n "${MIGRATION_DRILL_DB_URL:-}" ]]; then
     BASE_DSN="$MIGRATION_DRILL_DB_URL"
     DSN_SOURCE="MIGRATION_DRILL_DB_URL（环境变量）"
-elif [[ -n "${DATABASE_URL:-}" ]]; then
-    BASE_DSN="$DATABASE_URL"
-    DSN_SOURCE="DATABASE_URL（环境变量/外层 shell 导出）"
+elif [[ -n "${TEST_DATABASE_URL:-}" ]]; then
+    BASE_DSN="$TEST_DATABASE_URL"
+    DSN_SOURCE="TEST_DATABASE_URL（环境变量）"
 else
-    BASE_DSN="$(read_env_migrate_url)"
+    BASE_DSN="$(read_env_value TEST_DATABASE_URL)"
     if [[ -n "$BASE_DSN" ]]; then
-        DSN_SOURCE=".env 的 MIGRATE_URL"
+        DSN_SOURCE=".env 的 TEST_DATABASE_URL"
+    elif [[ -n "${DATABASE_URL:-}" ]]; then
+        BASE_DSN="$DATABASE_URL"
+        DSN_SOURCE="DATABASE_URL（环境变量/外层 shell 导出）"
     else
-        BASE_DSN="postgresql:///postgres"
-        DSN_SOURCE="缺省 socket（peer 认证）"
+        BASE_DSN="$(read_env_migrate_url)"
+        if [[ -n "$BASE_DSN" ]]; then
+            DSN_SOURCE=".env 的 MIGRATE_URL"
+        else
+            BASE_DSN="postgresql:///postgres"
+            DSN_SOURCE="缺省 socket（peer 认证）"
+        fi
     fi
 fi
 
@@ -132,6 +166,38 @@ while [[ $# -gt 0 ]]; do
         --svc) SVC_DIRS+=("$2"); shift 2 ;;
         *) echo "未知参数: $1" >&2; exit 2 ;;
     esac
+done
+
+# ---- HEAD 干净检出：迁移/基线/校验全部来自 HEAD，避免带进共享工作树在途迁移 ----
+HEAD_SHA="$(git -C "$SOURCE_ROOT" rev-parse HEAD)"
+DRILL_WORKTREE="$(mktemp -d "${TMPDIR:-/tmp}/topems-drill-head.XXXXXX")"
+rmdir "$DRILL_WORKTREE" 2>/dev/null || {
+    echo "FAIL: 无法准备 worktree 目录 ${DRILL_WORKTREE}" >&2
+    exit 1
+}
+cleanup_worktree() {
+    git -C "$SOURCE_ROOT" worktree remove --force "$DRILL_WORKTREE" >/dev/null 2>&1 || rm -rf "$DRILL_WORKTREE"
+}
+if ! git -C "$SOURCE_ROOT" worktree add --detach --quiet "$DRILL_WORKTREE" "$HEAD_SHA"; then
+    echo "FAIL: 无法在 ${DRILL_WORKTREE} 创建 HEAD(${HEAD_SHA}) 的干净检出" >&2
+    rm -rf "$DRILL_WORKTREE"
+    exit 1
+fi
+# 仅覆盖两个受测脚本；迁移/基线/校验脚本仍全部来自 HEAD。
+cp "$SOURCE_ROOT/scripts/dev/run-migration-drill.sh" "$DRILL_WORKTREE/scripts/dev/run-migration-drill.sh"
+cp "$SOURCE_ROOT/scripts/migration/apply-forward.sh" "$DRILL_WORKTREE/scripts/migration/apply-forward.sh"
+ROOT="$DRILL_WORKTREE"
+cd "$ROOT"
+echo "[worktree] HEAD ${HEAD_SHA} → ${DRILL_WORKTREE}；迁移/基线/校验只读该检出"
+trap 'cleanup_worktree' EXIT
+
+for dir in "${SVC_DIRS[@]:-}"; do
+    [[ -z "$dir" ]] && continue
+    [[ -d "$ROOT/$dir" ]] || {
+        echo "FAIL: --svc 目录在 HEAD 干净检出中不存在：${dir}" >&2
+        cleanup_worktree
+        exit 1
+    }
 done
 
 for bin in psql createdb dropdb; do
@@ -182,18 +248,64 @@ fi
 
 echo "[conn] 来源 ${DSN_SOURCE}；维护库 ${ADMIN_DSN_SHOWN}；身份 current_user=${CONN_USER}（rolsuper=${ROLSUPER}，rolbypassrls=${ROLBYPASS}）"
 
+TEMPLATE_OK="$(psql "$ADMIN_DSN" -v ON_ERROR_STOP=1 -tAc \
+    "SELECT datistemplate::text FROM pg_database WHERE datname = '${TEMPLATE_DB//\'/\'\'}'" 2>/dev/null || true)"
+if [[ "$TEMPLATE_OK" != "t" && "$TEMPLATE_OK" != "true" ]]; then
+    cat >&2 <<EOF
+FAIL: 演练模板库 ${TEMPLATE_DB} 不存在或未标记为模板
+  先执行一次性 bootstrap（仅本机特权，不触碰 topems_prod）：
+    bash scripts/dev/bootstrap-migration-drill-template.sh
+  为什么需要：anchor 基线快照含 CREATE EXTENSION（pgcrypto / uuid-ossp / vector），
+  非特权角色无法在新库创建；模板库预装扩展后，演练用 createdb --template 复制。
+EOF
+    exit 1
+fi
+echo "[template] ${TEMPLATE_DB}（IS_TEMPLATE=true）"
+
 cleanup() {
     dropdb --if-exists --maintenance-db="$ADMIN_DSN" "$DB" >/dev/null 2>&1 || true
+    cleanup_worktree
+    rm -f "${FORCE_RLS_SQL:-}" "${CONN_ERR:-}" 2>/dev/null || true
 }
 trap cleanup EXIT
 
 phase() { PHASE_START=$(date +%s); }
 phase_end() { echo "  ↳ $1 耗时 $(( $(date +%s) - PHASE_START ))s"; }
 
+# 基线数据恢复以演练角色（表 owner）执行；FORCE RLS 会连 owner 一起挡住。
+# 仅在该步临时 NO FORCE，数据恢复后按原清单恢复 FORCE；迁移/校验仍看到原策略。
+capture_and_disable_forced_rls() {
+    psql "$DSN" -v ON_ERROR_STOP=1 -Atq -c "
+        SELECT format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY;', n.nspname, c.relname)
+        FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relkind IN ('r','p') AND c.relforcerowsecurity
+        ORDER BY 1
+    " > "$FORCE_RLS_SQL" || return 1
+    psql "$DSN" -v ON_ERROR_STOP=1 -q -c "
+        DO \$\$
+        DECLARE r record;
+        BEGIN
+            FOR r IN
+                SELECT n.nspname, c.relname
+                FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE c.relkind IN ('r','p') AND c.relforcerowsecurity
+            LOOP
+                EXECUTE format('ALTER TABLE %I.%I NO FORCE ROW LEVEL SECURITY', r.nspname, r.relname);
+            END LOOP;
+        END \$\$;
+    " || return 1
+}
+
+restore_forced_rls() {
+    if [[ -s "$FORCE_RLS_SQL" ]]; then
+        psql "$DSN" -v ON_ERROR_STOP=1 -q -f "$FORCE_RLS_SQL" || return 1
+    fi
+}
+
 TOTAL_START=$(date +%s)
 echo "== 迁移演练 / ${MODE}（隔离库 ${DB}）=="
 
-createdb --maintenance-db="$ADMIN_DSN" "$DB" || { echo "FAIL: createdb 失败（维护库 ${ADMIN_DSN_SHOWN}）" >&2; exit 1; }
+createdb --maintenance-db="$ADMIN_DSN" --template="$TEMPLATE_DB" "$DB" || { echo "FAIL: createdb 失败（维护库 ${ADMIN_DSN_SHOWN}，模板 ${TEMPLATE_DB}）" >&2; exit 1; }
 
 if [[ "$MODE" == "zero" ]]; then
     # ---------------- drill:zero：空库全链（已知缺陷） ----------------
@@ -248,6 +360,7 @@ PY
 SCHEMA_GZ="$BASE_DIR/prod_schema_${ANCHOR}.sql.gz"
 LEDGER_SQL="$BASE_DIR/prod_ledger_${ANCHOR}.sql"
 DATA_GZ="$BASE_DIR/baseline_${ANCHOR}_data.sql.gz"
+FORCE_RLS_SQL="$(mktemp "${TMPDIR:-/tmp}/topems-drill-force-rls.XXXXXX")"
 for f in "$SCHEMA_GZ" "$LEDGER_SQL" "$DATA_GZ"; do
     [[ -f "$f" ]] || {
         echo "FAIL: 锚点 ${ANCHOR} 缺基线资产 ${f}" >&2
@@ -263,16 +376,21 @@ fi
 
 echo "[1/4] 恢复基线快照（anchor=${ANCHOR}）"
 phase
-gzip -dc "$SCHEMA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null || { echo "FAIL: schema 快照恢复失败" >&2; exit 1; }
+# 基线 pg_dump 末尾有 COMMENT ON EXTENSION；扩展由 bootstrap 以特权角色预装，
+# 演练角色不是扩属主，COMMENT 会报 "must be owner of extension"。
+# 只过滤扩展注释（纯元数据），其余 schema 语句原样恢复。
+gzip -dc "$SCHEMA_GZ" | grep -v '^COMMENT ON EXTENSION ' | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null || { echo "FAIL: schema 快照恢复失败" >&2; exit 1; }
+capture_and_disable_forced_rls || { echo "FAIL: 临时关闭 FORCE RLS 失败" >&2; exit 1; }
 psql "$DSN" -v ON_ERROR_STOP=1 -q -f "$LEDGER_SQL" >/dev/null || { echo "FAIL: 账本恢复失败" >&2; exit 1; }
 gzip -dc "$DATA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null || { echo "FAIL: 参考数据恢复失败" >&2; exit 1; }
+restore_forced_rls || { echo "FAIL: 恢复 FORCE RLS 失败" >&2; exit 1; }
 LEDGER_MAX="$(psql "$DSN" -tAc "SELECT max(version) FROM _sqlx_migrations WHERE success")"
 [[ "$LEDGER_MAX" == "$ANCHOR" ]] || { echo "FAIL: 账本 max(version)=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
 phase_end "恢复基线"
 
 echo "[2/4] 前向迁移（apply-forward.sh，只应用 version > ${ANCHOR}）"
 phase
-bash scripts/migration/apply-forward.sh --dsn "$DSN" || { echo "FAIL: 前向迁移失败" >&2; exit 1; }
+bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto || { echo "FAIL: 前向迁移失败" >&2; exit 1; }
 phase_end "前向迁移"
 
 echo "[3/4] 迁移静态校验 + 权限码审计"
@@ -286,11 +404,16 @@ phase
 # 整库重建而不是 DROP SCHEMA：基线快照含 _sqlx_test/ai/... 多个 schema，
 # 只删 public 会让快照里的 CREATE SCHEMA 撞车。
 dropdb --if-exists --maintenance-db="$ADMIN_DSN" "$DB" >/dev/null 2>&1 || true
-createdb --maintenance-db="$ADMIN_DSN" "$DB" || { echo "FAIL: 重放前重建库失败（维护库 ${ADMIN_DSN_SHOWN}）" >&2; exit 1; }
-gzip -dc "$SCHEMA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null
+createdb --maintenance-db="$ADMIN_DSN" --template="$TEMPLATE_DB" "$DB" || { echo "FAIL: 重放前重建库失败（维护库 ${ADMIN_DSN_SHOWN}，模板 ${TEMPLATE_DB}）" >&2; exit 1; }
+# 基线 pg_dump 末尾有 COMMENT ON EXTENSION；扩展由 bootstrap 以特权角色预装，
+# 演练角色不是扩属主，COMMENT 会报 "must be owner of extension"。
+# 只过滤扩展注释（纯元数据），其余 schema 语句原样恢复。
+gzip -dc "$SCHEMA_GZ" | grep -v '^COMMENT ON EXTENSION ' | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null
+capture_and_disable_forced_rls || { echo "FAIL: 重放前临时关闭 FORCE RLS 失败" >&2; exit 1; }
 psql "$DSN" -v ON_ERROR_STOP=1 -q -f "$LEDGER_SQL" >/dev/null
 gzip -dc "$DATA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null
-bash scripts/migration/apply-forward.sh --dsn "$DSN" >/dev/null || { echo "FAIL: 重放前向迁移失败" >&2; exit 1; }
+restore_forced_rls || { echo "FAIL: 重放前恢复 FORCE RLS 失败" >&2; exit 1; }
+bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto >/dev/null || { echo "FAIL: 重放前向迁移失败" >&2; exit 1; }
 phase_end "up-down-up"
 
 for dir in "${SVC_DIRS[@]:-}"; do
@@ -300,12 +423,12 @@ for dir in "${SVC_DIRS[@]:-}"; do
     phase
     # 独立 service 迁移账本：整库重建，避免套用主链基线
     dropdb --if-exists --maintenance-db="$ADMIN_DSN" "$DB" >/dev/null 2>&1 || true
-    createdb --maintenance-db="$ADMIN_DSN" "$DB" || { echo "FAIL: ${svc} 重放前重建库失败（维护库 ${ADMIN_DSN_SHOWN}）" >&2; exit 1; }
+    createdb --maintenance-db="$ADMIN_DSN" --template="$TEMPLATE_DB" "$DB" || { echo "FAIL: ${svc} 重放前重建库失败（维护库 ${ADMIN_DSN_SHOWN}，模板 ${TEMPLATE_DB}）" >&2; exit 1; }
     psql "$DSN" -v ON_ERROR_STOP=1 -q -c "CREATE SCHEMA IF NOT EXISTS \"$svc\";" \
         || { echo "FAIL: ${svc} 建 schema 失败" >&2; exit 1; }
     "$SQLX" migrate run --source "$dir" --database-url "$DSN" || { echo "FAIL: $svc 首次 up 失败" >&2; exit 1; }
     dropdb --if-exists --maintenance-db="$ADMIN_DSN" "$DB" >/dev/null 2>&1 || true
-    createdb --maintenance-db="$ADMIN_DSN" "$DB" || { echo "FAIL: ${svc} 重放重建库失败（维护库 ${ADMIN_DSN_SHOWN}）" >&2; exit 1; }
+    createdb --maintenance-db="$ADMIN_DSN" --template="$TEMPLATE_DB" "$DB" || { echo "FAIL: ${svc} 重放重建库失败（维护库 ${ADMIN_DSN_SHOWN}，模板 ${TEMPLATE_DB}）" >&2; exit 1; }
     psql "$DSN" -v ON_ERROR_STOP=1 -q -c "CREATE SCHEMA IF NOT EXISTS \"$svc\";" \
         || { echo "FAIL: ${svc} 重放建 schema 失败" >&2; exit 1; }
     "$SQLX" migrate run --source "$dir" --database-url "$DSN" || { echo "FAIL: $svc 重放失败" >&2; exit 1; }
