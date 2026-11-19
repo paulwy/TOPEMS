@@ -72,7 +72,7 @@
 ### 1.4 迁移脚本闸门（实测）
 
 - `apply-forward.sh` 在 DDL 前对每条破坏性语句做行数预演，超过 `destructive-max-rows`（`DROP TABLE` 必须为 0）即拒绝；票据不能绕过行数闸门。
-- 预演**不是只读事务**：它必须真实执行 DML 再 `ROLLBACK`，因此脚本拒绝会逃出事务或不可回滚的语句（`COMMIT`/`ROLLBACK`、`nextval`、`CREATE/DROP INDEX CONCURRENTLY`、`VACUUM`、`ALTER SYSTEM`、`CREATE/DROP DATABASE`），由预演生成器 fail-closed 中止。
+- 预演**不是只读事务**：它必须真实执行 DML 再 `ROLLBACK`，因此脚本拒绝会逃出事务或不可回滚的语句（`COMMIT`/`ROLLBACK`、`nextval`、`CREATE/DROP INDEX CONCURRENTLY`、`VACUUM`、`ALTER SYSTEM`、`CREATE/DROP DATABASE`），由预演生成器 fail-closed 中止；临时表的 `ON COMMIT` 子句（`DROP`/`PRESERVE ROWS`/`DELETE ROWS`）不结束事务，检测前先剔除。
 - 预演会话自行注入 `SET app.rls_system='on'` 与迁移文件声明的全部 `app.*_gate`：调用方不传 `PGOPTIONS` 也能看到 FORCE RLS 后的真实行数、通过闸门断言。prod 与 drill 两种模式都执行预演；drill 对文件自带 `destructive-ticket` 自动批准（隔离库），无标记的破坏性语句只提示、不阻断演练。
 - apply 段在 prod 仍不自行注入 GUC（`--drill-gate-guc-auto` 仅限演练）；开窗执行时 `PGOPTIONS` 必须自己带上 `-c app.rls_system=on` 与对应闸门 GUC。
 - `--apply-deferred` 只接受单个 14 位版本，必须同时带 `--ticket`，不可与 `--anchor/--only/--defer` 组合。

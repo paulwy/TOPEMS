@@ -85,6 +85,7 @@
 #   default_transaction_read_only=on。改为在生成预演 SQL 时拒绝无法回滚/会脱离
 #   事务的语句（COMMIT/ROLLBACK、nextval、CREATE INDEX CONCURRENTLY、VACUUM、
 #   ALTER SYSTEM、CREATE/DROP DATABASE 等），由 node 生成器 fail-closed 中止。
+#   临时表的 ON COMMIT {DROP|PRESERVE ROWS|DELETE ROWS} 子句不结束事务，检测前先剔除。
 #
 # 用法：
 #   bash scripts/migration/apply-forward.sh --db topems_prod --prod \
@@ -533,7 +534,12 @@ for v in ${PENDING_DG[@]+"${PENDING_DG[@]}"}; do
     const strip = (s) => String(s)
       .replace(/\/\*[\s\S]*?\*\//g, " ")
       .replace(/--[^\n]*/g, " ")
-      .replace(/'(?:[^']|'')*'/g, "''");
+      .replace(/'(?:[^']|'')*'/g, "''")
+      // ON COMMIT {DROP | PRESERVE ROWS | DELETE ROWS} 是临时表子句，不结束事务；
+      // 三种写法必须整体剔除，否则下面的 \bCOMMIT\b 会把临时表 DDL 误判成事务级 COMMIT
+      // （2026-11-19 drill 在 20261119200000 第 486 行 ON COMMIT DROP 处误报）。
+      // \s+ 容忍大小写、多空格与换行。
+      .replace(/\bON\s+COMMIT\s+(?:DROP|PRESERVE\s+ROWS|DELETE\s+ROWS)\b/gi, " ");
     const UNSAFE = [
       [/\bCOMMIT\b/i, "COMMIT 会提前结束预演事务，后续语句将在事务外真实执行"],
       [/\bROLLBACK\b/i, "ROLLBACK 会提前结束预演事务，后续语句将在事务外真实执行"],
