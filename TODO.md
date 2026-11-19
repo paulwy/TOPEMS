@@ -24,7 +24,7 @@
 | 说明 | 旧版本引用的 `docs/archive/misc/TODO_backup_20261107.md` 实际不存在，已从本文件移除该死链 |
 | 2026-11-19 增补 | 新增 §1.F 前端真实性 F1–F11（11 条，**未开工**）；依据 [主模块功能缺陷与前后端补位评估-2026-11-19](docs/quality/主模块功能缺陷与前后端补位评估-2026-11-19.md)，无既有条目重复 |
 
-### 0.1 当前阻断读数（2026-11-19 实测，HEAD `38c064dd3`）
+### 0.1 当前阻断读数（2026-11-20 复测，HEAD `d420891a6`）
 
 | 项 | 读数 | 来源 / 命令 |
 |---|---|---|
@@ -32,9 +32,9 @@
 | `cargo clippy --workspace --all-targets` | 绿（4 crate / 8 处已修，2026-11-17） | 见 §3.2 |
 | `facts:check` | **绿：62 项一致**（同日核销：`schema_prefix` 基线 306→287 条、`request-txn` 基线 26 项 erp `bare_txn` 351→350；观测值按当前代码重建） | `node scripts/report/facts.mjs --check docs/quality/facts-latest.json` |
 | `check:ledger` | **绿：4 本全部 OK**（`schema-prefix` / `request-txn` / `tenant-context` / `txn-write-non2xx` 均 stale 0、unregistered 0） | `node scripts/ci/check-ledger-staleness.mjs` |
-| `gen-manifest --check` | 绿：`registered=191 disk=784 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
+| `gen-manifest --check` | 绿：`registered=195 disk=788 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0`、`checksum_mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
 | API 审计闸门 | 绿（2026-11-17：P6 RED=0、p7 `not_legal=0`；`lefthook.yml` 已去 `--dry-run`） | 见 §3.2 |
-| 权限对账脚本 | 绿：`DB 来源：live`、DB=1021 | `scripts/audit_permission_codes.py`；见 §3.1 |
+| 权限对账脚本 | 绿：`DB 来源：live`、DB=1021、FE 1060 / BE 624 / ∩195、db_only 0、命名不一致组 0 | `python3 scripts/audit_permission_codes.py`；见 §3.1 |
 | GitHub Actions | **红，唯一原因 = 账号计费**（`The job was not started because recent account payments have failed...`，job 未启动，非代码） | `gh api repos/paulwy/TOPEMS/actions/runs/<id>/jobs`；见 §7.4 |
 
 ---
