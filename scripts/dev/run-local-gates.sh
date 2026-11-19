@@ -168,7 +168,9 @@ stage_fast() {
   need_file scripts/ci/check-api.cjs && run_gate "API 三合一审计" "node scripts/ci/check-api.cjs --mode=all"
   need_file scripts/ci/check-api-boundary.cjs && run_gate "API 边界" "node scripts/ci/check-api-boundary.cjs"
   need_file scripts/ci/check-openapi-coverage.cjs && run_gate "OpenAPI 覆盖" "node scripts/ci/check-openapi-coverage.cjs"
-  need_file scripts/ci/check-openapi-aggregated.cjs && run_gate "OpenAPI 聚合棘轮" "node scripts/ci/check-openapi-aggregated.cjs"
+  # 聚合产物自 2026-11-19 起不再入库（见 docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md），
+  # 本地/夜间链路在产物缺失时跳过该棘轮；CI 侧仍按原口径传产物
+  need_file scripts/ci/check-openapi-aggregated.cjs && run_gate "OpenAPI 聚合棘轮" "node scripts/ci/check-openapi-aggregated.cjs --allow-missing"
   need_file scripts/ci/check-decode-contract.mjs && run_gate "解码契约" "node scripts/ci/check-decode-contract.mjs scripts/ci/data/prod_cols.psv"
 
   # 前端
