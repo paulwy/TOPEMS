@@ -118,8 +118,6 @@ const mapApiInspections = (apiChecks: ApiQualityCheckCompat[]): Inspection[] => 
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockInspections
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -128,71 +126,6 @@ const formatDateTime = (value?: string) => {
 const QmsInspectionPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  const mockInspections: Inspection[] = [
-    {
-      id: '1',
-      check_no: 'QC202609001',
-      title: t('qms.demo.insp_title_1'),
-      inspection_type: 'incoming',
-      status: 'pending',
-      product_name: t('qms.demo.product_servo'),
-      batch_no: 'BATCH-2026-0901',
-      quantity: 500,
-      created_at: '2026-09-13 09:00:00',
-    },
-    {
-      id: '2',
-      check_no: 'QC202609002',
-      title: t('qms.demo.insp_title_2'),
-      inspection_type: 'process',
-      status: 'in_progress',
-      product_name: t('qms.demo.product_plc'),
-      batch_no: 'BATCH-2026-0902',
-      inspector: t('qms.demo.person_zhang'),
-      quantity: 200,
-      created_at: '2026-09-13 10:30:00',
-    },
-    {
-      id: '3',
-      check_no: 'QC202609003',
-      title: t('qms.demo.insp_title_3'),
-      inspection_type: 'final',
-      status: 'completed',
-      product_name: t('qms.demo.product_inverter'),
-      batch_no: 'BATCH-2026-0899',
-      inspector: t('qms.demo.person_li'),
-      result: 'qualified',
-      quantity: 320,
-      created_at: '2026-09-12 14:00:00',
-      completed_at: '2026-09-12 16:30:00',
-    },
-    {
-      id: '4',
-      check_no: 'QC202609004',
-      title: t('qms.demo.insp_title_4'),
-      inspection_type: 'incoming',
-      status: 'rejected',
-      product_name: t('qms.demo.product_camera'),
-      batch_no: 'BATCH-2026-0898',
-      inspector: t('qms.demo.person_wang'),
-      result: 'unqualified',
-      quantity: 1500,
-      created_at: '2026-09-11 11:00:00',
-      completed_at: '2026-09-11 15:00:00',
-    },
-    {
-      id: '5',
-      check_no: 'QC202609005',
-      title: t('qms.demo.insp_title_5'),
-      inspection_type: 'process',
-      status: 'pending',
-      product_name: t('qms.demo.product_hmi'),
-      batch_no: 'BATCH-2026-0903',
-      quantity: 100,
-      created_at: '2026-09-13 15:00:00',
-    },
-  ];
 
   const statusConfig = useMemo(
     () => ({
@@ -256,7 +189,6 @@ const QmsInspectionPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Inspection | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -303,26 +235,14 @@ const QmsInspectionPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiChecks.length;
         }
-        // API 成功（含空结果）即使用真实数据：空结果显示空列表而非 mock 数据
-        setIsMockData(false);
+        // API 成功（含空结果）即使用真实数据：空结果显示空列表
         return { inspections: mapApiInspections(apiChecks), total };
       } catch (e) {
-        console.warn('[QMS Inspections] API unavailable, using mock data:', e);
-        setIsMockData(true);
+        console.error('[QMS Inspections] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('qms.inspection_redesign.toast_list_fail', '质检单加载失败'));
       }
-      // 仅当 API 调用失败（抛异常）时才到达此处：空结果不落入 mock fallback
-      // Mock fallback：本地分页
-      let filtered = mockInspections;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (i) => i.check_no.includes(debouncedSearch) || i.product_name.includes(debouncedSearch)
-        );
-      }
-      if (typeFilter !== 'all') {
-        filtered = filtered.filter((i) => i.inspection_type === typeFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { inspections: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
@@ -351,36 +271,19 @@ const QmsInspectionPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Inspection>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        await inspectionApi.createCheck({
-          inspection_type: data.inspection_type ?? 'incoming',
-          product_name: data.product_name,
-          standard_id: data.standard_id,
-          quantity: Number(data.quantity ?? 100),
-          created_by: data.created_by,
-        } as CreateQualityCheckRequest);
-      } catch (e) {
-        console.warn('[QMS Inspections] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      await inspectionApi.createCheck({
+        inspection_type: data.inspection_type ?? 'incoming',
+        product_name: data.product_name,
+        standard_id: data.standard_id,
+        quantity: Number(data.quantity ?? 100),
+        created_by: data.created_by,
+      } as CreateQualityCheckRequest);
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t('qms.inspection_redesign.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('qms.inspection_redesign.toast_create_success'));
-      }
+      pushToast('success', t('qms.inspection_redesign.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('qms.inspection_redesign.toast_create_fail'));
@@ -389,32 +292,18 @@ const QmsInspectionPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Inspection> }) => {
-      let apiFailed = false;
-      try {
-        await inspectionApi.updateCheck(id, {
-          inspection_type: data.inspection_type,
-          product_name: data.product_name,
-          standard_id: data.standard_id,
-          quantity: data.quantity !== undefined ? Number(data.quantity) : undefined,
-        } as CreateQualityCheckRequest);
-      } catch (e) {
-        console.warn('[QMS Inspections] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      await inspectionApi.updateCheck(id, {
+        inspection_type: data.inspection_type,
+        product_name: data.product_name,
+        standard_id: data.standard_id,
+        quantity: data.quantity !== undefined ? Number(data.quantity) : undefined,
+      } as CreateQualityCheckRequest);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast(
-          'warning',
-          t('qms.inspection_redesign.mock_update_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('qms.inspection_redesign.toast_update_success'));
-      }
+      pushToast('success', t('qms.inspection_redesign.toast_update_success'));
     },
     onError: () => {
       pushToast('error', t('qms.inspection_redesign.toast_update_fail'));
@@ -577,21 +466,6 @@ const QmsInspectionPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('qms.inspection_redesign.banner_demo_mode')}
-        </div>
-      )}
       <ListPageTemplate<Inspection>
         header={{
           title: t('qms.inspection_redesign.header_title'),

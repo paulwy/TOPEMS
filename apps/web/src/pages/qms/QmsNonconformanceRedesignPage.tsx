@@ -122,8 +122,6 @@ const mapApiNonconformances = (apiIssues: ApiQualityIssueCompat[]): Nonconforman
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockNonconformances
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -132,84 +130,6 @@ const formatDateTime = (value?: string) => {
 const QmsNonconformancePage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  const mockNonconformances: Nonconformance[] = [
-    {
-      id: '1',
-      nc_no: 'NC202609001',
-      title: t('qms.demo.nc_title_1'),
-      nc_type: 'product',
-      severity: 'minor',
-      status: 'open',
-      product_name: t('qms.demo.product_servo'),
-      batch_no: 'BATCH-2026-0901',
-      quantity: 12,
-      discovered_by: t('qms.demo.person_zhang'),
-      discovered_date: '2026-09-13',
-      description: t('qms.demo.nc_desc_1'),
-      created_at: '2026-09-13 10:00:00',
-    },
-    {
-      id: '2',
-      nc_no: 'NC202609002',
-      title: t('qms.demo.nc_title_2'),
-      nc_type: 'process',
-      severity: 'major',
-      status: 'investigating',
-      product_name: t('qms.demo.product_plc'),
-      batch_no: 'BATCH-2026-0902',
-      quantity: 5,
-      discovered_by: t('qms.demo.person_li'),
-      discovered_date: '2026-09-12',
-      description: t('qms.demo.nc_desc_2'),
-      created_at: '2026-09-12 14:30:00',
-    },
-    {
-      id: '3',
-      nc_no: 'NC202609003',
-      title: t('qms.demo.nc_title_3'),
-      nc_type: 'material',
-      severity: 'minor',
-      status: 'contained',
-      product_name: t('qms.demo.product_camera'),
-      batch_no: 'BATCH-2026-0898',
-      quantity: 30,
-      discovered_by: t('qms.demo.person_wang'),
-      discovered_date: '2026-09-11',
-      description: t('qms.demo.nc_desc_3'),
-      created_at: '2026-09-11 09:00:00',
-    },
-    {
-      id: '4',
-      nc_no: 'NC202608001',
-      title: t('qms.demo.nc_title_4'),
-      nc_type: 'product',
-      severity: 'critical',
-      status: 'resolved',
-      product_name: t('qms.demo.product_inverter'),
-      batch_no: 'BATCH-2026-0899',
-      quantity: 2,
-      discovered_by: t('qms.demo.person_zhao'),
-      discovered_date: '2026-08-28',
-      description: t('qms.demo.nc_desc_4'),
-      created_at: '2026-08-28 11:00:00',
-    },
-    {
-      id: '5',
-      nc_no: 'NC202608002',
-      title: t('qms.demo.nc_title_5'),
-      nc_type: 'product',
-      severity: 'major',
-      status: 'closed',
-      product_name: t('qms.demo.product_hmi'),
-      batch_no: 'BATCH-2026-0897',
-      quantity: 8,
-      discovered_by: t('qms.demo.person_zhang'),
-      discovered_date: '2026-08-20',
-      description: t('qms.demo.nc_desc_5'),
-      created_at: '2026-08-20 16:00:00',
-    },
-  ];
 
   const statusConfig = useMemo(
     () => ({
@@ -288,9 +208,7 @@ const QmsNonconformancePage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Nonconformance | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
   // API 失败时本地新建的记录（不入 react-query 缓存，保证列表可见）
-  const [locallyCreated, setLocallyCreated] = useState<Nonconformance[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -338,29 +256,21 @@ const QmsNonconformancePage: React.FC = () => {
           total = dataObj.total || apiIssues.length;
         }
         if (Array.isArray(apiIssues)) {
-          setIsMockData(false);
           return { items: mapApiNonconformances(apiIssues), total };
         }
-      } catch (e) {
-        console.warn('[QMS Nonconformance] API unavailable, using mock data:', e);
-        setIsMockData(true);
-      }
-      // Mock fallback：本地分页
-      let filtered = mockNonconformances;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (i) => i.nc_no.includes(debouncedSearch) || i.product_name.includes(debouncedSearch)
+        throw new Error(
+          t('qms.nonconformance_redesign.list_unexpected_shape', '不合格列表返回格式异常')
         );
+      } catch (e) {
+        console.error('[QMS Nonconformance] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('qms.nonconformance_redesign.toast_list_fail', '不合格记录加载失败'));
       }
-      if (severityFilter !== 'all') {
-        filtered = filtered.filter((i) => i.severity === severityFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { items: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
-  const items = [...locallyCreated, ...(data?.items || [])];
+  const items = data?.items ?? [];
 
   const pushToast = (type: Toast['variant'], message: string) => {
     const id = Date.now().toString();
@@ -370,7 +280,7 @@ const QmsNonconformancePage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await issueApi.deleteIssue(id);
       return id;
     },
     onSuccess: () => {
@@ -385,64 +295,25 @@ const QmsNonconformancePage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Nonconformance>) => {
-      // 构造完整本地记录（id/nc_no/created_at 在前端生成，API 失败时也能入列）
-      const now = new Date().toISOString();
-      const record: Nonconformance = {
-        id: (data.id as string) || crypto.randomUUID(),
-        nc_no: data.nc_no || `NC2026${Date.now().toString().slice(-5)}`,
-        title: data.title || '',
-        nc_type: data.nc_type || 'product',
-        severity: data.severity || 'minor',
-        status: data.status || 'open',
-        product_name: data.product_name || '',
-        batch_no: data.batch_no || '',
-        quantity: data.quantity || 0,
-        discovered_by: data.discovered_by || '',
-        discovered_date: data.discovered_date || now.slice(0, 10),
-        description: data.description || '',
-        created_at: now,
-      };
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        // 字段对齐 CreateQualityIssueRequest（适配器映射 source=category、assigned_to=assignee）
-        await issueApi.createIssue({
-          issue_no: record.nc_no,
-          title: record.title,
-          description: record.description,
-          severity: record.severity,
-          category: record.nc_type,
-          status: record.status,
-          assignee: record.discovered_by,
-        } as unknown as CreateQualityIssueRequest);
-      } catch (e) {
-        console.warn('[QMS Nonconformance] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { record, apiFailed };
+      await issueApi.createIssue({
+        issue_no: data.nc_no,
+        title: data.title,
+        description: data.description,
+        severity: data.severity,
+        category: data.nc_type,
+        status: data.status,
+        assignee: data.discovered_by,
+      } as unknown as CreateQualityIssueRequest);
+      return data;
     },
-    onSuccess: ({ record, apiFailed }) => {
-      // S1：无论 API 成败，本地记录都合并入列（既有 mock 结构保留）；但失败时给警示而非成功
-      setLocallyCreated((prev) => [record, ...prev]);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCurrentPage(1);
       setSearchQuery('');
       setDebouncedSearch('');
       setSeverityFilter('all');
       setCreateModalOpen(false);
-      if (apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t(
-            'qms.nonconformance_redesign.mock_create_fallback',
-            '⚠️ 已降级为本地模拟数据，未写入数据库'
-          )
-        );
-      } else {
-        pushToast('success', t('qms.nonconformance_redesign.toast_create_success'));
-      }
+      pushToast('success', t('qms.nonconformance_redesign.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('qms.nonconformance_redesign.toast_create_fail'));
@@ -451,25 +322,16 @@ const QmsNonconformancePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Nonconformance> }) => {
-      let apiFailed = false;
-      try {
-        // 字段对齐 CreateQualityIssueRequest（updateIssue 适配器取 title/description/severity/status/assigned_to）
-        await issueApi.updateIssue(id, {
-          title: data.title,
-          description: data.description,
-          severity: data.severity,
-          status: data.status,
-          assignee: data.discovered_by,
-        } as unknown as CreateQualityIssueRequest);
-      } catch (e) {
-        console.warn('[QMS Nonconformance] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      await issueApi.updateIssue(id, {
+        title: data.title,
+        description: data.description,
+        severity: data.severity,
+        status: data.status,
+        assignee: data.discovered_by,
+      } as unknown as CreateQualityIssueRequest);
+      return { id, data };
     },
-    onSuccess: ({ id, data, apiFailed }) => {
-      // 本地替换该记录（API 失败时表单变更即时可见，不被 mock 覆盖）
+    onSuccess: ({ id, data }) => {
       queryClient.setQueriesData(
         { queryKey: QUERY_KEY },
         (old: { items?: Nonconformance[] } | undefined) => {
@@ -482,17 +344,7 @@ const QmsNonconformancePage: React.FC = () => {
       );
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (apiFailed) {
-        pushToast(
-          'warning',
-          t(
-            'qms.nonconformance_redesign.mock_update_fallback',
-            '⚠️ 已降级为本地模拟数据，未写入数据库'
-          )
-        );
-      } else {
-        pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
-      }
+      pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
     },
     onError: () => {
       pushToast('error', t('qms.nonconformance_redesign.toast_update_fail'));
@@ -501,7 +353,7 @@ const QmsNonconformancePage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredItems = items;
-  const totalItems = (data?.total || 0) + locallyCreated.length;
+  const totalItems = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedItems = filteredItems;
 
@@ -652,21 +504,6 @@ const QmsNonconformancePage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('qms.nonconformance_redesign.banner_demo_mode')}
-        </div>
-      )}
       <ListPageTemplate<Nonconformance>
         header={{
           title: t('qms.nonconformance_redesign.header_title'),

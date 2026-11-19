@@ -19,6 +19,67 @@ vi.mock('@/i18n', () => {
   return { default: { t: (k: string) => keys[k] ?? k } };
 });
 
+vi.mock('@/api/ai', () => {
+  const items = [
+    {
+      id: '1',
+      name: '写作助手',
+      description: '撰写各类文案',
+      category: 'writing',
+      content: '请写一篇关于{主题}的文章',
+      variables: ['主题'],
+      usage_count: 12,
+      is_favorite: true,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+      created_by: 'tester',
+    },
+    {
+      id: '2',
+      name: '代码生成器',
+      description: '生成代码片段',
+      category: 'coding',
+      content: '实现{功能}',
+      variables: ['功能'],
+      usage_count: 5,
+      is_favorite: false,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+      created_by: 'tester',
+    },
+    {
+      id: '3',
+      name: '数据分析',
+      description: '分析业务数据',
+      category: 'analysis',
+      content: '分析{数据}',
+      variables: ['数据'],
+      usage_count: 3,
+      is_favorite: false,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+      created_by: 'tester',
+    },
+  ];
+  return {
+    aiApi: {
+      listPromptTemplates: vi.fn(async () => ({
+        success: true,
+        data: { items, total: items.length, page: 1, page_size: 100 },
+      })),
+      togglePromptFavorite: vi.fn(async (id: string) => ({
+        success: true,
+        data: { id, is_favorite: true },
+      })),
+      deletePromptTemplate: vi.fn(async () => ({ success: true, data: true })),
+      usePromptTemplate: vi.fn(async () => ({
+        success: true,
+        data: { result: '生成结果', formatted_prompt: '提示词' },
+      })),
+    },
+  };
+});
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));

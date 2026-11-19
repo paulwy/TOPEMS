@@ -159,120 +159,14 @@ const ReportPage: React.FC = () => {
     { type: 'pdm_process_summary', name: i18n.t('pages.index.k11'), module: 'PDM' },
   ];
 
-  const mockReports: ReportData[] = [
-    {
-      id: 'report-001',
-      config: {
-        report_type: 'rs_project_progress',
-        format: 'excel',
-        title: i18n.t('pages.index.k12'),
-        description: i18n.t('pages.index.k13'),
-        columns: [
-          i18n.t('pages.index.k19'),
-          i18n.t('pages.index.k18'),
-          i18n.t('pages.index.k17'),
-          i18n.t('pages.index.k16'),
-          i18n.t('pages.index.k15'),
-          i18n.t('pages.index.k14'),
-        ],
-      },
-      data: [
-        {
-          [i18n.t('pages.index.k0')]: i18n.t('pages.index.k20'),
-          [i18n.t('pages.index.k1')]: i18n.t('pages.index.k21'),
-          [i18n.t('pages.index.k2')]: '2026-01-01',
-          [i18n.t('pages.index.k3')]: '2026-12-31',
-          [i18n.t('pages.index.k4')]: '45%',
-          [i18n.t('pages.index.k5')]: i18n.t('pages.index.k22'),
-        },
-        {
-          [i18n.t('pages.index.k6')]: i18n.t('pages.index.k23'),
-          [i18n.t('pages.index.k7')]: i18n.t('pages.index.k24'),
-          [i18n.t('pages.index.k8')]: '2026-03-01',
-          [i18n.t('pages.index.k9')]: '2026-09-30',
-          [i18n.t('pages.index.k10')]: '30%',
-          [i18n.t('pages.index.k11')]: i18n.t('pages.index.k25'),
-        },
-        {
-          [i18n.t('pages.index.k12')]: i18n.t('pages.index.k26'),
-          [i18n.t('pages.index.k13')]: i18n.t('pages.index.k27'),
-          [i18n.t('pages.index.k14')]: '2026-02-15',
-          [i18n.t('pages.index.k15')]: '2026-11-30',
-          [i18n.t('pages.index.k16')]: '65%',
-          [i18n.t('pages.index.k17')]: i18n.t('pages.index.k28'),
-        },
-      ],
-      row_count: 3,
-      created_at: '2026-05-22T10:00:00Z',
-    },
-    {
-      id: 'report-002',
-      config: {
-        report_type: 'lims_inspection_stats',
-        format: 'pdf',
-        title: i18n.t('pages.index.k29'),
-        description: i18n.t('pages.index.k30'),
-        columns: [
-          i18n.t('pages.index.k34'),
-          i18n.t('pages.index.k33'),
-          i18n.t('pages.index.k32'),
-          i18n.t('pages.index.k31'),
-        ],
-      },
-      data: [
-        {
-          [i18n.t('pages.index.k18')]: i18n.t('pages.index.a001_35'),
-          [i18n.t('pages.index.k19')]: '2026-05-20',
-          [i18n.t('pages.index.k20')]: i18n.t('pages.index.k36'),
-          [i18n.t('pages.index.k21')]: i18n.t('pages.index.k37'),
-        },
-        {
-          [i18n.t('pages.index.k22')]: i18n.t('pages.index.b002_38'),
-          [i18n.t('pages.index.k23')]: '2026-05-21',
-          [i18n.t('pages.index.k24')]: i18n.t('pages.index.k39'),
-          [i18n.t('pages.index.k25')]: i18n.t('pages.index.k40'),
-        },
-      ],
-      row_count: 2,
-      created_at: '2026-05-22T09:30:00Z',
-    },
-    {
-      id: 'report-003',
-      config: {
-        report_type: 'qms_quality_analysis',
-        format: 'excel',
-        title: i18n.t('pages.index.k41'),
-        description: i18n.t('pages.index.k42'),
-        columns: [
-          i18n.t('pages.index.k46'),
-          i18n.t('pages.index.k45'),
-          i18n.t('pages.index.k44'),
-          i18n.t('pages.index.k43'),
-        ],
-      },
-      data: [
-        {
-          [i18n.t('pages.index.k26')]: 'P-001',
-          [i18n.t('pages.index.k27')]: '20260501',
-          [i18n.t('pages.index.k28')]: '98.5%',
-          [i18n.t('pages.index.k29')]: '1.5%',
-        },
-        {
-          [i18n.t('pages.index.k30')]: 'P-002',
-          [i18n.t('pages.index.k31')]: '20260502',
-          [i18n.t('pages.index.k32')]: '99.2%',
-          [i18n.t('pages.index.k33')]: '0.8%',
-        },
-      ],
-      row_count: 2,
-      created_at: '2026-05-21T14:00:00Z',
-    },
-  ];
-
   const reportsQuery = useQuery<ReportData[]>({
     queryKey: QUERY_KEYS.REPORT.REPORTS,
     queryFn: async () => {
-      return mockReports;
+      const response = await reportApi.listReports();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || i18n.t('pages.report_page.error_load', '报表加载失败'));
+      }
+      return response.data;
     },
     staleTime: 5 * 60 * 1000,
   });

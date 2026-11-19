@@ -51,6 +51,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { aiApi } from '@/api/ai';
 
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
 
@@ -67,87 +68,6 @@ interface PromptTemplate {
   updated_at: string;
   created_by: string;
 }
-
-const mockPrompts: PromptTemplate[] = [
-  {
-    id: '1',
-    name: i18n.t('ai.ai_prompt_library_page.k0'),
-    description: i18n.t('ai.ai_prompt_library_page.k1'),
-    category: 'writing',
-    content: i18n.t('pages.ai_prompt_library_page.k0'),
-    variables: ['subject', 'recipient', 'key_points'],
-    usage_count: 234,
-    is_favorite: true,
-    created_at: '2024-01-15',
-    updated_at: '2024-06-20',
-    created_by: i18n.t('ai.ai_prompt_library_page.k2'),
-  },
-  {
-    id: '2',
-    name: i18n.t('ai.ai_prompt_library_page.k3'),
-    description: i18n.t('ai.ai_prompt_library_page.k4'),
-    category: 'code',
-    content: i18n.t('pages.ai_prompt_library_page.k1'),
-    variables: ['language', 'code'],
-    usage_count: 189,
-    is_favorite: true,
-    created_at: '2024-02-10',
-    updated_at: '2024-06-18',
-    created_by: i18n.t('ai.ai_prompt_library_page.k5'),
-  },
-  {
-    id: '3',
-    name: i18n.t('ai.ai_prompt_library_page.k6'),
-    description: i18n.t('ai.ai_prompt_library_page.k7'),
-    category: 'analysis',
-    content: i18n.t('pages.ai_prompt_library_page.k2'),
-    variables: ['data'],
-    usage_count: 156,
-    is_favorite: false,
-    created_at: '2024-03-05',
-    updated_at: '2024-06-15',
-    created_by: i18n.t('ai.ai_prompt_library_page.k8'),
-  },
-  {
-    id: '4',
-    name: i18n.t('ai.ai_prompt_library_page.k9'),
-    description: i18n.t('ai.ai_prompt_library_page.k10'),
-    category: 'business',
-    content: i18n.t('pages.ai_prompt_library_page.k3'),
-    variables: ['meeting_content'],
-    usage_count: 312,
-    is_favorite: false,
-    created_at: '2024-01-20',
-    updated_at: '2024-06-22',
-    created_by: i18n.t('ai.ai_prompt_library_page.k11'),
-  },
-  {
-    id: '5',
-    name: i18n.t('ai.ai_prompt_library_page.k12'),
-    description: i18n.t('ai.ai_prompt_library_page.k13'),
-    category: 'creative',
-    content: i18n.t('pages.ai_prompt_library_page.k4'),
-    variables: ['product', 'target_audience', 'selling_points'],
-    usage_count: 278,
-    is_favorite: true,
-    created_at: '2024-02-28',
-    updated_at: '2024-06-10',
-    created_by: i18n.t('ai.ai_prompt_library_page.k14'),
-  },
-  {
-    id: '6',
-    name: i18n.t('pages.ai_prompt_library_page.sql_5'),
-    description: i18n.t('ai.ai_prompt_library_page.sql_15'),
-    category: 'code',
-    content: i18n.t('pages.ai_prompt_library_page.k6'),
-    variables: ['requirement', 'table_structure'],
-    usage_count: 145,
-    is_favorite: false,
-    created_at: '2024-03-15',
-    updated_at: '2024-06-05',
-    created_by: i18n.t('ai.ai_prompt_library_page.k16'),
-  },
-];
 
 const categoryIcons: Record<string, React.ReactNode> = {
   all: <BookOpen size={18} />,
@@ -196,14 +116,37 @@ export const AiPromptLibraryPage: React.FC = () => {
   const { data: prompts = [], refetch } = useQuery<PromptTemplate[]>({
     queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE,
     queryFn: async () => {
-      return mockPrompts;
+      const res = await aiApi.listPromptTemplates({ page: 1, page_size: 100 });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || i18n.t('ai.ai_prompt_library_page.error_load'));
+      }
+      const items = (res.data.items ?? []) as unknown as Array<Record<string, unknown>>;
+      return items.map((raw): PromptTemplate => ({
+        id: String(raw.id ?? ''),
+        name: String(raw.name ?? ''),
+        description: String(raw.description ?? ''),
+        category: String(raw.category ?? ''),
+        content: String(raw.content ?? raw.template ?? ''),
+        variables: Array.isArray(raw.variables) ? (raw.variables as string[]) : [],
+        usage_count: Number(raw.usage_count ?? 0),
+        is_favorite: Boolean(raw.is_favorite),
+        created_at: String(raw.created_at ?? ''),
+        updated_at: String(raw.updated_at ?? ''),
+        created_by: String(raw.created_by ?? ''),
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (promptId: string) => {
-      return promptId;
+      const res = await aiApi.togglePromptFavorite(promptId);
+      if (!res.success || !res.data) {
+        throw new Error(
+          res.message || i18n.t('ai.ai_prompt_library_page.error_favorite', '收藏操作失败')
+        );
+      }
+      return res.data;
     },
     onMutate: async (promptId) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.AD_HOC.AI_PROMPTS_BASE });
@@ -224,6 +167,12 @@ export const AiPromptLibraryPage: React.FC = () => {
 
   const deletePromptMutation = useMutation({
     mutationFn: async (promptId: string) => {
+      const res = await aiApi.deletePromptTemplate(promptId);
+      if (!res.success) {
+        throw new Error(
+          res.message || i18n.t('ai.ai_prompt_library_page.error_delete', '删除提示词失败')
+        );
+      }
       return promptId;
     },
     onMutate: async (promptId) => {
@@ -286,20 +235,28 @@ export const AiPromptLibraryPage: React.FC = () => {
     setUseDialogOpen(true);
   }, []);
 
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     if (!selectedPrompt) return;
 
     setGenerating(true);
-
-    setTimeout(() => {
-      let result = selectedPrompt.content;
-      Object.entries(variables).forEach(([key, value]) => {
-        result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value || `[${key}]`);
+    try {
+      const res = await aiApi.usePromptTemplate(selectedPrompt.id, { ...variables });
+      if (!res.success || !res.data) {
+        throw new Error(
+          res.message || i18n.t('ai.ai_prompt_library_page.error_generate', '提示词执行失败')
+        );
+      }
+      setGeneratedResult(res.data.result ?? res.data.formatted_prompt ?? '');
+    } catch (err) {
+      addNotification({
+        title: i18n.t('ai.ai_prompt_library_page.error_generate', '提示词执行失败'),
+        message: err instanceof Error ? err.message : String(err),
+        type: 'error',
       });
-      setGeneratedResult(result);
+    } finally {
       setGenerating(false);
-    }, 1500);
-  }, [selectedPrompt, variables]);
+    }
+  }, [selectedPrompt, variables, addNotification]);
 
   const handleCopyResult = useCallback(() => {
     if (generatedResult) {

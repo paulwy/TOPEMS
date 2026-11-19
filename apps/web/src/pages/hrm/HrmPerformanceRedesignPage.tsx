@@ -116,8 +116,6 @@ const mapApiPerformanceReviews = (apiReviews: RawApiPerformanceReview[]): Perfor
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockPerformance
-
 const ratingConfig = {
   S: { label: 'S', variant: 'error' as const, score: '95-100' },
   A: { label: 'A', variant: 'warning' as const, score: '85-94' },
@@ -144,79 +142,6 @@ const HrmPerformanceRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const mockPerformance: PerformanceReview[] = [
-    {
-      id: '1',
-      review_no: 'PR2026H2001',
-      employee_name: t('hrm.demo.person_zhang'),
-      department: t('hrm.demo.dept_tech'),
-      period: t('hrm.demo.period_h1'),
-      reviewer: t('hrm.demo.reviewer_wang'),
-      rating: 'A',
-      status: 'completed',
-      score: 92,
-      kpi_completion: 105,
-      improvement: t('hrm.demo.perf_improvement_1'),
-      created_at: '2026-07-01 10:00:00',
-    },
-    {
-      id: '2',
-      review_no: 'PR2026H2002',
-      employee_name: t('hrm.demo.person_li'),
-      department: t('hrm.demo.dept_product'),
-      period: t('hrm.demo.period_h1'),
-      reviewer: t('hrm.demo.reviewer_wang'),
-      rating: 'B',
-      status: 'completed',
-      score: 85,
-      kpi_completion: 95,
-      improvement: t('hrm.demo.perf_improvement_2'),
-      created_at: '2026-07-01 14:30:00',
-    },
-    {
-      id: '3',
-      review_no: 'PR2026H2003',
-      employee_name: t('hrm.demo.person_wang'),
-      department: t('hrm.demo.dept_design'),
-      period: t('hrm.demo.period_h1'),
-      reviewer: t('hrm.demo.reviewer_zhao'),
-      rating: 'A',
-      status: 'in_review',
-      score: 88,
-      kpi_completion: 100,
-      improvement: t('hrm.demo.perf_improvement_3'),
-      created_at: '2026-09-01 09:15:00',
-    },
-    {
-      id: '4',
-      review_no: 'PR2026H2004',
-      employee_name: t('hrm.demo.person_zhao'),
-      department: t('hrm.demo.dept_market'),
-      period: t('hrm.demo.period_h1'),
-      reviewer: 'CEO',
-      rating: 'S',
-      status: 'pending',
-      score: 0,
-      kpi_completion: 0,
-      improvement: '',
-      created_at: '2026-09-10 11:00:00',
-    },
-    {
-      id: '5',
-      review_no: 'PR2026H2005',
-      employee_name: t('hrm.demo.person_qian'),
-      department: t('hrm.demo.dept_tech'),
-      period: t('hrm.demo.period_h1'),
-      reviewer: t('hrm.demo.reviewer_wang'),
-      rating: 'C',
-      status: 'completed',
-      score: 72,
-      kpi_completion: 80,
-      improvement: t('hrm.demo.perf_improvement_4'),
-      created_at: '2026-07-05 16:45:00',
-    },
-  ];
-
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_review' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -229,7 +154,6 @@ const HrmPerformanceRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PerformanceReview | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -274,25 +198,17 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           total = dataObj.total || apiReviews.length;
         }
         if (Array.isArray(apiReviews)) {
-          setIsMockData(false);
           return { reviews: mapApiPerformanceReviews(apiReviews), total };
         }
-      } catch (e) {
-        console.warn('[HRM Performance] API unavailable, using mock data:', e);
-        setIsMockData(true);
-      }
-      // Mock fallback：本地分页
-      let filtered = mockPerformance;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (r) => r.employee_name.includes(debouncedSearch) || r.review_no.includes(debouncedSearch)
+        throw new Error(
+          t('hrm.performance_redesign_page.list_unexpected_shape', '绩效列表返回格式异常')
         );
+      } catch (e) {
+        console.error('[HRM Performance] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('hrm.performance_redesign_page.k65', '绩效记录加载失败'));
       }
-      if (deptFilter !== 'all') {
-        filtered = filtered.filter((r) => r.department === deptFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { reviews: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
@@ -306,12 +222,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        await performanceReviewApi.delete(id);
-      } catch (e) {
-        console.warn('[HRM Performance] Delete API unavailable, using mock delete:', e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await performanceReviewApi.delete(id);
       return id;
     },
     onSuccess: () => {
@@ -326,39 +237,24 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<PerformanceReview>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
-        const payload = {
-          employee_id: data.review_no,
-          employee_name: data.employee_name,
-          period: data.period,
-          // 页面评级为 S/A/B/C/D 字母，后端 PerformanceReview.overall_rating 声明为 number；
-          // 既有行为即原样透传字母（原先靠 as any 绕过），此处显式保留，待后端契约对齐
-          overall_rating: data.rating as unknown as number,
-          score: data.score,
-          reviewer: data.reviewer,
-          status: data.status,
-        };
-        await performanceReviewApi.create(payload);
-      } catch (e) {
-        console.warn('[HRM Performance] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      const payload = {
+        employee_id: data.review_no,
+        employee_name: data.employee_name,
+        period: data.period,
+        // 页面评级为 S/A/B/C/D 字母，后端 PerformanceReview.overall_rating 声明为 number；
+        // 既有行为即原样透传字母，此处显式保留，待后端契约对齐
+        overall_rating: data.rating as unknown as number,
+        score: data.score,
+        reviewer: data.reviewer,
+        status: data.status,
+      };
+      await performanceReviewApi.create(payload);
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast('warning', t('hrm.performance_redesign_page.mock_create_fallback'));
-      } else {
-        pushToast('success', t('hrm.performance_redesign_page.k61'));
-      }
+      pushToast('success', t('hrm.performance_redesign_page.k61'));
     },
     onError: () => {
       pushToast('error', t('hrm.performance_redesign_page.k62'));
@@ -367,31 +263,20 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PerformanceReview> }) => {
-      let apiFailed = false;
-      try {
-        const payload = {
-          // 同 create：页面字母评级原样透传数值字段，待后端契约对齐
-          overall_rating: data.rating as unknown as number,
-          score: data.score,
-          reviewer_comment: data.improvement,
-          status: data.status,
-        };
-        await performanceReviewApi.update(id, payload);
-      } catch (e) {
-        console.warn('[HRM Performance] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      const payload = {
+        // 同 create：页面字母评级原样透传数值字段，待后端契约对齐
+        overall_rating: data.rating as unknown as number,
+        score: data.score,
+        reviewer_comment: data.improvement,
+        status: data.status,
+      };
+      await performanceReviewApi.update(id, payload);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast('warning', t('hrm.performance_redesign_page.mock_update_fallback'));
-      } else {
-        pushToast('success', t('hrm.performance_redesign_page.k63'));
-      }
+      pushToast('success', t('hrm.performance_redesign_page.k63'));
     },
     onError: () => {
       pushToast('error', t('hrm.performance_redesign_page.k64'));
@@ -573,21 +458,6 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('hrm.performance_redesign_page.k33')}
-        </div>
-      )}
       <ListPageTemplate<PerformanceReview>
         header={{
           title: t('hrm.performance_redesign_page.k0'),

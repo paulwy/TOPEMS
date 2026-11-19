@@ -1331,5 +1331,9 @@
   "ai.dshRag.k37": "Retrieval & Agents",
   "ai.dshRag.k38": "RAG Stats",
   "ai.dshRag.k39": "Agent Performance",
-  "ai.chat.message.reply_failed": "AI reply failed, please retry later"
+  "ai.chat.message.reply_failed": "AI reply failed, please retry later",
+  "ai.ai_prompt_library_page.error_load": "Failed to load prompt templates, please retry",
+  "ai.ai_prompt_library_page.error_favorite": "Failed to update favorite, please retry",
+  "ai.ai_prompt_library_page.error_delete": "Failed to delete prompt, please retry",
+  "ai.ai_prompt_library_page.error_generate": "Failed to run prompt, please retry"
 }

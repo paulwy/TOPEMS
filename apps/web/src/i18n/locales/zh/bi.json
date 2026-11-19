@@ -996,5 +996,6 @@
   "dashboard.dash_srm_desc": "供应商关系管理系统",
   "dashboard.dash_srm_name": "SRM 供应商管理",
   "bi.bi_dashboard_page.clone": "克隆",
-  "bi.bi_dashboard_page.visibility": "可见性"
+  "bi.bi_dashboard_page.visibility": "可见性",
+  "bi.report_builder_page.error_load": "报表加载失败，请重试"
 }

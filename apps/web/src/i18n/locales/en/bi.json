@@ -5857,5 +5857,6 @@
   "bi.dataset_page.loading": "Loading data sources...",
   "bi.dataset_page.no_data_sources": "No data sources yet (create one in Data Source Management first)",
   "bi.bi_dashboard_page.clone": "Clone",
-  "bi.bi_dashboard_page.visibility": "Visibility"
+  "bi.bi_dashboard_page.visibility": "Visibility",
+  "bi.report_builder_page.error_load": "Failed to load reports, please retry"
 }

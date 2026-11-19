@@ -36,7 +36,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { BottomTabBar, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
 import { useNotificationStore, useAuthStore } from '@/store';
-import { type QualityTask, type DefectRecord } from '@/api/mobile';
+import { mobileApi, type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/module-configs/mobile/config';
@@ -64,69 +64,11 @@ const MobileQualityPage: React.FC = () => {
   const tasksQuery = useQuery<QualityTask[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_TASKS_BASE, user?.fullName],
     queryFn: async () => {
-      const mockTasks: QualityTask[] = [
-        {
-          id: '1',
-          task_no: 'QT-2024-06-001',
-          type: 'incoming',
-          product_name: i18n.t('pages.mobile_quality_page.10k_0'),
-          batch_no: 'B20240601',
-          quantity: 5000,
-          status: 'pending',
-          inspector: user?.fullName || '',
-          due_date: '2024-06-28',
-          created_at: '2024-06-28T08:00:00Z',
-        },
-        {
-          id: '2',
-          task_no: 'QT-2024-06-002',
-          type: 'process',
-          product_name: i18n.t('pages.mobile_quality_page.pcb_1'),
-          batch_no: 'B20240602',
-          quantity: 1000,
-          status: 'in_progress',
-          inspector: user?.fullName || '',
-          due_date: '2024-06-28',
-          created_at: '2024-06-28T09:30:00Z',
-        },
-        {
-          id: '3',
-          task_no: 'QT-2024-06-003',
-          type: 'finished',
-          product_name: i18n.t('mobile.mobile_quality_page.k2'),
-          batch_no: 'FG20240625',
-          quantity: 320,
-          status: 'passed',
-          inspector: i18n.t('mobile.mobile_quality_page.k3'),
-          due_date: '2024-06-27',
-          created_at: '2024-06-27T10:00:00Z',
-        },
-        {
-          id: '4',
-          task_no: 'QT-2024-06-004',
-          type: 'outgoing',
-          product_name: i18n.t('mobile.mobile_quality_page.k4'),
-          batch_no: 'FG20240620',
-          quantity: 150,
-          status: 'failed',
-          inspector: i18n.t('mobile.mobile_quality_page.k5'),
-          due_date: '2024-06-26',
-          created_at: '2024-06-26T14:00:00Z',
-        },
-        {
-          id: '5',
-          task_no: 'QT-2024-06-005',
-          type: 'incoming',
-          product_name: i18n.t('mobile.mobile_quality_page.k6'),
-          batch_no: 'B20240603',
-          quantity: 2000,
-          status: 'pending',
-          inspector: user?.fullName || '',
-          due_date: '2024-06-29',
-          created_at: '2024-06-28T10:00:00Z',
-        },
-      ];
-      return mockTasks;
+      const res = await mobileApi.listQualityTasks({ page: 1, page_size: 50 });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || i18n.t('mobile.mobile_quality_page.error_load'));
+      }
+      return res.data.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -134,48 +76,11 @@ const MobileQualityPage: React.FC = () => {
   const defectsQuery = useQuery<DefectRecord[]>({
     queryKey: [...QUERY_KEYS.AD_HOC.MOBILE_QUALITY_DEFECTS_BASE, user?.fullName],
     queryFn: async () => {
-      const mockDefects: DefectRecord[] = [
-        {
-          id: '1',
-          task_id: 'QT-2024-06-002',
-          product_name: i18n.t('pages.mobile_quality_page.pcb_2'),
-          batch_no: 'B20240602',
-          defect_type: i18n.t('mobile.mobile_quality_page.k7'),
-          severity: 'major',
-          quantity: 5,
-          description: i18n.t('mobile.mobile_quality_page.k8'),
-          reporter: user?.fullName || '',
-          reported_at: '2024-06-28T10:30:00Z',
-          status: 'open',
-        },
-        {
-          id: '2',
-          task_id: 'QT-2024-06-004',
-          product_name: i18n.t('mobile.mobile_quality_page.k9'),
-          batch_no: 'FG20240620',
-          defect_type: i18n.t('mobile.mobile_quality_page.k10'),
-          severity: 'minor',
-          quantity: 3,
-          description: i18n.t('mobile.mobile_quality_page.k11'),
-          reporter: i18n.t('mobile.mobile_quality_page.k12'),
-          reported_at: '2024-06-26T15:00:00Z',
-          status: 'closed',
-        },
-        {
-          id: '3',
-          task_id: 'QT-2024-06-002',
-          product_name: i18n.t('pages.mobile_quality_page.pcb_3'),
-          batch_no: 'B20240602',
-          defect_type: i18n.t('mobile.mobile_quality_page.k13'),
-          severity: 'critical',
-          quantity: 2,
-          description: i18n.t('mobile.mobile_quality_page.k14'),
-          reporter: user?.fullName || '',
-          reported_at: '2024-06-28T11:00:00Z',
-          status: 'processing',
-        },
-      ];
-      return mockDefects;
+      const res = await mobileApi.listDefectRecords({ page: 1, page_size: 50 });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || i18n.t('mobile.mobile_quality_page.error_load_defects'));
+      }
+      return res.data.items ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -263,21 +168,17 @@ const MobileQualityPage: React.FC = () => {
   };
   const submitDefectMutation = useMutation({
     mutationFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const newDefect: DefectRecord = {
-        id: Date.now().toString(),
-        task_id: selectedTask?.task_no || '',
-        product_name: selectedTask?.product_name || '',
-        batch_no: selectedTask?.batch_no || '',
+      const res = await mobileApi.reportDefect({
+        task_id: selectedTask?.id ?? '',
         defect_type: defectForm.defect_type,
         severity: defectForm.severity,
         quantity: defectForm.quantity,
         description: defectForm.description,
-        reporter: user?.fullName || '',
-        reported_at: new Date().toISOString(),
-        status: 'open',
-      };
-      return newDefect;
+      });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || i18n.t('mobile.mobile_quality_page.error_report'));
+      }
+      return res.data;
     },
     onSuccess: (newDefect) => {
       queryClient.setQueryData<DefectRecord[]>(
@@ -313,27 +214,29 @@ const MobileQualityPage: React.FC = () => {
   };
   const updateTaskStatusMutation = useMutation({
     mutationFn: async (params: { task: QualityTask; action: 'start' | 'pass' | 'fail' }) => {
-      return params;
+      const statusMap = { start: 'in_progress', pass: 'passed', fail: 'failed' } as const;
+      const res = await mobileApi.updateQualityTaskStatus(params.task.id, {
+        status: statusMap[params.action],
+      });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || i18n.t('mobile.mobile_quality_page.error_update_task'));
+      }
+      return res.data;
     },
-    onSuccess: ({ task, action }) => {
-      queryClient.setQueryData<QualityTask[]>(['mobile-quality-tasks', user?.fullName], (prev) =>
-        (prev ?? []).map((t) => {
-          if (t.id === task.id) {
-            if (action === 'start') {
-              return { ...t, status: 'in_progress' };
-            } else if (action === 'pass') {
-              return { ...t, status: 'passed' };
-            } else {
-              return { ...t, status: 'failed' };
-            }
-          }
-          return t;
-        })
-      );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mobile-quality-tasks', user?.fullName] });
       addNotification({
         title: i18n.t('mobile.mobile_quality_page.k35'),
         message: i18n.t('pages.mobile_quality_page.k0'),
         type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error(i18n.t('pages.mobile_quality_page.k7'), err);
+      addNotification({
+        title: i18n.t('mobile.mobile_quality_page.error_update_task'),
+        message: err instanceof Error ? err.message : String(err),
+        type: 'error',
       });
     },
   });

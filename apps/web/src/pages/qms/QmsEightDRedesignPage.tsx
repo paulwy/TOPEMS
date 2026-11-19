@@ -123,8 +123,6 @@ const mapApiEightDReports = (apiReports: ApiEightDReportCompat[]): EightDReport[
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockEightDReports
-
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   return value;
@@ -133,77 +131,6 @@ const formatDateTime = (value?: string) => {
 const QmsEightDRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  const mockEightDReports: EightDReport[] = [
-    {
-      id: '1',
-      report_no: '8D202609001',
-      title: t('qms.demo.eightd_title_1'),
-      problem_source: 'customer',
-      severity: 'major',
-      status: 'd4',
-      current_step: t('qms.demo.eightd_step_d4'),
-      product_name: t('qms.demo.product_servo'),
-      customer_name: t('qms.demo.company_a_name'),
-      owner: t('qms.demo.person_zhang'),
-      due_date: '2026-09-20',
-      created_at: '2026-09-10 10:00:00',
-    },
-    {
-      id: '2',
-      report_no: '8D202609002',
-      title: t('qms.demo.eightd_title_2'),
-      problem_source: 'internal',
-      severity: 'critical',
-      status: 'd6',
-      current_step: t('qms.demo.eightd_step_d6'),
-      product_name: t('qms.demo.product_plc'),
-      owner: t('qms.demo.person_li'),
-      due_date: '2026-09-18',
-      created_at: '2026-09-05 14:30:00',
-    },
-    {
-      id: '3',
-      report_no: '8D202608001',
-      title: t('qms.demo.eightd_title_3'),
-      problem_source: 'supplier',
-      severity: 'minor',
-      status: 'closed',
-      current_step: t('qms.demo.eightd_step_d8'),
-      product_name: t('qms.demo.product_camera'),
-      customer_name: t('qms.demo.company_c_name'),
-      owner: t('qms.demo.person_wang'),
-      due_date: '2026-08-25',
-      created_at: '2026-08-15 09:00:00',
-    },
-    {
-      id: '4',
-      report_no: '8D202608002',
-      title: t('qms.demo.eightd_title_4'),
-      problem_source: 'internal',
-      severity: 'critical',
-      status: 'd8',
-      current_step: t('qms.demo.eightd_step_d8'),
-      product_name: t('qms.demo.product_inverter'),
-      owner: t('qms.demo.person_zhao'),
-      due_date: '2026-08-30',
-      created_at: '2026-08-20 11:00:00',
-    },
-    {
-      id: '5',
-      report_no: '8D202609003',
-      title: t('qms.demo.eightd_title_5'),
-      problem_source: 'customer',
-      severity: 'major',
-      status: 'd2',
-      current_step: t('qms.demo.eightd_step_d2'),
-      product_name: t('qms.demo.product_hmi'),
-      customer_name: t('qms.demo.company_d_name'),
-      owner: t('qms.demo.person_zhang'),
-      due_date: '2026-09-25',
-      created_at: '2026-09-12 16:00:00',
-    },
-  ];
 
   const statusConfig = useMemo<
     Record<string, { label: string; variant: BadgeVariant; step: number }>
@@ -253,7 +180,6 @@ const QmsEightDRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<EightDReport | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -301,30 +227,19 @@ const QmsEightDRedesignPage: React.FC = () => {
           total = dataObj.total || apiReports.length;
         }
         if (Array.isArray(apiReports)) {
-          setIsMockData(false);
           return { reports: mapApiEightDReports(apiReports), total };
         }
+        throw new Error(t('qms.eight_d_redesign.list_unexpected_shape', '8D 报告列表返回格式异常'));
       } catch (e) {
-        console.warn('[QMS 8D Reports] API unavailable, using mock data:', e);
-        setIsMockData(true);
+        console.error('[QMS 8D Reports] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('qms.eight_d_redesign.toast_list_fail', '8D 报告加载失败'));
       }
-      // Mock fallback：本地分页
-      let filtered = mockEightDReports;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (r) => r.report_no.includes(debouncedSearch) || r.title.includes(debouncedSearch)
-        );
-      }
-      if (severityFilter !== 'all') {
-        filtered = filtered.filter((r) => r.severity === severityFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { reports: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
-  // 真实数据优先；API 空/失败时降级 mock（渲染层兜底，不依赖 queryFn 分支是否命中）
-  const reports = data?.reports?.length ? data.reports : isLoading ? [] : mockEightDReports;
+  const reports = data?.reports ?? [];
 
   const pushToast = (type: Toast['variant'], message: string) => {
     const id = Date.now().toString();
@@ -349,41 +264,24 @@ const QmsEightDRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<EightDReport>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        await eightDApi.createEightDReport({
-          report_no: data.report_no,
-          title: data.title,
-          customer_name: data.customer_name,
-          product_name: data.product_name,
-          problem_source: data.problem_source,
-          severity: data.severity,
-          status: data.status,
-          owner: data.owner,
-          current_step: data.current_step,
-          due_date: data.due_date,
-        } as unknown as CreateEightDReportRequest);
-      } catch (e) {
-        console.warn('[QMS 8D Reports] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      await eightDApi.createEightDReport({
+        report_no: data.report_no,
+        title: data.title,
+        customer_name: data.customer_name,
+        product_name: data.product_name,
+        problem_source: data.problem_source,
+        severity: data.severity,
+        status: data.status,
+        owner: data.owner,
+        current_step: data.current_step,
+        due_date: data.due_date,
+      } as unknown as CreateEightDReportRequest);
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t('qms.eight_d_redesign.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('qms.eight_d_redesign.toast_create_success'));
-      }
+      pushToast('success', t('qms.eight_d_redesign.toast_create_success'));
     },
     onError: () => {
       pushToast('error', t('qms.eight_d_redesign.toast_create_fail'));
@@ -392,32 +290,18 @@ const QmsEightDRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<EightDReport> }) => {
-      let apiFailed = false;
-      try {
-        await eightDApi.updateEightDReport(id, {
-          status: data.status,
-          current_step: data.current_step,
-          due_date: data.due_date,
-          owner: data.owner,
-        } as unknown as CreateEightDReportRequest);
-      } catch (e) {
-        console.warn('[QMS 8D Reports] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      await eightDApi.updateEightDReport(id, {
+        status: data.status,
+        current_step: data.current_step,
+        due_date: data.due_date,
+        owner: data.owner,
+      } as unknown as CreateEightDReportRequest);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast(
-          'warning',
-          t('qms.eight_d_redesign.mock_update_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
-        );
-      } else {
-        pushToast('success', t('qms.eight_d_redesign.toast_update_success'));
-      }
+      pushToast('success', t('qms.eight_d_redesign.toast_update_success'));
     },
     onError: () => {
       pushToast('error', t('qms.eight_d_redesign.toast_update_fail'));
@@ -599,21 +483,6 @@ const QmsEightDRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('qms.eight_d_redesign.banner_demo_mode')}
-        </div>
-      )}
       <ListPageTemplate<EightDReport>
         header={{
           title: t('qms.eight_d_redesign.header_title'),

@@ -1794,5 +1794,9 @@
   "mobile.nav.mobile-scan_desc": "Scan",
   "mobile.nav.mobile-notifications_desc": "Notifications",
   "mobile.nav.mobile-profile_desc": "Profile",
-  "mobile.nav.mobile-settings_desc": "Settings"
+  "mobile.nav.mobile-settings_desc": "Settings",
+  "mobile.mobile_quality_page.error_load": "Failed to load quality tasks, please retry",
+  "mobile.mobile_quality_page.error_load_defects": "Failed to load defect records, please retry",
+  "mobile.mobile_quality_page.error_report": "Failed to report defect, please retry",
+  "mobile.mobile_quality_page.error_update_task": "Failed to update task status, please retry"
 }

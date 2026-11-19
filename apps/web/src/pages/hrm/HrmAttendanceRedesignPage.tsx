@@ -114,8 +114,6 @@ const mapApiAttendance = (apiRecords: RawApiAttendance[]): AttendanceRecord[] =>
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockAttendance
-
 const statusConfig: Record<
   string,
   {
@@ -135,74 +133,6 @@ const HrmAttendanceRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const mockAttendance: AttendanceRecord[] = [
-    {
-      id: '1',
-      emp_no: 'EMP001',
-      employee_name: t('hrm.demo.person_zhang'),
-      department: t('hrm.demo.dept_tech'),
-      date: '2026-09-12',
-      check_in: '08:55',
-      check_out: '18:30',
-      status: 'normal',
-      work_hours: 9.5,
-      overtime_hours: 1.5,
-      remark: '',
-    },
-    {
-      id: '2',
-      emp_no: 'EMP002',
-      employee_name: t('hrm.demo.person_li'),
-      department: t('hrm.demo.dept_product'),
-      date: '2026-09-12',
-      check_in: '09:20',
-      check_out: '18:00',
-      status: 'late',
-      work_hours: 8.0,
-      overtime_hours: 0,
-      remark: t('hrm.demo.att_remark_subway'),
-    },
-    {
-      id: '3',
-      emp_no: 'EMP003',
-      employee_name: t('hrm.demo.person_wang'),
-      department: t('hrm.demo.dept_design'),
-      date: '2026-09-12',
-      check_in: '09:00',
-      check_out: '17:30',
-      status: 'early',
-      work_hours: 8.5,
-      overtime_hours: 0,
-      remark: t('hrm.demo.att_remark_early_leave'),
-    },
-    {
-      id: '4',
-      emp_no: 'EMP004',
-      employee_name: t('hrm.demo.person_zhao'),
-      department: t('hrm.demo.dept_market'),
-      date: '2026-09-12',
-      check_in: '-',
-      check_out: '-',
-      status: 'leave',
-      work_hours: 0,
-      overtime_hours: 0,
-      remark: t('hrm.demo.att_remark_annual_leave'),
-    },
-    {
-      id: '5',
-      emp_no: 'EMP005',
-      employee_name: t('hrm.demo.person_qian'),
-      department: t('hrm.demo.dept_tech'),
-      date: '2026-09-12',
-      check_in: '08:50',
-      check_out: '20:00',
-      status: 'normal',
-      work_hours: 11.0,
-      overtime_hours: 3.0,
-      remark: t('hrm.demo.att_remark_project'),
-    },
-  ];
-
   const [activeTab, setActiveTab] = useState<'all' | 'normal' | 'abnormal' | 'leave'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -215,7 +145,6 @@ const HrmAttendanceRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -260,25 +189,17 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           total = dataObj.total || apiRecords.length;
         }
         if (Array.isArray(apiRecords)) {
-          setIsMockData(false);
           return { records: mapApiAttendance(apiRecords), total };
         }
-      } catch (e) {
-        console.warn('[HRM Attendance] API unavailable, using mock data:', e);
-        setIsMockData(true);
-      }
-      // Mock fallback：本地分页
-      let filtered = mockAttendance;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (r) => r.employee_name.includes(debouncedSearch) || r.emp_no.includes(debouncedSearch)
+        throw new Error(
+          t('hrm.attendance_redesign_page.list_unexpected_shape', '考勤列表返回格式异常')
         );
+      } catch (e) {
+        console.error('[HRM Attendance] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('hrm.attendance_redesign_page.k66', '考勤记录加载失败'));
       }
-      if (deptFilter !== 'all') {
-        filtered = filtered.filter((r) => r.department === deptFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { records: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
@@ -292,12 +213,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        await attendanceApi.delete(id);
-      } catch (e) {
-        console.warn('[HRM Attendance] Delete API unavailable, using mock delete:', e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await attendanceApi.delete(id);
       return id;
     },
     onSuccess: () => {
@@ -312,37 +228,22 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<AttendanceRecord>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
-        const payload = {
-          employee_id: data.emp_no,
-          employee_name: data.employee_name,
-          date: data.date,
-          check_in: data.check_in,
-          check_out: data.check_out,
-          status: data.status,
-          department: data.department,
-        };
-        await attendanceApi.create(payload);
-      } catch (e) {
-        console.warn('[HRM Attendance] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      const payload = {
+        employee_id: data.emp_no,
+        employee_name: data.employee_name,
+        date: data.date,
+        check_in: data.check_in,
+        check_out: data.check_out,
+        status: data.status,
+        department: data.department,
+      };
+      await attendanceApi.create(payload);
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast('warning', t('hrm.attendance_redesign_page.mock_create_fallback'));
-      } else {
-        pushToast('success', t('hrm.attendance_redesign_page.k62'));
-      }
+      pushToast('success', t('hrm.attendance_redesign_page.k62'));
     },
     onError: () => {
       pushToast('error', t('hrm.attendance_redesign_page.k63'));
@@ -351,29 +252,18 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<AttendanceRecord> }) => {
-      let apiFailed = false;
-      try {
-        const payload = {
-          check_in: data.check_in,
-          check_out: data.check_out,
-          status: data.status,
-        };
-        await attendanceApi.update(id, payload);
-      } catch (e) {
-        console.warn('[HRM Attendance] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      const payload = {
+        check_in: data.check_in,
+        check_out: data.check_out,
+        status: data.status,
+      };
+      await attendanceApi.update(id, payload);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast('warning', t('hrm.attendance_redesign_page.mock_update_fallback'));
-      } else {
-        pushToast('success', t('hrm.attendance_redesign_page.k64'));
-      }
+      pushToast('success', t('hrm.attendance_redesign_page.k64'));
     },
     onError: () => {
       pushToast('error', t('hrm.attendance_redesign_page.k65'));
@@ -518,21 +408,6 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('hrm.attendance_redesign_page.k35')}
-        </div>
-      )}
       <ListPageTemplate<AttendanceRecord>
         header={{
           title: t('hrm.attendance_redesign_page.k0'),

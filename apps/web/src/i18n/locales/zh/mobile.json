@@ -896,5 +896,9 @@
   "mobile.nav.mobile-profile": "个人中心",
   "mobile.nav.mobile-profile_desc": "个人中心",
   "mobile.nav.mobile-settings": "移动设置",
-  "mobile.nav.mobile-settings_desc": "移动设置"
+  "mobile.nav.mobile-settings_desc": "移动设置",
+  "mobile.mobile_quality_page.error_load": "质检任务加载失败，请重试",
+  "mobile.mobile_quality_page.error_load_defects": "缺陷记录加载失败，请重试",
+  "mobile.mobile_quality_page.error_report": "缺陷上报失败，请重试",
+  "mobile.mobile_quality_page.error_update_task": "任务状态更新失败，请重试"
 }

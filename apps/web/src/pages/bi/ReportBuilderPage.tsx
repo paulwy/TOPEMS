@@ -33,60 +33,6 @@ import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 type ViewMode = 'list' | 'builder';
-const mockReports: Report[] = [
-  {
-    id: 'rpt-001',
-    name: i18n.t('bi.report_builder_page.k0'),
-    description: i18n.t('bi.report_builder_page.k1'),
-    report_type: 'sales',
-    type: 'sales',
-    config: {},
-    status: 'published',
-    format: 'excel',
-    created_by: i18n.t('bi.report_builder_page.k2'),
-    created_at: '2026-01-15T10:30:00Z',
-    updated_at: '2026-06-28T08:00:00Z',
-  },
-  {
-    id: 'rpt-002',
-    name: i18n.t('bi.report_builder_page.k3'),
-    description: i18n.t('bi.report_builder_page.k4'),
-    report_type: 'quality',
-    type: 'quality',
-    config: {},
-    status: 'published',
-    format: 'pdf',
-    created_by: i18n.t('bi.report_builder_page.k5'),
-    created_at: '2026-02-20T14:00:00Z',
-    updated_at: '2026-06-23T00:00:00Z',
-  },
-  {
-    id: 'rpt-003',
-    name: i18n.t('bi.report_builder_page.k6'),
-    description: i18n.t('bi.report_builder_page.k7'),
-    report_type: 'inventory',
-    type: 'inventory',
-    config: {},
-    status: 'draft',
-    format: 'excel',
-    created_by: i18n.t('bi.report_builder_page.k8'),
-    created_at: '2026-05-10T09:00:00Z',
-    updated_at: '2026-06-25T16:30:00Z',
-  },
-  {
-    id: 'rpt-004',
-    name: i18n.t('bi.report_builder_page.k9'),
-    description: i18n.t('bi.report_builder_page.k10'),
-    report_type: 'hr',
-    type: 'hr',
-    config: {},
-    status: 'published',
-    format: 'pdf',
-    created_by: i18n.t('bi.report_builder_page.k11'),
-    created_at: '2026-03-01T11:00:00Z',
-    updated_at: '2026-06-01T00:00:00Z',
-  },
-];
 const ReportBuilderPage = () => {
   const theme = useTheme();
   const queryClient = useQueryClient();
@@ -106,20 +52,15 @@ const ReportBuilderPage = () => {
   const reportsQuery = useQuery<Report[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_REPORTS_BASE,
     queryFn: async () => {
-      try {
-        const res = await fetchReports();
-        if (res.success && res.data) {
-          return (res.data as unknown as Report[]) || mockReports;
-        }
-        return mockReports;
-      } catch (error: unknown) {
-        logger.error('Failed to load reports:', error);
-        return mockReports;
+      const res = await fetchReports();
+      if (!res.success || !res.data) {
+        throw new Error(res.message || i18n.t('bi.report_builder_page.error_load'));
       }
+      return (res.data as unknown as Report[]) ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
-  const reports = reportsQuery.data ?? mockReports;
+  const reports = reportsQuery.data ?? [];
   const loading = reportsQuery.isLoading;
   useEffect(() => {
     if (reportsQuery.isError) {

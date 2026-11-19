@@ -129,8 +129,6 @@ const mapApiEmployees = (apiEmployees: RawApiEmployee[]): Employee[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockEmployees
-
 const levelConfig = {
   P5: { label: 'P5', variant: 'default' as const },
   P6: { label: 'P6', variant: 'info' as const },
@@ -163,84 +161,6 @@ const HrmEmployeeRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const mockEmployees: Employee[] = [
-    {
-      id: '1',
-      emp_no: 'EMP001',
-      name: t('hrm.demo.person_zhang'),
-      department: t('hrm.demo.dept_tech'),
-      position: t('hrm.demo.pos_senior_engineer'),
-      level: 'P7',
-      status: 'active',
-      phone: '138****1234',
-      email: 'zhangsan@topems.com',
-      join_date: '2023-03-15',
-      salary: 25000,
-      manager: t('hrm.demo.reviewer_wang'),
-      created_at: '2023-03-15 10:00:00',
-    },
-    {
-      id: '2',
-      emp_no: 'EMP002',
-      name: t('hrm.demo.person_li'),
-      department: t('hrm.demo.dept_product'),
-      position: t('hrm.demo.pos_product_manager'),
-      level: 'P6',
-      status: 'active',
-      phone: '139****5678',
-      email: 'lisi@topems.com',
-      join_date: '2023-06-20',
-      salary: 22000,
-      manager: t('hrm.demo.reviewer_wang'),
-      created_at: '2023-06-20 14:30:00',
-    },
-    {
-      id: '3',
-      emp_no: 'EMP003',
-      name: t('hrm.demo.person_wang'),
-      department: t('hrm.demo.dept_design'),
-      position: t('hrm.demo.pos_ui_designer'),
-      level: 'P5',
-      status: 'probation',
-      phone: '137****9012',
-      email: 'wangwu@topems.com',
-      join_date: '2026-08-01',
-      salary: 15000,
-      manager: t('hrm.demo.reviewer_zhao'),
-      created_at: '2026-08-01 09:15:00',
-    },
-    {
-      id: '4',
-      emp_no: 'EMP004',
-      name: t('hrm.demo.person_zhao'),
-      department: t('hrm.demo.dept_market'),
-      position: t('hrm.demo.pos_marketing_director'),
-      level: 'M1',
-      status: 'active',
-      phone: '136****3456',
-      email: 'zhaoliu@topems.com',
-      join_date: '2022-01-10',
-      salary: 35000,
-      manager: 'CEO',
-      created_at: '2022-01-10 11:00:00',
-    },
-    {
-      id: '5',
-      emp_no: 'EMP005',
-      name: t('hrm.demo.person_qian'),
-      department: t('hrm.demo.dept_tech'),
-      position: t('hrm.demo.pos_frontend_engineer'),
-      level: 'P6',
-      status: 'leave',
-      phone: '135****7890',
-      email: 'qianqi@topems.com',
-      join_date: '2024-03-05',
-      salary: 20000,
-      manager: t('hrm.demo.reviewer_wang'),
-      created_at: '2024-03-05 16:45:00',
-    },
-  ];
-
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'probation' | 'leave'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -253,7 +173,6 @@ const HrmEmployeeRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -296,25 +215,17 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           total = dataObj.total || apiEmployees.length;
         }
         if (Array.isArray(apiEmployees)) {
-          setIsMockData(false);
           return { employees: mapApiEmployees(apiEmployees), total };
         }
-      } catch (e) {
-        console.warn('[HRM Employees] API unavailable, using mock data:', e);
-        setIsMockData(true);
-      }
-      // Mock fallback：本地分页
-      let filtered = mockEmployees;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (e) => e.name.includes(debouncedSearch) || e.emp_no.includes(debouncedSearch)
+        throw new Error(
+          t('hrm.employee_redesign_page.list_unexpected_shape', '员工列表返回格式异常')
         );
+      } catch (e) {
+        console.error('[HRM Employees] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('hrm.employee_redesign_page.k66', '员工列表加载失败'));
       }
-      if (deptFilter !== 'all') {
-        filtered = filtered.filter((e) => e.department === deptFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { employees: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
@@ -328,12 +239,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      try {
-        await employeeApi.delete(id);
-      } catch (e) {
-        console.warn('[HRM Employees] Delete API unavailable, using mock delete:', e);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await employeeApi.delete(id);
       return id;
     },
     onSuccess: () => {
@@ -348,41 +254,26 @@ const HrmEmployeeRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Employee>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
-        const payload = {
-          name: data.name || '',
-          employee_no: data.emp_no,
-          department: data.department,
-          position: data.position,
-          level: data.level,
-          status: data.status,
-          phone: data.phone,
-          email: data.email,
-          hire_date: data.join_date,
-          salary: data.salary,
-          manager: data.manager,
-        };
-        await employeeApi.create(payload);
-      } catch (e) {
-        console.warn('[HRM Employees] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      const payload = {
+        name: data.name || '',
+        employee_no: data.emp_no,
+        department: data.department,
+        position: data.position,
+        level: data.level,
+        status: data.status,
+        phone: data.phone,
+        email: data.email,
+        hire_date: data.join_date,
+        salary: data.salary,
+        manager: data.manager,
+      };
+      await employeeApi.create(payload);
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast('warning', t('hrm.employee_redesign_page.mock_create_fallback'));
-      } else {
-        pushToast('success', t('hrm.employee_redesign_page.k62'));
-      }
+      pushToast('success', t('hrm.employee_redesign_page.k62'));
     },
     onError: () => {
       pushToast('error', t('hrm.employee_redesign_page.k63'));
@@ -391,36 +282,25 @@ const HrmEmployeeRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Employee> }) => {
-      let apiFailed = false;
-      try {
-        const payload = {
-          name: data.name,
-          department: data.department,
-          position: data.position,
-          level: data.level,
-          status: data.status,
-          phone: data.phone,
-          email: data.email,
-          hire_date: data.join_date,
-          salary: data.salary,
-          manager: data.manager,
-        };
-        await employeeApi.update(id, payload);
-      } catch (e) {
-        console.warn('[HRM Employees] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      const payload = {
+        name: data.name,
+        department: data.department,
+        position: data.position,
+        level: data.level,
+        status: data.status,
+        phone: data.phone,
+        email: data.email,
+        hire_date: data.join_date,
+        salary: data.salary,
+        manager: data.manager,
+      };
+      await employeeApi.update(id, payload);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast('warning', t('hrm.employee_redesign_page.mock_update_fallback'));
-      } else {
-        pushToast('success', t('hrm.employee_redesign_page.k64'));
-      }
+      pushToast('success', t('hrm.employee_redesign_page.k64'));
     },
     onError: () => {
       pushToast('error', t('hrm.employee_redesign_page.k65'));
@@ -572,21 +452,6 @@ const HrmEmployeeRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('hrm.employee_redesign_page.k32')}
-        </div>
-      )}
       <ListPageTemplate<Employee>
         header={{
           title: t('hrm.employee_redesign_page.k0'),

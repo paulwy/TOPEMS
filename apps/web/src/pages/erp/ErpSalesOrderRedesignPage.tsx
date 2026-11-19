@@ -120,8 +120,6 @@ const mapApiSalesOrders = (apiOrders: ApiSalesOrderCompat[]): SalesOrder[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockSalesOrders
-
 const ErpSalesOrderRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -135,79 +133,6 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     }
     return `¥${value.toLocaleString('zh-CN')}`;
   };
-
-  const mockSalesOrders: SalesOrder[] = [
-    {
-      id: '1',
-      order_no: 'SO202609001',
-      customer_name: t('erp.demo.company_a_name'),
-      product_name: t('erp.demo.product_servo'),
-      quantity: 50,
-      unit_price: 3500,
-      total_amount: 175000,
-      status: 'delivered',
-      order_date: '2026-09-01',
-      delivery_date: '2026-09-10',
-      salesperson: t('erp.demo.owner_zhang'),
-      created_at: '2026-09-01 10:00:00',
-    },
-    {
-      id: '2',
-      order_no: 'SO202609002',
-      customer_name: t('erp.demo.company_b_name'),
-      product_name: t('erp.demo.product_plc'),
-      quantity: 100,
-      unit_price: 1200,
-      total_amount: 120000,
-      status: 'shipped',
-      order_date: '2026-09-05',
-      delivery_date: '2026-09-20',
-      salesperson: t('erp.demo.owner_li'),
-      created_at: '2026-09-05 14:30:00',
-    },
-    {
-      id: '3',
-      order_no: 'SO202609003',
-      customer_name: t('erp.demo.company_c_name'),
-      product_name: t('erp.demo.product_camera'),
-      quantity: 30,
-      unit_price: 5800,
-      total_amount: 174000,
-      status: 'confirmed',
-      order_date: '2026-09-10',
-      delivery_date: '2026-09-25',
-      salesperson: t('erp.demo.owner_zhang'),
-      created_at: '2026-09-10 09:15:00',
-    },
-    {
-      id: '4',
-      order_no: 'SO202608001',
-      customer_name: t('erp.demo.company_d_name'),
-      product_name: t('erp.demo.product_inverter'),
-      quantity: 20,
-      unit_price: 4200,
-      total_amount: 84000,
-      status: 'draft',
-      order_date: '2026-08-28',
-      delivery_date: '2026-09-15',
-      salesperson: t('erp.demo.owner_wang'),
-      created_at: '2026-08-28 11:00:00',
-    },
-    {
-      id: '5',
-      order_no: 'SO202608002',
-      customer_name: t('erp.demo.company_e_name'),
-      product_name: t('erp.demo.product_hmi'),
-      quantity: 15,
-      unit_price: 2800,
-      total_amount: 42000,
-      status: 'cancelled',
-      order_date: '2026-08-15',
-      delivery_date: '2026-08-30',
-      salesperson: t('erp.demo.owner_li'),
-      created_at: '2026-08-15 16:45:00',
-    },
-  ];
 
   const statusConfig = useMemo(
     () => ({
@@ -244,7 +169,6 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SalesOrder | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -289,25 +213,17 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           total = dataObj.total || apiOrders.length;
         }
         if (Array.isArray(apiOrders)) {
-          setIsMockData(false);
           return { orders: mapApiSalesOrders(apiOrders), total };
         }
-      } catch (e) {
-        console.warn('[ERP Sales Orders] API unavailable, using mock data:', e);
-        setIsMockData(true);
-      }
-      // Mock fallback：本地分页
-      let filtered = mockSalesOrders;
-      if (debouncedSearch) {
-        filtered = filtered.filter(
-          (o) => o.order_no.includes(debouncedSearch) || o.customer_name.includes(debouncedSearch)
+        throw new Error(
+          t('erp.erp_sales_order_redesign.list_unexpected_shape', '销售订单列表返回格式异常')
         );
+      } catch (e) {
+        console.error('[ERP Sales Orders] List API failed:', e);
+        throw e instanceof Error
+          ? e
+          : new Error(t('erp.erp_sales_order_redesign.toast.list_failed', '销售订单加载失败'));
       }
-      if (statusFilter !== 'all') {
-        filtered = filtered.filter((o) => o.status === statusFilter);
-      }
-      const start = (currentPage - 1) * pageSize;
-      return { orders: filtered.slice(start, start + pageSize), total: filtered.length };
     },
   });
 
@@ -341,41 +257,21 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<SalesOrder>) => {
-      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
-      let apiFailed = false;
-      try {
-        await salesOrderApi.create({
-          order_no: data.order_no,
-          customer_name: data.customer_name,
-          total_amount: data.total_amount,
-          status: data.status,
-          order_date: data.order_date,
-          delivery_date: data.delivery_date,
-          salesperson: data.salesperson,
-        } as unknown as CreateSalesOrderRequest);
-      } catch (e) {
-        console.warn('[ERP Sales Orders] Create API unavailable, using mock create:', e);
-        apiFailed = true;
-        setIsMockData(true);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { data, apiFailed };
+      await salesOrderApi.create({
+        order_no: data.order_no,
+        customer_name: data.customer_name,
+        total_amount: data.total_amount,
+        status: data.status,
+        order_date: data.order_date,
+        delivery_date: data.delivery_date,
+        salesperson: data.salesperson,
+      } as unknown as CreateSalesOrderRequest);
+      return data;
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        // 降级 mock：明确告知未写入数据库，禁止静默假成功
-        pushToast(
-          'warning',
-          t(
-            'erp.erp_sales_order_redesign.toast.mock_create_fallback',
-            '⚠️ 已降级为本地模拟数据，未写入数据库'
-          )
-        );
-      } else {
-        pushToast('success', t('erp.erp_sales_order_redesign.toast.create_success'));
-      }
+      pushToast('success', t('erp.erp_sales_order_redesign.toast.create_success'));
     },
     onError: () => {
       pushToast('error', t('erp.erp_sales_order_redesign.toast.create_failed'));
@@ -384,35 +280,18 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SalesOrder> }) => {
-      let apiFailed = false;
-      try {
-        await salesOrderApi.update(id, {
-          customer_name: data.customer_name,
-          total_amount: data.total_amount,
-          status: data.status,
-          delivery_date: data.delivery_date,
-        } as unknown as UpdateSalesOrderRequest);
-      } catch (e) {
-        console.warn('[ERP Sales Orders] Update API unavailable, using mock update:', e);
-        apiFailed = true;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data, apiFailed };
+      await salesOrderApi.update(id, {
+        customer_name: data.customer_name,
+        total_amount: data.total_amount,
+        status: data.status,
+        delivery_date: data.delivery_date,
+      } as unknown as UpdateSalesOrderRequest);
+      return { id, data };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      if (result.apiFailed) {
-        pushToast(
-          'warning',
-          t(
-            'erp.erp_sales_order_redesign.toast.mock_update_fallback',
-            '⚠️ 已降级为本地模拟数据，未写入数据库'
-          )
-        );
-      } else {
-        pushToast('success', t('erp.erp_sales_order_redesign.toast.update_success'));
-      }
+      pushToast('success', t('erp.erp_sales_order_redesign.toast.update_success'));
     },
     onError: () => {
       pushToast('error', t('erp.erp_sales_order_redesign.toast.update_failed'));
@@ -560,21 +439,6 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   return (
     <>
-      {isMockData && (
-        <div
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            color: 'var(--warning-700)',
-            backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--warning-500) 30%, transparent)',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: 'var(--text-sm)',
-            marginBottom: 'var(--space-4)',
-          }}
-        >
-          {t('erp.erp_sales_order_redesign.demo_banner')}
-        </div>
-      )}
       <ListPageTemplate<SalesOrder>
         header={{
           title: t('erp.erp_sales_order_redesign.title'),
