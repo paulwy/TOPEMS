@@ -270,17 +270,43 @@
 
 ## 4. 语义不同 · 不归一同名（单独列）
 
-| 表 | 现策略 | 语义 | 处置 |
+> 2026-11-19 实测复核：本节判断逐条以 `database/rls_policy_expected.json`（生产只读口径，`pg_get_expr` 实测）重新核对，不沿用原稿转述。更正项见 §4.0。
+
+### 4.0 实测更正：8 张 erp 合并报表表是等价改名，不是语义不同
+
+`erp.company_relations`、`erp.consolidation_report_lines`、`erp.consolidation_reports`、`erp.consolidation_scope_companies`、`erp.consolidation_scopes`、`erp.elimination_candidates`、`erp.elimination_rules`、`erp.internal_transactions`：
+
+- 实测各只有 1 条策略，名 `tenant_isolation_<table>`，`cmd=ALL` / `PERMISSIVE` / `roles=PUBLIC`，`polqual` 与 `polwithcheck` **逐字等于**严格 B（`COALESCE(current_setting('app.rls_system',true),'off')='on' OR tenant_id = ...`）。
+- 原稿依据「`erp.group_tenant_of`」判其语义不同**不成立**：该函数只出现在合并报表模块的业务 INSERT 列值里（`svc/erp/src/modules/consolidation/{scopes,scope_companies,company_relations,elimination_rules,elimination_flow,internal_transactions}.rs`）及其函数定义中，**全库策略表达式命中 0 次**。
+- 处置更正：按纯策略名漂移机械归一 → `20261119210000_rls_normalize_erp_consolidation_policy_rename.sql`（仅 `ALTER POLICY ... RENAME TO rls_tenant_isolation`，表达式不动），回滚为成对改名。快照实测 798 表 / 810 策略，差异仅这 8 条策略名。
+
+### 4.1 维持现状（现存更严、归一会放宽写口径）
+
+| 表 | 现策略 | 与目标（规范 `rls_tenant_isolation` + 严格 B）的差异 | 处置 |
 |---|---|---|---|
-| `bi.audit_logs` | `bi_allow_all_audit_logs`（ALL `USING(true)`） | 全放行；无运行期读写 | 已从 `20261119110000` 移出（schema-defense 会重建，见 `migration-exemptions.json` B20261119-batch2-bi-audit-logs-keep）；保留 `bi_allow_all_audit_logs`，不归一到严格 B |
-| `public.core_login_logs` | `rls_system_only`（ALL）+ `rls_tenant_read`（SELECT） | 系统全权 / 租户只读，按 command 拆分 | 永久移出候选，`20261119141000` 守卫钉住租户策略必须为 SELECT |
-| `erp.company_relations`、`erp.consolidation_report_lines`、`erp.consolidation_reports`、`erp.consolidation_scope_companies`、`erp.consolidation_scopes`、`erp.elimination_candidates`、`erp.elimination_rules`、`erp.internal_transactions` | `erp.group_tenant_of` | 集团/租户两层口径 | 语义不同，不归一（已在合并报表定性中处理） |
-| `erp.event_idempotency` | 幂等键控制 | 非租户隔离 | 语义不同，不归一 |
-| `public.core_refresh_tokens`、`public.core_sessions` | 系统通道/会话 | 主体维度而非租户维度 | 语义不同，不归一 |
-| 37 张 `*_allow_all_*`（`USING(true)`） | 全放行 | 无租户隔离 | 另立定性（见 `rls-using-true-triage-2026-11-19.md`），不并入本清单 |
+| `erp.event_idempotency` | `tenant_isolation`（ALL，USING = WITH CHECK = `tenant_id = NULLIF(...)::uuid`） | 目标多一条 `COALESCE(current_setting('app.rls_system',true),'off')='on'` 的全通分支；并入即新增系统通道，**放宽** | 维持原状，不归一、不写迁移 |
+| `public.core_login_logs` | `rls_system_only`（ALL，system-only）+ `rls_tenant_read`（SELECT，system OR tenant） | 合并成单条 ALL 会把写权限从 system-only 放开到「租户可写」，**放宽写口径** | 维持原状；`20261119141000` 守卫钉住租户策略必须为 SELECT |
+| `public.core_refresh_tokens` | `rls_system_only`（ALL） | 同上：并入 canonical 后租户可写，**放宽** | 维持原状，不归一 |
+| `public.core_sessions` | `rls_system_only`（ALL） | 同上：并入 canonical 后租户可写，**放宽** | 维持原状，不归一 |
+
+### 4.2 只记录、不处理
+
+| 表 / 集合 | 现策略 | 说明 |
+|---|---|---|
+| `bi.audit_logs` | `bi_allow_all_audit_logs`（ALL `USING(true)`） | 现存更松、目标更严；已从 `20261119110000` 移出（schema-defense 会重建，见 `migration-exemptions.json` B20261119-batch2-bi-audit-logs-keep）；定性需业务确认，不归一 |
+| `erp.core_erp_materials` | `erp_allow_all_core_erp_materials`（ALL `USING(true)`） | 同上，现存更松；收紧会改变可见行，需业务定性 |
+| `gis.track_positions` | `gis_allow_all_track_positions`（ALL `USING(true)`），且 `rls_enabled=false` / `force_rls=false` | 同上，连同 RLS 均未启用；收紧属另一议题 |
+| `iam.roles` | `rls_global_read`（SELECT `USING(true)`）+ `rls_system_write`（ALL system-only） | 归一会同时丢全局读并放开租户写；如需收紧须单独业务定性 |
+| 9 张平台/全局双策略表 | `rls_tenant_isolation` + `rls_platform_read` / `rls_global_read` | 已具备规范名，无漂移可归；两条策略语义不同，删任一都会改变可见行（清单见下） |
 
 另有 9 张「平台可见 vs 本租户可见」双策略表退出批 1（`rls_platform_read` / `rls_global_read`）：
 `core.core_plugins`、`erp.holidays`、`finance.core_finance_currencies`、`finance.core_finance_report_line_map`、`pm.project_type_configs`、`portal.portal_quick_actions`、`public.core_roles`、`public.core_menu_groups`、`public.core_menus`。两条策略语义不同，删任一条都会改变可见行。
+
+### 4.3 单列待办（本批不动）
+
+- `finance.finance_u8_import_records`：存在两条**定义逐字相同**的策略（`rls_tenant_isolation` 与 `tenant_isolation_finance_u8_import_records`，均为 ALL / PERMISSIVE / PUBLIC、同表达式）。系 `20261119190000` 为对齐 dev 刻意保留；去重在「删一条 PERMISSIVE 同义策略」意义上等价，但不在漂移清单范围，登记为单列小改，独立迁移处理。
+
+- 37 张 `*_allow_all_*`（`USING(true)`）：另立定性（见 `rls-using-true-triage-2026-11-19.md`），不并入本清单。
 
 ## 5. 代码依赖策略名核查
 
