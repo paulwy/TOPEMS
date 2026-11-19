@@ -241,3 +241,29 @@ RLS 现状（`database/rls_policy_expected.json`）：`iam.resource_permissions`
 3. 按资源端点是否强制 `resource_type + resource_id` 同时必填？（建议：是）
 4. 平台作用域是否允许 `tenant_id` 过滤做跨租户审计？（建议：是，仅平台）
 5. 是否需要返回已软删的历史授权？本草案建议不返回。
+
+## 11. 实施记录与并发提交说明
+
+### 11.1 已定稿口径
+
+五项待确认项已按建议定稿：新增 `iam:resource_acl:read`；用户端点只列显式例外；按资源端点双参数必填；平台作用域支持可选 `tenant_id`；不返回软删历史。
+
+### 11.2 并发提交碰撞（2026-11-19）
+
+`357a31de4` 是一次并发提交碰撞的产物，提交信息属另一条线（RLS 策略快照重生成），但内容同时包含本任务的文件：
+
+| 文件 | 归属 |
+|---|---|
+| `database/migrations/20261119220000_iam_resource_acl_read_permission.sql` | 本任务 |
+| `database/rollback/20261119220000_iam_resource_acl_read_permission.rollback.sql` | 本任务 |
+| `database/migration_manifest.yaml`（新增 `20261119220000` 条目） | 本任务 |
+| `database/checksums.txt`（新增对应校验行） | 本任务 |
+| `docs/api/API_IAM_RESOURCE_ACL_READ_DRAFT.md` | 本任务 |
+| `database/rls_policy_expected.json` | 另一条线 |
+
+两条线同时 `git commit`，对方把本任务已暂存的迁移文件一并带走。经确认**不做历史改写**：不 amend、不拆分该提交。后端实现另起 `bad6d1c03`（三个 GET 端点 + 作用域收敛 + OpenAPI 契约）。
+
+### 11.3 尚未提交
+
+`apps/web/src/config/permissions.ts`（由迁移自动重生成）尚未提交，原因是仓库当前存在一个与本任务无关的既有类型错误：`apps/web/src/api/finance/account.ts` 引用 `AdaptedQuery<'list_accounts'>`，而 HEAD 的 `packages/shared-types/src/generated/openapi.d.ts` 已无 `list_accounts`。全量 `frontend-typecheck` 因此失败，需另行决定处置方式后再随前端批次提交。
+
