@@ -325,13 +325,13 @@ pub async fn download_offline_data(
 
     // 下载轨迹数据
     if payload.include_tracks {
-        let mut query = "id, tenant_id, device_id, device_name, start_time, end_time, total_distance, created_at FROM gis.track_records".to_string();
+        let mut query = "SELECT id, tenant_id, device_id, device_name, start_time, end_time, total_distance, created_at FROM gis.track_records WHERE TRUE".to_string();
 
         if payload.track_date_from.is_some() {
-            query.push_str(" AND start_time >= $2");
+            query.push_str(" AND start_time >= $1");
         }
         if payload.track_date_to.is_some() {
-            query.push_str(" AND end_time <= $3");
+            query.push_str(" AND end_time <= $2");
         }
         query.push_str(" ORDER BY start_time DESC");
 

@@ -25,6 +25,11 @@ pub struct CreateContractTermRequest {
     pub sort_order: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateContractTermsRequest {
+    pub terms: Vec<CreateContractTermRequest>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,5 +209,25 @@ mod tests {
         assert_eq!(de.id, t.id);
         assert_eq!(de.tenant_id, t.tenant_id);
         assert_eq!(de.contract_id, t.contract_id);
+    }
+}
+
+#[cfg(test)]
+mod create_terms_request_tests {
+    use super::CreateContractTermsRequest;
+
+    #[test]
+    fn test_deserialize_terms() {
+        let json = r#"{"terms":[{"contract_id":"ignored","term_type":"payment","title":"Net 30","sort_order":1}]}"#;
+        let req: CreateContractTermsRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(req.terms.len(), 1);
+        assert_eq!(req.terms[0].term_type, "payment");
+        assert!(req.terms[0].content.is_none());
+    }
+
+    #[test]
+    fn test_deserialize_empty_terms() {
+        let req: CreateContractTermsRequest = serde_json::from_str(r#"{"terms":[]}"#).unwrap();
+        assert!(req.terms.is_empty());
     }
 }

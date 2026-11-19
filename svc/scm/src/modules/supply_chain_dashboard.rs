@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -26,6 +26,10 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/dashboard/supplier-performance", get(supplier_performance))
         .route("/dashboard/real-time-status", get(real_time_status))
+        .route(
+            "/dashboard/replenishment-snapshots",
+            post(generate_replenishment_snapshots),
+        )
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -730,6 +734,120 @@ pub async fn real_time_status(
             "timestamp": chrono::Utc::now().to_rfc3339(),
         }),
         "获取实时状态成功",
+    )
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:dashboard:write"])),
+    path = "/dashboard/replenishment-snapshots",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/dashboard"
+)]
+pub async fn generate_replenishment_snapshots(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e.0,
+    }
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
+
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::server_error("生成补货建议快照失败");
+        }
+    };
+
+    // 当天草稿快照整体重算，保证重复调用幂等
+    if let Err(e) = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        DELETE FROM scm.wms_replenishment_suggestion_snapshots
+        WHERE tenant_id = $1::uuid
+          AND status = 'draft'
+          AND synced_at::date = CURRENT_DATE
+        "#
+    ))
+    .bind(tenant_bind)
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("清理当日补货快照失败: {}", e);
+        drop(scope);
+        if let Some(t) = guard.take() {
+            let _ = t.rollback().await;
+        }
+        return ApiResponse::server_error("生成补货建议快照失败");
+    }
+
+    let insert_result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        INSERT INTO scm.wms_replenishment_suggestion_snapshots
+            (suggestion_number, warehouse_id, item_id, item_code, item_name,
+             suggested_quantity, unit, status, tenant_id, synced_at, created_at, updated_at)
+        SELECT
+            'RPL-' || to_char(CURRENT_DATE, 'YYYYMMDD') || '-'
+                || LPAD(ROW_NUMBER() OVER (ORDER BY x.item_code, x.warehouse_id)::text, 4, '0'),
+            x.warehouse_id, x.item_id, x.item_code, x.item_name,
+            GREATEST(x.min_quantity - x.available_quantity, 0), x.unit,
+            'draft', $1::uuid, NOW(), NOW(), NOW()
+        FROM (
+            SELECT DISTINCT ON (item_code, warehouse_id)
+                item_code, warehouse_id, item_id, item_name, unit,
+                available_quantity, min_quantity
+            FROM scm.wms_inventory_snapshots
+            WHERE tenant_id = $1::uuid
+              AND deleted_at IS NULL
+            ORDER BY item_code, warehouse_id, snapshot_date DESC, created_at DESC
+        ) x
+        WHERE x.available_quantity < x.min_quantity
+        "#
+    ))
+    .bind(tenant_bind)
+    .execute(&mut scope)
+    .await;
+
+    let generated = match insert_result {
+        Ok(result) => result.rows_affected(),
+        Err(e) => {
+            tracing::error!("生成补货建议快照失败: {}", e);
+            drop(scope);
+            if let Some(t) = guard.take() {
+                let _ = t.rollback().await;
+            }
+            return ApiResponse::server_error("生成补货建议快照失败");
+        }
+    };
+    drop(scope);
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
+    }
+
+    ApiResponse::success(
+        serde_json::json!({"generated": generated}),
+        "生成补货建议快照成功",
     )
 }
 

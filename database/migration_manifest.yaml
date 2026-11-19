@@ -2457,3 +2457,12 @@ pending_forward_patches:
     destructive_scan: "EXECUTE DROP POLICY 循环（动态）+ CREATE POLICY + ENABLE/FORCE；先写 archive._rls_policy_snapshot 快照；无 DELETE/UPDATE/TRUNCATE/DROP TABLE；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119161000_zero_path_retained_tables_policy_fix.rollback.sql（删除新策略、按 archive._rls_policy_snapshot 恢复原策略，清账本行）"
 
+  # ===== 2026-11-19 功能半成品收口 =====
+  # 依据：docs/quality/half-finished-closure-2026-11-19.md
+  - version: "20261119170000"
+    file: "database/migrations/20261119170000_seed_core_plugin_categories.sql"
+    status: to_apply
+    effect: "向 core.core_plugin_categories 灌入 9 条插件市场分类字典（全局字典表无 tenant_id）；按 code 幂等，已存在则跳过；面向 marketplace summary/categories 恒空问题"
+    destructive_scan: "仅 INSERT ... SELECT ... WHERE NOT EXISTS；无 UPDATE/DELETE/TRUNCATE/DROP；文件内无 BEGIN/COMMIT"
+    note: "回滚 database/rollback/20261119170000_seed_core_plugin_categories.rollback.sql（按 code 删除 9 条种子行，清账本行）；不改表结构、不建索引"
+

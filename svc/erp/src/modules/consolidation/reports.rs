@@ -164,7 +164,7 @@ pub async fn generate_report(
     responses((status = 200, description = "获取合并报表行项目成功", body = ApiResponse<serde_json::Value>))
 )]
 pub async fn get_report_lines(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<ConsolidationReportLine>> {
@@ -173,11 +173,35 @@ pub async fn get_report_lines(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取合并报表行项目失败".to_string()));
+        }
+    };
+    let report_exists = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM erp.consolidation_reports WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(report_id)
+    .fetch_one(&mut scope)
+    .await;
+
+    match report_exists {
+        Ok(0) => return ApiResponse::<Vec<ConsolidationReportLine>>::error(404, "合并报表不存在"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("校验合并报表失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取合并报表行项目失败".to_string()));
+        }
+    }
+
     match sqlx::query_as::<_, ConsolidationReportLine>(
         "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(lines) => ApiResponse::success(lines, "获取合并报表行项目成功"),

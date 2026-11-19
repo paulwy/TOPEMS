@@ -156,6 +156,10 @@ pub fn create_routes() -> Router<ApiState> {
                 .delete(delete_suggestion),
         )
         .route("/mrp/suggestions/{id}/confirm", post(confirm_suggestion))
+        .route(
+            "/mrp/demand-forecasts/import",
+            post(import_demand_forecasts),
+        )
         .route("/mrp-suggestions", get(list_suggestions))
         .route("/mrp-suggestions/{id}", get(get_suggestion))
         .route(
@@ -982,6 +986,118 @@ pub async fn material_requirement_summary(
             ApiResponse::from(TopemsError::Internal("获取物料需求汇总失败".to_string()))
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DemandForecastImportItem {
+    pub material_code: String,
+    pub quantity: f64,
+    pub forecast_date: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DemandForecastImportRequest {
+    pub items: Vec<DemandForecastImportItem>,
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase_order:write"])),
+    path = "/mrp/demand-forecasts/import",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/mrp"
+)]
+pub async fn import_demand_forecasts(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Json(req): Json<DemandForecastImportRequest>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e.0,
+    }
+    let tenant_bind = match require_tenant_bind(&claims) {
+        Ok(v) => v,
+        Err(e) => return e.0,
+    };
+
+    if req.items.is_empty() {
+        return ApiResponse::<serde_json::Value>::bad_request("预测明细不能为空");
+    }
+
+    let mut rows = Vec::with_capacity(req.items.len());
+    for item in &req.items {
+        let material_code = item.material_code.trim();
+        if material_code.is_empty() {
+            return ApiResponse::<serde_json::Value>::bad_request("物料编码不能为空");
+        }
+        if !item.quantity.is_finite() || item.quantity <= 0.0 {
+            return ApiResponse::<serde_json::Value>::bad_request("预测数量必须大于 0");
+        }
+        let forecast_date = match NaiveDate::parse_from_str(item.forecast_date.trim(), "%Y-%m-%d") {
+            Ok(date) => date,
+            Err(_) => {
+                return ApiResponse::<serde_json::Value>::bad_request(
+                    "预测日期格式错误，应为 YYYY-MM-DD",
+                )
+            }
+        };
+        rows.push((material_code.to_string(), item.quantity, forecast_date));
+    }
+
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::<serde_json::Value>::server_error("导入需求预测失败");
+        }
+    };
+
+    for (material_code, quantity, forecast_date) in &rows {
+        let insert_result = sqlx::query(only_own_schema_query!(
+            "scm",
+            r#"
+            INSERT INTO scm.demand_forecast (tenant_id, material_code, quantity, forecast_date)
+            VALUES ($1, $2, $3::numeric, $4)
+            "#,
+            "scm"
+        ))
+        .bind(tenant_bind)
+        .bind(material_code)
+        .bind(*quantity)
+        .bind(*forecast_date)
+        .execute(&mut scope)
+        .await;
+
+        if let Err(e) = insert_result {
+            tracing::error!("导入需求预测失败: {}", e);
+            return ApiResponse::<serde_json::Value>::server_error("导入需求预测失败");
+        }
+    }
+    drop(scope);
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
+    }
+
+    ApiResponse::success(
+        serde_json::json!({"imported": rows.len()}),
+        "需求预测导入成功",
+    )
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -14,9 +14,10 @@ use topems_shared_core::error::Result;
 use uuid::Uuid;
 
 use crate::models::{
-    ContractTerm, CreateSupplierContractRequest, SupplierContract, UpdateSupplierContractRequest,
+    ContractTerm, CreateContractTermsRequest, CreateSupplierContractRequest, SupplierContract,
+    UpdateSupplierContractRequest,
 };
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, require_write_tenant, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
@@ -50,6 +51,10 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
                 .delete(delete_contract),
         )
         .route("/supplier-contracts/{id}/terms", get(get_contract_terms))
+        .route(
+            "/supplier-contracts/{id}/terms",
+            post(create_contract_terms),
+        )
         .with_state(state);
 
     Ok(app)
@@ -594,4 +599,123 @@ pub async fn get_contract_terms(
             ApiResponse::<Vec<ContractTerm>>::error(500, "获取合同条款失败")
         }
     }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier_contract:write"])),
+    path = "/supplier-contracts/{id}/terms",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
+pub async fn create_contract_terms(
+    State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Json(req): Json<CreateContractTermsRequest>,
+) -> ApiResponse<Vec<ContractTerm>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
+        Ok(_) => {}
+        Err(e) => return e.0,
+    }
+
+    let tenant_id = match require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
+    if req.terms.is_empty() {
+        return ApiResponse::<Vec<ContractTerm>>::bad_request("条款列表不能为空");
+    }
+
+    for term in &req.terms {
+        if term.term_type.trim().is_empty() || term.title.trim().is_empty() {
+            return ApiResponse::<Vec<ContractTerm>>::bad_request("条款类型和标题不能为空");
+        }
+        if term.term_type.chars().count() > 50 || term.title.chars().count() > 200 {
+            return ApiResponse::<Vec<ContractTerm>>::bad_request("条款类型或标题超出长度限制");
+        }
+    }
+
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "srm, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::<Vec<ContractTerm>>::error(500, "创建合同条款失败");
+        }
+    };
+    let contract_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE deleted_at IS NULL AND id = $1",
+        "srm"
+    ))
+    .bind(id)
+    .fetch_one(&mut scope)
+    .await;
+
+    match contract_exists {
+        Ok(0) => return ApiResponse::<Vec<ContractTerm>>::error(404, "合同不存在"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("校验供应商合同失败: {}", e);
+            return ApiResponse::<Vec<ContractTerm>>::error(500, "创建合同条款失败");
+        }
+    }
+
+    let now = Utc::now();
+    let mut created = Vec::with_capacity(req.terms.len());
+    for term in &req.terms {
+        let insert_result = sqlx::query_as::<_, ContractTerm>(only_own_schema_query!(
+            "srm",
+            r#"
+            INSERT INTO srm.contract_terms
+                (tenant_id, contract_id, term_type, title, content, sort_order, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+            RETURNING id, tenant_id, contract_id, term_type, title, content, sort_order, created_at, updated_at
+            "#,
+            "srm"
+        ))
+        .bind(tenant_id)
+        .bind(id)
+        .bind(&term.term_type)
+        .bind(&term.title)
+        .bind(&term.content)
+        .bind(term.sort_order)
+        .bind(now)
+        .fetch_one(&mut scope)
+        .await;
+
+        match insert_result {
+            Ok(row) => created.push(row),
+            Err(e) => {
+                tracing::error!("创建合同条款失败: {}", e);
+                return ApiResponse::<Vec<ContractTerm>>::error(500, "创建合同条款失败");
+            }
+        }
+    }
+    drop(scope);
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
+    }
+
+    ApiResponse::success(created, "合同条款创建成功")
 }

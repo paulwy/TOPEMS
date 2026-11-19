@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
@@ -12,7 +12,10 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use uuid::Uuid;
 
-use crate::models::{AwardBiddingRequest, Bidding, CreateBiddingRequest, UpdateBiddingRequest};
+use crate::models::{
+    AwardBiddingRequest, Bidding, CreateBiddingRequest, SetBiddingSuppliersRequest,
+    UpdateBiddingRequest,
+};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -43,6 +46,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
         .route("/biddings/{id}/evaluate", post(evaluate_bidding))
         .route("/biddings/{id}/award", post(award_bidding))
         .route("/biddings/{id}/suppliers", get(list_bidding_suppliers))
+        .route("/biddings/{id}/suppliers", put(set_bidding_suppliers))
         .with_state(state);
 
     Ok(app)
@@ -694,6 +698,165 @@ pub async fn list_bidding_suppliers(
             ApiResponse::<serde_json::Value>::server_error("获取参与供应商失败")
         }
     }
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}/suppliers",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Bad request"),
+        (status = 404, description = "Not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
+pub async fn set_bidding_suppliers(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Json(req): Json<SetBiddingSuppliersRequest>,
+) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let db = topems_shared_db::scope::Db::new(state.db.clone(), "srm, public, shared");
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::server_error("更新参与供应商失败");
+        }
+    };
+
+    let mut supplier_ids = Vec::with_capacity(req.supplier_ids.len());
+    for raw in &req.supplier_ids {
+        match Uuid::parse_str(raw) {
+            Ok(uid) => supplier_ids.push(uid),
+            Err(_) => return ApiResponse::bad_request("供应商ID格式错误"),
+        }
+    }
+    supplier_ids.sort_unstable();
+    supplier_ids.dedup();
+
+    let bidding_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.biddings WHERE id = $1 AND deleted_at IS NULL",
+        "srm"
+    ))
+    .bind(id)
+    .fetch_one(&mut scope)
+    .await;
+
+    match bidding_exists {
+        Ok(0) => return ApiResponse::not_found("招标不存在"),
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("校验招标失败: {}", e);
+            return ApiResponse::server_error("更新参与供应商失败");
+        }
+    }
+
+    let expected = i64::try_from(supplier_ids.len()).unwrap_or(-1);
+    if !supplier_ids.is_empty() {
+        let valid = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "srm",
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = ANY($1) AND status <> 'deleted'",
+            "srm"
+        ))
+        .bind(&supplier_ids)
+        .fetch_one(&mut scope)
+        .await;
+
+        match valid {
+            Ok(count) if count == expected => {}
+            Ok(_) => return ApiResponse::bad_request("存在无效或已删除的供应商"),
+            Err(e) => {
+                tracing::error!("校验供应商失败: {}", e);
+                return ApiResponse::server_error("更新参与供应商失败");
+            }
+        }
+    }
+
+    if let Err(e) = sqlx::query(only_own_schema_query!(
+        "srm",
+        "DELETE FROM srm.bidding_suppliers WHERE bidding_id = $1",
+        "srm"
+    ))
+    .bind(id)
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("清空招标供应商关联失败: {}", e);
+        drop(scope);
+        if let Some(t) = guard.take() {
+            let _ = t.rollback().await;
+        }
+        return ApiResponse::server_error("更新参与供应商失败");
+    }
+
+    for supplier_id in &supplier_ids {
+        let insert_result = sqlx::query(only_own_schema_query!(
+            "srm",
+            r#"
+            INSERT INTO srm.bidding_suppliers (bidding_id, supplier_id, tenant_id)
+            VALUES ($1, $2, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+            "#,
+            "srm"
+        ))
+        .bind(id)
+        .bind(supplier_id)
+        .execute(&mut scope)
+        .await;
+
+        if let Err(e) = insert_result {
+            tracing::error!("写入招标供应商关联失败: {}", e);
+            drop(scope);
+            if let Some(t) = guard.take() {
+                let _ = t.rollback().await;
+            }
+            return ApiResponse::server_error("更新参与供应商失败");
+        }
+    }
+
+    if let Err(e) = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.biddings SET supplier_count = $2, updated_at = $3 WHERE id = $1",
+        "srm"
+    ))
+    .bind(id)
+    .bind(expected)
+    .bind(Utc::now())
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("更新招标供应商数量失败: {}", e);
+        drop(scope);
+        if let Some(t) = guard.take() {
+            let _ = t.rollback().await;
+        }
+        return ApiResponse::server_error("更新参与供应商失败");
+    }
+    drop(scope);
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return ApiResponse::server_error("提交事务失败");
+        }
+    }
+
+    ApiResponse::success(
+        serde_json::json!({"bidding_id": id, "supplier_count": expected}),
+        "更新参与供应商成功",
+    )
 }
 
 pub fn calculate_bid_total(tech: f64, commercial: f64, price_score: f64) -> f64 {

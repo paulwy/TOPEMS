@@ -63,6 +63,11 @@ pub struct AwardBiddingRequest {
     pub supplier_id: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetBiddingSuppliersRequest {
+    pub supplier_ids: Vec<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -346,5 +351,24 @@ mod tests {
             let de: Bidding = serde_json::from_str(&json).unwrap();
             assert_eq!(de.status, status);
         }
+    }
+}
+
+#[cfg(test)]
+mod set_suppliers_request_tests {
+    use super::SetBiddingSuppliersRequest;
+
+    #[test]
+    fn test_deserialize_supplier_ids() {
+        let req: SetBiddingSuppliersRequest =
+            serde_json::from_str(r#"{"supplier_ids":["a","b"]}"#).unwrap();
+        assert_eq!(req.supplier_ids, vec!["a".to_string(), "b".to_string()]);
+    }
+
+    #[test]
+    fn test_deserialize_empty_supplier_ids() {
+        let req: SetBiddingSuppliersRequest =
+            serde_json::from_str(r#"{"supplier_ids":[]}"#).unwrap();
+        assert!(req.supplier_ids.is_empty());
     }
 }
