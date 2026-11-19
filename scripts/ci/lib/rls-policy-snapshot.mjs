@@ -108,11 +108,17 @@ export function resolveDbUrl(explicitDsn) {
 }
 
 function psql(url, sql) {
+  // search_path 固定为 pg_catalog：pg_policies.qual / with_check 由 pg_get_expr 生成，
+  // 其限定名输出取决于会话 search_path（search_path 含 mes 时输出 process_flows，
+  // 不含时输出 mes.process_flows）。不固定会让快照随连接用户/环境漂移。
+  const pgoptions = [process.env.PGOPTIONS, "-c search_path=pg_catalog"]
+    .filter(Boolean)
+    .join(" ");
   return execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-Atc", sql], {
     encoding: "utf8",
     timeout: PSQL_TIMEOUT_MS,
     stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, PGCONNECT_TIMEOUT: "5" },
+    env: { ...process.env, PGCONNECT_TIMEOUT: "5", PGOPTIONS: pgoptions },
   }).trim();
 }
 
