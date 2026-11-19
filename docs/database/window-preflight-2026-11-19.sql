@@ -11,7 +11,7 @@
 --
 -- 判读：
 --   * exit 0，且输出中不得出现 ERROR。
---   * 第 9 节 C1–C15、C17 必须 PASS；C16 在 topems_drift 下为 NEEDS_DBA，
+--   * 第 9 节 C1–C15、C17 必须 PASS、第 7.5 节 C18 必须 PASS；C16 在 topems_drift 下为 NEEDS_DBA，
 --     必须由 DBA 特权只读会话复跑本文件后转为 PASS。
 --   * 本脚本不建临时表、不写任何生产对象；只查询 pg_catalog / pg_policies /
 --     pg_proc / pg_constraint 与账本。
@@ -28,7 +28,7 @@ SELECT current_user,
        coalesce(inet_server_addr()::text, 'local') AS server_addr,
        current_setting('transaction_read_only') AS txn_read_only;
 
-\echo '== 1. 账本水位与三条窗口版本 =='
+\echo '== 1. 账本水位与四条窗口版本 =='
 SELECT count(*) AS ledger_rows,
        count(*) FILTER (WHERE success) AS success_rows,
        count(*) FILTER (WHERE NOT success) AS failed_rows,
@@ -41,9 +41,9 @@ SELECT version,
        installed_on,
        encode(checksum, 'hex') AS sha384
 FROM _sqlx_migrations
-WHERE version IN (20261119160000, 20261119180000, 20261119200000)
+WHERE version IN (20261119160000, 20261119180000, 20261119200000, 20261119233000)
 ORDER BY version;
--- 期望：0 行（三条均未应用）
+-- 期望：0 行（四条均未应用）
 
 \echo '== 2. 全局表 / RLS / 策略基线（窗口前 1344 / 959 / 1050）=='
 SELECT count(*) FILTER (WHERE c.relkind IN ('r','p')) AS tables_rp,
@@ -340,6 +340,45 @@ ORDER BY wave, object;
 -- DBA 特权会话下期望：0 行（全部 READABLE 且 rows=0）
 -- topems_drift 下：132 行 NO_PRIV（预期）
 
+\echo '== 7.5 W4 权限码窗口前状态（C18：legacy=0 / grants=0 / dict=0）=='
+WITH legacy(code) AS (VALUES
+  ('attendance_read'),('attendance_write'),('company_read'),('company_write'),
+  ('department_read'),('department_write'),
+  ('doc:documents_create'),('doc:documents_delete'),('doc:documents_read'),('doc:documents_update'),
+  ('employee_read'),('employee_write'),
+  ('iam:audit_read'),('iam:permissions_read'),('iam:permissions_update'),
+  ('iam:plugins_read'),('iam:plugins_update'),
+  ('iam:roles_create'),('iam:roles_delete'),('iam:roles_read'),('iam:roles_update'),
+  ('iam:system_export'),('iam:system_logs'),('iam:system_monitor'),
+  ('iam:system_read'),('iam:system_settings'),('iam:system_update'),
+  ('iam:users_create'),('iam:users_delete'),('iam:users_update'),
+  ('leave_read'),('leave_write'),('payroll_read'),('payroll_write'),
+  ('performance_read'),('performance_write'),
+  ('pm:projects_create'),('pm:projects_delete'),('pm:projects_read'),('pm:projects_update'),
+  ('workflow:workflows_create'),('workflow:workflows_delete'),
+  ('workflow:workflows_read'),('workflow:workflows_update')
+),
+c AS (
+  SELECT (SELECT count(*) FROM legacy l JOIN public.core_permissions p ON p.code = l.code) AS legacy_present,
+         (SELECT count(*) FROM legacy l
+            JOIN public.core_permissions p ON p.code = l.code
+            JOIN public.core_role_permissions rp ON rp.permission_id = p.id) AS legacy_grants,
+         (SELECT count(*) FROM public.core_permissions
+           WHERE code IN ('iam:dictionaries_read','iam:dictionaries_update')) AS dict_present,
+         (SELECT count(*) FROM public.core_permissions) AS total_permissions
+)
+SELECT 'C18' AS id,
+       'W4 权限码窗口前状态（44 遗留=0、授权=0、字典码未插入）' AS item,
+       'legacy=0/0, dict=0' AS expect,
+       'legacy_present=' || c.legacy_present
+         || ', legacy_grants=' || c.legacy_grants
+         || ', dict_present=' || c.dict_present
+         || ', total=' || c.total_permissions AS actual,
+       CASE WHEN c.legacy_present = 0 AND c.legacy_grants = 0 AND c.dict_present = 0
+            THEN 'PASS' ELSE 'FAIL' END AS status
+FROM c;
+-- 期望：PASS；若 W4 已应用则本节 FAIL（同时第 1 节会出现该版本），属正常「已开窗」状态
+
 \echo '== 8. 环境变量 / 命令提醒（SQL 无法校验，开窗前人工确认）=='
 SELECT 'PGOPTIONS gate W1: -c app.drop_zero_path_tables_gate=zero-path-20261119' AS item
 UNION ALL SELECT 'PGOPTIONS gate W2: -c app.archive_legacy_copies_gate=legacy-copies-20261119'
@@ -347,10 +386,11 @@ UNION ALL SELECT 'PGOPTIONS gate W3: -c app.tenant_unblock_archive_gate=tenant-u
 UNION ALL SELECT 'PROD_CHANGE_TICKET W1: ZERO-PATH-20261119'
 UNION ALL SELECT 'PROD_CHANGE_TICKET W2: LEGACY-COPY-20261119'
 UNION ALL SELECT 'PROD_CHANGE_TICKET W3: TENANT-UNBLOCK-20261119'
+UNION ALL SELECT 'PROD_CHANGE_TICKET W4: IAM-PERM-20261119（无闸门 GUC，需 --allow-destructive=20261119233000）'
 UNION ALL SELECT 'apply-forward.sh: --apply-deferred <version> --ticket <ticket> --allow-destructive=<version>'
 UNION ALL SELECT 'node: prod 主机必须可用，否则脚本 DENIED';
 
-\echo '== 9. 就绪门禁汇总（C1–C15、C17 必须 PASS；C16 特权会话下必须 PASS）=='
+\echo '== 9. 就绪门禁汇总（C1–C15、C17 必须 PASS；C18 见 7.5；C16 特权会话下必须 PASS）=='
 WITH b(sch, tbl, wave) AS (
   SELECT sch, tbl, 'W1' FROM (VALUES
     ('doc','document_versions'),('doc','documents'),('doc','folders'),('doc','templates'),
@@ -524,7 +564,7 @@ SELECT 'C2', '账本：721/721、max 20261119000002、failed 0',
             THEN 'PASS' ELSE 'FAIL' END
 FROM led
 UNION ALL
-SELECT 'C3', '三条窗口版本均未应用', 'present=0',
+SELECT 'C3', '四条窗口版本均未应用', 'present=0',
        'present=' || led.versions_present || ', success=' || led.versions_success,
        CASE WHEN led.versions_present = 0 THEN 'PASS'
             WHEN led.versions_success = led.versions_present THEN 'ALREADY_APPLIED'
@@ -662,4 +702,4 @@ SELECT 'C17', 'archive 表数符合已应用波次', '0→22→130→139',
             THEN 'PASS' ELSE 'FAIL' END
 FROM led;
 
-\echo '== 完：C1–C15、C17 必须 PASS；C16 在特权只读会话下必须 PASS =='
+\echo '== 完：C1–C15、C17 与 7.5 的 C18 必须 PASS；C16 在特权只读会话下必须 PASS =='

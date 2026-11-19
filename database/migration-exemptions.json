@@ -163,6 +163,17 @@
       ],
       "evidence": "静态：check-migrations 豁免校验通过，validate.sh Checksum errors 0 / Schema drift 0，gen-manifest.sh --check 无漂移。演练：改后 scripts/dev/run-migration-drill.sh anchor 同路径 PASS（干净 worktree / 非特权 topems_test_runner / rolsuper=f / rolbypassrls=f），策略快照 796/807 → 797/808，bi.audit_logs（rls_enabled=true、force_rls=true、bi_allow_all_audit_logs ALL USING(true) WITH CHECK(true)）重新出现，20261119141000 守卫对其断言通过；计划文档同步 207→206、批 2 188→187（docs/quality/dead-table-disposal-plan-2026-11-19.md §2.3/§4.2）。",
       "approved": true
+    },
+    {
+      "id": "B20261119-iam-perm-destructive-markers",
+      "date": "2026-11-19",
+      "committer": "topmap163",
+      "reason": "20261119233000 为尚未进入任何账本的前向迁移（dev 账本 696 行/max=20261119200000、prod 721 行/max=20261119000002，均无该版本；manifest status=to_apply）。本次仅为两条 DELETE 补 destructive 豁免标记（gate/kind/reason/owner/ticket/expires/max-rows/backup），不改任何 SQL 逻辑、不改版本号：原文件无标记时 check-destructive-sql --strict 直接 DENY，prod 侧 --allow-destructive 也无法生成计划。max-rows=0 保持 fail-closed：dev/prod 实测 44 条遗留权限码及其授权均为 0，开窗时出现非 0 即拒绝。checksums.txt 仅更新该文件一行。",
+      "files": [
+        "20261119233000_iam_legacy_permission_convergence.sql"
+      ],
+      "evidence": "应用前只读核验（2026-11-19）：dev/prod 账本均无 20261119233000；dev core_permissions=348、prod=1157；44 条遗留码=0、其 core_role_permissions 授权=0、iam:dictionaries_read/update=0。标记后 check-destructive-sql --strict --approve-ticket=IAM-PERM-20261119 生成 2 条 DELETE 计划（maxRows=0）。dev 按 §7.1 落地（pg_dump -t core_permissions -t core_role_permissions 备份；--apply-deferred 20261119233000 --ticket IAM-PERM-20261119）：账本 696→697、success=t、checksum=13d61313…534b7 与文件 SHA-384 一致；core_permissions 348→350（仅 2 条字典码）、44 条遗留码与授权仍为 0、表/RLS/策略读数不变（1396/469/523）。validate.sh Checksum errors 0。",
+      "approved": true
     }
   ]
 }

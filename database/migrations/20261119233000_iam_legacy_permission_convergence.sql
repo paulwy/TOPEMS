@@ -31,6 +31,14 @@ WHERE NOT EXISTS (
 -- 先解除角色授权引用（这些码在运行期没有任何 has_permission 判定，
 -- 授权本身是空转；保留授权会让 core_role_permissions 指向即将删除的行）。
 
+-- destructive-gate: allow
+-- destructive-kind: DELETE
+-- destructive-reason: 清理 44 条遗留权限码的空转角色授权（生产实测 0 行，出现非 0 即拒绝）
+-- destructive-owner: iam
+-- destructive-ticket: IAM-PERM-20261119
+-- destructive-expires: 2027-05-10
+-- destructive-max-rows: 0
+-- destructive-backup: 窗口前超户 pg_dump -t public.core_permissions -t public.core_role_permissions
 DELETE FROM public.core_role_permissions rp
 USING public.core_permissions p
 WHERE rp.permission_id = p.id
@@ -81,6 +89,14 @@ WHERE rp.permission_id = p.id
     'workflow:workflows_update'
 );
 
+-- destructive-gate: allow
+-- destructive-kind: DELETE
+-- destructive-reason: 删除 44 条 2026-06 初始导入遗留、全仓零引用的扁平权限码（生产实测 0 行，出现非 0 即拒绝）
+-- destructive-owner: iam
+-- destructive-ticket: IAM-PERM-20261119
+-- destructive-expires: 2027-05-10
+-- destructive-max-rows: 0
+-- destructive-backup: 窗口前超户 pg_dump -t public.core_permissions -t public.core_role_permissions
 DELETE FROM public.core_permissions p
 WHERE p.code IN (
     'attendance_read',

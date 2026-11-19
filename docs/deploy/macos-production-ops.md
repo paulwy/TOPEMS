@@ -334,6 +334,25 @@ TM 取消后，每日 `pg_dump` 成为唯一的数据保护手段，因此顺带
 
 **验证**：手工执行与 `launchctl kickstart -k gui/$(id -u)/com.topems.backup` 均成功，最新 dump `10,841,560 bytes`、`pg_restore --list` 通过、单元 `last exit code = 0`；当日 dump 已归档到 `TOPEMS-TM/topems-archive/`（10 MB）。保留策略 7 份正常轮转。
 
+### 7.10 恢复演练（2026-11-19 首次执行）
+
+`pg_restore --list` 只证明文件结构可读，不证明数据能还原。为此新增 `scripts/dev/restore-drill.sh`：把 dump 真正灌进临时库 `topems_restore_drill`，与 `topems_prod` 逐表比对行数和迁移账本，全一致才算 PASS，结束时自动 `dropdb`。
+
+```bash
+scripts/dev/restore-drill.sh                  # 取 ~/topems/backups 最新一份
+scripts/dev/restore-drill.sh <path/to.dump>   # 指定某一份
+```
+
+首次执行结果（dump `topems_prod-20261119-203127.dump`，10,841,560 bytes，还原耗时 3.5 s）：
+
+| 比对项 | 生产 | 还原 | 结论 |
+|---|---|---|---|
+| 表数量 | 1344 | 1344 | 一致 |
+| 逐表 `count(*)` | — | — | 1344 张全部一致（diff 为空） |
+| 迁移账本 | 721 条 / max `20261119000002` | 同 | 一致 |
+
+结论：当前 dump 具备真实可恢复性。建议把本脚本纳入季度演练流程，也可在 `com.topems.backup` 成功后每周抽一次自动执行。
+
 ---
 
 ## 8. 局域网地址与 DHCP 静态绑定（2026-11-18）

@@ -30,9 +30,21 @@
  *   -- destructive-owner: ...
  *   -- destructive-ticket: ...
  *   -- destructive-expires: YYYY-MM-DD（不早于当天，不超过今天+180 天）
- *   -- destructive-max-rows: N（DELETE/UPDATE 必填）
+ *   -- destructive-max-rows: N（DELETE/UPDATE 必填，N=0 表示 fail-closed：出现 1 行即拒绝）
  *   -- destructive-rows-at-review: 0（DROP 必填）
  *   -- destructive-backup: ...（DELETE/UPDATE/DROP 必填）
+ *
+ * 最小合法示例（标记必须紧邻语句之前 12 行内；同一文件的同类语句各写一组）：
+ *   -- destructive-gate: allow
+ *   -- destructive-kind: DELETE
+ *   -- destructive-reason: 生产实测 0 行的遗留码清理（≥10 字）
+ *   -- destructive-owner: iam
+ *   -- destructive-ticket: IAM-PERM-20261119
+ *   -- destructive-expires: 2027-05-10
+ *   -- destructive-max-rows: 0
+ *   -- destructive-backup: 窗口前 pg_dump -t public.core_permissions
+ *   DELETE FROM public.core_permissions WHERE code IN ('legacy_code');
+ *   -- 说明：max-rows=0 不会放行任何非空删除；预演统计到 >0 即拒绝执行。
  *
  * 两档策略（避免既存违规把 main 变红）：
  *   - 文件 sha256 与 `destructive-sql-baseline.json` 一致，且版本在台账中可豁免

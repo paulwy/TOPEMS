@@ -2,7 +2,7 @@
 
 > 文档性质：**只做窗口前准备，不应用任何迁移、不写生产、不开窗、不 push**。
 > 目标：开窗时照文档执行，不需要现场判断。
-> 基线事实：dev 账本 696 行 / 696 success / `max=20261119200000`；prod 账本 721 行 / 721 success / `max=20261119000002`（2026-11-19 实测）。
+> 基线事实：dev 账本 697 行 / 697 success / `max=20261119233000`；prod 账本 721 行 / 721 success / `max=20261119000002`（2026-11-19 实测）。
 > 只读预检连接：`topems_drift`（非特权、非 superuser、无 BYPASSRLS）。
 > 配套可执行预检：`docs/database/window-preflight-2026-11-19.sql`。
 
@@ -10,18 +10,20 @@
 
 ## 0. 摘要
 
-- **dev-only 4 条**：`20261103000005`（孤儿，有账本行、无文件，排除）、`20261119160000`、`20261119180000`、`20261119200000`。
-- **本窗口可执行 3 条**，全部是「已进 dev、未进 prod」的归档迁移：
+- **dev-only 5 条**：`20261103000005`（孤儿，有账本行、无文件，排除）、`20261119160000`、`20261119180000`、`20261119200000`、`20261119233000`。
+- **本窗口可执行 4 条**，全部是「已进 dev、未进 prod」的迁移：
 
 | 波 | 版本 | 主题 | 归档表数 | destructive 标记 | 备注 |
 |---|---|---|---:|---:|---|
 | W1 | `20261119160000` | 零路径遗留表归档 | 16 | 8 | 建 archive schema + 6 张簿记表 |
 | W2 | `20261119180000` | 历史 schema 副本归档 | 108 | 10 | 入向 FK 19 条全在批次内 |
 | W3 | `20261119200000` | 遗留租户表解依赖归档 | 8 | 4 | 建第 7 张簿记表；插件 FK 重指；函数语义改写 |
+| W4 | `20261119233000` | IAM 遗留权限码收敛 | 0 | 2（DELETE） | 44 条遗留码 + 其授权清理；补 2 条字典码；ticket `IAM-PERM-20261119` |
 
 - **硬依赖**：W3 ← W2。W3 要求 `iam.core_tenants` 入向 FK 精确为 1；当前 prod 为 8，其中 7 条来自 W2 将删除的 108 批表。
-- **建议顺序**：W1 → W2 → W3；回滚逆序 W3 → W2 → W1（W2 回滚会重建指向 `iam.core_tenants` 的 7 条 FK，必须先由 W3 回滚恢复该表）。
-- **预期终态**：prod 账本 721 → 724；表总数 1344 → 1351；archive 表 0 → 139；RLS 959 → 913；策略 1050 → 1003。
+- **W4 与 W1/W2/W3 无依赖**：它只触碰 `public.core_permissions` / `public.core_role_permissions`，与三波的 132 张表、`archive` schema、插件 FK、函数改写均无交集；可与任一波合并，也可独立成波。建议放在最后执行（纯数据收敛，失败影响面最小，回滚只需恢复两张表）。
+- **建议顺序**：W1 → W2 → W3 → W4；回滚逆序 W4 → W3 → W2 → W1（W2 回滚会重建指向 `iam.core_tenants` 的 7 条 FK，必须先由 W3 回滚恢复该表；W4 与其他波无依赖，可最先回滚）。
+- **预期终态**：prod 账本 721 → 725；权限码 1157 → 1159（+2 字典码，44 条遗留码与授权保持 0）；表总数 1344 → 1351；archive 表 0 → 139；RLS 959 → 913；策略 1050 → 1003。
 - **不纳入**：29 条 prod-only 版本、10 条早间计划版本（`20261119010000`…`20261119170000`，dev/prod 均未落地）、孤儿 `20261103000005`。详见 §7。
 
 ---
@@ -32,11 +34,11 @@
 
 | 项 | dev | prod |
 |---|---|---|
-| 账本行 / success / failed | 696 / 696 / 0 | 721 / 721 / 0 |
-| `max(version)` | `20261119200000` | `20261119000002` |
-| 三条窗口版本 | 已应用（success） | 0 行（未应用） |
+| 账本行 / success / failed | 697 / 697 / 0 | 721 / 721 / 0 |
+| `max(version)` | `20261119233000` | `20261119000002` |
+| 四条窗口版本 | 已应用（success） | 0 行（未应用） |
 
-差集方向为 dev → prod。dev-only 的 4 条中只有 3 条有迁移文件且可执行；`20261103000005` 是历史孤儿账本行（无对应文件），不作为窗口项。
+差集方向为 dev → prod。dev-only 的 5 条中只有 4 条有迁移文件且可执行；`20261103000005` 是历史孤儿账本行（无对应文件），不作为窗口项。
 
 ### 1.2 dev 落地后读数（用于推定 prod 终态）
 
@@ -46,6 +48,7 @@
 | 非 archive 业务表 | 1257 |
 | 全局表（`relkind IN ('r','p')`） | 1396 |
 | RLS 表 / 策略 | 469 / 523 |
+| 权限码 / 角色授权（`public.core_permissions` / `core_role_permissions`） | 350 / 4507 |
 | `finance.bootstrap_defaults()` | 仅引用 `public.core_tenants` 与 `finance.core_finance_accounts`，不含 iam/flow/`iam.core_tenant_users` |
 | `iam.core_tenant_plugins` 外键 | `REFERENCES core_tenants(id)`（解析到 `public.core_tenants`） |
 
@@ -64,6 +67,7 @@
 | `iam.core_tenant_plugins` FK | `core_tenant_plugins_tenant_id_fkey → iam.core_tenants(id) ON DELETE CASCADE` |
 | `finance.bootstrap_defaults()` | 同时引用 `iam.core_tenants` / `flow.core_tenants` / `iam.core_tenant_users` / `public.core_tenants` |
 | 精确行数 | `topems_drift` 对 132 张表均无 SELECT 权限，须 DBA 特权只读会话（同一 preflight 第 7 节自动转 READABLE） |
+| 权限码 / 角色授权 | 1157 / 2917；44 条 W4 遗留码 = 0、相关授权 = 0；`iam:dictionaries_read` / `iam:dictionaries_update` 均不存在 |
 
 ### 1.4 迁移脚本闸门（实测）
 
@@ -82,7 +86,8 @@
 cd /Users/xingzhai/TOPEMS
 for v in 20261119160000_drop_zero_path_legacy_tables \
          20261119180000_archive_legacy_schema_copies \
-         20261119200000_unblock_and_archive_legacy_tenant_tables; do
+         20261119200000_unblock_and_archive_legacy_tenant_tables \
+         20261119233000_iam_legacy_permission_convergence; do
   shasum -a 384 database/migrations/$v.sql
   shasum -a 256 database/migrations/$v.sql
   shasum -a 256 database/rollback/$v.rollback.sql
@@ -96,12 +101,14 @@ done
 | `20261119160000` | 零路径遗留表归档 | 16 | `8a58bed713e99b511b5a2a491119c268066c860ebb266250fe4a83d0005d80f82214074cdcd34278e74491350f508c6c` | `cc30df5798befe482298f37e8e3dcb1d6c38b3460a100ae065cf216c53ccd64c` | `e5d2e12ace713bc9a5c64298224a807af511aae5` |
 | `20261119180000` | 历史 schema 副本归档 | 108 | `9b47af6d2c376bbf0921b7be76a3c0e01c8bb352eb8e739ea59604f15e803cdff82b6e9d1c12165f6b8909ca18013755` | `d43420625578900bfea3f5368ce10ed24300a8bcfdd6937b19cbd5d5d4a90e52` | `137cca4b8cdc6aa3efeca7870c2c31d5d61468a1` |
 | `20261119200000` | 遗留租户表解依赖归档 | 8 | `c130918357fab2c65251d4e32601e6329a88a9647fb4838af3b58f74b20a634a39fb920c9d6c2979acc10f35ca0f2ea6` | `cb71c4922ed2cc10114469a54da901c17b9e960c1a6f34da86d481d507160910` | `364eded6f091a92668dff44cc3f12ebc3faba87b` |
+| `20261119233000` | IAM 遗留权限码收敛 | 0 | `13d613136fb107739bac3a87c013b1d3dc9843795ad466a5e2a92d60c8faae92fdffe5ea6eceb590cdd9193f8a8534b7` | `a041ea01d7ee5cf4309fc2d83eb6958e9ca4db8281f11f49b74c936283210952` | `414155a1cec5f3dc2e83a030163939ed8b632f21`（原始）；标记块见 §2.2 |
 
 | 版本 | 回滚文件 | sha256 | destructive 标记数 |
 |---|---|---|---:|
 | `20261119160000` | `database/rollback/20261119160000_drop_zero_path_legacy_tables.rollback.sql` | `03996af8f692cb0728e8d132ad30aafead36278e127ca91092de6fb3c7ecc913` | 8 |
 | `20261119180000` | `database/rollback/20261119180000_archive_legacy_schema_copies.rollback.sql` | `1ca7c11ca8b6df74649ab73cf95f5d1bdc8b8f2cde237872d951cf6d9104c1de` | 10 |
 | `20261119200000` | `database/rollback/20261119200000_unblock_and_archive_legacy_tenant_tables.rollback.sql` | `40aa9ed80d2ebc3a127df6c49b17c1869f14d40616947625cfca6c1313ea986f` | 4 |
+| `20261119233000` | `database/rollback/20261119233000_iam_legacy_permission_convergence.rollback.sql` | `e9edec1ffd19853fec007dbb6c574e5f43722115c43eb0316df8fe5ec2d98b9e` | 2（DELETE） |
 
 ### 2.1 演练与 dev 落地方式
 
@@ -110,8 +117,31 @@ done
 | `20261119160000` | `run-migration-drill.sh anchor` `[5/5]` PASS（2026-11-19；快照重生成 + 实测比对，anchor `20261117235500`，非特权 `topems_test_runner`） | §7.1 重放：备份 → 删账本行 → `--apply-deferred` + GUC 闸门 + `--allow-destructive` | 2026-11-19 18:38:53 |
 | `20261119180000` | `[5/5]` PASS（2026-11-19，83s；快照 825→795 表、837→807 策略，-30/-30，diff 全部落在本批 108 张内） | §7.1 重放，同上 | 2026-11-19 18:38:16 |
 | `20261119200000` | `[5/5]` PASS（2026-11-19 18:47；check/write 双模式，798 表 / 809 策略零 diff） | §7.1 重放，同上 | 2026-11-19 18:43:01 |
+| `20261119233000` | 无独立隔离演练；`check-destructive-sql --strict --approve-ticket=IAM-PERM-20261119` 转 APPROVE（2 条 DELETE，max-rows=0） | §7.1 重放：`pg_dump` 备份两张表 → 账本无该行 → `--apply-deferred` | 2026-11-19 20:39 |
 
 > 演练快照与 prod 实测的 RLS 口径存在采集时差：演练 anchor 记 108 批 -30 表；dev 落地实测为 29 表 / 30 策略（`iam.permission_audit_logs` 带 2 条策略）；prod 当前实测为 30 表 / 31 策略。窗口验收以 **prod 实测目标值** 为准（§4）。
+
+### 2.2 W4 的 destructive 标记块（`20261119233000`）
+
+原文件（`414155a1c`）的两条 `DELETE` 没有豁免标记，prod 门禁会直接 DENY。按仓库既有字段顺序补齐，两条 `DELETE` 使用**完全相同**的 8 行模板（仅 `reason` 按语句语义区分）：
+
+```sql
+-- destructive-gate: allow
+-- destructive-kind: DELETE
+-- destructive-reason: <≥10 字，说明清理对象与生产实测行数>
+-- destructive-owner: iam
+-- destructive-ticket: IAM-PERM-20261119
+-- destructive-expires: 2027-05-10
+-- destructive-max-rows: 0
+-- destructive-backup: 窗口前超户 pg_dump -t public.core_permissions -t public.core_role_permissions
+```
+
+口径说明：
+
+- `destructive-owner: iam`：仓库既有取值以 `平台组/DBA` 为主，但本迁移只动 IAM 权限域，且已有 2 处 IAM 迁移使用 `iam`，按域归属取值。
+- `max-rows: 0`：dev/prod 实测 44 条遗留码与相关授权均为 0；开窗时若出现非 0（例如恢复库带回历史数据），预演直接拒绝，需人工确认后再放行。
+- `expires: 2027-05-10`：门禁要求不超过执行日 +180 天（2026-11-19 起），与其他三波保持一致。
+- 标记规范与最小示例已补进 `scripts/ci/check-destructive-sql.mjs` 头部注释，后续迁移不再需要靠猜字段。
 
 ---
 
@@ -123,6 +153,7 @@ done
 2. **W2 内部外键**：108 批的 19 条入向 FK 全部指向批次内表，迁移内按依赖顺序归档/DROP；不允许批次外引用（当前实测 0）。
 3. **W1 与 W2 无表集合交集**，可各自独立执行；建议 W1 先跑，由它创建 `archive` schema 与 6 张簿记表（W2 的 `CREATE ... IF NOT EXISTS` 也会兜底）。
 4. **W3 另建** `archive._fk_out_snapshot`（第 7 张簿记表），用于回滚重建被删表自身的出向外键。
+5. **W4 与 W1/W2/W3 无依赖**：W4 只读写 `public.core_permissions` 与 `public.core_role_permissions`；三波只归档/删除 132 张业务表并重指插件 FK/函数，两者对象集合无交集，也不共享闸门 GUC 或票据。W4 可与任一波合并，或独立成波；建议独立成波放在最后，便于单独回滚（只恢复两张表）。
 
 ### 3.2 分波（每波单文件、单事务、可独立回滚与验收）
 
@@ -131,11 +162,13 @@ done
 | W1 | `20261119160000` | 16 | 第一段 | `20261119160000` 回滚文件 |
 | W2 | `20261119180000` | 108 | 第二段 | `20261119180000` 回滚文件 |
 | W3 | `20261119200000` | 8 | 第三段 | `20261119200000` 回滚文件（须在 W2 回滚之前） |
+| W4 | `20261119233000` | 0 | 第四段（也可与任一波合并） | `20261119233000` 回滚文件（与三波无依赖，可最先回滚） |
 
 ### 3.3 回滚逆序
 
-`W3 → W2 → W1`。
+`W4 → W3 → W2 → W1`。
 
+- W4 回滚删除 2 条字典码、恢复 44 条遗留码及其角色授权；与其他三波无交集，可在任意时点最先执行。
 - W3 回滚先恢复 8 张表（含 `iam.core_tenants`）、旧函数体，并把插件 FK 改回 `iam.core_tenants`。
 - W2 回滚随后重建 108 张表；其中 7 条 FK 指向 `iam.core_tenants`，因此必须在 W3 回滚之后执行。
 - W1 回滚与其他两波无依赖，可在 W3 之后任意时点执行。
@@ -158,7 +191,7 @@ T-0（任一不过即停止开窗）：
 1. prod 主机检出目录内三份迁移文件 sha384 与 §2 完全一致；三份回滚文件 sha256 与 §2 一致。
 2. `git status --porcelain database/migrations database/rollback` 为空（除已跟踪的三份文件外无额外文件）。
 3. `PGPASSFILE=$HOME/.pgpass MIGRATION_DRIFT_DB_URL=postgresql://topems_drift@127.0.0.1:5432/topems_prod node scripts/migration/check-ledger-ddl-drift.mjs` 输出 PASS、exit 0。
-4. `window-preflight-2026-11-19.sql` 在 `topems_drift` 下 exit 0、无 `ERROR`，C1–C9/C11–C15/C17 全 PASS，C10 为 `PASS_PRE`；C16 为 `NEEDS_DBA`，按 §4.6 由 DBA 用 `topems_prod` 只读复跑并转 PASS。
+4. `window-preflight-2026-11-19.sql` 在 `topems_drift` 下 exit 0、无 `ERROR`，C1–C9/C11–C15/C17 全 PASS，C10 为 `PASS_PRE`；C16 为 `NEEDS_DBA`，按 §4.7 由 DBA 用 `topems_prod` 只读复跑并转 PASS。
 
 ### 4.2 W1：`20261119160000`（16 张，零路径）
 
@@ -290,20 +323,60 @@ WHERE n.nspname='finance' AND p.proname='bootstrap_defaults';
 -- 5) 全局 RLS 913 / 策略 1003 / 表 1351（W3 本身 0/0）
 ```
 
-### 4.5 三波累计预期读数
+### 4.5 W4：`20261119233000`（0 张表，2 条 DELETE）
 
-| 检查点 | 窗口前 | W1 后 | W2 后 | W3 后 |
-|---|---:|---:|---:|---:|
-| 账本行 | 721 | 722 | 723 | 724 |
-| `max(version)` | `20261119000002` | `20261119160000` | `20261119180000` | `20261119200000` |
-| 表总数 | 1344 | 1350 | 1350 | 1351 |
-| archive 表 | 0 | 22 | 130 | 139 |
-| RLS 表 | 959 | 943 | 913 | 913 |
-| 策略 | 1050 | 1034 | 1003 | 1003 |
+前置：
 
-表总数变化说明：W1 `-16 +16 +6 = +6`；W2 `-108 +108 = 0`；W3 `-8 +8 +1 = +1`。
+- 账本无 `20261119233000`。
+- `public.core_permissions` / `public.core_role_permissions` 存在；唯一指向 `core_permissions` 的外键是 `core_role_permissions_permission_id_fkey`。
+- 44 条遗留码 = 0、相关角色授权 = 0、`iam:dictionaries_read` / `iam:dictionaries_update` = 0（当前 prod 实测均为 0）。
+- 文件含 2 组 `destructive-ticket: IAM-PERM-20261119`、`destructive-max-rows: 0` 标记；`check-destructive-sql --strict` 带该票据应 APPROVE。
+- 无需闸门 GUC；预演会自行注入 `app.rls_system=on`（该表未启用 RLS，注入只是保持一致）。
 
-### 4.6 C16 交接：DBA 用 `topems_prod` 只读复跑（路径 A）
+命令：
+
+```bash
+PROD_CHANGE_TICKET=IAM-PERM-20261119 \
+bash scripts/migration/apply-forward.sh --db topems_prod --prod \
+  --apply-deferred 20261119233000 --ticket IAM-PERM-20261119 \
+  --allow-destructive=20261119233000
+```
+
+验收：
+
+```sql
+-- 1) 账本 success + checksum
+SELECT version, success, encode(checksum,'hex') AS sha384
+FROM _sqlx_migrations WHERE version = 20261119233000;
+-- 期望：t | 13d61313...534b7
+
+-- 2) 2 条字典码存在；44 条遗留码与授权仍为 0；总数 1159
+SELECT count(*) FROM core_permissions;                       -- 1159
+SELECT count(*) FROM core_permissions
+ WHERE code IN ('iam:dictionaries_read','iam:dictionaries_update');  -- 2
+-- 44 条遗留码：复用 preflight 第 10 节 C18，期望 legacy_present=0、legacy_grants=0
+
+-- 3) 无意外对象变化：表/RLS/策略与 W3 后一致（1351 / 913 / 1003）
+```
+
+失败处理：整文件单事务，任一断言失败即整批回滚；不重跑同一版本，先按回滚文件恢复两张表。
+
+### 4.6 四波累计预期读数
+
+| 检查点 | 窗口前 | W1 后 | W2 后 | W3 后 | W4 后 |
+|---|---:|---:|---:|---:|---:|
+| 账本行 | 721 | 722 | 723 | 724 | 725 |
+| `max(version)` | `20261119000002` | `20261119160000` | `20261119180000` | `20261119200000` | `20261119233000` |
+| 表总数 | 1344 | 1350 | 1350 | 1351 | 1351 |
+| archive 表 | 0 | 22 | 130 | 139 | 139 |
+| RLS 表 | 959 | 943 | 913 | 913 | 913 |
+| 策略 | 1050 | 1034 | 1003 | 1003 | 1003 |
+| 权限码 | 1157 | 1157 | 1157 | 1157 | 1159 |
+| 角色授权 | 2917 | 2917 | 2917 | 2917 | 2917 |
+
+表总数变化说明：W1 `-16 +16 +6 = +6`；W2 `-108 +108 = 0`；W3 `-8 +8 +1 = +1`；W4 不动表。权限码 +2 来自 W4 的两条字典码；授权数不变（44 条遗留码的授权本就为 0）。
+
+### 4.7 C16 交接：DBA 用 `topems_prod` 只读复跑（路径 A）
 
 C16 不能用 `topems_drift` 完成：它对 132 张表覆盖 **0/132**、15 个 schema 的 USAGE **0/15**。已确认的合规候选只有 `topems_prod`（`rolsuper=f`、`rolbypassrls=f`、有 LOGIN、132/132 覆盖、15/15 schema USAGE）。**不能用 `topems` / `xingzhai`**：二者为 superuser（`xingzhai` 还带 BYPASSRLS），会让权限判定与行数校验恒真。
 
@@ -361,19 +434,20 @@ DBA 回报格式（一条消息）：
 ## 6. 开窗执行顺序（照抄）
 
 1. T-0 四项门禁（§4.1）全过。
-2. 按 §4.6 的命令由 DBA 用 `topems_prod` 只读复跑，132 张全部 READABLE 且 0 行，C16 转 PASS。
+2. 按 §4.7 的命令由 DBA 用 `topems_prod` 只读复跑，132 张全部 READABLE 且 0 行，C16 转 PASS。
 3. W1：执行命令 → 跑 §4.2 五条验收 → 记录输出。
 4. W2：执行命令 → 跑 §4.3 验收 + `1/1/4` 确认 → 记录输出。
 5. W3：执行命令 → 跑 §4.4 五条验收 → 记录输出。
-6. 终态核对：§4.5 表逐项对齐；`check-ledger-ddl-drift.mjs` 再跑一次仍 PASS。
-7. 任一步失败：停止后续波次；该文件事务已整体回滚；按 §5.2 逆序恢复已成功的波次，再重新评审。
+6. W4：执行命令 → 跑 §4.5 三条验收（账本/权限码/无意外变化）→ 记录输出。
+7. 终态核对：§4.6 表逐项对齐；`check-ledger-ddl-drift.mjs` 再跑一次仍 PASS。
+8. 任一步失败：停止后续波次；该文件事务已整体回滚；按 §5.2 逆序恢复已成功的波次，再重新评审。
 
 ---
 
 ## 7. 范围外与已知差异
 
 - `20261103000005`：dev 账本孤儿（有行、无文件），不属本窗口，不处理。
-- 29 条 prod-only 版本：prod 已有、dev 没有；与本窗口三条无表集合交集，不纳入。
+- 29 条 prod-only 版本：prod 已有、dev 没有；与本窗口四条无表集合交集，不纳入。
 - 10 条早间计划版本（`20261119010000`、`20261119120000`、`20261119130000`、`20261119131000`、`20261119140000`、`20261119141000`、`20261119150000`、`20261119151000`、`20261119161000`、`20261119170000`）：dev/prod 均未落地，旧版文档曾纳入，本版剔除。
 - 工作树 `.verify/` 及其他线未跟踪文件：不动。
-- 本包不改迁移文件、不改回滚文件、不 push。
+- 本包只给 W4 补 destructive 标记块（§2.2），不改任何迁移/回滚的 SQL 逻辑；不 push。
