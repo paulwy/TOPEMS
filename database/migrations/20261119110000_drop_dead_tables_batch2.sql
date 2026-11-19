@@ -1,6 +1,10 @@
 -- 20261119110000_drop_dead_tables_batch2
--- 批次：batch-2，共 188 张表
+-- 批次：batch-2，共 187 张表
 -- 依据：docs/quality/table-disposition-2026-11-19.md 与 docs/quality/dead-table-disposal-plan-2026-11-19.md
+-- 例外：bi.audit_logs 已移出本批（187 而非 188）。原因：svc/analytics 的 schema-defense
+--       启动即 CREATE TABLE IF NOT EXISTS bi.audit_logs 并补列，删除会被重建，且重建后由
+--       harden_new_tenant_tables 补一条口径不同的 tenant_isolation_audit_logs，与 20261119141000
+--       守卫冲突。登记见 database/migration-exemptions.json（B20261119-batch2-bi-audit-logs-keep）。
 -- 安全闸门：必须显式设置 app.drop_dead_tables_gate=batch-2，否则整条迁移中止（外审清单未签不执行）。
 -- 归档：archive.<archive_table>（结构 + 数据），元数据在 archive._drop_manifest / _rls_policy_snapshot / _fk_snapshot / _view_snapshot
 -- 保留期：180 天；归档校验失败即 RAISE EXCEPTION，DROP 不执行。
@@ -100,7 +104,6 @@ BEGIN
   END IF;
 
   FOR r IN SELECT * FROM (VALUES
-    ('bi', 'audit_logs'),
     ('bi', 'report_execution_records'),
     ('ehs', 'audit_logs'),
     ('ehs', 'drill_records'),
@@ -407,7 +410,6 @@ DO $drop_bi$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('audit_logs'),
     ('report_execution_records')
   ) AS x(tbl)
   LOOP

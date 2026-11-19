@@ -134,11 +134,21 @@
 
 | 表 | 行数 | 阻塞证据 | 处置 |
 |---|---:|---|---|
-| `flow.core_tenants` | 0 | 入向外键：`flow._deprecated_core_tenant_modules`、`_deprecated_core_tenant_settings`、`_deprecated_core_tenant_usage`、`_deprecated_core_tenant_users`；且 `finance.bootstrap_defaults()` 以 `to_regclass` 读取它 | 拆出；先行处置 `_deprecated_*` 或解除函数读取后再归档 |
-| `iam.core_tenants` | 0 | 入向外键：`iam.core_tenant_plugins`（活跃表）→ `iam.core_tenants`；`finance.bootstrap_defaults()` 读取 | 拆出；需先改外键或改函数 |
-| `iam.core_users` | 0 | 入向外键：`iam.core_user_roles`（活跃表）→ `iam.core_users` | 拆出；需先改外键 |
+| `flow.core_tenants` | 0 | 入向外键：`flow._deprecated_core_tenant_modules`、`_deprecated_core_tenant_settings`、`_deprecated_core_tenant_usage`、`_deprecated_core_tenant_users`（均 0 行）；且 `finance.bootstrap_defaults()` 以 `to_regclass` 读取它 | 拆出；先行处置 `_deprecated_*` 或解除函数读取后再归档 |
+| `iam.core_tenants` | 0 | 入向外键 8 条：7 条来源表（`core_billing_invoices`/`core_subscriptions`/`core_tenant_modules`/`core_tenant_settings`/`core_tenant_usage`/`core_tenant_users`/`core_usage_records`）已由 `20261119180000` 归档删除，**仅剩** `iam.core_tenant_plugins`（0 行，活跃表）；`finance.bootstrap_defaults()` 读取 | 拆出；需先改外键或改函数 |
+| `iam.core_users` | 0 | 入向外键：`iam.core_user_roles`（0 行，活跃表）→ `iam.core_users`；权威表 `public.core_user_roles` 已存在（0 行） | 拆出；需先改外键 |
 
-> 未使用 `CASCADE`：拆出是唯一允许的依赖处理方式。
+### 2.1 待处理（本轮不动）
+
+1. **`iam.core_tenants`**
+   - 被谁引用：`iam.core_tenant_plugins`（0 行；`public.core_tenant_plugins` 与 `core.core_tenant_plugins` 均已存在、0 行）的外键 `core_tenant_plugins_tenant_id_fkey`；`finance.bootstrap_defaults()` 的 `to_regclass('iam.core_tenants')` 分支（`INSERT INTO bootstrap_seed_tenants SELECT id FROM iam.core_tenants`）。
+   - 解除依赖：确认 `iam.core_tenant_plugins` 的权威归属（迁移到 `public.core_tenant_plugins` 或随副本一并归档）并消除该外键；把 `finance.bootstrap_defaults()` 改为只读权威表 `public.core_tenants`（已有 1 行）。两项完成后该表无入向依赖，可归档。
+2. **`iam.core_users`**
+   - 被谁引用：`iam.core_user_roles`（0 行；权威表 `public.core_user_roles` 已存在、0 行）的外键 `core_user_roles_user_id_fkey`。
+   - 解除依赖：确认用户角色权威表为 `public.core_user_roles`，清空/归档 `iam.core_user_roles` 或把外键改指权威表；随后 `iam.core_users` 可归档（`public.core_users` 已存在、0 行）。
+3. **`flow.core_tenants`**
+   - 被谁引用：`flow._deprecated_core_tenant_modules`、`_deprecated_core_tenant_settings`、`_deprecated_core_tenant_usage`、`_deprecated_core_tenant_users` 四张 0 行 `_deprecated_*` 表的外键；`finance.bootstrap_defaults()` 的 `to_regclass('flow.core_tenants')` 分支。
+   - 解除依赖：把 4 张 `_deprecated_*` 纳入下一批归档删除（它们已被 `20261118160000` 改名、无运行期路径）；从 `finance.bootstrap_defaults()` 去掉 `flow.core_tenants` 回退分支。两项完成后该表可归档。
 
 ## 3. 已由前序批次处理（28 张，本批不重复）
 

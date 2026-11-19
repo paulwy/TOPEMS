@@ -272,7 +272,7 @@
 
 | 表 | 现策略 | 语义 | 处置 |
 |---|---|---|---|
-| `bi.audit_logs` | `bi_allow_all_audit_logs`（ALL `USING(true)`） | 全放行；无运行期读写 | 已登记 `20261119110000` 归档删除；不归一到严格 B |
+| `bi.audit_logs` | `bi_allow_all_audit_logs`（ALL `USING(true)`） | 全放行；无运行期读写 | 已从 `20261119110000` 移出（schema-defense 会重建，见 `migration-exemptions.json` B20261119-batch2-bi-audit-logs-keep）；保留 `bi_allow_all_audit_logs`，不归一到严格 B |
 | `public.core_login_logs` | `rls_system_only`（ALL）+ `rls_tenant_read`（SELECT） | 系统全权 / 租户只读，按 command 拆分 | 永久移出候选，`20261119141000` 守卫钉住租户策略必须为 SELECT |
 | `erp.company_relations`、`erp.consolidation_report_lines`、`erp.consolidation_reports`、`erp.consolidation_scope_companies`、`erp.consolidation_scopes`、`erp.elimination_candidates`、`erp.elimination_rules`、`erp.internal_transactions` | `erp.group_tenant_of` | 集团/租户两层口径 | 语义不同，不归一（已在合并报表定性中处理） |
 | `erp.event_idempotency` | 幂等键控制 | 非租户隔离 | 语义不同，不归一 |

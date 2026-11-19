@@ -2382,9 +2382,9 @@ pending_forward_patches:
   - version: "20261119110000"
     file: "database/migrations/20261119110000_drop_dead_tables_batch2.sql"
     status: to_apply
-    effect: "批 2/2：188 张 0 行死表先归档再 DROP（public 125 / ehs 21 / lims 10 / master_data 7 / qms 6 / hrm 6 / gis 3 / finance 3 / erp 3 / scm 2 / bi 2）；快照 116 条 RLS 策略、30 条入向外键（来源均为候选表，依赖图封闭）、587 条列默认值、1 个 serial 序列 public.tenant_permissions_id_seq"
-    destructive_scan: "DROP CONSTRAINT(FK) ×30 + DROP TABLE ×188；无 DELETE/TRUNCATE/UPDATE；归档三方行数校验失败即 RAISE EXCEPTION 回滚；会话闸门 app.drop_dead_tables_gate=batch-2"
-    note: "回滚 database/rollback/20261119110000_drop_dead_tables_batch2.rollback.sql；隔离库演练：188 张归档 → DROP → 回滚后 188/188 表、30 外键、116 策略、tenant_permissions_id_seq 与 nextval 默认值恢复；第二批须在第一批观察 ≥7 天后放行"
+    effect: "批 2/2：187 张 0 行死表先归档再 DROP（public 125 / ehs 21 / lims 10 / master_data 7 / qms 6 / hrm 6 / gis 3 / finance 3 / erp 3 / scm 2 / bi 1）；快照 115 条 RLS 策略、30 条入向外键（来源均为候选表，依赖图封闭）、585 条列默认值、1 个 serial 序列 public.tenant_permissions_id_seq；bi.audit_logs 已移出（analytics schema-defense 会重建，见 migration-exemptions.json B20261119-batch2-bi-audit-logs-keep）"
+    destructive_scan: "DROP CONSTRAINT(FK) ×30 + DROP TABLE ×187；无 DELETE/TRUNCATE/UPDATE；归档三方行数校验失败即 RAISE EXCEPTION 回滚；会话闸门 app.drop_dead_tables_gate=batch-2"
+    note: "回滚 database/rollback/20261119110000_drop_dead_tables_batch2.rollback.sql；隔离库演练：187 张归档 → DROP → 回滚后 187/187 表、30 外键、115 策略、tenant_permissions_id_seq 与 nextval 默认值恢复；第二批须在第一批观察 ≥7 天后放行"
 
   # ===== 2026-11-19 批：ERP 销售订单行项目表（scm.sales_order_items 归属收口） =====
   # 登记口径：由 ERP/SCM 会话在 05e86c3a7 提交迁移文件时漏登，此处按 to_apply 补登；不改动其他条目。

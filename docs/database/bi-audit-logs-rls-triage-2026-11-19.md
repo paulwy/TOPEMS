@@ -87,11 +87,11 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[ ..., ("audit_logs", &[ ...
 | 保持有意放行 + 守卫 | **保持现状，但需更正登记理由** | 现状 `bi_allow_all_audit_logs` 已由 `20261119141000` 守卫钉住；但它不是「共享审计系统通道」表，理由是「schema-defense 骨架表、无租户数据通路」 |
 | 归档删除（batch2 现值） | **建议移出** | 启动即重建，DROP 不持久，且会打乱守卫不变量 |
 
-### 需要另一条线处理的动作（本次不改）
+### 已处理（2026-11-19 后续变更）
 
-1. 将 `('bi','audit_logs')` 从 `20261119110000_drop_dead_tables_batch2.sql` 移除，或把 `bi` 从 analytics 的 `SERVICE_SCHEMA`/`TABLE_DEFS` 中摘除后再删表。
-2. 若移除，需同步 `20261119141000` 的 `v_dropped` 名单（去掉 `bi.audit_logs`，否则守卫会因「表存在」走正常断言——这条仍成立，无需改）与策略快照。
-3. 在该表保留期间，维持 `bi_allow_all_audit_logs` 不动；若要收紧，必须先让 analytics 停止维护该表。
+1. 已将 `('bi','audit_logs')` 从 `20261119110000_drop_dead_tables_batch2.sql` 移除（187 张），并在 `database/migration-exemptions.json` 登记 `B20261119-batch2-bi-audit-logs-keep`；analytics 的 `SERVICE_SCHEMA`/`TABLE_DEFS` 不动。
+2. `20261119141000` 的 `v_dropped` 保留 `bi.audit_logs` 不改：表存在时守卫走正常断言，`bi_allow_all_audit_logs` 仍被校验；策略快照随同批迁移更新。
+3. 该表保留期间维持 `bi_allow_all_audit_logs` 不动；若要收紧，必须先让 analytics 停止维护该表。
 
 ## 6. 复现命令
 

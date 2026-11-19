@@ -1,7 +1,7 @@
-# TOPEMS 207 张删除候选表处置方案（分批 · 先归档后 DROP）
+# TOPEMS 206 张删除候选表处置方案（分批 · 先归档后 DROP）
 
 - 日期：2026-11-19
-- 上游清单：[table-disposition-2026-11-19.md](table-disposition-2026-11-19.md)（清单 3，删除候选 207 张）
+- 上游清单：[table-disposition-2026-11-19.md](table-disposition-2026-11-19.md)（清单 3，删除候选 207 张；其中 `bi.audit_logs` 因 schema-defense 重建冲突移出，本方案实际处置 206 张，见 §2.3）
 - 定论：先复核外部消费，再「先归档后 DROP」，分两批执行
 - 状态：**仅出草案与清单；未对生产执行任何 DDL，未开窗，未改迁移窗口**
 - 生产只读口径：全部核查语句以 `PGOPTIONS='-cdefault_transaction_read_only=on'` 执行
@@ -10,18 +10,18 @@
 
 | 项 | 第一批 | 第二批 | 合计 |
 |---|---:|---:|---:|
-| 表数 | 19 | 188 | 207 |
-| schema 分布 | crm 1、mes 4、mobile 1、pm 4、rs 3、shared 1、tms 2、wms 3 | bi 2、ehs 21、erp 3、finance 3、gis 3、hrm 6、lims 10、master_data 7、public 125、qms 6、scm 2 | — |
+| 表数 | 19 | 187 | 206 |
+| schema 分布 | crm 1、mes 4、mobile 1、pm 4、rs 3、shared 1、tms 2、wms 3 | bi 1、ehs 21、erp 3、finance 3、gis 3、hrm 6、lims 10、master_data 7、public 125、qms 6、scm 2 | — |
 | 生产行数 | 0 | 0 | 0 |
 | 入向外键（全部来自候选内表） | 0 | 30 | 30 |
 | 依赖视图 | 1（`mes.v_tenant_backfill_gaps`） | 0 | 1 |
-| RLS ENABLE+FORCE 表 | 14 | 106 | 120 |
-| RLS 策略条数 | 14 | 116 | 130 |
-| 列默认值快照 | 60 | 587 | 647 |
+| RLS ENABLE+FORCE 表 | 14 | 105 | 119 |
+| RLS 策略条数 | 14 | 115 | 129 |
+| 列默认值快照 | 60 | 585 | 645 |
 | serial 序列 | 0 | 1 | 1 |
 | 迁移版本 | `20261119100000` | `20261119110000` | — |
 
-生产 `pg_stat_user_tables`（2026-11-19 只读采集）：207 张全部 `n_live_tup=0`；182 张 `seq_scan/idx_scan/n_tup_*` 全 0；25 张 `seq_scan>0`（1~2 次，与本次审计自身扫描吻合，不能据此证明无外部读，见 §5）。
+生产 `pg_stat_user_tables`（2026-11-19 只读采集，原 207 张候选口径）：207 张全部 `n_live_tup=0`；182 张 `seq_scan/idx_scan/n_tup_*` 全 0；25 张 `seq_scan>0`（1~2 次，与本次审计自身扫描吻合，不能据此证明无外部读，见 §5）。
 
 ## 1. 边界与不变量
 
@@ -71,200 +71,201 @@
 | 18 | `wms` | `transfers` | WMS 仓储 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b1__wms__transfers` |
 | 19 | `wms` | `wms_master_data_refs` | WMS 仓储 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b1__wms__wms_master_data_refs` |
 
-### 2.3 第二批（188 张）
+### 2.3 第二批（187 张）
+
+> **例外**：`bi.audit_logs` 已移出本批。原因：`svc/analytics` 的 schema-defense 启动即 `CREATE TABLE IF NOT EXISTS bi.audit_logs` 并补列，删除会被重建，且重建后由 `harden_new_tenant_tables` 补一条口径不同的 `tenant_isolation_audit_logs`，与 `20261119141000` 守卫冲突。登记见 `database/migration-exemptions.json`（`B20261119-batch2-bi-audit-logs-keep`）。因此本方案实际处置 206 张（批 1 19 + 批 2 187）。
 
 | # | schema | 表 | 归属模块 | 判定为删除候选的依据 | 归档表（archive.*） |
 |---:|---|---|---|---|---|
-| 1 | `bi` | `audit_logs` | BI 报表 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__bi__audit_logs` |
-| 2 | `bi` | `report_execution_records` | BI 报表 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__bi__report_execution_records` |
-| 3 | `ehs` | `audit_logs` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__audit_logs` |
-| 4 | `ehs` | `drill_records` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__drill_records` |
-| 5 | `ehs` | `emergency_plans` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__emergency_plans` |
-| 6 | `ehs` | `environmental_alerts` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__environmental_alerts` |
-| 7 | `ehs` | `environmental_data` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__environmental_data` |
-| 8 | `ehs` | `health_checkups` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__health_checkups` |
-| 9 | `ehs` | `monitoring_points` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__monitoring_points` |
-| 10 | `ehs` | `qa_ehs_accident_investigations` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_accident_investigations` |
-| 11 | `ehs` | `qa_ehs_accident_reviews` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_accident_reviews` |
-| 12 | `ehs` | `qa_ehs_accident_treatments` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_accident_treatments` |
-| 13 | `ehs` | `qa_ehs_compliance_items` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_compliance_items` |
-| 14 | `ehs` | `qa_ehs_detection_records` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_detection_records` |
-| 15 | `ehs` | `qa_ehs_environment` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_environment` |
-| 16 | `ehs` | `qa_ehs_health_abnormalities` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_health_abnormalities` |
-| 17 | `ehs` | `qa_ehs_health_trainings` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_health_trainings` |
-| 18 | `ehs` | `qa_ehs_material_stocks` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_material_stocks` |
-| 19 | `ehs` | `qa_ehs_protection_measures` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_protection_measures` |
-| 20 | `ehs` | `risk_assessments` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__risk_assessments` |
-| 21 | `ehs` | `risk_controls` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__risk_controls` |
-| 22 | `ehs` | `safety_incidents` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__safety_incidents` |
-| 23 | `ehs` | `vaccination_records` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__vaccination_records` |
-| 24 | `erp` | `expenses` | ERP | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__erp__expenses` |
-| 25 | `erp` | `voucher_items` | ERP | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__erp__voucher_items` |
-| 26 | `erp` | `vouchers` | ERP | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__erp__vouchers` |
-| 27 | `finance` | `core_finance_approval_workflows` | 财务 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__finance__core_finance_approval_workflows` |
-| 28 | `finance` | `reconciliation_orders` | 财务 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__finance__reconciliation_orders` |
-| 29 | `finance` | `settlement_center_dashboards` | 财务 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__finance__settlement_center_dashboards` |
-| 30 | `gis` | `audit_log` | GIS 地理 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__gis__audit_log` |
-| 31 | `gis` | `audit_logs` | GIS 地理 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__gis__audit_logs` |
-| 32 | `gis` | `geofence_alerts` | GIS 地理 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__gis__geofence_alerts` |
-| 33 | `hrm` | `hrm_master_data_refs` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__hrm__hrm_master_data_refs` |
-| 34 | `hrm` | `payroll_records` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__payroll_records` |
-| 35 | `hrm` | `performance_records` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__performance_records` |
-| 36 | `hrm` | `recruitment_applications` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__recruitment_applications` |
-| 37 | `hrm` | `recruitment_records` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__recruitment_records` |
-| 38 | `hrm` | `training_participants` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__training_participants` |
-| 39 | `lims` | `ai_analyses` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__ai_analyses` |
-| 40 | `lims` | `audit_logs` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__audit_logs` |
-| 41 | `lims` | `document_relations` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__document_relations` |
-| 42 | `lims` | `lab_ledger` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__lab_ledger` |
-| 43 | `lims` | `qa_lab_inspection_reports` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_inspection_reports` |
-| 44 | `lims` | `qa_lab_reagent_alerts` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_reagent_alerts` |
-| 45 | `lims` | `qa_lab_reagent_history` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_reagent_history` |
-| 46 | `lims` | `qa_lab_sample_lifecycle` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_sample_lifecycle` |
-| 47 | `lims` | `reagent_usages` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__reagent_usages` |
-| 48 | `lims` | `reagents` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__reagents` |
-| 49 | `master_data` | `core_master_data_change_log` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_master_data_change_log` |
-| 50 | `master_data` | `core_master_data_event_outbox` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_master_data_event_outbox` |
-| 51 | `master_data` | `core_master_data_refs` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_master_data_refs` |
-| 52 | `master_data` | `core_mdm_approvals` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_mdm_approvals` |
-| 53 | `master_data` | `core_mdm_reconciliation_log` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_mdm_reconciliation_log` |
-| 54 | `master_data` | `dynamic_data` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__dynamic_data` |
-| 55 | `master_data` | `schema_registry` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__schema_registry` |
-| 56 | `public` | `alert_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（4 策略） | `drop_20261119_b2__public__alert_rules` |
-| 57 | `public` | `alerts` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__alerts` |
-| 58 | `public` | `analytics_sync_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__analytics_sync_records` |
-| 59 | `public` | `conversion_executions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__conversion_executions` |
-| 60 | `public` | `conversion_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__conversion_rules` |
-| 61 | `public` | `core_faqs` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_faqs` |
-| 62 | `public` | `core_file_folders` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_file_folders` |
-| 63 | `public` | `core_finance_account_opening_balances` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_account_opening_balances` |
-| 64 | `public` | `core_finance_approval_workflows` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_approval_workflows` |
-| 65 | `public` | `core_finance_aux_accounts` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_aux_accounts` |
-| 66 | `public` | `core_finance_aux_balances` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_aux_balances` |
-| 67 | `public` | `core_finance_ledger` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_ledger` |
-| 68 | `public` | `core_finance_reconciliation_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_reconciliation_items` |
-| 69 | `public` | `core_finance_reconciliation_sessions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_reconciliation_sessions` |
-| 70 | `public` | `core_finance_voucher_entries` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_voucher_entries` |
-| 71 | `public` | `core_finance_voucher_lines` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_voucher_lines` |
-| 72 | `public` | `core_finance_voucher_templates` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_voucher_templates` |
-| 73 | `public` | `core_finance_vouchers` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_finance_vouchers` |
-| 74 | `public` | `core_guide_lessons` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_guide_lessons` |
-| 75 | `public` | `core_guide_progress` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_guide_progress` |
-| 76 | `public` | `core_guides` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__core_guides` |
-| 77 | `public` | `core_inter_module_sync` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_inter_module_sync` |
-| 78 | `public` | `core_master_data_event_outbox` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_master_data_event_outbox` |
-| 79 | `public` | `core_mdm_reconciliation_log` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_mdm_reconciliation_log` |
-| 80 | `public` | `core_plugin_categories` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_categories` |
-| 81 | `public` | `core_plugin_instances` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_instances` |
-| 82 | `public` | `core_plugin_navigation` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_navigation` |
-| 83 | `public` | `core_plugin_permissions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_permissions` |
-| 84 | `public` | `core_plugin_reviews` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_reviews` |
-| 85 | `public` | `core_plugin_versions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_versions` |
-| 86 | `public` | `core_plugins` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugins` |
-| 87 | `public` | `core_ticket_sla_escalations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_ticket_sla_escalations` |
-| 88 | `public` | `core_ticket_sla_policies` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_ticket_sla_policies` |
-| 89 | `public` | `cqrs_events` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__cqrs_events` |
-| 90 | `public` | `crm_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__crm_dashboard_snapshots` |
-| 91 | `public` | `ehs_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__ehs_dashboard_snapshots` |
-| 92 | `public` | `equipment` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__equipment` |
-| 93 | `public` | `equipment_inspections` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__equipment_inspections` |
-| 94 | `public` | `equipment_maintenance_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__equipment_maintenance_records` |
-| 95 | `public` | `finance_voucher_templates` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__finance_voucher_templates` |
-| 96 | `public` | `financial_reports` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__financial_reports` |
-| 97 | `public` | `hrm_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__hrm_dashboard_snapshots` |
-| 98 | `public` | `lims_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__lims_dashboard_snapshots` |
-| 99 | `public` | `material_boms` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_boms` |
-| 100 | `public` | `material_categories` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_categories` |
-| 101 | `public` | `material_issue_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_issue_items` |
-| 102 | `public` | `material_issues` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_issues` |
-| 103 | `public` | `material_requirement_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_requirement_items` |
-| 104 | `public` | `material_requirements` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_requirements` |
-| 105 | `public` | `material_return_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_return_items` |
-| 106 | `public` | `material_returns` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_returns` |
-| 107 | `public` | `meeting_bookings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__meeting_bookings` |
-| 108 | `public` | `meeting_rooms` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__meeting_rooms` |
-| 109 | `public` | `navigation_menu` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__navigation_menu` |
-| 110 | `public` | `pdm_change_notices` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_change_notices` |
-| 111 | `public` | `pdm_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_dashboard_snapshots` |
-| 112 | `public` | `pdm_materials` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_materials` |
-| 113 | `public` | `pdm_products` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_products` |
-| 114 | `public` | `pinned_apps` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pinned_apps` |
-| 115 | `public` | `pm_master_data_refs` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__pm_master_data_refs` |
-| 116 | `public` | `process_flow_steps` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__process_flow_steps` |
-| 117 | `public` | `process_flows` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__process_flows` |
-| 118 | `public` | `qa_ehs_accident_investigations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_accident_investigations` |
-| 119 | `public` | `qa_ehs_accident_reviews` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_accident_reviews` |
-| 120 | `public` | `qa_ehs_accident_treatments` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_accident_treatments` |
-| 121 | `public` | `qa_ehs_accidents` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 3 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_accidents` |
-| 122 | `public` | `qa_ehs_compliance_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_compliance_items` |
-| 123 | `public` | `qa_ehs_contraindications` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_contraindications` |
-| 124 | `public` | `qa_ehs_detection_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_detection_records` |
-| 125 | `public` | `qa_ehs_emergency_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_emergency_plans` |
-| 126 | `public` | `qa_ehs_environment` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_environment` |
-| 127 | `public` | `qa_ehs_hazard_rectifications` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_hazard_rectifications` |
-| 128 | `public` | `qa_ehs_hazard_verifications` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_hazard_verifications` |
-| 129 | `public` | `qa_ehs_hazardous_materials` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_hazardous_materials` |
-| 130 | `public` | `qa_ehs_health_abnormalities` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_health_abnormalities` |
-| 131 | `public` | `qa_ehs_health_exam_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_health_exam_plans` |
-| 132 | `public` | `qa_ehs_health_exam_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_health_exam_records` |
-| 133 | `public` | `qa_ehs_health_trainings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_health_trainings` |
-| 134 | `public` | `qa_ehs_inspection_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_inspection_items` |
-| 135 | `public` | `qa_ehs_inspection_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_inspection_plans` |
-| 136 | `public` | `qa_ehs_material_stocks` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_material_stocks` |
-| 137 | `public` | `qa_ehs_protection_measures` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_protection_measures` |
-| 138 | `public` | `qa_ehs_risks` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_risks` |
-| 139 | `public` | `qa_ehs_stock_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_stock_records` |
-| 140 | `public` | `qa_ehs_sync_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_sync_records` |
-| 141 | `public` | `qa_ehs_trainings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_trainings` |
-| 142 | `public` | `qa_lab_calibration_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lab_calibration_records` |
-| 143 | `public` | `qa_lab_reagent_alerts` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lab_reagent_alerts` |
-| 144 | `public` | `qa_lab_reagent_history` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lab_reagent_history` |
-| 145 | `public` | `qa_lab_reagents` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lab_reagents` |
-| 146 | `public` | `qa_lims_audit_logs` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_audit_logs` |
-| 147 | `public` | `qa_lims_barcode_scan_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_barcode_scan_records` |
-| 148 | `public` | `qa_lims_collection_tasks` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_collection_tasks` |
-| 149 | `public` | `qa_lims_instrument_data` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_instrument_data` |
-| 150 | `public` | `qa_lims_method_categories` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_method_categories` |
-| 151 | `public` | `qa_lims_method_validations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_method_validations` |
-| 152 | `public` | `qa_lims_method_versions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_method_versions` |
-| 153 | `public` | `qa_lims_parse_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_parse_rules` |
-| 154 | `public` | `qa_lims_pt_corrective_actions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_pt_corrective_actions` |
-| 155 | `public` | `qa_lims_pt_evaluations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_pt_evaluations` |
-| 156 | `public` | `qa_lims_pt_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 4 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_pt_plans` |
-| 157 | `public` | `qa_lims_pt_results` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_pt_results` |
-| 158 | `public` | `qa_lims_pt_samples` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_pt_samples` |
-| 159 | `public` | `qa_lims_rfid_tags` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_rfid_tags` |
-| 160 | `public` | `qa_lims_sample_barcodes` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_sample_barcodes` |
-| 161 | `public` | `qa_lims_sync_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_sync_records` |
-| 162 | `public` | `qa_lims_test_methods` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_test_methods` |
-| 163 | `public` | `qa_lims_uncertainty_components` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_uncertainty_components` |
-| 164 | `public` | `qa_lims_uncertainty_projects` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_uncertainty_projects` |
-| 165 | `public` | `qa_lims_uncertainty_sources` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_uncertainty_sources` |
-| 166 | `public` | `quality_inspections` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_inspections` |
-| 167 | `public` | `quality_patrol_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_patrol_items` |
-| 168 | `public` | `quality_patrols` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_patrols` |
-| 169 | `public` | `quality_standard_values` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_standard_values` |
-| 170 | `public` | `quality_standards` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_standards` |
-| 171 | `public` | `refresh_tokens` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__refresh_tokens` |
-| 172 | `public` | `tenant_permissions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略）；serial 序列 1 个（快照重建） | `drop_20261119_b2__public__tenant_permissions` |
-| 173 | `public` | `tenants` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__tenants` |
-| 174 | `public` | `ticket_automation_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__ticket_automation_rules` |
-| 175 | `public` | `ticket_knowledge_articles` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__ticket_knowledge_articles` |
-| 176 | `public` | `todos` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__todos` |
-| 177 | `public` | `user_settings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__user_settings` |
-| 178 | `public` | `vehicle_requests` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__vehicle_requests` |
-| 179 | `public` | `vehicles` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__vehicles` |
-| 180 | `public` | `wms_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__wms_dashboard_snapshots` |
-| 181 | `qms` | `audit_logs` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__audit_logs` |
-| 182 | `qms` | `corrective_actions` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__corrective_actions` |
-| 183 | `qms` | `dashboard_metrics` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__dashboard_metrics` |
-| 184 | `qms` | `inspection_items` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__inspection_items` |
-| 185 | `qms` | `quality_inspections` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__quality_inspections` |
-| 186 | `qms` | `quality_issues` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__quality_issues` |
-| 187 | `scm` | `materials` | SCM 供应链 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__scm__materials` |
-| 188 | `scm` | `scm_master_data_refs` | SCM 供应链 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__scm__scm_master_data_refs` |
+| 1 | `bi` | `report_execution_records` | BI 报表 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__bi__report_execution_records` |
+| 2 | `ehs` | `audit_logs` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__audit_logs` |
+| 3 | `ehs` | `drill_records` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__drill_records` |
+| 4 | `ehs` | `emergency_plans` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__emergency_plans` |
+| 5 | `ehs` | `environmental_alerts` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__environmental_alerts` |
+| 6 | `ehs` | `environmental_data` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__environmental_data` |
+| 7 | `ehs` | `health_checkups` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__health_checkups` |
+| 8 | `ehs` | `monitoring_points` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__monitoring_points` |
+| 9 | `ehs` | `qa_ehs_accident_investigations` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_accident_investigations` |
+| 10 | `ehs` | `qa_ehs_accident_reviews` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_accident_reviews` |
+| 11 | `ehs` | `qa_ehs_accident_treatments` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_accident_treatments` |
+| 12 | `ehs` | `qa_ehs_compliance_items` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_compliance_items` |
+| 13 | `ehs` | `qa_ehs_detection_records` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_detection_records` |
+| 14 | `ehs` | `qa_ehs_environment` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_environment` |
+| 15 | `ehs` | `qa_ehs_health_abnormalities` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_health_abnormalities` |
+| 16 | `ehs` | `qa_ehs_health_trainings` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_health_trainings` |
+| 17 | `ehs` | `qa_ehs_material_stocks` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_material_stocks` |
+| 18 | `ehs` | `qa_ehs_protection_measures` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__qa_ehs_protection_measures` |
+| 19 | `ehs` | `risk_assessments` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__risk_assessments` |
+| 20 | `ehs` | `risk_controls` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__risk_controls` |
+| 21 | `ehs` | `safety_incidents` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__safety_incidents` |
+| 22 | `ehs` | `vaccination_records` | EHS 安全环保 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__ehs__vaccination_records` |
+| 23 | `erp` | `expenses` | ERP | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__erp__expenses` |
+| 24 | `erp` | `voucher_items` | ERP | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__erp__voucher_items` |
+| 25 | `erp` | `vouchers` | ERP | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__erp__vouchers` |
+| 26 | `finance` | `core_finance_approval_workflows` | 财务 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__finance__core_finance_approval_workflows` |
+| 27 | `finance` | `reconciliation_orders` | 财务 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__finance__reconciliation_orders` |
+| 28 | `finance` | `settlement_center_dashboards` | 财务 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__finance__settlement_center_dashboards` |
+| 29 | `gis` | `audit_log` | GIS 地理 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__gis__audit_log` |
+| 30 | `gis` | `audit_logs` | GIS 地理 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__gis__audit_logs` |
+| 31 | `gis` | `geofence_alerts` | GIS 地理 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__gis__geofence_alerts` |
+| 32 | `hrm` | `hrm_master_data_refs` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__hrm__hrm_master_data_refs` |
+| 33 | `hrm` | `payroll_records` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__payroll_records` |
+| 34 | `hrm` | `performance_records` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__performance_records` |
+| 35 | `hrm` | `recruitment_applications` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__recruitment_applications` |
+| 36 | `hrm` | `recruitment_records` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__recruitment_records` |
+| 37 | `hrm` | `training_participants` | HRM 人力 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略） | `drop_20261119_b2__hrm__training_participants` |
+| 38 | `lims` | `ai_analyses` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__ai_analyses` |
+| 39 | `lims` | `audit_logs` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__audit_logs` |
+| 40 | `lims` | `document_relations` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__document_relations` |
+| 41 | `lims` | `lab_ledger` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__lab_ledger` |
+| 42 | `lims` | `qa_lab_inspection_reports` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_inspection_reports` |
+| 43 | `lims` | `qa_lab_reagent_alerts` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_reagent_alerts` |
+| 44 | `lims` | `qa_lab_reagent_history` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_reagent_history` |
+| 45 | `lims` | `qa_lab_sample_lifecycle` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__qa_lab_sample_lifecycle` |
+| 46 | `lims` | `reagent_usages` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__reagent_usages` |
+| 47 | `lims` | `reagents` | LIMS 实验室 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__lims__reagents` |
+| 48 | `master_data` | `core_master_data_change_log` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_master_data_change_log` |
+| 49 | `master_data` | `core_master_data_event_outbox` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_master_data_event_outbox` |
+| 50 | `master_data` | `core_master_data_refs` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_master_data_refs` |
+| 51 | `master_data` | `core_mdm_approvals` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_mdm_approvals` |
+| 52 | `master_data` | `core_mdm_reconciliation_log` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__core_mdm_reconciliation_log` |
+| 53 | `master_data` | `dynamic_data` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__dynamic_data` |
+| 54 | `master_data` | `schema_registry` | 主数据 MDM | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__master_data__schema_registry` |
+| 55 | `public` | `alert_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（4 策略） | `drop_20261119_b2__public__alert_rules` |
+| 56 | `public` | `alerts` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__alerts` |
+| 57 | `public` | `analytics_sync_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__analytics_sync_records` |
+| 58 | `public` | `conversion_executions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__conversion_executions` |
+| 59 | `public` | `conversion_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__conversion_rules` |
+| 60 | `public` | `core_faqs` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_faqs` |
+| 61 | `public` | `core_file_folders` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_file_folders` |
+| 62 | `public` | `core_finance_account_opening_balances` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_account_opening_balances` |
+| 63 | `public` | `core_finance_approval_workflows` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_approval_workflows` |
+| 64 | `public` | `core_finance_aux_accounts` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_aux_accounts` |
+| 65 | `public` | `core_finance_aux_balances` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_aux_balances` |
+| 66 | `public` | `core_finance_ledger` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_ledger` |
+| 67 | `public` | `core_finance_reconciliation_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_reconciliation_items` |
+| 68 | `public` | `core_finance_reconciliation_sessions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_reconciliation_sessions` |
+| 69 | `public` | `core_finance_voucher_entries` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_voucher_entries` |
+| 70 | `public` | `core_finance_voucher_lines` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_voucher_lines` |
+| 71 | `public` | `core_finance_voucher_templates` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_finance_voucher_templates` |
+| 72 | `public` | `core_finance_vouchers` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_finance_vouchers` |
+| 73 | `public` | `core_guide_lessons` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_guide_lessons` |
+| 74 | `public` | `core_guide_progress` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_guide_progress` |
+| 75 | `public` | `core_guides` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__core_guides` |
+| 76 | `public` | `core_inter_module_sync` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_inter_module_sync` |
+| 77 | `public` | `core_master_data_event_outbox` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_master_data_event_outbox` |
+| 78 | `public` | `core_mdm_reconciliation_log` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__core_mdm_reconciliation_log` |
+| 79 | `public` | `core_plugin_categories` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_categories` |
+| 80 | `public` | `core_plugin_instances` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_instances` |
+| 81 | `public` | `core_plugin_navigation` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_navigation` |
+| 82 | `public` | `core_plugin_permissions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_permissions` |
+| 83 | `public` | `core_plugin_reviews` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_reviews` |
+| 84 | `public` | `core_plugin_versions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugin_versions` |
+| 85 | `public` | `core_plugins` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_plugins` |
+| 86 | `public` | `core_ticket_sla_escalations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_ticket_sla_escalations` |
+| 87 | `public` | `core_ticket_sla_policies` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__core_ticket_sla_policies` |
+| 88 | `public` | `cqrs_events` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__cqrs_events` |
+| 89 | `public` | `crm_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__crm_dashboard_snapshots` |
+| 90 | `public` | `ehs_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__ehs_dashboard_snapshots` |
+| 91 | `public` | `equipment` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__equipment` |
+| 92 | `public` | `equipment_inspections` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__equipment_inspections` |
+| 93 | `public` | `equipment_maintenance_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__equipment_maintenance_records` |
+| 94 | `public` | `finance_voucher_templates` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__finance_voucher_templates` |
+| 95 | `public` | `financial_reports` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__financial_reports` |
+| 96 | `public` | `hrm_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__hrm_dashboard_snapshots` |
+| 97 | `public` | `lims_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__lims_dashboard_snapshots` |
+| 98 | `public` | `material_boms` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_boms` |
+| 99 | `public` | `material_categories` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_categories` |
+| 100 | `public` | `material_issue_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_issue_items` |
+| 101 | `public` | `material_issues` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_issues` |
+| 102 | `public` | `material_requirement_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_requirement_items` |
+| 103 | `public` | `material_requirements` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_requirements` |
+| 104 | `public` | `material_return_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_return_items` |
+| 105 | `public` | `material_returns` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__material_returns` |
+| 106 | `public` | `meeting_bookings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__meeting_bookings` |
+| 107 | `public` | `meeting_rooms` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__meeting_rooms` |
+| 108 | `public` | `navigation_menu` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__navigation_menu` |
+| 109 | `public` | `pdm_change_notices` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_change_notices` |
+| 110 | `public` | `pdm_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_dashboard_snapshots` |
+| 111 | `public` | `pdm_materials` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_materials` |
+| 112 | `public` | `pdm_products` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pdm_products` |
+| 113 | `public` | `pinned_apps` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__pinned_apps` |
+| 114 | `public` | `pm_master_data_refs` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__pm_master_data_refs` |
+| 115 | `public` | `process_flow_steps` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__process_flow_steps` |
+| 116 | `public` | `process_flows` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__process_flows` |
+| 117 | `public` | `qa_ehs_accident_investigations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_accident_investigations` |
+| 118 | `public` | `qa_ehs_accident_reviews` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_accident_reviews` |
+| 119 | `public` | `qa_ehs_accident_treatments` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_accident_treatments` |
+| 120 | `public` | `qa_ehs_accidents` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 3 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_accidents` |
+| 121 | `public` | `qa_ehs_compliance_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_compliance_items` |
+| 122 | `public` | `qa_ehs_contraindications` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_contraindications` |
+| 123 | `public` | `qa_ehs_detection_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_detection_records` |
+| 124 | `public` | `qa_ehs_emergency_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_emergency_plans` |
+| 125 | `public` | `qa_ehs_environment` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_environment` |
+| 126 | `public` | `qa_ehs_hazard_rectifications` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_hazard_rectifications` |
+| 127 | `public` | `qa_ehs_hazard_verifications` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_hazard_verifications` |
+| 128 | `public` | `qa_ehs_hazardous_materials` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_hazardous_materials` |
+| 129 | `public` | `qa_ehs_health_abnormalities` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_health_abnormalities` |
+| 130 | `public` | `qa_ehs_health_exam_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_health_exam_plans` |
+| 131 | `public` | `qa_ehs_health_exam_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_health_exam_records` |
+| 132 | `public` | `qa_ehs_health_trainings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_health_trainings` |
+| 133 | `public` | `qa_ehs_inspection_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_inspection_items` |
+| 134 | `public` | `qa_ehs_inspection_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_ehs_inspection_plans` |
+| 135 | `public` | `qa_ehs_material_stocks` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_material_stocks` |
+| 136 | `public` | `qa_ehs_protection_measures` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_protection_measures` |
+| 137 | `public` | `qa_ehs_risks` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_risks` |
+| 138 | `public` | `qa_ehs_stock_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_stock_records` |
+| 139 | `public` | `qa_ehs_sync_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_sync_records` |
+| 140 | `public` | `qa_ehs_trainings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__qa_ehs_trainings` |
+| 141 | `public` | `qa_lab_calibration_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lab_calibration_records` |
+| 142 | `public` | `qa_lab_reagent_alerts` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lab_reagent_alerts` |
+| 143 | `public` | `qa_lab_reagent_history` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lab_reagent_history` |
+| 144 | `public` | `qa_lab_reagents` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lab_reagents` |
+| 145 | `public` | `qa_lims_audit_logs` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_audit_logs` |
+| 146 | `public` | `qa_lims_barcode_scan_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_barcode_scan_records` |
+| 147 | `public` | `qa_lims_collection_tasks` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_collection_tasks` |
+| 148 | `public` | `qa_lims_instrument_data` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_instrument_data` |
+| 149 | `public` | `qa_lims_method_categories` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_method_categories` |
+| 150 | `public` | `qa_lims_method_validations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_method_validations` |
+| 151 | `public` | `qa_lims_method_versions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_method_versions` |
+| 152 | `public` | `qa_lims_parse_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_parse_rules` |
+| 153 | `public` | `qa_lims_pt_corrective_actions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_pt_corrective_actions` |
+| 154 | `public` | `qa_lims_pt_evaluations` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_pt_evaluations` |
+| 155 | `public` | `qa_lims_pt_plans` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 4 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_pt_plans` |
+| 156 | `public` | `qa_lims_pt_results` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_pt_results` |
+| 157 | `public` | `qa_lims_pt_samples` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_pt_samples` |
+| 158 | `public` | `qa_lims_rfid_tags` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_rfid_tags` |
+| 159 | `public` | `qa_lims_sample_barcodes` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_sample_barcodes` |
+| 160 | `public` | `qa_lims_sync_records` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_sync_records` |
+| 161 | `public` | `qa_lims_test_methods` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_test_methods` |
+| 162 | `public` | `qa_lims_uncertainty_components` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__qa_lims_uncertainty_components` |
+| 163 | `public` | `qa_lims_uncertainty_projects` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 2 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_uncertainty_projects` |
+| 164 | `public` | `qa_lims_uncertainty_sources` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略）；被 1 条候选内入向外键引用 | `drop_20261119_b2__public__qa_lims_uncertainty_sources` |
+| 165 | `public` | `quality_inspections` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_inspections` |
+| 166 | `public` | `quality_patrol_items` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_patrol_items` |
+| 167 | `public` | `quality_patrols` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_patrols` |
+| 168 | `public` | `quality_standard_values` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_standard_values` |
+| 169 | `public` | `quality_standards` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__quality_standards` |
+| 170 | `public` | `refresh_tokens` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__refresh_tokens` |
+| 171 | `public` | `tenant_permissions` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（2 策略）；serial 序列 1 个（快照重建） | `drop_20261119_b2__public__tenant_permissions` |
+| 172 | `public` | `tenants` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__tenants` |
+| 173 | `public` | `ticket_automation_rules` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__ticket_automation_rules` |
+| 174 | `public` | `ticket_knowledge_articles` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__ticket_knowledge_articles` |
+| 175 | `public` | `todos` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__todos` |
+| 176 | `public` | `user_settings` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__user_settings` |
+| 177 | `public` | `vehicle_requests` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__vehicle_requests` |
+| 178 | `public` | `vehicles` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；无 RLS | `drop_20261119_b2__public__vehicles` |
+| 179 | `public` | `wms_dashboard_snapshots` | public（跨模块遗留） | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__public__wms_dashboard_snapshots` |
+| 180 | `qms` | `audit_logs` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__audit_logs` |
+| 181 | `qms` | `corrective_actions` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__corrective_actions` |
+| 182 | `qms` | `dashboard_metrics` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__dashboard_metrics` |
+| 183 | `qms` | `inspection_items` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__inspection_items` |
+| 184 | `qms` | `quality_inspections` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__quality_inspections` |
+| 185 | `qms` | `quality_issues` | QMS 质量 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__qms__quality_issues` |
+| 186 | `scm` | `materials` | SCM 供应链 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__scm__materials` |
+| 187 | `scm` | `scm_master_data_refs` | SCM 供应链 | 生产 0 行；`n_tup_ins=0`；全仓 Rust 零 SQL 引用；无触发器；RLS ENABLE+FORCE（1 策略） | `drop_20261119_b2__scm__scm_master_data_refs` |
 
-> 口径纠偏：上游清单把「无外键引用」写进删除候选依据；实测这 207 张里有 30 条入向外键（指向 17 张候选表），来源表全部也在候选集合内。因此判定结论不变（删除后无活表引用），但依据需改写为「仅被候选表引用，依赖图封闭」。
+> 口径纠偏：上游清单把「无外键引用」写进删除候选依据；实测这 206 张里有 30 条入向外键（指向 17 张候选表），来源表全部也在候选集合内。因此判定结论不变（删除后无活表引用），但依据需改写为「仅被候选表引用，依赖图封闭」。
 
 ## 3. 归档机制
 
@@ -302,7 +303,7 @@
 | G3 语句失败 | 归档建表/复制/序列快照任一报错 | PL/pgSQL 异常向上抛，事务回滚 |
 | G4 DROP 顺序 | 视图/外键未先删除 | 由顺序保证；仍有依赖时 DROP 报错并回滚 |
 
-因为「归档 + 校验 + DROP」在同一个事务内（由 runner 提供，文件内不写 `BEGIN/COMMIT`），**只要有一张表归档失败，207 张一张都不会被删**。
+因为「归档 + 校验 + DROP」在同一个事务内（由 runner 提供，文件内不写 `BEGIN/COMMIT`），**只要有一张表归档失败，206 张一张都不会被删**。
 
 已知边界：归档表名按「批次 + schema + 表名」唯一；若同名归档表已存在，迁移直接 `RAISE EXCEPTION` 拒绝重跑（不做静默覆盖），由执行人确认后改名或清理。迁移文件本身不含 `BEGIN/COMMIT`，事务边界由 `scripts/migration/apply-forward.sh` 提供；手工执行时必须显式加 `--single-transaction`。
 
@@ -312,7 +313,7 @@
 |---|---|---|
 | `database/migrations/20261119100000_drop_dead_tables_batch1.sql` | 批 1：19 张归档 + DROP | `batch-1` |
 | `database/rollback/20261119100000_drop_dead_tables_batch1.rollback.sql` | 批 1 回滚 | — |
-| `database/migrations/20261119110000_drop_dead_tables_batch2.sql` | 批 2：188 张归档 + DROP | `batch-2` |
+| `database/migrations/20261119110000_drop_dead_tables_batch2.sql` | 批 2：187 张归档 + DROP | `batch-2` |
 | `database/rollback/20261119110000_drop_dead_tables_batch2.rollback.sql` | 批 2 回滚 | — |
 
 执行方式（**本次不执行**，仅记录）：
@@ -333,11 +334,13 @@ PGOPTIONS='-capp.drop_dead_tables_gate=batch-1' \
 | 步骤 | 读数 |
 |---|---|
 | 批 1 应用 | 归档 19 张、0 行；策略 14；视图 1；外键 0；序列 0 |
-| 批 2 应用 | 归档 188 张、0 行；策略 116；外键 30；默认值 587；序列 1 |
-| 合计 | 归档表 207 张，`_drop_manifest` 207 行 |
-| 批 2 回滚 | 188 张全部重建；策略/外键/默认值/序列恢复 |
+| 批 2 应用 | 归档 187 张、0 行；策略 115；外键 30；默认值 585；序列 1 |
+| 合计 | 归档表 206 张，`_drop_manifest` 206 行 |
+| 批 2 回滚 | 187 张全部重建；策略/外键/默认值/序列恢复 |
 | 批 1 回滚 | 19 张全部重建；`mes.v_tenant_backfill_gaps` 恢复 |
-| 回滚后终态 | 207/207 表存在；候选表上策略 130 条；RLS ENABLE+FORCE 120 张；入向外键 30 条；`public.tenant_permissions.id` 默认值恢复为 `nextval(...)` |
+| 回滚后终态 | 206/206 表存在；候选表上策略 129 条；RLS ENABLE+FORCE 119 张；入向外键 30 条；`public.tenant_permissions.id` 默认值恢复为 `nextval(...)` |
+
+> 读数按移出 `bi.audit_logs` 重算：该表贡献 1 张表、1 条策略、2 条列默认值、0 条入向外键、0 个序列，且为 RLS ENABLE+FORCE；其余读数不变。
 
 ### 4.3 manifest 与 checksums
 
@@ -350,7 +353,7 @@ PGOPTIONS='-capp.drop_dead_tables_gate=batch-1' \
 
 ### 5.1 采集语句
 
-候选集合 `cand(s,t)` 用附录 A 的 207 行生成 `VALUES (...)`，或先建临时表：
+候选集合 `cand(s,t)` 用附录 A 的 206 行生成 `VALUES (...)`，或先建临时表：
 
 ```sql
 CREATE TEMP TABLE cand(s text, t text);
@@ -483,14 +486,14 @@ WHERE NOT t.tgisinternal AND (n.nspname, c.relname) IN (SELECT s, t FROM cand);
 
 ## 6. 风险与未决
 
-1. **归档体积**：207 张均为 0 行，归档表本身只有结构开销；若未来重跑时表已有数据，归档会按实际行数占用空间。
+1. **归档体积**：206 张均为 0 行，归档表本身只有结构开销；若未来重跑时表已有数据，归档会按实际行数占用空间。
 2. **`archive` schema 的权限**：删除后归档表对业务角色不可见；如需审计读取，需单独授权，且不要加入 `search_path`。
 3. **序列 `last_value` 为 NULL**：`public.tenant_permissions_id_seq` 从未被调用，回滚以 `START WITH 1` 重建；若生产在窗口前已有写入，需在窗口前的只读核查里重新取 `last_value`。
 4. **观察窗口的判定标准**需 DBA 与业务共同签署，本文给的是最低标准。
 5. 第二批 125 张 `public` 表与 IAM/ERP/SCM 两条并行会话的改动无文件重叠，但**执行窗口需错开**，避免 `ACCESS EXCLUSIVE` 锁与迁移窗口叠加。
 6. **易误判的同名表**：第二批含 `public.tenants`、`public.vehicles`、`public.equipment`、`public.quality_standards`、`scm.materials` 等与权威表近名的对象。生产实测均为 0 行且仓库零引用，权威版本分别落在 `core`/`iam`/`mes`/`qms`/`rs`/`master_data` 等 schema。这类表必须在 §5.1 的 4（授权）/5（发布）两项上单独确认后再放行——名字越像，外部报表误连的概率越高。
 
-## 附录 A：207 张逐表清单
+## 附录 A：206 张逐表清单
 
 同 §2.2 / §2.3 的两张表；供 §5 SQL 生成 `cand` 值集：
 
@@ -516,7 +519,6 @@ INSERT INTO cand(s, t) VALUES
   ('wms', 'transfer_items'),
   ('wms', 'transfers'),
   ('wms', 'wms_master_data_refs'),
-  ('bi', 'audit_logs'),
   ('bi', 'report_execution_records'),
   ('ehs', 'audit_logs'),
   ('ehs', 'drill_records'),

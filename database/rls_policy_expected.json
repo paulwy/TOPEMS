@@ -418,6 +418,24 @@
     },
     {
       "schema": "bi",
+      "table": "audit_logs",
+      "rls_enabled": true,
+      "force_rls": true,
+      "policies": [
+        {
+          "name": "bi_allow_all_audit_logs",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "true",
+          "with_check": "true"
+        }
+      ]
+    },
+    {
+      "schema": "bi",
       "table": "report_schedules",
       "rls_enabled": true,
       "force_rls": true,

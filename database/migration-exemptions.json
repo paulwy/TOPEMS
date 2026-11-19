@@ -152,6 +152,17 @@
       ],
       "evidence": "静态：validate.sh Errors 0 / Checksum errors 0；gen-manifest.sh --check 无漂移。死表交集经脚本比对两份 DROP 清单确认（4/6 命中，flow.audit_logs、iam.audit_logs 未命中、断言保留）。修复后门禁同路径 scripts/dev/run-migration-drill.sh anchor 复跑结果见本次回报。",
       "approved": true
+    },
+    {
+      "id": "B20261119-batch2-bi-audit-logs-keep",
+      "date": "2026-11-19",
+      "committer": "topmap163",
+      "reason": "20261119110000 为尚未在任何环境应用的前向迁移（prod 账本停在 20261119000002，dev 未到；manifest status=to_apply），本轮把 bi.audit_logs 从批 2 删除清单移出（188→187），属『未应用迁移』的受控内容修正：不改版本号、不改历史账本。原因：svc/analytics 的 schema-defense（SERVICE_SCHEMA=bi，TABLE_DEFS 含 audit_logs）启动即 CREATE TABLE IF NOT EXISTS bi.audit_logs 并补列（生产 25 列 = 共享审计 15 列 ∪ analytics 专有列），DROP 会被重建；重建后 harden_new_tenant_tables 会补一条 tenant_isolation_audit_logs，与 20261119141000 钉住的 bi_allow_all_audit_logs 冲突。该表 0 行、无运行期读写，保留无数据风险。checksums.txt 仅更新该文件一行。",
+      "files": [
+        "20261119110000_drop_dead_tables_batch2.sql"
+      ],
+      "evidence": "静态：check-migrations 豁免校验通过，validate.sh Checksum errors 0 / Schema drift 0，gen-manifest.sh --check 无漂移。演练：改后 scripts/dev/run-migration-drill.sh anchor 同路径 PASS（干净 worktree / 非特权 topems_test_runner / rolsuper=f / rolbypassrls=f），策略快照 796/807 → 797/808，bi.audit_logs（rls_enabled=true、force_rls=true、bi_allow_all_audit_logs ALL USING(true) WITH CHECK(true)）重新出现，20261119141000 守卫对其断言通过；计划文档同步 207→206、批 2 188→187（docs/quality/dead-table-disposal-plan-2026-11-19.md §2.3/§4.2）。",
+      "approved": true
     }
   ]
 }
