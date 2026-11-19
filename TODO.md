@@ -32,7 +32,7 @@
 | `cargo clippy --workspace --all-targets` | 绿（4 crate / 8 处已修，2026-11-17） | 见 §3.2 |
 | `facts:check` | **绿：62 项一致**（同日核销：`schema_prefix` 基线 306→287 条、`request-txn` 基线 26 项 erp `bare_txn` 351→350；观测值按当前代码重建） | `node scripts/report/facts.mjs --check docs/quality/facts-latest.json` |
 | `check:ledger` | **绿：4 本全部 OK**（`schema-prefix` / `request-txn` / `tenant-context` / `txn-write-non2xx` 均 stale 0、unregistered 0） | `node scripts/ci/check-ledger-staleness.mjs` |
-| `gen-manifest --check` | 绿：`registered=195 disk=788 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0`、`checksum_mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
+| `gen-manifest --check` | 绿：`registered=196 disk=789 anchor=20261118150000`，`unregistered_pending=0`、`file/checksum mismatch=0`、`checksum_mismatch=0` | `bash scripts/migration/gen-manifest.sh --check` |
 | API 审计闸门 | 绿（2026-11-17：P6 RED=0、p7 `not_legal=0`；`lefthook.yml` 已去 `--dry-run`） | 见 §3.2 |
 | 权限对账脚本 | 绿：`DB 来源：live`、DB=1021、FE 1060 / BE 624 / ∩195、db_only 0、命名不一致组 0 | `python3 scripts/audit_permission_codes.py`；见 §3.1 |
 | GitHub Actions | **红，唯一原因 = 账号计费**（`The job was not started because recent account payments have failed...`，job 未启动，非代码） | `gh api repos/paulwy/TOPEMS/actions/runs/<id>/jobs`；见 §7.4 |
@@ -118,7 +118,7 @@
 
 | ID | 现象 | 证据 / 复现（只读） | 状态 |
 |---|---|---|---|
-| DRIFT-01 | `mes.production_records.completed_quantity` 在本地 `topems` 实际为 `numeric`（无 typmod），迁移 `20260926120000_app_schema_tables.sql:1617` 与门禁断言要求 `numeric(12,2)` | `psql "postgresql:///topems" -tAc "select format_type(atttypid, atttypmod) from pg_attribute where attrelid='mes.production_records'::regclass and attname='completed_quantity'"` → `numeric`；`topems_web_smoke` 为 `numeric(12,2)`，生产快照 `fixtures/full_schema_contract.sql:17144` 亦为 `numeric(12,2)`；全仓迁移无后续 `ALTER ... TYPE` | **未定性**：尚无「迁移写错 / 契约写错 / 本地库手工改过」的结论。现状证据更像本地 `topems` 建库路径漂移，但未取证建库历史。**未改契约、未改迁移**；待确认来源后只修一侧。门禁复现：`MIGRATION_DRIFT_DB_URL=postgresql:///topems node scripts/migration/check-ledger-ddl-drift.mjs`（本地 socket 为超管，需 `MIGRATION_DRIFT_ALLOW_SUPERUSER=1` 才会跑到断言） |
+| DRIFT-01 ✅ | `mes.production_records.completed_quantity` 曾出现 `numeric`（无 typmod），契约要求 `numeric(12,2)` | **已定性并修复（2026-11-20）**。根因：`20260928120000_mes_schema_type_align.sql` 的判据是 `information_schema.data_type <> 'numeric'`，而无精度 `numeric` 与 `numeric(12,2)` 的 `data_type` 同为 `numeric`，导致该迁移误判「已对齐」直接跳过 ALTER。现场已消失：本机 20 个 `topems*` 库该列均为 `numeric(12,2)`，原读数的 `topems_web_smoke` 已不存在。修复：新增前向兜底迁移 `20261120090000_mes_column_typmod_align.sql`，以 `format_type`（含 typmod）为判据对齐同 4 列，表/列缺失用 `to_regclass` 跳过、已对齐零 ALTER。验证：事务内把列改回无精度 `numeric` → 执行迁移 → 恢复 `numeric(12,2)` → ROLLBACK，通过；`apply-forward` 在 `topems_test_full` 应用 1 条、重跑 0 条（账本 max=`20261120090000`）；`validate.sh` errors 0 / checksum 0；`gen-manifest --check` 无漂移（registered=196/disk=789）。回滚件只回退到无约束 `numeric/varchar` 且不回退已四舍五入的小数位，已在文件中如实声明 |
 
 ### F. 前端真实性与交互纠错（2026-11-19 评估增补；批次 1 + 批次 2 全部完工：F1–F12 均 ✅）
 

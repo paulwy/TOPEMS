@@ -2529,3 +2529,11 @@ pending_forward_patches:
     effect: "删除 44 条 2026-06 初始导入遗留的扁平权限码及其空转角色授权（attendance_read / doc:documents_read / pm:projects_read 等，全仓 has_permission 引用=0）；补种 2 条仍被 svc/erp/src/modules/dict.rs 校验引用的 iam:dictionaries_read / iam:dictionaries_update"
     destructive_scan: "DELETE public.core_role_permissions（按 permission_id 关联 44 码）+ DELETE public.core_permissions（按 code 精确名单）；INSERT 带 NOT EXISTS 去重；无 ALTER/DROP/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "根因：初始数据库导入早于「迁移是唯一源」纪律，快照见 database/backup/p5_20261106/public_iam_core.sql。回滚 database/rollback/20261119233000_iam_legacy_permission_convergence.rollback.sql（权限码可重放，角色授权需从备份重建，已在文件中声明）；无表结构/RLS/策略快照变化"
+
+  # ===== 2026-11-20：mes typmod 对齐兜底（DRIFT-01 根因修复） =====
+  - version: "20261120090000"
+    file: "database/migrations/20261120090000_mes_column_typmod_align.sql"
+    status: to_apply
+    effect: "以 format_type（含 typmod）为判据，对齐 mes 4 列：production_orders/production_records.completed_quantity -> numeric(12,2)，process_flows/quality_standards.version -> integer。修复 20260928120000 仅比较 information_schema.data_type、把无精度 numeric 误判为已对齐而跳过 ALTER 的漏口"
+    destructive_scan: "4 处 ALTER COLUMN TYPE（ACCESS EXCLUSIVE 锁，numeric 加精度会重写表）；无 DROP/TRUNCATE/INSERT/UPDATE/DELETE；表或列不存在时跳过；文件内无 BEGIN/COMMIT"
+    note: "可直接重复执行（列已对齐则零 ALTER）。回滚 database/rollback/20261120090000_mes_column_typmod_align.rollback.sql（只能回到无约束 numeric/varchar，且不回退已四舍五入的小数位，文件中已声明）"
