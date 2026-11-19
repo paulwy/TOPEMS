@@ -157,17 +157,24 @@ git bundle verify ~/TOPEMS-local-branches-archive-20261119.bundle   # "records a
 保留：`main`、`w7-b4-wms-rls-window-runbook`（2 条未合入手册提交）、
 `wcs-save-20261012`（1 条未合入 WCS 回归报告）。
 
-### 9.3 远端分支（31 → 9）
+### 9.3 远端分支（31 → 3）
 
-| 删除（21） | 判定依据 |
+| 删除（28） | 判定依据 |
 | --- | --- |
 | 12 个已并入 main（`chore/*`、`fix/flow-monitor-tenant-*`、`fix/iam-role-perm-tenant-scope-p0`、`p0/p1` 等） | `git branch -r --merged origin/main` |
 | `feat/expo58-upgrade`、`fix/ehs-tenant-scope-20261114`、`fix/hook-fail-closed-20261114`、`fix/iam-role-perm-tenant-scope`、`fix/tenant-sentinel-batch1-20261114`、`fix/w7-b4-ehs-followup-1-scoped-txn-drop`、`w7-b4-wms-rls` | `git cherry` 未合入 = 0（等价补丁已入 main） |
 | `fix/ehs-safety-check-timestamps`、`fix/lims-trigger-decode-v2` | 内容已核验落在 main |
+| `feature/merge-iam-admin`、`feature/v286`、`feature/v287`、`release/v5.14.0`、`ui-codemod-phase3-group1`、`fix/mes-production-order-rls` | 重写前历史备份，已被重写后的 main 取代；删前另打远端 bundle |
 
-保留（均含未合入内容或为重写前远端备份）：`feature/merge-iam-admin`、`feature/v286`、
-`feature/v287`、`release/v5.14.0`、`ui-codemod-phase3-group1`、`fix/mes-production-order-rls`、
-`fix/i18n-placeholder-cleanup`（2 条真独有改动）、`w7-b4-wms-rls-window-runbook`（1 条独有）。
+重写前远端备份未收进首个本地 bundle，故删前单独打包：
+
+```
+git bundle create ~/TOPEMS-remote-branches-archive-20261119.bundle <6 个 refs/remotes/...>
+git bundle verify ~/TOPEMS-remote-branches-archive-20261119.bundle  # "records a complete history"
+```
+
+保留（均含真实未合入改动）：`main`、`fix/i18n-placeholder-cleanup`（2 条独有）、
+`w7-b4-wms-rls-window-runbook`（1 条独有，本地 ahead 1）。
 
 ### 9.4 清理后复核
 
