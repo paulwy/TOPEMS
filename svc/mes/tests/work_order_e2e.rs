@@ -11,6 +11,7 @@ use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::{json, Value};
 use topems_mes::modules::work_order::{list_work_orders, ListWorkOrdersQuery};
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS mes")
@@ -83,18 +84,25 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
     let txn_cell = app_state::request_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
+    let claims = scoped_claims();
     let q: ListWorkOrdersQuery = serde_json::from_value(if let Some(s) = status {
         json!({ "status": s })
     } else {
         json!({})
     })
     .unwrap();
-    let resp = list_work_orders(
-        State(state),
-        Extension(txn_cell),
-        Extension(claims),
-        Query(q),
+    // 直调 handler 缺少 auth_middleware 写入的 task-local 租户上下文，测试侧补齐。
+    let resp = scope_request_tenant(
+        RlsRequestTenant {
+            tenant: tenant_uuid(),
+            system: false,
+        },
+        list_work_orders(
+            State(state),
+            Extension(txn_cell),
+            Extension(claims),
+            Query(q),
+        ),
     )
     .await;
     serde_json::to_value(
@@ -104,11 +112,26 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
     .unwrap()
 }
 
+const TEST_TENANT: &str = "00000000-0000-0000-0000-0000000000b1";
+
+fn tenant_uuid() -> uuid::Uuid {
+    uuid::Uuid::parse_str(TEST_TENANT).unwrap()
+}
+
+fn scoped_claims() -> topems_shared_auth::auth::Claims {
+    let mut claims = super_claims();
+    claims.tenant_id = Some(TEST_TENANT.to_string());
+    claims
+}
+
 async fn insert_work_order(pool: &sqlx::PgPool, no: &str, status: &str) {
-    sqlx::query("INSERT INTO mes.work_orders (id, work_order_no, status) VALUES ($1, $2, $3)")
-        .bind(uuid::Uuid::new_v4())
-        .bind(no)
-        .bind(status)
+    sqlx::query(
+        "INSERT INTO mes.work_orders (id, work_order_no, status, tenant_id) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(uuid::Uuid::new_v4())
+    .bind(no)
+    .bind(status)
+    .bind(tenant_uuid())
         .execute(pool)
         .await
         .unwrap();

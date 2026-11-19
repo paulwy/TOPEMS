@@ -60,7 +60,7 @@ use super::permission_audit_log::{
 ///     old_value: None,
 ///     new_value: None,
 ///     changed_by: "admin".to_string(),
-///     changed_at: chrono::Utc::now().to_rfc3339(),
+///     changed_at: chrono::Utc::now(),
 ///     ip_address: None,
 ///     user_agent: None,
 ///     metadata: HashMap::new(),

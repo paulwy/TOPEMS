@@ -21,6 +21,8 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             code VARCHAR(64) NOT NULL UNIQUE,
+            -- create_tenant 会写 tenant_id（生产表由迁移保证存在）
+            tenant_id UUID,
             tenant_type VARCHAR(32) DEFAULT 'shared',
             plan VARCHAR(32) DEFAULT 'basic',
             license_type VARCHAR(32) DEFAULT 'subscription',

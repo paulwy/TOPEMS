@@ -6,17 +6,31 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{commit_test_txn, super_claims, test_app_state, test_txn_cell};
+use app_state::{commit_test_txn, tenant_claims, test_app_state, test_txn_cell};
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde_json::Value;
 use sqlx::postgres::PgPoolOptions;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_unified_core::modules::menu::handlers::{
     create_group, create_menu, delete_group, get_menu, list_groups, list_menus,
 };
 use topems_unified_core::modules::menu::models::{
     CreateMenuGroupRequest, CreateMenuRequest, MenuGroupQuery, MenuQuery,
 };
+
+/// 直调 handler 缺少 auth_middleware 写入的 task-local 租户上下文，测试侧补齐。
+async fn in_tenant<T>(fut: impl std::future::Future<Output = T>) -> T {
+    let tenant = uuid::Uuid::parse_str(tenant_claims().tenant_id.as_deref().unwrap()).unwrap();
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        fut,
+    )
+    .await
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -87,12 +101,12 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
         sort_order: Some(1),
     };
     let txn = test_txn_cell(pool).await;
-    let resp = create_group(
+    let resp = in_tenant(create_group(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Json(req),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     let data = resp
@@ -109,12 +123,12 @@ topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_groups_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_groups(
+    let resp = in_tenant(list_groups(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_group_query()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -127,12 +141,12 @@ async fn create_group_and_list(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = create_group_via_handler(&pool, "grp-core", "核心分组").await;
 
-    let resp = list_groups(
+    let resp = in_tenant(list_groups(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_group_query()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -149,22 +163,22 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
     let id = create_group_via_handler(&pool, "grp-tmp", "临时分组").await;
 
     let txn = test_txn_cell(&pool).await;
-    let del = delete_group(
+    let del = in_tenant(delete_group(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Path(id),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     assert!(del.data.is_some(), "delete failed: {:?}", del.message);
 
-    let resp = list_groups(
+    let resp = in_tenant(list_groups(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_group_query()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -175,12 +189,12 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn list_menus_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_menus(
+    let resp = in_tenant(list_menus(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_menu_query()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -204,12 +218,12 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
         permissions: Some(serde_json::json!(["dashboard:read"])),
     };
     let txn = test_txn_cell(&pool).await;
-    let created = create_menu(
+    let created = in_tenant(create_menu(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Json(req),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     let data = created
@@ -219,12 +233,12 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
     assert_eq!(menu["name"], "仪表盘");
     assert_eq!(menu["code"], "dashboard");
 
-    let resp = list_menus(
+    let resp = in_tenant(list_menus(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_menu_query()),
-    )
+    ))
     .await;
     let list = resp
         .data
@@ -248,12 +262,12 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
         permissions: None,
     };
     let txn = test_txn_cell(&pool).await;
-    let created = create_menu(
+    let created = in_tenant(create_menu(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Json(req),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     let menu_id: uuid::Uuid = serde_json::to_value(
@@ -267,11 +281,11 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
         .parse()
         .unwrap();
 
-    let resp = get_menu(
+    let resp = in_tenant(get_menu(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Path(menu_id),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -334,12 +348,12 @@ async fn menu_hits_public_when_flow_shadow_exists(pool: sqlx::PgPool) {
     assert_eq!(flow_groups, 0, "flow 影子副本不应被写入");
     assert_eq!(public_groups, 1, "菜单必须写入 public 权威表");
 
-    let resp = list_groups(
+    let resp = in_tenant(list_groups(
         Extension(test_txn_cell(&prod_pool).await),
         State(test_app_state(prod_pool)),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_group_query()),
-    )
+    ))
     .await;
     let data = resp
         .data

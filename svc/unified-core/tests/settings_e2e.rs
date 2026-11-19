@@ -6,15 +6,29 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{commit_test_txn, super_claims, test_app_state, test_txn_cell};
+use app_state::{commit_test_txn, tenant_claims, test_app_state, test_txn_cell};
 use axum::extract::{Extension, State};
 use axum::Json;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_unified_core::modules::settings::api_keys::{
     create_api_key, delete_api_key, list_api_keys, ApiKeyEntry, CreateApiKeyRequest,
 };
 use topems_unified_core::modules::settings::smtp::{
     get_smtp_config, update_smtp_config, SmtpConfig,
 };
+
+/// 直调 handler 缺少 auth_middleware 写入的 task-local 租户上下文，测试侧补齐。
+async fn in_tenant<T>(fut: impl std::future::Future<Output = T>) -> T {
+    let tenant = uuid::Uuid::parse_str(tenant_claims().tenant_id.as_deref().unwrap()).unwrap();
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        fut,
+    )
+    .await
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -51,11 +65,11 @@ topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_api_keys_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_api_keys(
+    let resp = in_tenant(list_api_keys(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
-    )
+        Extension(tenant_claims()),
+    ))
     .await;
     let data = resp
         .data
@@ -72,12 +86,12 @@ async fn create_api_key_persists(pool: sqlx::PgPool) {
         secret: "sk-abcdef1234".to_string(),
     };
     let txn = test_txn_cell(&pool).await;
-    let resp = create_api_key(
+    let resp = in_tenant(create_api_key(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Json(payload),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     let data = resp
@@ -86,11 +100,11 @@ async fn create_api_key_persists(pool: sqlx::PgPool) {
     assert_eq!(data.name, "部署密钥");
     assert!(data.secret.contains("****"));
 
-    let resp = list_api_keys(
+    let resp = in_tenant(list_api_keys(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
-    )
+        Extension(tenant_claims()),
+    ))
     .await;
     let items = resp
         .data
@@ -108,12 +122,12 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
         secret: "sk-xyz".to_string(),
     };
     let txn = test_txn_cell(&pool).await;
-    let created = create_api_key(
+    let created = in_tenant(create_api_key(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Json(payload),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     let entry: ApiKeyEntry = created
@@ -121,21 +135,21 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
         .unwrap_or_else(|| panic!("handler error: {:?}", created.message));
 
     let txn = test_txn_cell(&pool).await;
-    let del = delete_api_key(
+    let del = in_tenant(delete_api_key(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         axum::extract::Path(entry.id),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     assert!(del.data.is_some());
 
-    let resp = list_api_keys(
+    let resp = in_tenant(list_api_keys(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
-    )
+        Extension(tenant_claims()),
+    ))
     .await;
     let items = resp
         .data
@@ -146,11 +160,11 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn get_smtp_returns_default_when_unset(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = get_smtp_config(
+    let resp = in_tenant(get_smtp_config(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
-    )
+        Extension(tenant_claims()),
+    ))
     .await;
     let data = resp
         .data
@@ -163,21 +177,21 @@ async fn update_smtp_persists_and_reads_back(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let payload = smtp_payload();
     let txn = test_txn_cell(&pool).await;
-    let upd = update_smtp_config(
+    let upd = in_tenant(update_smtp_config(
         Extension(txn.clone()),
         State(test_app_state(pool.clone())),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Json(payload),
-    )
+    ))
     .await;
     commit_test_txn(&txn).await;
     assert!(upd.data.is_some(), "update failed: {:?}", upd.message);
 
-    let resp = get_smtp_config(
+    let resp = in_tenant(get_smtp_config(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
-        Extension(super_claims()),
-    )
+        Extension(tenant_claims()),
+    ))
     .await;
     let data = resp
         .data

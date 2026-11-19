@@ -9,10 +9,23 @@ mod app_state;
 use app_state::{test_app_state, test_txn_cell};
 use axum::extract::{Extension, Path, Query, State};
 use serde_json::Value;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_unified_core::modules::system_audit::{
     export_audit_logs, get_audit_log, get_audit_stats, list_audit_logs, AuditLogQueryParams,
     AuditStatsParams,
 };
+
+/// 系统审计是系统作用域读取：直调 handler 缺少中间件写入的 task-local 上下文。
+async fn in_system<T>(fut: impl std::future::Future<Output = T>) -> T {
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant: uuid::Uuid::new_v4(),
+            system: true,
+        },
+        fut,
+    )
+    .await
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -70,11 +83,11 @@ topems_test_support::sqlx_dsn_guard!();
 #[sqlx::test(migrations = false)]
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_audit_logs(
+    let resp = in_system(list_audit_logs(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Query(empty_params()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -87,11 +100,11 @@ async fn list_returns_inserted(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     insert_log(&pool, "create").await;
 
-    let resp = list_audit_logs(
+    let resp = in_system(list_audit_logs(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool.clone())),
         Query(empty_params()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -106,11 +119,11 @@ async fn get_returns_log(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let id = insert_log(&pool, "update").await;
 
-    let resp = get_audit_log(
+    let resp = in_system(get_audit_log(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Path(id),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -125,11 +138,11 @@ async fn export_returns_csv_rows(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     insert_log(&pool, "create").await;
 
-    let resp = export_audit_logs(
+    let resp = in_system(export_audit_logs(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Query(empty_params()),
-    )
+    ))
     .await;
     let data = resp
         .data
@@ -149,11 +162,11 @@ async fn stats_groups_by_action(pool: sqlx::PgPool) {
         end_date: None,
         group_by: Some("action".to_string()),
     };
-    let resp = get_audit_stats(
+    let resp = in_system(get_audit_stats(
         Extension(test_txn_cell(&pool).await),
         State(test_app_state(pool)),
         Query(params),
-    )
+    ))
     .await;
     let data = resp
         .data

@@ -6,7 +6,7 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state};
+use app_state::{tenant_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
 use topems_unified_core::modules::automation::{
@@ -73,7 +73,7 @@ async fn create_returns_variable(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
     let state = test_app_state(pool);
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = create_variable(
         State(state),
         Extension(claims),
@@ -90,7 +90,7 @@ async fn get_roundtrip(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
     let state = test_app_state(pool.clone());
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = create_variable(
         State(state),
         Extension(claims),
@@ -110,7 +110,7 @@ async fn update_changes_value(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
     let state = test_app_state(pool.clone());
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = create_variable(
         State(state),
         Extension(claims),
@@ -136,7 +136,7 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
     let state = test_app_state(pool.clone());
-    let claims = super_claims();
+    let claims = tenant_claims();
     let resp = create_variable(
         State(state),
         Extension(claims),

@@ -417,6 +417,46 @@ jobs:
             --db-url "postgresql://postgres:postgres@localhost:5432/topems?options=-csearch_path=mes,public"
 
   # ──────────────────────────────────────────────────────────────────────────
+  # db-tests：需要真实 PostgreSQL 的集成测试（显式 opt-in feature）
+  # 默认 cargo test 不编译这些用例（sqlx DSN 守卫会在进程启动即 panic）；
+  # 只有本 job / 本地 `cargo test -p <crate> --features db-tests` 才实跑。
+  # 用超管账号起库：sqlx::test 需要 CREATEDB，每个用例自动建独立库。
+  # ──────────────────────────────────────────────────────────────────────────
+  db-tests:
+    name: Gate · DB integration tests (db-tests feature)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: "db-tests-2026-11-19"
+      - name: Run db-tests crates
+        run: |
+          set -euo pipefail
+          for p in topems-shared-auth topems-crm topems-scm topems-wms topems-mes topems-erp topems-finance topems-unified-core; do
+            echo "== $p"
+            cargo test -p "$p" --features db-tests -- --test-threads=4
+          done
+
+  # ──────────────────────────────────────────────────────────────────────────
   # runtime-sql-contract-gate：运行时查询风格 crate 在线契约门禁（--all 全 29 crate）
   # 流程：postgres 起库 → 导入全 schema 快照 fixtures/full_schema_contract.sql
   #       → 对每 crate 提取的运行时 SQL 逐个 PREPARE → 断言 0 HARD

@@ -7,9 +7,10 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::{super_claims, test_app_state, test_txn_cell};
+use app_state::{tenant_claims, test_app_state, test_txn_cell};
 use axum::extract::{Path, Query, State};
 use axum::Extension;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_unified_core::modules::audit::handlers::{
     get_operation_log, get_operation_log_stats, list_operation_logs,
 };
@@ -86,16 +87,29 @@ async fn insert_log(
     id
 }
 
+/// 直调 handler 缺少 auth_middleware 写入的 task-local 租户上下文，测试侧补齐。
+async fn in_tenant<T>(fut: impl std::future::Future<Output = T>) -> T {
+    let tenant = uuid::Uuid::parse_str(tenant_claims().tenant_id.as_deref().unwrap()).unwrap();
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        fut,
+    )
+    .await
+}
+
 async fn call_list(pool: sqlx::PgPool, query: OperationLogQuery) -> OperationLogListResponse {
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
-    let resp = list_operation_logs(
+    let claims = tenant_claims();
+    let resp = in_tenant(list_operation_logs(
         Extension(txn),
         State(state),
         Extension(claims),
         Query(query),
-    )
+    ))
     .await;
     resp.data.unwrap()
 }
@@ -171,8 +185,14 @@ async fn get_operation_log_returns_log(pool: sqlx::PgPool) {
 
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
-    let resp = get_operation_log(Extension(txn), State(state), Extension(claims), Path(id)).await;
+    let claims = tenant_claims();
+    let resp = in_tenant(get_operation_log(
+        Extension(txn),
+        State(state),
+        Extension(claims),
+        Path(id),
+    ))
+    .await;
     let log: OperationLog = resp.data.unwrap();
     assert_eq!(log.id, id);
     assert_eq!(log.user_name, "alice");
@@ -185,13 +205,13 @@ async fn get_operation_log_not_found_returns_none(pool: sqlx::PgPool) {
 
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
-    let resp = get_operation_log(
+    let claims = tenant_claims();
+    let resp = in_tenant(get_operation_log(
         Extension(txn),
         State(state),
         Extension(claims),
         Path(uuid::Uuid::new_v4()),
-    )
+    ))
     .await;
     assert!(resp.data.is_none());
 }
@@ -202,8 +222,13 @@ async fn stats_empty_returns_zero(pool: sqlx::PgPool) {
 
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
-    let resp = get_operation_log_stats(Extension(txn), State(state), Extension(claims)).await;
+    let claims = tenant_claims();
+    let resp = in_tenant(get_operation_log_stats(
+        Extension(txn),
+        State(state),
+        Extension(claims),
+    ))
+    .await;
     let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
@@ -217,8 +242,13 @@ async fn stats_counts_inserted_rows(pool: sqlx::PgPool) {
 
     let txn = test_txn_cell(&pool).await;
     let state = test_app_state(pool);
-    let claims = super_claims();
-    let resp = get_operation_log_stats(Extension(txn), State(state), Extension(claims)).await;
+    let claims = tenant_claims();
+    let resp = in_tenant(get_operation_log_stats(
+        Extension(txn),
+        State(state),
+        Extension(claims),
+    ))
+    .await;
     let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 3);
 }
@@ -232,7 +262,7 @@ async fn record_operation_log_writes_without_request_context(pool: sqlx::PgPool)
     setup_schema(&pool).await;
     let state = test_app_state(pool.clone());
 
-    let id = record_operation_log(
+    let id = in_tenant(record_operation_log(
         &state.db,
         OperationLogRecord {
             tenant_id: uuid::Uuid::nil(),
@@ -249,7 +279,7 @@ async fn record_operation_log_writes_without_request_context(pool: sqlx::PgPool)
             user_agent: Some("test".to_string()),
             trace_id: Some("trace-async".to_string()),
         },
-    )
+    ))
     .await
     .unwrap();
 

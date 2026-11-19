@@ -94,6 +94,7 @@ async fn cleanup(pool: &PgPool, tenant_id: Uuid) {
 }
 
 #[tokio::test]
+#[ignore = "需要已执行全量迁移的测试库：MDM 表 core_master_data_refs 等由迁移创建，sqlx::test 新建库无此表"]
 async fn same_entity_events_converge_to_one_ref() {
     topems_test_support::ensure_test_dsn();
     let pool = PgPool::connect(&topems_test_support::test_database_url())

@@ -8,7 +8,20 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, empty_params, super_claims};
+use api_state::{api_state, empty_params, tenant_claims, test_tenant};
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
+
+/// 直调 handler 缺少 auth_middleware 写入的 task-local 租户上下文，统一在测试侧补齐。
+async fn in_tenant<T>(fut: impl std::future::Future<Output = T>) -> T {
+    scope_request_tenant(
+        RlsRequestTenant {
+            tenant: test_tenant(),
+            system: false,
+        },
+        fut,
+    )
+    .await
+}
 use axum::extract::{Path, Query, State};
 use axum::http::HeaderMap;
 use axum::Extension;
@@ -37,6 +50,8 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             tenant_id UUID,
             org_id UUID,
             organization_id UUID,
+            -- production 表同时有 name 与 warehouse_name；create 会两列都写
+            name TEXT,
             warehouse_name TEXT,
             warehouse_code TEXT,
             address TEXT,
@@ -60,13 +75,13 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let txn_arc = fresh_txn(&pool).await;
     let state = api_state(pool);
-    let resp = list_warehouses(
+    let resp = in_tenant(list_warehouses(
         State(state),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_params()),
         HeaderMap::new(),
         Extension(txn_arc),
-    )
+    ))
     .await;
     let body = resp
         .data
@@ -87,37 +102,37 @@ async fn create_then_list_and_get(pool: sqlx::PgPool) {
         manager: Some("张工".to_string()),
         phone: Some("13800000000".to_string()),
     };
-    let created = create_warehouse(
+    let created = in_tenant(create_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
         axum::Json(req),
-    )
+    ))
     .await;
     assert!(created.success, "create failed: {:?}", created.message);
     let wh = created.data.as_ref().unwrap();
     assert_eq!(wh.name, "石家庄一号仓");
     let id = wh.id;
 
-    let listed = list_warehouses(
+    let listed = in_tenant(list_warehouses(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Query(empty_params()),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
-    )
+    ))
     .await;
     let body: Value = listed.data.expect("list failed");
     assert_eq!(body["total"].as_i64().unwrap(), 1);
 
-    let got = get_warehouse(
+    let got = in_tenant(get_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Path(id),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
-    )
+    ))
     .await;
     assert!(got.success, "get failed: {:?}", got.message);
     assert_eq!(got.data.as_ref().unwrap().name, "石家庄一号仓");
@@ -136,13 +151,13 @@ async fn update_warehouse_changes_name(pool: sqlx::PgPool) {
         manager: None,
         phone: None,
     };
-    let created = create_warehouse(
+    let created = in_tenant(create_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
         axum::Json(req),
-    )
+    ))
     .await;
     assert!(created.success);
     let id = created.data.as_ref().unwrap().id;
@@ -156,25 +171,25 @@ async fn update_warehouse_changes_name(pool: sqlx::PgPool) {
         phone: None,
         status: Some("active".to_string()),
     };
-    let updated = update_warehouse(
+    let updated = in_tenant(update_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Path(id),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
         axum::Json(upd),
-    )
+    ))
     .await;
     assert!(updated.success, "update failed: {:?}", updated.message);
     assert_eq!(updated.data.as_ref().unwrap().name, "新仓");
 
-    let got = get_warehouse(
+    let got = in_tenant(get_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Path(id),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
-    )
+    ))
     .await;
     assert_eq!(got.data.as_ref().unwrap().name, "新仓");
     assert_eq!(got.data.as_ref().unwrap().address.as_deref(), Some("新址"));
@@ -193,34 +208,34 @@ async fn delete_warehouse_removes(pool: sqlx::PgPool) {
         manager: None,
         phone: None,
     };
-    let created = create_warehouse(
+    let created = in_tenant(create_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
         axum::Json(req),
-    )
+    ))
     .await;
     assert!(created.success);
     let id = created.data.as_ref().unwrap().id;
 
-    let del = delete_warehouse(
+    let del = in_tenant(delete_warehouse(
         State(state.clone()),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Path(id),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
-    )
+    ))
     .await;
     assert!(del.success, "delete failed: {:?}", del.message);
 
-    let got = get_warehouse(
+    let got = in_tenant(get_warehouse(
         State(state),
-        Extension(super_claims()),
+        Extension(tenant_claims()),
         Path(id),
         HeaderMap::new(),
         Extension(fresh_txn(&pool).await),
-    )
+    ))
     .await;
     assert!(!got.success, "deleted warehouse should not be found");
 }
