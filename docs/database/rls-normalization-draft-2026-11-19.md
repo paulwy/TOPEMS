@@ -311,7 +311,87 @@ ALTER POLICY rls_tenant_isolation ON "<schema>"."<table>"
 
 ---
 
-## 6. 待决点
+## 6. 死表清单撞车与存在性守卫（2026-11-19 追加）
+
+### 6.1 根因：两份清单同源，链内顺序是「先删表、后归一」
+
+`migration-drill-anchor` 门禁在干净 worktree 上首次暴露真差异：批 1/批 2 归一迁移的目标清单，与同一批次死表清理迁移
+`20261119100000_drop_dead_tables_batch1`（19 张）/ `20261119110000_drop_dead_tables_batch2`（188 张）的 DROP 清单存在交集。
+
+- 两份清单都取样于「DROP 执行前」的生产现状，各自内部自洽；
+- 但迁移链内顺序是 `100000/110000`（删表）→ `130000/131000`（归一），归一执行时这些表已不存在；
+- 于是归一迁移的 `DROP POLICY` / `ALTER POLICY` 命中不存在的对象，门禁报错。这不是建表迁移漏策略，也不是基线/夹具缺东西。
+
+### 6.2 交集：27 张逐表名单
+
+**批 1 归一 ∩ 死表 DROP = 7 张**（均由 `20261119110000` 删除）：
+
+| # | 表 |
+|---|---|
+| 1 | `erp.voucher_items` |
+| 2 | `hrm.payroll_records` |
+| 3 | `hrm.performance_records` |
+| 4 | `hrm.recruitment_applications` |
+| 5 | `hrm.recruitment_records` |
+| 6 | `hrm.training_participants` |
+| 7 | `public.tenant_permissions` |
+
+**批 2 归一 ∩ 死表 DROP = 20 张**：
+
+| # | 表 | 删除方 |
+|---|---|---|
+| 1 | `tms.carriers` | `20261119100000` |
+| 2 | `tms.drivers` | `20261119100000` |
+| 3 | `public.core_file_folders` | `20261119110000` |
+| 4 | `public.core_finance_vouchers` | `20261119110000` |
+| 5 | `public.core_guide_lessons` | `20261119110000` |
+| 6 | `public.core_guide_progress` | `20261119110000` |
+| 7 | `public.core_inter_module_sync` | `20261119110000` |
+| 8 | `public.core_mdm_reconciliation_log` | `20261119110000` |
+| 9 | `public.cqrs_events` | `20261119110000` |
+| 10 | `public.crm_dashboard_snapshots` | `20261119110000` |
+| 11 | `public.ehs_dashboard_snapshots` | `20261119110000` |
+| 12 | `public.finance_voucher_templates` | `20261119110000` |
+| 13 | `public.financial_reports` | `20261119110000` |
+| 14 | `public.hrm_dashboard_snapshots` | `20261119110000` |
+| 15 | `public.lims_dashboard_snapshots` | `20261119110000` |
+| 16 | `public.pdm_change_notices` | `20261119110000` |
+| 17 | `public.pdm_dashboard_snapshots` | `20261119110000` |
+| 18 | `public.pdm_materials` | `20261119110000` |
+| 19 | `public.pdm_products` | `20261119110000` |
+| 20 | `public.wms_dashboard_snapshots` | `20261119110000` |
+
+合计 27 张：归一覆盖率相应变为 `71−7=64` 与 `167−20=147`，其余目标表全部按原严格度处理。
+
+### 6.3 处置：清单白名单 + 三条守卫（A 的加强版）
+
+静态 DDL 全部改为「按表循环 + `to_regclass` 存在性守卫」，批 1 的 71 条 `DROP POLICY`、批 2 的 318 条 `ALTER POLICY` +
+16 条 `DROP POLICY` + 8 条 `CREATE POLICY` 走同一套循环；严格 B 表达式从原文件原样取用（生成时只做单引号转义），不手抄重写。
+
+| 规则 | 条件 | 行为 |
+|---|---|---|
+| 1 | 表不存在，且命中本批 `v_dropped` 白名单（7 / 20 张） | `RAISE NOTICE` 跳过，并按批累计跳过数 |
+| 2 | 表不存在，且**不在**白名单 | `RAISE EXCEPTION`，文案含表名与实际原因 |
+| 3 | 表存在 | 前置断言（恰好 2 条 / 恰好 1 条、含 `app.rls_system`、FORCE）、归一 DDL、后置断言全部保持原严格度，一条不放宽 |
+
+规则 2 是刻意 fail-closed：将来任何人调整两份死表清单而未同步本迁移，归一这一步会立刻炸出来，而不是静默少归一。
+回滚文件同样带守卫：`表已被删` 与 `死表批已回滚、表已恢复` 两种顺序都可逆。
+
+### 6.4 为什么不用纯 B（按现存表收敛、删除清单直接剔除）
+
+纯 B 的做法是把这 27 张从目标清单里直接删掉。问题在回滚：死表批一旦回滚（`archive` 里的表被恢复），这 27 张会重新出现，
+但归一迁移的账本已记过、不会重跑，于是它们**永久漏归一**（保留遗留策略名 / 重复策略），且没有任何断言会提示。
+守卫版把「跳过」限制在同一批次的已知删除名单内，并在名单外的缺失上即时报错，因此能同时容纳两种回滚顺序。
+
+### 6.5 验收
+
+- 走门禁同一路径 `bash scripts/dev/run-migration-drill.sh anchor`：干净 worktree、模板库 `topems_drill_template`、非特权连接
+  （`[conn]` 显示 `topems_test_runner`、`rolsuper=false`、`rolbypassrls=false`），尾行 `PASS: drill:anchor`。
+- 演练日志应包含 27 条跳过 `NOTICE`（批 1 ×7、批 2 ×20）与最终策略计数，后置断言全部通过。
+
+---
+
+## 7. 待决点
 
 1. **9 张平台读语义表**（§1.1）：两个策略语义不同，需确认保留两张还是合并为一张带 `OR` 的 `rls_platform_read`。本批未动。
 2. **37 条 fail-open 中除 6 张审计表外的其余表**：按 §4 清单继续确认「平台语料 / 租户数据 / 休眠表」。6 张共享审计表已定性为有意放行并由守卫钉住；其余未动。

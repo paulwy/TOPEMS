@@ -2405,13 +2405,13 @@ pending_forward_patches:
     status: to_apply
     effect: "批 1：71 张「canonical + 遗留并存」表删除遗留策略 tenant_isolation_<t>；每表恰好 2 条 → 1 条 rls_tenant_isolation；排除 9 张平台读语义表与 37 张 fail-open"
     destructive_scan: "DROP POLICY ×71；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT"
-    note: "回滚 database/rollback/20261119130000_rls_normalize_batch1_drop_duplicate_legacy.rollback.sql（按原 qual/with_check 逐表重建遗留策略）；前置断言 canonical 存在且含 rls_system + FORCE，后置断言每表只剩 1 条"
+    note: "回滚 database/rollback/20261119130000_rls_normalize_batch1_drop_duplicate_legacy.rollback.sql（按原 qual/with_check 逐表重建遗留策略）；前置断言 canonical 存在且含 rls_system + FORCE，后置断言每表只剩 1 条；目标表已被 20261119110000 删除（7 张）时 NOTICE 跳过，表缺失但不在该名单时 RAISE（见 docs §6）"
   - version: "20261119131000"
     file: "database/migrations/20261119131000_rls_normalize_batch2_rename_legacy.sql"
     status: to_apply
     effect: "批 2：167 张「只有遗留名」表归一为 rls_tenant_isolation（159 张 ALTER POLICY 改名 + 改严格 B 表达式；8 张多策略合并为先 DROP 遗留再 CREATE 严格策略）；排除 37 fail-open、8 张 erp 合并表、erp.event_idempotency、public.core_refresh_tokens/sessions、public.core_login_logs"
     destructive_scan: "DROP POLICY ×16 + ALTER POLICY ×318 + CREATE POLICY ×8；无 DELETE/UPDATE/TRUNCATE/DROP TABLE/DROP COLUMN；文件内无 BEGIN/COMMIT"
-    note: "回滚 database/rollback/20261119131000_rls_normalize_batch2_rename_legacy.rollback.sql（还原原策略名与表达式；8 张多策略按原 polcmd 逐条重建）；热点表 core.ai_faqs(15)/mdm_sync_dead_letter(4)/mdm_suppliers(1)/ai_conversations(1) 需低峰窗口；其中 10 张 mdm_* 表租户列为 tenant_uid（非 tenant_id），表达式按 tenant_uid 生成"
+    note: "回滚 database/rollback/20261119131000_rls_normalize_batch2_rename_legacy.rollback.sql（还原原策略名与表达式；8 张多策略按原 polcmd 逐条重建）；热点表 core.ai_faqs(15)/mdm_sync_dead_letter(4)/mdm_suppliers(1)/ai_conversations(1) 需低峰窗口；其中 10 张 mdm_* 表租户列为 tenant_uid（非 tenant_id），表达式按 tenant_uid 生成；目标表已被 20261119100000/20261119110000 删除（20 张）时 NOTICE 跳过，表缺失但不在该名单时 RAISE（见 docs §6）"
 
   # ===== 2026-11-19 批：前向补丁 + 有意策略守卫 =====
   - version: "20261119140000"

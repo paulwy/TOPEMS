@@ -127,6 +127,20 @@
       ],
       "evidence": "生产只读核验（2026-11-19）：账本 718 行/max=20261118150000，version=20261007000012 success=t；两表 0 行、id 无默认值；另两只 DROP 目标生产仍物理存在且均 0 行（运行时 DDL 残留，本轮保留 DROP 并补标记）；public.core_file_permissions / public.monitor_thresholds 均 0 行、rls+force=t、严格策略各 1 条（qual/with_check md5=ebc643cb801ddee08487f735dcba97f3）。隔离库 topems_scratch_20261119（pg_dump --schema-only topems_prod，1345 表）：删两表后原语句复现 ERROR relation iam.tenant_permissions does not exist；应用修正块后两表重建成功、原 ENABLE 语句通过；草案 A 走「已是 identity，跳过」；iam.tenant_permissions FORCE RLS 下（owner=drill_owner 非超级用户，app.tenant_id=t1）本租户写入得 id 1/2、跨租户写入被 RLS 拒绝、无 GUC 可见 0 行；草案 C 重置后应用，策略 qual/with_check md5 与生产逐字一致，回滚正常；演练后 drop 库与角色。",
       "approved": true
+    },
+    {
+      "id": "B20261119-rls-normalize-dead-table-guard",
+      "date": "2026-11-19",
+      "committer": "topmap163",
+      "reason": "20261119130000/20261119131000 为尚未在任何环境应用的前向迁移（manifest 记 prod 账本 max=20261119000002，两版本 absent、status=to_apply）。migration-drill-anchor 门禁在干净 worktree 首次暴露真差异：批 1/批 2 归一目标清单与同批死表清理 20261119100000/20261119110000 的 DROP 清单撞车 27 张（批1 7 张、批2 20 张），链内先删表后归一，归一 DDL 命中不存在对象。属『未应用迁移』的受控内容修正：静态 DDL 改为按表循环 + to_regclass 存在性守卫；表不存在且命中已知删除名单 → RAISE NOTICE 跳过并累计，表不存在但不在名单 → RAISE EXCEPTION，表存在 → 前置/后置断言与归一严格度一条不放宽；回滚文件同加守卫，两种回滚顺序均可逆。严格 B 表达式由原文件提取（仅单引号转义），未手抄改写。不改版本号、不删除文件、不改已推送历史；checksums.txt 仅更新这两行。",
+      "files": [
+        "20261119130000_rls_normalize_batch1_drop_duplicate_legacy.sql",
+        "20261119131000_rls_normalize_batch2_rename_legacy.sql",
+        "20261119130000_rls_normalize_batch1_drop_duplicate_legacy.rollback.sql",
+        "20261119131000_rls_normalize_batch2_rename_legacy.rollback.sql"
+      ],
+      "evidence": "手工演练库 topems_test_runner（非特权 rolsuper=f/rolbypassrls=f，基线 1039 策略）逐条应用：批1 目标 71 张、跳过 0（表均存在），postcheck 71；批2 precheck 159→归一 159、multi 8、postcheck 167；前向补丁后策略 1039→961。回滚在同一库 BEGIN..ROLLBACK 内逆序执行：rollback2 159+8、rollback1 71，全部 NOTICE 无 ERROR，exit 0，回滚后库仍为 961（未留痕）。静态：validate.sh Errors 0 / Checksum errors 0；gen-manifest.sh --check 无漂移（checksum_mismatch=0、checksum_missing=0、unregistered_pending=0）；check-destructive-sql.mjs --strict 四文件 OK。门禁同路径 scripts/dev/run-migration-drill.sh anchor（干净 worktree / topems_drill_template / 非特权）在本次提交后复跑，结果见回报。",
+      "approved": true
     }
   ]
 }

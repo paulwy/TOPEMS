@@ -9,6 +9,13 @@
 -- 后置：每表恰好 1 条 rls_tenant_isolation 且 FORCE。
 -- 事务：文件内不含 BEGIN/COMMIT，由 apply-forward.sh 包裹。
 -- 回滚：database/rollback/20261119130000_rls_normalize_batch1_drop_duplicate_legacy.rollback.sql
+-- 死表清单撞车（2026-11-19 发现）：本批目标与同批死表清理 20261119100000/20261119110000 的 DROP 清单有 7 张交集：
+--   erp.voucher_items、hrm.payroll_records、hrm.performance_records、hrm.recruitment_applications、
+--   hrm.recruitment_records、hrm.training_participants、public.tenant_permissions（均由 20261119110000 删除）。
+-- 存在性守卫（三条）：
+--   1) 表不存在且命中 v_dropped → RAISE NOTICE 跳过，并按批累计；
+--   2) 表不存在且不在 v_dropped → RAISE EXCEPTION（死表清单变更必须在此立刻暴露，不允许静默少归一）；
+--   3) 表存在 → 前置断言、DROP 与后置断言保持原严格度，一条不放宽。
 -- 状态：草案，未应用、未开窗。
 
 SET search_path = pg_catalog, pg_temp;
@@ -24,8 +31,18 @@ DECLARE
   v_n int;
   v_forced boolean;
   v_q text;
-BEGIN
-  FOREACH v_item IN ARRAY ARRAY['bi|report_templates|tenant_isolation_report_templates',
+  v_skip int := 0;
+  v_total int := 71;
+  v_dropped text[] := ARRAY[
+    'erp|voucher_items',
+    'hrm|payroll_records',
+    'hrm|performance_records',
+    'hrm|recruitment_applications',
+    'hrm|recruitment_records',
+    'hrm|training_participants',
+    'public|tenant_permissions'];
+  v_targets text[] := ARRAY[
+    'bi|report_templates|tenant_isolation_report_templates',
     'communication|notification_channels|tenant_isolation_notification_channels',
     'crm|contacts|tenant_isolation_contacts',
     'crm|customer_finance|tenant_isolation_customer_finance',
@@ -95,11 +112,22 @@ BEGIN
     'qms|qa_spc_data_points|tenant_isolation_qa_spc_data_points',
     'qms|qa_standard_revisions|tenant_isolation_qa_standard_revisions',
     'qms|qa_standards|tenant_isolation_qa_standards',
-    'rs|change_requests|tenant_isolation_change_requests']
-  LOOP
+    'rs|change_requests|tenant_isolation_change_requests'];
+BEGIN
+  FOREACH v_item IN ARRAY v_targets LOOP
     v_schema := split_part(v_item, '|', 1);
     v_table  := split_part(v_item, '|', 2);
     v_legacy := split_part(v_item, '|', 3);
+
+    -- 规则 1/2：表不存在时，只有「已知被前序死表迁移删除」才允许跳过；否则立刻炸
+    IF to_regclass(format('%I.%I', v_schema, v_table)) IS NULL THEN
+      IF (v_schema || '|' || v_table) = ANY(v_dropped) THEN
+        v_skip := v_skip + 1;
+        RAISE NOTICE 'batch1 precheck: %.% 已被前序死表迁移删除，跳过归一（累计 %/% 张）', v_schema, v_table, v_skip, v_total;
+        CONTINUE;
+      END IF;
+      RAISE EXCEPTION 'batch1 precheck: %.% 不存在，且不在已知死表删除名单（7 张）内；拒绝静默跳过：若刚调整 20261119100000/20261119110000 的死表清单，请同步本迁移', v_schema, v_table;
+    END IF;
 
     SELECT count(*), bool_and(c.relforcerowsecurity)
       INTO v_n, v_forced
@@ -129,80 +157,118 @@ BEGIN
       RAISE EXCEPTION 'batch precheck: %.% 的遗留策略 % 不存在或重名（%）', v_schema, v_table, v_legacy, v_n;
     END IF;
   END LOOP;
+  RAISE NOTICE 'batch1 precheck: 目标 % 张，跳过 % 张（已删除），待归一 % 张', v_total, v_skip, v_total - v_skip;
 END $pre$;
 
--- 71 条 DROP（仅策略，无数据 DDL）
-DROP POLICY "tenant_isolation_announcements" ON "erp"."announcements";
-DROP POLICY "tenant_isolation_assets" ON "erp"."assets";
-DROP POLICY "tenant_isolation_attendance_records" ON "hrm"."attendance_records";
-DROP POLICY "tenant_isolation_candidates" ON "hrm"."candidates";
-DROP POLICY "tenant_isolation_change_requests" ON "rs"."change_requests";
-DROP POLICY "tenant_isolation_companies" ON "hrm"."companies";
-DROP POLICY "tenant_isolation_contacts" ON "crm"."contacts";
-DROP POLICY "tenant_isolation_contract_renewals" ON "hrm"."contract_renewals";
-DROP POLICY "tenant_isolation_contracts" ON "hrm"."contracts";
-DROP POLICY "tenant_isolation_core_workflow_versions" ON "public"."_archive_core_workflow_versions";
-DROP POLICY "tenant_isolation_customer_finance" ON "crm"."customer_finance";
-DROP POLICY "tenant_isolation_customer_tags" ON "crm"."customer_tags";
-DROP POLICY "tenant_isolation_departments" ON "hrm"."departments";
-DROP POLICY "tenant_isolation_employees" ON "hrm"."employees";
-DROP POLICY "tenant_isolation_fin_reconciliations" ON "erp"."fin_reconciliations";
-DROP POLICY "tenant_isolation_interactions" ON "crm"."interactions";
-DROP POLICY "tenant_isolation_interviews" ON "hrm"."interviews";
-DROP POLICY "tenant_isolation_inventory" ON "erp"."inventory";
-DROP POLICY "tenant_isolation_job_openings" ON "hrm"."job_openings";
-DROP POLICY "tenant_isolation_leave_records" ON "hrm"."leave_records";
-DROP POLICY "tenant_isolation_materials" ON "erp"."materials";
-DROP POLICY "tenant_isolation_materials" ON "master_data"."materials";
-DROP POLICY "tenant_isolation_notification_channels" ON "communication"."notification_channels";
-DROP POLICY "tenant_isolation_opportunities" ON "crm"."opportunities";
-DROP POLICY "tenant_isolation_payroll_details" ON "hrm"."payroll_details";
-DROP POLICY "tenant_isolation_payroll_items" ON "hrm"."payroll_items";
-DROP POLICY "tenant_isolation_payroll_records" ON "hrm"."payroll_records";
-DROP POLICY "tenant_isolation_payroll_runs" ON "hrm"."payroll_runs";
-DROP POLICY "tenant_isolation_performance_goals" ON "hrm"."performance_goals";
-DROP POLICY "tenant_isolation_performance_records" ON "hrm"."performance_records";
-DROP POLICY "tenant_isolation_performance_reviews" ON "hrm"."performance_reviews";
-DROP POLICY "tenant_isolation_permission_audit_logs" ON "iam"."permission_audit_logs";
-DROP POLICY "tenant_isolation_position_permissions" ON "iam"."position_permissions";
-DROP POLICY "tenant_isolation_position_roles" ON "iam"."position_roles";
-DROP POLICY "tenant_isolation_positions" ON "hrm"."positions";
-DROP POLICY "tenant_isolation_positions" ON "iam"."positions";
-DROP POLICY "tenant_isolation_purchase_orders" ON "erp"."purchase_orders";
-DROP POLICY "tenant_isolation_qa_audit_findings" ON "qms"."qa_audit_findings";
-DROP POLICY "tenant_isolation_qa_audit_plans" ON "qms"."qa_audit_plans";
-DROP POLICY "tenant_isolation_qa_audit_tasks" ON "qms"."qa_audit_tasks";
-DROP POLICY "tenant_isolation_qa_corrective_action_items" ON "qms"."qa_corrective_action_items";
-DROP POLICY "tenant_isolation_qa_corrective_actions" ON "qms"."qa_corrective_actions";
-DROP POLICY "tenant_isolation_qa_eightd_audit_logs" ON "qms"."qa_eightd_audit_logs";
-DROP POLICY "tenant_isolation_qa_eightd_reports" ON "qms"."qa_eightd_reports";
-DROP POLICY "tenant_isolation_qa_fmea_analyses" ON "qms"."qa_fmea_analyses";
-DROP POLICY "tenant_isolation_qa_fmea_items" ON "qms"."qa_fmea_items";
-DROP POLICY "tenant_isolation_qa_inspection_audits" ON "qms"."qa_inspection_audits";
-DROP POLICY "tenant_isolation_qa_inspection_results" ON "qms"."qa_inspection_results";
-DROP POLICY "tenant_isolation_qa_qms_sync_records" ON "qms"."qa_qms_sync_records";
-DROP POLICY "tenant_isolation_qa_quality_costs" ON "qms"."qa_quality_costs";
-DROP POLICY "tenant_isolation_qa_quality_inspections" ON "qms"."qa_quality_inspections";
-DROP POLICY "tenant_isolation_qa_quality_issues" ON "qms"."qa_quality_issues";
-DROP POLICY "tenant_isolation_qa_spc_charts" ON "qms"."qa_spc_charts";
-DROP POLICY "tenant_isolation_qa_spc_data_points" ON "qms"."qa_spc_data_points";
-DROP POLICY "tenant_isolation_qa_standard_revisions" ON "qms"."qa_standard_revisions";
-DROP POLICY "tenant_isolation_qa_standards" ON "qms"."qa_standards";
-DROP POLICY "tenant_isolation_recruitment_applications" ON "hrm"."recruitment_applications";
-DROP POLICY "tenant_isolation_recruitment_records" ON "hrm"."recruitment_records";
-DROP POLICY "tenant_isolation_report_templates" ON "bi"."report_templates";
-DROP POLICY "tenant_isolation_resource_permissions" ON "iam"."resource_permissions";
-DROP POLICY "tenant_isolation_salary_adjustments" ON "hrm"."salary_adjustments";
-DROP POLICY "tenant_isolation_samples" ON "master_data"."samples";
-DROP POLICY "tenant_isolation_tags" ON "crm"."tags";
-DROP POLICY "tenant_isolation_tenant_permissions" ON "public"."tenant_permissions";
-DROP POLICY "tenant_isolation_training_courses" ON "hrm"."training_courses";
-DROP POLICY "tenant_isolation_training_participants" ON "hrm"."training_participants";
-DROP POLICY "tenant_isolation_training_plans" ON "hrm"."training_plans";
-DROP POLICY "tenant_isolation_training_records" ON "hrm"."training_records";
-DROP POLICY "tenant_isolation_uoms" ON "master_data"."uoms";
-DROP POLICY "tenant_isolation_user_positions" ON "iam"."user_positions";
-DROP POLICY "tenant_isolation_voucher_items" ON "erp"."voucher_items";
+-- 71 张目标按表循环执行（表已在前序死表迁移中删除的跳过；DDL 走 EXECUTE，不再静态硬编码）
+DO $body$
+DECLARE
+  v_item text;
+  v_schema text;
+  v_table text;
+  v_legacy text;
+  v_skip int := 0;
+  v_done int := 0;
+  v_total int := 71;
+  v_dropped text[] := ARRAY[
+    'erp|voucher_items',
+    'hrm|payroll_records',
+    'hrm|performance_records',
+    'hrm|recruitment_applications',
+    'hrm|recruitment_records',
+    'hrm|training_participants',
+    'public|tenant_permissions'];
+  v_targets text[] := ARRAY[
+    'bi|report_templates|tenant_isolation_report_templates',
+    'communication|notification_channels|tenant_isolation_notification_channels',
+    'crm|contacts|tenant_isolation_contacts',
+    'crm|customer_finance|tenant_isolation_customer_finance',
+    'crm|customer_tags|tenant_isolation_customer_tags',
+    'crm|interactions|tenant_isolation_interactions',
+    'crm|opportunities|tenant_isolation_opportunities',
+    'crm|tags|tenant_isolation_tags',
+    'erp|announcements|tenant_isolation_announcements',
+    'erp|assets|tenant_isolation_assets',
+    'erp|fin_reconciliations|tenant_isolation_fin_reconciliations',
+    'erp|inventory|tenant_isolation_inventory',
+    'erp|materials|tenant_isolation_materials',
+    'erp|purchase_orders|tenant_isolation_purchase_orders',
+    'erp|voucher_items|tenant_isolation_voucher_items',
+    'hrm|attendance_records|tenant_isolation_attendance_records',
+    'hrm|candidates|tenant_isolation_candidates',
+    'hrm|companies|tenant_isolation_companies',
+    'hrm|contract_renewals|tenant_isolation_contract_renewals',
+    'hrm|contracts|tenant_isolation_contracts',
+    'hrm|departments|tenant_isolation_departments',
+    'hrm|employees|tenant_isolation_employees',
+    'hrm|interviews|tenant_isolation_interviews',
+    'hrm|job_openings|tenant_isolation_job_openings',
+    'hrm|leave_records|tenant_isolation_leave_records',
+    'hrm|payroll_details|tenant_isolation_payroll_details',
+    'hrm|payroll_items|tenant_isolation_payroll_items',
+    'hrm|payroll_records|tenant_isolation_payroll_records',
+    'hrm|payroll_runs|tenant_isolation_payroll_runs',
+    'hrm|performance_goals|tenant_isolation_performance_goals',
+    'hrm|performance_records|tenant_isolation_performance_records',
+    'hrm|performance_reviews|tenant_isolation_performance_reviews',
+    'hrm|positions|tenant_isolation_positions',
+    'hrm|recruitment_applications|tenant_isolation_recruitment_applications',
+    'hrm|recruitment_records|tenant_isolation_recruitment_records',
+    'hrm|salary_adjustments|tenant_isolation_salary_adjustments',
+    'hrm|training_courses|tenant_isolation_training_courses',
+    'hrm|training_participants|tenant_isolation_training_participants',
+    'hrm|training_plans|tenant_isolation_training_plans',
+    'hrm|training_records|tenant_isolation_training_records',
+    'iam|permission_audit_logs|tenant_isolation_permission_audit_logs',
+    'iam|position_permissions|tenant_isolation_position_permissions',
+    'iam|position_roles|tenant_isolation_position_roles',
+    'iam|positions|tenant_isolation_positions',
+    'iam|resource_permissions|tenant_isolation_resource_permissions',
+    'iam|user_positions|tenant_isolation_user_positions',
+    'master_data|materials|tenant_isolation_materials',
+    'master_data|samples|tenant_isolation_samples',
+    'master_data|uoms|tenant_isolation_uoms',
+    'public|_archive_core_workflow_versions|tenant_isolation_core_workflow_versions',
+    'public|tenant_permissions|tenant_isolation_tenant_permissions',
+    'qms|qa_audit_findings|tenant_isolation_qa_audit_findings',
+    'qms|qa_audit_plans|tenant_isolation_qa_audit_plans',
+    'qms|qa_audit_tasks|tenant_isolation_qa_audit_tasks',
+    'qms|qa_corrective_action_items|tenant_isolation_qa_corrective_action_items',
+    'qms|qa_corrective_actions|tenant_isolation_qa_corrective_actions',
+    'qms|qa_eightd_audit_logs|tenant_isolation_qa_eightd_audit_logs',
+    'qms|qa_eightd_reports|tenant_isolation_qa_eightd_reports',
+    'qms|qa_fmea_analyses|tenant_isolation_qa_fmea_analyses',
+    'qms|qa_fmea_items|tenant_isolation_qa_fmea_items',
+    'qms|qa_inspection_audits|tenant_isolation_qa_inspection_audits',
+    'qms|qa_inspection_results|tenant_isolation_qa_inspection_results',
+    'qms|qa_qms_sync_records|tenant_isolation_qa_qms_sync_records',
+    'qms|qa_quality_costs|tenant_isolation_qa_quality_costs',
+    'qms|qa_quality_inspections|tenant_isolation_qa_quality_inspections',
+    'qms|qa_quality_issues|tenant_isolation_qa_quality_issues',
+    'qms|qa_spc_charts|tenant_isolation_qa_spc_charts',
+    'qms|qa_spc_data_points|tenant_isolation_qa_spc_data_points',
+    'qms|qa_standard_revisions|tenant_isolation_qa_standard_revisions',
+    'qms|qa_standards|tenant_isolation_qa_standards',
+    'rs|change_requests|tenant_isolation_change_requests'];
+BEGIN
+  FOREACH v_item IN ARRAY v_targets LOOP
+    v_schema := split_part(v_item, '|', 1);
+    v_table  := split_part(v_item, '|', 2);
+    v_legacy := split_part(v_item, '|', 3);
+
+    IF to_regclass(format('%I.%I', v_schema, v_table)) IS NULL THEN
+      IF (v_schema || '|' || v_table) = ANY(v_dropped) THEN
+        v_skip := v_skip + 1;
+        CONTINUE;
+      END IF;
+      RAISE EXCEPTION 'batch1: %.% 不存在，且不在已知死表删除名单（7 张）内；拒绝静默跳过', v_schema, v_table;
+    END IF;
+
+    EXECUTE format('DROP POLICY %I ON %I.%I', v_legacy, v_schema, v_table);
+    v_done := v_done + 1;
+  END LOOP;
+  RAISE NOTICE 'batch1: 已删除 % 张表的遗留策略，跳过 % 张已删除表（目标 % 张）', v_done, v_skip, v_total;
+END $body$;
 
 DO $post$
 DECLARE
@@ -213,8 +279,18 @@ DECLARE
   v_name text;
   v_q text;
   v_forced boolean;
-BEGIN
-  FOREACH v_item IN ARRAY ARRAY['bi|report_templates',
+  v_skip int := 0;
+  v_total int := 71;
+  v_dropped text[] := ARRAY[
+    'erp|voucher_items',
+    'hrm|payroll_records',
+    'hrm|performance_records',
+    'hrm|recruitment_applications',
+    'hrm|recruitment_records',
+    'hrm|training_participants',
+    'public|tenant_permissions'];
+  v_targets text[] := ARRAY[
+    'bi|report_templates',
     'communication|notification_channels',
     'crm|contacts',
     'crm|customer_finance',
@@ -284,10 +360,20 @@ BEGIN
     'qms|qa_spc_data_points',
     'qms|qa_standard_revisions',
     'qms|qa_standards',
-    'rs|change_requests']
-  LOOP
+    'rs|change_requests'];
+BEGIN
+  FOREACH v_item IN ARRAY v_targets LOOP
     v_schema := split_part(v_item, '|', 1);
     v_table  := split_part(v_item, '|', 2);
+
+    IF to_regclass(format('%I.%I', v_schema, v_table)) IS NULL THEN
+      IF (v_schema || '|' || v_table) = ANY(v_dropped) THEN
+        v_skip := v_skip + 1;
+        CONTINUE;
+      END IF;
+      RAISE EXCEPTION 'batch1 postcheck: %.% 不存在，且不在已知死表删除名单（7 张）内；拒绝静默通过', v_schema, v_table;
+    END IF;
+
     SELECT count(*), max(p.polname), max(pg_get_expr(p.polqual, p.polrelid)), bool_and(c.relforcerowsecurity)
       INTO v_n, v_name, v_q, v_forced
       FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -302,5 +388,5 @@ BEGIN
       RAISE EXCEPTION 'batch postcheck: %.% 未 FORCE RLS', v_schema, v_table;
     END IF;
   END LOOP;
+  RAISE NOTICE 'batch1 postcheck: 已校验 % 张归一结果，跳过 % 张已删除表（目标 % 张）', v_total - v_skip, v_skip, v_total;
 END $post$;
-
