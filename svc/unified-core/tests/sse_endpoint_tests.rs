@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "http-tests")]
 //! SSE (Server-Sent Events) 端点测试
 //!
 //! 覆盖测试用例：
@@ -48,13 +49,7 @@ async fn service_available() -> bool {
 
 #[tokio::test]
 async fn test_sse_connect_receives_endpoint_event() {
-    if !service_available().await {
-        eprintln!(
-            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
-            API_URL
-        );
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let client = create_client();
 
     // 建立SSE连接
@@ -141,13 +136,7 @@ async fn test_sse_connect_receives_endpoint_event() {
 
 #[tokio::test]
 async fn test_sse_session_request_sends_event() {
-    if !service_available().await {
-        eprintln!(
-            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
-            API_URL
-        );
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let client = create_client();
 
     // 第一步：建立SSE连接，获取session_id
@@ -221,13 +210,7 @@ async fn test_sse_session_request_sends_event() {
 
 #[tokio::test]
 async fn test_sse_session_not_found() {
-    if !service_available().await {
-        eprintln!(
-            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
-            API_URL
-        );
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let client = create_client();
 
     // 使用不存在的session_id发送请求
@@ -267,13 +250,7 @@ async fn test_sse_session_not_found() {
 
 #[tokio::test]
 async fn test_sse_heartbeat() {
-    if !service_available().await {
-        eprintln!(
-            "SKIP: unified-core 服务未运行（{}），跳过 SSE 集成测试",
-            API_URL
-        );
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let client = create_client();
 
     // 建立SSE连接
@@ -366,13 +343,7 @@ async fn read_sse_event(
 
 #[tokio::test]
 async fn test_sse_full_session_roundtrip() {
-    if !service_available().await {
-        eprintln!(
-            "SKIP: unified-core 服务未运行（{}），跳过 SSE 完整会话闭环测试",
-            API_URL
-        );
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let client = create_client();
 
     // 第一步：建立 SSE 连接（保持连接，不关闭 stream）

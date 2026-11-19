@@ -8,6 +8,7 @@ license.workspace = true
 description = "TOPEMS-ERP 企业资源计划系统"
 
 [features]
+http-tests = []
 # 需要真实 PostgreSQL 的测试（sqlx::test / DSN 守卫）；默认关闭，CI 起 postgres service 后开启
 
 db-tests = []

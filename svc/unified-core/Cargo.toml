@@ -7,6 +7,7 @@ license.workspace = true
 description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + AI"
 
 [features]
+http-tests = []
 # 需要真实 PostgreSQL 的测试（sqlx::test / DSN 守卫）；默认关闭，CI 起 postgres service 后开启
 
 db-tests = []

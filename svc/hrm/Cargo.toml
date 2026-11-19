@@ -7,6 +7,7 @@ license.workspace = true
 description = "TOPEMS-HRM 人力资源管理系统"
 
 [features]
+http-tests = []
 http_endpoint_tests = []
 
 [dependencies]

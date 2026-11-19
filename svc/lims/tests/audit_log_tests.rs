@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "http-tests")]
 #[cfg(test)]
 #[allow(clippy::needless_borrows_for_generic_args)]
 mod tests {
@@ -47,10 +48,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_audit_logs_success() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -85,10 +86,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_audit_logs_invalid_start_date() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -120,10 +121,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_audit_logs_invalid_end_date() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -155,10 +156,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_audit_logs_with_valid_date_range() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -183,10 +184,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_audit_log_not_found() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -219,10 +220,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_export_audit_logs_success() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -253,10 +254,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_export_audit_logs_invalid_date() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -288,10 +289,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_audit_logs_unauthorized() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
 

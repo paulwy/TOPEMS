@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "http-tests")]
 #[cfg(test)]
 #[allow(clippy::needless_borrows_for_generic_args)]
 mod tests {
@@ -491,10 +492,10 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_rs_integration() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: API服务未运行 (localhost:8000)");
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         test_project_crud().await;
         test_project_batch_operations().await;
         test_project_export_import().await;

@@ -1,3 +1,4 @@
+#![cfg(feature = "db-tests")]
 //! W7-B4 PDM 本地验证（证据 2 / 证据 3）
 //!
 //! 依赖：
@@ -129,10 +130,9 @@ async fn material_ids(data: &Value) -> Vec<String> {
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
 async fn evidence2_cache_does_not_bleed_across_tenants() {
-    let Some(pool) = connect().await else {
-        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
-        return;
-    };
+    let pool = connect()
+        .await
+        .expect("本地 w7_b4_fresh 不可达；禁止静默跳过");
     let state = build_state(pool.clone());
 
     let claims_a = test_claims(Some(TENANT_A), false);
@@ -162,10 +162,9 @@ async fn evidence2_cache_does_not_bleed_across_tenants() {
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
 async fn evidence4_superadmin_explicit_tenant_reads_pdm_list() {
-    let Some(pool) = connect().await else {
-        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
-        return;
-    };
+    let pool = connect()
+        .await
+        .expect("本地 w7_b4_fresh 不可达；禁止静默跳过");
     let state = build_state(pool.clone());
 
     let su_a = test_claims(Some(TENANT_A), true);
@@ -188,10 +187,9 @@ async fn evidence4_superadmin_explicit_tenant_reads_pdm_list() {
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
 async fn evidence3_nil_tenant_returns_400() {
-    let Some(pool) = connect().await else {
-        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
-        return;
-    };
+    let pool = connect()
+        .await
+        .expect("本地 w7_b4_fresh 不可达；禁止静默跳过");
     let state = build_state(pool.clone());
 
     // 先取一个 A 的真实 id，供 get_* 入口使用

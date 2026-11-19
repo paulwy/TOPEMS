@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "http-tests")]
 // CRM 插件接口集成测试
 // 测试 CRM 插件的 /api/plugins/info 接口和认证功能
 
@@ -54,10 +55,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_plugin_info_endpoint() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/plugins/info", CRM_BASE_URL))
@@ -67,20 +68,21 @@ mod plugin_tests {
         assert!(response.is_ok(), "插件接口应该可访问");
 
         let resp = response.unwrap();
-        if resp.status().is_server_error() {
-            eprintln!("⏭ 跳过: 插件接口返回服务器错误 ({})", resp.status());
-            return;
-        }
+        assert!(
+            !resp.status().is_server_error(),
+            "⏭ 跳过: 插件接口返回服务器错误 ({})",
+            resp.status()
+        );
         assert_eq!(resp.status(), 200, "状态码应该是 200");
     }
 
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_plugin_info_structure() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/plugins/info", CRM_BASE_URL))
@@ -88,10 +90,11 @@ mod plugin_tests {
             .await
             .unwrap();
 
-        if response.status().is_server_error() {
-            eprintln!("⏭ 跳过: 插件接口返回服务器错误 ({})", response.status());
-            return;
-        }
+        assert!(
+            !response.status().is_server_error(),
+            "⏭ 跳过: 插件接口返回服务器错误 ({})",
+            response.status()
+        );
 
         let body: ApiResponse<PluginInfo> = response.json().await.unwrap();
 
@@ -109,10 +112,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_auth_with_x_user_id_header() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/crm/customers", CRM_BASE_URL))
@@ -129,10 +132,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_auth_with_authorization_header() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/crm/customers", CRM_BASE_URL))
@@ -148,10 +151,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_customers_list_endpoint() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/crm/customers", CRM_BASE_URL))
@@ -165,10 +168,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_contacts_list_endpoint() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/crm/contacts", CRM_BASE_URL))
@@ -182,10 +185,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_opportunities_list_endpoint() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client
             .get(format!("{}/api/crm/opportunities", CRM_BASE_URL))
@@ -201,10 +204,10 @@ mod plugin_tests {
     #[tokio::test]
     #[ignore = "requires PostgreSQL"]
     async fn test_health_endpoint() {
-        if !ensure_api_available().await {
-            eprintln!("⏭ 跳过: CRM服务未运行 ({})", CRM_BASE_URL);
-            return;
-        }
+        assert!(
+            ensure_api_available().await,
+            "需要本地依赖服务；禁止静默跳过"
+        );
         let client = Client::new();
         let response = client.get(format!("{}/health", CRM_BASE_URL)).send().await;
 

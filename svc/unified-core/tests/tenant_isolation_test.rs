@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "http-tests")]
 //! 多租户隔离集成测试
 //!
 //! 覆盖测试用例：租户间数据隔离、跨租户访问控制、租户 ID 校验等场景
@@ -252,10 +253,7 @@ use common::*;
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_user_access() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let app = create_test_app().await;
 
     let tenant1_token = login_as_admin(&app, "tenant1").await;
@@ -290,10 +288,7 @@ async fn tenant_isolation_user_access() {
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_role_access() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let app = create_test_app().await;
 
     let tenant1_token = login_as_admin(&app, "tenant1").await;
@@ -326,10 +321,7 @@ async fn tenant_isolation_role_access() {
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_permission_access() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let app = create_test_app().await;
 
     let tenant1_token = login_as_admin(&app, "tenant1").await;
@@ -368,10 +360,7 @@ async fn tenant_isolation_permission_access() {
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_menu_access() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let app = create_test_app().await;
 
     let tenant1_token = login_as_admin(&app, "tenant1").await;
@@ -406,10 +395,7 @@ async fn tenant_isolation_menu_access() {
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_tenant_access() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let app = create_test_app().await;
 
     let system_token = login_as_system_admin(&app).await;
@@ -429,10 +415,7 @@ async fn tenant_isolation_tenant_access() {
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_cross_tenant_user_list() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let app = create_test_app().await;
 
     let tenant1_token = login_as_admin(&app, "tenant1").await;
@@ -472,10 +455,7 @@ async fn tenant_isolation_cross_tenant_user_list() {
 #[tokio::test]
 #[ignore = "集成测试：需先启动 unified-core 服务并初始化种子数据，运行时加 --ignored"]
 async fn tenant_isolation_invalid_tenant_id() {
-    if !service_available().await {
-        eprintln!("⏭ 跳过: 统一核心服务未运行 ({})", TEST_BASE_URL);
-        return;
-    }
+    assert!(service_available().await, "需要本地依赖服务；禁止静默跳过");
     let response = reqwest::Client::new()
         .get(format!("{}/api/core/iam/users", TEST_BASE_URL))
         .header("X-Tenant-Id", "invalid-tenant-id")

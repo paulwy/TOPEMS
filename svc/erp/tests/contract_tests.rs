@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+#![cfg(feature = "http-tests")]
 #[cfg(test)]
 mod tests {
     use serde_json::json;
@@ -13,11 +14,6 @@ mod tests {
             .await
             .map(|resp| !resp.status().is_server_error())
             .unwrap_or(false)
-    }
-
-    #[ignore = "Contract APIs are not implemented in ERP service yet"]
-    async fn test_project_contract_crud() {
-        eprintln!("⏭ 跳过合同CRUD测试: ERP服务尚未实现合同管理API");
     }
 
     async fn test_project_budget_crud() {

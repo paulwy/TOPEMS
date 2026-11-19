@@ -219,4 +219,5 @@ cast_possible_wrap = "deny"
 cast_sign_loss = "deny"
 
 [features]
+http-tests = []
 db-tests = []

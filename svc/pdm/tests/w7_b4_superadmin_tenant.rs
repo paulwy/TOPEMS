@@ -1,3 +1,4 @@
+#![cfg(feature = "db-tests")]
 //! 口径 1 实证：超管必须显式选租户（`x-tenant-id`），不允许隐式跨租户。
 //!
 //! 走真实 `tenant_middleware` + 真实 `pdm` 表与策略，返回实际 HTTP 状态码与行数：
@@ -109,10 +110,9 @@ async fn call(app: &Router, claims: Claims, tenant_header: Option<&str>) -> (Sta
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
 async fn superadmin_with_explicit_tenant_header_scoped_to_that_tenant() {
-    let Some(pool) = connect().await else {
-        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
-        return;
-    };
+    let pool = connect()
+        .await
+        .expect("本地 w7_b4_fresh 不可达；禁止静默跳过");
     let (status, body) = call(&app(pool), claims(None, true), Some(TENANT_A)).await;
     println!("超管+头A → {status} {body}");
     assert_eq!(status, StatusCode::OK, "超管显式选租户应放行");
@@ -126,10 +126,9 @@ async fn superadmin_with_explicit_tenant_header_scoped_to_that_tenant() {
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
 async fn superadmin_without_tenant_header_is_400() {
-    let Some(pool) = connect().await else {
-        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
-        return;
-    };
+    let pool = connect()
+        .await
+        .expect("本地 w7_b4_fresh 不可达；禁止静默跳过");
     let (status, body) = call(&app(pool), claims(None, true), None).await;
     println!("超管+无头 → {status} {body}");
     assert_eq!(status, StatusCode::BAD_REQUEST, "超管无租户头必须 400");
@@ -147,10 +146,9 @@ async fn superadmin_without_tenant_header_is_400() {
 #[tokio::test]
 #[ignore = "requires local w7_b4_fresh with A/B seed"]
 async fn normal_user_cannot_be_spoofed_by_tenant_header() {
-    let Some(pool) = connect().await else {
-        eprintln!("⏭ 跳过：本地 w7_b4_fresh 不可达");
-        return;
-    };
+    let pool = connect()
+        .await
+        .expect("本地 w7_b4_fresh 不可达；禁止静默跳过");
     let (status, body) = call(&app(pool), claims(Some(TENANT_A), false), Some(TENANT_B)).await;
     println!("普通用户(租户A)+头B → {status} {body}");
     assert_eq!(status, StatusCode::OK);
