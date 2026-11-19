@@ -1371,6 +1371,8 @@ export const CORE_PERMISSION_CODES: string[] = [
   'iam:admin',
   'iam:dashboard:read',
   'iam:delete',
+  'iam:dictionaries_read',
+  'iam:dictionaries_update',
   'iam:permission:create',
   'iam:permission:delete',
   'iam:permission:read',

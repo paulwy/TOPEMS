@@ -52,7 +52,7 @@
 | A5 | 修 `audit_permission_codes.py`：DSN 优先级改为 `.env` 优先于进程环境，并在降级时显式告警（已完成，见 §3.1） | `DB 来源：live`、DB=1021，不再 `sql_fallback` |
 | A6 ✅ | 清掉文档死链与过期读数 | README:227 已改为实测「35 个一级模块、454 个二级菜单」（按 `module-configs/*/config.ts` 的 `navItems` 计数）；§17.1 的 `max_connections=2` 已在上一轮 TODO 重写中移除；`TODO_backup_20261107.md` 死链已删 | README 与 TODO 相对链接缺失 = 0；全仓 `17/83` 仅存于历史档 `docs/archive/ui-migration/ROOT-TODO-ui-v3-history.md`（留档不改） |
 | A7 ✅ | LEG-13 残余核实：`ai_knowledge` 启动告警 | 代码侧无该告警：模块完整接线（`svc/ai/src/routes.rs:1015-1047` 合并 `ai_knowledge::create_routes`，openapi 全量登记），handlers 中 501/Not Implemented = 0，无启动期 warn；`document_processor` 的两处 warn 是 embedding 重试日志，非“未实现”告警 | 结论：原告警不存在，LEG-13 残余关闭（无历史日志可复现，按代码事实判定） |
-| A8 | 生产 `core_permissions` 有 69 条模块级权限码（`ai:write`、`crm:write` 等）不在任何迁移中，由非迁移路径种入（初始化脚本 / 运行时补种 / 历史手工导入），「迁移是唯一源」当前不成立；查清种入路径并收敛到迁移 | 种入路径有结论并归档；收敛后 `node scripts/ci/gen-permissions.mjs --check` 的码集与生产全集一致 |
+| A8 ✅ | 生产 `core_permissions` 中 69 条（实测 46 条）不在任何迁移中：查清种入路径并收敛到迁移 | 溯源结论：来源 = 2026-06-18/06-21 初始数据库导入（历史快照 `database/backup/p5_20261106/public_iam_core.sql`），早于「迁移是唯一源」纪律；非运行期插入（`check-no-runtime-permission-insert.mjs` 在守）；旧扁平命名已被 `hrm:attendance:read` 等取代。处置：新迁移 `20261119233000_iam_legacy_permission_convergence.sql` —— 补种 2 条仍被 `svc/erp/src/modules/dict.rs:89/118/147` 校验引用的 `iam:dictionaries_read/update`（干净库缺它们会让非超管字典接口 403）；删除其余 44 条零引用遗留码及其空转授权（先在事务内演练：DELETE 119 授权 + 44 码，无孤儿授权）。回滚件已写并如实声明「授权需从备份重建」；manifest 登记 `to_apply` + checksums 已入账 | `gen-manifest --check` 0 漂移（registered=194, unregistered=0）；`gen-permissions --check` 1162 条一致（前端清单新增 2 条）；本地库应用两遍幂等（第二次 0/0），总数 1204→1160；`check:ledger` 绿 |
 
 ### B. 数据访问收口（按服务分批，行为等价）
 

@@ -2523,3 +2523,9 @@ pending_forward_patches:
     effect: "删除 finance.finance_u8_import_records 上多余的 tenant_isolation_finance_u8_import_records；保留 rls_tenant_isolation。两条策略实测 cmd=ALL / PERMISSIVE / roles=PUBLIC 且 using=with_check 逐字相同，PERMISSIVE 间为 OR，删除不改变可见性，不收紧也不放宽"
     destructive_scan: "仅 DROP POLICY 一条；无 DROP TABLE/COLUMN、无 UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "回滚 database/rollback/20261119230000_rls_dedupe_finance_u8_import_records_policy.rollback.sql（只重建被删策略，不动保留策略）；策略快照预期该表策略数 2→1（总策略 810→809），需随迁移同批重生成"
+  - version: "20261119233000"
+    file: "database/migrations/20261119233000_iam_legacy_permission_convergence.sql"
+    status: to_apply
+    effect: "删除 44 条 2026-06 初始导入遗留的扁平权限码及其空转角色授权（attendance_read / doc:documents_read / pm:projects_read 等，全仓 has_permission 引用=0）；补种 2 条仍被 svc/erp/src/modules/dict.rs 校验引用的 iam:dictionaries_read / iam:dictionaries_update"
+    destructive_scan: "DELETE public.core_role_permissions（按 permission_id 关联 44 码）+ DELETE public.core_permissions（按 code 精确名单）；INSERT 带 NOT EXISTS 去重；无 ALTER/DROP/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "根因：初始数据库导入早于「迁移是唯一源」纪律，快照见 database/backup/p5_20261106/public_iam_core.sql。回滚 database/rollback/20261119233000_iam_legacy_permission_convergence.rollback.sql（权限码可重放，角色授权需从备份重建，已在文件中声明）；无表结构/RLS/策略快照变化"
