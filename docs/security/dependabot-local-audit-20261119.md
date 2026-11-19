@@ -52,3 +52,30 @@ lint 直接中断。改为只覆盖使用 `minimatch.minimatch` 命名导出的 
 - `libsqlite3-sys 0.30.1`：等上游 sqlx 改用 `libsqlite3-sys >=0.39` 后解除豁免。
 - `async-executor 1.14.0` yanked：随 async-std/smol 生态滚动升级消除。
 - npm 侧当前 0 条；若未来 `glob`/`minimatch` 再出 advisory，优先评估"升级父包"而非"全量强制大版本"。
+
+## 6. 桌面端（`apps/desktop/src-tauri`，独立 `Cargo.lock`，700 crates）
+
+`cargo audit --no-fetch` 命中（均属构建期工具链，不进服务端运行时）：
+
+| 包 | 版本 | 条数 | 最高级别 | 引入链 | 处置 |
+|---|---|---|---|---|---|
+| zip | 8.6.0 | 8 | 9.1 critical（RUSTSEC-2026-0369） | tauri-plugin-stronghold → libsodium-sys-stable 1.24.3 → zip ^8 | 上游未发新版，登记接受 |
+| crypto-bigint | 0.5.5 | 1 | moderate | 同主仓 jwtn/p256 链 | 同主仓豁免口径 |
+| bincode | 1.3.3 | 1 | unmaintained | tauri 生态 | 随 tauri 滚动 |
+| chrono | 0.4.45 | 1 | informational | tauri 生态 | 随 tauri 滚动 |
+
+**为什么 zip 不修**：修复要求 `zip >= 9.0.0`，而 `libsodium-sys-stable` 约束 `^8`，且 1.24.3 已是
+当前兼容上限（`cargo update -p libsodium-sys-stable` → Locking 0 packages）。该 zip 仅用于
+**构建期解压固定的 libsodium 源码包**（归档来源固定、无外部输入），桌面端不解析用户提交的压缩包，
+实际利用面为空。待上游 stronghold/libsodium 生态切到 zip 9 后自动消除。
+
+**已排除的错误做法**：对桌面锁 `cargo update` 全量刷新会带来 `syn 3.0.9→2.0.119`、
+`windows-sys 0.61.2→0.59.0` 等**解析回退**，既无安全收益又可能打挂桌面构建，已还原。
+
+## 7. GitHub 口径 28 → 5 的对应关系
+
+- 26 → 0：pnpm 工作区（第三、四节已闭环）。
+- 28 → 5 中剩余 5 条 = 桌面工具链 zip（critical/high）+ crypto-bigint + libsqlite3-sys（服务端约定豁免）。
+- `tests/integration/package-lock.json`、`tests/e2e/package-lock.json` 被 `.gitignore` 忽略，
+  **不在 GitHub 扫描面**；本地仍已刷新（integration 的 lock 过期锁在 vitest 2.1.9 且有结构损坏，
+  package.json 早已是 `^4.1.11`，按 package.json 重生成后两处 `npm audit` 均 0 条）。
