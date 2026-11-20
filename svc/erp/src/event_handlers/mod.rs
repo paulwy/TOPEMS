@@ -977,70 +977,73 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
 
+        // 租户只来自 payload.tenant_id；缺失/nil 显式失败进入重试/DLQ。
+        let tenant_id = payload.tenant_id.filter(|t| !t.is_nil()).ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "[erp] PaymentReceived 缺少租户上下文 - payment_no={}",
+                payload.payment_no
+            ))
+        })?;
+
         // 根据 customer_name（收款单无 customer_id，2026-09-08 新增字段）→ customer_id → 金额匹配。
-        // RLS 事件链路隔离（2026-09-09）：仅在有租户上下文时核销；无租户时禁用兜底（宁缺勿乱）。
-        let result = match payload.tenant_id {
-            Some(tenant_id) => {
-                if let Some(customer_name) = payload.customer_name.as_deref() {
-                    sqlx::query(
-                        r#"UPDATE erp.receivables
-                           SET status = 'paid',
-                               received_amount = received_amount + $1,
-                               updated_at = $2
-                           WHERE customer_name = $3
-                             AND tenant_id = $4
-                             AND status = 'pending'
-                             AND amount = $1
-                           RETURNING invoice_number"#,
-                    )
-                    .bind(payload.amount)
-                    .bind(now)
-                    .bind(customer_name)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                } else if let Some(customer_id) = payload.customer_id {
-                    sqlx::query(
-                        r#"UPDATE erp.receivables
-                           SET status = 'paid',
-                               received_amount = received_amount + $1,
-                               updated_at = $2
-                           WHERE customer_id = $3
-                             AND tenant_id = $4
-                             AND status = 'pending'
-                             AND amount = $1
-                           RETURNING invoice_number"#,
-                    )
-                    .bind(payload.amount)
-                    .bind(now)
-                    .bind(customer_id)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                } else {
-                    sqlx::query(
-                        r#"UPDATE erp.receivables
-                           SET status = 'paid',
-                               received_amount = received_amount + $1,
-                               updated_at = $2
-                           WHERE id = (
-                               SELECT id FROM erp.receivables
-                               WHERE status = 'pending'
-                                 AND tenant_id = $3
-                                 AND amount = $1
-                               ORDER BY invoice_date ASC
-                               LIMIT 1
-                           )
-                           RETURNING invoice_number"#,
-                    )
-                    .bind(payload.amount)
-                    .bind(now)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                }
-            }
-            None => Ok(None),
+        // 无匹配视为业务 no-op；数据库错误返回 Err 进入重试/DLQ。
+        let result = if let Some(customer_name) = payload.customer_name.as_deref() {
+            sqlx::query(
+                r#"UPDATE erp.receivables
+                   SET status = 'paid',
+                       received_amount = received_amount + $1,
+                       updated_at = $2
+                   WHERE customer_name = $3
+                     AND tenant_id = $4
+                     AND status = 'pending'
+                     AND amount = $1
+                   RETURNING invoice_number"#,
+            )
+            .bind(payload.amount)
+            .bind(now)
+            .bind(customer_name)
+            .bind(tenant_id)
+            .fetch_optional(&self.db)
+            .await
+        } else if let Some(customer_id) = payload.customer_id {
+            sqlx::query(
+                r#"UPDATE erp.receivables
+                   SET status = 'paid',
+                       received_amount = received_amount + $1,
+                       updated_at = $2
+                   WHERE customer_id = $3
+                     AND tenant_id = $4
+                     AND status = 'pending'
+                     AND amount = $1
+                   RETURNING invoice_number"#,
+            )
+            .bind(payload.amount)
+            .bind(now)
+            .bind(customer_id)
+            .bind(tenant_id)
+            .fetch_optional(&self.db)
+            .await
+        } else {
+            sqlx::query(
+                r#"UPDATE erp.receivables
+                   SET status = 'paid',
+                       received_amount = received_amount + $1,
+                       updated_at = $2
+                   WHERE id = (
+                       SELECT id FROM erp.receivables
+                       WHERE status = 'pending'
+                         AND tenant_id = $3
+                         AND amount = $1
+                       ORDER BY invoice_date ASC
+                       LIMIT 1
+                   )
+                   RETURNING invoice_number"#,
+            )
+            .bind(payload.amount)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&self.db)
+            .await
         };
 
         match result {
@@ -1057,14 +1060,17 @@ impl ErpEventHandlers {
             }
             Ok(None) => {
                 tracing::warn!(
-                    "[erp] PaymentReceived 未找到匹配的应收账款 - payment_no={}, customer_id={:?}, amount={}（graceful fallback）",
+                    "[erp] PaymentReceived 未找到匹配的应收账款 - payment_no={}, customer_id={:?}, amount={}，业务 no-op",
                     payload.payment_no,
                     payload.customer_id,
                     payload.amount
                 );
             }
             Err(e) => {
-                tracing::warn!("[erp] 核销应收账款失败（graceful fallback）: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[erp] 核销应收账款失败：payment_no={}: {}",
+                    payload.payment_no, e
+                )));
             }
         }
 
@@ -1099,52 +1105,55 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
 
+        // 租户只来自 payload.tenant_id；缺失/nil 显式失败进入重试/DLQ。
+        let tenant_id = payload.tenant_id.filter(|t| !t.is_nil()).ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "[erp] PaymentMade 缺少租户上下文 - payment_no={}",
+                payload.payment_no
+            ))
+        })?;
+
         // 根据 supplier_id 和 amount 匹配应付账款并核销。
-        // RLS 事件链路隔离（2026-09-09）：仅在有租户上下文时核销；无租户时禁用兜底（宁缺勿乱）。
-        let result = match payload.tenant_id {
-            Some(tenant_id) => {
-                if let Some(supplier_id) = payload.supplier_id {
-                    sqlx::query(
-                        r#"UPDATE erp.payables
-                           SET status = 'paid',
-                               paid_amount = paid_amount + $1,
-                               updated_at = $2
-                           WHERE supplier_id = $3
-                             AND tenant_id = $4
-                             AND status = 'pending'
-                             AND amount = $1
-                           RETURNING invoice_number"#,
-                    )
-                    .bind(payload.amount)
-                    .bind(now)
-                    .bind(supplier_id)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                } else {
-                    sqlx::query(
-                        r#"UPDATE erp.payables
-                           SET status = 'paid',
-                               paid_amount = paid_amount + $1,
-                               updated_at = $2
-                           WHERE id = (
-                               SELECT id FROM erp.payables
-                               WHERE status = 'pending'
-                                 AND tenant_id = $3
-                                 AND amount = $1
-                               ORDER BY invoice_date ASC
-                               LIMIT 1
-                           )
-                           RETURNING invoice_number"#,
-                    )
-                    .bind(payload.amount)
-                    .bind(now)
-                    .bind(tenant_id)
-                    .fetch_optional(&self.db)
-                    .await
-                }
-            }
-            None => Ok(None),
+        // 无匹配视为业务 no-op；数据库错误返回 Err 进入重试/DLQ。
+        let result = if let Some(supplier_id) = payload.supplier_id {
+            sqlx::query(
+                r#"UPDATE erp.payables
+                   SET status = 'paid',
+                       paid_amount = paid_amount + $1,
+                       updated_at = $2
+                   WHERE supplier_id = $3
+                     AND tenant_id = $4
+                     AND status = 'pending'
+                     AND amount = $1
+                   RETURNING invoice_number"#,
+            )
+            .bind(payload.amount)
+            .bind(now)
+            .bind(supplier_id)
+            .bind(tenant_id)
+            .fetch_optional(&self.db)
+            .await
+        } else {
+            sqlx::query(
+                r#"UPDATE erp.payables
+                   SET status = 'paid',
+                       paid_amount = paid_amount + $1,
+                       updated_at = $2
+                   WHERE id = (
+                       SELECT id FROM erp.payables
+                       WHERE status = 'pending'
+                         AND tenant_id = $3
+                         AND amount = $1
+                       ORDER BY invoice_date ASC
+                       LIMIT 1
+                   )
+                   RETURNING invoice_number"#,
+            )
+            .bind(payload.amount)
+            .bind(now)
+            .bind(tenant_id)
+            .fetch_optional(&self.db)
+            .await
         };
 
         match result {
@@ -1161,14 +1170,17 @@ impl ErpEventHandlers {
             }
             Ok(None) => {
                 tracing::warn!(
-                    "[erp] PaymentMade 未找到匹配的应付账款 - payment_no={}, supplier_id={:?}, amount={}（graceful fallback）",
+                    "[erp] PaymentMade 未找到匹配的应付账款 - payment_no={}, supplier_id={:?}, amount={}，业务 no-op",
                     payload.payment_no,
                     payload.supplier_id,
                     payload.amount
                 );
             }
             Err(e) => {
-                tracing::warn!("[erp] 核销应付账款失败（graceful fallback）: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[erp] 核销应付账款失败：payment_no={}: {}",
+                    payload.payment_no, e
+                )));
             }
         }
 

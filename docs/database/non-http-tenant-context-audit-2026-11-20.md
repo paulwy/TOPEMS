@@ -1,6 +1,6 @@
 # B43-09 非 HTTP 入口租户上下文评估（2026-11-20）
 
-- 状态：**评估完成；事件入口 2 处遗留分支转 DEC-04 继续收口**
+- 状态：**评估完成；Payment* 留余已清零，剩余 DB 错误降级随 DEC-04 收口**
 - 口径来源：[w7-cross-request-tenant-context-2026-11-10.md](../quality/w7-cross-request-tenant-context-2026-11-10.md)
 - 扫描基线：`1ce4e5d03` + 本轮修复（静态扫描，不连生产）
 - 结论：定时任务、消息消费、WebSocket、CLI、启动预热五类入口均有租户上下文或书面豁免；事件消费类发现并修复 SRM 零 UUID 兜底、ERP 缺租户 ACK、ERP 全局指标裸池三处问题。
@@ -44,8 +44,8 @@
 
 ### 2.3 遗留（转 DEC-04，不在本轮改）
 
-- `svc/erp/src/event_handlers/mod.rs` `PaymentReceived` / `PaymentMade`：`match payload.tenant_id { None => Ok(None) }` 仍把缺租户当业务 no-op ACK。需改为入口前置 `ValidationFailed`，再收窄 SQL 分支。
-- `svc/erp/src/event_handlers/mod.rs` 仍有 16 条 `graceful fallback` 文本（含注释与业务 no-op）；其中数据库错误分支需逐条区分 `Err` vs 业务 no-op，不能一刀切。
+- `PaymentReceived` / `PaymentMade` 已在本轮补齐：入口前置 `payload.tenant_id.filter(!nil)`，缺租户 `ValidationFailed`；DB 错误返回 `DatabaseQuery`；仅“未找到匹配单据”保留业务 no-op。
+- `svc/erp/src/event_handlers/mod.rs` 仍有 16 条 `graceful fallback` 文本（含注释与业务 no-op）；其中创建应收/应付、入职应付、项目应收、库存余额更新等数据库错误分支需逐条区分 `Err` vs 幂等冲突，继续随 DEC-04 收口。
 
 ---
 
@@ -87,4 +87,4 @@
 
 - 每类入口均能指出租户来源或豁免条目；无“连接残留 GUC / 全局静态租户 / 零 UUID 默认租户”作为业务来源。
 - 本轮新增修复：SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道、单体 analytics 残留 DDL 调用。
-- 后续仅剩 ERP Payment* 两个可选租户分支及数据库错误降级，随 DEC-04 统一处理；处理完可在 `TODO` 将 B43-09 标为完全闭环。
+- 后续仅剩 ERP 创建应收/应付、入职应付、项目应收、库存余额更新等数据库错误降级，随 DEC-04 逐条区分幂等冲突后收口；处理完可在 `TODO` 将 B43-09 标为完全闭环。
