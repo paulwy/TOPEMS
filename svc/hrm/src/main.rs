@@ -1,5 +1,4 @@
 mod models;
-mod schema_defense;
 mod services;
 
 mod event_handlers;
@@ -15,7 +14,7 @@ use modules::ApiState;
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, create_health_state,
-    create_standard_health_routes, default_init_db, run, ServiceConfig,
+    create_standard_health_routes, run, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_core::config::CacheConfig;
@@ -36,17 +35,6 @@ async fn main() -> Result<()> {
     };
 
     let ctx = bootstrap_service_with_search_path(&config, "hrm, public, shared").await?;
-
-    if let Err(e) = default_init_db(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-        "hrm",
-        false,
-        schema_defense::run_schema_migration_and_verify,
-    )
-    .await
-    {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
 
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");

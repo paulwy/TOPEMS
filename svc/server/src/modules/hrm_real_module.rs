@@ -17,7 +17,7 @@ use std::time::Duration;
 use topems_hrm::modules::{hrm_plugin, ApiState};
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_auth::security::init_encryption_from_env;
-use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::config::CacheConfig;
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::L2CacheConfig;
@@ -53,18 +53,6 @@ impl HrmRealModule {
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
-
-        // 2. HRM 数据库初始化（schema_defense 迁移验证，失败不阻塞）
-        if let Err(e) = default_init_db(
-            &ctx.db,
-            "hrm",
-            true,
-            topems_hrm::schema_defense::run_schema_migration_and_verify,
-        )
-        .await
-        {
-            tracing::warn!("HRM 数据库初始化警告（不阻塞）: {}", e);
-        }
 
         // 3. 字段加密服务
         let encryption = init_encryption_from_env();

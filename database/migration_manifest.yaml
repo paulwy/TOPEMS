@@ -2647,3 +2647,17 @@ pending_forward_patches:
     effect: "把 qms 30 张运行期表（APQP/审核/纠正措施/8D/FMEA/质量成本/检验计划与结果/SPC/标准/同步记录）以 live 形状固化，30 表 / 502 列 / 52 约束 / 109 索引 / 28 策略 / 30 RLS，五项 diff 为 0；删除 models/schema_defense.rs、modules::run_schema_defense 包装与 main、server qms_real_module 的启动调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 30 张全部存在；qa_approval_events/qa_ehs_hazards/quality_standards 由既有迁移维护，不在名单内。batch2 删除的 qms.audit_logs 等旧表无 qa_ 前缀，与本迁移不冲突。回滚 database/rollback/20261120230000_qms_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-20：hrm 23 表收口 + 死表复活清理（W2-D2 第十二个模块） =====
+  - version: "20261120235900"
+    file: "database/migrations/20261120235900_hrm_schema_canonical.sql"
+    status: to_apply
+    effect: "把 hrm 23 张运行期表（公司/部门/岗位/员工/合同/考勤/薪酬运行与明细/绩效/培训/招聘/候选人/面试等）以 live 形状固化，23 表 / 441 列 / 31 约束 / 43 索引 / 23 策略 / 23 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 server hrm_real_module 的 default_init_db 调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 28 张，其中 payroll_records/performance_records/recruitment_applications/recruitment_records/training_participants 已在 batch2 归档删除并被启动期 DDL 复活，本迁移不纳入；hrm_master_data_refs 同属 batch2 死表，由 default_init_db(with_master_data_refs=true) 复活，调用已移除。hrm_cache_invalidation_logs/module_settings 由既有迁移维护、未纳入。回滚 database/rollback/20261120235900_hrm_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+  - version: "20261120235930"
+    file: "database/migrations/20261120235930_hrm_drop_resurrected_dead_tables.sql"
+    status: to_apply
+    effect: "幂等收尾：payroll_records/performance_records/recruitment_applications/recruitment_records/training_participants/hrm_master_data_refs 若仍存在，逐表 count(*)=0 校验通过后 DROP TABLE（不带 CASCADE）；任一非空即 RAISE EXCEPTION 中止整条迁移"
+    destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch2 已归档的死表复活空表；先 count(*) 守卫，非空拒绝；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "历史数据已在 archive.drop_20261119_b2__hrm__* 保留 180 天。回滚 database/rollback/20261120235930_hrm_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"
