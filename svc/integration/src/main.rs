@@ -1,5 +1,3 @@
-use sqlx::PgPool;
-
 mod conversion_rules;
 mod event_bus;
 mod event_handlers;
@@ -14,7 +12,6 @@ mod qms_lims_ehs;
 mod retry_handler;
 mod routes;
 mod rule_engine;
-mod schema_defense;
 mod sync_retry;
 
 use axum::{routing::get, Router};
@@ -47,11 +44,7 @@ async fn main() -> anyhow::Result<()> {
     // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务（兜底守卫）。
     let db = Db::new(ctx.db.clone(), "integration, public").deny_request_own_txn();
 
-    // 业务初始化：运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）+ 事件订阅者
-    // 迁移/自检使用原生池（需要 DDL/会话级操作），业务查询统一走 Db 作用域。
-    if let Err(e) = run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("⚠️ Schema defense warning: {}", e);
-    }
+    // 业务初始化：事件订阅者（schema 由迁移链唯一维护）
     if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
         tracing::warn!("⚠️ Integration 事件订阅者启动失败: {}", e);
     }
@@ -123,14 +116,5 @@ async fn main() -> anyhow::Result<()> {
     });
 
     run(app).await?;
-    Ok(())
-}
-
-async fn run_schema_defense(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表；建表 DDL 已收敛至迁移链，D7）
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[integration] Schema 防御检查失败: {:?}", e);
-    }
-
     Ok(())
 }
