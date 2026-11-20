@@ -2,10 +2,10 @@
   "generated": "2026-11-20",
   "note": "运行期 DDL 只减不增基线（TODO W2-D1）。度量：tables/columns = TABLE_DEFS 声明数；ddl = SQL 字面量中的 CREATE TABLE|CREATE INDEX|CREATE SCHEMA|ALTER TABLE|DROP TABLE；callers = run_schema_migration_and_verify 调用次数。仅允许在下降后 --update-baseline 核销。",
   "totals": {
-    "files": 27,
-    "tables": 116,
-    "columns": 1723,
-    "ddl": 40,
+    "files": 26,
+    "tables": 96,
+    "columns": 1499,
+    "ddl": 39,
     "callers": 7
   },
   "files": {
@@ -85,12 +85,6 @@
       "tables": 0,
       "columns": 0,
       "ddl": 3,
-      "callers": 0
-    },
-    "svc/gis/src/db/schema.rs": {
-      "tables": 20,
-      "columns": 224,
-      "ddl": 1,
       "callers": 0
     },
     "svc/integration/src/main.rs": {

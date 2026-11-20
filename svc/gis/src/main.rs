@@ -3,7 +3,6 @@ use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
-use topems_shared_db::database::create_migrate_pool;
 use utoipa::OpenApi;
 
 use topems_shared_bootstrap::{
@@ -20,9 +19,7 @@ use topems_shared_observability::telemetry::telemetry_middleware;
 use topems_gis::embedded::{self, AppState};
 
 // 二进制复用 lib crate 的模块（避免重复编译产生类型身份不一致）
-use topems_gis::{db, event_handlers, modules, schema_defense};
-
-use db::schema::init_tables;
+use topems_gis::{event_handlers, modules};
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
     axum::Json(modules::openapi::GisApiDoc::openapi())
@@ -65,21 +62,6 @@ async fn main() -> Result<()> {
         });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
-
-    // GIS 专属初始化：建表（DDL 走 MIGRATE_URL owner 池，未配置回退运行时池）
-    let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
-        tracing::warn!("⚠️ GIS MIGRATE_URL 迁移池创建失败，DDL 回退运行时池: {}", e);
-        None
-    });
-    if let Err(e) = init_tables(migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("⚠️ GIS 建表初始化失败: {}", e);
-    }
-    tracing::info!("✅ 数据库表初始化成功");
-
-    // Schema 防御：增量补列 + 一致性校验（失败不阻塞启动）
-    if let Err(e) = schema_defense::run(&ctx.db).await {
-        tracing::warn!("GIS schema defense 失败（不阻塞启动）: {}", e);
-    }
 
     if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
         tracing::warn!("⚠️ GIS 事件订阅者启动失败: {}", e);

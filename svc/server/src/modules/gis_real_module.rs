@@ -48,14 +48,6 @@ impl GisRealModule {
         // 连接治理 B：模块 schema 作用域固化在 Db 中（事务内 SET LOCAL search_path）。
         let db = Db::new(ctx.db.clone(), "gis, public");
 
-        // 2. GIS 建表 + schema 防御（失败不阻塞嵌入，独立部署行为一致）
-        if let Err(e) = topems_gis::db::schema::init_tables(&ctx.db).await {
-            tracing::warn!("GIS 建表初始化警告（不阻塞）: {}", e);
-        }
-        if let Err(e) = topems_gis::schema_defense::run(&ctx.db).await {
-            tracing::warn!("GIS schema defense 失败（不阻塞）: {}", e);
-        }
-
         // 3. 构建业务 AppState（与独立部署 main.rs 一致）
         let ws_config = WebSocketConfig::from_env();
         let state = AppState {
