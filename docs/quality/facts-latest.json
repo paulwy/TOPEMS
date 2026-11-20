@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T02:02:35.486Z",
+  "generated_at": "2026-11-20T02:22:38.779Z",
   "root": "/Users/air/TOPEMS",
   "txn": {
     "total": {
@@ -43,8 +43,8 @@
     "gate_exit_ok": true
   },
   "schema_prefix": {
-    "scanned_files": 1424,
-    "sql_literals": 6518,
+    "scanned_files": 1423,
+    "sql_literals": 6517,
     "violations": 1134,
     "by_level": {
       "AMBIGUOUS": 0,
@@ -144,5 +144,5 @@
     },
     "tenants_in_prod": 1
   },
-  "fingerprint": "8309229b1fcf48568472f3e63e93a3eb9937be4e9b9640ce16a6136be36915c4"
+  "fingerprint": "70ed96350617b133ebcc786af37daed1de00a1ca21c61247feccdda8957eb5bf"
 }

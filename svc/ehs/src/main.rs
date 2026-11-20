@@ -6,7 +6,6 @@ mod event_handlers;
 mod models;
 mod modules;
 
-mod schema_defense;
 mod shared;
 
 use std::sync::Arc;
@@ -56,10 +55,6 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service_with_search_path(&config, "ehs, public, shared").await?;
 
-    // Schema 防御：增量补列 + 一致性校验（失败不阻塞启动；建表 DDL 已收敛至迁移链，D7）
-    if let Err(e) = schema_defense::run(&ctx.db).await {
-        tracing::warn!("EHS schema defense 失败（不阻塞启动）: {}", e);
-    }
     if let Err(e) =
         event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
