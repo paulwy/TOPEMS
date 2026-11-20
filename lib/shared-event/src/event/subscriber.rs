@@ -1165,7 +1165,9 @@ mod tests {
             eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
             return;
         }
-        let sub = EventSubscriber::new("test-service")
+        // Stream 模式的 start_listening 是长期运行监听器，Redis 不可达时会持续重连，
+        // 不会返回 Err；这里显式走 Pub/Sub 模式验证“启动即失败”的错误路径。
+        let sub = EventSubscriber::new_with_mode("test-service", false)
             .expect("lazy construction succeeds")
             .subscribe(vec![EventType::HealthCheck], |_event: Event| {
                 Box::pin(async {})
