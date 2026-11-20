@@ -2601,3 +2601,11 @@ pending_forward_patches:
     effect: "把 finance 66 张运行期表（总账/凭证/期间/对账/税务/结算/资金/风控/报表/决策 v54-v60）以 live 形状固化，覆盖 schema_defense 的 66 表 563 列与 7 个 modules/*.rs、services/finance/database.rs 的重复建表；删除全部启动期 CREATE TABLE/INDEX 与 schema 自检调用。列/索引/约束/策略/RLS 五项 diff 为 0"
     destructive_scan: "仅 CREATE SCHEMA/TYPE/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT，策略 DROP IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "约束按 p/u/x/c/f 顺序添加，FK 最后；独立唯一索引先于约束创建，避免 FK 依赖的唯一索引缺失。回滚 database/rollback/20261120170000_finance_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-20：portal 112 表收口（W2-D2 第七个模块） =====
+  - version: "20261120180000"
+    file: "database/migrations/20261120180000_portal_schema_canonical.sql"
+    status: to_apply
+    effect: "把 portal 112 张运行期表（去重后；GraphQL 聚合/路由/服务负载/队列/审计/通知/配置/帮助中心等）以 live 形状固化，列/索引/约束/策略/RLS 五项 diff 为 0；删除 models/schema_defense.rs 的启动期建表与逐列补列，embedded build_router 不再执行 schema 自检。modules/gateway_security.rs 的 2 条 ddl 为威胁检测字符串字面量（drop table），非建表，保留在基线中"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "112 张表与 live 的列/索引/约束/策略/RLS 逐项 diff 为 0；portal_announcements/portal_dashboard_stats/portal_notifications 由既有迁移维护，不在 schema_defense 名单内、未纳入本迁移。回滚 database/rollback/20261120180000_portal_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"

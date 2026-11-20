@@ -27,7 +27,6 @@ use topems_shared_core::logging::request_context_middleware;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_observability::telemetry::telemetry_middleware;
 
-use crate::models;
 use crate::modules;
 use crate::shared::AppState;
 use crate::ApiDoc;
@@ -52,13 +51,13 @@ fn decrement_ws_connections() {
 /// 构建 Portal 业务路由（业务 API + GraphQL 聚合层 + 事件总线 + 遗留别名 + CORS）
 ///
 /// - `db`：portal 连接池（search_path=`public, portal`，与独立部署一致；public 在前）
-/// - `migrate_pool`：DDL owner 连接池（帮助中心 / portal schema 防御建表用）
+/// - `_migrate_pool`：预留的 DDL owner 连接池参数（表/索引/RLS 已全部由迁移链维护）
 /// - `event_publisher`：事件发布器
 /// - `public_routes`：调用方提供的健康/指标/首页等入口路由（无 state 依赖）；
 ///   独立部署传 `main.rs` 构造的 public 路由，server 嵌入传空 `Router::new()`
 pub async fn build_router(
     db: sqlx::PgPool,
-    migrate_pool: sqlx::PgPool,
+    _migrate_pool: sqlx::PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
     public_routes: Router<AppState>,
 ) -> anyhow::Result<Router> {
@@ -77,11 +76,7 @@ pub async fn build_router(
         .with_permission_resolver(db.clone());
 
     // V68.1 A2.4.2: 帮助中心数据表 DDL 已收敛至迁移链（D7 双源消除），不再运行时自建
-
-    // Portal 全模块增量迁移 + schema 自检（115 表 / 728 列，DDL 走 owner 池）
-    if let Err(e) = models::schema_defense::run_schema_migration_and_verify(&migrate_pool).await {
-        tracing::warn!("⚠️ Portal schema 防御初始化失败（不阻塞启动）: {}", e);
-    }
+    // 全模块 112 张 portal 表的表结构/索引/RLS 同样由迁移链维护，启动阶段不执行 DDL
 
     // V33.0 Portal BFF Phase 3: GraphQL 聚合层
     let graphql_schema = modules::graphql_schema::build_schema(app_state.clone());
