@@ -14,6 +14,14 @@
  *      `svc/<svc>/src/modules/**.rs` 里直接使用 `state.pool`（绕过 `Db::scope*`，
  *      查询拿不到 `app.tenant_id`）。存量按文件计数冻结，新增即失败。
  *
+ *   R3 event_handlers 吞错
+ *      `let _ = self...` 或旧 `subscribe_master_data`，错误被日志吞掉后仍 ACK；
+ *      纯观测/广播需 `// event-handler-observability|best-effort: <原因>`。
+ *
+ *   R4 event_handlers 裸池
+ *      直接引用 `&self.db`，绕过 `Db::scope_for_tenant`；事件处理器必须按
+ *      payload 租户开作用域，存量已清零，新增即失败。
+ *
  * 豁免：同一行或上一行有 `// tenant-system: <原因>`。
  * 约定说明见 `lib/shared-db/src/schema.rs` 模块头。
  *
@@ -115,6 +123,7 @@ function scanFile(rel) {
   const r1 = [];
   const r2 = [];
   const r3 = [];
+  const r4 = [];
   const scopedHits = [];
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -144,8 +153,11 @@ function scanFile(rel) {
     ) {
       r3.push({ line: i + 1, text: raw.trim() });
     }
+    if (isEventHandler && /&self\.db\b/.test(code) && !hasEventHandlerAnnotation(lines, i)) {
+      r4.push({ line: i + 1, text: raw.trim() });
+    }
   }
-  return { rel, r1, r2, r3, scopedHits };
+  return { rel, r1, r2, r3, r4, scopedHits };
 }
 
 function serviceOf(rel) {
@@ -175,8 +187,8 @@ function main() {
     if (r) results.push(r);
   }
 
-  const current = { r1: {}, r2: {}, r3: {} };
-  const total = { r1: 0, r2: 0, r3: 0 };
+  const current = { r1: {}, r2: {}, r3: {}, r4: {} };
+  const total = { r1: 0, r2: 0, r3: 0, r4: 0 };
 
   // 上限断言：5 处白名单必须逐一命中（形态/行号漂移即红），且命中数不得超出白名单。
   const scopedHits = results.flatMap((r) => r.scopedHits || []);
@@ -200,7 +212,7 @@ function main() {
   }
 
   for (const r of results) {
-    for (const rule of ['r1', 'r2', 'r3']) {
+    for (const rule of ['r1', 'r2', 'r3', 'r4']) {
       if (r[rule].length) {
         current[rule][r.rel] = r[rule].length;
         total[rule] += r[rule].length;
@@ -222,14 +234,16 @@ function main() {
         r1: 'event_handlers 内使用 scope_system / scope_read_system（无登记注释）',
         r2: 'modules 内直接使用 state.pool（无登记注释）',
         r3: 'event_handlers 内 let _ = self 吞错或使用旧 subscribe_master_data（无登记注释）',
+        r4: 'event_handlers 内直接引用 &self.db 裸池（无登记注释）',
       },
       r1: current.r1,
       r2: current.r2,
       r3: current.r3,
+      r4: current.r4,
     };
     fs.writeFileSync(BASELINE_PATH, JSON.stringify(payload, null, 2) + '\n');
     console.log(
-      `[tenant-context] 基线已更新: R1 ${total.r1} 处 / R2 ${total.r2} 处 / R3 ${total.r3} 处（${BASELINE_PATH}）`,
+      `[tenant-context] 基线已更新: R1 ${total.r1} 处 / R2 ${total.r2} 处 / R3 ${total.r3} 处 / R4 ${total.r4} 处（${BASELINE_PATH}）`,
     );
     return;
   }
@@ -238,15 +252,17 @@ function main() {
     r1: baseline ? Object.values(baseline.r1 || {}).reduce((a, b) => a + b, 0) : 0,
     r2: baseline ? Object.values(baseline.r2 || {}).reduce((a, b) => a + b, 0) : 0,
     r3: baseline ? Object.values(baseline.r3 || {}).reduce((a, b) => a + b, 0) : 0,
+    r4: baseline ? Object.values(baseline.r4 || {}).reduce((a, b) => a + b, 0) : 0,
   };
   const baseFiles = {
     r1: baseline ? Object.keys(baseline.r1 || {}).length : 0,
     r2: baseline ? Object.keys(baseline.r2 || {}).length : 0,
     r3: baseline ? Object.keys(baseline.r3 || {}).length : 0,
+    r4: baseline ? Object.keys(baseline.r4 || {}).length : 0,
   };
 
   const newViolations = [];
-  for (const rule of ['r1', 'r2', 'r3']) {
+  for (const rule of ['r1', 'r2', 'r3', 'r4']) {
     for (const [rel, count] of Object.entries(current[rule])) {
       const base = baseline?.[rule]?.[rel] ?? 0;
       if (count > base) {
@@ -257,10 +273,10 @@ function main() {
 
   // 按服务汇总存量，便于分批。
   const byService = {};
-  for (const rule of ['r1', 'r2', 'r3']) {
+  for (const rule of ['r1', 'r2', 'r3', 'r4']) {
     for (const [rel, count] of Object.entries(current[rule])) {
       const svc = serviceOf(rel);
-      byService[svc] = byService[svc] || { r1: 0, r2: 0, r3: 0 };
+      byService[svc] = byService[svc] || { r1: 0, r2: 0, r3: 0, r4: 0 };
       byService[svc][rule] += count;
     }
   }
@@ -284,13 +300,13 @@ function main() {
 
   console.log(
     `[tenant-context] 扫描 ${results.length} 个文件${changedOnly ? '（仅暂存）' : ''}；` +
-      `存量基线 R1 ${baseTotals.r1} 处/${baseFiles.r1} 文件，R2 ${baseTotals.r2} 处/${baseFiles.r2} 文件，R3 ${baseTotals.r3} 处/${baseFiles.r3} 文件`,
+      `存量基线 R1 ${baseTotals.r1} 处/${baseFiles.r1} 文件，R2 ${baseTotals.r2} 处/${baseFiles.r2} 文件，R3 ${baseTotals.r3} 处/${baseFiles.r3} 文件，R4 ${baseTotals.r4} 处/${baseFiles.r4} 文件`,
   );
   console.log(
-    `[tenant-context] 本次 R1 ${total.r1} 处，R2 ${total.r2} 处，R3 ${total.r3} 处`,
+    `[tenant-context] 本次 R1 ${total.r1} 处，R2 ${total.r2} 处，R3 ${total.r3} 处，R4 ${total.r4} 处`,
   );
 
-  if (!baseline && (total.r1 || total.r2 || total.r3)) {
+  if (!baseline && (total.r1 || total.r2 || total.r3 || total.r4)) {
     console.error(
       '[tenant-context] 基线缺失。请先全量运行 --update-baseline 冻结存量，再启用门禁。',
     );
@@ -309,10 +325,13 @@ function main() {
         ? 'R1 事件消费使用了系统通道'
         : v.rule === 'r2'
           ? 'R2 模块绕过 Db 作用域直连池'
-          : 'R3 事件处理器吞错或使用旧 MDM 订阅';
+          : v.rule === 'r3'
+            ? 'R3 事件处理器吞错或使用旧 MDM 订阅'
+            : 'R4 事件处理器直接引用裸池';
     console.error(`  - [${v.rule}] ${v.rel}: ${v.base} → ${v.count}（+${v.delta}）${label}`);
     const r = results.find((x) => x.rel === v.rel);
-    const sites = v.rule === 'r1' ? r?.r1 : v.rule === 'r2' ? r?.r2 : r?.r3;
+    const sites =
+      v.rule === 'r1' ? r?.r1 : v.rule === 'r2' ? r?.r2 : v.rule === 'r3' ? r?.r3 : r?.r4;
     for (const site of sites || []) {
       console.error(`      L${site.line}: ${site.text}`);
     }

@@ -101,6 +101,6 @@
 ## 4. 验收与后续
 
 - 每类入口均能指出租户来源或豁免条目；无“连接残留 GUC / 全局静态租户 / 零 UUID 默认租户”作为业务来源。
-- 门禁：`scripts/ci/check-tenant-context.cjs` 新增 R3，事件处理器内 `let _ = self` 吞错或使用旧 `subscribe_master_data` 无豁免注释即失败；HRM 缓存失效审计日志按 `// event-handler-observability:` 登记。
+- 门禁：`scripts/ci/check-tenant-context.cjs` 新增 R3/R4，事件处理器内 `let _ = self` 吞错、旧 `subscribe_master_data`、或直接引用 `&self.db` 裸池，无豁免注释即失败；HRM 缓存失效审计日志按 `// event-handler-observability:` 登记。当前全仓 R3=0、R4=0，R2 存量按文件基线冻结（614 处）。
 - 本轮新增修复：SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道、单体 analytics 残留 DDL 调用。
 - DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账均改为缺租户显式失败、DB 错误上抛，事件处理器裸池访问清零；PM 审批、RD 项目同步、结算创建/审批全部改为租户作用域写入，审批事件按项目主键反查租户；SCM/SRM/WMS/RD/Portal 事件消费统一改为租户作用域并上抛 DB 错误，Portal 通知创建失败不再吞掉；PDM/SCM 主数据订阅改 Result 变体，handle 错误不再被订阅层吞掉；integration 同步日志改租户作用域并上抛写入失败；EHS 租户前置改 `Result` 并覆盖三个 handler；Finance 入职成本事务提交与对账/结算 6 个快照写入、金额快照写入全部上抛；HRM 权限/岗位事件缺租户显式失败，缓存失效审计日志改租户作用域；全部服务事件处理器 `&self.db` 引用归零。18 个事件消费入口已无 graceful fallback 后静默 ACK，B43-09 标为完全闭环。

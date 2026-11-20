@@ -4,7 +4,8 @@
   "rules": {
     "r1": "event_handlers 内使用 scope_system / scope_read_system（无登记注释）",
     "r2": "modules 内直接使用 state.pool（无登记注释）",
-    "r3": "event_handlers 内 let _ = self 吞错或使用旧 subscribe_master_data（无登记注释）"
+    "r3": "event_handlers 内 let _ = self 吞错或使用旧 subscribe_master_data（无登记注释）",
+    "r4": "event_handlers 内直接引用 &self.db 裸池（无登记注释）"
   },
   "r1": {},
   "r3": {},
@@ -113,5 +114,6 @@
     "svc/unified-core/src/modules/master/handlers.rs": 19,
     "svc/unified-core/src/modules/migration/handlers.rs": 3,
     "svc/unified-core/src/modules/system_audit/mod.rs": 4
-  }
+  },
+  "r4": {}
 }
