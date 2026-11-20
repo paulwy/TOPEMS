@@ -273,7 +273,9 @@ pub enum RoleTarget {
     NotFound,
 }
 
-/// 读取角色归属租户。`Some(None)` 表示全局角色，`None` 表示角色不存在。
+/// 读取角色归属租户。`Some(None)` 或 `Some(Some(nil))` 表示全局/平台角色，
+/// `None` 表示角色不存在。DEC-15 归一后平台角色租户为全零哨兵，保留 NULL 兼容
+/// 未迁移环境。
 ///
 /// `core_roles` 是 FORCE RLS 表，必须走作用域事务，裸池无 GUC 时租户域角色会被
 /// 误判为不存在。
@@ -320,6 +322,7 @@ pub async fn check_role_target(
         (_, None) => RoleTarget::NotFound,
         (IamScope::Platform, Some(_)) => RoleTarget::Ok,
         (IamScope::Tenant(_), Some(None)) => RoleTarget::Ok,
+        (IamScope::Tenant(_), Some(Some(role_tenant))) if role_tenant.is_nil() => RoleTarget::Ok,
         (IamScope::Tenant(tenant), Some(Some(role_tenant))) if role_tenant == tenant => {
             RoleTarget::Ok
         }
@@ -356,6 +359,9 @@ pub async fn check_role_write_target(
         }
         // 全局角色对租户可见、可授予，但不可改；他租户角色在作用域内不可见。
         (IamScope::Tenant(_), Some(None)) => RoleWriteTarget::Forbidden,
+        (IamScope::Tenant(_), Some(Some(role_tenant))) if role_tenant.is_nil() => {
+            RoleWriteTarget::Forbidden
+        }
         (IamScope::Tenant(_), Some(_)) => RoleWriteTarget::NotFound,
     })
 }

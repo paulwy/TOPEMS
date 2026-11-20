@@ -276,7 +276,7 @@ async fn seed(pool: &PgPool, suffix: &str) -> Fixtures {
     .unwrap();
 
     let platform_role: Uuid = sqlx::query_scalar(
-        "SELECT id FROM public.core_roles WHERE tenant_id IS NULL AND deleted_at IS NULL AND name IN ('admin','superadmin') ORDER BY name LIMIT 1",
+        "SELECT id FROM public.core_roles WHERE (tenant_id IS NULL OR tenant_id = '00000000-0000-0000-0000-000000000000'::uuid) AND deleted_at IS NULL AND name IN ('admin','superadmin') ORDER BY name LIMIT 1",
     )
     .fetch_one(pool)
     .await
