@@ -164,6 +164,7 @@ pub struct CreateAlertMessageRequest {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_overview(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityOverview> {
@@ -173,33 +174,44 @@ pub async fn get_quality_overview(
     } else {
         Some(get_tenant_id(&claims, &headers))
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 质量概览读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取质量概览失败");
+        }
+    };
     let total_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
         "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_inspections = total_insp.unwrap_or(0);
 
     let qualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let qualified_inspections = qualified_insp.unwrap_or(0);
 
     let unqualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let unqualified_inspections = unqualified_insp.unwrap_or(0);
 
     let avg_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"#))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let qualification_rate: f64 = big_decimal_to_f64(avg_rate);
@@ -210,7 +222,7 @@ pub async fn get_quality_overview(
         "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_issues = total_issues_count.unwrap_or(0);
@@ -219,7 +231,7 @@ pub async fn get_quality_overview(
         only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE (status = 'open' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
     )
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let open_issues = open_issues_count.unwrap_or(0);
@@ -229,7 +241,7 @@ pub async fn get_quality_overview(
         "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let complaint_count = complaint_count_val.unwrap_or(0);
@@ -244,14 +256,14 @@ pub async fn get_quality_overview(
         "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let in_progress_eightd = in_progress_8d.unwrap_or(0);
 
     let pending_act: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let pending_actions = pending_act.unwrap_or(0);
@@ -285,6 +297,7 @@ pub async fn get_quality_overview(
 )]
 pub async fn get_quality_trend(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<TrendQuery>,
@@ -295,6 +308,17 @@ pub async fn get_quality_trend(
         None
     } else {
         Some(get_tenant_id(&claims, &headers))
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 质量趋势读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取质量趋势失败");
+        }
     };
 
     let rows = sqlx::query(only_own_schema_query!("qms", r#"
@@ -309,7 +333,7 @@ pub async fn get_quality_trend(
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY period ASC
         "#)).bind(days_str).bind(tenant)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
@@ -350,6 +374,7 @@ pub async fn get_quality_trend(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_defect_distribution(
     State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<QualityDefectDistribution>> {
@@ -358,12 +383,23 @@ pub async fn get_defect_distribution(
     } else {
         Some(get_tenant_id(&claims, &headers))
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 缺陷分布读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取缺陷分布失败");
+        }
+    };
     let total: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
         "SELECT COUNT(*) FROM qms.qa_inspection_results WHERE is_qualified = false AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .ok();
     let total_count = total.unwrap_or(0);
@@ -383,7 +419,7 @@ pub async fn get_defect_distribution(
         "#
     ))
     .bind(tenant)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match rows {
