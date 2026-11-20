@@ -14,12 +14,21 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 use crate::AppState;
+
+fn tenant_filter(claims: &Claims, headers: &axum::http::HeaderMap) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(claims, headers))
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct QualityTaskQuery {
@@ -87,13 +96,28 @@ pub struct DefectRecord {
 /// GET /quality-tasks —— 质检任务列表（数据源 qa_quality_inspections）
 pub async fn list_quality_tasks(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(query): Query<QualityTaskQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+    let filter = tenant_filter(&claims, &headers);
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 质检任务读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取质检任务列表失败");
+        }
+    };
 
     let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "qms",
@@ -102,11 +126,13 @@ pub async fn list_quality_tasks(
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR status = $1)
           AND ($2::text IS NULL OR inspection_no ILIKE $2 OR product_name ILIKE $2)
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
     "#
     ))
     .bind(query.status.as_deref())
     .bind(search_pattern.as_deref())
-    .fetch_one(&state.pool)
+    .bind(filter)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -138,6 +164,7 @@ pub async fn list_quality_tasks(
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR status = $1)
           AND ($2::text IS NULL OR inspection_no ILIKE $2 OR product_name ILIKE $2)
+          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
     "#
@@ -146,7 +173,8 @@ pub async fn list_quality_tasks(
     .bind(search_pattern.as_deref())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .bind(filter)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
@@ -165,12 +193,27 @@ pub async fn list_quality_tasks(
 /// GET /quality-tasks/{id} —— 质检任务详情
 pub async fn get_quality_task(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
+    let filter = tenant_filter(&claims, &headers);
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的质检任务ID"),
+    };
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 质检任务详情读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取质检任务详情失败");
+        }
     };
 
     let row = sqlx::query_as::<_, QualityTask>(only_own_schema_query!(
@@ -193,10 +236,12 @@ pub async fn get_quality_task(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
         WHERE id = $1 AND deleted_at IS NULL
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
     "#
     ))
     .bind(id)
-    .fetch_optional(&state.pool)
+    .bind(filter)
+    .fetch_optional(&mut scope)
     .await;
 
     match row {
@@ -281,21 +326,38 @@ pub async fn update_quality_task_status(
 /// GET /defect-records —— 缺陷记录列表（数据源 qa_inspection_results，未合格项）
 pub async fn list_defect_records(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(query): Query<DefectRecordQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
+    let filter = tenant_filter(&claims, &headers);
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match crate::shared::read_scope_for_claims(&state.db, &claims, txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[qms] 缺陷记录读取作用域创建失败: {}", e);
+            return ApiResponse::server_error("获取缺陷记录列表失败");
+        }
+    };
 
     let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "qms",
         r#"
         SELECT COUNT(*) FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
+          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
     "#
     ))
-    .fetch_one(&state.pool)
+    .bind(filter)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -319,13 +381,15 @@ pub async fn list_defect_records(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
     "#
     ))
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .bind(filter)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
