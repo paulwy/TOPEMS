@@ -602,6 +602,7 @@ pub async fn trigger_rule(
 
 pub async fn list_runs(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<RunQueryParams>,
 ) -> ApiResponse<PaginatedResponse<AutomationRun>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -617,18 +618,38 @@ pub async fn list_runs(
         .and_then(|s| Uuid::parse_str(&s).ok());
     let status = params.status.clone();
 
-    let total: i64 = sqlx::query_scalar(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
+
+    let total = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM public.automation_runs
            WHERE ($1::uuid IS NULL OR rule_id = $1)
              AND ($2::text IS NULL OR status = $2)"#,
     )
     .bind(rule_id)
     .bind(&status)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
+    .fetch_one(&mut rls_scope)
+    .await;
+    let total = match total {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("统计自动化运行记录失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询运行记录失败".to_string()));
+        }
+    };
 
-    let items: Vec<AutomationRun> = sqlx::query_as(
+    let items = sqlx::query_as::<_, AutomationRun>(
         r#"SELECT * FROM public.automation_runs
            WHERE ($1::uuid IS NULL OR rule_id = $1)
              AND ($2::text IS NULL OR status = $2)
@@ -638,9 +659,15 @@ pub async fn list_runs(
     .bind(&status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    .fetch_all(&mut rls_scope)
+    .await;
+    let items = match items {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询自动化运行记录失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询运行记录失败".to_string()));
+        }
+    };
 
     ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
@@ -650,12 +677,27 @@ pub async fn list_runs(
 
 pub async fn get_run(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRun> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
+
     let run: Result<AutomationRun, _> =
         sqlx::query_as("SELECT * FROM public.automation_runs WHERE id = $1")
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await;
 
     match run {
@@ -832,6 +874,7 @@ pub async fn purge_runs(
 
 pub async fn list_variables(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<VariableQueryParams>,
 ) -> ApiResponse<PaginatedResponse<AutomationVariable>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -848,7 +891,21 @@ pub async fn list_variables(
         .and_then(|s| Uuid::parse_str(&s).ok());
     let search = params.search.clone().unwrap_or_default();
 
-    let total: i64 = sqlx::query_scalar(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
+
+    let total = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM public.automation_variables
            WHERE ($1::text IS NULL OR scope = $1)
              AND ($2::uuid IS NULL OR rule_id = $2)
@@ -857,11 +914,17 @@ pub async fn list_variables(
     .bind(&scope)
     .bind(rule_id)
     .bind(&search)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
+    .fetch_one(&mut rls_scope)
+    .await;
+    let total = match total {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("统计自动化变量失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询变量失败".to_string()));
+        }
+    };
 
-    let items: Vec<AutomationVariable> = sqlx::query_as(
+    let items = sqlx::query_as::<_, AutomationVariable>(
         r#"SELECT id, tenant_id, key,
                   CASE WHEN is_secret THEN NULL ELSE value END as value,
                   description, scope, rule_id, is_secret, created_by, created_at, updated_at
@@ -876,9 +939,15 @@ pub async fn list_variables(
     .bind(&search)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    .fetch_all(&mut rls_scope)
+    .await;
+    let items = match items {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询自动化变量失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询变量失败".to_string()));
+        }
+    };
 
     ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
@@ -888,8 +957,23 @@ pub async fn list_variables(
 
 pub async fn get_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(key): Path<String>,
 ) -> ApiResponse<AutomationVariable> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
+
     let var: Result<AutomationVariable, _> = sqlx::query_as(
         r#"SELECT id, tenant_id, key,
                   CASE WHEN is_secret THEN NULL ELSE value END as value,
@@ -897,7 +981,7 @@ pub async fn get_variable(
            FROM public.automation_variables WHERE key = $1"#,
     )
     .bind(&key)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match var {
@@ -1022,13 +1106,28 @@ pub async fn delete_variable(
 
 pub async fn reveal_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(key): Path<String>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
+
     let value: Result<Option<String>, _> = sqlx::query_scalar(
         "SELECT value FROM public.automation_variables WHERE key = $1 AND is_secret = true",
     )
     .bind(&key)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match value {

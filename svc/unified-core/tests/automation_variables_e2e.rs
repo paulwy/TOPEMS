@@ -9,10 +9,21 @@ mod app_state;
 use app_state::{tenant_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use topems_shared_auth::middleware::tenant::{
+    rls_request_tenant, scope_request_tenant, RlsRequestTenant, RlsTxnCell,
+};
 use topems_unified_core::modules::automation::{
     create_variable, delete_variable, get_variable, list_variables, update_variable,
     AutomationVariable, CreateVariableRequest, UpdateVariableRequest, VariableQueryParams,
 };
+
+async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
+    let tx = pool.begin().await.unwrap();
+    let cell: RlsTxnCell = Arc::new(Mutex::new(Some(tx)));
+    (cell, rls_request_tenant(&tenant_claims()))
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -62,8 +73,13 @@ topems_test_support::sqlx_dsn_guard!();
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_variables(State(state), Query(empty_params())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        list_variables(State(state), Extension(cell), Query(empty_params())),
+    )
+    .await;
     let body = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
@@ -99,8 +115,13 @@ async fn get_roundtrip(pool: sqlx::PgPool) {
     .await;
     let var: AutomationVariable = resp.data.unwrap();
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_variable(State(state), Path(var.key.clone())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_variable(State(state), Extension(cell), Path(var.key.clone())),
+    )
+    .await;
     let got: AutomationVariable = resp.data.unwrap();
     assert_eq!(got.key, "db_host");
 }
@@ -150,7 +171,12 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
     let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_variable(State(state), Path(var.key)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_variable(State(state), Extension(cell), Path(var.key)),
+    )
+    .await;
     assert!(resp.data.is_none());
 }

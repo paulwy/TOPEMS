@@ -8,13 +8,25 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::test_app_state;
+use app_state::{tenant_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
+use axum::Extension;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use topems_shared_auth::middleware::tenant::{
+    rls_request_tenant, scope_request_tenant, RlsRequestTenant, RlsTxnCell,
+};
 use topems_unified_core::modules::automation::{
     cancel_run, get_run, get_run_log_by_id, get_run_logs, get_run_steps, list_runs, purge_runs,
     retry_run, trigger_rule, AutomationRun, PurgeRequest, RunLogQueryParams, RunQueryParams,
     TriggerRequest,
 };
+
+async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
+    let tx = pool.begin().await.unwrap();
+    let cell: RlsTxnCell = Arc::new(Mutex::new(Some(tx)));
+    (cell, rls_request_tenant(&tenant_claims()))
+}
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -129,8 +141,13 @@ topems_test_support::sqlx_dsn_guard!();
 async fn list_runs_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_runs(State(state), Query(empty_params())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        list_runs(State(state), Extension(cell), Query(empty_params())),
+    )
+    .await;
     let body = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
@@ -142,8 +159,13 @@ async fn list_runs_counts_inserted(pool: sqlx::PgPool) {
     insert_run_via_sql(&pool, rid, "running", "规则A").await;
     insert_run_via_sql(&pool, rid, "completed", "规则A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_runs(State(state), Query(empty_params())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        list_runs(State(state), Extension(cell), Query(empty_params())),
+    )
+    .await;
     let body = resp.data.unwrap();
     assert_eq!(body.total, 2);
     assert_eq!(body.items.len(), 2);
@@ -158,8 +180,10 @@ async fn list_runs_filters_by_status(pool: sqlx::PgPool) {
 
     let mut params = empty_params();
     params.status = Some("running".to_string());
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_runs(State(state), Query(params)).await;
+    let resp =
+        scope_request_tenant(ctx, list_runs(State(state), Extension(cell), Query(params))).await;
     let body = resp.data.unwrap();
     assert_eq!(body.total, 1);
     assert_eq!(body.items[0].status, "running");
@@ -171,8 +195,10 @@ async fn get_run_returns_run(pool: sqlx::PgPool) {
     let rid = uuid::Uuid::new_v4();
     let run_id = insert_run_via_sql(&pool, rid, "running", "规则A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_run(State(state), Path(run_id)).await;
+    let resp =
+        scope_request_tenant(ctx, get_run(State(state), Extension(cell), Path(run_id))).await;
     let got: AutomationRun = resp.data.unwrap();
     assert_eq!(got.id, run_id);
     assert_eq!(got.rule_id, rid);
@@ -183,8 +209,13 @@ async fn get_run_returns_run(pool: sqlx::PgPool) {
 async fn get_run_missing_returns_none(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_run(State(state), Path(uuid::Uuid::new_v4())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_run(State(state), Extension(cell), Path(uuid::Uuid::new_v4())),
+    )
+    .await;
     assert!(resp.data.is_none());
 }
 
