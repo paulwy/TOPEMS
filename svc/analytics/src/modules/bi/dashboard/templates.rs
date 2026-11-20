@@ -5,6 +5,7 @@ use axum::{
 use chrono::Utc;
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::TenantScope;
 use tracing::info;
 
@@ -274,6 +275,7 @@ pub async fn get_dashboard_template(
 pub async fn update_dashboard_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDashboardTemplateRequest>,
 ) -> Json<serde_json::Value> {
@@ -289,7 +291,14 @@ pub async fn update_dashboard_template(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -381,6 +390,7 @@ now,
 pub async fn delete_dashboard_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting dashboard template: {}", id);
@@ -395,7 +405,14 @@ pub async fn delete_dashboard_template(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(

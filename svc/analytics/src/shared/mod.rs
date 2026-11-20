@@ -32,10 +32,11 @@ pub async fn open_read_scope<'a>(
 pub async fn open_write_scope<'a>(
     db: &'a Db,
     scope: &TenantScope,
+    txn: &'a mut sqlx::Transaction<'_, sqlx::Postgres>,
 ) -> Result<ScopedTxn<'a>, sqlx::Error> {
     match scope.tenant_id() {
-        Some(tenant) => db.scope_for_tenant(tenant).await,
-        None => db.scope_system().await,
+        Some(_) => db.scope_with(txn).await,
+        None => db.scope_with_system(txn).await,
     }
 }
 

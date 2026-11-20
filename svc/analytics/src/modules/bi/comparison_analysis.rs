@@ -20,6 +20,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::TenantScope;
 use topems_shared_db::scope::ScopedTxn;
 use tracing::{info, warn};
@@ -355,6 +356,7 @@ pub async fn get_comparison(
 pub async fn create_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Json(req): Json<CreateComparisonRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating comparison analysis: {}", req.name);
@@ -369,7 +371,14 @@ pub async fn create_comparison(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -453,6 +462,7 @@ pub async fn create_comparison(
 pub async fn update_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id_str): Path<String>,
     Json(req): Json<UpdateComparisonRequest>,
 ) -> Json<serde_json::Value> {
@@ -466,7 +476,14 @@ pub async fn update_comparison(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -572,6 +589,7 @@ pub async fn update_comparison(
 pub async fn delete_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
     let tenant_scope = match TenantScope::from_claims(
@@ -584,7 +602,14 @@ pub async fn delete_comparison(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -659,6 +684,7 @@ pub async fn delete_comparison(
 pub async fn run_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
     let tenant_scope = match TenantScope::from_claims(
@@ -671,7 +697,14 @@ pub async fn run_comparison(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(

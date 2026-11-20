@@ -2,9 +2,9 @@
   "generated": "2026-11-20",
   "note": "§17.2 作用域 API 收敛基线。scope_for_tenant 计未标记（无 // scope-exempt: <理由>）的生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/short-txn-exempt/lib-standalone）。db_new 计 Db::new( 构造点，只减不增。口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。",
   "scope_for_tenant": {
-    "total": 155,
+    "total": 154,
     "marked": 0,
-    "unmarked": 155,
+    "unmarked": 154,
     "files": {
       "lib/shared-db/src/master_data_refs.rs": {
         "unmarked": 5
@@ -17,9 +17,6 @@
       },
       "svc/ai/src/modules/ai_knowledge/service.rs": {
         "unmarked": 5
-      },
-      "svc/analytics/src/shared/mod.rs": {
-        "unmarked": 1
       },
       "svc/crm/src/event_handlers/mod.rs": {
         "unmarked": 6

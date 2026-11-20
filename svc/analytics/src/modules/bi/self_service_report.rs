@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::TenantScope;
 use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
@@ -199,6 +200,7 @@ pub async fn list_reports(
 pub async fn create_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating self-service report: {}", req.name);
@@ -214,7 +216,14 @@ pub async fn create_report(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -391,6 +400,7 @@ pub async fn get_report(
 pub async fn update_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateReportRequest>,
 ) -> Json<serde_json::Value> {
@@ -406,7 +416,14 @@ pub async fn update_report(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -502,6 +519,7 @@ now,
 pub async fn delete_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting self-service report: {}", id);
@@ -516,7 +534,14 @@ pub async fn delete_report(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(

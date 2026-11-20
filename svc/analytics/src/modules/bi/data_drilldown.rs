@@ -6,6 +6,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::TenantScope;
 use tracing::info;
 
@@ -174,6 +175,7 @@ pub async fn list_drilldown_paths(
 pub async fn create_drilldown_path(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Json(req): Json<CreateDrilldownPathRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating drilldown path: {}", req.name);
@@ -189,7 +191,14 @@ pub async fn create_drilldown_path(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -342,6 +351,7 @@ pub async fn get_drilldown_path(
 pub async fn update_drilldown_path(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDrilldownPathRequest>,
 ) -> Json<serde_json::Value> {
@@ -357,7 +367,14 @@ pub async fn update_drilldown_path(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -438,6 +455,7 @@ now,
 pub async fn delete_drilldown_path(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting drilldown path: {}", id);
@@ -452,7 +470,14 @@ pub async fn delete_drilldown_path(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -511,6 +536,7 @@ pub async fn delete_drilldown_path(
 pub async fn drill_down(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Json(req): Json<DrilldownQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Drilling down on path: {}", req.path_id);
@@ -526,7 +552,14 @@ pub async fn drill_down(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -635,6 +668,7 @@ now,
 pub async fn roll_up(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Json(req): Json<DrilldownQueryRequest>,
 ) -> Json<serde_json::Value> {
     info!("Rolling up on path: {}", req.path_id);
@@ -650,7 +684,14 @@ pub async fn roll_up(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_write_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(

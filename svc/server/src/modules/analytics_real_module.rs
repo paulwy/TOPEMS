@@ -64,7 +64,12 @@ impl AnalyticsRealModule {
         };
 
         // 4. 业务路由（create_protected_routes 已含 require_permission + with_state）
-        let protected_routes = routes::create_protected_routes(app_state);
+        //    BI 写端点复用请求事务（RlsTxnCell）；宿主进程也必须注入，与独立部署 main.rs 对齐。
+        let protected_routes =
+            routes::create_protected_routes(app_state).layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ));
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn_with_state(
