@@ -128,7 +128,7 @@ pub async fn list_categories(
     let status = query.status.clone().filter(|s| !s.is_empty());
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_flow_categories
+        r#"SELECT COUNT(*) FROM public.core_flow_categories
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR status = $1)
              AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' OR code ILIKE '%' || $2 || '%')"#,
@@ -147,7 +147,7 @@ pub async fn list_categories(
 
     let rows: Vec<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
-           FROM core_flow_categories
+           FROM public.core_flow_categories
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR status = $1)
              AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' OR code ILIKE '%' || $2 || '%')
@@ -199,7 +199,7 @@ pub async fn get_category(
     };
     let row: Option<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
-           FROM core_flow_categories WHERE id = $1 AND deleted_at IS NULL"#,
+           FROM public.core_flow_categories WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -257,7 +257,7 @@ pub async fn create_category(
     let status = payload.status.unwrap_or_else(|| "active".to_string());
 
     let row: Option<CategoryRow> = match sqlx::query_as(
-        r#"INSERT INTO core_flow_categories
+        r#"INSERT INTO public.core_flow_categories
              (name, code, parent_id, sort_order, status, description, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id"#,
@@ -304,7 +304,7 @@ pub async fn update_category(
     };
     let existing: Option<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
-           FROM core_flow_categories WHERE id = $1 AND deleted_at IS NULL"#,
+           FROM public.core_flow_categories WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -329,7 +329,7 @@ pub async fn update_category(
     let description = payload.description.clone().or(cur.description);
 
     let row: Option<CategoryRow> = match sqlx::query_as(
-        r#"UPDATE core_flow_categories
+        r#"UPDATE public.core_flow_categories
            SET name = $2, code = $3, parent_id = $4, sort_order = $5, status = $6, description = $7,
                updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
@@ -375,7 +375,7 @@ pub async fn delete_category(
         }
     };
     let res = sqlx::query(
-        r#"UPDATE core_flow_categories SET deleted_at = NOW(), updated_at = NOW()
+        r#"UPDATE public.core_flow_categories SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
@@ -411,7 +411,7 @@ pub async fn list_active_categories(
     };
     let rows: Vec<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
-           FROM core_flow_categories
+           FROM public.core_flow_categories
            WHERE deleted_at IS NULL AND status = 'active'
            ORDER BY sort_order ASC, created_at ASC"#,
     )
@@ -467,7 +467,7 @@ pub async fn get_category_tree(
     };
     let rows: Vec<CategoryRow> = match sqlx::query_as(
         r#"SELECT id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id
-           FROM core_flow_categories
+           FROM public.core_flow_categories
            WHERE deleted_at IS NULL
            ORDER BY sort_order ASC, created_at ASC"#,
     )
@@ -529,7 +529,7 @@ pub async fn sort_categories(
     for (idx, id) in payload.ids.iter().enumerate() {
         let sort_order = i32::try_from(idx).unwrap_or(i32::MAX);
         let res = sqlx::query(
-            "UPDATE core_flow_categories SET sort_order = $2, updated_at = NOW() WHERE id = $1",
+            "UPDATE public.core_flow_categories SET sort_order = $2, updated_at = NOW() WHERE id = $1",
         )
         .bind(id)
         .bind(sort_order)

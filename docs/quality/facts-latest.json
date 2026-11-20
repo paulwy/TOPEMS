@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T05:02:38.541Z",
+  "generated_at": "2026-11-20T05:27:33.483Z",
   "root": "/Users/air/TOPEMS",
   "txn": {
     "total": {
@@ -45,20 +45,17 @@
   "schema_prefix": {
     "scanned_files": 1401,
     "sql_literals": 6515,
-    "violations": 1134,
+    "violations": 929,
     "by_level": {
       "AMBIGUOUS": 0,
       "CROSS_SCHEMA": 0,
-      "SEARCH_PATH_DEPENDENT": 604,
-      "UNKNOWN": 530
+      "SEARCH_PATH_DEPENDENT": 508,
+      "UNKNOWN": 421
     },
-    "baseline_keys": 225,
+    "baseline_keys": 200,
     "new_violations": 0,
-    "stale_keys": 2,
-    "stale_samples": [
-      "svc/finance/src/services/finance/database.rs::pg_namespace",
-      "svc/finance/src/services/finance/database.rs::pg_type"
-    ],
+    "stale_keys": 0,
+    "stale_samples": [],
     "gate_exit_ok": true
   },
   "txn_write_non2xx": {
@@ -74,17 +71,17 @@
     "generated_at": "2026-11-12T12:37:17.618Z"
   },
   "ledger": {
-    "ok": false,
-    "problems": 1,
+    "ok": true,
+    "problems": 0,
     "ledgers": [
       {
         "ledger": "scripts/ci/schema-prefix-baseline.json",
         "owner": "db-platform",
         "reviewed_at": "2026-11-16",
         "expires_days": 90,
-        "stale_keys": 2,
+        "stale_keys": 0,
         "unregistered": null,
-        "ok": false
+        "ok": true
       },
       {
         "ledger": "scripts/ci/request-txn-baseline.json",
@@ -144,5 +141,5 @@
     },
     "tenants_in_prod": 1
   },
-  "fingerprint": "9f2e82038b4c2df3739c3b84659b821a36dd72f2be34977420ddf069e4d95e67"
+  "fingerprint": "14c0d951d3810628fbccef3f3ee944cc39be1833cc8d9b461d94dc036817e9f5"
 }

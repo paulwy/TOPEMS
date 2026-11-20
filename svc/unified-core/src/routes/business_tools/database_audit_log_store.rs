@@ -228,7 +228,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO permission_audit_logs
+            INSERT INTO public.permission_audit_logs
                 (tenant_id, user_id, action, old_value, new_value, changed_by, changed_at, ip_address, user_agent, details)
             VALUES
                 ($1, $2, $3, $4, $5, $6, $7, $8::inet, $9, $10)
@@ -267,7 +267,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
 
         // Count total matching entries
         let count_sql = format!(
-            "SELECT COUNT(*) as count FROM permission_audit_logs {}",
+            "SELECT COUNT(*) as count FROM public.permission_audit_logs {}",
             where_clause
         );
         let count_row = sqlx::query(sqlx::AssertSqlSafe(count_sql))
@@ -282,7 +282,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
         let offset = query.offset.min(total as usize);
         let limit = query.limit;
         let entries_sql = format!(
-            "SELECT * FROM permission_audit_logs {} ORDER BY changed_at DESC LIMIT {} OFFSET {}",
+            "SELECT * FROM public.permission_audit_logs {} ORDER BY changed_at DESC LIMIT {} OFFSET {}",
             where_clause, limit, offset
         );
         let rows = sqlx::query(sqlx::AssertSqlSafe(entries_sql))
@@ -308,7 +308,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
             .parse()
             .map_err(|_| AuditLogError::NotFound(format!("Invalid audit log ID: {}", id)))?;
 
-        let row = sqlx::query("SELECT * FROM permission_audit_logs WHERE id = $1")
+        let row = sqlx::query("SELECT * FROM public.permission_audit_logs WHERE id = $1")
             .bind(id_i64)
             .fetch_optional(&*self.pool)
             .await
@@ -326,7 +326,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
         clippy::cast_sign_loss
     )]
     async fn count(&self) -> Result<usize, AuditLogError> {
-        let row = sqlx::query("SELECT COUNT(*) as count FROM permission_audit_logs")
+        let row = sqlx::query("SELECT COUNT(*) as count FROM public.permission_audit_logs")
             .fetch_one(&*self.pool)
             .await
             .map_err(|e| AuditLogError::StoreError(format!("Failed to count audit logs: {}", e)))?;

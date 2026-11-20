@@ -228,7 +228,7 @@ impl MigrationServiceLayer {
 
             sqlx::query(
                 r#"
-                INSERT INTO core_migration_history (plugin_name, version, name, description, applied_at, duration_ms, success)
+                INSERT INTO public.core_migration_history (plugin_name, version, name, description, applied_at, duration_ms, success)
                 VALUES ($1, $2, $3, $4, NOW(), $5, true)
                 ON CONFLICT (plugin_name, version) DO UPDATE SET applied_at = NOW()
                 "#,
@@ -257,7 +257,7 @@ impl MigrationServiceLayer {
 
         let latest_migration: Option<MigrationHistory> = sqlx::query_as(
             r#"
-            SELECT id, plugin_name, version, name, description, applied_at, duration_ms, success, error_message, created_at FROM core_migration_history
+            SELECT id, plugin_name, version, name, description, applied_at, duration_ms, success, error_message, created_at FROM public.core_migration_history
             WHERE plugin_name = $1 AND success = true
             ORDER BY applied_at DESC LIMIT 1
             "#,
@@ -270,7 +270,7 @@ impl MigrationServiceLayer {
             Some(migration) => {
                 sqlx::query(
                     r#"
-                    UPDATE core_migration_history
+                    UPDATE public.core_migration_history
                     SET success = false, error_message = 'Rolled back'
                     WHERE id = $1
                     "#,

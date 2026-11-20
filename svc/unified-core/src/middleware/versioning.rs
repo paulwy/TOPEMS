@@ -156,7 +156,7 @@ impl VersionConfig {
 
     pub async fn load_from_db(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
         let configs: Vec<ApiVersionConfigRecord> =
-            sqlx::query_as("SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL")
+            sqlx::query_as("SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM public.core_api_version_configs WHERE deleted_at IS NULL")
                 .fetch_all(pool)
                 .await?;
 
@@ -489,7 +489,7 @@ pub async fn list_versions(
 ) -> Json<crate::CoreResponse<Vec<ApiVersionConfigRecord>>> {
     tracing::info!("[Versioning] Listing all API versions");
 
-    let result = sqlx::query_as("SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM core_api_version_configs ORDER BY version")
+    let result = sqlx::query_as("SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM public.core_api_version_configs ORDER BY version")
         .fetch_all(&state.pool)
         .await;
 
@@ -512,7 +512,7 @@ pub async fn get_version(
     tracing::info!("[Versioning] Getting API version: {}", version);
 
     let result = sqlx::query_as(
-        "SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
+        "SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM public.core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
     )
     .bind(&version)
     .fetch_optional(&state.pool)
@@ -541,7 +541,7 @@ pub async fn create_version(
     let is_default = req.is_default.unwrap_or(false);
 
     if is_current {
-        if let Err(e) = sqlx::query("UPDATE core_api_version_configs SET is_current = false")
+        if let Err(e) = sqlx::query("UPDATE public.core_api_version_configs SET is_current = false")
             .execute(&state.pool)
             .await
         {
@@ -554,7 +554,7 @@ pub async fn create_version(
     }
 
     if is_default {
-        if let Err(e) = sqlx::query("UPDATE core_api_version_configs SET is_default = false")
+        if let Err(e) = sqlx::query("UPDATE public.core_api_version_configs SET is_default = false")
             .execute(&state.pool)
             .await
         {
@@ -568,7 +568,7 @@ pub async fn create_version(
 
     let result = sqlx::query_as(
         r#"
-        INSERT INTO core_api_version_configs (version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default)
+        INSERT INTO public.core_api_version_configs (version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *;
         "#,
@@ -609,7 +609,7 @@ pub async fn update_version_status(
 
     let result = sqlx::query_as(
         r#"
-        UPDATE core_api_version_configs
+        UPDATE public.core_api_version_configs
         SET status = $1, deprecated_since = $2, sunset_date = $3, message = $4, migration_guide = $5, changes = $6, updated_at = CURRENT_TIMESTAMP
         WHERE version = $7
         RETURNING *;
@@ -646,11 +646,12 @@ pub async fn delete_version(
 ) -> Json<crate::CoreResponse<bool>> {
     tracing::info!("[Versioning] Deleting API version: {}", version);
 
-    let result =
-        sqlx::query("UPDATE core_api_version_configs SET deleted_at = NOW() WHERE version = $1")
-            .bind(&version)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.core_api_version_configs SET deleted_at = NOW() WHERE version = $1",
+    )
+    .bind(&version)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(result) => {
@@ -676,51 +677,51 @@ pub async fn get_version_statistics(
 ) -> Json<crate::CoreResponse<VersionStatistics>> {
     tracing::info!("[Versioning] Getting version statistics");
 
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_api_version_configs")
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_api_version_configs")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let active: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_api_version_configs WHERE deleted_at IS NULL AND status = 'active'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_api_version_configs WHERE deleted_at IS NULL AND status = 'active'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let deprecated: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_api_version_configs WHERE deleted_at IS NULL AND status = 'deprecated'",
+        "SELECT COUNT(*) FROM public.core_api_version_configs WHERE deleted_at IS NULL AND status = 'deprecated'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let sunset: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_api_version_configs WHERE deleted_at IS NULL AND status = 'sunset'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_api_version_configs WHERE deleted_at IS NULL AND status = 'sunset'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let current_version: String =
-        sqlx::query_scalar("SELECT version FROM core_api_version_configs WHERE deleted_at IS NULL AND is_current = true")
+        sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_current = true")
             .fetch_one(&state.pool)
             .await
             .unwrap_or_else(|_| "v1".to_string());
 
     let default_version: String =
-        sqlx::query_scalar("SELECT version FROM core_api_version_configs WHERE deleted_at IS NULL AND is_default = true")
+        sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_default = true")
             .fetch_one(&state.pool)
             .await
             .unwrap_or_else(|_| "v1".to_string());
 
     let oldest_version: Option<String> = sqlx::query_scalar(
-        "SELECT version FROM core_api_version_configs ORDER BY version ASC LIMIT 1",
+        "SELECT version FROM public.core_api_version_configs ORDER BY version ASC LIMIT 1",
     )
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
 
     let newest_version: Option<String> = sqlx::query_scalar(
-        "SELECT version FROM core_api_version_configs ORDER BY version DESC LIMIT 1",
+        "SELECT version FROM public.core_api_version_configs ORDER BY version DESC LIMIT 1",
     )
     .fetch_optional(&state.pool)
     .await
@@ -748,13 +749,13 @@ async fn reload_version_config(state: &AppState) {
     }
 
     let current: Option<String> =
-        sqlx::query_scalar("SELECT version FROM core_api_version_configs WHERE deleted_at IS NULL AND is_current = true")
+        sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_current = true")
             .fetch_optional(&state.pool)
             .await
             .unwrap_or(None);
 
     let default: Option<String> =
-        sqlx::query_scalar("SELECT version FROM core_api_version_configs WHERE deleted_at IS NULL AND is_default = true")
+        sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_default = true")
             .fetch_optional(&state.pool)
             .await
             .unwrap_or(None);

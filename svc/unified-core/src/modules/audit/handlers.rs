@@ -90,7 +90,7 @@ pub async fn list_operation_logs(
         .map(|dt| dt.with_timezone(&Utc));
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_operation_logs
+        r#"SELECT COUNT(*) FROM public.core_operation_logs
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::uuid IS NULL OR user_id = $2)
              AND ($3::text IS NULL OR user_name ILIKE $3)
@@ -132,7 +132,7 @@ pub async fn list_operation_logs(
         r#"SELECT id, tenant_id, user_id, user_name, module, operation,
                   resource_type, resource_id, description, request_data,
                   response_status, ip_address, user_agent, trace_id, created_at
-           FROM core_operation_logs
+           FROM public.core_operation_logs
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::uuid IS NULL OR user_id = $2)
              AND ($3::text IS NULL OR user_name ILIKE $3)
@@ -221,7 +221,7 @@ pub async fn get_operation_log(
         r#"SELECT id, tenant_id, user_id, user_name, module, operation,
                   resource_type, resource_id, description, request_data,
                   response_status, ip_address, user_agent, trace_id, created_at
-           FROM core_operation_logs
+           FROM public.core_operation_logs
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(id)
@@ -277,7 +277,7 @@ pub async fn get_operation_log_stats(
     }
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_operation_logs WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,
+        r#"SELECT COUNT(*) FROM public.core_operation_logs WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -291,7 +291,7 @@ pub async fn get_operation_log_stats(
     };
 
     let by_module_rows: Vec<(String, i64)> = match sqlx::query_as(
-        r#"SELECT module, COUNT(*)::bigint FROM core_operation_logs
+        r#"SELECT module, COUNT(*)::bigint FROM public.core_operation_logs
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
            GROUP BY module ORDER BY COUNT(*) DESC"#,
     )
@@ -307,7 +307,7 @@ pub async fn get_operation_log_stats(
     };
 
     let by_operation_rows: Vec<(String, i64)> = match sqlx::query_as(
-        r#"SELECT operation, COUNT(*)::bigint FROM core_operation_logs
+        r#"SELECT operation, COUNT(*)::bigint FROM public.core_operation_logs
            WHERE ($1::uuid IS NULL OR tenant_id = $1)
            GROUP BY operation ORDER BY COUNT(*) DESC"#,
     )

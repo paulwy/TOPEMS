@@ -23,7 +23,7 @@ pub async fn record_operation_log(
 
     sqlx::query(
         r#"
-        INSERT INTO core_operation_logs (
+        INSERT INTO public.core_operation_logs (
             id, tenant_id, user_id, user_name, module, operation,
             resource_type, resource_id, description, request_data,
             response_status, ip_address, user_agent, trace_id, created_at
@@ -69,7 +69,7 @@ pub async fn get_operation_log(
         r#"SELECT id, tenant_id, user_id, user_name, module, operation,
                   resource_type, resource_id, description, request_data,
                   response_status, ip_address, user_agent, trace_id, created_at
-           FROM core_operation_logs
+           FROM public.core_operation_logs
            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(id)

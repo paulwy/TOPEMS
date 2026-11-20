@@ -101,12 +101,12 @@ pub async fn list_instances(
                    SELECT 1 FROM public.core_workflow_tasks t
                    WHERE t.instance_id = public.core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
                ) OR EXISTS (
-                   SELECT 1 FROM approvals a
+                   SELECT 1 FROM public.approvals a
                    WHERE a.workflow_instance_id = public.core_workflow_instances.id AND a.deleted_at IS NULL
                      AND (a.assignee_id = $1 OR a.approved_by = $1)
                ) OR EXISTS (
-                   SELECT 1 FROM approval_records ar
-                   JOIN approvals a ON a.id = ar.approval_id
+                   SELECT 1 FROM public.approval_records ar
+                   JOIN public.approvals a ON a.id = ar.approval_id
                    WHERE a.workflow_instance_id = public.core_workflow_instances.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
@@ -128,12 +128,12 @@ pub async fn list_instances(
                      SELECT 1 FROM public.core_workflow_tasks t
                      WHERE t.instance_id = public.core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
                  ) OR EXISTS (
-                     SELECT 1 FROM approvals a
+                     SELECT 1 FROM public.approvals a
                      WHERE a.workflow_instance_id = public.core_workflow_instances.id AND a.deleted_at IS NULL
                        AND (a.assignee_id = $4 OR a.approved_by = $4)
                  ) OR EXISTS (
-                     SELECT 1 FROM approval_records ar
-                     JOIN approvals a ON a.id = ar.approval_id
+                     SELECT 1 FROM public.approval_records ar
+                     JOIN public.approvals a ON a.id = ar.approval_id
                      WHERE a.workflow_instance_id = public.core_workflow_instances.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
@@ -168,12 +168,12 @@ pub async fn list_instances(
                    SELECT 1 FROM public.core_workflow_tasks t
                    WHERE t.instance_id = i.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
                ) OR EXISTS (
-                   SELECT 1 FROM approvals a
+                   SELECT 1 FROM public.approvals a
                    WHERE a.workflow_instance_id = i.id AND a.deleted_at IS NULL
                      AND (a.assignee_id = $1 OR a.approved_by = $1)
                ) OR EXISTS (
-                   SELECT 1 FROM approval_records ar
-                   JOIN approvals a ON a.id = ar.approval_id
+                   SELECT 1 FROM public.approval_records ar
+                   JOIN public.approvals a ON a.id = ar.approval_id
                    WHERE a.workflow_instance_id = i.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
@@ -214,12 +214,12 @@ pub async fn list_instances(
                      SELECT 1 FROM public.core_workflow_tasks t
                      WHERE t.instance_id = i.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
                  ) OR EXISTS (
-                     SELECT 1 FROM approvals a
+                     SELECT 1 FROM public.approvals a
                      WHERE a.workflow_instance_id = i.id AND a.deleted_at IS NULL
                        AND (a.assignee_id = $4 OR a.approved_by = $4)
                  ) OR EXISTS (
-                     SELECT 1 FROM approval_records ar
-                     JOIN approvals a ON a.id = ar.approval_id
+                     SELECT 1 FROM public.approval_records ar
+                     JOIN public.approvals a ON a.id = ar.approval_id
                      WHERE a.workflow_instance_id = i.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))

@@ -139,7 +139,7 @@ pub async fn list_delegates(
     let status = query.status.filter(|s| !s.is_empty());
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_flow_delegates
+        r#"SELECT COUNT(*) FROM public.core_flow_delegates
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR delegator_id = $1)
              AND ($2::uuid IS NULL OR attorney_id = $2)
@@ -160,7 +160,7 @@ pub async fn list_delegates(
 
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
-           FROM core_flow_delegates
+           FROM public.core_flow_delegates
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR delegator_id = $1)
              AND ($2::uuid IS NULL OR attorney_id = $2)
@@ -216,7 +216,7 @@ pub async fn get_delegate(
     };
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
-           FROM core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
+           FROM public.core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -260,7 +260,7 @@ pub async fn create_delegate(
     let scope_name = payload.scope.unwrap_or_else(|| "all".to_string());
 
     let row: Option<DelegateRow> = match sqlx::query_as(
-        r#"INSERT INTO core_flow_delegates
+        r#"INSERT INTO public.core_flow_delegates
              (tenant_id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason)
            VALUES ((NULLIF(current_setting('app.tenant_id', true), ''))::uuid,
                    $1, $2, $3, $4, $5, $6, $7)
@@ -309,7 +309,7 @@ pub async fn update_delegate(
         }
     };
     let row: Option<DelegateRow> = match sqlx::query_as(
-        r#"UPDATE core_flow_delegates
+        r#"UPDATE public.core_flow_delegates
            SET attorney_id = COALESCE($2, attorney_id),
                workflow_id = $3,
                scope = COALESCE($4, scope),
@@ -364,7 +364,7 @@ pub async fn delete_delegate(
         }
     };
     let res = sqlx::query(
-        r#"UPDATE core_flow_delegates SET deleted_at = NOW(), updated_at = NOW()
+        r#"UPDATE public.core_flow_delegates SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
@@ -399,7 +399,7 @@ pub async fn set_delegate_status(
     status: &str,
 ) -> ApiResponse<serde_json::Value> {
     let res = sqlx::query(
-        r#"UPDATE core_flow_delegates SET status = $2, updated_at = NOW()
+        r#"UPDATE public.core_flow_delegates SET status = $2, updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
@@ -527,7 +527,7 @@ pub async fn get_active_delegate(
     let uid = query.user_id.or_else(|| Uuid::parse_str(&claims.sub).ok());
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
-           FROM core_flow_delegates
+           FROM public.core_flow_delegates
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR delegator_id = $1)
              AND status = 'active'
@@ -569,7 +569,7 @@ pub async fn get_delegate_workflows(
     };
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
-           FROM core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
+           FROM public.core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -646,7 +646,7 @@ pub async fn check_delegation(
     let uid = query.user_id;
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
-           FROM core_flow_delegates
+           FROM public.core_flow_delegates
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR delegator_id = $1)
              AND status = 'active'

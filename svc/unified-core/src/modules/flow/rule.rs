@@ -146,7 +146,7 @@ pub async fn list_rules(
     let status = query.status.filter(|s| !s.is_empty());
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_flow_rules
+        r#"SELECT COUNT(*) FROM public.core_flow_rules
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR workflow_id = $1)
              AND ($2::text IS NULL OR rule_type = $2)
@@ -167,7 +167,7 @@ pub async fn list_rules(
 
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
-           FROM core_flow_rules
+           FROM public.core_flow_rules
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR workflow_id = $1)
              AND ($2::text IS NULL OR rule_type = $2)
@@ -223,7 +223,7 @@ pub async fn get_rule(
     };
     let row: Option<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
-           FROM core_flow_rules WHERE id = $1 AND deleted_at IS NULL"#,
+           FROM public.core_flow_rules WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -272,7 +272,7 @@ pub async fn create_rule(
     let status = payload.status.unwrap_or_else(|| "active".to_string());
 
     let row: Option<RuleRow> = match sqlx::query_as(
-        r#"INSERT INTO core_flow_rules
+        r#"INSERT INTO public.core_flow_rules
              (tenant_id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description)
            VALUES ((NULLIF(current_setting('app.tenant_id', true), ''))::uuid,
                    $1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -323,7 +323,7 @@ pub async fn update_rule(
         }
     };
     let row: Option<RuleRow> = match sqlx::query_as(
-        r#"UPDATE core_flow_rules
+        r#"UPDATE public.core_flow_rules
            SET name = COALESCE($2, name),
                workflow_id = $3,
                node_id = $4,
@@ -382,7 +382,7 @@ pub async fn delete_rule(
         }
     };
     let res = sqlx::query(
-        r#"UPDATE core_flow_rules SET deleted_at = NOW(), updated_at = NOW()
+        r#"UPDATE public.core_flow_rules SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
@@ -433,7 +433,7 @@ pub async fn get_rules_by_workflow(
     let rule_type = query.rule_type.filter(|s| !s.is_empty());
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
-           FROM core_flow_rules
+           FROM public.core_flow_rules
            WHERE deleted_at IS NULL AND workflow_id = $1
              AND ($2::text IS NULL OR rule_type = $2)
            ORDER BY priority ASC, created_at DESC"#,
@@ -474,7 +474,7 @@ pub async fn get_rules_by_node(
     };
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
-           FROM core_flow_rules
+           FROM public.core_flow_rules
            WHERE deleted_at IS NULL AND workflow_id = $1 AND node_id = $2 AND status = 'active'
            ORDER BY priority ASC, created_at DESC"#,
     )
@@ -519,7 +519,7 @@ pub async fn set_rule_status(
     status: &str,
 ) -> ApiResponse<serde_json::Value> {
     let res = sqlx::query(
-        r#"UPDATE core_flow_rules SET status = $2, updated_at = NOW()
+        r#"UPDATE public.core_flow_rules SET status = $2, updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(id)
@@ -607,7 +607,7 @@ pub async fn batch_update_rules(
     let mut updated = 0usize;
     for rule in payload.rules {
         let res = sqlx::query(
-            r#"UPDATE core_flow_rules
+            r#"UPDATE public.core_flow_rules
                SET name = $2, workflow_id = $3, node_id = $4, rule_type = $5,
                    condition = $6, action = $7, priority = $8, status = $9,
                    description = $10, updated_at = NOW()

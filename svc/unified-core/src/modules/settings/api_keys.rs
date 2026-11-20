@@ -431,7 +431,7 @@ pub async fn update_api_key(
     };
 
     let result = sqlx::query(
-        "UPDATE core_tenant_settings SET setting_value = $1, updated_at = NOW() WHERE tenant_id = $2 AND setting_key = $3 AND deleted_at IS NULL",
+        "UPDATE public.core_tenant_settings SET setting_value = $1, updated_at = NOW() WHERE tenant_id = $2 AND setting_key = $3 AND deleted_at IS NULL",
     )
     .bind(&serialized)
     .bind(tenant_id)

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-19",
+  "generated": "2026-11-20",
   "note": "既存裸表名基线。规则见 docs/database/connection-governance.md「C. schema 前缀规则」；新增条目必须人工 review（优先改成显式 schema 前缀，而不是加进基线）。",
   "entries": [
     {
@@ -397,14 +397,6 @@
     {
       "file": "svc/finance/src/services/finance/collection.rs",
       "table": "erp_collection_records"
-    },
-    {
-      "file": "svc/finance/src/services/finance/database.rs",
-      "table": "pg_namespace"
-    },
-    {
-      "file": "svc/finance/src/services/finance/database.rs",
-      "table": "pg_type"
     },
     {
       "file": "svc/finance/src/services/finance/payable.rs",
@@ -805,98 +797,6 @@
     {
       "file": "svc/search/src/handlers.rs",
       "table": "core_files"
-    },
-    {
-      "file": "svc/unified-core/src/middleware/versioning.rs",
-      "table": "core_api_version_configs"
-    },
-    {
-      "file": "svc/unified-core/src/modules/audit/handlers.rs",
-      "table": "core_operation_logs"
-    },
-    {
-      "file": "svc/unified-core/src/modules/audit/service.rs",
-      "table": "core_operation_logs"
-    },
-    {
-      "file": "svc/unified-core/src/modules/automation/mod.rs",
-      "table": "automation_rules"
-    },
-    {
-      "file": "svc/unified-core/src/modules/automation/mod.rs",
-      "table": "automation_runs"
-    },
-    {
-      "file": "svc/unified-core/src/modules/automation/mod.rs",
-      "table": "automation_variables"
-    },
-    {
-      "file": "svc/unified-core/src/modules/engagement/handlers.rs",
-      "table": "core_comments"
-    },
-    {
-      "file": "svc/unified-core/src/modules/engagement/handlers.rs",
-      "table": "core_favorites"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/category.rs",
-      "table": "core_flow_categories"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/delegate.rs",
-      "table": "core_flow_delegates"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/instance.rs",
-      "table": "approval_records"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/instance.rs",
-      "table": "approvals"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/rule.rs",
-      "table": "core_flow_rules"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/variable.rs",
-      "table": "core_flow_variable_history"
-    },
-    {
-      "file": "svc/unified-core/src/modules/flow/variable.rs",
-      "table": "core_flow_variables"
-    },
-    {
-      "file": "svc/unified-core/src/modules/migration/service.rs",
-      "table": "core_migration_history"
-    },
-    {
-      "file": "svc/unified-core/src/modules/settings/api_keys.rs",
-      "table": "core_tenant_settings"
-    },
-    {
-      "file": "svc/unified-core/src/modules/settings/smtp.rs",
-      "table": "core_tenant_settings"
-    },
-    {
-      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
-      "table": "core_tenant_modules"
-    },
-    {
-      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
-      "table": "core_tenant_usage"
-    },
-    {
-      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
-      "table": "core_tenant_users"
-    },
-    {
-      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
-      "table": "core_tenants"
-    },
-    {
-      "file": "svc/unified-core/src/routes/business_tools/database_audit_log_store.rs",
-      "table": "permission_audit_logs"
     },
     {
       "file": "svc/wms/src/modules/serial_number.rs",

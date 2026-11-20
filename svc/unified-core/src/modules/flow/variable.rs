@@ -139,10 +139,10 @@ async fn upsert_variable(
     let vt = value_type.unwrap_or_else(|| infer_value_type(&value));
     // 先写历史（旧值快照）
     let _ = sqlx::query(
-        r#"INSERT INTO core_flow_variable_history (tenant_id, variable_id, var_key, var_value, value_type, changed_by)
+        r#"INSERT INTO public.core_flow_variable_history (tenant_id, variable_id, var_key, var_value, value_type, changed_by)
            SELECT (NULLIF(current_setting('app.tenant_id', true), ''))::uuid,
                   id, var_key, var_value, value_type, NULL
-           FROM core_flow_variables
+           FROM public.core_flow_variables
            WHERE scope = $1
              AND ($2::uuid IS NULL OR instance_id = $2)
              AND ($3::uuid IS NULL OR task_id = $3)
@@ -158,7 +158,7 @@ async fn upsert_variable(
     .await;
 
     sqlx::query_as::<_, VariableRow>(
-        r#"INSERT INTO core_flow_variables (tenant_id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type)
+        r#"INSERT INTO public.core_flow_variables (tenant_id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type)
            VALUES ((NULLIF(current_setting('app.tenant_id', true), ''))::uuid, $1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (scope, instance_id, task_id, workflow_id, var_key)
              WHERE deleted_at IS NULL
@@ -221,7 +221,7 @@ async fn find_variable(
 ) -> Result<Option<VariableRow>, sqlx::Error> {
     sqlx::query_as::<_, VariableRow>(
         r#"SELECT id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type, created_at, updated_at
-           FROM core_flow_variables
+           FROM public.core_flow_variables
            WHERE scope = $1
              AND ($2::uuid IS NULL OR instance_id = $2)
              AND ($3::uuid IS NULL OR task_id = $3)
@@ -246,7 +246,7 @@ async fn delete_variable(
     key: &str,
 ) -> Result<u64, sqlx::Error> {
     let r = sqlx::query(
-        r#"UPDATE core_flow_variables SET deleted_at = NOW(), updated_at = NOW()
+        r#"UPDATE public.core_flow_variables SET deleted_at = NOW(), updated_at = NOW()
            WHERE scope = $1
              AND ($2::uuid IS NULL OR instance_id = $2)
              AND ($3::uuid IS NULL OR task_id = $3)
@@ -274,7 +274,7 @@ async fn list_variables(
 ) -> Result<(Vec<VariableRow>, i64), sqlx::Error> {
     let offset = (page - 1) * page_size;
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_flow_variables
+        r#"SELECT COUNT(*) FROM public.core_flow_variables
            WHERE scope = $1
              AND ($2::uuid IS NULL OR instance_id = $2)
              AND ($3::uuid IS NULL OR task_id = $3)
@@ -289,7 +289,7 @@ async fn list_variables(
     .await?;
     let rows = sqlx::query_as::<_, VariableRow>(
         r#"SELECT id, scope, instance_id, task_id, workflow_id, var_key, var_value, value_type, created_at, updated_at
-           FROM core_flow_variables
+           FROM public.core_flow_variables
            WHERE scope = $1
              AND ($2::uuid IS NULL OR instance_id = $2)
              AND ($3::uuid IS NULL OR task_id = $3)
@@ -593,8 +593,8 @@ pub async fn get_variable_history(
     let offset = (page - 1) * page_size;
     let rows: Vec<VariableHistoryRow> = match sqlx::query_as(
         r#"SELECT h.id, h.var_key, h.var_value, h.value_type, h.changed_by, h.created_at
-           FROM core_flow_variable_history h
-           JOIN core_flow_variables v ON v.id = h.variable_id
+           FROM public.core_flow_variable_history h
+           JOIN public.core_flow_variables v ON v.id = h.variable_id
            WHERE v.scope = 'instance' AND v.instance_id = $1 AND v.var_key = $2
            ORDER BY h.created_at DESC
            LIMIT $3 OFFSET $4"#,

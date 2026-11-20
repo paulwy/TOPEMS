@@ -207,11 +207,13 @@
         "svc/unified-core/src/modules/iam/user_permission.rs": ["iam.users"],
         "svc/unified-core/src/modules/iam/user_position.rs": ["iam.positions", "iam.user_positions", "iam.users"],
         "svc/unified-core/src/modules/tenant/handlers.rs": ["iam.users"],
+        "svc/unified-core/src/modules/engagement/handlers.rs": ["flow.core_comments", "flow.core_favorites"],
         "svc/unified-core/src/modules/flow/task.rs": ["iam.users"],
         "svc/unified-core/src/modules/flow/instance.rs": ["iam.users"],
         "svc/unified-core/src/routes/business_tools/database_permission_store.rs": ["iam.tenant_permissions", "iam.tool_permissions"]
       },
       "allow_notes": {
+        "flow": "通用评论/收藏权威表在 flow schema（P4 已删除 public.core_comments / public.core_favorites 影子表，见 20261105210000_p4a3_drop_15_remaining_shadows.sql）；仅 engagement/handlers.rs 逐表放行，调用点均包 only_own_schema_query!(\"unified-core\", ..., \"flow\")。",
         "iam": "IAM 模块宿主（svc/unified-core/src/modules/iam/**）：iam.users 是身份权威表，iam.positions/user_positions/position_*/resource_permissions 由 database/init/06_iam_schema.sql 定义；business_tools 权限存储显式读写 iam.tenant_permissions / iam.tool_permissions（public 无 tool_permissions，tenant_permissions 仅为影子表）。按文件逐表放行，不再整服务 allow iam。Node 门禁 EXTRA_OWNED_SCHEMAS 已把 iam 视为 unified-core 自有 schema。"
       }
     },

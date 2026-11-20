@@ -12,6 +12,7 @@ use axum::{
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -58,12 +59,16 @@ pub async fn list_comments(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_comments
+        only_own_schema_query!(
+            "unified-core",
+            r#"SELECT {} FROM flow.core_comments
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR entity_type = $1)
              AND ($2::text IS NULL OR entity_id = $2)
              AND {}
            ORDER BY created_at ASC"#,
+            "flow"
+        ),
         COMMENT_COLUMNS,
         tenant_scope.sql_predicate("tenant_id", "$3")
     );
@@ -126,10 +131,14 @@ pub async fn create_comment(
     };
 
     let sql = format!(
-        r#"INSERT INTO core_comments
+        only_own_schema_query!(
+            "unified-core",
+            r#"INSERT INTO flow.core_comments
              (tenant_id, content, author_id, author_name, entity_type, entity_id, parent_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING {}"#,
+            "flow"
+        ),
         COMMENT_COLUMNS
     );
 
@@ -191,10 +200,14 @@ pub async fn update_comment(
     };
 
     let sql = format!(
-        r#"UPDATE core_comments
+        only_own_schema_query!(
+            "unified-core",
+            r#"UPDATE flow.core_comments
            SET content = $1, updated_at = NOW()
            WHERE id = $2 AND author_id = $3 AND tenant_id = $4 AND deleted_at IS NULL
            RETURNING {}"#,
+            "flow"
+        ),
         COMMENT_COLUMNS
     );
 
@@ -256,10 +269,12 @@ pub async fn delete_comment(
         }
     };
 
-    let result = sqlx::query(
-        r#"UPDATE core_comments SET deleted_at = NOW()
+    let result = sqlx::query(only_own_schema_query!(
+        "unified-core",
+        r#"UPDATE flow.core_comments SET deleted_at = NOW()
            WHERE id = $1 AND author_id = $2 AND tenant_id = $3 AND deleted_at IS NULL"#,
-    )
+        "flow"
+    ))
     .bind(id)
     .bind(&claims.sub)
     .bind(tenant_id)
@@ -320,9 +335,13 @@ pub async fn list_favorites(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_favorites
+        only_own_schema_query!(
+            "unified-core",
+            r#"SELECT {} FROM flow.core_favorites
            WHERE user_id = $1 AND {}
            ORDER BY created_at DESC"#,
+            "flow"
+        ),
         FAVORITE_COLUMNS,
         tenant_scope.sql_predicate("tenant_id", "$2")
     );
@@ -378,12 +397,14 @@ pub async fn add_favorite(
         }
     };
 
-    if let Err(e) = sqlx::query(
-        r#"INSERT INTO core_favorites
+    if let Err(e) = sqlx::query(only_own_schema_query!(
+        "unified-core",
+        r#"INSERT INTO flow.core_favorites
              (tenant_id, user_id, entity_type, entity_id, entity_name)
            VALUES ($1, $2, $3, $4, $5)
            ON CONFLICT (tenant_id, user_id, entity_type, entity_id) DO NOTHING"#,
-    )
+        "flow"
+    ))
     .bind(tenant_id)
     .bind(&claims.sub)
     .bind(req.entity_type.trim())
@@ -400,17 +421,23 @@ pub async fn add_favorite(
         return ApiResponse::from(TopemsError::Internal("添加收藏失败".to_string()));
     }
 
-    let fav: Option<Favorite> = match sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {} FROM core_favorites
+    let fav_sql = format!(
+        only_own_schema_query!(
+            "unified-core",
+            r#"SELECT {} FROM flow.core_favorites
                WHERE tenant_id = $1 AND user_id = $2 AND entity_type = $3 AND entity_id = $4"#,
+            "flow"
+        ),
         FAVORITE_COLUMNS
-    )))
-    .bind(tenant_id)
-    .bind(&claims.sub)
-    .bind(req.entity_type.trim())
-    .bind(req.entity_id.trim())
-    .fetch_optional(&mut scope)
-    .await
+    );
+
+    let fav: Option<Favorite> = match sqlx::query_as(sqlx::AssertSqlSafe(fav_sql))
+        .bind(tenant_id)
+        .bind(&claims.sub)
+        .bind(req.entity_type.trim())
+        .bind(req.entity_id.trim())
+        .fetch_optional(&mut scope)
+        .await
     {
         Ok(v) => v,
         Err(e) => {
@@ -460,9 +487,11 @@ pub async fn remove_favorite(
         }
     };
 
-    let result = sqlx::query(
-        r#"DELETE FROM core_favorites WHERE id = $1 AND user_id = $2 AND tenant_id = $3"#,
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "unified-core",
+        r#"DELETE FROM flow.core_favorites WHERE id = $1 AND user_id = $2 AND tenant_id = $3"#,
+        "flow"
+    ))
     .bind(id)
     .bind(&claims.sub)
     .bind(tenant_id)
@@ -520,11 +549,15 @@ pub async fn check_favorite(
     };
 
     let sql = format!(
-        r#"SELECT EXISTS(
-             SELECT 1 FROM core_favorites
+        only_own_schema_query!(
+            "unified-core",
+            r#"SELECT EXISTS(
+             SELECT 1 FROM flow.core_favorites
              WHERE user_id = $1 AND entity_type = $2 AND entity_id = $3
                AND {}
            )"#,
+            "flow"
+        ),
         tenant_scope.sql_predicate("tenant_id", "$4")
     );
 

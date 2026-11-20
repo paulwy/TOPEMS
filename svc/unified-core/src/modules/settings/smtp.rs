@@ -95,7 +95,7 @@ pub async fn get_smtp_config(
     };
 
     let result = sqlx::query(
-        "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
+        "SELECT setting_value FROM public.core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
     )
     .bind(tenant_id)
     .bind(SMTP_CONFIG_KEY)
@@ -168,7 +168,7 @@ pub async fn update_smtp_config(
     let mut to_store = payload.clone();
     if to_store.password.is_empty() || to_store.password == PASSWORD_MASK {
         let existing = sqlx::query(
-            "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
+            "SELECT setting_value FROM public.core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
         )
         .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)
@@ -197,7 +197,7 @@ pub async fn update_smtp_config(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
         VALUES ($1, $2, $3, FALSE)
         ON CONFLICT (tenant_id, setting_key)
         DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()
@@ -258,7 +258,7 @@ pub async fn test_smtp_config(
             }
         };
         let row = sqlx::query(
-            "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
+            "SELECT setting_value FROM public.core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
         )
         .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)

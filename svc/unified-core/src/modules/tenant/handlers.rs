@@ -51,7 +51,7 @@ pub async fn list_tenants(
     let tenants: Vec<Tenant> = match (params.search, params.status, params.plan) {
         (Some(s), Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 AND plan = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -64,7 +64,7 @@ pub async fn list_tenants(
         }
         (Some(s), Some(st), None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(st)
@@ -76,7 +76,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND (name ILIKE $1 OR code ILIKE $1) AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(format!("%{}%", s))
             .bind(p)
@@ -88,7 +88,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND status = $1 AND plan = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(st)
             .bind(p)
@@ -100,7 +100,7 @@ pub async fn list_tenants(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(format!("%{}%", s))
             .bind(page_size)
@@ -111,7 +111,7 @@ pub async fn list_tenants(
         }
         (None, Some(st), None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(st)
             .bind(page_size)
@@ -122,7 +122,7 @@ pub async fn list_tenants(
         }
         (None, None, Some(p)) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND plan = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(p)
             .bind(page_size)
@@ -133,7 +133,7 @@ pub async fn list_tenants(
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+                "SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants ORDER BY created_at DESC LIMIT $1 OFFSET $2"
             )
             .bind(page_size)
             .bind(offset)
@@ -144,13 +144,13 @@ pub async fn list_tenants(
     };
 
     let total: i64 = if let Some(s) = search {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_tenants WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1")
             .bind(format!("%{}%", s))
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0)
     } else {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_tenants WHERE deleted_at IS NULL")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_tenants WHERE deleted_at IS NULL")
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0)
@@ -188,7 +188,7 @@ pub async fn get_tenant(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM public.core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&mut scope)
         .await
@@ -222,7 +222,7 @@ pub async fn get_tenant_by_code(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND code = $1")
         .bind(&code)
         .fetch_optional(&mut scope)
         .await
@@ -268,7 +268,7 @@ pub async fn create_tenant(
     let tenant_id = Uuid::new_v4();
     match sqlx::query_as::<_, Tenant>(
         r#"
-        INSERT INTO core_tenants (id, tenant_id, name, code, tenant_type, plan, license_type, license_expires_at, trial_expires_at)
+        INSERT INTO public.core_tenants (id, tenant_id, name, code, tenant_type, plan, license_type, license_expires_at, trial_expires_at)
         VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         "#,
@@ -368,7 +368,7 @@ async fn seed_tenant_defaults(
     // 4. Create the core_tenant_users membership linking admin -> tenant.
     sqlx::query(
         r#"
-        INSERT INTO core_tenant_users (tenant_id, user_id, email, role, status)
+        INSERT INTO public.core_tenant_users (tenant_id, user_id, email, role, status)
         VALUES ($1, $2, $3, 'superadmin', 'active')
         "#,
     )
@@ -518,7 +518,7 @@ async fn activate_basic_modules(
     for domain in crate::modules::tenant::tier::basic_domains() {
         sqlx::query(
             r#"
-            INSERT INTO core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
+            INSERT INTO public.core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
             VALUES ($1, $2, $3, 'basic', TRUE)
             ON CONFLICT (tenant_id, module_code) DO NOTHING
             "#,
@@ -536,7 +536,7 @@ async fn activate_basic_modules(
     for (module_code, module_name) in BASIC_MODULE_CODES.iter() {
         sqlx::query(
             r#"
-            INSERT INTO core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
+            INSERT INTO public.core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
             VALUES ($1, $2, $3, 'basic', TRUE)
             ON CONFLICT (tenant_id, module_code) DO NOTHING
             "#,
@@ -599,7 +599,7 @@ pub async fn onboard_tenant(
     let tenant_id = Uuid::new_v4();
     let tenant: Tenant = match sqlx::query_as::<_, Tenant>(
         r#"
-        INSERT INTO core_tenants (id, tenant_id, name, code, tenant_type, plan, license_type)
+        INSERT INTO public.core_tenants (id, tenant_id, name, code, tenant_type, plan, license_type)
         VALUES ($1, $1, $2, $3, $4, $5, $6)
         RETURNING id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at
         "#,
@@ -702,7 +702,7 @@ pub async fn update_tenant(
     };
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
-        UPDATE core_tenants
+        UPDATE public.core_tenants
         SET 
             name = COALESCE($2, name),
             plan = COALESCE($3, plan),
@@ -775,7 +775,7 @@ pub async fn activate_tenant(
     };
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
-        UPDATE core_tenants
+        UPDATE public.core_tenants
         SET status = 'active', activated_at = NOW(), updated_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -816,7 +816,7 @@ pub async fn suspend_tenant(
     };
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
-        UPDATE core_tenants
+        UPDATE public.core_tenants
         SET status = 'suspended', suspended_at = NOW(), updated_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -856,7 +856,7 @@ pub async fn get_tenant_quota(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM public.core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&mut scope)
         .await
@@ -871,7 +871,7 @@ pub async fn get_tenant_quota(
                        COALESCE(storage_used_mb, 0) as storage_used_mb,
                        COALESCE(api_calls_count, 0) as api_calls_count,
                        *
-                FROM core_tenant_usage
+                FROM public.core_tenant_usage
                 WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_start <= CURRENT_DATE AND period_end >= CURRENT_DATE
                 ORDER BY period_start DESC LIMIT 1
                 "#,
@@ -944,7 +944,7 @@ pub async fn list_tenant_modules(
         }
     };
     let modules: Vec<TenantModule> = sqlx::query_as(
-        "SELECT id, tenant_id, module_code, module_name, tier, is_active, activated_at, expires_at  FROM core_tenant_modules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY activated_at DESC",
+        "SELECT id, tenant_id, module_code, module_name, tier, is_active, activated_at, expires_at  FROM public.core_tenant_modules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY activated_at DESC",
     )
     .bind(tenant_id)
     .fetch_all(&mut scope)
@@ -986,7 +986,7 @@ pub async fn activate_module(
 
     match sqlx::query_as::<_, TenantModule>(
         r#"
-        INSERT INTO core_tenant_modules (tenant_id, module_code, is_active)
+        INSERT INTO public.core_tenant_modules (tenant_id, module_code, is_active)
         VALUES ($1, $2, true)
         ON CONFLICT (tenant_id, module_code) 
         DO UPDATE SET is_active = true, activated_at = NOW()
@@ -1038,7 +1038,7 @@ pub async fn deactivate_module(
     };
     let module: Option<TenantModule> = sqlx::query_as(
         r#"
-        UPDATE core_tenant_modules
+        UPDATE public.core_tenant_modules
         SET is_active = false
         WHERE tenant_id = $1 AND module_code = $2
         RETURNING *
@@ -1078,7 +1078,7 @@ pub async fn delete_tenant(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
-    let result = sqlx::query("UPDATE core_tenants SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE public.core_tenants SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut scope)
         .await;
@@ -1129,7 +1129,7 @@ pub async fn get_tenant_users(
     let users: Vec<TenantUser> = match (params.search, params.role, params.status) {
         (Some(s), Some(r), Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 AND role = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -1143,7 +1143,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), Some(r), None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 AND role = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 AND role = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -1156,7 +1156,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), None, Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -1169,7 +1169,7 @@ pub async fn get_tenant_users(
         }
         (None, Some(r), Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND role = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND role = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
             )
             .bind(tenant_id)
             .bind(r)
@@ -1182,7 +1182,7 @@ pub async fn get_tenant_users(
         }
         (Some(s), None, None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND email ILIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(format!("%{}%", s))
@@ -1194,7 +1194,7 @@ pub async fn get_tenant_users(
         }
         (None, Some(r), None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND role = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND role = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(r)
@@ -1206,7 +1206,7 @@ pub async fn get_tenant_users(
         }
         (None, None, Some(st)) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
             )
             .bind(tenant_id)
             .bind(st)
@@ -1218,7 +1218,7 @@ pub async fn get_tenant_users(
         }
         (None, None, None) => {
             sqlx::query_as(
-                "SELECT id, tenant_id, user_id, created_at, last_login  FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT id, tenant_id, user_id, created_at, last_login  FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(tenant_id)
             .bind(page_size)
@@ -1230,7 +1230,7 @@ pub async fn get_tenant_users(
     };
 
     let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -1291,7 +1291,7 @@ pub async fn invite_member(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO core_tenant_users (id, tenant_id, user_id, email, role, status, created_at)
+        INSERT INTO public.core_tenant_users (id, tenant_id, user_id, email, role, status, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
     )
@@ -1344,7 +1344,7 @@ pub async fn remove_member(
         }
     };
     let result = sqlx::query(
-        "UPDATE core_tenant_users SET deleted_at = NOW() WHERE tenant_id = $1 AND user_id = $2",
+        "UPDATE public.core_tenant_users SET deleted_at = NOW() WHERE tenant_id = $1 AND user_id = $2",
     )
     .bind(tenant_id)
     .bind(user_id)
@@ -1388,7 +1388,7 @@ pub async fn update_member_role(
     };
     let user: Option<TenantUser> = sqlx::query_as(
         r#"
-        UPDATE core_tenant_users
+        UPDATE public.core_tenant_users
         SET role = $1, status = $2
         WHERE tenant_id = $3 AND user_id = $4
         RETURNING *
@@ -1441,7 +1441,7 @@ pub async fn get_tenant_stats(
         }
     };
     let total_users: i32 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(id)
     .fetch_one(&mut scope)
@@ -1449,7 +1449,7 @@ pub async fn get_tenant_stats(
     .unwrap_or(0);
 
     let active_users: i32 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
+        "SELECT COUNT(*) FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
     )
     .bind(id)
     .fetch_one(&mut scope)
@@ -1459,7 +1459,7 @@ pub async fn get_tenant_stats(
     let storage_used_gb: f64 = sqlx::query_scalar(
         r#"
         SELECT COALESCE(SUM(storage_used_mb), 0) / 1024.0 
-        FROM core_tenant_usage 
+        FROM public.core_tenant_usage 
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_end >= CURRENT_DATE
         "#,
     )
@@ -1471,7 +1471,7 @@ pub async fn get_tenant_stats(
     let api_requests_today: i64 = sqlx::query_scalar(
         r#"
         SELECT COALESCE(SUM(api_calls_count), 0) 
-        FROM core_tenant_usage 
+        FROM public.core_tenant_usage 
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_start <= CURRENT_DATE AND period_end >= CURRENT_DATE
         "#,
     )
@@ -1524,7 +1524,7 @@ pub async fn get_usage_metrics(
         }
     };
     let users_count: i32 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) FROM public.core_tenant_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(id)
     .fetch_one(&mut scope)
@@ -1534,7 +1534,7 @@ pub async fn get_usage_metrics(
     let storage_used_gb: f64 = sqlx::query_scalar(
         r#"
         SELECT COALESCE(SUM(storage_used_mb), 0) / 1024.0 
-        FROM core_tenant_usage 
+        FROM public.core_tenant_usage 
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_end >= CURRENT_DATE
         "#,
     )
@@ -1546,7 +1546,7 @@ pub async fn get_usage_metrics(
     let api_requests_today: i64 = sqlx::query_scalar(
         r#"
         SELECT COALESCE(SUM(api_calls_count), 0) 
-        FROM core_tenant_usage 
+        FROM public.core_tenant_usage 
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_start <= CURRENT_DATE AND period_end >= CURRENT_DATE
         "#,
     )
@@ -1588,12 +1588,13 @@ pub async fn get_billing_info(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
-    let row =
-        sqlx::query("SELECT plan, status FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
-            .bind(id)
-            .fetch_optional(&mut scope)
-            .await
-            .unwrap_or(None);
+    let row = sqlx::query(
+        "SELECT plan, status FROM public.core_tenants WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    .unwrap_or(None);
 
     let _ = scope.commit().await;
 
@@ -1667,7 +1668,7 @@ pub async fn get_current_tenant_context(
             }
         };
         let membership = sqlx::query_scalar::<_, Uuid>(
-            "SELECT tenant_id FROM core_tenant_users WHERE deleted_at IS NULL AND user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+            "SELECT tenant_id FROM public.core_tenant_users WHERE deleted_at IS NULL AND user_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 1",
         )
         .bind(user_id)
         .fetch_optional(&mut scope)
@@ -1733,8 +1734,8 @@ pub async fn get_my_tenants(
         }
     };
     let tenants: Vec<Tenant> = sqlx::query_as(
-        "SELECT t.* FROM core_tenants t
-         INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
+        "SELECT t.* FROM public.core_tenants t
+         INNER JOIN public.core_tenant_users tu ON t.id = tu.tenant_id
          WHERE t.deleted_at IS NULL AND tu.user_id = $1 AND tu.status = 'active' AND ($2::uuid IS NULL OR t.tenant_id = $2)
          ORDER BY t.created_at DESC",
     )
@@ -1800,7 +1801,7 @@ pub async fn switch_tenant(
         }
     };
     let tenant_member: Option<(Uuid, String)> = sqlx::query_as(
-        "SELECT tenant_id, role FROM core_tenant_users
+        "SELECT tenant_id, role FROM public.core_tenant_users
          WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND user_id = $2 AND status = 'active'",
     )
     .bind(tenant_id)
@@ -1815,7 +1816,7 @@ pub async fn switch_tenant(
     };
 
     // 获取租户信息
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await
@@ -1889,7 +1890,7 @@ pub async fn get_tenant_by_slug(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM core_tenants WHERE deleted_at IS NULL AND code = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at  FROM public.core_tenants WHERE deleted_at IS NULL AND code = $1")
         .bind(&slug)
         .fetch_optional(&mut scope)
         .await
@@ -2088,11 +2089,13 @@ async fn tenant_features_read(
         Ok(scope) => scope,
         Err(e) => return Err(TopemsError::internal("读取租户特性失败", e)),
     };
-    let row = sqlx::query("SELECT features FROM core_tenants WHERE id = $1 AND deleted_at IS NULL")
-        .bind(tenant_id)
-        .fetch_optional(&mut scope)
-        .await
-        .map_err(|e| TopemsError::internal("读取租户特性失败", e))?;
+    let row = sqlx::query(
+        "SELECT features FROM public.core_tenants WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    .map_err(|e| TopemsError::internal("读取租户特性失败", e))?;
     let _ = scope.commit().await;
     match row {
         Some(r) => {
@@ -2131,7 +2134,7 @@ async fn tenant_features_write(
         Err(e) => return Err(TopemsError::internal("写入租户特性失败", e)),
     };
     sqlx::query(
-        "UPDATE core_tenants SET features = $2, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        "UPDATE public.core_tenants SET features = $2, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&value)
@@ -3322,12 +3325,13 @@ async fn tenant_billing_default(
             return serde_json::json!({"plan": "free", "status": "inactive"});
         }
     };
-    let row =
-        sqlx::query("SELECT plan, status FROM core_tenants WHERE id = $1 AND deleted_at IS NULL")
-            .bind(tenant_id)
-            .fetch_optional(&mut scope)
-            .await
-            .unwrap_or(None);
+    let row = sqlx::query(
+        "SELECT plan, status FROM public.core_tenants WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    .unwrap_or(None);
     let _ = scope.commit().await;
     match row {
         Some(r) => {
@@ -3518,7 +3522,7 @@ pub async fn get_tenant_analytics_overview(
         }
     };
     let usage: serde_json::Value = sqlx::query(
-        "SELECT COALESCE(users_count,0) AS users, COALESCE(storage_used_mb,0) AS storage_mb, COALESCE(api_calls_count,0) AS api_calls FROM core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 1",
+        "SELECT COALESCE(users_count,0) AS users, COALESCE(storage_used_mb,0) AS storage_mb, COALESCE(api_calls_count,0) AS api_calls FROM public.core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 1",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -3530,7 +3534,7 @@ pub async fn get_tenant_analytics_overview(
     }))
     .unwrap_or(serde_json::json!({"users": 0, "storage_mb": 0, "api_calls": 0}));
     let members: i64 = sqlx::query(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL",
+        "SELECT COUNT(*) FROM public.core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -3538,7 +3542,7 @@ pub async fn get_tenant_analytics_overview(
     .map(|r| r.get::<i64, _>("count"))
     .unwrap_or(0);
     let modules: i64 = sqlx::query(
-        "SELECT COUNT(*) FROM core_tenant_modules WHERE tenant_id = $1 AND is_active = TRUE",
+        "SELECT COUNT(*) FROM public.core_tenant_modules WHERE tenant_id = $1 AND is_active = TRUE",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -3582,7 +3586,7 @@ pub async fn get_tenant_usage(
         }
     };
     let rows: Vec<serde_json::Value> = sqlx::query(
-        "SELECT period_start::text, period_end::text, users_count, storage_used_mb, api_calls_count, base_cost::text FROM core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 12",
+        "SELECT period_start::text, period_end::text, users_count, storage_used_mb, api_calls_count, base_cost::text FROM public.core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 12",
     )
     .bind(tenant_id)
     .fetch_all(&mut scope)
@@ -3758,7 +3762,7 @@ pub async fn get_tenant_user_stats(
         }
     };
     let by_role: Vec<serde_json::Value> = sqlx::query(
-        "SELECT role, COUNT(*) AS cnt FROM core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL GROUP BY role",
+        "SELECT role, COUNT(*) AS cnt FROM public.core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL GROUP BY role",
     )
     .bind(tenant_id)
     .fetch_all(&mut scope)
@@ -3794,7 +3798,7 @@ pub async fn get_tenant_real_time(
         }
     };
     let active: i64 = sqlx::query(
-        "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL AND status = 'active'",
+        "SELECT COUNT(*) FROM public.core_tenant_users WHERE tenant_id = $1 AND deleted_at IS NULL AND status = 'active'",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -3845,7 +3849,7 @@ pub async fn get_governance_trends(
         }
     };
     let rows: Vec<serde_json::Value> = sqlx::query(
-        "SELECT period_start::text, period_end::text, COALESCE(SUM(users_count),0)::bigint AS users_count, COALESCE(SUM(storage_used_mb),0)::bigint AS storage_used_mb, COALESCE(SUM(api_calls_count),0)::bigint AS api_calls_count, COALESCE(SUM(base_cost),0)::text AS base_cost FROM core_tenant_usage GROUP BY period_start, period_end ORDER BY period_start DESC LIMIT 6",
+        "SELECT period_start::text, period_end::text, COALESCE(SUM(users_count),0)::bigint AS users_count, COALESCE(SUM(storage_used_mb),0)::bigint AS storage_used_mb, COALESCE(SUM(api_calls_count),0)::bigint AS api_calls_count, COALESCE(SUM(base_cost),0)::text AS base_cost FROM public.core_tenant_usage GROUP BY period_start, period_end ORDER BY period_start DESC LIMIT 6",
     )
     .fetch_all(&mut scope)
     .await

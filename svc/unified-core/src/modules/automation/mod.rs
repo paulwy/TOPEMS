@@ -229,7 +229,7 @@ pub async fn list_rules(
     let status = params.status.clone();
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM automation_rules
+        r#"SELECT COUNT(*) FROM public.automation_rules
            WHERE ($1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)"#,
     )
@@ -240,7 +240,7 @@ pub async fn list_rules(
     .unwrap_or(0);
 
     let items: Vec<AutomationRule> = sqlx::query_as(
-        r#"SELECT * FROM automation_rules
+        r#"SELECT * FROM public.automation_rules
            WHERE ($1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
@@ -264,7 +264,7 @@ pub async fn get_rule(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> =
-        sqlx::query_as("SELECT * FROM automation_rules WHERE id = $1")
+        sqlx::query_as("SELECT * FROM public.automation_rules WHERE id = $1")
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -287,7 +287,7 @@ pub async fn get_rule_by_code(
     Path(code): Path<String>,
 ) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> =
-        sqlx::query_as("SELECT * FROM automation_rules WHERE code = $1")
+        sqlx::query_as("SELECT * FROM public.automation_rules WHERE code = $1")
             .bind(&code)
             .fetch_one(&state.pool)
             .await;
@@ -322,7 +322,7 @@ pub async fn create_rule(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by, tenant_id)
+        r#"INSERT INTO public.automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            RETURNING *"#,
     )
@@ -355,7 +355,7 @@ pub async fn update_rule(
     Json(payload): Json<UpdateRuleRequest>,
 ) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        r#"UPDATE automation_rules SET
+        r#"UPDATE public.automation_rules SET
               name = COALESCE($2, name),
               description = COALESCE($3, description),
               trigger = COALESCE($4, trigger),
@@ -396,7 +396,7 @@ pub async fn delete_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
-    let result = sqlx::query("DELETE FROM automation_rules WHERE id = $1")
+    let result = sqlx::query("DELETE FROM public.automation_rules WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -418,7 +418,7 @@ pub async fn enable_rule(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        "UPDATE automation_rules SET status = 'enabled', updated_at = NOW() WHERE id = $1 RETURNING *",
+        "UPDATE public.automation_rules SET status = 'enabled', updated_at = NOW() WHERE id = $1 RETURNING *",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -442,7 +442,7 @@ pub async fn disable_rule(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        "UPDATE automation_rules SET status = 'disabled', updated_at = NOW() WHERE id = $1 RETURNING *",
+        "UPDATE public.automation_rules SET status = 'disabled', updated_at = NOW() WHERE id = $1 RETURNING *",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -466,10 +466,10 @@ pub async fn duplicate_rule(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status)
+        r#"INSERT INTO public.automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status)
            SELECT name || ' (副本)', code || '_copy_' || substr(gen_random_uuid()::text, 1, 8),
                   description, trigger, action, on_success, on_error, canvas, 'draft'
-           FROM automation_rules WHERE id = $1 RETURNING *"#,
+           FROM public.automation_rules WHERE id = $1 RETURNING *"#,
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -494,7 +494,7 @@ pub async fn trigger_rule(
     Json(payload): Json<Option<TriggerRequest>>,
 ) -> ApiResponse<Value> {
     let rule: Result<AutomationRule, _> =
-        sqlx::query_as("SELECT * FROM automation_rules WHERE id = $1")
+        sqlx::query_as("SELECT * FROM public.automation_rules WHERE id = $1")
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -513,7 +513,7 @@ pub async fn trigger_rule(
     let input_vars = payload.and_then(|p| p.input_variables);
 
     let run: Result<(Uuid,), _> = sqlx::query_as(
-        r#"INSERT INTO automation_runs (rule_id, rule_name, status, trigger_type, input_variables, started_at)
+        r#"INSERT INTO public.automation_runs (rule_id, rule_name, status, trigger_type, input_variables, started_at)
            VALUES ($1, $2, 'running', 'manual', $3, NOW())
            RETURNING id"#,
     )
@@ -526,7 +526,7 @@ pub async fn trigger_rule(
     match run {
         Ok((run_id,)) => {
             let _ = sqlx::query(
-                "UPDATE automation_rules SET run_count = run_count + 1, last_run_at = NOW() WHERE id = $1",
+                "UPDATE public.automation_rules SET run_count = run_count + 1, last_run_at = NOW() WHERE id = $1",
             )
             .bind(id)
             .execute(&state.pool)
@@ -564,7 +564,7 @@ pub async fn list_runs(
     let status = params.status.clone();
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM automation_runs
+        r#"SELECT COUNT(*) FROM public.automation_runs
            WHERE ($1::uuid IS NULL OR rule_id = $1)
              AND ($2::text IS NULL OR status = $2)"#,
     )
@@ -575,7 +575,7 @@ pub async fn list_runs(
     .unwrap_or(0);
 
     let items: Vec<AutomationRun> = sqlx::query_as(
-        r#"SELECT * FROM automation_runs
+        r#"SELECT * FROM public.automation_runs
            WHERE ($1::uuid IS NULL OR rule_id = $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
@@ -599,7 +599,7 @@ pub async fn get_run(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRun> {
     let run: Result<AutomationRun, _> =
-        sqlx::query_as("SELECT * FROM automation_runs WHERE id = $1")
+        sqlx::query_as("SELECT * FROM public.automation_runs WHERE id = $1")
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -619,7 +619,7 @@ pub async fn get_run(
 
 pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Value> {
     let run: Result<AutomationRun, _> =
-        sqlx::query_as("SELECT * FROM automation_runs WHERE id = $1")
+        sqlx::query_as("SELECT * FROM public.automation_runs WHERE id = $1")
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -637,7 +637,7 @@ pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> A
     };
 
     let new_run: Result<(Uuid,), _> = sqlx::query_as(
-        r#"INSERT INTO automation_runs (rule_id, rule_name, status, trigger_type, input_variables, started_at)
+        r#"INSERT INTO public.automation_runs (rule_id, rule_name, status, trigger_type, input_variables, started_at)
            VALUES ($1, $2, 'running', 'retry', $3, NOW())
            RETURNING id"#,
     )
@@ -661,7 +661,7 @@ pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> A
 
 pub async fn cancel_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Value> {
     let result = sqlx::query(
-        "UPDATE automation_runs SET status = 'cancelled', completed_at = NOW() WHERE id = $1 AND status = 'running'",
+        "UPDATE public.automation_runs SET status = 'cancelled', completed_at = NOW() WHERE id = $1 AND status = 'running'",
     )
     .bind(id)
     .execute(&state.pool)
@@ -686,7 +686,7 @@ pub async fn get_run_steps(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
     let steps: Result<Option<Value>, _> =
-        sqlx::query_scalar("SELECT steps FROM automation_runs WHERE id = $1")
+        sqlx::query_scalar("SELECT steps FROM public.automation_runs WHERE id = $1")
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -710,7 +710,7 @@ pub async fn get_run_logs(
     Query(_params): Query<RunLogQueryParams>,
 ) -> ApiResponse<Value> {
     let logs: Result<Option<String>, _> =
-        sqlx::query_scalar("SELECT logs FROM automation_runs WHERE id = $1")
+        sqlx::query_scalar("SELECT logs FROM public.automation_runs WHERE id = $1")
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -753,7 +753,7 @@ pub async fn purge_runs(
     Json(payload): Json<PurgeRequest>,
 ) -> ApiResponse<Value> {
     let result = sqlx::query(
-        r#"DELETE FROM automation_runs
+        r#"DELETE FROM public.automation_runs
            WHERE ($1::text IS NULL OR created_at < $1::timestamp)
              AND ($2::text IS NULL OR status = $2)"#,
     )
@@ -795,7 +795,7 @@ pub async fn list_variables(
     let search = params.search.clone().unwrap_or_default();
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM automation_variables
+        r#"SELECT COUNT(*) FROM public.automation_variables
            WHERE ($1::text IS NULL OR scope = $1)
              AND ($2::uuid IS NULL OR rule_id = $2)
              AND ($3 = '' OR key ILIKE '%' || $3 || '%')"#,
@@ -811,7 +811,7 @@ pub async fn list_variables(
         r#"SELECT id, tenant_id, key,
                   CASE WHEN is_secret THEN NULL ELSE value END as value,
                   description, scope, rule_id, is_secret, created_by, created_at, updated_at
-           FROM automation_variables
+           FROM public.automation_variables
            WHERE ($1::text IS NULL OR scope = $1)
              AND ($2::uuid IS NULL OR rule_id = $2)
              AND ($3 = '' OR key ILIKE '%' || $3 || '%')
@@ -840,7 +840,7 @@ pub async fn get_variable(
         r#"SELECT id, tenant_id, key,
                   CASE WHEN is_secret THEN NULL ELSE value END as value,
                   description, scope, rule_id, is_secret, created_by, created_at, updated_at
-           FROM automation_variables WHERE key = $1"#,
+           FROM public.automation_variables WHERE key = $1"#,
     )
     .bind(&key)
     .fetch_one(&state.pool)
@@ -881,7 +881,7 @@ pub async fn create_variable(
     let is_secret = payload.is_secret.unwrap_or(false);
 
     let var: Result<AutomationVariable, _> = sqlx::query_as(
-        r#"INSERT INTO automation_variables (key, value, description, scope, rule_id, is_secret, created_by, tenant_id)
+        r#"INSERT INTO public.automation_variables (key, value, description, scope, rule_id, is_secret, created_by, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING id, tenant_id, key,
                      CASE WHEN is_secret THEN NULL ELSE value END as value,
@@ -913,7 +913,7 @@ pub async fn update_variable(
     Json(payload): Json<UpdateVariableRequest>,
 ) -> ApiResponse<AutomationVariable> {
     let var: Result<AutomationVariable, _> = sqlx::query_as(
-        r#"UPDATE automation_variables SET
+        r#"UPDATE public.automation_variables SET
               value = COALESCE($2, value),
               description = COALESCE($3, description),
               scope = COALESCE($4, scope),
@@ -949,7 +949,7 @@ pub async fn delete_variable(
     State(state): State<AppState>,
     Path(key): Path<String>,
 ) -> ApiResponse<Value> {
-    let result = sqlx::query("DELETE FROM automation_variables WHERE key = $1")
+    let result = sqlx::query("DELETE FROM public.automation_variables WHERE key = $1")
         .bind(&key)
         .execute(&state.pool)
         .await;
@@ -971,7 +971,7 @@ pub async fn reveal_variable(
     Path(key): Path<String>,
 ) -> ApiResponse<Value> {
     let value: Result<Option<String>, _> = sqlx::query_scalar(
-        "SELECT value FROM automation_variables WHERE key = $1 AND is_secret = true",
+        "SELECT value FROM public.automation_variables WHERE key = $1 AND is_secret = true",
     )
     .bind(&key)
     .fetch_one(&state.pool)
@@ -1010,7 +1010,7 @@ pub async fn bulk_import_variables(
         let is_secret = var.is_secret.unwrap_or(false);
 
         let result = sqlx::query(
-            r#"INSERT INTO automation_variables (key, value, description, scope, rule_id, is_secret, created_by, tenant_id)
+            r#"INSERT INTO public.automation_variables (key, value, description, scope, rule_id, is_secret, created_by, tenant_id)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                ON CONFLICT (tenant_id, key) DO NOTHING"#,
         )
@@ -1042,36 +1042,36 @@ pub async fn bulk_import_variables(
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_dashboard_stats(State(state): State<AppState>) -> ApiResponse<DashboardStats> {
-    let total_rules: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM automation_rules")
+    let total_rules: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_rules")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let enabled_rules: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM automation_rules WHERE status = 'enabled'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_rules WHERE status = 'enabled'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
-    let total_runs: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs")
+    let total_runs: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let successful_runs: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs WHERE status = 'success'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs WHERE status = 'success'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let failed_runs: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs WHERE status = 'failed'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs WHERE status = 'failed'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let running_runs: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs WHERE status = 'running'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs WHERE status = 'running'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -1083,22 +1083,24 @@ pub async fn get_dashboard_stats(State(state): State<AppState>) -> ApiResponse<D
     };
 
     let avg_duration: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(duration_ms), 0) FROM automation_runs WHERE duration_ms IS NOT NULL",
+        "SELECT COALESCE(AVG(duration_ms), 0) FROM public.automation_runs WHERE duration_ms IS NOT NULL",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
 
-    let total_variables: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM automation_variables")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
-
-    let runs_today: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs WHERE created_at >= CURRENT_DATE")
+    let total_variables: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_variables")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
+
+    let runs_today: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.automation_runs WHERE created_at >= CURRENT_DATE",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     ApiResponse::success(
         DashboardStats {
@@ -1197,11 +1199,12 @@ pub async fn get_designer_canvas(
     State(state): State<AppState>,
     Path(rule_id): Path<String>,
 ) -> ApiResponse<Value> {
-    let canvas: Result<Option<Value>, _> =
-        sqlx::query_scalar("SELECT canvas FROM automation_rules WHERE id::text = $1 OR code = $1")
-            .bind(&rule_id)
-            .fetch_one(&state.pool)
-            .await;
+    let canvas: Result<Option<Value>, _> = sqlx::query_scalar(
+        "SELECT canvas FROM public.automation_rules WHERE id::text = $1 OR code = $1",
+    )
+    .bind(&rule_id)
+    .fetch_one(&state.pool)
+    .await;
 
     match canvas {
         Ok(Some(c)) => ApiResponse::success(c, "查询成功"),
@@ -1225,7 +1228,7 @@ pub async fn save_designer_canvas(
     Json(payload): Json<SaveCanvasRequest>,
 ) -> ApiResponse<Value> {
     let result = sqlx::query(
-        "UPDATE automation_rules SET canvas = $2, updated_at = NOW() WHERE id::text = $1 OR code = $1",
+        "UPDATE public.automation_rules SET canvas = $2, updated_at = NOW() WHERE id::text = $1 OR code = $1",
     )
     .bind(&rule_id)
     .bind(&payload.canvas)
@@ -1255,7 +1258,7 @@ pub async fn sync_to_rule(
     Path(rule_id): Path<String>,
 ) -> ApiResponse<Value> {
     let result = sqlx::query(
-        "UPDATE automation_rules SET updated_at = NOW() WHERE id::text = $1 OR code = $1",
+        "UPDATE public.automation_rules SET updated_at = NOW() WHERE id::text = $1 OR code = $1",
     )
     .bind(&rule_id)
     .execute(&state.pool)
@@ -1278,11 +1281,12 @@ pub async fn sync_from_rule(
     State(state): State<AppState>,
     Path(rule_id): Path<String>,
 ) -> ApiResponse<Value> {
-    let canvas: Result<Option<Value>, _> =
-        sqlx::query_scalar("SELECT canvas FROM automation_rules WHERE id::text = $1 OR code = $1")
-            .bind(&rule_id)
-            .fetch_one(&state.pool)
-            .await;
+    let canvas: Result<Option<Value>, _> = sqlx::query_scalar(
+        "SELECT canvas FROM public.automation_rules WHERE id::text = $1 OR code = $1",
+    )
+    .bind(&rule_id)
+    .fetch_one(&state.pool)
+    .await;
 
     match canvas {
         Ok(Some(c)) => ApiResponse::success(c, "同步成功"),
