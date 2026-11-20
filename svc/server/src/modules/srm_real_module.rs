@@ -12,14 +12,13 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
-use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
 use topems_srm::modules;
-use topems_srm::schema_defense;
 
 /// 真实 SRM 模块：持有数据库连接池 + 完整业务路由
 pub struct SrmRealModule {
@@ -47,18 +46,6 @@ impl SrmRealModule {
         // search_path 优先 srm schema（显式传入，不依赖进程变量）
         let ctx = bootstrap_service_with_search_path(&config, "srm, public, shared").await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
-
-        // DB 初始化（schema_defense 迁移验证，失败不阻塞）
-        if let Err(e) = default_init_db(
-            &ctx.db,
-            "srm",
-            false,
-            schema_defense::run_schema_migration_and_verify,
-        )
-        .await
-        {
-            tracing::warn!("SRM 数据库初始化警告（不阻塞）: {}", e);
-        }
 
         // 依赖构造（与独立部署 main.rs 一致）
         let l2_config = L2CacheConfig {
