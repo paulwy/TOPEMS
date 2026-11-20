@@ -6,6 +6,7 @@ use topems_shared_core::cache::{
 };
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     require_event_tenant, CacheInvalidatedPayload, Event, EventPublisher, EventResult,
     EventSubscriber, EventType, PurchaseOrderCreatedPayload, ScmPurchasePlanCreatedPayload,
@@ -72,14 +73,15 @@ impl SrmEventHandlers {
             TopemsError::ValidationFailed(format!("解析采购计划创建事件 payload 失败: {}", e))
         })?;
 
-        // 该表有租户维度且事件本应携带租户：缺失时告警并跳过联动，禁止写零 UUID 共享行。
-        let tenant_id = match require_event_tenant(&event) {
-            Ok(t) => t.get(),
-            Err(e) => {
-                tracing::warn!("[srm] 跳过采购计划→询价单联动：事件缺少租户上下文（{}）", e);
-                return Ok(());
-            }
-        };
+        // 该表有租户维度且事件本应携带租户：缺失/nil 显式失败进入重试/DLQ，禁止静默 ACK。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[srm] 采购计划→询价单联动缺少租户上下文 - plan_id={}: {e}",
+                    payload.plan_id
+                ))
+            })?
+            .get();
 
         tracing::debug!(
             "[srm] 采购计划创建: {} ({})，金额: {:?}，周期: {:?}",
@@ -96,6 +98,10 @@ impl SrmEventHandlers {
         );
         let title = format!("询价单 - {}", payload.plan_name);
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "srm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开采购计划联动作用域失败: {e}"))
+        })?;
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO srm.inquiries (inquiry_no, title, description, status, creator, tenant_id, created_at, updated_at)
@@ -109,17 +115,23 @@ impl SrmEventHandlers {
         .bind(now)
         .bind(now)
         .bind(tenant_id)
-        .fetch_one(&self.db)
-        .await;
+        .fetch_one(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "联动生成询价单失败 - tenant_id={tenant_id}, plan_id={}: {e}",
+                payload.plan_id
+            ))
+        })?;
 
-        match result {
-            Ok(inquiry_id) => {
-                tracing::debug!("[srm] 联动生成询价单成功: {} ({})", inquiry_no, inquiry_id);
-            }
-            Err(e) => {
-                tracing::error!("[srm] 联动生成询价单失败: {}", e);
-            }
-        }
+        tracing::debug!("[srm] 联动生成询价单成功: {} ({})", inquiry_no, result);
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交采购计划联动失败 - tenant_id={tenant_id}, plan_id={}: {e}",
+                payload.plan_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -152,36 +164,57 @@ impl SrmEventHandlers {
             _ => "medium",
         };
 
+        // 供应商分级写入必须落在事件租户内；缺租户显式失败，DB 错误进入重试/DLQ。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[srm] 供应商考评缺少租户上下文 - supplier_id={}: {e}",
+                    payload.supplier_id
+                ))
+            })?
+            .get();
+        let db = Db::new(self.db.clone(), "srm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开供应商考评作用域失败: {e}"))
+        })?;
+
         let result = sqlx::query(
-            "UPDATE srm.suppliers SET credit_rating = $1, risk_level = $2, updated_at = $3 WHERE id = $4",
+            "UPDATE srm.suppliers SET credit_rating = $1, risk_level = $2, updated_at = $3 WHERE id = $4 AND tenant_id = $5",
         )
         .bind(&grade_val)
         .bind(risk_level)
         .bind(Utc::now())
         .bind(payload.supplier_id)
-        .execute(&self.db)
-        .await;
+        .bind(tenant_id)
+        .execute(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "供应商分级更新失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
 
-        match result {
-            Ok(result) => {
-                if result.rows_affected() > 0 {
-                    tracing::info!(
-                        "[srm] 供应商分级更新成功: supplier={}, credit_rating={}, risk_level={}",
-                        payload.supplier_name,
-                        grade_val,
-                        risk_level
-                    );
-                } else {
-                    tracing::warn!(
-                        "[srm] 供应商未找到，跳过分级更新: supplier_id={}",
-                        payload.supplier_id
-                    );
-                }
-            }
-            Err(e) => {
-                tracing::error!("[srm] 供应商分级更新失败: {}", e);
-            }
+        if result.rows_affected() > 0 {
+            tracing::info!(
+                "[srm] 供应商分级更新成功: supplier={}, credit_rating={}, risk_level={}",
+                payload.supplier_name,
+                grade_val,
+                risk_level
+            );
+        } else {
+            tracing::warn!(
+                "[srm] 供应商未找到，跳过分级更新: supplier_id={}",
+                payload.supplier_id
+            );
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交供应商考评失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -197,17 +230,15 @@ impl SrmEventHandlers {
             TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e))
         })?;
 
-        // 该表有租户维度且事件本应携带租户：缺失时告警并跳过履约同步，禁止写零 UUID 共享行。
-        let tenant_id = match require_event_tenant(&event) {
-            Ok(t) => t.get(),
-            Err(e) => {
-                tracing::warn!(
-                    "[srm] 跳过采购订单→供应商履约同步：事件缺少租户上下文（{}）",
-                    e
-                );
-                return Ok(());
-            }
-        };
+        // 该表有租户维度且事件本应携带租户：缺失/nil 显式失败进入重试/DLQ，禁止静默 ACK。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[srm] 采购订单→履约同步缺少租户上下文 - order_id={}: {e}",
+                    payload.order_id
+                ))
+            })?
+            .get();
 
         tracing::debug!(
             "[srm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
@@ -217,14 +248,24 @@ impl SrmEventHandlers {
             payload.total_amount
         );
 
+        let db = Db::new(self.db.clone(), "srm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开采购履约同步作用域失败: {e}"))
+        })?;
+
         if let Some(supplier_id) = payload.supplier_id {
             let perf_count = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM srm.supplier_performance WHERE supplier_id = $1",
+                "SELECT COUNT(*) FROM srm.supplier_performance WHERE supplier_id = $1 AND tenant_id = $2",
             )
             .bind(supplier_id)
-            .fetch_one(&self.db)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
             .await
-            .unwrap_or(0);
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "查询供应商履约记录失败 - tenant_id={tenant_id}, supplier_id={supplier_id}: {e}"
+                ))
+            })?;
 
             let result = sqlx::query(
                 "INSERT INTO srm.supplier_performance (supplier_id, order_count, total_amount, last_order_date, tenant_id, created_at, updated_at)
@@ -240,24 +281,30 @@ impl SrmEventHandlers {
             .bind(Utc::now().date_naive())
             .bind(Utc::now())
             .bind(tenant_id)
-            .execute(&self.db)
-            .await;
+            .execute(&mut scope)
+            .await
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "供应商履约记录同步失败 - tenant_id={tenant_id}, supplier_id={supplier_id}: {e}"
+                ))
+            })?;
 
-            match result {
-                Ok(_) => {
-                    tracing::debug!(
-                        "[srm] 供应商履约记录同步成功: supplier_id={}, perf_records={}",
-                        supplier_id,
-                        perf_count + 1
-                    );
-                }
-                Err(e) => {
-                    tracing::error!("[srm] 供应商履约记录同步失败: {}", e);
-                }
-            }
+            tracing::debug!(
+                "[srm] 供应商履约记录同步成功: supplier_id={}, perf_records={}, rows={}",
+                supplier_id,
+                perf_count + 1,
+                result.rows_affected()
+            );
         } else {
             tracing::warn!("[srm] 采购订单无供应商ID，跳过履约记录同步");
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交采购履约同步失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                payload.order_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -296,15 +343,24 @@ impl SrmEventHandlers {
         }
 
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "srm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开供应商同步作用域失败: {e}"))
+        })?;
 
         let existing_srm_count = sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2",
         )
         .bind(payload.supplier_id)
         .bind(tenant_id)
-        .fetch_one(&self.db)
+        .fetch_one(&mut scope)
         .await
-        .unwrap_or(0);
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "查询 SRM 供应商是否存在失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
 
         if existing_srm_count > 0 {
             sqlx::query(
@@ -327,7 +383,7 @@ impl SrmEventHandlers {
             .bind(payload.supplier_id)
             .bind(now)
             .bind(tenant_id)
-            .execute(&self.db)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新 suppliers 失败: {}", e)))?;
         } else {
@@ -363,7 +419,7 @@ impl SrmEventHandlers {
             .bind(payload.supplier_id)
             .bind(now)
             .bind(now)
-            .execute(&self.db)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("创建 suppliers 失败: {}", e)))?;
         }
@@ -410,10 +466,20 @@ impl SrmEventHandlers {
         .bind(now)
         .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("写入 srm.scm_supplier_snapshots 失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "写入 srm.scm_supplier_snapshots 失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交供应商同步失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
         })?;
 
         Ok(())

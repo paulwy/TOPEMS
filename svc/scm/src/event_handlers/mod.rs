@@ -9,7 +9,7 @@ use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
+    require_event_tenant, CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
     InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
     PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, SrmSupplierCreatedPayload,
     SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload, StockInboundPayload,
@@ -144,32 +144,42 @@ impl ScmEventHandlers {
                     payload.total_amount
                 );
 
+                let tenant_id = require_event_tenant(&event)?.get();
+                let db = Db::new(self.db.clone(), "scm, public, shared");
+                let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!("打开采购订单作用域失败: {e}"))
+                })?;
+
                 let result = sqlx::query(
-                    "UPDATE scm.purchase_orders SET status = 'pending', updated_at = $1 WHERE id = $2",
+                    "UPDATE scm.purchase_orders SET status = 'pending', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
                 )
                 .bind(Utc::now())
                 .bind(payload.order_id)
-                .execute(&self.db)
-                .await;
+                .bind(tenant_id)
+                .execute(&mut scope)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "更新采购订单状态失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                        payload.order_id
+                    ))
+                })?;
 
-                match result {
-                    Ok(r) => {
-                        if r.rows_affected() > 0 {
-                            tracing::debug!(
-                                "[scm] 采购订单 {} 状态已设置为 pending",
-                                payload.order_no
-                            );
-                        } else {
-                            tracing::debug!(
-                                "[scm] 采购订单 {} 不在 SCM 模块中（可能由其他模块创建）",
-                                payload.order_no
-                            );
-                        }
-                    }
-                    Err(e) => {
-                        tracing::warn!("[scm] 更新采购订单状态失败（不阻塞主流程）: {}", e);
-                    }
+                if result.rows_affected() > 0 {
+                    tracing::debug!("[scm] 采购订单 {} 状态已设置为 pending", payload.order_no);
+                } else {
+                    tracing::debug!(
+                        "[scm] 采购订单 {} 不在 SCM 模块中（可能由其他模块创建）",
+                        payload.order_no
+                    );
                 }
+
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交采购订单状态失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                        payload.order_id
+                    ))
+                })?;
             }
             EventType::PurchaseOrderApproved => {
                 let payload: PurchaseOrderApprovedPayload = event.parse_payload().map_err(|e| {
@@ -185,32 +195,45 @@ impl ScmEventHandlers {
                     payload.approved_by
                 );
 
+                let tenant_id = require_event_tenant(&event)?.get();
+                let db = Db::new(self.db.clone(), "scm, public, shared");
+                let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!("打开采购审批作用域失败: {e}"))
+                })?;
+
                 let result = sqlx::query(
-                    "UPDATE scm.purchase_orders SET status = 'approved', updated_at = $1 WHERE id = $2",
+                    "UPDATE scm.purchase_orders SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
                 )
                 .bind(Utc::now())
                 .bind(payload.order_id)
-                .execute(&self.db)
-                .await;
+                .bind(tenant_id)
+                .execute(&mut scope)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "更新采购订单审批状态失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                        payload.order_id
+                    ))
+                })?;
 
-                match result {
-                    Ok(r) => {
-                        if r.rows_affected() > 0 {
-                            tracing::info!(
-                                "[scm] 采购订单 {} 状态已更新为 approved，通知供应商发货",
-                                payload.order_no
-                            );
-                        } else {
-                            tracing::debug!(
-                                "[scm] 采购订单 {} 不在 SCM 模块中（可能由其他模块创建）",
-                                payload.order_no
-                            );
-                        }
-                    }
-                    Err(e) => {
-                        tracing::warn!("[scm] 更新采购订单状态失败（不阻塞主流程）: {}", e);
-                    }
+                if result.rows_affected() > 0 {
+                    tracing::info!(
+                        "[scm] 采购订单 {} 状态已更新为 approved，通知供应商发货",
+                        payload.order_no
+                    );
+                } else {
+                    tracing::debug!(
+                        "[scm] 采购订单 {} 不在 SCM 模块中（可能由其他模块创建）",
+                        payload.order_no
+                    );
                 }
+
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交采购订单审批状态失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                        payload.order_id
+                    ))
+                })?;
             }
             _ => {}
         }
@@ -240,32 +263,37 @@ impl ScmEventHandlers {
                 );
 
                 if let Some(order_id) = payload.reference_order_id {
+                    let tenant_id = require_event_tenant(&event)?.get();
+                    let db = Db::new(self.db.clone(), "scm, public, shared");
+                    let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+                        TopemsError::DatabaseTransaction(format!("打开入库关联订单作用域失败: {e}"))
+                    })?;
+
                     let result = sqlx::query(
-                        "UPDATE scm.purchase_orders SET status = 'receiving', updated_at = $1 WHERE id = $2 AND status IN ('approved', 'partially_received')",
+                        "UPDATE scm.purchase_orders SET status = 'receiving', updated_at = $1 WHERE id = $2 AND tenant_id = $3 AND status IN ('approved', 'partially_received')",
                     )
                     .bind(Utc::now())
                     .bind(order_id)
-                    .execute(&self.db)
-                    .await;
+                    .bind(tenant_id)
+                    .execute(&mut scope)
+                    .await
+                    .map_err(|e| {
+                        TopemsError::DatabaseQuery(format!(
+                            "更新采购订单收货状态失败 - tenant_id={tenant_id}, order_id={order_id}: {e}"
+                        ))
+                    })?;
 
-                    match result {
-                        Ok(r) => {
-                            if r.rows_affected() > 0 {
-                                tracing::info!(
-                                    "[scm] 关联采购订单 {} 状态已更新为 receiving",
-                                    order_id
-                                );
-                            } else {
-                                tracing::debug!(
-                                    "[scm] 入库单关联的订单 {} 不在 SCM 采购订单中",
-                                    order_id
-                                );
-                            }
-                        }
-                        Err(e) => {
-                            tracing::warn!("[scm] 更新采购订单收货状态失败（不阻塞主流程）: {}", e);
-                        }
+                    if result.rows_affected() > 0 {
+                        tracing::info!("[scm] 关联采购订单 {} 状态已更新为 receiving", order_id);
+                    } else {
+                        tracing::debug!("[scm] 入库单关联的订单 {} 不在 SCM 采购订单中", order_id);
                     }
+
+                    scope.commit().await.map_err(|e| {
+                        TopemsError::DatabaseTransaction(format!(
+                            "提交采购订单收货状态失败 - tenant_id={tenant_id}, order_id={order_id}: {e}"
+                        ))
+                    })?;
                 }
             }
             EventType::StockOutbound => {
@@ -310,12 +338,26 @@ impl ScmEventHandlers {
             return Ok(());
         }
 
-        let existing_count =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scm.suppliers WHERE id = $1")
-                .bind(payload.supplier_id)
-                .fetch_one(&self.db)
-                .await
-                .unwrap_or(0);
+        // 缺租户显式失败；供应商、快照写入同一租户事务，禁止 DB 错误降级为“按不存在处理”。
+        let tenant_id = require_event_tenant(&event)?.get();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开供应商同步作用域失败: {e}"))
+        })?;
+
+        let existing_count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(payload.supplier_id)
+        .bind(tenant_id)
+        .fetch_one(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "查询供应商是否存在失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
 
         let now = Utc::now();
 
@@ -325,7 +367,7 @@ impl ScmEventHandlers {
                     name = $2, legal_name = $3, contact_person = $4, phone = $5,
                     email = $6, address = $7, tax_id = $8, status = $9,
                     sync_from_srm = TRUE, srm_supplier_id = $10, updated_at = $11
-                WHERE id = $1"#,
+                WHERE id = $1 AND tenant_id = $12"#,
             )
             .bind(payload.supplier_id)
             .bind(&payload.supplier_name)
@@ -338,22 +380,22 @@ impl ScmEventHandlers {
             .bind(&payload.status)
             .bind(payload.supplier_id)
             .bind(now)
-            .execute(&self.db)
-            .await;
+            .bind(tenant_id)
+            .execute(&mut scope)
+            .await
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "更新供应商失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                    payload.supplier_id
+                ))
+            })?;
 
-            match result {
-                Ok(r) => {
-                    tracing::info!(
-                        "[scm] 供应商 {} 已更新 (supplier_id={}, rows_affected={})",
-                        payload.supplier_name,
-                        payload.supplier_id,
-                        r.rows_affected()
-                    );
-                }
-                Err(e) => {
-                    tracing::warn!("[scm] 更新供应商失败: {}", e);
-                }
-            }
+            tracing::info!(
+                "[scm] 供应商 {} 已更新 (supplier_id={}, rows_affected={})",
+                payload.supplier_name,
+                payload.supplier_id,
+                result.rows_affected()
+            );
         } else {
             let result = sqlx::query(
                 r#"INSERT INTO scm.suppliers
@@ -363,7 +405,7 @@ impl ScmEventHandlers {
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE, $12, $13, $14)"#,
             )
             .bind(payload.supplier_id)
-            .bind(payload.tenant_id)
+            .bind(tenant_id)
             .bind(&payload.supplier_name)
             .bind(&payload.short_name)
             .bind(&payload.contact_name)
@@ -376,21 +418,21 @@ impl ScmEventHandlers {
             .bind(payload.supplier_id)
             .bind(now)
             .bind(now)
-            .execute(&self.db)
-            .await;
+            .execute(&mut scope)
+            .await
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "创建供应商失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                    payload.supplier_id
+                ))
+            })?;
 
-            match result {
-                Ok(_) => {
-                    tracing::info!(
-                        "[scm] 供应商 {} 已创建 (supplier_id={})",
-                        payload.supplier_name,
-                        payload.supplier_id
-                    );
-                }
-                Err(e) => {
-                    tracing::warn!("[scm] 创建供应商失败: {}", e);
-                }
-            }
+            tracing::info!(
+                "[scm] 供应商 {} 已创建 (supplier_id={}, rows={})",
+                payload.supplier_name,
+                payload.supplier_id,
+                result.rows_affected()
+            );
         }
 
         sqlx::query(
@@ -430,12 +472,22 @@ impl ScmEventHandlers {
         .bind(&payload.address)
         .bind(&payload.tax_number)
         .bind(&payload.status)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("写入 scm.srm_supplier_snapshots 失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "写入 scm.srm_supplier_snapshots 失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交供应商同步失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
         })?;
 
         Ok(())
@@ -513,7 +565,12 @@ impl ScmEventHandlers {
             payload.supplier_id
         );
 
+        let tenant_id = require_event_tenant(&event)?.get();
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开 SRM 供应商快照作用域失败: {e}"))
+        })?;
 
         sqlx::query(
             r#"INSERT INTO scm.srm_supplier_snapshots
@@ -538,12 +595,22 @@ impl ScmEventHandlers {
         .bind(payload.contact_email)
         .bind(payload.category.unwrap_or_else(|| "".to_string()))
         .bind(&payload.status)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("写入 srm_supplier_snapshots 失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "写入 srm_supplier_snapshots 失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交 SRM 供应商快照失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
         })?;
 
         Ok(())
@@ -561,7 +628,12 @@ impl ScmEventHandlers {
             payload.supplier_id
         );
 
+        let tenant_id = require_event_tenant(&event)?.get();
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开 SRM 供应商更新快照作用域失败: {e}"))
+        })?;
 
         sqlx::query(
             r#"INSERT INTO scm.srm_supplier_snapshots
@@ -576,12 +648,22 @@ impl ScmEventHandlers {
         .bind(payload.supplier_id)
         .bind(&payload.supplier_no)
         .bind(&payload.supplier_name)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("更新 srm_supplier_snapshots 失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "更新 srm_supplier_snapshots 失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交 SRM 供应商更新快照失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
         })?;
 
         Ok(())
@@ -604,7 +686,12 @@ impl ScmEventHandlers {
             payload.new_status
         );
 
+        let tenant_id = require_event_tenant(&event)?.get();
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开 SRM 供应商状态快照作用域失败: {e}"))
+        })?;
 
         sqlx::query(
             r#"INSERT INTO scm.srm_supplier_snapshots
@@ -620,12 +707,22 @@ impl ScmEventHandlers {
         .bind(&payload.supplier_no)
         .bind(&payload.supplier_name)
         .bind(&payload.new_status)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("更新 srm_supplier_snapshots 状态失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "更新 srm_supplier_snapshots 状态失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交 SRM 供应商状态快照失败 - tenant_id={tenant_id}, supplier_id={}: {e}",
+                payload.supplier_id
+            ))
         })?;
 
         Ok(())
@@ -704,7 +801,12 @@ impl ScmEventHandlers {
             payload.quantity
         );
 
+        let tenant_id = require_event_tenant(&event)?.get();
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开 WMS 入库快照作用域失败: {e}"))
+        })?;
 
         sqlx::query(
             r#"INSERT INTO scm.wms_inbound_order_snapshots
@@ -712,7 +814,7 @@ impl ScmEventHandlers {
                  purchase_order_id, purchase_order_number, total_quantity, received_at,
                  tenant_id, synced_at, created_at, updated_at)
             VALUES ($1, $2, $3, $4, 'purchase', 'received', $5, $6, $7, $8,
-                    NULL, $9, $9, $9)
+                    $9, $10, $10, $10)
             ON CONFLICT (id) DO UPDATE SET
                 status = 'received',
                 warehouse_id = EXCLUDED.warehouse_id,
@@ -730,21 +832,25 @@ impl ScmEventHandlers {
         .bind(payload.reference_order_no.unwrap_or_default())
         .bind(payload.quantity)
         .bind(payload.received_at)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("写入 wms_inbound_order_snapshots 失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "写入 wms_inbound_order_snapshots 失败 - tenant_id={tenant_id}, inbound_id={}: {e}",
+                payload.inbound_id
+            ))
         })?;
 
-        // 同步写入入库库存移动历史（供 turnover 趋势查询）
-        if let Err(e) = sqlx::query(
+        // 同步写入入库库存移动历史（供 turnover 趋势查询）；DB 失败上抛，避免台账断裂。
+        sqlx::query(
             r#"INSERT INTO scm.wms_inventory_movement_snapshots
                 (movement_no, movement_type, warehouse_id, item_id, item_code, item_name,
                  quantity, unit, total_value, reference_type, reference_id,
                  movement_date, tenant_id, synced_at, created_at)
             VALUES ($1, 'inbound', $2, $3, $4, $5, $6, $7, 0, 'inbound_order', $8,
-                    $9, NULL, $10, $10)"#,
+                    $9, $10, $11, $11)"#,
         )
         .bind(&payload.inbound_no)
         .bind(payload.warehouse_id)
@@ -755,26 +861,26 @@ impl ScmEventHandlers {
         .bind(payload.unit.unwrap_or_else(|| "".to_string()))
         .bind(payload.inbound_id)
         .bind(payload.received_at.unwrap_or(now))
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
-        {
-            tracing::error!(
-                "[scm] 写入入库库存移动快照失败: movement_no={}, warehouse_id={:?}, err={}",
-                payload.inbound_no,
-                payload.warehouse_id,
-                e
-            );
-        }
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "写入入库库存移动快照失败 - tenant_id={tenant_id}, movement_no={}: {e}",
+                payload.inbound_no
+            ))
+        })?;
 
         // 同步更新采购订单状态（订单状态丢失必须上抛让事件重试，不能吞错）
         if let Some(po_id) = payload.reference_order_id {
             sqlx::query(
-                "UPDATE scm.purchase_orders SET status = 'receiving', updated_at = $1 WHERE id = $2 AND status IN ('approved', 'partially_received')",
+                "UPDATE scm.purchase_orders SET status = 'receiving', updated_at = $1 WHERE id = $2 AND tenant_id = $3 AND status IN ('approved', 'partially_received')",
             )
             .bind(now)
             .bind(po_id)
-            .execute(&self.db)
+            .bind(tenant_id)
+            .execute(&mut scope)
             .await
             .map_err(|e| {
                 tracing::error!(
@@ -785,6 +891,13 @@ impl ScmEventHandlers {
                 TopemsError::DatabaseQuery(format!("更新采购订单状态失败: {}", e))
             })?;
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交 WMS 入库快照失败 - tenant_id={tenant_id}, inbound_id={}: {e}",
+                payload.inbound_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -806,14 +919,19 @@ impl ScmEventHandlers {
             payload.quantity
         );
 
+        let tenant_id = require_event_tenant(&event)?.get();
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开 WMS 出库快照作用域失败: {e}"))
+        })?;
 
         sqlx::query(
             r#"INSERT INTO scm.wms_outbound_order_snapshots
                 (id, order_number, warehouse_id, customer_id, order_type, status,
                  total_quantity, tenant_id, synced_at, created_at, updated_at)
             VALUES ($1, $2, $3, $4, 'sales', 'shipped', $5,
-                    NULL, $6, $6, $6)
+                    $6, $7, $7, $7)
             ON CONFLICT (id) DO UPDATE SET
                 status = 'shipped',
                 warehouse_id = EXCLUDED.warehouse_id,
@@ -827,21 +945,25 @@ impl ScmEventHandlers {
         .bind(payload.warehouse_id)
         .bind(payload.customer_id)
         .bind(payload.quantity)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("写入 wms_outbound_order_snapshots 失败: {}", e))
+            TopemsError::DatabaseQuery(format!(
+                "写入 wms_outbound_order_snapshots 失败 - tenant_id={tenant_id}, outbound_id={}: {e}",
+                payload.outbound_id
+            ))
         })?;
 
-        // 同步写入出库库存移动历史（供 turnover 趋势查询）
-        if let Err(e) = sqlx::query(
+        // 同步写入出库库存移动历史（供 turnover 趋势查询）；DB 失败上抛。
+        sqlx::query(
             r#"INSERT INTO scm.wms_inventory_movement_snapshots
                 (movement_no, movement_type, warehouse_id, item_id, item_code, item_name,
                  quantity, unit, total_value, reference_type, reference_id,
                  movement_date, tenant_id, synced_at, created_at)
             VALUES ($1, 'outbound', $2, $3, $4, $5, $6, $7, 0, 'outbound_order', $8,
-                    $9, NULL, $10, $10)"#,
+                    $9, $10, $11, $11)"#,
         )
         .bind(&payload.outbound_no)
         .bind(payload.warehouse_id)
@@ -852,17 +974,23 @@ impl ScmEventHandlers {
         .bind(payload.unit.unwrap_or_else(|| "".to_string()))
         .bind(payload.outbound_id)
         .bind(payload.shipped_at.unwrap_or(now))
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
-        {
-            tracing::error!(
-                "[scm] 写取出库库存移动快照失败: movement_no={}, warehouse_id={:?}, err={}",
-                payload.outbound_no,
-                payload.warehouse_id,
-                e
-            );
-        }
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "写入出库库存移动快照失败 - tenant_id={tenant_id}, movement_no={}: {e}",
+                payload.outbound_no
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交 WMS 出库快照失败 - tenant_id={tenant_id}, outbound_id={}: {e}",
+                payload.outbound_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -882,19 +1010,28 @@ impl ScmEventHandlers {
             payload.delta
         );
 
+        let tenant_id = require_event_tenant(&event)?.get();
         let now = Utc::now();
+        let db = Db::new(self.db.clone(), "scm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开库存快照作用域失败: {e}"))
+        })?;
 
         if payload.change_type == "delete" {
             sqlx::query(
                 r#"DELETE FROM scm.wms_inventory_snapshots
-                   WHERE warehouse_id = $1 AND item_code = $2"#,
+                   WHERE warehouse_id = $1 AND item_code = $2 AND tenant_id = $3"#,
             )
             .bind(payload.warehouse_id)
             .bind(&payload.material_code)
-            .execute(&self.db)
+            .bind(tenant_id)
+            .execute(&mut scope)
             .await
             .map_err(|e| {
-                TopemsError::DatabaseQuery(format!("删除 wms_inventory_snapshots 失败: {}", e))
+                TopemsError::DatabaseQuery(format!(
+                    "删除 wms_inventory_snapshots 失败 - tenant_id={tenant_id}, warehouse_id={:?}: {e}",
+                    payload.warehouse_id
+                ))
             })?;
         } else {
             let available = payload.available_quantity.unwrap_or(payload.new_quantity);
@@ -908,7 +1045,7 @@ impl ScmEventHandlers {
                      unit, warehouse_name,
                      tenant_id, synced_at, snapshot_date, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, NULL,
-                        NULL, $8, CURRENT_DATE, $8, $8)
+                        $9, $8, CURRENT_DATE, $8, $8)
                 ON CONFLICT (warehouse_id, item_code) DO UPDATE SET
                     quantity = EXCLUDED.quantity,
                     item_name = EXCLUDED.item_name,
@@ -927,23 +1064,28 @@ impl ScmEventHandlers {
             .bind(min_qty)
             .bind(total_value)
             .bind(now)
-            .execute(&self.db)
+            .bind(tenant_id)
+            .execute(&mut scope)
             .await
             .map_err(|e| {
-                TopemsError::DatabaseQuery(format!("写入 wms_inventory_snapshots 失败: {}", e))
+                TopemsError::DatabaseQuery(format!(
+                    "写入 wms_inventory_snapshots 失败 - tenant_id={tenant_id}, warehouse_id={:?}, item_code={}: {e}",
+                    payload.warehouse_id, payload.material_code
+                ))
             })?;
 
-            // 同步写入库存移动历史（供 turnover 趋势查询）
+            // 同步写入库存移动历史（供 turnover 趋势查询）；DB 失败上抛。
             if payload.delta.abs() > f64::EPSILON {
-                let movement_result = sqlx::query(
+                let movement_no = format!("INV-{}", payload.inventory_id);
+                sqlx::query(
                     r#"INSERT INTO scm.wms_inventory_movement_snapshots
                         (movement_no, movement_type, warehouse_id, item_id, item_code, item_name,
                          quantity, unit, total_value, reference_type, reference_id,
                          movement_date, tenant_id, synced_at, created_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, 'inventory_adjust', $9,
-                            $10, NULL, $11, $11)"#,
+                            $10, $11, $12, $12)"#,
                 )
-                .bind(format!("INV-{}", payload.inventory_id))
+                .bind(&movement_no)
                 .bind(if payload.delta > 0.0 {
                     "inbound"
                 } else {
@@ -957,20 +1099,24 @@ impl ScmEventHandlers {
                 .bind(total_value)
                 .bind(payload.inventory_id)
                 .bind(now)
+                .bind(tenant_id)
                 .bind(now)
-                .execute(&self.db)
-                .await;
-
-                if let Err(e) = movement_result {
-                    tracing::error!(
-                        "[scm] 写入库存调整移动快照失败: movement_no={}, warehouse_id={:?}, err={}",
-                        format!("INV-{}", payload.inventory_id),
-                        payload.warehouse_id,
-                        e
-                    );
-                }
+                .execute(&mut scope)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "写入库存调整移动快照失败 - tenant_id={tenant_id}, movement_no={movement_no}: {e}"
+                    ))
+                })?;
             }
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交库存快照失败 - tenant_id={tenant_id}, inventory_id={}: {e}",
+                payload.inventory_id
+            ))
+        })?;
 
         Ok(())
     }

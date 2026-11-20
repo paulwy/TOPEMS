@@ -2,6 +2,7 @@ use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     require_event_tenant, Event, EventPublisher, EventResult, EventSubscriber, EventType,
     PdmBomCreatedPayload, PdmBomUpdatedPayload, PdmMaterialCreatedPayload,
@@ -84,6 +85,10 @@ impl RdEventHandlers {
                     payload.project_name.chars().take(4).collect::<String>(),
                     Utc::now().timestamp_subsec_millis()
                 );
+                let db = Db::new(self.db.clone(), "rs, public, shared");
+                let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!("打开研发项目创建作用域失败: {e}"))
+                })?;
                 let result = sqlx::query_scalar::<_, uuid::Uuid>(
                     "INSERT INTO rs.rs_projects (name, code, project_type, status, leader, progress, start_date, created_by, created_at, updated_at, source_type, source_id, tenant_id)
                      VALUES ($1, $2, 'r_d', 'pending', $3, 0, $4, 'system', $4, $4, 'pm_project', $5, $6)
@@ -96,28 +101,38 @@ impl RdEventHandlers {
                 .bind(Utc::now())
                 .bind(payload.project_id)
                 .bind(tenant_id)
-                .fetch_optional(&self.db)
-                .await;
+                .fetch_optional(&mut scope)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "关联研发项目创建失败 - tenant_id={tenant_id}, source_id={}: {e}",
+                        payload.project_id
+                    ))
+                })?;
 
                 match result {
-                    Ok(Some(_id)) => {
+                    Some(_id) => {
                         tracing::info!(
                             "[rd] 关联研发项目创建成功: project={}, source_id={}",
                             payload.project_name,
                             payload.project_id
                         );
                     }
-                    Ok(None) => {
+                    None => {
                         tracing::info!(
                             "[rd] 研发项目已存在（幂等跳过）: project={}, source_id={}",
                             payload.project_name,
                             payload.project_id
                         );
                     }
-                    Err(e) => {
-                        tracing::error!("[rd] 关联研发项目创建失败: {}", e);
-                    }
                 }
+
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交研发项目创建失败 - tenant_id={tenant_id}, source_id={}: {e}",
+                        payload.project_id
+                    ))
+                })?;
             }
             EventType::PmProjectCompleted => {
                 let payload: PmProjectCompletedPayload = event.parse_payload().map_err(|e| {
@@ -131,33 +146,43 @@ impl RdEventHandlers {
                     payload.completed_by
                 );
 
+                let db = Db::new(self.db.clone(), "rs, public, shared");
+                let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!("打开研发项目完成作用域失败: {e}"))
+                })?;
                 let result = sqlx::query(
                     "UPDATE rs.rs_projects SET status = 'completed', progress = 100, updated_at = $1 WHERE name = $2 AND tenant_id = $3",
                 )
                 .bind(Utc::now())
                 .bind(&payload.project_name)
                 .bind(tenant_id)
-                .execute(&self.db)
-                .await;
+                .execute(&mut scope)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "研发项目状态同步失败 - tenant_id={tenant_id}, project={}: {e}",
+                        payload.project_name
+                    ))
+                })?;
 
-                match result {
-                    Ok(r) => {
-                        if r.rows_affected() > 0 {
-                            tracing::info!(
-                                "[rd] 研发项目状态同步完成: project={}",
-                                payload.project_name
-                            );
-                        } else {
-                            tracing::warn!(
-                                "[rd] 未找到匹配的研发项目: project={}",
-                                payload.project_name
-                            );
-                        }
-                    }
-                    Err(e) => {
-                        tracing::error!("[rd] 研发项目状态同步失败: {}", e);
-                    }
+                if result.rows_affected() > 0 {
+                    tracing::info!(
+                        "[rd] 研发项目状态同步完成: project={}",
+                        payload.project_name
+                    );
+                } else {
+                    tracing::warn!(
+                        "[rd] 未找到匹配的研发项目: project={}",
+                        payload.project_name
+                    );
                 }
+
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交研发项目完成失败 - tenant_id={tenant_id}, project={}: {e}",
+                        payload.project_name
+                    ))
+                })?;
             }
             _ => {}
         }

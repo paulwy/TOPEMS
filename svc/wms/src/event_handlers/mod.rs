@@ -12,10 +12,10 @@ use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
-    commit_retry, Event, EventPublisher, EventResult, EventSubscriber, EventType,
-    InboundOrderRequestedPayload, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
-    WmsInventoryItemReceivedPayload, WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
-    WmsWarehouseTransferCompletedPayload,
+    commit_retry, require_event_tenant, Event, EventPublisher, EventResult, EventSubscriber,
+    EventType, InboundOrderRequestedPayload, PurchaseOrderApprovedPayload,
+    PurchaseOrderCreatedPayload, WmsInventoryItemReceivedPayload, WmsInventoryItemShippedPayload,
+    WmsInventoryLowStockPayload, WmsWarehouseTransferCompletedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -74,6 +74,7 @@ impl WmsEventHandlers {
             payload.order_id,
             payload.order_no
         );
+        let tenant_id = require_event_tenant(&event)?.get();
         store_po_snapshot(
             &self.db,
             payload.order_id,
@@ -85,9 +86,9 @@ impl WmsEventHandlers {
             "pending",
             None,
             None,
-            payload.tenant_id,
+            tenant_id,
         )
-        .await;
+        .await?;
         Ok(())
     }
 
@@ -100,6 +101,7 @@ impl WmsEventHandlers {
             payload.order_id,
             payload.order_no
         );
+        let tenant_id = require_event_tenant(&event)?.get();
         store_po_snapshot(
             &self.db,
             payload.order_id,
@@ -111,9 +113,9 @@ impl WmsEventHandlers {
             "approved",
             payload.approved_by,
             payload.approved_at,
-            payload.tenant_id,
+            tenant_id,
         )
-        .await;
+        .await?;
         Ok(())
     }
 
@@ -412,29 +414,19 @@ async fn store_po_snapshot(
     status: &str,
     approved_by: Option<String>,
     approved_at: Option<chrono::DateTime<chrono::Utc>>,
-    tenant_id: Option<uuid::Uuid>,
-) {
+    tenant_id: uuid::Uuid,
+) -> Result<(), TopemsError> {
     let now = chrono::Utc::now();
     // 事件消费不经过租户中间件，没有 `app.tenant_id`；M1 起策略 fail-closed，
-    // 必须显式开一个租户作用域，且租户缺失时直接跳过而不是写 nil 租户行。
-    let Some(tenant_id) = tenant_id else {
-        tracing::warn!(
-            "[wms] 采购订单快照缺少租户，已跳过 - id={}, order_number={}",
-            id,
-            order_number
-        );
-        return;
-    };
+    // 必须显式开租户作用域。租户由调用方 require_event_tenant 校验，缺失不会到达这里。
     let scope_db = topems_shared_db::scope::Db::new(db.clone(), "wms, public");
-    // wms-short-txn-exempt: B-02 后台事件消费（不经请求中间件、无请求事务；按快照租户开独立短事务，租户缺失即跳过）
-    let mut scope = match scope_db.scope_for_tenant(tenant_id).await {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::warn!("[wms] 开启采购订单快照事务失败 - id={}, error={}", id, e);
-            return;
-        }
-    };
-    let result = sqlx::query(
+    // wms-short-txn-exempt: B-02 后台事件消费（不经请求中间件、无请求事务；按快照租户开独立短事务）
+    let mut scope = scope_db.scope_for_tenant(tenant_id).await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!(
+            "开启采购订单快照事务失败 - tenant_id={tenant_id}, id={id}: {e}"
+        ))
+    })?;
+    sqlx::query(
         r#"INSERT INTO wms.purchase_order_snapshots
            (id, order_number, supplier_id, supplier_name, total_amount, payable_amount,
             status, approved_by, approved_at, synced_at, created_at, updated_at, tenant_id)
@@ -465,20 +457,25 @@ async fn store_po_snapshot(
     .bind(now)
     .bind(tenant_id)
     .execute(&mut scope)
-    .await;
+    .await
+    .map_err(|e| {
+        TopemsError::DatabaseQuery(format!(
+            "存储采购订单快照失败 - tenant_id={tenant_id}, id={id}: {e}"
+        ))
+    })?;
 
-    match result {
-        Ok(_) => {
-            if let Err(e) = scope.commit().await {
-                tracing::warn!("[wms] 提交采购订单快照失败 - id={}, error={}", id, e);
-            } else {
-                tracing::debug!(
-                    "[wms] 采购订单快照已存储 - id={}, order_number={}",
-                    id,
-                    order_number
-                );
-            }
-        }
-        Err(e) => tracing::warn!("[wms] 存储采购订单快照失败 - id={}, error={}", id, e),
-    }
+    scope.commit().await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!(
+            "提交采购订单快照失败 - tenant_id={tenant_id}, id={id}: {e}"
+        ))
+    })?;
+
+    tracing::debug!(
+        "[wms] 采购订单快照已存储 - tenant_id={}, id={}, order_number={}",
+        tenant_id,
+        id,
+        order_number
+    );
+
+    Ok(())
 }

@@ -59,6 +59,12 @@ impl PortalEventHandlers {
     ) -> Result<uuid::Uuid, TopemsError> {
         let now = Utc::now();
         let notif_id = uuid::Uuid::new_v4();
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "portal, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开门户通知写入作用域失败 - tenant_id={tenant_id}: {e}"
+            ))
+        })?;
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO portal.portal_notifications (id, title, content, service, service_name, notification_type, read, created_at, link_url, target_user, tenant_id)
@@ -75,11 +81,17 @@ impl PortalEventHandlers {
         .bind(link_url)
         .bind(target_user)
         .bind(tenant_id)
-        .fetch_one(&self.db)
+        .fetch_one(&mut scope)
         .await;
 
         match result {
             Ok(id) => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交门户通知写入失败 - tenant_id={tenant_id}, id={id}: {e}"
+                    ))
+                })?;
+
                 tracing::info!(
                     "[portal] 通知创建成功: {} ({}), type={}",
                     title,
@@ -129,7 +141,9 @@ impl PortalEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[portal] 通知创建失败: {}", e);
-                Err(TopemsError::BusinessLogic(format!("通知创建失败: {}", e)))
+                Err(TopemsError::DatabaseQuery(format!(
+                    "门户通知创建失败 - tenant_id={tenant_id}: {e}"
+                )))
             }
         }
     }
@@ -204,15 +218,26 @@ impl PortalEventHandlers {
             payload.owner_id
         );
 
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "portal, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开门户项目概览作用域失败 - tenant_id={tenant_id}: {e}"
+            ))
+        })?;
+
         let project_count = sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM portal.portal_dashboard_stats WHERE stat_key = 'total_projects' AND tenant_id = $1",
         )
         .bind(tenant_id)
-        .fetch_one(&self.db)
+        .fetch_one(&mut scope)
         .await
-        .unwrap_or(0);
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "读取门户项目概览失败 - tenant_id={tenant_id}: {e}"
+            ))
+        })?;
 
-        let result = sqlx::query(
+        sqlx::query(
             "INSERT INTO portal.portal_dashboard_stats (stat_key, stat_value, stat_label, updated_at, tenant_id)
              VALUES ('total_projects', $1, '项目总数', $2, $3)
              ON CONFLICT (stat_key, tenant_id) DO UPDATE SET
@@ -222,20 +247,24 @@ impl PortalEventHandlers {
         .bind(project_count + 1)
         .bind(Utc::now())
         .bind(tenant_id)
-        .execute(&self.db)
-        .await;
+        .execute(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "更新门户项目概览失败 - tenant_id={tenant_id}: {e}"
+            ))
+        })?;
 
-        match result {
-            Ok(_) => {
-                tracing::info!(
-                    "[portal] 门户项目概览已更新: total_projects={}",
-                    project_count + 1
-                );
-            }
-            Err(e) => {
-                tracing::warn!("[portal] 门户项目概览更新失败: {}", e);
-            }
-        }
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交门户项目概览失败 - tenant_id={tenant_id}: {e}"
+            ))
+        })?;
+
+        tracing::info!(
+            "[portal] 门户项目概览已更新: total_projects={}",
+            project_count + 1
+        );
 
         let title = format!("新项目启动：{}", payload.project_name);
         let content = format!(
