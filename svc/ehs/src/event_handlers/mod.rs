@@ -119,6 +119,7 @@ impl EhsEventHandlers {
         // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
         let db = topems_shared_db::scope::Db::new(self.db.clone(), "ehs, public, shared");
         let mut scope = match db.scope_for_tenant(tenant_id).await {
+            // scope-exempt: bg-event
             Ok(s) => s,
             Err(e) => {
                 return Err(TopemsError::DatabaseTransaction(format!(
@@ -199,6 +200,7 @@ impl EhsEventHandlers {
         // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
         let db = topems_shared_db::scope::Db::new(self.db.clone(), "ehs, public, shared");
         let mut scope = match db.scope_for_tenant(tenant_id).await {
+            // scope-exempt: bg-event
             Ok(s) => s,
             Err(e) => {
                 return Err(TopemsError::DatabaseTransaction(format!(
@@ -317,6 +319,7 @@ impl EhsEventHandlers {
         // D4：租户只来自 payload.tenant_id；写入走租户作用域，禁止 nil 业务行
         let db = topems_shared_db::scope::Db::new(self.db.clone(), "ehs, public, shared");
         let mut scope = match db.scope_for_tenant(tenant_id).await {
+            // scope-exempt: bg-event
             Ok(s) => s,
             Err(e) => {
                 return Err(TopemsError::DatabaseTransaction(format!(

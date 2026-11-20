@@ -141,9 +141,9 @@ impl WmsEventHandlers {
             ))
         })?;
         let scope_db = topems_shared_db::scope::Db::new(self.db.clone(), "wms, public");
-        // wms-short-txn-exempt: B-01 后台事件消费（不经请求中间件、无请求事务；按事件 payload 租户开独立短事务，tenant_of 缺失即失败）
+        // wms-bg-event: B-01 后台事件消费（不经请求中间件、无请求事务；按事件 payload 租户开独立短事务，tenant_of 缺失即失败）
         let mut scope = scope_db
-            .scope_for_tenant(tenant_id)
+            .scope_for_tenant(tenant_id) // scope-exempt: bg-event
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("开启入库单事务失败: {}", e)))?;
 
@@ -421,8 +421,9 @@ async fn store_po_snapshot(
     let now = chrono::Utc::now();
     // 事件消费不经过租户中间件，没有 `app.tenant_id`；M1 起策略 fail-closed，
     // 必须显式开租户作用域。租户由调用方 require_event_tenant 校验，缺失不会到达这里。
-    // wms-short-txn-exempt: B-02 后台事件消费（不经请求中间件、无请求事务；按快照租户开独立短事务）
+    // wms-bg-event: B-02 后台事件消费（不经请求中间件、无请求事务；按快照租户开独立短事务）
     let mut scope = scope_db.scope_for_tenant(tenant_id).await.map_err(|e| {
+        // scope-exempt: bg-event
         TopemsError::DatabaseTransaction(format!(
             "开启采购订单快照事务失败 - tenant_id={tenant_id}, id={id}: {e}"
         ))

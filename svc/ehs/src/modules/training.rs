@@ -249,6 +249,7 @@ pub async fn create_training(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -1506,6 +1507,7 @@ pub async fn create_training_plan(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -1709,6 +1711,7 @@ pub async fn create_training_record(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -1953,6 +1956,7 @@ pub async fn create_certificate(
     let tenant_id = tenant;
     // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);

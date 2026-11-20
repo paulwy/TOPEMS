@@ -199,6 +199,8 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 | B0 | 已完成（远端 `95a45ac26`） | `check-scope-api.mjs` + `scope-api-baseline.json` 接入 |
 | B2 | 已完成（2026-11-21） | `resolve_reconciliation_issue_handler` 取 `RlsTxnCell`，经 `scope_with` / `scope_with_system` 复用请求事务；`MasterDataService::from_db(Db)` 替代 `new(state.pool)`；`resolve_reconciliation_issue_in_scope` 由调用方提交。新增 `lib/shared-db/tests/reconciliation_scope_it.rs` 验证「提交前外部不可见 / 未提交即回滚 / 重复标记 false」；`check-scope-api.mjs` 读数 `scope_for_tenant 155`、`Db::new 163`（较基线 164 下降 1，已核销） |
 | B1 | 已完成（2026-11-21） | `open_write_scope` 改收 `&mut Transaction` 并走 `scope_with` / `scope_with_system`；28 个 BI 写 handler 取 `RlsTxnCell` 复用 `tenant_middleware` 请求事务；宿主 `svc/server` 的 analytics 模块补挂同一中间件。`cargo check/clippy -p topems-analytics` 通过，analytics lib 185、DB integration 6 全绿；门禁 `scope_for_tenant 155 → 154`，基线已核销 |
-| B3 / B4 / B5 | 未开始 | — |
+| B4 | 已完成（2026-11-21） | shared-db 的 8 个非事务包装（`MasterDataRefService` 5 个 + `ReconciliationLogService` 3 个）在方法文档标注 **Standalone（非事务）**，明确请求链路应改用对应 `_tx` / `_in_scope` 变体 |
+| B5 | 已完成（2026-11-21） | EHS/WMS 写作用域豁免落注释：实际 **EHS 44**（41 `no-request-txn` + 3 `bg-event`）、**WMS 12**（10 `short-txn-exempt` + 2 `bg-event`）；同时修正门禁 `EXEMPT_RE` 缺 `m` 标志导致「同行豁免」不计数的缺陷。门禁读数 `total 154 / marked 56 / unmarked 98`，基线已核销 |
+| B3 | 未开始（受阻） | analytics 读面仍有约 30 处 `open_read_scope` / `scope_read_for_tenant`，且 WebSocket 为长连接短事务；全局开 `deny_request_tenant_scope` 会打红读端点与订阅，需先做读面迁移与 WS 豁免设计 |
 
 > B2 的 e2e `master_ten_endpoints_form_closed_loop` 仍因测试库 `core_mdm_reconciliation_log.detected_at` 为 `timestamp without time zone`、Rust 侧 `DateTime<Utc>` 解码不匹配而无法端到端跑通（该用例原即 `#[ignore]`），本次改由 shared-db 事务边界回归覆盖；该时间类型漂移独立于 B2，另行处理。

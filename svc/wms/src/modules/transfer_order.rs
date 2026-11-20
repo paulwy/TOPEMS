@@ -660,6 +660,7 @@ pub async fn ship_transfer(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-08 调拨发货独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启调拨发货事务失败: {}", e);
@@ -1001,6 +1002,7 @@ pub async fn receive_transfer(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-09 调拨收货独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启调拨收货事务失败: {}", e);

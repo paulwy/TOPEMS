@@ -3,8 +3,8 @@
   "note": "§17.2 作用域 API 收敛基线。scope_for_tenant 计未标记（无 // scope-exempt: <理由>）的生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/short-txn-exempt/lib-standalone）。db_new 计 Db::new( 构造点，只减不增。口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。",
   "scope_for_tenant": {
     "total": 154,
-    "marked": 0,
-    "unmarked": 154,
+    "marked": 56,
+    "unmarked": 98,
     "files": {
       "lib/shared-db/src/master_data_refs.rs": {
         "unmarked": 5
@@ -22,55 +22,55 @@
         "unmarked": 6
       },
       "svc/ehs/src/event_handlers/mod.rs": {
-        "unmarked": 3
+        "unmarked": 0
       },
       "svc/ehs/src/modules/accident.rs": {
-        "unmarked": 7
+        "unmarked": 0
       },
       "svc/ehs/src/modules/data_sync.rs": {
-        "unmarked": 2
+        "unmarked": 0
       },
       "svc/ehs/src/modules/emergency_drill.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/ehs/src/modules/emergency_plan.rs": {
-        "unmarked": 2
+        "unmarked": 0
       },
       "svc/ehs/src/modules/environment.rs": {
-        "unmarked": 2
+        "unmarked": 0
       },
       "svc/ehs/src/modules/environmental_compliance.rs": {
-        "unmarked": 5
+        "unmarked": 0
       },
       "svc/ehs/src/modules/hazard.rs": {
-        "unmarked": 6
+        "unmarked": 0
       },
       "svc/ehs/src/modules/hazardous_material.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/ehs/src/modules/health.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/ehs/src/modules/integration.rs": {
-        "unmarked": 2
+        "unmarked": 0
       },
       "svc/ehs/src/modules/occupational_disease.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/ehs/src/modules/occupational_health.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/ehs/src/modules/risk.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/ehs/src/modules/safety.rs": {
-        "unmarked": 4
+        "unmarked": 0
       },
       "svc/ehs/src/modules/training.rs": {
-        "unmarked": 4
+        "unmarked": 0
       },
       "svc/ehs/src/shared/permission.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/erp/src/event_handlers/mod.rs": {
         "unmarked": 13
@@ -148,25 +148,25 @@
         "unmarked": 1
       },
       "svc/wms/src/event_handlers/mod.rs": {
-        "unmarked": 2
+        "unmarked": 0
       },
       "svc/wms/src/modules/inbound_order.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/wms/src/modules/inventory.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/wms/src/modules/outbound_order.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/wms/src/modules/smart_replenishment/suggestions.rs": {
-        "unmarked": 1
+        "unmarked": 0
       },
       "svc/wms/src/modules/stock_take.rs": {
-        "unmarked": 4
+        "unmarked": 0
       },
       "svc/wms/src/modules/transfer_order.rs": {
-        "unmarked": 2
+        "unmarked": 0
       }
     }
   },

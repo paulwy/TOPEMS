@@ -130,7 +130,7 @@ pub async fn open_write_scope<'a>(
     scope: &TenantScope,
 ) -> Result<ScopedTxn<'a>, sqlx::Error> {
     match scope.tenant_id() {
-        Some(tenant) => db.scope_for_tenant(tenant).await,
+        Some(tenant) => db.scope_for_tenant(tenant).await, // scope-exempt: no-request-txn
         None => db.scope_system().await,
     }
 }

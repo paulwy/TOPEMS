@@ -197,6 +197,7 @@ pub async fn create_record(
     // 不再复用请求级事务，也不再额外预开一条请求事务连接（紧池下 3 条会自锁）。
     // 提交由本函数显式完成，不再依赖中间件 commit。
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("Failed to create environment monitor scope: {}", e);
@@ -545,6 +546,7 @@ pub async fn delete_record(
     };
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!(

@@ -623,6 +623,7 @@ pub async fn start_stock_take(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-01 盘点开始独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启盘点事务失败: {}", e);
@@ -1064,6 +1065,7 @@ pub async fn count_stock_take(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-02 盘点计数独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启盘点计数事务失败: {}", e);
@@ -1510,6 +1512,7 @@ pub async fn complete_stock_take(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-03 盘点完成独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启盘点事务失败: {}", e);
@@ -1772,6 +1775,7 @@ pub async fn adjust_stock_take(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-04 盘点调整独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启盘点调整事务失败: {}", e);

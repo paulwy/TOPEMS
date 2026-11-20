@@ -133,6 +133,7 @@ impl MasterDataRefService {
     /// 插入主数据引用（core schema，version=1）
     ///
     /// 替代 unified-core/master/handlers.rs create_ref 内的 INSERT INTO core_master_data_refs。
+    /// **Standalone（非事务）**：自开租户作用域并提交，仅限后台/事件/脚本；请求链路请用 [`Self::insert_master_data_ref_tx`]。
     pub async fn insert_master_data_ref(
         &self,
         master_data_id: &str,
@@ -198,6 +199,7 @@ impl MasterDataRefService {
     /// 按 master_data_id UPSERT（core schema，事件消费路径）
     ///
     /// 同一实体的事件使用稳定 master_data_id，重复消费只会更新同一行。
+    /// **Standalone（非事务）**：自开租户作用域并提交，仅限后台/事件/脚本；请求链路请用 [`Self::upsert_master_data_ref_tx`]。
     pub async fn upsert_master_data_ref(
         &self,
         master_data_id: &str,
@@ -271,6 +273,7 @@ impl MasterDataRefService {
     /// 更新主数据引用（core schema，version+1，RETURNING *）
     ///
     /// 替代 unified-core/master/handlers.rs update_ref 内的 UPDATE ... RETURNING *。
+    /// **Standalone（非事务）**：自开租户作用域并提交，仅限后台/事件/脚本；请求链路请用 [`Self::update_master_data_ref_tx`]。
     pub async fn update_master_data_ref(
         &self,
         master_data_id: &str,
@@ -318,6 +321,7 @@ impl MasterDataRefService {
     /// 软删除主数据引用（status='deleted'）
     ///
     /// 替代 unified-core/master/handlers.rs delete_ref 内的 UPDATE ... SET status='deleted'。
+    /// **Standalone（非事务）**：自开租户作用域并提交，仅限后台/事件/脚本；请求链路请用 [`Self::soft_delete_master_data_ref_tx`]。
     pub async fn soft_delete_master_data_ref(
         &self,
         master_data_id: &str,
@@ -356,6 +360,7 @@ impl MasterDataRefService {
     /// 按 master_data_id + tenant_id 查询
     ///
     /// 替代 unified-core get_ref 的 SELECT * FROM core_master_data_refs WHERE ...。
+    /// **Standalone（非事务）**：自开只读租户作用域，仅限后台/事件/脚本；请求链路请用 [`Self::get_by_id_tx`]。
     pub async fn get_by_id(
         &self,
         master_data_id: &str,

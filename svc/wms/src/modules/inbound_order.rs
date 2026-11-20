@@ -1289,6 +1289,7 @@ pub async fn receive_inbound_order(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-05 入库收货独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启入库事务失败: {}", e);

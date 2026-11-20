@@ -563,6 +563,7 @@ pub async fn create_regulation(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -1392,6 +1393,7 @@ pub async fn create_evaluation(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -1836,6 +1838,7 @@ pub async fn create_monitor_record(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -2028,6 +2031,7 @@ pub async fn create_permit(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -2202,6 +2206,7 @@ pub async fn create_incident(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);

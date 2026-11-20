@@ -230,6 +230,7 @@ pub async fn compute_replenishment(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-10 补货建议计算独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut tx = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);

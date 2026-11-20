@@ -96,6 +96,7 @@ impl ReconciliationLogService {
     }
 
     /// 插入单条对账日志
+    /// **Standalone（非事务）**：自开租户作用域并提交，仅限后台/事件路径；请求链路应由调用方事务承载。
     pub async fn insert_reconciliation_log(
         &self,
         tenant_id: Uuid,
@@ -168,6 +169,7 @@ impl ReconciliationLogService {
     /// 查询对账日志（支持 unresolved_only 过滤）
     ///
     /// 封装 unified-core list_reconciliation_logs 的 SQL。
+    /// **Standalone（非事务）**：自开只读租户作用域，仅限后台/事件路径；请求链路应由调用方事务承载。
     pub async fn query_reconciliation_logs(
         &self,
         tenant_id: Uuid,
@@ -206,6 +208,7 @@ impl ReconciliationLogService {
     ///
     /// 封装 unified-core resolve_reconciliation_issue 的 UPDATE SQL。
     /// 返回是否实际更新了至少一行（false 表示已解决或不存在）。
+    /// **Standalone（非事务）**：自开租户作用域并提交，仅限后台/脚本；请求链路请用 [`Self::resolve_reconciliation_issue_in_scope`]。
     pub async fn resolve_reconciliation_issue(
         &self,
         tenant_id: Uuid,

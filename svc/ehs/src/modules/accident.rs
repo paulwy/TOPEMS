@@ -347,6 +347,7 @@ pub async fn report_accident(
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -628,6 +629,7 @@ pub async fn delete_accident(
     tracing::debug!("Deleting accident: {}", id);
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!(
@@ -691,6 +693,7 @@ pub async fn start_investigation(
     let tenant_id = tenant;
     // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);
@@ -850,6 +853,7 @@ pub async fn create_treatment(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -1177,6 +1181,7 @@ pub async fn complete_treatment(
     tracing::info!("Completing treatment for accident: {}", id);
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!(
@@ -1282,6 +1287,7 @@ pub async fn create_review(
     let tenant_id = tenant;
     // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);
@@ -1413,6 +1419,7 @@ pub async fn create_incident_action(
     let tenant_id = tenant;
     // 显式租户写作用域：单条连接 + 事务级租户 GUC；提交由本函数显式完成。
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);

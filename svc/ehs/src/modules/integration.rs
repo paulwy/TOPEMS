@@ -132,7 +132,7 @@ async fn persist_integration_hazard(
     tenant_id: Uuid,
     req: &CreateIntegrationHazardRequest,
 ) -> sqlx::Result<serde_json::Value> {
-    let mut scope = db.scope_for_tenant(tenant_id).await?;
+    let mut scope = db.scope_for_tenant(tenant_id).await?; // scope-exempt: no-request-txn
     let row = sqlx::query(
         "INSERT INTO ehs.qa_ehs_hazards
              (hazard_no, title, category, level, location, description, status,
@@ -231,7 +231,7 @@ async fn persist_integration_alert(
     tenant_id: Uuid,
     req: &CreateIntegrationAlertRequest,
 ) -> sqlx::Result<serde_json::Value> {
-    let mut scope = db.scope_for_tenant(tenant_id).await?;
+    let mut scope = db.scope_for_tenant(tenant_id).await?; // scope-exempt: no-request-txn
     let row = sqlx::query(
         "INSERT INTO ehs.qa_ehs_alerts
              (alert_no, title, alert_type, severity, description, status,

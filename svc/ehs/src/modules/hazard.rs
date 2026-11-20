@@ -785,6 +785,7 @@ pub async fn delete_hazard(
     tracing::debug!("Deleting hazard: {}", id);
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope for hazard delete: {}", e);
@@ -1067,6 +1068,7 @@ pub async fn create_rectification(
         .map(|s| s.to_string());
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope for rectification: {}", e);
@@ -1307,6 +1309,7 @@ pub async fn submit_rectification(
     tracing::info!("Submitting rectification for hazard: {}", id);
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope for submit: {}", e);
@@ -1410,6 +1413,7 @@ pub async fn verify_hazard(
         .map(|s| s.to_string());
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant write scope for verify: {}", e);
@@ -1702,6 +1706,7 @@ pub async fn create_safety_hazard(
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -2433,6 +2438,7 @@ pub async fn create_control_measure_db(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);

@@ -52,7 +52,7 @@ const SKIP_DIRS = new Set(['target', 'node_modules', '.git', 'vendor', 'dist', '
 
 const SCOPE_CALL_RE = /(?:\.|Db::)scope_for_tenant\s*\(/g;
 const DB_NEW_RE = /\bDb::new\s*\(/g;
-const EXEMPT_RE = /\/\/\s*scope-exempt:\s*(\S.*?)\s*$/;
+const EXEMPT_RE = /\/\/\s*scope-exempt:\s*(\S.*?)\s*$/m;
 
 const EXEMPT_REASONS = [
   'bg-event',
@@ -225,7 +225,7 @@ for (const abs of allFiles) {
     const hits = countMatches(line, SCOPE_CALL_RE);
     if (!hits) return;
     total += hits;
-    const markerSrc = `${rawLines[idx] || ''}\n${rawLines[idx - 1] || ''}`;
+    const markerSrc = `${rawLines[idx] || ''}\n${rawLines[idx - 1] || ''}\n${rawLines[idx + 1] || ''}`;
     const m = EXEMPT_RE.exec(markerSrc);
     const reason = m ? m[1].trim() : '';
     if (reason) {

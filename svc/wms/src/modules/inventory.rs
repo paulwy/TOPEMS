@@ -507,6 +507,7 @@ pub async fn update_inventory(
     let db = wms_db(&state.db);
     // wms-short-txn-exempt: W-07 库存绝对值调整独立短事务（连接 GUC 收敛防 RLS 误过滤；行锁边界；每请求连接占用见 m1-acceptance §10）
     let mut scope = match db.scope_for_tenant(tenant).await {
+        // scope-exempt: short-txn-exempt
         Ok(s) => s,
         Err(e) => {
             tracing::error!("开启库存调整事务失败: {}", e);

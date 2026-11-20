@@ -198,6 +198,7 @@ pub async fn create_plan_item(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -389,6 +390,7 @@ pub async fn create_safety_check(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -554,6 +556,7 @@ pub async fn create_plan_db(
         Err(resp) => return resp,
     };
     let mut scope = match state.db.scope_for_tenant(tenant).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to open tenant scope: {}", e);
@@ -947,6 +950,7 @@ pub async fn create_record_db(
         .unwrap_or_else(|| serde_json::json!([]));
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
+        // scope-exempt: no-request-txn
         Ok(s) => s,
         Err(e) => {
             tracing::error!(
