@@ -9882,6 +9882,24 @@
     },
     {
       "schema": "pm",
+      "table": "acceptances",
+      "rls_enabled": true,
+      "force_rls": true,
+      "policies": [
+        {
+          "name": "tenant_isolation_acceptances",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid = '00000000-0000-0000-0000-000000000000'::uuid) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
+          "with_check": "(((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid = '00000000-0000-0000-0000-000000000000'::uuid) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+        }
+      ]
+    },
+    {
+      "schema": "pm",
       "table": "budget_items",
       "rls_enabled": true,
       "force_rls": true,
@@ -10039,6 +10057,24 @@
           ],
           "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
           "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+        }
+      ]
+    },
+    {
+      "schema": "pm",
+      "table": "documents",
+      "rls_enabled": true,
+      "force_rls": true,
+      "policies": [
+        {
+          "name": "tenant_isolation_documents",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid = '00000000-0000-0000-0000-000000000000'::uuid) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
+          "with_check": "(((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid = '00000000-0000-0000-0000-000000000000'::uuid) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
         }
       ]
     },
