@@ -1,6 +1,5 @@
 mod event_handlers;
 mod models;
-mod schema_defense;
 
 use topems_scm::modules;
 
@@ -14,7 +13,7 @@ use utoipa::OpenApi;
 use prometheus::{default_registry, Gauge};
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, create_health_state,
-    create_standard_health_routes, default_init_db, run, Application, ServiceConfig,
+    create_standard_health_routes, run, Application, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -61,17 +60,6 @@ async fn main() -> Result<()> {
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let ctx = bootstrap_service_with_search_path(&config, "scm, public, shared").await?;
-
-    if let Err(e) = default_init_db(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-        "scm",
-        true,
-        schema_defense::run_schema_migration_and_verify,
-    )
-    .await
-    {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
 
     // Redis 缓存（可选，失败不阻塞启动）
     let redis_cache = match env::var("REDIS_URL").ok() {
