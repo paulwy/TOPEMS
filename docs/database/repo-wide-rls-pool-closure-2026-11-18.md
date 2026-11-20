@@ -1148,19 +1148,20 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 | 指标 | 11-18 | 11-20 |
 | --- | --- | --- |
 | `&state.(db\|pool)` 命中 | 1922 | 1869 |
-| 已作用域化 | — | 533 |
+| 已作用域化 | — | 534 |
 | 权限/审计/健康/元数据 | — | 1111 |
-| 业务带显式谓词 | — | 98 |
+| 业务带显式谓词 | — | 97 |
 | 业务无谓词 | — | 57 |
 | 业务无上下文 | — | 64 |
 | 业务后台内部 | — | 6 |
-| **业务裸池合计** | **340** | **225** |
+| **业务裸池合计** | **340** | **224** |
 
 本轮变化：
 
 - QMS `quality-tasks` / `defect-records` 的列表、详情 5 处改走请求事务 `read_scope_for_claims`，并补 `tenant_id` 谓词；QMS 业务带谓词裸池 18→13。
 - QMS 质量看板三接口（概览/趋势/缺陷分布）12 处改走请求事务 `read_scope_for_claims`，QMS 业务带谓词裸池 13→1。
+- QMS SPC `POST /spc/charts/{id}/calculate` 补请求事务作用域与 `tenant_id` 谓词，QMS 业务带谓词裸池降为 0。
 - MES 审批桥接 6 处（生产订单发起/驳回、报工返工发起/驳回、让步接收发起/驳回）改用 `create_approval_and_log_db` / `reject_and_log_db`，传 `state.db` 作用域包装；MES 业务无谓词裸池归零。
 - 复测后 `biz_noctx` 只剩已登记面：ERP `searchable_projection` / `consolidation::reports` 写后按主键投影与审批桥接、QMS `integration` 平台常量通道、unified-core IAM/versioning/automation 平台表。
 - `biz_nopred` 集中在 ERP `emit_after_commit`（写后按主键读快照）与 unified-core 平台表，均对应第 5 节已登记项，不构成跨租户请求读面。
-- 结论：W7-A 的「未登记跨租户裸池」为 0；剩余 225 处是已分类存量，其中 98 处带显式租户谓词的可作为后续净化对象，不再作为安全缺口。
+- 结论：W7-A 的「未登记跨租户裸池」为 0；剩余 224 处是已分类存量，其中 97 处带显式租户谓词的可作为后续净化对象，不再作为安全缺口。
