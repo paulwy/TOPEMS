@@ -25,6 +25,34 @@ async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
     (cell, rls_request_tenant(&tenant_claims()))
 }
 
+async fn commit_scope(cell: &RlsTxnCell) {
+    let mut guard = cell.lock().await;
+    if let Some(tx) = guard.take() {
+        tx.commit().await.unwrap();
+    }
+}
+
+async fn create_scoped_variable(
+    pool: &sqlx::PgPool,
+    req: CreateVariableRequest,
+) -> AutomationVariable {
+    let (cell, ctx) = rls_scope(pool).await;
+    let cell_clone = cell.clone();
+    let state = test_app_state(pool.clone());
+    let resp = scope_request_tenant(
+        ctx,
+        create_variable(
+            State(state),
+            Extension(cell),
+            Extension(tenant_claims()),
+            Json(req),
+        ),
+    )
+    .await;
+    commit_scope(&cell_clone).await;
+    resp.data.unwrap()
+}
+
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS automation_variables (
@@ -88,15 +116,7 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
 async fn create_returns_variable(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
-    let state = test_app_state(pool);
-    let claims = tenant_claims();
-    let resp = create_variable(
-        State(state),
-        Extension(claims),
-        Json(create_req("api_key", "v1")),
-    )
-    .await;
-    let var: AutomationVariable = resp.data.unwrap();
+    let var = create_scoped_variable(&pool, create_req("api_key", "v1")).await;
     assert_eq!(var.key, "api_key");
     assert_eq!(var.value.as_deref(), Some("v1"));
 }
@@ -105,15 +125,7 @@ async fn create_returns_variable(pool: sqlx::PgPool) {
 async fn get_roundtrip(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
-    let state = test_app_state(pool.clone());
-    let claims = tenant_claims();
-    let resp = create_variable(
-        State(state),
-        Extension(claims),
-        Json(create_req("db_host", "localhost")),
-    )
-    .await;
-    let var: AutomationVariable = resp.data.unwrap();
+    let var = create_scoped_variable(&pool, create_req("db_host", "localhost")).await;
 
     let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
@@ -130,15 +142,7 @@ async fn get_roundtrip(pool: sqlx::PgPool) {
 async fn update_changes_value(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
-    let state = test_app_state(pool.clone());
-    let claims = tenant_claims();
-    let resp = create_variable(
-        State(state),
-        Extension(claims),
-        Json(create_req("timeout", "30")),
-    )
-    .await;
-    let var: AutomationVariable = resp.data.unwrap();
+    let var = create_scoped_variable(&pool, create_req("timeout", "30")).await;
 
     let req = UpdateVariableRequest {
         value: Some("60".to_string()),
@@ -161,15 +165,7 @@ async fn update_changes_value(pool: sqlx::PgPool) {
 async fn delete_removes_variable(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
-    let state = test_app_state(pool.clone());
-    let claims = tenant_claims();
-    let resp = create_variable(
-        State(state),
-        Extension(claims),
-        Json(create_req("temp", "x")),
-    )
-    .await;
-    let var: AutomationVariable = resp.data.unwrap();
+    let var = create_scoped_variable(&pool, create_req("temp", "x")).await;
 
     let (cell, ctx) = rls_scope(&pool).await;
     let cell_clone = cell.clone();

@@ -88,14 +88,21 @@ fn create_req(name: &str, code: &str) -> CreateRuleRequest {
 }
 
 async fn create_via_handler(pool: sqlx::PgPool, name: &str, code: &str) -> AutomationRule {
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool);
     let claims = tenant_claims();
-    let resp = create_rule(
-        State(state),
-        Extension(claims),
-        Json(create_req(name, code)),
+    let resp = scope_request_tenant(
+        ctx,
+        create_rule(
+            State(state),
+            Extension(cell),
+            Extension(claims),
+            Json(create_req(name, code)),
+        ),
     )
     .await;
+    commit_scope(&cell_clone).await;
     resp.data.unwrap()
 }
 
@@ -119,14 +126,21 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
 async fn create_applies_defaults(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool);
     let claims = tenant_claims();
-    let resp = create_rule(
-        State(state),
-        Extension(claims),
-        Json(create_req("规则A", "RULE_A")),
+    let resp = scope_request_tenant(
+        ctx,
+        create_rule(
+            State(state),
+            Extension(cell),
+            Extension(claims),
+            Json(create_req("规则A", "RULE_A")),
+        ),
     )
     .await;
+    commit_scope(&cell_clone).await;
     let rule: AutomationRule = resp.data.unwrap();
     assert_eq!(rule.name, "规则A");
     assert_eq!(rule.code, "RULE_A");

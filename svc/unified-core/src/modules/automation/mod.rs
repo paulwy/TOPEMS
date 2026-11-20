@@ -361,6 +361,7 @@ pub async fn get_rule_by_code(
 
 pub async fn create_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateRuleRequest>,
 ) -> ApiResponse<AutomationRule> {
@@ -369,6 +370,19 @@ pub async fn create_rule(
         .status
         .clone()
         .unwrap_or_else(|| "draft".to_string());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化规则作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化规则作用域失败".to_string(),
+            ));
+        }
+    };
 
     // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
     let tenant_id = match try_tenant_id_from_claims(&claims) {
@@ -391,7 +405,7 @@ pub async fn create_rule(
     .bind(&status)
     .bind(user_id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match rule {
@@ -1218,10 +1232,24 @@ pub async fn get_variable(
 
 pub async fn create_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateVariableRequest>,
 ) -> ApiResponse<AutomationVariable> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
     // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
     let tenant_id = match try_tenant_id_from_claims(&claims) {
         Ok(t) => t,
@@ -1252,7 +1280,7 @@ pub async fn create_variable(
     .bind(is_secret)
     .bind(user_id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match var {
@@ -1425,10 +1453,24 @@ pub async fn reveal_variable(
 
 pub async fn bulk_import_variables(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkImportRequest>,
 ) -> ApiResponse<Value> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
     // 写入必须绑定真实租户：取不到即 400，禁止静默落全零 UUID 共享行。
     let tenant_id = match try_tenant_id_from_claims(&claims) {
         Ok(t) => t,
@@ -1455,7 +1497,7 @@ pub async fn bulk_import_variables(
         .bind(is_secret)
         .bind(user_id)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut rls_scope)
         .await;
 
         match result {
