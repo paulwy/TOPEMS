@@ -5496,10 +5496,10 @@ pub async fn get_opening_balances(
         )>,
         sqlx::Error,
     > = sqlx::query_as(only_own_schema_query!(
-        "erp",
+        "finance",
         r#"SELECT id, company_id, subject_code, subject_name, period,
                    debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at
-            FROM erp.opening_balances
+            FROM finance.opening_balances
             WHERE deleted_at IS NULL
               AND ($1::uuid IS NULL OR company_id = $1)
               AND ($2::text IS NULL OR period = $2)
@@ -5518,8 +5518,8 @@ pub async fn get_opening_balances(
     match rows {
         Ok(items) => {
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
-                "erp",
-                r#"SELECT COUNT(*) FROM erp.opening_balances
+                "finance",
+                r#"SELECT COUNT(*) FROM finance.opening_balances
                    WHERE deleted_at IS NULL
                      AND ($1::uuid IS NULL OR company_id = $1)
                      AND ($2::text IS NULL OR period = $2)
@@ -5592,10 +5592,10 @@ pub async fn get_opening_balance(
         )>,
         sqlx::Error,
     > = sqlx::query_as(only_own_schema_query!(
-        "erp",
+        "finance",
         r#"SELECT id, company_id, subject_code, subject_name, period,
                   debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at
-           FROM erp.opening_balances
+           FROM finance.opening_balances
            WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
@@ -5666,8 +5666,8 @@ pub async fn update_opening_balance(
         )>,
         sqlx::Error,
     > = sqlx::query_as(only_own_schema_query!(
-        "erp",
-        r#"UPDATE erp.opening_balances SET
+        "finance",
+        r#"UPDATE finance.opening_balances SET
                debit_balance = COALESCE($2, debit_balance),
                credit_balance = COALESCE($3, credit_balance),
                subject_name = COALESCE($4, subject_name),
@@ -5722,8 +5722,8 @@ pub async fn delete_opening_balance(
     };
 
     let res = sqlx::query(only_own_schema_query!(
-        "erp",
-        r#"UPDATE erp.opening_balances SET deleted_at = NOW()
+        "finance",
+        r#"UPDATE finance.opening_balances SET deleted_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
@@ -5827,8 +5827,8 @@ pub async fn import_opening_balances(
             Err(e) => return crate::shared::err_resp(e),
         };
         let res = sqlx::query(only_own_schema_query!(
-            "erp",
-            r#"INSERT INTO erp.opening_balances
+            "finance",
+            r#"INSERT INTO finance.opening_balances
                 (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())"#
         ))
@@ -5945,8 +5945,8 @@ pub async fn create_opening_balances(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let res = sqlx::query(only_own_schema_query!(
-        "erp",
-        r#"INSERT INTO erp.opening_balances
+        "finance",
+        r#"INSERT INTO finance.opening_balances
             (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#
     ))
@@ -6052,8 +6052,8 @@ pub async fn set_opening_balance(
 
     // 覆盖式更新：先软删旧行，再插入新行
     let _ = sqlx::query(only_own_schema_query!(
-        "erp",
-        r#"UPDATE erp.opening_balances SET deleted_at = NOW()
+        "finance",
+        r#"UPDATE finance.opening_balances SET deleted_at = NOW()
            WHERE tenant_id = $1 AND subject_code = $2 AND period = $3 AND company_id = $4"#
     ))
     .bind(tenant_id)
@@ -6066,8 +6066,8 @@ pub async fn set_opening_balance(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let res = sqlx::query(only_own_schema_query!(
-        "erp",
-        r#"INSERT INTO erp.opening_balances
+        "finance",
+        r#"INSERT INTO finance.opening_balances
             (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $11, $8, $9, $10)"#
     ))
@@ -6135,11 +6135,11 @@ pub async fn carry_forward_opening_balance(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let res = sqlx::query(only_own_schema_query!(
-        "erp",
-        r#"INSERT INTO erp.opening_balances
+        "finance",
+        r#"INSERT INTO finance.opening_balances
             (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, account_id, tenant_id, created_at, updated_at)
            SELECT gen_random_uuid(), company_id, subject_code, subject_name, $1, debit_balance, credit_balance, account_id, tenant_id, NOW(), NOW()
-           FROM erp.opening_balances
+           FROM finance.opening_balances
            WHERE period = $2 AND deleted_at IS NULL
              AND ($3::uuid IS NULL OR company_id = $3)
            ON CONFLICT DO NOTHING"#

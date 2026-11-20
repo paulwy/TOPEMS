@@ -359,7 +359,7 @@ impl FinanceService {
                 SELECT ob.account_id,
                        ob.period AS base_period,
                        (ob.debit_balance - ob.credit_balance) AS base_net
-                FROM erp.opening_balances ob
+                FROM finance.opening_balances ob
                 WHERE ob.tenant_id = $1
                   AND ob.company_id = $2
                   AND ob.deleted_at IS NULL
@@ -367,7 +367,7 @@ impl FinanceService {
                   AND ob.period <= $3
                   AND ob.period = (
                       SELECT max(ob2.period)
-                      FROM erp.opening_balances ob2
+                      FROM finance.opening_balances ob2
                       WHERE ob2.tenant_id = ob.tenant_id
                         AND ob2.company_id = ob.company_id
                         AND ob2.account_id = ob.account_id
@@ -417,7 +417,7 @@ impl FinanceService {
             WHERE a.tenant_id = $1 AND a.deleted_at IS NULL
             ORDER BY a.code
             "#,
-            "erp"
+            "finance"
         ))
         .bind(tenant_id)
         .bind(company_id)
@@ -472,10 +472,10 @@ impl FinanceService {
 
         let unlinked: i64 = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            r#"SELECT COUNT(*) FROM erp.opening_balances
+            r#"SELECT COUNT(*) FROM finance.opening_balances
                WHERE tenant_id = $1 AND company_id = $2
                  AND deleted_at IS NULL AND account_id IS NULL"#,
-            "erp"
+            "finance"
         ))
         .bind(tenant_id)
         .bind(company_id)
@@ -625,12 +625,12 @@ impl FinanceService {
             WITH base AS (
                 SELECT ob.account_id, ob.period AS base_period,
                        (ob.debit_balance - ob.credit_balance) AS base_net
-                FROM erp.opening_balances ob
+                FROM finance.opening_balances ob
                 WHERE ob.tenant_id = $1 AND ob.company_id = $2
                   AND ob.deleted_at IS NULL AND ob.account_id IS NOT NULL
                   AND ob.period <= $3
                   AND ob.period = (
-                      SELECT max(ob2.period) FROM erp.opening_balances ob2
+                      SELECT max(ob2.period) FROM finance.opening_balances ob2
                       WHERE ob2.tenant_id = ob.tenant_id AND ob2.company_id = ob.company_id
                         AND ob2.account_id = ob.account_id AND ob2.deleted_at IS NULL
                         AND ob2.period <= $3
@@ -677,7 +677,7 @@ impl FinanceService {
             ) m ON TRUE
             WHERE a.tenant_id = $1 AND a.deleted_at IS NULL
             "#,
-            "erp"
+            "finance"
         ))
         .bind(tenant_id)
         .bind(company_id)

@@ -2795,3 +2795,9 @@ pending_forward_patches:
     effect: "把 communication.core_location_messages（IM 位置消息）以 live 形状固化，1 表 / 22 列 / 7 约束 / 2 索引 / 无策略 / 无 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 lib 中的 schema_defense 单元测试"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "该表由 im_location 活跃读写；live 比 TABLE_DEFS 多 deleted_at，已按 live 固化。live communication 其余 4 表由既有迁移维护，未纳入。回滚 database/rollback/20261121210000_communication_schema_canonical.rollback.sql（接管型）"
+  - version: "20261121220000"
+    file: "database/migrations/20261121220000_finance_opening_balances_move.sql"
+    status: to_apply
+    effect: "把 erp.opening_balances 连同数据、索引、唯一约束与 tenant RLS 策略整体 ALTER TABLE SET SCHEMA 迁入 finance；代码改为 finance.opening_balances，finance 不再直连 erp schema"
+    destructive_scan: "仅 CREATE SCHEMA IF NOT EXISTS 与 DO 块内 ALTER TABLE ... SET SCHEMA；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE、无数据复制；两表并存时中止"
+    note: "全仓仅 finance 读写该表，erp 服务零引用；测试库 topems_test_full 实测迁移后 erp 表消失、finance 表与 RLS 策略保留，重复执行为 no-op。回滚 database/rollback/20261121220000_finance_opening_balances_move.rollback.sql（仅移回 erp，不删数据）"

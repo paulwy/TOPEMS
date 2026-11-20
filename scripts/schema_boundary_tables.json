@@ -217,7 +217,7 @@
     "mobile_tasks": "mobile",
     "mrp_suggestions": "scm",
     "notifications": "pm",
-    "opening_balances": "erp",
+    "opening_balances": "finance",
     "opportunities": "crm",
     "outbound_order_items": "wms",
     "outbound_orders": "wms",
