@@ -13,7 +13,7 @@
 //! 重复投递/乱序收敛由投影表自身处理。发布为最佳努力：失败仅告警，不阻断业务写。
 
 use chrono::{DateTime, Utc};
-use sqlx::{PgConnection, PgPool, Row};
+use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::{EventPublisher, EventType, SearchableEntityChangedPayload};
@@ -35,7 +35,7 @@ struct Snapshot {
 
 /// 从连接（连接池或事务）读取实体最新快照 + tenant_id；软删/不存在 → (None, tenant_id)。
 async fn fetch_snapshot_with_tenant(
-    conn: &mut PgConnection,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     entity_type: &str,
     entity_id: Uuid,
 ) -> (Option<Snapshot>, Option<Uuid>) {
@@ -46,7 +46,7 @@ async fn fetch_snapshot_with_tenant(
                  FROM erp.customers WHERE id = $1 AND deleted_at IS NULL",
             )
             .bind(entity_id)
-            .fetch_optional(&mut *conn)
+            .fetch_optional(&mut *scope)
             .await
             .ok()
             .flatten();
@@ -79,7 +79,7 @@ async fn fetch_snapshot_with_tenant(
             );
             let row = sqlx::query(sqlx::AssertSqlSafe(sql))
                 .bind(entity_id)
-                .fetch_optional(&mut *conn)
+                .fetch_optional(&mut *scope)
                 .await
                 .ok()
                 .flatten();
@@ -113,8 +113,10 @@ async fn build_payload_from_pool(
     entity_type: &str,
     entity_id: Uuid,
 ) -> Option<SearchableEntityChangedPayload> {
-    let mut conn = db.acquire().await.ok()?;
-    let (snap, tenant_id) = fetch_snapshot_with_tenant(&mut conn, entity_type, entity_id).await;
+    // commit 后快照读取不属于任何请求事务：显式系统只读通道，连接不裸借。
+    let scoped_db = topems_shared_db::scope::Db::new(db.clone(), "public, shared");
+    let mut scope = scoped_db.scope_read_system().await.ok()?;
+    let (snap, tenant_id) = fetch_snapshot_with_tenant(&mut scope, entity_type, entity_id).await;
     Some(match snap {
         Some(s) => SearchableEntityChangedPayload {
             entity_type: entity_type.to_string(),

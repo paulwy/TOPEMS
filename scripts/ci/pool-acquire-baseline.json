@@ -7,10 +7,6 @@
       "reason": "BI 动态 SQL 执行：语句由用户配置、目标可能是外部数据源，schema 不由本进程 search_path 决定；需手工 BEGIN READ ONLY + set_config('app.tenant_id', true)。B 全量改造时不纳入 ScopedTxn，改为保留此独立路径并由本白名单长期登记。"
     },
     {
-      "file": "svc/erp/src/modules/searchable_projection.rs",
-      "reason": "erp 模块尚未纳入 Db 试点（仍是 &PgPool）。该处是启动期快照补写用的独立只读借连接，语义等价于 scope_read，但 erp 未持有 Db；B 全量改造 erp 时一并改为 scope_read。"
-    },
-    {
       "file": "svc/mes/src/modules/work_report.rs",
       "reason": "tokio::spawn 后台任务，请求事务已提交，无法复用请求级 scope；且需要独立设置 app.tenant_id=nil 的会话上下文。已做到查询结束立即 drop(conn)，不跨事件发布持有。mes 纳入 Db 后改为 scope_read + scope_with 语义。"
     },
