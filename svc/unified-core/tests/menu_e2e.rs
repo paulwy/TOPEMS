@@ -7,13 +7,15 @@
 mod app_state;
 
 use app_state::{commit_test_txn, tenant_claims, test_app_state, test_txn_cell};
+use axum::body;
 use axum::extract::{Extension, Path, Query, State};
+use axum::http::HeaderMap;
 use axum::Json;
 use serde_json::Value;
 use sqlx::postgres::PgPoolOptions;
 use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
 use topems_unified_core::modules::menu::handlers::{
-    create_group, create_menu, delete_group, get_menu, list_groups, list_menus,
+    create_group, create_menu, delete_group, get_menu, list_groups, list_menus, my_menu_tree,
 };
 use topems_unified_core::modules::menu::models::{
     CreateMenuGroupRequest, CreateMenuRequest, MenuGroupQuery, MenuQuery,
@@ -117,6 +119,51 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
         .unwrap()
         .parse()
         .unwrap()
+}
+
+#[sqlx::test(migrations = false)]
+async fn my_menu_tree_exposes_group_metadata(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let group_id = create_group_via_handler(&pool, "nav_business", "导航业务").await;
+
+    let req = CreateMenuRequest {
+        group_id,
+        parent_id: None,
+        name: "凭证管理".to_string(),
+        code: "finance-vouchers".to_string(),
+        path: Some("/finance/vouchers".to_string()),
+        icon: Some("FileText".to_string()),
+        sort_order: Some(1),
+        permissions: None,
+    };
+    let txn = test_txn_cell(&pool).await;
+    let created = in_tenant(create_menu(
+        Extension(txn.clone()),
+        State(test_app_state(pool.clone())),
+        Extension(tenant_claims()),
+        Json(req),
+    ))
+    .await;
+    commit_test_txn(&txn).await;
+    assert!(
+        created.data.is_some(),
+        "create_menu failed: {:?}",
+        created.message
+    );
+
+    let resp = in_tenant(my_menu_tree(
+        Extension(test_txn_cell(&pool).await),
+        State(test_app_state(pool)),
+        Extension(tenant_claims()),
+        HeaderMap::new(),
+    ))
+    .await;
+    let bytes = body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let payload: Value = serde_json::from_slice(&bytes).unwrap();
+    let node = &payload["data"]["items"][0];
+    assert_eq!(node["code"], "finance-vouchers");
+    assert_eq!(node["groupCode"], "nav_business");
+    assert_eq!(node["groupOrder"], 1);
 }
 
 topems_test_support::sqlx_dsn_guard!();

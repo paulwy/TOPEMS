@@ -38,6 +38,8 @@ export interface NavItem {
   children?: NavItem[];
   /** 二级语义分组（P2-2）：overview/master/process/business/analytics/report/setting/other */
   group?: string;
+  /** DB 分组排序；有值时优先于前端标准顺序 */
+  groupOrder?: number;
   /** 点击后的导航路径 */
   path?: string;
 }

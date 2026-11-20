@@ -45,6 +45,15 @@ pub struct MenuNode {
     pub visible: bool,
     pub parent_code: Option<String>,
     pub icon: Option<String>,
+    /// 分组 code（如 `finance_business`），前端从后缀还原 `business` 等语义分组。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_code: Option<String>,
+    /// 分组展示名（DB name，中文兜底）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_name: Option<String>,
+    /// 分组排序（来自 `core_menu_groups.sort_order`）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_order: Option<i32>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<MenuNode>,
 }

@@ -17,6 +17,12 @@ export interface DbMenuItem {
   visible: boolean;
   parentCode?: string;
   icon?: string;
+  /** DB 分组 code，如 `finance_business`；前端取后缀还原 `business` 语义分组。 */
+  groupCode?: string;
+  /** DB 分组展示名（中文兜底，当前仅透传）。 */
+  groupName?: string;
+  /** DB 分组排序（`core_menu_groups.sort_order`）。 */
+  groupOrder?: number;
   children?: DbMenuItem[];
 }
 

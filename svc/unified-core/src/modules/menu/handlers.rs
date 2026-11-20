@@ -662,8 +662,9 @@ pub async fn delete_menu(
 // 缓存：租户级 60s TTL（AppState.menu_cache）；HTTP：ETag + If-None-Match → 304。
 // ============================================================================
 
-const MENU_READ_COLUMNS: &str =
-    "id, code, name, path, icon, sort_order, status, parent_id, permissions";
+const MENU_READ_COLUMNS: &str = "m.id, m.code, m.name, m.path, m.icon, m.sort_order, m.status, \
+    m.parent_id, m.permissions, g.code AS group_code, g.name AS group_name, \
+    g.sort_order AS group_sort_order";
 
 fn menu_visible_to_claims(permissions: &Option<serde_json::Value>, claims: &Claims) -> bool {
     if claims.is_superuser {
@@ -714,6 +715,9 @@ fn build_menu_tree(rows: &[DbMenuRow]) -> Vec<MenuNode> {
                 visible: row.status == "active",
                 parent_code,
                 icon: row.icon.clone(),
+                group_code: row.group_code.clone(),
+                group_name: row.group_name.clone(),
+                group_order: row.group_sort_order,
                 children: Vec::new(),
             },
         );
@@ -808,10 +812,13 @@ pub async fn my_menu_tree(
                     .and_then(|t| Uuid::parse_str(t).ok())
             };
             let sql = format!(
-                r#"SELECT {} FROM public.core_menus
-                   WHERE deleted_at IS NULL
-                     AND ($1::uuid IS NULL OR tenant_id = $1)
-                   ORDER BY sort_order ASC, code ASC"#,
+                r#"SELECT {}
+                   FROM public.core_menus m
+                   LEFT JOIN public.core_menu_groups g
+                     ON g.id = m.group_id AND g.deleted_at IS NULL
+                   WHERE m.deleted_at IS NULL
+                     AND ($1::uuid IS NULL OR m.tenant_id = $1)
+                   ORDER BY g.sort_order ASC, m.sort_order ASC, m.code ASC"#,
                 MENU_READ_COLUMNS
             );
             let mut guard = txn_arc.lock().await;

@@ -25,6 +25,10 @@ pub struct DbMenuRow {
     pub status: String,
     pub parent_id: Option<Uuid>,
     pub permissions: Option<Value>,
+    /// 所属分组元数据：随菜单一次返回，供前端按 DB 分组语义渲染。
+    pub group_code: Option<String>,
+    pub group_name: Option<String>,
+    pub group_sort_order: Option<i32>,
 }
 
 struct CacheEntry {

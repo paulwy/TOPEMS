@@ -110,7 +110,7 @@
 | W1-3b ✅ | hrm/crm/pdm/pm/rd/tms/gis/mobile | 已并入 W1-3 运行期矩阵：CRM/HRM/PM/PDM/RD/TMS/GIS 读 200，TMS/PDM/RD 写 403；Mobile 读 200、写 403，个人接口仍按 auth-only 不入模块门 | 非超管 200 / 无权限 403 ✅；mobile 个人接口保持 auth-only ✅ |
 | W1-3c ✅ | integration/monitor/ticket/master-data | 已并入 W1-3 运行期矩阵：Integration/Monitor/Ticket/master-data 读 200、写 403；master-data 实际业务前缀为 `/api/master-data/quality-v51/*`，已按真实前缀验；monitor 的 `monitor:dashboard:read` 仍按现网读码授予，收紧到具体看板属后续细化 | 非超管 200 / 无权限 403 ✅；monitor 收紧需核真实用户（未改） |
 | W1-3 ✅（运行期验收完成） | 全模块非超管矩阵 + 写门根因修复 | 单体 :8099 真实登录实测：`w13_reader` 仅授各模块读码时，CRM/ERP/SCM/WMS/QMS/EHS/HRM/PM/TMS/LIMS/master-data/SRM/MES/PDM/RD/GIS/Mobile/Integration/Monitor/Ticket 读全部 200；未授权模块 403。EHS/QMS/MES 曾用合法载荷真实写入，根因是单体 `topems-server` 的 `*_real_module` 只挂 `require_module_access`、绕过独立部署 `main.rs` 写门；已在 EHS/QMS/TMS/LIMS/master-data/MES 的单体挂载点与独立部署入口补齐 `require_module_write`。复测：EHS/QMS/MES 合法写 403（`需要 <module>:admin`），TMS/LIMS/master-data/SRM/PDM/RD/Mobile/Integration/Monitor/Ticket 写 403、读 200，admin 写仍 200；ERP/SCM/WMS 走处理器级细粒度 `check_permission`（无效体 422 属参数校验，不是放行）。探针数据按主键删除，`w13-*-probe` 计数 0；验收已固化为 `scripts/dev/verify-runtime-permissions.sh`，实跑 `pass=34 fail=0` | 20 模块读 200/写 403 可复现 ✅；脚本门禁 34/34 ✅；新增 `scripts/ci/check-module-write-parity.mjs`（独立部署有写门则单体挂载必须同步，14 项配平 0 缺失，反向构造缺失可判红），接入 CI `connection-governance` 与 pre-commit；EHS/QMS/MES 越权写入已闭合 |
-| W1-4a | DB 菜单分组映射到 10 个域组并被前端消费 | `GlobalLayoutV3.tsx` 无 `group_id` 消费 | 菜单接口返回 10 组；`?menu_authority=config` 可回退 |
+| W1-4a ✅（口径修正） | DB 菜单分组被前端消费 | 2026-11-21 实测 `core_menu_groups` 是**模块内语义分组**（`finance_business` 等 2–4 组/模块），全仓不存在 10 个域组记录，故不硬套 `DOMAIN_GROUPS`。后端 `my_menu_tree` 返回 `groupCode/groupName/groupOrder`；前端三级菜单按 DB 分组语义与顺序渲染，缺值回退 `navItems.group`；一级 10 个域组仍由前端呈现聚合。证据 `docs/quality/menu-grouping-2026-11-21.md` | 模块内分组由 DB 驱动 ✅；`?menu_authority=config` 完整回退 ✅ |
 | §14.1 | 财务期初余额 4 项遗留（f64 路径、币种符号、签名等） | 未动 | 逐项用例绿 |
 | §14.2 | 单一率校验 | 未做 | 用例绿 |
 | §17.3 | `200 + success:false` 分批改语义（先加响应头/错误码映射） | 545 处 | 每批计数下降且客户端兼容 |
@@ -326,7 +326,7 @@
 | E4-7 | W1-2a 修脚本后重出权限快照 | E0-3 | — | 快照可重跑一致 |
 | E4-8 | W1-2b/c/d 权限码分流与对齐 | E4-7 | — | 交集上升、0 删除、非超管 403 实测 |
 | E4-9 | W1-3a/b/c 路由级权限验收（按服务清单三批） | E4-8 | — | 非超管 200 / 无权限 403；mobile 个人接口保持 auth-only |
-| E4-10 | W1-4a 菜单分组被前端消费 | E4-7 | — | 菜单接口返回 10 组，`?menu_authority=config` 可回退 |
+| E4-10 ✅ | W1-4a 菜单分组被前端消费 | E4-7 | — | 2026-11-21 完成：后端返回模块内 `groupCode/groupName/groupOrder`，前端三级菜单消费并按 DB 顺序排序；10 个一级域组保留前端 `DOMAIN_GROUPS`，`?menu_authority=config` 可回退 |
 | E4-11 | W1-4b 同名菜单收敛 | 无（数据已盘点） | DEC-05 | 31 组收敛后有回归证据 |
 | E4-12 | W1-4c dashboard 幽灵菜单定性 | 无（数据已盘点） | DEC-06 | 35 个菜单全部有归属或删除 |
 | E4-13 | W1-5a/b/c 遗留 schema 归档 | 无 | DEC-02 | `rs` 24 表归档迁移 + 回滚演练 |

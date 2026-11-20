@@ -16,6 +16,7 @@ import { DOMAIN_GROUPS } from '@/config/moduleTiers';
 import { NOTIFICATION_PATHS } from '@/module-configs/notification/config';
 import type { DbMenuItem } from '@/api/core/menus';
 import { useMenuAuthority } from '@/hooks/useMenuAuthority';
+import { navGroupFromDbMenu } from '@/components/redesign/layout/menuGrouping';
 import { useTenantModules } from '@/hooks/useTenantModules';
 import i18n, { ensureNamespacesLoaded, subscribeResourceVersion, getResourceVersion } from '@/i18n';
 
@@ -165,8 +166,10 @@ function buildSidebarItems(
           icon: resolveIcon(dbItem?.icon || child.icon),
           path: dbItem?.path || child.path,
           // P2-2：把 navItems 的 group 语义带到渲染层，由 SideRail 按
-          // NavGroup 标准顺序聚合成可折叠的二级分组
-          group: child.group,
+          // NavGroup 标准顺序聚合成可折叠的二级分组。
+          // W1-4a：DB 分组优先；无 DB 分组时回退 config 的 child.group。
+          group: navGroupFromDbMenu(dbItem) ?? child.group,
+          groupOrder: dbItem?.groupOrder,
         };
       });
 
