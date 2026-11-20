@@ -181,7 +181,7 @@ pub struct UpdateProjectPhaseByIdRequest {
 const PROJECT_COLUMNS: &str = r#"
     p.id, p.tenant_id, p.project_no, p.name, p.description, p.status, p.phase,
     p.start_date, p.end_date, p.manager_id, p.manager_name, p.budget::float8 AS budget, p.progress,
-    (SELECT COUNT(*) FROM pdm_project_members m WHERE m.project_id = p.id AND m.tenant_id = p.tenant_id) AS member_count,
+    (SELECT COUNT(*) FROM pdm.pdm_project_members m WHERE m.project_id = p.id AND m.tenant_id = p.tenant_id) AS member_count,
     p.created_by, p.created_at, p.updated_at
 "#;
 
@@ -225,7 +225,7 @@ pub async fn list_projects(
     let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {PROJECT_COLUMNS}
-        FROM pdm_projects p
+        FROM pdm.pdm_projects p
         WHERE p.deleted_at IS NULL AND p.tenant_id = $1
           AND ($2::text IS NULL OR p.project_no ILIKE $2 OR p.name ILIKE $2 OR p.description ILIKE $2)
           AND ($3::text IS NULL OR p.status = $3)
@@ -296,7 +296,7 @@ pub async fn create_project(
 
     let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
-        INSERT INTO pdm_projects AS p (
+        INSERT INTO pdm.pdm_projects AS p (
             tenant_id, project_no, name, description, status, phase, start_date, end_date,
             manager_id, manager_name, budget, progress, created_by
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
@@ -370,7 +370,7 @@ pub async fn get_project(
     let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {PROJECT_COLUMNS}
-        FROM pdm_projects p
+        FROM pdm.pdm_projects p
         WHERE p.deleted_at IS NULL AND p.id = $1 AND p.tenant_id = $2
         "#
     )))
@@ -509,7 +509,7 @@ pub async fn delete_project(
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query(
-        "UPDATE pdm_projects SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        "UPDATE pdm.pdm_projects SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
@@ -679,7 +679,7 @@ pub async fn list_members(
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         SELECT id, tenant_id, project_id, user_id, user_name, user_email, role, joined_at, updated_at
-        FROM pdm_project_members
+        FROM pdm.pdm_project_members
         WHERE tenant_id = $1 AND project_id = $2
         ORDER BY joined_at DESC
         "#,
@@ -739,7 +739,7 @@ pub async fn add_member(
     }
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
-        INSERT INTO pdm_project_members (tenant_id, project_id, user_id, user_name, user_email, role)
+        INSERT INTO pdm.pdm_project_members (tenant_id, project_id, user_id, user_name, user_email, role)
         VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (tenant_id, project_id, user_id) DO UPDATE
         SET user_name = COALESCE(EXCLUDED.user_name, pdm_project_members.user_name),
@@ -805,7 +805,7 @@ pub async fn update_member(
     };
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
-        UPDATE pdm_project_members
+        UPDATE pdm.pdm_project_members
         SET user_name = COALESCE($4, user_name),
             user_email = COALESCE($5, user_email),
             role = COALESCE($6, role),
@@ -869,7 +869,7 @@ pub async fn remove_member(
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query(
-        "DELETE FROM pdm_project_members WHERE tenant_id = $1 AND project_id = $2 AND user_id = $3",
+        "DELETE FROM pdm.pdm_project_members WHERE tenant_id = $1 AND project_id = $2 AND user_id = $3",
     )
     .bind(tenant_id)
     .bind(project_id)
@@ -925,7 +925,7 @@ pub async fn list_phases(
         r#"
         SELECT id, tenant_id, project_id, phase, name, description, start_date, end_date,
                status, deliverables, created_at, updated_at
-        FROM pdm_project_phases
+        FROM pdm.pdm_project_phases
         WHERE tenant_id = $1 AND project_id = $2
         ORDER BY created_at ASC
         "#,
@@ -985,7 +985,7 @@ pub async fn create_phase(
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        INSERT INTO pdm_project_phases (
+        INSERT INTO pdm.pdm_project_phases (
             tenant_id, project_id, phase, name, description, start_date, end_date, status, deliverables
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, project_id, phase, name, description, start_date, end_date,
@@ -1050,7 +1050,7 @@ pub async fn update_phase(
     };
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        UPDATE pdm_project_phases
+        UPDATE pdm.pdm_project_phases
         SET phase = COALESCE($4, phase),
             name = COALESCE($5, name),
             description = COALESCE($6, description),
@@ -1122,7 +1122,7 @@ pub async fn delete_phase(
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query(
-        "DELETE FROM pdm_project_phases WHERE tenant_id = $1 AND project_id = $2 AND id = $3",
+        "DELETE FROM pdm.pdm_project_phases WHERE tenant_id = $1 AND project_id = $2 AND id = $3",
     )
     .bind(tenant_id)
     .bind(project_id)

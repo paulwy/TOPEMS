@@ -274,7 +274,7 @@ pub async fn detect_conflicts(
             // 持久化冲突记录到数据库
             let _ = sqlx::query(only_own_schema_query!(
                 "erp",
-                r#"INSERT INTO erp_master_data_conflicts
+                r#"INSERT INTO erp.erp_master_data_conflicts
                    (id, master_data_id, domain, conflict_type, field_name,
                     local_value, remote_value, remote_service, status,
                     merge_strategy, resolved_value, detected_at, resolved_at, resolved_by)
@@ -312,7 +312,7 @@ pub async fn detect_conflicts(
             // 持久化待审查冲突
             let _ = sqlx::query(only_own_schema_query!(
                 "erp",
-                r#"INSERT INTO erp_master_data_conflicts
+                r#"INSERT INTO erp.erp_master_data_conflicts
                    (id, master_data_id, domain, conflict_type, field_name,
                     local_value, remote_value, remote_service, status,
                     merge_strategy, resolved_value, detected_at, resolved_at, resolved_by)
@@ -401,7 +401,7 @@ pub async fn list_conflicts(
                 r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                           local_value, remote_value, remote_service, status,
                           merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
-                   FROM erp_master_data_conflicts
+                   FROM erp.erp_master_data_conflicts
                    WHERE master_data_id = $1 AND status = $2
                    ORDER BY detected_at DESC LIMIT $3 OFFSET $4"#
             ))
@@ -417,7 +417,7 @@ pub async fn list_conflicts(
                 r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                           local_value, remote_value, remote_service, status,
                           merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
-                   FROM erp_master_data_conflicts
+                   FROM erp.erp_master_data_conflicts
                    WHERE master_data_id = $1
                    ORDER BY detected_at DESC LIMIT $2 OFFSET $3"#
             ))
@@ -433,7 +433,7 @@ pub async fn list_conflicts(
             r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                       local_value, remote_value, remote_service, status,
                       merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
-               FROM erp_master_data_conflicts
+               FROM erp.erp_master_data_conflicts
                WHERE status = $1
                ORDER BY detected_at DESC LIMIT $2 OFFSET $3"#
         ))
@@ -448,7 +448,7 @@ pub async fn list_conflicts(
             r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                       local_value, remote_value, remote_service, status,
                       merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
-               FROM erp_master_data_conflicts
+               FROM erp.erp_master_data_conflicts
                ORDER BY detected_at DESC LIMIT $1 OFFSET $2"#
         ))
         .bind(page_size)
@@ -515,7 +515,7 @@ pub async fn get_conflict(
         r#"SELECT id, master_data_id, domain, conflict_type, field_name,
                   local_value, remote_value, remote_service, status,
                   merge_strategy, resolved_value, detected_at, resolved_at, resolved_by
-           FROM erp_master_data_conflicts WHERE id = $1"#
+           FROM erp.erp_master_data_conflicts WHERE id = $1"#
     ))
     .bind(cid)
     .fetch_optional(&mut **txn)
@@ -568,7 +568,7 @@ pub async fn resolve_conflict(
     // 1. 查询冲突记录获取 master_data_id 和 field_name
     let row = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"SELECT master_data_id, field_name FROM erp_master_data_conflicts WHERE id = $1"#
+        r#"SELECT master_data_id, field_name FROM erp.erp_master_data_conflicts WHERE id = $1"#
     ))
     .bind(cid)
     .fetch_optional(&mut **txn)
@@ -585,7 +585,7 @@ pub async fn resolve_conflict(
     // 2. 更新冲突记录状态
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"UPDATE erp_master_data_conflicts
+        r#"UPDATE erp.erp_master_data_conflicts
            SET status = 'resolved', resolved_value = $1, resolved_at = $2, resolved_by = $3
            WHERE id = $4"#
     ))
@@ -655,7 +655,7 @@ pub async fn auto_merge_conflict(
     // 1. 查询冲突记录
     let row = sqlx::query(
         only_own_schema_query!("erp", r#"SELECT master_data_id, field_name, local_value, remote_value, remote_service
-           FROM erp_master_data_conflicts WHERE id = $1 AND status IN ('pending_review', 'detected')"#),
+           FROM erp.erp_master_data_conflicts WHERE id = $1 AND status IN ('pending_review', 'detected')"#),
     )
     .bind(cid)
     .fetch_optional(&mut **txn)
@@ -698,7 +698,7 @@ pub async fn auto_merge_conflict(
     // 3. 更新冲突记录
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"UPDATE erp_master_data_conflicts
+        r#"UPDATE erp.erp_master_data_conflicts
            SET status = 'auto_resolved', resolved_value = $1, resolved_at = $2,
                resolved_by = $3, merge_strategy = $4
            WHERE id = $5"#

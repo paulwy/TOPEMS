@@ -83,7 +83,7 @@ pub async fn get_dashboard(
     };
 
     let pending_reviews = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pdm_documents WHERE tenant_id = $1 AND status IN ('review', 'pending')",
+        "SELECT COUNT(*) FROM pdm.pdm_documents WHERE tenant_id = $1 AND status IN ('review', 'pending')",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -91,7 +91,7 @@ pub async fn get_dashboard(
     .unwrap_or(0);
 
     let active_boms = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pdm_boms WHERE tenant_id = $1 AND status = 'active'",
+        "SELECT COUNT(*) FROM pdm.pdm_boms WHERE tenant_id = $1 AND status = 'active'",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -99,7 +99,7 @@ pub async fn get_dashboard(
     .unwrap_or(0);
 
     let total_boms =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_boms WHERE tenant_id = $1")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm.pdm_boms WHERE tenant_id = $1")
             .bind(tenant_id)
             .fetch_one(&mut scope)
             .await
@@ -110,7 +110,7 @@ pub async fn get_dashboard(
         tenant_id,
         r#"
         SELECT COALESCE(document_type, 'other') AS name, COUNT(*) AS value
-        FROM pdm_documents
+        FROM pdm.pdm_documents
         WHERE tenant_id = $1
         GROUP BY COALESCE(document_type, 'other')
         ORDER BY value DESC
@@ -123,7 +123,7 @@ pub async fn get_dashboard(
         tenant_id,
         r#"
         SELECT COALESCE(status, 'unknown') AS name, COUNT(*) AS value
-        FROM pdm_change_notices
+        FROM pdm.pdm_change_notices
         WHERE tenant_id = $1
         GROUP BY COALESCE(status, 'unknown')
         ORDER BY value DESC
@@ -136,7 +136,7 @@ pub async fn get_dashboard(
         tenant_id,
         r#"
         SELECT COALESCE(status, 'unknown') AS name, COUNT(*) AS value
-        FROM pdm_boms
+        FROM pdm.pdm_boms
         WHERE tenant_id = $1
         GROUP BY COALESCE(status, 'unknown')
         ORDER BY value DESC

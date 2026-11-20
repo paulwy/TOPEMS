@@ -75,7 +75,7 @@ pub async fn list_rooms(
         "erp",
         r#"
         SELECT id, name, capacity, location, facilities, status, created_at, updated_at
-        FROM meeting_rooms
+        FROM erp.meeting_rooms
         WHERE ($1::text IS NULL OR name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -94,7 +94,7 @@ pub async fn list_rooms(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
                 r#"
-                SELECT COUNT(*) FROM meeting_rooms
+                SELECT COUNT(*) FROM erp.meeting_rooms
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#
@@ -156,7 +156,7 @@ pub async fn create_room(
 
     let result = sqlx::query_as::<_, MeetingRoom>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at, tenant_id)
+        INSERT INTO erp.meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8)
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
         "#),
@@ -252,7 +252,7 @@ pub async fn get_room(
         "erp",
         r#"
         SELECT id, name, capacity, location, facilities, status, created_at, updated_at
-        FROM meeting_rooms WHERE id = $1
+        FROM erp.meeting_rooms WHERE id = $1
         "#
     ))
     .bind(id)
@@ -297,7 +297,7 @@ pub async fn update_room(
         None => unreachable!("rls txn missing"),
     };
     let existing = sqlx::query_as::<_, MeetingRoom>(
-        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM erp.meeting_rooms WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -323,7 +323,7 @@ pub async fn update_room(
     let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
         "erp",
         r#"
-        UPDATE meeting_rooms SET
+        UPDATE erp.meeting_rooms SET
             name = $2, capacity = $3, location = $4, facilities = $5, status = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
@@ -418,7 +418,7 @@ pub async fn delete_room(
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE erp.meeting_rooms SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut **txn)
@@ -510,7 +510,7 @@ pub async fn list_bookings(
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        FROM meeting_bookings
+        FROM erp.meeting_bookings
         WHERE ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY start_time DESC
@@ -528,7 +528,7 @@ pub async fn list_bookings(
         Ok(bookings) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 only_own_schema_query!("erp", r#"
-                SELECT COUNT(*) FROM meeting_bookings
+                SELECT COUNT(*) FROM erp.meeting_bookings
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR room_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#),
@@ -586,7 +586,7 @@ pub async fn create_booking(
     // 显式列出 MeetingRoom 全部字段：query_as 按列名映射，投影缺列会直接报
     // `no column found for name: ...` 并把创建预约打成 500（K2）。
     let room_result = sqlx::query_as::<_, MeetingRoom>(
-        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
+        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM erp.meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
     )
     .bind(req.room_id)
     .fetch_optional(&mut **txn)
@@ -605,7 +605,7 @@ pub async fn create_booking(
     let overlapping = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "erp",
         r#"
-        SELECT COUNT(*) FROM meeting_bookings
+        SELECT COUNT(*) FROM erp.meeting_bookings
         WHERE deleted_at IS NULL AND room_id = $1 AND status = 'confirmed'
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#
@@ -629,7 +629,7 @@ pub async fn create_booking(
 
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at, tenant_id)
+        INSERT INTO erp.meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9, $10)
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         "#),
@@ -725,7 +725,7 @@ pub async fn get_booking(
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        FROM meeting_bookings WHERE id = $1
+        FROM erp.meeting_bookings WHERE id = $1
         "#),
     )
     .bind(id)
@@ -769,7 +769,7 @@ pub async fn update_booking(
         None => unreachable!("rls txn missing"),
     };
     let existing = sqlx::query_as::<_, MeetingBooking>(
-        only_own_schema_query!("erp", "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM erp.meeting_bookings WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -794,7 +794,7 @@ pub async fn update_booking(
 
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
-        UPDATE meeting_bookings SET
+        UPDATE erp.meeting_bookings SET
             title = $2, organizer = $3, start_time = $4, end_time = $5, status = $6, updated_at = $7
         WHERE id = $1
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
@@ -888,7 +888,7 @@ pub async fn delete_booking(
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE erp.meeting_bookings SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut **txn)
@@ -976,7 +976,7 @@ pub async fn get_room_bookings(
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
-        FROM meeting_bookings WHERE room_id = $1 ORDER BY start_time ASC
+        FROM erp.meeting_bookings WHERE room_id = $1 ORDER BY start_time ASC
         "#),
     )
     .bind(id)

@@ -118,7 +118,7 @@ pub async fn list_configurations(
         r#"
         SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
-        FROM pdm_configurations
+        FROM pdm.pdm_configurations
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -140,7 +140,7 @@ pub async fn list_configurations(
         Ok(configurations) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_configurations
+                SELECT COUNT(*) FROM pdm.pdm_configurations
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -235,7 +235,7 @@ pub async fn create_configuration(
 
     let result = sqlx::query_as::<_, Configuration>(
         r#"
-        INSERT INTO pdm_configurations (
+        INSERT INTO pdm.pdm_configurations (
             id, tenant_id, config_no, name, description, product_id, config_items,
             status, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -316,7 +316,7 @@ pub async fn get_configuration(
         r#"
         SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
-        FROM pdm_configurations WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_configurations WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -388,7 +388,7 @@ pub async fn update_configuration(
 
     let result = sqlx::query_as::<_, Configuration>(
         r#"
-        UPDATE pdm_configurations SET
+        UPDATE pdm.pdm_configurations SET
             config_no = COALESCE(NULLIF($2, ''), config_no),
             name = COALESCE(NULLIF($3, ''), name),
             description = COALESCE($4, description),
@@ -472,7 +472,7 @@ pub async fn delete_configuration(
     };
 
     let result = sqlx::query(
-        "UPDATE pdm_configurations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE pdm.pdm_configurations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

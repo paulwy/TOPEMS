@@ -82,7 +82,7 @@ impl PdmEventHandlers {
         let material_count = match self.db.scope_read_system().await {
             Ok(mut scope) => {
                 let count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM pdm_materials WHERE status = 'active'",
+                    "SELECT COUNT(*) FROM pdm.pdm_materials WHERE status = 'active'",
                 )
                 .fetch_one(&mut scope)
                 .await
@@ -130,7 +130,7 @@ impl PdmEventHandlers {
             let config_count = match self.db.scope_read_system().await {
                 Ok(mut scope) => {
                     let count = sqlx::query_scalar::<_, i64>(
-                        "SELECT COUNT(*) FROM pdm_configurations WHERE product_id = $1",
+                        "SELECT COUNT(*) FROM pdm.pdm_configurations WHERE product_id = $1",
                     )
                     .bind(product_id)
                     .fetch_one(&mut scope)
@@ -184,7 +184,7 @@ impl PdmEventHandlers {
         // tenant-system: 后台事件处理器（白名单第 4 类），系统通道跨租户统计。
         let material_count = match self.db.scope_read_system().await {
             Ok(mut scope) => {
-                let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_materials")
+                let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm.pdm_materials")
                     .fetch_one(&mut scope)
                     .await
                     .unwrap_or(0);
@@ -275,7 +275,7 @@ impl PdmEventHandlers {
         let result = match self.db.scope_system().await {
             Ok(mut scope) => {
                 let result = sqlx::query(
-                    r#"INSERT INTO pdm_master_data_refs
+                    r#"INSERT INTO pdm.pdm_master_data_refs
                        (master_data_id, tenant_id, domain, code, name, status, source_service,
                         local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())

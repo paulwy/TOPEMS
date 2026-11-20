@@ -90,7 +90,7 @@ pub async fn record_version(
 
     // 获取当前最大版本号，新版本 = max + 1
     let max_version: i32 = sqlx::query_scalar(
-        only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#),
+        only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp.erp_master_data_versions WHERE master_data_id = $1"#),
     )
     .bind(&master_data_id)
     .fetch_one(&mut **txn)
@@ -100,7 +100,7 @@ pub async fn record_version(
     let new_version = max_version + 1;
 
     let result = sqlx::query(
-        only_own_schema_query!("erp", r#"INSERT INTO erp_master_data_versions
+        only_own_schema_query!("erp", r#"INSERT INTO erp.erp_master_data_versions
            (id, master_data_id, version_number, domain, code, name, status, snapshot, changed_by, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#),
     )
@@ -178,7 +178,7 @@ pub async fn get_versions(
         "erp",
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
                   snapshot, changed_by, created_at
-           FROM erp_master_data_versions
+           FROM erp.erp_master_data_versions
            WHERE master_data_id = $1
            ORDER BY version_number DESC
            LIMIT $2 OFFSET $3"#
@@ -241,7 +241,7 @@ pub async fn get_version(
         "erp",
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
                   snapshot, changed_by, created_at
-           FROM erp_master_data_versions
+           FROM erp.erp_master_data_versions
            WHERE master_data_id = $1 AND id = $2::uuid"#
     ))
     .bind(&master_data_id)
@@ -289,7 +289,7 @@ pub async fn rollback_to_version(
     let version_row = sqlx::query(only_own_schema_query!(
         "erp",
         r#"SELECT version_number, domain, code, name, status, snapshot
-           FROM erp_master_data_versions
+           FROM erp.erp_master_data_versions
            WHERE master_data_id = $1 AND id = $2::uuid"#
     ))
     .bind(&master_data_id)
@@ -329,7 +329,7 @@ pub async fn rollback_to_version(
             // 3. 记录回滚版本快照（新版本 = max + 1）
             let new_id = uuid::Uuid::new_v4();
             let max_version: i32 = sqlx::query_scalar(
-                only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp_master_data_versions WHERE master_data_id = $1"#),
+                only_own_schema_query!("erp", r#"SELECT COALESCE(MAX(version_number), 0) FROM erp.erp_master_data_versions WHERE master_data_id = $1"#),
             )
             .bind(&master_data_id)
             .fetch_one(&mut **txn)
@@ -338,7 +338,7 @@ pub async fn rollback_to_version(
             let new_version = max_version + 1;
 
             let _ = sqlx::query(
-                only_own_schema_query!("erp", r#"INSERT INTO erp_master_data_versions
+                only_own_schema_query!("erp", r#"INSERT INTO erp.erp_master_data_versions
                    (id, master_data_id, version_number, domain, code, name, status, snapshot, changed_by, created_at)
                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#),
             )

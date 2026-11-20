@@ -165,7 +165,7 @@ pub async fn list_documents(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents
+        FROM pdm.pdm_documents
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -185,7 +185,7 @@ pub async fn list_documents(
         Ok(documents) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_documents
+                SELECT COUNT(*) FROM pdm.pdm_documents
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -266,7 +266,7 @@ pub async fn search_documents(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents
+        FROM pdm.pdm_documents
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR document_type = $3)
@@ -292,7 +292,7 @@ pub async fn search_documents(
         Ok(documents) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_documents
+                SELECT COUNT(*) FROM pdm.pdm_documents
                 WHERE tenant_id = $1
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR document_type = $3)
@@ -385,7 +385,7 @@ pub async fn create_document(
 
     let result = sqlx::query_as::<_, Document>(
         r#"
-        INSERT INTO pdm_documents (
+        INSERT INTO pdm.pdm_documents (
             id, tenant_id, document_no, name, description, document_type, file_path,
             file_size, version, status, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
@@ -472,7 +472,7 @@ pub async fn get_document(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_documents WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -542,7 +542,7 @@ pub async fn update_document(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_documents WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -571,7 +571,7 @@ pub async fn update_document(
 
     let result = sqlx::query_as::<_, Document>(
         r#"
-        UPDATE pdm_documents SET
+        UPDATE pdm.pdm_documents SET
             document_no = $2,
             name = $3,
             description = $4,
@@ -662,7 +662,7 @@ pub async fn update_document_status(
 
     let result = sqlx::query_as::<_, Document>(
         r#"
-        UPDATE pdm_documents
+        UPDATE pdm.pdm_documents
         SET status = $3, updated_at = NOW()
         WHERE id = $1 AND tenant_id = $2
         RETURNING id, tenant_id, document_no, name, description, document_type, file_path,
@@ -731,12 +731,13 @@ pub async fn delete_document(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let result =
-        sqlx::query("UPDATE pdm_documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE pdm.pdm_documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除文档成功"),
@@ -803,7 +804,7 @@ pub async fn start_document_approval(
     };
 
     let document_result = sqlx::query_as::<_, Document>(
-        "SELECT id, tenant_id, name, status FROM pdm_documents WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, status FROM pdm.pdm_documents WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -825,7 +826,7 @@ pub async fn start_document_approval(
 
     let workflow_result = sqlx::query(
         r#"
-        SELECT id, name, steps FROM pdm_workflows 
+        SELECT id, name, steps FROM pdm.pdm_workflows 
         WHERE id = $1 AND status = 'active' AND tenant_id = $2
         "#,
     )
@@ -866,7 +867,7 @@ pub async fn start_document_approval(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO pdm_workflow_instances (
+        INSERT INTO pdm.pdm_workflow_instances (
             id, tenant_id, workflow_id, workflow_name, target_type, target_id,
             current_step, status, assignees, history, created_by,
             created_at, updated_at
@@ -900,7 +901,7 @@ pub async fn start_document_approval(
     match result {
         Ok(row) => {
             sqlx::query(
-                "UPDATE pdm_documents SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
+                "UPDATE pdm.pdm_documents SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
             )
             .bind(now)
             .bind(id)
@@ -980,7 +981,7 @@ pub async fn get_document_approval_history(
         r#"
         SELECT id, workflow_id, workflow_name, current_step, status, 
                assignees, history, created_by, created_at, updated_at
-        FROM pdm_workflow_instances 
+        FROM pdm.pdm_workflow_instances 
         WHERE target_type = 'document' AND target_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
         "#,
@@ -1072,8 +1073,8 @@ pub async fn list_pending_documents(
         SELECT d.id, d.document_no, d.name, d.description, d.document_type,
                d.version, d.status, d.created_by, d.created_at, d.updated_at,
                i.current_step, i.assignees
-        FROM pdm_documents d
-        LEFT JOIN pdm_workflow_instances i 
+        FROM pdm.pdm_documents d
+        LEFT JOIN pdm.pdm_workflow_instances i 
             ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND i.tenant_id = $1
         WHERE d.status = 'pending_approval' AND d.tenant_id = $1
         ORDER BY d.updated_at DESC

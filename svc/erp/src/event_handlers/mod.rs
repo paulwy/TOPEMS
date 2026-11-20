@@ -1321,7 +1321,7 @@ impl ErpEventHandlers {
         })?;
 
         let result = sqlx::query(
-            r#"INSERT INTO erp_master_data_refs
+            r#"INSERT INTO erp.erp_master_data_refs
                (master_data_id, tenant_id, domain, code, name, status, source_service,
                 local_entity_type, payload_snapshot, last_synced_at, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW(), NOW())

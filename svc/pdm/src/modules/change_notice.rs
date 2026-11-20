@@ -139,7 +139,7 @@ pub async fn list_change_notices(
         SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices
+        FROM pdm.pdm_change_notices
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -163,7 +163,7 @@ pub async fn list_change_notices(
         Ok(notices) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_change_notices
+                SELECT COUNT(*) FROM pdm.pdm_change_notices
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -264,7 +264,7 @@ pub async fn create_change_notice(
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        INSERT INTO pdm_change_notices (
+        INSERT INTO pdm.pdm_change_notices (
             id, tenant_id, ecn_no, title, description, change_type, affected_items,
             reason, priority, status, initiator, effective_date, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -350,7 +350,7 @@ pub async fn get_change_notice(
         SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_change_notices WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -421,7 +421,7 @@ pub async fn update_change_notice(
         SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_change_notices WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -459,7 +459,7 @@ pub async fn update_change_notice(
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        UPDATE pdm_change_notices SET
+        UPDATE pdm.pdm_change_notices SET
             title = $2, description = $3, change_type = $4, affected_items = $5,
             reason = $6, priority = $7, status = $8, approver = $9,
             approved_at = $10, effective_date = $11, updated_at = $12
@@ -542,7 +542,7 @@ pub async fn delete_change_notice(
     };
 
     let result = sqlx::query(
-        "UPDATE pdm_change_notices SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE pdm.pdm_change_notices SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -609,7 +609,7 @@ pub async fn submit_change_notice(
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        UPDATE pdm_change_notices SET status = $2, updated_at = $3
+        UPDATE pdm.pdm_change_notices SET status = $2, updated_at = $3
         WHERE id = $1 AND tenant_id = $4 AND status = 'draft'
         RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
@@ -688,7 +688,7 @@ pub async fn approve_change_notice(
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        UPDATE pdm_change_notices SET
+        UPDATE pdm.pdm_change_notices SET
             status = $2, approver = $3, approved_at = $4, updated_at = $5
         WHERE id = $1 AND tenant_id = $6 AND status = 'pending'
         RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
@@ -774,7 +774,7 @@ pub async fn reject_change_notice(
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        UPDATE pdm_change_notices SET
+        UPDATE pdm.pdm_change_notices SET
             status = $2, approver = $3, approved_at = $4, reason = $5, updated_at = $6
         WHERE id = $1 AND tenant_id = $7 AND status = 'pending'
         RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,

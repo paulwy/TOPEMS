@@ -105,7 +105,7 @@ pub async fn get_governance_dashboard(
     .unwrap_or(0);
 
     let quality_rules_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND is_active = TRUE"),
+        only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.erp_master_data_quality_rules WHERE deleted_at IS NULL AND is_active = TRUE"),
     )
     .fetch_one(&mut *db)
     .await
@@ -114,7 +114,7 @@ pub async fn get_governance_dashboard(
     let latest_report = sqlx::query(only_own_schema_query!(
         "erp",
         r#"SELECT total_checked, total_issues, errors, warnings, info
-           FROM erp_master_data_quality_reports
+           FROM erp.erp_master_data_quality_reports
            ORDER BY generated_at DESC LIMIT 1"#
     ))
     .fetch_optional(&mut *db)
@@ -141,14 +141,14 @@ pub async fn get_governance_dashboard(
 
     let conflict_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
-        "SELECT COUNT(*) FROM erp_master_data_conflicts"
+        "SELECT COUNT(*) FROM erp.erp_master_data_conflicts"
     ))
     .fetch_one(&mut *db)
     .await
     .unwrap_or(0);
 
     let unresolved_conflicts: i64 = sqlx::query_scalar(
-        only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp_master_data_conflicts WHERE status IN ('detected', 'pending_review')"),
+        only_own_schema_query!("erp", "SELECT COUNT(*) FROM erp.erp_master_data_conflicts WHERE status IN ('detected', 'pending_review')"),
     )
     .fetch_one(&mut *db)
     .await
@@ -156,7 +156,7 @@ pub async fn get_governance_dashboard(
 
     let version_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
-        "SELECT COUNT(*) FROM erp_master_data_versions"
+        "SELECT COUNT(*) FROM erp.erp_master_data_versions"
     ))
     .fetch_one(&mut *db)
     .await
@@ -165,7 +165,7 @@ pub async fn get_governance_dashboard(
     let seven_days_ago = chrono::Utc::now() - chrono::Duration::days(7);
     let audit_events_last_7d: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
-        "SELECT COUNT(*) FROM erp_master_data_audit_trail WHERE created_at >= $1"
+        "SELECT COUNT(*) FROM erp.erp_master_data_audit_trail WHERE created_at >= $1"
     ))
     .bind(seven_days_ago)
     .fetch_one(&mut *db)

@@ -78,7 +78,7 @@ pub async fn list_announcements(
                CASE WHEN $6 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
                CASE WHEN $6 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                author, status, priority, publish_at, expire_at, created_at, updated_at
-        FROM announcements
+        FROM erp.announcements
         WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR priority = $3)
@@ -98,7 +98,7 @@ pub async fn list_announcements(
         Ok(announcements) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 only_own_schema_query!("erp", r#"
-                SELECT COUNT(*) FROM announcements
+                SELECT COUNT(*) FROM erp.announcements
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR priority = $3)
@@ -158,7 +158,7 @@ pub async fn create_announcement(
         .unwrap_or(uuid::Uuid::from_u128(1));
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id, title_en, content_en)
+        INSERT INTO erp.announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id, title_en, content_en)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11)
         RETURNING id,
                   CASE WHEN $12 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
@@ -261,7 +261,7 @@ pub async fn get_announcement(
                CASE WHEN $2 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
                CASE WHEN $2 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                author, status, priority, publish_at, expire_at, created_at, updated_at
-        FROM announcements WHERE id = $1
+        FROM erp.announcements WHERE id = $1
         "#
     ))
     .bind(id)
@@ -304,7 +304,7 @@ pub async fn update_announcement(
         None => unreachable!("rls txn missing"),
     };
     let existing = sqlx::query_as::<_, Announcement>(
-        only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM erp.announcements WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -326,7 +326,7 @@ pub async fn update_announcement(
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        UPDATE announcements SET
+        UPDATE erp.announcements SET
             title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8,
             title_en = COALESCE($9, title_en), content_en = COALESCE($10, content_en)
         WHERE id = $1
@@ -424,7 +424,7 @@ pub async fn delete_announcement(
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE announcements SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE erp.announcements SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut **txn)
@@ -509,7 +509,7 @@ pub async fn publish_announcement(
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        UPDATE announcements SET
+        UPDATE erp.announcements SET
             status = 'published', publish_at = $2, updated_at = $3
         WHERE id = $1 AND status = 'draft'
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
@@ -603,7 +603,7 @@ pub async fn unpublish_announcement(
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        UPDATE announcements SET
+        UPDATE erp.announcements SET
             status = 'draft', publish_at = NULL, updated_at = $2
         WHERE id = $1 AND status = 'published'
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at

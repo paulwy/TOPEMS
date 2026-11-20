@@ -110,7 +110,7 @@ pub async fn list_products(
         SELECT id, tenant_id, product_no,
                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_products
+        FROM pdm.pdm_products
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -131,7 +131,7 @@ pub async fn list_products(
         Ok(products) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_products
+                SELECT COUNT(*) FROM pdm.pdm_products
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -216,7 +216,7 @@ pub async fn create_product(
 
     let result = sqlx::query_as::<_, Product>(
         r#"
-        INSERT INTO pdm_products (tenant_id, product_no, name, description, version, status)
+        INSERT INTO pdm.pdm_products (tenant_id, product_no, name, description, version, status)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, tenant_id, product_no, name, description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
@@ -291,7 +291,7 @@ pub async fn get_product(
         SELECT id, tenant_id, product_no,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_products WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_products WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -361,7 +361,7 @@ pub async fn update_product(
 
     let result = sqlx::query_as::<_, Product>(
         r#"
-        UPDATE pdm_products SET
+        UPDATE pdm.pdm_products SET
             product_no = COALESCE($2, product_no),
             name = COALESCE($3, name),
             description = COALESCE($4, description),
@@ -439,12 +439,13 @@ pub async fn delete_product(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let result =
-        sqlx::query("UPDATE pdm_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE pdm.pdm_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "产品删除成功"),

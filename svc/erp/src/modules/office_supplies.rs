@@ -67,7 +67,7 @@ pub async fn list_supplies(
         "erp",
         r#"
         SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at
-        FROM office_supplies
+        FROM erp.office_supplies
         WHERE ($1::text IS NULL OR name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
@@ -88,7 +88,7 @@ pub async fn list_supplies(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
                 r#"
-                SELECT COUNT(*) FROM office_supplies
+                SELECT COUNT(*) FROM erp.office_supplies
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
@@ -145,7 +145,7 @@ pub async fn create_supply(
 
     let result = sqlx::query_as::<_, OfficeSupply>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO office_supplies (id, name, category, quantity, unit, price, location, status, created_at, updated_at)
+        INSERT INTO erp.office_supplies (id, name, category, quantity, unit, price, location, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'in_stock', $8, $9)
         RETURNING id, name, category, quantity, unit, price, location, status, created_at, updated_at
         "#),
@@ -241,7 +241,7 @@ pub async fn get_supply(
         "erp",
         r#"
         SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at
-        FROM office_supplies WHERE id = $1
+        FROM erp.office_supplies WHERE id = $1
         "#
     ))
     .bind(id)
@@ -285,7 +285,7 @@ pub async fn update_supply(
         None => unreachable!("rls txn missing"),
     };
     let existing = sqlx::query_as::<_, OfficeSupply>(
-        only_own_schema_query!("erp", "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM office_supplies WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM erp.office_supplies WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -312,7 +312,7 @@ pub async fn update_supply(
 
     let result = sqlx::query_as::<_, OfficeSupply>(
         only_own_schema_query!("erp", r#"
-        UPDATE office_supplies SET
+        UPDATE erp.office_supplies SET
             name = $2, category = $3, quantity = $4, unit = $5, price = $6, location = $7, status = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, name, category, quantity, unit, price, location, status, created_at, updated_at
@@ -408,7 +408,7 @@ pub async fn delete_supply(
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE office_supplies SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE erp.office_supplies SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut **txn)

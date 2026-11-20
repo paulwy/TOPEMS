@@ -124,7 +124,7 @@ pub async fn get_dashboard(
 
     let total_inventory = sqlx::query_scalar(only_own_schema_query!(
         "erp",
-        "SELECT COALESCE(SUM(quantity), 0) FROM inventory_items"
+        "SELECT COALESCE(SUM(quantity), 0) FROM erp.inventory_items"
     ))
     .fetch_one(&mut **txn)
     .await
@@ -132,7 +132,7 @@ pub async fn get_dashboard(
 
     let low_stock_items = sqlx::query_scalar(only_own_schema_query!(
         "erp",
-        "SELECT COUNT(*) FROM inventory_items WHERE quantity < COALESCE(reorder_point, 10)"
+        "SELECT COUNT(*) FROM erp.inventory_items WHERE quantity < COALESCE(reorder_point, 10)"
     ))
     .fetch_one(&mut **txn)
     .await

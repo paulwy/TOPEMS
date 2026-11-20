@@ -396,7 +396,7 @@ pub async fn list_formulas(
                CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                product_id, description, formula_items,
                status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_production_formulas
+        FROM pdm.pdm_production_formulas
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -419,7 +419,7 @@ pub async fn list_formulas(
         Ok(formulas) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_production_formulas
+                SELECT COUNT(*) FROM pdm.pdm_production_formulas
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -503,7 +503,7 @@ pub async fn create_formula(
 
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
-        INSERT INTO pdm_production_formulas (
+        INSERT INTO pdm.pdm_production_formulas (
             tenant_id, formula_no, name, product_id, description, formula_items, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, tenant_id, formula_no, name, product_id, description, formula_items,
@@ -579,7 +579,7 @@ pub async fn get_formula(
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                product_id, description, formula_items,
                status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_production_formulas WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_production_formulas WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -645,7 +645,7 @@ pub async fn update_formula(
 
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
-        UPDATE pdm_production_formulas SET
+        UPDATE pdm.pdm_production_formulas SET
             formula_no = COALESCE(NULLIF($2, ''), formula_no),
             name = COALESCE(NULLIF($3, ''), name),
             product_id = COALESCE($4, product_id),
@@ -723,7 +723,7 @@ pub async fn delete_formula(
     };
 
     let result = sqlx::query(
-        "UPDATE pdm_production_formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE pdm.pdm_production_formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

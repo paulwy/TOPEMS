@@ -347,7 +347,7 @@ pub async fn list_db_changes(
     let result = sqlx::query_as::<_, DbChange>(
         only_own_schema_query!("erp", r#"
         SELECT id, change_type, table_name, column_name, old_definition, new_definition, sql_statement, executed_by, executed_at, backup_data
-        FROM sys_db_changes
+        FROM public.sys_db_changes
         WHERE ($1::text IS NULL OR table_name = $1)
         ORDER BY executed_at DESC
         LIMIT $2 OFFSET $3
@@ -363,7 +363,7 @@ pub async fn list_db_changes(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
                 r#"
-                SELECT COUNT(*) FROM sys_db_changes
+                SELECT COUNT(*) FROM public.sys_db_changes
                 WHERE ($1::text IS NULL OR table_name = $1)
                 "#
             ))

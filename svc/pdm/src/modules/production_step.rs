@@ -111,7 +111,7 @@ pub async fn list_steps(
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
-        FROM pdm_production_steps
+        FROM pdm.pdm_production_steps
         WHERE tenant_id = $1
           AND ($2::uuid IS NULL OR process_id = $2)
         ORDER BY process_id, step_no
@@ -129,7 +129,7 @@ pub async fn list_steps(
         Ok(steps) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_production_steps
+                SELECT COUNT(*) FROM pdm.pdm_production_steps
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::uuid IS NULL OR process_id = $2)
                 "#,
@@ -209,7 +209,7 @@ pub async fn create_step(
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
-        INSERT INTO pdm_production_steps (tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status)
+        INSERT INTO pdm.pdm_production_steps (tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         "#,
@@ -284,7 +284,7 @@ pub async fn get_step(
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
-        FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_production_steps WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -352,7 +352,7 @@ pub async fn update_step(
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
-        UPDATE pdm_production_steps SET
+        UPDATE pdm.pdm_production_steps SET
             process_id = COALESCE($2, process_id),
             step_no = COALESCE($3, step_no),
             name = COALESCE($4, name),
@@ -435,7 +435,7 @@ pub async fn delete_step(
     };
 
     let result = sqlx::query(
-        "UPDATE pdm_production_steps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE pdm.pdm_production_steps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

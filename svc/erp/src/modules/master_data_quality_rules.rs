@@ -272,7 +272,7 @@ pub async fn create_quality_rule(
     let is_active = req.is_active.unwrap_or(true);
 
     let result = sqlx::query(
-        only_own_schema_query!("erp", r#"INSERT INTO erp_master_data_quality_rules
+        only_own_schema_query!("erp", r#"INSERT INTO erp.erp_master_data_quality_rules
            (id, name, description, domain, field_name, rule_type, severity, config, is_active, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"#),
     )
@@ -348,7 +348,7 @@ pub async fn list_quality_rules(
     let offset = (page - 1) * page_size;
 
     let sql_base = format!(
-        "SELECT {} FROM erp_master_data_quality_rules",
+        "SELECT {} FROM erp.erp_master_data_quality_rules",
         QUALITY_RULE_COLUMNS
     );
 
@@ -446,7 +446,7 @@ pub async fn get_quality_rule(
     };
 
     let sql = format!(
-        "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
+        "SELECT {} FROM erp.erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
     match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -496,7 +496,7 @@ pub async fn update_quality_rule(
 
     // 先查询现有规则
     let sql_select = format!(
-        "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
+        "SELECT {} FROM erp.erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
     let existing = match sqlx::query(sqlx::AssertSqlSafe(sql_select))
@@ -529,7 +529,7 @@ pub async fn update_quality_rule(
 
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"UPDATE erp_master_data_quality_rules
+        r#"UPDATE erp.erp_master_data_quality_rules
            SET name = $1, description = $2, domain = $3, field_name = $4,
                rule_type = $5, severity = $6, config = $7, is_active = $8, updated_at = $9
            WHERE id = $10"#
@@ -605,7 +605,7 @@ pub async fn delete_quality_rule(
 
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE erp.erp_master_data_quality_rules SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(rid)
     .execute(&mut **txn)
@@ -710,7 +710,7 @@ pub async fn run_quality_check(
     let total_issues = report.total_issues;
     let _ = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"INSERT INTO erp_master_data_quality_reports
+        r#"INSERT INTO erp.erp_master_data_quality_reports
            (id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#
     ))
@@ -769,7 +769,7 @@ pub async fn get_quality_report(
     let rows = if let Some(ref domain) = params.domain {
         sqlx::query(
             only_own_schema_query!("erp", r#"SELECT id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at
-               FROM erp_master_data_quality_reports
+               FROM erp.erp_master_data_quality_reports
                WHERE domain = $1
                ORDER BY generated_at DESC LIMIT $2 OFFSET $3"#),
         )
@@ -781,7 +781,7 @@ pub async fn get_quality_report(
     } else {
         sqlx::query(
             only_own_schema_query!("erp", r#"SELECT id, domain, total_checked, total_issues, errors, warnings, info, issues, generated_at
-               FROM erp_master_data_quality_reports
+               FROM erp.erp_master_data_quality_reports
                ORDER BY generated_at DESC LIMIT $1 OFFSET $2"#),
         )
         .bind(page_size)
@@ -821,7 +821,7 @@ async fn load_quality_rules(
     rule_ids: Option<&[uuid::Uuid]>,
 ) -> Vec<QualityRule> {
     let sql_base = format!(
-        "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL",
+        "SELECT {} FROM erp.erp_master_data_quality_rules WHERE deleted_at IS NULL",
         QUALITY_RULE_COLUMNS
     );
 

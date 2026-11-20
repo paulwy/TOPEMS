@@ -76,7 +76,7 @@ async fn record_lifecycle_audit(
 
     let _ = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"INSERT INTO erp_master_data_audit_trail
+        r#"INSERT INTO erp.erp_master_data_audit_trail
            (id, master_data_id, domain, action, source_service, target_service,
             changed_by, old_values, new_values, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#

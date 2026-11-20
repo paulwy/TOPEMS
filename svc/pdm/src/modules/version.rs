@@ -117,7 +117,7 @@ pub async fn list_versions(
         r#"
         SELECT id, tenant_id, version_no, target_type, target_id, target_name, version_label,
                description, status, created_by, created_at, updated_at
-        FROM pdm_versions
+        FROM pdm.pdm_versions
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR version_no ILIKE $2 OR target_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -141,7 +141,7 @@ pub async fn list_versions(
         Ok(versions) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_versions
+                SELECT COUNT(*) FROM pdm.pdm_versions
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR version_no ILIKE $2 OR target_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -228,7 +228,7 @@ pub async fn create_version(
 
     let result = sqlx::query_as::<_, Version>(
         r#"
-        INSERT INTO pdm_versions (
+        INSERT INTO pdm.pdm_versions (
             tenant_id, version_no, target_type, target_id, target_name, version_label,
             description, status, created_by
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -307,7 +307,7 @@ pub async fn get_version(
         r#"
         SELECT id, tenant_id, version_no, target_type, target_id, target_name, version_label,
                description, status, created_by, created_at, updated_at
-        FROM pdm_versions WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_versions WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -376,7 +376,7 @@ pub async fn update_version(
 
     let result = sqlx::query_as::<_, Version>(
         r#"
-        UPDATE pdm_versions SET
+        UPDATE pdm.pdm_versions SET
             version_no = COALESCE($2, version_no),
             target_type = COALESCE($3, target_type),
             target_id = COALESCE($4, target_id),
@@ -461,12 +461,13 @@ pub async fn delete_version(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let result =
-        sqlx::query("UPDATE pdm_versions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE pdm.pdm_versions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "版本删除成功"),

@@ -101,7 +101,7 @@ async fn main() -> Result<()> {
 
             // 预热字典类型列表（所有字典类型）
             match sqlx::query_as::<_, DictType>(
-                "SELECT id, code, name, category, description, status, created_at, updated_at FROM dict_types WHERE deleted_at IS NULL ORDER BY category, code"
+                "SELECT id, code, name, category, description, status, created_at, updated_at FROM erp.dict_types WHERE deleted_at IS NULL ORDER BY category, code"
             )
             .fetch_all(&pool)
             .await
@@ -257,7 +257,7 @@ async fn main() -> Result<()> {
 }
 
 async fn update_business_metrics(pool: &sqlx::PgPool) {
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM assets")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM erp.assets")
         .fetch_one(pool)
         .await
     {
@@ -265,7 +265,7 @@ async fn update_business_metrics(pool: &sqlx::PgPool) {
         Err(e) => tracing::warn!("Failed to update asset count: {}", e),
     }
 
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM financial_vouchers")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM erp.financial_vouchers")
         .fetch_one(pool)
         .await
     {

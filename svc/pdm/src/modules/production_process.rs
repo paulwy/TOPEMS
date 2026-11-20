@@ -120,7 +120,7 @@ pub async fn list_processes(
         SELECT id, tenant_id, process_no,
                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, process_type, standard_time, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_production_processes
+        FROM pdm.pdm_production_processes
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -141,7 +141,7 @@ pub async fn list_processes(
         Ok(processes) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_production_processes
+                SELECT COUNT(*) FROM pdm.pdm_production_processes
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -226,7 +226,7 @@ pub async fn create_process(
 
     let result = sqlx::query_as::<_, ProductionProcess>(
         r#"
-        INSERT INTO pdm_production_processes (tenant_id, process_no, name, description, process_type, standard_time, unit, status)
+        INSERT INTO pdm.pdm_production_processes (tenant_id, process_no, name, description, process_type, standard_time, unit, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
@@ -303,7 +303,7 @@ pub async fn get_process(
         SELECT id, tenant_id, process_no,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, process_type, standard_time, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_production_processes WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -373,7 +373,7 @@ pub async fn update_process(
 
     let result = sqlx::query_as::<_, ProductionProcess>(
         r#"
-        UPDATE pdm_production_processes SET
+        UPDATE pdm.pdm_production_processes SET
             process_no = COALESCE($2, process_no),
             name = COALESCE($3, name),
             description = COALESCE($4, description),
@@ -456,7 +456,7 @@ pub async fn delete_process(
     };
 
     let result = sqlx::query(
-        "UPDATE pdm_production_processes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE pdm.pdm_production_processes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

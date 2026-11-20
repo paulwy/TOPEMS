@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
             // 预热物料列表：按租户分别预热。缓存键必须带租户维度，
             // 禁止把跨租户聚合写进 default / all 这类共享桶（否则会串租户）。
             match sqlx::query_scalar::<_, uuid::Uuid>(
-                "SELECT DISTINCT tenant_id FROM pdm_materials \
+                "SELECT DISTINCT tenant_id FROM pdm.pdm_materials \
                  WHERE deleted_at IS NULL AND tenant_id IS NOT NULL",
             )
             .fetch_all(&mut scope)
@@ -103,13 +103,13 @@ async fn main() -> anyhow::Result<()> {
                             r#"
                             SELECT json_build_object(
                                 'items', COALESCE(json_agg(t), '[]'::json),
-                                'total', (SELECT COUNT(*) FROM pdm_materials
+                                'total', (SELECT COUNT(*) FROM pdm.pdm_materials
                                           WHERE deleted_at IS NULL AND tenant_id = $1),
                                 'page', 1,
                                 'page_size', 20
                             ) as data
                             FROM (
-                                SELECT m.* FROM pdm_materials m
+                                SELECT m.* FROM pdm.pdm_materials m
                                 WHERE m.deleted_at IS NULL AND m.tenant_id = $1
                                 ORDER BY m.created_at DESC
                                 LIMIT 20 OFFSET 0

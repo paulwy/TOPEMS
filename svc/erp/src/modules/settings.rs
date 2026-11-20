@@ -89,7 +89,7 @@ pub async fn list_settings(
     let search = params.search.clone().unwrap_or_default();
 
     let items: Vec<SystemSetting> = sqlx::query_as(
-        r#"SELECT * FROM system_settings
+        r#"SELECT * FROM public.system_settings
            WHERE ($1::text IS NULL OR category = $1)
              AND ($2 = '' OR key ILIKE '%' || $2 || '%' OR value ILIKE '%' || $2 || '%')
            ORDER BY category, key"#,
@@ -120,7 +120,7 @@ pub async fn get_setting(
     Path(key): Path<String>,
 ) -> ApiResponse<SystemSetting> {
     let setting: Result<SystemSetting, _> =
-        sqlx::query_as("SELECT * FROM system_settings WHERE key = $1")
+        sqlx::query_as("SELECT * FROM public.system_settings WHERE key = $1")
             .bind(&key)
             .fetch_one(&pool)
             .await;
@@ -143,7 +143,7 @@ pub async fn create_setting(
     Json(payload): Json<CreateSettingRequest>,
 ) -> ApiResponse<SystemSetting> {
     let setting: Result<SystemSetting, _> = sqlx::query_as(
-        r#"INSERT INTO system_settings (key, value, description, category)
+        r#"INSERT INTO public.system_settings (key, value, description, category)
            VALUES ($1, $2, $3, $4)
            RETURNING *"#,
     )
@@ -169,7 +169,7 @@ pub async fn update_setting(
     Json(payload): Json<UpdateSettingRequest>,
 ) -> ApiResponse<SystemSetting> {
     let setting: Result<SystemSetting, _> = sqlx::query_as(
-        r#"UPDATE system_settings SET
+        r#"UPDATE public.system_settings SET
               value = COALESCE($2, value),
               description = COALESCE($3, description),
               category = COALESCE($4, category),
@@ -200,7 +200,7 @@ pub async fn delete_setting(
     State(pool): State<PgPool>,
     Path(key): Path<String>,
 ) -> ApiResponse<String> {
-    let result = sqlx::query("DELETE FROM system_settings WHERE key = $1")
+    let result = sqlx::query("DELETE FROM public.system_settings WHERE key = $1")
         .bind(&key)
         .execute(&pool)
         .await;
@@ -246,7 +246,7 @@ pub async fn batch_update_settings(
         };
 
         let result: Result<SystemSetting, _> = sqlx::query_as(
-            r#"INSERT INTO system_settings (key, value, category)
+            r#"INSERT INTO public.system_settings (key, value, category)
                VALUES ($1, $2, 'general')
                ON CONFLICT (tenant_id, key) DO UPDATE
                SET value = EXCLUDED.value, updated_at = NOW()

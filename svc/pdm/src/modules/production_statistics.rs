@@ -111,7 +111,7 @@ pub async fn list_statistics(
     let result = sqlx::query_as::<_, ProductStatistics>(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
-        FROM pdm_production_batches
+        FROM pdm.pdm_production_batches
         WHERE tenant_id = $1
         GROUP BY product_id, product_name
         ORDER BY batch_count DESC
@@ -129,7 +129,7 @@ pub async fn list_statistics(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM (
-                    SELECT 1 FROM pdm_production_batches
+                    SELECT 1 FROM pdm.pdm_production_batches
                     WHERE tenant_id = $1
                     GROUP BY product_id, product_name
                 ) AS grouped
@@ -214,17 +214,17 @@ pub async fn get_statistics_summary(
     )>(
         r#"
         SELECT
-            (SELECT COUNT(*) FROM pdm_production_processes WHERE tenant_id = $1) AS total_processes,
-            (SELECT COUNT(*) FROM pdm_production_processes WHERE tenant_id = $1 AND status = 'active') AS active_processes,
-            (SELECT COUNT(*) FROM pdm_production_formulas WHERE tenant_id = $1) AS total_formulas,
-            (SELECT COUNT(*) FROM pdm_production_formulas WHERE tenant_id = $1 AND status = 'active') AS active_formulas,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1) AS total_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status IN ('planning', 'pending')) AS planning_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status IN ('in_progress', 'processing')) AS in_progress_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status = 'completed') AS completed_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status = 'cancelled') AS cancelled_batches,
-            (SELECT COUNT(*) FROM pdm_production_steps WHERE tenant_id = $1) AS total_steps,
-            (SELECT COALESCE(SUM(quantity), 0) FROM pdm_production_batches WHERE tenant_id = $1) AS total_output_quantity
+            (SELECT COUNT(*) FROM pdm.pdm_production_processes WHERE tenant_id = $1) AS total_processes,
+            (SELECT COUNT(*) FROM pdm.pdm_production_processes WHERE tenant_id = $1 AND status = 'active') AS active_processes,
+            (SELECT COUNT(*) FROM pdm.pdm_production_formulas WHERE tenant_id = $1) AS total_formulas,
+            (SELECT COUNT(*) FROM pdm.pdm_production_formulas WHERE tenant_id = $1 AND status = 'active') AS active_formulas,
+            (SELECT COUNT(*) FROM pdm.pdm_production_batches WHERE tenant_id = $1) AS total_batches,
+            (SELECT COUNT(*) FROM pdm.pdm_production_batches WHERE tenant_id = $1 AND status IN ('planning', 'pending')) AS planning_batches,
+            (SELECT COUNT(*) FROM pdm.pdm_production_batches WHERE tenant_id = $1 AND status IN ('in_progress', 'processing')) AS in_progress_batches,
+            (SELECT COUNT(*) FROM pdm.pdm_production_batches WHERE tenant_id = $1 AND status = 'completed') AS completed_batches,
+            (SELECT COUNT(*) FROM pdm.pdm_production_batches WHERE tenant_id = $1 AND status = 'cancelled') AS cancelled_batches,
+            (SELECT COUNT(*) FROM pdm.pdm_production_steps WHERE tenant_id = $1) AS total_steps,
+            (SELECT COALESCE(SUM(quantity), 0) FROM pdm.pdm_production_batches WHERE tenant_id = $1) AS total_output_quantity
         "#,
     )
     .bind(tenant_id)
@@ -325,7 +325,7 @@ pub async fn get_statistics(
     let main_result = sqlx::query_as::<_, ProductStatistics>(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
-        FROM pdm_production_batches
+        FROM pdm.pdm_production_batches
         WHERE product_id = $1 AND tenant_id = $2
         GROUP BY product_id, product_name
         "#,
@@ -342,7 +342,7 @@ pub async fn get_statistics(
             let status_result = sqlx::query_as::<_, StatusCount>(
                 r#"
                 SELECT status, COUNT(*) AS count, SUM(quantity) AS quantity
-                FROM pdm_production_batches
+                FROM pdm.pdm_production_batches
                 WHERE product_id = $1 AND tenant_id = $2
                 GROUP BY status
                 "#,

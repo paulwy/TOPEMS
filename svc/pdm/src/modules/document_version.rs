@@ -434,7 +434,7 @@ pub async fn list_versions(
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {VERSION_COLUMNS}
-        FROM pdm_document_versions
+        FROM pdm.pdm_document_versions
         WHERE deleted_at IS NULL AND tenant_id = $1 AND document_id = $2
         ORDER BY created_at DESC
         "#
@@ -492,7 +492,7 @@ pub async fn create_version(
     let doc_type = get_document_type(&mut scope, tenant_id, document_id).await;
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
-        INSERT INTO pdm_document_versions (
+        INSERT INTO pdm.pdm_document_versions (
             tenant_id, document_id, document_type, version_number, title, description, status,
             file_url, filesize, file_type, changes, created_by, created_by_name
         ) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11, $12)
@@ -558,7 +558,7 @@ pub async fn get_version(
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {VERSION_COLUMNS}
-        FROM pdm_document_versions
+        FROM pdm.pdm_document_versions
         WHERE deleted_at IS NULL AND tenant_id = $1 AND document_id = $2 AND id = $3
         "#
     )))
@@ -611,7 +611,7 @@ pub async fn update_version(
     };
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
-        UPDATE pdm_document_versions
+        UPDATE pdm.pdm_document_versions
         SET version_number = COALESCE($4, version_number),
             title = COALESCE($5, title),
             description = COALESCE($6, description),
@@ -688,7 +688,7 @@ pub async fn delete_version(
         return ApiResponse::bad_request("缺少租户上下文");
     };
     let result = sqlx::query(
-        "UPDATE pdm_document_versions SET deleted_at = NOW(), updated_at = NOW() WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL",
+        "UPDATE pdm.pdm_document_versions SET deleted_at = NOW(), updated_at = NOW() WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(document_id)
@@ -739,7 +739,7 @@ pub async fn publish_version(
     };
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
-        UPDATE pdm_document_versions
+        UPDATE pdm.pdm_document_versions
         SET status = 'published', published_at = NOW(), updated_at = NOW()
         WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL
         RETURNING {VERSION_COLUMNS}
@@ -762,7 +762,7 @@ pub async fn publish_version(
 
     if let Err(e) = sqlx::query(
         r#"
-        UPDATE pdm_documents
+        UPDATE pdm.pdm_documents
         SET version = $3, status = 'published', file_path = COALESCE($4, file_path),
             file_size = COALESCE($5, file_size), updated_at = NOW()
         WHERE tenant_id = $1 AND id = $2
@@ -859,7 +859,7 @@ pub async fn upload_version(
 
     let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
-        INSERT INTO pdm_document_versions (
+        INSERT INTO pdm.pdm_document_versions (
             tenant_id, document_id, document_type, version_number, title, status,
             file_url, filesize, file_type, changes, created_by, file_content
         ) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11)
@@ -924,7 +924,7 @@ pub async fn download_version(
     let result = sqlx::query(
         r#"
         SELECT file_url, file_type, encode(file_content, 'base64') AS file_content_base64
-        FROM pdm_document_versions
+        FROM pdm.pdm_document_versions
         WHERE deleted_at IS NULL AND tenant_id = $1 AND document_id = $2 AND id = $3
         "#,
     )
@@ -964,7 +964,7 @@ async fn get_document_type(
     document_id: Uuid,
 ) -> Option<String> {
     sqlx::query_scalar::<_, Option<String>>(
-        "SELECT document_type FROM pdm_documents WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL",
+        "SELECT document_type FROM pdm.pdm_documents WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(document_id)
@@ -981,7 +981,7 @@ async fn next_version_number(
     document_id: Uuid,
 ) -> String {
     let count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pdm_document_versions WHERE tenant_id = $1 AND document_id = $2",
+        "SELECT COUNT(*) FROM pdm.pdm_document_versions WHERE tenant_id = $1 AND document_id = $2",
     )
     .bind(tenant_id)
     .bind(document_id)

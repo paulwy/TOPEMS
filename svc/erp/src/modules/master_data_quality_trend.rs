@@ -72,7 +72,7 @@ pub async fn get_quality_trend(
         sqlx::query(only_own_schema_query!(
             "erp",
             r#"SELECT generated_at, total_checked, total_issues, errors, warnings
-               FROM erp_master_data_quality_reports
+               FROM erp.erp_master_data_quality_reports
                WHERE domain = $1 AND generated_at >= NOW() - INTERVAL '90 days'
                ORDER BY generated_at DESC
                LIMIT 100"#
@@ -84,7 +84,7 @@ pub async fn get_quality_trend(
         sqlx::query(only_own_schema_query!(
             "erp",
             r#"SELECT generated_at, total_checked, total_issues, errors, warnings
-               FROM erp_master_data_quality_reports
+               FROM erp.erp_master_data_quality_reports
                WHERE generated_at >= NOW() - INTERVAL '90 days'
                ORDER BY generated_at DESC
                LIMIT 100"#

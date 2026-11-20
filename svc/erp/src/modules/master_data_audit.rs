@@ -96,7 +96,7 @@ pub async fn record_audit_event(
 
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"INSERT INTO erp_master_data_audit_trail
+        r#"INSERT INTO erp.erp_master_data_audit_trail
            (id, master_data_id, domain, action, source_service, target_service,
             changed_by, old_values, new_values, created_at)
            VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10)"#
@@ -175,7 +175,7 @@ pub async fn get_audit_trail(
         "erp",
         r#"SELECT id, master_data_id::text AS master_data_id, domain, action, source_service, target_service,
                   changed_by::text AS changed_by, old_values, new_values, created_at
-           FROM erp_master_data_audit_trail
+           FROM erp.erp_master_data_audit_trail
            WHERE master_data_id = $1
            ORDER BY created_at DESC
            LIMIT $2 OFFSET $3"#

@@ -159,7 +159,7 @@ pub async fn list_materials(
         SELECT id, tenant_id, material_no,
                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_materials
+        FROM pdm.pdm_materials
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -180,7 +180,7 @@ pub async fn list_materials(
         Ok(materials) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_materials
+                SELECT COUNT(*) FROM pdm.pdm_materials
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -282,7 +282,7 @@ pub async fn create_material(
 
     let result = sqlx::query_as::<_, Material>(
         r#"
-        INSERT INTO pdm_materials (
+        INSERT INTO pdm.pdm_materials (
             id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
@@ -441,7 +441,7 @@ pub async fn get_material(
         SELECT id, tenant_id, material_no,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_materials WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_materials WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -511,7 +511,7 @@ pub async fn update_material(
     let existing = sqlx::query_as::<_, Material>(
         r#"
         SELECT id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM pdm_materials WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_materials WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -537,7 +537,7 @@ pub async fn update_material(
 
     let result = sqlx::query_as::<_, Material>(
         r#"
-        UPDATE pdm_materials SET
+        UPDATE pdm.pdm_materials SET
             material_no = $2, name = $3, spec = $4, unit = $5,
             status = $6, updated_at = $7
         WHERE id = $1 AND tenant_id = $8
@@ -657,12 +657,13 @@ pub async fn delete_material(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let result =
-        sqlx::query("UPDATE pdm_materials SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE pdm.pdm_materials SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

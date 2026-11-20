@@ -260,7 +260,7 @@ async fn calculate_domain_quality_score(db: &mut sqlx::PgConnection, domain: &st
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         r#"SELECT total_checked, total_issues, errors, warnings
-           FROM erp_master_data_quality_reports
+           FROM erp.erp_master_data_quality_reports
            WHERE domain = $1
            ORDER BY generated_at DESC LIMIT 1"#
     ))

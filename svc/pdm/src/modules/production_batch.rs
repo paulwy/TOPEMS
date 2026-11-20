@@ -121,7 +121,7 @@ pub async fn list_batches(
         r#"
         SELECT id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                start_date, end_date, status, notes, created_at, updated_at
-        FROM pdm_production_batches
+        FROM pdm.pdm_production_batches
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR batch_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -143,7 +143,7 @@ pub async fn list_batches(
         Ok(batches) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_production_batches
+                SELECT COUNT(*) FROM pdm.pdm_production_batches
                 WHERE deleted_at IS NULL AND tenant_id = $1
                   AND ($2::text IS NULL OR batch_no ILIKE $2 OR product_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -227,7 +227,7 @@ pub async fn create_batch(
 
     let result = sqlx::query_as::<_, ProductionBatch>(
         r#"
-        INSERT INTO pdm_production_batches (
+        INSERT INTO pdm.pdm_production_batches (
             tenant_id, batch_no, product_id, product_name, quantity, unit,
             start_date, end_date, status, notes
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -307,7 +307,7 @@ pub async fn get_batch(
         r#"
         SELECT id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                start_date, end_date, status, notes, created_at, updated_at
-        FROM pdm_production_batches WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_production_batches WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -376,7 +376,7 @@ pub async fn update_batch(
 
     let result = sqlx::query_as::<_, ProductionBatch>(
         r#"
-        UPDATE pdm_production_batches SET
+        UPDATE pdm.pdm_production_batches SET
             batch_no = COALESCE(NULLIF($2, ''), batch_no),
             product_id = COALESCE($3, product_id),
             product_name = COALESCE($4, product_name),
@@ -464,7 +464,7 @@ pub async fn delete_batch(
     };
 
     let result = sqlx::query(
-        "UPDATE pdm_production_batches SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE pdm.pdm_production_batches SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

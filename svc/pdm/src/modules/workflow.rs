@@ -139,7 +139,7 @@ pub async fn list_workflows(
         r#"
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
-        FROM pdm_workflows
+        FROM pdm.pdm_workflows
         WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
@@ -222,7 +222,7 @@ pub async fn create_workflow(
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
-        INSERT INTO pdm_workflows (
+        INSERT INTO pdm.pdm_workflows (
             id, tenant_id, name, description, workflow_type, steps, conditions,
             status, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -303,7 +303,7 @@ pub async fn get_workflow(
         r#"
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
-        FROM pdm_workflows WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_workflows WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -375,7 +375,7 @@ pub async fn update_workflow(
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
-        UPDATE pdm_workflows SET
+        UPDATE pdm.pdm_workflows SET
             name = COALESCE(NULLIF($2, ''), name),
             description = COALESCE($3, description),
             status = COALESCE(NULLIF($4, ''), status),
@@ -450,12 +450,13 @@ pub async fn delete_workflow(
         return ApiResponse::bad_request("缺少租户上下文");
     };
 
-    let result =
-        sqlx::query("UPDATE pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE pdm.pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "工作流删除成功"),
@@ -511,7 +512,7 @@ pub async fn start_workflow(
     };
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
-        "SELECT id, tenant_id, name, steps FROM pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND status = 'active' AND tenant_id = $2",
+        "SELECT id, tenant_id, name, steps FROM pdm.pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND status = 'active' AND tenant_id = $2",
     )
     .bind(req.workflow_id)
     .bind(tenant_id)
@@ -549,7 +550,7 @@ pub async fn start_workflow(
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
-        INSERT INTO pdm_workflow_instances (
+        INSERT INTO pdm.pdm_workflow_instances (
             id, tenant_id, workflow_id, workflow_name, target_type, target_id,
             current_step, status, assignees, history, created_by,
             created_at, updated_at
@@ -643,7 +644,7 @@ pub async fn list_workflow_instances(
         SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
-        FROM pdm_workflow_instances
+        FROM pdm.pdm_workflow_instances
         WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
@@ -718,7 +719,7 @@ pub async fn get_workflow_instance(
         SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
-        FROM pdm_workflow_instances WHERE id = $1 AND tenant_id = $2
+        FROM pdm.pdm_workflow_instances WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -791,7 +792,7 @@ pub async fn advance_workflow(
     let comment = req.get("comment").and_then(|v| v.as_str()).unwrap_or("");
 
     let instance_result = sqlx::query_as::<_, WorkflowInstance>(
-        "SELECT id, tenant_id, workflow_id, current_step, status, history FROM pdm_workflow_instances WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, workflow_id, current_step, status, history FROM pdm.pdm_workflow_instances WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -812,7 +813,7 @@ pub async fn advance_workflow(
     }
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
-        "SELECT steps FROM pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT steps FROM pdm.pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(instance.workflow_id)
     .bind(tenant_id)
@@ -888,7 +889,7 @@ pub async fn advance_workflow(
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
-        UPDATE pdm_workflow_instances SET
+        UPDATE pdm.pdm_workflow_instances SET
             current_step = $2, status = $3, assignees = $4, history = $5, updated_at = $6
         WHERE id = $1 AND tenant_id = $7
         RETURNING id, tenant_id, workflow_id, workflow_name, target_type, target_id,

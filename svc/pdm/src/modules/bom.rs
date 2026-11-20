@@ -628,7 +628,7 @@ pub async fn list_bom_versions(
         r#"
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
-        FROM pdm_boms
+        FROM pdm.pdm_boms
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR bom_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -696,7 +696,7 @@ pub async fn get_bom_version(
         r#"
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
-        FROM pdm_boms
+        FROM pdm.pdm_boms
         WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -759,7 +759,7 @@ pub async fn create_bom_version(
 
     let result = sqlx::query_as::<_, BomVersion>(
         r#"
-        INSERT INTO pdm_boms
+        INSERT INTO pdm.pdm_boms
             (tenant_id, bom_no, product_id, product_name, version, status, description)
         VALUES ($1, $2, $3, $4, $5, COALESCE($6, 'draft'), $7)
         RETURNING id, tenant_id, bom_no, product_name AS name, product_id, product_name,
@@ -831,7 +831,7 @@ pub async fn update_bom_version(
 
     let result = sqlx::query_as::<_, BomVersion>(
         r#"
-        UPDATE pdm_boms
+        UPDATE pdm.pdm_boms
         SET bom_no = COALESCE($3, bom_no),
             product_name = COALESCE($4, product_name),
             product_id = COALESCE($5, product_id),
@@ -903,7 +903,7 @@ pub async fn delete_bom_version(
         );
         return ApiResponse::bad_request("缺少租户上下文");
     };
-    let result = sqlx::query("DELETE FROM pdm_boms WHERE id = $1 AND tenant_id = $2")
+    let result = sqlx::query("DELETE FROM pdm.pdm_boms WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&mut scope)
@@ -938,7 +938,7 @@ async fn update_bom_status(
     };
     let result = sqlx::query_as::<_, BomVersion>(
         r#"
-        UPDATE pdm_boms
+        UPDATE pdm.pdm_boms
         SET status = $3, updated_at = NOW()
         WHERE id = $1 AND tenant_id = $2
         RETURNING id, tenant_id, bom_no, product_name AS name, product_id, product_name,
@@ -1090,7 +1090,7 @@ pub async fn list_bom_items(
         SELECT id, tenant_id, bom_id AS bom_version_id, material_id,
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
-        FROM pdm_bom_items
+        FROM pdm.pdm_bom_items
         WHERE tenant_id = $1
           AND ($2::uuid IS NULL OR bom_id = $2)
         ORDER BY sequence ASC, material_code ASC
@@ -1153,7 +1153,7 @@ pub async fn get_bom_item(
         SELECT id, tenant_id, bom_id AS bom_version_id, material_id,
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
-        FROM pdm_bom_items
+        FROM pdm.pdm_bom_items
         WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -1227,7 +1227,7 @@ async fn insert_bom_item(
 ) -> Result<BomItem, sqlx::Error> {
     sqlx::query_as::<_, BomItem>(
         r#"
-        INSERT INTO pdm_bom_items
+        INSERT INTO pdm.pdm_bom_items
             (tenant_id, bom_id, material_code, material_name, unit, quantity, sequence, notes)
         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 0), $8)
         RETURNING id, tenant_id, bom_id AS bom_version_id, material_id,
@@ -1288,7 +1288,7 @@ pub async fn update_bom_item(
     };
     let result = sqlx::query_as::<_, BomItem>(
         r#"
-        UPDATE pdm_bom_items
+        UPDATE pdm.pdm_bom_items
         SET material_code = COALESCE($3, material_code),
             material_name = COALESCE($4, material_name),
             unit = COALESCE($5, unit),
@@ -1360,7 +1360,7 @@ pub async fn delete_bom_item(
         );
         return ApiResponse::bad_request("缺少租户上下文");
     };
-    let result = sqlx::query("DELETE FROM pdm_bom_items WHERE id = $1 AND tenant_id = $2")
+    let result = sqlx::query("DELETE FROM pdm.pdm_bom_items WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
         .execute(&mut scope)
@@ -1553,7 +1553,7 @@ async fn fetch_items_by_bom(
         SELECT id, tenant_id, bom_id AS bom_version_id, material_id,
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
-        FROM pdm_bom_items
+        FROM pdm.pdm_bom_items
         WHERE tenant_id = $1 AND bom_id = $2
         ORDER BY sequence ASC, material_code ASC
         "#,
