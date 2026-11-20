@@ -2035,4 +2035,84 @@ mod rls_scope_tests {
             .expect_err("ref 写入失败必须上抛（重试/DLQ），不得吞成 Ok");
         assert!(format!("{err}").contains("本地 ref 同步失败"), "{err}");
     }
+
+    #[sqlx::test(migrations = false)]
+    async fn payment_received_without_tenant_fails(pool: PgPool) {
+        let event = Event::new(
+            EventType::PaymentReceived,
+            "test",
+            serde_json::json!({
+                "payment_id": uuid::Uuid::new_v4(),
+                "payment_no": "PAY-TEST-NO-TENANT",
+                "amount": 10.0,
+            }),
+        );
+
+        let err = handlers(&pool)
+            .handle_payment_received(event)
+            .await
+            .expect_err("缺租户必须显式失败，不得 ACK");
+        assert!(matches!(err, TopemsError::ValidationFailed(_)), "{err}");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn reconciliation_approved_nil_tenant_fails(pool: PgPool) {
+        let event = Event::new(
+            EventType::ReconciliationApproved,
+            "test",
+            serde_json::json!({
+                "id": uuid::Uuid::new_v4(),
+                "tenant_id": uuid::Uuid::nil().to_string(),
+                "approved_by": "tester",
+                "approved_at": chrono::Utc::now(),
+            }),
+        );
+
+        let err = handlers(&pool)
+            .handle_reconciliation_approved(event)
+            .await
+            .expect_err("nil 租户必须显式失败，不得 ACK");
+        assert!(matches!(err, TopemsError::ValidationFailed(_)), "{err}");
+    }
+
+    #[sqlx::test(migrations = false)]
+    async fn mes_work_report_without_tenant_fails_without_idempotency_write(pool: PgPool) {
+        sqlx::query("CREATE SCHEMA IF NOT EXISTS erp")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE erp.event_idempotency (
+                   idempotency_key TEXT PRIMARY KEY,
+                   event_type TEXT NOT NULL,
+                   tenant_id UUID NOT NULL,
+                   processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+               )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let work_report_id = uuid::Uuid::new_v4();
+        let event = Event::new(
+            EventType::MesWorkReportSubmitted,
+            "test",
+            serde_json::json!({
+                "work_report_id": work_report_id,
+                "completed_quantity": 1.0,
+            }),
+        );
+
+        let err = handlers(&pool)
+            .handle_mes_work_report_submitted(event)
+            .await
+            .expect_err("缺租户必须显式失败，不得 ACK");
+        assert!(matches!(err, TopemsError::ValidationFailed(_)), "{err}");
+
+        let written: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM erp.event_idempotency")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(written, 0, "缺租户失败前不得留下幂等账本行");
+    }
 }
