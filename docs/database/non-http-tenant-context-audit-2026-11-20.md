@@ -56,7 +56,7 @@
 - PDM 主数据消费：AccountSubject 订阅同样改为 `subscribe_master_data_handler`，`upsert_local_master_data_ref` 的缺租户/DB 失败进入重试/DLQ；Portal GraphQL 的 MDM 广播不落库，保持 best-effort。
 - SRM 事件消费：采购计划、供应商考评、采购订单履约、SCM 供应商同步补齐租户前置与租户作用域；缺租户由 warn+ACK 改为 `ValidationFailed`，DB 错误不再仅记 error 日志。
 - WMS 事件消费：`PurchaseOrderCreated/Approved` 快照缺租户不再静默跳过，`store_po_snapshot` 返回 `Result`，开作用域/写快照/提交失败均进入重试/DLQ。
-- RD / Portal 事件消费：RD 项目创建/完成改为租户作用域写入并上抛 DB 错误；Portal 通知写入与项目概览统计改为租户作用域，统计读取失败不再 `unwrap_or(0)`；3 处通知创建由 `let _ =` 改为 `?`，DB 写失败进入重试/DLQ，发布失败仍由 `commit_retry` 队列重发；`target_user` 非空但非法 UUID 时在写库前 `ValidationFailed`，不再降级为空目标广播。
+- RD / Portal 事件消费：RD 项目创建/完成改为租户作用域写入并上抛 DB 错误；RD 主数据/BOM 事件中两处跨租户 `COUNT(*) ... unwrap_or(0)` 纯日志查询已移除，事件处理器 `&self.db` 归零；Portal 通知写入与项目概览统计改为租户作用域，统计读取失败不再 `unwrap_or(0)`；3 处通知创建由 `let _ =` 改为 `?`，DB 写失败进入重试/DLQ，发布失败仍由 `commit_retry` 队列重发；`target_user` 非空但非法 UUID 时在写库前 `ValidationFailed`，不再降级为空目标广播。
 - `svc/integration` 事件消费：`record_sync_log` 由 `scope_system` 改为 `scope_for_tenant`，三个 QMS→LIMS / EHS→QMS / LIMS→EHS trigger 缺租户由 warn+ACK 改为 `ValidationFailed`，同步日志写入失败由 `let _ =` 吞掉改为 `?` 上抛进入重试/DLQ。
 - EHS 事件消费：本地 `require_event_tenant` 由 `Option<Uuid>` 改为 `Result<Uuid, TopemsError>`，缺租户累计 `EHS_EVENT_DROPPED_MISSING_TENANT` 并返回 `ValidationFailed`；LIMS 异常、QMS 纠正措施、HRM 员工变更三个 handler 全部改为 `?`，不再静默 ACK。
 - Finance 事件消费：`EmployeeOnboarded` 读取入职成本配置后的事务提交由 `let _ =` 改为 `map_err → DatabaseTransaction` 上抛；对账单/结算单 6 个快照处理器由 `let _ =` 改为 `?`；`store_source_amount_snapshot` 由 `()` + warn 降级改为 `Result`，作用域开启、写入、提交失败全部上抛。

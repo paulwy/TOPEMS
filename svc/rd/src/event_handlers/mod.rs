@@ -211,15 +211,8 @@ impl RdEventHandlers {
                     payload.material_type
                 );
 
-                let total_materials: i64 =
-                    sqlx::query_scalar("SELECT COUNT(*) FROM rs.rs_formulas")
-                        .fetch_one(&self.db)
-                        .await
-                        .unwrap_or(0);
-
                 tracing::info!(
-                    "[rd] 研发物料库同步检查: 当前配方总数={}，新物料: {} 可用于研发配方",
-                    total_materials,
+                    "[rd] 研发物料库已同步: 新物料 {} 可用于研发配方",
                     payload.material_code
                 );
             }
@@ -267,15 +260,8 @@ impl RdEventHandlers {
                     payload.version
                 );
 
-                let total_experiments: i64 =
-                    sqlx::query_scalar("SELECT COUNT(*) FROM rs.rs_experiments")
-                        .fetch_one(&self.db)
-                        .await
-                        .unwrap_or(0);
-
                 tracing::info!(
-                    "[rd] 研发 BOM 数据同步: 当前实验总数={}，新 BOM: {} 可参考",
-                    total_experiments,
+                    "[rd] 研发 BOM 数据已同步: 新 BOM {} 可供实验参考",
                     payload.bom_code
                 );
             }
