@@ -93,10 +93,6 @@ async fn main() -> anyhow::Result<()> {
     let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared")
         .deny_request_own_txn();
 
-    if let Err(e) = models::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("LIMS schema defense warning: {}", e);
-    }
-
     if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
         tracing::warn!("⚠️ LIMS 事件订阅者启动失败: {}", e);
     }

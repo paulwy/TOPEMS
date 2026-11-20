@@ -52,11 +52,6 @@ impl LimsRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. LIMS 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7；失败不阻塞）
-        if let Err(e) = topems_lims::models::run_schema_defense(&ctx.db).await {
-            tracing::warn!("LIMS schema defense 检查警告（不阻塞）: {}", e);
-        }
-
         // 3. 事件订阅者：lims 的 event_handlers 已由 bin-only 提升为 lib 暴露
         //    （svc/lims/src/lib.rs `pub mod event_handlers`），单体化与独立部署同源，
         //    挂载消费循环使质量链联动（qms→lims）自动落库

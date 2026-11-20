@@ -2617,3 +2617,11 @@ pending_forward_patches:
     effect: "把 ehs 仍在库内的 33 张运行期表（风险/隐患/巡检/事故/应急/职业健康/危化品/MSDS 等）以 live 形状固化，列/索引/约束/策略/RLS 五项 diff 为 0；删除 models/mod.rs 与 schema_defense.rs 两份重复的 43 表 TABLE_DEFS，移除 main 启动期 schema_defense 调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 声明 43 表，但 qa_ehs_accident_investigations/reviews/treatments、qa_ehs_compliance_items、qa_ehs_detection_records、qa_ehs_environment、qa_ehs_health_abnormalities、qa_ehs_health_trainings、qa_ehs_material_stocks、qa_ehs_protection_measures 共 10 张已被 20261119110000_drop_dead_tables_batch2 作为死表删除；本迁移不重建，删除运行期 DDL 后不再复活。回滚 database/rollback/20261120190000_ehs_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-20：lims 42 表收口（W2-D2 第九个模块） =====
+  - version: "20261120200000"
+    file: "database/migrations/20261120200000_lims_schema_canonical.sql"
+    status: to_apply
+    effect: "把 lims 42 张运行期表（样品/检验任务与记录/仪器校准/试剂/标准方法/期间核查/不确定度/实验室台账等）以 live 形状固化，列/索引/约束/策略/RLS 五项 diff 为 0；删除 models/schema_defense.rs 的建骨架表与逐列补列、models 包装函数及 main/server 启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 42 张表在库中全部存在；lims.lims_inspection_records/lims.lims_safety_tasks/lims.qa_lims_analytes 由既有迁移维护，不在名单内、未纳入。回滚 database/rollback/20261120200000_lims_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
