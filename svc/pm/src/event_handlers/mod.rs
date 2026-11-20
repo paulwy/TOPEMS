@@ -3,6 +3,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     require_event_tenant, Event, EventPublisher, EventResult, EventSubscriber, EventType,
     HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload, RdProjectCreatedPayload,
@@ -105,14 +106,27 @@ impl PmEventHandlers {
             _ => return Ok(()),
         }
 
+        // 员工变更只做租户内成员统计；缺租户显式失败，DB 错误不再吞成 0。
+        let tenant = require_event_tenant(&event)?;
+        let tenant_id = tenant.get();
+        let db = Db::new(self.db.clone(), "pm, public, shared");
+        let mut scope = db.scope_read_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开租户只读作用域失败: {e}"))
+        })?;
+
         let member_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "pm",
             "SELECT COUNT(*) FROM pm.project_members WHERE user_id = $1"
         ))
         .bind(employee_id.to_string())
-        .fetch_one(&self.db)
+        .fetch_one(&mut scope)
         .await
-        .unwrap_or(0);
+        .map_err(|e| TopemsError::DatabaseQuery(format!("统计项目成员失败: {e}")))?;
+
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseTransaction(format!("提交项目成员统计失败: {e}")))?;
 
         tracing::debug!(
             "[pm] 员工 {} 参与了 {} 个项目，项目成员关联已同步",
@@ -185,6 +199,14 @@ impl PmEventHandlers {
         let now = Utc::now();
         let status = if approved { "approved" } else { "rejected" };
 
+        // Workflow* 载荷不带 tenant_id：按 business_id（项目主键）只读反查归属租户，
+        // 再在租户作用域内原子更新审批与项目状态。反查失败/无归属显式失败。
+        let db = Db::new(self.db.clone(), "pm, public, shared");
+        let tenant_id = resolve_project_tenant(&db, project_id).await?;
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开项目审批租户作用域失败: {e}"))
+        })?;
+
         let result = sqlx::query(only_own_schema_query!(
             "pm",
             r#"
@@ -197,40 +219,46 @@ impl PmEventHandlers {
         .bind(reason.unwrap_or_default())
         .bind(now)
         .bind(project_id)
-        .execute(&self.db)
-        .await;
+        .execute(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "更新项目审批状态失败 - tenant_id={tenant_id}, project_id={project_id}: {e}"
+            ))
+        })?;
 
-        match result {
-            Ok(r) => {
-                if r.rows_affected() > 0 {
-                    let _ = sqlx::query(only_own_schema_query!(
-                        "pm",
-                        "UPDATE pm.projects SET status = $1, updated_at = $2 WHERE id = $3"
-                    ))
-                    .bind(if approved { "active" } else { "rejected" })
-                    .bind(now)
-                    .bind(project_id)
-                    .execute(&self.db)
-                    .await;
+        if result.rows_affected() > 0 {
+            sqlx::query(only_own_schema_query!(
+                "pm",
+                "UPDATE pm.projects SET status = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4"
+            ))
+            .bind(if approved { "active" } else { "rejected" })
+            .bind(now)
+            .bind(project_id)
+            .bind(tenant_id)
+            .execute(&mut scope)
+            .await
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "更新项目状态失败 - tenant_id={tenant_id}, project_id={project_id}: {e}"
+                ))
+            })?;
 
-                    tracing::info!(
-                        "[pm] 项目 {} 审批状态已更新为 {} (操作人: {:?})",
-                        project_id,
-                        status,
-                        operator
-                    );
-                } else {
-                    tracing::debug!("[pm] 项目 {} 无待处理审批，或审批已处理", project_id);
-                }
-            }
-            Err(e) => {
-                tracing::error!("[pm] 更新项目审批状态失败: {}", e);
-                return Err(TopemsError::BusinessLogic(format!(
-                    "更新项目审批状态失败: {}",
-                    e
-                )));
-            }
+            tracing::info!(
+                "[pm] 项目 {} 审批状态已更新为 {} (操作人: {:?})",
+                project_id,
+                status,
+                operator
+            );
+        } else {
+            tracing::debug!("[pm] 项目 {} 无待处理审批，或审批已处理", project_id);
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交项目审批结果失败 - tenant_id={tenant_id}, project_id={project_id}: {e}"
+            ))
+        })?;
 
         Ok(())
     }
@@ -263,6 +291,11 @@ impl PmEventHandlers {
             .clone()
             .unwrap_or_else(|| format!("RD-{}", payload.project_id));
 
+        let db = Db::new(self.db.clone(), "pm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开 RD 项目同步作用域失败: {e}"))
+        })?;
+
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("pm", "INSERT INTO pm.projects (id, name, code, description, project_type, status, leader, start_date, progress, tenant_id, created_at, updated_at)
              VALUES ($1, $2, $3, $4, 'rd_project', 'active', $5, $6, 0, $7, $8, $8)
@@ -277,27 +310,37 @@ impl PmEventHandlers {
         .bind(payload.created_at.unwrap_or(now))
         .bind(tenant_id)
         .bind(now)
-        .fetch_optional(&self.db)
-        .await;
+        .fetch_optional(&mut scope)
+        .await
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "同步 RD 项目失败 - tenant_id={tenant_id}, project_id={}: {e}",
+                payload.project_id
+            ))
+        })?;
 
         match result {
-            Ok(Some(project_id)) => {
+            Some(project_id) => {
                 tracing::info!(
                     "[pm] RD 项目已同步到 PM: rd_project_id={}, pm_project_id={}",
                     payload.project_id,
                     project_id
                 );
             }
-            Ok(None) => {
+            None => {
                 tracing::info!(
                     "[pm] RD 项目已存在（幂等跳过）: project_id={}",
                     payload.project_id
                 );
             }
-            Err(e) => {
-                tracing::error!("[pm] RD 项目同步失败: {}", e);
-            }
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交 RD 项目同步失败 - tenant_id={tenant_id}, project_id={}: {e}",
+                payload.project_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -318,6 +361,14 @@ impl PmEventHandlers {
         let now = Utc::now();
         let date = payload.settlement_date.unwrap_or(now);
 
+        // 缺租户/nil 显式失败；写入在租户作用域内，禁止落 NULL 租户结算行。
+        let tenant = require_event_tenant(&event)?;
+        let tenant_id = tenant.get();
+        let db = Db::new(self.db.clone(), "pm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开结算写入作用域失败: {e}"))
+        })?;
+
         sqlx::query(only_own_schema_query!(
             "pm",
             r#"INSERT INTO pm.settlements
@@ -336,11 +387,23 @@ impl PmEventHandlers {
         .bind(&payload.status)
         .bind(payload.remarks)
         .bind(payload.created_by)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 pm.settlements 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "写入 pm.settlements 失败 - tenant_id={tenant_id}, id={}: {e}",
+                payload.id
+            ))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交结算写入失败 - tenant_id={tenant_id}, id={}: {e}",
+                payload.id
+            ))
+        })?;
 
         Ok(())
     }
@@ -361,20 +424,80 @@ impl PmEventHandlers {
             event.trace_id
         );
 
-        sqlx::query(only_own_schema_query!(
+        // 缺租户/nil 显式失败；在租户作用域内更新，避免 RLS 下静默 0 行。
+        let tenant = require_event_tenant(&event)?;
+        let tenant_id = tenant.get();
+        let db = Db::new(self.db.clone(), "pm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!("打开结算审批作用域失败: {e}"))
+        })?;
+
+        let result = sqlx::query(only_own_schema_query!(
             "pm",
             r#"UPDATE pm.settlements
                SET status = 'approved',
                    updated_at = NOW()
-               WHERE id = $1 AND status IN ('pending', 'draft')"#
+               WHERE id = $1 AND tenant_id = $2 AND status IN ('pending', 'draft')"#
         ))
         .bind(payload.id)
-        .execute(&self.db)
+        .bind(tenant_id)
+        .execute(&mut scope)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 pm.settlements 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "更新 pm.settlements 失败 - tenant_id={tenant_id}, id={}: {e}",
+                payload.id
+            ))
+        })?;
+
+        if result.rows_affected() == 0 {
+            tracing::warn!(
+                "[pm] SettlementApproved 未命中待审批结算（可能已处理）- tenant_id={}, id={}",
+                tenant_id,
+                payload.id
+            );
+        }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交结算审批失败 - tenant_id={tenant_id}, id={}: {e}",
+                payload.id
+            ))
+        })?;
 
         Ok(())
     }
+}
+
+/// Workflow* 事件无 tenant_id：按项目主键只读反查归属租户，仅用于建立租户作用域。
+async fn resolve_project_tenant(
+    db: &Db,
+    project_id: Uuid,
+) -> std::result::Result<Uuid, TopemsError> {
+    // tenant-system: Workflow* 事件载荷不带 tenant_id，只能按项目主键反查归属租户
+    let mut scope = db.scope_read_system().await.map_err(|e| {
+        TopemsError::DatabaseTransaction(format!("打开项目租户反查作用域失败: {e}"))
+    })?;
+    let tenant: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT tenant_id FROM pm.projects WHERE id = $1"
+    ))
+    .bind(project_id)
+    .fetch_optional(&mut scope)
+    .await
+    .map_err(|e| {
+        TopemsError::DatabaseQuery(format!(
+            "反查项目归属租户失败 - project_id={project_id}: {e}"
+        ))
+    })?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseTransaction(format!("提交项目租户反查失败: {e}")))?;
+
+    tenant.filter(|t| !t.is_nil()).ok_or_else(|| {
+        TopemsError::ValidationFailed(format!("无法确定项目归属租户 - project_id={project_id}"))
+    })
 }
 
 pub async fn start_event_subscribers(
