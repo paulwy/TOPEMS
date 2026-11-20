@@ -41,7 +41,7 @@ pub async fn query_dashboard_realtime_data(
     };
 
     let dashboard = match sqlx::query!(
-        r#"SELECT id, name FROM analytics_dashboards WHERE id = $1"#,
+        r#"SELECT id, name FROM bi.analytics_dashboards WHERE id = $1"#,
         id,
     )
     .fetch_optional(&mut *tx)
@@ -68,7 +68,7 @@ pub async fn query_dashboard_realtime_data(
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE dashboard_id = $1
         "#,
         id,
@@ -200,7 +200,7 @@ pub async fn refresh_dashboard_data(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboards
+        UPDATE bi.analytics_dashboards
         SET updated_at = $1
         WHERE id = $2
         RETURNING id, name
@@ -230,7 +230,7 @@ pub async fn refresh_dashboard_data(
                 }
             };
             let widgets = match sqlx::query!(
-                r#"SELECT id FROM analytics_widgets WHERE dashboard_id = $1"#,
+                r#"SELECT id FROM bi.analytics_widgets WHERE dashboard_id = $1"#,
                 id,
             )
             .fetch_all(&mut *wtx)
@@ -297,7 +297,7 @@ pub async fn set_auto_refresh(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboards
+        UPDATE bi.analytics_dashboards
         SET auto_refresh_enabled = $1,
             auto_refresh_interval = $2,
             updated_at = $3

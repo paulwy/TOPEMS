@@ -94,7 +94,7 @@ impl ReportScheduler {
         let active_schedules = sqlx::query(
             r#"
             SELECT id, name, schedule_type, schedule_expression, tenant_id
-            FROM report_schedules
+            FROM bi.report_schedules
             WHERE status = 'active'
             "#,
         )
@@ -234,7 +234,7 @@ async fn check_and_execute_schedules(pool: &PgPool) -> Result<(), TopemsError> {
     let due_schedules = sqlx::query(
         r#"
         SELECT id, name, tenant_id
-        FROM report_schedules
+        FROM bi.report_schedules
         WHERE status = 'active'
           AND (next_run_at IS NULL OR next_run_at <= $1)
         "#,
@@ -308,7 +308,7 @@ pub async fn execute_schedule_job(
 
             sqlx::query(
                 r#"
-                UPDATE report_schedules
+                UPDATE bi.report_schedules
                 SET last_run_at = $1, run_count = run_count + 1, error_message = NULL
                 WHERE id = $2
                 "#,
@@ -337,7 +337,7 @@ pub async fn execute_schedule_job(
 
             sqlx::query(
                 r#"
-                UPDATE report_schedules
+                UPDATE bi.report_schedules
                 SET last_run_at = $1, error_message = $2
                 WHERE id = $3
                 "#,
@@ -362,7 +362,7 @@ async fn run_report(conn: &mut PgConnection, schedule_id: Uuid) -> Result<String
     let schedule = sqlx::query!(
         r#"
         SELECT template_id, parameters
-        FROM report_schedules
+        FROM bi.report_schedules
         WHERE id = $1
         "#,
         schedule_id,
@@ -373,7 +373,7 @@ async fn run_report(conn: &mut PgConnection, schedule_id: Uuid) -> Result<String
     let template = sqlx::query!(
         r#"
         SELECT name, output_format
-        FROM report_templates
+        FROM bi.report_templates
         WHERE id = $1
         "#,
         schedule.template_id,
@@ -399,7 +399,7 @@ async fn notify_subscribers(conn: &mut PgConnection, schedule_id: Uuid) -> Resul
     let schedule = sqlx::query!(
         r#"
         SELECT template_id, recipients
-        FROM report_schedules
+        FROM bi.report_schedules
         WHERE id = $1
         "#,
         schedule_id,
@@ -410,7 +410,7 @@ async fn notify_subscribers(conn: &mut PgConnection, schedule_id: Uuid) -> Resul
     let subscribers = sqlx::query!(
         r#"
         SELECT user_id, email, frequency, enabled
-        FROM report_subscriptions
+        FROM bi.report_subscriptions
         WHERE template_id = $1 AND enabled = true
         "#,
         schedule.template_id,

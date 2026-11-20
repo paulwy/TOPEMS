@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.analytics_drilldown_paths SET deleted_at = NOW()\n        WHERE id = $1\n          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)\n        RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8a5e854f899eb61f651bb02b557073b0723ade3228b249fe97161d9eb8fd82a5"
+}

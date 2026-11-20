@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.analytics_row_level_permissions SET deleted_at = NOW()\n        WHERE id = $1\n          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)\n        RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_row_level_permissions",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8406e01c6c316a1eaf3a7561f397fcd39d7f60da1f5af50e1dfca75a148c891e"
+}

@@ -921,7 +921,7 @@ async fn check_bi_sql_allowed(pool: &sqlx::PgPool, sql: &str) -> Result<(), Tope
         .collect();
     // 复用 S1.3 注册表：bi_datasets(table_name, column_name, is_active)
     let registered: Vec<String> = sqlx::query_scalar::<_, String>(
-        r#"SELECT DISTINCT table_name FROM bi_datasets WHERE is_active = TRUE"#,
+        r#"SELECT DISTINCT table_name FROM bi.bi_datasets WHERE is_active = TRUE"#,
     )
     .fetch_all(pool)
     .await

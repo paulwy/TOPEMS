@@ -232,7 +232,7 @@ pub async fn list_projects(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let base_sql = "SELECT p.id::TEXT, p.project_no, p.project_name, p.method_id::TEXT, p.method_name, p.test_item, p.measurand, p.measurement_range, p.unit, p.status, p.evaluator, p.evaluation_date::TEXT, p.combined_uncertainty::FLOAT8, p.expanded_uncertainty::FLOAT8, p.coverage_factor::FLOAT8, p.confidence_level::FLOAT8, p.notes, p.created_at, p.updated_at, p.tenant_id::TEXT FROM qa_lims_uncertainty_projects p";
+    let base_sql = "SELECT p.id::TEXT, p.project_no, p.project_name, p.method_id::TEXT, p.method_name, p.test_item, p.measurand, p.measurement_range, p.unit, p.status, p.evaluator, p.evaluation_date::TEXT, p.combined_uncertainty::FLOAT8, p.expanded_uncertainty::FLOAT8, p.coverage_factor::FLOAT8, p.confidence_level::FLOAT8, p.notes, p.created_at, p.updated_at, p.tenant_id::TEXT FROM lims.qa_lims_uncertainty_projects p";
 
     let sql = match (query.status.as_ref(), query.method_id.as_ref(), query.project_name.as_ref()) {
         (Some(_), Some(_), Some(_)) => format!("{} WHERE p.status = $1 AND p.method_id = $2 AND p.project_name LIKE $3 ORDER BY p.created_at DESC LIMIT $4 OFFSET $5", base_sql),
@@ -380,7 +380,7 @@ pub async fn create_project(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_uncertainty_projects (
+        INSERT INTO lims.qa_lims_uncertainty_projects (
             project_no, project_name, method_id, method_name, test_item,
             measurand, measurement_range, unit, status, evaluator, notes, tenant_id
         ) VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
@@ -482,7 +482,7 @@ pub async fn get_project(
     };
 
     let row = sqlx::query(
-        "SELECT id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty::FLOAT8, expanded_uncertainty::FLOAT8, coverage_factor::FLOAT8, confidence_level::FLOAT8, notes, created_at, updated_at, tenant_id::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty::FLOAT8, expanded_uncertainty::FLOAT8, coverage_factor::FLOAT8, confidence_level::FLOAT8, notes, created_at, updated_at, tenant_id::TEXT FROM lims.qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&mut scope)
@@ -552,7 +552,7 @@ pub async fn update_project(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_uncertainty_projects 
+        UPDATE lims.qa_lims_uncertainty_projects 
         SET project_name = COALESCE($2, project_name),
             method_id = COALESCE($3::uuid, method_id),
             method_name = COALESCE($4, method_name),
@@ -656,11 +656,12 @@ pub async fn delete_project(
         }
     };
 
-    let result =
-        sqlx::query("UPDATE qa_lims_uncertainty_projects SET deleted_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE lims.qa_lims_uncertainty_projects SET deleted_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(_) => {
@@ -719,7 +720,7 @@ pub async fn list_sources(
         SELECT id::TEXT, project_id::TEXT, source_name, source_type, description,
                distribution_type, sensitivity_coefficient::FLOAT8, sort_order,
                created_at, updated_at, tenant_id::TEXT
-        FROM qa_lims_uncertainty_sources
+        FROM lims.qa_lims_uncertainty_sources
         WHERE project_id = $1
         ORDER BY sort_order ASC, created_at ASC
         "#,
@@ -796,7 +797,7 @@ pub async fn create_source(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_uncertainty_sources (
+        INSERT INTO lims.qa_lims_uncertainty_sources (
             project_id, source_name, source_type, description,
             distribution_type, sensitivity_coefficient, sort_order, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -886,7 +887,7 @@ pub async fn update_source(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_uncertainty_sources 
+        UPDATE lims.qa_lims_uncertainty_sources 
         SET source_name = COALESCE($2, source_name),
             source_type = COALESCE($3, source_type),
             description = COALESCE($4, description),
@@ -967,7 +968,7 @@ pub async fn delete_source(
     };
 
     let result =
-        sqlx::query("UPDATE qa_lims_uncertainty_sources SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE lims.qa_lims_uncertainty_sources SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&mut scope)
             .await;
@@ -1030,8 +1031,8 @@ pub async fn list_components(
                c.component_name, c.standard_uncertainty::FLOAT8, c.relative_uncertainty::FLOAT8,
                c.sensitivity_coefficient::FLOAT8, c.degrees_freedom::FLOAT8, c.calculation_method,
                c.parameters, c.description, c.created_at, c.updated_at, c.tenant_id::TEXT
-        FROM qa_lims_uncertainty_components c
-        LEFT JOIN qa_lims_uncertainty_sources s ON c.source_id = s.id
+        FROM lims.qa_lims_uncertainty_components c
+        LEFT JOIN lims.qa_lims_uncertainty_sources s ON c.source_id = s.id
         WHERE c.project_id = $1
         ORDER BY c.created_at ASC
         "#,
@@ -1115,7 +1116,7 @@ pub async fn create_component(
     };
 
     let source_row = sqlx::query(
-        "SELECT source_name FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND id = $1",
+        "SELECT source_name FROM lims.qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(source_id)
     .fetch_optional(&mut scope)
@@ -1129,7 +1130,7 @@ pub async fn create_component(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_uncertainty_components (
+        INSERT INTO lims.qa_lims_uncertainty_components (
             project_id, source_id, component_type, component_name,
             standard_uncertainty, relative_uncertainty, sensitivity_coefficient,
             degrees_freedom, calculation_method, parameters, description, tenant_id
@@ -1231,7 +1232,7 @@ pub async fn update_component(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_uncertainty_components 
+        UPDATE lims.qa_lims_uncertainty_components 
         SET component_name = COALESCE($2, component_name),
             standard_uncertainty = COALESCE($3, standard_uncertainty),
             relative_uncertainty = COALESCE($4, relative_uncertainty),
@@ -1321,11 +1322,12 @@ pub async fn delete_component(
         }
     };
 
-    let result =
-        sqlx::query("UPDATE qa_lims_uncertainty_components SET deleted_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "UPDATE lims.qa_lims_uncertainty_components SET deleted_at = NOW() WHERE id = $1",
+    )
+    .bind(id)
+    .execute(&mut scope)
+    .await;
 
     match result {
         Ok(_) => {
@@ -1414,7 +1416,7 @@ pub async fn calculate_type_a(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_uncertainty_components (
+        INSERT INTO lims.qa_lims_uncertainty_components (
             project_id, source_id, component_type, component_name,
             standard_uncertainty, sensitivity_coefficient, degrees_freedom,
             calculation_method, parameters, tenant_id
@@ -1531,7 +1533,7 @@ pub async fn calculate_type_b(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_uncertainty_components (
+        INSERT INTO lims.qa_lims_uncertainty_components (
             project_id, source_id, component_type, component_name,
             standard_uncertainty, sensitivity_coefficient, degrees_freedom,
             calculation_method, parameters, description, tenant_id
@@ -1627,7 +1629,7 @@ pub async fn calculate_combined(
     };
 
     let rows = sqlx::query(
-        "SELECT standard_uncertainty::float8, sensitivity_coefficient::float8, degrees_freedom::float8 FROM qa_lims_uncertainty_components WHERE deleted_at IS NULL AND project_id = $1"
+        "SELECT standard_uncertainty::float8, sensitivity_coefficient::float8, degrees_freedom::float8 FROM lims.qa_lims_uncertainty_components WHERE deleted_at IS NULL AND project_id = $1"
     )
     .bind(id)
     .fetch_all(&mut scope)
@@ -1672,7 +1674,7 @@ pub async fn calculate_combined(
     };
 
     let project_row =
-        sqlx::query("SELECT coverage_factor::float8 FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1")
+        sqlx::query("SELECT coverage_factor::float8 FROM lims.qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
             .fetch_optional(&mut scope)
             .await;
@@ -1686,7 +1688,7 @@ pub async fn calculate_combined(
 
     match sqlx::query(
         r#"
-        UPDATE qa_lims_uncertainty_projects
+        UPDATE lims.qa_lims_uncertainty_projects
         SET combined_uncertainty = $2, expanded_uncertainty = $3, updated_at = NOW()
         WHERE id = $1
         "#,
@@ -1754,7 +1756,7 @@ pub async fn generate_report(
     };
 
     let project_row = sqlx::query(
-        "SELECT id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty::float8, expanded_uncertainty::float8, coverage_factor::float8, confidence_level::float8, notes, created_at::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty::float8, expanded_uncertainty::float8, coverage_factor::float8, confidence_level::float8, notes, created_at::TEXT FROM lims.qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -1788,7 +1790,7 @@ pub async fn generate_report(
     };
 
     let source_rows = sqlx::query(
-        "SELECT id::TEXT, source_name, source_type, description, distribution_type, sensitivity_coefficient::float8, sort_order FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY sort_order ASC"
+        "SELECT id::TEXT, source_name, source_type, description, distribution_type, sensitivity_coefficient::float8, sort_order FROM lims.qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY sort_order ASC"
     )
     .bind(id)
     .fetch_all(&mut scope)
@@ -1816,8 +1818,8 @@ pub async fn generate_report(
         SELECT c.id::TEXT, c.component_type, c.component_name, c.standard_uncertainty::float8,
                c.relative_uncertainty::float8, c.sensitivity_coefficient::float8, c.degrees_freedom::float8,
                c.calculation_method, s.source_name
-        FROM qa_lims_uncertainty_components c
-        LEFT JOIN qa_lims_uncertainty_sources s ON c.source_id = s.id
+        FROM lims.qa_lims_uncertainty_components c
+        LEFT JOIN lims.qa_lims_uncertainty_sources s ON c.source_id = s.id
         WHERE c.project_id = $1
         ORDER BY c.created_at ASC
         "#,

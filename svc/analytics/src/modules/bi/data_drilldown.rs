@@ -122,7 +122,7 @@ pub async fn list_drilldown_paths(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
-        FROM analytics_drilldown_paths
+        FROM bi.analytics_drilldown_paths
         WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
@@ -204,7 +204,7 @@ pub async fn create_drilldown_path(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_drilldown_paths 
+        INSERT INTO bi.analytics_drilldown_paths 
         (id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
@@ -292,7 +292,7 @@ pub async fn get_drilldown_path(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
-        FROM analytics_drilldown_paths
+        FROM bi.analytics_drilldown_paths
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -371,7 +371,7 @@ pub async fn update_drilldown_path(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_drilldown_paths
+        UPDATE bi.analytics_drilldown_paths
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             levels = COALESCE($3, levels),
@@ -464,7 +464,7 @@ pub async fn delete_drilldown_path(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_drilldown_paths SET deleted_at = NOW()
+        UPDATE bi.analytics_drilldown_paths SET deleted_at = NOW()
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
@@ -539,7 +539,7 @@ pub async fn drill_down(
     let path = match sqlx::query!(
         r#"
         SELECT id, name, levels, measures
-        FROM analytics_drilldown_paths
+        FROM bi.analytics_drilldown_paths
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -580,7 +580,7 @@ pub async fn drill_down(
 
     let _ = sqlx::query!(
         r#"
-        INSERT INTO analytics_drilldown_history
+        INSERT INTO bi.analytics_drilldown_history
         (id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
@@ -663,7 +663,7 @@ pub async fn roll_up(
     let path = match sqlx::query!(
         r#"
         SELECT id, name, levels, measures
-        FROM analytics_drilldown_paths
+        FROM bi.analytics_drilldown_paths
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -703,7 +703,7 @@ pub async fn roll_up(
 
     let _ = sqlx::query!(
         r#"
-        INSERT INTO analytics_drilldown_history
+        INSERT INTO bi.analytics_drilldown_history
         (id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
@@ -787,7 +787,7 @@ pub async fn get_drilldown_history(
     let rows = match sqlx::query!(
         r#"
         SELECT id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at
-        FROM analytics_drilldown_history
+        FROM bi.analytics_drilldown_history
         WHERE user_id = $1
           AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         ORDER BY created_at DESC

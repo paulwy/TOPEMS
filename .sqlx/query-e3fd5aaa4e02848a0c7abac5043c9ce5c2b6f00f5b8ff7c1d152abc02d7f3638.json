@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.analytics_comparison_analyses SET deleted_at = NOW()\n        WHERE id = $1\n          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)\n        RETURNING id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_comparison_analyses",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e3fd5aaa4e02848a0c7abac5043c9ce5c2b6f00f5b8ff7c1d152abc02d7f3638"
+}

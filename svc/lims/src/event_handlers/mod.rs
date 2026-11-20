@@ -66,7 +66,7 @@ impl LimsEventHandlers {
             .map_err(|e| TopemsError::internal("LIMS 事件处理器建立租户作用域失败", e))?;
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO lims_inspection_records (record_no, source_type, source_inspection_id, product_id, product_name, result, qualification_rate, inspector, status, tenant_id, created_at, updated_at)
+            "INSERT INTO lims.lims_inspection_records (record_no, source_type, source_inspection_id, product_id, product_name, result, qualification_rate, inspector, status, tenant_id, created_at, updated_at)
              VALUES ($1, 'qms', $2, $3, $4, $5, $6, $7, 'completed', $9, $8, $8)
              ON CONFLICT (tenant_id, source_type, source_inspection_id) DO NOTHING
              RETURNING id",
@@ -141,7 +141,7 @@ impl LimsEventHandlers {
             .map_err(|e| TopemsError::internal("LIMS 事件处理器建立租户作用域失败", e))?;
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO lims_safety_tasks (task_no, title, category, level, description, location, status, source_type, source_hazard_id, assigned_to, tenant_id, created_at, updated_at)
+            "INSERT INTO lims.lims_safety_tasks (task_no, title, category, level, description, location, status, source_type, source_hazard_id, assigned_to, tenant_id, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'ehs_hazard', $7, 'system', $9, $8, $8)
              ON CONFLICT (tenant_id, source_type, source_hazard_id) DO NOTHING
              RETURNING id",

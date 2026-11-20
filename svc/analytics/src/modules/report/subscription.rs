@@ -117,8 +117,8 @@ pub async fn get_subscription(
         r#"
         SELECT s.id, s.template_id, t.name as template_name, s.user_id::text AS user_id, 
                s.email, s.frequency, s.enabled, s.created_at
-        FROM report_subscriptions s
-        LEFT JOIN report_templates t ON s.template_id = t.id
+        FROM bi.report_subscriptions s
+        LEFT JOIN bi.report_templates t ON s.template_id = t.id
         WHERE s.id = $1
         "#,
     )
@@ -178,7 +178,7 @@ pub async fn list_subscriptions(
     let subscriptions = sqlx::query(
         r#"
         SELECT s.id, s.template_id, s.user_id::text AS user_id, s.email, s.frequency, s.enabled, s.created_at
-        FROM report_subscriptions s
+        FROM bi.report_subscriptions s
         ORDER BY s.created_at DESC
         "#,
     )
@@ -237,8 +237,8 @@ pub async fn get_user_subscriptions(
         r#"
         SELECT s.id, s.template_id, t.name as template_name, s.user_id::text AS user_id, 
                s.email, s.frequency, s.enabled, s.created_at
-        FROM report_subscriptions s
-        LEFT JOIN report_templates t ON s.template_id = t.id
+        FROM bi.report_subscriptions s
+        LEFT JOIN bi.report_templates t ON s.template_id = t.id
         WHERE s.user_id = $1
         ORDER BY s.created_at DESC
         "#,
@@ -300,7 +300,7 @@ pub async fn create_subscription(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO report_subscriptions (id, template_id, user_id, email, frequency, enabled, tenant_id)
+        INSERT INTO bi.report_subscriptions (id, template_id, user_id, email, frequency, enabled, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         "#,
     )
@@ -361,7 +361,7 @@ pub async fn update_subscription(
 
     let result = sqlx::query!(
         r#"
-        UPDATE report_subscriptions
+        UPDATE bi.report_subscriptions
         SET email = COALESCE($1, email),
             frequency = COALESCE($2, frequency),
             enabled = COALESCE($3, enabled)
@@ -420,7 +420,7 @@ pub async fn delete_subscription(
 
     let result = sqlx::query!(
         r#"
-        UPDATE report_subscriptions SET deleted_at = NOW()
+        UPDATE bi.report_subscriptions SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -473,7 +473,7 @@ pub async fn toggle_subscription(
 
     let result = sqlx::query!(
         r#"
-        UPDATE report_subscriptions
+        UPDATE bi.report_subscriptions
         SET enabled = NOT enabled
         WHERE id = $1
         RETURNING id, enabled

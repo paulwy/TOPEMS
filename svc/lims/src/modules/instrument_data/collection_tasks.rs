@@ -50,7 +50,7 @@ pub async fn trigger_collection(
     };
 
     let task_row = sqlx::query(
-        "SELECT id::TEXT, task_no, task_name, instrument_id::TEXT, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, task_no, task_name, instrument_id::TEXT, protocol FROM lims.qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(task_id)
     .fetch_optional(&mut scope)
@@ -114,7 +114,7 @@ pub async fn trigger_collection(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_instrument_data
+        INSERT INTO lims.qa_lims_instrument_data
             (id, data_no, instrument_id, batch_no, protocol, raw_data, status, collected_at, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'collected', NOW(), 'system', $7)
         RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
@@ -137,7 +137,7 @@ pub async fn trigger_collection(
         Ok(r) => {
             let _ = sqlx::query(
                 r#"
-                UPDATE qa_lims_collection_tasks 
+                UPDATE lims.qa_lims_collection_tasks 
                 SET last_run_at = NOW(),
                     total_collections = total_collections + 1,
                     success_count = success_count + 1,
@@ -228,8 +228,8 @@ pub async fn list_collection_tasks(
              t.total_collections, t.success_count, t.failed_count, \
              t.created_by, t.created_at, t.updated_at, t.tenant_id::TEXT, \
              i.instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
-             FROM qa_lims_collection_tasks t \
-             LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
+             FROM lims.qa_lims_collection_tasks t \
+             LEFT JOIN lims.qa_lab_instruments i ON t.instrument_id = i.id \
              WHERE t.status = $1 \
              ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"
         }
@@ -240,8 +240,8 @@ pub async fn list_collection_tasks(
              t.total_collections, t.success_count, t.failed_count, \
              t.created_by, t.created_at, t.updated_at, t.tenant_id::TEXT, \
              i.instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
-             FROM qa_lims_collection_tasks t \
-             LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
+             FROM lims.qa_lims_collection_tasks t \
+             LEFT JOIN lims.qa_lab_instruments i ON t.instrument_id = i.id \
              ORDER BY t.created_at DESC LIMIT $1 OFFSET $2"
         }
     };
@@ -346,8 +346,8 @@ pub async fn get_collection_task(
                t.total_collections, t.success_count, t.failed_count,
                t.created_by, t.created_at, t.updated_at, t.tenant_id::TEXT,
                i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name
-        FROM qa_lims_collection_tasks t
-        LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id
+        FROM lims.qa_lims_collection_tasks t
+        LEFT JOIN lims.qa_lab_instruments i ON t.instrument_id = i.id
         WHERE t.id = $1
         "#,
     )
@@ -426,7 +426,7 @@ pub async fn create_collection_task(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_collection_tasks
+        INSERT INTO lims.qa_lims_collection_tasks
             (id, task_no, task_name, instrument_id, protocol, collection_mode,
              cron_expression, interval_minutes, parse_rule_id, status, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'system', $10)
@@ -517,7 +517,7 @@ pub async fn update_collection_task(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_collection_tasks 
+        UPDATE lims.qa_lims_collection_tasks 
         SET task_name = COALESCE($2, task_name),
             status = COALESCE($3, status),
             cron_expression = COALESCE($4, cron_expression),
@@ -607,7 +607,7 @@ pub async fn delete_collection_task(
     };
 
     let result =
-        sqlx::query("UPDATE qa_lims_collection_tasks SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE lims.qa_lims_collection_tasks SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&mut scope)
             .await;

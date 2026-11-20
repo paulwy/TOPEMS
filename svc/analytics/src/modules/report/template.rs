@@ -156,7 +156,7 @@ pub async fn list_templates(
     let templates = sqlx::query(
         r#"
         SELECT id, name, code, category, report_type, is_active, created_at
-        FROM report_templates
+        FROM bi.report_templates
         ORDER BY created_at DESC
         "#,
     )
@@ -216,7 +216,7 @@ pub async fn create_template(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO report_templates (id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at, tenant_id)
+        INSERT INTO bi.report_templates (id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         "#,
     )
@@ -286,7 +286,7 @@ pub async fn get_template(
     let template = sqlx::query(
         r#"
         SELECT id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at
-        FROM report_templates
+        FROM bi.report_templates
         WHERE id = $1
         "#,
     )
@@ -371,7 +371,7 @@ pub async fn update_template(
 
     let result = sqlx::query(
         r#"
-        UPDATE report_templates
+        UPDATE bi.report_templates
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             category = COALESCE($3, category),
@@ -448,7 +448,7 @@ pub async fn delete_template(
 
     let result = sqlx::query!(
         r#"
-        UPDATE report_templates SET deleted_at = NOW()
+        UPDATE bi.report_templates SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,

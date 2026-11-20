@@ -88,7 +88,7 @@ async fn handle_dashboard_socket(
     // 超管（tenant_id = nil）不受限；软删过滤。非归属一律 not found，不泄露存在性。
     let dashboard_row = match sqlx::query(
         r#"SELECT id, name, auto_refresh_enabled, auto_refresh_interval
-           FROM analytics_dashboards
+           FROM bi.analytics_dashboards
            WHERE id = $1 AND deleted_at IS NULL
              AND (tenant_id = $2 OR $2 = '00000000-0000-0000-0000-000000000000' OR is_public = TRUE)"#,
     )
@@ -160,7 +160,7 @@ async fn handle_dashboard_socket(
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE dashboard_id = $1
         "#,
         dashboard_id,
@@ -329,7 +329,7 @@ async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE dashboard_id = $1
         "#,
         dashboard_id,

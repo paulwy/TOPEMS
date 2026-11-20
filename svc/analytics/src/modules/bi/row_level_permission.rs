@@ -183,7 +183,7 @@ pub async fn list_permission_rules(
         r#"
         SELECT id, name, description, datasource_id, table_name, rule_type, condition, 
                role_ids, user_ids, is_active, created_by, created_at, updated_at
-        FROM analytics_row_level_permissions
+        FROM bi.analytics_row_level_permissions
         WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
@@ -282,7 +282,7 @@ pub async fn create_permission_rule(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_row_level_permissions 
+        INSERT INTO bi.analytics_row_level_permissions 
         (id, name, description, datasource_id, table_name, rule_type, condition,
          role_ids, user_ids, is_active, created_by, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -389,7 +389,7 @@ pub async fn get_permission_rule(
         r#"
         SELECT id, name, description, datasource_id, table_name, rule_type, condition,
                role_ids, user_ids, is_active, created_by, created_at, updated_at
-        FROM analytics_row_level_permissions
+        FROM bi.analytics_row_level_permissions
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -488,7 +488,7 @@ pub async fn update_permission_rule(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_row_level_permissions
+        UPDATE bi.analytics_row_level_permissions
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             condition = COALESCE($3, condition),
@@ -598,7 +598,7 @@ pub async fn delete_permission_rule(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_row_level_permissions SET deleted_at = NOW()
+        UPDATE bi.analytics_row_level_permissions SET deleted_at = NOW()
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
@@ -682,7 +682,7 @@ pub async fn validate_permission(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, rule_type, condition
-        FROM analytics_row_level_permissions
+        FROM bi.analytics_row_level_permissions
         WHERE datasource_id = $1
           AND table_name = $2
           AND is_active = true
@@ -818,7 +818,7 @@ pub async fn get_user_permissions(
         r#"
         SELECT id, name, description, datasource_id, table_name, rule_type, condition,
                role_ids, user_ids, is_active, created_by, created_at, updated_at
-        FROM analytics_row_level_permissions
+        FROM bi.analytics_row_level_permissions
         WHERE is_active = true
           AND (user_ids @> $1::text[] OR user_ids IS NULL)
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)

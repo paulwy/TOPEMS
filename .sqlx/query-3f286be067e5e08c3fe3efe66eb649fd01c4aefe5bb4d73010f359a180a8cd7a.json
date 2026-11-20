@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT name, output_format\n        FROM bi.report_templates\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bi.report_templates",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "output_format",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "bi.report_templates",
+            "name": "output_format"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "3f286be067e5e08c3fe3efe66eb649fd01c4aefe5bb4d73010f359a180a8cd7a"
+}

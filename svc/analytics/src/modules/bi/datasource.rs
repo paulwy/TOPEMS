@@ -278,7 +278,7 @@ pub async fn list_datasources(
         SELECT id, name, source_type, status, host, database, port, username,
                connection_string, last_sync, data_volume, sync_frequency,
                description, is_enabled, created_at, updated_at
-        FROM analytics_datasources
+        FROM bi.analytics_datasources
         WHERE ($1 = '' OR name ILIKE $1)
           AND ($2 = '' OR source_type = $2)
           AND ($3 = '' OR status = $3)
@@ -306,7 +306,7 @@ pub async fn list_datasources(
     let total: i64 = match sqlx::query_scalar!(
         r#"
         SELECT COUNT(*) AS "count!"
-        FROM analytics_datasources
+        FROM bi.analytics_datasources
         WHERE ($1 = '' OR name ILIKE $1)
           AND ($2 = '' OR source_type = $2)
           AND ($3 = '' OR status = $3)
@@ -420,7 +420,7 @@ pub async fn create_datasource(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_datasources (
+        INSERT INTO bi.analytics_datasources (
             id, name, source_type, status, host, database, port, username, password,
             connection_string, sync_frequency, description, is_enabled,
             connection_config, query_template, created_at, updated_at, tenant_id
@@ -538,7 +538,7 @@ pub async fn get_datasource(
         SELECT id, name, source_type, status, host, database, port, username,
                connection_string, last_sync, data_volume, sync_frequency,
                description, is_enabled, created_at, updated_at
-        FROM analytics_datasources
+        FROM bi.analytics_datasources
         WHERE id = $1
         "#,
         id,
@@ -645,7 +645,7 @@ pub async fn update_datasource(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_datasources
+        UPDATE bi.analytics_datasources
         SET name = COALESCE($1, name),
             source_type = COALESCE($2, source_type),
             status = COALESCE($3, status),
@@ -788,7 +788,7 @@ pub async fn delete_datasource(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_datasources SET deleted_at = NOW()
+        UPDATE bi.analytics_datasources SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,
@@ -875,7 +875,7 @@ pub async fn test_datasource(
         r#"
         SELECT id, name, source_type, status, host, database, port, username,
                password, connection_string, is_enabled
-        FROM analytics_datasources
+        FROM bi.analytics_datasources
         WHERE id = $1
         "#,
         id,
@@ -922,7 +922,7 @@ pub async fn test_datasource(
     // Best-effort status update; don't fail the request if the update fails.
     if let Err(e) = sqlx::query!(
         r#"
-        UPDATE analytics_datasources
+        UPDATE bi.analytics_datasources
         SET status = $1, updated_at = NOW()
         WHERE id = $2
         "#,
@@ -1014,7 +1014,7 @@ pub async fn refresh_datasource(
     let row = match sqlx::query!(
         r#"
         SELECT id, source_type
-        FROM analytics_datasources
+        FROM bi.analytics_datasources
         WHERE id = $1
         "#,
         id,
@@ -1048,7 +1048,7 @@ pub async fn refresh_datasource(
 
     if let Err(e) = sqlx::query!(
         r#"
-        UPDATE analytics_datasources
+        UPDATE bi.analytics_datasources
         SET status = 'active',
             last_sync = $1,
             data_volume = COALESCE(data_volume, 0) + $2,

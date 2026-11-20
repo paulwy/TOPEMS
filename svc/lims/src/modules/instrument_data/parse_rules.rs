@@ -45,7 +45,7 @@ pub async fn list_parse_rules(
             "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
              created_by, created_at, updated_at, tenant_id::TEXT \
-             FROM qa_lims_parse_rules \
+             FROM lims.qa_lims_parse_rules \
              WHERE status = $1 AND protocol = $2 \
              ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
@@ -53,7 +53,7 @@ pub async fn list_parse_rules(
             "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
              created_by, created_at, updated_at, tenant_id::TEXT \
-             FROM qa_lims_parse_rules \
+             FROM lims.qa_lims_parse_rules \
              WHERE status = $1 \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
@@ -61,7 +61,7 @@ pub async fn list_parse_rules(
             "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
              created_by, created_at, updated_at, tenant_id::TEXT \
-             FROM qa_lims_parse_rules \
+             FROM lims.qa_lims_parse_rules \
              WHERE protocol = $1 \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
@@ -69,7 +69,7 @@ pub async fn list_parse_rules(
             "SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
              created_by, created_at, updated_at, tenant_id::TEXT \
-             FROM qa_lims_parse_rules \
+             FROM lims.qa_lims_parse_rules \
              ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
     };
@@ -164,7 +164,7 @@ pub async fn get_parse_rule(
         SELECT id::TEXT, rule_no, rule_name, protocol, instrument_type,
                parse_config, quality_rules, status, version, description,
                created_by, created_at, updated_at, tenant_id::TEXT
-        FROM qa_lims_parse_rules
+        FROM lims.qa_lims_parse_rules
         WHERE id = $1
         "#,
     )
@@ -227,7 +227,7 @@ pub async fn create_parse_rule(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_parse_rules
+        INSERT INTO lims.qa_lims_parse_rules
             (id, rule_no, rule_name, protocol, instrument_type,
              parse_config, quality_rules, status, version, description, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', '1.0', $8, 'system', $9)
@@ -308,7 +308,7 @@ pub async fn update_parse_rule(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_parse_rules 
+        UPDATE lims.qa_lims_parse_rules 
         SET rule_name = COALESCE($2, rule_name),
             status = COALESCE($3, status),
             parse_config = COALESCE($4, parse_config),
@@ -389,10 +389,11 @@ pub async fn delete_parse_rule(
         }
     };
 
-    let result = sqlx::query("UPDATE qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&mut scope)
-        .await;
+    let result =
+        sqlx::query("UPDATE lims.qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&mut scope)
+            .await;
 
     match result {
         Ok(_) => {

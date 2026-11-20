@@ -50,7 +50,7 @@ pub async fn create_share_link(
 
     // 校验看板归属，避免为其他租户看板创建分享链接后经 share_id 读布局
     let owns_dashboard = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM analytics_dashboards \
+        "SELECT COUNT(*) FROM bi.analytics_dashboards \
          WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
     )
     .bind(id)
@@ -72,7 +72,7 @@ pub async fn create_share_link(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboard_shares (id, dashboard_id, shared_with, permission, expires_at, created_at, tenant_id)
+        INSERT INTO bi.analytics_dashboard_shares (id, dashboard_id, shared_with, permission, expires_at, created_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, dashboard_id, permission, expires_at, created_at
         "#,
@@ -153,8 +153,8 @@ pub async fn get_shared_dashboard(
         r#"
         SELECT s.dashboard_id, s.permission, s.expires_at,
                d.id, d.name, d.description, d.layout, d.owner_id, d.created_at, d.updated_at
-        FROM analytics_dashboard_shares s
-        JOIN analytics_dashboards d ON s.dashboard_id = d.id
+        FROM bi.analytics_dashboard_shares s
+        JOIN bi.analytics_dashboards d ON s.dashboard_id = d.id
         WHERE s.id = $1
           AND (s.expires_at IS NULL OR s.expires_at > NOW())
           AND d.tenant_id = s.tenant_id
@@ -235,7 +235,7 @@ pub async fn list_share_links(
     let rows = match sqlx::query!(
         r#"
         SELECT id, dashboard_id, shared_with, permission, expires_at, created_at
-        FROM analytics_dashboard_shares
+        FROM bi.analytics_dashboard_shares
         WHERE dashboard_id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY created_at DESC
@@ -314,7 +314,7 @@ pub async fn delete_share_link(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboard_shares SET deleted_at = NOW()
+        UPDATE bi.analytics_dashboard_shares SET deleted_at = NOW()
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id

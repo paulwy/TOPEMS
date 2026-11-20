@@ -130,12 +130,12 @@ pub async fn list_sync_records(
         "SELECT s.id, s.data_source_id, d.name AS data_source_name, s.status, s.sync_type, \
          s.records_count, s.affected_records, s.error_message, s.started_at, s.completed_at, \
          s.duration_ms, s.created_at, s.updated_at \
-         FROM analytics_sync_records s \
-         LEFT JOIN analytics_datasources d ON s.data_source_id = d.id \
+         FROM bi.analytics_sync_records s \
+         LEFT JOIN bi.analytics_datasources d ON s.data_source_id = d.id \
          WHERE 1=1",
     );
     let mut count_sql =
-        String::from("SELECT COUNT(*) AS total FROM analytics_sync_records s WHERE 1=1");
+        String::from("SELECT COUNT(*) AS total FROM bi.analytics_sync_records s WHERE 1=1");
 
     if query.data_source_id.is_some() {
         sql.push_str(" AND s.data_source_id = $1");
@@ -289,8 +289,8 @@ pub async fn get_sync_record(
         "SELECT s.id, s.data_source_id, d.name AS data_source_name, s.status, s.sync_type, \
          s.records_count, s.affected_records, s.error_message, s.started_at, s.completed_at, \
          s.duration_ms, s.created_at, s.updated_at \
-         FROM analytics_sync_records s \
-         LEFT JOIN analytics_datasources d ON s.data_source_id = d.id \
+         FROM bi.analytics_sync_records s \
+         LEFT JOIN bi.analytics_datasources d ON s.data_source_id = d.id \
          WHERE s.id = $1",
     )
     .bind(id)
@@ -363,7 +363,7 @@ pub async fn create_sync_record(
 
     // Verify data source exists (analytics_datasources 受 RLS 约束，需带租户上下文)
     let ds_exists: Option<Uuid> = match sqlx::query_scalar(
-        "SELECT id FROM analytics_datasources WHERE id = $1 \
+        "SELECT id FROM bi.analytics_datasources WHERE id = $1 \
          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
     )
     .bind(req.data_source_id)
@@ -389,7 +389,7 @@ pub async fn create_sync_record(
     // The INSERT...RETURNING below only returns table columns; re-fetch with the JOIN
     // so the response includes the data_source_name from analytics_datasources.
     let row = sqlx::query(
-        "INSERT INTO analytics_sync_records \
+        "INSERT INTO bi.analytics_sync_records \
          (id, data_source_id, status, sync_type, records_count, affected_records, error_message, \
           started_at, completed_at, duration_ms, created_at, updated_at) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
@@ -470,7 +470,7 @@ pub async fn update_sync_record(
     let now = Utc::now();
 
     let result = sqlx::query(
-        "UPDATE analytics_sync_records SET \
+        "UPDATE bi.analytics_sync_records SET \
          data_source_id = COALESCE($1, data_source_id), \
          sync_type = COALESCE($2, sync_type), \
          status = COALESCE($3, status), \
@@ -558,7 +558,7 @@ pub async fn delete_sync_record(
         }
     };
 
-    let result = sqlx::query("DELETE FROM analytics_sync_records WHERE id = $1")
+    let result = sqlx::query("DELETE FROM bi.analytics_sync_records WHERE id = $1")
         .bind(id)
         .execute(&mut db_scope)
         .await;
@@ -628,8 +628,8 @@ pub async fn retry_sync(
         "SELECT s.id, s.data_source_id, d.name AS data_source_name, s.status, s.sync_type, \
          s.records_count, s.affected_records, s.error_message, s.started_at, s.completed_at, \
          s.duration_ms, s.created_at, s.updated_at \
-         FROM analytics_sync_records s \
-         LEFT JOIN analytics_datasources d ON s.data_source_id = d.id \
+         FROM bi.analytics_sync_records s \
+         LEFT JOIN bi.analytics_datasources d ON s.data_source_id = d.id \
          WHERE s.id = $1",
     )
     .bind(id)
@@ -671,7 +671,7 @@ pub async fn retry_sync(
 
     // Reset record to pending and clear error state
     let result = sqlx::query(
-        "UPDATE analytics_sync_records SET \
+        "UPDATE bi.analytics_sync_records SET \
          status = 'pending', \
          error_message = $1, \
          started_at = $2, \

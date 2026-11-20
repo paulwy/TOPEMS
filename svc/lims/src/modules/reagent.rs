@@ -98,10 +98,10 @@ pub async fn list_reagents(
     let offset = (page - 1) * page_size;
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND status = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM lims.qa_lab_reagents WHERE deleted_at IS NULL AND status = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM lims.qa_lab_reagents WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM lims.qa_lab_reagents WHERE deleted_at IS NULL AND name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM lims.qa_lab_reagents WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -218,7 +218,7 @@ pub async fn create_reagent(
     };
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
+        "INSERT INTO lims.qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
     )
     .bind(tenant_id)
     .bind(reagent_no)
@@ -342,7 +342,7 @@ pub async fn get_reagent(
         }
     };
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM lims.qa_lab_reagents WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .bind(locale)
@@ -407,7 +407,7 @@ pub async fn update_reagent(
     };
 
     let row = sqlx::query(
-        "UPDATE qa_lab_reagents SET name = COALESCE($3, name), specification = COALESCE($4, specification), manufacturer = COALESCE($5, manufacturer), batch_no = COALESCE($6, batch_no), quantity = COALESCE($7, quantity), unit = COALESCE($8, unit), status = COALESCE($9, status), expired_at = COALESCE($10, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
+        "UPDATE lims.qa_lab_reagents SET name = COALESCE($3, name), specification = COALESCE($4, specification), manufacturer = COALESCE($5, manufacturer), batch_no = COALESCE($6, batch_no), quantity = COALESCE($7, quantity), unit = COALESCE($8, unit), status = COALESCE($9, status), expired_at = COALESCE($10, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
     )
     .bind(id)
     .bind(tenant_id)
@@ -483,7 +483,7 @@ pub async fn delete_reagent(
     };
 
     let result = sqlx::query(
-        "UPDATE qa_lab_reagents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE lims.qa_lab_reagents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)

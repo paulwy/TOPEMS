@@ -79,7 +79,7 @@ pub async fn list_processes(
         }
     };
     let rows = sqlx::query(
-        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id::TEXT FROM qa_lab_processes ORDER BY created_at DESC",
+        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id::TEXT FROM lims.qa_lab_processes ORDER BY created_at DESC",
     )
     .bind(locale)
     .fetch_all(&mut scope)
@@ -156,7 +156,7 @@ pub async fn get_process(
         }
     };
     let row = sqlx::query(
-        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id::TEXT FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id::TEXT FROM lims.qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(uuid)
     .bind(locale)
@@ -212,7 +212,7 @@ pub async fn create_process(
     };
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
+        "INSERT INTO lims.qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
     )
     .bind(req.name)
     .bind(req.description)
@@ -278,7 +278,7 @@ pub async fn update_process(
     };
 
     let row = sqlx::query(
-        "UPDATE qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
+        "UPDATE lims.qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
     )
     .bind(uuid)
     .bind(req.name)
@@ -342,7 +342,7 @@ pub async fn delete_process(
         }
     };
 
-    let result = sqlx::query("UPDATE qa_lab_processes SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE lims.qa_lab_processes SET deleted_at = NOW() WHERE id = $1")
         .bind(uuid)
         .execute(&mut scope)
         .await;

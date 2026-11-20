@@ -53,7 +53,7 @@ pub async fn list_dashboard_templates(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
-        FROM analytics_dashboard_templates
+        FROM bi.analytics_dashboard_templates
         WHERE is_active = true
           AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
@@ -130,7 +130,7 @@ pub async fn create_dashboard_template(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboard_templates (id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at, tenant_id)
+        INSERT INTO bi.analytics_dashboard_templates (id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         "#,
@@ -218,7 +218,7 @@ pub async fn get_dashboard_template(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
-        FROM analytics_dashboard_templates
+        FROM bi.analytics_dashboard_templates
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -303,7 +303,7 @@ pub async fn update_dashboard_template(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboard_templates
+        UPDATE bi.analytics_dashboard_templates
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             layout = COALESCE($3, layout),
@@ -407,7 +407,7 @@ pub async fn delete_dashboard_template(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboard_templates
+        UPDATE bi.analytics_dashboard_templates
         SET is_active = false, updated_at = $1
         WHERE id = $2
           AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
@@ -472,7 +472,7 @@ pub async fn create_dashboard_from_template(
     let row = match sqlx::query!(
         r#"
         SELECT name, description, layout
-        FROM analytics_dashboard_templates
+        FROM bi.analytics_dashboard_templates
         WHERE id = $1 AND is_active = true
         "#,
         template_id,
@@ -496,7 +496,7 @@ pub async fn create_dashboard_from_template(
 
             let result = sqlx::query!(
                 r#"
-                INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+                INSERT INTO bi.analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id, name, description, layout, owner_id, is_public, created_at, updated_at
                 "#,

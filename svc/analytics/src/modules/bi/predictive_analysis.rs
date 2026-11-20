@@ -319,7 +319,7 @@ pub async fn moving_average_forecast(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM bi.analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
@@ -462,7 +462,7 @@ pub async fn exponential_smoothing_forecast(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM bi.analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
@@ -585,7 +585,7 @@ pub async fn trend_analysis(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM bi.analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 
@@ -695,7 +695,7 @@ pub async fn prediction_comparison(
         };
 
     let query = format!(
-        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
+        "SELECT {}, {} FROM bi.analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} ASC LIMIT $1",
         time_q, value_q, time_q
     );
 

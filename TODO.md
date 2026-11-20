@@ -66,7 +66,7 @@
 | W2-B1 ✅ | mes：裸表引用归零 | 316 → 0（2026-11-20，25 文件；基线移除 62 条，`.sqlx` 新增 99 条） | `check-schema-prefix` 该模块归零 |
 | W2-B2 ✅ | unified-core 裸表引用归零 | 205 → 0（2026-11-21，15 文件；按 gate 逐行显式前缀：public 20 张业务表 + `flow.core_comments`/`flow.core_favorites` 两张权威表）。全仓 schema_prefix 违规 1134→929（SEARCH_PATH_DEPENDENT 604→508、UNKNOWN 530→421），基线 225→200 key、新增 0。`cargo fmt -p topems-unified-core` + `cargo check -p topems-unified-core --all-targets` 绿；`check-ledger-staleness` 绿；事实口径已同步 | `check-schema-prefix` 该模块归零 |
 | W2-B3 ✅ | finance 裸表引用归零 | 202 → 0（2026-11-21，19 文件；全部为 finance schema 表，逐行显式前缀 `finance.*`；`payment.rs` 两处已包裹宏但字面量仍裸名，一并修正）。全仓 schema_prefix 违规 929→727（SEARCH_PATH_DEPENDENT 508→490、UNKNOWN 421→237），基线 200→160 key、新增 0。`cargo fmt -p topems-finance` + `cargo check -p topems-finance --all-targets` 绿；Node/Python 双边界门禁 PASS；事实口径已同步 | `check-schema-prefix` 该模块归零 |
-| W2-B4 | lims + analytics | 174 / 167 | 同上 |
+| W2-B4 ✅ | lims + analytics 裸表引用归零 | 322 → 0（2026-11-21，37 文件；lims 174 处统一 `lims.*`，analytics 148 处统一 `bi.*`，含 4 个多行续行 SQL 文件的二次补齐）。analytics 的目录名与权威 schema 名不一致，Node 边界门禁补充 `EXTRA_OWNED_SCHEMAS.analytics=[bi]`；两服务门禁 PASS。全仓 schema_prefix 违规 727→405（SEARCH_PATH_DEPENDENT 490→183、UNKNOWN 237→222），基线 160→95 key、新增 0。`.sqlx` 按 `sqlx-prepare.sh -p topems-analytics -p topems-lims` 刷新（analytics 89 查询 / lims 0，新增 88 条），离线编译与 `--check` 全绿；`cargo fmt` + `cargo check -p topems-lims -p topems-analytics --all-targets` 绿；事实口径已同步 | `check-schema-prefix` 两模块归零 |
 | W2-B5 | pdm + erp | 152 / 105 | 同上 |
 | W2-B6 | integration 46 + communication 44 + portal 19 + rd 16 + pm 10 + monitor 5 + 小模块 8 | 合计 1536 | 同上 |
 | W2-C1..C3 | finance 停止直连 `erp.opening_balances`（改经 erp 接口/共享读视图） | 8 处（`finance/modules/mod.rs` 5564~6118） | 该 grep 归零，期初余额口径测试绿 |

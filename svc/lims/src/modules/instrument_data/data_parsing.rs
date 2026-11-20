@@ -44,7 +44,7 @@ pub async fn parse_instrument_data(
     };
 
     let data_row = sqlx::query(
-        "SELECT id::TEXT, data_no, protocol, raw_data FROM qa_lims_instrument_data WHERE id = $1",
+        "SELECT id::TEXT, data_no, protocol, raw_data FROM lims.qa_lims_instrument_data WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -71,7 +71,7 @@ pub async fn parse_instrument_data(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_instrument_data 
+        UPDATE lims.qa_lims_instrument_data 
         SET parsed_data = $2, 
             quality_score = $3,
             status = $4,

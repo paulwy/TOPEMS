@@ -219,7 +219,7 @@ pub async fn query_cube(
 
     // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM bi.analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
@@ -374,7 +374,7 @@ pub async fn slice_cube(
 
     // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM bi.analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
@@ -530,7 +530,7 @@ pub async fn dice_cube(
 
     // S1.1: 使用参数化绑定 LIMIT/OFFSET，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM bi.analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
@@ -652,7 +652,7 @@ pub async fn pivot_table(
 
     // S1.1: LIMIT 参数化绑定，杜绝 format! 硬编码数字。
     let query = format!(
-        "SELECT {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) LIMIT $1",
+        "SELECT {} FROM bi.analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) LIMIT $1",
         select_clause
     );
 
@@ -796,7 +796,7 @@ pub async fn rank_data(
 
     // S1.1: 使用参数化绑定 LIMIT，避免通过 format! 拼接用户可控数值
     let query = format!(
-        "SELECT {}, {} FROM analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} {} LIMIT $1",
+        "SELECT {}, {} FROM bi.analytics_data WHERE ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY {} {} LIMIT $1",
         dimension, measure, measure, sort_order
     );
 

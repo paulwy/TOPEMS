@@ -136,7 +136,7 @@ pub async fn list_reports(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
-        FROM analytics_self_service_reports
+        FROM bi.analytics_self_service_reports
         WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
@@ -229,7 +229,7 @@ pub async fn create_report(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_self_service_reports 
+        INSERT INTO bi.analytics_self_service_reports 
         (id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
@@ -326,7 +326,7 @@ pub async fn get_report(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
-        FROM analytics_self_service_reports
+        FROM bi.analytics_self_service_reports
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -420,7 +420,7 @@ pub async fn update_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_self_service_reports
+        UPDATE bi.analytics_self_service_reports
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             datasource_id = COALESCE($3, datasource_id),
@@ -528,7 +528,7 @@ pub async fn delete_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_self_service_reports SET deleted_at = NOW()
+        UPDATE bi.analytics_self_service_reports SET deleted_at = NOW()
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
@@ -603,7 +603,7 @@ pub async fn query_report_data(
     let report = match sqlx::query!(
         r#"
         SELECT id, name, datasource_id, fields, filters
-        FROM analytics_self_service_reports
+        FROM bi.analytics_self_service_reports
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -754,7 +754,7 @@ pub async fn query_report_data(
 
     // S1.1: LIMIT/OFFSET 参数化绑定，杜绝 format! 拼接用户可控数值。
     let query = format!(
-        "SELECT {} FROM analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
+        "SELECT {} FROM bi.analytics_data WHERE ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY {} {} LIMIT $1 OFFSET $2",
         select_clause, sort_by, sort_order
     );
 
@@ -858,7 +858,7 @@ pub async fn export_report(
     let report = match sqlx::query!(
         r#"
         SELECT id, name, fields
-        FROM analytics_self_service_reports
+        FROM bi.analytics_self_service_reports
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,

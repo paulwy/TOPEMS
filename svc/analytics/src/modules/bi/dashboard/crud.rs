@@ -48,7 +48,7 @@ pub async fn list_dashboards(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         ORDER BY created_at DESC
         "#,
     )
@@ -130,7 +130,7 @@ pub async fn create_dashboard(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+        INSERT INTO bi.analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         "#,
         id,
@@ -212,7 +212,7 @@ pub async fn get_dashboard(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE id = $1
         "#,
         id,
@@ -294,7 +294,7 @@ pub async fn update_dashboard(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboards
+        UPDATE bi.analytics_dashboards
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             layout = COALESCE($3, layout),
@@ -382,7 +382,7 @@ pub async fn delete_dashboard(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_dashboards SET deleted_at = NOW()
+        UPDATE bi.analytics_dashboards SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,
@@ -442,7 +442,7 @@ pub async fn get_public_dashboards(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE is_public = true
         ORDER BY created_at DESC
         "#,
@@ -512,7 +512,7 @@ pub async fn get_user_dashboards(
     let rows = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE owner_id = $1
         ORDER BY created_at DESC
         "#,
@@ -582,7 +582,7 @@ pub async fn clone_dashboard(
     let row = match sqlx::query!(
         r#"
         SELECT name, description, layout, owner_id, is_public
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE id = $1
         "#,
         id,
@@ -607,7 +607,7 @@ pub async fn clone_dashboard(
 
             let result = sqlx::query!(
                 r#"
-                INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+                INSERT INTO bi.analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id, name, description, layout, owner_id, is_public, created_at, updated_at
                 "#,
@@ -690,7 +690,7 @@ pub async fn import_dashboard(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
+        INSERT INTO bi.analytics_dashboards (id, name, description, layout, owner_id, is_public, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, name, description, layout, owner_id, is_public, created_at, updated_at
         "#,

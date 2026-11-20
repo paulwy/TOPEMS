@@ -163,8 +163,8 @@ pub async fn list_schedules(
                s.schedule_type, s.schedule_expression, s.parameters, 
                s.recipients, s.status, s.last_run_at, s.next_run_at, 
                s.run_count, s.error_message, s.created_at, s.updated_at
-        FROM report_schedules s
-        LEFT JOIN report_templates t ON s.template_id = t.id
+        FROM bi.report_schedules s
+        LEFT JOIN bi.report_templates t ON s.template_id = t.id
         ORDER BY s.created_at DESC
         "#,
     )
@@ -232,7 +232,7 @@ pub async fn create_schedule(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO report_schedules (id, name, template_id, schedule_type,
+        INSERT INTO bi.report_schedules (id, name, template_id, schedule_type,
                                       schedule_expression, parameters, recipients,
                                       status, run_count, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -303,8 +303,8 @@ pub async fn get_schedule(
                s.schedule_type, s.schedule_expression, s.parameters, 
                s.recipients, s.status, s.last_run_at, s.next_run_at, 
                s.run_count, s.error_message, s.created_at, s.updated_at
-        FROM report_schedules s
-        LEFT JOIN report_templates t ON s.template_id = t.id
+        FROM bi.report_schedules s
+        LEFT JOIN bi.report_templates t ON s.template_id = t.id
         WHERE s.id = $1
         "#,
     )
@@ -372,7 +372,7 @@ pub async fn update_schedule(
 
     let result = sqlx::query(
         r#"
-        UPDATE report_schedules
+        UPDATE bi.report_schedules
         SET name = COALESCE($1, name),
             schedule_expression = COALESCE($2, schedule_expression),
             parameters = COALESCE($3, parameters),
@@ -437,7 +437,7 @@ pub async fn delete_schedule(
 
     let result = sqlx::query!(
         r#"
-        UPDATE report_schedules SET deleted_at = NOW()
+        UPDATE bi.report_schedules SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -492,7 +492,7 @@ pub async fn execute_schedule(
 
     let result = sqlx::query(
         r#"
-        UPDATE report_schedules
+        UPDATE bi.report_schedules
         SET last_run_at = $1, run_count = run_count + 1, updated_at = $2
         WHERE id = $3
         "#,
@@ -616,7 +616,7 @@ pub async fn toggle_schedule(
 
     let result = sqlx::query(
         r#"
-        UPDATE report_schedules
+        UPDATE bi.report_schedules
         SET status = CASE WHEN status = 'active' THEN 'paused' ELSE 'active' END,
             updated_at = $1
         WHERE id = $2

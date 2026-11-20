@@ -69,7 +69,7 @@ pub async fn validate_columns(
 
     // 参数化查询：只取出该表下的 active 列名集合
     let result = sqlx::query_scalar::<_, String>(
-        r#"SELECT column_name FROM bi_datasets WHERE table_name = $1 AND is_active = TRUE"#,
+        r#"SELECT column_name FROM bi.bi_datasets WHERE table_name = $1 AND is_active = TRUE"#,
     )
     .bind(table_name)
     .fetch_all(pool)
@@ -155,7 +155,7 @@ pub async fn auto_register_from_information_schema(
     for table in tables {
         let rows = sqlx::query(
             r#"
-            INSERT INTO bi_datasets (table_name, column_name, data_type)
+            INSERT INTO bi.bi_datasets (table_name, column_name, data_type)
             SELECT
                 $1::VARCHAR  AS table_name,
                 column_name,

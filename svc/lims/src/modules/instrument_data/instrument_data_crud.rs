@@ -56,8 +56,8 @@ pub async fn list_instrument_data(
     query_builder.push(
         r#" = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name,
         d.tenant_id::TEXT
-        FROM qa_lims_instrument_data d
-        LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
+        FROM lims.qa_lims_instrument_data d
+        LEFT JOIN lims.qa_lab_instruments i ON d.instrument_id = i.id
         WHERE 1=1
         "#,
     );
@@ -167,8 +167,8 @@ pub async fn get_instrument_data(
                d.error_msg, d.collected_at, d.parsed_at,
                d.created_by, d.created_at, d.updated_at, d.tenant_id::TEXT,
                i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name
-        FROM qa_lims_instrument_data d
-        LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
+        FROM lims.qa_lims_instrument_data d
+        LEFT JOIN lims.qa_lab_instruments i ON d.instrument_id = i.id
         WHERE d.id = $1
         "#,
     )
@@ -250,7 +250,7 @@ pub async fn create_instrument_data(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_instrument_data
+        INSERT INTO lims.qa_lims_instrument_data
             (id, data_no, instrument_id, batch_no, protocol, raw_data, status, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'system', $7)
         RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
@@ -333,7 +333,7 @@ pub async fn update_instrument_data(
 
     let row = sqlx::query(
         r#"
-        UPDATE qa_lims_instrument_data 
+        UPDATE lims.qa_lims_instrument_data 
         SET status = COALESCE($2, status),
             parsed_data = COALESCE($3, parsed_data),
             error_msg = COALESCE($4, error_msg),
@@ -414,10 +414,11 @@ pub async fn delete_instrument_data(
         }
     };
 
-    let result = sqlx::query("UPDATE qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1")
-        .bind(id)
-        .execute(&mut scope)
-        .await;
+    let result =
+        sqlx::query("UPDATE lims.qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1")
+            .bind(id)
+            .execute(&mut scope)
+            .await;
 
     match result {
         Ok(_) => {

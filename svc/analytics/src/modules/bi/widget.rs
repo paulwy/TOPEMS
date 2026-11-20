@@ -162,7 +162,7 @@ pub async fn list_widgets(
     let rows = match sqlx::query!(
         r#"
         SELECT id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         ORDER BY created_at DESC
         "#,
     )
@@ -231,7 +231,7 @@ pub async fn get_widgets_by_dashboard(
     let rows = match sqlx::query!(
         r#"
         SELECT id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE dashboard_id = $1
         ORDER BY created_at ASC
         "#,
@@ -316,7 +316,7 @@ pub async fn create_widget(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_widgets (id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at, tenant_id)
+        INSERT INTO bi.analytics_widgets (id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at
         "#,
@@ -402,7 +402,7 @@ pub async fn get_widget(
     let row = match sqlx::query!(
         r#"
         SELECT id, dashboard_id, name, widget_type, config, position, datasource_id, query_config, cache_ttl_seconds, created_at, updated_at
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE id = $1
         "#,
         id,
@@ -484,7 +484,7 @@ pub async fn update_widget(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_widgets
+        UPDATE bi.analytics_widgets
         SET name = COALESCE($1, name),
             widget_type = COALESCE($2, widget_type),
             config = COALESCE($3, config),
@@ -582,7 +582,7 @@ pub async fn delete_widget(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_widgets SET deleted_at = NOW()
+        UPDATE bi.analytics_widgets SET deleted_at = NOW()
         WHERE id = $1
         RETURNING id
         "#,
@@ -644,7 +644,7 @@ pub async fn get_widget_data(
     let row = match sqlx::query!(
         r#"
         SELECT name, widget_type, config, position, query_config, cache_ttl_seconds
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE id = $1
         "#,
         id,
@@ -797,7 +797,7 @@ pub async fn get_widget_data_realtime(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE id = $1
         "#,
         id,

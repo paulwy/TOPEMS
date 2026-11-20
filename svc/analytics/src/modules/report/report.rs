@@ -200,7 +200,7 @@ pub async fn create_report_from_template(
     let template = sqlx::query(
         r#"
         SELECT id, name, report_type, data_source, layout_config, filter_config, style_config, columns, output_format
-        FROM report_templates
+        FROM bi.report_templates
         WHERE id = $1 AND is_active = TRUE
         "#,
     )

@@ -1,0 +1,130 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.analytics_drilldown_paths\n        SET name = COALESCE($1, name),\n            description = COALESCE($2, description),\n            levels = COALESCE($3, levels),\n            measures = COALESCE($4, measures),\n            updated_at = $5\n        WHERE id = $6\n          AND ($7::uuid IS NULL OR tenant_id = $7::uuid)\n        RETURNING id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "datasource_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "datasource_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "levels",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "levels"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "measures",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "measures"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "owner_id",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "owner_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3c910e85df260de115f35813af4f76c9c3b2e2f7f8875dcd6d93aab8d16d7697"
+}

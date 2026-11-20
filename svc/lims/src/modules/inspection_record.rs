@@ -84,7 +84,7 @@ pub async fn list_records(
                 Err(_) => return ApiResponse::bad_request("无效的任务ID"),
             };
             sqlx::query(
-                "SELECT r.id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT r.id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM lims.qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(tid)
             .bind(page_size)
@@ -93,7 +93,7 @@ pub async fn list_records(
             .await
         }
         None => sqlx::query(
-            "SELECT r.id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT r.id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM lims.qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
@@ -160,7 +160,7 @@ pub async fn create_record(
     };
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at, created_at, tenant_id::TEXT"
+        "INSERT INTO lims.qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at, created_at, tenant_id::TEXT"
     )
     .bind(record_no)
     .bind(task_id)
@@ -233,7 +233,7 @@ pub async fn list_records_by_task(
     };
 
     let rows = sqlx::query(
-        "SELECT r.id::TEXT, r.tenant_id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC"
+        "SELECT r.id::TEXT, r.tenant_id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM lims.qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC"
     )
     .bind(task_id)
     .fetch_all(&mut scope)
@@ -304,7 +304,7 @@ pub async fn get_record(
     };
 
     let row = sqlx::query(
-        "SELECT r.id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
+        "SELECT r.id::TEXT, r.record_no, r.task_id::TEXT, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at, r.created_at, r.tenant_id::TEXT FROM lims.qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
     )
     .bind(id)
     .fetch_one(&mut scope)
@@ -361,7 +361,7 @@ pub async fn delete_record(
         }
     };
 
-    let result = sqlx::query("UPDATE qa_lab_records SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE lims.qa_lab_records SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut scope)
         .await;

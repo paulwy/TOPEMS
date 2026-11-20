@@ -44,7 +44,7 @@ pub async fn export_dashboard(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE id = $1
         "#,
         id,
@@ -119,7 +119,7 @@ pub async fn export_dashboard_pdf(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE id = $1
         "#,
         id,
@@ -142,7 +142,7 @@ pub async fn export_dashboard_pdf(
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE dashboard_id = $1
         "#,
         id,
@@ -296,7 +296,7 @@ pub async fn export_dashboard_excel(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, description, layout, owner_id, is_public, created_at, updated_at
-        FROM analytics_dashboards
+        FROM bi.analytics_dashboards
         WHERE id = $1
         "#,
         id,
@@ -319,7 +319,7 @@ pub async fn export_dashboard_excel(
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config
-        FROM analytics_widgets
+        FROM bi.analytics_widgets
         WHERE dashboard_id = $1
         "#,
         id,

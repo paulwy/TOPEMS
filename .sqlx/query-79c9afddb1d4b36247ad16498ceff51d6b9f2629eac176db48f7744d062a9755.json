@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE bi.analytics_comparison_analyses\n        SET status = 'running', updated_at = $1\n        WHERE id = $2\n          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "79c9afddb1d4b36247ad16498ceff51d6b9f2629eac176db48f7744d062a9755"
+}

@@ -166,7 +166,7 @@ pub async fn list_comparisons(
         r#"
         SELECT id, name, description, comparison_type, dimension_a, dimension_b,
                indicators, filters, status, last_run_at, created_by, created_at, updated_at
-        FROM analytics_comparison_analyses
+        FROM bi.analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
           AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
@@ -194,7 +194,7 @@ pub async fn list_comparisons(
     let total: i64 = match sqlx::query_scalar!(
         r#"
         SELECT COUNT(*) AS "count!"
-        FROM analytics_comparison_analyses
+        FROM bi.analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
@@ -298,7 +298,7 @@ pub async fn get_comparison(
         r#"
         SELECT id, name, description, comparison_type, dimension_a, dimension_b,
                indicators, filters, status, last_run_at, created_by, created_at, updated_at
-        FROM analytics_comparison_analyses
+        FROM bi.analytics_comparison_analyses
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -384,7 +384,7 @@ pub async fn create_comparison(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO analytics_comparison_analyses
+        INSERT INTO bi.analytics_comparison_analyses
         (id, name, description, comparison_type, dimension_a, dimension_b,
          indicators, filters, status, created_by, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
@@ -492,7 +492,7 @@ pub async fn update_comparison(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_comparison_analyses
+        UPDATE bi.analytics_comparison_analyses
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             comparison_type = COALESCE($3, comparison_type),
@@ -608,7 +608,7 @@ pub async fn delete_comparison(
 
     let result = sqlx::query!(
         r#"
-        UPDATE analytics_comparison_analyses SET deleted_at = NOW()
+        UPDATE bi.analytics_comparison_analyses SET deleted_at = NOW()
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING id
@@ -696,7 +696,7 @@ pub async fn run_comparison(
     let row = match sqlx::query!(
         r#"
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
-        FROM analytics_comparison_analyses
+        FROM bi.analytics_comparison_analyses
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
@@ -728,7 +728,7 @@ pub async fn run_comparison(
     // Mark as running
     if let Err(e) = sqlx::query!(
         r#"
-        UPDATE analytics_comparison_analyses
+        UPDATE bi.analytics_comparison_analyses
         SET status = 'running', updated_at = $1
         WHERE id = $2
           AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
@@ -775,7 +775,7 @@ pub async fn run_comparison(
 
     let insert_result = sqlx::query!(
         r#"
-        INSERT INTO analytics_comparison_results
+        INSERT INTO bi.analytics_comparison_results
         (id, comparison_id, status, data, summary, generated_at, tenant_id)
         VALUES ($1, $2, 'success', $3, $4, $5, $6)
         "#,
@@ -793,7 +793,7 @@ pub async fn run_comparison(
         warn!("Failed to persist comparison result: {}", e);
         let _ = sqlx::query!(
             r#"
-            UPDATE analytics_comparison_analyses
+            UPDATE bi.analytics_comparison_analyses
             SET status = 'failed', updated_at = $1
             WHERE id = $2
               AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
@@ -813,7 +813,7 @@ pub async fn run_comparison(
 
     let _ = sqlx::query!(
         r#"
-        UPDATE analytics_comparison_analyses
+        UPDATE bi.analytics_comparison_analyses
         SET status = 'completed',
             last_run_at = $1,
             updated_at = $1
@@ -886,7 +886,7 @@ pub async fn get_comparison_result(
         Err(_) => {
             if id_str == "1" || id_str.parse::<i32>().is_ok() {
                 let default_id = sqlx::query_scalar!(
-                    r#"SELECT id FROM analytics_comparison_analyses WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT 1"#,
+                    r#"SELECT id FROM bi.analytics_comparison_analyses WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT 1"#,
                     tenant_scope.tenant_id(),
                 )
                 .fetch_optional(&mut db_scope)
@@ -915,7 +915,7 @@ pub async fn get_comparison_result(
     let row = match sqlx::query!(
         r#"
         SELECT id, comparison_id, status, data, summary, generated_at
-        FROM analytics_comparison_results
+        FROM bi.analytics_comparison_results
         WHERE comparison_id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY generated_at DESC
@@ -1058,7 +1058,7 @@ async fn fallback_comparison_result(
     let row = sqlx::query!(
         r#"
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
-        FROM analytics_comparison_analyses
+        FROM bi.analytics_comparison_analyses
         WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,

@@ -106,6 +106,7 @@ const SCHEMA_REF_RE =
 // Services that own more than their directory-named schema.
 const EXTRA_OWNED_SCHEMAS = {
   'unified-core': ['unified_core', 'iam', 'core'],
+  analytics: ['bi'], // analytics 的权威 schema 是 bi（目录名 vs schema 名不一致）
   rd: ['rs'], // rd 启动时经 schema_defense 建 rs schema
   'master-data': ['master_data'], // 目录名连字符 vs schema 下划线；D1 起 master-data 独立拥有 master_data schema
 };
