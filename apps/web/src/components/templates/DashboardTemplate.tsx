@@ -49,8 +49,8 @@ import type {
   ChartSchema,
   DashboardColor,
   IconName,
-} from '@/schema';
-import { getColumns } from '@/schema';
+} from '@/schema-dsl';
+import { getColumns } from '@/schema-dsl';
 
 import { CACHE_DURATIONS } from '@/lib/reactQuery';
 

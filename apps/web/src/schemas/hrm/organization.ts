@@ -1,5 +1,5 @@
-import type { EntitySchema } from '@/schema';
-import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import type { SchemaExtensions } from '@/schema-dsl/schemaExtensions';
 import i18n from '@/i18n';
 
 export const organizationSchema: EntitySchema & SchemaExtensions = {

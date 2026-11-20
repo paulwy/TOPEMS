@@ -4,7 +4,7 @@ import { Eye } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { releaseSchema } from '@/schemas/rd';
 import { deployApi } from '@/api/rd';
 import type { Deploy, CreateDeployRequest } from '@/api/rd';

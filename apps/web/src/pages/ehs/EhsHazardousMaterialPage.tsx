@@ -16,7 +16,7 @@ import { FlaskConical, AlertTriangle, Package, Clock, FileWarning } from 'lucide
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { hazardousMaterialSchema } from '@/schemas/ehs';
 import { hazardousMaterialApi } from '@/api/ehs';
 import type {

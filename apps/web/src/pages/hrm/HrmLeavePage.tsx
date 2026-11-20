@@ -5,7 +5,7 @@ import { Card, CardContent } from '@mui/material';
 import { PageContainer, StatCardGroup } from '@/components';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { leaveSchema } from '@/schemas/hrm';
 import { leaveApi, type LeaveRequest } from '@/api/hrm';
 import { useNotificationStore } from '@/store';

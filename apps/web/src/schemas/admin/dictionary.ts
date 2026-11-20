@@ -1,5 +1,5 @@
 import React from 'react';
-import type { EntitySchema, SchemaField } from '@/schema/types';
+import type { EntitySchema, SchemaField } from '@/schema-dsl/types';
 import { dictItemApi } from '@/api/system';
 import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';

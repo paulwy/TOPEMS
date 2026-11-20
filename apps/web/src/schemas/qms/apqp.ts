@@ -8,9 +8,9 @@
  * 注意：本文件为纯 Schema 定义，不含 JSX。
  */
 
-import type { EntitySchema } from '@/schema';
-import { columnsFromFields } from '@/schema/schemaExtensions';
-import type { NestedTableConfig, WizardConfig } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import { columnsFromFields } from '@/schema-dsl/schemaExtensions';
+import type { NestedTableConfig, WizardConfig } from '@/schema-dsl/schemaExtensions';
 import i18n from '@/i18n';
 
 // ============ 阶段任务子表通用字段 ============

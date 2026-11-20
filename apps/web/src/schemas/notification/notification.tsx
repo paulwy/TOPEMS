@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { Settings, CheckSquare, Calendar, MessageSquare } from 'lucide-react';
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';

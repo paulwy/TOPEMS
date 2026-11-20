@@ -20,15 +20,15 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { TreeBuilder, type TreeNode } from '@/components/templates/TreeBuilder';
 import { eightDSchema, injectRootCauseRenderer } from '@/schemas/qms/eightD';
 import { eightDApi } from '@/api/qms';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import type {
   SchemaExtensions,
   WizardStepRenderProps,
   TreeConfig,
-} from '@/schema/schemaExtensions';
+} from '@/schema-dsl/schemaExtensions';
 import type { CreateEightDReportRequest } from '@/api/qms/types';
 import i18n from '@/i18n';
-import type { SchemaField } from '@/schema/types';
+import type { SchemaField } from '@/schema-dsl/types';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 

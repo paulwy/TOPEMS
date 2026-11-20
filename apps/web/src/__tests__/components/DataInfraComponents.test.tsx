@@ -650,7 +650,7 @@ vi.mock('@/utils/logger', () => ({
 }));
 
 // @/schema：DashboardTemplate 动态加载 schema.getColumns；mock 为 passthrough
-vi.mock('@/schema', () => ({
+vi.mock('@/schema-dsl', () => ({
   getColumns: (cols: unknown[]) => cols ?? [],
   EntitySchema: {},
   DashboardSchema: {},

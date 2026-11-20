@@ -4,7 +4,7 @@ import { ClipboardCheck, FileText } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { inspectionPlanSchema, inspectionRecordSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
 import type {

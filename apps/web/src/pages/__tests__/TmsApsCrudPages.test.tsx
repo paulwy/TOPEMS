@@ -11,7 +11,7 @@ import { driverApi, routeApi, carrierApi } from '@/api/tms';
 import { scheduleApi, capacityApi, materialPlanApi } from '@/api/aps';
 
 // 与 CrmCrudPages 冻结范本同构：验证真实 createCrudPageAdapter 的参数归一化/响应解包/错误翻译
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

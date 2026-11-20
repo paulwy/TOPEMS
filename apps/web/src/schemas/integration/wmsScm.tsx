@@ -1,5 +1,5 @@
 import { Box, Chip, Typography } from '@mui/material';
-import type { EntitySchema, SchemaField } from '@/schema';
+import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const WMS_SCM_STATUS_CONFIG: Record<

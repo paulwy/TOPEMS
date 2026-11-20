@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { positionSchema } from '@/schemas/hrm';
 import { positionApi, departmentApi, type Department } from '@/api/hrm';
 

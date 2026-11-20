@@ -1,5 +1,5 @@
 import React from 'react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { departmentApi } from '@/api/hrm';
 import type { Department } from '@/api/hrm';
 

@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import styles from './billing.module.css';
 import i18n from '@/i18n';
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Pencil } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { projectSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';

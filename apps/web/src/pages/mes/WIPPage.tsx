@@ -15,7 +15,7 @@ import { ArrowRightLeft, Package, Scale } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { wipSchema } from '@/schemas/mes';
 import { wipApi } from '@/api/mes';
 import type { Wip, WipStatistics } from '@/api/mes';

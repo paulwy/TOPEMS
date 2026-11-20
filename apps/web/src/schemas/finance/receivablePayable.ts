@@ -1,7 +1,7 @@
 import React from 'react';
-import type { EntitySchema } from '@/schema';
-import type { SchemaExtensions, NestedTableConfig } from '@/schema/schemaExtensions';
-import { columnsFromFields } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import type { SchemaExtensions, NestedTableConfig } from '@/schema-dsl/schemaExtensions';
+import { columnsFromFields } from '@/schema-dsl/schemaExtensions';
 import i18n from '@/i18n';
 
 const formatMoney = (amount: number | undefined) => {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { FormBuilder } from '@/components/common';
-import { getFormFields } from '@/schema';
-import type { EntitySchema } from '@/schema';
+import { getFormFields } from '@/schema-dsl';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 interface SchemaFormProps<T> {

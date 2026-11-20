@@ -2,7 +2,7 @@ import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { GitBranch, CheckCircle, XCircle, Clock } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {

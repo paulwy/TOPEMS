@@ -21,7 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CrudPage } from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { settingSchema } from '@/schemas/rd';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { rdSettingsApi } from '@/api/rd/settings';

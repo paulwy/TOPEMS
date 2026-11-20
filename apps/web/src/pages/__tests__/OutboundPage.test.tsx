@@ -45,7 +45,7 @@ vi.mock('@/components/common', () => ({
   ),
 }));
 
-vi.mock('@/schema', () => ({
+vi.mock('@/schema-dsl', () => ({
   getColumns: () => [{ key: 'order_no', title: 'order_no' }],
   getFormFields: () => [{ key: 'order_no' }],
 }));

@@ -17,7 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { LoadingSpinner } from '@topems/shared-components';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { PageContainer } from '@/components/common';
 import { teamSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';

@@ -5,7 +5,7 @@
  * 支持列表展示、创建、编辑、删除等操作。
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const alertRuleSchema: EntitySchema = {

@@ -9,7 +9,7 @@
  *
  * @example
  * ```ts
- * import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+ * import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
  *
  * const voucherAdapter = createCrudPageAdapter(voucherApi);
  * ```

@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { receiptSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
 import type { ApiResponse, CollectionRecord } from '@/types/finance';

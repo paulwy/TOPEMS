@@ -18,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { assetCategorySchema } from '@/schemas/erp/assetCategory';
 import { assetCategoryApi } from '@/api/asset/assetCategory';
 import type { AssetCategory, CreateAssetCategoryRequest } from '@/api/asset/assetCategory';

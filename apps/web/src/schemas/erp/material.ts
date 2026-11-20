@@ -4,7 +4,7 @@
  * 包含表单分组、状态徽章、筛选、自定义头部统计等高级功能。
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 /**

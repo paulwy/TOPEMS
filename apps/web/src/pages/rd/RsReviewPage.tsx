@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { reviewSchema } from '@/schemas/rd';
 import { formulaApi } from '@/api/rd';
 import type { Formula, CreateFormulaRequest } from '@/api/rd';

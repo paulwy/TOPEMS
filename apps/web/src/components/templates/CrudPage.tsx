@@ -50,14 +50,14 @@ import type { ColumnDef, RowAction } from './list/types';
 import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { resolveCrudPermissionCodes } from './crudPermissions';
 
-import type { EntitySchema, BatchActionConfig, SchemaField } from '@/schema';
+import type { EntitySchema, BatchActionConfig, SchemaField } from '@/schema-dsl';
 import type {
   SchemaExtensions,
   WizardConfig,
   NestedTableConfig,
   TreeConfig,
-} from '@/schema/schemaExtensions';
-import { getColumns, getFormFields, getFilterParams } from '@/schema';
+} from '@/schema-dsl/schemaExtensions';
+import { getColumns, getFormFields, getFilterParams } from '@/schema-dsl';
 import { useDynamicOptions, mergeDynamicOptions } from '@/hooks/useDynamicOptions';
 import { SubTableBuilder } from './SubTableBuilder';
 import { WizardBuilder } from './WizardBuilder';

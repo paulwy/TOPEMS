@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { type EntitySchema } from '@/schema';
+import { type EntitySchema } from '@/schema-dsl';
 import { getVersionSchema } from '@/schemas/pdm';
 import { documentApi, pdmApi, type DocumentVersion, type Document } from '@/api/pdm';
 

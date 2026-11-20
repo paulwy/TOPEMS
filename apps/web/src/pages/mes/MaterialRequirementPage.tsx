@@ -3,7 +3,7 @@ import styles from './MaterialRequirementPage.module.css';
 import { Box, Typography, InputLabel, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { materialRequirementSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { MaterialRequirement } from '@/api/mes';

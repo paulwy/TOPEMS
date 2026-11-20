@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './ProductionRecordPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { productionRecordSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { Activity } from 'lucide-react';

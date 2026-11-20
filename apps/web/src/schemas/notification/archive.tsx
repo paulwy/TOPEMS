@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { Box, Typography, Chip } from '@mui/material';
 import i18n from '@/i18n';
 

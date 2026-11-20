@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { apqpSchema } from '@/schemas/qms/apqp';
 import { qmsApi } from '@/api/qms';
 import i18n from '@/i18n';

@@ -22,7 +22,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, CrudTab } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { bomSchema, bomItemSchema } from '@/schemas/pdm';
 import { bomApi } from '@/api/pdm/bom';
 import type {

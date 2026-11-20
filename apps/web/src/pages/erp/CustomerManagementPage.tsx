@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { customerSchema } from '@/schemas/erp/customer';
 import { erpApi } from '@/api/erp';
 import i18n from '@/i18n';

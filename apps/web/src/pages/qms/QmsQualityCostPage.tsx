@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Box, Typography, useTheme } from '@mui/material';
 import { DollarSign, TrendingDown, AlertTriangle, CheckCircle, BarChart3 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema-dsl/crudPageAdapter';
 import { qualityCostSchema } from '@/schemas/qms';
 import { qualityCostApi } from '@/api/qms';
 import type { QualityCost } from '@/api/qms';

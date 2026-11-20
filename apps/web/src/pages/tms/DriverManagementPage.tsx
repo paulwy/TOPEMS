@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { driverSchema } from '@/schemas/tms';
 import { driverApi } from '@/api/tms';
 import i18n from '@/i18n';

@@ -13,7 +13,7 @@ vi.mock('@/components/templates/CrudPage', () => ({
   ),
 }));
 
-vi.mock('@/schema/crudPageAdapter', () => ({
+vi.mock('@/schema-dsl/crudPageAdapter', () => ({
   createCrudPageAdapter: vi.fn(() => ({})),
 }));
 
@@ -21,11 +21,11 @@ vi.mock('@/schemas/scm', () => ({
   purchaseRequisitionSchema: { name: 'purchaseRequisition' },
 }));
 
-vi.mock('@/schema', () => ({
+vi.mock('@/schema-dsl', () => ({
   EntitySchema: class {},
 }));
 
-vi.mock('@/schema/schemaExtensions', () => ({
+vi.mock('@/schema-dsl/schemaExtensions', () => ({
   SchemaExtensions: class {},
 }));
 

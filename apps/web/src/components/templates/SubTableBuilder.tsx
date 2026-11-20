@@ -48,8 +48,8 @@ import {
 import i18n from '@/i18n';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 
-import type { NestedTableConfig } from '@/schema/schemaExtensions';
-import type { SchemaField } from '@/schema/types';
+import type { NestedTableConfig } from '@/schema-dsl/schemaExtensions';
+import type { SchemaField } from '@/schema-dsl/types';
 
 // ============ Props ============
 

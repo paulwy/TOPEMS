@@ -6,7 +6,7 @@ import { srmApi } from '@/api/srm';
 
 // setup-mocks.ts 将 createCrudPageAdapter mock 为直通(api)=>api；
 // 本页适配器为页面内手写实现（内存 store，非 createCrudPageAdapter 生成），照范本恢复真实适配器。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

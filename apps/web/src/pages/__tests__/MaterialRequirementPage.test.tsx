@@ -8,7 +8,7 @@ import { mesApi } from '@/api/mes';
 // createCrudPageAdapter(mesApi.materialRequirements, { itemsField: 'requirements' })，
 // setup-mocks 将其 mock 为直通(api)=>api，这里恢复真实实现以验证
 // 参数归一化(pageSize→page_size)/itemsField 响应解包/错误翻译。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 // 真实适配器直接用全局 i18n.t（非 react-i18next hook），显式提供 crud_page_adapter
 // 翻译表（与 locales/zh/schema.json 一致），避免 t() 返回原始 key。

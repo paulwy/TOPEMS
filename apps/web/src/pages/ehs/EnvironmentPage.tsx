@@ -3,7 +3,7 @@ import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Activity, FileText, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { environmentMonitorSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
 import type {

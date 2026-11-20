@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { commonAuditSchema } from './_shared';
 import i18n from '@/i18n';
 

@@ -2,7 +2,7 @@
  * 检测方法管理 Schema — 驱动 LimsTestMethodPage 的完整 CRUD
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const testMethodSchema: EntitySchema = {

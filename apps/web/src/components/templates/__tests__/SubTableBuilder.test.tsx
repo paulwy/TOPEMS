@@ -4,8 +4,8 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import { SubTableBuilder } from '../SubTableBuilder';
-import type { NestedTableConfig } from '@/schema/schemaExtensions';
-import type { SchemaField } from '@/schema/types';
+import type { NestedTableConfig } from '@/schema-dsl/schemaExtensions';
+import type { SchemaField } from '@/schema-dsl/types';
 
 const { i18nMap, translate } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {

@@ -10,7 +10,7 @@
  */
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { supplierSchema } from '@/schemas/erp/supplier';
 import { masterDataApi } from '@/api/master-data';
 import i18n from '@/i18n';

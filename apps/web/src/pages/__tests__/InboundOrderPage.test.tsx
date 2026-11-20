@@ -7,7 +7,7 @@ import { wmsApi } from '@/api/wms';
 // setup-mocks.ts 将 createCrudPageAdapter mock 为直通 (api)=>api；
 // 本页在模块加载时即调用 createCrudPageAdapter(wmsApi.inboundOrders, { itemsField: 'orders' })
 // 构造真实适配器，这里恢复真实实现以验证参数归一化/响应解包(orders 字段)/错误翻译。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 // 真实适配器与 createListPageCrudApi 均直接用全局 i18n.t（非 react-i18next hook），
 // 显式提供 crud_page_adapter 翻译表与本页面包屑译文（与 locales/zh 一致），

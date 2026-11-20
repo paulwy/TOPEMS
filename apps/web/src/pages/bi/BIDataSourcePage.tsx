@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { RefreshCw, TestTube } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { dataSourceSchema } from '@/schemas/bi';
 import { dataSourceCrudApi, testDataSource, refreshDataSource } from '@/api/bi';
 import { logger } from '@/utils/logger';

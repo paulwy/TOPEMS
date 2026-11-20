@@ -5,7 +5,7 @@
  * Schema 字段仅描述生成推荐所需表单字段。
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { crmApi } from '@/api/crm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

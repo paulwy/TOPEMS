@@ -10,7 +10,7 @@ import {
 
 // NotificationArchivePage 手写 CrudApiAdapter（list 走 getArchivedNotifications + 客户端 search 过滤；
 // create/update/delete 为空桩）+ useQuery 拉归档配置渲染 headerContent——按真实行为断言
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

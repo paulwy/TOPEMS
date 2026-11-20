@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { employeeApi } from '@/api/hrm';
 import type { Employee } from '@/api/hrm/types';
 

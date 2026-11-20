@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema-dsl/crudPageAdapter';
 import { fmeaSchema } from '@/schemas/qms';
 import { fmeaApi } from '@/api/qms';
 import type { FmeaAnalysis } from '@/api/qms';

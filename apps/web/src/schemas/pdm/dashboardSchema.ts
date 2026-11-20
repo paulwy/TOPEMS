@@ -1,4 +1,4 @@
-import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema';
+import type { DashboardSchema, StatCardSchema, ChartSchema } from '@/schema-dsl';
 import type { PdmDashboardStats } from '@/api/pdm/dashboard';
 import i18n from '@/i18n';
 

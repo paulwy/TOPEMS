@@ -4,7 +4,7 @@ import { GraduationCap, FileText, Award } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { trainingPlanSchema, trainingRecordSchema, trainingCertificateSchema } from '@/schemas/ehs';
 import { trainingApi } from '@/api/ehs';
 import type {

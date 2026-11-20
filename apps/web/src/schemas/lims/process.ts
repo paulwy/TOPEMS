@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const processSchema: EntitySchema = {

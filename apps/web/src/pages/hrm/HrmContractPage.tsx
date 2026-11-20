@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { contractSchema } from '@/schemas/hrm';
 import { contractApi } from '@/api/hrm';
 import { useQueryClient, useMutation } from '@tanstack/react-query';

@@ -5,12 +5,12 @@ import { PageContainer, StatCardGroup } from '@/components/common';
 import { Tabs, Tab, Box, Typography, Chip } from '@mui/material';
 import { ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
 import { useTranslation } from 'react-i18next';
-import type { EntitySchema } from '@/schema';
-import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import type { SchemaExtensions } from '@/schema-dsl/schemaExtensions';
 import i18n from '@/i18n';
 
 const receivableAdapter = createCrudPageAdapter({

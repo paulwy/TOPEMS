@@ -3,7 +3,7 @@ import styles from './ProcessFlowPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, BarChart3 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { PageContainer } from '@/components/common';
 import { processFlowSchema } from '@/schemas/mes';
 import {

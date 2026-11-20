@@ -7,7 +7,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { ConfirmDialog } from '@topems/shared-components';
 
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { supplierAdmissionSchema } from '@/schemas/scm';
 import { scmApi } from '@/api/scm';
 import type {

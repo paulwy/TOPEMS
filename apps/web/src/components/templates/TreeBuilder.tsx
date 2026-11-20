@@ -40,8 +40,8 @@ import {
   Trash2 as TrashIcon,
   MoreVertical as MoreIcon,
 } from 'lucide-react';
-import type { TreeConfig } from '@/schema/schemaExtensions';
-import type { SchemaField } from '@/schema/types';
+import type { TreeConfig } from '@/schema-dsl/schemaExtensions';
+import type { SchemaField } from '@/schema-dsl/types';
 
 // ============ 类型 ============
 

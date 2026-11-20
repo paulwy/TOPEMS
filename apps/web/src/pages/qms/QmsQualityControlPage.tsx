@@ -3,7 +3,7 @@ import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { qualityIssueSchema, auditPlanSchema } from '@/schemas/qms';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue, AuditPlan, CreateQualityIssueRequest } from '@/api/qms';

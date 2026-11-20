@@ -7,7 +7,7 @@ import { assetApi } from '@/api/asset/asset';
 // AssetListPage：模块级 createCrudPageAdapter(assetApi.*)（unmock 真实适配器验证归一化/解包）
 // + useQuery 拉资产（extractListData 双形态解包）+ stats + useMutation 状态流转（投用/维修/退役 show 条件）
 // + headerContent/detailContent + CrudTab——按真实行为断言
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

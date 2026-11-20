@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema-dsl/crudPageAdapter';
 import { productionProcessSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { ProductionProcess } from '@/api/mes/types';

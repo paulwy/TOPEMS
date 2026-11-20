@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import type { SubscriptionFrequency } from '@/api/report';
 import i18n from '@/i18n';
 

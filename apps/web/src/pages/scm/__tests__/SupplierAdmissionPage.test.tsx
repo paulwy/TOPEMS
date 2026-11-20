@@ -13,7 +13,7 @@ vi.mock('@/components/templates/CrudPage', () => ({
   ),
 }));
 
-vi.mock('@/schema/crudPageAdapter', () => ({
+vi.mock('@/schema-dsl/crudPageAdapter', () => ({
   createCrudPageAdapter: vi.fn(() => ({})),
 }));
 

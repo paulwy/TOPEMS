@@ -7,7 +7,7 @@ import { mesApi } from '@/api/mes';
 // MaterialReturnPage 在模块加载时即调用 createCrudPageAdapter(mesApi.materialReturns, { itemsField: 'returns' })，
 // setup-mocks 将其 mock 为直通(api)=>api，这里恢复真实实现以验证
 // 参数归一化(pageSize→page_size)/itemsField 响应解包/四档错误翻译。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

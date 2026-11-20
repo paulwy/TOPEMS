@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import CrudPage, { type CrudApiAdapter } from './CrudPage';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 
 interface Employee {
   id: string;

@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { recruitmentSchema } from '@/schemas/hrm';
 import { hrmApi } from '@/api/hrm';
 import { useTranslation } from 'react-i18next';

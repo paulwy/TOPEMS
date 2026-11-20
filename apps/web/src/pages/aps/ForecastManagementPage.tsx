@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { forecastSchema } from '@/schemas/aps';
 import { forecastApi } from '@/api/aps';
 import i18n from '@/i18n';

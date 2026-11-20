@@ -2,7 +2,7 @@ import React from 'react';
 import { Play } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import type { RowAction } from '@/components/templates/list/types';
 import { testSchema } from '@/schemas/rd';
 import { rdApi } from '@/api/rd';

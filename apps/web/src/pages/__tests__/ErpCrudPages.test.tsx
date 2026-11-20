@@ -12,7 +12,7 @@ import { masterDataApi } from '@/api/master-data';
 
 // 批次6：erp 域剩余 CrudPage 包装页真断言（照 CrmCrudPages 冻结范本）。
 // 3 纯包装（Supplier/VehicleRequest/MeetingRoom）+ 3 带 headerContent 统计卡（Vehicle/Material/Asset，useQuery 部分 mock）。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { bankAccountSchema } from '@/schemas/erp/bankAccount';
 import { bankAccountApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';

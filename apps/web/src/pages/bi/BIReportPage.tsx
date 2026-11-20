@@ -2,7 +2,7 @@ import React from 'react';
 import { Eye, Download } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { reportSchema } from '@/schemas/bi';
 import { reportCrudApi } from '@/api/report';
 import { logger } from '@/utils/logger';

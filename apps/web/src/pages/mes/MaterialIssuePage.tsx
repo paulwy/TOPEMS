@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema-dsl/crudPageAdapter';
 import { materialIssueSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { MaterialIssue, MaterialIssueItem } from '@/api/mes';

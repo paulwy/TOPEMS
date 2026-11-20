@@ -1,6 +1,6 @@
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { type RowAction } from '@/components/templates';
 import { transferSchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';

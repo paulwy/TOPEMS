@@ -1,4 +1,4 @@
-import type { EntitySchema, BadgeColor } from '@/schema';
+import type { EntitySchema, BadgeColor } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const STATUS_OPTIONS = [

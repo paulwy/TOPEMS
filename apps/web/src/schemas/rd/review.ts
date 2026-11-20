@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { FileText, User, Clock } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 /**

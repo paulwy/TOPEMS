@@ -5,7 +5,7 @@
  * 列表展示由页面的 customColumns 提供（含等级徽章 / 趋势图标等自定义渲染）。
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const customerScoringSchema: EntitySchema = {

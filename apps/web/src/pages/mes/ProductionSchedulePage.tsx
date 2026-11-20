@@ -22,7 +22,7 @@ import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { productionScheduleSchema } from '@/schemas/mes';
 import { Calendar, GanttChart, RefreshCw } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';

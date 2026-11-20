@@ -1,6 +1,6 @@
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { supplierSchema } from '@/schemas/srm';
 import { masterDataApi } from '@/api/master-data';
 import { useQuery } from '@tanstack/react-query';

@@ -4,7 +4,7 @@ import { Check, XCircle, CalendarCheck, PackageCheck, Ban } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { scmApi } from '@/api/scm';
 import type { SupplierDeliveryAppointment, DeliveryAppointmentStats } from '@/api/scm';
 import { deliveryAppointmentSchema } from '@/schemas/scm';

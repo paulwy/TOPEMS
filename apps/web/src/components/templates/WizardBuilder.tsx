@@ -19,9 +19,9 @@ import type {
   WizardStepConfig,
   WizardStepRenderProps,
   NestedTableConfig,
-} from '@/schema/schemaExtensions';
-import type { SchemaField } from '@/schema/types';
-import { toFormField } from '@/schema/types';
+} from '@/schema-dsl/schemaExtensions';
+import type { SchemaField } from '@/schema-dsl/types';
+import { toFormField } from '@/schema-dsl/types';
 
 // ============ Props ============
 

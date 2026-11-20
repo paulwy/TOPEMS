@@ -6,7 +6,7 @@
  * （short_name/country/province/city/zip_code）已删除，避免列表空列。
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 import { masterDataSupplierCategoriesApi } from '@/api/master-data/supplierCategories';
 import { getNameZhSync } from '@/hooks/useDictionary';

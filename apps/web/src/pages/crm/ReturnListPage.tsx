@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { returnSchema } from '@/schemas/crm';
 import { returnsApi } from '@/api/crm';
 

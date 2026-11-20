@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Chip, LinearProgress, Stack, Typography } from '@mui/material';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning'> = {

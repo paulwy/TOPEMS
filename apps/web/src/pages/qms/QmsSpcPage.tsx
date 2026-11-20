@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter, type CrudApi } from '@/schema-dsl/crudPageAdapter';
 import { spcSchema } from '@/schemas/qms';
 import { spcApi } from '@/api/qms';
 import type { SpcChart } from '@/api/qms';

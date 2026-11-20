@@ -19,7 +19,7 @@ import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { equipmentSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

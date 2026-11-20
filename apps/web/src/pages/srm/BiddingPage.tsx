@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Gavel, Users, Send, Check } from 'lucide-react';
 import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { biddingSchema } from '@/schemas/srm';
 import { srmApi, type Bidding } from '@/api/srm';
 import { QUERY_KEYS } from '@/lib/reactQuery';

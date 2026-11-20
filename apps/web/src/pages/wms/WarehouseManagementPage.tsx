@@ -6,13 +6,13 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { SchemaForm } from '@/components/templates/list/SchemaForm';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import { createListPageCrudApi } from '@/schema/listPageCrudAdapter';
-import { getColumns } from '@/schema';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
+import { createListPageCrudApi } from '@/schema-dsl/listPageCrudAdapter';
+import { getColumns } from '@/schema-dsl';
 import { warehouseSchema } from '@/schemas/wms/warehouse';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/module-configs/wms/config';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const warehouseApiAdapter = createCrudPageAdapter(wmsApi.warehouses);

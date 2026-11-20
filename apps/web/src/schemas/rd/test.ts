@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chip } from '@mui/material';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const PRIORITY_COLOR_MAP: Record<string, 'default' | 'warning' | 'error'> = {

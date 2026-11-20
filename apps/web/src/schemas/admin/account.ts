@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { accountApi } from '@/api/finance/account';
 import i18n from '@/i18n';
 

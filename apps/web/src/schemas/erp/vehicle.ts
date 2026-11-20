@@ -2,7 +2,7 @@
  * 车辆管理 Schema — 驱动 VehiclePage 的完整 CRUD
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const vehicleSchema: EntitySchema = {

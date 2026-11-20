@@ -6,7 +6,7 @@
  */
 
 import type React from 'react';
-import type { EntitySchema, SchemaField } from '@/schema';
+import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 // ============ 设计器组件 ============

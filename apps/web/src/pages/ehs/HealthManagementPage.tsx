@@ -3,7 +3,7 @@ import styles from './HealthManagementPage.module.css';
 import { Box, Card, CardContent, Typography, Chip, Tabs, Tab, useTheme } from '@mui/material';
 import { Heart, FileText, Users, ClipboardList, CheckSquare, ShieldAlert } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import {
   healthManagementSchema,
   healthCheckPlanSchema,

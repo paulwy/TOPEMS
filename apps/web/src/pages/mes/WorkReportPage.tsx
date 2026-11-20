@@ -3,7 +3,7 @@ import styles from './WorkReportPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter, type RowAction } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { workReportSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';

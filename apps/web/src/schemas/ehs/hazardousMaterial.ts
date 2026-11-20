@@ -2,7 +2,7 @@ import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { Clock } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 // ============ 分类与等级配色 ============

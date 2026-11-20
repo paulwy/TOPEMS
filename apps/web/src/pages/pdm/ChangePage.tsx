@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { changeSchema } from '@/schemas/pdm';
 import { pdmApi } from '@/api/pdm';
 import type { ChangeOrder, CreateChangeOrderRequest } from '@/api/pdm';

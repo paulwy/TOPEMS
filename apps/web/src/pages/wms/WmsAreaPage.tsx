@@ -1,8 +1,8 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { areaSchema } from '@/schemas/wms';
-import type { EntitySchema } from '@/schema';
-import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import type { SchemaExtensions } from '@/schema-dsl/schemaExtensions';
 import { wmsApi } from '@/api/wms';
 import type { Location } from '@/api/wms/types';
 import i18n from '@/i18n';

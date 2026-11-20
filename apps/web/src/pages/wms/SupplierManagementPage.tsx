@@ -2,12 +2,12 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import React from 'react';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { SchemaForm } from '@/components/templates/list/SchemaForm';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import { createListPageCrudApi } from '@/schema/listPageCrudAdapter';
-import { getColumns } from '@/schema';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
+import { createListPageCrudApi } from '@/schema-dsl/listPageCrudAdapter';
+import { getColumns } from '@/schema-dsl';
 import { supplierSchema } from '@/schemas/wms';
 import { masterDataApi } from '@/api/master-data';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 // 切 MDM 权威源（2026-11-07）：WMS 供应商列表原本复用 scmApi.suppliers，

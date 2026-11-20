@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { FileText, User, Calendar } from 'lucide-react';
-import type { EntitySchema, SchemaField } from '@/schema';
+import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const REPORT_TYPE_CONFIG: Record<

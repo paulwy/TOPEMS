@@ -5,7 +5,7 @@
  * Schema 字段仅描述新建分群所需表单字段。
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const customerSegmentationSchema: EntitySchema = {

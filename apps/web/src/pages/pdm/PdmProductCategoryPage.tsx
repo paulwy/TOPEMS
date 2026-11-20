@@ -1,8 +1,8 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { productCategorySchema } from '@/schemas/pdm';
-import type { EntitySchema } from '@/schema';
-import type { SchemaExtensions } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import type { SchemaExtensions } from '@/schema-dsl/schemaExtensions';
 import { documentApi } from '@/api/pdm';
 import { useTranslation } from 'react-i18next';
 

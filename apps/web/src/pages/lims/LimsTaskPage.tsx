@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { taskSchema } from '@/schemas/lims';
 import { limsApi } from '@/api/lims';
 import i18n from '@/i18n';

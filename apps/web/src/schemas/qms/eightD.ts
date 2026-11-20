@@ -8,17 +8,17 @@
  *
  * 注意：本文件为纯 Schema 定义，不含 JSX。自定义渲染函数在 QmsEightDPage.tsx 中定义并注入。
  */
-import type { EntitySchema } from '@/schema';
-import { columnsFromFields } from '@/schema/schemaExtensions';
+import type { EntitySchema } from '@/schema-dsl';
+import { columnsFromFields } from '@/schema-dsl/schemaExtensions';
 import type {
   NestedTableConfig,
   WizardConfig,
   TreeConfig,
   WizardStepRenderProps,
-} from '@/schema/schemaExtensions';
+} from '@/schema-dsl/schemaExtensions';
 import i18n from '@/i18n';
 import type { TreeNode } from '@/components/templates/TreeBuilder';
-import type { SchemaField } from '@/schema/types';
+import type { SchemaField } from '@/schema-dsl/types';
 /** D4 根因分析自定义渲染函数类型 */
 type RootCauseRenderer = (props: WizardStepRenderProps) => React.ReactNode;
 // ============ D1 团队成员子表 ============

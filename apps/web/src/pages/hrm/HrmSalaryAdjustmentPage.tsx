@@ -5,7 +5,7 @@ import { CheckCircle, TrendingUp } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { salaryAdjustmentSchema } from '@/schemas/hrm';
 import { salaryAdjustmentApi } from '@/api/hrm';
 import i18n from '@/i18n';

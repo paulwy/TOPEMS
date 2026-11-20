@@ -2,7 +2,7 @@
  * 仓库管理 Schema — 驱动 WarehouseManagementPage 的完整 CRUD
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const warehouseSchema: EntitySchema = {

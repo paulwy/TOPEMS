@@ -6,7 +6,7 @@ import { erpApi } from '@/api/erp';
 
 // setup-mocks.ts 将 createCrudPageAdapter mock 为直通(api)=>api；
 // 本页使用真实适配器做参数归一化/响应解包/错误翻译断言，需恢复真实实现。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 // 适配器直接用全局 i18n.t（非 react-i18next hook），此处显式提供 crud_page_adapter
 // 翻译表与页面 breadcrumbs 使用的 erp.material_management_page 译文（与 locales/zh/erp.json 一致）。

@@ -1,7 +1,7 @@
 export { getBudgetSchema } from './budget';
 export { costSchema } from './cost';
 export { assetSchema } from './asset';
-export type { DashboardSchema } from '@/schema';
+export type { DashboardSchema } from '@/schema-dsl';
 export { expenseSchema } from './expense';
 export { expenseApprovalSchema } from './expenseApproval';
 export { paymentSchema } from './payment';

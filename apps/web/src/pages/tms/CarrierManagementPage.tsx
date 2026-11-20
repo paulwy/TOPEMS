@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { carrierSchema } from '@/schemas/tms';
 import { carrierApi } from '@/api/tms';
 import i18n from '@/i18n';

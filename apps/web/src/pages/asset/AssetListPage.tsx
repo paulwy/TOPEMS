@@ -30,7 +30,7 @@ import { useTranslation } from 'react-i18next';
 
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudTab } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { assetSchema } from '@/schemas/erp/asset';
 import { assetApi } from '@/api/asset/asset';
 import type { Asset } from '@/api/erp/types';

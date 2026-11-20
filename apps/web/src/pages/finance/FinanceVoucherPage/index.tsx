@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import CrudPage, { type CrudTab } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { PageContainer, StatCardGroup, ActionButton, StatusBadge } from '@/components/common';
 import { voucherApi } from '@/api/finance/voucher';
 import { accountingSubjectApi } from '@/api/finance/accountingSubject';
@@ -30,7 +30,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import { voucherSchema, accountingSubjectSchema } from '@/schemas/finance';
-import type { EntitySchema, BatchActionConfig } from '@/schema';
+import type { EntitySchema, BatchActionConfig } from '@/schema-dsl';
 import type { RowAction } from '@/components/templates';
 
 import VoucherFormModal from './components/VoucherFormModal';

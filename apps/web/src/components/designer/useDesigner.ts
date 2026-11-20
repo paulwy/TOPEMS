@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import type { EntitySchema, SchemaField } from '@/schema';
+import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import {
   type CanvasNode,
   type CanvasState,

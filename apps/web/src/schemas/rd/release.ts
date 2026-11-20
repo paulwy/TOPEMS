@@ -1,7 +1,7 @@
 import React from 'react';
 import { Chip, Box, Typography, Button } from '@mui/material';
 import { Tag, Calendar, User, Globe, FlaskConical } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 /**

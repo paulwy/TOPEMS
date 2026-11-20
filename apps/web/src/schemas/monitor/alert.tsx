@@ -8,7 +8,7 @@
 import React from 'react';
 import { Box, Chip, Typography, Stack, Avatar } from '@mui/material';
 import { AlertCircle, AlertTriangle, Info, Clock, Server } from 'lucide-react';
-import type { EntitySchema, SchemaField } from '@/schema';
+import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 

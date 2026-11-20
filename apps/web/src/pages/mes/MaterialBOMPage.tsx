@@ -16,7 +16,7 @@ import {
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { materialBomSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { MaterialBom, MaterialBomItem } from '@/api/mes';

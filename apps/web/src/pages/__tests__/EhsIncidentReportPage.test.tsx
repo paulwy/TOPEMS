@@ -6,7 +6,7 @@ import { ehsApi } from '@/api/ehs';
 
 // setup-mocks.ts 将 createCrudPageAdapter mock 为直通(api)=>api；
 // 本页用裸方法对象 { list/create/update/delete } 走真实适配器，需恢复真实实现。
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

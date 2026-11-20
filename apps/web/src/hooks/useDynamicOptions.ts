@@ -17,7 +17,7 @@
 
 import { useMemo } from 'react';
 import { useQueries, type UseQueryResult } from '@tanstack/react-query';
-import type { DynamicOptionConfig } from '@/schema';
+import type { DynamicOptionConfig } from '@/schema-dsl';
 
 interface DynamicOptionsResult {
   [fieldName: string]: {

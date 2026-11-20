@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { assetCategoryApi, type AssetCategory } from '@/api/asset/assetCategory';
 import i18n from '@/i18n';
 

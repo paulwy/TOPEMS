@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FileCheck, ClipboardCheck, AlertTriangle, Shield } from 'lucide-react';
 
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { regulationSchema, assessmentSchema, permitSchema } from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
 import { designTokens } from '@/theme/tokens';

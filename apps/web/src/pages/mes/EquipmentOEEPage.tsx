@@ -3,7 +3,7 @@ import styles from './EquipmentOEEPage.module.css';
 import { Box, Typography, LinearProgress, InputLabel, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { equipmentOeeSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { OeeRecord } from '@/api/mes';

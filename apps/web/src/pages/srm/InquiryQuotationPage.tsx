@@ -19,7 +19,7 @@ import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
 import { TrendingUp, Send, Check, XCircle } from 'lucide-react';
 import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { inquirySchema } from '@/schemas/srm';
 import { srmApi, type Inquiry, type Quotation } from '@/api/srm';
 import { QUERY_KEYS } from '@/lib/reactQuery';

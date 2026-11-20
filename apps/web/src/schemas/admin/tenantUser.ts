@@ -1,6 +1,6 @@
 import React from 'react';
 import { Chip, Avatar, Box, Typography, FormControl, Select, MenuItem } from '@mui/material';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const roleLabels: Record<string, string> = {

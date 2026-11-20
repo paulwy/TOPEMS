@@ -10,7 +10,7 @@ import { financeApi } from '@/api/finance';
 import { rdApi } from '@/api/rd';
 
 // 与 CrmCrudPages 冻结范本同构；本文件覆盖自定义 adapter / no-op 桩 / 动态 schema 特殊形态
-vi.unmock('@/schema/crudPageAdapter');
+vi.unmock('@/schema-dsl/crudPageAdapter');
 
 vi.mock('@/i18n', () => ({
   default: {

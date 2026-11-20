@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { materialSchema } from '@/schemas/rd';
 import { materialApi } from '@/api/rd';
 import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/rd';

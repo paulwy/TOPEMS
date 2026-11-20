@@ -1,5 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { paymentSchema } from '@/schemas/finance';
 import { financeApi } from '@/api/finance';
 import { useTranslation } from 'react-i18next';

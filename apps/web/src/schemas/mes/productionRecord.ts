@@ -1,7 +1,7 @@
 import React from 'react';
 import { Chip, Stack, Box } from '@mui/material';
 import { User, Package } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 export const productionRecordSchema: EntitySchema = {

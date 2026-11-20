@@ -14,11 +14,11 @@ import { WMS_PATHS } from '@/module-configs/wms/config';
 import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { SchemaForm } from '@/components/templates/list/SchemaForm';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import { createListPageCrudApi } from '@/schema/listPageCrudAdapter';
-import { getColumns } from '@/schema';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
+import { createListPageCrudApi } from '@/schema-dsl/listPageCrudAdapter';
+import { getColumns } from '@/schema-dsl';
 import { inboundOrderSchema } from '@/schemas/wms/inboundOrder';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 
 // 后端列表响应体为 { data: { orders: [...] , total } }（见 svc/wms GET /inbound-orders），
 // normalizeListResponse 默认只认 items/materials/data 字段，需显式 itemsField='orders'，

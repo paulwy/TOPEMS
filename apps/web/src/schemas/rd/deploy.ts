@@ -1,7 +1,7 @@
 import React from 'react';
 import { Chip, Box, Button, Typography } from '@mui/material';
 import { Rocket, CheckCircle, XCircle, Clock, Globe } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'success' | 'error' | 'warning'> = {

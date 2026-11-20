@@ -2,7 +2,7 @@
  * 条码管理 Schema — 驱动 BarcodePage 的完整 CRUD
  */
 
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const statusColorMap: Record<

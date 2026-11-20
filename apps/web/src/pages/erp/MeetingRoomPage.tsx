@@ -1,6 +1,6 @@
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { meetingRoomSchema } from '@/schemas/erp/meetingRoom';
 import { meetingRoomApi } from '@/api/erp';
 import i18n from '@/i18n';

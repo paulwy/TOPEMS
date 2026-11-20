@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { materialSchema } from '@/schemas/erp/material';
 import { erpApi } from '@/api/erp';
 import { QUERY_KEYS } from '@/lib/reactQuery';

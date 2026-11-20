@@ -1,8 +1,8 @@
 import React from 'react';
-import type { EntitySchema } from '@/schema';
-import { columnsFromFields } from '@/schema/schemaExtensions';
-import type { NestedTableConfig } from '@/schema/schemaExtensions';
-import type { SchemaField } from '@/schema/types';
+import type { EntitySchema } from '@/schema-dsl';
+import { columnsFromFields } from '@/schema-dsl/schemaExtensions';
+import type { NestedTableConfig } from '@/schema-dsl/schemaExtensions';
+import type { SchemaField } from '@/schema-dsl/types';
 import i18n from '@/i18n';
 
 const quotationItemFields: SchemaField[] = [

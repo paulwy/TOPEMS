@@ -8,7 +8,7 @@
 import React from 'react';
 import { Box, Chip, Typography, Paper, Stack } from '@mui/material';
 import { StatusChip } from '@/components/common';
-import type { EntitySchema, SchemaField } from '@/schema';
+import type { EntitySchema, SchemaField } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const SEVERITY_LABELS: Record<string, string> = {

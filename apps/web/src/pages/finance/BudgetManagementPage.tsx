@@ -33,7 +33,7 @@ import { FINANCE_PATHS } from '@/module-configs/finance/config';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
-import type { EntitySchema, BatchActionConfig } from '@/schema';
+import type { EntitySchema, BatchActionConfig } from '@/schema-dsl';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';

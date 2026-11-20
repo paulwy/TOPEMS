@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Chip } from '@mui/material';
 import { File, FileText, BookOpen, Folder } from 'lucide-react';
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
 const DOC_TYPE_OPTIONS: { value: string; label: string }[] = [

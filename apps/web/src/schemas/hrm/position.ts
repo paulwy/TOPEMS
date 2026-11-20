@@ -1,4 +1,4 @@
-import type { EntitySchema } from '@/schema';
+import type { EntitySchema } from '@/schema-dsl';
 import { departmentApi, type Department } from '@/api/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';

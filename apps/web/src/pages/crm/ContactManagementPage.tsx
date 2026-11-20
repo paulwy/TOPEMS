@@ -5,7 +5,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import CrudPage from '@/components/templates/CrudPage';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { contactSchema } from '@/schemas/crm/contact';
 import { crmApi } from '@/api/crm';
 

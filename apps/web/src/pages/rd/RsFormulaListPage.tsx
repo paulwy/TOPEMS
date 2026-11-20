@@ -4,7 +4,7 @@ import { Eye, Edit, Trash2 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
-import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { createCrudPageAdapter } from '@/schema-dsl/crudPageAdapter';
 import { formulaSchema } from '@/schemas/rd';
 import { formulaApi } from '@/api/rd';
 import type { Formula, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rd';
