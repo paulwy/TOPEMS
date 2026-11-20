@@ -4,7 +4,6 @@ mod handlers;
 mod models;
 mod modules;
 mod routes;
-mod schema_defense;
 mod services;
 mod shared;
 
@@ -95,16 +94,10 @@ async fn main() -> anyhow::Result<()> {
     }
     tracing::info!("✅ 数据库表结构已就绪");
 
-    // V69.3 Schema 防御：增量补齐列 + 一致性自检（DDL 走 MIGRATE_URL owner 池，失败不阻塞启动）
-    if let Some(ddl_pool) = db.ddl_pool() {
-        if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(ddl_pool).await {
-            tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
-        }
-    } else {
-        tracing::warn!("⚠️ 未配置迁移池（migrate_pool），跳过 ai schema 防御检查");
-    }
+    // W2-D2：AI 4 张表已由 20261120110000 固化到迁移，运行期不再建表/补列。
+    // 迁移未应用时由 SQL 查询直接暴露缺表/缺列，不再在启动阶段隐式改 schema。
 
-    // 遗留⑩/会话存储闭环：建表 DDL 已收敛至迁移链（D7 双源消除），schema 防御见上
+    // 遗留⑩/会话存储闭环：建表 DDL 已收敛至迁移链（D7 双源消除）
 
     // 读取 AI 配置
     let api_key = std::env::var("OLLAMA_API_KEY")

@@ -70,7 +70,7 @@
 | W2-B5 | pdm + erp | 152 / 105 | 同上 |
 | W2-B6 | integration 46 + communication 44 + portal 19 + rd 16 + pm 10 + monitor 5 + 小模块 8 | 合计 1536 | 同上 |
 | W2-C1..C3 | finance 停止直连 `erp.opening_balances`（改经 erp 接口/共享读视图） | 8 处（`finance/modules/mod.rs` 5564~6118） | 该 grep 归零，期初余额口径测试绿 |
-| W2-D1..D3 | 运行期 DDL 收口：先加“零运行时 DDL”断言，再逐服务迁移 | W2-D1 ✅ 2026-11-20：`scripts/ci/check-runtime-ddl.mjs` + `runtime-ddl-baseline.json`（67 文件 / 648 表 / 8210 列 / 272 条 DDL / 20 个运行期调用点），pre-commit+CI 已接线；W2-D2/D3 未开工 | 断言上线；`TABLE_DEFS` 只减不增 |
+| W2-D1..D3 | 运行期 DDL 收口：先加“零运行时 DDL”断言，再逐服务迁移 | W2-D1 ✅ 2026-11-20：`scripts/ci/check-runtime-ddl.mjs` + `runtime-ddl-baseline.json`，pre-commit+CI 已接线。W2-D2 首个模块 AI ✅：4 张运行期表（documents/document_chunks/qa_history/analysis_results）以 live 真实形状固化到 `20261120110000_ai_schema_canonical.sql`（21/17/11/9 列、索引/约束/RLS 与 live 逐项 diff 为 0），并清理 schema_defense 遗留的重复索引 `idx_chunks_document_id`（`20261120120000`）；删除 `svc/ai/src/schema_defense.rs` 与启动期建表/补列调用；基线由 67 文件 / 648 表 / 8210 列 / 272 DDL / 20 调用点降至 **65 / 644 / 8156 / 270 / 19**。W2-D2 其余服务与 D3 未开工 | 断言上线 ✅；`TABLE_DEFS` 只减不增 ✅（AI 已整模块移除） |
 | W2-§12.6 | WS 消费组默认值按服务区分（机制已有，默认名仍相同） | `ws_event_bridge.rs:164` | 默认值不同，双实例互不抢占 |
 
 ### C. 测试与 CI 可信化
@@ -106,9 +106,9 @@
 | W1-2b | 仅后端存在的权限码分流（补录/白名单） | 481 | 交集上升，0 删除 |
 | W1-2c ✅ | 菜单权限码与后端 `security` 对齐（口径已澄清） | 3 条真坏码已由 `20261120100000` 修复（评分/分群/漏斗引用 `core_permissions` 不存在的别名）；修复后 dev 189 条菜单码 `menu_not_in_db=0`。剩余 92 条（菜单∩后端字面量 97/189）经逐条核验：全部在 `core_permissions` 存在且已授予角色（零授权仅上述 3 条），后端这些模块走 `require_module_access(<module>)`——拥有任意 `<module>:` 前缀权限即放行，菜单码本身满足该判据，故不存在「菜单可见但后端 403」的错配。把 92 条都加逐端点 `security` 属权限模型细化（W1-3a 范畴），不是本次修复项。防复发门禁已补：新增 `scripts/ci/check-menu-permission-codes.mjs`（`core_menus.permissions->>'permission'` 必须全部存在于 `core_permissions.code`），接入迁移演练 `[6/6]`、pre-push `migration-drill-anchor` 触发路径，以及 CI `migration-test` 的 baseline+forward 审计步骤；演练实跑 `[6/6] PASS: 341 个菜单权限码均存在`，dev 现库因账本停在 `20261115141100`、尚未应用 `20261120100000` 而被判红（3 条旧别名），属预期未迁移状态 | 菜单引用码 100% 存在于权限表且零授权码=0 ✅；逐端点非超管 403 验收归 W1-3a/b/c |
 | W1-2d ✅ | 仅 DB 存在的权限码分流 | `db_only=0`、`未登记（live DB 有、init∪migrations 无）=0`，`sql_history_also_current=1021`；A8 收敛后 DB 1021 条全部在迁移中有字面量，无需删除 | 删除前有全仓检索证据 ✅（本轮结论：无需删除） |
-| W1-3a | erp/scm/srm/wms/mes 路由级权限验收（原“17 服务零权限”已不成立，29/29 服务已有声明） | 需逐路由核对 | 非超管 200 / 无权限 403 |
-| W1-3b | hrm/crm/pdm/pm/rd/tms/gis/mobile | 同上 | mobile 个人接口保持 auth-only |
-| W1-3c | integration/monitor/ticket/master-data | 同上 | monitor 收紧需核真实用户 |
+| W1-3a ✅ | erp/scm/srm/wms/mes 路由级权限验收（原“17 服务零权限”已不成立，29/29 服务已有声明） | 已并入 W1-3 运行期矩阵：ERP/SCM/WMS 走处理器级细粒度 `check_permission`，SRM/MES 读 200 / 写 403；MES `create_plan` 越权写已补写门并复测闭合 | 非超管 200 / 无权限 403 ✅ |
+| W1-3b ✅ | hrm/crm/pdm/pm/rd/tms/gis/mobile | 已并入 W1-3 运行期矩阵：CRM/HRM/PM/PDM/RD/TMS/GIS 读 200，TMS/PDM/RD 写 403；Mobile 读 200、写 403，个人接口仍按 auth-only 不入模块门 | 非超管 200 / 无权限 403 ✅；mobile 个人接口保持 auth-only ✅ |
+| W1-3c ✅ | integration/monitor/ticket/master-data | 已并入 W1-3 运行期矩阵：Integration/Monitor/Ticket/master-data 读 200、写 403；master-data 实际业务前缀为 `/api/master-data/quality-v51/*`，已按真实前缀验；monitor 的 `monitor:dashboard:read` 仍按现网读码授予，收紧到具体看板属后续细化 | 非超管 200 / 无权限 403 ✅；monitor 收紧需核真实用户（未改） |
 | W1-3 ✅（运行期验收完成） | 全模块非超管矩阵 + 写门根因修复 | 单体 :8099 真实登录实测：`w13_reader` 仅授各模块读码时，CRM/ERP/SCM/WMS/QMS/EHS/HRM/PM/TMS/LIMS/master-data/SRM/MES/PDM/RD/GIS/Mobile/Integration/Monitor/Ticket 读全部 200；未授权模块 403。EHS/QMS/MES 曾用合法载荷真实写入，根因是单体 `topems-server` 的 `*_real_module` 只挂 `require_module_access`、绕过独立部署 `main.rs` 写门；已在 EHS/QMS/TMS/LIMS/master-data/MES 的单体挂载点与独立部署入口补齐 `require_module_write`。复测：EHS/QMS/MES 合法写 403（`需要 <module>:admin`），TMS/LIMS/master-data/SRM/PDM/RD/Mobile/Integration/Monitor/Ticket 写 403、读 200，admin 写仍 200；ERP/SCM/WMS 走处理器级细粒度 `check_permission`（无效体 422 属参数校验，不是放行）。探针数据按主键删除，`w13-*-probe` 计数 0；验收已固化为 `scripts/dev/verify-runtime-permissions.sh`，实跑 `pass=34 fail=0` | 20 模块读 200/写 403 可复现 ✅；脚本门禁 34/34 ✅；新增 `scripts/ci/check-module-write-parity.mjs`（独立部署有写门则单体挂载必须同步，14 项配平 0 缺失，反向构造缺失可判红），接入 CI `connection-governance` 与 pre-commit；EHS/QMS/MES 越权写入已闭合 |
 | W1-4a | DB 菜单分组映射到 10 个域组并被前端消费 | `GlobalLayoutV3.tsx` 无 `group_id` 消费 | 菜单接口返回 10 组；`?menu_authority=config` 可回退 |
 | §14.1 | 财务期初余额 4 项遗留（f64 路径、币种符号、签名等） | 未动 | 逐项用例绿 |

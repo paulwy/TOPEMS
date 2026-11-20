@@ -2545,3 +2545,19 @@ pending_forward_patches:
     effect: "把 3 个 CRM 菜单的 permissions.permission 从 core_permissions 不存在的别名（crm:scoring:read / crm:segmentation:read / crm:funnel:read）改为后端 security 与权限表实际使用的 crm:customer_scoring:read / crm:customer_segmentation:read / crm:sales_funnel:read；按 code+旧码匹配、不限 tenant_id（覆盖 tenant_id IS NULL 的全局行与租户副本）"
     destructive_scan: "仅 UPDATE public/iam.core_menus 的 permissions jsonb 与 updated_at（3 行/库）；无 INSERT/DELETE/TRUNCATE、无 DDL；表不存在跳过；文件内无 BEGIN/COMMIT"
     note: "根因：20261102190000_fix_menu_crm_permission.sql 只处理 tenant_id=000…001，而模块菜单是 tenant_id IS NULL 的全局行（20261110100100 归 NULL 后），UPDATE 命中 0 行；且该迁移只覆盖分群，评分/漏斗从未修复。回滚 database/rollback/20261120100000_menu_crm_permission_alias_fix.rollback.sql（恢复旧别名，会使菜单权限判定重新失效，仅应急）"
+
+  # ===== 2026-11-20：AI 运行期表收口（W2-D2 首个模块） =====
+  - version: "20261120110000"
+    file: "database/migrations/20261120110000_ai_schema_canonical.sql"
+    status: to_apply
+    effect: "把 ai.documents / ai.document_chunks / ai.qa_history / ai.analysis_results 以线上真实形状固化为迁移（tags=jsonb、title/file_name/mime_type=text、tenant_id 可空等），补 4 表主键 + 20 条二级索引、documents 更新时间触发器、4 表 ENABLE/FORCE RLS 与 rls_tenant_isolation 策略；同步移除 svc/ai 启动期 schema_defense 建表/补列（含 TABLE_DEFS 与 run_schema_migration_and_verify 调用）"
+    destructive_scan: "仅 CREATE TABLE/INDEX/FUNCTION/TRIGGER IF NOT EXISTS 与 DROP POLICY/TRIGGER IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；表已存在时 CREATE TABLE 整段跳过；文件内无 BEGIN/COMMIT"
+    note: "口径：canonical 取 baseline+forward 库 live 形状而非旧 TABLE_DEFS（后者 tags=TEXT[]、title=VARCHAR、tenant_id NOT NULL，直接套用会改坏类型）。本迁移在既有库上是 no-op（仅重建策略/触发器），空库按此形状建表。回滚 database/rollback/20261120110000_ai_schema_canonical.rollback.sql（接管型迁移，明确拒绝 DROP，避免误丢向量/问答数据）"
+
+  # ===== 2026-11-20：AI document_chunks 重复索引清理（W2-D2 配套卫生） =====
+  - version: "20261120120000"
+    file: "database/migrations/20261120120000_ai_drop_duplicate_chunk_document_idx.sql"
+    status: to_apply
+    effect: "删除 ai.document_chunks 上定义与 idx_document_chunks_document_id 完全相同的冗余 btree 索引 idx_chunks_document_id（旧 schema_defense 遗留）；保留迁移链命名版本，新库由 20261120110000 只建一份"
+    destructive_scan: "仅 DROP INDEX IF EXISTS 一条；无 DROP TABLE/COLUMN、无数据 DML；索引不承载约束，删除不改变可见性与查询语义；文件内无 BEGIN/COMMIT"
+    note: "根因是运行期 schema_defense 与迁移链各建了一份同列索引；W2-D2 移除 schema_defense 后不再复发。回滚 database/rollback/20261120120000_ai_drop_duplicate_chunk_document_idx.rollback.sql（重建同一冗余索引）"
