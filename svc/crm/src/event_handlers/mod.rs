@@ -205,7 +205,14 @@ impl CrmEventHandlers {
             payload.created_by.as_deref().unwrap_or("system")
         );
 
-        // 多租户：org_id 与 tenant_id 均绑定事件校验后的租户。
+        // 多租户：org_id 与 tenant_id 均绑定事件校验后的租户，写入走租户作用域。
+        let db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开售后工单交互记录写入作用域失败 - tenant_id={}, ticket_no={}: {}",
+                tenant_id, payload.ticket_no, e
+            ))
+        })?;
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at, tenant_id)
@@ -220,11 +227,17 @@ impl CrmEventHandlers {
         .bind(now)
         .bind(now)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await;
 
         match result {
             Ok(_) => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "[crm] 提交售后工单交互记录失败 - tenant_id={}, ticket_no={}: {}",
+                        tenant_id, payload.ticket_no, e
+                    ))
+                })?;
                 tracing::info!(
                     "[crm] 已创建售后工单交互记录 - interaction_id={}, interaction_no={}, ticket_no={}, customer_id={:?}",
                     interaction_id,
@@ -287,7 +300,18 @@ impl CrmEventHandlers {
         // 跟进日期：商机赢单后 7 天
         let follow_up_date = now + chrono::Duration::days(7);
 
-        // 多租户：org_id 与 tenant_id 均绑定已校验租户。
+        // 多租户：org_id 与 tenant_id 均绑定已校验租户，跟进任务写入走租户作用域。
+        let interaction_db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut interaction_scope =
+            interaction_db
+                .scope_for_tenant(tenant_id)
+                .await
+                .map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                    "[crm] 打开商机跟进任务写入作用域失败 - tenant_id={}, opportunity_id={}: {}",
+                    tenant_id, payload.opportunity_id, e
+                ))
+                })?;
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at, tenant_id)
@@ -304,11 +328,17 @@ impl CrmEventHandlers {
         .bind(follow_up_date)
         .bind(now)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut interaction_scope)
         .await;
 
         match result {
             Ok(_) => {
+                interaction_scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "[crm] 提交商机赢单跟进任务失败 - tenant_id={}, opportunity_id={}: {}",
+                        tenant_id, payload.opportunity_id, e
+                    ))
+                })?;
                 tracing::info!(
                     "[crm] 已创建商机赢单跟进任务 - interaction_id={}, interaction_no={}, opportunity_id={}, follow_up_date={}",
                     interaction_id,
@@ -598,13 +628,38 @@ impl CrmEventHandlers {
             event.trace_id
         );
 
+        // 客户存在性校验必须落在事件租户内；缺租户显式失败，禁止跨租户读。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[crm] CustomerCreated 缺少有效租户 - customer_id={}: {}",
+                    payload.customer_id, e
+                ))
+            })?
+            .get();
+        let db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut scope = db.scope_read_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开客户存在性校验租户只读作用域失败 - tenant_id={}, customer_id={}: {}",
+                tenant_id, payload.customer_id, e
+            ))
+        })?;
+
         // 校验客户记录存在（防止事件先于客户落库的情况）
         let customer_exists: Option<(uuid::Uuid,)> =
-            sqlx::query_as(r#"SELECT id FROM crm.customers WHERE id = $1"#)
+            sqlx::query_as(r#"SELECT id FROM crm.customers WHERE id = $1 AND tenant_id = $2"#)
                 .bind(payload.customer_id)
-                .fetch_optional(&self.db)
+                .bind(tenant_id)
+                .fetch_optional(&mut scope)
                 .await
                 .map_err(|e| TopemsError::DatabaseQuery(format!("查询客户记录失败: {}", e)))?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 提交客户存在性校验只读事务失败 - tenant_id={}, customer_id={}: {}",
+                tenant_id, payload.customer_id, e
+            ))
+        })?;
 
         if customer_exists.is_none() {
             tracing::warn!(
@@ -756,16 +811,31 @@ impl CrmEventHandlers {
 
         let now = chrono::Utc::now();
 
+        // 出库转销售订单的幂等查询与写入必须落在事件租户同一事务内。
+        let order_db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut order_scope = order_db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开销售订单写入作用域失败 - tenant_id={}, shipping_order_number={}: {}",
+                tenant_id, payload.shipping_order_number, e
+            ))
+        })?;
+
         let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
             "SELECT id FROM crm.sales_orders WHERE order_number = $1 AND tenant_id = $2",
         )
         .bind(&payload.shipping_order_number)
         .bind(tenant_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut order_scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e)))?;
 
         if existing.is_some() {
+            order_scope.commit().await.map_err(|e| {
+                TopemsError::DatabaseTransaction(format!(
+                    "[crm] 提交销售订单幂等查询事务失败 - tenant_id={}, shipping_order_number={}: {}",
+                    tenant_id, payload.shipping_order_number, e
+                ))
+            })?;
             tracing::warn!(
                 "[crm] 销售订单已存在（跳过）- shipping_order_number={}",
                 payload.shipping_order_number
@@ -788,11 +858,17 @@ impl CrmEventHandlers {
         .bind(now)
         .bind(now)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut order_scope)
         .await;
 
         match result {
             Ok(_) => {
+                order_scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "[crm] 提交销售订单写入失败 - tenant_id={}, shipping_order_number={}: {}",
+                        tenant_id, payload.shipping_order_number, e
+                    ))
+                })?;
                 tracing::info!(
                     "[crm] 销售订单已创建 - shipping_id={}, shipping_order_number={}, customer_id={:?}, total_amount={}",
                     payload.shipping_id,
@@ -891,18 +967,31 @@ impl CrmEventHandlers {
             })?
             .get();
 
-        // 幂等：同租户同单号已同步则跳过
+        // 幂等：同租户同单号已同步则跳过；查询与写入使用同一租户事务。
         let order_no = payload.order_no.clone();
+        let ledger_db = Db::new(self.db.clone(), "crm, public, shared");
+        let mut ledger_scope = ledger_db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "[crm] 打开客户订单台账写入作用域失败 - tenant_id={}, order_no={}: {}",
+                tenant_id, order_no, e
+            ))
+        })?;
         let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
             "SELECT id FROM crm.customer_orders WHERE order_no = $1 AND tenant_id = $2",
         )
         .bind(&order_no)
         .bind(tenant_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut ledger_scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询客户订单失败: {}", e)))?;
 
         if existing.is_some() {
+            ledger_scope.commit().await.map_err(|e| {
+                TopemsError::DatabaseTransaction(format!(
+                    "[crm] 提交客户订单幂等查询事务失败 - tenant_id={}, order_no={}: {}",
+                    tenant_id, order_no, e
+                ))
+            })?;
             tracing::debug!("[crm] 客户订单已同步（跳过）- order_no={}", order_no);
             return Ok(());
         }
@@ -927,16 +1016,24 @@ impl CrmEventHandlers {
         .bind(&order_no)
         .bind(order_amount)
         .bind(&status)
-        .execute(&self.db)
+        .execute(&mut ledger_scope)
         .await;
 
         match result {
-            Ok(_) => tracing::info!(
-                "[crm] 客户订单台账已同步 - order_no={}, amount={}, status={}",
-                order_no,
-                order_amount,
-                status
-            ),
+            Ok(_) => {
+                ledger_scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "[crm] 提交客户订单台账写入失败 - tenant_id={}, order_no={}: {}",
+                        tenant_id, order_no, e
+                    ))
+                })?;
+                tracing::info!(
+                    "[crm] 客户订单台账已同步 - order_no={}, amount={}, status={}",
+                    order_no,
+                    order_amount,
+                    status
+                );
+            }
             Err(e) => {
                 return Err(TopemsError::DatabaseQuery(format!(
                     "[crm] 客户订单同步失败 - tenant_id={}, order_no={}: {}",
