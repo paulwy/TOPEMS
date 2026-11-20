@@ -52,20 +52,6 @@ impl MesRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. MES 建表 DDL 已收敛至迁移链（D7）；Schema 防御见下（增量迁移 + 一致性自检）
-
-        // 3. Schema 防御：增量迁移 + 一致性自检（失败不阻塞）
-        if let Err(e) = topems_shared_db::schema::run_schema_defense(
-            &ctx.db,
-            topems_mes::models::schema_defense::SERVICE_SCHEMA,
-            topems_mes::models::schema_defense::TABLE_DEFS,
-            "mes",
-        )
-        .await
-        {
-            tracing::warn!("[mes schema 防御] 非阻塞警告: {}", e);
-        }
-
         // 4. 健康检查配置
         let health_config = SimpleHealthConfig::new("topems-mes").with_db(ctx.db.clone());
 

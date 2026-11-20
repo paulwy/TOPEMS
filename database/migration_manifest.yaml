@@ -2743,3 +2743,11 @@ pending_forward_patches:
     effect: "把 srm 16 张运行期表（供应商/分类/评估/合同与条款/产品/采购订单/审计日志/招标与投标与中标/询价/供应商绩效/SCM 供应商快照）以 live 形状固化，16 表 / 244 列 / 125 约束 / 18 索引 / 16 策略 / 16 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 main、server srm_real_module 的 default_init_db 启动调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 16 张全部 live 存在；live 另有 bidding_suppliers/biddings/quotations/scoring_dimensions 由既有迁移维护，未纳入。default_init_db(false) 不建 master_data_refs。回滚 database/rollback/20261121150000_srm_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-21：mes 14 表收口（W2-D2 第二十一个模块） =====
+  - version: "20261121160000"
+    file: "database/migrations/20261121160000_mes_schema_canonical.sql"
+    status: to_apply
+    effect: "把 mes 14 张运行期表（审计日志/设备与巡检与维保/工艺路线与工步/生产订单与工序与报工记录/工位/车间/产线/班次/工作日历）以 live 形状固化，14 表 / 403 列 / 129 约束 / 53 索引 / 14 策略 / 14 RLS，五项 diff 为 0；删除 models/schema_defense.rs 与 mod 引用，main、server mes_real_module 移除 run_schema_defense 启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 14 张全部 live 存在；live 另有 material_*/quality_*/work_orders 等由既有迁移维护，未纳入。回滚 database/rollback/20261121160000_mes_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"

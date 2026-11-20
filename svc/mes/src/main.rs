@@ -47,18 +47,6 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service_with_search_path(&config, "mes, public, shared").await?;
 
-    // Schema 防御：增量迁移 + 一致性自检（建表 DDL 已收敛至迁移链，D7）
-    if let Err(e) = topems_shared_db::schema::run_schema_defense(
-        &ctx.db,
-        models::schema_defense::SERVICE_SCHEMA,
-        models::schema_defense::TABLE_DEFS,
-        "mes",
-    )
-    .await
-    {
-        tracing::warn!("[mes schema 防御] 非阻塞警告: {}", e);
-    }
-
     let health_config = SimpleHealthConfig::new("topems-mes").with_db(ctx.db.clone());
 
     // ERP 服务客户端（生产执行闭环：报工后回传生产进度，service token erp:write；失败优雅降级）
