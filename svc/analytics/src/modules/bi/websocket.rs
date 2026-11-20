@@ -86,6 +86,23 @@ async fn handle_dashboard_socket(
 
     // P1-13: 看板归属校验——仅允许订阅者本租户看板 / 公开看板（is_public），
     // 超管（tenant_id = nil）不受限；软删过滤。非归属一律 not found，不泄露存在性。
+    let mut dashboard_scope = if tenant_id.is_nil() {
+        match state.db.scope_read_platform().await {
+            Ok(s) => s,
+            Err(e) => {
+                warn!("Failed to open platform read scope for dashboard: {}", e);
+                return;
+            }
+        }
+    } else {
+        match state.db.scope_read_for_tenant(tenant_id).await {
+            Ok(s) => s,
+            Err(e) => {
+                warn!("Failed to open tenant read scope for dashboard: {}", e);
+                return;
+            }
+        }
+    };
     let dashboard_row = match sqlx::query(
         r#"SELECT id, name, auto_refresh_enabled, auto_refresh_interval
            FROM bi.analytics_dashboards
@@ -94,7 +111,7 @@ async fn handle_dashboard_socket(
     )
     .bind(dashboard_id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut dashboard_scope)
     .await
     {
         Ok(row) => row,
@@ -127,6 +144,7 @@ async fn handle_dashboard_socket(
             .await;
         return;
     };
+    drop(dashboard_scope);
     let dashboard_name: String = row.try_get("name").unwrap_or_default();
     let auto_refresh_enabled: Option<bool> = row.try_get("auto_refresh_enabled").ok().flatten();
     let auto_refresh_interval: Option<i32> = row.try_get("auto_refresh_interval").ok().flatten();
@@ -157,6 +175,15 @@ async fn handle_dashboard_socket(
     }
 
     // Send current widget data immediately
+    // 看板归属已校验（本租户或 is_public）；组件按 dashboard_id 读取，走显式平台只读通道，
+    // 避免公开看板的跨租户组件被本租户作用域过滤掉。
+    let mut widget_scope = match state.db.scope_read_platform().await {
+        Ok(s) => s,
+        Err(e) => {
+            warn!("Failed to open platform read scope for widgets: {}", e);
+            return;
+        }
+    };
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
@@ -165,7 +192,7 @@ async fn handle_dashboard_socket(
         "#,
         dashboard_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut widget_scope)
     .await
     {
         Ok(rows) => rows,
@@ -174,6 +201,7 @@ async fn handle_dashboard_socket(
             vec![]
         }
     };
+    drop(widget_scope);
 
     let chart_service = ChartService::new(state.pool.clone());
     let mut widget_data = Vec::new();
@@ -326,6 +354,11 @@ async fn handle_dashboard_socket(
 
 #[allow(clippy::as_conversions)]
 async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_json::Value> {
+    // 连接建立时已校验看板归属；刷新沿用显式平台只读通道按 dashboard_id 读取组件。
+    let mut widget_scope = match state.db.scope_read_platform().await {
+        Ok(s) => s,
+        Err(_) => return vec![],
+    };
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds
@@ -334,12 +367,13 @@ async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_
         "#,
         dashboard_id,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut widget_scope)
     .await
     {
         Ok(rows) => rows,
         Err(_) => return vec![],
     };
+    drop(widget_scope);
 
     let chart_service = ChartService::new(state.pool.clone());
     let mut widget_data = Vec::new();
