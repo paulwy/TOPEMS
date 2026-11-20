@@ -2767,3 +2767,11 @@ pending_forward_patches:
     effect: "把 integration 8 张运行期表（转换规则与执行/集成事件/LIMS-QMS 与 MES-ERP 与 MES-QMS 与 WMS-SCM 同步/MES-ERP 同步日志）以 live 形状固化，8 表 / 131 列 / 79 约束 / 22 索引 / 7 策略 / 8 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 main 的 run_schema_defense 包装"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 8 张全部 live 存在；live 另有 erp_*/crm_*/hrm_*/core_* 等由既有迁移维护，未纳入。回滚 database/rollback/20261121180000_integration_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-21：rd 6 表收口（W2-D2 第二十四个模块） =====
+  - version: "20261121190000"
+    file: "database/migrations/20261121190000_rd_schema_canonical.sql"
+    status: to_apply
+    effect: "把 rs 6 张运行期表（项目/阶段/里程碑/成员/变更申请/变更单）以 live 形状固化，6 表 / 106 列 / 61 约束 / 11 索引 / 6 策略 / 6 RLS，五项 diff 为 0；含 uuid-ossp 扩展幂等创建；删除 src/schema_defense.rs、lib/main 引用、main init_db 与 server rd_real_module 启动调用"
+    destructive_scan: "仅 CREATE EXTENSION/SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 6 张全部 live 存在；live 另有 formulas/experiments/patents 等由既有迁移维护，未纳入。回滚 database/rollback/20261121190000_rd_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"

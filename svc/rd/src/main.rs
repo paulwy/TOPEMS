@@ -17,7 +17,6 @@ mod event_handlers;
 mod models;
 pub mod modules;
 mod repositories;
-mod schema_defense;
 mod services;
 mod shared;
 
@@ -71,9 +70,6 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("✅ Prometheus 监控已初始化");
 
     // ── 数据库初始化 ───────────────────────────────────────────────
-    if let Err(e) = init_db(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
 
     // ── 事件订阅者（失败不阻塞启动） ────────────────────────────────
     if let Err(e) =
@@ -251,11 +247,4 @@ async fn get_metrics(
     };
 
     Json(ApiResponse::success(metrics, "服务指标"))
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> anyhow::Result<()> {
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[rd] Schema 防御检查失败: {:?}", e);
-    }
-    Ok(())
 }

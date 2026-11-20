@@ -49,11 +49,6 @@ impl RdRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. RD 数据库初始化（schema_defense 迁移验证，失败不阻塞）
-        if let Err(e) = topems_rd::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
-            tracing::warn!("RD 数据库初始化警告（不阻塞）: {}", e);
-        }
-
         // 3. 构建业务 ApiState（与独立部署 main.rs 一致）
         let config_app = topems_shared_core::config::Config::load()
             .await
