@@ -1,0 +1,8 @@
+crm|core_crm_customers|crm_allow_all_core_crm_customers|PERMISSIVE|{public}|ALL|true|true
+erp|core_erp_suppliers|erp_allow_all_core_erp_suppliers|PERMISSIVE|{public}|ALL|true|true
+erp|expenses|erp_allow_all_expenses|PERMISSIVE|{public}|ALL|true|true
+erp|meeting_bookings|erp_allow_all_meeting_bookings|PERMISSIVE|{public}|ALL|true|true
+erp|meeting_rooms|erp_allow_all_meeting_rooms|PERMISSIVE|{public}|ALL|true|true
+erp|vehicle_requests|erp_allow_all_vehicle_requests|PERMISSIVE|{public}|ALL|true|true
+erp|vehicles|erp_allow_all_vehicles|PERMISSIVE|{public}|ALL|true|true
+portal|portal_announcements|portal_allow_all_portal_announcements|PERMISSIVE|{public}|ALL|true|true
