@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, create_health_state,
-    create_standard_health_routes, default_init_db, run, ServiceConfig,
+    create_standard_health_routes, run, ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
@@ -24,7 +24,6 @@ use topems_shared_service_client::service_client::{
 };
 
 mod models;
-mod schema_defense;
 mod shared;
 
 mod event_handlers;
@@ -47,17 +46,6 @@ async fn main() -> Result<()> {
     };
 
     let ctx = bootstrap_service_with_search_path(&config, "crm, public, shared").await?;
-
-    if let Err(e) = default_init_db(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-        "crm",
-        true,
-        schema_defense::run_schema_migration_and_verify,
-    )
-    .await
-    {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
 
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
         tracing::warn!("⚠️ CRM 事件订阅者启动失败: {}", e);

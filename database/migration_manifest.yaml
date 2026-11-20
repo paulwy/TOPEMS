@@ -2751,3 +2751,11 @@ pending_forward_patches:
     effect: "把 mes 14 张运行期表（审计日志/设备与巡检与维保/工艺路线与工步/生产订单与工序与报工记录/工位/车间/产线/班次/工作日历）以 live 形状固化，14 表 / 403 列 / 129 约束 / 53 索引 / 14 策略 / 14 RLS，五项 diff 为 0；删除 models/schema_defense.rs 与 mod 引用，main、server mes_real_module 移除 run_schema_defense 启动调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 14 张全部 live 存在；live 另有 material_*/quality_*/work_orders 等由既有迁移维护，未纳入。回滚 database/rollback/20261121160000_mes_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-21：crm 13 表收口（W2-D2 第二十二个模块） =====
+  - version: "20261121170000"
+    file: "database/migrations/20261121170000_crm_schema_canonical.sql"
+    status: to_apply
+    effect: "把 crm 13 张运行期表（审计日志/联系人/客户订单/客户标签/客户/客户财务/互动/机会/退货与明细/RFM/标签/主数据引用）以 live 形状固化，13 表 / 260 列 / 92 约束 / 36 索引 / 12 策略 / 13 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 main、server crm_real_module 的 default_init_db(true) 启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 12 张全部 live 存在；crm_master_data_refs 虽在 batch1 死表清单，但 event_handlers 仍通过 MasterDataRefService 活跃写入，保留并固化，待业务评审。live 另有 billing_records/contracts/sales_* 等由既有迁移维护，未纳入。回滚 database/rollback/20261121170000_crm_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
