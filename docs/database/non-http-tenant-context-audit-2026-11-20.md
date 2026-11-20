@@ -1,6 +1,6 @@
 # B43-09 非 HTTP 入口租户上下文评估（2026-11-20）
 
-- 状态：**评估完成；ERP 事件消费 DB 错误降级已全部收口，DEC-04 留余清零**
+- 状态：**评估完成；ERP/CRM 事件消费 DB 错误降级已全部收口，DEC-04 留余清零**
 - 口径来源：[w7-cross-request-tenant-context-2026-11-10.md](../quality/w7-cross-request-tenant-context-2026-11-10.md)
 - 扫描基线：`1ce4e5d03` + 本轮修复（静态扫描，不连生产）
 - 结论：定时任务、消息消费、WebSocket、CLI、启动预热五类入口均有租户上下文或书面豁免；事件消费类发现并修复 SRM 零 UUID 兜底、ERP 缺租户 ACK、ERP 全局指标裸池三处问题。
@@ -12,7 +12,7 @@
 | 入口类别 | 代表位置 | 租户来源 | 判定 |
 |---|---|---|---|
 | HTTP 请求 | 各服务 `tenant_middleware` → `RlsTxnCell` | Claims + `x-tenant-id` | ✅ 不在本文范围，已有 RequestTenant |
-| 事件消费 | `svc/*/src/event_handlers/` 共 18 个入口 | `payload.tenant_id` / `require_event_tenant(&event)` | ✅ 机制统一；ERP 缺租户与 DB 错误降级已全部收口 |
+| 事件消费 | `svc/*/src/event_handlers/` 共 18 个入口 | `payload.tenant_id` / `require_event_tenant(&event)` | ✅ 机制统一；ERP/CRM 缺租户与 DB 错误降级已全部收口 |
 | Redis Stream 消费 | `unified-core/src/modules/master/consumer.rs`、`communication/ws_event_bridge.rs` | 事件 payload / `core_master_data_refs` 平台表 | ✅ 平台表无租户语义；WS 帧缺租户拒绝广播 |
 | 定时任务 | `analytics` 报表调度、`erp` 业务指标、`unified-core` 审计清理/插件心跳 | 调度行 `tenant_id` / 显式系统通道 | ✅ 报表按租户执行；全局指标改系统只读通道 |
 | WebSocket | BI `dashboard_websocket`、unified-core 事件桥 | 连接建立时 token → Claims | ✅ 看板归属校验 + 按租户频道广播 |
@@ -48,6 +48,8 @@
 - ERP 创建应收（SalesOrderApproved）/ 应付（PurchaseOrderApproved）/ 入职应付（EmployeeOnboarded）/ 项目应收（PmProjectSettled）：`ON CONFLICT DO NOTHING` 已吸收重复键，剩余 `Err` 一律 `DatabaseQuery` 上抛；EmployeeOnboarded 的 begin/commit 失败同样上抛。
 - `InventoryUpdated`：此前 SQL 仅按 `material_code` 更新 `erp.account_balances`，存在跨租户写风险；现改为 `require_event_tenant(&event)` + `AND tenant_id = $4`，缺租户 `ValidationFailed`，DB 错误上抛，仅“无匹配余额行”保留业务 no-op。
 - `svc/erp/src/event_handlers/mod.rs` 已无 `graceful fallback` 文本；剩余 `Ok(())` 均为明确业务 no-op（未配置入职成本、无匹配单据/余额、缺少结算金额）。
+- CRM 事件消费：`PaymentReceived` 缺租户改 `ValidationFailed`；`AfterSalesTicketCreated` 交互记录改用事件租户，删除 NULL 租户写入并上抛 DB 错误；`OpportunityWon` 入口统一解析租户，无法确定即失败，跟进任务与应收共用同一 `tenant_id`；`ShippingOrderRequested` 销售订单补租户校验/过滤；`SalesOrderCreated` 台账同步缺租户不再跳过 ACK，DB 错误上抛。仅“客户记录尚未落库”保留业务 no-op。
+- 保留豁免：HRM 缓存失效审计日志插入失败返回 nil（纯观测日志，不影响业务写入）；Portal 事件发布失败进入 `commit_retry` 重试队列（非静默 ACK）。
 
 ---
 
@@ -89,4 +91,4 @@
 
 - 每类入口均能指出租户来源或豁免条目；无“连接残留 GUC / 全局静态租户 / 零 UUID 默认租户”作为业务来源。
 - 本轮新增修复：SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道、单体 analytics 残留 DDL 调用。
-- DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；至此事件消费入口无 graceful fallback 后静默 ACK，B43-09 可标为完全闭环。
+- DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账均改为缺租户显式失败、DB 错误上抛。事件消费入口已无 graceful fallback 后静默 ACK，B43-09 可标为完全闭环。

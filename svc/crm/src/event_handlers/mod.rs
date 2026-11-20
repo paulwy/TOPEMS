@@ -12,9 +12,10 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
-    AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event, EventResult, EventSubscriber,
-    EventType, MasterDataAction, MasterDataDomain, MasterDataEvent, OpportunityWonPayload,
-    PaymentReceivedPayload, SalesOrderCreatedPayload, ShippingOrderRequestedPayload,
+    require_event_tenant, AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event,
+    EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    OpportunityWonPayload, PaymentReceivedPayload, SalesOrderCreatedPayload,
+    ShippingOrderRequestedPayload,
 };
 
 type HandlerResult = std::result::Result<(), TopemsError>;
@@ -166,7 +167,7 @@ impl CrmEventHandlers {
 
     /// AfterSalesTicketCreated → 自动创建 CRM 交互记录，关联工单与客户
     ///
-    /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续，不让事件处理失败。
+    /// 缺租户显式失败；DB 失败返回 Err 进入重试/DLQ。
     async fn handle_aftersales_ticket_created(&self, event: Event) -> HandlerResult {
         let payload: AfterSalesTicketCreatedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -186,6 +187,15 @@ impl CrmEventHandlers {
         );
 
         let now = chrono::Utc::now();
+        // 多租户：交互记录必须落在事件租户内；缺租户显式失败，禁止写 NULL 租户行。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[crm] AfterSalesTicketCreated 缺少有效租户 - ticket_no={}: {}",
+                    payload.ticket_no, e
+                ))
+            })?
+            .get();
         let interaction_id = uuid::Uuid::new_v4();
         let interaction_no = format!("INT-TICKET-{}", payload.ticket_no);
         let subject = format!("售后工单 {} - {}", payload.ticket_no, payload.title);
@@ -195,8 +205,7 @@ impl CrmEventHandlers {
             payload.created_by.as_deref().unwrap_or("system")
         );
 
-        // 多租户：org_id 与 tenant_id 均取事件携带的租户维度；无租户（系统事件）落 SQL NULL，
-        // 不再硬编码真实租户 ...0001（命中 crm.interactions 的 tenant_id IS NULL 分支）。
+        // 多租户：org_id 与 tenant_id 均绑定事件校验后的租户。
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at, tenant_id)
@@ -204,13 +213,13 @@ impl CrmEventHandlers {
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(payload.customer_id)
         .bind(&subject)
         .bind(&content)
         .bind(now)
         .bind(now)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -225,17 +234,20 @@ impl CrmEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!("[crm] 创建售后工单交互记录失败（graceful fallback）: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[crm] 创建售后工单交互记录失败 - tenant_id={}, ticket_no={}: {}",
+                    tenant_id, payload.ticket_no, e
+                )));
             }
         }
 
         Ok(())
     }
 
-    /// OpportunityWon → 自动创建跟进任务记录
+    /// OpportunityWon → 自动创建跟进任务记录与应收账款
     ///
-    /// 商机赢单后创建一条跟进交互记录，提醒销售人员继续维护客户关系。
-    /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续。
+    /// 商机赢单后创建一条跟进交互记录，并按商机金额落应收。
+    /// 缺租户（含旧载荷无法反查客户归属）显式失败；DB 失败返回 Err。
     async fn handle_opportunity_won(&self, event: Event) -> HandlerResult {
         let payload: OpportunityWonPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -252,6 +264,17 @@ impl CrmEventHandlers {
         );
 
         let now = chrono::Utc::now();
+        // 交互记录与应收必须落在同一租户。旧载荷缺 tenant_id 时按客户归属反查一次；
+        // 仍无法确定则显式失败，禁止写 NULL 租户行或静默跳过。
+        let tenant_id = self
+            .resolve_opportunity_tenant(&payload)
+            .await?
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed(format!(
+                    "[crm] OpportunityWon 无法确定租户 - opportunity_id={}, customer_id={:?}",
+                    payload.opportunity_id, payload.customer_id
+                ))
+            })?;
         let interaction_id = uuid::Uuid::new_v4();
         let interaction_no = format!("INT-FOLLOWUP-{}", payload.opportunity_id);
         let subject = format!("商机赢单跟进 - {}", payload.opportunity_name);
@@ -264,8 +287,7 @@ impl CrmEventHandlers {
         // 跟进日期：商机赢单后 7 天
         let follow_up_date = now + chrono::Duration::days(7);
 
-        // 多租户：org_id 与 tenant_id 均取事件携带的租户维度；无租户（系统事件）落 SQL NULL，
-        // 不再硬编码真实租户 ...0001（命中 crm.interactions 的 tenant_id IS NULL 分支）。
+        // 多租户：org_id 与 tenant_id 均绑定已校验租户。
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at, tenant_id)
@@ -273,7 +295,7 @@ impl CrmEventHandlers {
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(payload.customer_id)
         .bind(payload.opportunity_id)
         .bind(&subject)
@@ -281,7 +303,7 @@ impl CrmEventHandlers {
         .bind(now)
         .bind(follow_up_date)
         .bind(now)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -296,7 +318,10 @@ impl CrmEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!("[crm] 创建商机赢单跟进任务失败（graceful fallback）: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[crm] 创建商机赢单跟进任务失败 - tenant_id={}, opportunity_id={}: {}",
+                    tenant_id, payload.opportunity_id, e
+                )));
             }
         }
 
@@ -308,18 +333,7 @@ impl CrmEventHandlers {
         let due_date = now + chrono::Duration::days(30);
         let billing_amount = payload.amount.unwrap_or(rust_decimal::Decimal::ZERO);
 
-        let Some(tenant_id) = self.resolve_opportunity_tenant(&payload).await? else {
-            tracing::warn!(
-                target: "crm",
-                event = "OpportunityWon",
-                opportunity_id = %payload.opportunity_id,
-                customer_id = ?payload.customer_id,
-                invoice_no = %invoice_no,
-                "无法确定租户，跳过应收账款创建（不跨租户兜底）"
-            );
-            return Ok(());
-        };
-
+        // 租户已在入口解析并校验，应收与跟进任务使用同一 tenant_id。
         let db = Db::new(self.db.clone(), "crm, public, shared");
         let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
             TopemsError::DatabaseTransaction(format!(
@@ -466,17 +480,15 @@ impl CrmEventHandlers {
 
         // 优先 customer_name 匹配；无则金额匹配最早 pending。
         // K8：核销必须在租户作用域内执行（billing_records 已 fail-closed，裸池 UPDATE 会命中 0 行）；
-        // 无 tenant_id 时保持「宁缺勿乱」跳过，并带业务键告警，便于定位丢单。
-        let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
-            tracing::warn!(
-                target: "crm",
-                event = "PaymentReceived",
-                payment_no = %payload.payment_no,
-                amount = %payload.amount,
-                "缺少 tenant_id，跳过应收核销（不跨租户兜底）"
-            );
-            return Ok(());
-        };
+        // 缺租户显式失败进入重试/DLQ，禁止静默 ACK 造成丢单。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[crm] PaymentReceived 缺少有效租户 - payment_no={}: {}",
+                    payload.payment_no, e
+                ))
+            })?
+            .get();
 
         let db = Db::new(self.db.clone(), "crm, public, shared");
         let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
@@ -570,7 +582,7 @@ impl CrmEventHandlers {
     /// CustomerCreated → 触发欢迎邮件
     ///
     /// 客户创建后记录欢迎邮件触发日志，实际邮件发送由通知服务异步处理。
-    /// 若客户记录在 DB 中不存在，记录警告并跳过（graceful fallback）。
+    /// 若客户记录在 DB 中不存在，记录警告并跳过（业务 no-op：事件可能先于客户落库）。
     async fn handle_customer_created(&self, event: Event) -> HandlerResult {
         let payload: CustomerCreatedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -596,7 +608,7 @@ impl CrmEventHandlers {
 
         if customer_exists.is_none() {
             tracing::warn!(
-                "[crm] CustomerCreated 未找到客户记录 - customer_id={}（graceful fallback，跳过欢迎邮件触发）",
+                "[crm] CustomerCreated 未找到客户记录 - customer_id={}（业务 no-op，跳过欢迎邮件触发）",
                 payload.customer_id
             );
             return Ok(());
@@ -732,16 +744,26 @@ impl CrmEventHandlers {
             event.trace_id
         );
 
+        // 缺租户显式失败，禁止写 NULL 租户销售订单。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[crm] ShippingOrderRequested 缺少有效租户 - order_number={}: {}",
+                    payload.shipping_order_number, e
+                ))
+            })?
+            .get();
+
         let now = chrono::Utc::now();
 
-        let existing: Option<(uuid::Uuid,)> =
-            sqlx::query_as("SELECT id FROM crm.sales_orders WHERE order_number = $1")
-                .bind(&payload.shipping_order_number)
-                .fetch_optional(&self.db)
-                .await
-                .map_err(|e| {
-                    TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e))
-                })?;
+        let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
+            "SELECT id FROM crm.sales_orders WHERE order_number = $1 AND tenant_id = $2",
+        )
+        .bind(&payload.shipping_order_number)
+        .bind(tenant_id)
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e)))?;
 
         if existing.is_some() {
             tracing::warn!(
@@ -765,7 +787,7 @@ impl CrmEventHandlers {
         .bind(payload.total_amount)
         .bind(now)
         .bind(now)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -780,11 +802,10 @@ impl CrmEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!(
-                    "[crm] 创建销售订单失败（graceful fallback）- shipping_order_number={}: {}",
-                    payload.shipping_order_number,
-                    e
-                );
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[crm] 创建销售订单失败 - tenant_id={}, shipping_order_number={}: {}",
+                    tenant_id, payload.shipping_order_number, e
+                )));
             }
         }
 
@@ -860,14 +881,23 @@ impl CrmEventHandlers {
             }
         };
 
+        // 事件必须携带租户；缺租户显式失败，禁止跳过 ACK 导致台账静默丢失。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "[crm] SalesOrderCreated 缺少有效租户 - order_no={}: {}",
+                    payload.order_no, e
+                ))
+            })?
+            .get();
+
         // 幂等：同租户同单号已同步则跳过
         let order_no = payload.order_no.clone();
-        let payload_tenant = payload.tenant_id;
         let existing: Option<(uuid::Uuid,)> = sqlx::query_as(
             "SELECT id FROM crm.customer_orders WHERE order_no = $1 AND tenant_id = $2",
         )
         .bind(&order_no)
-        .bind(payload_tenant)
+        .bind(tenant_id)
         .fetch_optional(&self.db)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询客户订单失败: {}", e)))?;
@@ -876,15 +906,6 @@ impl CrmEventHandlers {
             tracing::debug!("[crm] 客户订单已同步（跳过）- order_no={}", order_no);
             return Ok(());
         }
-
-        // 事件载荷必须携带租户；后台链路无请求 GUC，缺失租户时跳过（与既有行为一致）
-        let Some(tenant_id) = payload_tenant else {
-            tracing::warn!(
-                "[crm] 跳过客户订单同步（无租户上下文）- order_no={}",
-                order_no
-            );
-            return Ok(());
-        };
 
         // 状态透传：erp 侧真实订单状态；缺失时按 CRM 台账语义记 confirmed（进入台账视为已确认）
         let status = payload
@@ -916,7 +937,12 @@ impl CrmEventHandlers {
                 order_amount,
                 status
             ),
-            Err(e) => tracing::warn!("[crm] 客户订单同步失败（graceful fallback）: {}", e),
+            Err(e) => {
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[crm] 客户订单同步失败 - tenant_id={}, order_no={}: {}",
+                    tenant_id, order_no, e
+                )));
+            }
         }
         Ok(())
     }
