@@ -59,6 +59,15 @@ impl PortalEventHandlers {
     ) -> Result<uuid::Uuid, TopemsError> {
         let now = Utc::now();
         let notif_id = uuid::Uuid::new_v4();
+        // 目标用户若存在但非法，必须显式失败：降级为空目标会被下游当成全员广播。
+        let target_users = match target_user {
+            Some(uid) => vec![uuid::Uuid::parse_str(uid).map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "门户通知目标用户非法 - target_user={uid}: {e}"
+                ))
+            })?],
+            None => Vec::new(),
+        };
         let db = topems_shared_db::scope::Db::new(self.db.clone(), "portal, public, shared");
         let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
             TopemsError::DatabaseTransaction(format!(
@@ -104,12 +113,6 @@ impl PortalEventHandlers {
                     let notification_id = id;
                     let title_owned = title.to_string();
                     let message = content.to_string();
-                    let target_users = match target_user {
-                        Some(uid) => uuid::Uuid::parse_str(uid)
-                            .map(|u| vec![u])
-                            .unwrap_or_default(),
-                        None => Vec::new(),
-                    };
                     let published_at = Some(Utc::now());
                     tokio::spawn(async move {
                         let payload =
