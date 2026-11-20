@@ -15,7 +15,7 @@
 //!   GET    /slotting/impact-analysis      优化影响分析
 //!
 //! 表：wms.slotting_suggestions / wms.slotting_zones / wms.slotting_rules
-//! （schema 权威定义见 crate::schema_defense）
+//! （schema 权威定义见迁移链 20261120210000_wms_schema_canonical）
 
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},

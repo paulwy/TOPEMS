@@ -2625,3 +2625,17 @@ pending_forward_patches:
     effect: "把 lims 42 张运行期表（样品/检验任务与记录/仪器校准/试剂/标准方法/期间核查/不确定度/实验室台账等）以 live 形状固化，列/索引/约束/策略/RLS 五项 diff 为 0；删除 models/schema_defense.rs 的建骨架表与逐列补列、models 包装函数及 main/server 启动调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 42 张表在库中全部存在；lims.lims_inspection_records/lims.lims_safety_tasks/lims.qa_lims_analytes 由既有迁移维护，不在名单内、未纳入。回滚 database/rollback/20261120200000_lims_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-20：wms 31 表收口 + 死表复活清理（W2-D2 第十个模块） =====
+  - version: "20261120210000"
+    file: "database/migrations/20261120210000_wms_schema_canonical.sql"
+    status: to_apply
+    effect: "把 wms 31 张运行期表（仓库/库位/库存/入出库/盘点/波次/补货/安全库存/库存流水/同步记录等）以 live 形状固化，31 表 / 900 列 / 31 约束 / 38 索引 / 31 策略 / 31 RLS，五项 diff 为 0；删除 svc/wms/src/schema_defense.rs、lib/main 引用与 server wms_real_module 的 default_init_db 调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 声明 33 张，其中 wms.transfers/wms.transfer_items 已在 20261119100000_drop_dead_tables_batch1 归档删除、被启动期 DDL 复活，本迁移不纳入；wms.wms_master_data_refs 同属 batch1 死表，由 default_init_db(with_master_data_refs=true) 复活，调用已移除。回滚 database/rollback/20261120210000_wms_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+  - version: "20261120220000"
+    file: "database/migrations/20261120220000_wms_drop_resurrected_dead_tables.sql"
+    status: to_apply
+    effect: "幂等收尾：wms.transfers / wms.transfer_items / wms.wms_master_data_refs 若仍存在，逐表 count(*)=0 校验通过后 DROP TABLE（不带 CASCADE，存在依赖则迁移失败）；任一非空即 RAISE EXCEPTION 中止整条迁移"
+    destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch1 已归档的死表复活空表；先 count(*) 守卫，非空拒绝；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "历史数据已在 archive.drop_20261119_b1__wms__* 保留 180 天。回滚 database/rollback/20261120220000_wms_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"

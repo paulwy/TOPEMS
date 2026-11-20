@@ -1,6 +1,6 @@
 //! WMS 同步记录模块（前端契约 /sync-records 系列 + /sync/scm 触发）
 //!
-//! 数据源：wms.sync_records / wms.sync_record_details（owner DDL 建表，schema_defense）
+//! 数据源：wms.sync_records / wms.sync_record_details（建表由迁移链 20261120210000_wms_schema_canonical 维护）
 //! 与 scm.sync_records 同构；前端 sync.ts 契约：
 //!   list/get/items/retry/retry-items/statistics + POST /sync/scm{,/inventory,/orders}
 

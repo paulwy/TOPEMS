@@ -4,7 +4,6 @@
 #![allow(deprecated)]
 mod event_handlers;
 mod models;
-mod schema_defense;
 mod shared;
 
 pub mod modules;
@@ -17,7 +16,7 @@ use utoipa::OpenApi;
 
 use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, create_health_state,
-    create_standard_health_routes, default_init_db, run, ServiceConfig,
+    create_standard_health_routes, run, ServiceConfig,
 };
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -45,17 +44,6 @@ async fn main() -> Result<()> {
     };
 
     let ctx = bootstrap_service_with_search_path(&config, "wms, public, shared").await?;
-
-    if let Err(e) = default_init_db(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-        "wms",
-        false,
-        schema_defense::run_schema_migration_and_verify,
-    )
-    .await
-    {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let redis_url = std::env::var("REDIS_URL").ok();
