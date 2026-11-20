@@ -11,7 +11,6 @@ use topems_shared_event::event::{
     EventSubscriber, EventType, PurchaseOrderCreatedPayload, ScmPurchasePlanCreatedPayload,
     ScmSupplierEvaluatedPayload, SupplierDataSyncRequestedPayload,
 };
-use uuid::Uuid;
 
 type HandlerResult = std::result::Result<(), TopemsError>;
 
@@ -279,6 +278,15 @@ impl SrmEventHandlers {
             payload.sync_direction
         );
 
+        // 租户只来自 payload.tenant_id；缺失/nil 显式失败进入重试/DLQ，
+        // 禁止降级为零 UUID 写共享供应商行。
+        let tenant_id = payload.tenant_id.filter(|t| !t.is_nil()).ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "[srm] SupplierDataSyncRequested 缺少租户上下文：supplier_id={}",
+                payload.supplier_id
+            ))
+        })?;
+
         if payload.sync_direction != "scm_to_srm" {
             tracing::debug!(
                 "[srm] 跳过非 scm_to_srm 方向的同步事件 - direction={}",
@@ -293,7 +301,7 @@ impl SrmEventHandlers {
             "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2",
         )
         .bind(payload.supplier_id)
-        .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await
         .unwrap_or(0);
@@ -318,7 +326,7 @@ impl SrmEventHandlers {
             .bind(&payload.status)
             .bind(payload.supplier_id)
             .bind(now)
-            .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
+            .bind(tenant_id)
             .execute(&self.db)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("更新 suppliers 失败: {}", e)))?;
@@ -342,7 +350,7 @@ impl SrmEventHandlers {
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)"#,
             )
             .bind(payload.supplier_id)
-            .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
+            .bind(tenant_id)
             .bind(supplier_no)
             .bind(&payload.supplier_name)
             .bind(&payload.short_name)
@@ -400,7 +408,7 @@ impl SrmEventHandlers {
         .bind(&payload.bank_account)
         .bind(&payload.status)
         .bind(now)
-        .bind(payload.tenant_id)
+        .bind(tenant_id)
         .bind(now)
         .execute(&self.db)
         .await

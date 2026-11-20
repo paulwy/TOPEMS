@@ -353,7 +353,9 @@ impl ErpEventHandlers {
                 "[erp] SalesOrderApproved 缺少租户，跳过处理 - order_id={}",
                 payload.order_id
             );
-            return Ok(());
+            return Err(TopemsError::ValidationFailed(
+                "事件 payload 缺少 tenant_id，拒绝处理并进入重试/DLQ".to_string(),
+            ));
         };
 
         let order: Option<(Option<rust_decimal::Decimal>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
@@ -441,7 +443,9 @@ impl ErpEventHandlers {
                 "[erp] PurchaseOrderApproved 缺少租户，跳过处理 - order_id={}",
                 payload.order_id
             );
-            return Ok(());
+            return Err(TopemsError::ValidationFailed(
+                "事件 payload 缺少 tenant_id，拒绝处理并进入重试/DLQ".to_string(),
+            ));
         };
 
         let order: Option<(Option<f64>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
@@ -598,7 +602,9 @@ impl ErpEventHandlers {
                 "[erp] EmployeeOnboarded 缺少租户，跳过处理 - employee_id={}",
                 payload.employee_id
             );
-            return Ok(());
+            return Err(TopemsError::ValidationFailed(
+                "事件 payload 缺少 tenant_id，拒绝处理并进入重试/DLQ".to_string(),
+            ));
         };
 
         // 入职成本是租户级固定规则，落到配置而不是写死：读取
@@ -809,7 +815,9 @@ impl ErpEventHandlers {
                 "[erp] OpportunityWon 缺少租户，跳过处理 - opportunity_id={}",
                 payload.opportunity_id
             );
-            return Ok(());
+            return Err(TopemsError::ValidationFailed(
+                "事件 payload 缺少 tenant_id，拒绝处理并进入重试/DLQ".to_string(),
+            ));
         };
 
         // 幂等检查：同一商机不会重复创建销售订单
@@ -1512,7 +1520,9 @@ impl ErpEventHandlers {
                 "[erp] MesWorkReportSubmitted 缺少租户，跳过处理 - work_report_id={}",
                 payload.work_report_id
             );
-            return Ok(());
+            return Err(TopemsError::ValidationFailed(
+                "事件 payload 缺少 tenant_id，拒绝处理并进入重试/DLQ".to_string(),
+            ));
         };
 
         // 幂等：账本插入冲突 = 已处理过，直接收敛返回

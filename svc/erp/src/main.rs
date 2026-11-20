@@ -129,13 +129,14 @@ async fn main() -> Result<()> {
         tracing::warn!("⚠️ ERP 事件订阅者启动失败: {}", e);
     }
 
-    // 后台业务指标更新
-    let pool_clone = ctx.db.clone();
+    // 后台业务指标更新（跨租户聚合，显式系统只读通道）
+    let metrics_pool = ctx.db.clone();
     tokio::spawn(async move {
+        let metrics_db = topems_shared_db::Db::new(metrics_pool, "erp, public, shared");
         let mut interval = tokio::time::interval(Duration::from_secs(60));
         loop {
             interval.tick().await;
-            update_business_metrics(&pool_clone).await;
+            update_business_metrics(&metrics_db).await;
         }
     });
 
@@ -256,31 +257,48 @@ async fn main() -> Result<()> {
     run(app).await
 }
 
-async fn update_business_metrics(pool: &sqlx::PgPool) {
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM erp.assets")
-        .fetch_one(pool)
-        .await
-    {
-        Ok(count) => ASSET_COUNT.set(count),
-        Err(e) => tracing::warn!("Failed to update asset count: {}", e),
-    }
-
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM erp.financial_vouchers")
-        .fetch_one(pool)
-        .await
-    {
-        Ok(count) => VOUCHER_COUNT.set(count),
-        Err(e) => tracing::warn!("Failed to update voucher count: {}", e),
-    }
-
-    match sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM public.audit_logs 
-         WHERE created_at >= NOW() - INTERVAL '1 hour'",
+async fn update_business_metrics(db: &topems_shared_db::Db) {
+    update_gauge(
+        db,
+        "SELECT COUNT(*) FROM erp.assets",
+        &ASSET_COUNT,
+        "asset count",
     )
-    .fetch_one(pool)
-    .await
+    .await;
+    update_gauge(
+        db,
+        "SELECT COUNT(*) FROM erp.financial_vouchers",
+        &VOUCHER_COUNT,
+        "voucher count",
+    )
+    .await;
+    update_gauge(
+        db,
+        "SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '1 hour'",
+        &ACTIVE_USERS,
+        "active users",
+    )
+    .await;
+}
+
+async fn update_gauge(db: &topems_shared_db::Db, sql: &'static str, gauge: &IntGauge, label: &str) {
+    let mut scope = match db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("Failed to open system scope for {label}: {e}");
+            return;
+        }
+    };
+    match sqlx::query_scalar::<_, i64>(sql)
+        .fetch_one(&mut scope)
+        .await
     {
-        Ok(count) => ACTIVE_USERS.set(count),
-        Err(e) => tracing::warn!("Failed to update active users: {}", e),
+        Ok(count) => {
+            gauge.set(count);
+            if let Err(e) = scope.commit().await {
+                tracing::warn!("Failed to commit {label} metrics scope: {e}");
+            }
+        }
+        Err(e) => tracing::warn!("Failed to update {label}: {e}"),
     }
 }

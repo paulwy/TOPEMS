@@ -60,7 +60,7 @@
 |---|---|---|---|
 | W7-A | 按「外层 Scope + 内层迁移」继续收口业务裸池，逐服务提交 | 340 处（11-18 口径） | `check-pool-acquire.mjs` 该服务计数下降，行为等价测试绿 |
 | W7-B | 平台语料 5 表归一（币种、报表映射、角色模板、同步策略、项目类型），归入 DEC-15 | `docs/database/residual-ten-table-triage-2026-11-18.md:92` | 归一后租户仍可经平台通道读到 8/48/16/1 条 |
-| B43-09 | 非 HTTP 路径（定时任务/消息消费/CLI）中间件与租户上下文评估 | 未做 | 每类入口有租户上下文或显式豁免记录 |
+| B43-09 ✅ | 非 HTTP 路径（定时任务/消息消费/CLI）中间件与租户上下文评估 | 2026-11-20 完成：新增 `docs/database/non-http-tenant-context-audit-2026-11-20.md`，覆盖事件消费 18 入口、Redis Stream、定时任务、WebSocket、CLI、启动预热；本轮修 SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道。ERP Payment* 可选分支与 DB 错误降级转 DEC-04 | 每类入口有租户上下文或显式豁免记录 ✅ |
 | W2-A1 ✅ | 移除 `SEARCH_PATH` 环境读取 | 实为 2 处（`shared-bootstrap/lib.rs` 的 legacy 入口与内层 fallback；`audit.rs` 那处已在此前改为必填 `schema_prefix` 消失）。已删除 legacy `bootstrap_service` 入口，内层只接受显式参数；17 个服务 main 全改 `bootstrap_service_with_search_path(&config, "<module path>")`；`embedded.rs` 显式传 `flow, public` | 全仓 `env::var("SEARCH_PATH")` = 0；`cargo check --workspace` 绿 |
 | W2-A3 ✅ | 增 CI 规则禁止 `SEARCH_PATH` 环境读写 | 新增 `scripts/ci/check-search-path-env.mjs`（零基线，扫 1879 文件 0 违规）；已接入 lefthook pre-push `[Gate SPE]` 与 CI `connection-governance` job；配套删掉 `connection_budget_it.rs` 里已失效的 `set_var` | 规则上线；构造一条 `set_var("SEARCH_PATH")` 能被拦下（`--root` 自测路径已留） |
 | W2-B1 ✅ | mes：裸表引用归零 | 316 → 0（2026-11-20，25 文件；基线移除 62 条，`.sqlx` 新增 99 条） | `check-schema-prefix` 该模块归零 |
@@ -158,7 +158,7 @@
 | DEC-01 | 全面改为「每请求一个作用域事务」，删除请求级/作用域双轨，业务只允许 `Db::scope*` | 终态只有一种事务边界；不保留 `scope_with`/`scope_for_tenant` 兼容层；新服务照抄同一入口 | `lib/shared-db` scope API、`svc/server` 中间件、各 svc `state.db`；无迁移 | `scope_for_tenant`/`scope_with` 仅剩白名单；workspace 测试绿；长请求连接占用有监控 | E4-24、E5-2 | 长请求占连接；先在 server 设 30s 事务超时再切 |
 | DEC-02 | `rs` 等 24 表一次性 `SET SCHEMA archive`，不留兼容视图 | schema 边界一次划清；后续历史表按同一规则进 archive | migration + manifest/checksums；`svc/rd` 引用同批改 | `archive` 表数=24；`cargo check`+smoke 绿；回滚脚本演练通过 | E4-13 | 可逆（反向 SET SCHEMA）；先在克隆库演练 |
 | DEC-03 | 拆为 `finance:<domain>:write/read`，`finance:admin` 只留给超管角色 | 粒度与菜单/模块一致，不留万能码；其他模块照抄 domain 粒度 | 权限行、FE `hasPermission`、网关 `require_permission`、角色模板 | 三端对账 db_only=0；非财务角色写接口 403；超管 200 | E5-4 | 需一次性回填角色；先跑角色差集 |
-| DEC-04 | 缺租户/缺关联一律显式失败，禁止 graceful fallback，失败写死信并告警 | 单一错误语义；与 B43-09「入口必须有租户上下文」同一条规则 | 2026-11-20 已完成 master-data ref 两处：`svc/pdm/src/event_handlers/mod.rs` 与 `svc/scm/src/event_handlers/mod.rs` 不再 warn 后返回 Ok，改为 `DatabaseQuery` Err 进入重试/DLQ；ERP 幂等冲突分支仍保留显式识别 | 缺 tenant 用例报错且无部分写入；死信可查 | 无（随 E3-9/E4-13） | 先上告警再切，避免积压不可见 |
+| DEC-04 | 缺租户/缺关联一律显式失败，禁止 graceful fallback，失败写死信并告警 | 单一错误语义；与 B43-09「入口必须有租户上下文」同一条规则 | 2026-11-20 已完成：PDM/SCM master-data ref 失败返回 Err；SRM `handle_supplier_data_sync` 去零 UUID 兜底；ERP SalesOrder/PurchaseOrder/EmployeeOnboarded/OpportunityWon/MesWorkReport 5 处缺租户由 ACK 改 Err。ERP PaymentReceived/PaymentMade 可选租户分支与 DB 错误降级仍待逐条收口 | 缺 tenant 用例报错且无部分写入；死信可查 | 无（随 E3-9/E4-13） | 先上告警再切，避免积压不可见 |
 | DEC-05 | DB 层一次性改名（31 组同名菜单），不保留前端别名 | 菜单唯一源在 DB，不新增映射层；重复项照同一规则 | 31 组菜单行 + 菜单种子 SQL + 前端路由常量；数据迁移 1 个 | 同名组=0；菜单接口 10 组；前端导航 e2e 绿 | E4-11 | 外部书签失效；变更清单先留档 |
 | DEC-06 | 删除 35 个 dashboard 幽灵菜单（无路由/权限码消费即删） | 菜单表与路由 1:1，不设隐藏位 | 菜单行 35；无代码改动 | 菜单数降 35；`?menu_authority=config` 对比无差异；无 404 导航 | E4-12 | 低 |
 | DEC-07 | 存量数据统一按「权威源 + 租户归属」修：能定位的 UPDATE，不能定位的软删并留证 | 不留孤儿行、不建例外表 | B43-11/12/13/15/16/17 各表；可回滚数据脚本 | 每表 orphan=0；回滚演练通过 | E4-22 | 需逐表取证，禁止批量猜归属 |
@@ -315,7 +315,7 @@
 | E3-11 | W2-D1 零运行时 DDL 断言 | E3-8 | — | 断言上线并能拦住新增调用 |
 | E3-12 | W2-D2/D3 逐服务迁走运行期 DDL | E3-11 | — | `TABLE_DEFS` 只减不增 |
 | E3-13 ✅ | W2-§12.6 WS 消费组默认值区分 | 无 | — | 默认名不同，双实例互不抢占 |
-| E3-14 | B43-09 非 HTTP 入口租户上下文评估 | 无（只读分析） | — | 每类入口有上下文或书面豁免 |
+| E3-14 ✅ | B43-09 非 HTTP 入口租户上下文评估 | 无（只读分析） | — | 每类入口有上下文或书面豁免 ✅ |
 | E3-15 | W7-B 平台语料 5 表归一 | E3-9、E0-1 | DEC-15 | 归一后经平台通道读到 8/48/16/1 条 |
 | E4-1 | W3-B 清 `pages/` 残留 | 无 | — | 残留目录清零 |
 | E4-2 | W3-C `@/pages/*` 收敛 | E4-1 | — | 仅路由层引用 |
