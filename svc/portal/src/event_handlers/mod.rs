@@ -180,18 +180,17 @@ impl PortalEventHandlers {
                 .unwrap_or_else(|| "待分配".to_string())
         );
 
-        let _ = self
-            .create_notification(
-                tenant_id,
-                &title,
-                &content,
-                "hrm",
-                "人力资源",
-                "welcome",
-                None,
-                None,
-            )
-            .await;
+        self.create_notification(
+            tenant_id,
+            &title,
+            &content,
+            "hrm",
+            "人力资源",
+            "welcome",
+            None,
+            None,
+        )
+        .await?;
 
         Ok(())
     }
@@ -272,18 +271,17 @@ impl PortalEventHandlers {
             payload.project_name
         );
 
-        let _ = self
-            .create_notification(
-                tenant_id,
-                &title,
-                &content,
-                "pm",
-                "项目管理",
-                "info",
-                None,
-                Some(&payload.owner_id.to_string()),
-            )
-            .await;
+        self.create_notification(
+            tenant_id,
+            &title,
+            &content,
+            "pm",
+            "项目管理",
+            "info",
+            None,
+            Some(&payload.owner_id.to_string()),
+        )
+        .await?;
 
         Ok(())
     }
@@ -332,18 +330,17 @@ impl PortalEventHandlers {
             _ => "info",
         };
 
-        let _ = self
-            .create_notification(
-                tenant_id,
-                &title,
-                &content,
-                "crm",
-                "客户关系",
-                notification_type,
-                None,
-                payload.created_by.as_deref(),
-            )
-            .await;
+        self.create_notification(
+            tenant_id,
+            &title,
+            &content,
+            "crm",
+            "客户关系",
+            notification_type,
+            None,
+            payload.created_by.as_deref(),
+        )
+        .await?;
 
         Ok(())
     }
