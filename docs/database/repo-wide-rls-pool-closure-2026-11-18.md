@@ -1147,14 +1147,14 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 
 | 指标 | 11-18 | 11-20 |
 | --- | --- | --- |
-| `&state.(db\|pool)` 命中 | 1922 | 1675 |
+| `&state.(db\|pool)` 命中 | 1922 | 1672 |
 | 已作用域化 | — | 542 |
 | 权限/审计/健康/元数据 | — | 1104 |
 | 业务带显式谓词 | — | 8 |
 | 业务无谓词 | — | 16 |
-| 业务无上下文 | — | 5 |
+| 业务无上下文 | — | 2 |
 | 业务后台内部 | — | 0 |
-| **业务裸池合计** | **340** | **29** |
+| **业务裸池合计** | **340** | **26** |
 
 > 11-20 IAM 收口后复核：`core_api_version_configs` 与 `core_plugin_instances` 已改显式平台只读/写作用域；BI WebSocket 看板与组件读取已改为显式平台/租户只读作用域；2 处为 QMS `/api/internal/` 免 JWT 集成入口（显式平台哨兵）。第二轮补收口：`versioning.rs::reload_version_config` 后台重载改 `scope_read_system`（后台内部 3→0）；`role.rs` 的创建/更新/授权角色权限全部复用请求事务，`resolve_permission_ids` 与权限码查询不再走裸池；权限校验两个入口改 `txn_arc` + `scope_with` 读写通道；登录失败审计改为接收 `Db` 并由 `record_login_event` 内部开系统写作用域。剩余 26 处均为 ERP/MES 内部 helper 与静态普查误报，业务 handler 裸池读写已清零。补充：ERP `searchable_projection::build_payload_from_pool` 原用 `pool.acquire()` 裸借连接，现改为 `Db::scope_read_system()` 显式系统只读通道，并从 `pool-acquire-baseline.json` 移除；全仓 `.acquire` 白名单由 3 条降至 2 条。QMS `/api/internal/` 两个免 JWT 集成入口由裸池改 `scope_system` 显式平台写通道；ERP `/internal/searchable-snapshot` 全量快照改 `scope_read_system` 只读通道。
 
