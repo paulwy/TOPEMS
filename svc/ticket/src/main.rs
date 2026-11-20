@@ -12,7 +12,6 @@ mod feedback_compat;
 mod handlers;
 mod models;
 mod openapi;
-mod schema_defense;
 pub mod sla_service;
 mod ticket_ext;
 mod util;
@@ -37,14 +36,7 @@ async fn main() -> anyhow::Result<()> {
     let db = Db::new(ctx.db.clone(), "ticket, public").deny_request_own_txn();
     tracing::info!("🚀 TOPEMS Ticket Service starting...");
 
-    // ── 模块级数据库初始化（DDL 走 owner 迁移连接池，受限业务用户无表 owner 权限）────
-    // C-1：自建 DDL 已移除（迁移权威唯一仲裁）；Schema 防御保留
-    let ddl_pool = ctx.migrate_pool.as_ref().unwrap_or(&ctx.db);
-
-    // ── Schema 防御：增量迁移 + 列一致性校验（7 张 ticket 表）──
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(ddl_pool).await {
-        tracing::warn!("Ticket schema defense 失败（不阻塞启动）: {}", e);
-    }
+    // ── 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL ──────────
 
     // ── public_routes（无状态） ──────────────────────────────────────
     let public_routes = Router::new()
