@@ -1159,7 +1159,7 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 本轮变化：
 
 - QMS `quality-tasks` / `defect-records` 的列表、详情 5 处改走请求事务 `read_scope_for_claims`，并补 `tenant_id` 谓词；QMS 业务带谓词裸池 18→13。
-- QMS 质量看板三接口（概览/趋势/缺陷分布）12 处改走请求事务 `read_scope_for_claims`，QMS 业务带谓词裸池 13→1。
+- QMS 质量看板三接口（概览/趋势/缺陷分布）12 处改走请求事务 `read_scope_for_claims`，QMS 业务带谓词裸池 13→1；概览与不良分布的 DB 统计错误改为返回 500，不再 `.ok()` 静默归零。
 - QMS SPC `POST /spc/charts/{id}/calculate` 补请求事务作用域与 `tenant_id` 谓词，QMS 业务带谓词裸池降为 0。
 - MES 审批桥接 6 处（生产订单发起/驳回、报工返工发起/驳回、让步接收发起/驳回）改用 `create_approval_and_log_db` / `reject_and_log_db`，传 `state.db` 作用域包装；MES 业务无谓词裸池归零。
 - 复测后 `biz_noctx` 只剩已登记面：ERP `searchable_projection` / `consolidation::reports` 写后按主键投影与审批桥接、QMS `integration` 平台常量通道、unified-core IAM/versioning/automation 平台表。

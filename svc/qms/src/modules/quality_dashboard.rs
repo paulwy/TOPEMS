@@ -185,88 +185,78 @@ pub async fn get_quality_overview(
             return ApiResponse::server_error("获取质量概览失败");
         }
     };
-    let total_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+    macro_rules! overview_count {
+        ($sql:literal, $label:literal) => {{
+            match sqlx::query_scalar::<_, i64>(only_own_schema_query!("qms", $sql))
+                .bind(tenant)
+                .fetch_one(&mut scope)
+                .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("[qms] 质量概览{}统计失败: {}", $label, e);
+                    return ApiResponse::server_error("获取质量概览失败");
+                }
+            }
+        }};
+    }
+
+    let total_inspections = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "总检验数"
+    );
+    let qualified_inspections = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "合格检验数"
+    );
+    let unqualified_inspections = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "不合格检验数"
+    );
+
+    let avg_rate: BigDecimal = match sqlx::query_scalar::<_, BigDecimal>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"#
     ))
     .bind(tenant)
     .fetch_one(&mut scope)
     .await
-    .ok();
-    let total_inspections = total_insp.unwrap_or(0);
-
-    let qualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let qualified_inspections = qualified_insp.unwrap_or(0);
-
-    let unqualified_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let unqualified_inspections = unqualified_insp.unwrap_or(0);
-
-    let avg_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"#))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let qualification_rate: f64 = big_decimal_to_f64(avg_rate);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[qms] 质量概览合格率统计失败: {}", e);
+            return ApiResponse::server_error("获取质量概览失败");
+        }
+    };
+    let qualification_rate: f64 = big_decimal_to_f64(Some(avg_rate));
     let defect_rate = 100.0 - qualification_rate;
 
-    let total_issues_count: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
-        "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
-    ))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let total_issues = total_issues_count.unwrap_or(0);
-
-    let open_issues_count: Option<i64> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE (status = 'open' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
-    )
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let open_issues = open_issues_count.unwrap_or(0);
-
-    let complaint_count_val: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
-        "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
-    ))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let complaint_count = complaint_count_val.unwrap_or(0);
+    let total_issues = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "问题总数"
+    );
+    let open_issues = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE (status = 'open' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "未关闭问题数"
+    );
+    let complaint_count = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "客诉数"
+    );
     let complaint_rate = if total_inspections > 0 {
         (complaint_count as f64 / total_inspections as f64) * 100.0
     } else {
         0.0
     };
 
-    let in_progress_8d: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
-        "qms",
-        "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
-    ))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let in_progress_eightd = in_progress_8d.unwrap_or(0);
-
-    let pending_act: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!("qms", "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"))
-    .bind(tenant)
-    .fetch_one(&mut scope)
-    .await
-    .ok();
-    let pending_actions = pending_act.unwrap_or(0);
+    let in_progress_eightd = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "8D 进行中数"
+    );
+    let pending_actions = overview_count!(
+        "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "待处理措施数"
+    );
 
     let overview = QualityOverview {
         total_inspections,
@@ -394,15 +384,20 @@ pub async fn get_defect_distribution(
             return ApiResponse::server_error("获取缺陷分布失败");
         }
     };
-    let total: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
+    let total_count: i64 = match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "qms",
         "SELECT COUNT(*) FROM qms.qa_inspection_results WHERE is_qualified = false AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant)
     .fetch_one(&mut scope)
     .await
-    .ok();
-    let total_count = total.unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[qms] 不良总数统计失败: {}", e);
+            return ApiResponse::server_error("获取不良分布失败");
+        }
+    };
 
     let rows = sqlx::query(only_own_schema_query!(
         "qms",
