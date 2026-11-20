@@ -358,11 +358,21 @@ impl ErpEventHandlers {
             ));
         };
 
+        // 读订单与写应收必须落在事件租户同一事务内，禁止裸池跨租户读。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开销售订单审批租户作用域失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                payload.order_id
+            ))
+        })?;
+
         let order: Option<(Option<rust_decimal::Decimal>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
-            r#"SELECT total_amount, customer_id, customer_name, order_date FROM erp.sales_orders WHERE id = $1"#,
+            r#"SELECT total_amount, customer_id, customer_name, order_date FROM erp.sales_orders WHERE id = $1 AND tenant_id = $2"#,
         )
         .bind(payload.order_id)
-        .fetch_optional(&self.db)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单失败: {}", e)))?;
 
@@ -370,12 +380,6 @@ impl ErpEventHandlers {
             let amount = amount.unwrap_or(rust_decimal::Decimal::ZERO);
             let receivable_no = format!("REC-{}", payload.order_no);
             let now = chrono::Utc::now();
-
-            let mut tx = self
-                .db
-                .begin()
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
 
             let receivable_result = sqlx::query(
                 r#"INSERT INTO erp.receivables
@@ -391,7 +395,7 @@ impl ErpEventHandlers {
             .bind(order_date)
             .bind(now)
             .bind(tenant_id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
 
             match receivable_result {
@@ -413,15 +417,19 @@ impl ErpEventHandlers {
 
             // 凭证写入已收敛至 finance（finance 订阅 SalesOrderApproved 写完整分录），
             // ERP 侧只保留业务应收记录，不再写 erp.financial_vouchers / erp.voucher_items。
-            tx.commit()
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
         } else {
             tracing::warn!(
                 "[erp] SalesOrderApproved 未找到对应订单 {}，跳过应收账款和凭证生成",
                 payload.order_id
             );
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交销售订单审批事务失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                payload.order_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -451,11 +459,21 @@ impl ErpEventHandlers {
             ));
         };
 
+        // 读订单与写应付必须落在事件租户同一事务内，禁止裸池跨租户读。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开采购订单审批租户作用域失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                payload.order_id
+            ))
+        })?;
+
         let order: Option<(Option<f64>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
-            r#"SELECT total_amount, supplier_id, supplier_name, order_date FROM erp.purchase_orders WHERE id = $1"#,
+            r#"SELECT total_amount, supplier_id, supplier_name, order_date FROM erp.purchase_orders WHERE id = $1 AND tenant_id = $2"#,
         )
         .bind(payload.order_id)
-        .fetch_optional(&self.db)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询采购订单失败: {}", e)))?;
 
@@ -463,12 +481,6 @@ impl ErpEventHandlers {
             let amount = amount.unwrap_or(0.0);
             let payable_no = format!("PAY-{}", payload.order_no);
             let now = chrono::Utc::now();
-
-            let mut tx = self
-                .db
-                .begin()
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
 
             let payable_result = sqlx::query(
                 r#"INSERT INTO erp.payables
@@ -484,7 +496,7 @@ impl ErpEventHandlers {
             .bind(order_date)
             .bind(now)
             .bind(tenant_id)
-            .execute(&mut *tx)
+            .execute(&mut scope)
             .await;
 
             match payable_result {
@@ -506,15 +518,19 @@ impl ErpEventHandlers {
 
             // 凭证写入已收敛至 finance（finance 订阅 PurchaseOrderApproved 写完整分录），
             // ERP 侧只保留业务应付记录，不再写 erp.financial_vouchers / erp.voucher_items。
-            tx.commit()
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
         } else {
             tracing::warn!(
                 "[erp] PurchaseOrderApproved 未找到对应订单 {}，跳过应付账款和凭证生成",
                 payload.order_id
             );
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交采购订单审批事务失败 - tenant_id={tenant_id}, order_id={}: {e}",
+                payload.order_id
+            ))
+        })?;
 
         Ok(())
     }
@@ -616,6 +632,15 @@ impl ErpEventHandlers {
         // 入职成本是租户级固定规则，落到配置而不是写死：读取
         // public.core_tenant_settings('erp.employee_onboarding_cost')。
         // 未配置则不生成应付账款，避免继续写入 500.0 这类占位金额。
+        // 配置读取与应付写入放在同一租户事务内，禁止裸池访问。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开员工入职租户作用域失败 - tenant_id={tenant_id}, employee_id={}: {e}",
+                payload.employee_id
+            ))
+        })?;
+
         let configured_cost: Option<Option<Decimal>> = sqlx::query_scalar(
             r#"SELECT NULLIF(setting_value, '')::numeric
                FROM public.core_tenant_settings
@@ -625,13 +650,19 @@ impl ErpEventHandlers {
                LIMIT 1"#,
         )
         .bind(tenant_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("读取入职成本配置失败: {}", e)))?;
 
         let onboarding_cost = match configured_cost.flatten() {
             Some(cost) => cost,
             None => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交员工入职配置读取事务失败 - tenant_id={tenant_id}, employee_id={}: {e}",
+                        payload.employee_id
+                    ))
+                })?;
                 tracing::info!(
                     "[erp] 租户 {} 未配置 erp.employee_onboarding_cost，跳过入职应付账款（employee_id={}）",
                     tenant_id,
@@ -643,16 +674,6 @@ impl ErpEventHandlers {
 
         let payable_no = format!("PAY-ONBOARD-{}", payload.employee_id);
         let supplier_name = "员工入职福利（内部计提）".to_string();
-
-        let mut tx = match self.db.begin().await {
-            Ok(tx) => tx,
-            Err(e) => {
-                return Err(TopemsError::DatabaseQuery(format!(
-                    "[erp] EmployeeOnboarded 开启事务失败: {}",
-                    e
-                )));
-            }
-        };
 
         let payable_result = sqlx::query(
             r#"INSERT INTO erp.payables
@@ -666,7 +687,7 @@ impl ErpEventHandlers {
         .bind(onboard_date)
         .bind(now)
         .bind(tenant_id)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
 
         match payable_result {
@@ -688,8 +709,8 @@ impl ErpEventHandlers {
 
         // 凭证写入已收敛至 finance（finance 订阅 EmployeeOnboarded 写完整分录），
         // ERP 侧只保留业务应付记录。提交失败必须上抛，由幂等 UPSERT + Stream 重试自愈。
-        tx.commit().await.map_err(|e| {
-            TopemsError::DatabaseQuery(format!(
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
                 "[erp] EmployeeOnboarded 提交事务失败：{}: {}",
                 payable_no, e
             ))
@@ -766,6 +787,15 @@ impl ErpEventHandlers {
             ));
         };
 
+        // 项目应收写入走事件租户作用域，禁止裸池。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开项目应收租户作用域失败 - tenant_id={tenant_id}, project_id={}: {e}",
+                payload.project_id
+            ))
+        })?;
+
         let receivable_result = sqlx::query(
             r#"INSERT INTO erp.receivables
                (invoice_number, customer_name, project_name, amount, status, invoice_date, created_at, updated_at, tenant_id)
@@ -780,11 +810,17 @@ impl ErpEventHandlers {
         .bind(settled_at)
         .bind(now)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await;
 
         match receivable_result {
             Ok(_) => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交项目应收账款失败 - tenant_id={tenant_id}, project_id={}: {e}",
+                        payload.project_id
+                    ))
+                })?;
                 tracing::info!(
                     "[erp] 已生成项目应收账款 {} 金额={} 项目={}",
                     receivable_no,
@@ -829,17 +865,32 @@ impl ErpEventHandlers {
             ));
         };
 
+        // 幂等查询与销售订单创建必须落在事件租户同一事务内。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开商机赢单租户作用域失败 - tenant_id={tenant_id}, opportunity_id={}: {e}",
+                payload.opportunity_id
+            ))
+        })?;
+
         // 幂等检查：同一商机不会重复创建销售订单
-        let existing_order: Option<(uuid::Uuid,)> =
-            sqlx::query_as(r#"SELECT id FROM erp.sales_orders WHERE remark = $1"#)
-                .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
-                .fetch_optional(&self.db)
-                .await
-                .map_err(|e| {
-                    TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e))
-                })?;
+        let existing_order: Option<(uuid::Uuid,)> = sqlx::query_as(
+            r#"SELECT id FROM erp.sales_orders WHERE remark = $1 AND tenant_id = $2"#,
+        )
+        .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e)))?;
 
         if existing_order.is_some() {
+            scope.commit().await.map_err(|e| {
+                TopemsError::DatabaseTransaction(format!(
+                    "提交商机赢单幂等查询事务失败 - tenant_id={tenant_id}, opportunity_id={}: {e}",
+                    payload.opportunity_id
+                ))
+            })?;
             tracing::info!(
                 "[erp] 商机 {} 已创建过销售订单，跳过自动创建",
                 payload.opportunity_id
@@ -872,11 +923,17 @@ impl ErpEventHandlers {
         .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
         .bind(now)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await;
 
         match result {
             Ok(_) => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交商机赢单销售订单失败 - tenant_id={tenant_id}, opportunity_id={}: {e}",
+                        payload.opportunity_id
+                    ))
+                })?;
                 tracing::info!(
                     "[erp] CRM商机赢单自动创建销售订单成功 - order_no={}, opportunity_id={}",
                     order_no,
@@ -921,6 +978,14 @@ impl ErpEventHandlers {
         let tenant = require_event_tenant(&event)?;
         let tenant_id = tenant.get();
 
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开库存更新租户作用域失败 - tenant_id={tenant_id}, material_code={}: {e}",
+                payload.material_code
+            ))
+        })?;
+
         // 更新 erp.account_balances 表的最近变动信息
         let result = sqlx::query(
             r#"UPDATE erp.account_balances
@@ -934,11 +999,17 @@ impl ErpEventHandlers {
         .bind(&payload.change_type)
         .bind(&payload.material_code)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await;
 
         match result {
             Ok(rows_affected) => {
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交库存更新失败 - tenant_id={tenant_id}, material_code={}: {e}",
+                        payload.material_code
+                    ))
+                })?;
                 if rows_affected.rows_affected() == 0 {
                     tracing::warn!(
                         "[erp] InventoryUpdated 未找到匹配的 account_balances 记录 - material_code={}, tenant_id={}（业务 no-op，跳过更新）",
@@ -1001,7 +1072,14 @@ impl ErpEventHandlers {
         })?;
 
         // 根据 customer_name（收款单无 customer_id，2026-09-08 新增字段）→ customer_id → 金额匹配。
-        // 无匹配视为业务 no-op；数据库错误返回 Err 进入重试/DLQ。
+        // 无匹配视为业务 no-op；数据库错误返回 Err 进入重试/DLQ。核销走事件租户事务。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开收款核销租户作用域失败 - tenant_id={tenant_id}, payment_no={}: {e}",
+                payload.payment_no
+            ))
+        })?;
         let result = if let Some(customer_name) = payload.customer_name.as_deref() {
             sqlx::query(
                 r#"UPDATE erp.receivables
@@ -1018,7 +1096,7 @@ impl ErpEventHandlers {
             .bind(now)
             .bind(customer_name)
             .bind(tenant_id)
-            .fetch_optional(&self.db)
+            .fetch_optional(&mut scope)
             .await
         } else if let Some(customer_id) = payload.customer_id {
             sqlx::query(
@@ -1036,7 +1114,7 @@ impl ErpEventHandlers {
             .bind(now)
             .bind(customer_id)
             .bind(tenant_id)
-            .fetch_optional(&self.db)
+            .fetch_optional(&mut scope)
             .await
         } else {
             sqlx::query(
@@ -1057,7 +1135,7 @@ impl ErpEventHandlers {
             .bind(payload.amount)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&self.db)
+            .fetch_optional(&mut scope)
             .await
         };
 
@@ -1088,6 +1166,13 @@ impl ErpEventHandlers {
                 )));
             }
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交收款核销事务失败 - tenant_id={tenant_id}, payment_no={}: {e}",
+                payload.payment_no
+            ))
+        })?;
 
         Ok(())
     }
@@ -1129,7 +1214,14 @@ impl ErpEventHandlers {
         })?;
 
         // 根据 supplier_id 和 amount 匹配应付账款并核销。
-        // 无匹配视为业务 no-op；数据库错误返回 Err 进入重试/DLQ。
+        // 无匹配视为业务 no-op；数据库错误返回 Err 进入重试/DLQ。核销走事件租户事务。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开付款核销租户作用域失败 - tenant_id={tenant_id}, payment_no={}: {e}",
+                payload.payment_no
+            ))
+        })?;
         let result = if let Some(supplier_id) = payload.supplier_id {
             sqlx::query(
                 r#"UPDATE erp.payables
@@ -1146,7 +1238,7 @@ impl ErpEventHandlers {
             .bind(now)
             .bind(supplier_id)
             .bind(tenant_id)
-            .fetch_optional(&self.db)
+            .fetch_optional(&mut scope)
             .await
         } else {
             sqlx::query(
@@ -1167,7 +1259,7 @@ impl ErpEventHandlers {
             .bind(payload.amount)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&self.db)
+            .fetch_optional(&mut scope)
             .await
         };
 
@@ -1198,6 +1290,13 @@ impl ErpEventHandlers {
                 )));
             }
         }
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交付款核销事务失败 - tenant_id={tenant_id}, payment_no={}: {e}",
+                payload.payment_no
+            ))
+        })?;
 
         Ok(())
     }
@@ -1429,6 +1528,21 @@ impl ErpEventHandlers {
             .unwrap_or_else(|| format!("REC-{}", payload.id));
         let now = chrono::Utc::now();
 
+        // 对账单写入必须带事件租户，缺租户/nil 显式失败。
+        if payload.tenant_id.is_nil() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "[erp] ReconciliationCreated 缺少租户上下文 - id={}",
+                payload.id
+            )));
+        }
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(payload.tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开对账单写入租户作用域失败 - tenant_id={}, id={}: {e}",
+                payload.tenant_id, payload.id
+            ))
+        })?;
+
         sqlx::query(
             r#"INSERT INTO erp.fin_reconciliations
                (id, reconciliation_no, reconciliation_type, status, period,
@@ -1446,10 +1560,17 @@ impl ErpEventHandlers {
         .bind(payload.tenant_id)
         .bind(payload.created_by)
         .bind(now)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!("写入 erp.fin_reconciliations 失败: {}", e))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交对账单写入事务失败 - tenant_id={}, id={}: {e}",
+                payload.tenant_id, payload.id
+            ))
         })?;
 
         Ok(())
@@ -1471,6 +1592,21 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
+        // 审批更新必须带事件租户，缺租户/nil 显式失败。
+        if payload.tenant_id.is_nil() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "[erp] ReconciliationApproved 缺少租户上下文 - id={}",
+                payload.id
+            )));
+        }
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(payload.tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开对账单审批租户作用域失败 - tenant_id={}, id={}: {e}",
+                payload.tenant_id, payload.id
+            ))
+        })?;
+
         sqlx::query(
             r#"UPDATE erp.fin_reconciliations
                SET status = 'approved',
@@ -1479,10 +1615,17 @@ impl ErpEventHandlers {
         )
         .bind(payload.id)
         .bind(payload.tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!("更新 erp.fin_reconciliations 失败: {}", e))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交对账单审批事务失败 - tenant_id={}, id={}: {e}",
+                payload.tenant_id, payload.id
+            ))
         })?;
 
         Ok(())
@@ -1501,6 +1644,21 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
+        // 状态更新必须带事件租户，缺租户/nil 显式失败。
+        if payload.tenant_id.is_nil() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "[erp] ReconciliationUpdated 缺少租户上下文 - id={}",
+                payload.id
+            )));
+        }
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(payload.tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开对账单更新租户作用域失败 - tenant_id={}, id={}: {e}",
+                payload.tenant_id, payload.id
+            ))
+        })?;
+
         sqlx::query(
             r#"UPDATE erp.fin_reconciliations
                SET status = $1,
@@ -1510,10 +1668,17 @@ impl ErpEventHandlers {
         .bind(&payload.status)
         .bind(payload.id)
         .bind(payload.tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!("更新 erp.fin_reconciliations 失败: {}", e))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交对账单更新事务失败 - tenant_id={}, id={}: {e}",
+                payload.tenant_id, payload.id
+            ))
         })?;
 
         Ok(())
@@ -1552,6 +1717,15 @@ impl ErpEventHandlers {
             ));
         };
 
+        // 幂等账本与订单进度更新必须同一租户事务：否则失败重试会被账本误判为已处理。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "erp, public, shared");
+        let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "打开报工处理租户作用域失败 - tenant_id={tenant_id}, work_report_id={}: {e}",
+                payload.work_report_id
+            ))
+        })?;
+
         // 幂等：账本插入冲突 = 已处理过，直接收敛返回
         let key = format!("mes_work_report:{}", payload.work_report_id);
         let inserted = sqlx::query(
@@ -1559,10 +1733,16 @@ impl ErpEventHandlers {
         )
         .bind(&key)
         .bind(tenant_id)
-        .execute(&self.db)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("写入幂等账本失败: {}", e)))?;
         if inserted.rows_affected() == 0 {
+            scope.commit().await.map_err(|e| {
+                TopemsError::DatabaseTransaction(format!(
+                    "提交报工幂等查询事务失败 - tenant_id={tenant_id}, work_report_id={}: {e}",
+                    payload.work_report_id
+                ))
+            })?;
             tracing::info!(
                 "[erp] MesWorkReportSubmitted 幂等跳过 - work_report_id={} 已处理",
                 payload.work_report_id
@@ -1576,10 +1756,11 @@ impl ErpEventHandlers {
             None => match payload.mes_order_id {
                 Some(mid) => {
                     sqlx::query_scalar::<_, Option<uuid::Uuid>>(
-                        "SELECT id FROM erp.erp_production_orders WHERE source_order_id = $1 AND deleted_at IS NULL LIMIT 1",
+                        "SELECT id FROM erp.erp_production_orders WHERE source_order_id = $1 AND tenant_id = $2 AND deleted_at IS NULL LIMIT 1",
                     )
                     .bind(mid.to_string())
-                    .fetch_optional(&self.db)
+                    .bind(tenant_id)
+                    .fetch_optional(&mut scope)
                     .await
                     .map_err(|e| TopemsError::DatabaseQuery(format!("按 mes_order_id 反查 erp 订单失败: {}", e)))?
                     .flatten()
@@ -1605,16 +1786,24 @@ impl ErpEventHandlers {
                    completed_quantity = COALESCE($2, completed_quantity),
                    status = COALESCE($3, status),
                    updated_at = $4
-               WHERE id = $1"#,
+               WHERE id = $1 AND tenant_id = $5"#,
         )
         .bind(order_id)
         .bind(payload.completed_quantity)
         .bind(&payload.status)
         .bind(now.naive_utc())
-        .execute(&self.db)
+        .bind(tenant_id)
+        .execute(&mut scope)
         .await
         .map_err(|e| {
             TopemsError::DatabaseQuery(format!("更新 erp.erp_production_orders 进度失败: {}", e))
+        })?;
+
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交报工进度更新失败 - tenant_id={tenant_id}, work_report_id={}: {e}",
+                payload.work_report_id
+            ))
         })?;
 
         tracing::info!(
