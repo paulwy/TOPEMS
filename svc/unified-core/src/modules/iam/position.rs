@@ -61,8 +61,17 @@ pub async fn list_positions(
         r#"SELECT id, code, name, department_id, description FROM iam.positions ORDER BY name"#,
     )
     .fetch_all(&mut scope)
-    .await
-    .unwrap_or_default();
+    .await;
+    let rows = match rows {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询岗位列表失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询岗位列表失败",
+            ));
+        }
+    };
 
     let result: Vec<serde_json::Value> = rows
         .into_iter()
@@ -87,6 +96,7 @@ pub async fn list_positions(
 pub async fn create_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePositionRequest>,
 ) -> Json<serde_json::Value> {
     let position_id = Uuid::new_v4();
@@ -96,7 +106,25 @@ pub async fn create_position(
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or_else(Uuid::nil);
 
-    let result = sqlx::query(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位创建事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位创建事务作用域失败",
+            ));
+        }
+    };
+
+    if let Err(e) = sqlx::query(
         r#"INSERT INTO iam.positions (id, code, name, department_id, description, tenant_id) VALUES ($1, $2, $3, $4, $5, $6)"#,
     )
     .bind(position_id)
@@ -105,36 +133,47 @@ pub async fn create_position(
     .bind(req.department_id)
     .bind(&req.description)
     .bind(tenant_id)
-    .execute(&state.pool)
-    .await;
-
-    if result.is_err() {
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "创建岗位失败",
-        ));
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("创建岗位失败: {}", e);
+        return Json(topems_shared_core::response::error_value(500, "创建岗位失败"));
     }
 
     for perm in &req.permissions {
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"INSERT INTO iam.position_permissions (position_id, permission, tenant_id) VALUES ($1, $2, $3)"#,
         )
         .bind(position_id)
         .bind(perm)
         .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+        .execute(&mut scope)
+        .await
+        {
+            tracing::error!("写入岗位权限失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "创建岗位权限失败",
+            ));
+        }
     }
 
     for role_id in &req.role_ids {
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"INSERT INTO iam.position_roles (position_id, role_id, tenant_id) VALUES ($1, $2, $3)"#,
         )
         .bind(position_id)
         .bind(role_id)
         .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+        .execute(&mut scope)
+        .await
+        {
+            tracing::error!("写入岗位角色失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "创建岗位角色失败",
+            ));
+        }
     }
 
     Json(serde_json::json!({
@@ -180,34 +219,61 @@ pub async fn get_position(
     )
     .bind(id)
     .fetch_optional(&mut scope)
-    .await
-    .ok()
-    .flatten();
+    .await;
+    let row = match row {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询岗位详情失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询岗位详情失败",
+            ));
+        }
+    };
 
     let p = match row {
         Some(p) => p,
         None => return Json(topems_shared_core::response::error_value(404, "岗位不存在")),
     };
 
-    let permissions: Vec<String> =
-        sqlx::query(r#"SELECT permission FROM iam.position_permissions WHERE position_id = $1"#)
-            .bind(id)
-            .fetch_all(&state.pool)
-            .await
-            .unwrap_or_default()
+    let permissions = match sqlx::query(
+        r#"SELECT permission FROM iam.position_permissions WHERE position_id = $1"#,
+    )
+    .bind(id)
+    .fetch_all(&mut scope)
+    .await
+    {
+        Ok(r) => r
             .into_iter()
             .map(|r| r.get::<String, _>("permission"))
-            .collect();
+            .collect::<Vec<String>>(),
+        Err(e) => {
+            tracing::error!("查询岗位权限失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询岗位权限失败",
+            ));
+        }
+    };
 
-    let roles: Vec<Uuid> =
-        sqlx::query(r#"SELECT role_id FROM iam.position_roles WHERE position_id = $1"#)
+    let roles =
+        match sqlx::query(r#"SELECT role_id FROM iam.position_roles WHERE position_id = $1"#)
             .bind(id)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
-            .unwrap_or_default()
-            .into_iter()
-            .map(|r| r.get::<uuid::Uuid, _>("role_id"))
-            .collect();
+        {
+            Ok(r) => r
+                .into_iter()
+                .map(|r| r.get::<uuid::Uuid, _>("role_id"))
+                .collect::<Vec<Uuid>>(),
+            Err(e) => {
+                tracing::error!("查询岗位角色失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "查询岗位角色失败",
+                ));
+            }
+        };
 
     Json(serde_json::json!({
         "success": true,
@@ -256,85 +322,142 @@ pub async fn update_position(
     };
 
     let exists =
-        sqlx::query(r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#)
+        match sqlx::query(r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1"#)
             .bind(id)
             .fetch_optional(&mut scope)
             .await
-            .ok()
-            .flatten();
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询岗位失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "查询岗位失败",
+                ));
+            }
+        };
 
     if exists.is_none() {
         return Json(topems_shared_core::response::error_value(404, "岗位不存在"));
     }
 
-    drop(scope);
-    drop(guard);
-
     if let Some(name) = &req.name {
-        let _ = sqlx::query(r#"UPDATE iam.positions SET name = $1 WHERE id = $2"#)
+        if let Err(e) = sqlx::query(r#"UPDATE iam.positions SET name = $1 WHERE id = $2"#)
             .bind(name)
             .bind(id)
-            .execute(&state.pool)
-            .await;
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("更新岗位名称失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "更新岗位失败",
+            ));
+        }
     }
 
     if req.department_id.is_some() {
-        let _ = sqlx::query(r#"UPDATE iam.positions SET department_id = $1 WHERE id = $2"#)
+        if let Err(e) = sqlx::query(r#"UPDATE iam.positions SET department_id = $1 WHERE id = $2"#)
             .bind(req.department_id)
             .bind(id)
-            .execute(&state.pool)
-            .await;
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("更新岗位部门失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "更新岗位失败",
+            ));
+        }
     }
 
     if let Some(description) = &req.description {
-        let _ = sqlx::query(r#"UPDATE iam.positions SET description = $1 WHERE id = $2"#)
+        if let Err(e) = sqlx::query(r#"UPDATE iam.positions SET description = $1 WHERE id = $2"#)
             .bind(description)
             .bind(id)
-            .execute(&state.pool)
-            .await;
+            .execute(&mut scope)
+            .await
+        {
+            tracing::error!("更新岗位描述失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "更新岗位失败",
+            ));
+        }
     }
 
     if let Some(permissions) = &req.permissions {
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"DELETE FROM iam.position_permissions WHERE position_id = $1 AND tenant_id = $2"#,
         )
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+        .execute(&mut scope)
+        .await
+        {
+            tracing::error!("清理岗位权限失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "更新岗位权限失败",
+            ));
+        }
 
         for perm in permissions {
-            let _ = sqlx::query(
+            if let Err(e) = sqlx::query(
                 r#"INSERT INTO iam.position_permissions (position_id, permission, tenant_id) VALUES ($1, $2, $3)"#,
             )
             .bind(id)
             .bind(perm)
             .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("写入岗位权限失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "更新岗位权限失败",
+                ));
+            }
         }
     }
 
     if let Some(role_ids) = &req.role_ids {
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"DELETE FROM iam.position_roles WHERE position_id = $1 AND tenant_id = $2"#,
         )
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+        .execute(&mut scope)
+        .await
+        {
+            tracing::error!("清理岗位角色失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "更新岗位角色失败",
+            ));
+        }
 
         for role_id in role_ids {
-            let _ = sqlx::query(
+            if let Err(e) = sqlx::query(
                 r#"INSERT INTO iam.position_roles (position_id, role_id, tenant_id) VALUES ($1, $2, $3)"#,
             )
             .bind(id)
             .bind(role_id)
             .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+            .execute(&mut scope)
+            .await
+            {
+                tracing::error!("写入岗位角色失败: {}", e);
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "更新岗位角色失败",
+                ));
+            }
         }
     }
+
+    drop(scope);
+    drop(guard);
 
     get_position(State(state), Extension(txn_arc), Path(id)).await
 }
@@ -342,6 +465,7 @@ pub async fn update_position(
 pub async fn delete_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let tenant_id = claims
@@ -350,10 +474,28 @@ pub async fn delete_position(
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or_else(Uuid::nil);
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位删除事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位删除事务作用域失败",
+            ));
+        }
+    };
+
     let result = if claims.is_superuser {
         sqlx::query(r#"UPDATE iam.positions SET deleted_at = NOW() WHERE id = $1"#)
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
     } else {
         sqlx::query(
@@ -361,7 +503,7 @@ pub async fn delete_position(
         )
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     };
 
@@ -371,10 +513,14 @@ pub async fn delete_position(
             "message": "删除成功",
             "code": 200,
         })),
-        _ => Json(topems_shared_core::response::error_value(
-            404,
-            "删除岗位失败",
-        )),
+        Ok(_) => Json(topems_shared_core::response::error_value(404, "岗位不存在")),
+        Err(e) => {
+            tracing::error!("删除岗位失败: {}", e);
+            Json(topems_shared_core::response::error_value(
+                500,
+                "删除岗位失败",
+            ))
+        }
     }
 }
 

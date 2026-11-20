@@ -58,7 +58,7 @@
 
 | ID | 任务 | 当前读数 | 验收 |
 |---|---|---|---|
-| W7-A | 按「外层 Scope + 内层迁移」继续收口业务裸池，逐服务提交 | 164 处（11-20 复测；未登记跨租户裸池 0，剩余为已分类存量） | `check-pool-acquire.mjs` 该服务计数下降，行为等价测试绿 |
+| W7-A | 按「外层 Scope + 内层迁移」继续收口业务裸池，逐服务提交 | 150 处（11-20 复测；未登记跨租户裸池 0，剩余为已分类存量） | `check-pool-acquire.mjs` 该服务计数下降，行为等价测试绿 |
 | W7-B | 平台语料 5 表归一（币种、报表映射、角色模板、同步策略、项目类型），归入 DEC-15 | `docs/database/residual-ten-table-triage-2026-11-18.md:92` | 归一后租户仍可经平台通道读到 8/48/16/1 条 |
 | B43-09 ✅ | 非 HTTP 路径（定时任务/消息消费/CLI）中间件与租户上下文评估 | 2026-11-20 完成：新增 `docs/database/non-http-tenant-context-audit-2026-11-20.md`，覆盖事件消费 18 入口、Redis Stream、定时任务、WebSocket、CLI、启动预热；本轮修 SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道。DEC-04 后续已收口 ERP Payment*、应收/应付/入职应付/项目应收 DB 错误与 `InventoryUpdated` 跨租户写风险；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账同步已补齐缺租户失败与 DB 错误上抛；PM 审批/RD 项目/结算/员工变更改用租户作用域并按项目主键反查租户；SCM/SRM/WMS/RD/Portal 事件处理器同步改用租户作用域并上抛 DB 错误；EHS 租户前置改 `Result`、Finance 入职成本提交上抛、integration 同步日志改租户作用域并上抛写入失败、HRM 权限/岗位事件缺租户失败（缓存失效审计日志为观测性豁免） | 每类入口有租户上下文或显式豁免记录 ✅ |
 | W2-A1 ✅ | 移除 `SEARCH_PATH` 环境读取 | 实为 2 处（`shared-bootstrap/lib.rs` 的 legacy 入口与内层 fallback；`audit.rs` 那处已在此前改为必填 `schema_prefix` 消失）。已删除 legacy `bootstrap_service` 入口，内层只接受显式参数；17 个服务 main 全改 `bootstrap_service_with_search_path(&config, "<module path>")`；`embedded.rs` 显式传 `flow, public` | 全仓 `env::var("SEARCH_PATH")` = 0；`cargo check --workspace` 绿 |
@@ -310,7 +310,7 @@
 | E3-6 | W2-B4 lims+analytics | E3-5 | — | 同上 |
 | E3-7 | W2-B5 pdm+erp | E3-6 | — | 同上 |
 | E3-8 ✅ | W2-B6 其余模块 | E3-7 | — | 全仓 violations=0，baseline 已清空 |
-| E3-9 | W7-A 裸池收口（164，逐服务） | A1、A2、服务锁 | — | 该服务 `check-pool-acquire` 下降，等价测试绿 |
+| E3-9 | W7-A 裸池收口（150，逐服务） | A1、A2、服务锁 | — | 该服务 `check-pool-acquire` 下降，等价测试绿 |
 | E3-10 ✅ | W2-C1..C3 停直连 `erp.opening_balances` | E3-5 | — | 全仓 `erp.opening_balances` 引用=0，期初余额用例绿 |
 | E3-11 | W2-D1 零运行时 DDL 断言 | E3-8 | — | 断言上线并能拦住新增调用 |
 | E3-12 | W2-D2/D3 逐服务迁走运行期 DDL | E3-11 | — | `TABLE_DEFS` 只减不增 |
