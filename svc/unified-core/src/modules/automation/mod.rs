@@ -1083,37 +1083,6 @@ pub async fn update_variable(
         return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
     }
 
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
-    };
-    let mut rls_scope = match state.db.scope_with(txn).await {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("打开自动化变量写作用域失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal(
-                "打开自动化变量写作用域失败".to_string(),
-            ));
-        }
-    };
-    let exists = match sqlx::query_scalar::<_, i32>(
-        "SELECT 1 FROM public.automation_variables WHERE key = $1",
-    )
-    .bind(&key)
-    .fetch_optional(&mut rls_scope)
-    .await
-    {
-        Ok(Some(_)) => true,
-        Ok(None) => false,
-        Err(e) => {
-            tracing::error!("查询变量失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("更新变量失败".to_string()));
-        }
-    };
-    if !exists {
-        return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
-    }
-
     let var: Result<AutomationVariable, _> = sqlx::query_as(
         r#"UPDATE public.automation_variables SET
               value = COALESCE($2, value),
@@ -1158,37 +1127,6 @@ pub async fn delete_variable(
             tracing::error!("打开自动化变量作用域失败: {}", e);
             return ApiResponse::from(TopemsError::Internal(
                 "打开自动化变量作用域失败".to_string(),
-            ));
-        }
-    };
-    let exists = match sqlx::query_scalar::<_, i32>(
-        "SELECT 1 FROM public.automation_variables WHERE key = $1",
-    )
-    .bind(&key)
-    .fetch_optional(&mut rls_scope)
-    .await
-    {
-        Ok(Some(_)) => true,
-        Ok(None) => false,
-        Err(e) => {
-            tracing::error!("查询变量失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("删除变量失败".to_string()));
-        }
-    };
-    if !exists {
-        return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
-    }
-
-    let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
-        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
-    };
-    let mut rls_scope = match state.db.scope_with(txn).await {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("打开自动化变量写作用域失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal(
-                "打开自动化变量写作用域失败".to_string(),
             ));
         }
     };

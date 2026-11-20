@@ -3962,6 +3962,7 @@ pub async fn collect_tenant_usage(
 }
 
 #[cfg(test)]
+#[allow(clippy::mixed_attributes_style)]
 mod p1_company_tests {
     #![cfg(feature = "db-tests")]
     #![allow(clippy::unwrap_used, clippy::expect_used)]

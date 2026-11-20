@@ -172,6 +172,7 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
     let var: AutomationVariable = resp.data.unwrap();
 
     let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
     let resp = scope_request_tenant(
         ctx,
@@ -181,11 +182,11 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
     let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
 
-    let (cell, ctx) = rls_scope(&pool).await;
+    // 同一事务内复核：删除已生效，且读路径受 RLS 作用域约束。
     let state = test_app_state(pool);
     let resp = scope_request_tenant(
         ctx,
-        get_variable(State(state), Extension(cell), Path(var.key)),
+        get_variable(State(state), Extension(cell_clone), Path(var.key)),
     )
     .await;
     assert!(resp.data.is_none());
