@@ -13,7 +13,7 @@ use std::sync::Arc;
 use topems_pm::modules;
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_auth::tenant_middleware;
-use topems_shared_bootstrap::{bootstrap_service_shared, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
@@ -50,18 +50,6 @@ impl PmRealModule {
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
-
-        // 2. PM 数据库初始化（schema_defense 迁移验证，失败不阻塞）
-        if let Err(e) = default_init_db(
-            &ctx.db,
-            "pm",
-            true,
-            topems_pm::schema_defense::run_schema_migration_and_verify,
-        )
-        .await
-        {
-            tracing::warn!("PM 数据库初始化警告（不阻塞）: {}", e);
-        }
 
         // 3. 工作流服务客户端（构造失败则 pm 模块降级跳过）
         let jwt_secret = ctx.auth_state.jwt_secret.clone();

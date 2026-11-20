@@ -18,7 +18,6 @@ use utoipa::OpenApi;
 mod event_handlers;
 pub mod models;
 pub mod modules;
-pub mod schema_defense;
 pub mod services;
 pub mod shared;
 
@@ -64,11 +63,6 @@ async fn main() -> Result<()> {
         });
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
-
-    // ── 数据库初始化 ────────────────────────────────────────────────
-    if let Err(e) = init_db(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
 
     // ── 事件订阅者（失败不阻塞启动） ──────────────────────────────────
     if let Err(e) =
@@ -162,12 +156,5 @@ async fn main() -> Result<()> {
     }
 
     run(app).await?;
-    Ok(())
-}
-
-async fn init_db(pool: &sqlx::PgPool) -> topems_shared_core::error::Result<()> {
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[pm] Schema 防御检查失败: {:?}", e);
-    }
     Ok(())
 }

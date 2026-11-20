@@ -2713,3 +2713,17 @@ pending_forward_patches:
     effect: "把 gis 20 张 live 运行期表（工厂地图/设备定位/管线/库位/照片/业务地点/地图/图层/地理数据/地理要素/空间分析/位置/设备/设备定位记录/围栏/证据/轨迹与轨迹点/两类标记）以 live 形状固化，20 表 / 310 列 / 160 约束 / 44 索引 / 20 策略 / 20 RLS，五项 diff 为 0；删除 svc/gis/src/db/schema.rs（TABLE_DEFS 与 init_tables 运行时补列/自检）、src/schema_defense.rs 及 main、server gis_real_module 的启动调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 声明 20 张中 gis.audit_log 无迁移且 live 不存在，不重建；live 另有 gis.gis_map_markers 被 event_handlers 活跃写入，已一并固化。回滚 database/rollback/20261121120000_gis_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-21：pm 18 表收口 + 死表复活清理（W2-D2 第十八个模块） =====
+  - version: "20261121130000"
+    file: "database/migrations/20261121130000_pm_schema_canonical.sql"
+    status: to_apply
+    effect: "把 pm 18 张运行期表（项目/阶段/里程碑/成员/资源/费用/收益/预算/风险/审批/合同/质检/验收/结算/文档/项目类型配置/通知/任务）以 live 形状固化，18 表 / 332 列 / 192 约束 / 31 索引 / 19 策略 / 18 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 init_db 启动调用，server pm_real_module 移除 default_init_db"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 18 张全部 live 存在；live 另有 acceptance_*/contract_*/settlement_*/report_* 等 19 张由既有迁移维护，未纳入。回滚 database/rollback/20261121130000_pm_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+  - version: "20261121131000"
+    file: "database/migrations/20261121131000_pm_drop_resurrected_dead_tables.sql"
+    status: to_apply
+    effect: "幂等收尾：pm.pm_master_data_refs（batch2 已归档）若存在，count(*)=0 校验通过后 DROP TABLE（不带 CASCADE）；非空即 RAISE EXCEPTION"
+    destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch2 已归档的死表复活空表；先 count(*) 守卫；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "历史数据已在 archive.drop_20261119_b2__pm__pm_master_data_refs 保留 180 天。回滚 database/rollback/20261121131000_pm_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"

@@ -2,11 +2,11 @@
   "generated": "2026-11-20",
   "note": "运行期 DDL 只减不增基线（TODO W2-D1）。度量：tables/columns = TABLE_DEFS 声明数；ddl = SQL 字面量中的 CREATE TABLE|CREATE INDEX|CREATE SCHEMA|ALTER TABLE|DROP TABLE；callers = run_schema_migration_and_verify 调用次数。仅允许在下降后 --update-baseline 核销。",
   "totals": {
-    "files": 26,
-    "tables": 96,
-    "columns": 1499,
-    "ddl": 39,
-    "callers": 7
+    "files": 24,
+    "tables": 78,
+    "columns": 1265,
+    "ddl": 37,
+    "callers": 6
   },
   "files": {
     "lib/shared-db/src/audit.rs": {
@@ -115,18 +115,6 @@
       "tables": 18,
       "columns": 213,
       "ddl": 0,
-      "callers": 0
-    },
-    "svc/pm/src/main.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 0,
-      "callers": 1
-    },
-    "svc/pm/src/schema_defense.rs": {
-      "tables": 18,
-      "columns": 234,
-      "ddl": 2,
       "callers": 0
     },
     "svc/portal/src/modules/gateway_security.rs": {
