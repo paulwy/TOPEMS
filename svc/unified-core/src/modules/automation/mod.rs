@@ -1194,40 +1194,73 @@ pub async fn bulk_import_variables(
 // ─── Dashboard handlers ───────────────────────────────────────────────────────
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_dashboard_stats(State(state): State<AppState>) -> ApiResponse<DashboardStats> {
-    let total_rules: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_rules")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+pub async fn get_dashboard_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+) -> ApiResponse<DashboardStats> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化统计作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化统计作用域失败".to_string(),
+            ));
+        }
+    };
 
-    let enabled_rules: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_rules WHERE status = 'enabled'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    macro_rules! count {
+        ($sql:expr, $label:expr) => {
+            match sqlx::query_scalar::<_, i64>($sql)
+                .fetch_one(&mut rls_scope)
+                .await
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("{}失败: {}", $label, e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "查询自动化统计失败".to_string(),
+                    ));
+                }
+            }
+        };
+    }
 
-    let total_runs: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
-
-    let successful_runs: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs WHERE status = 'success'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
-
-    let failed_runs: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs WHERE status = 'failed'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
-
-    let running_runs: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_runs WHERE status = 'running'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total_rules = count!(
+        "SELECT COUNT(*) FROM public.automation_rules",
+        "统计规则总数"
+    );
+    let enabled_rules = count!(
+        "SELECT COUNT(*) FROM public.automation_rules WHERE status = 'enabled'",
+        "统计启用规则"
+    );
+    let total_runs = count!(
+        "SELECT COUNT(*) FROM public.automation_runs",
+        "统计运行总数"
+    );
+    let successful_runs = count!(
+        "SELECT COUNT(*) FROM public.automation_runs WHERE status = 'success'",
+        "统计成功运行"
+    );
+    let failed_runs = count!(
+        "SELECT COUNT(*) FROM public.automation_runs WHERE status = 'failed'",
+        "统计失败运行"
+    );
+    let running_runs = count!(
+        "SELECT COUNT(*) FROM public.automation_runs WHERE status = 'running'",
+        "统计运行中任务"
+    );
+    let total_variables = count!(
+        "SELECT COUNT(*) FROM public.automation_variables",
+        "统计变量总数"
+    );
+    let runs_today = count!(
+        "SELECT COUNT(*) FROM public.automation_runs WHERE created_at >= CURRENT_DATE",
+        "统计今日运行"
+    );
 
     let success_rate = if total_runs > 0 {
         (successful_runs as f64 / total_runs as f64) * 100.0
@@ -1235,25 +1268,20 @@ pub async fn get_dashboard_stats(State(state): State<AppState>) -> ApiResponse<D
         0.0
     };
 
-    let avg_duration: f64 = sqlx::query_scalar(
+    let avg_duration = match sqlx::query_scalar::<_, f64>(
         "SELECT COALESCE(AVG(duration_ms), 0) FROM public.automation_runs WHERE duration_ms IS NOT NULL",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await
-    .unwrap_or(0.0);
-
-    let total_variables: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.automation_variables")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
-
-    let runs_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.automation_runs WHERE created_at >= CURRENT_DATE",
-    )
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("统计平均耗时失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "查询自动化统计失败".to_string(),
+            ));
+        }
+    };
 
     ApiResponse::success(
         DashboardStats {
@@ -1350,13 +1378,28 @@ pub async fn get_designer_resources() -> ApiResponse<DesignerResources> {
 
 pub async fn get_designer_canvas(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(rule_id): Path<String>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化画布作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化画布作用域失败".to_string(),
+            ));
+        }
+    };
+
     let canvas: Result<Option<Value>, _> = sqlx::query_scalar(
         "SELECT canvas FROM public.automation_rules WHERE id::text = $1 OR code = $1",
     )
     .bind(&rule_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match canvas {
@@ -1377,20 +1420,51 @@ pub async fn get_designer_canvas(
 
 pub async fn save_designer_canvas(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(rule_id): Path<String>,
     Json(payload): Json<SaveCanvasRequest>,
 ) -> ApiResponse<Value> {
-    let result = sqlx::query(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化画布作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化画布作用域失败".to_string(),
+            ));
+        }
+    };
+
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_rules WHERE id::text = $1 OR code = $1",
+    )
+    .bind(&rule_id)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询规则失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("保存画布失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
+    }
+
+    match sqlx::query(
         "UPDATE public.automation_rules SET canvas = $2, updated_at = NOW() WHERE id::text = $1 OR code = $1",
     )
     .bind(&rule_id)
     .bind(&payload.canvas)
-    .execute(&state.pool)
-    .await;
-
-    match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(payload.canvas, "保存成功"),
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
+    .execute(&mut rls_scope)
+    .await
+    {
+        Ok(_) => ApiResponse::success(payload.canvas, "保存成功"),
         Err(e) => {
             tracing::error!("保存画布失败: {}", e);
             ApiResponse::from(TopemsError::Internal("保存画布失败".to_string()))
@@ -1408,21 +1482,52 @@ pub async fn validate_canvas(
 
 pub async fn sync_to_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(rule_id): Path<String>,
 ) -> ApiResponse<Value> {
-    let result = sqlx::query(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化画布作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化画布作用域失败".to_string(),
+            ));
+        }
+    };
+
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_rules WHERE id::text = $1 OR code = $1",
+    )
+    .bind(&rule_id)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询规则失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("同步失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
+    }
+
+    match sqlx::query(
         "UPDATE public.automation_rules SET updated_at = NOW() WHERE id::text = $1 OR code = $1",
     )
     .bind(&rule_id)
-    .execute(&state.pool)
-    .await;
-
-    match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(
+    .execute(&mut rls_scope)
+    .await
+    {
+        Ok(_) => ApiResponse::success(
             serde_json::json!({"success": true, "message": "已同步到规则定义"}),
             "同步成功",
         ),
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
         Err(e) => {
             tracing::error!("同步失败: {}", e);
             ApiResponse::from(TopemsError::Internal("同步失败".to_string()))
@@ -1432,13 +1537,28 @@ pub async fn sync_to_rule(
 
 pub async fn sync_from_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(rule_id): Path<String>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化画布作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化画布作用域失败".to_string(),
+            ));
+        }
+    };
+
     let canvas: Result<Option<Value>, _> = sqlx::query_scalar(
         "SELECT canvas FROM public.automation_rules WHERE id::text = $1 OR code = $1",
     )
     .bind(&rule_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match canvas {
