@@ -1147,16 +1147,16 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 
 | 指标 | 11-18 | 11-20 |
 | --- | --- | --- |
-| `&state.(db\|pool)` 命中 | 1922 | 1702 |
+| `&state.(db\|pool)` 命中 | 1922 | 1686 |
 | 已作用域化 | — | 537 |
 | 权限/审计/健康/元数据 | — | 1111 |
 | 业务带显式谓词 | — | 16 |
 | 业务无谓词 | — | 56 |
-| 业务无上下文 | — | 21 |
+| 业务无上下文 | — | 5 |
 | 业务后台内部 | — | 3 |
-| **业务裸池合计** | **340** | **55** |
+| **业务裸池合计** | **340** | **39** |
 
-> 11-20 IAM 收口后复核：剩余 58 处中，18 处为 `core_api_version_configs`（无 `tenant_id` 的平台版本配置），BI WebSocket 看板与组件读取已改为显式平台/租户只读作用域；2 处为 QMS `/api/internal/` 免 JWT 集成入口（显式平台哨兵），其余多为静态普查误报（函数内 `check_permission(&state.db)` 被计入，实际业务查询已走请求事务）。ERP sales_order/customer/purchase_order 已逐行核对，主查询均使用 `Extension(txn_arc)` + `scope_with`，无需再改。
+> 11-20 IAM 收口后复核：剩余 58 处中，`core_api_version_configs` 与 `core_plugin_instances` 已改显式平台只读/写作用域；BI WebSocket 看板与组件读取已改为显式平台/租户只读作用域；2 处为 QMS `/api/internal/` 免 JWT 集成入口（显式平台哨兵），其余多为静态普查误报（函数内 `check_permission(&state.db)` 被计入，实际业务查询已走请求事务）。ERP sales_order/customer/purchase_order 已逐行核对，主查询均使用 `Extension(txn_arc)` + `scope_with`，无需再改。
 
 本轮变化：
 

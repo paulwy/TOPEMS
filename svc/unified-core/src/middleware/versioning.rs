@@ -489,8 +489,19 @@ pub async fn list_versions(
 ) -> Json<crate::CoreResponse<Vec<ApiVersionConfigRecord>>> {
     tracing::info!("[Versioning] Listing all API versions");
 
+    let mut scope = match state.db.scope_read_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Versioning] 打开平台只读作用域失败: {}", e);
+            return Json(crate::CoreResponse::error(&format!(
+                "Failed to open platform read scope: {}",
+                e
+            )));
+        }
+    };
+
     let result = sqlx::query_as("SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM public.core_api_version_configs ORDER BY version")
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     match result {
@@ -511,11 +522,22 @@ pub async fn get_version(
 ) -> Json<crate::CoreResponse<Option<ApiVersionConfigRecord>>> {
     tracing::info!("[Versioning] Getting API version: {}", version);
 
+    let mut scope = match state.db.scope_read_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Versioning] 打开平台只读作用域失败: {}", e);
+            return Json(crate::CoreResponse::error(&format!(
+                "Failed to open platform read scope: {}",
+                e
+            )));
+        }
+    };
+
     let result = sqlx::query_as(
         "SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM public.core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
     )
     .bind(&version)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -537,12 +559,23 @@ pub async fn create_version(
 ) -> Json<crate::CoreResponse<ApiVersionConfigRecord>> {
     tracing::info!("[Versioning] Creating API version: {}", req.version);
 
+    let mut scope = match state.db.scope_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Versioning] 打开平台写作用域失败: {}", e);
+            return Json(crate::CoreResponse::error(&format!(
+                "Failed to open platform write scope: {}",
+                e
+            )));
+        }
+    };
+
     let is_current = req.is_current.unwrap_or(false);
     let is_default = req.is_default.unwrap_or(false);
 
     if is_current {
         if let Err(e) = sqlx::query("UPDATE public.core_api_version_configs SET is_current = false")
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
         {
             tracing::error!("[Versioning] Failed to update current version: {}", e);
@@ -555,7 +588,7 @@ pub async fn create_version(
 
     if is_default {
         if let Err(e) = sqlx::query("UPDATE public.core_api_version_configs SET is_default = false")
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
         {
             tracing::error!("[Versioning] Failed to update default version: {}", e);
@@ -582,11 +615,18 @@ pub async fn create_version(
     .bind(&req.changes)
     .bind(is_current)
     .bind(is_default)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(version) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[Versioning] 提交平台版本配置失败: {}", e);
+                return Json(crate::CoreResponse::error(&format!(
+                    "Failed to commit version config: {}",
+                    e
+                )));
+            }
             reload_version_config(&state).await;
             Json(crate::CoreResponse::success(version, "Version created"))
         }
@@ -607,6 +647,17 @@ pub async fn update_version_status(
 ) -> Json<crate::CoreResponse<ApiVersionConfigRecord>> {
     tracing::info!("[Versioning] Updating API version status: {}", version);
 
+    let mut scope = match state.db.scope_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Versioning] 打开平台写作用域失败: {}", e);
+            return Json(crate::CoreResponse::error(&format!(
+                "Failed to open platform write scope: {}",
+                e
+            )));
+        }
+    };
+
     let result = sqlx::query_as(
         r#"
         UPDATE public.core_api_version_configs
@@ -622,11 +673,18 @@ pub async fn update_version_status(
     .bind(&req.migration_guide)
     .bind(&req.changes)
     .bind(&version)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(version) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[Versioning] 提交平台版本配置失败: {}", e);
+                return Json(crate::CoreResponse::error(&format!(
+                    "Failed to commit version config: {}",
+                    e
+                )));
+            }
             reload_version_config(&state).await;
             Json(crate::CoreResponse::success(version, "Version updated"))
         }
@@ -646,16 +704,34 @@ pub async fn delete_version(
 ) -> Json<crate::CoreResponse<bool>> {
     tracing::info!("[Versioning] Deleting API version: {}", version);
 
+    let mut scope = match state.db.scope_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Versioning] 打开平台写作用域失败: {}", e);
+            return Json(crate::CoreResponse::error(&format!(
+                "Failed to open platform write scope: {}",
+                e
+            )));
+        }
+    };
+
     let result = sqlx::query(
         "UPDATE public.core_api_version_configs SET deleted_at = NOW() WHERE version = $1",
     )
     .bind(&version)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
+                if let Err(e) = scope.commit().await {
+                    tracing::error!("[Versioning] 提交平台版本配置失败: {}", e);
+                    return Json(crate::CoreResponse::error(&format!(
+                        "Failed to commit version config: {}",
+                        e
+                    )));
+                }
                 reload_version_config(&state).await;
                 Json(crate::CoreResponse::success(true, "Version deleted"))
             } else {
@@ -677,53 +753,64 @@ pub async fn get_version_statistics(
 ) -> Json<crate::CoreResponse<VersionStatistics>> {
     tracing::info!("[Versioning] Getting version statistics");
 
+    let mut scope = match state.db.scope_read_system().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Versioning] 打开平台只读作用域失败: {}", e);
+            return Json(crate::CoreResponse::error(&format!(
+                "Failed to open platform read scope: {}",
+                e
+            )));
+        }
+    };
+
     let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_api_version_configs")
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
     let active: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_api_version_configs WHERE deleted_at IS NULL AND status = 'active'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
     let deprecated: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM public.core_api_version_configs WHERE deleted_at IS NULL AND status = 'deprecated'",
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
     let sunset: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM public.core_api_version_configs WHERE deleted_at IS NULL AND status = 'sunset'")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
     let current_version: String =
         sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_current = true")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or_else(|_| "v1".to_string());
 
     let default_version: String =
         sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_default = true")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or_else(|_| "v1".to_string());
 
     let oldest_version: Option<String> = sqlx::query_scalar(
         "SELECT version FROM public.core_api_version_configs ORDER BY version ASC LIMIT 1",
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     let newest_version: Option<String> = sqlx::query_scalar(
         "SELECT version FROM public.core_api_version_configs ORDER BY version DESC LIMIT 1",
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 

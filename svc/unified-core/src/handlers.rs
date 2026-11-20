@@ -29,6 +29,13 @@ pub(crate) async fn plugin_proxy(
     request: Request<Body>,
 ) -> Result<Response, (StatusCode, String)> {
     // 1. 查询插件 runtime_url
+    // 插件实例为平台级注册表（无 tenant_id），使用显式平台只读通道。
+    let mut scope = state.db.scope_read_system().await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("open scope: {e}"),
+        )
+    })?;
     let plugin_info: Option<(String, String)> = sqlx::query_as(
         r#"
         SELECT pi.runtime_url, pi.base_path
@@ -38,9 +45,10 @@ pub(crate) async fn plugin_proxy(
         "#,
     )
     .bind(&plugin_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+    drop(scope);
 
     let (runtime_url, base_path) = match plugin_info {
         Some((url, path)) => (url, path),
