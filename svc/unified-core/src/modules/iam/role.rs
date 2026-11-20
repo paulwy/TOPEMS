@@ -29,7 +29,7 @@ fn is_unique_violation(err: &sqlx::Error) -> bool {
 /// - 非法/不存在的 ID -> 400；
 /// - 超出操作者自身权限集或平台层码 -> 403（租户管理员提权边界）。
 async fn resolve_permission_ids(
-    pool: &sqlx::PgPool,
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
     claims: &Claims,
     raw_ids: &[String],
 ) -> Result<Vec<Uuid>, Json<serde_json::Value>> {
@@ -53,7 +53,7 @@ async fn resolve_permission_ids(
         "SELECT id, code FROM public.core_permissions WHERE deleted_at IS NULL AND id = ANY($1)",
     )
     .bind(&unique)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     .map_err(|e| json_error(500, &format!("查询权限失败: {}", e)))?;
 
@@ -218,13 +218,6 @@ pub async fn create_role(
         return json_error(403, "不能创建系统内置角色");
     }
 
-    // 授权上限：任何调用者都不得授予平台层码或超出自身权限集的权限。
-    let resolved_permission_ids =
-        match resolve_permission_ids(&state.pool, &claims, &permission_ids).await {
-            Ok(ids) => ids,
-            Err(resp) => return resp,
-        };
-
     let role_id = Uuid::new_v4();
     let tenant_id = match scope {
         IamScope::Platform => claims
@@ -260,6 +253,16 @@ pub async fn create_role(
             ));
         }
     };
+
+    // 授权上限：任何调用者都不得授予平台层码或超出自身权限集的权限。
+    let resolved_permission_ids =
+        match resolve_permission_ids(&mut tx, &claims, &permission_ids).await {
+            Ok(ids) => ids,
+            Err(resp) => {
+                let _ = tx.rollback().await;
+                return resp;
+            }
+        };
 
     // 检查角色名是否已存在（在作用域内检查：租户通道能看到本租户角色 + 全局角色）
     let exists: bool = match sqlx::query_scalar(
@@ -517,14 +520,6 @@ pub async fn update_role(
         },
     };
 
-    let resolved_permission_ids = match &permission_ids {
-        Some(ids) => match resolve_permission_ids(&state.pool, &claims, ids).await {
-            Ok(ids) => Some(ids),
-            Err(resp) => return resp,
-        },
-        None => None,
-    };
-
     // 作用域写事务：core_roles 为 FORCE RLS，裸池事务在严格策略下会 0 行更新。
     let mut guard = txn_arc.lock().await;
     let tx_result = match scope {
@@ -543,6 +538,17 @@ pub async fn update_role(
             tracing::error!("开始角色写事务失败: {}", e);
             return json_error(500, &format!("更新角色失败: {}", e));
         }
+    };
+
+    let resolved_permission_ids = match &permission_ids {
+        Some(ids) => match resolve_permission_ids(&mut tx, &claims, ids).await {
+            Ok(ids) => Some(ids),
+            Err(resp) => {
+                let _ = tx.rollback().await;
+                return resp;
+            }
+        },
+        None => None,
     };
 
     // 事务内读取当前名称：既做保留名校验，也在角色被并发删除时回 404。
@@ -966,12 +972,37 @@ pub async fn add_role_permission(
     if let Some(id) = payload.get("permission_id").and_then(|v| v.as_str()) {
         raw_ids.push(id.to_string());
     }
+    let mut guard = txn_arc.lock().await;
+    let tx_result = match scope {
+        IamScope::Platform => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with_system(txn).await
+        }
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return json_error(500, "数据库事务上下文缺失");
+            };
+            state.db.scope_with(txn).await
+        }
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("开始角色权限授权事务失败: {}", e);
+            return json_error(500, &format!("角色权限授权失败: {}", e));
+        }
+    };
+
     if let Some(code) = payload.get("permission_code").and_then(|v| v.as_str()) {
         let id: Option<Uuid> = sqlx::query_scalar(
             "SELECT id FROM public.core_permissions WHERE code = $1 AND deleted_at IS NULL",
         )
         .bind(code)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut tx)
         .await
         .ok()
         .flatten();
@@ -986,16 +1017,11 @@ pub async fn add_role_permission(
     }
 
     // 授权上限：租户管理员只能授予自身权限集内、且非平台层的权限。
-    let permission_ids = match resolve_permission_ids(&state.pool, &claims, &raw_ids).await {
+    let permission_ids = match resolve_permission_ids(&mut tx, &claims, &raw_ids).await {
         Ok(ids) => ids,
-        Err(resp) => return resp,
-    };
-
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("开始事务失败: {}", e);
-            return json_error(500, &format!("角色权限授权失败: {}", e));
+        Err(resp) => {
+            let _ = tx.rollback().await;
+            return resp;
         }
     };
 
@@ -1005,7 +1031,7 @@ pub async fn add_role_permission(
         )
         .bind(role_uuid)
         .bind(permission_id)
-        .execute(&mut *tx)
+        .execute(&mut tx)
         .await
         {
             let _ = tx.rollback().await;

@@ -8,10 +8,10 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::sync::{Arc, RwLock};
+use topems_shared_db::ScopedTxn;
 use utoipa::ToSchema;
 
 use crate::AppState;
@@ -154,10 +154,10 @@ impl VersionConfig {
             .unwrap_or(false)
     }
 
-    pub async fn load_from_db(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
+    pub async fn load_from_db(&mut self, scope: &mut ScopedTxn<'_>) -> Result<(), sqlx::Error> {
         let configs: Vec<ApiVersionConfigRecord> =
             sqlx::query_as("SELECT id, version, status, deprecated_since, sunset_date, message, migration_guide, changes, is_current, is_default, created_at, updated_at, deleted_at FROM public.core_api_version_configs WHERE deleted_at IS NULL")
-                .fetch_all(pool)
+                .fetch_all(&mut *scope)
                 .await?;
 
         self.versions.clear();
@@ -829,21 +829,28 @@ pub async fn get_version_statistics(
 }
 
 async fn reload_version_config(state: &AppState) {
+    let mut scope = match state.db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[Versioning] Failed to open platform read scope: {}", e);
+            return;
+        }
+    };
     let mut config = VersionConfig::default();
-    if let Err(e) = config.load_from_db(&state.pool).await {
+    if let Err(e) = config.load_from_db(&mut scope).await {
         tracing::error!("[Versioning] Failed to reload version config: {}", e);
         return;
     }
 
     let current: Option<String> =
         sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_current = true")
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
 
     let default: Option<String> =
         sqlx::query_scalar("SELECT version FROM public.core_api_version_configs WHERE deleted_at IS NULL AND is_default = true")
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
 
@@ -853,6 +860,7 @@ async fn reload_version_config(state: &AppState) {
     if let Some(v) = default {
         config.default_version = v;
     }
+    drop(scope);
 
     state.versioning_middleware.update_config(config);
 }

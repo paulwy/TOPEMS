@@ -118,7 +118,7 @@ fn hash_token(token: &str) -> String {
 /// - 写失败已在 `record_login_event` 内输出 ERROR + 指标，这里显式消费 Result，
 ///   不再用 `let _ =` 静默丢弃，但不把审计故障升级成 500（避免审计库抖动导致全站无法登录）。
 async fn record_failed_login(
-    pool: &sqlx::PgPool,
+    db: &topems_shared_db::Db,
     user_id: Option<Uuid>,
     username: &str,
     ip_address: Option<&str>,
@@ -126,7 +126,7 @@ async fn record_failed_login(
     reason: &str,
 ) {
     if record_login_event(
-        pool,
+        db,
         topems_shared_auth::middleware::tenant_scope::PLATFORM_TENANT_ID,
         user_id,
         username,
@@ -244,7 +244,7 @@ pub async fn login(
 
     if username.is_empty() || password.is_empty() {
         record_failed_login(
-            &state.pool,
+            &state.db,
             None,
             username,
             ip_addr_opt,
@@ -292,7 +292,7 @@ pub async fn login(
         Ok(None) => {
             tracing::warn!("Login failed: user not found - {}", username);
             record_failed_login(
-                &state.pool,
+                &state.db,
                 None,
                 username,
                 ip_addr_opt,
@@ -312,7 +312,7 @@ pub async fn login(
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
             record_failed_login(
-                &state.pool,
+                &state.db,
                 None,
                 username,
                 ip_addr_opt,
@@ -334,7 +334,7 @@ pub async fn login(
     if !user.is_active {
         tracing::warn!("Login failed: user is not active - {}", username);
         record_failed_login(
-            &state.pool,
+            &state.db,
             Some(user.id),
             &user.username,
             ip_addr_opt,
@@ -355,7 +355,7 @@ pub async fn login(
     if !verify_password(password, &user.password_hash) {
         tracing::warn!("Login failed: invalid password for user - {}", username);
         record_failed_login(
-            &state.pool,
+            &state.db,
             Some(user.id),
             &user.username,
             ip_addr_opt,

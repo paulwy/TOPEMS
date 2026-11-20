@@ -2,7 +2,6 @@ use crate::modules::iam::tenant_scope::{self, IamScope};
 use crate::AppState;
 use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
@@ -33,6 +32,7 @@ pub struct VerifyPermissionResponse {
     )
 )]
 pub async fn verify_permission(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<VerifyPermissionRequest>,
@@ -46,7 +46,37 @@ pub async fn verify_permission(
             ));
         }
     };
-    let result = verify_user_permission(&state.pool, &user_id, &req.permission).await;
+    let scope_kind = match tenant_scope::iam_read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                403,
+                "缺少租户上下文",
+            ))
+        }
+    };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let scope = match scope_kind {
+        IamScope::Platform => state.db.scope_with_system(txn).await,
+        IamScope::Tenant(_) => state.db.scope_with(txn).await,
+    };
+    let mut scope = match scope {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开权限校验作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "权限校验失败",
+            ));
+        }
+    };
+    let result = verify_user_permission(&mut scope, &user_id, &req.permission).await;
     let permission = req.permission.clone();
 
     Json(serde_json::json!({
@@ -84,6 +114,7 @@ pub struct VerifyMultiplePermissionsResponse {
     )
 )]
 pub async fn verify_multiple_permissions(
+    Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<VerifyMultiplePermissionsRequest>,
@@ -98,10 +129,40 @@ pub async fn verify_multiple_permissions(
         }
     };
 
+    let scope_kind = match tenant_scope::iam_read_scope(&claims) {
+        Ok(scope) => scope,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                403,
+                "缺少租户上下文",
+            ))
+        }
+    };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let scope = match scope_kind {
+        IamScope::Platform => state.db.scope_with_system(txn).await,
+        IamScope::Tenant(_) => state.db.scope_with(txn).await,
+    };
+    let mut scope = match scope {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("打开批量权限校验作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "权限校验失败",
+            ));
+        }
+    };
     let mut results = Vec::new();
 
     for permission in req.permissions {
-        let has_permission = verify_user_permission(&state.pool, &user_id, &permission).await;
+        let has_permission = verify_user_permission(&mut scope, &user_id, &permission).await;
         results.push(VerifyPermissionResponse {
             has_permission,
             permission: permission.clone(),
@@ -127,13 +188,17 @@ pub async fn verify_multiple_permissions(
     }))
 }
 
-async fn verify_user_permission(pool: &PgPool, user_id: &Uuid, permission_code: &str) -> bool {
+async fn verify_user_permission(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+    user_id: &Uuid,
+    permission_code: &str,
+) -> bool {
     // 超级管理员拥有所有权限
     let is_superuser: Option<bool> = sqlx::query_scalar(
         "SELECT is_superuser FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
     .ok()
     .flatten();
@@ -156,7 +221,7 @@ async fn verify_user_permission(pool: &PgPool, user_id: &Uuid, permission_code: 
     )
     .bind(user_id)
     .bind(permission_code)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await
     .unwrap_or(0);
 

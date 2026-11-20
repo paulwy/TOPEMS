@@ -379,7 +379,7 @@ where
 /// 写失败不再静默：输出 ERROR 结构化日志（`audit_write_failed=true`）并累加
 /// `topems_audit_write_failures_total{kind="login_log"}`，便于在 /metrics 与日志侧告警。
 pub async fn record_login_event(
-    pool: &sqlx::PgPool,
+    db: &topems_shared_db::Db,
     tenant_id: Uuid,
     user_id: Option<Uuid>,
     username: &str,
@@ -390,7 +390,6 @@ pub async fn record_login_event(
 ) -> Result<(), sqlx::Error> {
     // 后台/失败路径没有请求事务上下文：用系统写作用域（显式 nil 租户），
     // 否则严格 RLS 会拒绝裸池写入（表现为 login_log 审计计数上涨）。
-    let db = topems_shared_db::scope::Db::new(pool.clone(), "public, shared");
     let result = async {
         let mut scope = db.scope_system().await?;
         insert_login_log(
