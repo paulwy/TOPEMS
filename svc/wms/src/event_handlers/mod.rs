@@ -75,8 +75,9 @@ impl WmsEventHandlers {
             payload.order_no
         );
         let tenant_id = require_event_tenant(&event)?.get();
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "wms, public");
         store_po_snapshot(
-            &self.db,
+            &db,
             payload.order_id,
             payload.order_no,
             payload.supplier_id,
@@ -102,8 +103,9 @@ impl WmsEventHandlers {
             payload.order_no
         );
         let tenant_id = require_event_tenant(&event)?.get();
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "wms, public");
         store_po_snapshot(
-            &self.db,
+            &db,
             payload.order_id,
             payload.order_no,
             payload.supplier_id,
@@ -404,7 +406,7 @@ fn _wms_event_type_markers() {
 }
 
 async fn store_po_snapshot(
-    db: &PgPool,
+    scope_db: &topems_shared_db::scope::Db,
     id: uuid::Uuid,
     order_number: String,
     supplier_id: Option<uuid::Uuid>,
@@ -419,7 +421,6 @@ async fn store_po_snapshot(
     let now = chrono::Utc::now();
     // 事件消费不经过租户中间件，没有 `app.tenant_id`；M1 起策略 fail-closed，
     // 必须显式开租户作用域。租户由调用方 require_event_tenant 校验，缺失不会到达这里。
-    let scope_db = topems_shared_db::scope::Db::new(db.clone(), "wms, public");
     // wms-short-txn-exempt: B-02 后台事件消费（不经请求中间件、无请求事务；按快照租户开独立短事务）
     let mut scope = scope_db.scope_for_tenant(tenant_id).await.map_err(|e| {
         TopemsError::DatabaseTransaction(format!(

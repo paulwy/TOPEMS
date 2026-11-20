@@ -55,10 +55,22 @@ impl HrmEventHandlers {
         let now = Utc::now();
         let log_id = uuid::Uuid::new_v4();
 
-        let result = sqlx::query_scalar::<_, uuid::Uuid>(
+        // 审计日志也必须落在事件租户作用域内，避免裸池跨租户写；失败仍按观测性豁免降级。
+        let db = topems_shared_db::scope::Db::new(self.db.clone(), "hrm, public");
+        let mut scope = match db.scope_for_tenant(tenant_id).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::warn!(
+                    "[hrm] 缓存失效记录开作用域失败（观测性日志降级，已登记豁免）: {}",
+                    e
+                );
+                return uuid::Uuid::nil();
+            }
+        };
+
+        let result = sqlx::query(
             "INSERT INTO hrm.hrm_cache_invalidation_logs (id, cache_type, cache_key, operation, source_event, invalidated_at, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             RETURNING id",
+             VALUES ($1, $2, $3, $4, $5, $6, $7)",
         )
         .bind(log_id)
         .bind(cache_type)
@@ -67,19 +79,26 @@ impl HrmEventHandlers {
         .bind(source_event)
         .bind(now)
         .bind(tenant_id)
-        .fetch_one(&self.db)
+        .execute(&mut scope)
         .await;
 
         match result {
-            Ok(id) => {
+            Ok(_) => {
+                if let Err(e) = scope.commit().await {
+                    tracing::warn!(
+                        "[hrm] 缓存失效记录提交失败（观测性日志降级，已登记豁免）: {}",
+                        e
+                    );
+                    return uuid::Uuid::nil();
+                }
                 tracing::info!(
                     "[hrm] 缓存失效记录成功: type={}, key={}, op={}, id={}",
                     cache_type,
                     cache_key,
                     operation,
-                    id
+                    log_id
                 );
-                id
+                log_id
             }
             Err(e) => {
                 tracing::warn!(
