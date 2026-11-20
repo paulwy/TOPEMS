@@ -95,7 +95,8 @@ async fn handle_dashboard_socket(
             }
         }
     } else {
-        match state.db.scope_read_for_tenant(tenant_id).await {
+        // stream-exempt: 长连接短读，不复用请求事务
+        match state.db.scope_read_for_tenant_stream(tenant_id).await {
             Ok(s) => s,
             Err(e) => {
                 warn!("Failed to open tenant read scope for dashboard: {}", e);

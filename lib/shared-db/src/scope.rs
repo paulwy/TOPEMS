@@ -221,6 +221,19 @@ impl Db {
     /// nil 租户（否则超管/服务身份会静默读写公共行）。
     pub async fn scope_read_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
         self.guard_request_tenant_scope("scope_read_for_tenant")?;
+        self.open_read_for_tenant(tenant).await
+    }
+
+    /// 长连接/流式消费专用租户读作用域：**跳过请求上下文守卫**。
+    ///
+    /// 仅限 WebSocket 订阅循环这类「一个请求跨越大量短读事务」的场景：请求事务会
+    /// 被长连接整段占住，不能复用。普通请求 handler 一律用 [`Db::scope_with`]。
+    /// 静态门禁只允许该入口出现在 WebSocket 实现文件中。
+    pub async fn scope_read_for_tenant_stream(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
+        self.open_read_for_tenant(tenant).await
+    }
+
+    async fn open_read_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
         if tenant.is_nil() {
             return Err(sqlx::Error::Protocol(
                 "RLS context missing: scope_read_for_tenant 收到 nil 租户；\
@@ -633,5 +646,36 @@ mod tenant_guard_tests {
                 "请求上下文内自开租户作用域应被拒绝，实际: {err:?}"
             );
         }
+    }
+
+    /// B3：长连接流式入口必须跳过请求租户守卫（否则 WebSocket 订阅无法短读）。
+    #[tokio::test]
+    async fn stream_scope_bypasses_request_tenant_guard() {
+        let Ok(pool) = PgPoolOptions::new()
+            .acquire_timeout(std::time::Duration::from_millis(200))
+            .connect_lazy("postgres://u:p@127.0.0.1:1/none")
+        else {
+            return;
+        };
+        let db = Db::new(pool, "bi, public").deny_request_tenant_scope();
+        let ctx = topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant: Uuid::new_v4(),
+            system: false,
+        };
+        let tenant = ctx.tenant;
+
+        let Some(err) = topems_shared_auth::middleware::tenant::scope_request_tenant(ctx, async {
+            db.scope_read_for_tenant_stream(tenant).await.err()
+        })
+        .await
+        else {
+            return;
+        };
+
+        // 连接必然失败（假地址）；关键是错误不是守卫的 Protocol("禁止")。
+        assert!(
+            !matches!(&err, sqlx::Error::Protocol(m) if m.contains("禁止")),
+            "流式入口不应被请求守卫拦截，实际: {err:?}"
+        );
     }
 }

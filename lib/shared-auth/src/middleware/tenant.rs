@@ -7,7 +7,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use prometheus::{register_int_counter_vec, IntCounterVec};
+use prometheus::{register_histogram_vec, register_int_counter_vec, HistogramVec, IntCounterVec};
 use sqlx::PgPool;
 use std::sync::OnceLock;
 use uuid::Uuid;
@@ -17,6 +17,36 @@ use uuid::Uuid;
 /// GUC 的查询。
 pub type RlsTxnCell =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
+/// 请求事务总耗时（秒）——按成功/失败分标签，供 P99 与长事务告警消费。
+pub static RLS_REQUEST_TXN_DURATION: OnceLock<HistogramVec> = OnceLock::new();
+/// 请求事务计数——按 success / error 分标签。
+pub static RLS_REQUEST_TXN_TOTAL: OnceLock<IntCounterVec> = OnceLock::new();
+
+#[allow(clippy::expect_used)]
+fn rls_request_txn_duration_metric() -> &'static HistogramVec {
+    RLS_REQUEST_TXN_DURATION.get_or_init(|| {
+        register_histogram_vec!(
+            "topems_rls_request_txn_duration_seconds",
+            "Request-scoped RLS transaction duration in seconds",
+            &["outcome"],
+            vec![0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0]
+        )
+        .expect("failed to register topems_rls_request_txn_duration_seconds")
+    })
+}
+
+#[allow(clippy::expect_used)]
+fn rls_request_txn_total_metric() -> &'static IntCounterVec {
+    RLS_REQUEST_TXN_TOTAL.get_or_init(|| {
+        register_int_counter_vec!(
+            "topems_rls_request_txn_total",
+            "Request-scoped RLS transaction count by outcome",
+            &["outcome"]
+        )
+        .expect("failed to register topems_rls_request_txn_total")
+    })
+}
 
 /// 请求的 RLS 租户上下文（供 `shared-db::Db` 的独立作用域事务使用）。
 ///
@@ -643,6 +673,7 @@ pub fn tenant_middleware() -> impl Fn(
                 Err(resp) => return resp,
             };
 
+            let txn_started = std::time::Instant::now();
             let mut txn = match pool.begin().await {
                 Ok(t) => t,
                 Err(e) => {
@@ -687,7 +718,20 @@ pub fn tenant_middleware() -> impl Fn(
                     REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req)),
                 )
                 .await;
-            finish_response(resp, txn_cell, &method, &path, finalizers, post_commit).await
+            let response =
+                finish_response(resp, txn_cell, &method, &path, finalizers, post_commit).await;
+            let outcome = if response.status().is_success() {
+                "success"
+            } else {
+                "error"
+            };
+            rls_request_txn_duration_metric()
+                .with_label_values(&[outcome])
+                .observe(txn_started.elapsed().as_secs_f64());
+            rls_request_txn_total_metric()
+                .with_label_values(&[outcome])
+                .inc();
+            response
         })
     }
 }

@@ -10,6 +10,7 @@ use axum::{
 };
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::{require_module_access, require_permission};
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::error::TopemsError;
@@ -900,6 +901,7 @@ fn activity_display_name(action: &str) -> String {
 pub async fn reports_center_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     // Dashboard summary stats — 用户口径以 iam.users 为唯一真相源，经
     // public.core_tenant_users 落到租户；public.core_users 是 0 行孤儿镜像，
@@ -922,7 +924,11 @@ pub async fn reports_center_stats(
         }
     };
 
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::error(500, "数据库事务上下文缺失");
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("[analytics] 打开只读作用域失败: {}", e);

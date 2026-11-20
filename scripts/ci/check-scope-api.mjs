@@ -52,6 +52,8 @@ const SKIP_DIRS = new Set(['target', 'node_modules', '.git', 'vendor', 'dist', '
 
 const SCOPE_CALL_RE = /(?:\.|Db::)scope_for_tenant\s*\(/g;
 const DB_NEW_RE = /\bDb::new\s*\(/g;
+const STREAM_SCOPE_RE = /\.scope_read_for_tenant_stream\s*\(/g;
+const STREAM_ALLOWED_FILES = new Set(['svc/analytics/src/modules/bi/websocket.rs']);
 const EXEMPT_RE = /\/\/\s*scope-exempt:\s*(\S.*?)\s*$/m;
 
 const EXEMPT_REASONS = [
@@ -202,7 +204,7 @@ if (
   staged = null;
 }
 
-const current = { scope: {}, dbNew: {} };
+const current = { scope: {}, dbNew: {}, streamScope: {} };
 const violations = [];
 const decreases = [];
 
@@ -253,6 +255,21 @@ for (const abs of allFiles) {
     };
   }
   if (dbNewLines.length > 0) current.dbNew[rel] = { total: dbNewLines.length, lines: dbNewLines };
+
+  const streamLines = [];
+  codeLines.forEach((line, idx) => {
+    if (countMatches(line, STREAM_SCOPE_RE) > 0) streamLines.push(idx + 1);
+  });
+  if (streamLines.length > 0) {
+    current.streamScope[rel] = { total: streamLines.length, lines: streamLines };
+    if (!STREAM_ALLOWED_FILES.has(rel)) {
+      violations.push({
+        kind: 'scope_read_for_tenant_stream',
+        file: rel,
+        lines: streamLines,
+      });
+    }
+  }
 }
 
 // ── 5. 与基线比对 ───────────────────────────────────────────────────────────
@@ -331,6 +348,7 @@ const summary = {
     baseline_unmarked: baseUnmarked,
   },
   db_new: { total: curDbNew, baseline: baseDbNewTotal },
+  stream_scope: Object.values(current.streamScope).reduce((n, v) => n + v.total, 0),
   changed_only: CHANGED_ONLY,
 };
 
@@ -381,7 +399,8 @@ if (JSON_MODE) {
   console.log(
     `[scope-api] 扫描 ${summary.scanned_files} 个文件：scope_for_tenant 调用 ${curTotal} ` +
       `（已豁免 ${curMarked}，未标记 ${curUnmarked}/基线 ${baseUnmarked}），` +
-      `Db::new ${curDbNew}/基线 ${baseDbNewTotal}`
+      `Db::new ${curDbNew}/基线 ${baseDbNewTotal}，` +
+      `stream 专用入口 ${summary.stream_scope}`
   );
   if (decreases.length) {
     console.log(`[scope-api] ↓ 检测到 ${decreases.length} 项下降（可 --update-baseline 核销）：`);

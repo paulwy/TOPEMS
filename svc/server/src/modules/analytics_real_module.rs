@@ -59,7 +59,8 @@ impl AnalyticsRealModule {
         let app_state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
-            db: topems_shared_db::Db::new(ctx.db.clone(), "bi, public, shared"),
+            db: topems_shared_db::Db::new(ctx.db.clone(), "bi, public, shared")
+                .deny_request_tenant_scope(),
             health_config,
         };
 

@@ -98,6 +98,7 @@ pub struct RetrySyncResponse {
 pub async fn list_sync_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Query(query): Query<SyncRecordQuery>,
 ) -> Json<serde_json::Value> {
     info!("Listing BI sync records with query: {:?}", query);
@@ -112,7 +113,14 @@ pub async fn list_sync_records(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -262,6 +270,7 @@ pub async fn list_sync_records(
 pub async fn get_sync_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting BI sync record: {}", id);
@@ -276,7 +285,14 @@ pub async fn get_sync_record(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             return Json(topems_shared_core::response::error_value(
@@ -432,7 +448,15 @@ pub async fn create_sync_record(
         ));
     }
 
-    match get_sync_record(State(state.clone()), Extension(claims.clone()), Path(id)).await {
+    drop(txn_guard);
+    match get_sync_record(
+        State(state.clone()),
+        Extension(claims.clone()),
+        Extension(txn_cell.clone()),
+        Path(id),
+    )
+    .await
+    {
         Json(value) => Json(serde_json::json!({
             "success": true,
             "message": "Create sync record",
@@ -526,7 +550,15 @@ pub async fn update_sync_record(
                     &format!("Failed to update sync record: {}", e),
                 ));
             }
-            match get_sync_record(State(state.clone()), Extension(claims.clone()), Path(id)).await {
+            drop(txn_guard);
+            match get_sync_record(
+                State(state.clone()),
+                Extension(claims.clone()),
+                Extension(txn_cell.clone()),
+                Path(id),
+            )
+            .await
+            {
                 Json(value) => Json(serde_json::json!({
                     "success": true,
                     "message": "Update sync record",
@@ -735,13 +767,22 @@ pub async fn retry_sync(
         ));
     }
 
-    let refreshed =
-        match get_sync_record(State(state.clone()), Extension(claims.clone()), Path(id)).await {
+    let refreshed = {
+        drop(txn_guard);
+        match get_sync_record(
+            State(state.clone()),
+            Extension(claims.clone()),
+            Extension(txn_cell.clone()),
+            Path(id),
+        )
+        .await
+        {
             Json(value) => value
                 .get("data")
                 .cloned()
                 .unwrap_or(serde_json::Value::Null),
-        };
+        }
+    };
 
     Json(serde_json::json!({
         "success": true,

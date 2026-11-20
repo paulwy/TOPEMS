@@ -120,6 +120,7 @@ pub fn create_write_routes() -> Router<AppState> {
 pub async fn list_datasets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Query(params): Query<ListDatasetQuery>,
 ) -> ApiResponse<ListResponse<Dataset>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -137,7 +138,11 @@ pub async fn list_datasets(
             return ApiResponse::from(TopemsError::ValidationFailed(message));
         }
     };
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::error(500, "数据库事务上下文缺失");
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             warn!("打开只读作用域失败: {}", e);
@@ -203,6 +208,7 @@ pub async fn list_datasets(
 pub async fn get_dataset(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let tenant_scope = match TenantScope::from_claims(
@@ -215,7 +221,14 @@ pub async fn get_dataset(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             warn!("打开只读作用域失败: {}", e);
@@ -727,6 +740,7 @@ pub async fn refresh_dataset(
 pub async fn get_dataset_preview(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Query(params): Query<LimitQuery>,
 ) -> Json<serde_json::Value> {
@@ -742,7 +756,14 @@ pub async fn get_dataset_preview(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             warn!("打开只读作用域失败: {}", e);
@@ -801,6 +822,7 @@ pub async fn get_dataset_preview(
 pub async fn query_dataset(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_cell): Extension<RlsTxnCell>,
     Json(params): Json<DatasetQueryParams>,
 ) -> Json<serde_json::Value> {
     let dataset_id = match params.dataset_id {
@@ -824,7 +846,14 @@ pub async fn query_dataset(
             return Json(topems_shared_core::response::error_value(400, &message));
         }
     };
-    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope).await {
+    let mut txn_guard = txn_cell.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut db_scope = match crate::shared::open_read_scope(&state.db, &tenant_scope, txn).await {
         Ok(scope) => scope,
         Err(e) => {
             warn!("打开只读作用域失败: {}", e);
