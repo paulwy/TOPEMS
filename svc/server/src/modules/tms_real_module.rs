@@ -51,10 +51,7 @@ impl TmsRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. TMS 数据库初始化（含 schema_defense 迁移验证，失败不阻塞）
-        if let Err(e) = topems_tms::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
-            tracing::warn!("TMS 数据库初始化警告（不阻塞）: {}", e);
-        }
+        // 2. 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
 
         // 3. 构建业务 AppState（与独立部署 main.rs 一致）
         //    多级缓存初始化（L1: moka + L2: Redis，server 嵌入未配置 Redis 时降级纯 L1）

@@ -1,5 +1,4 @@
 mod models;
-mod schema_defense;
 mod shared;
 
 pub mod modules;
@@ -13,7 +12,7 @@ use utoipa::OpenApi;
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_shared, build_application, create_health_state,
-    create_standard_health_routes, default_init_db, run, ServiceConfig,
+    create_standard_health_routes, run, ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
@@ -40,16 +39,7 @@ async fn main() -> Result<()> {
 
     let ctx = bootstrap_service_shared(&config).await?;
 
-    if let Err(e) = default_init_db(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-        "tms",
-        false,
-        schema_defense::run_schema_migration_and_verify,
-    )
-    .await
-    {
-        tracing::warn!("数据库初始化警告: {}", e);
-    }
+    // 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
 
     // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
     // M-1 试点：请求上下文内禁止自开事务（scope / scope_read），必须复用请求事务

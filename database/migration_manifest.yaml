@@ -2561,3 +2561,11 @@ pending_forward_patches:
     effect: "删除 ai.document_chunks 上定义与 idx_document_chunks_document_id 完全相同的冗余 btree 索引 idx_chunks_document_id（旧 schema_defense 遗留）；保留迁移链命名版本，新库由 20261120110000 只建一份"
     destructive_scan: "仅 DROP INDEX IF EXISTS 一条；无 DROP TABLE/COLUMN、无数据 DML；索引不承载约束，删除不改变可见性与查询语义；文件内无 BEGIN/COMMIT"
     note: "根因是运行期 schema_defense 与迁移链各建了一份同列索引；W2-D2 移除 schema_defense 后不再复发。回滚 database/rollback/20261120120000_ai_drop_duplicate_chunk_document_idx.rollback.sql（重建同一冗余索引）"
+
+  # ===== 2026-11-20：TMS 运行期表收口（W2-D2 第二个模块） =====
+  - version: "20261120130000"
+    file: "database/migrations/20261120130000_tms_schema_canonical.sql"
+    status: to_apply
+    effect: "把 tms.tms_vehicles / tms_drivers / tms_carriers / tms_routes / tms_shipments 以线上真实形状固化（12/12/13/20/12 列，含 name_en/deleted_at/actual_arrival/actual_departure 等 schema_defense 补出的列），补主键、唯一键、状态 CHECK、7 条二级索引、5 表 ENABLE/FORCE RLS 与 rls_tenant_isolation；同步移除 svc/tms 启动期 schema_defense 建表/补列调用"
+    destructive_scan: "仅 CREATE TABLE/INDEX IF NOT EXISTS 与 DROP POLICY IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；表已存在时 CREATE TABLE 整段跳过；文件内无 BEGIN/COMMIT"
+    note: "口径取 baseline+forward 库 live 形状（text/name_en/deleted_at 等），不套旧 TABLE_DEFS 的 VARCHAR。既有库上仅重建策略，空库按此形状建表。回滚 database/rollback/20261120130000_tms_schema_canonical.rollback.sql（接管型迁移，明确拒绝 DROP，避免误丢运输主数据）"
