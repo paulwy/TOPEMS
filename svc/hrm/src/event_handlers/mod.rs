@@ -82,7 +82,10 @@ impl HrmEventHandlers {
                 id
             }
             Err(e) => {
-                tracing::warn!("[hrm] 缓存失效记录失败（graceful fallback）: {}", e);
+                tracing::warn!(
+                    "[hrm] 缓存失效记录失败（观测性日志降级，已登记豁免）: {}",
+                    e
+                );
                 uuid::Uuid::nil()
             }
         }

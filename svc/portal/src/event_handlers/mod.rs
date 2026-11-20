@@ -111,7 +111,7 @@ impl PortalEventHandlers {
                         let et = EventType::PortalNotificationPublished;
                         if let Err(e) = publisher.publish_event(et, &payload).await {
                             tracing::warn!(
-                                "[portal] PortalNotificationPublished 事件发布失败（graceful fallback）: {}，入重试队列",
+                                "[portal] PortalNotificationPublished 事件发布失败，已入重试队列: {}",
                                 e
                             );
                             // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
