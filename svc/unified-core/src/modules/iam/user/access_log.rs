@@ -39,10 +39,35 @@ struct LoginLogRow {
 /// GET /users/{userId}/login-history?limit=10 — 返回用户登录历史
 pub async fn get_login_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Query(query): Query<LoginHistoryQuery>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开登录日志作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询登录历史失败: {}", e),
+                )),
+            );
+        }
+    };
+
     tracing::info!(
         "IAM user get_login_history called with user_id: {}",
         user_id
@@ -67,7 +92,7 @@ pub async fn get_login_history(
     let total: i64 =
         match sqlx::query_scalar("SELECT COUNT(*) FROM public.core_login_logs WHERE user_id = $1")
             .bind(user_uuid)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await
         {
             Ok(t) => t,
@@ -94,7 +119,7 @@ pub async fn get_login_history(
     )
     .bind(user_uuid)
     .bind(limit)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut rls_scope)
     .await
     .unwrap_or_else(|e| {
         tracing::error!("Failed to fetch login logs: {}", e);

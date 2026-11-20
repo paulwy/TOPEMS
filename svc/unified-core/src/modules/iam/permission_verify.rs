@@ -331,8 +331,27 @@ async fn check_user_resource_permission(
 
 pub async fn get_my_permissions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 权限作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询权限失败: {}", e),
+            ));
+        }
+    };
+
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(_) => {
@@ -346,7 +365,7 @@ pub async fn get_my_permissions(
     let permissions: Vec<String> = if claims.is_superuser {
         // 超级管理员返回所有权限
         sqlx::query_scalar("SELECT code FROM public.core_permissions ORDER BY code")
-            .fetch_all(&state.pool)
+            .fetch_all(&mut rls_scope)
             .await
             .unwrap_or_default()
     } else {
@@ -362,7 +381,7 @@ pub async fn get_my_permissions(
             "#,
         )
         .bind(user_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut rls_scope)
         .await
         .unwrap_or_default()
     };

@@ -572,12 +572,36 @@ pub async fn assign_user_role(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 角色作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询角色失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let result = sqlx::query(
         "INSERT INTO public.core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
     )
     .bind(user_uuid)
     .bind(role_uuid)
-    .execute(&state.pool)
+    .execute(&mut rls_scope)
     .await;
 
     match result {
@@ -715,11 +739,35 @@ pub async fn remove_user_role(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 角色作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询角色失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let result =
         sqlx::query("DELETE FROM public.core_user_roles WHERE user_id = $1 AND role_id = $2")
             .bind(user_uuid)
             .bind(role_uuid)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await;
 
     match result {

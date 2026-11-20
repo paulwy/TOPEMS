@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Serialize;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -27,6 +28,7 @@ struct EffectivePermissionRow {
 /// GET /users/{userId}/effective-permissions — 返回用户有效权限（direct + role + total）
 pub async fn get_effective_permissions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -49,11 +51,35 @@ pub async fn get_effective_permissions(
         }
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let is_superuser: bool = match sqlx::query_scalar(
         "SELECT is_superuser FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut rls_scope)
     .await
     {
         Ok(Some(v)) => v,
@@ -80,7 +106,7 @@ pub async fn get_effective_permissions(
         sqlx::query_as::<_, EffectivePermissionRow>(
             "SELECT id as permission_id, code, name, description, resource, action FROM public.core_permissions ORDER BY code",
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut rls_scope)
         .await
         .unwrap_or_default()
     } else {
@@ -95,7 +121,7 @@ pub async fn get_effective_permissions(
             "#,
         )
         .bind(user_uuid)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut rls_scope)
         .await
         .unwrap_or_default()
     };
@@ -140,6 +166,7 @@ pub async fn get_effective_permissions(
 /// POST /users/batch-delete — 批量删除用户
 pub async fn batch_delete_users(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -172,6 +199,30 @@ pub async fn batch_delete_users(
         );
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let mut deleted_count: i64 = 0;
     let mut failed_ids: Vec<String> = Vec::new();
 
@@ -196,7 +247,7 @@ pub async fn batch_delete_users(
 
         let result = sqlx::query("UPDATE iam.users SET deleted_at = NOW() WHERE id = $1")
             .bind(user_uuid)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await;
 
         match result {
@@ -248,6 +299,7 @@ pub async fn batch_delete_users(
 /// PUT /users/batch-update — 批量更新用户
 pub async fn batch_update_users(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -285,6 +337,30 @@ pub async fn batch_update_users(
         .and_then(|v| v.as_bool())
         .map(|active| if active { "active" } else { "inactive" }.to_string());
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let mut updated_count: i64 = 0;
 
     for id in &user_ids {
@@ -300,7 +376,7 @@ pub async fn batch_update_users(
             sqlx::query("UPDATE iam.users SET status = $1, updated_at = NOW() WHERE id = $2")
                 .bind(status)
                 .bind(user_uuid)
-                .execute(&state.pool)
+                .execute(&mut rls_scope)
                 .await
         } else {
             // 没有提供 isactive，尝试更新 full_name / email（兼容任务描述中的 updates 形态）
@@ -317,7 +393,7 @@ pub async fn batch_update_users(
             .bind(payload.get("full_name").and_then(|v| v.as_str()))
             .bind(payload.get("email").and_then(|v| v.as_str()))
             .bind(user_uuid)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await
         };
 

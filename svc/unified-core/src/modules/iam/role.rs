@@ -881,6 +881,18 @@ pub async fn get_role_permissions(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return json_error(500, "数据库事务上下文缺失");
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 角色作用域失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    };
+
     // 集合类：角色不存在时返回空列表（HTTP 200），不裸 404
     let permissions: Vec<String> = sqlx::query_scalar(
         r#"
@@ -891,7 +903,7 @@ pub async fn get_role_permissions(
         "#,
     )
     .bind(role_uuid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut rls_scope)
     .await
     .unwrap_or_default();
 
@@ -1061,12 +1073,24 @@ pub async fn remove_role_permission(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return json_error(500, "数据库事务上下文缺失");
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 角色作用域失败: {}", e);
+            return json_error(500, &format!("查询角色失败: {}", e));
+        }
+    };
+
     let result = sqlx::query(
         "DELETE FROM public.core_role_permissions WHERE role_id = $1 AND permission_id = $2",
     )
     .bind(role_uuid)
     .bind(perm_uuid)
-    .execute(&state.pool)
+    .execute(&mut rls_scope)
     .await;
 
     match result {

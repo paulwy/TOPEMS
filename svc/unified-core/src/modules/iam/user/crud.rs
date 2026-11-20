@@ -573,12 +573,36 @@ pub async fn get_user(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let user: Option<UserRow> = sqlx::query_as(
         "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut rls_scope)
     .await
     .unwrap_or_else(|e| {
         tracing::error!("Database query failed: {}", e);
@@ -592,7 +616,7 @@ pub async fn get_user(
                 "SELECT r.name FROM public.core_user_roles ur JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = $1 AND r.deleted_at IS NULL ORDER BY r.name",
             )
             .bind(u.id)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut rls_scope)
             .await
             .unwrap_or_default();
 
@@ -700,13 +724,37 @@ pub async fn update_user(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     if let Some(username) = payload.get("username").and_then(|v| v.as_str()) {
         let existing_count: i64 = match sqlx::query_scalar(
             "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1 AND id != $2",
         )
         .bind(username)
         .bind(user_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut rls_scope)
         .await
         {
             Ok(count) => count,
@@ -736,7 +784,7 @@ pub async fn update_user(
         )
         .bind(email)
         .bind(user_id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut rls_scope)
         .await
         {
             Ok(count) => count,
@@ -775,7 +823,7 @@ pub async fn update_user(
     .bind(payload.get("email").and_then(|v| v.as_str()))
     .bind(payload.get("full_name").and_then(|v| v.as_str()))
     .bind(user_id)
-    .execute(&state.pool)
+    .execute(&mut rls_scope)
     .await;
 
     match update_result {
@@ -883,9 +931,33 @@ pub async fn delete_user(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("删除用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let delete_result = sqlx::query("UPDATE iam.users SET deleted_at = NOW() WHERE id = $1")
         .bind(user_id)
-        .execute(&state.pool)
+        .execute(&mut rls_scope)
         .await;
 
     match delete_result {

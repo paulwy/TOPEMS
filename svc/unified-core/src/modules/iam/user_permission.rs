@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -30,9 +31,28 @@ struct UserPermissionResponse {
 
 pub async fn get_user_permissions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 权限作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询权限失败: {}", e),
+            ));
+        }
+    };
+
     tracing::info!(
         "IAM user_permission get_user_permissions called with user_id: {}",
         user_id
@@ -53,7 +73,7 @@ pub async fn get_user_permissions(
         "SELECT is_superuser FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut rls_scope)
     .await
     {
         Ok(Some(v)) => v,
@@ -74,7 +94,7 @@ pub async fn get_user_permissions(
         let all_permissions = match sqlx::query_as::<_, UserPermissionRow>(
             "SELECT p.id as permission_id, p.code, p.name, p.description, p.resource, p.action FROM public.core_permissions p ORDER BY p.code"
         )
-        .fetch_all(&state.pool)
+        .fetch_all(&mut rls_scope)
         .await
         {
             Ok(perms) => perms,
@@ -117,7 +137,7 @@ pub async fn get_user_permissions(
         "#,
     )
     .bind(user_uuid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut rls_scope)
     .await;
 
     match result {
@@ -154,10 +174,29 @@ pub async fn get_user_permissions(
 
 pub async fn update_user_permissions(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 权限作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询权限失败: {}", e),
+            ));
+        }
+    };
+
     tracing::info!(
         "IAM user_permission update_user_permissions called with user_id: {} and payload: {:?}",
         user_id,
@@ -198,7 +237,7 @@ pub async fn update_user_permissions(
         "SELECT EXISTS(SELECT 1 FROM iam.users WHERE deleted_at IS NULL AND id = $1)",
     )
     .bind(user_uuid)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await
     {
         Ok(exists) => exists,

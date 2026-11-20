@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use super::models::is_valid_email;
 
@@ -25,9 +26,34 @@ pub struct CheckUsernameQuery {
 /// GET /users/check-email?email=xxx — 检查邮箱可用性
 pub async fn check_email_availability(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<CheckEmailQuery>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     tracing::info!(
         "IAM user check_email_availability called with email: {}",
         query.email
@@ -62,7 +88,7 @@ pub async fn check_email_availability(
     let existing_count: i64 =
         match sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE email = $1")
             .bind(email)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await
         {
             Ok(count) => count,
@@ -96,9 +122,34 @@ pub async fn check_email_availability(
 /// GET /users/check-username?username=xxx — 检查用户名可用性
 pub async fn check_username_availability(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<CheckUsernameQuery>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     tracing::info!(
         "IAM user check_username_availability called with username: {}",
         query.username
@@ -119,7 +170,7 @@ pub async fn check_username_availability(
     let existing_count: i64 =
         match sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE username = $1")
             .bind(username)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await
         {
             Ok(count) => count,

@@ -60,10 +60,34 @@ pub async fn disable_user(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let result =
         sqlx::query("UPDATE iam.users SET status = 'inactive', updated_at = NOW() WHERE id = $1")
             .bind(user_id)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await;
 
     match result {
@@ -160,10 +184,34 @@ pub async fn enable_user(
         }
     }
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let result =
         sqlx::query("UPDATE iam.users SET status = 'active', updated_at = NOW() WHERE id = $1")
             .bind(user_id)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await;
 
     match result {
@@ -215,6 +263,7 @@ pub async fn enable_user(
 
 pub async fn change_password(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
@@ -250,10 +299,34 @@ pub async fn change_password(
         }
     };
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "数据库事务上下文缺失",
+            )),
+        );
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("查询用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let existing_user_count: i64 =
         match sqlx::query_scalar("SELECT COUNT(*) FROM iam.users WHERE id = $1::UUID")
             .bind(&id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await
         {
             Ok(count) => count,
@@ -315,7 +388,7 @@ pub async fn change_password(
         sqlx::query("UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
             .bind(hashed_password)
             .bind(user_id)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await;
 
     match result {

@@ -15,8 +15,27 @@ use super::models::{resolve_user_grants, UserResponse, UserRow};
 /// 表结构由迁移链权威创建（C-1 已移除运行时自建表，迁移权威唯一仲裁）。
 pub async fn get_preferences(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询用户失败: {}", e),
+            ));
+        }
+    };
+
     tracing::info!("IAM user get_preferences called for user: {}", claims.sub);
 
     // 默认值（与旧行为一致）
@@ -39,7 +58,7 @@ pub async fn get_preferences(
              WHERE user_id = $1 AND deleted_at IS NULL",
         )
         .bind(user_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut rls_scope)
         .await
         .unwrap_or_else(|e| {
             tracing::warn!("read local preferences failed for {}: {}", claims.sub, e);
@@ -155,9 +174,28 @@ pub async fn update_preferences(
 
 pub async fn get_current_user(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开 IAM 用户作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("查询用户失败: {}", e),
+            ));
+        }
+    };
+
     tracing::info!("IAM user get_current_user called for user: {}", claims.sub);
 
     let user_id = match sqlx::types::Uuid::parse_str(&claims.sub) {
@@ -176,7 +214,7 @@ pub async fn get_current_user(
     )
     .bind(user_id)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut rls_scope)
     .await
     .unwrap_or_else(|e| {
         tracing::error!("Database query failed: {}", e);
