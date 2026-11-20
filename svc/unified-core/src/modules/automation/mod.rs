@@ -1047,9 +1047,73 @@ pub async fn create_variable(
 
 pub async fn update_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(key): Path<String>,
     Json(payload): Json<UpdateVariableRequest>,
 ) -> ApiResponse<AutomationVariable> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
+
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_variables WHERE key = $1",
+    )
+    .bind(&key)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询变量失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新变量失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
+    }
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量写作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_variables WHERE key = $1",
+    )
+    .bind(&key)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询变量失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新变量失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
+    }
+
     let var: Result<AutomationVariable, _> = sqlx::query_as(
         r#"UPDATE public.automation_variables SET
               value = COALESCE($2, value),
@@ -1067,36 +1131,95 @@ pub async fn update_variable(
     .bind(&payload.description)
     .bind(&payload.scope)
     .bind(payload.is_secret)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match var {
         Ok(v) => ApiResponse::success(v, "更新成功"),
         Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()))
-            } else {
-                tracing::error!("更新变量失败: {}", e);
-                ApiResponse::from(TopemsError::Internal("更新变量失败".to_string()))
-            }
+            tracing::error!("更新变量失败: {}", e);
+            ApiResponse::from(TopemsError::Internal("更新变量失败".to_string()))
         }
     }
 }
 
 pub async fn delete_variable(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(key): Path<String>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_variables WHERE key = $1",
+    )
+    .bind(&key)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询变量失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除变量失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
+    }
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化变量写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化变量写作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_variables WHERE key = $1",
+    )
+    .bind(&key)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询变量失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("删除变量失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()));
+    }
+
     let result = sqlx::query("DELETE FROM public.automation_variables WHERE key = $1")
         .bind(&key)
-        .execute(&state.pool)
+        .execute(&mut rls_scope)
         .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             ApiResponse::success(serde_json::json!({"success": true}), "删除成功")
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())),
+        Ok(_) => ApiResponse::success(serde_json::json!({"success": true}), "删除成功"),
         Err(e) => {
             tracing::error!("删除变量失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除变量失败".to_string()))

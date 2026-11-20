@@ -146,8 +146,13 @@ async fn update_changes_value(pool: sqlx::PgPool) {
         scope: None,
         is_secret: None,
     };
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = update_variable(State(state), Path(var.key), Json(req)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        update_variable(State(state), Extension(cell), Path(var.key), Json(req)),
+    )
+    .await;
     let updated: AutomationVariable = resp.data.unwrap();
     assert_eq!(updated.value.as_deref(), Some("60"));
 }
@@ -166,8 +171,13 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
     .await;
     let var: AutomationVariable = resp.data.unwrap();
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool.clone());
-    let resp = delete_variable(State(state), Path(var.key.clone())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        delete_variable(State(state), Extension(cell), Path(var.key.clone())),
+    )
+    .await;
     let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
 
