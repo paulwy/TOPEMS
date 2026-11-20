@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import React from 'react';
-import type { ApprovalSettings as ApprovalSettingsType } from '../types';
+import type { ApprovalSettings as ApprovalSettingsType } from '@/components/workflow/types';
 
 interface ApprovalSettingsProps {
   settings: ApprovalSettingsType;

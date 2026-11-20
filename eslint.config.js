@@ -95,5 +95,35 @@ export default ts.config(
       'jsx-a11y/no-static-element-interactions': 'warn',
     },
   },
-  prettierConfig,
+  {
+    // W4-D：页面实现属于路由层，业务代码不得跨层直接 import `@/pages/*`。
+    // 例外仅限路由装配（module-configs / routes / DynamicRoutes）与测试。
+    files: ['apps/web/src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/pages/*'],
+              message:
+                '禁止跨层 import 页面实现；请在 components/ 或 api/ 中抽取共享实现，仅 module-configs/routes 可装配页面。',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: [
+      'apps/web/src/module-configs/**/*.{ts,tsx}',
+      'apps/web/src/routes/**/*.{ts,tsx}',
+      'apps/web/src/components/DynamicRoutes.tsx',
+      'apps/web/src/**/__tests__/**/*.{ts,tsx}',
+      'apps/web/src/**/*.test.{ts,tsx}',
+      'apps/web/src/**/*.spec.{ts,tsx}',
+    ],
+    rules: { 'no-restricted-imports': 'off' },
+  },
+  prettierConfig
 );

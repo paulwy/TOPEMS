@@ -38,7 +38,7 @@ import type {
   WorkStationUtilization,
   EquipmentStatusBucket,
   RefreshStatus,
-} from './types';
+} from '@/components/mes/types';
 import {
   ct,
   REFRESH_INTERVAL_MS,

@@ -1,5 +1,5 @@
 import type { ProductionRecord } from '@/api/mes';
-import type { TrendPoint } from './types';
+import type { TrendPoint } from '@/components/mes/types';
 import { TREND_HOURS } from '@/components/mes/ProductionDashboardConstants';
 import i18n from '@/i18n';
 

@@ -1,6 +1,6 @@
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
-import type { RealtimeAlarm } from '@/pages/mes/ProductionDashboardPage/types';
+import type { RealtimeAlarm } from '@/components/mes/types';
 
 export const ct = designTokens.colors;
 export const REFRESH_INTERVAL_MS = 10_000;

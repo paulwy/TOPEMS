@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { Send as SendIcon } from 'lucide-react';
 import { PRIORITY_OPTIONS } from '@/api/mail';
-import type { SendForm } from '../types';
+import type { SendForm } from '@/components/im/mail/types';
 import { useTranslation } from 'react-i18next';
 
 interface SendEmailDialogProps {

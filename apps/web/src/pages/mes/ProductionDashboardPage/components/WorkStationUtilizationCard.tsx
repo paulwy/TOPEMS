@@ -11,7 +11,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Gauge } from 'lucide-react';
-import type { WorkStationUtilization } from '../types';
+import type { WorkStationUtilization } from '@/components/mes/types';
 import { formatPercent } from '../utils';
 import i18n from '@/i18n';
 

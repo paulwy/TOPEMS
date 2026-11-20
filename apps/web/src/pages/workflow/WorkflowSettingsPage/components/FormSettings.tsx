@@ -1,6 +1,6 @@
 import { Box, Typography, Switch, TextField, Stack, Divider } from '@mui/material';
 import React from 'react';
-import type { FormSettings as FormSettingsType } from '../types';
+import type { FormSettings as FormSettingsType } from '@/components/workflow/types';
 import i18n from '@/i18n';
 
 interface FormSettingsProps {

@@ -1,5 +1,5 @@
 import { Settings, CheckSquare, Bell, FileText, Shield, Plug } from 'lucide-react';
-import type { SettingGroup } from '@/pages/workflow/WorkflowSettingsPage/types';
+import type { SettingGroup } from '@/components/workflow/types';
 import i18n from '@/i18n';
 
 export const SETTING_GROUPS: SettingGroup[] = [

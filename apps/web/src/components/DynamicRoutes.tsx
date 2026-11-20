@@ -4,7 +4,7 @@ import { logger } from '@/utils/logger';
 import { loadModuleConfig, coreModuleCodes, type RouteConfig } from '../routes';
 import ProtectedRouteWrapper from './ProtectedRouteWrapper';
 import PageLoader from './PageLoader';
-import NotFoundPage from '@/pages/shared/NotFoundPage';
+import NotFoundPage from '@/components/common/NotFoundPage';
 import { ModRootRedirect } from '@/lib/moduleRedirect';
 import { MODULE_ROOT_TO_DASHBOARD, resolveModuleDashboard } from '@/lib/modulePathMap';
 import { recordNavigation, prefetchIntelligent } from '@/lib/pwa';

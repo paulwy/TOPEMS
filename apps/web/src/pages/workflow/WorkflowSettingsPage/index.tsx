@@ -31,7 +31,7 @@ import type {
   FormSettings as FormSettingsType,
   PermissionSettings as PermissionSettingsType,
   IntegrationSettings as IntegrationSettingsType,
-} from './types';
+} from '@/components/workflow/types';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ApprovalSettings } from './components/ApprovalSettings';
 import { NotificationSettings } from './components/NotificationSettings';

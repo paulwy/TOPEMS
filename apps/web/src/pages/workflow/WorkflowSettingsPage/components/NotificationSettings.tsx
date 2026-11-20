@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import React from 'react';
-import type { NotificationSettings as NotificationSettingsType } from '../types';
+import type { NotificationSettings as NotificationSettingsType } from '@/components/workflow/types';
 
 interface NotificationSettingsProps {
   settings: NotificationSettingsType;

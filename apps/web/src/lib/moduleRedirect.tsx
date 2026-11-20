@@ -16,7 +16,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { loadModuleConfig } from '@/routes/v2';
 import PageLoader from '@/components/PageLoader';
-import NotFoundPage from '@/pages/shared/NotFoundPage';
+import NotFoundPage from '@/components/common/NotFoundPage';
 import { logger } from '@/utils/logger';
 
 type RedirectState = 'loading' | '404' | { target: string };

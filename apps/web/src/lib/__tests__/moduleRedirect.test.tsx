@@ -15,7 +15,7 @@ vi.mock('@/components/PageLoader', () => ({
   default: () => <div data-testid='page-loader'>Loading...</div>,
 }));
 
-vi.mock('@/pages/shared/NotFoundPage', () => ({
+vi.mock('@/components/common/NotFoundPage', () => ({
   default: () => <div data-testid='not-found'>404 Not Found</div>,
 }));
 

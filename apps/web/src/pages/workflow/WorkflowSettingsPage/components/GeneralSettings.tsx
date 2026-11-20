@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import React from 'react';
-import type { GeneralSettings as GeneralSettingsType } from '../types';
+import type { GeneralSettings as GeneralSettingsType } from '@/components/workflow/types';
 
 interface GeneralSettingsProps {
   settings: GeneralSettingsType;

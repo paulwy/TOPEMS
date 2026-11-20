@@ -2,7 +2,7 @@ import React from 'react';
 import i18n from '@/i18n';
 import { HybridDashboard } from '../../components/dashboard/HybridDashboard';
 import { DashboardTemplate } from '@/components/templates';
-import { InitGate } from '@/pages/hrm/setup/InitChecklistPanel';
+import { InitGate } from '@/components/hrm/InitChecklistPanel';
 
 export const HybridHomePage: React.FC = () => {
   return (

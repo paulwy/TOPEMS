@@ -4,9 +4,9 @@ import { Chip } from '@mui/material';
 import { emailApi, type Email, type EmailStats } from '@/api/mail';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { validateEmailList } from '@/pages/im/MailPage/utils';
-import { STATUS_MAP, PRIORITY_MAP } from '@/pages/im/MailPage/constants';
-import type { SendForm } from '@/pages/im/MailPage/types';
+import { validateEmailList } from '@/components/im/mail/utils';
+import { STATUS_MAP, PRIORITY_MAP } from '@/components/im/mail/constants';
+import type { SendForm } from '@/components/im/mail/types';
 import i18n from '@/i18n';
 
 const INITIAL_SEND_FORM: SendForm = {
