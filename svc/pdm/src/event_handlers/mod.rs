@@ -46,16 +46,9 @@ impl PdmEventHandlers {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_shipment_received(event).await })
             })
-            .subscribe_master_data(vec![MasterDataDomain::AccountSubject], move |event| {
+            .subscribe_master_data_handler(vec![MasterDataDomain::AccountSubject], move |event| {
                 let h = h4.clone();
-                Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_account_subject_changed(event).await {
-                        tracing::error!(
-                            "[pdm] handle_master_data_account_subject_changed 失败: {}",
-                            e
-                        );
-                    }
-                })
+                Box::pin(async move { h.handle_master_data_account_subject_changed(event).await })
             }))
     }
 

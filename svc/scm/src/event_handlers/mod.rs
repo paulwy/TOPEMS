@@ -103,21 +103,13 @@ impl ScmEventHandlers {
                 let h = h11.clone();
                 Box::pin(async move { h.handle_srm_supplier_status_changed(event).await })
             })
-            .subscribe_master_data(vec![MasterDataDomain::Supplier], move |event| {
+            .subscribe_master_data_handler(vec![MasterDataDomain::Supplier], move |event| {
                 let h = h3.clone();
-                Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_supplier_changed(event).await {
-                        tracing::error!("[scm] handle_master_data_supplier_changed 失败: {}", e);
-                    }
-                })
+                Box::pin(async move { h.handle_master_data_supplier_changed(event).await })
             })
-            .subscribe_master_data(vec![MasterDataDomain::Material], move |event| {
+            .subscribe_master_data_handler(vec![MasterDataDomain::Material], move |event| {
                 let h = h4.clone();
-                Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_material_changed(event).await {
-                        tracing::error!("[scm] handle_master_data_material_changed 失败: {}", e);
-                    }
-                })
+                Box::pin(async move { h.handle_master_data_material_changed(event).await })
             }))
     }
 
