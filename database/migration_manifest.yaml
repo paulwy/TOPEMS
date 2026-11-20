@@ -2593,3 +2593,11 @@ pending_forward_patches:
     effect: "把 core.core_plugins/core_plugin_versions/core_plugin_reviews/core_plugin_categories/core_plugin_instances/core_plugin_permissions/core_plugin_navigation 以 live 形状固化（37/12/13/10/9/7/6 列）；core_plugins 唯一启用 FORCE RLS 并保留 rls_platform_read 与 rls_tenant_isolation 两条策略；同步移除 svc/plugin-registry 启动期 schema_defense。core.core_tenant_plugins 为运行代码未使用的孤儿表（实际读写 iam.core_tenant_plugins），不纳入、不删除"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX IF NOT EXISTS 与 DROP POLICY IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "空库与 live 的列/索引/约束/策略/RLS 五项 diff 为 0；core_plugins 的 platform_name 部分唯一索引单独建，其余主键/唯一索引由约束创建。回滚 database/rollback/20261120160000_plugin_registry_schema_canonical.rollback.sql（接管型迁移，明确拒绝 DROP）"
+
+  # ===== 2026-11-20：finance 66 表收口（W2-D2 第六个模块） =====
+  - version: "20261120170000"
+    file: "database/migrations/20261120170000_finance_schema_canonical.sql"
+    status: to_apply
+    effect: "把 finance 66 张运行期表（总账/凭证/期间/对账/税务/结算/资金/风控/报表/决策 v54-v60）以 live 形状固化，覆盖 schema_defense 的 66 表 563 列与 7 个 modules/*.rs、services/finance/database.rs 的重复建表；删除全部启动期 CREATE TABLE/INDEX 与 schema 自检调用。列/索引/约束/策略/RLS 五项 diff 为 0"
+    destructive_scan: "仅 CREATE SCHEMA/TYPE/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT，策略 DROP IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "约束按 p/u/x/c/f 顺序添加，FK 最后；独立唯一索引先于约束创建，避免 FK 依赖的唯一索引缺失。回滚 database/rollback/20261120170000_finance_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"

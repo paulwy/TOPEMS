@@ -1,5 +1,4 @@
 pub mod audit_log;
-pub mod schema_defense;
 
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;

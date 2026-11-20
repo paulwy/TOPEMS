@@ -2,11 +2,11 @@
   "generated": "2026-11-20",
   "note": "运行期 DDL 只减不增基线（TODO W2-D1）。度量：tables/columns = TABLE_DEFS 声明数；ddl = SQL 字面量中的 CREATE TABLE|CREATE INDEX|CREATE SCHEMA|ALTER TABLE|DROP TABLE；callers = run_schema_migration_and_verify 调用次数。仅允许在下降后 --update-baseline 核销。",
   "totals": {
-    "files": 53,
-    "tables": 619,
-    "columns": 7882,
-    "ddl": 241,
-    "callers": 13
+    "files": 43,
+    "tables": 553,
+    "columns": 7319,
+    "ddl": 57,
+    "callers": 12
   },
   "files": {
     "lib/shared-db/src/audit.rs": {
@@ -104,66 +104,6 @@
       "columns": 423,
       "ddl": 3,
       "callers": 0
-    },
-    "svc/finance/src/models/schema_defense.rs": {
-      "tables": 66,
-      "columns": 563,
-      "ddl": 2,
-      "callers": 0
-    },
-    "svc/finance/src/modules/decision_v60.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 32,
-      "callers": 0
-    },
-    "svc/finance/src/modules/reports_v57.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 21,
-      "callers": 0
-    },
-    "svc/finance/src/modules/risk_v54.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 22,
-      "callers": 0
-    },
-    "svc/finance/src/modules/risk_v59.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 28,
-      "callers": 0
-    },
-    "svc/finance/src/modules/settlement_v55.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 20,
-      "callers": 0
-    },
-    "svc/finance/src/modules/tax_v56.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 22,
-      "callers": 0
-    },
-    "svc/finance/src/modules/treasury_v58.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 25,
-      "callers": 0
-    },
-    "svc/finance/src/services/finance/database.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 12,
-      "callers": 0
-    },
-    "svc/finance/src/services/mod.rs": {
-      "tables": 0,
-      "columns": 0,
-      "ddl": 0,
-      "callers": 1
     },
     "svc/gis/src/db/schema.rs": {
       "tables": 20,

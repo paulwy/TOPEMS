@@ -19,7 +19,6 @@ use topems_shared_bootstrap::{
     bootstrap_service_with_search_path, build_application, create_health_state,
     create_standard_health_routes, run, ServiceConfig,
 };
-use topems_shared_db::database::create_migrate_pool;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 #[derive(OpenApi)]
@@ -163,17 +162,7 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service_with_search_path(&config, "finance, public, shared").await?;
 
-    // Finance 初始化（DDL 走 MIGRATE_URL owner 池，未配置回退运行时池）
-    let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
-        tracing::warn!(
-            "⚠️ Finance MIGRATE_URL 迁移池创建失败，DDL 回退运行时池: {}",
-            e
-        );
-        None
-    });
-    if let Err(e) = services::run_schema_defense(migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("⚠️ Finance schema 防御检查失败: {}", e);
-    }
+    // 表/索引/约束/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
 
     if let Err(e) = event_handlers::start_event_subscribers(
         topems_shared_db::scope::Db::new(ctx.db.clone(), "finance, public, shared"),

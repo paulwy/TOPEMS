@@ -66,11 +66,7 @@ impl FinanceRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
-        if let Err(e) = topems_finance::services::run_schema_defense(&ctx.db).await {
-            tracing::error!("Failed to run finance schema defense: {}", e);
-            return Err(TopemsError::internal("finance schema 防御检查失败", e));
-        }
+        // 2. 表/索引/约束/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
 
         // 2c. 事件订阅者：与独立部署 main.rs 同源
         //     （此前单体形态缺失，导致 SettlementApproved / PmProjectSettled 等
