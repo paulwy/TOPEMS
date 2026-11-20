@@ -285,9 +285,9 @@
 
 | 序 | 步骤 | 前置 | DEC | 验收判据 |
 |---|---|---|---|---|
-| E0-1 | P4 生产只读复核（已完成 2026-11-17） | 无 | — | 权限三源 / RLS 计数 / 零租户三张报表，零写入 |
+| E0-1 ✅ | P4 生产只读复核（已完成 2026-11-17） | 无 | — | 权限三源 / RLS 计数 / 零租户三张报表，零写入 |
 | E0-2 | A1 dev `strip="none"`（已完成 2026-11-17） | 无 | — | 默认 `cargo check --workspace` 通过 |
-| E0-3 | A5 权限脚本 DSN 优先级与降级标注（已完成 2026-11-17） | 无 | — | 脚本 DB≈1021（live），不再误报 `sql_fallback` |
+| E0-3 ✅ | A5 权限脚本 DSN 优先级与降级标注（已完成 2026-11-17） | 无 | — | 脚本 DB≈1021（live），不再误报 `sql_fallback` |
 | E0-4 | 78 处未限定 schema 的 `CREATE TABLE` 定性（已完成 2026-11-18），见 [docs/quality/unqualified-create-table-triage-2026-11-18.md](docs/quality/unqualified-create-table-triage-2026-11-18.md) | 无 | — | 78 条逐条落点/生产 schema/后续显式化；真隐患 17、需人工判断 2、历史无害 59 |
 | E1-1 | A2 修 clippy（已完成 2026-11-17） | A1 | — | `clippy --all-targets -- -D warnings` 绿 |
 | E1-2 | A4 API 闸门去 `--dry-run` + 修 check-api 假绿 + P6 解析器（已完成 2026-11-17） | A1、A2 | — | P6 RED=0；闸门真实阻断（`EXIT=1`，红灯只剩 p7 → E1-4） |
@@ -312,8 +312,8 @@
 | E3-8 ✅ | W2-B6 其余模块 | E3-7 | — | 全仓 violations=0，baseline 已清空 |
 | E3-9 ✅ | W7-A 业务裸池收口（静态余 26 均为内部/误报） | A1、A2、服务锁 | — | 业务 handler 裸池读写=0；`cargo test -p topems-unified-core` 574 绿 ✅ |
 | E3-10 ✅ | W2-C1..C3 停直连 `erp.opening_balances` | E3-5 | — | 全仓 `erp.opening_balances` 引用=0，期初余额用例绿 |
-| E3-11 | W2-D1 零运行时 DDL 断言 | E3-8 | — | 断言上线并能拦住新增调用 |
-| E3-12 | W2-D2/D3 逐服务迁走运行期 DDL | E3-11 | — | `TABLE_DEFS` 只减不增 |
+| E3-11 ✅ | W2-D1 零运行时 DDL 断言 | E3-8 | — | `check-runtime-ddl.mjs` 上线：files=10 / ddl=22 / callers=0，新增即红 |
+| E3-12 ✅ | W2-D2/D3 逐服务迁走运行期 DDL | E3-11 | — | 26 模块 `schema_defense` 清零；基线 10 文件 / 22 条字面量 / 0 tables / 0 columns / 0 callers |
 | E3-13 ✅ | W2-§12.6 WS 消费组默认值区分 | 无 | — | 默认名不同，双实例互不抢占 |
 | E3-14 ✅ | B43-09 非 HTTP 入口租户上下文评估 | 无（只读分析） | — | 每类入口有上下文或书面豁免 ✅ |
 | E3-15 ✅ | W7-B 平台语料 5 表归一 | E3-9、E0-1 | DEC-15 | 归零哨兵归一 ✅；租户 GUC 8/48/16/1、空 GUC 0 ✅（生产窗口待执行） |
