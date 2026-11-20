@@ -2775,3 +2775,23 @@ pending_forward_patches:
     effect: "把 rs 6 张运行期表（项目/阶段/里程碑/成员/变更申请/变更单）以 live 形状固化，6 表 / 106 列 / 61 约束 / 11 索引 / 6 策略 / 6 RLS，五项 diff 为 0；含 uuid-ossp 扩展幂等创建；删除 src/schema_defense.rs、lib/main 引用、main init_db 与 server rd_real_module 启动调用"
     destructive_scan: "仅 CREATE EXTENSION/SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 6 张全部 live 存在；live 另有 formulas/experiments/patents 等由既有迁移维护，未纳入。回滚 database/rollback/20261121190000_rd_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-21：analytics 3 表收口（W2-D2 第二十五个模块） =====
+  - version: "20261121200000"
+    file: "database/migrations/20261121200000_analytics_schema_canonical.sql"
+    status: to_apply
+    effect: "把 bi.reports / bi.report_schedules / bi.report_templates 以 live 形状固化，3 表 / 60 列 / 22 约束（含 3 主键）/ 3 索引 / 3 策略 / 3 RLS，五项 diff 为 0；删除 models/schema_defense.rs、models/mod 引用、bi/report 两个 run_schema_defense 包装与 main 启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 第 4 张 bi.audit_logs 为清单 3 死表候选（0 行、全仓无读写、无 RLS），仅因 schema-defense 复活被移出 batch2，本迁移不纳入、由 20261121201000 清理。回滚 database/rollback/20261121200000_analytics_schema_canonical.rollback.sql（接管型）"
+  - version: "20261121201000"
+    file: "database/migrations/20261121201000_analytics_drop_resurrected_dead_tables.sql"
+    status: to_apply
+    effect: "清理 bi.audit_logs：to_regclass 不存在则跳过，存在则 count(*)=0 守卫后 DROP；非空中止整条迁移"
+    destructive_scan: "含 1 条 DROP TABLE，已带完整 8 行 destructive 豁免标记，ticket W2-D2-ANALYTICS-20261121，rows-at-review 0"
+    note: "bi.audit_logs 原 exemption B20261119-batch2-bi-audit-logs-keep 的豁免前提（schema-defense 会重建）已随本模块移除。回滚文件明确拒绝重建"
+  - version: "20261121210000"
+    file: "database/migrations/20261121210000_communication_schema_canonical.sql"
+    status: to_apply
+    effect: "把 communication.core_location_messages（IM 位置消息）以 live 形状固化，1 表 / 22 列 / 7 约束 / 2 索引 / 无策略 / 无 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 lib 中的 schema_defense 单元测试"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "该表由 im_location 活跃读写；live 比 TABLE_DEFS 多 deleted_at，已按 live 固化。live communication 其余 4 表由既有迁移维护，未纳入。回滚 database/rollback/20261121210000_communication_schema_canonical.rollback.sql（接管型）"

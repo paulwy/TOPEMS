@@ -21,7 +21,6 @@ mod mail;
 mod models;
 mod notification;
 pub mod openapi;
-mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -42,15 +41,6 @@ async fn main() -> anyhow::Result<()> {
     // M-1：请求链路禁止自开事务，必须复用 tenant_middleware 注入的请求事务；
     // 后台任务（邮件队列落库/消费）改用 scope_system()。
     let db = Db::new(ctx.db.clone(), "communication, public").deny_request_own_txn();
-
-    // C-1：自建 DDL 已移除（迁移权威唯一仲裁）；Schema 防御保留
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-    )
-    .await
-    {
-        tracing::error!("[communication] Schema 防御检查失败: {:?}", e);
-    }
 
     // ===== 通知读取路由（需要认证） =====
     let notification_read = Router::new()

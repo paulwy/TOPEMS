@@ -4,7 +4,6 @@ pub mod mail;
 pub mod models;
 pub mod notification;
 pub mod openapi;
-pub mod schema_defense;
 
 #[cfg(test)]
 mod tests {
@@ -45,12 +44,5 @@ mod tests {
         assert!(crate::im_location::is_within_geofence(
             30.0, 120.0, 30.0, 120.0, 1.0
         ));
-    }
-
-    #[test]
-    fn test_schema_defense_constants_reachable() {
-        // 确认 schema_defense 模块在 lib 中可编译可达
-        let tables = crate::schema_defense::table_defs_for_test();
-        assert!(!tables.is_empty());
     }
 }

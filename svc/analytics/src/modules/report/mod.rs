@@ -103,12 +103,3 @@ pub fn create_write_routes() -> Router<crate::shared::AppState> {
             post(subscription::toggle_subscription),
         )
 }
-
-/// Initialize Report database tables
-pub async fn run_schema_defense(pool: &PgPool) -> Result<(), sqlx::Error> {
-    if let Err(e) = crate::models::schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[analytics] Schema 防御检查失败: {:?}", e);
-    }
-
-    Ok(())
-}

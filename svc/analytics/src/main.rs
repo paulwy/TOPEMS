@@ -48,18 +48,6 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service_with_search_path(&config, "bi, public, shared").await?;
     tracing::info!("🚀 TOPEMS Analytics Service starting...");
 
-    // ── 模块级运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）──
-    if let Err(e) =
-        modules::bi::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
-    {
-        tracing::warn!("BI schema defense warning: {}", e);
-    }
-    if let Err(e) =
-        modules::report::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
-    {
-        tracing::warn!("Report schema defense warning: {}", e);
-    }
-
     // ── Report Scheduler（后台定时任务） ──────────────────────────────
     let scheduler = modules::report::ReportScheduler::new(ctx.db.clone());
     if let Err(e) = scheduler.start().await {
