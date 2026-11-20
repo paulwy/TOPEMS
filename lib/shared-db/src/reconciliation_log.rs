@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::scope::Db;
+use crate::scope::{Db, ScopedTxn};
 
 /// 对账日志记录
 ///
@@ -211,6 +211,21 @@ impl ReconciliationLogService {
         tenant_id: Uuid,
         issue_id: Uuid,
     ) -> Result<bool, sqlx::Error> {
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
+        let updated = self
+            .resolve_reconciliation_issue_in_scope(&mut scope, tenant_id, issue_id)
+            .await?;
+        scope.commit().await?;
+        Ok(updated)
+    }
+
+    /// 在调用方已开启的租户作用域内标记已解决；提交边界由调用方负责。
+    pub async fn resolve_reconciliation_issue_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        issue_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
         let sql = format!(
             r#"
             UPDATE {}
@@ -219,13 +234,11 @@ impl ReconciliationLogService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
         let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(issue_id)
             .bind(tenant_id)
-            .execute(&mut scope)
+            .execute(&mut *scope)
             .await?;
-        scope.commit().await?;
         Ok(result.rows_affected() > 0)
     }
 }

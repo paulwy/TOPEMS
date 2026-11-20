@@ -340,7 +340,7 @@
 | E4-21 | §17.3 `200+success:false` 改语义（分批） | 无 | — | 每批 545 下降且客户端兼容 |
 | E4-22 | B43-11/12/13/15/16/17 存量数据处置 | 无 | DEC-07 | 逐条有处置记录与回退说明 |
 | E4-23 | LEG-04/05/07/08/09 批次去留 | 无 | DEC-08 | 继续则立批次，关闭则登记为已接受 |
-| E4-24 | W2-§17.2 作用域 API 收敛（审计 B6） | E3-9 | DEC-01 | 「`scope_for_tenant` 125→0」已废弃：计数已增至 190，原口径失真；按 2026-11-21 测绘（`docs/quality/scope-api-convergence-mapping-2026-11-21.md`）生产调用 **155 → 未标记白名单 154，只减不增**。真正待改仅两处：`analytics::shared::open_write_scope`（改 `scope_with`）与 `unified-core` 的 `resolve_reconciliation_issue_handler`（用 `MasterDataService::new(state.pool.clone())` 重建无守卫 `Db`，绕过已开启的 `deny_request_tenant_scope`）。新增调用须带 `// scope-exempt: <理由>`；`check-scope-api.mjs` 冻结 `Db::new` 164 处。前置未就绪：30s 事务超时、事务存活时长指标与告警、连接预算/并发基线 |
+| E4-24 | W2-§17.2 作用域 API 收敛（审计 B6） | E3-9 | DEC-01 | 「`scope_for_tenant` 125→0」已废弃：计数已增至 190，原口径失真；按 2026-11-21 测绘（`docs/quality/scope-api-convergence-mapping-2026-11-21.md`）生产调用 **155 → 未标记白名单 154，只减不增**。真正待改仅两处：`analytics::shared::open_write_scope`（改 `scope_with`）与 `unified-core` 的 `resolve_reconciliation_issue_handler`（用 `MasterDataService::new(state.pool.clone())` 重建无守卫 `Db`，绕过已开启的 `deny_request_tenant_scope`）。新增调用须带 `// scope-exempt: <理由>`；`check-scope-api.mjs` 冻结 `Db::new` 163 处（B2 于 2026-11-21 完成，unified-core 对账解决已复用请求事务）。前置未就绪：30s 事务超时、事务存活时长指标与告警、连接预算/并发基线 |
 | E5-1 | P2 待上生产迁移 38 条 | E1-3、E0-1 | — | 每批 `_sqlx_migrations` 与 DDL 指纹一致 |
 | E5-2 | P1 宽松 RLS 8 批收紧 | E3-9、E3-15 | DEC-01/12/13/15 | 每批 A/B 对抗查询通过，异常即回滚 |
 | E5-3 | P3 零租户写入口收口 | E3-9 | DEC-11 | `access_log`/`login_log` 零租户写入归零 |

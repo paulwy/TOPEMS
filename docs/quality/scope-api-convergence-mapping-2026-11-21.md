@@ -189,3 +189,15 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 5. **T5（防绕过）**：请求 handler 模块内新增 `Db::new(` = 0；现有 164 处 / 83 文件冻结进基线（排除 `#[cfg(test)]` 与 `tests/`）。
 
 > 说明：若后续把 EHS 迁回请求事务（需先解决紧池并发），B 类 40 处才重新进入收敛范围；在该前提成立前，将其计入白名单是唯一正确口径。
+
+---
+
+## 6. 执行进度
+
+| 批 | 状态 | 证据 |
+|---|---|---|
+| B0 | 已完成（远端 `95a45ac26`） | `check-scope-api.mjs` + `scope-api-baseline.json` 接入 |
+| B2 | 已完成（2026-11-21） | `resolve_reconciliation_issue_handler` 取 `RlsTxnCell`，经 `scope_with` / `scope_with_system` 复用请求事务；`MasterDataService::from_db(Db)` 替代 `new(state.pool)`；`resolve_reconciliation_issue_in_scope` 由调用方提交。新增 `lib/shared-db/tests/reconciliation_scope_it.rs` 验证「提交前外部不可见 / 未提交即回滚 / 重复标记 false」；`check-scope-api.mjs` 读数 `scope_for_tenant 155`、`Db::new 163`（较基线 164 下降 1，已核销） |
+| B1 / B3 / B4 / B5 | 未开始 | — |
+
+> B2 的 e2e `master_ten_endpoints_form_closed_loop` 仍因测试库 `core_mdm_reconciliation_log.detected_at` 为 `timestamp without time zone`、Rust 侧 `DateTime<Utc>` 解码不匹配而无法端到端跑通（该用例原即 `#[ignore]`），本次改由 shared-db 事务边界回归覆盖；该时间类型漂移独立于 B2，另行处理。

@@ -217,13 +217,18 @@ pub struct MasterDataService {
 
 impl MasterDataService {
     pub fn new(pool: PgPool) -> Self {
+        Self::from_db(Db::new(pool, "public, shared"))
+    }
+
+    /// 复用服务已注入的 `Db`（请求链路），避免在 handler 内重新包装裸池。
+    pub fn from_db(db: Db) -> Self {
         Self {
-            ref_service: MasterDataRefService::new(Db::new(pool.clone(), "public, shared")),
-            audit_service: AuditLogService::new(pool.clone()),
+            ref_service: MasterDataRefService::new(db.clone()),
+            audit_service: AuditLogService::from_db(db.clone()),
             // 本模块 refs 权威表在 public；默认 new() 指向 master_data.* 空副本，
             // 会导致对账 INSERT...SELECT 读到 0 行、查询/标记落到另一张表。
             recon_service: ReconciliationLogService::with_tables(
-                Db::new(pool.clone(), "public, shared"),
+                db,
                 "public.core_mdm_reconciliation_log",
                 "public.core_master_data_refs",
             ),
@@ -898,6 +903,18 @@ impl MasterDataService {
             .await
     }
 
+    /// 在请求事务内标记对账问题已解决；提交由 `tenant_middleware` 统一处理。
+    pub async fn resolve_reconciliation_issue_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        issue_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        self.recon_service
+            .resolve_reconciliation_issue_in_scope(scope, tenant_id, issue_id)
+            .await
+    }
+
     // ==================== V31.0 变更审批 ====================
 
     /// 创建变更审批请求
@@ -1376,7 +1393,7 @@ pub async fn create_ref_handler(
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1410,7 +1427,7 @@ pub async fn update_ref_handler(
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1443,7 +1460,7 @@ pub async fn delete_ref_handler(
 ) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1474,7 +1491,7 @@ pub async fn get_ref_handler(
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.get_ref(tenant_id, &master_data_id).await {
         Ok(Some(r)) => ApiResponse::success(r, "查询成功"),
@@ -1490,7 +1507,7 @@ pub async fn get_ref_by_code_handler(
     Path((domain, code)): Path<(String, String)>,
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.get_ref_by_code(tenant_id, &domain, &code).await {
         Ok(Some(r)) => ApiResponse::success(r, "查询成功"),
@@ -1506,7 +1523,7 @@ pub async fn list_refs_handler(
     Query(query): Query<MasterDataQuery>,
 ) -> ApiResponse<MasterDataListResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
@@ -1531,7 +1548,7 @@ pub async fn list_changes_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<Vec<MasterDataChangeLog>> {
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1559,7 +1576,7 @@ pub async fn get_overall_stats_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<MdmOverallStats> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1586,7 +1603,7 @@ pub async fn get_sync_status_handler(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<SyncStatus>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.get_sync_status(tenant_id).await {
         Ok(status) => ApiResponse::success(status, "查询成功"),
@@ -1604,7 +1621,7 @@ pub async fn get_quality_report_handler(
 ) -> ApiResponse<QualityReport> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let stale_hours = params.stale_threshold_hours.unwrap_or(24);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.get_quality_report(tenant_id, stale_hours).await {
         Ok(report) => ApiResponse::success(report, "质量报告生成成功"),
@@ -1618,7 +1635,7 @@ pub async fn list_duplicates_handler(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<DuplicateRecord>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.list_duplicates(tenant_id).await {
         Ok(dups) => ApiResponse::success(dups, "查询成功"),
@@ -1634,7 +1651,7 @@ pub async fn list_stale_handler(
 ) -> ApiResponse<Vec<StaleRecord>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = params.stale_threshold_hours.unwrap_or(24);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.list_stale(tenant_id, threshold).await {
         Ok(records) => ApiResponse::success(records, "查询成功"),
@@ -1650,7 +1667,7 @@ pub async fn run_reconciliation_handler(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<ReconciliationResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service.run_reconciliation(tenant_id).await {
         Ok(result) => ApiResponse::success(result, "对账完成"),
@@ -1667,7 +1684,7 @@ pub async fn list_reconciliation_logs_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let unresolved = params.unresolved_only.unwrap_or(false);
     let limit = params.limit.unwrap_or(50).min(200);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     match service
         .list_reconciliation_logs(tenant_id, unresolved, limit)
@@ -1682,13 +1699,34 @@ pub async fn list_reconciliation_logs_handler(
 pub async fn resolve_reconciliation_issue_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(issue_id): Path<Uuid>,
 ) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::error(500, "数据库事务上下文缺失");
+    };
+    let scope = if tenant_id.is_nil() {
+        state.db.scope_with_system(txn).await
+    } else {
+        state.db.scope_with(txn).await
+    };
+    let mut scope = match scope {
+        Ok(scope) => scope,
+        Err(e) => {
+            return ApiResponse::from(TopemsError::internal(
+                "resolve_reconciliation_issue_handler",
+                e,
+            ));
+        }
+    };
 
     match service
-        .resolve_reconciliation_issue(tenant_id, issue_id)
+        .resolve_reconciliation_issue_in_scope(&mut scope, tenant_id, issue_id)
         .await
     {
         Ok(true) => ApiResponse::success(true, "对账问题已标记为解决"),
@@ -1730,7 +1768,7 @@ pub async fn create_approval_handler(
 ) -> ApiResponse<MasterDataApproval> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let requested_by = claims.username.clone();
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
 
     if !requires_approval(&req.domain) {
         return ApiResponse::bad_request(&format!("域 {} 不需要审批", req.domain));
@@ -1774,7 +1812,7 @@ pub async fn review_approval_handler(
 ) -> ApiResponse<MasterDataApproval> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1824,7 +1862,7 @@ pub async fn list_pending_approvals_handler(
     Query(params): Query<PendingApprovalQuery>,
 ) -> ApiResponse<Vec<MasterDataApproval>> {
     let limit = params.limit.unwrap_or(50).min(200);
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
@@ -1854,7 +1892,7 @@ pub async fn list_approval_history_handler(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<Vec<MasterDataApproval>> {
-    let service = MasterDataService::new(state.pool.clone());
+    let service = MasterDataService::from_db(state.db.clone());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
