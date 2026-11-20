@@ -11082,6 +11082,24 @@
     },
     {
       "schema": "public",
+      "table": "core_mdm_reconciliation_log",
+      "rls_enabled": true,
+      "force_rls": true,
+      "policies": [
+        {
+          "name": "tenant_isolation_core_mdm_reconciliation_log",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid = '00000000-0000-0000-0000-000000000000'::uuid) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
+          "with_check": "(((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid = '00000000-0000-0000-0000-000000000000'::uuid) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+        }
+      ]
+    },
+    {
+      "schema": "public",
       "table": "core_menu_groups",
       "rls_enabled": true,
       "force_rls": true,
