@@ -211,7 +211,7 @@ pub(crate) async fn search_documents(
     // 未设置租户上下文时回退零 UUID（仅命中全局/无归属文件）。
     let rows: Vec<DocumentSearchRow> = match sqlx::query_as(
         r#"SELECT id, name, path, mime_type
-           FROM core_files
+           FROM public.core_files
            WHERE (name ILIKE $1 OR path ILIKE $1)
              AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            ORDER BY created_at DESC

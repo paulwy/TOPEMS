@@ -62,7 +62,7 @@ pub async fn list_connections(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections \
+         created_at, updated_at FROM integration.erp_connections \
          ORDER BY created_at DESC"
     ))
     .fetch_all(&mut scope)
@@ -112,7 +112,7 @@ pub async fn get_connection(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections \
+         created_at, updated_at FROM integration.erp_connections \
          WHERE id = $1"
     ))
     .bind(id)
@@ -158,7 +158,7 @@ pub async fn create_connection(
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
-        "INSERT INTO erp_connections \
+        "INSERT INTO integration.erp_connections \
          (id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
          VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
@@ -218,7 +218,7 @@ pub async fn update_connection(
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
-        "UPDATE erp_connections SET \
+        "UPDATE integration.erp_connections SET \
          name = COALESCE($1, name), \
          api_url = COALESCE($2, api_url), \
          api_version = COALESCE($3, api_version), \
@@ -257,7 +257,7 @@ pub async fn update_connection(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["integration:erp_connections:write"])),
+    security(("BearerAuth" = ["integration:integration.erp_connections:write"])),
     path = "/api/integration/erp/connections/{id}",
     tag = "integration",
     responses(
@@ -284,7 +284,7 @@ pub async fn delete_connection(
 
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_connections WHERE id = $1"
+        "DELETE FROM integration.erp_connections WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut scope)

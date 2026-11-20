@@ -26,7 +26,7 @@ where
     E: sqlx::Executor<'e, Database = sqlx::Postgres>,
 {
     sqlx::query(
-        r#"INSERT INTO qa_approval_events (tenant_id, entity_type, entity_id, action, operator, status_from, status_to, comment)
+        r#"INSERT INTO qms.qa_approval_events (tenant_id, entity_type, entity_id, action, operator, status_from, status_to, comment)
            VALUES ($1::uuid, $2, $3::uuid, $4, $5, $6, $7, $8)"#,
     )
     .bind(tenant_id)

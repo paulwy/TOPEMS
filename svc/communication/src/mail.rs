@@ -1078,7 +1078,7 @@ pub fn queue_email(
             Ok(mut scope) => {
                 match sqlx::query(only_own_schema_query!(
                     "public",
-                    "INSERT INTO core_email_queue \
+                    "INSERT INTO public.core_email_queue \
                      (id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts, status, tenant_id) \
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 3, 'pending', $9::uuid)"
                 ))
@@ -1152,7 +1152,7 @@ async fn process_persisted_queue(db: &Db) {
     let rows = match sqlx::query_as::<_, QueueRow>(only_own_schema_query!(
         "public",
         "SELECT id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts \
-         FROM core_email_queue \
+         FROM public.core_email_queue \
          WHERE status = 'pending' \
          ORDER BY created_at ASC \
          LIMIT 20"
@@ -1173,7 +1173,7 @@ async fn process_persisted_queue(db: &Db) {
         // 标记 sending（防止并发重复发送）
         let _ = sqlx::query(only_own_schema_query!(
             "public",
-            "UPDATE core_email_queue SET status = 'sending', updated_at = NOW() WHERE id = $1"
+            "UPDATE public.core_email_queue SET status = 'sending', updated_at = NOW() WHERE id = $1"
         ))
         .bind(&id)
         .execute(&mut scope)
@@ -1191,7 +1191,7 @@ async fn process_persisted_queue(db: &Db) {
             Ok(_) => {
                 let _ = sqlx::query(only_own_schema_query!(
                     "public",
-                    "UPDATE core_email_queue SET status = 'sent', sent_at = NOW(), updated_at = NOW() WHERE id = $1"
+                    "UPDATE public.core_email_queue SET status = 'sent', sent_at = NOW(), updated_at = NOW() WHERE id = $1"
                 ))
                 .bind(&id)
                 .execute(&mut scope)
@@ -1207,7 +1207,7 @@ async fn process_persisted_queue(db: &Db) {
                 };
                 let _ = sqlx::query(only_own_schema_query!(
                     "public",
-                    "UPDATE core_email_queue SET attempts = $2, status = $3, error_message = $4, updated_at = NOW() WHERE id = $1"
+                    "UPDATE public.core_email_queue SET attempts = $2, status = $3, error_message = $4, updated_at = NOW() WHERE id = $1"
                 ))
                 .bind(&id)
                 .bind(next_attempts)

@@ -875,7 +875,7 @@ pub async fn report_assistant(
             req.data_source.as_deref().unwrap_or("default")
         )),
         sql: Some(
-            "SELECT month, SUM(sales) as sales, SUM(profit) as profit FROM orders GROUP BY month"
+            "SELECT month, SUM(sales) as sales, SUM(profit) as profit FROM public.demo_orders GROUP BY month"
                 .to_string(),
         ),
         data,

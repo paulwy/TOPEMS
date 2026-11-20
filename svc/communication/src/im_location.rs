@@ -225,14 +225,15 @@ pub async fn send_location_message(
     let msg = match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
         "public",
         r#"
-        INSERT INTO core_location_messages (
+        INSERT INTO communication.core_location_messages (
             chat_id, sender_id, location_type, coordinates,
             address, place_name, place_id, gis_location_id,
             gis_map_id, map_provider, description
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
-        "#
+        "#,
+        "communication"
     ))
     .bind(payload.chat_id)
     .bind(Uuid::nil())
@@ -328,7 +329,8 @@ pub async fn list_location_messages(
     };
     match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50"
+        "SELECT * FROM communication.core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50",
+        "communication"
     ))
     .bind(chat_id)
     .fetch_all(&mut scope)

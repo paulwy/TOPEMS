@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "wms.slotting_suggestions",
+            "table": "slotting_suggestions",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wms.slotting_suggestions",
+            "table": "slotting_suggestions",
             "name": "status"
           }
         }

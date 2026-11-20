@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE portal.core_faqs SET views = views + 1 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b95512c6611c5c0b735642d6cd5c56fb53d49fa2b31a73224170398cf97fca87"
+}

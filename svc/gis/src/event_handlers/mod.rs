@@ -52,7 +52,7 @@ impl GisEventHandlers {
 
         let mut scope = self.db.scope_for_tenant(tenant.get()).await?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("gis", "INSERT INTO gis_map_markers (id, marker_type, source_type, source_id, title, description, level, location, status, created_at, updated_at, tenant_id)
+            only_own_schema_query!("gis", "INSERT INTO gis.gis_map_markers (id, marker_type, source_type, source_id, title, description, level, location, status, created_at, updated_at, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $9, $10)
              ON CONFLICT (source_type, source_id, tenant_id) DO UPDATE SET
                  title = EXCLUDED.title,

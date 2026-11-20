@@ -408,7 +408,7 @@ pub async fn list_connections(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_connections ORDER BY created_at DESC"
     ))
     .fetch_all(&mut scope)
     .await
@@ -502,7 +502,7 @@ pub async fn create_connection(
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
-        "INSERT INTO erp_connections \
+        "INSERT INTO integration.erp_connections \
          (id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
          VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
@@ -658,7 +658,7 @@ async fn get_connection(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1"
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_connections WHERE id = $1"
     ))
     .bind(uuid)
     .fetch_optional(&mut scope)
@@ -719,7 +719,7 @@ pub async fn update_connection(
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
-        "UPDATE erp_connections SET \
+        "UPDATE integration.erp_connections SET \
          name = COALESCE($1, name), \
          api_url = COALESCE($2, api_url), \
          isactive = COALESCE($3, isactive), \
@@ -779,7 +779,7 @@ pub async fn delete_connection(
 
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_connections WHERE id = $1 AND tenant_id::text = $2"
+        "DELETE FROM integration.erp_connections WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(uuid)
     .bind(&claims.tenant_id)
@@ -817,7 +817,7 @@ pub async fn list_entity_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings \
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_mappings \
          WHERE connection_id = $1 AND mapping_type = $2 ORDER BY created_at DESC"
     ))
     .bind(uuid)
@@ -878,7 +878,7 @@ async fn create_entity_mapping(
 
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
-        "INSERT INTO erp_mappings \
+        "INSERT INTO integration.erp_mappings \
          (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
           external_code, external_name, direction, isactive, priority, condition, \
           created_at, updated_at) \
@@ -961,7 +961,7 @@ pub async fn batch_entity_mappings(
 
         match sqlx::query(only_own_schema_query!(
             "integration",
-            "INSERT INTO erp_mappings \
+            "INSERT INTO integration.erp_mappings \
              (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
               external_code, external_name, direction, isactive, priority, created_at, updated_at) \
              VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NOW(),NOW())"
@@ -1017,7 +1017,7 @@ pub async fn preview_entity(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings \
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_mappings \
          WHERE connection_id = $1 AND mapping_type = $2 \
          ORDER BY created_at DESC LIMIT 20"
     ))
@@ -1043,7 +1043,7 @@ async fn get_connection_by_id(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND tenant_id::text = $2"
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_connections WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(connection_id)
     .bind(tenant)
@@ -1143,7 +1143,7 @@ async fn update_sync_log_status(
 ) {
     let _ = sqlx::query(only_own_schema_query!(
         "integration",
-        "UPDATE external_erp_sync_logs \
+        "UPDATE integration.external_erp_sync_logs \
          SET status = $1, total_records = $2, success_count = $3, failed_count = $4, \
              error_message = $5, completed_at = NOW() \
          WHERE id = $6"
@@ -1283,7 +1283,7 @@ pub async fn sync_entity(
     // 创建同步日志记录
     if let Err(e) = sqlx::query(only_own_schema_query!(
         "integration",
-        "INSERT INTO external_erp_sync_logs \
+        "INSERT INTO integration.external_erp_sync_logs \
          (id, tenant_id, connection_id, entity, direction, status, started_at, created_at) \
          VALUES ($1,$2::uuid,$3,$4,$5,'running',NOW(),NOW())"
     ))
@@ -1442,7 +1442,7 @@ pub async fn sync_entity(
     // 更新连接的最后同步时间
     let _ = sqlx::query(only_own_schema_query!(
         "integration",
-        "UPDATE erp_connections SET last_sync_at = NOW(), updated_at = NOW() WHERE id = $1"
+        "UPDATE integration.erp_connections SET last_sync_at = NOW(), updated_at = NOW() WHERE id = $1"
     ))
     .bind(cid)
     .execute(&mut scope)
@@ -1490,7 +1490,7 @@ pub async fn sync_logs(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs ORDER BY created_at DESC LIMIT 100"
+         FROM integration.external_erp_sync_logs ORDER BY created_at DESC LIMIT 100"
     ))
     .fetch_all(&mut scope)
     .await
@@ -1522,7 +1522,7 @@ pub async fn sync_statistics(
     // 总量统计
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs"
+        "SELECT COUNT(*) FROM integration.external_erp_sync_logs"
     ))
     .fetch_optional(&mut scope)
     .await
@@ -1530,7 +1530,7 @@ pub async fn sync_statistics(
 
     let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE status = 'success'"
+        "SELECT COUNT(*) FROM integration.external_erp_sync_logs WHERE status = 'success'"
     ))
     .fetch_optional(&mut scope)
     .await
@@ -1538,7 +1538,7 @@ pub async fn sync_statistics(
 
     let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE status = 'failed'"
+        "SELECT COUNT(*) FROM integration.external_erp_sync_logs WHERE status = 'failed'"
     ))
     .fetch_optional(&mut scope)
     .await
@@ -1547,7 +1547,7 @@ pub async fn sync_statistics(
     let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
         sqlx::query_as(only_own_schema_query!(
             "integration",
-            "SELECT MAX(completed_at) FROM external_erp_sync_logs"
+            "SELECT MAX(completed_at) FROM integration.external_erp_sync_logs"
         ))
         .fetch_optional(&mut scope)
         .await
@@ -1556,7 +1556,7 @@ pub async fn sync_statistics(
     // 按 entity 分组统计
     let by_entity_rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT entity, COUNT(*) FROM external_erp_sync_logs GROUP BY entity ORDER BY COUNT(*) DESC"
+        "SELECT entity, COUNT(*) FROM integration.external_erp_sync_logs GROUP BY entity ORDER BY COUNT(*) DESC"
     ))
     .fetch_all(&mut scope)
     .await
@@ -1602,7 +1602,7 @@ pub async fn export_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_mappings ORDER BY created_at DESC"
     ))
     .fetch_all(&mut scope)
     .await
@@ -1641,7 +1641,7 @@ pub async fn export_sync_logs(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs ORDER BY created_at DESC"
+         FROM integration.external_erp_sync_logs ORDER BY created_at DESC"
     ))
     .fetch_all(&mut scope)
     .await
@@ -1686,7 +1686,7 @@ pub async fn toggle_connection(
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
-        "UPDATE erp_connections SET isactive = $2, updated_at = NOW() \
+        "UPDATE integration.erp_connections SET isactive = $2, updated_at = NOW() \
          WHERE id = $1 AND tenant_id::text = $3 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
@@ -1761,7 +1761,7 @@ pub async fn list_company_mappings(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at \
-         FROM erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' ORDER BY created_at DESC"
+         FROM integration.erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' ORDER BY created_at DESC"
     ))
     .bind(uuid)
     .fetch_all(&mut scope)
@@ -1818,7 +1818,7 @@ pub async fn create_company_mapping(
 
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
-        "INSERT INTO erp_mappings \
+        "INSERT INTO integration.erp_mappings \
          (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
           external_code, external_name, direction, isactive, priority, condition, \
           created_at, updated_at) \
@@ -1868,7 +1868,7 @@ pub async fn update_company_mapping(
     let external_name = body.get("external_name").and_then(|v| v.as_str());
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
-        "UPDATE erp_mappings SET \
+        "UPDATE integration.erp_mappings SET \
          local_code = COALESCE($1, local_code), \
          local_name = COALESCE($2, local_name), \
          external_code = COALESCE($3, external_code), \
@@ -1915,7 +1915,7 @@ pub async fn delete_company_mapping(
 
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' "
+        "DELETE FROM integration.erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' "
     ))
     .bind(mid)
     .bind(conn_uuid)
@@ -1955,7 +1955,7 @@ pub async fn update_entity_mapping(
     let external_name = body.get("external_name").and_then(|v| v.as_str());
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
-        "UPDATE erp_mappings SET \
+        "UPDATE integration.erp_mappings SET \
          local_code = COALESCE($1, local_code), \
          local_name = COALESCE($2, local_name), \
          external_code = COALESCE($3, external_code), \
@@ -2003,7 +2003,7 @@ pub async fn delete_entity_mapping(
 
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 "
+        "DELETE FROM integration.erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 "
     ))
     .bind(mid)
     .bind(conn_uuid)
@@ -2048,7 +2048,7 @@ pub async fn cancel_sync(
 
     let exists: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT id FROM external_erp_sync_logs WHERE id = $1"
+        "SELECT id FROM integration.external_erp_sync_logs WHERE id = $1"
     ))
     .bind(uuid)
     .fetch_optional(&mut scope)
@@ -2085,7 +2085,7 @@ pub async fn get_sync_log(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs WHERE id = $1"
+         FROM integration.external_erp_sync_logs WHERE id = $1"
     ))
     .bind(uuid)
     .fetch_optional(&mut scope)
@@ -2119,7 +2119,7 @@ pub async fn connection_sync_statistics(
 
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1"
+        "SELECT COUNT(*) FROM integration.external_erp_sync_logs WHERE connection_id = $1"
     ))
     .bind(uuid)
     .fetch_optional(&mut scope)
@@ -2127,7 +2127,7 @@ pub async fn connection_sync_statistics(
     .unwrap_or(None);
     let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1 AND status = 'success'"
+        "SELECT COUNT(*) FROM integration.external_erp_sync_logs WHERE connection_id = $1 AND status = 'success'"
     ))
     .bind(uuid)
     .fetch_optional(&mut scope)
@@ -2135,7 +2135,7 @@ pub async fn connection_sync_statistics(
     .unwrap_or(None);
     let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1 AND status = 'failed'"
+        "SELECT COUNT(*) FROM integration.external_erp_sync_logs WHERE connection_id = $1 AND status = 'failed'"
     ))
     .bind(uuid)
     .fetch_optional(&mut scope)
@@ -2144,7 +2144,7 @@ pub async fn connection_sync_statistics(
     let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
         sqlx::query_as(only_own_schema_query!(
             "integration",
-            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE connection_id = $1"
+            "SELECT MAX(completed_at) FROM integration.external_erp_sync_logs WHERE connection_id = $1"
         ))
         .bind(uuid)
         .fetch_optional(&mut scope)

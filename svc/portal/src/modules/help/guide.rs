@@ -139,7 +139,7 @@ pub async fn list_guides(
     };
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_guides
+        r#"SELECT COUNT(*) FROM portal.core_guides
            WHERE is_active = true
              AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR title ILIKE '%' || $2 || '%' OR description ILIKE '%' || $2 || '%')"#,
@@ -158,7 +158,7 @@ pub async fn list_guides(
 
     let items: Vec<Guide> = match sqlx::query_as(
         r#"SELECT id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at
-           FROM core_guides
+           FROM portal.core_guides
            WHERE is_active = true
              AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR title ILIKE '%' || $2 || '%' OR description ILIKE '%' || $2 || '%')
@@ -226,7 +226,7 @@ pub async fn get_guide(
 
     let guide: Option<Guide> = match sqlx::query_as(
         r#"SELECT id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at
-           FROM core_guides WHERE id = $1 AND is_active = true"#,
+           FROM portal.core_guides WHERE id = $1 AND is_active = true"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -246,7 +246,7 @@ pub async fn get_guide(
 
     let lessons: Vec<GuideLesson> = match sqlx::query_as(
         r#"SELECT id, guide_id, title, content, duration, sort_order, is_active, created_at
-           FROM core_guide_lessons WHERE guide_id = $1 AND is_active = true ORDER BY sort_order ASC"#,
+           FROM portal.core_guide_lessons WHERE guide_id = $1 AND is_active = true ORDER BY sort_order ASC"#,
     )
     .bind(id)
     .fetch_all(&mut scope)
@@ -315,7 +315,7 @@ pub async fn create_guide(
     };
 
     let guide: Guide = match sqlx::query_as(
-        r#"INSERT INTO core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at, tenant_id)
+        r#"INSERT INTO portal.core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9, $10)
            RETURNING id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at"#,
     )
@@ -397,7 +397,7 @@ pub async fn add_lesson(
     };
 
     let lesson: GuideLesson = match sqlx::query_as(
-        r#"INSERT INTO core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at, tenant_id)
+        r#"INSERT INTO portal.core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8)
            RETURNING id, guide_id, title, content, duration, sort_order, is_active, created_at"#,
     )
@@ -420,7 +420,7 @@ pub async fn add_lesson(
     };
 
     let _ = sqlx::query!(
-        r#"UPDATE core_guides SET lessons_count = lessons_count + 1 WHERE id = $1"#,
+        r#"UPDATE portal.core_guides SET lessons_count = lessons_count + 1 WHERE id = $1"#,
         guide_id
     )
     .execute(&mut scope)
@@ -463,7 +463,7 @@ pub async fn get_guide_categories(
     };
 
     let categories: Vec<String> = match sqlx::query_scalar(
-        r#"SELECT DISTINCT category FROM core_guides WHERE is_active = true ORDER BY category"#,
+        r#"SELECT DISTINCT category FROM portal.core_guides WHERE is_active = true ORDER BY category"#,
     )
     .fetch_all(&mut scope)
     .await

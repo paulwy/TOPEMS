@@ -102,7 +102,7 @@ pub async fn list_faqs(
     };
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_faqs
+        r#"SELECT COUNT(*) FROM portal.core_faqs
            WHERE is_active = true
              AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR question ILIKE '%' || $2 || '%' OR answer ILIKE '%' || $2 || '%')"#,
@@ -121,7 +121,7 @@ pub async fn list_faqs(
 
     let items: Vec<Faq> = match sqlx::query_as(
         r#"SELECT id, question, answer, category, views, is_active, sort_order, created_at, updated_at
-           FROM core_faqs
+           FROM portal.core_faqs
            WHERE is_active = true
              AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR question ILIKE '%' || $2 || '%' OR answer ILIKE '%' || $2 || '%')
@@ -189,7 +189,7 @@ pub async fn get_faq(
 
     let faq: Option<Faq> = match sqlx::query_as(
         r#"SELECT id, question, answer, category, views, is_active, sort_order, created_at, updated_at
-           FROM core_faqs WHERE id = $1 AND is_active = true"#,
+           FROM portal.core_faqs WHERE id = $1 AND is_active = true"#,
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -205,7 +205,7 @@ pub async fn get_faq(
     match faq {
         Some(faq) => {
             let _ = sqlx::query!(
-                r#"UPDATE core_faqs SET views = views + 1 WHERE id = $1"#,
+                r#"UPDATE portal.core_faqs SET views = views + 1 WHERE id = $1"#,
                 id
             )
             .execute(&mut scope)
@@ -267,7 +267,7 @@ pub async fn create_faq(
     };
 
     let faq: Faq = match sqlx::query_as(
-        r#"INSERT INTO core_faqs (id, question, answer, category, views, is_active, sort_order, created_at, updated_at, tenant_id)
+        r#"INSERT INTO portal.core_faqs (id, question, answer, category, views, is_active, sort_order, created_at, updated_at, tenant_id)
            VALUES ($1, $2, $3, $4, 0, true, $5, $6, $7, $8)
            RETURNING id, question, answer, category, views, is_active, sort_order, created_at, updated_at"#,
     )
@@ -331,7 +331,7 @@ pub async fn update_faq(
     };
 
     let faq: Option<Faq> = match sqlx::query_as(
-        r#"UPDATE core_faqs
+        r#"UPDATE portal.core_faqs
            SET question = COALESCE($1, question),
                answer = COALESCE($2, answer),
                category = COALESCE($3, category),
@@ -389,7 +389,7 @@ pub async fn delete_faq(
     };
 
     let result = sqlx::query!(
-        r#"UPDATE core_faqs SET is_active = false, updated_at = $1 WHERE id = $2"#,
+        r#"UPDATE portal.core_faqs SET is_active = false, updated_at = $1 WHERE id = $2"#,
         chrono::Utc::now(),
         id
     )
@@ -440,7 +440,7 @@ pub async fn get_faq_categories(
     };
 
     let categories: Vec<String> = match sqlx::query_scalar(
-        r#"SELECT DISTINCT category FROM core_faqs WHERE is_active = true ORDER BY category"#,
+        r#"SELECT DISTINCT category FROM portal.core_faqs WHERE is_active = true ORDER BY category"#,
     )
     .fetch_all(&mut scope)
     .await

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE portal.core_guides SET lessons_count = lessons_count + 1 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4262a2ee6f3deb8eb6d3223d5a9b87a0fb4a8711e61c5fdd161effb09077f590"
+}

@@ -56,7 +56,7 @@ impl HrmEventHandlers {
         let log_id = uuid::Uuid::new_v4();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO hrm_cache_invalidation_logs (id, cache_type, cache_key, operation, source_event, invalidated_at, tenant_id)
+            "INSERT INTO hrm.hrm_cache_invalidation_logs (id, cache_type, cache_key, operation, source_event, invalidated_at, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id",
         )

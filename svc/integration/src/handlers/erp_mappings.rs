@@ -42,7 +42,7 @@ pub async fn list_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_mappings ORDER BY created_at DESC"
     ))
     .fetch_all(&mut scope)
     .await
@@ -90,7 +90,7 @@ pub async fn get_mapping(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE id = $1"
+         created_at AS created_at, updated_at AS updated_at FROM integration.erp_mappings WHERE id = $1"
     ))
     .bind(id)
     .fetch_optional(&mut scope)
@@ -133,7 +133,7 @@ pub async fn create_mapping(
 
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
-        "INSERT INTO erp_mappings \
+        "INSERT INTO integration.erp_mappings \
          (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
           external_code, external_name, direction, isactive, priority, condition, \
           created_at, updated_at) \
@@ -196,7 +196,7 @@ pub async fn update_mapping(
 
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
-        "UPDATE erp_mappings SET \
+        "UPDATE integration.erp_mappings SET \
          connection_id = COALESCE($1, connection_id), \
          local_id = COALESCE($2, local_id), \
          local_code = COALESCE($3, local_code), \
@@ -267,7 +267,7 @@ pub async fn delete_mapping(
 
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND tenant_id::text = $2"
+        "DELETE FROM integration.erp_mappings WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(id)
     .bind(&tid)

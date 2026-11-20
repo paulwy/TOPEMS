@@ -3017,7 +3017,7 @@ pub async fn list_channels(
                 type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
-         FROM notification_channels \
+         FROM communication.notification_channels \
            WHERE ($1::text IS NULL OR type = $1) \
            AND ($2::text IS NULL OR status = $2) \
          ORDER BY created_at DESC LIMIT $4 OFFSET $5",
@@ -3040,7 +3040,7 @@ pub async fn list_channels(
     };
 
     let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM notification_channels \
+        "SELECT COUNT(*) FROM communication.notification_channels \
          WHERE ($1::text IS NULL OR type = $1) AND ($2::text IS NULL OR status = $2)",
     )
     .bind(query.r#type)
@@ -3112,7 +3112,7 @@ pub async fn get_channel(
                 type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
-         FROM notification_channels WHERE id = $1",
+         FROM communication.notification_channels WHERE id = $1",
     )
     .bind(id)
     .bind(locale)
@@ -3194,7 +3194,7 @@ pub async fn create_channel(
     // 如果设为默认，先取消其他默认
     if is_default {
         let _ = sqlx::query(
-            "UPDATE notification_channels SET is_default = false, updated_at = NOW() \
+            "UPDATE communication.notification_channels SET is_default = false, updated_at = NOW() \
              WHERE tenant_id = $1 AND is_default = true",
         )
         .bind(tenant_id)
@@ -3203,7 +3203,7 @@ pub async fn create_channel(
     }
 
     match sqlx::query_as::<_, NotificationChannel>(
-        "INSERT INTO notification_channels \
+        "INSERT INTO communication.notification_channels \
          (id, tenant_id, name, type, status, provider_id, is_default, config, \
           rate_limit_per_minute, retry_count, description, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,'active',$5,$6,$7,$8,$9,$10,NOW(),NOW()) \
@@ -3296,7 +3296,7 @@ pub async fn update_channel(
     // 如果设为默认，先取消其他默认
     if req.is_default.unwrap_or(false) {
         let _ = sqlx::query(
-            "UPDATE notification_channels SET is_default = false, updated_at = NOW() \
+            "UPDATE communication.notification_channels SET is_default = false, updated_at = NOW() \
              WHERE tenant_id = $1 AND is_default = true AND id != $2",
         )
         .bind(tenant_id)
@@ -3306,7 +3306,7 @@ pub async fn update_channel(
     }
 
     match sqlx::query_as::<_, NotificationChannel>(
-        "UPDATE notification_channels SET \
+        "UPDATE communication.notification_channels SET \
          name = COALESCE($1, name), \
          config = COALESCE($2, config), \
          is_default = COALESCE($3, is_default), \
@@ -3402,11 +3402,13 @@ pub async fn delete_channel(
             }));
         }
     };
-    match sqlx::query("DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&mut scope)
-        .await
+    match sqlx::query(
+        "DELETE FROM communication.notification_channels WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
@@ -3470,7 +3472,7 @@ pub async fn test_channel(
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
-         FROM notification_channels WHERE id = $1",
+         FROM communication.notification_channels WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&mut scope)
@@ -4064,7 +4066,7 @@ async fn load_preference_row(
 ) -> Result<Option<PrefRow>, String> {
     let row = sqlx::query(
         "SELECT categories, quiet_hours, global_mute, default_channels, language, timezone \
-         FROM core_notification_preferences WHERE user_id = $1",
+         FROM communication.core_notification_preferences WHERE user_id = $1",
     )
     .bind(user_id)
     .fetch_optional(&mut *scope)
@@ -4233,7 +4235,7 @@ pub async fn update_preferences(
     let tenant_bind = tenant_bind_for(&claims);
 
     let result = sqlx::query(
-        "INSERT INTO core_notification_preferences \
+        "INSERT INTO communication.core_notification_preferences \
          (user_id, categories, quiet_hours, global_mute, default_channels, language, timezone, tenant_id, updated_at) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) \
          ON CONFLICT (user_id) DO UPDATE SET \
@@ -4406,7 +4408,7 @@ pub async fn update_category_preference(
     }
     let tenant_bind = tenant_bind_for(&claims);
     let result = sqlx::query(
-        "INSERT INTO core_notification_preferences (user_id, categories, tenant_id, updated_at) \
+        "INSERT INTO communication.core_notification_preferences (user_id, categories, tenant_id, updated_at) \
          VALUES ($1, $2, $3, NOW()) \
          ON CONFLICT (user_id) DO UPDATE SET categories = EXCLUDED.categories, updated_at = NOW()",
     )
@@ -4482,7 +4484,7 @@ pub async fn set_global_mute(
     });
     let tenant_bind = tenant_bind_for(&claims);
     let result = sqlx::query(
-        "INSERT INTO core_notification_preferences (user_id, global_mute, tenant_id, updated_at) \
+        "INSERT INTO communication.core_notification_preferences (user_id, global_mute, tenant_id, updated_at) \
          VALUES ($1, $2, $3, NOW()) \
          ON CONFLICT (user_id) DO UPDATE SET global_mute = EXCLUDED.global_mute, updated_at = NOW()",
     )
@@ -4552,7 +4554,7 @@ pub async fn cancel_global_mute(
     let mute = serde_json::json!({ "enabled": false });
     let tenant_bind = tenant_bind_for(&claims);
     let result = sqlx::query(
-        "INSERT INTO core_notification_preferences (user_id, global_mute, tenant_id, updated_at) \
+        "INSERT INTO communication.core_notification_preferences (user_id, global_mute, tenant_id, updated_at) \
          VALUES ($1, $2, $3, NOW()) \
          ON CONFLICT (user_id) DO UPDATE SET global_mute = EXCLUDED.global_mute, updated_at = NOW()",
     )
@@ -4714,7 +4716,7 @@ pub async fn update_quiet_hours(
     }
     let tenant_bind = tenant_bind_for(&claims);
     let result = sqlx::query(
-        "INSERT INTO core_notification_preferences (user_id, quiet_hours, tenant_id, updated_at) \
+        "INSERT INTO communication.core_notification_preferences (user_id, quiet_hours, tenant_id, updated_at) \
          VALUES ($1, $2, $3, NOW()) \
          ON CONFLICT (user_id) DO UPDATE SET quiet_hours = EXCLUDED.quiet_hours, updated_at = NOW()",
     )
@@ -4784,7 +4786,7 @@ pub async fn reset_preferences(
     let defaults = default_preferences(user_id);
     let tenant_bind = tenant_bind_for(&claims);
     let result = sqlx::query(
-        "INSERT INTO core_notification_preferences \
+        "INSERT INTO communication.core_notification_preferences \
          (user_id, categories, quiet_hours, global_mute, default_channels, language, timezone, tenant_id, updated_at) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) \
          ON CONFLICT (user_id) DO UPDATE SET \
@@ -4938,7 +4940,7 @@ pub async fn list_subscriptions(
     let rows = sqlx::query(
         "SELECT id, user_id, tenant_id, event_type, event_category, channels, status, \
          filter_expression, priority, expires_at, created_at, updated_at \
-         FROM core_notification_subscriptions \
+         FROM communication.core_notification_subscriptions \
          WHERE user_id = $1 \
            AND ($2::text IS NULL OR event_type = $2) \
            AND ($3::text IS NULL OR status = $3) \
@@ -4955,7 +4957,7 @@ pub async fn list_subscriptions(
     .fetch_all(&mut scope)
     .await;
     let total = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM core_notification_subscriptions \
+        "SELECT COUNT(*) FROM communication.core_notification_subscriptions \
          WHERE user_id = $1 \
            AND ($2::text IS NULL OR event_type = $2) \
            AND ($3::text IS NULL OR status = $3) \
@@ -5036,7 +5038,7 @@ pub async fn get_subscription(
     let row = sqlx::query(
         "SELECT id, user_id, tenant_id, event_type, event_category, channels, status, \
          filter_expression, priority, expires_at, created_at, updated_at \
-         FROM core_notification_subscriptions WHERE id = $1 AND user_id = $2",
+         FROM communication.core_notification_subscriptions WHERE id = $1 AND user_id = $2",
     )
     .bind(id)
     .bind(user_id)
@@ -5112,7 +5114,7 @@ pub async fn create_subscription(
             .map(|d| d.with_timezone(&chrono::Utc))
     });
     let row = sqlx::query(
-        "INSERT INTO core_notification_subscriptions \
+        "INSERT INTO communication.core_notification_subscriptions \
          (user_id, tenant_id, event_type, event_category, channels, status, filter_expression, priority, expires_at) \
          VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8) \
          RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
@@ -5197,7 +5199,7 @@ pub async fn update_subscription(
             .map(|d| d.with_timezone(&chrono::Utc))
     });
     let row = sqlx::query(
-        "UPDATE core_notification_subscriptions SET \
+        "UPDATE communication.core_notification_subscriptions SET \
          channels = COALESCE($1, channels), \
          filter_expression = COALESCE($2, filter_expression), \
          priority = COALESCE($3, priority), \
@@ -5277,12 +5279,13 @@ pub async fn delete_subscription(
         Ok(uid) => uid,
         Err(v) => return Json(v),
     };
-    let result =
-        sqlx::query("DELETE FROM core_notification_subscriptions WHERE id = $1 AND user_id = $2")
-            .bind(id)
-            .bind(user_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "DELETE FROM communication.core_notification_subscriptions WHERE id = $1 AND user_id = $2",
+    )
+    .bind(id)
+    .bind(user_id)
+    .execute(&mut scope)
+    .await;
     match result {
         Ok(r) => Json(serde_json::json!({
             "success": true, "message": "ok",
@@ -5343,7 +5346,7 @@ pub async fn pause_subscription(
         Err(v) => return Json(v),
     };
     let row = sqlx::query(
-        "UPDATE core_notification_subscriptions SET status = 'paused', updated_at = NOW() \
+        "UPDATE communication.core_notification_subscriptions SET status = 'paused', updated_at = NOW() \
          WHERE id = $1 AND user_id = $2 \
          RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
          filter_expression, priority, expires_at, created_at, updated_at",
@@ -5415,7 +5418,7 @@ pub async fn resume_subscription(
         Err(v) => return Json(v),
     };
     let row = sqlx::query(
-        "UPDATE core_notification_subscriptions SET status = 'active', updated_at = NOW() \
+        "UPDATE communication.core_notification_subscriptions SET status = 'active', updated_at = NOW() \
          WHERE id = $1 AND user_id = $2 \
          RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
          filter_expression, priority, expires_at, created_at, updated_at",
@@ -5525,7 +5528,7 @@ pub async fn batch_subscribe(
                 .map(|d| d.with_timezone(&chrono::Utc))
         });
         let result = sqlx::query(
-            "INSERT INTO core_notification_subscriptions \
+            "INSERT INTO communication.core_notification_subscriptions \
              (user_id, tenant_id, event_type, event_category, channels, status, filter_expression, priority, expires_at) \
              VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8) \
              ON CONFLICT DO NOTHING",
@@ -5593,7 +5596,7 @@ pub async fn batch_unsubscribe(
         Err(v) => return Json(v),
     };
     let result = sqlx::query(
-        "DELETE FROM core_notification_subscriptions WHERE user_id = $1 AND id = ANY($2)",
+        "DELETE FROM communication.core_notification_subscriptions WHERE user_id = $1 AND id = ANY($2)",
     )
     .bind(user_id)
     .bind(&req.ids)
@@ -5664,7 +5667,7 @@ pub async fn unsubscribe_event(
         }));
     };
     let result = sqlx::query(
-        "DELETE FROM core_notification_subscriptions WHERE user_id = $1 AND event_type = $2",
+        "DELETE FROM communication.core_notification_subscriptions WHERE user_id = $1 AND event_type = $2",
     )
     .bind(user_id)
     .bind(&event_type)
@@ -5794,7 +5797,7 @@ fn delivery_select_sql() -> &'static str {
     "SELECT id, notification_id, user_id, channel, status, recipient, subject, body, \
      sent_at, delivered_at, failed_at, failure_reason, retry_count, max_retries, \
      next_retry_at, provider_message_id, metadata, created_at, updated_at \
-     FROM core_notification_deliveries"
+     FROM communication.core_notification_deliveries"
 }
 
 fn parse_ts(s: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
@@ -5841,7 +5844,7 @@ async fn paginated_deliveries(
     q = q.bind(offset);
     let rows = q.fetch_all(&mut *scope).await;
     let count_sql = format!(
-        "SELECT COUNT(*) FROM core_notification_deliveries {}",
+        "SELECT COUNT(*) FROM communication.core_notification_deliveries {}",
         filter
     );
     let mut c = sqlx::query(sqlx::AssertSqlSafe(count_sql));
@@ -6032,7 +6035,7 @@ pub async fn retry_delivery(
         Err(v) => return Json(v),
     };
     let prev = sqlx::query_scalar::<_, String>(
-        "SELECT status FROM core_notification_deliveries WHERE id = $1 AND user_id = $2",
+        "SELECT status FROM communication.core_notification_deliveries WHERE id = $1 AND user_id = $2",
     )
     .bind(id)
     .bind(user_id)
@@ -6052,7 +6055,7 @@ pub async fn retry_delivery(
         }
     };
     let row = sqlx::query(
-        "UPDATE core_notification_deliveries SET status = 'pending', \
+        "UPDATE communication.core_notification_deliveries SET status = 'pending', \
          retry_count = retry_count + 1, failure_reason = NULL, \
          next_retry_at = NOW() + INTERVAL '5 minutes', updated_at = NOW() \
          WHERE id = $1 AND user_id = $2 \
@@ -6226,7 +6229,7 @@ pub async fn delivery_stats(
          COUNT(*) FILTER (WHERE status = 'expired') AS expired, \
          COALESCE(AVG(CASE WHEN delivered_at IS NOT NULL \
            THEN EXTRACT(EPOCH FROM (delivered_at - COALESCE(sent_at, created_at))) * 1000 END), 0) AS avg_ms \
-         FROM core_notification_deliveries \
+         FROM communication.core_notification_deliveries \
          WHERE ($1::timestamptz IS NULL OR created_at >= $1) \
            AND ($2::timestamptz IS NULL OR created_at <= $2) \
            AND ($3::text IS NULL OR channel = $3)",
@@ -6237,7 +6240,7 @@ pub async fn delivery_stats(
     .fetch_one(&mut scope)
     .await;
     let by_channel = sqlx::query(
-        "SELECT channel, COUNT(*) AS cnt FROM core_notification_deliveries \
+        "SELECT channel, COUNT(*) AS cnt FROM communication.core_notification_deliveries \
          WHERE ($1::timestamptz IS NULL OR created_at >= $1) \
            AND ($2::timestamptz IS NULL OR created_at <= $2) \
            AND ($3::text IS NULL OR channel = $3) GROUP BY channel",
@@ -6248,7 +6251,7 @@ pub async fn delivery_stats(
     .fetch_all(&mut scope)
     .await;
     let by_status = sqlx::query(
-        "SELECT status, COUNT(*) AS cnt FROM core_notification_deliveries \
+        "SELECT status, COUNT(*) AS cnt FROM communication.core_notification_deliveries \
          WHERE ($1::timestamptz IS NULL OR created_at >= $1) \
            AND ($2::timestamptz IS NULL OR created_at <= $2) \
            AND ($3::text IS NULL OR channel = $3) GROUP BY status",
@@ -6260,7 +6263,7 @@ pub async fn delivery_stats(
     .await;
     let reasons = sqlx::query(
         "SELECT COALESCE(failure_reason, 'unknown') AS reason, COUNT(*) AS cnt \
-         FROM core_notification_deliveries WHERE status = 'failed' \
+         FROM communication.core_notification_deliveries WHERE status = 'failed' \
          GROUP BY reason ORDER BY cnt DESC LIMIT 10",
     )
     .fetch_all(&mut scope)
@@ -6416,7 +6419,7 @@ pub async fn retry_all_failed(
         Err(v) => return Json(v),
     };
     let result = sqlx::query(
-        "UPDATE core_notification_deliveries SET status = 'pending', \
+        "UPDATE communication.core_notification_deliveries SET status = 'pending', \
          retry_count = retry_count + 1, failure_reason = NULL, \
          next_retry_at = NOW() + INTERVAL '5 minutes', updated_at = NOW() \
          WHERE status = 'failed' AND user_id = $1",
@@ -6530,12 +6533,13 @@ pub async fn delete_delivery(
         Ok(uid) => uid,
         Err(v) => return Json(v),
     };
-    let result =
-        sqlx::query("DELETE FROM core_notification_deliveries WHERE id = $1 AND user_id = $2")
-            .bind(id)
-            .bind(user_id)
-            .execute(&mut scope)
-            .await;
+    let result = sqlx::query(
+        "DELETE FROM communication.core_notification_deliveries WHERE id = $1 AND user_id = $2",
+    )
+    .bind(id)
+    .bind(user_id)
+    .execute(&mut scope)
+    .await;
     match result {
         Ok(r) => Json(serde_json::json!({
             "success": true, "message": "ok", "data": r.rows_affected() > 0

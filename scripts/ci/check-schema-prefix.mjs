@@ -55,6 +55,7 @@ const SKIP_RELATIONS = new Set([
   'select', 'values', 'lateral', 'only', 'unnest', 'generate_series', 'json_each',
   'jsonb_each', 'json_array_elements', 'jsonb_array_elements', 'json_table', 'dual',
   'now', 'current_setting', 'set_config', 'to_regclass', 'to_regnamespace', 'extract',
+  'jsonb_array_elements_text', 'skip',
   'pg_catalog', 'information_schema', 'set', 'with', 'conflict',
 ]);
 

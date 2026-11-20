@@ -823,7 +823,7 @@ pub async fn get_trace(
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"SELECT id, serial_no, batch_no, status, location_code, created_at, updated_at
-           FROM serial_numbers WHERE id = $1 AND tenant_id = $2::uuid"#,
+           FROM wms.serial_numbers WHERE id = $1 AND tenant_id = $2::uuid"#,
         "core"
     ))
     .bind(serial_id)

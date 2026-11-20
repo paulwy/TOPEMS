@@ -731,17 +731,20 @@ async fn build_pm_statistics(db: &mut ScopedTxn<'_>) -> PmStatistics {
         closed_risks: query_count(db, "SELECT COUNT(*) FROM pm.risks WHERE status = 'closed'")
             .await,
 
-        total_tasks: query_count(db, "SELECT COUNT(*) FROM pm_tasks").await,
-        pending_tasks: query_count(db, "SELECT COUNT(*) FROM pm_tasks WHERE status = 'pending'")
-            .await,
+        total_tasks: query_count(db, "SELECT COUNT(*) FROM pm.pm_tasks").await,
+        pending_tasks: query_count(
+            db,
+            "SELECT COUNT(*) FROM pm.pm_tasks WHERE status = 'pending'",
+        )
+        .await,
         in_progress_tasks: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_tasks WHERE status = 'in_progress'",
+            "SELECT COUNT(*) FROM pm.pm_tasks WHERE status = 'in_progress'",
         )
         .await,
         completed_tasks: query_count(
             db,
-            "SELECT COUNT(*) FROM pm_tasks WHERE status = 'completed'",
+            "SELECT COUNT(*) FROM pm.pm_tasks WHERE status = 'completed'",
         )
         .await,
 
@@ -908,7 +911,7 @@ async fn build_budget_statistics(db: &mut ScopedTxn<'_>) -> BudgetStatistics {
     };
 
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, f64, f64)>(
-        only_own_schema_query!("pm", "SELECT COALESCE(category, 'uncategorized'), SUM(budget_amount), SUM(spent_amount) FROM pm_budget_items GROUP BY category"),
+        only_own_schema_query!("pm", "SELECT COALESCE(category, 'uncategorized'), SUM(budget_amount), SUM(spent_amount) FROM pm.pm_budget_items GROUP BY category"),
     )
     .fetch_all(&mut *db)
     .await
@@ -974,18 +977,18 @@ async fn build_risk_statistics(db: &mut ScopedTxn<'_>) -> RiskStatistics {
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn build_task_statistics(db: &mut ScopedTxn<'_>) -> TaskStatistics {
-    let total_tasks = query_count(db, "SELECT COUNT(*) FROM pm_tasks").await;
+    let total_tasks = query_count(db, "SELECT COUNT(*) FROM pm.pm_tasks").await;
 
     let by_status = query_status_counts(
         db,
-        "SELECT status, COUNT(*) as count FROM pm_tasks GROUP BY status",
+        "SELECT status, COUNT(*) as count FROM pm.pm_tasks GROUP BY status",
     )
     .await;
 
     let by_priority: Vec<PriorityCount> =
         sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
             "pm",
-            "SELECT COALESCE(priority, 'normal'), COUNT(*) FROM pm_tasks GROUP BY priority"
+            "SELECT COALESCE(priority, 'normal'), COUNT(*) FROM pm.pm_tasks GROUP BY priority"
         ))
         .fetch_all(&mut *db)
         .await
@@ -996,7 +999,7 @@ async fn build_task_statistics(db: &mut ScopedTxn<'_>) -> TaskStatistics {
 
     let completed = query_count(
         db,
-        "SELECT COUNT(*) FROM pm_tasks WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE status = 'completed'",
     )
     .await;
     let completion_rate = if total_tasks > 0 {
@@ -1007,7 +1010,7 @@ async fn build_task_statistics(db: &mut ScopedTxn<'_>) -> TaskStatistics {
 
     let overdue_count = query_count(
         db,
-        "SELECT COUNT(*) FROM pm_tasks WHERE status NOT IN ('completed', 'cancelled') AND due_date < CURRENT_TIMESTAMP",
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE status NOT IN ('completed', 'cancelled') AND due_date < CURRENT_TIMESTAMP",
     )
     .await;
 

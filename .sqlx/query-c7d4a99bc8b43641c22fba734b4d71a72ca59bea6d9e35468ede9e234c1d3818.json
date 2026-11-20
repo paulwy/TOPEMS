@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE portal.core_faqs SET is_active = false, updated_at = $1 WHERE id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c7d4a99bc8b43641c22fba734b4d71a72ca59bea6d9e35468ede9e234c1d3818"
+}

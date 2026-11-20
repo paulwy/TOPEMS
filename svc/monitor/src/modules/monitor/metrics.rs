@@ -661,7 +661,7 @@ pub async fn get_performance_summary(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT * FROM orders WHERE customer_id = ?".to_string(),
+            query: "SELECT * FROM public.demo_orders WHERE customer_id = ?".to_string(),
             duration_ms: 450.2,
             service_name: "topems-crm".to_string(),
             timestamp: now - chrono::Duration::minutes(15),
@@ -671,7 +671,7 @@ pub async fn get_performance_summary(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT SUM(amount) FROM transactions WHERE date >= ?".to_string(),
+            query: "SELECT SUM(amount) FROM public.demo_transactions WHERE date >= ?".to_string(),
             duration_ms: 890.5,
             service_name: "topems-erp".to_string(),
             timestamp: now - chrono::Duration::minutes(45),
@@ -762,7 +762,7 @@ pub async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT * FROM orders WHERE customer_id = ? AND status = 'pending'".to_string(),
+            query: "SELECT * FROM public.demo_orders WHERE customer_id = ? AND status = 'pending'".to_string(),
             duration_ms: 450.2,
             service_name: "topems-crm".to_string(),
             timestamp: now - chrono::Duration::minutes(15),
@@ -772,7 +772,7 @@ pub async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT SUM(amount) FROM transactions WHERE date >= ? AND account_id = ?".to_string(),
+            query: "SELECT SUM(amount) FROM public.demo_transactions WHERE date >= ? AND account_id = ?".to_string(),
             duration_ms: 890.5,
             service_name: "topems-erp".to_string(),
             timestamp: now - chrono::Duration::minutes(45),
@@ -812,7 +812,7 @@ pub async fn get_slow_queries(
         SlowQuery {
             id: Uuid::new_v4(),
             tenant_id,
-            query: "SELECT * FROM ai_models WHERE version = ? ORDER BY created_at DESC".to_string(),
+            query: "SELECT * FROM public.demo_ai_models WHERE version = ? ORDER BY created_at DESC".to_string(),
             duration_ms: 750.2,
             service_name: "topems-ai".to_string(),
             timestamp: now - chrono::Duration::hours(4),

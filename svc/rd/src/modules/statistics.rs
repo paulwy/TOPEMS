@@ -51,71 +51,71 @@ pub async fn get_statistics(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let total_projects: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_projects")
+    let total_projects: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects")
         .fetch_one(&mut **txn)
         .await
         .unwrap_or((0,));
 
     let pending_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'pending'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'pending'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let in_progress_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'in_progress'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'in_progress'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let completed_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'completed'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'completed'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let cancelled_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_projects WHERE status = 'cancelled'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'cancelled'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
-    let total_experiments: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_experiments")
+    let total_experiments: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs.rs_experiments")
         .fetch_one(&mut **txn)
         .await
         .unwrap_or((0,));
 
     let pending_experiments: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_experiments WHERE status = 'pending'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_experiments WHERE status = 'pending'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let in_progress_experiments: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_experiments WHERE status = 'in_progress'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_experiments WHERE status = 'in_progress'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let completed_experiments: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_experiments WHERE status = 'completed'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_experiments WHERE status = 'completed'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
-    let total_formulas: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_formulas")
+    let total_formulas: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs.rs_formulas")
         .fetch_one(&mut **txn)
         .await
         .unwrap_or((0,));
 
     let draft_formulas: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_formulas WHERE status = 'draft'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_formulas WHERE status = 'draft'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let approved_formulas: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_formulas WHERE status = 'approved'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_formulas WHERE status = 'approved'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));

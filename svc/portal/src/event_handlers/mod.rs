@@ -61,7 +61,7 @@ impl PortalEventHandlers {
         let notif_id = uuid::Uuid::new_v4();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            "INSERT INTO portal_notifications (id, title, content, service, service_name, notification_type, read, created_at, link_url, target_user, tenant_id)
+            "INSERT INTO portal.portal_notifications (id, title, content, service, service_name, notification_type, read, created_at, link_url, target_user, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, false, $7, $8, $9, $10)
              RETURNING id",
         )
@@ -205,7 +205,7 @@ impl PortalEventHandlers {
         );
 
         let project_count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM portal_dashboard_stats WHERE stat_key = 'total_projects' AND tenant_id = $1",
+            "SELECT COUNT(*) FROM portal.portal_dashboard_stats WHERE stat_key = 'total_projects' AND tenant_id = $1",
         )
         .bind(tenant_id)
         .fetch_one(&self.db)
@@ -213,7 +213,7 @@ impl PortalEventHandlers {
         .unwrap_or(0);
 
         let result = sqlx::query(
-            "INSERT INTO portal_dashboard_stats (stat_key, stat_value, stat_label, updated_at, tenant_id)
+            "INSERT INTO portal.portal_dashboard_stats (stat_key, stat_value, stat_label, updated_at, tenant_id)
              VALUES ('total_projects', $1, '项目总数', $2, $3)
              ON CONFLICT (stat_key, tenant_id) DO UPDATE SET
                  stat_value = portal_dashboard_stats.stat_value + 1,

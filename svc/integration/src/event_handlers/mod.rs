@@ -96,7 +96,7 @@ impl IntegrationEventHandlers {
         let mut scope = scope_res
             .map_err(|e| TopemsError::BusinessLogic(format!("建立同步日志作用域失败: {}", e)))?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("integration", "INSERT INTO integration_sync_logs (id, sync_type, source_system, target_system, status, trace_id, details, started_at, source_type, source_id, tenant_id)
+            only_own_schema_query!("integration", "INSERT INTO integration.integration_sync_logs (id, sync_type, source_system, target_system, status, trace_id, details, started_at, source_type, source_id, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
              ON CONFLICT (source_type, source_id, tenant_id) DO NOTHING
              RETURNING id"),

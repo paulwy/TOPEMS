@@ -85,7 +85,7 @@ impl RdEventHandlers {
                     Utc::now().timestamp_subsec_millis()
                 );
                 let result = sqlx::query_scalar::<_, uuid::Uuid>(
-                    "INSERT INTO rs_projects (name, code, project_type, status, leader, progress, start_date, created_by, created_at, updated_at, source_type, source_id, tenant_id)
+                    "INSERT INTO rs.rs_projects (name, code, project_type, status, leader, progress, start_date, created_by, created_at, updated_at, source_type, source_id, tenant_id)
                      VALUES ($1, $2, 'r_d', 'pending', $3, 0, $4, 'system', $4, $4, 'pm_project', $5, $6)
                      ON CONFLICT (source_type, source_id) DO NOTHING
                      RETURNING id",
@@ -132,7 +132,7 @@ impl RdEventHandlers {
                 );
 
                 let result = sqlx::query(
-                    "UPDATE rs_projects SET status = 'completed', progress = 100, updated_at = $1 WHERE name = $2 AND tenant_id = $3",
+                    "UPDATE rs.rs_projects SET status = 'completed', progress = 100, updated_at = $1 WHERE name = $2 AND tenant_id = $3",
                 )
                 .bind(Utc::now())
                 .bind(&payload.project_name)
@@ -186,10 +186,11 @@ impl RdEventHandlers {
                     payload.material_type
                 );
 
-                let total_materials: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM rs_formulas")
-                    .fetch_one(&self.db)
-                    .await
-                    .unwrap_or(0);
+                let total_materials: i64 =
+                    sqlx::query_scalar("SELECT COUNT(*) FROM rs.rs_formulas")
+                        .fetch_one(&self.db)
+                        .await
+                        .unwrap_or(0);
 
                 tracing::info!(
                     "[rd] 研发物料库同步检查: 当前配方总数={}，新物料: {} 可用于研发配方",
@@ -242,7 +243,7 @@ impl RdEventHandlers {
                 );
 
                 let total_experiments: i64 =
-                    sqlx::query_scalar("SELECT COUNT(*) FROM rs_experiments")
+                    sqlx::query_scalar("SELECT COUNT(*) FROM rs.rs_experiments")
                         .fetch_one(&self.db)
                         .await
                         .unwrap_or(0);
