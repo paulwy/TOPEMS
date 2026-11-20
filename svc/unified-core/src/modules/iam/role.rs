@@ -106,83 +106,73 @@ pub async fn list_roles(
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 
+    let scope_kind = match tenant_scope::iam_read_scope(&claims) {
+        Ok(s) => s,
+        Err(_) => return json_error(403, "缺少租户上下文，无法查看角色"),
+    };
+    let tenant_filter = match scope_kind {
+        IamScope::Platform => None,
+        IamScope::Tenant(tenant_id) => Some(tenant_id),
+    };
+
     let mut guard = txn_arc.lock().await;
-    // `core_roles` 是 FORCE RLS 表：租户管理员必须走租户读通道才能看到本租户角色；
-    // 裸池无 GUC 时只能看到全局角色，新建的租户域角色会“建完即消失”。
-    let result = if claims.is_superuser {
-        match state.db.scope_read_system().await {
-            Ok(mut scope) => {
-                let result = sqlx::query_as::<_, RoleRow>(
-                    "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL ORDER BY created_at DESC",
-                )
-                .fetch_all(&mut scope)
-                .await;
-                let _ = scope.commit().await;
-                result
-            }
-            Err(e) => Err(e),
-        }
-    } else {
-        match tenant_scope::iam_read_scope(&claims) {
-            Ok(IamScope::Tenant(tenant_id)) => {
-                let Some(txn) = guard.as_mut() else {
-                    tracing::error!("rls txn missing: RLS 事务中间件未注入");
-                    return json_error(500, "数据库事务上下文缺失");
-                };
-                match state.db.scope_with(txn).await {
-                    Ok(mut scope) => {
-                        let result = sqlx::query_as::<_, RoleRow>(
-                        "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1 OR tenant_id = '00000000-0000-0000-0000-000000000000'::uuid) ORDER BY created_at DESC",
-                    )
-                    .bind(tenant_id)
-                    .fetch_all(&mut scope)
-                    .await;
-                        let _ = scope.commit().await;
-                        result
-                    }
-                    Err(e) => Err(e),
-                }
-            }
-            _ => return json_error(403, "缺少租户上下文，无法查看角色"),
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return json_error(500, "数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开角色读作用域失败: {}", e);
+            return json_error(500, "获取角色列表失败");
         }
     };
 
-    match result {
-        Ok(roles) => {
-            let mut role_responses = Vec::new();
-            for r in roles {
-                // 获取每个角色的权限数量
-                let perm_count: i64 = sqlx::query_scalar(
-                    "SELECT COUNT(*) FROM public.core_role_permissions WHERE role_id = $1",
-                )
-                .bind(r.id)
-                .fetch_one(&state.pool)
-                .await
-                .unwrap_or(0);
+    let roles = sqlx::query_as::<_, RoleRow>(
+        "SELECT id, name, description, tenant_id, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1 OR tenant_id = '00000000-0000-0000-0000-000000000000'::uuid) ORDER BY created_at DESC",
+    )
+    .bind(tenant_filter)
+    .fetch_all(&mut scope)
+    .await;
 
-                role_responses.push(RoleResponse {
-                    id: r.id.to_string(),
-                    name: r.name,
-                    description: r.description,
-                    created_at: r.created_at,
-                    permission_count: perm_count,
-                });
-            }
-
-            Json(serde_json::json!({
-                "success": true,
-                "message": "获取角色列表成功",
-                "data": role_responses
-            }))
-        }
+    let roles = match roles {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch roles: {}", e);
-            Json(topems_shared_core::response::error_value(
-                500,
-                &format!("获取角色列表失败: {}", e),
-            ))
+            return json_error(500, "获取角色列表失败");
         }
+    };
+
+    let mut role_responses = Vec::new();
+    for r in roles {
+        let perm_count = match sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM public.core_role_permissions WHERE role_id = $1",
+        )
+        .bind(r.id)
+        .fetch_one(&mut scope)
+        .await
+        {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("统计角色权限数失败: {}", e);
+                return json_error(500, "获取角色列表失败");
+            }
+        };
+
+        role_responses.push(RoleResponse {
+            id: r.id.to_string(),
+            name: r.name,
+            description: r.description,
+            created_at: r.created_at,
+            permission_count: perm_count,
+        });
     }
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取角色列表成功",
+        "data": role_responses
+    }))
 }
 
 pub async fn create_role(
@@ -413,12 +403,11 @@ pub async fn get_role(
     .bind(tenant_filter)
     .fetch_optional(&mut tx)
     .await;
-    let _ = tx.commit().await;
 
     match role {
         Ok(Some(r)) => {
             // 获取角色的权限列表
-            let permissions: Vec<String> = sqlx::query_scalar(
+            let permissions = match sqlx::query_scalar::<_, String>(
                 r#"
                 SELECT p.code FROM public.core_permissions p
                 INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
@@ -427,9 +416,16 @@ pub async fn get_role(
                 "#,
             )
             .bind(role_uuid)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut tx)
             .await
-            .unwrap_or_default();
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("查询角色权限失败: {}", e);
+                    return json_error(500, "获取角色失败");
+                }
+            };
+            let _ = tx.commit().await;
 
             Json(serde_json::json!({
                 "success": true,

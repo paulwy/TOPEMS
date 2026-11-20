@@ -1147,14 +1147,14 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 
 | 指标 | 11-18 | 11-20 |
 | --- | --- | --- |
-| `&state.(db\|pool)` 命中 | 1922 | 1798 |
+| `&state.(db\|pool)` 命中 | 1922 | 1792 |
 | 已作用域化 | — | 537 |
 | 权限/审计/健康/元数据 | — | 1111 |
-| 业务带显式谓词 | — | 25 |
-| 业务无谓词 | — | 57 |
-| 业务无上下文 | — | 62 |
+| 业务带显式谓词 | — | 21 |
+| 业务无谓词 | — | 56 |
+| 业务无上下文 | — | 61 |
 | 业务后台内部 | — | 6 |
-| **业务裸池合计** | **340** | **150** |
+| **业务裸池合计** | **340** | **144** |
 
 本轮变化：
 
@@ -1167,4 +1167,5 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 - MES 产能 `capacity.rs` 9 个 handler、需求预测 `demand_forecast.rs` 8 个 handler、生产计划 `production_plan.rs` 8 个 handler、巡检 `quality_management/patrol.rs` 9 个 handler、检验记录 `quality_management/inspection.rs` 5 个 handler 全部改为请求事务 `state.db.scope_with(txn)`，数据查询/写入不再走 `&state.pool`；分页计数错误改为返回 500，不再 `.unwrap_or(0)` 吞掉。权限校验仍在池上执行，属控制面查询。
 - MES 审批通过的状态转换（生产订单、返工、让步接收）改用 `execute_transition_and_log_db`，传 `state.db`，避免状态更新在裸池上 fail-closed 0 行；`approval_common.rs` 补充 re-export。MES 业务带谓词裸池仅剩 `create_process` / `update_process` 的权限校验 2 处，扫描器按 handler 口径归入 pred，实际是控制面调用，不计业务数据面。
 - IAM 岗位 `iam/position.rs` 的列表/详情/创建/更新/删除全部改走请求事务作用域：原先详情子表仍回裸池、更新先查再 `drop(scope)` 后分多条裸池写入且 `let _ =` 吞错，现统一在同一作用域内完成，任一写入失败返回 500 由中间件回滚；列表/详情查询错误不再 `unwrap_or_default()`。
-- 结论：W7-A 的「未登记跨租户裸池」为 0；剩余 150 处是已分类存量，其中 25 处带显式租户谓词的可作为后续净化对象，不再作为安全缺口。
+- IAM 用户-岗位 `iam/user_position.rs` 四个接口与角色 `iam/role.rs` 的列表/详情改走请求事务作用域：角色列表权限计数从裸池 N+1 改为同一作用域内统计，详情权限列表不再先提交再看裸池；查询错误统一上抛 500。
+- 结论：W7-A 的「未登记跨租户裸池」为 0；剩余 144 处是已分类存量，其中 21 处带显式租户谓词的可作为后续净化对象，不再作为安全缺口。

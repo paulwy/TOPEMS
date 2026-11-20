@@ -40,9 +40,27 @@ fn user_positions_response(rows: Vec<sqlx::postgres::PgRow>) -> Json<serde_json:
 
 pub async fn get_user_positions(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(user_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位分配事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位分配事务作用域失败",
+            ));
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT p.id, p.code, p.name, p.department_id, p.description
@@ -53,9 +71,19 @@ pub async fn get_user_positions(
         "#,
     )
     .bind(user_id)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    .fetch_all(&mut scope)
+    .await;
+
+    let rows = match rows {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询用户岗位失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询用户岗位失败",
+            ));
+        }
+    };
 
     user_positions_response(rows)
 }
@@ -63,6 +91,7 @@ pub async fn get_user_positions(
 pub async fn assign_position(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(user_id): Path<Uuid>,
     Json(req): Json<AssignPositionRequest>,
 ) -> Json<serde_json::Value> {
@@ -72,7 +101,24 @@ pub async fn assign_position(
         .and_then(|s| Uuid::parse_str(s).ok())
         .unwrap_or_else(Uuid::nil);
 
-    let result = sqlx::query(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位分配事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位分配事务作用域失败",
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query(
         r#"
         INSERT INTO iam.user_positions (user_id, position_id, tenant_id)
         VALUES ($1, $2, $3)
@@ -82,24 +128,65 @@ pub async fn assign_position(
     .bind(user_id)
     .bind(req.position_id)
     .bind(tenant_id)
-    .execute(&state.pool)
-    .await;
-
-    if result.is_err() {
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("分配岗位失败: {}", e);
         return Json(topems_shared_core::response::error_value(
             500,
             "分配岗位失败",
         ));
     }
 
-    get_user_positions(State(state), Extension(claims.clone()), Path(user_id)).await
+    let rows = match sqlx::query(
+        r#"
+        SELECT p.id, p.code, p.name, p.department_id, p.description
+        FROM iam.positions p
+        JOIN iam.user_positions up ON p.id = up.position_id
+        WHERE up.user_id = $1
+        ORDER BY p.name
+        "#,
+    )
+    .bind(user_id)
+    .fetch_all(&mut scope)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询用户岗位失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询用户岗位失败",
+            ));
+        }
+    };
+
+    user_positions_response(rows)
 }
 
 pub async fn batch_assign_positions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<BatchAssignPositionsRequest>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位分配事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位分配事务作用域失败",
+            ));
+        }
+    };
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -107,7 +194,7 @@ pub async fn batch_assign_positions(
         .unwrap_or_else(Uuid::nil);
 
     for user_id in &req.user_ids {
-        let _ = sqlx::query(
+        if let Err(e) = sqlx::query(
             r#"
             INSERT INTO iam.user_positions (user_id, position_id, tenant_id)
             VALUES ($1, $2, $3)
@@ -117,8 +204,15 @@ pub async fn batch_assign_positions(
         .bind(user_id)
         .bind(req.position_id)
         .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
+        .execute(&mut scope)
+        .await
+        {
+            tracing::error!("批量分配岗位失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "批量分配岗位失败",
+            ));
+        }
     }
 
     Json(serde_json::json!({
@@ -187,8 +281,26 @@ pub async fn unassign_position(
 
 pub async fn get_position_users(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(position_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化岗位分配事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化岗位分配事务作用域失败",
+            ));
+        }
+    };
     let rows = sqlx::query(
         r#"
         SELECT u.id, u.username, u.email, u.full_name
@@ -199,9 +311,19 @@ pub async fn get_position_users(
         "#,
     )
     .bind(position_id)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    .fetch_all(&mut scope)
+    .await;
+
+    let rows = match rows {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询岗位用户失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "查询岗位用户失败",
+            ));
+        }
+    };
 
     let result: Vec<serde_json::Value> = rows
         .into_iter()
