@@ -20,8 +20,8 @@ use topems_shared_event::event::{commit_retry, EventType, ProductionOrderCreated
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
-    build_approve_response, build_reject_response, build_start_response, create_approval_and_log,
-    execute_transition_and_log, reject_and_log,
+    build_approve_response, build_reject_response, build_start_response,
+    create_approval_and_log_db, execute_transition_and_log, reject_and_log_db,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -1611,8 +1611,8 @@ pub async fn start_order_approval(
         Ok(uid) => uid,
         Err(_) => return ApiResponse::unauthorized("无效的用户身份"),
     };
-    let approval_id = match create_approval_and_log(
-        &state.pool,
+    let approval_id = match create_approval_and_log_db(
+        &state.db,
         "production_order",
         id,
         "pending",
@@ -1706,8 +1706,8 @@ pub async fn reject_order(
         return e;
     }
     // 校验 approval_id 与版本，记录驳回并写入 audit log
-    if let Err(e) = reject_and_log(
-        &state.pool,
+    if let Err(e) = reject_and_log_db(
+        &state.db,
         "production_order",
         id,
         req.approval_id,
