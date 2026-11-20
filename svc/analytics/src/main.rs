@@ -420,7 +420,7 @@ async fn reports_center_stats(
 
     // Role distribution: 真实聚合（iam.users ⨝ public.core_tenant_users 落租户，
     // 角色经 public.core_user_roles ↔ public.core_roles 关联）。
-    // core_roles 同时存在平台全局行（tenant_id IS NULL）与租户行，且启用了 FORCE RLS：
+    // core_roles 同时存在平台全局行（全零哨兵 tenant_id）与租户行，且启用了 FORCE RLS：
     // 角色侧取「全局行 + 本租户行」，成员侧用 ctu.tenant_id 谓词限定本租户，
     // 避免系统通道跨租户串算，也避免全局角色在租户视图里整行消失。
     // 旧版写死 3/12/8（系统管理员/部门经理/访客）占位已下线：查询失败回落空数组，
