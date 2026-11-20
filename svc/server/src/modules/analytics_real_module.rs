@@ -48,21 +48,13 @@ impl AnalyticsRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. 模块级运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
-        if let Err(e) = modules::bi::run_schema_defense(&ctx.db).await {
-            tracing::warn!("BI schema defense warning: {}", e);
-        }
-        if let Err(e) = modules::report::run_schema_defense(&ctx.db).await {
-            tracing::warn!("Report schema defense warning: {}", e);
-        }
-
-        // 3. Report Scheduler（后台定时任务，start() 内部 spawn 不阻塞）
+        // 2. Report Scheduler（后台定时任务，start() 内部 spawn 不阻塞）
         let scheduler = modules::report::ReportScheduler::new(ctx.db.clone());
         if let Err(e) = scheduler.start().await {
             tracing::warn!("Failed to start report scheduler: {}", e);
         }
 
-        // 4. 构建业务 AppState（与独立部署 main.rs 一致）
+        // 3. 构建业务 AppState（与独立部署 main.rs 一致）
         let health_config = SimpleHealthConfig::new("topems-analytics").with_db(ctx.db.clone());
         let app_state = AppState {
             auth_state: ctx.auth_state.clone(),
@@ -71,7 +63,7 @@ impl AnalyticsRealModule {
             health_config,
         };
 
-        // 5. 业务路由（create_protected_routes 已含 require_permission + with_state）
+        // 4. 业务路由（create_protected_routes 已含 require_permission + with_state）
         let protected_routes = routes::create_protected_routes(app_state);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

@@ -25,6 +25,11 @@ pub struct WsEventBridgeConfig {
     pub enable_alert: bool,
     /// 是否启用系统消息转发
     pub enable_system: bool,
+    /// 消费组名（None 时由启动路径按部署形态选择默认值）。
+    /// 独立 unified-core 与单体 topems-server 必须使用不同默认组，
+    /// 否则同机双实例会竞争消费、互相抢走发给对方连接的事件。
+    /// `WS_BRIDGE_GROUP` 环境变量始终优先。
+    pub consumer_group: Option<String>,
 }
 
 impl Default for WsEventBridgeConfig {
@@ -35,7 +40,16 @@ impl Default for WsEventBridgeConfig {
             enable_notification: true,
             enable_alert: true,
             enable_system: true,
+            consumer_group: None,
         }
+    }
+}
+
+impl WsEventBridgeConfig {
+    /// 指定消费组名（仍可被 `WS_BRIDGE_GROUP` 环境变量覆盖）。
+    pub fn with_consumer_group(mut self, group: impl Into<String>) -> Self {
+        self.consumer_group = Some(group.into());
+        self
     }
 }
 
@@ -157,11 +171,13 @@ impl WsEventBridge {
         let ws_state = self.ws_state.clone();
         let mut subscriber = StreamEventSubscriber::new("unified-core-ws-bridge")?;
 
-        // P0③：消费组名可配置（默认沿用现值），并打印实例标识便于多副本排查。
-        // 注意：本轮不改消费语义 —— 同组多实例仍是竞争消费。
-        // 扩容扇出方案（Redis Pub/Sub）见 w7-p0-ws-tenant-partition-design 文档，未实施。
+        // W2-§12.6：消费组名按部署形态区分。独立 unified-core 默认
+        // `unified-core-ws-bridge`；单体 topems-server 由调用方显式传
+        // `topems-server-ws-bridge`。`WS_BRIDGE_GROUP` 仍可统一覆盖。
         let group = std::env::var("WS_BRIDGE_GROUP")
-            .unwrap_or_else(|_| "unified-core-ws-bridge".to_string());
+            .ok()
+            .or_else(|| self.config.consumer_group.clone())
+            .unwrap_or_else(|| "unified-core-ws-bridge".to_string());
         let instance = std::env::var("WS_INSTANCE_ID")
             .or_else(|_| std::env::var("HOSTNAME"))
             .unwrap_or_else(|_| "local".to_string());
@@ -463,4 +479,18 @@ pub fn spawn_event_bridge(
             }
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::WsEventBridgeConfig;
+
+    #[test]
+    fn consumer_group_can_be_set_per_deployment() {
+        let config = WsEventBridgeConfig::default().with_consumer_group("topems-server-ws-bridge");
+        assert_eq!(
+            config.consumer_group.as_deref(),
+            Some("topems-server-ws-bridge")
+        );
+    }
 }
