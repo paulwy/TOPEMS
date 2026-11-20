@@ -12,11 +12,11 @@ use axum::http::StatusCode;
 use axum::Extension;
 use axum::Json;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::scope::Db;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
 use super::tenant_scope::{self, IamScope, UserTarget};
@@ -136,7 +136,7 @@ async fn check_user(
 }
 
 async fn list_scopes(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     user_id: Uuid,
 ) -> Result<Vec<CompanyScopeRow>, sqlx::Error> {
@@ -154,7 +154,7 @@ async fn list_scopes(
     ))
     .bind(tenant_id)
     .bind(user_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
 }
 
@@ -200,7 +200,15 @@ pub async fn get_user_company_scopes(
         Err(resp) => return resp,
     };
 
-    match list_scopes(&state.pool, tenant_id, user_uuid).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return internal("数据库事务上下文缺失".to_string());
+    };
+    let mut read_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return internal(format!("打开主体范围读作用域失败: {}", e)),
+    };
+    match list_scopes(&mut read_scope, tenant_id, user_uuid).await {
         Ok(scopes) => (
             StatusCode::OK,
             Json(serde_json::json!({
@@ -263,6 +271,14 @@ pub async fn update_user_company_scopes(
         Ok(t) => t,
         Err(resp) => return resp,
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return internal("数据库事务上下文缺失".to_string());
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return internal(format!("打开主体范围写作用域失败: {}", e)),
+    };
 
     // 入参校验：access_level 取值 + 不允许重复 company_id。
     let mut seen = std::collections::HashSet::new();
@@ -280,19 +296,22 @@ pub async fn update_user_company_scopes(
 
     // 公司必须属于目标租户且未软删。
     for item in &req.scopes {
-        let exists: Option<i64> = sqlx::query_scalar(only_own_schema_query!(
+        let exists: Option<i64> = match sqlx::query_scalar(only_own_schema_query!(
             "public",
             "SELECT 1::bigint FROM hrm.companies WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
             "hrm"
         ))
         .bind(item.company_id)
         .bind(tenant_id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
-        .unwrap_or_else(|e| {
-            tracing::error!("查询公司主体失败: {}", e);
-            None
-        });
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("查询公司主体失败: {}", e);
+                return internal(format!("查询公司主体失败: {}", e));
+            }
+        };
         if exists.is_none() {
             return tenant_scope::not_found_detail(&format!(
                 "主体不存在：{} 不属于当前租户",
@@ -301,17 +320,12 @@ pub async fn update_user_company_scopes(
         }
     }
 
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
-        Err(e) => return internal(format!("开启事务失败: {}", e)),
-    };
-
     if let Err(e) = sqlx::query(
         "DELETE FROM public.core_user_company_scopes WHERE tenant_id = $1 AND user_id = $2",
     )
     .bind(tenant_id)
     .bind(user_uuid)
-    .execute(&mut *tx)
+    .execute(&mut scope)
     .await
     {
         return internal(format!("清理旧主体范围失败: {}", e));
@@ -330,18 +344,14 @@ pub async fn update_user_company_scopes(
         .bind(item.company_id)
         .bind(&item.access_level)
         .bind(operator_uuid(&claims))
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await
         {
             return internal(format!("写入主体范围失败: {}", e));
         }
     }
 
-    if let Err(e) = tx.commit().await {
-        return internal(format!("提交主体范围失败: {}", e));
-    }
-
-    match list_scopes(&state.pool, tenant_id, user_uuid).await {
+    match list_scopes(&mut scope, tenant_id, user_uuid).await {
         Ok(scopes) => (
             StatusCode::OK,
             Json(serde_json::json!({

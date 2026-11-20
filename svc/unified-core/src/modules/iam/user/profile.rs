@@ -2,6 +2,7 @@ use crate::AppState;
 use axum::Extension;
 use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use super::models::{resolve_user_grants, UserResponse, UserRow};
 
@@ -72,6 +73,7 @@ pub async fn get_preferences(
 pub async fn update_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
@@ -86,6 +88,24 @@ pub async fn update_preferences(
             return Json(topems_shared_core::response::error_value(
                 400,
                 "无效的用户ID",
+            ));
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "数据库事务上下文缺失",
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("初始化偏好保存事务作用域失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "初始化偏好保存事务作用域失败",
             ));
         }
     };
@@ -105,7 +125,7 @@ pub async fn update_preferences(
         .bind(key)
         .bind(value)
         .bind(claims.tenant_id.as_deref().and_then(|s| uuid::Uuid::parse_str(s).ok()))
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
         if let Err(e) = result {

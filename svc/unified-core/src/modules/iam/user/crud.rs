@@ -302,11 +302,44 @@ pub async fn create_user(
         );
     }
 
+    // 写入必须带显式租户通道：`core_tenant_users` 已 FORCE RLS，裸池无 GUC 时
+    // INSERT 会被 fail-closed 策略拒绝（42501）。平台通道走系统作用域。
+    let mut guard = txn_arc.lock().await;
+    let tx_result = match scope {
+        IamScope::Tenant(_) => {
+            let Some(txn) = guard.as_mut() else {
+                tracing::error!("rls txn missing: RLS 事务中间件未注入");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        "数据库事务上下文缺失",
+                    )),
+                );
+            };
+            state.db.scope_with(txn).await
+        }
+        IamScope::Platform => state.db.scope_system().await,
+    };
+    let mut tx = match tx_result {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin create_user transaction: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("创建用户失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let existing_user_count: i64 = match sqlx::query_scalar(
         "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1",
     )
     .bind(username)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut tx)
     .await
     {
         Ok(count) => count,
@@ -337,7 +370,7 @@ pub async fn create_user(
         "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND email = $1",
     )
     .bind(email)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut tx)
     .await
     {
         Ok(count) => count,
@@ -380,38 +413,6 @@ pub async fn create_user(
     // 租户管理员创建的账号必须同时写入 core_tenant_users，否则后续按租户过滤
     // 时看不到、也管不了自己刚建的账号。平台管理员保持既有行为（不写成员关系）。
     //
-    // 写入必须带显式租户通道：`core_tenant_users` 已 FORCE RLS，裸池无 GUC 时
-    // INSERT 会被 fail-closed 策略拒绝（42501）。平台通道走系统作用域。
-    let mut guard = txn_arc.lock().await;
-    let tx_result = match scope {
-        IamScope::Tenant(_) => {
-            let Some(txn) = guard.as_mut() else {
-                tracing::error!("rls txn missing: RLS 事务中间件未注入");
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        "数据库事务上下文缺失",
-                    )),
-                );
-            };
-            state.db.scope_with(txn).await
-        }
-        IamScope::Platform => state.db.scope_system().await,
-    };
-    let mut tx = match tx_result {
-        Ok(tx) => tx,
-        Err(e) => {
-            tracing::error!("Failed to begin create_user transaction: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(
-                    500,
-                    &format!("创建用户失败: {}", e),
-                )),
-            );
-        }
-    };
 
     let insert_result = sqlx::query(
         r#"
