@@ -105,13 +105,11 @@ impl EhsEventHandlers {
             payload.conclusion
         );
 
-        let Some(tenant_id) = require_event_tenant(
+        let tenant_id = require_event_tenant(
             payload.tenant_id,
             &event,
             "lims_inspection_abnormal_detected",
-        ) else {
-            return Ok(());
-        };
+        )?;
 
         // 编号与 integration 路径共用单一实现（FNV-1a 64 位低 32 位），
         // 不再使用 `EHS-HZ-{毫秒}`：后者每次重投都会生成新编号，无法收敛。
@@ -192,11 +190,8 @@ impl EhsEventHandlers {
             payload.assigned_to
         );
 
-        let Some(tenant_id) =
-            require_event_tenant(payload.tenant_id, &event, "qms_corrective_action_created")
-        else {
-            return Ok(());
-        };
+        let tenant_id =
+            require_event_tenant(payload.tenant_id, &event, "qms_corrective_action_created")?;
 
         let hazard_no = format!("CA-QMS-{}", payload.action_id);
         let now = Utc::now();
@@ -315,11 +310,7 @@ impl EhsEventHandlers {
             _ => return Ok(()),
         }
 
-        let Some(tenant_id) =
-            require_event_tenant(payload_tenant_id, &event, "hrm_employee_changed")
-        else {
-            return Ok(());
-        };
+        let tenant_id = require_event_tenant(payload_tenant_id, &event, "hrm_employee_changed")?;
 
         let now = Utc::now();
 
@@ -379,7 +370,7 @@ impl EhsEventHandlers {
 }
 
 /// D4：事件消费者唯一的租户来源是 `payload.tenant_id`。
-/// 缺失/nil → 丢弃事件并累计告警计数；非法由反序列化阶段拦截。
+/// 缺失/nil → 返回 `ValidationFailed` 进入重试/DLQ，并累计告警计数；非法由反序列化阶段拦截。
 static EHS_EVENT_DROPPED_MISSING_TENANT: std::sync::atomic::AtomicU64 =
     std::sync::atomic::AtomicU64::new(0);
 
@@ -387,20 +378,23 @@ fn require_event_tenant(
     tenant_id: uuid::Uuid,
     event: &Event,
     handler: &'static str,
-) -> Option<uuid::Uuid> {
+) -> Result<uuid::Uuid, TopemsError> {
     if tenant_id.is_nil() {
         let dropped =
             EHS_EVENT_DROPPED_MISSING_TENANT.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
         tracing::warn!(
-            "[ehs] 丢弃事件：payload.tenant_id 缺失/nil（handler={}, event_type={:?}, trace_id={:?}, dropped_total={}）",
+            "[ehs] 事件缺少租户，进入重试/DLQ（handler={}, event_type={:?}, trace_id={:?}, dropped_total={}）",
             handler,
             event.event_type,
             event.trace_id,
             dropped
         );
-        return None;
+        return Err(TopemsError::ValidationFailed(format!(
+            "[ehs] {handler} 缺少有效租户上下文 - event_type={:?}, trace_id={:?}",
+            event.event_type, event.trace_id
+        )));
     }
-    Some(tenant_id)
+    Ok(tenant_id)
 }
 
 pub async fn start_event_subscribers(

@@ -1,6 +1,6 @@
 # B43-09 非 HTTP 入口租户上下文评估（2026-11-20）
 
-- 状态：**评估完成；ERP/CRM/PM/SCM/SRM/WMS/RD/Portal 事件消费 DB 错误降级已收口，DEC-04 留余清零**
+- 状态：**评估完成；18 个事件消费入口的租户上下文与 DB 错误降级已全部收口，DEC-04 留余清零**
 - 口径来源：[w7-cross-request-tenant-context-2026-11-10.md](../quality/w7-cross-request-tenant-context-2026-11-10.md)
 - 扫描基线：`1ce4e5d03` + 本轮修复（静态扫描，不连生产）
 - 结论：定时任务、消息消费、WebSocket、CLI、启动预热五类入口均有租户上下文或书面豁免；事件消费类发现并修复 SRM 零 UUID 兜底、ERP 缺租户 ACK、ERP 全局指标裸池三处问题。
@@ -12,7 +12,7 @@
 | 入口类别 | 代表位置 | 租户来源 | 判定 |
 |---|---|---|---|
 | HTTP 请求 | 各服务 `tenant_middleware` → `RlsTxnCell` | Claims + `x-tenant-id` | ✅ 不在本文范围，已有 RequestTenant |
-| 事件消费 | `svc/*/src/event_handlers/` 共 18 个入口 | `payload.tenant_id` / `require_event_tenant(&event)` / 业务主键反查 | ✅ 机制统一；ERP/CRM/PM/SCM/SRM/WMS/RD/Portal 缺租户与 DB 错误降级已收口 |
+| 事件消费 | `svc/*/src/event_handlers/` 共 18 个入口 | `payload.tenant_id` / `require_event_tenant(&event)` / 业务主键反查 | ✅ 机制统一；18 个入口缺租户与 DB 错误降级已全部收口 |
 | Redis Stream 消费 | `unified-core/src/modules/master/consumer.rs`、`communication/ws_event_bridge.rs` | 事件 payload / `core_master_data_refs` 平台表 | ✅ 平台表无租户语义；WS 帧缺租户拒绝广播 |
 | 定时任务 | `analytics` 报表调度、`erp` 业务指标、`unified-core` 审计清理/插件心跳 | 调度行 `tenant_id` / 显式系统通道 | ✅ 报表按租户执行；全局指标改系统只读通道 |
 | WebSocket | BI `dashboard_websocket`、unified-core 事件桥 | 连接建立时 token → Claims | ✅ 看板归属校验 + 按租户频道广播 |
@@ -55,6 +55,10 @@
 - SRM 事件消费：采购计划、供应商考评、采购订单履约、SCM 供应商同步补齐租户前置与租户作用域；缺租户由 warn+ACK 改为 `ValidationFailed`，DB 错误不再仅记 error 日志。
 - WMS 事件消费：`PurchaseOrderCreated/Approved` 快照缺租户不再静默跳过，`store_po_snapshot` 返回 `Result`，开作用域/写快照/提交失败均进入重试/DLQ。
 - RD / Portal 事件消费：RD 项目创建/完成改为租户作用域写入并上抛 DB 错误；Portal 通知写入与项目概览统计改为租户作用域，统计读取失败不再 `unwrap_or(0)`。
+- `svc/integration` 事件消费：`record_sync_log` 由 `scope_system` 改为 `scope_for_tenant`，三个 QMS→LIMS / EHS→QMS / LIMS→EHS trigger 缺租户由 warn+ACK 改为 `ValidationFailed`，同步日志写入失败由 `let _ =` 吞掉改为 `?` 上抛进入重试/DLQ。
+- EHS 事件消费：本地 `require_event_tenant` 由 `Option<Uuid>` 改为 `Result<Uuid, TopemsError>`，缺租户累计 `EHS_EVENT_DROPPED_MISSING_TENANT` 并返回 `ValidationFailed`；LIMS 异常、QMS 纠正措施、HRM 员工变更三个 handler 全部改为 `?`，不再静默 ACK。
+- Finance 事件消费：`EmployeeOnboarded` 读取入职成本配置后的事务提交由 `let _ =` 改为 `map_err → DatabaseTransaction` 上抛。
+- HRM 事件消费：`PermissionOrPositionChanged` 缺租户由 warn+ACK 改为 `ValidationFailed`；缓存失效审计日志插入失败仍返回 nil 属观测性豁免（不影响任何业务写入）。
 
 ---
 
@@ -96,4 +100,4 @@
 
 - 每类入口均能指出租户来源或豁免条目；无“连接残留 GUC / 全局静态租户 / 零 UUID 默认租户”作为业务来源。
 - 本轮新增修复：SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道、单体 analytics 残留 DDL 调用。
-- DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账均改为缺租户显式失败、DB 错误上抛；PM 审批、RD 项目同步、结算创建/审批全部改为租户作用域写入，审批事件按项目主键反查租户；SCM/SRM/WMS/RD/Portal 事件消费统一改为租户作用域并上抛 DB 错误。事件消费入口已无 graceful fallback 后静默 ACK，B43-09 可标为完全闭环。
+- DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账均改为缺租户显式失败、DB 错误上抛；PM 审批、RD 项目同步、结算创建/审批全部改为租户作用域写入，审批事件按项目主键反查租户；SCM/SRM/WMS/RD/Portal 事件消费统一改为租户作用域并上抛 DB 错误；integration 同步日志改租户作用域并上抛写入失败；EHS 租户前置改 `Result` 并覆盖三个 handler；Finance 入职成本事务提交上抛；HRM 权限/岗位事件缺租户显式失败。18 个事件消费入口已无 graceful fallback 后静默 ACK，B43-09 标为完全闭环。

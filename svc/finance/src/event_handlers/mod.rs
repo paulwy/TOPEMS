@@ -903,7 +903,11 @@ impl FinanceEventHandlers {
         .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("读取入职成本配置失败: {}", e)))?;
-        let _ = scope.commit().await;
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "提交入职成本配置读取事务失败 - tenant_id={tenant_id}: {e}"
+            ))
+        })?;
 
         let amount = match configured_cost.flatten() {
             Some(cost) => cost,

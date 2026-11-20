@@ -98,14 +98,12 @@ impl HrmEventHandlers {
             event.trace_id
         );
 
-        // 缓存失效日志表有租户维度且事件本应携带租户：缺失时告警并跳过记录，禁止写零 UUID 共享行。
-        let tenant_id = match require_event_tenant(&event) {
-            Ok(t) => t.get(),
-            Err(e) => {
-                tracing::warn!("[hrm] 跳过缓存失效记录：事件缺少租户上下文（{}）", e);
-                return Ok(());
-            }
-        };
+        // 缺租户显式失败进入重试/DLQ，禁止写零 UUID 共享行后静默 ACK。
+        let tenant_id = require_event_tenant(&event)
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!("[hrm] 权限/岗位变更缺少租户上下文: {e}"))
+            })?
+            .get();
 
         match event.event_type {
             EventType::PermissionChanged => {
