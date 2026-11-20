@@ -1251,7 +1251,7 @@ async fn upsert_report(
     // 与 P3 迁移 20261109110200 的回填口径一致。
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"
-        INSERT INTO financial_reports (report_type, org_id, tenant_id, company_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
+        INSERT INTO finance.financial_reports (report_type, org_id, tenant_id, company_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
         VALUES ($1, $3, $2, $3, $4, $5, 'draft', 'draft', $6, $7, NOW())
         ON CONFLICT (report_type, org_id, period, currency_code)
         DO UPDATE SET data = EXCLUDED.data, company_id = EXCLUDED.company_id, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW()
@@ -1295,7 +1295,7 @@ async fn fetch_report(
     let mut scope = db.scope_with(txn).await?;
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
-           FROM financial_reports WHERE ($4::uuid IS NULL OR company_id = $4)
+           FROM finance.financial_reports WHERE ($4::uuid IS NULL OR company_id = $4)
              AND report_type = $1 AND period = $2 AND currency_code = $3"#),
     )
     .bind(report_type)
@@ -1339,7 +1339,7 @@ async fn fetch_history(
     let mut scope = db.scope_with(txn).await?;
     let rows = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
-           FROM financial_reports WHERE ($7::uuid IS NULL OR company_id = $7)
+           FROM finance.financial_reports WHERE ($7::uuid IS NULL OR company_id = $7)
              AND report_type = $1 AND period >= $2 AND period <= $3
              AND ($4::text IS NULL OR currency_code = $4)
            ORDER BY period DESC
@@ -1357,7 +1357,7 @@ async fn fetch_history(
 
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        r#"SELECT COUNT(*) FROM financial_reports WHERE ($5::uuid IS NULL OR company_id = $5)
+        r#"SELECT COUNT(*) FROM finance.financial_reports WHERE ($5::uuid IS NULL OR company_id = $5)
              AND report_type = $1 AND period >= $2 AND period <= $3
              AND ($4::text IS NULL OR currency_code = $4)"#
     ))
@@ -2037,7 +2037,7 @@ pub async fn submit_report_for_approval(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .execute(&mut scope)
         .await
@@ -2077,7 +2077,7 @@ pub async fn approve_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .bind(req.comment)
         .bind(&claims.username)
@@ -2119,7 +2119,7 @@ pub async fn reject_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .bind(req.reason)
         .execute(&mut scope)
@@ -2173,7 +2173,7 @@ pub async fn lock_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .execute(&mut scope)
         .await
@@ -2213,7 +2213,7 @@ pub async fn unlock_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
         .execute(&mut scope)
         .await

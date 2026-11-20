@@ -72,7 +72,7 @@ pub async fn list_entries(
                 Err(e) => return crate::shared::err_resp(e),
             };
             let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1  ORDER BY sort_order, created_at"),
+                only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance.finance_voucher_template_lines WHERE template_id = $1  ORDER BY sort_order, created_at"),
             )
             .bind(template_id)
         .fetch_all(&mut scope)
@@ -101,7 +101,7 @@ pub async fn get_entry(
         Err(e) => return crate::shared::err_resp(e),
     };
     let line: Option<VoucherTemplateLine> = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE l.template_id = $1 AND l.id = $2"),
+        only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance.finance_voucher_template_lines l JOIN finance.finance_voucher_templates t ON l.template_id = t.id WHERE l.template_id = $1 AND l.id = $2"),
     )
     .bind(template_id)
     .bind(entry_id)

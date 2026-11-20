@@ -104,7 +104,7 @@ impl FinanceService {
 
                     let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
-                        only_own_schema_query!("finance", "INSERT INTO core_finance_payment_workflow (tenant_id, payment_id, workflow_id, workflow_instance_id, current_approver, current_level, status)
+                        only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payment_workflow (tenant_id, payment_id, workflow_id, workflow_instance_id, current_approver, current_level, status)
                          VALUES ($1, $2, $3, $4, $5, $6, $7)"),
                     )
                     .bind(tenant_id)
@@ -180,7 +180,7 @@ impl FinanceService {
 
         let workflow_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            "SELECT workflow_id FROM core_finance_payment_approval_config
+            "SELECT workflow_id FROM finance.core_finance_payment_approval_config
              WHERE tenant_id = $1 AND is_active = true AND amount_threshold <= $2
              AND (max_amount IS NULL OR max_amount > $2)
              ORDER BY priority DESC, amount_threshold DESC LIMIT 1"
@@ -250,7 +250,7 @@ impl FinanceService {
 
         let mut scope = self.read_scope(txn).await?;
         let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
+            only_own_schema_query!("finance", "SELECT workflow_instance_id FROM finance.core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -307,7 +307,7 @@ impl FinanceService {
                     let instance_status = instance.status;
                     let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
-                        only_own_schema_query!("finance", "UPDATE core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
+                        only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
                     .bind(approved_by)
                     .bind(instance_status.clone())
@@ -451,7 +451,7 @@ impl FinanceService {
 
         let mut scope = self.read_scope(txn).await?;
         let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
+            only_own_schema_query!("finance", "SELECT workflow_instance_id FROM finance.core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2"),
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -490,7 +490,7 @@ impl FinanceService {
                     let instance_status = instance.status;
                     let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
-                        only_own_schema_query!("finance", "UPDATE core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
+                        only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
                     .bind(rejected_by)
                     .bind(instance_status.clone())
@@ -606,7 +606,7 @@ impl FinanceService {
 
         let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(only_own_schema_query!(
             "finance",
-            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM finance.core_finance_payment_items WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(item_id)
@@ -622,7 +622,7 @@ impl FinanceService {
         let payment_id = item.payment_id;
 
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE core_finance_payment_items SET write_off_amount = $1, write_off_status = 'completed', write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5"),
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_items SET write_off_amount = $1, write_off_status = 'completed', write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5"),
         )
         .bind(write_off_amount)
         .bind(write_off_by)

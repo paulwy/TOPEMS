@@ -304,7 +304,7 @@ impl CashFlowPredictor {
 
         let mut scope = db.scope_with(txn).await?;
         sqlx::query(
-            only_own_schema_query!("finance", r#"INSERT INTO finance_cash_flow_predictions_v53
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_cash_flow_predictions_v53
                 (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at, tenant_id, is_synthetic)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
             ON CONFLICT DO NOTHING"#),
@@ -370,8 +370,8 @@ impl CashFlowPredictor {
             only_own_schema_query!("finance", r#"SELECT
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '6%' THEN vl.amount ELSE 0 END), 0)::float8 as inflow,
                 COALESCE(SUM(CASE WHEN vl.account_code LIKE '4%' OR vl.account_code LIKE '5%' THEN vl.amount ELSE 0 END), 0)::float8 as outflow
-            FROM vouchers v
-            JOIN voucher_lines vl ON vl.voucher_id = v.id
+            FROM finance.vouchers v
+            JOIN finance.voucher_lines vl ON vl.voucher_id = v.id
             WHERE v.tenant_id = $1 AND ($2::text IS NULL OR v.entity_id = $2::text)
             AND v.status NOT IN ('draft', 'cancelled')
             AND v.created_at > NOW() - INTERVAL '12 months'
@@ -600,10 +600,10 @@ impl CashFlowPredictor {
         let mut scope = db.scope_with(txn).await?;
 
         let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
+            "SELECT COUNT(*) FROM finance.finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
         );
         let mut data_query = String::from(
-            "SELECT id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at FROM finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
+            "SELECT id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at FROM finance.finance_cash_flow_predictions_v53 WHERE is_synthetic = false",
         );
 
         if entity_id.is_some() {
@@ -660,7 +660,7 @@ impl CashFlowPredictor {
 
         let mut scope = db.scope_with(txn).await?;
         let record = sqlx::query_as::<_, PredictionModelRecord>(
-            only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_prediction_models_v53
                 (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at, tenant_id, is_synthetic)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false)
             ON CONFLICT (model_type) DO UPDATE
@@ -733,14 +733,14 @@ impl CashFlowPredictor {
         // 只返回基于真实历史训练的模型精度；is_synthetic=true 的历史合成行一律排除。
         let records: Vec<PredictionModelRecord> = if let Some(ref mt) = model_type {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE is_synthetic = false AND model_type = $1 ORDER BY trained_at DESC"),
+                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance.finance_prediction_models_v53 WHERE is_synthetic = false AND model_type = $1 ORDER BY trained_at DESC"),
             )
             .bind(mt)
             .fetch_all(&mut scope)
             .await?
         } else {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance_prediction_models_v53 WHERE is_synthetic = false ORDER BY trained_at DESC"),
+                only_own_schema_query!("finance", "SELECT id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at FROM finance.finance_prediction_models_v53 WHERE is_synthetic = false ORDER BY trained_at DESC"),
             )
             .fetch_all(&mut scope)
             .await?
@@ -913,7 +913,7 @@ impl BudgetAnalyzer {
         let mut scope = db.scope_with(txn).await?;
         for v in &variances {
             sqlx::query(
-                only_own_schema_query!("finance", r#"INSERT INTO finance_budget_variances_v53
+                only_own_schema_query!("finance", r#"INSERT INTO finance.finance_budget_variances_v53
                     (id, budget_item_id, period, budget_amount, actual_amount, variance_amount, variance_percentage, classification, trend, created_at, updated_at, tenant_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 ON CONFLICT DO NOTHING"#),
@@ -1133,7 +1133,7 @@ impl BudgetAnalyzer {
         classification: Option<String>,
     ) -> Result<Vec<BudgetVariance>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, budget_item_id, period, budget_amount, actual_amount, variance_amount, variance_percentage, classification, trend, created_at, updated_at FROM finance_budget_variances_v53 WHERE 1=1",
+            "SELECT id, budget_item_id, period, budget_amount, actual_amount, variance_amount, variance_percentage, classification, trend, created_at, updated_at FROM finance.finance_budget_variances_v53 WHERE 1=1",
         );
 
         if entity_id.is_some() {

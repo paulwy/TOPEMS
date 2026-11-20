@@ -86,7 +86,7 @@ pub async fn list_expenses(
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, currency, sub_category, project_id, employee_id, payment_method, voucher_id,
                   created_at, updated_at
-           FROM expenses
+           FROM finance.expenses
            WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
@@ -102,7 +102,7 @@ pub async fn list_expenses(
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_expense_json).collect();
             let total: i64 = sqlx::query_scalar(
-                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM expenses
+                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM finance.expenses
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
                      AND ($2::text IS NULL OR status = $2)"#),
             )
@@ -173,7 +173,7 @@ pub async fn create_expense(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type,
+        r#"INSERT INTO finance.expenses (id, expense_number, applicant_name, department_id, expense_type,
                                   amount, description, expense_date, receipt_count, status,
                                   created_at, updated_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12)
@@ -261,7 +261,7 @@ pub async fn get_expense(
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
-           FROM expenses WHERE id = $1"#
+           FROM finance.expenses WHERE id = $1"#
     ))
     .bind(id)
     .fetch_optional(&mut scope)
@@ -306,7 +306,7 @@ pub async fn update_expense(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE expenses SET
+        r#"UPDATE finance.expenses SET
               applicant_name = $2, department_id = $3, expense_type = $4, amount = $5,
               description = $6, expense_date = $7, receipt_count = $8, status = $9,
               approver_id = $10, approved_at = $11, reimbursed_at = $12, updated_at = $13
@@ -413,7 +413,7 @@ pub async fn delete_expense(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE expenses SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE finance.expenses SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
     .execute(&mut scope)
@@ -885,7 +885,7 @@ pub async fn list_receivables(
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
-           FROM receivables
+           FROM finance.receivables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
@@ -901,7 +901,7 @@ pub async fn list_receivables(
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_receivable_json).collect();
             let total: i64 = sqlx::query_scalar(
-                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM receivables
+                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM finance.receivables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
                      AND ($2::text IS NULL OR status = $2)"#),
             )
@@ -960,7 +960,7 @@ pub async fn create_receivable(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"INSERT INTO receivables (id, invoice_number, customer_name, project_id, contract_id,
+        r#"INSERT INTO finance.receivables (id, invoice_number, customer_name, project_id, contract_id,
                                     project_name, amount, invoice_date, due_date, status,
                                     received_amount, payment_schedule, created_at, updated_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, $12)
@@ -1051,7 +1051,7 @@ pub async fn get_receivable(
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
-           FROM receivables WHERE id = $1"#
+           FROM finance.receivables WHERE id = $1"#
     ))
     .bind(id)
     .fetch_optional(&mut scope)
@@ -1099,7 +1099,7 @@ pub async fn update_receivable(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE receivables SET
+        r#"UPDATE finance.receivables SET
               customer_name = $2, project_name = $3, amount = $4, invoice_date = $5,
               due_date = $6, status = $7, received_amount = $8, payment_schedule = $9,
               updated_at = $10
@@ -1184,7 +1184,7 @@ pub async fn delete_receivable(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE receivables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+        "UPDATE finance.receivables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
@@ -1254,7 +1254,7 @@ pub async fn list_payables(
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
-           FROM payables
+           FROM finance.payables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
@@ -1270,7 +1270,7 @@ pub async fn list_payables(
         Ok(rows) => {
             let items: Vec<Value> = rows.iter().map(row_to_payable_json).collect();
             let total: i64 = sqlx::query_scalar(
-                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM payables
+                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM finance.payables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
                      AND ($2::text IS NULL OR status = $2)"#),
             )
@@ -1331,7 +1331,7 @@ pub async fn create_payable(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"INSERT INTO payables (id, invoice_number, supplier_name, project_id, contract_id,
+        r#"INSERT INTO finance.payables (id, invoice_number, supplier_name, project_id, contract_id,
                                  category, amount, invoice_date, due_date, status,
                                  paid_amount, payment_schedule, created_at, updated_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, $12)
@@ -1422,7 +1422,7 @@ pub async fn get_payable(
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
-           FROM payables WHERE id = $1"#
+           FROM finance.payables WHERE id = $1"#
     ))
     .bind(id)
     .fetch_optional(&mut scope)
@@ -1470,7 +1470,7 @@ pub async fn update_payable(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE payables SET
+        r#"UPDATE finance.payables SET
               supplier_name = $2, category = $3, amount = $4, invoice_date = $5,
               due_date = $6, status = $7, paid_amount = $8, payment_schedule = $9,
               updated_at = $10
@@ -1555,7 +1555,7 @@ pub async fn delete_payable(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE payables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+        "UPDATE finance.payables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)

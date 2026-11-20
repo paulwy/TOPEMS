@@ -26,9 +26,9 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM finance.erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM finance.erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
 
         let mut cond = Vec::new();
@@ -117,7 +117,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let row = sqlx::query(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM finance.erp_payables WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(payable_id)
@@ -155,7 +155,7 @@ impl FinanceService {
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "INSERT INTO erp_payables (tenant_id, supplier_name, amount, status, created_by)
+            "INSERT INTO finance.erp_payables (tenant_id, supplier_name, amount, status, created_by)
              VALUES ($1, $2, $3, 'unpaid', $4)
              RETURNING id, supplier_name, amount, status, created_at"
         ))
@@ -196,7 +196,7 @@ impl FinanceService {
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_payables
+            "UPDATE finance.erp_payables
              SET supplier_name = COALESCE($1, supplier_name),
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
@@ -237,7 +237,7 @@ impl FinanceService {
 
         let result = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+            "UPDATE finance.erp_payables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payable_id)
@@ -266,22 +266,22 @@ impl FinanceService {
                 '0-30天' as bucket,
                 COALESCE(SUM(CASE WHEN due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as amount,
                 COUNT(*) FILTER (WHERE due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid') as cnt
-             FROM erp_payables WHERE (tenant_id = $1::uuid)
+             FROM finance.erp_payables WHERE (tenant_id = $1::uuid)
              UNION ALL
              SELECT '31-60天',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '30 days' AND due_date >= CURRENT_DATE - INTERVAL '60 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '30 days' AND due_date >= CURRENT_DATE - INTERVAL '60 days' AND status = 'unpaid')
-             FROM erp_payables WHERE (tenant_id = $1::uuid)
+             FROM finance.erp_payables WHERE (tenant_id = $1::uuid)
              UNION ALL
              SELECT '61-90天',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '60 days' AND due_date >= CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '60 days' AND due_date >= CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE (tenant_id = $1::uuid)
+             FROM finance.erp_payables WHERE (tenant_id = $1::uuid)
              UNION ALL
              SELECT '90天以上',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE (tenant_id = $1::uuid)"),
+             FROM finance.erp_payables WHERE (tenant_id = $1::uuid)"),
         )
         .bind(tenant_id)
         .fetch_all(&mut scope)

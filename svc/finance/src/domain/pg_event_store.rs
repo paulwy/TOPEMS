@@ -71,7 +71,7 @@ impl PgEventStore {
             let last_uuid = Uuid::parse_str(last_id)
                 .map_err(|e| TopemsError::ValidationFailed(format!("无效UUID: {e}")))?;
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE id > $1 ORDER BY occurred_at ASC, id ASC LIMIT $2"),
+                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM finance.cqrs_events WHERE id > $1 ORDER BY occurred_at ASC, id ASC LIMIT $2"),
             )
             .bind(last_uuid)
             .bind(batch_i64)
@@ -79,7 +79,7 @@ impl PgEventStore {
             .await
             ?
         } else {
-            sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1"))
+            sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM finance.cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1"))
                 .bind(batch_i64)
                 .fetch_all(&self.pool)
                 .await
@@ -97,7 +97,7 @@ impl PgEventStore {
     pub async fn get_event_count(&self) -> Result<u64, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT COUNT(*) as count FROM cqrs_events"
+            "SELECT COUNT(*) as count FROM finance.cqrs_events"
         ))
         .fetch_one(&self.pool)
         .await?;
@@ -117,7 +117,7 @@ impl PgEventStore {
 
         let count_row = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT COUNT(*) as count FROM cqrs_events WHERE aggregate_type = $1"
+            "SELECT COUNT(*) as count FROM finance.cqrs_events WHERE aggregate_type = $1"
         ))
         .bind(aggregate_type)
         .fetch_one(&self.pool)
@@ -125,7 +125,7 @@ impl PgEventStore {
         let total: i64 = count_row.try_get("count")?;
 
         let rows = sqlx::query(
-            only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_type = $1 ORDER BY occurred_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM finance.cqrs_events WHERE aggregate_type = $1 ORDER BY occurred_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(aggregate_type)
         .bind(limit)
@@ -145,7 +145,7 @@ impl PgEventStore {
     pub async fn get_snapshot_count(&self) -> Result<u64, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT COUNT(*) as count FROM cqrs_snapshots"
+            "SELECT COUNT(*) as count FROM finance.cqrs_snapshots"
         ))
         .fetch_one(&self.pool)
         .await?;
@@ -173,7 +173,7 @@ impl EventStore for PgEventStore {
 
         let current_version_row = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT COALESCE(MAX(version), 0) as version FROM cqrs_events WHERE aggregate_id = $1"
+            "SELECT COALESCE(MAX(version), 0) as version FROM finance.cqrs_events WHERE aggregate_id = $1"
         ))
         .bind(aggregate_id)
         .fetch_one(&mut *tx)
@@ -202,7 +202,7 @@ impl EventStore for PgEventStore {
             let id = Uuid::new_v4();
 
             let row = sqlx::query(
-                only_own_schema_query!("finance", "INSERT INTO cqrs_events (id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at)
+                only_own_schema_query!("finance", "INSERT INTO finance.cqrs_events (id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                  RETURNING id, aggregate_id::text, aggregate_type, event_type, version, payload, metadata, occurred_at"),
             )
@@ -233,7 +233,7 @@ impl EventStore for PgEventStore {
     ) -> Result<Vec<EventRecord>, TopemsError> {
         let rows = if let Some(to_ver) = to_version {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 AND version <= $3 ORDER BY version ASC"),
+                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM finance.cqrs_events WHERE aggregate_id = $1 AND version >= $2 AND version <= $3 ORDER BY version ASC"),
             )
             .bind(aggregate_id)
             .bind(from_version as i64)
@@ -243,7 +243,7 @@ impl EventStore for PgEventStore {
             ?
         } else {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 ORDER BY version ASC"),
+                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM finance.cqrs_events WHERE aggregate_id = $1 AND version >= $2 ORDER BY version ASC"),
             )
             .bind(aggregate_id)
             .bind(from_version as i64)
@@ -266,7 +266,7 @@ impl EventStore for PgEventStore {
 
         sqlx::query(only_own_schema_query!(
             "finance",
-            "INSERT INTO cqrs_snapshots (aggregate_id, aggregate_type, version, state, created_at)
+            "INSERT INTO finance.cqrs_snapshots (aggregate_id, aggregate_type, version, state, created_at)
              VALUES ($1, $2, $3, $4, NOW())
              ON CONFLICT (aggregate_id) DO UPDATE
              SET aggregate_type = EXCLUDED.aggregate_type,
@@ -289,7 +289,7 @@ impl EventStore for PgEventStore {
         &self,
         aggregate_id: &str,
     ) -> Result<Option<SnapshotRecord>, TopemsError> {
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT aggregate_id, aggregate_type, state, version, created_at FROM cqrs_snapshots WHERE aggregate_id = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT aggregate_id, aggregate_type, state, version, created_at FROM finance.cqrs_snapshots WHERE aggregate_id = $1"))
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await
@@ -319,7 +319,7 @@ impl EventStore for PgEventStore {
     async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT COALESCE(MAX(version), 0) as version FROM cqrs_events WHERE aggregate_id = $1"
+            "SELECT COALESCE(MAX(version), 0) as version FROM finance.cqrs_events WHERE aggregate_id = $1"
         ))
         .bind(aggregate_id)
         .fetch_one(&self.pool)

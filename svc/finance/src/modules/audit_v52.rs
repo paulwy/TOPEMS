@@ -348,7 +348,7 @@ impl AutoAuditEngine {
 
         let mut scope = db.scope_with(txn).await?;
         let rule = sqlx::query_as::<_, AuditRule>(
-            only_own_schema_query!("finance", r#"INSERT INTO finance_audit_rules_v52
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_audit_rules_v52
                 (id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at"#),
@@ -378,7 +378,7 @@ impl AutoAuditEngine {
         is_active: Option<bool>,
     ) -> Result<Vec<AuditRule>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL",
+            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance.finance_audit_rules_v52 WHERE deleted_at IS NULL",
         );
 
         if category.is_some() {
@@ -460,7 +460,7 @@ impl AutoAuditEngine {
         set_parts.push(format!("updated_at = ${}", arg_idx));
 
         let query = format!(
-            "UPDATE finance_audit_rules_v52 SET {} WHERE id = ${} AND tenant_id = ${} RETURNING id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at",
+            "UPDATE finance.finance_audit_rules_v52 SET {} WHERE id = ${} AND tenant_id = ${} RETURNING id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at",
             set_parts.join(", "),
             arg_idx + 1,
             arg_idx + 2
@@ -503,7 +503,7 @@ impl AutoAuditEngine {
         tenant_id: Uuid,
     ) -> Result<(), sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
-        sqlx::query(only_own_schema_query!("finance", "UPDATE finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_audit_rules_v52 SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"))
             .bind(id)
             .bind(tenant_id)
             .execute(&mut scope)
@@ -520,7 +520,7 @@ impl AutoAuditEngine {
     ) -> Result<AuditRule, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let rule = sqlx::query_as::<_, AuditRule>(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance.finance_audit_rules_v52 WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
         )
         .bind(id)
         .bind(tenant_id)
@@ -539,7 +539,7 @@ impl AutoAuditEngine {
         let mut scope = db.scope_with(txn).await?;
         let rules = if let Some(ids) = rule_ids {
             sqlx::query_as::<_, AuditRule>(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND id = ANY($2) AND is_active = TRUE"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance.finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND id = ANY($2) AND is_active = TRUE"),
             )
             .bind(tenant_id)
             .bind(ids)
@@ -547,7 +547,7 @@ impl AutoAuditEngine {
             .await?
         } else {
             sqlx::query_as::<_, AuditRule>(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance.finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1 AND is_active = TRUE"),
             )
             .bind(tenant_id)
             .fetch_all(&mut scope)
@@ -810,7 +810,7 @@ impl AutoAuditEngine {
             sqlx::query_as(only_own_schema_query!(
                 "finance",
                 r#"SELECT id, entity_type, action, created_at
-               FROM finance_audit_log
+               FROM finance.finance_audit_log
                WHERE tenant_id = $1 AND action = 'delete'
                AND created_at > NOW() - INTERVAL '1 day' * $2
                ORDER BY created_at DESC
@@ -1040,9 +1040,9 @@ impl AutoAuditEngine {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE TRUE");
+            String::from("SELECT COUNT(*) FROM finance.finance_audit_findings_v52 WHERE TRUE");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance_audit_findings_v52 WHERE TRUE",
+            "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance.finance_audit_findings_v52 WHERE TRUE",
         );
 
         if status.is_some() {
@@ -1099,7 +1099,7 @@ impl AutoAuditEngine {
 
         let mut scope = db.scope_with(txn).await?;
         let finding = sqlx::query_as::<_, AuditFinding>(
-            only_own_schema_query!("finance", r#"UPDATE finance_audit_findings_v52
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_audit_findings_v52
                SET status = 'resolved', resolved_at = $1, resolved_by = $2,
                    evidence = jsonb_set(COALESCE(evidence, '{}')::jsonb, '{resolution}', to_jsonb($3::text))::text
                WHERE id = $4 AND tenant_id = $5
@@ -1174,7 +1174,7 @@ impl AnomalyDetector {
         let mut scope = db.scope_with(txn).await?;
         for alert in &alerts {
             sqlx::query_as::<_, AnomalyAlert>(
-                only_own_schema_query!("finance", r#"INSERT INTO finance_anomaly_alerts_v52
+                only_own_schema_query!("finance", r#"INSERT INTO finance.finance_anomaly_alerts_v52
                     (id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at"#),
@@ -1546,9 +1546,9 @@ impl AnomalyDetector {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE TRUE");
+            String::from("SELECT COUNT(*) FROM finance.finance_anomaly_alerts_v52 WHERE TRUE");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE TRUE",
+            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance.finance_anomaly_alerts_v52 WHERE TRUE",
         );
 
         if detection_type.is_some() {
@@ -1604,7 +1604,7 @@ impl AnomalyDetector {
         let mut scope = db.scope_with(txn).await?;
         sqlx::query(only_own_schema_query!(
             "finance",
-            r#"INSERT INTO finance_detection_configs_v52
+            r#"INSERT INTO finance.finance_detection_configs_v52
                 (tenant_id, detection_type, is_enabled, parameters, updated_at)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (tenant_id, detection_type) DO UPDATE
@@ -1631,7 +1631,7 @@ impl AnomalyDetector {
     ) -> Result<DetectionSummary, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let alerts: Vec<AnomalyAlert> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance.finance_anomaly_alerts_v52"),
         )
         .fetch_all(&mut scope)
         .await?;
@@ -1679,7 +1679,7 @@ impl AlertManager {
 
         let mut scope = db.scope_with(txn).await?;
         let config = sqlx::query_as::<_, AlertConfig>(
-            only_own_schema_query!("finance", r#"INSERT INTO finance_alert_configs_v52
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_alert_configs_v52
                 (id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at"#),
@@ -1706,7 +1706,7 @@ impl AlertManager {
     ) -> Result<Vec<AlertConfig>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let configs = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 ORDER BY created_at DESC"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance.finance_alert_configs_v52 ORDER BY created_at DESC"),
         )
         .fetch_all(&mut scope)
         .await?;
@@ -1726,7 +1726,7 @@ impl AlertManager {
     ) -> Result<AlertHistory, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let configs = sqlx::query_as::<_, AlertConfig>(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 AND channel = $2 AND is_active = TRUE"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance.finance_alert_configs_v52 WHERE tenant_id = $1 AND channel = $2 AND is_active = TRUE"),
         )
         .bind(tenant_id)
         .bind(channel)
@@ -1742,7 +1742,7 @@ impl AlertManager {
         let now = Utc::now();
 
         let history = sqlx::query_as::<_, AlertHistory>(
-            only_own_schema_query!("finance", r#"INSERT INTO finance_alert_history_v52
+            only_own_schema_query!("finance", r#"INSERT INTO finance.finance_alert_history_v52
                 (id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at"#),
@@ -1785,9 +1785,9 @@ impl AlertManager {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_alert_history_v52 WHERE TRUE");
+            String::from("SELECT COUNT(*) FROM finance.finance_alert_history_v52 WHERE TRUE");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance_alert_history_v52 WHERE TRUE",
+            "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance.finance_alert_history_v52 WHERE TRUE",
         );
 
         if channel.is_some() {
@@ -1841,7 +1841,7 @@ impl AlertManager {
     ) -> Result<AlertHistory, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let history = sqlx::query_as::<_, AlertHistory>(
-            only_own_schema_query!("finance", r#"UPDATE finance_alert_history_v52
+            only_own_schema_query!("finance", r#"UPDATE finance.finance_alert_history_v52
                SET is_acknowledged = TRUE, acknowledged_by = $1
                WHERE id = $2 AND tenant_id = $3
                RETURNING id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at"#),
@@ -1868,7 +1868,7 @@ pub async fn auto_audit_scheduler(db: Db) {
         let tenants = match db.scope_read_system().await {
             Ok(mut scope) => {
                 let rows = sqlx::query_scalar::<_, Uuid>(
-                    only_own_schema_query!("finance", "SELECT DISTINCT tenant_id FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE"),
+                    only_own_schema_query!("finance", "SELECT DISTINCT tenant_id FROM finance.finance_audit_rules_v52 WHERE deleted_at IS NULL AND is_active = TRUE"),
                 )
                 .fetch_all(&mut scope)
                 .await

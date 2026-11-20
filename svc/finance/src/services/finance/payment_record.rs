@@ -26,10 +26,10 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM finance.erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM finance.erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
 
         let mut cond = Vec::new();
@@ -119,7 +119,7 @@ impl FinanceService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
 
-        let row = sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
+        let row = sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, payment_no, supplier_id, supplier_name, invoice_no, invoice_date, payment_date, amount, currency, paid_amount, payment_method, status, description, created_by, created_at, updated_at FROM finance.erp_payment_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
             .bind(tenant_id)
             .bind(payment_id)
             .fetch_optional(&mut scope)
@@ -158,7 +158,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let row = sqlx::query(
-            only_own_schema_query!("finance", "INSERT INTO erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
              VALUES ($1, $2, $3, $4, NULL, $5)
              RETURNING id, payment_no, supplier_name, amount, status::text AS status, created_at"),
         )
@@ -202,7 +202,7 @@ impl FinanceService {
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_payment_records
+            "UPDATE finance.erp_payment_records
              SET supplier_name = COALESCE($1, supplier_name),
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
@@ -245,7 +245,7 @@ impl FinanceService {
 
         let result = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_payment_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+            "UPDATE finance.erp_payment_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(payment_id)
@@ -273,7 +273,7 @@ impl FinanceService {
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_payment_records
+            "UPDATE finance.erp_payment_records
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
              RETURNING id, payment_no, status"

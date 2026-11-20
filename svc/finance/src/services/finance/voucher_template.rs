@@ -102,7 +102,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let mut query =
-            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance.finance_voucher_templates WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let _params: Vec<&(dyn sqlx::Encode<'_, sqlx::Postgres> + Send + Sync)> = Vec::new();
 
@@ -160,7 +160,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let template: VoucherTemplate = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance.finance_voucher_templates WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -195,7 +195,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
+            only_own_schema_query!("finance", "SELECT id, template_id, account_id, account_code, account_name, description, debit_amount, credit_amount, sort_order, created_at FROM finance.finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
         )
         .bind(template_id)
         .fetch_all(&mut scope)
@@ -223,7 +223,7 @@ impl FinanceService {
         let template: VoucherTemplate = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"
-            INSERT INTO finance_voucher_templates 
+            INSERT INTO finance.finance_voucher_templates 
                 (id, tenant_id, name, description, voucher_type, 
                  default_debit_account, default_credit_account, is_default, 
                  status, created_at, updated_at, created_by)
@@ -250,7 +250,7 @@ impl FinanceService {
 
             let line: VoucherTemplateLine = sqlx::query_as(
                 only_own_schema_query!("finance", r#"
-                INSERT INTO finance_voucher_template_lines
+                INSERT INTO finance.finance_voucher_template_lines
                     (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
@@ -302,7 +302,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let existing: VoucherTemplate = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance.finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -323,7 +323,7 @@ impl FinanceService {
         let template: VoucherTemplate = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"
-            UPDATE finance_voucher_templates SET
+            UPDATE finance.finance_voucher_templates SET
                 name = $2, description = $3, voucher_type = $4,
                 default_debit_account = $5, default_credit_account = $6,
                 is_default = $7, status = $8, updated_at = $9
@@ -347,7 +347,7 @@ impl FinanceService {
         if let Some(lines_req) = req.lines {
             sqlx::query(only_own_schema_query!(
                 "finance",
-                "DELETE FROM finance_voucher_template_lines WHERE template_id = $1"
+                "DELETE FROM finance.finance_voucher_template_lines WHERE template_id = $1"
             ))
             .bind(template_id)
             .execute(&mut scope)
@@ -359,7 +359,7 @@ impl FinanceService {
 
                 sqlx::query(
                     only_own_schema_query!("finance", r#"
-                    INSERT INTO finance_voucher_template_lines
+                    INSERT INTO finance.finance_voucher_template_lines
                         (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     "#),
@@ -407,7 +407,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let existing = sqlx::query_as::<_, VoucherTemplate>(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance.finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -420,13 +420,13 @@ impl FinanceService {
 
         sqlx::query(only_own_schema_query!(
             "finance",
-            "DELETE FROM finance_voucher_template_lines WHERE template_id = $1"
+            "DELETE FROM finance.finance_voucher_template_lines WHERE template_id = $1"
         ))
         .bind(template_id)
         .execute(&mut scope)
         .await?;
 
-        sqlx::query(only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"))
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_voucher_templates SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"))
             .bind(tenant_id)
             .bind(template_id)
             .execute(&mut scope)
@@ -445,7 +445,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let template: VoucherTemplate = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance.finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -453,7 +453,7 @@ impl FinanceService {
         .await?;
 
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET is_default = false WHERE tenant_id = $1 AND voucher_type = $2"),
+            only_own_schema_query!("finance", "UPDATE finance.finance_voucher_templates SET is_default = false WHERE tenant_id = $1 AND voucher_type = $2"),
         )
         .bind(tenant_id)
         .bind(&template.voucher_type)
@@ -461,7 +461,7 @@ impl FinanceService {
         .await?;
 
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET is_default = true, updated_at = NOW() WHERE tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "UPDATE finance.finance_voucher_templates SET is_default = true, updated_at = NOW() WHERE tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)

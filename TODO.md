@@ -65,7 +65,7 @@
 | W2-A3 ✅ | 增 CI 规则禁止 `SEARCH_PATH` 环境读写 | 新增 `scripts/ci/check-search-path-env.mjs`（零基线，扫 1879 文件 0 违规）；已接入 lefthook pre-push `[Gate SPE]` 与 CI `connection-governance` job；配套删掉 `connection_budget_it.rs` 里已失效的 `set_var` | 规则上线；构造一条 `set_var("SEARCH_PATH")` 能被拦下（`--root` 自测路径已留） |
 | W2-B1 ✅ | mes：裸表引用归零 | 316 → 0（2026-11-20，25 文件；基线移除 62 条，`.sqlx` 新增 99 条） | `check-schema-prefix` 该模块归零 |
 | W2-B2 ✅ | unified-core 裸表引用归零 | 205 → 0（2026-11-21，15 文件；按 gate 逐行显式前缀：public 20 张业务表 + `flow.core_comments`/`flow.core_favorites` 两张权威表）。全仓 schema_prefix 违规 1134→929（SEARCH_PATH_DEPENDENT 604→508、UNKNOWN 530→421），基线 225→200 key、新增 0。`cargo fmt -p topems-unified-core` + `cargo check -p topems-unified-core --all-targets` 绿；`check-ledger-staleness` 绿；事实口径已同步 | `check-schema-prefix` 该模块归零 |
-| W2-B3 | finance | 227 | 同上 |
+| W2-B3 ✅ | finance 裸表引用归零 | 202 → 0（2026-11-21，19 文件；全部为 finance schema 表，逐行显式前缀 `finance.*`；`payment.rs` 两处已包裹宏但字面量仍裸名，一并修正）。全仓 schema_prefix 违规 929→727（SEARCH_PATH_DEPENDENT 508→490、UNKNOWN 421→237），基线 200→160 key、新增 0。`cargo fmt -p topems-finance` + `cargo check -p topems-finance --all-targets` 绿；Node/Python 双边界门禁 PASS；事实口径已同步 | `check-schema-prefix` 该模块归零 |
 | W2-B4 | lims + analytics | 174 / 167 | 同上 |
 | W2-B5 | pdm + erp | 152 / 105 | 同上 |
 | W2-B6 | integration 46 + communication 44 + portal 19 + rd 16 + pm 10 + monitor 5 + 小模块 8 | 合计 1536 | 同上 |

@@ -2372,7 +2372,7 @@ pub async fn toggle_template_handler(
     };
 
     let res = sqlx::query(
-        only_own_schema_query!("finance", "UPDATE finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
+        only_own_schema_query!("finance", "UPDATE finance.finance_voucher_templates SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
@@ -2453,7 +2453,7 @@ pub async fn match_template_handler(
     };
 
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
+        only_own_schema_query!("finance", "SELECT * FROM finance.finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
     )
     .bind(tenant_id)
     .bind(&source_type)
@@ -2546,7 +2546,7 @@ pub async fn get_template_usage_stats_handler(
     };
 
     let rule_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE mapping_config::jsonb->>'template_id' = $1"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_voucher_generation_rules WHERE mapping_config::jsonb->>'template_id' = $1"),
     )
     .bind(template_id.to_string())
     .fetch_one(&mut scope)
@@ -2614,7 +2614,7 @@ async fn add_template_entry_handler(
 
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
+        "SELECT COUNT(*) FROM finance.finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(template_id)
@@ -2628,7 +2628,7 @@ async fn add_template_entry_handler(
         Some(s) => s,
         None => {
             let max_order: i32 = sqlx::query_scalar(
-                only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance_voucher_template_lines WHERE template_id = $1"),
+                only_own_schema_query!("finance", "SELECT COALESCE(MAX(sort_order), 0) FROM finance.finance_voucher_template_lines WHERE template_id = $1"),
             )
             .bind(template_id)
             .fetch_one(&mut scope)
@@ -2643,7 +2643,7 @@ async fn add_template_entry_handler(
         crate::services::finance::voucher_template::VoucherTemplateLine,
         sqlx::Error,
     > = sqlx::query_as(
-        only_own_schema_query!("finance", r#"INSERT INTO finance_voucher_template_lines
+        only_own_schema_query!("finance", r#"INSERT INTO finance.finance_voucher_template_lines
             (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING *"#),
@@ -2700,7 +2700,7 @@ async fn update_template_entry_handler(
     };
 
     let owns: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_voucher_template_lines l JOIN finance.finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
     )
     .bind(tenant_id)
     .bind(template_id)
@@ -2714,7 +2714,7 @@ async fn update_template_entry_handler(
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!(
             "finance",
-            "SELECT * FROM finance_voucher_template_lines WHERE id = $1"
+            "SELECT * FROM finance.finance_voucher_template_lines WHERE id = $1"
         ))
         .bind(entry_id)
         .fetch_one(&mut scope)
@@ -2733,7 +2733,7 @@ async fn update_template_entry_handler(
     let line: Result<crate::services::finance::voucher_template::VoucherTemplateLine, sqlx::Error> =
         sqlx::query_as(only_own_schema_query!(
             "finance",
-            r#"UPDATE finance_voucher_template_lines
+            r#"UPDATE finance.finance_voucher_template_lines
               SET description = $1, account_code = $2, direction = $3,
                   amount_formula = $4, sort_order = $5
             WHERE id = $6
@@ -2778,7 +2778,7 @@ async fn delete_template_entry_handler(
     };
 
     let res = sqlx::query(
-        only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
+        only_own_schema_query!("finance", "DELETE FROM finance.finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance.finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
     )
     .bind(entry_id)
     .bind(template_id)
@@ -2846,7 +2846,7 @@ pub async fn reorder_template_entries_handler(
 
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
+        "SELECT COUNT(*) FROM finance.finance_voucher_templates WHERE tenant_id = $1 AND id = $2"
     ))
     .bind(tenant_id)
     .bind(template_id)
@@ -2859,7 +2859,7 @@ pub async fn reorder_template_entries_handler(
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
         if let Err(e) = sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3"),
+            only_own_schema_query!("finance", "UPDATE finance.finance_voucher_template_lines SET sort_order = $1 WHERE id = $2 AND template_id = $3"),
         )
         .bind(sort_order)
         .bind(entry_id)
@@ -2874,7 +2874,7 @@ pub async fn reorder_template_entries_handler(
         Vec<crate::services::finance::voucher_template::VoucherTemplateLine>,
         sqlx::Error,
     > = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT * FROM finance.finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
     .fetch_all(&mut scope)
@@ -3231,7 +3231,7 @@ pub async fn toggle_generation_rule_handler(
     };
 
     let res = sqlx::query(
-        only_own_schema_query!("finance", "UPDATE finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
+        only_own_schema_query!("finance", "UPDATE finance.finance_voucher_generation_rules SET status = $1, updated_at = $2 WHERE tenant_id = $3 AND id = $4"),
     )
     .bind(new_status)
     .bind(now)
@@ -3249,7 +3249,7 @@ pub async fn toggle_generation_rule_handler(
                 sqlx::Error,
             > = sqlx::query_as(only_own_schema_query!(
                 "finance",
-                "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"
+                "SELECT * FROM finance.finance_voucher_generation_rules WHERE tenant_id = $1 AND id = $2"
             ))
             .bind(tenant_id)
             .bind(rule_id)

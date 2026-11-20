@@ -112,7 +112,7 @@ impl FinanceService {
         let mut items = Vec::new();
         for (i, item) in req.items.iter().enumerate() {
             let payment_item: PaymentItem = sqlx::query_as(
-                only_own_schema_query!("finance", "INSERT INTO core_finance_payment_items (tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, remark, remaining_amount)
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payment_items (tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, remark, remaining_amount)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                  RETURNING *"),
             )
@@ -171,7 +171,7 @@ impl FinanceService {
                 .await?;
 
         let items: Vec<PaymentItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM finance.core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -303,7 +303,7 @@ impl FinanceService {
                 .await?;
 
         let items: Vec<PaymentItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM finance.core_finance_payment_items WHERE (tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
         )
         .bind(tenant_id)
         .bind(payment_id)
@@ -453,7 +453,7 @@ impl FinanceService {
 
         sqlx::query(only_own_schema_query!(
             "finance",
-            "DELETE FROM core_finance_payment_items WHERE payment_id = $1"
+            "DELETE FROM finance.core_finance_payment_items WHERE payment_id = $1"
         ))
         .bind(payment_id)
         .execute(&mut tx)
@@ -462,7 +462,7 @@ impl FinanceService {
         let mut items = Vec::new();
         for (i, item) in req.items.iter().enumerate() {
             let payment_item: PaymentItem = sqlx::query_as(
-                only_own_schema_query!("finance", "INSERT INTO core_finance_payment_items (tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_amount, payment_amount, remark)
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payment_items (tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_amount, payment_amount, remark)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                  RETURNING *"),
             )

@@ -46,7 +46,7 @@ impl PgVoucherSummaryView {
         let count_row = if let Some(s) = &status {
             sqlx::query(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) as count FROM mv_voucher_summary WHERE status = $1"
+                "SELECT COUNT(*) as count FROM finance.mv_voucher_summary WHERE status = $1"
             ))
             .bind(s)
             .fetch_one(&mut scope)
@@ -54,7 +54,7 @@ impl PgVoucherSummaryView {
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) as count FROM mv_voucher_summary"
+                "SELECT COUNT(*) as count FROM finance.mv_voucher_summary"
             ))
             .fetch_one(&mut scope)
             .await?
@@ -63,7 +63,7 @@ impl PgVoucherSummaryView {
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM finance.mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
             )
             .bind(s)
             .bind(page_size)
@@ -73,7 +73,7 @@ impl PgVoucherSummaryView {
             ?
         } else {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM finance.mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
             )
             .bind(page_size)
             .bind(offset)
@@ -91,7 +91,7 @@ impl PgVoucherSummaryView {
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
         let mut scope = self.db.scope_system().await?;
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE id = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM finance.mv_voucher_summary WHERE id = $1"))
             .bind(id)
             .fetch_optional(&mut scope)
             .await
@@ -105,7 +105,7 @@ impl PgVoucherSummaryView {
 
     pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
         let mut scope = self.db.scope_system().await?;
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM finance.mv_voucher_summary WHERE voucher_no = $1"))
             .bind(no)
             .fetch_optional(&mut scope)
             .await
@@ -149,7 +149,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 // tenant-system: CQRS 投影表无租户维度（跨租户聚合读模型），显式落平台租户常量，
                 // 区别于业务数据租户，禁止用请求租户或隐式零值。
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO mv_voucher_summary
+                    only_own_schema_query!("finance", "INSERT INTO finance.mv_voucher_summary
                      (id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, created_by, created_at, version, tenant_id)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1, $10)
                      ON CONFLICT (id) DO UPDATE SET
@@ -179,7 +179,7 @@ impl MaterializedView for PgVoucherSummaryView {
             FinanceDomainEvent::VoucherPosted(e) => {
                 sqlx::query(only_own_schema_query!(
                     "finance",
-                    "UPDATE mv_voucher_summary 
+                    "UPDATE finance.mv_voucher_summary 
                      SET status = $1, posted_at = $2, version = version + 1
                      WHERE id = $3"
                 ))
@@ -192,7 +192,7 @@ impl MaterializedView for PgVoucherSummaryView {
             FinanceDomainEvent::VoucherReversed(e) => {
                 sqlx::query(only_own_schema_query!(
                     "finance",
-                    "UPDATE mv_voucher_summary 
+                    "UPDATE finance.mv_voucher_summary 
                      SET status = $1, version = version + 1
                      WHERE id = $2"
                 ))
@@ -211,7 +211,7 @@ impl MaterializedView for PgVoucherSummaryView {
         let mut scope = self.db.scope_system().await?;
         sqlx::query(only_own_schema_query!(
             "finance",
-            "DELETE FROM mv_voucher_summary"
+            "DELETE FROM finance.mv_voucher_summary"
         ))
         .execute(&mut scope)
         .await?;
@@ -259,7 +259,7 @@ impl PgReceivableAgingView {
         let count_row = if let Some(s) = &status {
             sqlx::query(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) as count FROM mv_receivable_aging WHERE status = $1"
+                "SELECT COUNT(*) as count FROM finance.mv_receivable_aging WHERE status = $1"
             ))
             .bind(s)
             .fetch_one(&mut scope)
@@ -267,7 +267,7 @@ impl PgReceivableAgingView {
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) as count FROM mv_receivable_aging"
+                "SELECT COUNT(*) as count FROM finance.mv_receivable_aging"
             ))
             .fetch_one(&mut scope)
             .await?
@@ -276,7 +276,7 @@ impl PgReceivableAgingView {
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM mv_receivable_aging WHERE status = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3"),
+                only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM finance.mv_receivable_aging WHERE status = $1 ORDER BY updated_at DESC LIMIT $2 OFFSET $3"),
             )
             .bind(s)
             .bind(page_size)
@@ -286,7 +286,7 @@ impl PgReceivableAgingView {
             ?
         } else {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2"),
+                only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM finance.mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2"),
             )
             .bind(page_size)
             .bind(offset)
@@ -304,7 +304,7 @@ impl PgReceivableAgingView {
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgReceivableAging>, TopemsError> {
         let mut scope = self.db.scope_system().await?;
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM mv_receivable_aging WHERE id = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM finance.mv_receivable_aging WHERE id = $1"))
             .bind(id)
             .fetch_optional(&mut scope)
             .await
@@ -346,7 +346,7 @@ impl PgReceivableAgingView {
                     SUM(bucket_90_amount) as b90,
                     SUM(bucket_180_amount) as b180,
                     SUM(over_180_amount) as over180
-             FROM mv_receivable_aging"
+             FROM finance.mv_receivable_aging"
         ))
         .fetch_one(&mut scope)
         .await?;
@@ -421,7 +421,7 @@ impl MaterializedView for PgReceivableAgingView {
                 // tenant-system: CQRS 投影表无租户维度（跨租户聚合读模型），显式落平台租户常量，
                 // 区别于业务数据租户，禁止用请求租户或隐式零值。
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO mv_receivable_aging
+                    only_own_schema_query!("finance", "INSERT INTO finance.mv_receivable_aging
                      (id, customer_id, customer_name, total_amount, current_amount,
                       bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount,
                       status, version, updated_at, tenant_id)
@@ -455,7 +455,7 @@ impl MaterializedView for PgReceivableAgingView {
                 };
                 sqlx::query(only_own_schema_query!(
                     "finance",
-                    "UPDATE mv_receivable_aging 
+                    "UPDATE finance.mv_receivable_aging 
                      SET total_amount = $1, status = $2, version = version + 1, updated_at = NOW()
                      WHERE id = $3"
                 ))
@@ -479,7 +479,7 @@ impl MaterializedView for PgReceivableAgingView {
                         _ => continue,
                     };
                     let query = format!(
-                            "UPDATE mv_receivable_aging SET {} = $1, version = version + 1, updated_at = NOW() WHERE status != 'Settled'",
+                            "UPDATE finance.mv_receivable_aging SET {} = $1, version = version + 1, updated_at = NOW() WHERE status != 'Settled'",
                             bucket_col
                         );
                     sqlx::query(sqlx::AssertSqlSafe(query))
@@ -498,7 +498,7 @@ impl MaterializedView for PgReceivableAgingView {
         let mut scope = self.db.scope_system().await?;
         sqlx::query(only_own_schema_query!(
             "finance",
-            "DELETE FROM mv_receivable_aging"
+            "DELETE FROM finance.mv_receivable_aging"
         ))
         .execute(&mut scope)
         .await?;

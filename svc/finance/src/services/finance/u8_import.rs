@@ -90,7 +90,7 @@ impl FinanceService {
         let _record: U8ImportRecord = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"
-            INSERT INTO finance_u8_import_records 
+            INSERT INTO finance.finance_u8_import_records 
                 (id, tenant_id, import_batch_no, source_system, import_time, 
                  total_count, success_count, failed_count, status, 
                  created_by, created_at, updated_at)
@@ -142,7 +142,7 @@ impl FinanceService {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"
-            UPDATE finance_u8_import_records SET
+            UPDATE finance.finance_u8_import_records SET
                 success_count = $2, failed_count = $3, status = $4, 
                 error_message = $5, updated_at = $6
             WHERE tenant_id = $1 AND id = $7
@@ -189,7 +189,7 @@ impl FinanceService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let record: U8ImportRecord = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance.finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
@@ -214,7 +214,7 @@ impl FinanceService {
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Vec<U8ImportRecord>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
-        let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid)".to_string();
+        let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance.finance_u8_import_records WHERE (tenant_id = $1::uuid)".to_string();
         let mut param_idx = 2;
 
         if query.status.is_some() {
@@ -251,7 +251,7 @@ impl FinanceService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let record: U8ImportRecord = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance.finance_u8_import_records WHERE (tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
@@ -277,7 +277,7 @@ impl FinanceService {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"
-            UPDATE finance_u8_import_records SET
+            UPDATE finance.finance_u8_import_records SET
                 status = 'rolled_back', updated_at = NOW()
             WHERE tenant_id = $1 AND id = $2
             "#

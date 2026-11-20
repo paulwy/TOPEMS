@@ -26,10 +26,10 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
+            "SELECT COUNT(*) FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
@@ -117,7 +117,7 @@ impl FinanceService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let row =
-            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(collection_id)
                 .fetch_optional(&mut scope)
@@ -157,7 +157,7 @@ impl FinanceService {
             .unwrap_or("");
 
         let row = sqlx::query(
-            only_own_schema_query!("finance", "INSERT INTO erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
              VALUES ($1, $2, $3, $4, 'pending', $5)
              RETURNING id, collection_no, customer_name, amount, status::text AS status, created_at"),
         )
@@ -198,7 +198,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_collection_records
+            "UPDATE finance.erp_collection_records
              SET customer_name = COALESCE($1, customer_name),
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
@@ -240,7 +240,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
         let result = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+            "UPDATE finance.erp_collection_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
         ))
         .bind(tenant_id)
         .bind(collection_id)
@@ -267,7 +267,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
         let row = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE erp_collection_records
+            "UPDATE finance.erp_collection_records
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
              RETURNING id, collection_no, COALESCE(status, 'pending') AS status"
