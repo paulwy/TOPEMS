@@ -1,0 +1,430 @@
+{
+  "generated": "2026-11-20",
+  "note": "§17.2 作用域 API 收敛基线。scope_for_tenant 计未标记（无 // scope-exempt: <理由>）的生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/short-txn-exempt/lib-standalone）。db_new 计 Db::new( 构造点，只减不增。口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。",
+  "scope_for_tenant": {
+    "total": 155,
+    "marked": 0,
+    "unmarked": 155,
+    "files": {
+      "lib/shared-db/src/master_data_refs.rs": {
+        "unmarked": 5
+      },
+      "lib/shared-db/src/reconciliation_log.rs": {
+        "unmarked": 3
+      },
+      "svc/ai/src/event_handlers/mod.rs": {
+        "unmarked": 1
+      },
+      "svc/ai/src/modules/ai_knowledge/service.rs": {
+        "unmarked": 5
+      },
+      "svc/analytics/src/shared/mod.rs": {
+        "unmarked": 1
+      },
+      "svc/crm/src/event_handlers/mod.rs": {
+        "unmarked": 6
+      },
+      "svc/ehs/src/event_handlers/mod.rs": {
+        "unmarked": 3
+      },
+      "svc/ehs/src/modules/accident.rs": {
+        "unmarked": 7
+      },
+      "svc/ehs/src/modules/data_sync.rs": {
+        "unmarked": 2
+      },
+      "svc/ehs/src/modules/emergency_drill.rs": {
+        "unmarked": 1
+      },
+      "svc/ehs/src/modules/emergency_plan.rs": {
+        "unmarked": 2
+      },
+      "svc/ehs/src/modules/environment.rs": {
+        "unmarked": 2
+      },
+      "svc/ehs/src/modules/environmental_compliance.rs": {
+        "unmarked": 5
+      },
+      "svc/ehs/src/modules/hazard.rs": {
+        "unmarked": 6
+      },
+      "svc/ehs/src/modules/hazardous_material.rs": {
+        "unmarked": 1
+      },
+      "svc/ehs/src/modules/health.rs": {
+        "unmarked": 1
+      },
+      "svc/ehs/src/modules/integration.rs": {
+        "unmarked": 2
+      },
+      "svc/ehs/src/modules/occupational_disease.rs": {
+        "unmarked": 1
+      },
+      "svc/ehs/src/modules/occupational_health.rs": {
+        "unmarked": 1
+      },
+      "svc/ehs/src/modules/risk.rs": {
+        "unmarked": 1
+      },
+      "svc/ehs/src/modules/safety.rs": {
+        "unmarked": 4
+      },
+      "svc/ehs/src/modules/training.rs": {
+        "unmarked": 4
+      },
+      "svc/ehs/src/shared/permission.rs": {
+        "unmarked": 1
+      },
+      "svc/erp/src/event_handlers/mod.rs": {
+        "unmarked": 13
+      },
+      "svc/finance/src/event_handlers/mod.rs": {
+        "unmarked": 8
+      },
+      "svc/gis/src/event_handlers/mod.rs": {
+        "unmarked": 1
+      },
+      "svc/hrm/src/event_handlers/mod.rs": {
+        "unmarked": 1
+      },
+      "svc/integration/src/crm_erp_sync.rs": {
+        "unmarked": 3
+      },
+      "svc/integration/src/crm_scm_sync.rs": {
+        "unmarked": 3
+      },
+      "svc/integration/src/erp_wms_sync.rs": {
+        "unmarked": 3
+      },
+      "svc/integration/src/event_handlers/mod.rs": {
+        "unmarked": 1
+      },
+      "svc/integration/src/hrm_finance_sync.rs": {
+        "unmarked": 3
+      },
+      "svc/integration/src/mes_erp_sync.rs": {
+        "unmarked": 4
+      },
+      "svc/integration/src/mes_qms_integration.rs": {
+        "unmarked": 4
+      },
+      "svc/integration/src/sync_scheduler.rs": {
+        "unmarked": 2
+      },
+      "svc/lims/src/event_handlers/mod.rs": {
+        "unmarked": 2
+      },
+      "svc/master-data/src/modules/supplier_sync.rs": {
+        "unmarked": 1
+      },
+      "svc/mes/src/event_handlers.rs": {
+        "unmarked": 1
+      },
+      "svc/mobile/src/event_handlers/mod.rs": {
+        "unmarked": 1
+      },
+      "svc/pm/src/event_handlers/mod.rs": {
+        "unmarked": 4
+      },
+      "svc/portal/src/event_handlers/mod.rs": {
+        "unmarked": 2
+      },
+      "svc/rd/src/event_handlers/mod.rs": {
+        "unmarked": 2
+      },
+      "svc/scm/src/event_handlers/mod.rs": {
+        "unmarked": 10
+      },
+      "svc/search/src/handlers.rs": {
+        "unmarked": 1
+      },
+      "svc/search/src/projection.rs": {
+        "unmarked": 1
+      },
+      "svc/srm/src/event_handlers/mod.rs": {
+        "unmarked": 4
+      },
+      "svc/srm/src/modules/supplier.rs": {
+        "unmarked": 2
+      },
+      "svc/unified-core/src/modules/audit/service.rs": {
+        "unmarked": 1
+      },
+      "svc/wms/src/event_handlers/mod.rs": {
+        "unmarked": 2
+      },
+      "svc/wms/src/modules/inbound_order.rs": {
+        "unmarked": 1
+      },
+      "svc/wms/src/modules/inventory.rs": {
+        "unmarked": 1
+      },
+      "svc/wms/src/modules/outbound_order.rs": {
+        "unmarked": 1
+      },
+      "svc/wms/src/modules/smart_replenishment/suggestions.rs": {
+        "unmarked": 1
+      },
+      "svc/wms/src/modules/stock_take.rs": {
+        "unmarked": 4
+      },
+      "svc/wms/src/modules/transfer_order.rs": {
+        "unmarked": 2
+      }
+    }
+  },
+  "db_new": {
+    "total": 164,
+    "files": {
+      "lib/shared-db/src/audit.rs": {
+        "total": 2
+      },
+      "svc/ai/src/event_handlers/mod.rs": {
+        "total": 1
+      },
+      "svc/ai/src/main.rs": {
+        "total": 1
+      },
+      "svc/ai/src/routes.rs": {
+        "total": 1
+      },
+      "svc/analytics/src/main.rs": {
+        "total": 1
+      },
+      "svc/communication/src/main.rs": {
+        "total": 1
+      },
+      "svc/crm/src/event_handlers/mod.rs": {
+        "total": 9
+      },
+      "svc/crm/src/modules/analytics.rs": {
+        "total": 8
+      },
+      "svc/ehs/src/event_handlers/mod.rs": {
+        "total": 3
+      },
+      "svc/ehs/src/main.rs": {
+        "total": 1
+      },
+      "svc/erp/src/event_handlers/mod.rs": {
+        "total": 13
+      },
+      "svc/erp/src/main.rs": {
+        "total": 1
+      },
+      "svc/erp/src/modules/consolidation/reports.rs": {
+        "total": 1
+      },
+      "svc/erp/src/modules/purchase_order.rs": {
+        "total": 1
+      },
+      "svc/erp/src/modules/sales_order.rs": {
+        "total": 1
+      },
+      "svc/erp/src/modules/searchable_projection.rs": {
+        "total": 2
+      },
+      "svc/finance/src/domain/async_projector.rs": {
+        "total": 1
+      },
+      "svc/finance/src/domain/cqrs.rs": {
+        "total": 2
+      },
+      "svc/finance/src/main.rs": {
+        "total": 2
+      },
+      "svc/gis/src/main.rs": {
+        "total": 1
+      },
+      "svc/hrm/src/event_handlers/mod.rs": {
+        "total": 1
+      },
+      "svc/integration/src/main.rs": {
+        "total": 1
+      },
+      "svc/lims/src/main.rs": {
+        "total": 1
+      },
+      "svc/master-data/src/main.rs": {
+        "total": 1
+      },
+      "svc/master-data/src/modules/supplier_sync.rs": {
+        "total": 3
+      },
+      "svc/mes/src/event_handlers.rs": {
+        "total": 1
+      },
+      "svc/mes/src/main.rs": {
+        "total": 1
+      },
+      "svc/mobile/src/main.rs": {
+        "total": 2
+      },
+      "svc/monitor/src/main.rs": {
+        "total": 1
+      },
+      "svc/pdm/src/main.rs": {
+        "total": 1
+      },
+      "svc/plugin-registry/src/main.rs": {
+        "total": 1
+      },
+      "svc/pm/src/event_handlers/mod.rs": {
+        "total": 5
+      },
+      "svc/pm/src/main.rs": {
+        "total": 1
+      },
+      "svc/portal/src/embedded.rs": {
+        "total": 1
+      },
+      "svc/portal/src/event_handlers/mod.rs": {
+        "total": 2
+      },
+      "svc/portal/src/main.rs": {
+        "total": 1
+      },
+      "svc/qms/src/main.rs": {
+        "total": 1
+      },
+      "svc/rd/src/event_handlers/mod.rs": {
+        "total": 2
+      },
+      "svc/rd/src/modules/settings.rs": {
+        "total": 2
+      },
+      "svc/scm/src/event_handlers/mod.rs": {
+        "total": 11
+      },
+      "svc/scm/src/modules/analytics.rs": {
+        "total": 3
+      },
+      "svc/scm/src/modules/audit.rs": {
+        "total": 1
+      },
+      "svc/scm/src/modules/mrp.rs": {
+        "total": 1
+      },
+      "svc/scm/src/modules/supply_chain_dashboard.rs": {
+        "total": 1
+      },
+      "svc/scm/src/modules/sync_records.rs": {
+        "total": 7
+      },
+      "svc/search/src/main.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/ai_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/analytics_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/communication_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/ehs_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/finance_real_module.rs": {
+        "total": 3
+      },
+      "svc/server/src/modules/gis_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/integration_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/lims_real_module.rs": {
+        "total": 2
+      },
+      "svc/server/src/modules/master_data_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/mes_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/mobile_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/monitor_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/pdm_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/plugin_registry_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/pm_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/portal_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/qms_real_module.rs": {
+        "total": 3
+      },
+      "svc/server/src/modules/search_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/subscription_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/ticket_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/tms_real_module.rs": {
+        "total": 1
+      },
+      "svc/server/src/modules/unified_core_real_module.rs": {
+        "total": 1
+      },
+      "svc/srm/src/event_handlers/mod.rs": {
+        "total": 4
+      },
+      "svc/srm/src/modules/bidding.rs": {
+        "total": 1
+      },
+      "svc/srm/src/modules/supplier.rs": {
+        "total": 3
+      },
+      "svc/srm/src/modules/supplier_contract.rs": {
+        "total": 1
+      },
+      "svc/ticket/src/main.rs": {
+        "total": 1
+      },
+      "svc/tms/src/main.rs": {
+        "total": 1
+      },
+      "svc/unified-core/src/embedded.rs": {
+        "total": 1
+      },
+      "svc/unified-core/src/main.rs": {
+        "total": 2
+      },
+      "svc/unified-core/src/modules/iam/user/access_log.rs": {
+        "total": 3
+      },
+      "svc/unified-core/src/modules/iam/user/models.rs": {
+        "total": 1
+      },
+      "svc/unified-core/src/modules/master/consumer.rs": {
+        "total": 1
+      },
+      "svc/unified-core/src/modules/master/handlers.rs": {
+        "total": 2
+      },
+      "svc/unified-core/src/modules/system_audit/mod.rs": {
+        "total": 4
+      },
+      "svc/wms/src/event_handlers/mod.rs": {
+        "total": 4
+      },
+      "svc/wms/src/shared/scope.rs": {
+        "total": 1
+      }
+    }
+  }
+}

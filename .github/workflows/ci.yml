@@ -274,6 +274,9 @@ jobs:
       - name: Request txn gate
         run: node scripts/ci/check-request-txn.mjs
 
+      - name: Scope API gate (only-decrease)
+        run: node scripts/ci/check-scope-api.mjs
+
       - name: Runtime DDL gate (only-decrease)
         run: node scripts/ci/check-runtime-ddl.mjs
 

@@ -466,6 +466,16 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-request-txn.mjs --changed-only
 
+    # [Gate SA] 作用域 API 门禁（§17.2）：未标记的 scope_for_tenant 与 Db::new 只减不增；
+    # 新增调用必须带 `// scope-exempt: <理由>`（事件消费/后台/EHS 无请求事务/WMS 短事务）。
+    # 基线 scripts/ci/scope-api-baseline.json，口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。
+    scope-api:
+      tags: database rust transaction
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$|^scripts/ci/check-scope-api\.mjs$|^scripts/ci/scope-api-baseline\.json$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-scope-api.mjs --changed-only
+
     # [Gate TWS] 零租户写入源头扫描（2026-11-16 接入，report-only 起步）
     # 扫描 svc/lib/scripts 中「裸零 UUID 当 tenant 写」的疑似点；显式
     # PLATFORM_TENANT_ID / SYSTEM_TENANT_ID 与测试代码在白名单内。
