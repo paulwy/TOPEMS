@@ -17,7 +17,7 @@ use std::time::Duration;
 use topems_erp::modules::ApiState;
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
-use topems_shared_bootstrap::{bootstrap_service_with_search_path, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_with_search_path, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::L2CacheConfig;
 use topems_shared_service_client::notification::NotificationServiceClient;
@@ -62,18 +62,6 @@ impl ErpRealModule {
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
-
-        // 2. 数据库初始化（建表 + schema 防御，失败不阻塞）
-        if let Err(e) = default_init_db(
-            &ctx.db,
-            "erp",
-            true,
-            topems_erp::schema_defense::run_schema_migration_and_verify,
-        )
-        .await
-        {
-            tracing::warn!("ERP 数据库初始化警告（不阻塞）: {}", e);
-        }
 
         // 3. 服务客户端（与独立部署一致；指向外部服务地址，模块化单体阶段保留 HTTP）
         let encryption_service = topems_shared::init_encryption_from_env();
