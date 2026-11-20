@@ -17,7 +17,7 @@ use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
     build_approve_response, build_reject_response, build_start_response,
-    create_approval_and_log_db, execute_transition_and_log, reject_and_log_db,
+    create_approval_and_log_db, execute_transition_and_log_db, reject_and_log_db,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -1362,13 +1362,8 @@ pub async fn approve_rework(
     }
     // 校验 approval_id 与版本，执行 rejected→reworking 转换并写入 audit log
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
-    if let Err(e) = execute_transition_and_log(
-        &state.pool,
-        if claims.is_superuser {
-            None
-        } else {
-            Some(get_tenant_id(&claims))
-        },
+    if let Err(e) = execute_transition_and_log_db(
+        &state.db,
         Some("work_reports"),
         "work_report",
         record_id,

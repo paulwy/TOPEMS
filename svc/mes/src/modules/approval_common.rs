@@ -7,8 +7,9 @@
 
 pub use topems_shared_db::approval::{
     build_approve_response, build_reject_response, build_start_response, create_approval_and_log,
-    create_approval_and_log_db, execute_transition_and_log, reject_and_log, reject_and_log_db,
-    validate_approval_decision, validate_start_approval, ApprovalResult,
+    create_approval_and_log_db, execute_transition_and_log, execute_transition_and_log_db,
+    reject_and_log, reject_and_log_db, validate_approval_decision, validate_start_approval,
+    ApprovalResult,
 };
 
 use sqlx::postgres::PgPool;

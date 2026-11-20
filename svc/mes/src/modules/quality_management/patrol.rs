@@ -75,12 +75,24 @@ pub struct PatrolResponse {
 pub async fn list_patrols(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<ListPatrolsQuery>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
@@ -134,7 +146,7 @@ pub async fn list_patrols(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -166,7 +178,7 @@ pub async fn list_patrols(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality patrols: {}", e);
@@ -245,14 +257,25 @@ pub async fn list_patrols(
 )]
 pub async fn get_patrol(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<PatrolResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -299,7 +322,7 @@ pub async fn get_patrol(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -332,6 +355,7 @@ pub async fn get_patrol(
 pub async fn create_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<CreatePatrolRequest>,
 ) -> ApiResponse<PatrolResponse> {
     if let Err(e) =
@@ -339,6 +363,17 @@ pub async fn create_patrol(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let now = Utc::now();
     let patrol_no = format!(
@@ -390,7 +425,7 @@ pub async fn create_patrol(
         body.memo,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -439,6 +474,7 @@ struct PatrolUpdateRow {
 pub async fn update_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(body): Json<UpdatePatrolRequest>,
 ) -> ApiResponse<PatrolResponse> {
@@ -447,6 +483,17 @@ pub async fn update_patrol(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -493,7 +540,7 @@ pub async fn update_patrol(
     .bind(body.memo)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -526,6 +573,7 @@ pub async fn update_patrol(
 pub async fn delete_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
     if let Err(e) =
@@ -533,6 +581,17 @@ pub async fn delete_patrol(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -549,7 +608,7 @@ pub async fn delete_patrol(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -596,14 +655,25 @@ pub struct PatrolItemResponse {
 )]
 pub async fn list_patrol_items(
     State(state): State<AppState>,
-    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(patrol_id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let patrol_uuid = match Uuid::parse_str(&patrol_id) {
         Ok(u) => u,
@@ -649,7 +719,7 @@ pub async fn list_patrol_items(
         "#,
         patrol_uuid,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -682,6 +752,7 @@ pub async fn list_patrol_items(
 pub async fn add_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(patrol_id): Path<String>,
     Json(body): Json<AddPatrolItemRequest>,
 ) -> ApiResponse<PatrolItemResponse> {
@@ -690,6 +761,17 @@ pub async fn add_patrol_item(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let patrol_uuid = match Uuid::parse_str(&patrol_id) {
         Ok(u) => u,
@@ -715,7 +797,7 @@ pub async fn add_patrol_item(
         body.remark,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -774,6 +856,7 @@ struct PatrolItemUpdateRow {
 pub async fn update_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(body): Json<UpdatePatrolItemRequest>,
 ) -> ApiResponse<PatrolItemResponse> {
@@ -782,6 +865,17 @@ pub async fn update_patrol_item(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -811,7 +905,7 @@ pub async fn update_patrol_item(
     .bind(body.remark)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -838,6 +932,7 @@ pub async fn update_patrol_item(
 pub async fn delete_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
     if let Err(e) =
@@ -845,6 +940,17 @@ pub async fn delete_patrol_item(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立巡检作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -861,7 +967,7 @@ pub async fn delete_patrol_item(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {

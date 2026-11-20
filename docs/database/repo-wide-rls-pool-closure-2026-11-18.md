@@ -1147,14 +1147,14 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 
 | 指标 | 11-18 | 11-20 |
 | --- | --- | --- |
-| `&state.(db\|pool)` 命中 | 1922 | 1869 |
-| 已作用域化 | — | 534 |
+| `&state.(db\|pool)` 命中 | 1922 | 1812 |
+| 已作用域化 | — | 537 |
 | 权限/审计/健康/元数据 | — | 1111 |
-| 业务带显式谓词 | — | 97 |
+| 业务带显式谓词 | — | 37 |
 | 业务无谓词 | — | 57 |
 | 业务无上下文 | — | 64 |
 | 业务后台内部 | — | 6 |
-| **业务裸池合计** | **340** | **224** |
+| **业务裸池合计** | **340** | **164** |
 
 本轮变化：
 
@@ -1164,4 +1164,6 @@ down 后 allow_all 恢复（`dict_types` 含写校验新增行共 4 行，四档
 - MES 审批桥接 6 处（生产订单发起/驳回、报工返工发起/驳回、让步接收发起/驳回）改用 `create_approval_and_log_db` / `reject_and_log_db`，传 `state.db` 作用域包装；MES 业务无谓词裸池归零。
 - 复测后 `biz_noctx` 只剩已登记面：ERP `searchable_projection` / `consolidation::reports` 写后按主键投影与审批桥接、QMS `integration` 平台常量通道、unified-core IAM/versioning/automation 平台表。
 - `biz_nopred` 集中在 ERP `emit_after_commit`（写后按主键读快照）与 unified-core 平台表，均对应第 5 节已登记项，不构成跨租户请求读面。
-- 结论：W7-A 的「未登记跨租户裸池」为 0；剩余 224 处是已分类存量，其中 97 处带显式租户谓词的可作为后续净化对象，不再作为安全缺口。
+- MES 产能 `capacity.rs` 9 个 handler、需求预测 `demand_forecast.rs` 8 个 handler、生产计划 `production_plan.rs` 8 个 handler、巡检 `quality_management/patrol.rs` 9 个 handler、检验记录 `quality_management/inspection.rs` 5 个 handler 全部改为请求事务 `state.db.scope_with(txn)`，数据查询/写入不再走 `&state.pool`；分页计数错误改为返回 500，不再 `.unwrap_or(0)` 吞掉。权限校验仍在池上执行，属控制面查询。
+- MES 审批通过的状态转换（生产订单、返工、让步接收）改用 `execute_transition_and_log_db`，传 `state.db`，避免状态更新在裸池上 fail-closed 0 行；`approval_common.rs` 补充 re-export。MES 业务带谓词裸池仅剩 `create_process` / `update_process` 的权限校验 2 处，扫描器按 handler 口径归入 pred，实际是控制面调用，不计业务数据面。
+- 结论：W7-A 的「未登记跨租户裸池」为 0；剩余 164 处是已分类存量，其中 37 处带显式租户谓词的可作为后续净化对象，不再作为安全缺口。

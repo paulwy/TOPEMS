@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::shared::aps_fsm::demand_forecast_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
@@ -139,12 +140,24 @@ fn calc_accuracy(forecast: Option<f64>, actual: Option<f64>) -> Option<f64> {
 pub async fn list_forecasts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListForecastsQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -174,7 +187,7 @@ pub async fn list_forecasts(
     .bind(&method_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -194,9 +207,15 @@ pub async fn list_forecasts(
             .bind(&status_filter)
             .bind(product_filter)
             .bind(&method_filter)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+            .fetch_one(&mut scope)
+            .await;
+            let total = match total {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("[mes] 需求预测计数失败: {}", e);
+                    return ApiResponse::server_error("获取需求预测列表失败");
+                }
+            };
 
             ApiResponse::success(
                 serde_json::json!({
@@ -231,9 +250,21 @@ pub async fn list_forecasts(
 pub async fn get_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
@@ -247,7 +278,7 @@ pub async fn get_forecast(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -263,6 +294,7 @@ pub async fn get_forecast(
 pub async fn create_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreateForecastRequest>,
 ) -> ApiResponse<DemandForecast> {
     let id = Uuid::new_v4();
@@ -270,6 +302,17 @@ pub async fn create_forecast(
     let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
         Ok(t) => t,
         Err(resp) => return resp,
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
     };
     let accuracy_rate = calc_accuracy(req.forecast_quantity, req.actual_quantity);
 
@@ -301,7 +344,7 @@ pub async fn create_forecast(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -316,17 +359,29 @@ pub async fn create_forecast(
 pub async fn update_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateForecastRequest>,
 ) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = sqlx::query_as::<_, DemandForecast>(
         "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let existing = match existing {
@@ -373,7 +428,7 @@ pub async fn update_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -388,17 +443,29 @@ pub async fn update_forecast(
 pub async fn delete_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
         Ok(t) => t,
         Err(resp) => return resp,
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let result = sqlx::query("DELETE FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
@@ -431,16 +498,28 @@ pub async fn delete_forecast(
 pub async fn calculate_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
         "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(f)) => f,
@@ -473,7 +552,7 @@ pub async fn calculate_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -501,16 +580,28 @@ pub async fn calculate_forecast(
 pub async fn validate_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
         "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(f)) => f,
@@ -541,7 +632,7 @@ pub async fn validate_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -569,16 +660,28 @@ pub async fn validate_forecast(
 pub async fn adopt_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立需求预测作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
         "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(f)) => f,
@@ -604,7 +707,7 @@ pub async fn adopt_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {

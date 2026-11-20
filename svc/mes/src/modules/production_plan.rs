@@ -15,6 +15,7 @@ use crate::shared::aps_fsm::production_plan_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
@@ -118,12 +119,24 @@ fn can_transition(from: &str, to: &str) -> bool {
 pub async fn list_plans(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ListPlansQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -145,7 +158,7 @@ pub async fn list_plans(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -161,9 +174,15 @@ pub async fn list_plans(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+            .fetch_one(&mut scope)
+            .await;
+            let total = match total {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::error!("[mes] 生产计划计数失败: {}", e);
+                    return ApiResponse::server_error("获取生产计划列表失败");
+                }
+            };
 
             ApiResponse::success(
                 serde_json::json!({
@@ -198,9 +217,21 @@ pub async fn list_plans(
 pub async fn get_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
@@ -212,7 +243,7 @@ pub async fn get_plan(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -228,6 +259,7 @@ pub async fn get_plan(
 pub async fn create_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<CreatePlanRequest>,
 ) -> ApiResponse<ProductionPlan> {
     let id = Uuid::new_v4();
@@ -235,6 +267,17 @@ pub async fn create_plan(
     let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
         Ok(t) => t,
         Err(resp) => return resp,
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
     };
 
     let result = sqlx::query_as::<_, ProductionPlan>(
@@ -260,7 +303,7 @@ pub async fn create_plan(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -275,10 +318,22 @@ pub async fn create_plan(
 pub async fn update_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePlanRequest>,
 ) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = sqlx::query_as::<_, ProductionPlan>(
         r#"
@@ -290,7 +345,7 @@ pub async fn update_plan(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let existing = match existing {
@@ -333,7 +388,7 @@ pub async fn update_plan(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -348,17 +403,29 @@ pub async fn update_plan(
 pub async fn delete_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
         Ok(t) => t,
         Err(resp) => return resp,
     };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let result = sqlx::query("DELETE FROM mes.production_plans WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
@@ -391,16 +458,28 @@ pub async fn delete_plan(
 pub async fn submit_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
         "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(p)) => p,
@@ -419,7 +498,7 @@ pub async fn submit_plan(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -447,17 +526,29 @@ pub async fn submit_plan(
 pub async fn approve_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(_req): Json<ApprovalRequest>,
 ) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
         "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(p)) => p,
@@ -476,7 +567,7 @@ pub async fn approve_plan(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -504,17 +595,29 @@ pub async fn approve_plan(
 pub async fn reject_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(_req): Json<ApprovalRequest>,
 ) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立生产计划作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
         "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(p)) => p,
@@ -533,7 +636,7 @@ pub async fn reject_plan(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {

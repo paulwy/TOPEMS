@@ -12,7 +12,7 @@ use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
     build_approve_response, build_reject_response, build_start_response,
-    create_approval_and_log_db, execute_transition_and_log, reject_and_log_db,
+    create_approval_and_log_db, execute_transition_and_log_db, reject_and_log_db,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -89,12 +89,24 @@ pub struct InspectionResponse {
 pub async fn list_inspections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<ListInspectionsQuery>,
 ) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立检验记录作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
@@ -158,7 +170,7 @@ pub async fn list_inspections(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -192,7 +204,7 @@ pub async fn list_inspections(
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
-    let rows = match fetch_query.fetch_all(&state.pool).await {
+    let rows = match fetch_query.fetch_all(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality inspections: {}", e);
@@ -313,6 +325,17 @@ pub async fn get_inspection(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立检验记录作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -361,7 +384,7 @@ pub async fn get_inspection(
         "#,
         uuid,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -401,6 +424,7 @@ pub async fn get_inspection(
 pub async fn create_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(body): Json<CreateInspectionRequest>,
 ) -> ApiResponse<InspectionResponse> {
     if let Err(e) =
@@ -408,6 +432,17 @@ pub async fn create_inspection(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立检验记录作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let now = Utc::now();
     let inspection_no = format!(
@@ -481,7 +516,7 @@ pub async fn create_inspection(
         body.memo,
         tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -544,6 +579,7 @@ struct InspectionUpdateRow {
 pub async fn update_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
     Json(body): Json<UpdateInspectionRequest>,
 ) -> ApiResponse<InspectionResponse> {
@@ -552,6 +588,17 @@ pub async fn update_inspection(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立检验记录作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -602,7 +649,7 @@ pub async fn update_inspection(
     .bind(body.memo)
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -642,6 +689,7 @@ pub async fn update_inspection(
 pub async fn delete_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
     if let Err(e) =
@@ -649,6 +697,17 @@ pub async fn delete_inspection(
     {
         return e;
     }
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立检验记录作用域失败: {}", e);
+            return ApiResponse::server_error("数据库事务上下文缺失");
+        }
+    };
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -665,7 +724,7 @@ pub async fn delete_inspection(
     )
     .bind(uuid)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -781,13 +840,8 @@ pub async fn approve_concession(
     }
     // 校验 approval_id 与版本，执行 failed→concession_received 转换并写入 audit log
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
-    if let Err(e) = execute_transition_and_log(
-        &state.pool,
-        if claims.is_superuser {
-            None
-        } else {
-            Some(get_tenant_id(&claims))
-        },
+    if let Err(e) = execute_transition_and_log_db(
+        &state.db,
         Some("quality_inspections"),
         "quality_inspection",
         record_id,
