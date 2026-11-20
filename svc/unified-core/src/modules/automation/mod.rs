@@ -13,6 +13,7 @@ use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::middleware::try_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
@@ -216,6 +217,7 @@ pub struct RunLogQueryParams {
 
 pub async fn list_rules(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<RuleQueryParams>,
 ) -> ApiResponse<PaginatedResponse<AutomationRule>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -228,18 +230,38 @@ pub async fn list_rules(
     let search = params.search.clone().unwrap_or_default();
     let status = params.status.clone();
 
-    let total: i64 = sqlx::query_scalar(
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化列表作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化列表作用域失败".to_string(),
+            ));
+        }
+    };
+
+    let total = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM public.automation_rules
            WHERE ($1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)"#,
     )
     .bind(&search)
     .bind(&status)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
+    .fetch_one(&mut scope)
+    .await;
+    let total = match total {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("统计自动化规则失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询规则失败".to_string()));
+        }
+    };
 
-    let items: Vec<AutomationRule> = sqlx::query_as(
+    let items = sqlx::query_as::<_, AutomationRule>(
         r#"SELECT * FROM public.automation_rules
            WHERE ($1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
@@ -249,9 +271,15 @@ pub async fn list_rules(
     .bind(&status)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    .fetch_all(&mut scope)
+    .await;
+    let items: Vec<AutomationRule> = match items {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("查询自动化规则失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询规则失败".to_string()));
+        }
+    };
 
     ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
@@ -261,12 +289,25 @@ pub async fn list_rules(
 
 pub async fn get_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("打开自动化作用域失败".to_string()));
+        }
+    };
+
     let rule: Result<AutomationRule, _> =
         sqlx::query_as("SELECT * FROM public.automation_rules WHERE id = $1")
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
     match rule {
@@ -284,12 +325,25 @@ pub async fn get_rule(
 
 pub async fn get_rule_by_code(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(code): Path<String>,
 ) -> ApiResponse<AutomationRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("打开自动化作用域失败".to_string()));
+        }
+    };
+
     let rule: Result<AutomationRule, _> =
         sqlx::query_as("SELECT * FROM public.automation_rules WHERE code = $1")
             .bind(&code)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
     match rule {

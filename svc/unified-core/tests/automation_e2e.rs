@@ -10,6 +10,11 @@ mod app_state;
 use app_state::{tenant_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use topems_shared_auth::middleware::tenant::{
+    rls_request_tenant, scope_request_tenant, RlsRequestTenant, RlsTxnCell,
+};
 use topems_unified_core::modules::automation::{
     create_rule, delete_rule, disable_rule, duplicate_rule, enable_rule, get_rule,
     get_rule_by_code, list_rules, update_rule, AutomationRule, CreateRuleRequest, RuleQueryParams,
@@ -42,6 +47,12 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .execute(pool)
     .await
     .unwrap();
+}
+
+async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
+    let tx = pool.begin().await.unwrap();
+    let cell: RlsTxnCell = Arc::new(Mutex::new(Some(tx)));
+    (cell, rls_request_tenant(&tenant_claims()))
 }
 
 fn empty_params() -> RuleQueryParams {
@@ -86,8 +97,13 @@ topems_test_support::sqlx_dsn_guard!();
 async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_rules(State(state), Query(empty_params())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        list_rules(State(state), Extension(cell), Query(empty_params())),
+    )
+    .await;
     let body = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
@@ -121,8 +137,13 @@ async fn list_counts_created(pool: sqlx::PgPool) {
     create_via_handler(pool.clone(), "规则A", "RULE_A").await;
     create_via_handler(pool.clone(), "规则B", "RULE_B").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = list_rules(State(state), Query(empty_params())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        list_rules(State(state), Extension(cell), Query(empty_params())),
+    )
+    .await;
     let body = resp.data.unwrap();
     assert_eq!(body.total, 2);
     assert_eq!(body.items.len(), 2);
@@ -133,8 +154,10 @@ async fn get_returns_rule(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_rule(State(state), Path(rule.id)).await;
+    let resp =
+        scope_request_tenant(ctx, get_rule(State(state), Extension(cell), Path(rule.id))).await;
     let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.id, rule.id);
     assert_eq!(got.name, "规则A");
@@ -144,8 +167,13 @@ async fn get_returns_rule(pool: sqlx::PgPool) {
 async fn get_missing_returns_none(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_rule(State(state), Path(uuid::Uuid::new_v4())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_rule(State(state), Extension(cell), Path(uuid::Uuid::new_v4())),
+    )
+    .await;
     assert!(resp.data.is_none());
 }
 
@@ -181,8 +209,10 @@ async fn delete_removes_rule(pool: sqlx::PgPool) {
     let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool.clone());
-    let resp = get_rule(State(state), Path(rule.id)).await;
+    let resp =
+        scope_request_tenant(ctx, get_rule(State(state), Extension(cell), Path(rule.id))).await;
     assert!(resp.data.is_none());
 }
 
@@ -191,8 +221,13 @@ async fn get_by_code_returns_rule(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_rule_by_code(State(state), Path("RULE_A".to_string())).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_rule_by_code(State(state), Extension(cell), Path("RULE_A".to_string())),
+    )
+    .await;
     let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.id, rule.id);
     assert_eq!(got.name, "规则A");
