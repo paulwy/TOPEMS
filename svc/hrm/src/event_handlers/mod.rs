@@ -119,6 +119,7 @@ impl HrmEventHandlers {
                 );
 
                 let cache_key = format!("user_permissions:{}", payload.user_id);
+                // event-handler-observability: 缓存失效审计日志，失败不影响业务写入
                 let _ = self
                     .record_cache_invalidation(
                         tenant_id,
@@ -143,6 +144,7 @@ impl HrmEventHandlers {
                     payload.position_id
                 );
 
+                // event-handler-observability: 缓存失效审计日志，失败不影响业务写入
                 let _ = self
                     .record_cache_invalidation(
                         tenant_id,
@@ -170,6 +172,7 @@ impl HrmEventHandlers {
                 );
 
                 let cache_key = format!("position:{}", payload.position_id);
+                // event-handler-observability: 缓存失效审计日志，失败不影响业务写入
                 let _ = self
                     .record_cache_invalidation(
                         tenant_id,
@@ -180,6 +183,7 @@ impl HrmEventHandlers {
                     )
                     .await;
 
+                // event-handler-observability: 缓存失效审计日志，失败不影响业务写入
                 let _ = self
                     .record_cache_invalidation(
                         tenant_id,
@@ -200,6 +204,7 @@ impl HrmEventHandlers {
                 tracing::info!("[hrm] 岗位删除: position_id={}", payload.position_id);
 
                 let cache_key = format!("position:{}", payload.position_id);
+                // event-handler-observability: 缓存失效审计日志，失败不影响业务写入
                 let _ = self
                     .record_cache_invalidation(
                         tenant_id,
@@ -210,6 +215,7 @@ impl HrmEventHandlers {
                     )
                     .await;
 
+                // event-handler-observability: 缓存失效审计日志，失败不影响业务写入
                 let _ = self
                     .record_cache_invalidation(
                         tenant_id,

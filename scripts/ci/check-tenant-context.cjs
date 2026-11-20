@@ -34,6 +34,8 @@ const { execSync } = require('child_process');
 const ROOT = path.resolve(__dirname, '..', '..');
 const BASELINE_PATH = path.join(__dirname, 'tenant-context-baseline.json');
 const ANNOTATION = /\/\/\s*tenant-system\s*:/;
+// 事件处理器豁免：纯观测日志或明确 best-effort 广播，必须写明原因。
+const EVENT_HANDLER_ANNOTATION = /\/\/\s*event-handler-(observability|best-effort)\s*:/;
 
 // W7-B4-EHS 定案（D5）：曾豁免 `Db::new(pool.clone()).scope_with(...)` 这一种形态
 // （复用 tenant_middleware 已开启的请求级 RLS 事务）。W7-B4-EHS-FOLLOWUP-1 已把这
@@ -94,6 +96,11 @@ function hasAnnotation(lines, idx) {
   return idx > 0 && ANNOTATION.test(lines[idx - 1]);
 }
 
+function hasEventHandlerAnnotation(lines, idx) {
+  if (EVENT_HANDLER_ANNOTATION.test(lines[idx])) return true;
+  return idx > 0 && EVENT_HANDLER_ANNOTATION.test(lines[idx - 1]);
+}
+
 function scanFile(rel) {
   const abs = path.join(ROOT, rel);
   let text;
@@ -107,6 +114,7 @@ function scanFile(rel) {
   const isModule = /^svc\/[^/]+\/src\/modules\//.test(rel);
   const r1 = [];
   const r2 = [];
+  const r3 = [];
   const scopedHits = [];
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -122,8 +130,22 @@ function scanFile(rel) {
         r2.push({ line: i + 1, text: raw.trim() });
       }
     }
+    if (
+      isEventHandler &&
+      /\blet\s+_\s*=\s*self\b/.test(code) &&
+      !hasEventHandlerAnnotation(lines, i)
+    ) {
+      r3.push({ line: i + 1, text: raw.trim() });
+    }
+    if (
+      isEventHandler &&
+      /\.subscribe_master_data(?:_employee|_organization)?\s*\(/.test(code) &&
+      !hasEventHandlerAnnotation(lines, i)
+    ) {
+      r3.push({ line: i + 1, text: raw.trim() });
+    }
   }
-  return { rel, r1, r2, scopedHits };
+  return { rel, r1, r2, r3, scopedHits };
 }
 
 function serviceOf(rel) {
@@ -153,8 +175,8 @@ function main() {
     if (r) results.push(r);
   }
 
-  const current = { r1: {}, r2: {} };
-  const total = { r1: 0, r2: 0 };
+  const current = { r1: {}, r2: {}, r3: {} };
+  const total = { r1: 0, r2: 0, r3: 0 };
 
   // 上限断言：5 处白名单必须逐一命中（形态/行号漂移即红），且命中数不得超出白名单。
   const scopedHits = results.flatMap((r) => r.scopedHits || []);
@@ -178,13 +200,11 @@ function main() {
   }
 
   for (const r of results) {
-    if (r.r1.length) {
-      current.r1[r.rel] = r.r1.length;
-      total.r1 += r.r1.length;
-    }
-    if (r.r2.length) {
-      current.r2[r.rel] = r.r2.length;
-      total.r2 += r.r2.length;
+    for (const rule of ['r1', 'r2', 'r3']) {
+      if (r[rule].length) {
+        current[rule][r.rel] = r[rule].length;
+        total[rule] += r[rule].length;
+      }
     }
   }
 
@@ -201,13 +221,15 @@ function main() {
       rules: {
         r1: 'event_handlers 内使用 scope_system / scope_read_system（无登记注释）',
         r2: 'modules 内直接使用 state.pool（无登记注释）',
+        r3: 'event_handlers 内 let _ = self 吞错或使用旧 subscribe_master_data（无登记注释）',
       },
       r1: current.r1,
       r2: current.r2,
+      r3: current.r3,
     };
     fs.writeFileSync(BASELINE_PATH, JSON.stringify(payload, null, 2) + '\n');
     console.log(
-      `[tenant-context] 基线已更新: R1 ${total.r1} 处 / R2 ${total.r2} 处（${BASELINE_PATH}）`,
+      `[tenant-context] 基线已更新: R1 ${total.r1} 处 / R2 ${total.r2} 处 / R3 ${total.r3} 处（${BASELINE_PATH}）`,
     );
     return;
   }
@@ -215,14 +237,16 @@ function main() {
   const baseTotals = {
     r1: baseline ? Object.values(baseline.r1 || {}).reduce((a, b) => a + b, 0) : 0,
     r2: baseline ? Object.values(baseline.r2 || {}).reduce((a, b) => a + b, 0) : 0,
+    r3: baseline ? Object.values(baseline.r3 || {}).reduce((a, b) => a + b, 0) : 0,
   };
   const baseFiles = {
     r1: baseline ? Object.keys(baseline.r1 || {}).length : 0,
     r2: baseline ? Object.keys(baseline.r2 || {}).length : 0,
+    r3: baseline ? Object.keys(baseline.r3 || {}).length : 0,
   };
 
   const newViolations = [];
-  for (const rule of ['r1', 'r2']) {
+  for (const rule of ['r1', 'r2', 'r3']) {
     for (const [rel, count] of Object.entries(current[rule])) {
       const base = baseline?.[rule]?.[rel] ?? 0;
       if (count > base) {
@@ -233,10 +257,10 @@ function main() {
 
   // 按服务汇总存量，便于分批。
   const byService = {};
-  for (const rule of ['r1', 'r2']) {
+  for (const rule of ['r1', 'r2', 'r3']) {
     for (const [rel, count] of Object.entries(current[rule])) {
       const svc = serviceOf(rel);
-      byService[svc] = byService[svc] || { r1: 0, r2: 0 };
+      byService[svc] = byService[svc] || { r1: 0, r2: 0, r3: 0 };
       byService[svc][rule] += count;
     }
   }
@@ -260,11 +284,13 @@ function main() {
 
   console.log(
     `[tenant-context] 扫描 ${results.length} 个文件${changedOnly ? '（仅暂存）' : ''}；` +
-      `存量基线 R1 ${baseTotals.r1} 处/${baseFiles.r1} 文件，R2 ${baseTotals.r2} 处/${baseFiles.r2} 文件`,
+      `存量基线 R1 ${baseTotals.r1} 处/${baseFiles.r1} 文件，R2 ${baseTotals.r2} 处/${baseFiles.r2} 文件，R3 ${baseTotals.r3} 处/${baseFiles.r3} 文件`,
   );
-  console.log(`[tenant-context] 本次 R1 ${total.r1} 处，R2 ${total.r2} 处`);
+  console.log(
+    `[tenant-context] 本次 R1 ${total.r1} 处，R2 ${total.r2} 处，R3 ${total.r3} 处`,
+  );
 
-  if (!baseline && (total.r1 || total.r2)) {
+  if (!baseline && (total.r1 || total.r2 || total.r3)) {
     console.error(
       '[tenant-context] 基线缺失。请先全量运行 --update-baseline 冻结存量，再启用门禁。',
     );
@@ -279,16 +305,21 @@ function main() {
   console.error(`[tenant-context] FAIL：新增违规 ${newViolations.length} 个文件`);
   for (const v of newViolations) {
     const label =
-      v.rule === 'r1' ? 'R1 事件消费使用了系统通道' : 'R2 模块绕过 Db 作用域直连池';
+      v.rule === 'r1'
+        ? 'R1 事件消费使用了系统通道'
+        : v.rule === 'r2'
+          ? 'R2 模块绕过 Db 作用域直连池'
+          : 'R3 事件处理器吞错或使用旧 MDM 订阅';
     console.error(`  - [${v.rule}] ${v.rel}: ${v.base} → ${v.count}（+${v.delta}）${label}`);
     const r = results.find((x) => x.rel === v.rel);
-    for (const site of (v.rule === 'r1' ? r?.r1 : r?.r2) || []) {
+    const sites = v.rule === 'r1' ? r?.r1 : v.rule === 'r2' ? r?.r2 : r?.r3;
+    for (const site of sites || []) {
       console.error(`      L${site.line}: ${site.text}`);
     }
   }
   console.error(
-    '  修法：改用 Db::scope_read/scope（请求路径）或补齐租户绑定；确属系统通道的，' +
-      '在调用处或上一行加 `// tenant-system: <原因>`。',
+    '  修法：改用 Db::scope_read/scope（请求路径）或补齐租户绑定；系统通道加 `// tenant-system: <原因>`；' +
+      '事件处理器纯观测/广播豁免加 `// event-handler-observability: <原因>` 或 `// event-handler-best-effort: <原因>`。',
   );
   process.exit(1);
 }
