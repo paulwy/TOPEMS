@@ -120,7 +120,11 @@ pub async fn list_roles(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return json_error(500, "数据库事务上下文缺失");
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let scope_result = match scope_kind {
+        IamScope::Platform => state.db.scope_with_system(txn).await,
+        IamScope::Tenant(_) => state.db.scope_with(txn).await,
+    };
+    let mut scope = match scope_result {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("打开角色读作用域失败: {}", e);
