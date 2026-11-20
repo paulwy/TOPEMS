@@ -26,9 +26,9 @@ use topems_shared_core::cache::{
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
-    CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
-    EventType, InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
-    MesWorkReportSubmittedPayload, OpportunityWonPayload, PaymentMadePayload,
+    require_event_tenant, CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult,
+    EventSubscriber, EventType, InventoryUpdatedPayload, MasterDataAction, MasterDataDomain,
+    MasterDataEvent, MesWorkReportSubmittedPayload, OpportunityWonPayload, PaymentMadePayload,
     PaymentReceivedPayload, PmProjectCompletedPayload, PmProjectSettledPayload,
     PurchaseOrderApprovedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
     ReconciliationUpdatedPayload, SalesOrderApprovedPayload, StockInboundPayload,
@@ -404,7 +404,10 @@ impl ErpEventHandlers {
                     );
                 }
                 Err(e) => {
-                    tracing::warn!("[erp] 创建应收账款失败（可能已存在）: {}", e);
+                    return Err(TopemsError::DatabaseQuery(format!(
+                        "[erp] 创建应收账款失败：{}: {}",
+                        receivable_no, e
+                    )));
                 }
             }
 
@@ -494,7 +497,10 @@ impl ErpEventHandlers {
                     );
                 }
                 Err(e) => {
-                    tracing::warn!("[erp] 创建应付账款失败（可能已存在）: {}", e);
+                    return Err(TopemsError::DatabaseQuery(format!(
+                        "[erp] 创建应付账款失败：{}: {}",
+                        payable_no, e
+                    )));
                 }
             }
 
@@ -576,10 +582,10 @@ impl ErpEventHandlers {
         Ok(())
     }
 
-    /// EmployeeOnboarded → 自动创建入职费用应付账款 + 费用凭证
+    /// EmployeeOnboarded → 自动创建入职费用应付账款
     ///
-    /// 员工入职时自动生成一笔入职相关的应付账款（如办公用品、培训费用等）
-    /// 并生成对应的财务凭证。使用 graceful fallback：若 DB 操作失败，记录警告并继续。
+    /// 员工入职时按租户配置生成一笔入职相关应付账款（如办公用品、培训费用等）。
+    /// 未配置入职成本是业务 no-op；DB 失败返回 Err 进入重试/DLQ。
     async fn handle_employee_onboarded(&self, event: Event) -> HandlerResult {
         let payload: EmployeeOnboardedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -641,11 +647,10 @@ impl ErpEventHandlers {
         let mut tx = match self.db.begin().await {
             Ok(tx) => tx,
             Err(e) => {
-                tracing::warn!(
-                    "[erp] EmployeeOnboarded 开启事务失败（graceful fallback）: {}",
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[erp] EmployeeOnboarded 开启事务失败: {}",
                     e
-                );
-                return Ok(());
+                )));
             }
         };
 
@@ -674,29 +679,28 @@ impl ErpEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!("[erp] 创建入职应付账款失败（graceful fallback）: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[erp] 创建入职应付账款失败：{}: {}",
+                    payable_no, e
+                )));
             }
         }
 
         // 凭证写入已收敛至 finance（finance 订阅 EmployeeOnboarded 写完整分录），
-        // ERP 侧只保留业务应付记录。
-        match tx.commit().await {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::warn!(
-                    "[erp] EmployeeOnboarded 提交事务失败（graceful fallback）: {}",
-                    e
-                );
-            }
-        }
+        // ERP 侧只保留业务应付记录。提交失败必须上抛，由幂等 UPSERT + Stream 重试自愈。
+        tx.commit().await.map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "[erp] EmployeeOnboarded 提交事务失败：{}: {}",
+                payable_no, e
+            ))
+        })?;
 
         Ok(())
     }
 
-    /// PmProjectCompleted → 自动创建项目应收账款 + 收入凭证
+    /// PmProjectCompleted → 仅记录项目完成，不确认收入
     ///
-    /// 项目完成后自动生成应收账款记录（确认项目收入）并生成财务凭证。
-    /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续。
+    /// 项目完成时没有真实结算金额；应收账款改由 PmProjectSettled 生成。
     async fn handle_pm_project_completed(&self, event: Event) -> HandlerResult {
         let payload: PmProjectCompletedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -787,7 +791,10 @@ impl ErpEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!("[erp] 创建项目应收账款失败（graceful fallback）: {}", e);
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[erp] 创建项目应收账款失败：{}: {}",
+                    receivable_no, e
+                )));
             }
         }
 
@@ -890,7 +897,7 @@ impl ErpEventHandlers {
     ///
     /// 解析 InventoryUpdatedPayload，更新 erp.account_balances 表的
     /// last_movement_date 和 last_movement_type 字段。
-    /// 若 material_code 在 erp.account_balances 中不存在，记录警告（graceful fallback，不让事件处理失败）。
+    /// 若 material_code 在 erp.account_balances 中不存在，记录警告（业务 no-op）；DB 失败返回 Err。
     async fn handle_inventory_updated(&self, event: Event) -> HandlerResult {
         let payload: InventoryUpdatedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -908,18 +915,23 @@ impl ErpEventHandlers {
 
         let now = chrono::Utc::now();
 
+        // 库存变动事件必须携带租户；缺失/nil 显式失败，禁止跨租户按 material_code 更新。
+        let tenant = require_event_tenant(&event)?;
+        let tenant_id = tenant.get();
+
         // 更新 erp.account_balances 表的最近变动信息
-        // 通过 material_code 匹配；若表/记录不存在，使用 warn+continue graceful fallback
         let result = sqlx::query(
             r#"UPDATE erp.account_balances
                SET last_movement_date = $1,
                    last_movement_type = $2,
                    updated_at = $1
-               WHERE material_code = $3"#,
+               WHERE material_code = $3
+                 AND tenant_id = $4"#,
         )
         .bind(now)
         .bind(&payload.change_type)
         .bind(&payload.material_code)
+        .bind(tenant_id)
         .execute(&self.db)
         .await;
 
@@ -927,22 +939,23 @@ impl ErpEventHandlers {
             Ok(rows_affected) => {
                 if rows_affected.rows_affected() == 0 {
                     tracing::warn!(
-                        "[erp] InventoryUpdated 未找到匹配的 account_balances 记录 - material_code={}（graceful fallback，跳过更新）",
-                        payload.material_code
+                        "[erp] InventoryUpdated 未找到匹配的 account_balances 记录 - material_code={}, tenant_id={}（业务 no-op，跳过更新）",
+                        payload.material_code, tenant_id
                     );
                 } else {
                     tracing::info!(
-                        "[erp] 已更新 account_balances 最近变动信息 - material_code={}, rows={}",
+                        "[erp] 已更新 account_balances 最近变动信息 - material_code={}, tenant_id={}, rows={}",
                         payload.material_code,
+                        tenant_id,
                         rows_affected.rows_affected()
                     );
                 }
             }
             Err(e) => {
-                tracing::warn!(
-                    "[erp] 更新 account_balances 失败（graceful fallback）: {}",
-                    e
-                );
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[erp] 更新 account_balances 失败 - material_code={}: {}",
+                    payload.material_code, e
+                )));
             }
         }
 
@@ -952,7 +965,7 @@ impl ErpEventHandlers {
     /// PaymentReceived → 自动核销应收账款（V20.1 新增）
     ///
     /// 根据客户和金额匹配 erp.receivables，将状态置为 'paid' 并累加 received_amount。
-    /// 使用 graceful fallback：若未找到匹配记录或更新失败，记录警告并继续。
+    /// 未找到匹配记录是业务 no-op；缺租户或 DB 失败返回 Err。
     async fn handle_payment_received(&self, event: Event) -> HandlerResult {
         let payload: PaymentReceivedPayload = serde_json::from_value(event.payload.clone())
             .map_err(|e| {
@@ -1080,7 +1093,7 @@ impl ErpEventHandlers {
     /// PaymentMade → 自动核销应付账款（V20.1 新增）
     ///
     /// 根据供应商和金额匹配 erp.payables，将状态置为 'paid' 并累加 paid_amount。
-    /// 使用 graceful fallback：若未找到匹配记录或更新失败，记录警告并继续。
+    /// 未找到匹配记录是业务 no-op；缺租户或 DB 失败返回 Err。
     async fn handle_payment_made(&self, event: Event) -> HandlerResult {
         let payload: PaymentMadePayload =
             serde_json::from_value(event.payload.clone()).map_err(|e| {
