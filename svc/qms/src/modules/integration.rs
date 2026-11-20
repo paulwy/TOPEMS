@@ -59,6 +59,15 @@ pub async fn create_integration_action(
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let created_by = req.created_by.unwrap_or_else(|| "system".to_string());
 
+    // 免 JWT 内部入口没有请求租户：显式平台系统写通道，禁止裸池写入。
+    let mut scope = match state.db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[integration] 打开集成写作用域失败: {}", e);
+            return ApiResponse::server_error("创建集成纠正措施失败");
+        }
+    };
+
     let result = sqlx::query(
         only_own_schema_query!(
             "qms",
@@ -78,8 +87,15 @@ pub async fn create_integration_action(
     .bind(&status)
     .bind(&priority)
     .bind(&created_by)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[integration] 提交集成纠正措施失败: {}", e);
+            return ApiResponse::server_error("创建集成纠正措施失败");
+        }
+    }
 
     match result {
         Ok(row) => ApiResponse::success(
@@ -113,6 +129,14 @@ pub async fn update_integration_inspection_result(
     State(state): State<AppState>,
     Json(req): Json<UpdateInspectionResultRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match state.db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[integration] 打开集成写作用域失败: {}", e);
+            return ApiResponse::server_error("质检结果回写失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "qms",
         "UPDATE qms.qa_quality_inspections
@@ -124,8 +148,15 @@ pub async fn update_integration_inspection_result(
     .bind(&req.result)
     .bind(&req.memo)
     .bind(&req.inspection_no)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if result.is_ok() {
+        if let Err(e) = scope.commit().await {
+            tracing::error!("[integration] 提交质检结果失败: {}", e);
+            return ApiResponse::server_error("质检结果回写失败");
+        }
+    }
 
     match result {
         Ok(Some(row)) => ApiResponse::success(

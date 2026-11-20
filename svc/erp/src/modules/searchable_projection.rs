@@ -212,7 +212,15 @@ use super::ApiState;
 pub async fn searchable_snapshot(
     State(state): State<ApiState>,
 ) -> ApiResponse<Vec<SearchableEntityChangedPayload>> {
-    let db = &state.db;
+    // 内部 backfill 入口没有请求租户，需要全量快照：显式系统只读通道。
+    let scoped_db = topems_shared_db::scope::Db::new(state.db.clone(), "public, shared");
+    let mut scope = match scoped_db.scope_read_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("[erp] 打开搜索快照只读作用域失败: {}", e);
+            return ApiResponse::server_error("搜索快照读取失败");
+        }
+    };
     let mut out: Vec<SearchableEntityChangedPayload> = Vec::new();
 
     // customers
@@ -220,7 +228,7 @@ pub async fn searchable_snapshot(
         "SELECT id, tenant_id, name, contact_person, contact_phone, email, address, status, updated_at
          FROM erp.customers WHERE deleted_at IS NULL",
     )
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
     {
         for r in rows {
@@ -246,7 +254,7 @@ pub async fn searchable_snapshot(
         "SELECT id, tenant_id, order_no, status, remark, updated_at
          FROM erp.sales_orders WHERE deleted_at IS NULL",
     )
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
     {
         for r in rows {
@@ -272,7 +280,7 @@ pub async fn searchable_snapshot(
         "SELECT id, tenant_id, order_no, status, remark, updated_at
          FROM erp.purchase_orders WHERE deleted_at IS NULL",
     )
-    .fetch_all(db)
+    .fetch_all(&mut scope)
     .await
     {
         for r in rows {
