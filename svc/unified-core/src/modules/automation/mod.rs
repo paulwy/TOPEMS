@@ -405,9 +405,40 @@ pub async fn create_rule(
 
 pub async fn update_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateRuleRequest>,
 ) -> ApiResponse<AutomationRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化规则作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化规则作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists =
+        match sqlx::query_scalar::<_, i32>("SELECT 1 FROM public.automation_rules WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut rls_scope)
+            .await
+        {
+            Ok(Some(_)) => true,
+            Ok(None) => false,
+            Err(e) => {
+                tracing::error!("查询规则失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("更新规则失败".to_string()));
+            }
+        };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
+    }
+
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"UPDATE public.automation_rules SET
               name = COALESCE($2, name),
@@ -430,36 +461,60 @@ pub async fn update_rule(
     .bind(&payload.on_error)
     .bind(&payload.canvas)
     .bind(&payload.status)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match rule {
         Ok(v) => ApiResponse::success(v, "更新成功"),
         Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
-            } else {
-                tracing::error!("更新规则失败: {}", e);
-                ApiResponse::from(TopemsError::Internal("更新规则失败".to_string()))
-            }
+            tracing::error!("更新规则失败: {}", e);
+            ApiResponse::from(TopemsError::Internal("更新规则失败".to_string()))
         }
     }
 }
 
 pub async fn delete_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化规则作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化规则作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists =
+        match sqlx::query_scalar::<_, i32>("SELECT 1 FROM public.automation_rules WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut rls_scope)
+            .await
+        {
+            Ok(Some(_)) => true,
+            Ok(None) => false,
+            Err(e) => {
+                tracing::error!("查询规则失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("删除规则失败".to_string()));
+            }
+        };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
+    }
+
     let result = sqlx::query("DELETE FROM public.automation_rules WHERE id = $1")
         .bind(id)
-        .execute(&state.pool)
+        .execute(&mut rls_scope)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            ApiResponse::success(serde_json::json!({"success": true}), "删除成功")
-        }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
+        Ok(_) => ApiResponse::success(serde_json::json!({"success": true}), "删除成功"),
         Err(e) => {
             tracing::error!("删除规则失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除规则失败".to_string()))
@@ -469,56 +524,110 @@ pub async fn delete_rule(
 
 pub async fn enable_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
-    let rule: Result<AutomationRule, _> = sqlx::query_as(
-        "UPDATE public.automation_rules SET status = 'enabled', updated_at = NOW() WHERE id = $1 RETURNING *",
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await;
-
-    match rule {
-        Ok(v) => ApiResponse::success(v, "启用成功"),
-        Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
-            } else {
-                tracing::error!("启用规则失败: {}", e);
-                ApiResponse::from(TopemsError::Internal("启用规则失败".to_string()))
-            }
-        }
-    }
+    set_rule_status(state, txn_arc, id, "enabled", "启用成功", "启用规则失败").await
 }
 
 pub async fn disable_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
+    set_rule_status(state, txn_arc, id, "disabled", "禁用成功", "禁用规则失败").await
+}
+
+async fn set_rule_status(
+    state: AppState,
+    txn_arc: RlsTxnCell,
+    id: Uuid,
+    status: &str,
+    ok_msg: &str,
+    err_msg: &str,
+) -> ApiResponse<AutomationRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化规则作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化规则作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists =
+        match sqlx::query_scalar::<_, i32>("SELECT 1 FROM public.automation_rules WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut rls_scope)
+            .await
+        {
+            Ok(Some(_)) => true,
+            Ok(None) => false,
+            Err(e) => {
+                tracing::error!("查询规则失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(err_msg.to_string()));
+            }
+        };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
+    }
+
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        "UPDATE public.automation_rules SET status = 'disabled', updated_at = NOW() WHERE id = $1 RETURNING *",
+        "UPDATE public.automation_rules SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .bind(status)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match rule {
-        Ok(v) => ApiResponse::success(v, "禁用成功"),
+        Ok(v) => ApiResponse::success(v, ok_msg),
         Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
-            } else {
-                tracing::error!("禁用规则失败: {}", e);
-                ApiResponse::from(TopemsError::Internal("禁用规则失败".to_string()))
-            }
+            tracing::error!("{}: {}", err_msg, e);
+            ApiResponse::from(TopemsError::Internal(err_msg.to_string()))
         }
     }
 }
 
 pub async fn duplicate_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AutomationRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化规则作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化规则作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists =
+        match sqlx::query_scalar::<_, i32>("SELECT 1 FROM public.automation_rules WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut rls_scope)
+            .await
+        {
+            Ok(Some(_)) => true,
+            Ok(None) => false,
+            Err(e) => {
+                tracing::error!("查询规则失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("复制规则失败".to_string()));
+            }
+        };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
+    }
+
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"INSERT INTO public.automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status)
            SELECT name || ' (副本)', code || '_copy_' || substr(gen_random_uuid()::text, 1, 8),
@@ -526,31 +635,42 @@ pub async fn duplicate_rule(
            FROM public.automation_rules WHERE id = $1 RETURNING *"#,
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match rule {
         Ok(v) => ApiResponse::success(v, "复制成功"),
         Err(e) => {
-            if matches!(e, sqlx::Error::RowNotFound) {
-                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
-            } else {
-                tracing::error!("复制规则失败: {}", e);
-                ApiResponse::from(TopemsError::Internal("复制规则失败".to_string()))
-            }
+            tracing::error!("复制规则失败: {}", e);
+            ApiResponse::from(TopemsError::Internal("复制规则失败".to_string()))
         }
     }
 }
 
 pub async fn trigger_rule(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<TriggerRequest>>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化规则作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化规则作用域失败".to_string(),
+            ));
+        }
+    };
+
     let rule: Result<AutomationRule, _> =
         sqlx::query_as("SELECT * FROM public.automation_rules WHERE id = $1")
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await;
 
     let rule = match rule {
@@ -574,7 +694,7 @@ pub async fn trigger_rule(
     .bind(id)
     .bind(&rule.name)
     .bind(&input_vars)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match run {
@@ -583,7 +703,7 @@ pub async fn trigger_rule(
                 "UPDATE public.automation_rules SET run_count = run_count + 1, last_run_at = NOW() WHERE id = $1",
             )
             .bind(id)
-            .execute(&state.pool)
+            .execute(&mut rls_scope)
             .await;
 
             ApiResponse::success(
@@ -713,11 +833,29 @@ pub async fn get_run(
     }
 }
 
-pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Value> {
+pub async fn retry_run(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
+
     let run: Result<AutomationRun, _> =
         sqlx::query_as("SELECT * FROM public.automation_runs WHERE id = $1")
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await;
 
     let run = match run {
@@ -740,7 +878,7 @@ pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> A
     .bind(run.rule_id)
     .bind(&run.rule_name)
     .bind(&run.input_variables)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut rls_scope)
     .await;
 
     match new_run {
@@ -755,21 +893,53 @@ pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> A
     }
 }
 
-pub async fn cancel_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Value> {
+pub async fn cancel_run(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
+    let exists = match sqlx::query_scalar::<_, i32>(
+        "SELECT 1 FROM public.automation_runs WHERE id = $1 AND status = 'running'",
+    )
+    .bind(id)
+    .fetch_optional(&mut rls_scope)
+    .await
+    {
+        Ok(Some(_)) => true,
+        Ok(None) => false,
+        Err(e) => {
+            tracing::error!("查询运行记录失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("取消运行失败".to_string()));
+        }
+    };
+    if !exists {
+        return ApiResponse::from(TopemsError::ResourceNotFound(
+            "运行记录不存在或非运行中".to_string(),
+        ));
+    }
+
     let result = sqlx::query(
         "UPDATE public.automation_runs SET status = 'cancelled', completed_at = NOW() WHERE id = $1 AND status = 'running'",
     )
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut rls_scope)
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            ApiResponse::success(serde_json::json!({"success": true}), "取消成功")
-        }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "运行记录不存在或非运行中".to_string(),
-        )),
+        Ok(_) => ApiResponse::success(serde_json::json!({"success": true}), "取消成功"),
         Err(e) => {
             tracing::error!("取消运行失败: {}", e);
             ApiResponse::from(TopemsError::Internal("取消运行失败".to_string()))
@@ -779,12 +949,26 @@ pub async fn cancel_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> 
 
 pub async fn get_run_steps(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
     let steps: Result<Option<Value>, _> =
         sqlx::query_scalar("SELECT steps FROM public.automation_runs WHERE id = $1")
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await;
 
     match steps {
@@ -802,13 +986,27 @@ pub async fn get_run_steps(
 
 pub async fn get_run_logs(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Query(_params): Query<RunLogQueryParams>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
     let logs: Result<Option<String>, _> =
         sqlx::query_scalar("SELECT logs FROM public.automation_runs WHERE id = $1")
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut rls_scope)
             .await;
 
     match logs {
@@ -838,16 +1036,37 @@ pub async fn get_run_logs(
 /// 返回（待上游支持按 log_id 取条目）。避免该路径落到 BFF catch-all 裸 404。
 pub async fn get_run_log_by_id(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((run_id, _log_id)): Path<(Uuid, Uuid)>,
     Query(params): Query<RunLogQueryParams>,
 ) -> ApiResponse<Value> {
-    get_run_logs(State(state), Path(run_id), Query(params)).await
+    get_run_logs(
+        State(state),
+        Extension(txn_arc),
+        Path(run_id),
+        Query(params),
+    )
+    .await
 }
 
 pub async fn purge_runs(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<PurgeRequest>,
 ) -> ApiResponse<Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut rls_scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开自动化运行记录作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "打开自动化运行记录作用域失败".to_string(),
+            ));
+        }
+    };
     let result = sqlx::query(
         r#"DELETE FROM public.automation_runs
            WHERE ($1::text IS NULL OR created_at < $1::timestamp)
@@ -855,7 +1074,7 @@ pub async fn purge_runs(
     )
     .bind(&payload.before)
     .bind(&payload.status)
-    .execute(&state.pool)
+    .execute(&mut rls_scope)
     .await;
 
     match result {

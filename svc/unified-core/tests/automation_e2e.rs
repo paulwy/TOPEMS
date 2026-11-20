@@ -55,6 +55,13 @@ async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
     (cell, rls_request_tenant(&tenant_claims()))
 }
 
+async fn commit_scope(cell: &RlsTxnCell) {
+    let mut guard = cell.lock().await;
+    if let Some(tx) = guard.take() {
+        tx.commit().await.unwrap();
+    }
+}
+
 fn empty_params() -> RuleQueryParams {
     RuleQueryParams {
         page: None,
@@ -182,8 +189,13 @@ async fn enable_switches_status(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = enable_rule(State(state), Path(rule.id)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        enable_rule(State(state), Extension(cell), Path(rule.id)),
+    )
+    .await;
     let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.status, "enabled");
 }
@@ -193,8 +205,13 @@ async fn disable_switches_status(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = disable_rule(State(state), Path(rule.id)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        disable_rule(State(state), Extension(cell), Path(rule.id)),
+    )
+    .await;
     let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.status, "disabled");
 }
@@ -204,10 +221,17 @@ async fn delete_removes_rule(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
-    let resp = delete_rule(State(state), Path(rule.id)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        delete_rule(State(state), Extension(cell), Path(rule.id)),
+    )
+    .await;
     let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
+    commit_scope(&cell_clone).await;
 
     let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool.clone());
@@ -248,8 +272,13 @@ async fn update_rule_fields(pool: sqlx::PgPool) {
         canvas: None,
         status: Some("enabled".to_string()),
     };
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = update_rule(State(state), Path(rule.id), Json(payload)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        update_rule(State(state), Extension(cell), Path(rule.id), Json(payload)),
+    )
+    .await;
     let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.name, "规则A-改");
     assert_eq!(got.status, "enabled");
@@ -260,8 +289,13 @@ async fn duplicate_creates_copy(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = duplicate_rule(State(state), Path(rule.id)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        duplicate_rule(State(state), Extension(cell), Path(rule.id)),
+    )
+    .await;
     let copy: AutomationRule = resp.data.unwrap();
     assert_ne!(copy.id, rule.id);
     assert!(copy.name.contains("副本"));

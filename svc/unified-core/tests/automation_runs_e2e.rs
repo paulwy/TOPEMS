@@ -28,6 +28,13 @@ async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
     (cell, rls_request_tenant(&tenant_claims()))
 }
 
+async fn commit_scope(cell: &RlsTxnCell) {
+    let mut guard = cell.lock().await;
+    if let Some(tx) = guard.take() {
+        tx.commit().await.unwrap();
+    }
+}
+
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS automation_rules (
@@ -225,8 +232,12 @@ async fn retry_run_creates_new_run(pool: sqlx::PgPool) {
     let rid = uuid::Uuid::new_v4();
     let run_id = insert_run_via_sql(&pool, rid, "failed", "规则A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
-    let resp = retry_run(State(state), Path(run_id)).await;
+    let resp =
+        scope_request_tenant(ctx, retry_run(State(state), Extension(cell), Path(run_id))).await;
+    commit_scope(&cell_clone).await;
     let body: serde_json::Value = resp.data.unwrap();
     let new_id = body["run_id"].as_str().unwrap();
     assert!(!new_id.is_empty());
@@ -252,8 +263,12 @@ async fn cancel_run_marks_cancelled(pool: sqlx::PgPool) {
     let rid = uuid::Uuid::new_v4();
     let run_id = insert_run_via_sql(&pool, rid, "running", "规则A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
-    let resp = cancel_run(State(state), Path(run_id)).await;
+    let resp =
+        scope_request_tenant(ctx, cancel_run(State(state), Extension(cell), Path(run_id))).await;
+    commit_scope(&cell_clone).await;
     let body: serde_json::Value = resp.data.unwrap();
     assert_eq!(body["success"], serde_json::json!(true));
 
@@ -271,8 +286,10 @@ async fn cancel_non_running_returns_not_found(pool: sqlx::PgPool) {
     let rid = uuid::Uuid::new_v4();
     let run_id = insert_run_via_sql(&pool, rid, "completed", "规则A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = cancel_run(State(state), Path(run_id)).await;
+    let resp =
+        scope_request_tenant(ctx, cancel_run(State(state), Extension(cell), Path(run_id))).await;
     assert!(resp.data.is_none());
 }
 
@@ -287,8 +304,15 @@ async fn purge_runs_deletes_matching(pool: sqlx::PgPool) {
         before: None,
         status: Some("completed".to_string()),
     };
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
-    let resp = purge_runs(State(state), Json(payload)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        purge_runs(State(state), Extension(cell), Json(payload)),
+    )
+    .await;
+    commit_scope(&cell_clone).await;
     let body: serde_json::Value = resp.data.unwrap();
     assert_eq!(body["deleted"], serde_json::json!(1));
 
@@ -313,8 +337,13 @@ async fn get_run_steps_returns_steps(pool: sqlx::PgPool) {
     )
     .await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_run_steps(State(state), Path(run_id)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_run_steps(State(state), Extension(cell), Path(run_id)),
+    )
+    .await;
     let steps: serde_json::Value = resp.data.unwrap();
     assert_eq!(steps[0]["name"], serde_json::json!("init"));
 }
@@ -325,8 +354,13 @@ async fn get_run_steps_none_returns_empty_array(pool: sqlx::PgPool) {
     let rid = uuid::Uuid::new_v4();
     let run_id = insert_run_via_sql(&pool, rid, "running", "规则A").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_run_steps(State(state), Path(run_id)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        get_run_steps(State(state), Extension(cell), Path(run_id)),
+    )
+    .await;
     let steps: serde_json::Value = resp.data.unwrap();
     assert_eq!(steps, serde_json::json!([]));
 }
@@ -345,15 +379,20 @@ async fn get_run_logs_splits_lines(pool: sqlx::PgPool) {
     )
     .await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_run_logs(
-        State(state),
-        Path(run_id),
-        Query(RunLogQueryParams {
-            page: None,
-            page_size: None,
-            page_size_alt: None,
-        }),
+    let resp = scope_request_tenant(
+        ctx,
+        get_run_logs(
+            State(state),
+            Extension(cell),
+            Path(run_id),
+            Query(RunLogQueryParams {
+                page: None,
+                page_size: None,
+                page_size_alt: None,
+            }),
+        ),
     )
     .await;
     let body: serde_json::Value = resp.data.unwrap();
@@ -375,15 +414,20 @@ async fn get_run_log_by_id_delegates(pool: sqlx::PgPool) {
     )
     .await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = get_run_log_by_id(
-        State(state),
-        Path((run_id, uuid::Uuid::new_v4())),
-        Query(RunLogQueryParams {
-            page: None,
-            page_size: None,
-            page_size_alt: None,
-        }),
+    let resp = scope_request_tenant(
+        ctx,
+        get_run_log_by_id(
+            State(state),
+            Extension(cell),
+            Path((run_id, uuid::Uuid::new_v4())),
+            Query(RunLogQueryParams {
+                page: None,
+                page_size: None,
+                page_size_alt: None,
+            }),
+        ),
     )
     .await;
     let body: serde_json::Value = resp.data.unwrap();
@@ -411,8 +455,20 @@ async fn trigger_rule_creates_run(pool: sqlx::PgPool) {
     let payload = TriggerRequest {
         input_variables: Some(serde_json::json!({"key": "value"})),
     };
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
-    let resp = trigger_rule(State(state), Path(rule_id), Json(Some(payload))).await;
+    let resp = scope_request_tenant(
+        ctx,
+        trigger_rule(
+            State(state),
+            Extension(cell),
+            Path(rule_id),
+            Json(Some(payload)),
+        ),
+    )
+    .await;
+    commit_scope(&cell_clone).await;
     let body: serde_json::Value = resp.data.unwrap();
     let run_id = body["run_id"].as_str().unwrap();
 
@@ -442,8 +498,15 @@ async fn trigger_rule_without_payload(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let rule_id = insert_rule_via_sql(&pool, "规则B", "RULE_B").await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
+    let cell_clone = cell.clone();
     let state = test_app_state(pool.clone());
-    let resp = trigger_rule(State(state), Path(rule_id), Json(None)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        trigger_rule(State(state), Extension(cell), Path(rule_id), Json(None)),
+    )
+    .await;
+    commit_scope(&cell_clone).await;
     let body: serde_json::Value = resp.data.unwrap();
     let run_id = body["run_id"].as_str().unwrap();
 
@@ -460,7 +523,17 @@ async fn trigger_rule_without_payload(pool: sqlx::PgPool) {
 async fn trigger_rule_missing_rule_returns_none(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
 
+    let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
-    let resp = trigger_rule(State(state), Path(uuid::Uuid::new_v4()), Json(None)).await;
+    let resp = scope_request_tenant(
+        ctx,
+        trigger_rule(
+            State(state),
+            Extension(cell),
+            Path(uuid::Uuid::new_v4()),
+            Json(None),
+        ),
+    )
+    .await;
     assert!(resp.data.is_none());
 }
