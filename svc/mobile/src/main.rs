@@ -3,7 +3,6 @@ mod event_handlers;
 mod db;
 mod models;
 mod modules;
-mod schema_defense;
 mod services;
 mod shared;
 
@@ -50,15 +49,6 @@ async fn main() -> Result<()> {
         init_telemetry: true,
     };
     let ctx = bootstrap_service_shared(&config).await?;
-
-    // Mobile 专属初始化：Schema 防御（C-1：自建 DDL 已移除，迁移权威唯一仲裁）
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(
-        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
-    )
-    .await
-    {
-        tracing::error!("[mobile] Schema 防御检查失败: {:?}", e);
-    }
 
     if let Err(e) = event_handlers::start_event_subscribers(
         Db::new(ctx.db.clone(), "mobile, public, shared"),

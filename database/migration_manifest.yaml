@@ -2691,3 +2691,17 @@ pending_forward_patches:
     effect: "把 erp 27 张运行期表（资产与资产分类/供应商与客户/采购与销售订单/库存/凭证与明细/银行账户/合并报表/往来抵销/期初余额/字典/生产订单/主数据引用）以 live 形状固化，27 表 / 501 列 / 44 约束 / 17 附加索引 / 25 策略 / 27 RLS，五项 diff 为 0；fixed_assets 两个 GENERATED STORED 列按原定义保留；删除 schema_defense、lib/main 引用，并移除 main 与 server erp_real_module 的 default_init_db 调用"
     destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX、ADD COLUMN IF NOT EXISTS 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "TABLE_DEFS 25 张全部 live 存在且与 batch1/batch2 无冲突；erp.asset_categories 由既有迁移建表但缺 name_en，canonical 显式补列；erp.erp_master_data_refs 由 default_init_db(true) 创建且 event_handlers/mod.rs 的 INSERT 活跃使用，一并固化。回滚 database/rollback/20261121100000_erp_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+
+  # ===== 2026-11-21：mobile 22 表收口 + 死表复活清理（W2-D2 第十六个模块） =====
+  - version: "20261121110000"
+    file: "database/migrations/20261121110000_mobile_schema_canonical.sql"
+    status: to_apply
+    effect: "把 mobile 22 张运行期表（巡检/扫码/照片证据/音视频/任务/考勤/推送通知与设备与模板/离线记录与操作/同步策略/照片上传/快捷入口/媒体文件/条码扫描/设备/用户）以 live 形状固化，22 表 / 293 列 / 24 约束 / 9 附加索引 / 21 策略 / 22 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main 引用与 main 启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 23 张中 mobile.mobile_leave_applications 已被 batch1 归档删除、live 不存在、全仓零引用，本迁移不纳入并由 20261121111000 清理；其余 22 张全部 live 存在且无其他死表冲突。回滚 database/rollback/20261121110000_mobile_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+  - version: "20261121111000"
+    file: "database/migrations/20261121111000_mobile_drop_resurrected_dead_tables.sql"
+    status: to_apply
+    effect: "幂等收尾：mobile.mobile_leave_applications 若存在，count(*)=0 校验通过后 DROP TABLE（不带 CASCADE）；非空即 RAISE EXCEPTION 中止整条迁移"
+    destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch1 已归档的死表复活空表；先 count(*) 守卫，非空拒绝；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "历史数据已在 archive.drop_20261119_b1__mobile__mobile_leave_applications 保留 180 天。回滚 database/rollback/20261121111000_mobile_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"
