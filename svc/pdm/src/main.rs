@@ -3,7 +3,6 @@
 //! Product Data Management Service
 
 mod event_handlers;
-mod models;
 mod modules;
 mod services;
 mod shared;
@@ -13,8 +12,7 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
-    bootstrap_service_shared, build_application, default_init_db, prometheus_metrics_handler, run,
-    ServiceConfig,
+    bootstrap_service_shared, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
@@ -45,22 +43,6 @@ async fn main() -> anyhow::Result<()> {
 
     // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
     let db = Db::new(ctx.db.clone(), "pdm, public");
-
-    if let Err(e) = models::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("PDM database init warning: {}", e);
-    }
-    if let Err(e) = default_init_db(
-        &ctx.db,
-        "pdm",
-        true,
-        // pdm 的 schema 初始化已由上方的 models::init_database 完成，
-        // 此处仅负责 master_data_refs 表，schema_defense 步骤留空。
-        |_| async { Ok::<(), sqlx::Error>(()) },
-    )
-    .await
-    {
-        tracing::warn!("PDM AC-5 ref 表初始化警告: {}", e);
-    }
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let l2_config = topems_shared_core::l2_cache::L2CacheConfig {

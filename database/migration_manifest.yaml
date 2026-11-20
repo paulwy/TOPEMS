@@ -2727,3 +2727,11 @@ pending_forward_patches:
     effect: "幂等收尾：pm.pm_master_data_refs（batch2 已归档）若存在，count(*)=0 校验通过后 DROP TABLE（不带 CASCADE）；非空即 RAISE EXCEPTION"
     destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch2 已归档的死表复活空表；先 count(*) 守卫；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "历史数据已在 archive.drop_20261119_b2__pm__pm_master_data_refs 保留 180 天。回滚 database/rollback/20261121131000_pm_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"
+
+  # ===== 2026-11-21：pdm 19 表收口（W2-D2 第十九个模块） =====
+  - version: "20261121140000"
+    file: "database/migrations/20261121140000_pdm_schema_canonical.sql"
+    status: to_apply
+    effect: "把 pdm 19 张运行期表（BOM/变更通知/配置/文档与版本/物料/生产批次与配方与工序与工步/产品/项目/阶段/成员/版本/工作流/工作流实例/主数据引用）以 live 形状固化，19 表 / 255 列 / 148 约束 / 75 索引 / 19 策略 / 19 RLS，五项 diff 为 0；删除 src/models/schema_defense.rs 与 models 模块、main 的 init_database 与 default_init_db 启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 18 张全部 live 存在；pdm_master_data_refs 由 default_init_db(true) 创建且 event_handlers 活跃写入，一并固化。live 另有 module_settings / pdm_drawings 由既有迁移维护，未纳入。回滚 database/rollback/20261121140000_pdm_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
