@@ -14,7 +14,6 @@ use topems_shared_core::health::{DependencyHealth, HealthStatus, ServiceHealth, 
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
 
-mod schema_defense;
 mod shared;
 
 pub mod modules;
@@ -44,12 +43,7 @@ async fn main() -> anyhow::Result<()> {
         "🚀 TOPEMS Plugin Registry Service (拆分自 unified-core / V68.1 A2.2) starting..."
     );
 
-    // 初始化数据库表 + Schema 防御（V69.3）
-    if let Err(e) =
-        modules::plugin::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
-    {
-        tracing::error!("Failed to init plugin-registry database: {:?}", e);
-    }
+    // 表/索引/约束/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
 
     let start_time = Instant::now();
     let app_state = AppState {

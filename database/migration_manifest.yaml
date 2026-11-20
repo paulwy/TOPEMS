@@ -2585,3 +2585,11 @@ pending_forward_patches:
     effect: "把 ticket.core_tickets/core_ticket_comments/core_ticket_activities/core_ticket_sla_policies/core_ticket_sla_escalations/ticket_automation_rules/ticket_knowledge_articles 以 live 形状固化（20/9/9/22/9/14/9 列），7 表全部 FORCE RLS；子表 comments/activities/sla_escalations 保留 EXISTS core_tickets 父单租户策略，其余 4 表直接比 tenant_id；同步移除 svc/ticket 启动期 schema_defense"
     destructive_scan: "仅 CREATE TABLE/INDEX IF NOT EXISTS 与 DROP POLICY IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；表已存在时 CREATE TABLE 整段跳过；文件内无 BEGIN/COMMIT"
     note: "口径取 baseline+forward live 形状（含 deleted_at/name_en/常量默认值；core_tickets.ticket_no 可空）。既有库上仅重建策略，空库建全表。回滚 database/rollback/20261120150000_ticket_schema_canonical.rollback.sql（接管型迁移，明确拒绝 DROP）"
+
+  # ===== 2026-11-20：plugin-registry 7 表收口（W2-D2 第五个模块） =====
+  - version: "20261120160000"
+    file: "database/migrations/20261120160000_plugin_registry_schema_canonical.sql"
+    status: to_apply
+    effect: "把 core.core_plugins/core_plugin_versions/core_plugin_reviews/core_plugin_categories/core_plugin_instances/core_plugin_permissions/core_plugin_navigation 以 live 形状固化（37/12/13/10/9/7/6 列）；core_plugins 唯一启用 FORCE RLS 并保留 rls_platform_read 与 rls_tenant_isolation 两条策略；同步移除 svc/plugin-registry 启动期 schema_defense。core.core_tenant_plugins 为运行代码未使用的孤儿表（实际读写 iam.core_tenant_plugins），不纳入、不删除"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX IF NOT EXISTS 与 DROP POLICY IF EXISTS 后重建；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "空库与 live 的列/索引/约束/策略/RLS 五项 diff 为 0；core_plugins 的 platform_name 部分唯一索引单独建，其余主键/唯一索引由约束创建。回滚 database/rollback/20261120160000_plugin_registry_schema_canonical.rollback.sql（接管型迁移，明确拒绝 DROP）"

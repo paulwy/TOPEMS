@@ -27,8 +27,6 @@ use axum::{
     Router,
 };
 
-use sqlx::PgPool;
-
 /// V69.4：从空壳 Router::new() 补全为 52 个 handler 全量注册
 /// 路由按资源域分组，每组统一套 auth + permission 中间件
 pub fn create_routes() -> Router<AppState> {
@@ -341,15 +339,4 @@ pub fn create_routes() -> Router<AppState> {
         .merge(reviews_routes)
         .merge(simple_api_routes)
         .merge(plugin_prefix_marker)
-}
-
-/// Initialize Plugin Marketplace database tables
-pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // C-1: 运行时自建表 DDL 已移除（迁移权威唯一仲裁），仅保留 Schema 防御
-    // Schema 防御：增量迁移 + 一致性自检（V69.3）
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[plugin-registry] Schema 防御检查失败: {:?}", e);
-    }
-
-    Ok(())
 }
