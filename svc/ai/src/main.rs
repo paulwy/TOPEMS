@@ -73,10 +73,7 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service_shared(&config).await?;
 
     // AI 专用 Database：共享池 + 事务级 search_path = ai, public
-    let db = Database::from_parts(
-        Db::new(ctx.db.clone(), "ai, public").deny_request_own_txn(),
-        ctx.migrate_pool.clone(),
-    );
+    let db = Database::from_parts(Db::new(ctx.db.clone(), "ai, public").deny_request_own_txn());
     tracing::info!("✅ 数据库连接成功");
 
     if let Err(e) =
@@ -85,14 +82,8 @@ async fn main() -> anyhow::Result<()> {
         tracing::warn!("⚠️ AI 事件订阅者启动失败: {}", e);
     }
 
-    // 运行迁移（RLS 受限用户无 DDL 权限，失败仅告警不阻塞启动；表结构由 owner/migration 维护）
-    if let Err(e) = db.run_migrations().await {
-        tracing::warn!(
-            "⚠️ AI 迁移失败（表已存在则跳过，RLS 受限用户无 DDL 权限）: {}",
-            e
-        );
-    }
-    tracing::info!("✅ 数据库表结构已就绪");
+    // 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
+    // 迁移未应用时由业务 SQL 直接暴露缺表/缺列。
 
     // W2-D2：AI 4 张表已由 20261120110000 固化到迁移，运行期不再建表/补列。
     // 迁移未应用时由 SQL 查询直接暴露缺表/缺列，不再在启动阶段隐式改 schema。

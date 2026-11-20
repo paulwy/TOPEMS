@@ -56,21 +56,9 @@ impl AiRealModule {
         // AI 专用 Database：共享池 + 事务级 search_path = ai, public
         // M-1：请求链路禁止自开事务，必须复用 tenant_middleware 注入的请求事务。
         let ai_db = Db::new(ctx.db.clone(), "ai, public").deny_request_own_txn();
-        let db = Database::from_parts(ai_db.clone(), ctx.migrate_pool.clone());
+        let db = Database::from_parts(ai_db.clone());
 
-        // 迁移 / schema 防御 / ai_knowledge 初始化（失败仅告警不阻塞启动）
-        if let Err(e) = db.run_migrations().await {
-            tracing::warn!("⚠️ AI 迁移失败（表已存在则跳过）: {}", e);
-        }
-        if let Some(ddl_pool) = db.ddl_pool() {
-            if let Err(e) =
-                topems_ai::schema_defense::run_schema_migration_and_verify(ddl_pool).await
-            {
-                tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
-            }
-        } else {
-            tracing::warn!("⚠️ 未配置迁移池（migrate_pool），跳过 ai schema 防御检查");
-        }
+        // 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何 DDL。
 
         // 读取 AI 配置
         let api_key = std::env::var("OLLAMA_API_KEY")
