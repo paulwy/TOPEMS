@@ -2661,3 +2661,17 @@ pending_forward_patches:
     effect: "幂等收尾：payroll_records/performance_records/recruitment_applications/recruitment_records/training_participants/hrm_master_data_refs 若仍存在，逐表 count(*)=0 校验通过后 DROP TABLE（不带 CASCADE）；任一非空即 RAISE EXCEPTION 中止整条迁移"
     destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch2 已归档的死表复活空表；先 count(*) 守卫，非空拒绝；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "历史数据已在 archive.drop_20261119_b2__hrm__* 保留 180 天。回滚 database/rollback/20261120235930_hrm_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"
+
+  # ===== 2026-11-20：unified-core 27 表收口 + 死表复活清理（W2-D2 第十三个模块） =====
+  - version: "20261120235945"
+    file: "database/migrations/20261120235945_unified_core_schema_canonical.sql"
+    status: to_apply
+    effect: "把 unified-core 27 张 public 运行期表（角色/权限/用户角色/工作流实例与任务/文件与权限/租户及用量模块设置用户/租户迁移历史/主数据引用与变更日志/MDM 对账与审批/菜单/登录与操作日志/文档与模板/API 版本配置）以 live 形状固化，27 表 / 312 列 / 205 约束 / 91 索引 / 27 策略 / 27 RLS，五项 diff 为 0；删除 src/schema_defense.rs、lib/main/embedded 引用与启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 声明 28 张，其中 public.core_file_folders 已被 20261119110000_drop_dead_tables_batch2 归档删除、被启动期 DDL 复活，本迁移不纳入并由 20261120235950 清理；public.core_mdm_reconciliation_log 虽同在 batch2 清单，但 modules/master/handlers.rs 的 MasterDataService 仍将其作为对账日志权威表，属活跃依赖，本迁移保留并固化，待业务评审。回滚 database/rollback/20261120235945_unified_core_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"
+  - version: "20261120235950"
+    file: "database/migrations/20261120235950_unified_core_drop_resurrected_dead_tables.sql"
+    status: to_apply
+    effect: "幂等收尾：public.core_file_folders 若仍存在，count(*)=0 校验通过后 DROP TABLE（不带 CASCADE，存在依赖则迁移失败）；非空即 RAISE EXCEPTION 中止整条迁移"
+    destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch2 已归档的死表复活空表；先 count(*) 守卫，非空拒绝；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "历史数据已在 archive.drop_20261119_b2__public__core_file_folders 保留 180 天。同批 core_mdm_reconciliation_log 因活跃代码依赖未清理。回滚 database/rollback/20261120235950_unified_core_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"

@@ -71,11 +71,6 @@ async fn build_router_inner(
         "📦 Contains: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync"
     );
 
-    // Schema 防御：增量迁移 + 一致性自检
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
-        tracing::error!("[unified-core] Schema 防御检查失败: {:?}", e);
-    }
-
     let health_config = topems_shared_core::health::SimpleHealthConfig::new("topems-unified-core")
         .with_db(ctx.db.clone());
     let ws_state = std::sync::Arc::new(crate::modules::communication::ws::WsState::new(
