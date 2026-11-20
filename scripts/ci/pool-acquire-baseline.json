@@ -7,10 +7,6 @@
       "reason": "BI 动态 SQL 执行：语句由用户配置、目标可能是外部数据源，schema 不由本进程 search_path 决定；需手工 BEGIN READ ONLY + set_config('app.tenant_id', true)。B 全量改造时不纳入 ScopedTxn，改为保留此独立路径并由本白名单长期登记。"
     },
     {
-      "file": "svc/mes/src/modules/work_report.rs",
-      "reason": "tokio::spawn 后台任务，请求事务已提交，无法复用请求级 scope；且需要独立设置 app.tenant_id=nil 的会话上下文。已做到查询结束立即 drop(conn)，不跨事件发布持有。mes 纳入 Db 后改为 scope_read + scope_with 语义。"
-    },
-    {
       "file": "svc/unified-core/src/middleware/tenant_rls.rs",
       "reason": "请求级租户 GUC 中间件：连接必须在 next.run(req) 全程持有（会话级 set_config），与 shared-auth 的『事务级 RLS』是两套并存机制。切换需要把下游 handler 全部改为 crm 请求事务模式，属 B 全量范畴，保留并由白名单登记。"
     }
