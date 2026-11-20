@@ -320,10 +320,14 @@ impl PdmEventHandlers {
             }
             Err(e) => {
                 tracing::warn!(
-                    "[pdm-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
+                    "[pdm-mdm] 本地 ref 同步失败，事件返回 Err 进入重试/DLQ - master_data_id={}: {}",
                     event.master_data_id,
                     e
                 );
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[pdm-mdm] 本地 ref 同步失败：master_data_id={} domain={}: {}",
+                    event.master_data_id, domain_str, e
+                )));
             }
         }
 

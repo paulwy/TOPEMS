@@ -673,10 +673,14 @@ impl ScmEventHandlers {
             }
             Err(e) => {
                 tracing::warn!(
-                    "[scm-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
+                    "[scm-mdm] 本地 ref 同步失败，事件返回 Err 进入重试/DLQ - master_data_id={}: {}",
                     event.master_data_id,
                     e
                 );
+                return Err(TopemsError::DatabaseQuery(format!(
+                    "[scm-mdm] 本地 ref 同步失败：master_data_id={} domain={}: {}",
+                    event.master_data_id, domain_str, e
+                )));
             }
         }
 
