@@ -51,13 +51,7 @@ impl MasterDataRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 对齐独立进程 main.rs：Schema 防御（建表/补列，best-effort 不阻塞）。
-        // 根治恢复库缺 master_data.* 表（如 uoms）问题——此前仅在独立进程调用。
-        if let Err(e) =
-            topems_master_data::schema_defense::run_schema_migration_and_verify(&ctx.db).await
-        {
-            tracing::warn!("⚠️ master-data Schema 防御失败（降级运行）: {}", e);
-        }
+        // 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何静态 DDL。
 
         // 2. 构建业务 AppState（与独立部署 main.rs 一致）
         let app_state = AppState {

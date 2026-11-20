@@ -3,7 +3,7 @@
 //! 背景：10 个 MDM 模块原本以 `LazyLock<Mutex<Vec<T>>>` 内存 Store 运行，进程重启即失。
 //! 本模块提供一个与具体实体解耦的 JSONB 快照持久化能力：
 //!
-//! * [`init`] —— 服务启动时注入唯一 [`Db`]（幂等，仅首次生效），并确保表存在。
+//! * [`init`] —— 服务启动时注入唯一 [`Db`]（幂等，仅首次生效）。
 //! * [`save`] —— 把某模块某叶子集合整体 upsert 为一行 `master_data.mdm_collections`。
 //! * [`load`] —— 按 (module, entity) 读回并反序列化为集合。
 //!
@@ -26,37 +26,9 @@ use topems_shared_db::Db;
 static DB: OnceLock<Db> = OnceLock::new();
 
 /// 注入服务唯一 DB 句柄。重复调用会被忽略（OnceLock）。
-/// 同时确保 `master_data` schema 存在（表结构由迁移链权威创建，此处仅幂等兜底）。
-pub async fn init(db: Db) {
-    if DB.set(db.clone()).is_err() {
-        return;
-    }
-    let mut scope = match db.scope_system().await {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::warn!("[master-data] persist bootstrap 无法开启系统写通道: {e}");
-            return;
-        }
-    };
-    // sqlx prepare 不支持一条语句多个命令，逐条执行（B10 修复 bootstrap 报错；
-    // 迁移链 20261003000010_u4_master_data_collections.sql 为权威 DDL，此处为兜底）。
-    // C-1：建表语句已移除（迁移权威唯一仲裁）；保留 schema/索引幂等兜底。
-    for ddl in [
-        "CREATE SCHEMA IF NOT EXISTS master_data",
-        "CREATE INDEX IF NOT EXISTS mdm_collections_module_idx
-            ON master_data.mdm_collections (module)",
-    ] {
-        if let Err(e) = sqlx::query(sqlx::AssertSqlSafe(ddl))
-            .execute(&mut scope)
-            .await
-        {
-            tracing::warn!("[master-data] persist 表 bootstrap 失败（将依赖迁移链）: {e}");
-            break;
-        }
-    }
-    if let Err(e) = scope.commit().await {
-        tracing::warn!("[master-data] persist bootstrap 提交失败: {e}");
-    }
+/// schema 与索引均由迁移链维护，此处不再执行任何 DDL。
+pub fn init(db: Db) {
+    let _ = DB.set(db);
 }
 
 /// 是否已注入 DB 句柄（即是否启用持久化）。
