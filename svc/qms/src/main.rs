@@ -75,12 +75,6 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service_with_search_path(&config, "qms, public, shared").await?;
 
-    // QMS 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
-    if let Err(e) = modules::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
-    {
-        tracing::warn!("QMS schema defense warning: {}", e);
-    }
-
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let jwt_secret = ctx.auth_state.jwt_secret.clone();

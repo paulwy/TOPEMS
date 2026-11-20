@@ -17,7 +17,6 @@ pub mod spc;
 
 use crate::AppState;
 use axum::Router;
-use sqlx::PgPool;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -39,22 +38,6 @@ pub fn create_routes() -> Router<AppState> {
         .merge(quality_task::create_routes())
         // integration 编排侧 internal 接收端点（/api/internal/ 已在 auth 白名单）
         .merge(integration::integration_routes())
-}
-
-pub async fn run_schema_defense(pool: &PgPool) -> Result<(), sqlx::Error> {
-    // Schema 防御：增量迁移 + 一致性自检（TABLE_DEFS 保留；建表 DDL 已收敛至迁移链，D7）
-    if let Err(e) = topems_shared_db::schema::run_schema_defense(
-        pool,
-        crate::models::schema_defense::SERVICE_SCHEMA,
-        crate::models::schema_defense::TABLE_DEFS,
-        "qms",
-    )
-    .await
-    {
-        tracing::warn!("[qms schema 防御] 非阻塞警告: {}", e);
-    }
-
-    Ok(())
 }
 
 pub mod integration;

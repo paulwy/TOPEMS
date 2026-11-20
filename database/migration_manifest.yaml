@@ -2639,3 +2639,11 @@ pending_forward_patches:
     effect: "幂等收尾：wms.transfers / wms.transfer_items / wms.wms_master_data_refs 若仍存在，逐表 count(*)=0 校验通过后 DROP TABLE（不带 CASCADE，存在依赖则迁移失败）；任一非空即 RAISE EXCEPTION 中止整条迁移"
     destructive_scan: "含受保护的 DROP TABLE（无 CASCADE）：仅删除 batch1 已归档的死表复活空表；先 count(*) 守卫，非空拒绝；无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
     note: "历史数据已在 archive.drop_20261119_b1__wms__* 保留 180 天。回滚 database/rollback/20261120220000_wms_drop_resurrected_dead_tables.rollback.sql（明确拒绝重建）"
+
+  # ===== 2026-11-20：qms 30 表收口（W2-D2 第十一个模块） =====
+  - version: "20261120230000"
+    file: "database/migrations/20261120230000_qms_schema_canonical.sql"
+    status: to_apply
+    effect: "把 qms 30 张运行期表（APQP/审核/纠正措施/8D/FMEA/质量成本/检验计划与结果/SPC/标准/同步记录）以 live 形状固化，30 表 / 502 列 / 52 约束 / 109 索引 / 28 策略 / 30 RLS，五项 diff 为 0；删除 models/schema_defense.rs、modules::run_schema_defense 包装与 main、server qms_real_module 的启动调用"
+    destructive_scan: "仅 CREATE SCHEMA/TABLE/INDEX 与幂等 DO 块内 ADD CONSTRAINT；无 DROP TABLE/COLUMN、无 INSERT/UPDATE/DELETE/TRUNCATE；文件内无 BEGIN/COMMIT"
+    note: "TABLE_DEFS 30 张全部存在；qa_approval_events/qa_ehs_hazards/quality_standards 由既有迁移维护，不在名单内。batch2 删除的 qms.audit_logs 等旧表无 qa_ 前缀，与本迁移不冲突。回滚 database/rollback/20261120230000_qms_schema_canonical.rollback.sql（接管型，明确拒绝 DROP）"

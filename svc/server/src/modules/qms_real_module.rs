@@ -56,11 +56,6 @@ impl QmsRealModule {
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // 2. QMS 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7；失败不阻塞）
-        if let Err(e) = topems_qms::modules::run_schema_defense(&ctx.db).await {
-            tracing::warn!("QMS schema 防御检查警告（不阻塞）: {}", e);
-        }
-
         // 3. 工作流服务客户端
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()

@@ -8,7 +8,6 @@ pub mod quality_cost;
 pub mod quality_inspection;
 pub mod quality_issue;
 pub mod quality_standard;
-pub mod schema_defense;
 pub mod spc;
 
 #[allow(unused_imports)]
