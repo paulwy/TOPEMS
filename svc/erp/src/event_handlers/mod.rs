@@ -755,13 +755,15 @@ impl ErpEventHandlers {
         let now = chrono::Utc::now();
         let settled_at = payload.settled_at.unwrap_or(now);
         let receivable_no = format!("REC-PROJ-{}", payload.project_id);
-        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默写入零 UUID。
+        // 事件 payload 本应携带租户：缺失/零租户时拒绝处理，禁止静默丢应收。
         let Some(tenant_id) = payload.tenant_id.filter(|t| !t.is_nil()) else {
             tracing::warn!(
-                "[erp] PmProjectSettled 缺少租户，跳过项目应收账款 - project_id={}",
+                "[erp] PmProjectSettled 缺少租户，拒绝项目应收账款 - project_id={}",
                 payload.project_id
             );
-            return Ok(());
+            return Err(TopemsError::ValidationFailed(
+                "事件 payload 缺少 tenant_id，拒绝处理并进入重试/DLQ".to_string(),
+            ));
         };
 
         let receivable_result = sqlx::query(

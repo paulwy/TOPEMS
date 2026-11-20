@@ -45,7 +45,7 @@
 ### 2.3 遗留（已按 DEC-04 收口）
 
 - `PaymentReceived` / `PaymentMade`：入口前置 `payload.tenant_id.filter(!nil)`，缺租户 `ValidationFailed`；DB 错误返回 `DatabaseQuery`；仅“未找到匹配单据”保留业务 no-op。
-- ERP 创建应收（SalesOrderApproved）/ 应付（PurchaseOrderApproved）/ 入职应付（EmployeeOnboarded）/ 项目应收（PmProjectSettled）：`ON CONFLICT DO NOTHING` 已吸收重复键，剩余 `Err` 一律 `DatabaseQuery` 上抛；EmployeeOnboarded 的 begin/commit 失败同样上抛。
+- ERP 创建应收（SalesOrderApproved）/ 应付（PurchaseOrderApproved）/ 入职应付（EmployeeOnboarded）/ 项目应收（PmProjectSettled）：`ON CONFLICT DO NOTHING` 已吸收重复键，剩余 `Err` 一律 `DatabaseQuery` 上抛；EmployeeOnboarded 的 begin/commit 失败同样上抛；PmProjectSettled 缺租户已由静默 ACK 改为 `ValidationFailed`。
 - `InventoryUpdated`：此前 SQL 仅按 `material_code` 更新 `erp.account_balances`，存在跨租户写风险；现改为 `require_event_tenant(&event)` + `AND tenant_id = $4`，缺租户 `ValidationFailed`，DB 错误上抛，仅“无匹配余额行”保留业务 no-op。
 - `svc/erp/src/event_handlers/mod.rs` 已无 `graceful fallback` 文本；剩余 `Ok(())` 均为明确业务 no-op（未配置入职成本、无匹配单据/余额、缺少结算金额）。
 - CRM 事件消费：`PaymentReceived` 缺租户改 `ValidationFailed`；`AfterSalesTicketCreated` 交互记录改用事件租户，删除 NULL 租户写入并上抛 DB 错误；`OpportunityWon` 入口统一解析租户，无法确定即失败，跟进任务与应收共用同一 `tenant_id`；`ShippingOrderRequested` 销售订单补租户校验/过滤；`SalesOrderCreated` 台账同步缺租户不再跳过 ACK，DB 错误上抛。仅“客户记录尚未落库”保留业务 no-op。
@@ -57,7 +57,7 @@
 - RD / Portal 事件消费：RD 项目创建/完成改为租户作用域写入并上抛 DB 错误；Portal 通知写入与项目概览统计改为租户作用域，统计读取失败不再 `unwrap_or(0)`。
 - `svc/integration` 事件消费：`record_sync_log` 由 `scope_system` 改为 `scope_for_tenant`，三个 QMS→LIMS / EHS→QMS / LIMS→EHS trigger 缺租户由 warn+ACK 改为 `ValidationFailed`，同步日志写入失败由 `let _ =` 吞掉改为 `?` 上抛进入重试/DLQ。
 - EHS 事件消费：本地 `require_event_tenant` 由 `Option<Uuid>` 改为 `Result<Uuid, TopemsError>`，缺租户累计 `EHS_EVENT_DROPPED_MISSING_TENANT` 并返回 `ValidationFailed`；LIMS 异常、QMS 纠正措施、HRM 员工变更三个 handler 全部改为 `?`，不再静默 ACK。
-- Finance 事件消费：`EmployeeOnboarded` 读取入职成本配置后的事务提交由 `let _ =` 改为 `map_err → DatabaseTransaction` 上抛。
+- Finance 事件消费：`EmployeeOnboarded` 读取入职成本配置后的事务提交由 `let _ =` 改为 `map_err → DatabaseTransaction` 上抛；对账单/结算单 6 个快照处理器由 `let _ =` 改为 `?`；`store_source_amount_snapshot` 由 `()` + warn 降级改为 `Result`，作用域开启、写入、提交失败全部上抛。
 - HRM 事件消费：`PermissionOrPositionChanged` 缺租户由 warn+ACK 改为 `ValidationFailed`；缓存失效审计日志插入失败仍返回 nil 属观测性豁免（不影响任何业务写入）。
 
 ---
@@ -100,4 +100,4 @@
 
 - 每类入口均能指出租户来源或豁免条目；无“连接残留 GUC / 全局静态租户 / 零 UUID 默认租户”作为业务来源。
 - 本轮新增修复：SRM 零 UUID、ERP 5 处缺租户 ACK、ERP 全局指标系统通道、单体 analytics 残留 DDL 调用。
-- DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账均改为缺租户显式失败、DB 错误上抛；PM 审批、RD 项目同步、结算创建/审批全部改为租户作用域写入，审批事件按项目主键反查租户；SCM/SRM/WMS/RD/Portal 事件消费统一改为租户作用域并上抛 DB 错误；integration 同步日志改租户作用域并上抛写入失败；EHS 租户前置改 `Result` 并覆盖三个 handler；Finance 入职成本事务提交上抛；HRM 权限/岗位事件缺租户显式失败。18 个事件消费入口已无 graceful fallback 后静默 ACK，B43-09 标为完全闭环。
+- DEC-04 收口：ERP 事件消费 4 处 DB 错误降级改为 `DatabaseQuery`，`InventoryUpdated` 补租户过滤；CRM 结算、售后交互、商机赢单、出库转销售订单、客户订单台账均改为缺租户显式失败、DB 错误上抛；PM 审批、RD 项目同步、结算创建/审批全部改为租户作用域写入，审批事件按项目主键反查租户；SCM/SRM/WMS/RD/Portal 事件消费统一改为租户作用域并上抛 DB 错误；integration 同步日志改租户作用域并上抛写入失败；EHS 租户前置改 `Result` 并覆盖三个 handler；Finance 入职成本事务提交与对账/结算 6 个快照写入、金额快照写入全部上抛；HRM 权限/岗位事件缺租户显式失败。18 个事件消费入口已无 graceful fallback 后静默 ACK，B43-09 标为完全闭环。

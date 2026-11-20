@@ -361,7 +361,7 @@ impl FinanceEventHandlers {
                 payable_amount,
                 Self::require_tenant(payload.tenant_id)?,
             )
-            .await;
+            .await?;
         }
 
         let amount = payload.total_amount.unwrap_or(Decimal::ZERO);
@@ -402,7 +402,7 @@ impl FinanceEventHandlers {
                 payable_amount,
                 Self::require_tenant(payload.tenant_id)?,
             )
-            .await;
+            .await?;
         }
 
         let amount = payload.total_amount.unwrap_or(Decimal::ZERO);
@@ -489,7 +489,7 @@ impl FinanceEventHandlers {
                 payable_amount,
                 Self::require_tenant(payload.tenant_id)?,
             )
-            .await;
+            .await?;
         }
 
         let amount = payload.total_amount.unwrap_or(Decimal::ZERO);
@@ -705,21 +705,14 @@ impl FinanceEventHandlers {
         // U6: 快照金额改 Decimal（列已对齐 NUMERIC(18,4)）
         payable_amount: Decimal,
         tenant_id: uuid::Uuid,
-    ) {
+    ) -> Result<(), TopemsError> {
         let now = Utc::now();
         // 写路径走租户作用域：裸池无 GUC 在 fail-closed 下会 42501。
-        let mut scope = match self.db.scope_for_tenant(tenant_id).await {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::warn!(
-                    "[finance] 本地金额快照存储失败（graceful）- 租户作用域开启失败, source_type={}, source_id={}: {}",
-                    source_type,
-                    source_id,
-                    e
-                );
-                return;
-            }
-        };
+        let mut scope = self.db.scope_for_tenant(tenant_id).await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "本地金额快照租户作用域开启失败 - source_type={source_type}, source_id={source_id}: {e}"
+            ))
+        })?;
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.source_amount_snapshots
@@ -737,29 +730,23 @@ impl FinanceEventHandlers {
         .execute(&mut scope)
         .await;
 
-        match result {
-            Ok(_) => {
-                if let Err(e) = scope.commit().await {
-                    tracing::warn!(
-                        "[finance] 本地金额快照提交失败（graceful）- source_type={}, source_id={}: {}",
-                        source_type,
-                        source_id,
-                        e
-                    );
-                    return;
-                }
-                tracing::debug!(
-                    "[finance] 本地金额快照已存储 - source_type={}, source_id={}, payable_amount={}",
-                    source_type, source_id, payable_amount
-                );
-            }
-            Err(e) => {
-                tracing::warn!(
-                    "[finance] 本地金额快照存储失败（graceful）- source_type={}, source_id={}: {}，首次使用时将从ERP补拉",
-                    source_type, source_id, e
-                );
-            }
-        }
+        result.map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "本地金额快照写入失败 - source_type={source_type}, source_id={source_id}: {e}"
+            ))
+        })?;
+        scope.commit().await.map_err(|e| {
+            TopemsError::DatabaseTransaction(format!(
+                "本地金额快照提交失败 - source_type={source_type}, source_id={source_id}: {e}"
+            ))
+        })?;
+        tracing::debug!(
+            "[finance] 本地金额快照已存储 - source_type={}, source_id={}, payable_amount={}",
+            source_type,
+            source_id,
+            payable_amount
+        );
+        Ok(())
     }
 
     /// PurchaseOrderCreated → 采购订单创建时，存快照 + 生成应付凭证
@@ -782,7 +769,7 @@ impl FinanceEventHandlers {
                 payable_amount,
                 Self::require_tenant(payload.tenant_id)?,
             )
-            .await;
+            .await?;
         }
 
         // 创建阶段只存金额快照，不生成凭证：应付在审批事件确认，
@@ -803,7 +790,7 @@ impl FinanceEventHandlers {
             payload.id,
             payload.recon_name
         );
-        let _ = self.store_reconciliation_snapshot(&payload).await;
+        self.store_reconciliation_snapshot(&payload).await?;
         Ok(())
     }
 
@@ -816,7 +803,7 @@ impl FinanceEventHandlers {
             payload.id,
             payload.status
         );
-        let _ = self.update_reconciliation_snapshot(&payload).await;
+        self.update_reconciliation_snapshot(&payload).await?;
         Ok(())
     }
 
@@ -829,7 +816,7 @@ impl FinanceEventHandlers {
             payload.id,
             payload.approved_by
         );
-        let _ = self.approve_reconciliation_snapshot(&payload).await;
+        self.approve_reconciliation_snapshot(&payload).await?;
         Ok(())
     }
 
@@ -842,7 +829,7 @@ impl FinanceEventHandlers {
             payload.id,
             payload.settlement_no
         );
-        let _ = self.store_settlement_snapshot(&payload).await;
+        self.store_settlement_snapshot(&payload).await?;
         Ok(())
     }
 
@@ -855,7 +842,7 @@ impl FinanceEventHandlers {
             payload.id,
             payload.approved_by
         );
-        let _ = self.approve_settlement_snapshot(&payload).await;
+        self.approve_settlement_snapshot(&payload).await?;
         Ok(())
     }
 
@@ -868,7 +855,7 @@ impl FinanceEventHandlers {
             payload.id,
             payload.rejected_by
         );
-        let _ = self.reject_settlement_snapshot(&payload).await;
+        self.reject_settlement_snapshot(&payload).await?;
         Ok(())
     }
 
