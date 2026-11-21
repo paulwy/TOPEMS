@@ -33,6 +33,17 @@ impl SalesOrderStatus {
         "cancelled",
     ];
 
+    /// 读取侧兼容集合：历史 `confirmed` 投影为 approved，其余与 DB_VALUES 一致
+    pub const READ_VALUES: [&'static str; 7] = [
+        "draft",
+        "pending",
+        "approved",
+        "confirmed",
+        "shipped",
+        "completed",
+        "cancelled",
+    ];
+
     /// 新建订单的默认状态
     pub const DEFAULT: Self = Self::Draft;
 
@@ -46,6 +57,15 @@ impl SalesOrderStatus {
             "completed" => Some(Self::Completed),
             "cancelled" | "canceled" => Some(Self::Cancelled),
             _ => None,
+        }
+    }
+
+    /// 读取侧解析：历史 `confirmed` 归一为 approved，未知值仍返回 None
+    pub fn from_read_str(s: &str) -> Option<Self> {
+        if s.trim().eq_ignore_ascii_case("confirmed") {
+            Some(Self::Approved)
+        } else {
+            Self::from_db_str(s)
         }
     }
 
@@ -93,6 +113,20 @@ mod tests {
                 Some(s)
             );
         }
+    }
+
+    #[test]
+    fn sales_order_status_read_compat() {
+        assert_eq!(
+            SalesOrderStatus::from_read_str("confirmed"),
+            Some(SalesOrderStatus::Approved)
+        );
+        assert_eq!(
+            SalesOrderStatus::from_read_str(" CONFIRMED "),
+            Some(SalesOrderStatus::Approved)
+        );
+        assert_eq!(SalesOrderStatus::from_read_str("void"), None);
+        assert!(SalesOrderStatus::READ_VALUES.contains(&"confirmed"));
     }
 
     #[test]

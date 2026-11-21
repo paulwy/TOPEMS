@@ -10,6 +10,7 @@
 --       AND status <> ALL (ARRAY['draft','pending','approved','shipped','completed','cancelled'])
 --     GROUP BY status;
 --    本地已知：SO-TEST-0001 = 'confirmed'（1 行测试种子，B27 前不计入集合，VALIDATE 前需人工修订）
+--    B90 已加读取兼容投影：confirmed 在列表/详情/统计按 approved 展示，编辑保存会写回 approved；DB 原值未改。
 --    ⚠️ NOT VALID 只放过存量行，不放过对存量行的 UPDATE：该行只要被任何 UPDATE 触及
 --       （包括 status = status）都会 23514。所以生产执行前必须先修数据：
 --       UPDATE erp.sales_orders SET status = 'approved' WHERE status = 'confirmed';  -- 业务确认后

@@ -157,18 +157,31 @@ pub async fn list_sales_orders(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match SalesOrderStatus::from_read_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "invalid sales order status \"{}\", allowed: {}",
+                    raw,
+                    SalesOrderStatus::READ_VALUES.join("/")
+                )))
+            }
+        },
+    };
 
     let sales_orders_result = if search_pattern.is_some() || status_filter.is_some() {
         let search = search_pattern.unwrap_or_default();
         let status = status_filter.clone();
 
         sqlx::query_as::<_, SalesOrder>(
-            only_own_schema_query!("erp", r#"SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at
+            only_own_schema_query!("erp", r#"SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END AS status, remark, created_at, updated_at
                FROM erp.sales_orders
                WHERE deleted_at IS NULL
+                 AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled')
                  AND (order_no ILIKE $1 OR customer_name ILIKE $1)
-                 AND ($2 = '' OR status = $2)
+                 AND ($2 = '' OR CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END = $2)
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
         .bind(search)
@@ -179,7 +192,7 @@ pub async fn list_sales_orders(
         .await
     } else {
         sqlx::query_as::<_, SalesOrder>(
-            only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END AS status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled') ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -196,7 +209,7 @@ pub async fn list_sales_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL AND ($1 = '' OR order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled') AND ($1 = '' OR order_no ILIKE $1 OR customer_name ILIKE $1) AND ($2 = '' OR CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -245,7 +258,7 @@ pub async fn get_sales_order(
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END AS status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled') AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -468,7 +481,7 @@ pub async fn update_sales_order(
                 };
                 let current: Option<String> = sqlx::query_scalar(only_own_schema_query!(
                     "erp",
-                    "SELECT status FROM erp.sales_orders WHERE id = $1 AND deleted_at IS NULL"
+                    "SELECT CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END AS status FROM erp.sales_orders WHERE id = $1 AND deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled')"
                 ))
                 .bind(id)
                 .fetch_optional(&mut scope)
@@ -494,7 +507,7 @@ pub async fn update_sales_order(
     };
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 AND deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled') RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END AS status, remark, created_at, updated_at"),
     )
     .bind(body.customer_id)
     .bind(body.delivery_date)
@@ -1286,12 +1299,12 @@ pub async fn get_sales_order_stats(
     }
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
-        "SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL"
+        "SELECT COUNT(*) FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled')"
     ))
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
-    let by_status: Vec<StatusCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT status, COUNT(*) AS count FROM erp.sales_orders WHERE deleted_at IS NULL GROUP BY status ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
+    let by_status: Vec<StatusCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT CASE WHEN status = 'confirmed' THEN 'approved' ELSE status END AS status, COUNT(*) AS count FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('draft','pending','approved','confirmed','shipped','completed','cancelled') GROUP BY 1 ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
     let by_customer: Vec<CustomerOrderCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT customer_id, customer_name, COUNT(*) AS total FROM erp.sales_orders WHERE deleted_at IS NULL GROUP BY customer_id, customer_name ORDER BY total DESC LIMIT 10")).fetch_all(&mut **txn).await.unwrap_or_default();
     let pending_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = ANY($1)"))
         .bind(&[SalesOrderStatus::Pending.as_db_str(), SalesOrderStatus::Draft.as_db_str()][..])
