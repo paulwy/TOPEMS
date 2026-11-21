@@ -25,17 +25,8 @@ pub enum TenantPlan {
     Enterprise,
 }
 
-/// Tenant status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-#[derive(Default)]
-pub enum TenantStatus {
-    #[default]
-    Trial,
-    Active,
-    Suspended,
-    Expired,
-}
+/// Tenant status：单一源在 lib/shared-auth，避免同一词两处定义
+pub use topems_shared_auth::TenantStatus;
 
 /// License type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -482,19 +473,16 @@ mod tests {
 
     #[test]
     fn test_tenant_status_default_and_variants() {
-        assert_eq!(TenantStatus::default(), TenantStatus::Trial);
         let statuses = [
             TenantStatus::Trial,
             TenantStatus::Active,
             TenantStatus::Suspended,
-            TenantStatus::Expired,
+            TenantStatus::Deleted,
         ];
         for s in statuses.iter() {
-            let json =
-                serde_json::to_string(s).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
-            let de: TenantStatus = serde_json::from_str(&json).unwrap();
-            assert_eq!(&de, s);
+            assert_eq!(TenantStatus::from_db_str(s.as_db_str()), Some(*s));
         }
+        assert_eq!(TenantStatus::from_db_str("expired"), None);
     }
 
     #[test]

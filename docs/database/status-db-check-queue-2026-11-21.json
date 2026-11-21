@@ -3,16 +3,16 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 99,
+    "uncovered_enums": 98,
     "uncovered_values": 108,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 52,
-    "internal_state_enums": 32,
-    "persisted_unmapped_enums": 56,
+    "resolved_enums": 55,
+    "internal_state_enums": 33,
+    "persisted_unmapped_enums": 54,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 25,
-    "internal_state_values": 48,
-    "persisted_unmapped_values": 34,
+    "internal_state_values": 49,
+    "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
   },
@@ -23,9 +23,7 @@
       "enum": "TenantStatus",
       "values_by_bucket": {
         "internal_state": [
-          "deleted"
-        ],
-        "persisted_unmapped": [
+          "deleted",
           "trial"
         ]
       },
@@ -61,11 +59,11 @@
       "enum": "SubscriptionStatus",
       "values_by_bucket": {
         "internal_state": [
-          "canceled"
+          "canceled",
+          "trial"
         ],
         "persisted_unmapped": [
-          "expired",
-          "trial"
+          "expired"
         ]
       },
       "candidate_targets": [],
@@ -1629,7 +1627,13 @@
           "sunset"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/unified-core/src/middleware/versioning.rs",
+        "enum": "VersionStatus",
+        "persisted": false,
+        "reason": "API 版本生命周期，仅中间件内存表，无同名共享源"
+      }
     },
     {
       "module": "unified-core",
@@ -1637,23 +1641,19 @@
       "enum": "SubscriptionStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "expired",
+          "expired"
+        ],
+        "internal_state": [
           "trial"
         ]
       },
-      "candidate_targets": []
-    },
-    {
-      "module": "unified-core",
-      "file": "svc/unified-core/src/modules/tenant/models.rs",
-      "enum": "TenantStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired",
-          "trial"
-        ]
-      },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/unified-core/src/modules/subscription/mod.rs",
+        "enum": "SubscriptionStatus",
+        "persisted": false,
+        "reason": "纯内存订阅状态计算，无 SQL；与 shared-auth 同值集但 Canceled/Cancelled 拼写与 serde 输出不同，收敛需 API 契约决策"
+      }
     },
     {
       "module": "unified-core",
@@ -1668,7 +1668,13 @@
           "unhealthy"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/unified-core/src/shared/util.rs",
+        "enum": "HealthStatus",
+        "persisted": false,
+        "reason": "健康度聚合计算值，不落库；与 shared-core 同名同值但 serde 输出 PascalCase vs lowercase，直接替换会改 API 契约"
+      }
     }
   ]
 }

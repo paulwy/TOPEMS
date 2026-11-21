@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 136,
+    "rust_enums": 135,
     "rust_enum_values": 146,
     "rust_values_not_in_db_check": 108,
     "frontend_status_keys": 165,
@@ -2410,23 +2410,6 @@
         "active",
         "cancelled",
         "expired",
-        "trial"
-      ]
-    },
-    {
-      "module": "unified-core",
-      "file": "svc/unified-core/src/modules/tenant/models.rs",
-      "name": "TenantStatus",
-      "values": [
-        "Active",
-        "Expired",
-        "Suspended",
-        "Trial"
-      ],
-      "normalized": [
-        "active",
-        "expired",
-        "suspended",
         "trial"
       ]
     },

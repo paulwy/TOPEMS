@@ -328,6 +328,24 @@
       "enum": "CanaryStatus",
       "persisted": false,
       "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/unified-core/src/modules/subscription/mod.rs",
+      "enum": "SubscriptionStatus",
+      "persisted": false,
+      "reason": "纯内存订阅状态计算，无 SQL；与 shared-auth 同值集但 Canceled/Cancelled 拼写与 serde 输出不同，收敛需 API 契约决策"
+    },
+    {
+      "file": "svc/unified-core/src/shared/util.rs",
+      "enum": "HealthStatus",
+      "persisted": false,
+      "reason": "健康度聚合计算值，不落库；与 shared-core 同名同值但 serde 输出 PascalCase vs lowercase，直接替换会改 API 契约"
+    },
+    {
+      "file": "svc/unified-core/src/middleware/versioning.rs",
+      "enum": "VersionStatus",
+      "persisted": false,
+      "reason": "API 版本生命周期，仅中间件内存表，无同名共享源"
     }
   ]
 }

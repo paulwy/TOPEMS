@@ -700,6 +700,18 @@ pub async fn update_tenant(
             return Json(CoreResponse::error("Tenant not found"));
         }
     };
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match TenantStatus::from_db_str(raw) {
+            Some(parsed) => Some(parsed.as_db_str()),
+            None => {
+                return Json(CoreResponse::error(
+                    "invalid tenant status, allowed: active/suspended/trial/deleted",
+                ))
+            }
+        },
+    };
+
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE public.core_tenants
@@ -719,7 +731,7 @@ pub async fn update_tenant(
     .bind(id)
     .bind(&req.name)
     .bind(&req.plan)
-    .bind(&req.status)
+    .bind(status)
     .bind(req.quota_users)
     .bind(req.quota_storage_gb)
     .bind(req.quota_api_calls)

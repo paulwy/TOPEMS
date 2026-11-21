@@ -26,6 +26,32 @@ pub enum TenantStatus {
     Deleted,
 }
 
+impl TenantStatus {
+    /// 数据库 `core_tenants.status` 允许的唯一集合（与迁移默认值一致）
+    pub const DB_VALUES: [&'static str; 4] = ["active", "suspended", "trial", "deleted"];
+
+    /// 严格解析数据库字符串；未知值返回 `None`，不再静默归默认
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Active),
+            "suspended" => Some(Self::Suspended),
+            "trial" => Some(Self::Trial),
+            "deleted" => Some(Self::Deleted),
+            _ => None,
+        }
+    }
+
+    /// 写入 `core_tenants.status` 的唯一字符串形式
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Suspended => "suspended",
+            Self::Trial => "trial",
+            Self::Deleted => "deleted",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub enum TenantPlan {
     Free,
@@ -492,6 +518,24 @@ impl From<TenantError> for topems_shared_core::error::TopemsError {
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn tenant_status_db_strings_roundtrip() {
+        for status in [
+            TenantStatus::Active,
+            TenantStatus::Suspended,
+            TenantStatus::Trial,
+            TenantStatus::Deleted,
+        ] {
+            assert_eq!(TenantStatus::from_db_str(status.as_db_str()), Some(status));
+        }
+        assert_eq!(
+            TenantStatus::from_db_str(" ACTIVE "),
+            Some(TenantStatus::Active)
+        );
+        assert_eq!(TenantStatus::from_db_str("expired"), None);
+        assert_eq!(TenantStatus::from_db_str(""), None);
+    }
 
     #[tokio::test]
     async fn test_create_tenant() -> Result<(), TenantError> {
