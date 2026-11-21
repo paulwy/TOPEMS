@@ -121,7 +121,8 @@ pub async fn list_inquiries(
         SELECT id, inquiry_no, title, description, status, creator, tenant_id,
                created_at, updated_at
         FROM srm.inquiries
-        WHERE ($1::text IS NULL OR inquiry_no ILIKE $1 OR title ILIKE $1)
+        WHERE status IN ('draft','published','in_progress','closed','awarded','cancelled')
+          AND ($1::text IS NULL OR inquiry_no ILIKE $1 OR title ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
@@ -140,7 +141,8 @@ pub async fn list_inquiries(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM srm.inquiries
-                WHERE ($1::text IS NULL OR inquiry_no ILIKE $1 OR title ILIKE $1)
+                WHERE status IN ('draft','published','in_progress','closed','awarded','cancelled')
+                  AND ($1::text IS NULL OR inquiry_no ILIKE $1 OR title ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
                 "#,
@@ -194,6 +196,7 @@ pub async fn get_inquiry(
                created_at, updated_at
         FROM srm.inquiries
         WHERE id = $1 AND deleted_at IS NULL
+          AND status IN ('draft','published','in_progress','closed','awarded','cancelled')
         "#,
     )
     .bind(id)
@@ -303,6 +306,7 @@ pub async fn update_inquiry(
             status = COALESCE($4, status),
             updated_at = NOW()
         WHERE id = $1 AND deleted_at IS NULL
+          AND status IN ('draft','published','in_progress','closed','awarded','cancelled')
         RETURNING id, inquiry_no, title, description, status, creator, tenant_id,
                   created_at, updated_at
         "#,

@@ -75,7 +75,7 @@ pub async fn list_quotations(
             FROM srm.quotations q
             LEFT JOIN srm.inquiries i ON q.inquiry_id = i.id
             LEFT JOIN srm.suppliers s ON q.supplier_id = s.id
-            WHERE q.deleted_at IS NULL AND q.inquiry_id = $1
+            WHERE q.deleted_at IS NULL AND q.status IN ('pending','awarded','rejected') AND q.inquiry_id = $1
             ORDER BY q.created_at DESC
             "#, "srm"),
         )
@@ -91,7 +91,7 @@ pub async fn list_quotations(
             FROM srm.quotations q
             LEFT JOIN srm.inquiries i ON q.inquiry_id = i.id
             LEFT JOIN srm.suppliers s ON q.supplier_id = s.id
-            WHERE q.deleted_at IS NULL
+            WHERE q.deleted_at IS NULL AND q.status IN ('pending','awarded','rejected')
             ORDER BY q.created_at DESC
             "#, "srm"),
         )
@@ -254,7 +254,7 @@ pub async fn get_quotation(
         FROM srm.quotations q
         LEFT JOIN srm.inquiries i ON q.inquiry_id = i.id
         LEFT JOIN srm.suppliers s ON q.supplier_id = s.id
-        WHERE q.id = $1 AND q.deleted_at IS NULL
+        WHERE q.id = $1 AND q.status IN ('pending','awarded','rejected') AND q.deleted_at IS NULL
         "#, "srm"),
     )
     .bind(id)
