@@ -103,7 +103,9 @@ mod tests {
         let csv = ctx.visible_ids_csv();
         let parts: Vec<&str> = csv.split(',').collect();
         assert_eq!(parts.len(), 2, "重复子公司必须去重");
-        assert!(parts[0] < parts[1], "输出必须稳定排序");
+        let mut expected = parts.clone();
+        expected.sort_unstable();
+        assert_eq!(parts, expected, "输出必须稳定排序");
     }
 
     #[test]
