@@ -2290,22 +2290,38 @@ pub async fn complete_failover(
     .await
     .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return ApiResponse::from(e); }
 
-    if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+    match sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET status = $3, primary_flag = false WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&record.from_region)
     .bind(tenant)
+    .bind(region_status_to_str(&RegionStatus::Offline))
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return ApiResponse::from(e); }
-    if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+    {
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "源地域不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新源地域失败", e)),
+    }
+    match sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET status = $3, primary_flag = true WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&record.to_region)
     .bind(tenant)
+    .bind(region_status_to_str(&RegionStatus::Online))
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("更新目标地域失败", e)) { return ApiResponse::from(e); }
+    {
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "目标地域不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新目标地域失败", e)),
+    }
 
     ApiResponse::success(
         serde_json::json!({
@@ -2407,14 +2423,22 @@ pub async fn switch_regions(
     {
         return ApiResponse::from(e);
     }
-    if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+    match sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = $3 WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&req.primary_region)
     .bind(tenant)
+    .bind(region_status_to_str(&RegionStatus::Online))
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return ApiResponse::from(e); }
+    {
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "主地域不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("切换主地域失败", e)),
+    }
 
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
