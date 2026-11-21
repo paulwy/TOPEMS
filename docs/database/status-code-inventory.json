@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 167,
+    "rust_enums": 168,
     "rust_enum_values": 164,
     "rust_values_not_in_db_check": 125,
     "frontend_status_keys": 179,
@@ -494,6 +494,21 @@
         "none",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/contact_status.rs",
+      "name": "ContactStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive"
       ]
     },
     {

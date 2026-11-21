@@ -16,6 +16,7 @@ use crate::modules::audit::{
     log_audit_event, log_audit_event_with_actor, AuditActor, AuditEventParams,
 };
 use crate::modules::contact_approval_status::ContactApprovalStatus;
+use crate::modules::contact_status::ContactStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -89,14 +90,21 @@ pub async fn list_contacts(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match ContactStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的联系人状态"),
+        },
+        None => None,
+    };
     let customer_filter = params.customer_id;
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         FROM crm.contacts
-        WHERE ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR customer_id = $3)
         ORDER BY created_at DESC
@@ -194,7 +202,7 @@ pub async fn create_contact(
         r#"
         INSERT INTO crm.contacts (
             id, tenant_id, customer_id, first_name, last_name, email, phone, position, notes, status, approval_status, created_at, updated_at, org_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'none', $10, $11, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $13, 'none', $10, $11, $12)
         RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         "#,
     )
@@ -210,6 +218,7 @@ pub async fn create_contact(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(ContactStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -364,7 +373,13 @@ async fn update_contact(
     let phone = req.phone.or(existing.phone);
     let position = req.position.or(existing.position);
     let customer_id = req.customer_id.or(existing.customer_id);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        Some(raw) => match ContactStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的联系人状态"),
+        },
+        None => existing.status,
+    };
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
 

@@ -660,6 +660,13 @@
       "table": "crm.contacts",
       "column": "approval_status",
       "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/contact_status.rs",
+      "enum": "ContactStatus",
+      "table": "crm.contacts",
+      "column": "status",
+      "candidate": "existing:ck_contacts_status_standard"
     }
   ]
 }
