@@ -90,3 +90,18 @@ outbound_order_e2e` 4 passed（含新增创建用例）。
 
 本批不改 DDL、不删 `organization_id`：生产存量是否 `organization_id = tenant_id`
 仍未知，删列迁移必须等生产只读核对后再执行。
+
+## 7. 同型修复：`wave_picks` 创建（2026-11-21 补）
+
+`wms.wave_picks.org_id` 同样是 `NOT NULL` 无默认值，`create_wave_pick` 只写
+`organization_id`/`tenant_id`，创建必然 23502；现有 e2e 只覆盖列表，未暴露。
+
+改动：`create_wave_pick` 先经 `Db::scope_with` 按 `warehouse_id + tenant_id` 取仓库
+`org_id`，仓库不存在返回 409，再写入 `org_id`；`organization_id` 仍写租户值。
+`svc/wms/tests/wave_pick_e2e.rs` 补 `organization_id` 与最小仓库表，新增创建用例。
+
+`wave_pick_items` 没有服务端创建入口（只有列表与状态更新），其 `org_id` 由上游
+写入，本批不动。
+
+验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、4 个 wave e2e 通过；
+`request-txn` 保持 `1655` 基线。

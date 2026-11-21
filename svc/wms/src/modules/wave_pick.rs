@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::tenant_of;
+use crate::shared::scope::{tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginatedResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -211,6 +211,7 @@ pub async fn create_wave_pick(
     let now = Utc::now();
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    // organization_id 仍写租户值；org_id 取仓库，避免 canonical NOT NULL 列无绑定。
     let tenant_id: Option<Uuid> = match claims
         .tenant_id
         .as_deref()
@@ -219,6 +220,32 @@ pub async fn create_wave_pick(
         Some(t) => Some(t),
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
+    let org_id = {
+        let mut scope = match wms_db(&state.db).scope_with(txn).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("波次拣货创建失败".to_string()));
+            }
+        };
+        sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"SELECT org_id FROM wms.warehouses
+               WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+        ))
+        .bind(req.warehouse_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+    };
+    let org_id = match org_id {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("仓库不存在，无法创建波次拣货"),
+        Err(e) => {
+            tracing::error!("查询仓库组织失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("波次拣货创建失败".to_string()));
+        }
+    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
@@ -226,8 +253,8 @@ pub async fn create_wave_pick(
         INSERT INTO wms.wave_picks (id, organization_id, wave_pick_number, wave_pick_type,
                                     warehouse_id, status, priority, batch_id, remarks,
                                     total_items, picked_items, total_quantity, picked_quantity,
-                                    created_at, updated_at, tenant_id)
-        VALUES ($1, $10, $2, $3, $4, 'pending', $5, $6, $7, 0, 0, 0, 0, $8, $9, $10)
+                                    created_at, updated_at, tenant_id, org_id)
+        VALUES ($1, $10, $2, $3, $4, 'pending', $5, $6, $7, 0, 0, 0, 0, $8, $9, $10, $11)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -244,6 +271,7 @@ pub async fn create_wave_pick(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 
