@@ -297,14 +297,8 @@ mod tests {
         let pool = PgPool::connect(&database_url)
             .await
             .expect("Failed to connect to test database");
-
-        // 清理测试表中的所有数据，确保测试隔离
-        // 使用 CASCADE 以删除关联数据（如 project_phases 等外键关联表）
-        sqlx::query("DELETE FROM rs.projects")
-            .execute(&pool)
-            .await
-            .unwrap_or_default();
-
+        // 不在 setup 里全局清表：同一测试会被 lib/bin 两个二进制并行执行，
+        // 各自清表会互相删除刚插入的行。需要空表的用例自行清理自己依赖的表。
         pool
     }
 
@@ -504,9 +498,7 @@ mod tests {
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
 
-        // 使用 TRUNCATE 清理数据库，确保测试隔离
-        let _ = sqlx::query("DELETE FROM rs.projects").execute(&pool).await;
-
+        // 不做全局清表（并行二进制的其他用例可能刚插入行）；本用例只断言至少 5 条。
         for i in 1..=5 {
             let req = CreateProjectRequest {
                 name: format!("List Project {}", i),

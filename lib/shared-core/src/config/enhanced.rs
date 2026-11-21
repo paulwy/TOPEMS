@@ -725,7 +725,8 @@ mod tests {
     #[test]
     fn database_config_default_values() {
         let c = DatabaseConfig::default();
-        assert!(c.url.is_empty());
+        // default 读取 DATABASE_URL；缺失时为空串，由 bootstrap fail-fast。
+        assert_eq!(c.url, std::env::var("DATABASE_URL").unwrap_or_default());
         assert_eq!(c.max_connections, 10);
         assert_eq!(c.min_connections, Some(2));
         assert_eq!(c.connect_timeout, Some(10));

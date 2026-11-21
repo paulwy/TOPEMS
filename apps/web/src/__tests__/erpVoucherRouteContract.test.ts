@@ -2,7 +2,7 @@
  * 批 21 契约测试：ERP 凭证入口 → finance 权威页
  *
  * 背景：原 `pages/erp/VoucherPage.tsx`（114 行，纯 CrudPage + 统计卡片）是
- * `pages/finance/FinanceVoucherPage/index.tsx`（807 行，含科目 Tab / 导入 / 详情 / 分录 / 批量）的子集，
+ * `components/finance/FinanceVoucherPage/index.tsx`（807 行，含科目 Tab / 导入 / 详情 / 分录 / 批量）的子集，
  * 且两者数据都走 `apiClient.finance`。凭证本质属财务域实体，收敛至 finance 权威页。
  *
  * 本测试锁住收敛后的契约，防止：
@@ -64,7 +64,7 @@ describe('ERP 凭证入口收敛契约', () => {
 
   it('finance 权威页仍然存在且为默认导出', () => {
     const financePage = readFileSync(
-      resolve(webRoot, 'src/pages/finance/FinanceVoucherPage/index.tsx'),
+      resolve(webRoot, 'src/components/finance/FinanceVoucherPage/index.tsx'),
       'utf-8'
     );
     expect(financePage).toContain('export default FinanceVoucherPage');
