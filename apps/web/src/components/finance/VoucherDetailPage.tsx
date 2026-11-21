@@ -23,6 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Check, User, Calendar, Building2, AlertCircle } from 'lucide-react';
 import { DetailPageTemplate } from '@/components/templates';
 import { voucherApi } from '@/api/finance';
+import { VOUCHER_STATUS_LABELS, type VoucherStatus } from './generated/voucherStatus';
 import type { Voucher, VoucherEntry } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -133,21 +134,23 @@ const VoucherDetailPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<
-      string,
-      {
-        label: string;
-        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-      }
+    const statusColors: Record<
+      VoucherStatus,
+      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
     > = {
-      draft: { label: t('finance.voucher_detail_page.status_draft'), color: 'default' },
-      submitted: { label: t('finance.voucher_detail_page.pending_review'), color: 'warning' },
-      approved: { label: t('finance.voucher_detail_page.approved'), color: 'info' },
-      posted: { label: t('finance.voucher_detail_page.status_posted'), color: 'success' },
-      reversed: { label: t('finance.voucher_detail_page.status_reversed'), color: 'secondary' },
-      imported: { label: t('finance.voucher_detail_page.import'), color: 'secondary' },
+      draft: 'default',
+      submitted: 'warning',
+      approved: 'info',
+      posted: 'success',
+      reversed: 'secondary',
+      cancelled: 'default',
+      rejected: 'error',
     };
-    const config = statusConfig[status] || { label: status, color: 'default' };
+    const typed = status as VoucherStatus;
+    const config =
+      status in statusColors
+        ? { label: t(VOUCHER_STATUS_LABELS[typed]), color: statusColors[typed] }
+        : { label: status, color: 'default' as const };
     return (
       <Chip
         size='small'

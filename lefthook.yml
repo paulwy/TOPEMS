@@ -486,6 +486,14 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-org-field.mjs --changed-only
 
+    # [Gate STATUS-CODEGEN] W5-B B3 试点：finance 凭证状态常量必须由 DB ENUM 目录生成。
+    # 单一源 docs/database/status-check-catalog.json · public.voucher_status；
+    # 改目录/生成物/脚本任一未同步重生成即阻断。
+    status-codegen:
+      tags: database frontend status
+      glob: "{docs/database/status-check-catalog.json,scripts/ci/gen-finance-voucher-status.mjs,apps/web/src/components/finance/generated/voucherStatus.ts}"
+      run: node scripts/ci/gen-finance-voucher-status.mjs --check
+
     # [Gate TWS] 零租户写入源头扫描（2026-11-16 接入，report-only 起步）
     # 扫描 svc/lib/scripts 中「裸零 UUID 当 tenant 写」的疑似点；显式
     # PLATFORM_TENANT_ID / SYSTEM_TENANT_ID 与测试代码在白名单内。
