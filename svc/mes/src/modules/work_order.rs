@@ -18,6 +18,7 @@ use topems_shared_auth::middleware::require_tenant;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::ToSchema;
 
+use crate::modules::work_order_status::WorkOrderStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -646,7 +647,7 @@ pub async fn create_work_order(
             team_id, operator,
             status, priority, remark, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -671,6 +672,7 @@ pub async fn create_work_order(
     .bind(plan_end_date)
     .bind(team_id)
     .bind(&body.operator)
+    .bind(WorkOrderStatus::DEFAULT.as_db_str())
     .bind(priority)
     .bind(&body.remark)
     .bind(tenant_id)
@@ -944,11 +946,12 @@ pub async fn delete_work_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo SET deleted_at = NOW()
-        WHERE wo.id = $1 AND wo.status IN ('pending', 'cancelled')
-          AND wo.tenant_id = $2::uuid
+        WHERE wo.id = $1 AND wo.status = ANY($2)
+          AND wo.tenant_id = $3::uuid
         "#,
     )
     .bind(uuid)
+    .bind(WorkOrderStatus::DELETABLE.as_slice())
     .bind(tenant_id)
     .execute(&mut scope)
     .await;
@@ -1031,9 +1034,9 @@ pub async fn start_work_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo
-        SET status = 'in_progress', actual_start_date = NOW(), updated_at = NOW()
-        WHERE wo.id = $1 AND wo.status = 'pending'
-          AND wo.tenant_id = $2::uuid
+        SET status = $1, actual_start_date = NOW(), updated_at = NOW()
+        WHERE wo.id = $2 AND wo.status = ANY($3)
+          AND wo.tenant_id = $4::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1046,7 +1049,9 @@ pub async fn start_work_order(
             created_at, updated_at
         "#,
     )
+    .bind(WorkOrderStatus::InProgress.as_db_str())
     .bind(uuid)
+    .bind(WorkOrderStatus::start_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1124,9 +1129,9 @@ pub async fn complete_work_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo
-        SET status = 'completed', actual_end_date = NOW(), updated_at = NOW()
-        WHERE wo.id = $1 AND wo.status = 'in_progress'
-          AND wo.tenant_id = $2::uuid
+        SET status = $1, actual_end_date = NOW(), updated_at = NOW()
+        WHERE wo.id = $2 AND wo.status = ANY($3)
+          AND wo.tenant_id = $4::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1139,7 +1144,9 @@ pub async fn complete_work_order(
             created_at, updated_at
         "#,
     )
+    .bind(WorkOrderStatus::Completed.as_db_str())
     .bind(uuid)
+    .bind(WorkOrderStatus::complete_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1219,9 +1226,9 @@ pub async fn cancel_work_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo
-        SET status = 'cancelled', updated_at = NOW()
-        WHERE wo.id = $1 AND wo.status IN ('pending', 'in_progress', 'paused')
-          AND wo.tenant_id = $2::uuid
+        SET status = $1, updated_at = NOW()
+        WHERE wo.id = $2 AND wo.status = ANY($3)
+          AND wo.tenant_id = $4::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1234,7 +1241,9 @@ pub async fn cancel_work_order(
             created_at, updated_at
         "#,
     )
+    .bind(WorkOrderStatus::Cancelled.as_db_str())
     .bind(uuid)
+    .bind(WorkOrderStatus::cancel_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1314,9 +1323,9 @@ pub async fn pause_work_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo
-        SET status = 'paused', updated_at = NOW()
-        WHERE wo.id = $1 AND wo.status = 'in_progress'
-          AND wo.tenant_id = $2::uuid
+        SET status = $1, updated_at = NOW()
+        WHERE wo.id = $2 AND wo.status = ANY($3)
+          AND wo.tenant_id = $4::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1329,7 +1338,9 @@ pub async fn pause_work_order(
             created_at, updated_at
         "#,
     )
+    .bind(WorkOrderStatus::Paused.as_db_str())
     .bind(uuid)
+    .bind(WorkOrderStatus::pause_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1409,9 +1420,9 @@ pub async fn resume_work_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo
-        SET status = 'in_progress', updated_at = NOW()
-        WHERE wo.id = $1 AND wo.status = 'paused'
-          AND wo.tenant_id = $2::uuid
+        SET status = $1, updated_at = NOW()
+        WHERE wo.id = $2 AND wo.status = ANY($3)
+          AND wo.tenant_id = $4::uuid
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1424,7 +1435,9 @@ pub async fn resume_work_order(
             created_at, updated_at
         "#,
     )
+    .bind(WorkOrderStatus::InProgress.as_db_str())
     .bind(uuid)
+    .bind(WorkOrderStatus::resume_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;

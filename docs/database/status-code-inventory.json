@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 141,
+    "rust_enums": 142,
     "rust_enum_values": 153,
     "rust_values_not_in_db_check": 115,
     "frontend_status_keys": 169,
@@ -1749,6 +1749,25 @@
         "failed",
         "passed",
         "warning"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/work_order_status.rs",
+      "name": "WorkOrderStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Paused",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "paused",
+        "pending"
       ]
     },
     {

@@ -478,6 +478,13 @@
       "table": "ai.documents",
       "column": "status",
       "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/work_order_status.rs",
+      "enum": "WorkOrderStatus",
+      "table": "mes.work_orders",
+      "column": "status",
+      "candidate": "docs/database/mes-work-order-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

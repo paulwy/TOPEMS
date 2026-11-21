@@ -32,6 +32,7 @@ pub mod settings;
 pub mod team;
 pub mod wip;
 pub mod work_order;
+pub mod work_order_status;
 pub mod work_report;
 pub mod work_station;
 
