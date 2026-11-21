@@ -50,6 +50,8 @@ import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
+import { APPROVAL_STATUS_LABELS, type ApprovalStatus } from './generated/financeStatus';
+
 /**
  * P0 止血：合并报表生成/发布/抵消尚未接入真实数据链路。
  * 后端对应端点返回 501“未接入”，此开关保证页面不展示历史假数据、不提供假操作入口。
@@ -63,10 +65,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   published: { label: i18n.t('finance.consolidation_reports_page.k8'), color: 'secondary' },
 };
 
-const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: i18n.t('finance.consolidation_reports_page.k9'), color: 'warning' },
-  approved: { label: i18n.t('finance.consolidation_reports_page.k10'), color: 'success' },
-  rejected: { label: i18n.t('finance.consolidation_reports_page.k11'), color: 'error' },
+const APPROVAL_STATUS_CONFIG: Record<ApprovalStatus, { label: string; color: string }> = {
+  pending: { label: i18n.t(APPROVAL_STATUS_LABELS.pending), color: 'warning' },
+  approved: { label: i18n.t(APPROVAL_STATUS_LABELS.approved), color: 'success' },
+  rejected: { label: i18n.t(APPROVAL_STATUS_LABELS.rejected), color: 'error' },
+  cancelled: { label: i18n.t(APPROVAL_STATUS_LABELS.cancelled), color: 'default' },
 };
 
 const tableColumns: TableColumn[] = [

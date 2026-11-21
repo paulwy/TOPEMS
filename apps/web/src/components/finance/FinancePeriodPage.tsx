@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import {
+  PERIOD_STATUS_LABELS,
+  PERIOD_STATUS_VALUES,
+  type PeriodStatus,
+} from './generated/financeStatus';
 import { CalendarDays, Lock, Unlock, XCircle } from 'lucide-react';
 import {
   Box,
@@ -28,6 +33,9 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 import { PageContainer } from '@/components/common';
+
+const isPeriodStatus = (status?: string): status is PeriodStatus =>
+  status !== undefined && (PERIOD_STATUS_VALUES as readonly string[]).includes(status);
 
 interface PeriodRow {
   period: string;
@@ -173,14 +181,26 @@ const FinancePeriodPage: React.FC = () => {
                             ) : isClosed ? (
                               <Chip
                                 size='small'
-                                label={t('finance.period_page.status_closed')}
+                                label={t(PERIOD_STATUS_LABELS.closed)}
                                 color='default'
+                              />
+                            ) : isPeriodStatus(row.status) ? (
+                              <Chip
+                                size='small'
+                                label={t(PERIOD_STATUS_LABELS[row.status])}
+                                color={
+                                  row.status === 'open'
+                                    ? 'success'
+                                    : row.status === 'closing'
+                                      ? 'warning'
+                                      : 'default'
+                                }
                               />
                             ) : (
                               <Chip
                                 size='small'
-                                label={t('finance.period_page.status_open')}
-                                color='success'
+                                label={row.status}
+                                color='default'
                               />
                             )}
                           </TableCell>

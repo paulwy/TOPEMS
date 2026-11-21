@@ -23,7 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Check, User, Calendar, Building2, AlertCircle } from 'lucide-react';
 import { DetailPageTemplate } from '@/components/templates';
 import { voucherApi } from '@/api/finance';
-import { VOUCHER_STATUS_LABELS, type VoucherStatus } from './generated/voucherStatus';
+import { VOUCHER_STATUS_LABELS, type VoucherStatus } from './generated/financeStatus';
 import type { Voucher, VoucherEntry } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

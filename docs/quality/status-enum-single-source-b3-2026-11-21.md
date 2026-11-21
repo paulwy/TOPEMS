@@ -2,30 +2,33 @@
 
 ## 1. 范围
 
-B3 先在 finance 里选成本最低、DB 已有单一源的一列：`public.voucher_status`，
-对应 `finance.core_finance_vouchers.status`。
+B3 覆盖 finance 的 5 个 PostgreSQL ENUM 状态列，全部已在 DB 层拒绝集合外值，
+不需要再补 CHECK：
 
-DB 枚举标签（7 个）：
-
-`approved / cancelled / draft / posted / rejected / reversed / submitted`
-
-该列是 PostgreSQL ENUM 类型，数据库本身已拒绝集合外值，不需要再补 CHECK。
+| 类型                           | 值                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `public.voucher_status`        | approved / cancelled / draft / posted / rejected / reversed / submitted |
+| `public.approval_status`       | approved / cancelled / pending / rejected                               |
+| `public.match_status`          | diff / manual / matched / unmatched                                     |
+| `public.period_status`         | closed / closing / open                                                 |
+| `public.reconciliation_status` | cancelled / completed / pending / processing                            |
 
 ## 2. 生成链
 
-- 单一源：`docs/database/status-check-catalog.json` → `enum_types.public.voucher_status`
-- 生成脚本：`scripts/ci/gen-finance-voucher-status.mjs`
-- 生成物：`apps/web/src/components/finance/generated/voucherStatus.ts`
-  - `VOUCHER_STATUS_VALUES`（7 值，`as const`）
-  - `VoucherStatus` 联合类型
-  - `VOUCHER_STATUS_LABELS`（状态 → i18n key）
+- 单一源：`docs/database/status-check-catalog.json` → `enum_types` 中 `public` 的 5 个状态类型
+- 生成脚本：`scripts/ci/gen-finance-status.mjs`
+- 生成物：`apps/web/src/components/finance/generated/financeStatus.ts`
+  - 5 组 `*_VALUES`（`as const`）与联合类型
+  - 5 组 `*_LABELS`（状态 → `finance.status.<group>_<value>`）
 - 门禁：lefthook `status-codegen`，`--check` 不一致即阻断
+- i18n：zh/en 各补 18 个通用状态文案
 
 ## 3. 前端漂移修正
 
-`VoucherDetailPage` 原来手写 6 个状态：
+`VoucherDetailPage` 与凭证列表原来手写状态：
 
-`draft / submitted / approved / posted / reversed / imported`
+`draft / pending / approved / posted / imported`（列表）
+`draft / submitted / approved / posted / reversed / imported`（详情）
 
 与 DB 枚举对比：
 
@@ -33,22 +36,18 @@ DB 枚举标签（7 个）：
 - 缺少 `cancelled`、`rejected`，遇到真实数据会落到原始字符串兜底，已补齐；
 - 色板改为显式 `Record<VoucherStatus, ...>`，状态名由生成常量约束。
 
-i18n 补 4 个键（zh/en）：
-
-`status_approved / status_submitted / status_cancelled / status_rejected`
+i18n 统一补 18 个 `finance.status.*` 键（zh/en），详情页原有 4 个
+`status_approved / status_submitted / status_cancelled / status_rejected` 保留。
 
 ## 4. 验证
 
-- `node scripts/ci/gen-finance-voucher-status.mjs --check` 通过
+- `node scripts/ci/gen-finance-status.mjs --check` 通过
 - `pnpm --dir apps/web typecheck` 通过
-- `eslint VoucherDetailPage.tsx generated/voucherStatus.ts` 0 error
+- `eslint apps/web/src/components/finance` 0 error
 - `vitest src/components/finance` 3 files / 7 tests 通过
 
 ## 5. 剩余
 
-finance 还有 4 个 PostgreSQL ENUM 状态列：
-
-`period_status`、`match_status`、`reconciliation_status`、`approval_status`
-
-以及 28 个无约束状态列、23 个 Rust `*Status` 枚举。按同一模板逐列映射，不一次性
-机械合并。其它模块的生成链复用本结构，只替换 DB 类型与目标文件。
+finance 的 5 个 PostgreSQL ENUM 状态列已全部生成。还剩 28 个无约束状态列与
+23 个 Rust `*Status` 枚举需要逐列确认真实取值后再纳入，不能把代码枚举直接当
+DB 约束。其它模块复用本结构，只替换 DB 类型与目标文件。

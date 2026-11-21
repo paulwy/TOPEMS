@@ -26,6 +26,7 @@ import { voucherApi } from '@/api/finance/voucher';
 import { accountingSubjectApi } from '@/api/finance/accountingSubject';
 import type { FinancialVoucher, VoucherItemRequest } from '@/api/finance';
 import type { VoucherEntry } from '@/types/finance';
+import { VOUCHER_STATUS_LABELS, type VoucherStatus } from '../generated/financeStatus';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { FINANCE_PATHS } from '@/module-configs/finance/config';
@@ -299,9 +300,10 @@ const FinanceVoucherPage: React.FC = () => {
       if (ids.length === 0) return;
 
       try {
-        const promises = ids.map((id) => voucherApi.update(id, { status: 'approved' }));
-        const results = await Promise.allSettled(promises);
-        const successCount = results.filter((r) => r.status === 'fulfilled').length;
+        const results = await Promise.allSettled(ids.map((id) => voucherApi.approve(id)));
+        const successCount = results.filter(
+          (r) => r.status === 'fulfilled' && r.value.success
+        ).length;
 
         if (successCount === ids.length) {
           addNotification({
@@ -337,7 +339,7 @@ const FinanceVoucherPage: React.FC = () => {
   const handleAudit = useCallback(
     async (id: string) => {
       try {
-        const result = await voucherApi.update(id, { status: 'approved' });
+        const result = await voucherApi.approve(id);
         if (!result.success) {
           throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
         }
@@ -361,7 +363,7 @@ const FinanceVoucherPage: React.FC = () => {
   const handleUnaudit = useCallback(
     async (id: string) => {
       try {
-        const result = await voucherApi.update(id, { status: 'pending' });
+        const result = await voucherApi.unapprove(id);
         if (!result.success) {
           throw new Error(result.message || t('finance.finance_voucher_page_index.fail_2'));
         }
@@ -468,23 +470,23 @@ const FinanceVoucherPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<
-      string,
-      {
-        color: 'success' | 'warning' | 'default' | 'secondary';
-        label: string;
-      }
+    const statusColors: Record<
+      VoucherStatus,
+      'success' | 'warning' | 'default' | 'secondary' | 'error'
     > = {
-      draft: { color: 'default', label: t('finance.finance_voucher_page_index.status_draft') },
-      pending: { color: 'warning', label: t('finance.finance_voucher_page_index.pending_review') },
-      approved: { color: 'success', label: t('finance.finance_voucher_page_index.approved') },
-      posted: { color: 'success', label: t('finance.finance_voucher_page_index.status_posted') },
-      imported: { color: 'secondary', label: t('finance.finance_voucher_page_index.import_5') },
+      draft: 'default',
+      submitted: 'warning',
+      approved: 'success',
+      posted: 'success',
+      reversed: 'secondary',
+      cancelled: 'error',
+      rejected: 'error',
     };
-    const config = badges[status] || {
-      color: 'default' as const,
-      label: status,
-    };
+    const typed = status as VoucherStatus;
+    const config =
+      status in statusColors
+        ? { color: statusColors[typed], label: t(VOUCHER_STATUS_LABELS[typed]) }
+        : { color: 'default' as const, label: status };
     return (
       <StatusBadge
         status={status}
@@ -603,8 +605,7 @@ const FinanceVoucherPage: React.FC = () => {
         icon: <Check size={16} />,
         color: 'success',
         onClick: (row: Record<string, unknown>) => handleAudit(String(row.id)),
-        show: (row: Record<string, unknown>) =>
-          row.status !== 'approved' && row.status !== 'posted',
+        show: (row: Record<string, unknown>) => row.status === 'submitted',
       },
       {
         label: i18n.t('finance.finance_voucher_page_index.pending_review'),

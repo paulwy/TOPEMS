@@ -491,8 +491,8 @@ pre-commit:
     # 改目录/生成物/脚本任一未同步重生成即阻断。
     status-codegen:
       tags: database frontend status
-      glob: "{docs/database/status-check-catalog.json,scripts/ci/gen-finance-voucher-status.mjs,apps/web/src/components/finance/generated/voucherStatus.ts}"
-      run: node scripts/ci/gen-finance-voucher-status.mjs --check
+      glob: "{docs/database/status-check-catalog.json,scripts/ci/gen-finance-status.mjs,apps/web/src/components/finance/generated/financeStatus.ts}"
+      run: node scripts/ci/gen-finance-status.mjs --check
 
     # [Gate TWS] 零租户写入源头扫描（2026-11-16 接入，report-only 起步）
     # 扫描 svc/lib/scripts 中「裸零 UUID 当 tenant 写」的疑似点；显式
