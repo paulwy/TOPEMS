@@ -46,7 +46,8 @@ async fn begin_request_txn(pool: &PgPool, tenant: Uuid) -> RlsTxnCell {
 async fn setup_schema(pool: &PgPool) {
     sqlx::raw_sql(
         r#"
-        CREATE TABLE IF NOT EXISTS meeting_rooms (
+        CREATE SCHEMA IF NOT EXISTS erp;
+        CREATE TABLE IF NOT EXISTS erp.meeting_rooms (
             id UUID PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             capacity INT NOT NULL,
@@ -58,7 +59,7 @@ async fn setup_schema(pool: &PgPool) {
             deleted_at TIMESTAMPTZ,
             tenant_id UUID
         );
-        CREATE TABLE IF NOT EXISTS meeting_bookings (
+        CREATE TABLE IF NOT EXISTS erp.meeting_bookings (
             id UUID PRIMARY KEY,
             room_id UUID NOT NULL,
             room_name VARCHAR(255) NOT NULL,
@@ -72,7 +73,7 @@ async fn setup_schema(pool: &PgPool) {
             deleted_at TIMESTAMPTZ,
             tenant_id UUID
         );
-        CREATE TABLE IF NOT EXISTS vehicles (
+        CREATE TABLE IF NOT EXISTS erp.vehicles (
             id UUID PRIMARY KEY,
             plate_number VARCHAR(64) UNIQUE NOT NULL,
             brand VARCHAR(64),
@@ -88,7 +89,7 @@ async fn setup_schema(pool: &PgPool) {
             deleted_at TIMESTAMPTZ,
             tenant_id UUID
         );
-        CREATE TABLE IF NOT EXISTS vehicle_requests (
+        CREATE TABLE IF NOT EXISTS erp.vehicle_requests (
             id UUID PRIMARY KEY,
             vehicle_id UUID NOT NULL,
             vehicle_plate VARCHAR(64) NOT NULL,
@@ -113,7 +114,7 @@ async fn setup_schema(pool: &PgPool) {
 }
 
 async fn tenant_of(pool: &PgPool, table: &str, id: Uuid) -> Option<Uuid> {
-    let sql = format!("SELECT tenant_id FROM {table} WHERE id = $1");
+    let sql = format!("SELECT tenant_id FROM erp.{table} WHERE id = $1");
     sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .fetch_optional(pool)
