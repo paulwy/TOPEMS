@@ -73,14 +73,22 @@ fn decide_group_view(mut descendants: Vec<Uuid>, has_parent: bool) -> Option<Vec
     Some(descendants)
 }
 
-/// 显式公司头缺失时的隐式推断：仅当用户在当前租户只有一条成员记录时采用它。
+/// 显式公司头缺失时的隐式推断：`is_default` 优先，其次唯一成员。
 ///
-/// 多条或无记录一律返回 `None`（维持 fail-closed），不做任何猜测。
-fn decide_single_member(members: &[Uuid]) -> Option<Uuid> {
+/// 多条且无默认、或无记录一律返回 `None`（维持 fail-closed），不做任何猜测。
+fn decide_implicit_company(members: &[(Uuid, bool)]) -> Option<Uuid> {
+    if let Some((company_id, _)) = members.iter().find(|(_, is_default)| *is_default) {
+        return Some(*company_id);
+    }
     match members {
-        [only] => Some(*only),
+        [(only, _)] => Some(*only),
         _ => None,
     }
+}
+
+/// 公司上下文解析优先级：显式 `x-company-id` > `is_default` > 唯一成员推断 > 无上下文。
+fn pick_company_id(explicit: Option<Uuid>, members: &[(Uuid, bool)]) -> Option<Uuid> {
+    explicit.or_else(|| decide_implicit_company(members))
 }
 
 /// 校验「公司属于当前租户且当前用户持有该公司数据范围」。
@@ -113,12 +121,16 @@ async fn ensure_member(
     Ok(())
 }
 
-/// 读取用户在当前租户的全部成员记录，供唯一成员推断。
+/// 读取用户在当前租户的全部成员记录（含默认公司标记），供隐式推断。
 ///
 /// 查询失败按无上下文处理（保持改造前的 fail-closed 行为），不把无头请求变成 500。
-async fn load_members(conn: &mut PgConnection, tenant_id: Uuid, user_id: Uuid) -> Vec<Uuid> {
-    match sqlx::query_scalar::<_, Uuid>(
-        "SELECT company_id FROM public.core_user_company_scopes \
+async fn load_members(
+    conn: &mut PgConnection,
+    tenant_id: Uuid,
+    user_id: Uuid,
+) -> Vec<(Uuid, bool)> {
+    match sqlx::query_as::<_, (Uuid, bool)>(
+        "SELECT company_id, is_default FROM public.core_user_company_scopes \
          WHERE tenant_id = $1 AND user_id = $2",
     )
     .bind(tenant_id)
@@ -144,7 +156,7 @@ async fn set_system_flag(conn: &mut PgConnection, on: bool) -> Result<(), sqlx::
 
 /// 解析请求头中的公司上下文并校验归属。
 ///
-/// 解析优先级：显式 `x-company-id` > 唯一成员推断 > 无上下文（fail-closed）。
+/// 解析优先级：显式 `x-company-id` > `is_default` > 唯一成员推断 > 无上下文（fail-closed）。
 ///
 /// `conn` 必须位于事务内且已设置 `app.tenant_id`；`system` 是调用方原本的系统通道标志，
 /// 母公司视角推导结束后会原样恢复，避免扩大系统通道。
@@ -178,18 +190,18 @@ pub async fn resolve_company_context(
             company_id
         }
         None => {
-            // 无显式公司头：仅当用户在当前租户只有一条成员记录时自动采用。
+            // 无显式公司头：is_default 优先，其次仅为唯一成员兜底。
             if user_id.is_nil() {
                 return Ok(None);
             }
             let members = load_members(conn, tenant_id, user_id).await;
-            match decide_single_member(&members) {
+            match decide_implicit_company(&members) {
                 Some(company_id) => company_id,
                 None => {
                     if members.len() > 1 {
                         tracing::debug!(
                             candidates = members.len(),
-                            "用户存在多条公司范围记录且未声明 x-company-id，按无上下文处理"
+                            "用户存在多条公司范围记录、无默认公司且未声明 x-company-id，按无上下文处理"
                         );
                     }
                     return Ok(None);
@@ -367,23 +379,69 @@ mod tests {
     #[test]
     fn single_member_is_inferred() {
         assert_eq!(
-            decide_single_member(&[COMPANY]),
+            decide_implicit_company(&[(COMPANY, false)]),
             Some(COMPANY),
             "只有一条成员记录时自动采用它"
         );
     }
 
     #[test]
-    fn multiple_members_are_not_inferred() {
+    fn multiple_members_without_default_are_not_inferred() {
         assert_eq!(
-            decide_single_member(&[COMPANY, CHILD_A]),
+            decide_implicit_company(&[(COMPANY, false), (CHILD_A, false)]),
             None,
-            "多成员不带头时必须维持无上下文（fail-closed），不猜"
+            "多成员且无默认公司时必须维持无上下文（fail-closed），不猜"
         );
     }
 
     #[test]
     fn no_member_is_not_inferred() {
-        assert_eq!(decide_single_member(&[]), None, "无成员记录时维持无上下文");
+        assert_eq!(
+            decide_implicit_company(&[]),
+            None,
+            "无成员记录时维持无上下文"
+        );
+    }
+
+    #[test]
+    fn default_company_wins_over_other_members() {
+        assert_eq!(
+            decide_implicit_company(&[(COMPANY, false), (CHILD_A, true), (CHILD_B, false)]),
+            Some(CHILD_A),
+            "is_default 必须优先于其它成员"
+        );
+    }
+
+    #[test]
+    fn explicit_header_beats_default_and_single_member() {
+        assert_eq!(
+            pick_company_id(Some(CHILD_B), &[(COMPANY, true), (CHILD_A, false)]),
+            Some(CHILD_B),
+            "显式头必须优先于默认公司与唯一成员推断"
+        );
+        assert_eq!(
+            pick_company_id(Some(CHILD_B), &[(COMPANY, false)]),
+            Some(CHILD_B),
+            "显式头必须优先于唯一成员推断"
+        );
+    }
+
+    #[test]
+    fn implicit_priority_is_default_then_single_then_none() {
+        assert_eq!(
+            pick_company_id(None, &[(COMPANY, false), (CHILD_A, true)]),
+            Some(CHILD_A),
+            "无显式头时 is_default 优先"
+        );
+        assert_eq!(
+            pick_company_id(None, &[(COMPANY, false)]),
+            Some(COMPANY),
+            "无默认公司时回落到唯一成员推断"
+        );
+        assert_eq!(
+            pick_company_id(None, &[(COMPANY, false), (CHILD_A, false)]),
+            None,
+            "无默认公司且多成员时无上下文"
+        );
     }
 }

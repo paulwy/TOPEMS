@@ -1,10 +1,11 @@
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 //! 公司上下文解析：请求头缺失时的隐式推断与优先级（隔离库 `sqlx::test`）。
 //!
-//! 直接驱动 [`resolve_company_context`] 的真实查询路径，验证：
-//!   - 用户在当前租户只有一条成员记录时，不带 `x-company-id` 也能解析出该公司；
-//!   - 多条或无记录时维持无上下文（数据库侧 fail-closed）；
-//!   - 显式 `x-company-id` 覆盖推断结果，且仍走原有归属校验（403）。
+//! 直接驱动 [`resolve_company_context`] 的真实查询路径，验证优先级链：
+//!   显式 `x-company-id` > `is_default` > 唯一成员推断 > 无上下文（fail-closed）。
+//!
+//! 行为变化：改造前「多成员不带头 = 0 行」的用例只对「无默认公司」的多成员用户仍成立；
+//! 一旦用户有默认公司（迁移回填或人工指定），同一条无头请求会解析出默认公司。
 #![cfg(feature = "db-tests")]
 
 use axum::http::{HeaderMap, HeaderValue};
@@ -25,9 +26,13 @@ async fn setup(pool: &PgPool) {
             user_id uuid NOT NULL,
             company_id uuid NOT NULL,
             access_level varchar(20) NOT NULL DEFAULT 'read',
+            is_default boolean NOT NULL DEFAULT false,
             created_at timestamptz NOT NULL DEFAULT now(),
             CONSTRAINT uq_user_company_scopes UNIQUE (tenant_id, user_id, company_id)
         )"#,
+        r#"CREATE UNIQUE INDEX IF NOT EXISTS uq_user_company_scopes_default
+            ON public.core_user_company_scopes (tenant_id, user_id)
+            WHERE is_default"#,
         r#"CREATE TABLE IF NOT EXISTS erp.company_relations (
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id uuid NOT NULL,
@@ -43,10 +48,24 @@ async fn setup(pool: &PgPool) {
     }
 }
 
-async fn insert_scope(pool: &PgPool, tenant: Uuid, user: Uuid, company: Uuid) {
+async fn insert_scope(pool: &PgPool, tenant: Uuid, user: Uuid, company: Uuid, is_default: bool) {
     sqlx::query(
-        "INSERT INTO public.core_user_company_scopes (tenant_id, user_id, company_id)
-         VALUES ($1, $2, $3)",
+        "INSERT INTO public.core_user_company_scopes (tenant_id, user_id, company_id, is_default)
+         VALUES ($1, $2, $3, $4)",
+    )
+    .bind(tenant)
+    .bind(user)
+    .bind(company)
+    .bind(is_default)
+    .execute(pool)
+    .await
+    .unwrap();
+}
+
+async fn delete_scope(pool: &PgPool, tenant: Uuid, user: Uuid, company: Uuid) {
+    sqlx::query(
+        "DELETE FROM public.core_user_company_scopes
+          WHERE tenant_id = $1 AND user_id = $2 AND company_id = $3",
     )
     .bind(tenant)
     .bind(user)
@@ -54,6 +73,30 @@ async fn insert_scope(pool: &PgPool, tenant: Uuid, user: Uuid, company: Uuid) {
     .execute(pool)
     .await
     .unwrap();
+}
+
+async fn set_default(pool: &PgPool, tenant: Uuid, user: Uuid, company: Uuid) {
+    let mut tx = pool.begin().await.unwrap();
+    sqlx::query(
+        "UPDATE public.core_user_company_scopes SET is_default = false
+          WHERE tenant_id = $1 AND user_id = $2",
+    )
+    .bind(tenant)
+    .bind(user)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    sqlx::query(
+        "UPDATE public.core_user_company_scopes SET is_default = true
+          WHERE tenant_id = $1 AND user_id = $2 AND company_id = $3",
+    )
+    .bind(tenant)
+    .bind(user)
+    .bind(company)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
 }
 
 fn company_header(company: Uuid) -> HeaderMap {
@@ -88,7 +131,7 @@ async fn single_member_is_inferred_without_header(pool: PgPool) {
     let tenant = Uuid::new_v4();
     let user = Uuid::new_v4();
     let company = Uuid::new_v4();
-    insert_scope(&pool, tenant, user, company).await;
+    insert_scope(&pool, tenant, user, company, false).await;
 
     let ctx = resolve(&pool, tenant, user, &HeaderMap::new())
         .await
@@ -100,20 +143,37 @@ async fn single_member_is_inferred_without_header(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = false)]
-async fn multi_member_without_header_stays_fail_closed(pool: PgPool) {
+async fn multi_member_without_default_stays_fail_closed(pool: PgPool) {
     setup(&pool).await;
     let tenant = Uuid::new_v4();
     let user = Uuid::new_v4();
-    insert_scope(&pool, tenant, user, Uuid::new_v4()).await;
-    insert_scope(&pool, tenant, user, Uuid::new_v4()).await;
+    insert_scope(&pool, tenant, user, Uuid::new_v4(), false).await;
+    insert_scope(&pool, tenant, user, Uuid::new_v4(), false).await;
 
     assert_eq!(
         resolve(&pool, tenant, user, &HeaderMap::new())
             .await
             .unwrap(),
         None,
-        "多成员且未声明 x-company-id 时必须维持无上下文（下游 0 行）"
+        "多成员、无默认公司且未声明 x-company-id 时必须维持无上下文（下游 0 行）"
     );
+}
+
+#[sqlx::test(migrations = false)]
+async fn default_company_applies_for_multi_member(pool: PgPool) {
+    setup(&pool).await;
+    let tenant = Uuid::new_v4();
+    let user = Uuid::new_v4();
+    let other = Uuid::new_v4();
+    let default_company = Uuid::new_v4();
+    insert_scope(&pool, tenant, user, other, false).await;
+    insert_scope(&pool, tenant, user, default_company, true).await;
+
+    let ctx = resolve(&pool, tenant, user, &HeaderMap::new())
+        .await
+        .unwrap()
+        .expect("多成员用户应解析出默认公司");
+    assert_eq!(ctx.company_id, default_company);
 }
 
 #[sqlx::test(migrations = false)]
@@ -123,8 +183,8 @@ async fn explicit_header_overrides_inference(pool: PgPool) {
     let user = Uuid::new_v4();
     let first = Uuid::new_v4();
     let second = Uuid::new_v4();
-    insert_scope(&pool, tenant, user, first).await;
-    insert_scope(&pool, tenant, user, second).await;
+    insert_scope(&pool, tenant, user, first, false).await;
+    insert_scope(&pool, tenant, user, second, false).await;
 
     let ctx = resolve(&pool, tenant, user, &company_header(second))
         .await
@@ -134,11 +194,60 @@ async fn explicit_header_overrides_inference(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = false)]
+async fn explicit_header_overrides_default_company(pool: PgPool) {
+    setup(&pool).await;
+    let tenant = Uuid::new_v4();
+    let user = Uuid::new_v4();
+    let default_company = Uuid::new_v4();
+    let explicit = Uuid::new_v4();
+    insert_scope(&pool, tenant, user, default_company, true).await;
+    insert_scope(&pool, tenant, user, explicit, false).await;
+
+    let ctx = resolve(&pool, tenant, user, &company_header(explicit))
+        .await
+        .unwrap()
+        .expect("显式头必须覆盖默认公司");
+    assert_eq!(ctx.company_id, explicit);
+}
+
+#[sqlx::test(migrations = false)]
+async fn default_switch_takes_effect_immediately(pool: PgPool) {
+    setup(&pool).await;
+    let tenant = Uuid::new_v4();
+    let user = Uuid::new_v4();
+    let old_default = Uuid::new_v4();
+    let new_default = Uuid::new_v4();
+    insert_scope(&pool, tenant, user, old_default, true).await;
+    insert_scope(&pool, tenant, user, new_default, false).await;
+
+    let before = resolve(&pool, tenant, user, &HeaderMap::new())
+        .await
+        .unwrap()
+        .expect("初始默认公司应生效");
+    assert_eq!(before.company_id, old_default);
+
+    // 把默认公司改成另一家：无头请求必须立刻切到新默认，不做任何缓存。
+    set_default(&pool, tenant, user, new_default).await;
+    let after = resolve(&pool, tenant, user, &HeaderMap::new())
+        .await
+        .unwrap()
+        .expect("新默认公司应立即生效");
+    assert_eq!(after.company_id, new_default);
+
+    // 旧公司失去数据范围后，显式旧头立即失效（403）。
+    delete_scope(&pool, tenant, user, old_default).await;
+    let err = resolve(&pool, tenant, user, &company_header(old_default))
+        .await
+        .unwrap_err();
+    assert_eq!(err.0, 403, "旧头对应的范围已移除，必须立即失效");
+}
+
+#[sqlx::test(migrations = false)]
 async fn explicit_header_outside_scope_is_rejected(pool: PgPool) {
     setup(&pool).await;
     let tenant = Uuid::new_v4();
     let user = Uuid::new_v4();
-    insert_scope(&pool, tenant, user, Uuid::new_v4()).await;
+    insert_scope(&pool, tenant, user, Uuid::new_v4(), false).await;
 
     let err = resolve(&pool, tenant, user, &company_header(Uuid::new_v4()))
         .await
