@@ -30,7 +30,7 @@ fn amount_decimal(req: &Value, key: &str) -> Decimal {
         .unwrap_or(Decimal::ZERO)
 }
 
-use crate::modules::expense_status::normalize as normalize_expense_status;
+use crate::modules::expense_status::{normalize_expense, ExpenseStatus};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -157,6 +157,18 @@ pub async fn create_expense(
         return ApiResponse::bad_request("申请人不能为空");
     };
 
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => ExpenseStatus::Draft,
+        Some(raw) => match normalize_expense(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/submitted/approved/rejected/paid",
+                )
+            }
+        },
+    };
+
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
@@ -177,7 +189,7 @@ pub async fn create_expense(
         r#"INSERT INTO finance.expenses (id, expense_number, applicant_name, department_id, expense_type,
                                   amount, description, expense_date, receipt_count, status,
                                   created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
                      reimbursed_at, created_at, updated_at"#
@@ -208,6 +220,7 @@ pub async fn create_expense(
             .map(|i| i as i32)
             .unwrap_or(0),
     )
+    .bind(status.as_str())
     .bind(now)
     .bind(now)
     .bind(tenant_id)
@@ -307,11 +320,11 @@ pub async fn update_expense(
 
     let status = match req.get("status").and_then(|v| v.as_str()) {
         None => None,
-        Some(raw) => match normalize_expense_status(raw) {
+        Some(raw) => match normalize_expense(raw) {
             Some(status) => Some(status.as_str()),
             None => {
                 return ApiResponse::bad_request(
-                    "status 仅支持 draft/pending/approved/rejected/reimbursed",
+                    "status 仅支持 draft/submitted/approved/rejected/paid",
                 )
             }
         },
