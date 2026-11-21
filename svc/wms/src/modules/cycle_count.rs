@@ -14,7 +14,7 @@ use crate::models::inventory_alert::{CreateCycleCountConfigRequest, CycleCountCo
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::tenant_of;
+use crate::shared::scope::{tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -186,10 +186,39 @@ pub async fn create_cycle_count_config(
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
+    let org_id = {
+        let mut scope = match wms_db(&state.db).scope_with(txn).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "循环盘点配置创建失败".to_string(),
+                ));
+            }
+        };
+        sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"SELECT org_id FROM wms.warehouses
+               WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+        ))
+        .bind(req.warehouse_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+    };
+    let org_id = match org_id {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("仓库不存在，无法创建循环盘点配置"),
+        Err(e) => {
+            tracing::error!("查询仓库组织失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("循环盘点配置创建失败".to_string()));
+        }
+    };
+
     let result = sqlx::query_as::<_, CycleCountConfig>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at, tenant_id, organization_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, $10)
+        INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at, tenant_id, organization_id, org_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, $10, $11)
         RETURNING id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level, last_count_date, next_count_date, is_active, created_at, updated_at
         "#),
     )
@@ -203,6 +232,7 @@ pub async fn create_cycle_count_config(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 

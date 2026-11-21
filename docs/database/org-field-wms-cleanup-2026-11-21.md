@@ -105,3 +105,15 @@ outbound_order_e2e` 4 passed（含新增创建用例）。
 
 验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、4 个 wave e2e 通过；
 `request-txn` 保持 `1655` 基线。
+
+## 8. 同型修复：`cycle_count_configs` 创建（2026-11-21 补）
+
+`wms.cycle_count_configs.org_id` 同样 `NOT NULL` 无默认值，创建语句未写；配置表
+本地 0 行，创建必然 23502。
+
+改动：`create_cycle_count_config` 经 `Db::scope_with` 按 `warehouse_id + tenant_id`
+取仓库 `org_id`，仓库不存在返回 409；`organization_id` 保持租户值。
+`svc/wms/tests/cycle_count_e2e.rs` 补最小仓库表与创建用例。
+
+验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、4 个 cycle e2e 通过；
+`request-txn` 保持 `1655` 基线。
