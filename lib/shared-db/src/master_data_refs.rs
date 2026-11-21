@@ -452,14 +452,7 @@ impl MasterDataRefService {
         let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
         let result = self
             .list_by_tenant_in_scope(
-                &mut scope,
-                tenant_id,
-                offset,
-                limit,
-                domain,
-                code,
-                name,
-                status,
+                &mut scope, tenant_id, offset, limit, domain, code, name, status,
             )
             .await?;
         scope.commit().await?;
@@ -566,7 +559,9 @@ impl MasterDataRefService {
     /// 按 tenant_id + domain 统计总数
     pub async fn count_by_domain(&self, tenant_id: Uuid, domain: &str) -> Result<i64, sqlx::Error> {
         let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = self.count_by_domain_in_scope(&mut scope, tenant_id, domain).await?;
+        let count = self
+            .count_by_domain_in_scope(&mut scope, tenant_id, domain)
+            .await?;
         scope.commit().await?;
         Ok(count)
     }
