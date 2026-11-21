@@ -569,6 +569,13 @@
       "table": "ehs.qa_ehs_accidents",
       "column": "status",
       "candidate": "docs/database/ehs-accident-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/mobile/src/modules/push_status.rs",
+      "enum": "PushNotificationStatus",
+      "table": "mobile.push_notifications",
+      "column": "status",
+      "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

@@ -9,6 +9,7 @@ use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
+use super::push_status::PushNotificationStatus;
 use crate::db::repository::*;
 use crate::models::{CreatePushDevice, CreatePushNotification, PushNotification};
 use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
@@ -622,10 +623,12 @@ pub async fn get_notification_stats(
     };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
+    let sent_states: Vec<String> = vec![PushNotificationStatus::Sent.as_db_str().to_string()];
     let total_sent: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"
+        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = ANY($1::text[])"
     ))
+    .bind(&sent_states)
     .fetch_one(&mut scope)
     .await
     {
@@ -634,8 +637,9 @@ pub async fn get_notification_stats(
     };
 
     let delivered_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = ANY($1::text[])"),
     )
+    .bind(&sent_states)
     .fetch_one(&mut scope)
     .await
     {
@@ -644,8 +648,9 @@ pub async fn get_notification_stats(
     };
 
     let clicked_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = ANY($1::text[])"),
     )
+    .bind(&sent_states)
     .fetch_one(&mut scope)
     .await
     {

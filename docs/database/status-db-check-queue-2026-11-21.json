@@ -3,12 +3,12 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 110,
+    "uncovered_enums": 111,
     "uncovered_values": 124,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 82,
+    "resolved_enums": 83,
     "internal_state_enums": 43,
-    "persisted_unmapped_enums": 58,
+    "persisted_unmapped_enums": 59,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 28,
     "internal_state_values": 65,
@@ -1360,6 +1360,24 @@
         "table": "mes.work_stations",
         "column": "status",
         "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql"
+      }
+    },
+    {
+      "module": "mobile",
+      "file": "svc/mobile/src/modules/push_status.rs",
+      "enum": "PushNotificationStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "sent"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/mobile/src/modules/push_status.rs",
+        "enum": "PushNotificationStatus",
+        "table": "mobile.push_notifications",
+        "column": "status",
+        "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql"
       }
     },
     {

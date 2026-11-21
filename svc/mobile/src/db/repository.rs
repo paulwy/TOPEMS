@@ -3,6 +3,7 @@
 #![allow(clippy::needless_borrows_for_generic_args)]
 
 use crate::models::*;
+use crate::modules::push_status::PushNotificationStatus;
 use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::ScopedTxn;
@@ -672,7 +673,7 @@ pub async fn db_create_push_notification(
     .bind(&data.data)
     .bind(&data.target_type)
     .bind(&data.target_ids)
-    .bind("active")
+    .bind(PushNotificationStatus::DEFAULT.as_db_str())
     .bind(0)
     .bind(0)
     .bind(0)
@@ -689,7 +690,7 @@ pub async fn db_create_push_notification(
         data: data.data,
         target_type: data.target_type,
         target_ids: data.target_ids,
-        status: "pending".to_string(),
+        status: PushNotificationStatus::DEFAULT.as_db_str().to_string(),
         sent_count: 0,
         delivered_count: 0,
         clicked_count: 0,
@@ -708,14 +709,20 @@ pub async fn db_update_push_notification_stats(
     let now = Utc::now();
 
     sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6 "),
+        only_own_schema_query!("mobile", "UPDATE mobile.push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6 AND status = ANY($7::text[])"),
     )
-    .bind("sent")
+    .bind(PushNotificationStatus::Sent.as_db_str())
     .bind(sent_count)
     .bind(delivered_count)
     .bind(clicked_count)
     .bind(now)
     .bind(notification_id)
+    .bind(
+        PushNotificationStatus::send_from()
+            .iter()
+            .map(|s| s.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .execute(&mut *scope)
     .await?;
 

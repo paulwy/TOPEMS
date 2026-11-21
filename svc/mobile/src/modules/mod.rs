@@ -20,6 +20,7 @@ pub mod patrol;
 pub mod photo_upload;
 pub mod production;
 pub mod push_notification;
+pub mod push_status;
 pub mod quality;
 pub mod scan;
 pub mod shortcut;
