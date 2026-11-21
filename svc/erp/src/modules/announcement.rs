@@ -69,7 +69,13 @@ pub async fn list_announcements(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match AnnouncementStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的公告状态"),
+        },
+        None => None,
+    };
     let priority_filter = params.priority.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, Announcement>(only_own_schema_query!(
@@ -80,7 +86,8 @@ pub async fn list_announcements(
                CASE WHEN $6 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM erp.announcements
-        WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR priority = $3)
         ORDER BY publish_at DESC NULLS LAST, created_at DESC
@@ -160,10 +167,10 @@ pub async fn create_announcement(
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id, title_en, content_en)
-        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $12, $7, $8, $9, $10, $11)
         RETURNING id,
-                  CASE WHEN $12 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
-                  CASE WHEN $12 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+                  CASE WHEN $13 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+                  CASE WHEN $13 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
                   author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
@@ -173,6 +180,7 @@ pub async fn create_announcement(
     .bind(&req.author)
     .bind(&req.priority)
     .bind(req.expire_at)
+    .bind(AnnouncementStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(new_tenant)
