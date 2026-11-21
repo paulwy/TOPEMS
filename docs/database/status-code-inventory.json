@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 160,
+    "rust_enums": 161,
     "rust_enum_values": 163,
     "rust_values_not_in_db_check": 124,
     "frontend_status_keys": 178,
@@ -529,6 +529,23 @@
         "rejected",
         "reported",
         "resolved",
+        "verified"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/incident_action_status.rs",
+      "name": "IncidentActionStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Pending",
+        "Verified"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "pending",
         "verified"
       ]
     },

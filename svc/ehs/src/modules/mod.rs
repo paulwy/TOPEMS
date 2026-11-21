@@ -11,6 +11,7 @@ pub mod hazard;
 pub mod hazard_status;
 pub mod hazardous_material;
 pub mod health;
+pub mod incident_action_status;
 pub mod integration;
 pub mod investigation_status;
 pub mod occupational_disease;

@@ -18,6 +18,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::accident_status::AccidentStatus;
+use crate::modules::incident_action_status::IncidentActionStatus;
 use crate::modules::investigation_status::InvestigationStatus;
 use crate::modules::treatment_status::{TreatmentActionStatus, TreatmentStatus};
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
@@ -1519,12 +1520,13 @@ pub async fn create_incident_action(
         .unwrap_or("处置行动");
     if let Err(e) = sqlx::query(
         r#"INSERT INTO ehs.qa_ehs_incident_actions (id, accident_id, title, status, tenant_id)
-           VALUES ($1, $2, $3, 'pending', $4)"#,
+           VALUES ($1, $2, $3, $5, $4)"#,
     )
     .bind(act_id)
     .bind(Uuid::parse_str(&id).unwrap_or_default())
     .bind(title)
     .bind(tenant_id)
+    .bind(IncidentActionStatus::DEFAULT.as_db_str())
     .execute(&mut scope)
     .await
     {
@@ -1540,7 +1542,7 @@ pub async fn create_incident_action(
             "id": act_id.to_string(),
             "incident_id": id,
             "title": title,
-            "status": "pending",
+            "status": IncidentActionStatus::DEFAULT.as_db_str(),
             "tenant_id": tenant_id.to_string(),
             "created_at": chrono::Utc::now(),
         }),
@@ -1570,35 +1572,52 @@ pub async fn update_incident_action(
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("in_progress");
+    let status_target = match req.get("status").and_then(|v| v.as_str()) {
+        Some(raw) => match IncidentActionStatus::from_db_str(raw) {
+            Some(v) => v,
+            None => return ApiResponse::bad_request("无效的事故行动状态"),
+        },
+        None => return ApiResponse::bad_request("缺少事故行动状态"),
+    };
+    let allowed_from: Vec<String> = IncidentActionStatus::update_from(status_target)
+        .iter()
+        .map(|v| v.as_db_str().to_string())
+        .collect();
     let sql = if tenant_scope.tenant_id().is_some() {
         "UPDATE ehs.qa_ehs_incident_actions SET status=$1, updated_at=now() \
-         WHERE id = $2::uuid AND tenant_id = $3::uuid AND deleted_at IS NULL"
+         WHERE id = $2::uuid AND tenant_id = $3::uuid AND deleted_at IS NULL \
+           AND (status = ANY($4::text[]) OR status IS NULL) \
+         RETURNING status"
     } else {
         "UPDATE ehs.qa_ehs_incident_actions SET status=$1, updated_at=now() \
-         WHERE id = $2::uuid AND deleted_at IS NULL"
+         WHERE id = $2::uuid AND deleted_at IS NULL \
+           AND (status = ANY($3::text[]) OR status IS NULL) \
+         RETURNING status"
     };
-    let mut query = sqlx::query(sql).bind(status).bind(&action_id);
+    let mut query = sqlx::query(sql)
+        .bind(status_target.as_db_str())
+        .bind(&action_id)
+        .bind(&allowed_from);
     if let Some(tenant) = tenant_scope.tenant_id() {
         query = query.bind(tenant);
     }
-    let r = query.execute(&mut scope).await;
-    if let Err(e) = scope.commit().await {
-        tracing::error!("Failed to commit tenant write: {}", e);
-        return ApiResponse::server_error("提交事务失败");
-    }
+    let r = query.fetch_optional(&mut scope).await;
     match r {
-        Ok(_) => ApiResponse::success(
-            serde_json::json!({
-                "id": action_id,
-                "status": status,
-                "updated_at": chrono::Utc::now(),
-            }),
-            "事故行动更新成功",
-        ),
+        Ok(Some(row)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tenant write: {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": action_id,
+                    "status": row.try_get::<String, _>("status").unwrap_or_default(),
+                    "updated_at": chrono::Utc::now(),
+                }),
+                "事故行动更新成功",
+            )
+        }
+        Ok(None) => ApiResponse::conflict("事故行动不存在或状态不允许回退"),
         Err(e) => {
             tracing::error!("Failed to update incident action: {}", e);
             ApiResponse::server_error("事故行动更新失败")

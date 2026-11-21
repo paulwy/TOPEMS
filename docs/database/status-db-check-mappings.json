@@ -611,6 +611,13 @@
       "table": "ehs.qa_ehs_treatment_actions",
       "column": "status",
       "candidate": "docs/database/ehs-treatment-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/incident_action_status.rs",
+      "enum": "IncidentActionStatus",
+      "table": "ehs.qa_ehs_incident_actions",
+      "column": "status",
+      "candidate": "docs/database/ehs-incident-action-status-check-candidates-2026-11-21.sql"
     }
   ]
 }
