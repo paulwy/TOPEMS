@@ -2,11 +2,11 @@
 
 ## 1. 结论
 
-B2 把代码侧手写状态源盘成了可复现清单：Rust 133 个 `*Status` 枚举（B8 新增 `ap_payment_status`、B9 新增 `payment_item_write_off_status`）、145 个归一化
+B2 把代码侧手写状态源盘成了可复现清单：Rust 135 个 `*Status` 枚举（B8/B9/B10 新增付款、核销、对账中心三组）、146 个归一化
 值；前端 `STATUS_COLOR_MAP` 61 个键。对照 B1 的 DB 状态值并集（CHECK + 5 个
 ENUM 类型，共 47 个值）：
 
-- Rust 有 **107 个状态值**不在任何 DB 约束内；
+- Rust 有 **108 个状态值**不在任何 DB 约束内；
 - 前端有 **35 个状态键**不在任何 DB 约束内；
 - 不是少量漏配，而是业务 FSM 状态整体没有进 DB 约束。
 

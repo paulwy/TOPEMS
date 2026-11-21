@@ -5,9 +5,9 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 133,
-    "rust_enum_values": 145,
-    "rust_values_not_in_db_check": 107,
+    "rust_enums": 135,
+    "rust_enum_values": 146,
+    "rust_values_not_in_db_check": 108,
     "frontend_status_keys": 61,
     "frontend_keys_not_in_db_check": 35
   },
@@ -1121,6 +1121,36 @@
         "in_progress",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_center_status.rs",
+      "name": "SettlementLinkStatus",
+      "values": [
+        "Cancelled",
+        "Linked"
+      ],
+      "normalized": [
+        "cancelled",
+        "linked"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_center_status.rs",
+      "name": "SnapshotMatchStatus",
+      "values": [
+        "Diff",
+        "Manual",
+        "Matched",
+        "Unmatched"
+      ],
+      "normalized": [
+        "diff",
+        "manual",
+        "matched",
+        "unmatched"
       ]
     },
     {
@@ -2516,6 +2546,7 @@
       "invited",
       "invoiced",
       "lagging",
+      "linked",
       "locked",
       "max_retries_exceeded",
       "neutral",

@@ -232,11 +232,13 @@ pub async fn manual_reconcile(
         let result = sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_item_snapshots
-               SET match_status = 'matched', updated_at = NOW()
-               WHERE recon_id = $1 AND id = ANY($2)"#
+               SET match_status = $3, updated_at = NOW()
+               WHERE recon_id = $1 AND id = ANY($2)
+                 AND COALESCE(match_status, 'unmatched') <> $3"#
         ))
         .bind(recon_id)
         .bind(&req.record_ids)
+        .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Matched.as_str())
         .execute(&mut scope)
         .await?;
         result.rows_affected() as i64
@@ -314,13 +316,13 @@ pub async fn auto_reconcile(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.reconciliation_item_snapshots ri
-           SET match_status = 'matched', updated_at = NOW()
+           SET match_status = $4, updated_at = NOW()
            FROM finance.reconciliation_snapshots r
            WHERE ri.recon_id = r.id
              AND r.period = $1
              AND ($2::text IS NULL OR r.recon_type = $2)
              AND ($3::uuid IS NULL OR r.entity_id = $3)
-             AND ri.match_status <> 'matched'
+             AND COALESCE(ri.match_status, 'unmatched') <> $4
              AND EXISTS (
                SELECT 1 FROM finance.reconciliation_item_snapshots ri2
                WHERE ri2.recon_id = ri.recon_id
@@ -331,6 +333,7 @@ pub async fn auto_reconcile(
     .bind(&req.period)
     .bind(&req.recon_type)
     .bind(req.entity_id)
+    .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Matched.as_str())
     .execute(&mut scope)
     .await?;
 
@@ -723,7 +726,7 @@ pub async fn create_link(
         r#"INSERT INTO finance.reconciliation_settlement_links
              (id, tenant_id, reconciliation_id, settlement_id, link_type,
               amount, status, remark, created_by, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, 'linked', $7, $8, $9, $9)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)
            RETURNING id, tenant_id, reconciliation_id, settlement_id, link_type,
                      amount, status, remark, created_by, created_at, updated_at"#
     ))
@@ -733,6 +736,7 @@ pub async fn create_link(
     .bind(req.settlement_id)
     .bind(&req.link_type)
     .bind(req.amount)
+    .bind(crate::modules::settlement_center_status::SettlementLinkStatus::Linked.as_str())
     .bind(&req.remark)
     .bind(creator)
     .bind(now)
@@ -753,11 +757,13 @@ pub async fn cancel_link(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.reconciliation_settlement_links
-           SET status = 'cancelled', updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2 AND status = 'linked'"#
+           SET status = $3, updated_at = NOW()
+           WHERE id = $1 AND tenant_id = $2 AND status = $4"#
     ))
     .bind(link_id)
     .bind(tenant_id)
+    .bind(crate::modules::settlement_center_status::SettlementLinkStatus::Cancelled.as_str())
+    .bind(crate::modules::settlement_center_status::SettlementLinkStatus::Linked.as_str())
     .execute(&mut scope)
     .await?;
 

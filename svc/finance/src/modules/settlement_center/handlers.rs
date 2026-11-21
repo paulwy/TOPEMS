@@ -464,6 +464,21 @@ pub async fn list_links(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<LinkListQuery>,
 ) -> ApiResponse<Vec<ReconciliationSettlementLink>> {
+    if let Some(raw) = query
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        if raw
+            .parse::<crate::modules::settlement_center_status::SettlementLinkStatus>()
+            .is_err()
+        {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "非法结算关联状态: {raw}，可选值: linked/cancelled"
+            )));
+        }
+    }
     let tenant_id = current_tenant_id(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
