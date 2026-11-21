@@ -792,6 +792,13 @@ pub struct DataProduct {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Debug, Clone)]
+pub enum UpdateContractOutcome {
+    Updated(DataContract),
+    NotFound,
+    StatusConflict,
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DataContract {
     pub product_id: String,
@@ -929,7 +936,7 @@ impl DataProductManager {
         quality_requirements: Vec<String>,
         freshness_sla: String,
         security_level: SecurityLevel,
-    ) -> Result<Option<DataContract>, TopemsError> {
+    ) -> Result<UpdateContractOutcome, TopemsError> {
         let now = chrono::Utc::now();
         let contract = DataContract {
             product_id: product_id.to_string(),
@@ -940,6 +947,36 @@ impl DataProductManager {
             version: "1.0.0".to_string(),
             updated_at: now.clone(),
         };
+
+        // 先带起始态谓词更新产品；并发把状态改成 deprecated/retired 时 0 行，不再插入孤立契约。
+        let updated = sqlx::query(
+            "UPDATE master_data.mdm_data_products
+             SET data_contract = $2, status = 'published', updated_at = $3
+             WHERE id = $1
+               AND status IN ('draft','published')
+               AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        )
+        .bind(product_id)
+        .bind(serde_json::to_value(&contract).unwrap_or_default())
+        .bind(now.to_rfc3339())
+        .execute(&mut *scope)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("更新数据产品失败: {e}")))?;
+
+        if updated.rows_affected() == 0 {
+            let exists = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS(SELECT 1 FROM master_data.mdm_data_products WHERE id = $1)",
+            )
+            .bind(product_id)
+            .fetch_one(&mut *scope)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("查询数据产品失败: {e}")))?;
+            return Ok(if exists {
+                UpdateContractOutcome::StatusConflict
+            } else {
+                UpdateContractOutcome::NotFound
+            });
+        }
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
@@ -954,18 +991,8 @@ impl DataProductManager {
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据契约失败: {e}")))?;
-        sqlx::query(
-            "UPDATE master_data.mdm_data_products
-             SET data_contract = $2, status = 'published', updated_at = $3 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
-        )
-        .bind(product_id)
-        .bind(serde_json::to_value(&contract).unwrap_or_default())
-        .bind(now.to_rfc3339())
-        .execute(&mut *scope)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("更新数据产品失败: {e}")))?;
 
-        Ok(Some(contract))
+        Ok(UpdateContractOutcome::Updated(contract))
     }
 
     async fn get_contract_status(
@@ -2091,11 +2118,13 @@ pub async fn update_contract(
         }
     };
 
-    let security = req
-        .security_level
-        .as_deref()
-        .and_then(parse_security_level)
-        .unwrap_or(SecurityLevel::Internal);
+    let security = match req.security_level.as_deref() {
+        None => SecurityLevel::Internal,
+        Some(raw) => match parse_security_level(raw) {
+            Some(level) => level,
+            None => return ApiResponse::bad_request("无效的安全级别"),
+        },
+    };
 
     let requirements = req.quality_requirements.unwrap_or_else(|| {
         vec![
@@ -2138,8 +2167,11 @@ pub async fn update_contract(
         )
         .await
     ) {
-        Some(c) => ApiResponse::success(c, "数据契约已更新"),
-        None => ApiResponse::not_found("未找到数据产品"),
+        UpdateContractOutcome::Updated(c) => ApiResponse::success(c, "数据契约已更新"),
+        UpdateContractOutcome::NotFound => ApiResponse::not_found("未找到数据产品"),
+        UpdateContractOutcome::StatusConflict => {
+            ApiResponse::error(409, "数据产品状态已变更，已弃用或退役产品不允许写入契约")
+        }
     }
 }
 
