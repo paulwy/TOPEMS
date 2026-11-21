@@ -541,6 +541,13 @@
       "table": "srm.inquiries",
       "column": "status",
       "candidate": "docs/database/srm-inquiry-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/sync_status.rs",
+      "enum": "SyncRecordStatus",
+      "table": "scm.sync_records",
+      "column": "status",
+      "candidate": "docs/database/scm-sync-record-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

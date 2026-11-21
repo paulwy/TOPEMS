@@ -27,6 +27,7 @@ pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supply_chain_dashboard;
 pub mod sync_records;
+pub mod sync_status;
 
 #[derive(Clone)]
 pub struct ApiState {

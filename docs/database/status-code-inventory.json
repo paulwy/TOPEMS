@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 150,
+    "rust_enums": 151,
     "rust_enum_values": 157,
     "rust_values_not_in_db_check": 118,
     "frontend_status_keys": 172,
@@ -2553,6 +2553,23 @@
         "draft",
         "paused",
         "pending_approval"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/sync_status.rs",
+      "name": "SyncRecordStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "running"
       ]
     },
     {

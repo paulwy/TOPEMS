@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 
+use crate::modules::sync_status::SyncRecordStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::require_tenant_bind;
 use topems_shared_auth::auth::Claims;
@@ -132,6 +133,13 @@ pub async fn list_sync_records(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match SyncRecordStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的同步状态过滤值"),
+        },
+        None => None,
+    };
 
     // B-2 后 scm 全表 fail-closed：裸池读会 0 行，必须复用请求级 RLS 事务。
     let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
@@ -166,7 +174,7 @@ pub async fn list_sync_records(
     .bind(&params.source_system)
     .bind(&params.target_system)
     .bind(&params.sync_type)
-    .bind(&params.status)
+    .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -188,7 +196,7 @@ pub async fn list_sync_records(
             .bind(&params.source_system)
             .bind(&params.target_system)
             .bind(&params.sync_type)
-            .bind(&params.status)
+            .bind(&status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut scope)
             .await
@@ -307,7 +315,7 @@ pub async fn create_sync_record(
         INSERT INTO scm.sync_records
             (sync_no, source_system, target_system, sync_type, sync_direction, status,
              started_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'running', $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, sync_no, source_system, target_system, sync_type, sync_direction,
                   status, total_count, success_count, failed_count, started_at, completed_at,
                   duration_seconds, error_message, tenant_id, created_at
@@ -318,6 +326,7 @@ pub async fn create_sync_record(
     .bind(&req.target_system)
     .bind(&req.sync_type)
     .bind(req.sync_direction.unwrap_or_else(|| "push".to_string()))
+    .bind(SyncRecordStatus::Running.as_db_str())
     .bind(started)
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -338,7 +347,7 @@ pub async fn create_sync_record(
                 let update_res = sqlx::query(
                     r#"
                     UPDATE scm.sync_records
-                    SET status = 'completed', total_count = 0, success_count = 0,
+                    SET status = $3, total_count = 0, success_count = 0,
                         failed_count = 0, completed_at = NOW(),
                         duration_seconds = 0
                     WHERE id = $1 AND tenant_id = $2::uuid
@@ -346,6 +355,7 @@ pub async fn create_sync_record(
                 )
                 .bind(rid)
                 .bind(tenant)
+                .bind(SyncRecordStatus::Completed.as_db_str())
                 .execute(&mut scope)
                 .await;
                 if let Err(e) = update_res {
@@ -405,7 +415,7 @@ pub async fn retry_sync_record(
     let updated = sqlx::query(
         r#"
         UPDATE scm.sync_records
-        SET status = 'completed', started_at = $2, completed_at = NOW(),
+        SET status = $4, started_at = $2, completed_at = NOW(),
             duration_seconds = 0, error_message = NULL, updated_at = NOW()
         WHERE id = $1
           AND tenant_id = $3::uuid
@@ -415,6 +425,7 @@ pub async fn retry_sync_record(
     .bind(id)
     .bind(now)
     .bind(tenant_bind)
+    .bind(SyncRecordStatus::Completed.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
@@ -424,7 +435,7 @@ pub async fn retry_sync_record(
             ApiResponse::success(
                 SyncResult {
                     sync_id,
-                    status: "completed".to_string(),
+                    status: SyncRecordStatus::Completed.as_db_str().to_string(),
                     total_count: 0,
                     success_count: 0,
                     failed_count: 0,
@@ -563,7 +574,7 @@ async fn trigger_sync(
         INSERT INTO scm.sync_records
             (sync_no, source_system, target_system, sync_type, sync_direction, status,
              started_at, completed_at, total_count, success_count, failed_count, tenant_id)
-        VALUES ($1, $2, $3, $4, 'push', 'completed', $5, NOW(), 0, 0, 0, $6)
+        VALUES ($1, $2, $3, $4, 'push', $6, $5, NOW(), 0, 0, 0, $7)
         RETURNING id
         "#,
     )
@@ -572,6 +583,7 @@ async fn trigger_sync(
     .bind(target)
     .bind(&sync_type)
     .bind(now)
+    .bind(SyncRecordStatus::Completed.as_db_str())
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
@@ -580,7 +592,7 @@ async fn trigger_sync(
         Ok((sync_id,)) => ApiResponse::success(
             SyncResult {
                 sync_id,
-                status: "completed".to_string(),
+                status: SyncRecordStatus::Completed.as_db_str().to_string(),
                 total_count: 0,
                 success_count: 0,
                 failed_count: 0,

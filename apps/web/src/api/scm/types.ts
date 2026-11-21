@@ -667,6 +667,9 @@ export interface PriceComparisonResult {
 /**
  * 数据同步
  */
+/** 与后端 `svc/scm/src/modules/sync_status.rs` 的 SyncRecordStatus 对齐 */
+export type SyncRecordStatus = 'pending' | 'running' | 'completed' | 'failed';
+
 export interface SyncRecord {
   id: string;
   sync_no: string;
@@ -674,7 +677,7 @@ export interface SyncRecord {
   target_system: string;
   sync_type: string;
   sync_direction: string;
-  status: string;
+  status: SyncRecordStatus;
   total_count?: number;
   success_count?: number;
   failed_count?: number;
@@ -697,7 +700,7 @@ export interface SyncRecordQueryParams extends PaginationParams {
   source_system?: string;
   target_system?: string;
   sync_type?: string;
-  status?: string;
+  status?: SyncRecordStatus;
 }
 
 export interface SyncResult {
