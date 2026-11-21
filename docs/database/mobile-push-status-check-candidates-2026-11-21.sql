@@ -24,3 +24,8 @@ ALTER TABLE mobile.push_notifications
 --   发送/送达/点击三项统计的 `status = 'sent'` 字面量改为绑定枚举值。
 -- 遗留：mobile.mobile_push_notifications（76 行全 pending，事件处理器写入后无人推进）
 --   与 push_notifications 并行存在，下一批确认删表或接线。
+
+-- B75 读取侧兼容（2026-11-21）：
+--   列表/详情/总数 SELECT 已把 status='active' 投影为 'pending'，并只放行
+--   ('pending','sent','failed','active')；DB 值本身仍未归一，候选 CHECK 保持 NOT VALID。
+--   归一脚本仍是上面的 UPDATE ... WHERE status='active'，生产窗口执行后再 VALIDATE。

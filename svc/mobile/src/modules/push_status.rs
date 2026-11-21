@@ -2,7 +2,8 @@
 //!
 //! 落库列：`mobile.push_notifications.status`（varchar，DB 默认 `pending`）。
 //! 创建写 pending；发送统计更新写 sent；failed 预留给发送失败。
-//! 历史 191 行 `active` 是旧创建逻辑误写，需在窗口内归一为 pending。
+//! 历史 191 行 `active` 是旧创建逻辑误写：读取侧统一投影为 pending，
+//! 但 DB 值不在枚举内，需在窗口内归一后再 VALIDATE 候选 CHECK。
 
 use serde::{Deserialize, Serialize};
 
