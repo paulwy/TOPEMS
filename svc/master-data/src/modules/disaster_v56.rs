@@ -953,7 +953,7 @@ pub async fn get_recovery_status(
     .map(|rows| rows.iter().map(recovery_point_from_row).collect())
     .unwrap_or_default();
     let plans: Vec<RecoveryPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans"
+        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE status IN ('draft','active','executing','completed','failed')"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -1125,7 +1125,7 @@ pub async fn execute_plan(
     };
     let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
+        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1 AND status IN ('draft','active','executing','completed','failed')"
     )))
     .bind(&req.plan_id)
     .fetch_optional(&mut db_scope)
@@ -1222,7 +1222,7 @@ pub async fn get_plan_progress(
         }
     };
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
+        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1 AND status IN ('draft','active','executing','completed','failed')"
     )))
     .bind(&id)
     .fetch_optional(&mut db_scope)
