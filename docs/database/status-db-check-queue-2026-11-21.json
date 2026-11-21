@@ -6,7 +6,7 @@
     "uncovered_enums": 99,
     "uncovered_values": 108,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 38,
+    "resolved_enums": 52,
     "internal_state_enums": 32,
     "persisted_unmapped_enums": 56,
     "api_projection_enums": 25,
@@ -29,7 +29,14 @@
           "trial"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-auth/src/tenant.rs",
+        "enum": "TenantStatus",
+        "table": "public.core_tenants",
+        "column": "status",
+        "candidate": "docs/database/tenant-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "lib/shared-auth",
@@ -40,7 +47,13 @@
           "invited"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-auth/src/tenant.rs",
+        "enum": "UserStatus",
+        "persisted": false,
+        "reason": "无 DB 写入方；public.core_users.status 存在枚举外的 inactive（本地 1 行），接线前需先对齐；core_users 已标废弃"
+      }
     },
     {
       "module": "lib/shared-auth",
@@ -55,7 +68,13 @@
           "trial"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-auth/src/tier.rs",
+        "enum": "SubscriptionStatus",
+        "persisted": false,
+        "reason": "unified-core 订阅模块无 SQL，纯内存 tier 计算"
+      }
     },
     {
       "module": "lib/shared-core",
@@ -66,7 +85,13 @@
           "expired"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-core/src/common_types.rs",
+        "enum": "ApprovalStatus",
+        "persisted": false,
+        "reason": "共享审批值类型，实际落库在各服务自己的审批表，无固定列"
+      }
     },
     {
       "module": "lib/shared-core",
@@ -81,7 +106,13 @@
           "unhealthy"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-core/src/health.rs",
+        "enum": "HealthStatus",
+        "persisted": false,
+        "reason": "健康度计算值，不落库"
+      }
     },
     {
       "module": "lib/shared-db",
@@ -92,7 +123,13 @@
           "restored"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-db/src/backup.rs",
+        "enum": "BackupStatus",
+        "persisted": false,
+        "reason": "备份元数据只在内存与文件路径，无状态表"
+      }
     },
     {
       "module": "lib/shared-db",
@@ -104,7 +141,13 @@
           "verifying"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-db/src/data_governance.rs",
+        "enum": "DsrRequestStatus",
+        "persisted": false,
+        "reason": "DSR 请求在内存统计，无 SQL"
+      }
     },
     {
       "module": "lib/shared-event",
@@ -121,7 +164,13 @@
           "standby"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-event/src/cluster.rs",
+        "enum": "NodeStatus",
+        "persisted": false,
+        "reason": "集群节点状态内存态"
+      }
     },
     {
       "module": "lib/shared-event",
@@ -133,7 +182,13 @@
           "received"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-event/src/event/monitor.rs",
+        "enum": "TraceStatus",
+        "persisted": false,
+        "reason": "事件轨迹监控内存态"
+      }
     },
     {
       "module": "lib/shared-event",
@@ -146,7 +201,13 @@
           "compensating"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-event/src/saga/orchestrator.rs",
+        "enum": "SagaStatus",
+        "persisted": false,
+        "reason": "saga 编排内存态"
+      }
     },
     {
       "module": "lib/shared-event",
@@ -161,7 +222,13 @@
           "skipped"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-event/src/saga/step.rs",
+        "enum": "StepStatus",
+        "persisted": false,
+        "reason": "saga 步骤内存态"
+      }
     },
     {
       "module": "lib/shared-observability",
@@ -176,7 +243,13 @@
           "unhealthy"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-observability/src/monitoring.rs",
+        "enum": "ServiceStatus",
+        "persisted": false,
+        "reason": "服务监控计算态"
+      }
     },
     {
       "module": "lib/shared-observability",
@@ -192,7 +265,13 @@
           "warning"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-observability/src/observability/slo.rs",
+        "enum": "SLOStatus",
+        "persisted": false,
+        "reason": "SLO 计算态，不落库"
+      }
     },
     {
       "module": "lib/shared-service-client",
@@ -203,7 +282,13 @@
           "deprecated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "lib/shared-service-client/src/notification.rs",
+        "enum": "TemplateStatus",
+        "persisted": false,
+        "reason": "public.core_notification_templates 无 status 列，模板状态仅内存/API"
+      }
     },
     {
       "module": "ai",
