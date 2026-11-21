@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 165,
-    "rust_enum_values": 163,
-    "rust_values_not_in_db_check": 124,
-    "frontend_status_keys": 178,
-    "frontend_keys_not_in_db_check": 138,
+    "rust_enums": 166,
+    "rust_enum_values": 164,
+    "rust_values_not_in_db_check": 125,
+    "frontend_status_keys": 179,
+    "frontend_keys_not_in_db_check": 139,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -477,6 +477,23 @@
         "pending",
         "sending",
         "sent"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/customer_approval_status.rs",
+      "name": "CustomerApprovalStatus",
+      "values": [
+        "Approved",
+        "None",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "none",
+        "pending",
+        "rejected"
       ]
     },
     {
@@ -3017,6 +3034,7 @@
       "neutral",
       "new",
       "non_compliant",
+      "none",
       "normal",
       "not_applicable",
       "not_started",
@@ -3168,6 +3186,7 @@
       "neutral",
       "new",
       "non_compliant",
+      "none",
       "normal",
       "not_applicable",
       "not_started",
@@ -3303,6 +3322,7 @@
       "neutral",
       "new",
       "non_compliant",
+      "none",
       "normal",
       "not_applicable",
       "not_started",

@@ -16,6 +16,7 @@ export type StatusColor =
   | string;
 
 export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
+  none: 'default',
   approved: 'success',
   processed: 'success',
   planned: 'default',

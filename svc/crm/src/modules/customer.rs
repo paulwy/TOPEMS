@@ -12,6 +12,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::{log_audit_event_with_actor, AuditActor, AuditEventParams};
+use crate::modules::customer_approval_status::CustomerApprovalStatus;
 use crate::modules::customer_status::CustomerStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use std::str::FromStr;
@@ -854,7 +855,23 @@ pub async fn start_customer_approval(
         }
     };
     let old_approval_status = customer.approval_status.clone();
-    let new_approval_status = "pending".to_string();
+    let current = match CustomerApprovalStatus::from_db_str(&customer.approval_status) {
+        Some(v) => v,
+        None => return ApiResponse::conflict("客户审批状态异常，无法启动审批"),
+    };
+    if !CustomerApprovalStatus::Pending
+        .start_from()
+        .contains(&current)
+    {
+        return ApiResponse::conflict("客户当前审批状态不允许重复启动");
+    }
+    let new_status = CustomerApprovalStatus::Pending;
+    let new_approval_status = new_status.as_db_str().to_string();
+    let allowed_from: Vec<&str> = new_status
+        .start_from()
+        .iter()
+        .map(|v| v.as_db_str())
+        .collect();
 
     let workflow_client = state.workflow_client.clone();
     let id_str = id.to_string();
@@ -877,12 +894,24 @@ pub async fn start_customer_approval(
         }
     });
 
-    let _ = sqlx::query(
-        "UPDATE crm.customers SET approval_status = 'pending', updated_at = NOW() WHERE id = $1",
+    let update = sqlx::query(
+        "UPDATE crm.customers SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[])",
     )
     .bind(id)
+    .bind(new_status.as_db_str())
+    .bind(&allowed_from)
     .execute(&mut **txn)
     .await;
+    match update {
+        Err(e) => {
+            tracing::error!("客户审批启动状态更新失败: {}", e);
+            return ApiResponse::server_error("启动客户审批失败");
+        }
+        Ok(r) if r.rows_affected() == 0 => {
+            return ApiResponse::conflict("客户审批状态已变化，请刷新后重试")
+        }
+        Ok(_) => {}
+    }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
@@ -928,7 +957,7 @@ pub async fn start_customer_approval(
         serde_json::json!({
             "customer_id": id,
             "workflow_id": req.workflow_id,
-            "approval_status": "pending"
+            "approval_status": new_approval_status
         }),
         "客户审批流程已启动",
     )
@@ -982,14 +1011,37 @@ pub async fn approve_customer(
         }
     };
     let old_approval_status = customer.approval_status.clone();
-    let new_approval_status = "approved".to_string();
+    match CustomerApprovalStatus::from_db_str(&customer.approval_status) {
+        Some(v) if CustomerApprovalStatus::Approved.decide_from().contains(&v) => {}
+        Some(_) => return ApiResponse::conflict("客户当前审批状态不允许通过"),
+        None => return ApiResponse::conflict("客户审批状态异常，无法通过"),
+    }
+    let new_status = CustomerApprovalStatus::Approved;
+    let new_approval_status = new_status.as_db_str().to_string();
+    let allowed_from: Vec<&str> = new_status
+        .decide_from()
+        .iter()
+        .map(|v| v.as_db_str())
+        .collect();
 
-    let _ = sqlx::query(
-        "UPDATE crm.customers SET approval_status = 'approved', updated_at = NOW() WHERE id = $1",
+    let update = sqlx::query(
+        "UPDATE crm.customers SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[])",
     )
     .bind(id)
+    .bind(new_status.as_db_str())
+    .bind(&allowed_from)
     .execute(&mut **txn)
     .await;
+    match update {
+        Err(e) => {
+            tracing::error!("客户审批通过状态更新失败: {}", e);
+            return ApiResponse::server_error("客户审批通过失败");
+        }
+        Ok(r) if r.rows_affected() == 0 => {
+            return ApiResponse::conflict("客户审批状态已变化，请刷新后重试")
+        }
+        Ok(_) => {}
+    }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
@@ -1032,7 +1084,7 @@ pub async fn approve_customer(
     ApiResponse::success(
         serde_json::json!({
             "customer_id": id,
-            "approval_status": "approved"
+            "approval_status": new_approval_status
         }),
         "客户审批通过",
     )
@@ -1086,14 +1138,37 @@ pub async fn reject_customer(
         }
     };
     let old_approval_status = customer.approval_status.clone();
-    let new_approval_status = "rejected".to_string();
+    match CustomerApprovalStatus::from_db_str(&customer.approval_status) {
+        Some(v) if CustomerApprovalStatus::Rejected.decide_from().contains(&v) => {}
+        Some(_) => return ApiResponse::conflict("客户当前审批状态不允许驳回"),
+        None => return ApiResponse::conflict("客户审批状态异常，无法驳回"),
+    }
+    let new_status = CustomerApprovalStatus::Rejected;
+    let new_approval_status = new_status.as_db_str().to_string();
+    let allowed_from: Vec<&str> = new_status
+        .decide_from()
+        .iter()
+        .map(|v| v.as_db_str())
+        .collect();
 
-    let _ = sqlx::query(
-        "UPDATE crm.customers SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1",
+    let update = sqlx::query(
+        "UPDATE crm.customers SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[])",
     )
     .bind(id)
+    .bind(new_status.as_db_str())
+    .bind(&allowed_from)
     .execute(&mut **txn)
     .await;
+    match update {
+        Err(e) => {
+            tracing::error!("客户审批驳回状态更新失败: {}", e);
+            return ApiResponse::server_error("客户审批驳回失败");
+        }
+        Ok(r) if r.rows_affected() == 0 => {
+            return ApiResponse::conflict("客户审批状态已变化，请刷新后重试")
+        }
+        Ok(_) => {}
+    }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
@@ -1139,7 +1214,7 @@ pub async fn reject_customer(
     ApiResponse::success(
         serde_json::json!({
             "customer_id": id,
-            "approval_status": "rejected"
+            "approval_status": new_approval_status
         }),
         "客户审批已驳回",
     )

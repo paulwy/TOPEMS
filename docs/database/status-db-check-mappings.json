@@ -646,6 +646,13 @@
       "table": "ehs.qa_ehs_risk_controls",
       "column": "status",
       "candidate": "docs/database/ehs-risk-control-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/customer_approval_status.rs",
+      "enum": "CustomerApprovalStatus",
+      "table": "crm.customers",
+      "column": "approval_status",
+      "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql"
     }
   ]
 }
