@@ -149,7 +149,7 @@ pub async fn list_inbound_orders(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id AS tenant_id, order_number, order_type,
+        SELECT id, tenant_id AS tenant_id, order_number, order_type,
                reference_number, reference_type, warehouse_id, warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
@@ -164,7 +164,7 @@ pub async fn list_inbound_orders(
                priority, status, receiver, receiver_id, receiving_team,
                inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-               created_by, updated_by, approved_by, approved_at, organization_id,
+               created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                created_at, updated_at
         FROM wms.inbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
@@ -263,12 +263,12 @@ pub async fn create_inbound_order(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO wms.inbound_orders (id, organization_id, order_number, order_type, warehouse_id,
+        INSERT INTO wms.inbound_orders (id, order_number, order_type, warehouse_id,
                                        supplier_id, order_date, expected_arrival_date, total_value,
                                        status, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, $12, $2, 'purchase', $3, $4, $5, $6, $7,
+        VALUES ($1, $2, 'purchase', $3, $4, $5, $6, $7,
                'created', $8, $9, $10, $11)
-        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+        RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
@@ -283,7 +283,7 @@ pub async fn create_inbound_order(
                   priority, status, receiver, receiver_id, receiving_team,
                   inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                   notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-                  created_by, updated_by, approved_by, approved_at, organization_id,
+                  created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                   created_at, updated_at
         "#
     ))
@@ -297,7 +297,6 @@ pub async fn create_inbound_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(tenant_id.clone())
     .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
@@ -418,7 +417,7 @@ pub async fn get_inbound_order(
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id AS tenant_id, order_number, order_type,
+        SELECT id, tenant_id AS tenant_id, order_number, order_type,
                reference_number, reference_type, warehouse_id, warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
@@ -433,7 +432,7 @@ pub async fn get_inbound_order(
                priority, status, receiver, receiver_id, receiving_team,
                inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-               created_by, updated_by, approved_by, approved_at, organization_id,
+               created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                created_at, updated_at
         FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
@@ -487,7 +486,7 @@ pub async fn update_inbound_order(
     let existing = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id AS tenant_id, order_number, order_type,
+        SELECT id, tenant_id AS tenant_id, order_number, order_type,
                reference_number, reference_type, warehouse_id, warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
@@ -502,7 +501,7 @@ pub async fn update_inbound_order(
                priority, status, receiver, receiver_id, receiving_team,
                inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-               created_by, updated_by, approved_by, approved_at, organization_id,
+               created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                created_at, updated_at 
         FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
         "#
@@ -534,7 +533,7 @@ pub async fn update_inbound_order(
             warehouse_id = $2, supplier_id = $3, expected_arrival_date = $4, actual_arrival_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+        RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
@@ -549,7 +548,7 @@ pub async fn update_inbound_order(
                   priority, status, receiver, receiver_id, receiving_team,
                   inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                   notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-                  created_by, updated_by, approved_by, approved_at, organization_id,
+                  created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                   created_at, updated_at
         "#),
     )
@@ -1165,7 +1164,7 @@ pub async fn confirm_inbound_order(
         UPDATE wms.inbound_orders SET
             status = 'confirmed', updated_at = $2
         WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
-        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+        RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
@@ -1180,7 +1179,7 @@ pub async fn confirm_inbound_order(
                   priority, status, receiver, receiver_id, receiving_team,
                   inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                   notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-                  created_by, updated_by, approved_by, approved_at, organization_id,
+                  created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                   created_at, updated_at
         "#
     ))
@@ -1530,7 +1529,7 @@ pub async fn receive_inbound_order(
     let order_result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, organization_id AS tenant_id, order_number, order_type,
+        SELECT id, tenant_id AS tenant_id, order_number, order_type,
                reference_number, reference_type, warehouse_id, warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
@@ -1545,7 +1544,7 @@ pub async fn receive_inbound_order(
                priority, status, receiver, receiver_id, receiving_team,
                inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-               created_by, updated_by, approved_by, approved_at, organization_id,
+               created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                created_at, updated_at
         FROM wms.inbound_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#
@@ -1746,7 +1745,7 @@ pub async fn complete_inbound_order(
         UPDATE wms.inbound_orders SET
             status = 'completed', updated_at = $2
         WHERE id = $1 AND status = 'received' AND deleted_at IS NULL
-        RETURNING id, organization_id AS tenant_id, order_number, order_type,
+        RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
@@ -1761,7 +1760,7 @@ pub async fn complete_inbound_order(
                   priority, status, receiver, receiver_id, receiving_team,
                   inspection_required, inspection_status, inspection_result, inspector, inspection_date,
                   notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
-                  created_by, updated_by, approved_by, approved_at, organization_id,
+                  created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                   created_at, updated_at
         "#
     ))

@@ -2809,3 +2809,11 @@ pending_forward_patches:
     effect: "删除 hrm.departments/employees/positions/attendance_records 中逐行等于 tenant_id 的废弃 organization_id 列；覆盖 5/19/7/5 行，先守卫 organization_id <> tenant_id 为 0，再删列；代码侧 attendance 两处 INSERT 去掉 organization_id"
     destructive_scan: "4 条 ALTER TABLE DROP COLUMN，均带 destructive 标记；前置 DO 块对每表统计 organization_id IS DISTINCT FROM tenant_id，非 0 即中止整条迁移；无 DELETE/UPDATE/TRUNCATE，不删行、不改 tenant_id"
     note: "V69.1 口径 tenant_id 为租户键、organization_id 废弃。本地 topems 实测四表 organization_id 与 tenant_id 逐行相等；回滚 database/rollback/20261121230000_w5c_hrm_drop_redundant_organization_id.rollback.sql 仅按 tenant_id 派生恢复列"
+
+  # ===== 2026-11-21：W5-C 第二批组织字段收敛（WMS 2 表） =====
+  - version: "20261121235900"
+    file: "database/migrations/20261121235900_w5c_wms_audit_inbound_drop_organization_id.sql"
+    status: to_apply
+    effect: "删除 wms.audit_logs（organization_id 逐行等于 org_id）与 wms.inbound_orders（逐行等于 tenant_id）的废弃 organization_id；inbound_order.rs 改为只读 tenant_id，organization_id 仅保留 API 别名；e2e 插入改 tenant_id"
+    destructive_scan: "2 条 ALTER TABLE DROP COLUMN，均带 destructive 标记；前置守卫 audit_logs organization_id <> org_id、inbound_orders organization_id <> tenant_id 任一非 0 即中止；无 DELETE/UPDATE/TRUNCATE"
+    note: "WMS 内部口径相反：warehouses/locations/inventory 的 organization_id 是业务组织值，本批不动。回滚 database/rollback/20261121235900_w5c_wms_audit_inbound_drop_organization_id.rollback.sql 分别按 org_id/tenant_id 派生恢复"

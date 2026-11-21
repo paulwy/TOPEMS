@@ -87,9 +87,10 @@ node scripts/ci/check-org-field.mjs --update-baseline
 1. **HRM（已完成首批）**：`departments`/`employees`/`positions`/`attendance_records`
    四表 `organization_id` 逐行等于 `tenant_id`，已删列；`setup.rs` 的
    `initialization_logs`/`companies` 仍保留，待单独定性。
-2. **WMS**：按表分流。`inbound_orders` 可改 `tenant_id` 后删列；
-   `audit_logs` 应改 `org_id` 后删列；`warehouses`/`locations`/`inventory`
-   的 `organization_id` 是独立组织值，保留，先纠正 `org_id` 语义。
+2. **WMS（完成前两表）**：`audit_logs` 已删 `organization_id`（等于 `org_id`）；
+   `inbound_orders` 已删（等于 `tenant_id`，代码改读 `tenant_id`）。
+   `warehouses`/`locations`/`inventory` 的 `organization_id` 是独立组织值，保留，
+   先纠正 `org_id` 语义。
 3. **AI / LIMS / MES**：canonical 迁移改为 `tenant_id` 建列；测试夹具同步。
 4. **CRM / Finance**：只保留 `org_id` 与确有法人语义的 `company_id`，
    `organization_id` 不再新增。
@@ -99,7 +100,7 @@ node scripts/ci/check-org-field.mjs --update-baseline
 
 ## 5. 明确未完成
 
-- 首批 HRM 4 列已在迁移中删除（待生产窗口执行），其余存量未删除；
+- 首批 HRM 4 列、第二批 WMS 2 列已在迁移中删除（待生产窗口执行），其余存量未删除；
 - 代码中 `organization_id` 仍有约 120 处，集中在 WMS/LIMS/MES/HRM setup；
-- 本文件完成“口径定案 + 新增冻结 + 计数基线 + HRM 首批删列”，
+- 本文件完成“口径定案 + 新增冻结 + 计数基线 + HRM 首批 + WMS 两表”，
   不等于三套字段已全部合并。

@@ -97,7 +97,7 @@
 | W4-C ✅（口径修正） | `StatusBadge` 去重 | 旧口径“11 个定义”不是 11 份渲染实现：MUI 主实现+typed 包装属另一体系；Tailwind 侧 `common/StatusBadge` 为唯一渲染。2026-11-21 再收口：`createFsmStatusBadge` 工厂统一 aps/qms/tms/wms 包装，`STATUS_PALETTE` 统一色板，MES/EHS 仅保留数据映射。证据 `docs/quality/status-badge-dedupe-2026-11-21.md` | Tailwind 侧单一渲染+工厂 ✅；跨 MUI/Tailwind 不合并 |
 | W4-D ✅ | eslint 限制跨层 import 规则落地 | 2026-11-21：`no-restricted-imports` 禁 `@/pages/*`，仅 `module-configs`/`routes`/`DynamicRoutes`/测试豁免；`eslint apps/web/src --quiet` 0 error；web typecheck 0 error；证据见 `docs/quality/frontend-page-boundary-2026-11-21.md` | 规则生效 ✅ |
 | W5-B | 状态枚举单一源（前端/后端/DB CHECK 三处对齐） | 无生成物 | 三方一致校验通过 |
-| W5-C 🟡（首批已收口） | 组织字段口径收敛 | 2026-11-21 定案：`tenant_id`=租户隔离、`org_id`=组织层级、`company_id`=法人主体、`organization_id` 废弃。新增迁移 `organization_id` 新增列定义冻结在 `scripts/ci/org-field-baseline.json`（30 文件 / 281 次）。首批 HRM 4 表（departments/employees/positions/attendance_records）逐行等于 `tenant_id`，已加守卫删列并改 attendance INSERT；scratch 库正向/回滚通过，`cargo check -p topems-hrm` 通过。证据 `docs/database/org-field-hrm-cleanup-2026-11-21.md` | 口径已定 ✅；首批 4 列删除 ✅；WMS 需按表分流，其余存量待排期只降 |
+| W5-C 🟡（两批已收口） | 组织字段口径收敛 | 2026-11-21 定案：`tenant_id`=租户隔离、`org_id`=组织层级、`company_id`=法人主体、`organization_id` 废弃。新增迁移新增列定义冻结在 `scripts/ci/org-field-baseline.json`（30 文件 / 281 次）。首批 HRM 4 表删列；第二批 WMS `audit_logs`（=org_id）/`inbound_orders`（=tenant_id）删列并改 inbound 代码/e2e；两批 scratch 正向/回滚通过，`cargo check`/单测通过。证据 `docs/database/org-field-hrm-cleanup-2026-11-21.md`、`docs/database/org-field-wms-cleanup-2026-11-21.md` | 口径已定 ✅；6 列删除 ✅；WMS 其余表按业务组织值保留，存量待排期只降 |
 | W6-A | 文档盘点与目录说明补齐 | 34 目录 / 663 篇 | 与门禁读数一致 |
 | W6-B | `docs/modules/` 补到 28 篇 | 仅 3 篇 | 28 篇 |
 | W6-C | 重建 `openapi-aggregated.yaml` 并纳入 DDL | yaml 8-27 / json 11-16 | 两者同版 |
@@ -331,7 +331,7 @@
 | E4-12 | W1-4c dashboard 幽灵菜单定性 | 无（数据已盘点） | DEC-06 | 35 个菜单全部有归属或删除 |
 | E4-13 | W1-5a/b/c 遗留 schema 归档 | 无 | DEC-02 | `rs` 24 表归档迁移 + 回滚演练 |
 | E4-14 | W5-B 状态枚举单一源 | 无 | DEC-09 | 前端/后端/DB CHECK 三方校验通过 |
-| E4-15 | W5-C 组织字段口径收敛 | E4-14 | — | 口径已定；HRM 首批 4 列删除 ✅；WMS 按表分流，其余存量只降 |
+| E4-15 | W5-C 组织字段口径收敛 | E4-14 | — | 口径已定；HRM 4 列 + WMS 2 列删除 ✅；其余按表分流只降 |
 | E4-16 | W6-A 文档盘点与目录说明 | 无 | — | 与门禁读数一致 |
 | E4-17 | W6-B/C/D 模块文档、OpenAPI、i18n/decode | E4-16 | — | 28 篇、yaml/json 同版、门禁覆盖 |
 | E4-18 | W6-E 目录 34→6 重组 | E4-16 | DEC-10 | 按拍板结果执行并修链接 |

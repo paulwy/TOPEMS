@@ -111,7 +111,7 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
 async fn insert_order(pool: &sqlx::PgPool, order_number: &str, status: &str) {
     let tid = uuid::Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO wms.inbound_orders (id, org_id, organization_id, order_number, order_type, status, order_date) VALUES ($1, $2, $2, $3, 'standard', $4, NOW())",
+        "INSERT INTO wms.inbound_orders (id, org_id, tenant_id, order_number, order_type, status, order_date) VALUES ($1, $2, $2, $3, 'standard', $4, NOW())",
     )
     .bind(uuid::Uuid::new_v4())
     .bind(tid)
