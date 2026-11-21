@@ -520,6 +520,13 @@
       "table": "wms.replenishment_orders",
       "column": "status",
       "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/customer_status.rs",
+      "enum": "CustomerStatus",
+      "table": "crm.customers",
+      "column": "status",
+      "candidate": "existing:ck_customers_status_standard"
     }
   ]
 }

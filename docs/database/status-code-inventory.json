@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 147,
+    "rust_enums": 148,
     "rust_enum_values": 156,
     "rust_values_not_in_db_check": 117,
     "frontend_status_keys": 171,
@@ -477,6 +477,21 @@
         "pending",
         "sending",
         "sent"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/customer_status.rs",
+      "name": "CustomerStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive"
       ]
     },
     {

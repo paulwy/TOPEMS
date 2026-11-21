@@ -12,6 +12,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::{log_audit_event_with_actor, AuditActor, AuditEventParams};
+use crate::modules::customer_status::CustomerStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
@@ -267,6 +268,14 @@ pub async fn create_customer(
     // 归属人缺省取当前登录用户（claims.sub → user_id），前端可不传 owner_id
     let owner_id = req.owner_id.or_else(|| claims.user_id().ok());
 
+    let status_value = match req.status.as_deref() {
+        Some(raw) => match CustomerStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str(),
+            None => return ApiResponse::bad_request("无效的客户状态"),
+        },
+        None => CustomerStatus::DEFAULT.as_db_str(),
+    };
+
     let result = sqlx::query_as::<_, Customer>(
 
         only_own_schema_query!("crm", r#"
@@ -306,7 +315,7 @@ pub async fn create_customer(
     .bind(req.source.as_deref())
     // status 列 NOT NULL（DEFAULT 'active'）：前端契约可省略，未传时绑定默认值，
     // 避免显式 NULL 违反 NOT NULL 约束（MCS 冒烟暴露 500）
-    .bind(req.status.as_deref().unwrap_or("active"))
+    .bind(status_value)
     .bind(req.fax.as_deref())
     .bind(req.postal_code.as_deref())
     .bind(req.notes.as_deref())
@@ -506,7 +515,13 @@ pub async fn update_customer(
     let employee_count = req.employee_count.or(existing.employee_count);
     let revenue = req.revenue.or(existing.revenue);
     let source = req.source.or(existing.source);
-    let status = req.status.or(existing.status);
+    let status = match req.status {
+        Some(raw) => match CustomerStatus::from_db_str(&raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的客户状态"),
+        },
+        None => existing.status,
+    };
     let fax = req.fax.or(existing.fax);
     let postal_code = req.postal_code.or(existing.postal_code);
     let notes = req.notes.or(existing.notes);
