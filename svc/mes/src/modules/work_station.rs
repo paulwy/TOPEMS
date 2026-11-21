@@ -217,7 +217,9 @@ pub async fn list_work_stations(
     };
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE ws.deleted_at IS NULL");
+    let mut where_clause = String::from(
+        " WHERE ws.deleted_at IS NULL AND ws.status IN ('available','active','inactive')",
+    );
 
     if let Some(status) = query.status.as_deref() {
         let parsed = match WorkStationStatus::from_db_str(status) {
@@ -471,7 +473,7 @@ pub async fn get_work_station(
         FROM mes.work_stations ws
         LEFT JOIN mes.equipment e ON ws.equipment_id = e.id
         LEFT JOIN mes.production_processes pp ON ws.process_id = pp.id
-        WHERE ws.id = $1
+        WHERE ws.id = $1 AND ws.status IN ('available','active','inactive')
         "#,
     )
     .bind(id)

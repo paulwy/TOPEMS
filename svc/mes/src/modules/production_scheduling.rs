@@ -258,9 +258,13 @@ pub async fn list_production_schedules(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE ps.deleted_at IS NULL");
+    let mut where_clause = String::from(" WHERE ps.deleted_at IS NULL AND ps.status IN ('pending','scheduled','released','running','completed','cancelled')");
 
-    if let Some(status) = query.status {
+    if let Some(raw) = query.status {
+        let status = match ProductionScheduleStatus::from_db_str(&raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的排产状态"),
+        };
         where_clause.push_str(" AND ps.status = $1");
         params.push(serde_json::Value::String(status));
     }
@@ -683,6 +687,9 @@ pub async fn get_production_schedule(
 
     match result {
         Some(r) => {
+            if ProductionScheduleStatus::from_db_str(r.status.as_deref().unwrap_or("")).is_none() {
+                return ApiResponse::not_found("生产排产不存在");
+            }
             let schedule = ProductionScheduleResponse {
                 id: r.id,
                 schedule_no: r.schedule_no,
@@ -1112,7 +1119,12 @@ pub async fn get_gantt_data(
     .await;
 
     let schedules = match schedules {
-        Ok(s) => s,
+        Ok(s) => s
+            .into_iter()
+            .filter(|row| {
+                ProductionScheduleStatus::from_db_str(row.status.as_deref().unwrap_or("")).is_some()
+            })
+            .collect::<Vec<_>>(),
         Err(e) => {
             tracing::error!("Failed to fetch gantt data: {}", e);
             return ApiResponse::server_error("获取甘特图数据失败");
