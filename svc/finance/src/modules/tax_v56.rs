@@ -92,6 +92,14 @@ pub enum TaxFormStatus {
 }
 
 impl TaxFormStatus {
+    pub const ALL: [Self; 5] = [
+        TaxFormStatus::Draft,
+        TaxFormStatus::Calculated,
+        TaxFormStatus::Submitted,
+        TaxFormStatus::Accepted,
+        TaxFormStatus::Rejected,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             TaxFormStatus::Draft => "draft",
@@ -102,13 +110,15 @@ impl TaxFormStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "calculated" => TaxFormStatus::Calculated,
-            "submitted" => TaxFormStatus::Submitted,
-            "accepted" => TaxFormStatus::Accepted,
-            "rejected" => TaxFormStatus::Rejected,
-            _ => TaxFormStatus::Draft,
+    /// 严格解析：未知值返回 None，不再静默回退 draft。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "draft" => Some(TaxFormStatus::Draft),
+            "calculated" => Some(TaxFormStatus::Calculated),
+            "submitted" => Some(TaxFormStatus::Submitted),
+            "accepted" => Some(TaxFormStatus::Accepted),
+            "rejected" => Some(TaxFormStatus::Rejected),
+            _ => None,
         }
     }
 }
@@ -212,6 +222,15 @@ pub enum TaxPlanStatus {
 }
 
 impl TaxPlanStatus {
+    pub const ALL: [Self; 6] = [
+        TaxPlanStatus::Draft,
+        TaxPlanStatus::Proposed,
+        TaxPlanStatus::UnderReview,
+        TaxPlanStatus::Approved,
+        TaxPlanStatus::Rejected,
+        TaxPlanStatus::Executed,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             TaxPlanStatus::Draft => "draft",
@@ -223,14 +242,16 @@ impl TaxPlanStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "proposed" => TaxPlanStatus::Proposed,
-            "under_review" => TaxPlanStatus::UnderReview,
-            "approved" => TaxPlanStatus::Approved,
-            "rejected" => TaxPlanStatus::Rejected,
-            "executed" => TaxPlanStatus::Executed,
-            _ => TaxPlanStatus::Draft,
+    /// 严格解析：未知值返回 None，不再静默回退 draft。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "draft" => Some(TaxPlanStatus::Draft),
+            "proposed" => Some(TaxPlanStatus::Proposed),
+            "under_review" => Some(TaxPlanStatus::UnderReview),
+            "approved" => Some(TaxPlanStatus::Approved),
+            "rejected" => Some(TaxPlanStatus::Rejected),
+            "executed" => Some(TaxPlanStatus::Executed),
+            _ => None,
         }
     }
 }
@@ -390,7 +411,7 @@ impl AutoTaxFiler {
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_forms
                 (id, tenant_id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount)
-            VALUES ($1, $2, $3, $4, $5, $6, 'draft', 0)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 0)
             RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(id)
@@ -399,6 +420,7 @@ impl AutoTaxFiler {
         .bind(&jurisdiction)
         .bind(req.period_start)
         .bind(req.period_end)
+        .bind(TaxFormStatus::Draft.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -432,6 +454,35 @@ impl AutoTaxFiler {
         let mut saved_lines: Vec<TaxLine> = Vec::new();
 
         let mut scope = db.scope_with(txn).await?;
+        let current_status: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT status FROM finance.finance_v56_tax_forms WHERE id = $1 AND tenant_id = $2"
+        ))
+        .bind(form_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await?;
+        let current_status = current_status.ok_or(sqlx::Error::RowNotFound)?;
+        match TaxFormStatus::from_str(&current_status) {
+            Some(TaxFormStatus::Draft) | Some(TaxFormStatus::Calculated) => {}
+            Some(TaxFormStatus::Submitted)
+            | Some(TaxFormStatus::Accepted)
+            | Some(TaxFormStatus::Rejected) => return Err(sqlx::Error::RowNotFound),
+            None => {
+                return Err(sqlx::Error::Protocol(format!(
+                    "未知税务表单状态: {}",
+                    current_status
+                )));
+            }
+        }
+
+        // 重算时先软删旧行，避免重复行累加。
+        sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2 AND deleted_at IS NULL"))
+            .bind(form_id)
+            .bind(tenant_id)
+            .execute(&mut scope)
+            .await?;
+
         for line_input in &lines {
             let tax_amount =
                 (line_input.taxable_amount * line_input.tax_rate * 100.0).round() / 100.0;
@@ -467,13 +518,16 @@ impl AutoTaxFiler {
 
         let updated_form: TaxForm = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
-            SET status = 'calculated', total_tax_amount = $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, total_tax_amount = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 AND tenant_id = $3 AND status IN ($5, $6)
             RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(total_tax)
         .bind(form_id)
         .bind(tenant_id)
+        .bind(TaxFormStatus::Calculated.as_str())
+        .bind(TaxFormStatus::Draft.as_str())
+        .bind(TaxFormStatus::Calculated.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -494,13 +548,15 @@ impl AutoTaxFiler {
         let mut scope = db.scope_with(txn).await?;
         let updated_form: TaxForm = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
-            SET status = 'submitted', filed_at = $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, filed_at = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 AND tenant_id = $3 AND status = $5
             RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(now)
         .bind(form_id)
         .bind(tenant_id)
+        .bind(TaxFormStatus::Submitted.as_str())
+        .bind(TaxFormStatus::Calculated.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -521,7 +577,7 @@ impl AutoTaxFiler {
         status: Option<String>,
     ) -> Result<Vec<TaxForm>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms",
+            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE 1=1",
         );
         if form_type.is_some() {
             query.push_str(" AND form_type = $1");
@@ -578,6 +634,30 @@ impl AutoTaxFiler {
         req: AmendTaxFormRequest,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
+        let current_status: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT status FROM finance.finance_v56_tax_forms WHERE id = $1 AND tenant_id = $2"
+        ))
+        .bind(form_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await?;
+        let current_status = current_status.ok_or(sqlx::Error::RowNotFound)?;
+        match TaxFormStatus::from_str(&current_status) {
+            Some(TaxFormStatus::Draft)
+            | Some(TaxFormStatus::Calculated)
+            | Some(TaxFormStatus::Rejected) => {}
+            Some(TaxFormStatus::Submitted) | Some(TaxFormStatus::Accepted) => {
+                return Err(sqlx::Error::RowNotFound);
+            }
+            None => {
+                return Err(sqlx::Error::Protocol(format!(
+                    "未知税务表单状态: {}",
+                    current_status
+                )));
+            }
+        }
+
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance.finance_v56_tax_lines SET deleted_at = NOW() WHERE form_id = $1 AND tenant_id = $2"))
             .bind(form_id)
             .bind(tenant_id)
@@ -622,13 +702,17 @@ impl AutoTaxFiler {
 
         let updated_form: TaxForm = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_forms
-            SET status = 'draft', total_tax_amount = $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, total_tax_amount = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 AND tenant_id = $3 AND status IN ($5, $6, $7)
             RETURNING id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at"#),
         )
         .bind(total_tax)
         .bind(form_id)
         .bind(tenant_id)
+        .bind(TaxFormStatus::Draft.as_str())
+        .bind(TaxFormStatus::Draft.as_str())
+        .bind(TaxFormStatus::Calculated.as_str())
+        .bind(TaxFormStatus::Rejected.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -681,17 +765,12 @@ impl AutoTaxFiler {
         _tenant_id: Option<Uuid>,
         year: Option<i32>,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let mut sql = String::from(
-            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms",
-        );
-        if let Some(y) = year {
-            sql.push_str(&format!(" AND EXTRACT(YEAR FROM period_end) = {}", y));
-        }
-        sql.push_str(" GROUP BY form_type");
+        let sql = "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms WHERE ($1::int IS NULL OR date_part('year', period_end) = $1) GROUP BY form_type";
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let rows: Vec<(String, f64, i64)> = sqlx::query_as(sqlx::AssertSqlSafe(sql))
+            .bind(year)
             .fetch_all(&mut scope)
             .await?;
         scope.commit().await?;
@@ -1226,7 +1305,7 @@ impl TaxPlanner {
         let plan = sqlx::query_as(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v56_tax_plans
                 (id, tenant_id, entity, period, strategy, projected_savings, risk_level, status)
-            VALUES ($1, $2, $3, $4, $5, 0, 'low', 'draft')
+            VALUES ($1, $2, $3, $4, $5, 0, $6, $7)
             RETURNING id, entity, period, strategy, projected_savings, risk_level, status, approved_at"#),
         )
         .bind(id)
@@ -1234,6 +1313,8 @@ impl TaxPlanner {
         .bind(&req.entity)
         .bind(&req.period)
         .bind(&strategy)
+        .bind(TaxPlanRiskLevel::Low.as_str())
+        .bind(TaxPlanStatus::Draft.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1325,7 +1406,7 @@ impl TaxPlanner {
         status: Option<String>,
     ) -> Result<Vec<TaxPlan>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans",
+            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE 1=1",
         );
         if status.is_some() {
             query.push_str(" AND status = $1");
@@ -1353,13 +1434,17 @@ impl TaxPlanner {
         let mut scope = db.scope_with(txn).await?;
         let plan = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v56_tax_plans
-            SET status = 'approved', approved_at = $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, approved_at = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2 AND tenant_id = $3 AND status IN ($5, $6, $7)
             RETURNING id, entity, period, strategy, projected_savings, risk_level, status, approved_at"#),
         )
         .bind(now)
         .bind(plan_id)
         .bind(tenant_id)
+        .bind(TaxPlanStatus::Approved.as_str())
+        .bind(TaxPlanStatus::Draft.as_str())
+        .bind(TaxPlanStatus::Proposed.as_str())
+        .bind(TaxPlanStatus::UnderReview.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1376,17 +1461,12 @@ impl TaxPlanner {
         let mut warnings: Vec<String> = Vec::new();
         let mut suggestions: Vec<String> = Vec::new();
 
-        let mut query = String::from(
-            "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE status = 'draft'",
-        );
-        if entity.is_some() {
-            query.push_str(" AND jurisdiction = $2");
-        }
-        query.push_str(" ORDER BY period_end ASC LIMIT 100");
+        let query = "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE status = 'draft' AND ($1::text IS NULL OR jurisdiction = $1) ORDER BY period_end ASC LIMIT 100";
 
         // 系统通道例外（冻结文档 §2.1）：超管跨租户只读汇总
         let mut scope = db.scope_with(txn).await?;
         let draft_forms: Vec<(Uuid, String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(query))
+            .bind(entity.as_deref())
             .fetch_all(&mut scope)
             .await?;
 
@@ -1553,6 +1633,19 @@ pub async fn get_tax_forms_handler(
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
+    if let Some(raw) = params.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if TaxFormStatus::from_str(raw).is_none() {
+            let allowed = TaxFormStatus::ALL
+                .iter()
+                .map(TaxFormStatus::as_str)
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::bad_request(&format!(
+                "非法税务表单状态: {}，可选值: {}",
+                raw, allowed
+            ));
+        }
+    }
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1957,6 +2050,19 @@ pub async fn list_plans_handler(
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
+    if let Some(raw) = params.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if TaxPlanStatus::from_str(raw).is_none() {
+            let allowed = TaxPlanStatus::ALL
+                .iter()
+                .map(TaxPlanStatus::as_str)
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::bad_request(&format!(
+                "非法税务筹划状态: {}，可选值: {}",
+                raw, allowed
+            ));
+        }
+    }
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2367,9 +2473,14 @@ mod tests {
             TaxFormStatus::Rejected,
         ] {
             let s = v.as_str();
-            assert_eq!(TaxFormStatus::from_str(s), v);
+            assert_eq!(TaxFormStatus::from_str(s), Some(v.clone()));
         }
-        assert_eq!(TaxFormStatus::from_str("unknown"), TaxFormStatus::Draft);
+        assert_eq!(
+            TaxFormStatus::from_str("unknown"),
+            None,
+            "未知状态必须拒绝，不能静默回退 draft"
+        );
+        assert_eq!(TaxFormStatus::from_str(""), None);
     }
 
     #[test]
@@ -2428,9 +2539,14 @@ mod tests {
             TaxPlanStatus::Executed,
         ] {
             let s = v.as_str();
-            assert_eq!(TaxPlanStatus::from_str(s), v);
+            assert_eq!(TaxPlanStatus::from_str(s), Some(v.clone()));
         }
-        assert_eq!(TaxPlanStatus::from_str("unknown"), TaxPlanStatus::Draft);
+        assert_eq!(
+            TaxPlanStatus::from_str("unknown"),
+            None,
+            "未知状态必须拒绝，不能静默回退 draft"
+        );
+        assert_eq!(TaxPlanStatus::from_str(""), None);
     }
 
     // --- AutoTaxFiler::calculate_due_date ---
