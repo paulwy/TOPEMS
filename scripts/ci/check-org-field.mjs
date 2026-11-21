@@ -6,11 +6,13 @@
  *
  * 口径（V69.1 定案）：`tenant_id` 是租户隔离键，`org_id` 是组织层级键，
  * `company_id` 只保留法人主体语义；`organization_id` 已废弃，不得在新迁移中
- * 继续出现。存量按 `scripts/ci/org-field-baseline.json` 冻结，只减不增。
+ * 继续新增列。存量新增列定义按 `scripts/ci/org-field-baseline.json` 冻结，只减不增。
  *
- * 度量：`database/migrations/**\/*.sql` 中 `organization_id` 标识符出现次数，
- * 按文件冻结。默认全量比较；`--changed-only` 只检查暂存区里的 SQL 迁移。
- * 新文件出现 `organization_id` 直接阻断；既有文件次数上升阻断；下降只提示核销。
+ * 度量：`database/migrations/**\/*.sql` 中 `organization_id` 的**新增列定义**
+ * （CREATE TABLE 内联列 / ADD COLUMN），按文件冻结。DROP/RENAME/SELECT 中的
+ * `organization_id` 不计入，避免清理动作被误伤。
+ * 默认全量比较；`--changed-only` 只检查暂存区里的 SQL 迁移。
+ * 新文件出现新增列定义直接阻断；既有文件次数上升阻断；下降只提示核销。
  *
  * 用法：
  *   node scripts/ci/check-org-field.mjs
@@ -29,7 +31,9 @@ import { execSync } from 'node:child_process';
 const ROOT = process.cwd();
 const MIGRATIONS_DIR = join(ROOT, 'database/migrations');
 const BASELINE_FILE = join(ROOT, 'scripts/ci/org-field-baseline.json');
-const FIELD_RE = /\borganization_id\b/g;
+const FIELD_RE = /\borganization_id\b/;
+const COLUMN_DEF_RE = /^\s*organization_id\s+[A-Za-z]/;
+const ADD_COLUMN_RE = /\bADD\s+COLUMN\b[^\n;]*\borganization_id\b/i;
 
 const args = process.argv.slice(2);
 const CHANGED_ONLY = args.includes('--changed-only');
@@ -46,7 +50,13 @@ function listSqlFiles() {
 }
 
 function countField(src) {
-  return [...src.matchAll(FIELD_RE)].length;
+  // 只冻结“新增列定义”：CREATE TABLE 内联列与 ALTER TABLE ADD COLUMN。
+  // DROP COLUMN / RENAME COLUMN / SELECT 中的 organization_id 属于清理动作，
+  // 不应被门禁误伤。
+  return src
+    .split('\n')
+    .filter((line) => FIELD_RE.test(line) && (COLUMN_DEF_RE.test(line) || ADD_COLUMN_RE.test(line)))
+    .length;
 }
 
 function currentCounts() {

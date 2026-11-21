@@ -50,11 +50,13 @@ B/C 类法人主体表。
 **列数**，不是源码出现次数；本地库列数为 `15 / 32 / 140`，与生产克隆不可直接比较。
 
 本门禁改用可静态复现的源码口径：`database/migrations/**/*.sql` 中
-`organization_id` 标识符出现次数，按文件冻结在
-`scripts/ci/org-field-baseline.json`。当前基线：
+**新增列定义**（`CREATE TABLE` 内联列 + `ALTER TABLE ADD COLUMN`）的
+`organization_id` 次数，按文件冻结在
+`scripts/ci/org-field-baseline.json`。清理用的 `DROP COLUMN` / `RENAME COLUMN` /
+`SELECT` 不计入，避免门禁误伤收敛动作。当前基线：
 
-- 文件数：50
-- 出现次数：434
+- 文件数：30
+- 新增列定义次数：281
 
 门禁规则：
 
