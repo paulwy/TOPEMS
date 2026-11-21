@@ -17,6 +17,7 @@ use crate::models::{
     CreateSupplierRequest, Supplier, SupplierContract, SupplierPerformance, SupplierProduct,
     UpdateSupplierRequest,
 };
+use crate::modules::supplier_record_status::SupplierRecordStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
@@ -427,7 +428,13 @@ pub async fn list_suppliers(
     record_cache_miss("srm", "supplier", "list");
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match SupplierRecordStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::<serde_json::Value>::bad_request("无效的供应商状态"),
+        },
+        None => None,
+    };
     let category_filter = params.category.clone();
 
     let order_clause = if sort_order == "ASC" { "ASC" } else { "DESC" };
@@ -560,6 +567,10 @@ pub async fn create_supplier(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = Uuid::parse_str(&claims.sub).ok();
+    let status = match SupplierRecordStatus::from_db_str(&req.status) {
+        Some(v) => v,
+        None => return ApiResponse::<Supplier>::bad_request("无效的供应商状态"),
+    };
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
@@ -574,7 +585,7 @@ pub async fn create_supplier(
     .bind(&req.name)
     .bind(&req.legal_name)
     .bind(&req.category)
-    .bind(&req.status)
+    .bind(status.as_db_str())
     .bind(&req.tax_id)
     .bind(&req.address)
     .bind(&req.contact_person)
@@ -847,7 +858,13 @@ pub async fn update_supplier(
     let name = req.name.unwrap_or(existing.name);
     let legal_name = req.legal_name.or(existing.legal_name);
     let category = req.category.unwrap_or(existing.category);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        Some(raw) => match SupplierRecordStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::<Supplier>::bad_request("无效的供应商状态"),
+        },
+        None => existing.status,
+    };
     let tax_id = req.tax_id.or(existing.tax_id);
     let address = req.address.or(existing.address);
     let contact_person = req.contact_person.or(existing.contact_person);
@@ -1040,12 +1057,15 @@ pub async fn delete_supplier(
         .and_then(|s| serde_json::to_value(&s).ok());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
-    let result = sqlx::query(
-        only_own_schema_query!("srm", "UPDATE srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1 AND tenant_id = $3", "srm"),
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.suppliers SET status = $4, updated_at = $2 WHERE id = $1 AND tenant_id = $3",
+        "srm"
+    ))
     .bind(id)
     .bind(Utc::now())
     .bind(tenant_id)
+    .bind(SupplierRecordStatus::Deleted.as_db_str())
     .execute(&mut **txn)
     .await;
 

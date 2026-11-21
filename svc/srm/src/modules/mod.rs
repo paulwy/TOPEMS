@@ -19,6 +19,7 @@ pub mod supplier_evaluation;
 pub mod supplier_performance;
 pub mod supplier_portal;
 pub mod supplier_product;
+pub mod supplier_record_status;
 pub mod tender;
 
 pub use bid_price::create_routes as create_bid_price_routes;

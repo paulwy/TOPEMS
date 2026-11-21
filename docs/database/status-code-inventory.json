@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 170,
+    "rust_enums": 171,
     "rust_enum_values": 165,
     "rust_values_not_in_db_check": 126,
     "frontend_status_keys": 180,
@@ -2886,6 +2886,27 @@
         "archived",
         "draft",
         "inactive"
+      ]
+    },
+    {
+      "module": "srm",
+      "file": "svc/srm/src/modules/supplier_record_status.rs",
+      "name": "SupplierRecordStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Blacklisted",
+        "Deleted",
+        "Inactive",
+        "Pending"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "blacklisted",
+        "deleted",
+        "inactive",
+        "pending"
       ]
     },
     {

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS srm.suppliers (
     sync_from_scm boolean DEFAULT false NOT NULL,
     scm_supplier_id uuid,
     name_en character varying(255),
-    CONSTRAINT ck_suppliers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT ck_suppliers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'pending'::character varying, 'blacklisted'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])))),
     CONSTRAINT suppliers_pkey PRIMARY KEY (id),
     CONSTRAINT suppliers_supplier_no_key UNIQUE (supplier_no)
 );
