@@ -20,12 +20,16 @@
 # fail-closed：缺 psql/createdb/dropdb/sqlx、连不上 PG、建库失败、任一步失败
 #             均非 0；库名强制 topems_migration_drill_<pid>，绝不触碰生产库。
 #
-# 连接解析：MIGRATION_DRILL_DB_URL → TEST_DATABASE_URL → DATABASE_URL → .env 的 MIGRATE_URL → 缺省 socket。
-#   - TEST_DATABASE_URL 优先于 DATABASE_URL，用于把演练固定到非特权测试角色（需 CREATEDB）。
-#   - 连接串无口令且未设置 PGPASSWORD/PGPASSFILE → 回落 socket
-#     （postgresql:///<库名>，本机 peer 认证），并打印实际用的来源。
-#   - 本机 pg_hba 把 127.0.0.1/32 改成 scram-sha-256 后，无口令 TCP 连接必然失败；
-#     socket 回落是本地默认路径，失败文案给的是「怎么设置」而不是裸的连不上。
+# 连接解析（与漂移门禁同套路，默认可用）：
+#   进程 MIGRATION_DRILL_DB_URL → .env 的 MIGRATION_DRILL_DB_URL
+#   → 进程 TEST_DATABASE_URL → .env 的 TEST_DATABASE_URL
+#   → 内置默认 postgresql://topems_test_runner@127.0.0.1:5432/postgres。
+#   - 专用变量优先于通用 TEST_DATABASE_URL（与漂移门禁一致：专用 > .env 专用 > 通用 > 内置默认）。
+#   - 复用任意一档时都只借其角色与口令，演练库名由脚本强制改写为
+#     topems_migration_drill_<pid>，不会写 TEST_DATABASE_URL 指向的库本身。
+#   - 连接串无口令且未设置 PGPASSWORD/PGPASSFILE → 从 .env 的
+#     MIGRATION_DRILL_DB_URL / TEST_DATABASE_URL 借同角色口令；仍无则 fail-closed，
+#     不会静默回落到 socket（socket 会以 OS 用户连入，通常是 superuser，恒被拒绝）。
 #   - 连接成功后校验 current_user 的 rolsuper/rolbypassrls，命中即失败：
 #     这类连接会 BYPASSRLS，演练里的权限/RLS 校验恒真（2026-11-19 假绿事故）。
 #     仅本地演练可用 MIGRATION_DRILL_ALLOW_SUPERUSER=1 显式豁免（CI 不得设置）。
@@ -74,7 +78,7 @@ case "$TEMPLATE_DB" in
 esac
 ALLOW_SUPERUSER="${MIGRATION_DRILL_ALLOW_SUPERUSER:-}"
 
-# ---- 连接串解析：MIGRATION_DRILL_DB_URL → TEST_DATABASE_URL（均为显式环境变量，无回落默认）----
+# ---- 连接串解析：进程专用 → .env 专用 → 进程通用 → .env 通用 → 内置默认 ----
 
 sanitize_dsn() {
     printf '%s' "$1" | sed -E 's#(://[^:/@]+):[^@/]*@#\1:***@#'
@@ -90,16 +94,51 @@ url_is_socket() {
     [[ "$1" =~ ^[A-Za-z0-9+.-]+:/// ]]
 }
 
+url_role() {
+    [[ "$1" =~ ^[A-Za-z0-9+.-]+://([^/@:]+)(:[^/@]*)?@ ]] && printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+}
+
+url_password() {
+    [[ "$1" =~ ^[A-Za-z0-9+.-]+://[^/@:]+:([^/@]*)@ ]] && printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+}
+
+# 读取仓库根 .env 的单个键（去 export 前缀、行尾 CR 与成对引号），缺失返回空。
+read_env_value() {
+    local key="$1" file="$SOURCE_ROOT/.env" line
+    [[ -f "$file" ]] || return 0
+    line="$(grep -E "^[[:space:]]*(export[[:space:]]+)?${key}=" "$file" 2>/dev/null | head -n 1 || true)"
+    [[ -n "$line" ]] || return 0
+    line="${line#*=}"
+    line="${line%$'\r'}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    case "$line" in
+        \"*\") line="${line#\"}"; line="${line%\"}" ;;
+        \'*\') line="${line#\'}"; line="${line%\'}" ;;
+    esac
+    printf '%s' "$line"
+}
+
+ENV_FILE_DRILL_URL="$(read_env_value MIGRATION_DRILL_DB_URL)"
+ENV_FILE_TEST_URL="$(read_env_value TEST_DATABASE_URL)"
+
 if [[ -n "${MIGRATION_DRILL_DB_URL:-}" ]]; then
     BASE_DSN="$MIGRATION_DRILL_DB_URL"
     DSN_SOURCE="MIGRATION_DRILL_DB_URL（环境变量）"
+elif [[ -n "$ENV_FILE_DRILL_URL" ]]; then
+    BASE_DSN="$ENV_FILE_DRILL_URL"
+    DSN_SOURCE=".env 的 MIGRATION_DRILL_DB_URL"
 elif [[ -n "${TEST_DATABASE_URL:-}" ]]; then
     BASE_DSN="$TEST_DATABASE_URL"
     DSN_SOURCE="TEST_DATABASE_URL（环境变量）"
+elif [[ -n "$ENV_FILE_TEST_URL" ]]; then
+    BASE_DSN="$ENV_FILE_TEST_URL"
+    DSN_SOURCE=".env 的 TEST_DATABASE_URL（默认：具备 CREATEDB 的测试角色）"
 else
-    echo "FAIL: 未提供演练 DSN。必须显式设置 MIGRATION_DRILL_DB_URL（优先）或 TEST_DATABASE_URL；" >&2
-    echo "      本脚本不再回落到 .env / DATABASE_URL / postgresql:///postgres。" >&2
-    exit 1
+    BASE_DSN="postgresql://topems_test_runner@127.0.0.1:5432/postgres"
+    DSN_SOURCE="内置默认（topems_test_runner@127.0.0.1:5432/postgres）"
 fi
 
 if [[ ! "$BASE_DSN" =~ ^[A-Za-z0-9+.-]+:// ]]; then
@@ -108,9 +147,26 @@ if [[ ! "$BASE_DSN" =~ ^[A-Za-z0-9+.-]+:// ]]; then
     exit 1
 fi
 
+# 无内嵌口令时，只从 .env 的同角色 DSN 借口令（不跨角色借用，避免必然认证失败）。
 if ! url_is_socket "$BASE_DSN" && ! url_has_password "$BASE_DSN"; then
-    echo "FAIL: ${DSN_SOURCE} 未携带口令（且未设置 PGPASSWORD/PGPASSFILE）。" >&2
-    echo "      本脚本不再自动回落 unix socket；请补齐口令或直接给出 socket DSN。" >&2
+    TARGET_ROLE="$(url_role "$BASE_DSN")"
+    for candidate in "$ENV_FILE_DRILL_URL" "$ENV_FILE_TEST_URL"; do
+        [[ -n "$candidate" ]] || continue
+        CAND_PASS="$(url_password "$candidate")"
+        [[ -n "$CAND_PASS" ]] || continue
+        CAND_ROLE="$(url_role "$candidate")"
+        if [[ -z "$TARGET_ROLE" || "$CAND_ROLE" == "$TARGET_ROLE" ]]; then
+            export PGPASSWORD="$CAND_PASS"
+            echo "[conn] 口令来源：.env 中角色 ${CAND_ROLE} 的 DSN（口令不输出）"
+            break
+        fi
+    done
+fi
+
+if ! url_is_socket "$BASE_DSN" && ! url_has_password "$BASE_DSN"; then
+    echo "FAIL: ${DSN_SOURCE} 未携带口令（且未设置 PGPASSWORD/PGPASSFILE，.env 中也无同角色口令）。" >&2
+    echo "      默认路径要求 .env 的 TEST_DATABASE_URL 带上 topems_test_runner 的口令；" >&2
+    echo "      或显式 export MIGRATION_DRILL_DB_URL（形如 postgresql://<角色>@127.0.0.1:5432/postgres），再 export PGPASSWORD=<口令>。" >&2
     exit 1
 fi
 

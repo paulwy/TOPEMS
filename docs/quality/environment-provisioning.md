@@ -444,7 +444,8 @@ MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh
 
 目标库解析顺序：进程环境 `MIGRATION_DRIFT_DB_URL` → `.env` 的 `MIGRATION_DRIFT_DB_URL`
 → 进程环境 `DATABASE_URL` → `.env` 的 `MIGRATE_URL`。专用变量优先于通用 `DATABASE_URL`，
-避免被某个 shell 里遗留的通用连接带偏。
+避免被某个 shell 里遗留的通用连接带偏。演练门禁 `migration-drill-anchor` 采用同一口径
+（专用 > `.env` 专用 > 通用 > 内置默认），见 §11.6。
 
 ### 11.3 何时重跑 / 幂等性
 
@@ -476,3 +477,61 @@ MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh
 不修改已应用的 `1107/1200`；迁移含小数行守卫与终态 `int8` 断言，配套回滚。
 凡越过 `20261120090000` 的库应用该迁移后漂移消失；基线夹具停在锚点
 `20261117235500`，本就不受影响。
+
+### 11.6 演练门禁（migration-drill-anchor）从零跑通
+
+pre-push 的 `migration-drill-anchor` 从生产基线快照恢复隔离库，只应用 `> anchor` 的前向迁移，
+再跑静态校验、权限审计、up-down-up 重放、RLS 策略快照与菜单权限码六步。与漂移门禁一样，
+它只在 **pre-push（lefthook）** 跑，CI 不跑。
+
+**依赖**
+
+- 本机 PostgreSQL 16+；`psql` / `createdb` / `dropdb` / `sqlx` / `gzip` / `python3` / `node` 可用。
+- 模板库 `topems_drill_template`（`datistemplate=true`，预装 `pgcrypto` / `uuid-ossp` / `vector`）。
+  anchor 快照含 `CREATE EXTENSION`，非特权角色无法在空库创建，必须从模板复制。
+  一次性 bootstrap（仅本机特权）：`bash scripts/dev/bootstrap-migration-drill-template.sh`。
+- 角色 `topems_test_runner`：`LOGIN` + `CREATEDB`，非 superuser、非 BYPASSRLS。
+- 基线三件套与 `anchors.json`（同 §11.1）。
+
+**默认值与解析顺序**
+
+默认配置即可跑通，不需要临时 `export`：
+
+| 档位 | 来源 |
+|---|---|
+| 1 | 进程环境 `MIGRATION_DRILL_DB_URL` |
+| 2 | `.env` 的 `MIGRATION_DRILL_DB_URL` |
+| 3 | 进程环境 `TEST_DATABASE_URL` |
+| 4 | `.env` 的 `TEST_DATABASE_URL`（默认：`topems_test_runner`，具备 `CREATEDB`） |
+| 5 | 内置默认 `postgresql://topems_test_runner@127.0.0.1:5432/postgres` |
+
+与 §11.2 同一口径：专用变量 > `.env` 专用 > 通用连接 > 内置默认。连接串无内嵌口令时，
+只借 `.env` 中**同角色**的口令；仍无则 fail-closed，不回落 socket。
+任何一档都只借角色与口令：维护库固定为 `postgres`，演练库名强制
+`topems_migration_drill_<pid>`，跑完（含失败）立即 drop；不写生产，也不写
+`TEST_DATABASE_URL` 指向的库本身。模板库名可用 `MIGRATION_DRILL_TEMPLATE_DB` 覆盖。
+
+**验证与重跑**
+
+```bash
+# 默认配置：先清掉 MIGRATION_DRILL_DB_URL / TEST_DATABASE_URL / DATABASE_URL 等临时导出
+bash scripts/dev/run-migration-drill.sh anchor
+#   → PASS: drill:anchor 通过（anchor=<当前锚点>，总耗时约 2 分钟）
+```
+
+每次运行都新建临时库，可重复执行；模板库与角色属性不会被修改。
+显式指定仍然优先：`MIGRATION_DRILL_DB_URL=... bash scripts/dev/run-migration-drill.sh anchor`
+会跳过第 2–5 档。
+
+**排障**
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| `FAIL: … 未携带口令` | DSN 无口令且 `.env` 无同角色口令 | 在 `.env` 的 `TEST_DATABASE_URL` 补口令，或显式 `MIGRATION_DRILL_DB_URL` |
+| `FAIL: 该连接会 BYPASSRLS` | DSN 落到 OS 用户/owner/superuser | 改用 `topems_test_runner`；仅本地演练可 `MIGRATION_DRILL_ALLOW_SUPERUSER=1` |
+| `FAIL: 演练模板库 … 不存在或未标记为模板` | 未执行一次性 bootstrap | 跑 `scripts/dev/bootstrap-migration-drill-template.sh` |
+| `permission denied to create extension` | 绕过模板库直接恢复空库 | 走模板库复制；不要给演练角色扩权 |
+| `createdb: permission denied` | 角色缺 `CREATEDB` | 换具备 `CREATEDB` 的角色；需新建角色或扩权时先报备 |
+
+> 已知限制：anchor 快照含扩展创建语句，非特权角色无法在空库直接恢复；
+> 模板库机制是当前不改动授权的唯一解法。
