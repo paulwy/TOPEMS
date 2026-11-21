@@ -41,11 +41,16 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let ctx = bootstrap_service_shared(&config).await?;
-    // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务（兜底守卫）。
-    let db = Db::new(ctx.db.clone(), "integration, public").deny_request_own_txn();
+    // 后台任务（事件订阅、增量调度）按事件携带的租户自建租户作用域，使用未加请求守卫的 Db。
+    let background_db = Db::new(ctx.db.clone(), "integration, public");
+    // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务或租户作用域（兜底守卫）。
+    let db = background_db
+        .clone()
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
 
     // 业务初始化：事件订阅者（schema 由迁移链唯一维护）
-    if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(background_db.clone()).await {
         tracing::warn!("⚠️ Integration 事件订阅者启动失败: {}", e);
     }
 
@@ -110,7 +115,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // 启动增量同步定时调度器
-    let sync_db = db.clone();
+    let sync_db = background_db.clone();
     tokio::spawn(async move {
         sync_scheduler::start_sync_scheduler(sync_db).await;
     });

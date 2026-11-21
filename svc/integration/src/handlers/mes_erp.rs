@@ -267,6 +267,7 @@ pub async fn sync_mes_erp(
 pub async fn sync_erp_order_to_mes(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncErpToMesRequest>,
 ) -> ApiResponse<mes_erp_sync::SyncResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -282,7 +283,7 @@ pub async fn sync_erp_order_to_mes(
 
     match state
         .mes_erp_sync_service
-        .sync_erp_to_mes(tenant_id, erp_order_id)
+        .sync_erp_to_mes(&txn_arc, tenant_id, erp_order_id)
         .await
     {
         Ok(result) => ApiResponse::success(result, "ERP→MES 同步成功"),
@@ -306,6 +307,7 @@ pub async fn sync_erp_order_to_mes(
 pub async fn sync_mes_progress_to_erp(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<SyncMesToErpRequest>,
 ) -> ApiResponse<mes_erp_sync::SyncResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -321,7 +323,7 @@ pub async fn sync_mes_progress_to_erp(
 
     match state
         .mes_erp_sync_service
-        .sync_mes_progress_to_erp(tenant_id, mes_order_id)
+        .sync_mes_progress_to_erp(&txn_arc, tenant_id, mes_order_id)
         .await
     {
         Ok(result) => ApiResponse::success(result, "MES→ERP 进度同步成功"),
