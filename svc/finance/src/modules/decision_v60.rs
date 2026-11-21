@@ -29,6 +29,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -59,13 +60,18 @@ impl DecisionScenarioType {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "financing" => DecisionScenarioType::Financing,
-            "operational" => DecisionScenarioType::Operational,
-            "strategic" => DecisionScenarioType::Strategic,
-            _ => DecisionScenarioType::Investment,
+    fn try_from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "investment" => Some(DecisionScenarioType::Investment),
+            "financing" => Some(DecisionScenarioType::Financing),
+            "operational" => Some(DecisionScenarioType::Operational),
+            "strategic" => Some(DecisionScenarioType::Strategic),
+            _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Self {
+        Self::try_from_str(s).unwrap_or(DecisionScenarioType::Investment)
     }
 }
 
@@ -85,6 +91,16 @@ impl DecisionStatus {
             DecisionStatus::Active => "active",
             DecisionStatus::Evaluated => "evaluated",
             DecisionStatus::Archived => "archived",
+        }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "draft" => Some(Self::Draft),
+            "active" => Some(Self::Active),
+            "evaluated" => Some(Self::Evaluated),
+            "archived" => Some(Self::Archived),
+            _ => None,
         }
     }
 }
@@ -220,12 +236,17 @@ impl ScheduleTaskType {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "one_time" => ScheduleTaskType::OneTime,
-            "event_driven" => ScheduleTaskType::EventDriven,
-            _ => ScheduleTaskType::Recurring,
+    fn try_from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "recurring" => Some(ScheduleTaskType::Recurring),
+            "one_time" => Some(ScheduleTaskType::OneTime),
+            "event_driven" => Some(ScheduleTaskType::EventDriven),
+            _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Self {
+        Self::try_from_str(s).unwrap_or(ScheduleTaskType::Recurring)
     }
 }
 
@@ -240,6 +261,14 @@ pub enum ScheduleTaskStatus {
 }
 
 impl ScheduleTaskStatus {
+    const ALL: [Self; 5] = [
+        Self::Pending,
+        Self::Running,
+        Self::Paused,
+        Self::Completed,
+        Self::Failed,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             ScheduleTaskStatus::Pending => "pending",
@@ -247,6 +276,17 @@ impl ScheduleTaskStatus {
             ScheduleTaskStatus::Paused => "paused",
             ScheduleTaskStatus::Completed => "completed",
             ScheduleTaskStatus::Failed => "failed",
+        }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "pending" => Some(Self::Pending),
+            "running" => Some(Self::Running),
+            "paused" => Some(Self::Paused),
+            "completed" => Some(Self::Completed),
+            "failed" => Some(Self::Failed),
+            _ => None,
         }
     }
 }
@@ -369,7 +409,7 @@ impl DecisionEngine {
         let result = sqlx::query_as::<_, DecisionScenario>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_decision_scenarios
                 (id, tenant_id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at"#),
         )
         .bind(id)
@@ -379,6 +419,7 @@ impl DecisionEngine {
         .bind(&req.parameters)
         .bind(&req.objectives)
         .bind(&req.constraints)
+        .bind(DecisionStatus::Draft.as_str())
         .bind(now)
         .bind(now)
         .fetch_one(&mut scope)
@@ -403,6 +444,19 @@ impl DecisionEngine {
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await?;
+
+        match DecisionStatus::from_str(&scenario.status) {
+            Some(DecisionStatus::Draft | DecisionStatus::Active) => {}
+            Some(DecisionStatus::Evaluated | DecisionStatus::Archived) => {
+                return Err(sqlx::Error::RowNotFound);
+            }
+            None => {
+                return Err(sqlx::Error::Protocol(format!(
+                    "非法决策场景状态: {}",
+                    scenario.status
+                )));
+            }
+        }
 
         let objectives = scenario
             .objectives
@@ -473,11 +527,14 @@ impl DecisionEngine {
         .await?;
 
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.finance_v60_decision_scenarios SET status = 'evaluated', updated_at = $1 WHERE id = $2 AND tenant_id = $3"),
+            only_own_schema_query!("finance", "UPDATE finance.finance_v60_decision_scenarios SET status = $4, updated_at = $1 WHERE id = $2 AND tenant_id = $3 AND status IN ($5, $6)"),
         )
         .bind(now)
         .bind(scenario_id)
         .bind(tenant_id)
+        .bind(DecisionStatus::Evaluated.as_str())
+        .bind(DecisionStatus::Draft.as_str())
+        .bind(DecisionStatus::Active.as_str())
         .execute(&mut scope)
         .await?;
 
@@ -1131,7 +1188,7 @@ impl IntelligentScheduler {
         let result = sqlx::query_as::<_, ScheduleTask>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_schedule_tasks
                 (id, tenant_id, name, task_type, cron_expression, action, priority, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(id)
@@ -1141,6 +1198,7 @@ impl IntelligentScheduler {
         .bind(&req.cron_expression)
         .bind(&req.action)
         .bind(priority)
+        .bind(ScheduleTaskStatus::Pending.as_str())
         .bind(now)
         .bind(now)
         .fetch_one(&mut scope)
@@ -1156,33 +1214,15 @@ impl IntelligentScheduler {
         params: TaskQueryParams,
     ) -> Result<Vec<ScheduleTask>, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
-        let mut query = String::from(
-            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks",
-        );
-
-        if let Some(ref task_type) = params.task_type {
-            query.push_str(" AND task_type = $1");
-        }
-        if let Some(ref status) = params.status {
-            let placeholder = if params.task_type.is_some() {
-                "$2"
-            } else {
-                "$1"
-            };
-            query.push_str(&format!(" AND status = {}", placeholder));
-        }
-
-        query.push_str(" ORDER BY priority DESC, created_at DESC LIMIT 200");
-
-        let mut q = sqlx::query_as::<_, ScheduleTask>(sqlx::AssertSqlSafe(query));
-        if let Some(ref task_type) = params.task_type {
-            q = q.bind(task_type);
-        }
-        if let Some(ref status) = params.status {
-            q = q.bind(status);
-        }
-
-        let result = q.fetch_all(&mut scope).await;
+        // 原实现先拼 "FROM table" 再追加 " AND ..."，带任一过滤条件都会生成非法 SQL。
+        let result = sqlx::query_as::<_, ScheduleTask>(only_own_schema_query!(
+            "finance",
+            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE ($1::text IS NULL OR task_type = $1) AND ($2::text IS NULL OR status = $2) ORDER BY priority DESC, created_at DESC LIMIT 200"
+        ))
+        .bind(params.task_type.as_deref().map(str::trim).filter(|s| !s.is_empty()))
+        .bind(params.status.as_deref().map(str::trim).filter(|s| !s.is_empty()))
+        .fetch_all(&mut scope)
+        .await;
         let _ = scope.commit().await;
         result
     }
@@ -1197,13 +1237,14 @@ impl IntelligentScheduler {
         let now = Utc::now();
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
-            SET status = 'pending', updated_at = $1
+            SET status = $4, updated_at = $1
             WHERE id = $2 AND tenant_id = $3
             RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
+        .bind(ScheduleTaskStatus::Pending.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1219,10 +1260,11 @@ impl IntelligentScheduler {
     ) -> Result<ScheduleExecution, sqlx::Error> {
         let mut scope = db.scope_with(txn).await?;
         let task = sqlx::query_as::<_, ScheduleTask>(
-            only_own_schema_query!("finance", "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE id = $1 AND tenant_id = $2 AND status = $3"),
         )
         .bind(task_id)
         .bind(tenant_id)
+        .bind(ScheduleTaskStatus::Pending.as_str())
         .fetch_one(&mut scope)
         .await?;
 
@@ -1243,7 +1285,7 @@ impl IntelligentScheduler {
         let execution = sqlx::query_as::<_, ScheduleExecution>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v60_schedule_executions
                 (id, tenant_id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output"#),
         )
         .bind(exec_id)
@@ -1253,18 +1295,24 @@ impl IntelligentScheduler {
         .bind(started_at)
         .bind(completed_at)
         .bind(duration_ms)
+        .bind(ScheduleExecutionStatus::Completed.as_str())
         .bind(output)
         .fetch_one(&mut scope)
         .await?;
 
-        sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.finance_v60_schedule_tasks SET status = 'completed', updated_at = $1 WHERE id = $2 AND tenant_id = $3"),
+        let updated = sqlx::query(
+            only_own_schema_query!("finance", "UPDATE finance.finance_v60_schedule_tasks SET status = $4, updated_at = $1 WHERE id = $2 AND tenant_id = $3 AND status = $5"),
         )
         .bind(completed_at)
         .bind(task_id)
         .bind(tenant_id)
+        .bind(ScheduleTaskStatus::Completed.as_str())
+        .bind(ScheduleTaskStatus::Pending.as_str())
         .execute(&mut scope)
         .await?;
+        if updated.rows_affected() == 0 {
+            return Err(sqlx::Error::RowNotFound);
+        }
 
         scope.commit().await?;
         Ok(execution)
@@ -1367,13 +1415,16 @@ impl IntelligentScheduler {
         let now = Utc::now();
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
-            SET status = 'paused', updated_at = $1
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, updated_at = $1
+            WHERE id = $2 AND tenant_id = $3 AND status IN ($5, $6)
             RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
+        .bind(ScheduleTaskStatus::Paused.as_str())
+        .bind(ScheduleTaskStatus::Pending.as_str())
+        .bind(ScheduleTaskStatus::Running.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1390,13 +1441,15 @@ impl IntelligentScheduler {
         let now = Utc::now();
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_schedule_tasks
-            SET status = 'pending', updated_at = $1
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, updated_at = $1
+            WHERE id = $2 AND tenant_id = $3 AND status = $5
             RETURNING id, name, task_type, cron_expression, action, priority, status, created_at, updated_at"#),
         )
         .bind(now)
         .bind(task_id)
         .bind(tenant_id)
+        .bind(ScheduleTaskStatus::Pending.as_str())
+        .bind(ScheduleTaskStatus::Paused.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1414,6 +1467,18 @@ async fn create_scenario_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
 ) -> ApiResponse<DecisionScenario> {
+    if let Some(raw) = req
+        .scenario_type
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        if DecisionScenarioType::try_from_str(raw).is_none() {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "非法决策场景类型: {raw}，可选值: investment/financing/operational/strategic"
+            )));
+        }
+    }
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -1749,6 +1814,18 @@ pub async fn create_task_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
 ) -> ApiResponse<ScheduleTask> {
+    if let Some(raw) = req
+        .task_type
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        if ScheduleTaskType::try_from_str(raw).is_none() {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "非法调度任务类型: {raw}，可选值: recurring/one_time/event_driven"
+            )));
+        }
+    }
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -1766,6 +1843,35 @@ pub async fn get_tasks_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaskQueryParams>,
 ) -> ApiResponse<Vec<ScheduleTask>> {
+    if let Some(raw) = params
+        .task_type
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        if ScheduleTaskType::try_from_str(raw).is_none() {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "非法调度任务类型: {raw}"
+            )));
+        }
+    }
+    if let Some(raw) = params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        if ScheduleTaskStatus::from_str(raw).is_none() {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "非法调度任务状态: {raw}，可选值: {}",
+                ScheduleTaskStatus::ALL
+                    .iter()
+                    .map(ScheduleTaskStatus::as_str)
+                    .collect::<Vec<_>>()
+                    .join("/")
+            )));
+        }
+    }
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -1869,6 +1975,27 @@ pub async fn update_task_handler(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTaskRequest>,
 ) -> ApiResponse<ScheduleTask> {
+    if let Some(raw) = req
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        match ScheduleTaskStatus::from_str(raw) {
+            Some(ScheduleTaskStatus::Pending | ScheduleTaskStatus::Paused) => {}
+            Some(_) => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "更新接口只允许把任务改为 pending 或 paused；running/completed/failed 由执行流程推进"
+                        .to_string(),
+                ));
+            }
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "非法调度任务状态: {raw}"
+                )));
+            }
+        }
+    }
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -2533,5 +2660,55 @@ mod tests {
     fn check_condition_unknown_returns_false() {
         assert!(!AlertEngine::check_condition("unknown", 100.0, 50.0));
         assert!(!AlertEngine::check_condition("", 100.0, 50.0));
+    }
+
+    #[test]
+    fn schedule_task_status_parses_only_known_values() {
+        assert_eq!(
+            ScheduleTaskStatus::from_str(" pending "),
+            Some(ScheduleTaskStatus::Pending)
+        );
+        assert_eq!(
+            ScheduleTaskStatus::from_str("COMPLETED"),
+            None,
+            "大小写不一致必须拒绝，不能静默归一"
+        );
+        assert_eq!(
+            ScheduleTaskStatus::from_str("running"),
+            Some(ScheduleTaskStatus::Running)
+        );
+        assert_eq!(ScheduleTaskStatus::from_str(""), None);
+        assert_eq!(ScheduleTaskStatus::from_str("archived"), None);
+    }
+
+    #[test]
+    fn schedule_task_type_rejects_unknown_instead_of_defaulting() {
+        assert_eq!(
+            ScheduleTaskType::try_from_str("one_time"),
+            Some(ScheduleTaskType::OneTime)
+        );
+        assert_eq!(
+            ScheduleTaskType::try_from_str("event_driven"),
+            Some(ScheduleTaskType::EventDriven)
+        );
+        assert_eq!(ScheduleTaskType::try_from_str("cron"), None);
+        // 兼容入口仍保留历史默认，但新写路径一律走 try_from_str。
+        assert_eq!(
+            ScheduleTaskType::from_str("cron"),
+            ScheduleTaskType::Recurring
+        );
+    }
+
+    #[test]
+    fn decision_scenario_type_rejects_unknown_instead_of_defaulting() {
+        assert_eq!(
+            DecisionScenarioType::try_from_str("strategic"),
+            Some(DecisionScenarioType::Strategic)
+        );
+        assert_eq!(DecisionScenarioType::try_from_str("marketing"), None);
+        assert_eq!(
+            DecisionScenarioType::from_str("marketing"),
+            DecisionScenarioType::Investment
+        );
     }
 }
