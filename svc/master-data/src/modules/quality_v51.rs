@@ -168,6 +168,36 @@ pub enum FixStatus {
     Failed,
 }
 
+impl FixStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["pending", "applied", "verified", "failed"];
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "pending" => Some(Self::Pending),
+            "applied" => Some(Self::Applied),
+            "verified" => Some(Self::Verified),
+            "failed" => Some(Self::Failed),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Applied => "applied",
+            Self::Verified => "verified",
+            Self::Failed => "failed",
+        }
+    }
+
+    /// 可回滚的起始状态：仅已应用/已验证；pending/failed 不可回滚。
+    pub fn revert_from() -> &'static [&'static str] {
+        &["applied", "verified"]
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct AutoFixAction {
     pub id: String,
@@ -395,12 +425,7 @@ fn quality_status_from_str(s: &str) -> QualityStatus {
 }
 
 fn fix_status_from_str(s: &str) -> FixStatus {
-    match s {
-        "applied" => FixStatus::Applied,
-        "verified" => FixStatus::Verified,
-        "failed" => FixStatus::Failed,
-        _ => FixStatus::Pending,
-    }
+    FixStatus::from_db_str(s).unwrap_or(FixStatus::Pending)
 }
 
 fn suggestion_type_from_str(s: &str) -> SuggestionType {
@@ -1231,6 +1256,13 @@ pub async fn get_fix_actions(
         }
     };
 
+    let status = match params.status.as_deref() {
+        Some(raw) => match FixStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的修复状态"),
+        },
+        None => None,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1240,12 +1272,13 @@ pub async fn get_fix_actions(
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
            AND status = COALESCE($3, status)
+           AND status IN ('pending','applied','verified','failed')
          ORDER BY applied_at DESC
          LIMIT $4 OFFSET $5"
     )))
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
-    .bind(params.status.as_deref())
+    .bind(status.as_deref())
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut db_scope)
@@ -1257,11 +1290,12 @@ pub async fn get_fix_actions(
         "SELECT COUNT(*) FROM master_data.mdm_auto_fix_actions
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
-           AND status = COALESCE($3, status)",
+           AND status = COALESCE($3, status)
+           AND status IN ('pending','applied','verified','failed')",
     )
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
-    .bind(params.status.as_deref())
+    .bind(status.as_deref())
     .fetch_one(&mut db_scope)
     .await
     .unwrap_or(0);
@@ -1322,24 +1356,30 @@ pub async fn revert_fix_action(
         return ApiResponse::not_found("未找到修复操作");
     };
 
-    if !matches!(status.as_str(), "applied" | "verified") {
-        return ApiResponse::bad_request("当前状态不可回滚");
+    match FixStatus::from_db_str(&status) {
+        Some(FixStatus::Applied) | Some(FixStatus::Verified) => {}
+        Some(_) => return ApiResponse::error(409, "当前状态不可回滚"),
+        None => return ApiResponse::error(409, "当前修复状态非法，无法回滚"),
     }
 
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_auto_fix_actions
-         SET status = 'pending', after_value = NULL, applied_at = NULL
+         SET status = $3, after_value = NULL, applied_at = NULL
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+           AND status = ANY($4::text[])
          RETURNING {AUTO_FIX_COLS}"
     )))
     .bind(&id)
     .bind(tenant)
+    .bind(FixStatus::Pending.as_db_str())
+    .bind(FixStatus::revert_from().to_vec())
     .fetch_optional(&mut db_scope)
     .await
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return ApiResponse::not_found("未找到修复操作");
+        let _ = db_scope.rollback().await;
+        return ApiResponse::error(409, "修复操作已回滚或状态不允许，未找到可回滚记录");
     };
     let action = auto_fix_from_row(&row);
 
@@ -2260,6 +2300,17 @@ mod tests {
     fn test_fix_status_from_str_pending_default() {
         assert_eq!(fix_status_from_str("pending"), FixStatus::Pending);
         assert_eq!(fix_status_from_str("unknown"), FixStatus::Pending);
+    }
+
+    #[test]
+    fn test_fix_status_db_values_and_revert_from() {
+        for raw in FixStatus::DB_VALUES {
+            let parsed = FixStatus::from_db_str(raw).expect("raw must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(FixStatus::from_db_str("rolled_back"), None);
+        assert!(FixStatus::revert_from().contains(&"verified"));
+        assert!(!FixStatus::revert_from().contains(&"pending"));
     }
 
     // ---------- suggestion_type_from_str ----------
