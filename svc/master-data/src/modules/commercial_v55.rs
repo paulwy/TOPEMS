@@ -1581,9 +1581,12 @@ pub async fn configure_sla(
         }
     };
     // K1：写真表 master_data.mdm_sla_configs。
+    let Some(metric) = SLAMetric::from_db_str(&req.metric) else {
+        return ApiResponse::bad_request("无效的 SLA 指标");
+    };
     let config = SLAConfig {
         id: uuid::Uuid::new_v4().to_string(),
-        metric: sla_metric_from_str(&req.metric),
+        metric,
         target_value: req.target_value,
         unit: req.unit.unwrap_or_else(|| "%".to_string()),
         penalty_per_min: req.penalty_per_min.unwrap_or(10.0),
@@ -1648,7 +1651,8 @@ pub async fn measure_sla(
     };
     // K1：先读真表 SLA 配置（无行 404），再写度量。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
+           WHERE id = $1::uuid AND metric IN ('availability','latency','error_rate') LIMIT 1"#,
     )))
     .bind(config_id)
     .fetch_optional(&mut db_scope)
@@ -1733,7 +1737,8 @@ pub async fn get_sla_status(
     // K1：数据源改真表（configs + measurements），聚合逻辑保留。
     let config_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
-           WHERE ($1::text IS NULL OR id::text = $1) ORDER BY metric"#,
+           WHERE ($1::text IS NULL OR id::text = $1)
+             AND metric IN ('availability','latency','error_rate') ORDER BY metric"#,
     )))
     .bind(params.config_id.as_deref())
     .fetch_all(&mut db_scope)
@@ -1888,7 +1893,8 @@ pub async fn calculate_penalty(
     };
     // K1：数据源改真表（config + measurements），逻辑保留。
     let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
+           WHERE id = $1::uuid AND metric IN ('availability','latency','error_rate') LIMIT 1"#,
     )))
     .bind(config_id)
     .fetch_optional(&mut db_scope)
@@ -2108,7 +2114,8 @@ pub async fn generate_sla_report(
     };
     // K1：数据源改真表（configs / measurements / incidents），逻辑保留。
     let config_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs ORDER BY metric"#,
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
+           WHERE metric IN ('availability','latency','error_rate') ORDER BY metric"#,
     )))
     .fetch_all(&mut db_scope)
     .await;
@@ -2291,20 +2298,35 @@ fn rate_card_from_row(row: &sqlx::postgres::PgRow) -> RateCard {
     }
 }
 
-fn sla_metric_from_str(s: &str) -> SLAMetric {
-    match s {
-        "latency" => SLAMetric::Latency,
-        "error_rate" => SLAMetric::ErrorRate,
-        _ => SLAMetric::Availability,
+impl SLAMetric {
+    pub const DB_VALUES: [&'static str; 3] = ["availability", "latency", "error_rate"];
+
+    #[must_use]
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "availability" => Some(Self::Availability),
+            "latency" => Some(Self::Latency),
+            "error_rate" => Some(Self::ErrorRate),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Availability => "availability",
+            Self::Latency => "latency",
+            Self::ErrorRate => "error_rate",
+        }
     }
 }
 
+fn sla_metric_from_str(s: &str) -> SLAMetric {
+    SLAMetric::from_db_str(s).unwrap_or(SLAMetric::Availability)
+}
+
 fn sla_metric_to_str(m: &SLAMetric) -> String {
-    match m {
-        SLAMetric::Availability => "availability".to_string(),
-        SLAMetric::Latency => "latency".to_string(),
-        SLAMetric::ErrorRate => "error_rate".to_string(),
-    }
+    m.as_db_str().to_string()
 }
 
 fn sla_config_from_row(row: &sqlx::postgres::PgRow) -> SLAConfig {
@@ -2820,6 +2842,19 @@ mod tests {
             let back: ImpactSeverity = serde_json::from_str(&json).unwrap();
             assert_eq!(v, back);
         }
+    }
+
+    #[test]
+    fn test_sla_metric_db_values() {
+        for raw in SLAMetric::DB_VALUES {
+            let parsed = SLAMetric::from_db_str(raw).expect("sla metric");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(SLAMetric::from_db_str("throughput"), None);
+        assert_eq!(
+            SLAMetric::from_db_str(" ERROR_RATE "),
+            Some(SLAMetric::ErrorRate)
+        );
     }
 
     #[test]

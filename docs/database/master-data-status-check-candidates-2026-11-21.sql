@@ -52,6 +52,10 @@ ALTER TABLE master_data.mdm_sla_incidents
   ADD CONSTRAINT mdm_sla_incidents_severity_check
   CHECK (impact_severity IN ('low','medium','high','critical')) NOT VALID;
 
+ALTER TABLE master_data.mdm_sla_configs
+  ADD CONSTRAINT mdm_sla_configs_metric_check
+  CHECK (metric IN ('availability','latency','error_rate')) NOT VALID;
+
 ALTER TABLE master_data.mdm_recovery_plans
   ADD CONSTRAINT mdm_recovery_plans_status_check
   CHECK (status IN ('draft','active','executing','completed','failed')) NOT VALID;
