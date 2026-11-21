@@ -808,13 +808,42 @@ pub async fn create_inbound_order_item(
     });
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = match claims
+    let tenant_id: Uuid = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
     {
-        Some(t) => Some(t),
+        Some(t) => t,
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
+    };
+    // 明细组织继承入库单；单头不存在 409。
+    let org_id = {
+        let mut scope = match wms_db(&state.db).scope_with(txn).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "入库订单明细创建失败".to_string(),
+                ));
+            }
+        };
+        sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"SELECT org_id FROM wms.inbound_orders
+               WHERE id = $1 AND tenant_id = $2"#
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+    };
+    let org_id = match org_id {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("入库单不存在，无法创建明细"),
+        Err(e) => {
+            tracing::error!("查询入库单组织失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("入库订单明细创建失败".to_string()));
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -824,9 +853,10 @@ pub async fn create_inbound_order_item(
                                              material_code, material_name, material_type,
                                              specification, batch_number, lot_number, serial_number,
                                              expected_quantity, unit, location_id, unit_price,
-                                             total_value, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, $20, $20, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                                             total_value, notes, created_at, updated_at, tenant_id,
+                                             org_id)
+        VALUES ($1, $20, $21, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                $11, $12, $13, $14, $15, $16, $17, $18, $19, $21)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
                   expected_quantity::float8, received_quantity::float8, rejected_quantity::float8, unit,
                   location_id, quality_status, unit_price, total_value, notes as remarks,
@@ -851,8 +881,8 @@ pub async fn create_inbound_order_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(tenant_id.clone())
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 

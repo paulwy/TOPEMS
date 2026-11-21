@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::tenant_of;
+use crate::shared::scope::{tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -1010,13 +1010,49 @@ pub async fn create_alert_rule(
     let now = Utc::now();
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = match claims
+    let tenant_id: Uuid = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
     {
-        Some(t) => Some(t),
+        Some(t) => t,
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
+    };
+    // 规则组织：指定仓库取仓库组织，未指定仓库回落租户；仓库不存在 409。
+    let org_id = match req.warehouse_id {
+        Some(warehouse_id) => {
+            let lookup = {
+                let mut scope = match wms_db(&state.db).scope_with(txn).await {
+                    Ok(scope) => scope,
+                    Err(e) => {
+                        tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                        return ApiResponse::from(TopemsError::Internal(
+                            "创建预警规则失败".to_string(),
+                        ));
+                    }
+                };
+                sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                    "wms",
+                    r#"SELECT org_id FROM wms.warehouses
+                       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+                ))
+                .bind(warehouse_id)
+                .bind(tenant_id)
+                .fetch_optional(&mut scope)
+                .await
+            };
+            match lookup {
+                Ok(Some(v)) => v,
+                Ok(None) => return ApiResponse::conflict("仓库不存在，无法创建预警规则"),
+                Err(e) => {
+                    tracing::error!("查询仓库组织失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "创建预警规则失败".to_string(),
+                    ));
+                }
+            }
+        }
+        None => tenant_id,
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1024,8 +1060,9 @@ pub async fn create_alert_rule(
         r#"
         INSERT INTO wms.inventory_alert_rules (id, rule_name, alert_type, warehouse_id,
                                                material_code, threshold_value, severity,
-                                               enabled, remarks, created_at, updated_at, tenant_id, organization_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
+                                               enabled, remarks, created_at, updated_at, tenant_id,
+                                               organization_id, org_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $13)
         RETURNING id, rule_name, alert_type, warehouse_id, material_code,
                   threshold_value::float8, severity, enabled, remarks, created_at, updated_at
         "#
@@ -1042,6 +1079,7 @@ pub async fn create_alert_rule(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 

@@ -16,7 +16,7 @@ use crate::models::inventory_alert::{
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::scope::tenant_of;
+use crate::shared::scope::{tenant_of, wms_db};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -250,6 +250,29 @@ pub async fn get_discrepancy(
     }
 }
 
+/// 取盘点单组织；单头不存在返回错误消息。
+async fn fetch_stock_take_org(
+    state: &ApiState,
+    txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    stock_take_id: Uuid,
+    tenant_id: Uuid,
+) -> Result<Uuid, String> {
+    let mut scope = wms_db(&state.db)
+        .scope_with(txn)
+        .await
+        .map_err(|e| format!("建立 RLS 事务作用域失败: {e}"))?;
+    sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+        "wms",
+        r#"SELECT org_id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2"#
+    ))
+    .bind(stock_take_id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    .map_err(|e| format!("查询盘点单组织失败: {e}"))?
+    .ok_or_else(|| "盘点单不存在".to_string())
+}
+
 /// 创建差异处理记录
 pub async fn create_discrepancy(
     State(state): State<ApiState>,
@@ -304,13 +327,22 @@ pub async fn create_discrepancy(
     };
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = match claims
+    let tenant_id: Uuid = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
     {
-        Some(t) => Some(t),
+        Some(t) => t,
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
+    };
+    // 差异记录继承盘点单的组织；单头不存在则 409。
+    let stock_take_id = match stock_take_item.stock_take_id {
+        Some(v) => v,
+        None => return ApiResponse::conflict("盘点明细未关联盘点单"),
+    };
+    let org_id = match fetch_stock_take_org(&state, txn, stock_take_id, tenant_id).await {
+        Ok(v) => v,
+        Err(msg) => return ApiResponse::server_error(&msg),
     };
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
@@ -320,9 +352,9 @@ pub async fn create_discrepancy(
             id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
             system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
             adjustment_quantity, adjustment_status, reason, notes, created_at, updated_at,
-            tenant_id, organization_id
+            tenant_id, organization_id, org_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, $16, $17)
         RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -330,7 +362,7 @@ pub async fn create_discrepancy(
         "#
     ))
     .bind(id)
-    .bind(stock_take_item.stock_take_id)
+    .bind(stock_take_id)
     .bind(req.stock_take_item_id)
     .bind(stock_take_item.inventory_id)
     .bind(&stock_take_item.material_code)
@@ -345,6 +377,7 @@ pub async fn create_discrepancy(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -727,13 +760,17 @@ pub async fn process_stock_take_discrepancies(
 
     let now = Utc::now();
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = match claims
+    let tenant_id: Uuid = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
     {
-        Some(t) => Some(t),
+        Some(t) => t,
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
+    };
+    let org_id = match fetch_stock_take_org(&state, txn, stock_take_id, tenant_id).await {
+        Ok(v) => v,
+        Err(msg) => return ApiResponse::server_error(&msg),
     };
 
     // 获取盘点单已完成的所有盘点明细
@@ -768,29 +805,32 @@ pub async fn process_stock_take_discrepancies(
             .unwrap_or(0.0);
         let discrepancy_type = if discrepancy_q > 0.0 { "over" } else { "under" };
 
-        let create_result = sqlx::query!(
+        let create_result = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
             r#"
             INSERT INTO wms.discrepancy_records (
                 id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                 system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
-                adjustment_quantity, adjustment_status, created_at, updated_at, tenant_id, organization_id
+                adjustment_quantity, adjustment_status, created_at, updated_at, tenant_id,
+                organization_id, org_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12, $12, $13)
             RETURNING id
-            "#,
-            discrepancy_id,
-            item.stock_take_id,
-            item.id,
-            item.inventory_id,
-            item.material_code.as_deref().unwrap_or(""),
-            item.material_name.as_deref().unwrap_or(""),
-            item.system_quantity,
-            item.counted_quantity,
-            item.discrepancy_quantity,
-            discrepancy_type,
-            now,
-            tenant_id
-        )
+            "#
+        ))
+        .bind(discrepancy_id)
+        .bind(item.stock_take_id)
+        .bind(item.id)
+        .bind(item.inventory_id)
+        .bind(item.material_code.as_deref().unwrap_or(""))
+        .bind(item.material_name.as_deref().unwrap_or(""))
+        .bind(&item.system_quantity)
+        .bind(&item.counted_quantity)
+        .bind(&item.discrepancy_quantity)
+        .bind(discrepancy_type)
+        .bind(now)
+        .bind(tenant_id)
+        .bind(org_id)
         .fetch_one(&mut **txn)
         .await;
 

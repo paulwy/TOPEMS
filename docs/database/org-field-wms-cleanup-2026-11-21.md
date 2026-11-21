@@ -155,3 +155,22 @@ outbound_order_e2e` 4 passed（含新增创建用例）。
 
 验证：`cargo fmt`、`clippy -D warnings`、`stock_take_e2e` 6 passed；
 `request-txn` 保持 `bare_txn=1655` 基线。
+
+## 11. 同型修复：`discrepancy_records` / `inventory_alert_rules` / `inbound_order_items`（2026-11-21 补）
+
+三张表 `org_id` 均 `NOT NULL`，创建路径都未写，插入必报 23502：
+
+- `discrepancy_records`：手工创建与 `process_stock_take_discrepancies` 批量生成两条
+  INSERT 只写 `organization_id`。现按 `stock_take_id + tenant_id` 取盘点单 `org_id`，
+  单头不存在返回 409；批量生成在循环外查一次单头组织。
+- `inventory_alert_rules`：`create_alert_rule` 只写 `organization_id`。现按
+  `warehouse_id` 取仓库组织，仓库不存在 409，未指定仓库回落租户。
+  `inventory_alert_records` 当前没有服务端 INSERT（只读/状态更新），本批不动。
+- `inbound_order_items`：原先把 `organization_id` 与 `org_id` 都写租户（`$20`）。
+  现明细 `organization_id` 仍为租户、`org_id` 从入库单单头继承，单头不存在 409。
+  `inbound_order_items.org_id` 的固定默认 UUID 不再生效。
+
+`transfers` / `transfer_items` 当前无服务端创建入口（只有表与查询），本批不改。
+
+验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、3 个 inbound e2e 通过；
+`request-txn` 保持 `bare_txn=1655` 基线。
