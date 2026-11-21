@@ -31,6 +31,9 @@ fn amount_decimal(req: &Value, key: &str) -> Decimal {
 }
 
 use crate::modules::expense_status::{normalize_expense, ExpenseStatus};
+use crate::modules::receivable_payable_status::{
+    normalize_receivable_payable, ReceivablePayableStatus,
+};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -965,6 +968,16 @@ pub async fn create_receivable(
         return ApiResponse::bad_request("发票编号不能为空");
     }
 
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => ReceivablePayableStatus::Draft,
+        Some(raw) => match normalize_receivable_payable(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request("status 仅支持 draft/approved/posted/cancelled")
+            }
+        },
+    };
+
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
@@ -985,7 +998,7 @@ pub async fn create_receivable(
         r#"INSERT INTO finance.receivables (id, invoice_number, customer_name, project_id, contract_id,
                                     project_name, amount, invoice_date, due_date, status,
                                     received_amount, payment_schedule, created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, $12)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, NULL, $11, $12, $13)
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1019,6 +1032,7 @@ pub async fn create_receivable(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     }))
+    .bind(status.as_str())
     .bind(now)
     .bind(now)
     .bind(tenant_id)
@@ -1119,11 +1133,21 @@ pub async fn update_receivable(
         }
     };
 
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => None,
+        Some(raw) => match normalize_receivable_payable(raw) {
+            Some(status) => Some(status.as_str()),
+            None => {
+                return ApiResponse::bad_request("status 仅支持 draft/approved/posted/cancelled")
+            }
+        },
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.receivables SET
               customer_name = $2, project_name = $3, amount = $4, invoice_date = $5,
-              due_date = $6, status = $7, received_amount = $8, payment_schedule = $9,
+              due_date = $6, status = COALESCE($7, status), received_amount = $8, payment_schedule = $9,
               updated_at = $10
            WHERE id = $1 AND tenant_id = $11
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
@@ -1148,11 +1172,7 @@ pub async fn update_receivable(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     }))
-    .bind(
-        req.get("status")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unpaid"),
-    )
+    .bind(status)
     .bind(amount_decimal(&req, "received_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
@@ -1336,6 +1356,16 @@ pub async fn create_payable(
         return ApiResponse::bad_request("发票编号不能为空");
     }
 
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => ReceivablePayableStatus::Draft,
+        Some(raw) => match normalize_receivable_payable(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request("status 仅支持 draft/approved/posted/cancelled")
+            }
+        },
+    };
+
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
@@ -1356,7 +1386,7 @@ pub async fn create_payable(
         r#"INSERT INTO finance.payables (id, invoice_number, supplier_name, project_id, contract_id,
                                  category, amount, invoice_date, due_date, status,
                                  paid_amount, payment_schedule, created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, $12)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, NULL, $11, $12, $13)
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1390,6 +1420,7 @@ pub async fn create_payable(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     }))
+    .bind(status.as_str())
     .bind(now)
     .bind(now)
     .bind(tenant_opt)
@@ -1490,11 +1521,21 @@ pub async fn update_payable(
         }
     };
 
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => None,
+        Some(raw) => match normalize_receivable_payable(raw) {
+            Some(status) => Some(status.as_str()),
+            None => {
+                return ApiResponse::bad_request("status 仅支持 draft/approved/posted/cancelled")
+            }
+        },
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.payables SET
               supplier_name = $2, category = $3, amount = $4, invoice_date = $5,
-              due_date = $6, status = $7, paid_amount = $8, payment_schedule = $9,
+              due_date = $6, status = COALESCE($7, status), paid_amount = $8, payment_schedule = $9,
               updated_at = $10
            WHERE id = $1 AND tenant_id = $11
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
@@ -1519,11 +1560,7 @@ pub async fn update_payable(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     }))
-    .bind(
-        req.get("status")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unpaid"),
-    )
+    .bind(status)
     .bind(amount_decimal(&req, "paid_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)

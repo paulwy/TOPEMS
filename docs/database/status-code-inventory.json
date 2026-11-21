@@ -5,9 +5,9 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 124,
-    "rust_enum_values": 142,
-    "rust_values_not_in_db_check": 105,
+    "rust_enums": 127,
+    "rust_enum_values": 143,
+    "rust_values_not_in_db_check": 106,
     "frontend_status_keys": 61,
     "frontend_keys_not_in_db_check": 35
   },
@@ -917,6 +917,44 @@
     },
     {
       "module": "finance",
+      "file": "svc/finance/src/modules/expense_status.rs",
+      "name": "ExpenseApprovalStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Pending",
+        "Reimbursed",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "pending",
+        "reimbursed",
+        "rejected"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/expense_status.rs",
+      "name": "ExpenseStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Paid",
+        "Rejected",
+        "Submitted"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "paid",
+        "rejected",
+        "submitted"
+      ]
+    },
+    {
+      "module": "finance",
       "file": "svc/finance/src/modules/forecasting.rs",
       "name": "AlertStatus",
       "values": [
@@ -930,6 +968,23 @@
         "active",
         "resolved",
         "suppressed"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/receivable_payable_status.rs",
+      "name": "ReceivablePayableStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Draft",
+        "Posted"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "draft",
+        "posted"
       ]
     },
     {
@@ -2382,6 +2437,7 @@
       "published",
       "received",
       "recognized",
+      "reimbursed",
       "restored",
       "retired",
       "revoked",
