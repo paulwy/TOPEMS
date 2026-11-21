@@ -422,6 +422,13 @@ pub struct WorkflowHistoryEntry {
 
 // ==================== 自动化工作流：引擎 ====================
 
+#[derive(Debug, Clone)]
+pub enum WorkflowStartOutcome {
+    Started(WorkflowV58),
+    NotFound,
+    Conflict,
+}
+
 struct MDMWorkflowEngine;
 
 impl MDMWorkflowEngine {
@@ -466,14 +473,15 @@ impl MDMWorkflowEngine {
     async fn start_workflow(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
-    ) -> Result<Option<WorkflowV58>, TopemsError> {
+    ) -> Result<WorkflowStartOutcome, TopemsError> {
         let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
-            return Ok(None);
+            return Ok(WorkflowStartOutcome::NotFound);
         };
         if workflow.status != WorkflowStatus::Draft {
-            return Ok(None);
+            return Ok(WorkflowStartOutcome::Conflict);
         }
+        let previous_updated_at = workflow.updated_at.to_rfc3339();
         workflow.status = WorkflowStatus::Running;
         workflow.updated_at = chrono::Utc::now();
 
@@ -482,16 +490,22 @@ impl MDMWorkflowEngine {
             first_step.started_at = Some(chrono::Utc::now());
         }
 
-        sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        let updated = sqlx::query(
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4
+             WHERE id = $1 AND status = 'draft' AND updated_at::timestamptz = $5::timestamptz
+               AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
+        .bind(previous_updated_at)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
+        if updated.rows_affected() == 0 {
+            return Ok(WorkflowStartOutcome::Conflict);
+        }
         sqlx::query(
             "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
@@ -507,7 +521,7 @@ impl MDMWorkflowEngine {
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
 
-        Ok(Some(workflow))
+        Ok(WorkflowStartOutcome::Started(workflow))
     }
 
     async fn advance_step(
@@ -1652,8 +1666,11 @@ pub async fn start_workflow(
     };
 
     match db_exec!(MDMWorkflowEngine::start_workflow(&mut db_scope, &id).await) {
-        Some(w) => ApiResponse::success(w, "工作流已启动"),
-        None => ApiResponse::bad_request("工作流无法启动"),
+        WorkflowStartOutcome::Started(w) => ApiResponse::success(w, "工作流已启动"),
+        WorkflowStartOutcome::NotFound => ApiResponse::not_found("未找到工作流"),
+        WorkflowStartOutcome::Conflict => {
+            ApiResponse::error(409, "工作流已启动或状态不允许，未重复启动")
+        }
     }
 }
 
@@ -1757,13 +1774,16 @@ pub async fn list_workflows(
         }
     };
 
+    let status = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match WorkflowStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str()),
+            None => return ApiResponse::bad_request("无效的工作流状态"),
+        },
+    };
     let workflows = db_exec!(
-        MDMWorkflowEngine::list_workflows(
-            &mut db_scope,
-            params.workflow_type.as_deref(),
-            params.status.as_deref()
-        )
-        .await
+        MDMWorkflowEngine::list_workflows(&mut db_scope, params.workflow_type.as_deref(), status)
+            .await
     );
     ApiResponse::success(workflows, "工作流列表")
 }
@@ -2439,24 +2459,68 @@ fn security_level_str(l: &SecurityLevel) -> &str {
     }
 }
 
-fn workflow_status_from_str(s: &str) -> WorkflowStatus {
-    match s {
-        "running" => WorkflowStatus::Running,
-        "paused" => WorkflowStatus::Paused,
-        "completed" => WorkflowStatus::Completed,
-        "cancelled" => WorkflowStatus::Cancelled,
-        _ => WorkflowStatus::Draft,
+impl WorkflowStatus {
+    pub const DB_VALUES: [&'static str; 5] =
+        ["draft", "running", "paused", "completed", "cancelled"];
+
+    #[must_use]
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "draft" => Some(Self::Draft),
+            "running" => Some(Self::Running),
+            "paused" => Some(Self::Paused),
+            "completed" => Some(Self::Completed),
+            "cancelled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::Running => "running",
+            Self::Paused => "paused",
+            Self::Completed => "completed",
+            Self::Cancelled => "cancelled",
+        }
     }
 }
 
-fn step_status_from_str(s: &str) -> WorkflowStepStatus {
-    match s {
-        "in_progress" => WorkflowStepStatus::InProgress,
-        "approved" => WorkflowStepStatus::Approved,
-        "rejected" => WorkflowStepStatus::Rejected,
-        "skipped" => WorkflowStepStatus::Skipped,
-        _ => WorkflowStepStatus::Pending,
+impl WorkflowStepStatus {
+    pub const DB_VALUES: [&'static str; 5] =
+        ["pending", "in_progress", "approved", "rejected", "skipped"];
+
+    #[must_use]
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "pending" => Some(Self::Pending),
+            "in_progress" => Some(Self::InProgress),
+            "approved" => Some(Self::Approved),
+            "rejected" => Some(Self::Rejected),
+            "skipped" => Some(Self::Skipped),
+            _ => None,
+        }
     }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::InProgress => "in_progress",
+            Self::Approved => "approved",
+            Self::Rejected => "rejected",
+            Self::Skipped => "skipped",
+        }
+    }
+}
+
+fn workflow_status_from_str(s: &str) -> WorkflowStatus {
+    WorkflowStatus::from_db_str(s).unwrap_or(WorkflowStatus::Draft)
+}
+
+fn step_status_from_str(s: &str) -> WorkflowStepStatus {
+    WorkflowStepStatus::from_db_str(s).unwrap_or(WorkflowStepStatus::Pending)
 }
 
 fn step_type_from_str(s: &str) -> WorkflowStepType {
@@ -2669,7 +2733,8 @@ async fn fetch_workflows(
     scope: &mut topems_shared_db::ScopedTxn<'_>,
 ) -> Result<Vec<WorkflowV58>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {WORKFLOW_COLS} FROM master_data.mdm_workflows"
+        "SELECT {WORKFLOW_COLS} FROM master_data.mdm_workflows
+         WHERE status IN ('draft','running','paused','completed','cancelled')"
     )))
     .fetch_all(&mut *scope)
     .await
@@ -2868,6 +2933,25 @@ mod tests {
         let dims = [0.0, 0.0, 0.0];
         let score = calculate_maturity_score(&dims);
         assert_eq!(maturity_level_name(score), "initial");
+    }
+
+    #[test]
+    fn test_workflow_status_db_values() {
+        for raw in WorkflowStatus::DB_VALUES {
+            let parsed = WorkflowStatus::from_db_str(raw).expect("workflow status");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(WorkflowStatus::from_db_str("archived"), None);
+        assert_eq!(
+            WorkflowStatus::from_db_str(" RUNNING "),
+            Some(WorkflowStatus::Running)
+        );
+
+        for raw in WorkflowStepStatus::DB_VALUES {
+            let parsed = WorkflowStepStatus::from_db_str(raw).expect("step status");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(WorkflowStepStatus::from_db_str("failed"), None);
     }
 
     #[test]
