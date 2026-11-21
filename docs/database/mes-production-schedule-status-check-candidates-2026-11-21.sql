@@ -20,5 +20,8 @@ ALTER TABLE mes.production_schedules
 --   completed→cancelled → UPDATE 0（终态守卫）
 --   scheduled→'bogus' → 23514
 
+-- B58：aps_scheduling.rs 的 INSERT 状态由字面量 scheduled 改绑 APS_DEFAULT；
+-- 工位负载/瓶颈分析由 `IN (scheduled,in_progress)` 改绑 active_from（scheduled/released/running）。
+
 -- 语义提醒：B35 前删除/调整谓词只认 pending/in_progress，9678 条 APS scheduled 行既不能删也不能调整；
 -- 本批已把软删扩到 pending/scheduled/cancelled、调整扩到 pending/scheduled/released/running。

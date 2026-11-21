@@ -51,6 +51,12 @@ impl ProductionScheduleStatus {
         &["pending", "scheduled", "released", "running"]
     }
 
+    /// 计入工位负载/瓶颈分析的活跃排程：已排程、已发布、执行中。
+    /// 不含 pending（尚未排定）与 completed/cancelled（已结束）。
+    pub fn active_from() -> &'static [&'static str] {
+        &["scheduled", "released", "running"]
+    }
+
     /// 严格解析数据库/请求字符串；未知值返回 `None`
     pub fn from_db_str(s: &str) -> Option<Self> {
         match s.trim().to_ascii_lowercase().as_str() {
@@ -125,5 +131,9 @@ mod tests {
             .can_transition_to(ProductionScheduleStatus::Running));
         assert!(ProductionScheduleStatus::Running
             .can_transition_to(ProductionScheduleStatus::Cancelled));
+        assert_eq!(
+            ProductionScheduleStatus::active_from(),
+            &["scheduled", "released", "running"]
+        );
     }
 }

@@ -24,6 +24,7 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::production_schedule_status::ProductionScheduleStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -899,7 +900,7 @@ async fn save_schedule_result(
             planned_start_time, planned_end_time, status, priority, sequence, notes,
             created_at, updated_at, tenant_id
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'scheduled', $13, 0, $14, $15, $15, $16
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $17, $13, 0, $14, $15, $15, $16
         )
         ON CONFLICT (schedule_no) DO UPDATE SET
             planned_start_time = EXCLUDED.planned_start_time,
@@ -935,6 +936,7 @@ async fn save_schedule_result(
     .bind(format!("APS排程，可行性: {:.0}%", item.feasibility_score))
     .bind(now)
     .bind(tenant_id)
+    .bind(ProductionScheduleStatus::APS_DEFAULT.as_db_str())
     .execute(&mut *scope)
     .await;
 
@@ -1403,9 +1405,10 @@ pub async fn get_optimization_report(
             .unwrap_or(0);
 
     let scheduled_orders: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'scheduled' AND tenant_id = $1::uuid",
+        "SELECT COUNT(DISTINCT order_id) FROM mes.production_schedules WHERE status <> $2 AND tenant_id = $1::uuid",
     )
     .bind(tenant_id)
+    .bind(ProductionScheduleStatus::Cancelled.as_db_str())
     .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
@@ -1449,7 +1452,7 @@ pub async fn get_optimization_report(
                SUM(EXTRACT(EPOCH FROM (ps.planned_end_time - ps.planned_start_time)) / 3600) as total_hours
         FROM mes.work_stations ws
         LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
-            AND ps.status IN ('scheduled', 'in_progress')
+            AND ps.status = ANY($2::text[])
             AND ps.tenant_id = $1::uuid
         WHERE ws.status = 'active'
             AND ws.tenant_id = $1::uuid
@@ -1459,6 +1462,7 @@ pub async fn get_optimization_report(
         "#
     )
     .bind(tenant_id)
+    .bind(ProductionScheduleStatus::active_from())
     .fetch_all(&mut scope)
     .await;
 
@@ -1670,7 +1674,7 @@ pub async fn get_bottleneck_analysis(
                COUNT(DISTINCT ps.order_id) as unique_orders
         FROM mes.work_stations ws
         LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
-            AND ps.status IN ('scheduled', 'in_progress')
+            AND ps.status = ANY($2::text[])
             AND ps.tenant_id = $1::uuid
         WHERE ws.status = 'active'
             AND ws.tenant_id = $1::uuid
@@ -1680,6 +1684,7 @@ pub async fn get_bottleneck_analysis(
         "#,
     )
     .bind(tenant_id)
+    .bind(ProductionScheduleStatus::active_from())
     .fetch_all(&mut scope)
     .await;
 
