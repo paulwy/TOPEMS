@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 107,
-    "uncovered_values": 118,
+    "uncovered_enums": 108,
+    "uncovered_values": 121,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 79,
-    "internal_state_enums": 40,
-    "persisted_unmapped_enums": 57,
+    "resolved_enums": 80,
+    "internal_state_enums": 41,
+    "persisted_unmapped_enums": 58,
     "api_projection_enums": 25,
-    "finance_candidate_ready_enums": 27,
-    "internal_state_values": 59,
+    "finance_candidate_ready_enums": 28,
+    "internal_state_values": 62,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -423,6 +423,34 @@
         ]
       },
       "candidate_targets": []
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/hazard_status.rs",
+      "enum": "HazardStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "pending_approval"
+        ],
+        "internal_state": [
+          "pending_verification",
+          "rectifying",
+          "reported"
+        ],
+        "finance_candidate_ready": [
+          "verified"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_invoices.v55_invoices_status_check"
+      ],
+      "resolved": {
+        "file": "svc/ehs/src/modules/hazard_status.rs",
+        "enum": "HazardStatus",
+        "table": "ehs.qa_ehs_hazards",
+        "column": "status",
+        "candidate": "docs/database/ehs-hazard-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "erp",

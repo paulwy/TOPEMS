@@ -17,6 +17,7 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::modules::hazard_status::HazardStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 use topems_shared_service_client::service_client::CreateInstanceRequest;
@@ -208,6 +209,13 @@ pub async fn list_hazards(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match query.status.as_deref() {
+        Some(raw) => match HazardStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的隐患状态过滤值"),
+        },
+        None => None,
+    };
 
     // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
     let fetch_query = match tenant_scope.tenant_id() {
@@ -215,7 +223,7 @@ pub async fn list_hazards(
             let mut params: Vec<String> = Vec::new();
             let mut where_clause =
                 String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
-            if let Some(status) = &query.status {
+            if let Some(status) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
                 params.push(status.clone());
             }
@@ -255,7 +263,7 @@ pub async fn list_hazards(
         None => {
             let mut params: Vec<String> = Vec::new();
             let mut where_clause = String::from(" WHERE deleted_at IS NULL");
-            if let Some(status) = &query.status {
+            if let Some(status) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
                 params.push(status.clone());
             }
@@ -393,7 +401,7 @@ pub async fn create_hazard(
         location: req.location.clone(),
         reported_by: req.reported_by.clone(),
         reported_at: Some(now.clone()),
-        status: "reported".to_string(),
+        status: HazardStatus::DEFAULT.as_db_str().to_string(),
         inspection_id: req.inspection_id.clone(),
         approval_workflow_id: None,
         approval_status: None,
@@ -678,7 +686,14 @@ pub async fn update_hazard(
     set_str!("level", "level");
     set_str!("source", "source");
     set_str!("location", "location");
-    set_str!("status", "status");
+    if let Some(raw) = req.get("status").and_then(|x| x.as_str()) {
+        let parsed = match HazardStatus::from_db_str(raw) {
+            Some(s) => s,
+            None => return ApiResponse::bad_request("无效的隐患状态"),
+        };
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(parsed.as_db_str().to_string());
+    }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
     let row = match tenant_scope.tenant_id() {
@@ -886,12 +901,15 @@ pub async fn start_hazard_approval(
             sqlx::query(
                 r#"
                 UPDATE ehs.qa_ehs_hazards
-                SET status = 'pending_approval', updated_at = now()
-                WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
+                SET status = $3, updated_at = now()
+                WHERE id = $1::uuid AND tenant_id = $2::uuid
+                  AND status = ANY($4::text[]) AND deleted_at IS NULL
                 "#,
             )
             .bind(&id)
             .bind(tenant)
+            .bind(HazardStatus::PendingApproval.as_db_str())
+            .bind(HazardStatus::approval_from().to_vec())
             .execute(&mut scope)
             .await
         }
@@ -900,11 +918,13 @@ pub async fn start_hazard_approval(
             sqlx::query(
                 r#"
                 UPDATE ehs.qa_ehs_hazards
-                SET status = 'pending_approval', updated_at = now()
-                WHERE id = $1::uuid AND deleted_at IS NULL
+                SET status = $2, updated_at = now()
+                WHERE id = $1::uuid AND status = ANY($3::text[]) AND deleted_at IS NULL
                 "#,
             )
             .bind(&id)
+            .bind(HazardStatus::PendingApproval.as_db_str())
+            .bind(HazardStatus::approval_from().to_vec())
             .execute(&mut scope)
             .await
         }
@@ -987,12 +1007,13 @@ pub async fn close_hazard(
             sqlx::query(
                 r#"
                 UPDATE ehs.qa_ehs_hazards
-                SET status = 'closed', updated_at = now()
+                SET status = $3, updated_at = now()
                 WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
                 "#,
             )
             .bind(&id)
             .bind(tenant)
+            .bind(HazardStatus::Closed.as_db_str())
             .execute(&mut scope)
             .await
         }
@@ -1001,11 +1022,12 @@ pub async fn close_hazard(
             sqlx::query(
                 r#"
                 UPDATE ehs.qa_ehs_hazards
-                SET status = 'closed', updated_at = now()
+                SET status = $2, updated_at = now()
                 WHERE id = $1::uuid AND deleted_at IS NULL
                 "#,
             )
             .bind(&id)
+            .bind(HazardStatus::Closed.as_db_str())
             .execute(&mut scope)
             .await
         }
@@ -1109,11 +1131,14 @@ pub async fn create_rectification(
 
     // 隐患进入整改中（与整改方案插入同一事务，失败即整笔回滚）
     let updated = sqlx::query(
-        "UPDATE ehs.qa_ehs_hazards SET status = 'rectifying', updated_at = now() \
-         WHERE id = $1::uuid AND tenant_id = $2 AND deleted_at IS NULL",
+        "UPDATE ehs.qa_ehs_hazards SET status = $3, updated_at = now() \
+         WHERE id = $1::uuid AND tenant_id = $2
+           AND status = ANY($4::text[]) AND deleted_at IS NULL",
     )
     .bind(&id)
     .bind(tenant_id)
+    .bind(HazardStatus::Rectifying.as_db_str())
+    .bind(HazardStatus::rectify_from().to_vec())
     .execute(&mut scope)
     .await;
 
@@ -1343,11 +1368,14 @@ pub async fn submit_rectification(
 
     // 隐患流转至待验收（同一事务；0 行说明并发下状态已变，回滚并报 409）
     let updated = sqlx::query(
-        "UPDATE ehs.qa_ehs_hazards SET status = 'pending_verification', updated_at = now() \
-         WHERE id = $1::uuid AND tenant_id = $2 AND deleted_at IS NULL",
+        "UPDATE ehs.qa_ehs_hazards SET status = $3, updated_at = now() \
+         WHERE id = $1::uuid AND tenant_id = $2
+           AND status = ANY($4::text[]) AND deleted_at IS NULL",
     )
     .bind(&id)
     .bind(tenant_id)
+    .bind(HazardStatus::PendingVerification.as_db_str())
+    .bind(HazardStatus::submit_from().to_vec())
     .execute(&mut scope)
     .await;
 
@@ -1452,17 +1480,19 @@ pub async fn verify_hazard(
 
     // 验收结论驱动隐患状态流转：passed→closed，否则退回 rectifying
     let next_status = if result == "passed" {
-        "closed"
+        HazardStatus::Closed
     } else {
-        "rectifying"
+        HazardStatus::Rectifying
     };
     let updated = sqlx::query(
         "UPDATE ehs.qa_ehs_hazards SET status = $3, updated_at = now() \
-         WHERE id = $1::uuid AND tenant_id = $2 AND deleted_at IS NULL",
+         WHERE id = $1::uuid AND tenant_id = $2
+           AND status = ANY($4::text[]) AND deleted_at IS NULL",
     )
     .bind(&id)
     .bind(tenant_id)
-    .bind(next_status)
+    .bind(next_status.as_db_str())
+    .bind(HazardStatus::verify_from().to_vec())
     .execute(&mut scope)
     .await;
 

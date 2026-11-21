@@ -7,6 +7,7 @@ pub mod emergency_plan;
 pub mod environment;
 pub mod environmental_compliance;
 pub mod hazard;
+pub mod hazard_status;
 pub mod hazardous_material;
 pub mod health;
 pub mod integration;

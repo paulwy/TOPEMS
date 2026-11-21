@@ -548,6 +548,13 @@
       "table": "scm.sync_records",
       "column": "status",
       "candidate": "docs/database/scm-sync-record-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/hazard_status.rs",
+      "enum": "HazardStatus",
+      "table": "ehs.qa_ehs_hazards",
+      "column": "status",
+      "candidate": "docs/database/ehs-hazard-status-check-candidates-2026-11-21.sql"
     }
   ]
 }
