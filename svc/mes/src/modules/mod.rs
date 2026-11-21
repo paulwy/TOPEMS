@@ -8,6 +8,7 @@ pub mod basics;
 pub mod capacity;
 pub mod dashboard_ws;
 pub mod demand_forecast;
+pub mod demand_forecast_status;
 pub mod energy_management;
 pub mod equipment;
 pub mod equipment_oee;

@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::modules::demand_forecast_status::DemandForecastStatus;
 use crate::shared::aps_fsm::demand_forecast_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
@@ -160,7 +161,13 @@ pub async fn list_forecasts(
     };
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match DemandForecastStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的需求预测状态"),
+        },
+    };
     let product_filter = params.product_id;
     let method_filter = params.method.clone();
 
@@ -172,6 +179,7 @@ pub async fn list_forecasts(
                notes, status, tenant_id, created_at, updated_at
         FROM mes.demand_forecasts
         WHERE tenant_id = $1
+          AND status IN ('draft','calculated','validated','adopted','superseded','cancelled')
           AND ($2::text IS NULL OR forecast_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
@@ -196,6 +204,7 @@ pub async fn list_forecasts(
                 r#"
                 SELECT COUNT(*) FROM mes.demand_forecasts
                 WHERE tenant_id = $1
+                  AND status IN ('draft','calculated','validated','adopted','superseded','cancelled')
                   AND ($2::text IS NULL OR forecast_no ILIKE $2 OR product_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
@@ -273,7 +282,7 @@ pub async fn get_forecast(
                method, confidence_level::float8,
                notes, status, tenant_id, created_at, updated_at
         FROM mes.demand_forecasts
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND status IN ('draft','calculated','validated','adopted','superseded','cancelled') AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -377,7 +386,7 @@ pub async fn update_forecast(
     };
 
     let existing = sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND status IN ('draft','calculated','validated','adopted','superseded','cancelled') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -398,7 +407,15 @@ pub async fn update_forecast(
     let method = req.method.unwrap_or(existing.method);
     let confidence_level = req.confidence_level.or(existing.confidence_level);
     let notes = req.notes.or(existing.notes);
-    let status = req.status.unwrap_or(existing.status);
+    if let Some(raw) = req.status.as_deref() {
+        match DemandForecastStatus::from_db_str(raw) {
+            Some(v) if v.as_db_str() == existing.status => {}
+            Some(_) => {
+                return ApiResponse::bad_request("需求预测状态只能通过计算/验证/采纳流程变更");
+            }
+            None => return ApiResponse::bad_request("无效的需求预测状态"),
+        }
+    }
     let accuracy_rate = calc_accuracy(forecast_quantity, actual_quantity);
     let now = Utc::now();
 
@@ -409,6 +426,7 @@ pub async fn update_forecast(
             forecast_quantity = $4, actual_quantity = $5, accuracy_rate = $6,
             method = $7, confidence_level = $8, notes = $9, status = $10, updated_at = $11
         WHERE id = $12 AND tenant_id = $13
+          AND status IN ('draft','calculated','validated','adopted','superseded','cancelled')
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
                   forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
                   method, confidence_level::float8,
@@ -424,7 +442,7 @@ pub async fn update_forecast(
     .bind(&method)
     .bind(confidence_level)
     .bind(&notes)
-    .bind(&status)
+    .bind(Option::<String>::None)
     .bind(now)
     .bind(id)
     .bind(tenant_id)
@@ -515,7 +533,7 @@ pub async fn calculate_forecast(
     };
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND status IN ('draft','calculated','validated','adopted','superseded','cancelled') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -540,7 +558,7 @@ pub async fn calculate_forecast(
         r#"
         UPDATE mes.demand_forecasts SET
             forecast_quantity = $1, accuracy_rate = $2, status = 'calculated', updated_at = $3
-        WHERE id = $4 AND tenant_id = $5
+        WHERE id = $4 AND status = 'draft' AND tenant_id = $5
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
                   forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
                   method, confidence_level::float8,
@@ -552,11 +570,12 @@ pub async fn calculate_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(fc) => ApiResponse::success(fc, "需求预测计算完成"),
+        Ok(Some(fc)) => ApiResponse::success(fc, "需求预测计算完成"),
+        Ok(None) => ApiResponse::conflict("需求预测状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("计算需求预测失败: {}", e);
             ApiResponse::server_error("计算需求预测失败")
@@ -597,7 +616,7 @@ pub async fn validate_forecast(
     };
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND status IN ('draft','calculated','validated','adopted','superseded','cancelled') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -622,7 +641,7 @@ pub async fn validate_forecast(
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
         UPDATE mes.demand_forecasts SET status = 'validated', updated_at = $1
-        WHERE id = $2 AND tenant_id = $3
+        WHERE id = $2 AND status = 'calculated' AND tenant_id = $3
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
                   forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
                   method, confidence_level::float8,
@@ -632,11 +651,12 @@ pub async fn validate_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(fc) => ApiResponse::success(fc, "需求预测验证通过"),
+        Ok(Some(fc)) => ApiResponse::success(fc, "需求预测验证通过"),
+        Ok(None) => ApiResponse::conflict("需求预测状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("验证需求预测失败: {}", e);
             ApiResponse::server_error("验证需求预测失败")
@@ -677,7 +697,7 @@ pub async fn adopt_forecast(
     };
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM mes.demand_forecasts WHERE id = $1 AND status IN ('draft','calculated','validated','adopted','superseded','cancelled') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -697,7 +717,7 @@ pub async fn adopt_forecast(
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
         UPDATE mes.demand_forecasts SET status = 'adopted', updated_at = $1
-        WHERE id = $2 AND tenant_id = $3
+        WHERE id = $2 AND status = 'validated' AND tenant_id = $3
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
                   forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
                   method, confidence_level::float8,
@@ -707,11 +727,12 @@ pub async fn adopt_forecast(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(fc) => ApiResponse::success(fc, "需求预测已采纳"),
+        Ok(Some(fc)) => ApiResponse::success(fc, "需求预测已采纳"),
+        Ok(None) => ApiResponse::conflict("需求预测状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("采纳需求预测失败: {}", e);
             ApiResponse::server_error("采纳需求预测失败")

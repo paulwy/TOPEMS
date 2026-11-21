@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 174,
-    "rust_enum_values": 170,
-    "rust_values_not_in_db_check": 131,
-    "frontend_status_keys": 185,
-    "frontend_keys_not_in_db_check": 145,
+    "rust_enums": 175,
+    "rust_enum_values": 173,
+    "rust_values_not_in_db_check": 134,
+    "frontend_status_keys": 188,
+    "frontend_keys_not_in_db_check": 148,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2001,6 +2001,27 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/demand_forecast_status.rs",
+      "name": "DemandForecastStatus",
+      "values": [
+        "Adopted",
+        "Calculated",
+        "Cancelled",
+        "Draft",
+        "Superseded",
+        "Validated"
+      ],
+      "normalized": [
+        "adopted",
+        "calculated",
+        "cancelled",
+        "draft",
+        "superseded",
+        "validated"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/material_bom/issue_status.rs",
       "name": "MaterialIssueStatus",
       "values": [
@@ -3094,6 +3115,7 @@
       "achieved",
       "acknowledged",
       "active",
+      "adopted",
       "applied",
       "approved",
       "archived",
@@ -3249,6 +3271,7 @@
       "submitted",
       "success",
       "sunset",
+      "superseded",
       "suppressed",
       "suspended",
       "synced",
@@ -3268,6 +3291,7 @@
       "unsettled",
       "unsupported",
       "valid",
+      "validated",
       "validating",
       "verified",
       "verifying",
@@ -3280,6 +3304,7 @@
     "rust_values": [
       "aborted",
       "achieved",
+      "adopted",
       "applied",
       "assessed",
       "assigned",
@@ -3390,6 +3415,7 @@
       "standby",
       "stopped",
       "sunset",
+      "superseded",
       "suppressed",
       "synced",
       "syncing",
@@ -3403,6 +3429,7 @@
       "unhealthy",
       "unsettled",
       "unsupported",
+      "validated",
       "validating",
       "verified",
       "verifying",
@@ -3413,6 +3440,7 @@
     "frontend_keys": [
       "aborted",
       "achieved",
+      "adopted",
       "applied",
       "assessed",
       "assigned",
@@ -3534,6 +3562,7 @@
       "standby",
       "stopped",
       "sunset",
+      "superseded",
       "suppressed",
       "synced",
       "syncing",
@@ -3550,6 +3579,7 @@
       "unsettled",
       "unsupported",
       "valid",
+      "validated",
       "validating",
       "verified",
       "verifying",

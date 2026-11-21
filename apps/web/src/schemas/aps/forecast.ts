@@ -96,6 +96,7 @@ export const forecastSchema: EntitySchema = {
       type: 'select',
       defaultValue: 'draft',
       showInList: false,
+      showInForm: false,
       options: {
         type: 'static',
         options: [
