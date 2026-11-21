@@ -738,6 +738,36 @@ pub enum DataProductStatus {
     Retired,
 }
 
+impl DataProductStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["draft", "published", "deprecated", "retired"];
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "draft" => Some(Self::Draft),
+            "published" => Some(Self::Published),
+            "deprecated" => Some(Self::Deprecated),
+            "retired" => Some(Self::Retired),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::Published => "published",
+            Self::Deprecated => "deprecated",
+            Self::Retired => "retired",
+        }
+    }
+
+    /// 写数据契约会自动发布：仅草稿可首次发布，已发布可重写契约；已弃用/退役不允许复活。
+    pub fn publish_from() -> &'static [&'static str] {
+        &["draft", "published"]
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SecurityLevel {
@@ -1102,12 +1132,7 @@ fn status_str(s: &WorkflowStatus) -> &str {
 }
 
 fn product_status_str(s: &DataProductStatus) -> &str {
-    match s {
-        DataProductStatus::Draft => "draft",
-        DataProductStatus::Published => "published",
-        DataProductStatus::Deprecated => "deprecated",
-        DataProductStatus::Retired => "retired",
-    }
+    s.as_db_str()
 }
 
 fn generate_gaps(
@@ -2082,6 +2107,26 @@ pub async fn update_contract(
 
     let sla = req.freshness_sla.unwrap_or_else(|| "24h".to_string());
 
+    let current_status = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM master_data.mdm_data_products WHERE id = $1",
+    )
+    .bind(&id)
+    .fetch_optional(&mut db_scope)
+    .await;
+    let current_status = match current_status {
+        Ok(Some(raw)) => raw,
+        Ok(None) => return ApiResponse::not_found("未找到数据产品"),
+        Err(e) => return ApiResponse::server_error(&format!("查询数据产品失败: {e}")),
+    };
+    match DataProductStatus::from_db_str(&current_status) {
+        Some(DataProductStatus::Draft) | Some(DataProductStatus::Published) => {}
+        Some(other) => {
+            let msg = format!("数据产品状态为 {}，不允许写入契约", other.as_db_str());
+            return ApiResponse::error(409, &msg);
+        }
+        None => return ApiResponse::error(409, "数据产品当前状态非法，无法写入契约"),
+    }
+
     match db_exec!(
         DataProductManager::update_contract(
             &mut db_scope,
@@ -2496,12 +2541,8 @@ fn data_product_from_row(r: &sqlx::postgres::PgRow) -> DataProduct {
         consumers: json_str_vec(&r.get::<serde_json::Value, _>("consumers")),
         data_contract: contract_value.and_then(|v| serde_json::from_value::<DataContract>(v).ok()),
         sla_level: parse_sla_level(r.get("sla_level")).unwrap_or(SlaLevel::Bronze),
-        status: match r.get::<String, _>("status").as_str() {
-            "published" => DataProductStatus::Published,
-            "deprecated" => DataProductStatus::Deprecated,
-            "retired" => DataProductStatus::Retired,
-            _ => DataProductStatus::Draft,
-        },
+        status: DataProductStatus::from_db_str(&r.get::<String, _>("status"))
+            .unwrap_or(DataProductStatus::Draft),
         created_at: r.get("created_at"),
         updated_at: r.get("updated_at"),
     }
@@ -2632,7 +2673,7 @@ async fn fetch_data_products(
     scope: &mut topems_shared_db::ScopedTxn<'_>,
 ) -> Result<Vec<DataProduct>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {DATA_PRODUCT_COLS} FROM master_data.mdm_data_products"
+        "SELECT {DATA_PRODUCT_COLS} FROM master_data.mdm_data_products WHERE status IN ('draft','published','deprecated','retired')"
     )))
     .fetch_all(&mut *scope)
     .await
@@ -2795,5 +2836,16 @@ mod tests {
         let dims = [0.0, 0.0, 0.0];
         let score = calculate_maturity_score(&dims);
         assert_eq!(maturity_level_name(score), "initial");
+    }
+
+    #[test]
+    fn test_data_product_status_values_and_publish_from() {
+        for raw in DataProductStatus::DB_VALUES {
+            let parsed = DataProductStatus::from_db_str(raw).expect("raw must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(DataProductStatus::from_db_str("archived"), None);
+        assert!(DataProductStatus::publish_from().contains(&"draft"));
+        assert!(!DataProductStatus::publish_from().contains(&"retired"));
     }
 }
