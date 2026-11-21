@@ -15,6 +15,7 @@ use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequ
 use crate::modules::audit::{
     log_audit_event, log_audit_event_with_actor, AuditActor, AuditEventParams,
 };
+use crate::modules::opportunity_status::OpportunityStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
@@ -396,7 +397,7 @@ pub async fn create_opportunity(
     };
     let stage = "draft".to_string();
     let priority = req.priority.clone().unwrap_or_else(|| "medium".into());
-    let status = "open".to_string();
+    let status = OpportunityStatus::DEFAULT.as_db_str().to_string();
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
@@ -614,20 +615,36 @@ async fn update_opportunity(
     let customer_id = req.customer_id.or(existing.customer_id);
     let customer_name = req.customer_name.or(existing.customer_name);
     let value = req.value.or(existing.value);
-    let stage = req.stage.unwrap_or(existing.stage);
+    if let Some(raw) = req.stage.as_deref() {
+        let parsed = match OppStage::from_str(raw) {
+            Some(stage) => stage,
+            None => return ApiResponse::bad_request("商机阶段非法"),
+        };
+        if parsed.as_str() != existing.stage {
+            return ApiResponse::bad_request("商机阶段只能通过推进或回退接口变更");
+        }
+    }
     let win_rate = req.win_rate.or(existing.win_rate);
     let close_date = req.close_date.or(existing.close_date);
     let owner_id = req.owner_id.or(existing.owner_id);
     let priority = req.priority.unwrap_or(existing.priority);
-    let status = req.status.unwrap_or(existing.status);
+    if let Some(raw) = req.status.as_deref() {
+        let parsed = match OpportunityStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("商机状态非法"),
+        };
+        if parsed.as_db_str() != existing.status {
+            return ApiResponse::bad_request("商机状态只能通过阶段推进或回退变更");
+        }
+    }
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         UPDATE crm.opportunities SET
-            name = $2, customer_id = $3, customer_name = $4, value = $5, stage = $6, priority = $7, probability = $8,
-            close_date = $9, owner_id = $10, status = $11, notes = $12, updated_at = $13,
+            name = $2, customer_id = $3, customer_name = $4, value = $5, stage = COALESCE($6, stage), priority = $7, probability = $8,
+            close_date = $9, owner_id = $10, status = COALESCE($11, status), notes = $12, updated_at = $13,
             name_en = COALESCE($15, name_en)
         WHERE id = $1 AND tenant_id = $14
         RETURNING id, tenant_id, opp_no,
@@ -640,12 +657,12 @@ async fn update_opportunity(
     .bind(customer_id)
     .bind(&customer_name)
     .bind(value)
-    .bind(&stage)
+    .bind(Option::<&str>::None)
     .bind(&priority)
     .bind(win_rate)
     .bind(close_date)
     .bind(owner_id)
-    .bind(&status)
+    .bind(Option::<&str>::None)
     .bind(&notes)
     .bind(now)
     .bind(tenant_id)
@@ -1283,6 +1300,10 @@ pub async fn advance_opportunity(
 
     let is_owner_or_admin = true;
 
+    if OpportunityStatus::from_db_str(&existing.status).is_none() {
+        return ApiResponse::bad_request("商机状态非法");
+    }
+
     let from_stage = match OppStage::from_str(&existing.stage) {
         Some(s) => s,
         None => {
@@ -1319,10 +1340,10 @@ pub async fn advance_opportunity(
     let now = Utc::now();
     let to_stage_str = to_stage.as_str();
     let new_status = match to_stage {
-        OppStage::Won => "won",
-        OppStage::Lost => "lost",
-        OppStage::Closed => "archived",
-        _ => &existing.status,
+        OppStage::Won => OpportunityStatus::Won.as_db_str(),
+        OppStage::Lost => OpportunityStatus::Lost.as_db_str(),
+        OppStage::Closed => OpportunityStatus::Archived.as_db_str(),
+        _ => existing.status.as_str(),
     };
 
     let result = sqlx::query_as::<_, Opportunity>(
@@ -1472,6 +1493,10 @@ pub async fn rollback_opportunity(
 
     let is_owner_or_admin = true;
 
+    if OpportunityStatus::from_db_str(&existing.status).is_none() {
+        return ApiResponse::bad_request("商机状态非法");
+    }
+
     let from_stage = match OppStage::from_str(&existing.stage) {
         Some(s) => s,
         None => {
@@ -1508,8 +1533,10 @@ pub async fn rollback_opportunity(
     let now = Utc::now();
     let to_stage_str = to_stage.as_str();
     let new_status = match to_stage {
-        OppStage::Won | OppStage::Lost | OppStage::Closed => "archived",
-        _ => "open",
+        OppStage::Won | OppStage::Lost | OppStage::Closed => {
+            OpportunityStatus::Archived.as_db_str()
+        }
+        _ => OpportunityStatus::Open.as_db_str(),
     };
 
     let notes_combined = match (

@@ -84,6 +84,8 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   expired: 'error',
   overdue: 'error',
   open: 'error',
+  won: 'success',
+  lost: 'error',
   closed: 'default',
   partial: 'warning',
   claimed: 'info',

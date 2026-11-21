@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 177,
-    "rust_enum_values": 176,
-    "rust_values_not_in_db_check": 137,
-    "frontend_status_keys": 191,
-    "frontend_keys_not_in_db_check": 151,
+    "rust_enums": 178,
+    "rust_enum_values": 178,
+    "rust_values_not_in_db_check": 139,
+    "frontend_status_keys": 193,
+    "frontend_keys_not_in_db_check": 153,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -579,6 +579,23 @@
         "active",
         "archived",
         "inactive"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/opportunity_status.rs",
+      "name": "OpportunityStatus",
+      "values": [
+        "Archived",
+        "Lost",
+        "Open",
+        "Won"
+      ],
+      "normalized": [
+        "archived",
+        "lost",
+        "open",
+        "won"
       ]
     },
     {
@@ -3239,6 +3256,7 @@
       "lagging",
       "linked",
       "locked",
+      "lost",
       "maintenance",
       "manual",
       "matched",
@@ -3340,6 +3358,7 @@
       "verifying",
       "waiting",
       "warning",
+      "won",
       "written_off"
     ]
   },
@@ -3406,6 +3425,7 @@
       "lagging",
       "linked",
       "locked",
+      "lost",
       "max_retries_exceeded",
       "neutral",
       "new",
@@ -3481,6 +3501,7 @@
       "verifying",
       "waiting",
       "warning",
+      "won",
       "written_off"
     ],
     "frontend_keys": [
@@ -3554,6 +3575,7 @@
       "lagging",
       "linked",
       "locked",
+      "lost",
       "max_retries_exceeded",
       "neutral",
       "new",
@@ -3634,6 +3656,7 @@
       "verifying",
       "waiting",
       "warning",
+      "won",
       "written_off"
     ]
   },
