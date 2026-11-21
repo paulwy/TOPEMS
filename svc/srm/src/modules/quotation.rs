@@ -13,6 +13,7 @@ use topems_shared_core::error::Result;
 use uuid::Uuid;
 
 use crate::models::{CreateQuotationRequest, Quotation, UpdateQuotationRequest};
+use crate::modules::quotation_status::QuotationStatus;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -196,7 +197,7 @@ pub async fn create_quotation(
     .bind(valid_until)
     .bind(&req.delivery_time)
     .bind(&req.payment_terms)
-    .bind("pending")
+    .bind(QuotationStatus::DEFAULT.as_db_str())
     .bind(&req.items)
     .bind(&req.remarks)
     .bind(now)
@@ -308,7 +309,7 @@ pub async fn update_quotation(
             items = COALESCE($8, items),
             remarks = COALESCE($9, remarks),
             updated_at = $10
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = ANY($11::text[])
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
@@ -323,6 +324,12 @@ pub async fn update_quotation(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
+    .bind(
+        QuotationStatus::pending_from()
+            .iter()
+            .map(|s| s.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .fetch_optional(&mut **txn)
     .await;
 
@@ -358,10 +365,16 @@ pub async fn delete_quotation(
     };
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1",
+        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1 AND status = ANY($2::text[])",
         "srm"
     ))
     .bind(id)
+    .bind(
+        QuotationStatus::pending_from()
+            .iter()
+            .map(|s| s.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .execute(&mut **txn)
     .await;
 
@@ -413,15 +426,22 @@ pub async fn award_quotation(
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.quotations SET
-            status = 'awarded',
-            updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+            status = $2,
+            updated_at = $3
+        WHERE id = $1 AND status = ANY($4::text[])
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
+    .bind(QuotationStatus::Awarded.as_db_str())
     .bind(now)
+    .bind(
+        QuotationStatus::pending_from()
+            .iter()
+            .map(|s| s.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .fetch_optional(&mut **txn)
     .await;
 
@@ -473,15 +493,22 @@ pub async fn reject_quotation(
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.quotations SET
-            status = 'rejected',
-            updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+            status = $2,
+            updated_at = $3
+        WHERE id = $1 AND status = ANY($4::text[])
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
+    .bind(QuotationStatus::Rejected.as_db_str())
     .bind(now)
+    .bind(
+        QuotationStatus::pending_from()
+            .iter()
+            .map(|s| s.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .fetch_optional(&mut **txn)
     .await;
 

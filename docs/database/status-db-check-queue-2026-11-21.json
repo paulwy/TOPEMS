@@ -3,11 +3,11 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 111,
+    "uncovered_enums": 112,
     "uncovered_values": 124,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 83,
-    "internal_state_enums": 43,
+    "resolved_enums": 84,
+    "internal_state_enums": 44,
     "persisted_unmapped_enums": 59,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 28,
@@ -1969,6 +1969,24 @@
         "table": "srm.inquiries",
         "column": "status",
         "candidate": "docs/database/srm-inquiry-status-check-candidates-2026-11-21.sql"
+      }
+    },
+    {
+      "module": "srm",
+      "file": "svc/srm/src/modules/quotation_status.rs",
+      "enum": "QuotationStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "awarded"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/srm/src/modules/quotation_status.rs",
+        "enum": "QuotationStatus",
+        "table": "srm.quotations",
+        "column": "status",
+        "candidate": "docs/database/srm-quotation-status-check-candidates-2026-11-21.sql"
       }
     },
     {

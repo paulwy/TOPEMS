@@ -576,6 +576,13 @@
       "table": "mobile.push_notifications",
       "column": "status",
       "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/srm/src/modules/quotation_status.rs",
+      "enum": "QuotationStatus",
+      "table": "srm.quotations",
+      "column": "status",
+      "candidate": "docs/database/srm-quotation-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 155,
+    "rust_enums": 156,
     "rust_enum_values": 163,
     "rust_values_not_in_db_check": 124,
     "frontend_status_keys": 178,
@@ -2659,6 +2659,21 @@
         "draft",
         "in_progress",
         "published"
+      ]
+    },
+    {
+      "module": "srm",
+      "file": "svc/srm/src/modules/quotation_status.rs",
+      "name": "QuotationStatus",
+      "values": [
+        "Awarded",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "awarded",
+        "pending",
+        "rejected"
       ]
     },
     {

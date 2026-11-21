@@ -6,6 +6,7 @@ pub mod inquiry_status;
 pub mod openapi;
 pub mod purchase_order;
 pub mod quotation;
+pub mod quotation_status;
 pub mod scoring_dimension;
 pub mod srm_plugin;
 pub mod statistics;
