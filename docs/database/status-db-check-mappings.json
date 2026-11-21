@@ -2,18 +2,247 @@
   "version": 1,
   "note": "人工确认的枚举→表列映射；只登记已读代码与 DB 列核对过的项",
   "mappings": [
-    { "file": "svc/master-data/src/modules/commercial_v55.rs", "enum": "SubscriptionStatus", "table": "master_data.mdm_subscriptions", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/commercial_v55.rs", "enum": "BillingStatus", "table": "master_data.mdm_billing_records", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/commercial_v55.rs", "enum": "IncidentStatus", "table": "master_data.mdm_sla_incidents", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "RecoveryPlanStatus", "table": "master_data.mdm_recovery_plans", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "ContinuityPlanStatus", "table": "master_data.mdm_continuity_plans", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "RegionStatus", "table": "master_data.mdm_region_configs", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "ReplicationStatus", "table": "master_data.mdm_replication_configs", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "FailoverStatus", "table": "master_data.mdm_failover_records", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/governance_v58.rs", "enum": "DataProductStatus", "table": "master_data.mdm_data_products", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/quality_v51.rs", "enum": "QualityStatus", "table": "master_data.mdm_quality_checks", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/governance_v58.rs", "enum": "WorkflowStatus", "table": "master_data.mdm_workflows", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
-    { "file": "svc/master-data/src/modules/governance_v58.rs", "enum": "WorkflowStepStatus", "table": "master_data.mdm_workflows", "column": "steps(jsonb)", "persisted": false, "reason": "步骤状态嵌在 steps jsonb 数组里，没有独立列，无法用列级 CHECK 约束" },
-    { "file": "svc/master-data/src/modules/quality_v51.rs", "enum": "FixStatus", "table": "master_data.mdm_auto_fix_actions", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" }
+    {
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "BillingStatus",
+      "table": "master_data.mdm_billing_records",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "IncidentStatus",
+      "table": "master_data.mdm_sla_incidents",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "SubscriptionStatus",
+      "table": "master_data.mdm_subscriptions",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "ContinuityPlanStatus",
+      "table": "master_data.mdm_continuity_plans",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "FailoverStatus",
+      "table": "master_data.mdm_failover_records",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "RecoveryPlanStatus",
+      "table": "master_data.mdm_recovery_plans",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "RegionStatus",
+      "table": "master_data.mdm_region_configs",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "ReplicationStatus",
+      "table": "master_data.mdm_replication_configs",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "enum": "DataProductStatus",
+      "table": "master_data.mdm_data_products",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "enum": "WorkflowStatus",
+      "table": "master_data.mdm_workflows",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "enum": "WorkflowStepStatus",
+      "table": "master_data.mdm_workflows",
+      "column": "steps(jsonb)",
+      "persisted": false,
+      "reason": "步骤状态嵌在 steps jsonb 数组里，没有独立列，无法用列级 CHECK 约束"
+    },
+    {
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "enum": "FixStatus",
+      "table": "master_data.mdm_auto_fix_actions",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "enum": "QualityStatus",
+      "table": "master_data.mdm_quality_checks",
+      "column": "status",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/portal/src/models/mod.rs",
+      "enum": "HealthStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/ai_ops.rs",
+      "enum": "HealingStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "enum": "AuthStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "enum": "CheckStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "enum": "DeploymentStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "enum": "RollbackActionStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/gateway_monitoring.rs",
+      "enum": "HealthStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+      "enum": "DeploymentStatusGql",
+      "persisted": false,
+      "reason": "GraphQL/API 投影，无表列"
+    },
+    {
+      "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+      "enum": "EdgeExecutionStatusGql",
+      "persisted": false,
+      "reason": "GraphQL/API 投影，无表列"
+    },
+    {
+      "file": "svc/portal/src/modules/graphql_federation_v4.rs",
+      "enum": "ClusterStatusV4",
+      "persisted": false,
+      "reason": "GraphQL/API 投影，无表列"
+    },
+    {
+      "file": "svc/portal/src/modules/graphql_governance.rs",
+      "enum": "SchemaVersionStatusGql",
+      "persisted": false,
+      "reason": "GraphQL/API 投影，无表列"
+    },
+    {
+      "file": "svc/portal/src/modules/graphql_security.rs",
+      "enum": "DiscoveryStatus",
+      "persisted": false,
+      "reason": "GraphQL/API 投影，无表列"
+    },
+    {
+      "file": "svc/portal/src/modules/graphql_semantic_cache.rs",
+      "enum": "MutationStatusGql",
+      "persisted": false,
+      "reason": "GraphQL/API 投影，无表列"
+    },
+    {
+      "file": "svc/portal/src/modules/intelligent_gateway.rs",
+      "enum": "ConflictStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/intelligent_gateway.rs",
+      "enum": "StitchStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/orchestration.rs",
+      "enum": "HealthStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/persisted_query.rs",
+      "enum": "QueryStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/persisted_query.rs",
+      "enum": "SyncStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/query_governance.rs",
+      "enum": "ApprovalStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/query_governance.rs",
+      "enum": "QueryStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/realtime_processing.rs",
+      "enum": "SubscriptionStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/schema_versioning/types.rs",
+      "enum": "VersionStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/streaming_processing.rs",
+      "enum": "StreamStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/version_control.rs",
+      "enum": "APIVersionStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    },
+    {
+      "file": "svc/portal/src/modules/version_control.rs",
+      "enum": "CanaryStatus",
+      "persisted": false,
+      "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+    }
   ]
 }

@@ -6,7 +6,7 @@
     "uncovered_enums": 99,
     "uncovered_values": 108,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 13,
+    "resolved_enums": 38,
     "internal_state_enums": 32,
     "persisted_unmapped_enums": 56,
     "api_projection_enums": 25,
@@ -1023,7 +1023,13 @@
           "unhealthy"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/models/mod.rs",
+        "enum": "HealthStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1034,7 +1040,13 @@
           "executing"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/ai_ops.rs",
+        "enum": "HealingStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1049,7 +1061,13 @@
           "revoked"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/deep_federation.rs",
+        "enum": "AuthStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1061,7 +1079,13 @@
           "warning"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/deep_federation.rs",
+        "enum": "CheckStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1073,7 +1097,13 @@
           "rolling_back"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/deployment_manager.rs",
+        "enum": "DeploymentStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1084,7 +1114,13 @@
           "executing"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/deployment_manager.rs",
+        "enum": "RollbackActionStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1099,7 +1135,13 @@
           "unhealthy"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/gateway_monitoring.rs",
+        "enum": "HealthStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1111,7 +1153,13 @@
           "rolled_back"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+        "enum": "DeploymentStatusGql",
+        "persisted": false,
+        "reason": "GraphQL/API 投影，无表列"
+      }
     },
     {
       "module": "portal",
@@ -1122,7 +1170,13 @@
           "skipped"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+        "enum": "EdgeExecutionStatusGql",
+        "persisted": false,
+        "reason": "GraphQL/API 投影，无表列"
+      }
     },
     {
       "module": "portal",
@@ -1134,7 +1188,13 @@
           "offline"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/graphql_federation_v4.rs",
+        "enum": "ClusterStatusV4",
+        "persisted": false,
+        "reason": "GraphQL/API 投影，无表列"
+      }
     },
     {
       "module": "portal",
@@ -1149,7 +1209,13 @@
           "staging"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/graphql_governance.rs",
+        "enum": "SchemaVersionStatusGql",
+        "persisted": false,
+        "reason": "GraphQL/API 投影，无表列"
+      }
     },
     {
       "module": "portal",
@@ -1165,7 +1231,13 @@
       },
       "candidate_targets": [
         "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/portal/src/modules/graphql_security.rs",
+        "enum": "DiscoveryStatus",
+        "persisted": false,
+        "reason": "GraphQL/API 投影，无表列"
+      }
     },
     {
       "module": "portal",
@@ -1178,7 +1250,13 @@
           "syncing"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/graphql_semantic_cache.rs",
+        "enum": "MutationStatusGql",
+        "persisted": false,
+        "reason": "GraphQL/API 投影，无表列"
+      }
     },
     {
       "module": "portal",
@@ -1189,7 +1267,13 @@
           "escalated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/intelligent_gateway.rs",
+        "enum": "ConflictStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1208,7 +1292,13 @@
           "rolled_back"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/intelligent_gateway.rs",
+        "enum": "StitchStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1223,7 +1313,13 @@
           "unhealthy"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/orchestration.rs",
+        "enum": "HealthStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1234,7 +1330,13 @@
           "deprecated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/persisted_query.rs",
+        "enum": "QueryStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1245,7 +1347,13 @@
           "synced"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/persisted_query.rs",
+        "enum": "SyncStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1256,7 +1364,13 @@
           "expired"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/query_governance.rs",
+        "enum": "ApprovalStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1267,7 +1381,13 @@
           "deprecated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/query_governance.rs",
+        "enum": "QueryStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1283,7 +1403,13 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/portal/src/modules/realtime_processing.rs",
+        "enum": "SubscriptionStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1298,7 +1424,13 @@
           "unsupported"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/schema_versioning/types.rs",
+        "enum": "VersionStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1311,7 +1443,13 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/portal/src/modules/streaming_processing.rs",
+        "enum": "StreamStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1326,7 +1464,13 @@
           "preview"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/portal/src/modules/version_control.rs",
+        "enum": "APIVersionStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "portal",
@@ -1342,7 +1486,13 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/portal/src/modules/version_control.rs",
+        "enum": "CanaryStatus",
+        "persisted": false,
+        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
     },
     {
       "module": "rd",
