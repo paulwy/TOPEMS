@@ -67,7 +67,19 @@ pub async fn list_purchase_orders(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match PurchaseOrderStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "invalid purchase order status \"{}\", allowed: {}",
+                    raw,
+                    PurchaseOrderStatus::DB_VALUES.join("/")
+                )))
+            }
+        },
+    };
 
     let purchase_orders_result = if search_pattern.is_some() || status_filter.is_some() {
         let search = search_pattern.unwrap_or_default();
@@ -77,6 +89,7 @@ pub async fn list_purchase_orders(
             only_own_schema_query!("erp", r#"SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at
                FROM erp.purchase_orders
                WHERE deleted_at IS NULL
+                 AND status IN ('pending','approved','cancelled')
                  AND (order_no ILIKE $1 OR supplier_name ILIKE $1)
                  AND ($2 = '' OR status = $2)
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
@@ -89,7 +102,7 @@ pub async fn list_purchase_orders(
         .await
     } else {
         sqlx::query_as::<_, PurchaseOrder>(
-            only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL AND status IN ('pending','approved','cancelled') ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -106,7 +119,7 @@ pub async fn list_purchase_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE deleted_at IS NULL AND status IN ('pending','approved','cancelled') AND (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
@@ -155,16 +168,19 @@ pub async fn get_purchase_order(
     }
 
     let purchase_order = match sqlx::query_as::<_, PurchaseOrder>(
-        only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL AND id = $1")
+        only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL AND status IN ('pending','approved','cancelled') AND id = $1")
     )
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await
     {
-        Ok(o) => o,
+        Ok(Some(o)) => o,
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()));
+            return ApiResponse::from(TopemsError::Internal("查询采购订单失败".to_string()));
         }
     };
 
@@ -352,7 +368,7 @@ pub async fn update_purchase_order(
             delivery_date = COALESCE($2, delivery_date),
             remark = COALESCE($3, remark),
             updated_at = $4
-            WHERE id = $5
+            WHERE id = $5 AND status IN ('pending','approved','cancelled')
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
                       total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
