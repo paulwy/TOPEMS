@@ -17,6 +17,7 @@
 //! - `PaymentReceived` → 自动核销应收账款（V20.1 新增）
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
+use crate::modules::receivable_status::ReceivableStatus;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
@@ -1083,12 +1084,12 @@ impl ErpEventHandlers {
         let result = if let Some(customer_name) = payload.customer_name.as_deref() {
             sqlx::query(
                 r#"UPDATE erp.receivables
-                   SET status = 'paid',
+                   SET status = $5,
                        received_amount = received_amount + $1,
                        updated_at = $2
                    WHERE customer_name = $3
                      AND tenant_id = $4
-                     AND status = 'pending'
+                     AND status = $6
                      AND amount = $1
                    RETURNING invoice_number"#,
             )
@@ -1096,17 +1097,19 @@ impl ErpEventHandlers {
             .bind(now)
             .bind(customer_name)
             .bind(tenant_id)
+            .bind(ReceivableStatus::Paid.as_db_str())
+            .bind(ReceivableStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await
         } else if let Some(customer_id) = payload.customer_id {
             sqlx::query(
                 r#"UPDATE erp.receivables
-                   SET status = 'paid',
+                   SET status = $5,
                        received_amount = received_amount + $1,
                        updated_at = $2
                    WHERE customer_id = $3
                      AND tenant_id = $4
-                     AND status = 'pending'
+                     AND status = $6
                      AND amount = $1
                    RETURNING invoice_number"#,
             )
@@ -1114,17 +1117,19 @@ impl ErpEventHandlers {
             .bind(now)
             .bind(customer_id)
             .bind(tenant_id)
+            .bind(ReceivableStatus::Paid.as_db_str())
+            .bind(ReceivableStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await
         } else {
             sqlx::query(
                 r#"UPDATE erp.receivables
-                   SET status = 'paid',
+                   SET status = $4,
                        received_amount = received_amount + $1,
                        updated_at = $2
                    WHERE id = (
                        SELECT id FROM erp.receivables
-                       WHERE status = 'pending'
+                       WHERE status = $5
                          AND tenant_id = $3
                          AND amount = $1
                        ORDER BY invoice_date ASC
@@ -1135,6 +1140,8 @@ impl ErpEventHandlers {
             .bind(payload.amount)
             .bind(now)
             .bind(tenant_id)
+            .bind(ReceivableStatus::Paid.as_db_str())
+            .bind(ReceivableStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await
         };

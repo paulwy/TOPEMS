@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 139,
+    "rust_enums": 140,
     "rust_enum_values": 151,
     "rust_values_not_in_db_check": 113,
     "frontend_status_keys": 167,
@@ -731,6 +731,19 @@
       "normalized": [
         "approved",
         "cancelled",
+        "pending"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/receivable_status.rs",
+      "name": "ReceivableStatus",
+      "values": [
+        "Paid",
+        "Pending"
+      ],
+      "normalized": [
+        "paid",
         "pending"
       ]
     },

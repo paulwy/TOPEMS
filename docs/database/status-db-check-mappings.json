@@ -434,6 +434,13 @@
       "table": "erp.assets",
       "column": "status",
       "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/receivable_status.rs",
+      "enum": "ReceivableStatus",
+      "table": "erp.receivables",
+      "column": "status",
+      "candidate": "docs/database/erp-receivable-status-check-candidates-2026-11-21.sql"
     }
   ]
 }
