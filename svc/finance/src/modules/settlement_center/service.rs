@@ -829,7 +829,7 @@ pub async fn create_difference(
              (id, tenant_id, source_type, source_id, difference_type,
               difference_amount, reason, adjustment_amount, adjustment_type,
               status, remark, created_by, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $12)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13)
            RETURNING id, tenant_id, source_type, source_id, difference_type,
                      difference_amount, reason, adjustment_amount, adjustment_type,
                      status, approved_by, approved_at, remark, created_by,
@@ -844,6 +844,7 @@ pub async fn create_difference(
     .bind(&req.reason)
     .bind(req.adjustment_amount)
     .bind(&req.adjustment_type)
+    .bind(crate::modules::settlement_center_status::DifferenceAdjustmentStatus::Pending.as_str())
     .bind(&req.remark)
     .bind(creator)
     .bind(now)
@@ -865,8 +866,8 @@ pub async fn approve_difference(
     let item: Option<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.difference_adjustments
-           SET status = 'approved', approved_by = $1, approved_at = NOW(), updated_at = NOW()
-           WHERE id = $2 AND tenant_id = $3 AND status = 'pending'
+           SET status = $4, approved_by = $1, approved_at = NOW(), updated_at = NOW()
+           WHERE id = $2 AND tenant_id = $3 AND status = $5
            RETURNING id, tenant_id, source_type, source_id, difference_type,
                      difference_amount, reason, adjustment_amount, adjustment_type,
                      status, approved_by, approved_at, remark, created_by,
@@ -875,6 +876,8 @@ pub async fn approve_difference(
     .bind(approver)
     .bind(diff_id)
     .bind(tenant_id)
+    .bind(crate::modules::settlement_center_status::DifferenceAdjustmentStatus::Approved.as_str())
+    .bind(crate::modules::settlement_center_status::DifferenceAdjustmentStatus::Pending.as_str())
     .fetch_optional(&mut scope)
     .await?;
 
@@ -893,8 +896,8 @@ pub async fn reject_difference(
     let item: Option<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.difference_adjustments
-           SET status = 'rejected', approved_by = $1, approved_at = NOW(), updated_at = NOW()
-           WHERE id = $2 AND tenant_id = $3 AND status = 'pending'
+           SET status = $4, approved_by = $1, approved_at = NOW(), updated_at = NOW()
+           WHERE id = $2 AND tenant_id = $3 AND status = $5
            RETURNING id, tenant_id, source_type, source_id, difference_type,
                      difference_amount, reason, adjustment_amount, adjustment_type,
                      status, approved_by, approved_at, remark, created_by,
@@ -903,6 +906,8 @@ pub async fn reject_difference(
     .bind(approver)
     .bind(diff_id)
     .bind(tenant_id)
+    .bind(crate::modules::settlement_center_status::DifferenceAdjustmentStatus::Rejected.as_str())
+    .bind(crate::modules::settlement_center_status::DifferenceAdjustmentStatus::Pending.as_str())
     .fetch_optional(&mut scope)
     .await?;
 

@@ -91,6 +91,46 @@ impl FromStr for SnapshotMatchStatus {
     }
 }
 
+/// 差异调整状态：创建 `pending`，审批 `approved`，拒绝 `rejected`。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DifferenceAdjustmentStatus {
+    Pending,
+    Approved,
+    Rejected,
+}
+
+impl DifferenceAdjustmentStatus {
+    pub const ALL: [Self; 3] = [Self::Pending, Self::Approved, Self::Rejected];
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Approved => "approved",
+            Self::Rejected => "rejected",
+        }
+    }
+}
+
+impl fmt::Display for DifferenceAdjustmentStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for DifferenceAdjustmentStatus {
+    type Err = ();
+
+    fn from_str(raw: &str) -> Result<Self, Self::Err> {
+        match raw.trim() {
+            "pending" => Ok(Self::Pending),
+            "approved" => Ok(Self::Approved),
+            "rejected" => Ok(Self::Rejected),
+            _ => Err(()),
+        }
+    }
+}
+
 /// NULL / 空串是未匹配的历史别名；未知值返回 `None`，由调用方拒绝。
 pub fn normalize_snapshot_match_status(raw: Option<&str>) -> Option<SnapshotMatchStatus> {
     match raw.map(str::trim).filter(|s| !s.is_empty()) {
@@ -131,6 +171,18 @@ mod tests {
             normalize_snapshot_match_status(Some("  ")),
             Some(SnapshotMatchStatus::Unmatched)
         );
+    }
+
+    #[test]
+    fn difference_values_roundtrip() {
+        for status in DifferenceAdjustmentStatus::ALL {
+            assert_eq!(
+                DifferenceAdjustmentStatus::from_str(status.as_str()),
+                Ok(status)
+            );
+        }
+        assert_eq!(DifferenceAdjustmentStatus::from_str("unknown"), Err(()));
+        assert_eq!(DifferenceAdjustmentStatus::from_str("APPROVED"), Err(()));
     }
 
     #[test]

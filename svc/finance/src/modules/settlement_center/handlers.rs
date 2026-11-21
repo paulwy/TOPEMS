@@ -509,6 +509,23 @@ pub async fn list_differences(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<DifferenceListQuery>,
 ) -> ApiResponse<Vec<DifferenceAdjustment>> {
+    if let Some(raw) = query.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if raw
+            .parse::<crate::modules::settlement_center_status::DifferenceAdjustmentStatus>()
+            .is_err()
+        {
+            let allowed = crate::modules::settlement_center_status::DifferenceAdjustmentStatus::ALL
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "非法差异调整状态: {}，可选值: {}",
+                raw, allowed
+            )));
+        }
+    }
+
     let tenant_id = current_tenant_id(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
