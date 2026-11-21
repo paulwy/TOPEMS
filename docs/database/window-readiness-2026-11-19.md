@@ -706,7 +706,7 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 
 1. 账本：两版本均不存在或 `success=f`；`20261114180000`、`20261120235900`、`20261121100000` 为 `success=t`（前两者版本号可能低于旧 prod max，须逐条查）。
 2. 8 张表均存在、`relrowsecurity=t`、`relforcerowsecurity=t`、各 1 条 `rls_tenant_isolation`（ALL / PERMISSIVE / {public}，表达式 `COALESCE(current_setting('app.rls_system', true), 'off') = 'on' OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid`；原 `tenant_isolation_<表名>` 已被 `20261119210000` 改名）；`hrm.companies` 有 `(tenant_id, id)` 唯一约束 `uq_companies_tenant_id_id`；`erp.group_tenant_of(uuid)` 存在（W9-A 新策略的解析函数，不参与旧策略表达式）。
-3. 8 张表的 `company_id` 若已存在（重复执行场景），其非 NULL 行必须能通过 `company_readable()`；`period_version` 已存在时须为 `integer NOT NULL DEFAULT 1`。
+3. 公司列现状：仅 `consolidation_scope_companies` 在迁移前已有 `company_id`（NOT NULL）；`consolidation_scopes` / `consolidation_reports` / `consolidation_report_lines` / `elimination_rules` 的 `company_id` 由 W9-A 新增（可空）；`company_relations` 用 `parent/child_company_id`，`internal_transactions` / `elimination_candidates` 用 `from/to_company_id`。既有或重复执行场景下，非 NULL 的 `company_id` 行必须能通过 `company_readable()`；`period_version` 已存在时须为 `integer NOT NULL DEFAULT 1`。
 4. `public.core_user_company_scopes.is_default` 不存在；同一 `(tenant_id,user_id)` 的 `is_default=true` 行数 ≤ 1（列已存在时）。
 5. 同窗口发布物已就绪；`pg_dump` 备份完成（8 张 erp 表 + `core_user_company_scopes`）。
 
@@ -741,9 +741,12 @@ WHERE table_schema = 'erp'
                      'consolidation_scope_companies','consolidation_reports',
                      'consolidation_report_lines','elimination_rules','elimination_candidates')
 ORDER BY 1,2;
--- 期望：company_id uuid 可空（consolidation_scopes / consolidation_reports /
---       consolidation_report_lines / elimination_rules 共 4 张）；
---       period_version integer NOT NULL DEFAULT 1（仅 consolidation_reports / report_lines）
+-- 期望共 7 行：company_id 5 行 = 4 张本次新增可空（consolidation_scopes /
+--       consolidation_reports / consolidation_report_lines / elimination_rules）
+--       + consolidation_scope_companies 既有 NOT NULL；
+--       period_version 2 行 = 本次新增 integer NOT NULL DEFAULT 1
+--       （仅 consolidation_reports / consolidation_report_lines）。
+--       本次新增列合计 6 个，只分布在上述 4 张表。
 
 -- 3 个解析函数存在且 SECURITY INVOKER
 SELECT proname, prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -765,7 +768,7 @@ WHERE n.nspname = 'erp'
 
 写侧不是「任一侧」：`company_relations` 要求 `parent_company_id = 当前公司`（子公司不能自行维护关系）；
 `internal_transactions` / `elimination_candidates` 要求 from/to 任一侧等于当前公司；
-其余 4 表要求 `company_id = 当前公司`。系统通道只放宽读，不放宽写。
+其余 5 表（`consolidation_scopes` / `consolidation_scope_companies` / `consolidation_reports` / `consolidation_report_lines` / `elimination_rules`）要求 `company_id = 当前公司`。系统通道只放宽读，不放宽写。
 
 **`is_default` 回填抽查（只读）**
 
@@ -809,7 +812,7 @@ FROM public.core_user_company_scopes
 ORDER BY tenant_id, user_id, created_at LIMIT 20;
 ```
 
-**回滚**：按 B→A 执行 `database/rollback/20261122090000_...rollback.sql`（删索引与列、自删账本行）与 `database/rollback/20261121235940_...rollback.sql`（每表删 4 条公司策略、恢复 1 条租户策略，删 6 列/4 FK/4 索引/3 函数）；A 不删账本行，需手工清理。回滚后同租户各公司恢复互相可见，回填值丢失。
+**回滚**：按 B→A 执行 `database/rollback/20261122090000_...rollback.sql`（删索引与列、自删账本行）与 `database/rollback/20261121235940_...rollback.sql`（每表删 4 条公司策略、恢复 1 条租户策略；删 6 列、4 FK、4 索引、3 函数，其中 6 列仅指上述 4 张表新增的 `company_id` / `period_version`，`consolidation_scope_companies.company_id` 为迁移前既有、不删）；A 不删账本行，需手工清理。回滚后同租户各公司恢复互相可见；上述新增列的回填值丢失，`scope_companies` 的既有 `company_id` 保留。
 
 **与 MES 数量列的边界**：本波不触碰 `mes.*`；`20261120090000` 与 `20261122100000` 只保证 `mes.production_orders.quantity/completed_quantity` 同为 bigint，W9 前后该终态不变。二者仅共享「按版本号顺序应用」这一约束，无对象依赖。
 
