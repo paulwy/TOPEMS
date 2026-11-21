@@ -1,10 +1,10 @@
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
-    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    check_module_permission_claims, ModuleCode, ModulePermission as SharedModulePermission,
     PermissionAction,
 };
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum CrmPermission {
@@ -98,12 +98,12 @@ pub fn require_write_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiRespons
 }
 
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     permission: &CrmPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
+    check_module_permission_claims(claims, &shared_perm).await
 }
 
 #[cfg(test)]

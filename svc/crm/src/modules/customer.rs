@@ -339,7 +339,7 @@ pub async fn create_customer(
             let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
             tokio::spawn(async move {
                 let _ = log_audit_event_with_actor(
-                    &state.db,
+                    &state.system_pool,
                     AuditEventParams {
                         action: "crm.customer.create".to_string(),
                         entity_type: "customer".to_string(),
@@ -597,7 +597,7 @@ pub async fn update_customer(
             let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
             tokio::spawn(async move {
                 let _ = log_audit_event_with_actor(
-                    &state.db,
+                    &state.system_pool,
                     AuditEventParams {
                         action: "crm.customer.update".to_string(),
                         entity_type: "customer".to_string(),
@@ -679,7 +679,7 @@ pub async fn delete_customer(
             let audit_actor = AuditActor::from_claims(Some(entity_tenant), &claims);
             tokio::spawn(async move {
                 let _ = log_audit_event_with_actor(
-                    &state.db,
+                    &state.system_pool,
                     AuditEventParams {
                         action: "crm.customer.delete".to_string(),
                         entity_type: "customer".to_string(),
@@ -783,7 +783,7 @@ pub async fn batch_delete_customers(
             let response_data = serde_json::json!({ "rows_affected": rows_affected });
             tokio::spawn(async move {
                 let _ = log_audit_event_with_actor(
-                    &state.db,
+                    &state.system_pool,
                     AuditEventParams {
                         action: "crm.customer.batch_delete".to_string(),
                         entity_type: "customer".to_string(),
@@ -950,7 +950,7 @@ pub async fn start_customer_approval(
     });
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.customer.approval.start".to_string(),
                 entity_type: "customer".to_string(),
@@ -1078,7 +1078,7 @@ pub async fn approve_customer(
     });
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.customer.approval.approve".to_string(),
                 entity_type: "customer".to_string(),
@@ -1208,7 +1208,7 @@ pub async fn reject_customer(
     });
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.customer.approval.reject".to_string(),
                 entity_type: "customer".to_string(),

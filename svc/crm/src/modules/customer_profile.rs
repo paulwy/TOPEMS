@@ -13,6 +13,7 @@ use super::ApiState;
 use crate::models::Customer;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
@@ -139,27 +140,25 @@ pub async fn get_customer_profile(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<ProfileQueryParams>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<CustomerProfile> {
-    let mut txn = match state.db.begin().await {
-        Ok(t) => t,
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::from(TopemsError::Internal("获取客户信息失败".to_string())),
+    };
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        return e.0;
+    }
+
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("获取客户信息失败: 事务开启失败 {}", e);
+            tracing::error!("获取客户信息失败: 请求事务作用域开启失败 {}", e);
             return ApiResponse::from(TopemsError::Internal("获取客户信息失败".to_string()));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(claims.tenant_id.clone().unwrap_or_default())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("获取客户信息失败: RLS 上下文设置失败 {}", e);
-        return ApiResponse::from(TopemsError::Internal("获取客户信息失败".to_string()));
-    }
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
-        Ok(_) => {}
-        Err(e) => return e.0,
-    }
-
     let customer_result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, approval_status, created_at, updated_at, deleted_at
@@ -167,8 +166,9 @@ pub async fn get_customer_profile(
         "#,
     )
     .bind(id)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
+    drop(scope);
 
     let customer = match customer_result {
         Ok(Some(c)) => c,
@@ -181,22 +181,22 @@ pub async fn get_customer_profile(
         }
     };
 
-    let score = fetch_customer_score(&mut txn, id).await;
+    let score = fetch_customer_score(&mut *txn, id).await;
 
     let opportunities = if params.include_opportunities.unwrap_or(true) {
-        fetch_customer_opportunities(&mut txn, id).await
+        fetch_customer_opportunities(&mut *txn, id).await
     } else {
         Vec::new()
     };
 
     let interactions = if params.include_interactions.unwrap_or(true) {
-        fetch_customer_interactions(&mut txn, id).await
+        fetch_customer_interactions(&mut *txn, id).await
     } else {
         Vec::new()
     };
 
     let contacts = if params.include_contacts.unwrap_or(true) {
-        fetch_customer_contacts(&mut txn, id).await
+        fetch_customer_contacts(&mut *txn, id).await
     } else {
         Vec::new()
     };
@@ -235,7 +235,7 @@ pub async fn get_customer_profile(
 }
 
 async fn fetch_customer_score(
-    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    conn: &mut sqlx::PgConnection,
     customer_id: Uuid,
 ) -> Option<CustomerScoreSummary> {
     let result = sqlx::query(
@@ -248,7 +248,7 @@ async fn fetch_customer_score(
         "#,
     )
     .bind(customer_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut *conn)
     .await;
 
     match result {
@@ -264,7 +264,7 @@ async fn fetch_customer_score(
 }
 
 async fn fetch_customer_opportunities(
-    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    conn: &mut sqlx::PgConnection,
     customer_id: Uuid,
 ) -> Vec<OpportunitySummary> {
     let result = sqlx::query_as::<_, OpportunitySummary>(
@@ -277,7 +277,7 @@ async fn fetch_customer_opportunities(
         "#,
     )
     .bind(customer_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut *conn)
     .await;
 
     match result {
@@ -290,7 +290,7 @@ async fn fetch_customer_opportunities(
 }
 
 async fn fetch_customer_interactions(
-    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    conn: &mut sqlx::PgConnection,
     customer_id: Uuid,
 ) -> Vec<InteractionSummary> {
     let result = sqlx::query_as::<_, InteractionSummary>(
@@ -303,7 +303,7 @@ async fn fetch_customer_interactions(
         "#,
     )
     .bind(customer_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut *conn)
     .await;
 
     match result {
@@ -316,7 +316,7 @@ async fn fetch_customer_interactions(
 }
 
 async fn fetch_customer_contacts(
-    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    conn: &mut sqlx::PgConnection,
     customer_id: Uuid,
 ) -> Vec<ContactSummary> {
     let result = sqlx::query_as::<_, ContactSummary>(
@@ -329,7 +329,7 @@ async fn fetch_customer_contacts(
         "#,
     )
     .bind(customer_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut *conn)
     .await;
 
     match result {
@@ -406,32 +406,30 @@ pub async fn add_profile_tags(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> ApiResponse<String> {
     let tenant_id = match require_tenant_write(&claims) {
         Ok(t) => t,
         Err(resp) => return resp,
     };
-    let mut txn = match state.db.begin().await {
-        Ok(t) => t,
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::from(TopemsError::Internal("添加客户标签失败".to_string())),
+    };
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        return e.0;
+    }
+
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("添加客户标签失败: 事务开启失败 {}", e);
+            tracing::error!("添加客户标签失败: 请求事务作用域开启失败 {}", e);
             return ApiResponse::from(TopemsError::Internal("添加客户标签失败".to_string()));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(tenant_id.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("添加客户标签失败: RLS 上下文设置失败 {}", e);
-        return ApiResponse::from(TopemsError::Internal("添加客户标签失败".to_string()));
-    }
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
-        Ok(_) => {}
-        Err(e) => return e.0,
-    }
-
     for tag in &req.tags {
         let result = sqlx::query(
             r#"
@@ -444,7 +442,7 @@ pub async fn add_profile_tags(
         .bind(tag)
         .bind(Utc::now())
         .bind(tenant_id)
-        .execute(&mut *txn)
+        .execute(&mut scope)
         .await;
 
         if let Err(e) = result {
@@ -453,9 +451,12 @@ pub async fn add_profile_tags(
         }
     }
 
-    if let Err(e) = txn.commit().await {
-        tracing::error!("事务提交失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
+    drop(scope);
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
+        }
     }
     ApiResponse::success("".to_string(), "标签添加成功")
 }
@@ -477,38 +478,35 @@ pub async fn remove_profile_tags(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> ApiResponse<String> {
-    let tenant_id = match require_tenant_write(&claims) {
-        Ok(t) => t,
-        Err(resp) => return resp,
+    if let Err(resp) = require_tenant_write::<String>(&claims) {
+        return resp;
+    }
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return ApiResponse::from(TopemsError::Internal("移除客户标签失败".to_string())),
     };
-    let mut txn = match state.db.begin().await {
-        Ok(t) => t,
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
+        return e.0;
+    }
+
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("移除客户标签失败: 事务开启失败 {}", e);
+            tracing::error!("移除客户标签失败: 请求事务作用域开启失败 {}", e);
             return ApiResponse::from(TopemsError::Internal("移除客户标签失败".to_string()));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(tenant_id.to_string())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("移除客户标签失败: RLS 上下文设置失败 {}", e);
-        return ApiResponse::from(TopemsError::Internal("移除客户标签失败".to_string()));
-    }
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
-        Ok(_) => {}
-        Err(e) => return e.0,
-    }
-
     for tag in &req.tags {
         let result =
             sqlx::query("DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag = $2")
                 .bind(id)
                 .bind(tag)
-                .execute(&mut *txn)
+                .execute(&mut scope)
                 .await;
 
         if let Err(e) = result {
@@ -517,9 +515,12 @@ pub async fn remove_profile_tags(
         }
     }
 
-    if let Err(e) = txn.commit().await {
-        tracing::error!("事务提交失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
+    drop(scope);
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
+        }
     }
     ApiResponse::success("".to_string(), "标签删除成功")
 }
@@ -538,25 +539,17 @@ pub async fn list_customer_profiles(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut txn = match state.db.begin().await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("获取客户画像列表失败: 事务开启失败 {}", e);
-            return ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()));
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()))
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(claims.tenant_id.clone().unwrap_or_default())
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("获取客户画像列表失败: RLS 上下文设置失败 {}", e);
-        return ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()));
-    }
-    match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
-        Ok(_) => {}
-        Err(e) => return e.0,
+    if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
+        return e.0;
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -565,6 +558,14 @@ pub async fn list_customer_profiles(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
 
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取客户画像列表失败: 请求事务作用域开启失败 {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()));
+        }
+    };
     let customers_result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, approval_status, created_at, updated_at, deleted_at
@@ -581,7 +582,7 @@ pub async fn list_customer_profiles(
     .bind(&params.customer_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&mut *txn)
+    .fetch_all(&mut scope)
     .await;
 
     match customers_result {
@@ -597,17 +598,18 @@ pub async fn list_customer_profiles(
             .bind(&search_pattern)
             .bind(&params.status)
             .bind(&params.customer_type)
-            .fetch_one(&mut *txn)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
+            drop(scope);
 
             let mut profiles = Vec::new();
             for customer in customers {
-                let score = fetch_customer_score(&mut txn, customer.id).await;
-                let opportunities = fetch_customer_opportunities(&mut txn, customer.id).await;
-                let interactions = fetch_customer_interactions(&mut txn, customer.id).await;
-                let contacts = fetch_customer_contacts(&mut txn, customer.id).await;
+                let score = fetch_customer_score(&mut *txn, customer.id).await;
+                let opportunities = fetch_customer_opportunities(&mut *txn, customer.id).await;
+                let interactions = fetch_customer_interactions(&mut *txn, customer.id).await;
+                let contacts = fetch_customer_contacts(&mut *txn, customer.id).await;
                 let profile_tags = generate_profile_tags(&customer, &score, &opportunities);
 
                 profiles.push(CustomerProfile {

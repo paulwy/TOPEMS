@@ -400,7 +400,7 @@ async fn create_return(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "return".to_string(),
@@ -593,7 +593,7 @@ async fn update_return(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "return".to_string(),
@@ -706,7 +706,7 @@ async fn delete_return(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "return".to_string(),

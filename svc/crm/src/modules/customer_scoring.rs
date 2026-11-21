@@ -296,7 +296,7 @@ async fn create_customer_score(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "customer_score".to_string(),
@@ -410,7 +410,7 @@ async fn update_customer_score(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "customer_score".to_string(),
@@ -494,7 +494,7 @@ async fn delete_customer_score(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "customer_score".to_string(),

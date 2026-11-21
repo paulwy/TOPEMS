@@ -323,8 +323,14 @@ async fn main() -> Result<()> {
         }
     };
 
+    // 请求链路统一走受守卫的 Db；handler 复用 tenant_middleware 注入的请求事务。
+    let request_db = topems_shared_db::scope::Db::new(ctx.db.clone(), "crm, public, shared")
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
     let api_state = ApiState {
-        db: ctx.db.clone(),
+        db: request_db,
+        // 审计落库使用原始池（系统通道），不参与请求租户查询。
+        system_pool: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,

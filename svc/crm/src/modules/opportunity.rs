@@ -464,7 +464,7 @@ pub async fn create_opportunity(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "opportunity".to_string(),
@@ -687,7 +687,7 @@ async fn update_opportunity(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "opportunity".to_string(),
@@ -777,7 +777,7 @@ async fn delete_opportunity(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "opportunity".to_string(),
@@ -881,7 +881,7 @@ pub async fn batch_delete_opportunities(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "batch_delete".to_string(),
             entity_type: "opportunity".to_string(),
@@ -1395,7 +1395,7 @@ pub async fn advance_opportunity(
     let audit_actor = AuditActor::from_claims(Some(existing.tenant_id), &claims);
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.opportunity.advance".to_string(),
                 entity_type: "opportunity".to_string(),
@@ -1592,7 +1592,7 @@ pub async fn rollback_opportunity(
     let audit_actor = AuditActor::from_claims(Some(existing.tenant_id), &claims);
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.opportunity.rollback".to_string(),
                 entity_type: "opportunity".to_string(),

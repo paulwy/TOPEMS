@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-19",
+  "generated_at": "2026-11-21",
   "note": "§17.2 只减不增基线：bare_txn = 裸 &mut **txn 直接查；own_txn = 请求路径自开事务（.scope()/.scope_read()）。--update-baseline 仅允许在计数下降后执行。",
   "counts": {
-    "crm::bare_txn": 196,
+    "crm::bare_txn": 192,
     "erp::bare_txn": 350,
     "hrm::bare_txn": 232,
     "rd::bare_txn": 163,

@@ -106,7 +106,7 @@ pub async fn dashboard_overview(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -225,7 +225,7 @@ pub async fn dashboard_aggregate(
 
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -329,7 +329,7 @@ pub async fn analytics_funnel(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -402,7 +402,7 @@ pub async fn analytics_scoring(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -472,7 +472,7 @@ pub async fn analytics_forecast(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -548,7 +548,7 @@ pub async fn analytics_segmentation(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -631,7 +631,7 @@ pub async fn analytics_billing(
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
     // M-1：请求链路禁止自开事务，复用 tenant_middleware 注入的请求事务。
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -765,7 +765,7 @@ pub async fn analytics_recommendation(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(_p): Query<PeriodParam>,
 ) -> impl IntoResponse {
-    let db = Db::new(state.db.clone(), "crm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

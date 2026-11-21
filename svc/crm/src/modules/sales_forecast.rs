@@ -247,7 +247,7 @@ async fn create_sales_forecast(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "sales_forecast".to_string(),
@@ -480,7 +480,7 @@ async fn update_sales_forecast(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "sales_forecast".to_string(),
@@ -566,7 +566,7 @@ async fn delete_sales_forecast(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "sales_forecast".to_string(),

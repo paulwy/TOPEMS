@@ -214,7 +214,7 @@ async fn create_tag(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "tag".to_string(),
@@ -388,7 +388,7 @@ async fn update_tag(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "tag".to_string(),
@@ -472,7 +472,7 @@ async fn delete_tag(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "tag".to_string(),
@@ -619,7 +619,7 @@ async fn add_tag_to_customer(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "add_tag".to_string(),
             entity_type: "customer_tag".to_string(),
@@ -718,7 +718,7 @@ pub async fn remove_tag_from_customer(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "remove_tag".to_string(),
             entity_type: "customer_tag".to_string(),

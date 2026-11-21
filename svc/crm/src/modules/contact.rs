@@ -255,7 +255,7 @@ pub async fn create_contact(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "contact".to_string(),
@@ -451,7 +451,7 @@ async fn update_contact(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "contact".to_string(),
@@ -535,7 +535,7 @@ async fn delete_contact(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "contact".to_string(),
@@ -634,7 +634,7 @@ pub async fn batch_delete_contacts(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "batch_delete".to_string(),
             entity_type: "contact".to_string(),
@@ -795,7 +795,7 @@ pub async fn start_contact_approval(
     });
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.contact.approval.start".to_string(),
                 entity_type: "contact".to_string(),
@@ -925,7 +925,7 @@ pub async fn approve_contact(
     });
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.contact.approval.approve".to_string(),
                 entity_type: "contact".to_string(),
@@ -1057,7 +1057,7 @@ pub async fn reject_contact(
     });
     tokio::spawn(async move {
         let _ = log_audit_event_with_actor(
-            &state.db,
+            &state.system_pool,
             AuditEventParams {
                 action: "crm.contact.approval.reject".to_string(),
                 entity_type: "contact".to_string(),

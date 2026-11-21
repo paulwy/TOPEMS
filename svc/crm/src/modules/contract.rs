@@ -241,7 +241,7 @@ pub async fn create_contract(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "contract".to_string(),
@@ -473,7 +473,7 @@ pub async fn delete_contract(
     match result {
         Ok(r) if r.rows_affected() > 0 => {
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 AuditEventParams {
                     action: "delete".to_string(),
                     entity_type: "contract".to_string(),
