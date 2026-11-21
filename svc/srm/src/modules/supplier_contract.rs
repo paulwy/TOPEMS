@@ -17,6 +17,7 @@ use crate::models::{
     ContractTerm, CreateContractTermsRequest, CreateSupplierContractRequest, SupplierContract,
     UpdateSupplierContractRequest,
 };
+use crate::modules::supplier_contract_status::SupplierContractStatus;
 use crate::shared::permission::{check_permission, require_write_tenant, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
@@ -94,7 +95,13 @@ pub async fn list_contracts(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match SupplierContractStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的合同状态"),
+        },
+        None => None,
+    };
     let supplier_id_filter = params
         .supplier_id
         .clone()
@@ -105,7 +112,8 @@ pub async fn list_contracts(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         FROM srm.supplier_contracts
-          WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
+          WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR supplier_id = $3)
           AND ($4::text IS NULL OR contract_type = $4)
@@ -254,6 +262,10 @@ pub async fn create_contract(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = Uuid::parse_str(&claims.sub).ok();
+    let status = match SupplierContractStatus::from_db_str(&req.status) {
+        Some(v) => v,
+        None => return ApiResponse::<SupplierContract>::bad_request("无效的合同状态"),
+    };
 
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
@@ -274,7 +286,7 @@ pub async fn create_contract(
     .bind(sign_date)
     .bind(start_date)
     .bind(end_date)
-    .bind(&req.status)
+    .bind(status.as_db_str())
     .bind(&req.remarks)
     .bind(user_id)
     .bind(now)
@@ -438,7 +450,13 @@ pub async fn update_contract(
     let contract_type = req.contract_type.unwrap_or(existing.contract_type);
     let total_amount = req.total_amount.or(existing.total_amount);
     let currency = req.currency.unwrap_or(existing.currency);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        Some(raw) => match SupplierContractStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::<SupplierContract>::bad_request("无效的合同状态"),
+        },
+        None => existing.status,
+    };
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 

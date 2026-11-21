@@ -674,6 +674,13 @@
       "table": "srm.biddings",
       "column": "status",
       "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/srm/src/modules/supplier_contract_status.rs",
+      "enum": "SupplierContractStatus",
+      "table": "srm.supplier_contracts",
+      "column": "status",
+      "candidate": "docs/database/srm-supplier-contract-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

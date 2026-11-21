@@ -14,6 +14,7 @@ pub mod statistics;
 pub mod supplier;
 pub mod supplier_category;
 pub mod supplier_contract;
+pub mod supplier_contract_status;
 pub mod supplier_evaluation;
 pub mod supplier_performance;
 pub mod supplier_portal;

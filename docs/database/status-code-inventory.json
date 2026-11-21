@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 169,
+    "rust_enums": 170,
     "rust_enum_values": 165,
     "rust_values_not_in_db_check": 126,
     "frontend_status_keys": 180,
@@ -2869,6 +2869,23 @@
         "awarded",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "srm",
+      "file": "svc/srm/src/modules/supplier_contract_status.rs",
+      "name": "SupplierContractStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Draft",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "draft",
+        "inactive"
       ]
     },
     {

@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS srm.supplier_contracts (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    CONSTRAINT ck_supplier_contracts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT ck_supplier_contracts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
     CONSTRAINT supplier_contracts_contract_no_key UNIQUE (contract_no),
     CONSTRAINT supplier_contracts_pkey PRIMARY KEY (id),
     CONSTRAINT supplier_contracts_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES srm.suppliers(id)
