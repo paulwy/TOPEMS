@@ -91,7 +91,8 @@ async fn main() -> anyhow::Result<()> {
     // M-1：请求链路内禁止自开事务，handler 复用 tenant_middleware 的请求事务；
     // 后台订阅（无请求上下文）不受影响，仍可自开事务。
     let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "lims, public, shared")
-        .deny_request_own_txn();
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
 
     if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
         tracing::warn!("⚠️ LIMS 事件订阅者启动失败: {}", e);
