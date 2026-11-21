@@ -131,3 +131,27 @@ outbound_order_e2e` 4 passed（含新增创建用例）。
 
 验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、5 个 labor e2e 通过；
 `request-txn` 保持 `1655` 基线。
+
+## 10. 同型修复：`stock_takes` / `stock_take_items`（2026-11-21 补）
+
+`wms.stock_takes.org_id` 有默认值 `00000000-0000-0000-0000-000000000001`，创建语句
+未写，默认值会把所有盘点单的组织都压成同一个固定 UUID；`stock_take_items.org_id`
+为 `NOT NULL` 无默认，自动播种和手工新增两条 INSERT 都未写，明细创建必然 23502。
+
+改动：
+
+- `create_stock_take`：`organization_id`/`tenant_id` 写租户；`org_id` 有
+  `warehouse_id` 时经 `Db::scope_with` 取仓库组织，仓库不存在 409，无仓库回落租户；
+- `start_stock_take` 自动播种：单头查询同时取 `warehouse_id` 与 `org_id`，明细
+  `org_id` 跟随单头（为空再回落租户），INSERT 增加 `org_id`；
+- `create_stock_take_item`：按 `stock_take_id + tenant_id` 从单头取 `org_id` 写入
+  明细，单头不存在返回 409；
+- `CreateStockTakeRequest` 路径下 `tenant_id` 从 `Option` 收紧为 `Uuid`（上方已做
+  缺失即 400 校验，原 `Option` 只是把错误推迟到运行期）。
+
+`svc/wms/tests/stock_take_e2e.rs` 补 `organization_id`/`tenant_id`/`org_id`/
+`start_time`/`end_time` 列、最小仓库表与明细表，新增 4 个用例：无仓库回落租户、
+指定仓库派生组织、明细继承单头组织、原有列表用例补租户/组织。
+
+验证：`cargo fmt`、`clippy -D warnings`、`stock_take_e2e` 6 passed；
+`request-txn` 保持 `bare_txn=1655` 基线。

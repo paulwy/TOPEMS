@@ -241,21 +241,55 @@ pub async fn create_stock_take(
     let now = Utc::now();
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Option<Uuid> = match claims
+    let tenant_id: Uuid = match claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
     {
-        Some(t) => Some(t),
+        Some(t) => t,
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
+    };
+
+    let org_id = match req.warehouse_id {
+        Some(warehouse_id) => {
+            let lookup = {
+                let mut scope = match wms_db(&state.db).scope_with(txn).await {
+                    Ok(scope) => scope,
+                    Err(e) => {
+                        tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                        return ApiResponse::from(TopemsError::Internal(
+                            "盘点单创建失败".to_string(),
+                        ));
+                    }
+                };
+                sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                    "wms",
+                    r#"SELECT org_id FROM wms.warehouses
+                       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+                ))
+                .bind(warehouse_id)
+                .bind(tenant_id)
+                .fetch_optional(&mut scope)
+                .await
+            };
+            match lookup {
+                Ok(Some(v)) => v,
+                Ok(None) => return ApiResponse::conflict("仓库不存在，无法创建盘点单"),
+                Err(e) => {
+                    tracing::error!("查询仓库组织失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal("盘点单创建失败".to_string()));
+                }
+            }
+        }
+        None => tenant_id,
     };
 
     let result = sqlx::query_as::<_, StockTake>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type,
                                      warehouse_id, location_id, status, planned_date,
-                                     remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, $9, $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9)
+                                     remarks, created_at, updated_at, tenant_id, org_id)
+        VALUES ($1, $9, $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9, $10)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_id, stock_take_number, status,
                   start_time, end_time, remarks, created_at, updated_at
         "#),
@@ -269,6 +303,7 @@ pub async fn create_stock_take(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -680,23 +715,24 @@ pub async fn start_stock_take(
         }
     }
 
-    let warehouse_id = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
+    let header = sqlx::query_as::<_, (Option<Uuid>, Option<Uuid>)>(only_own_schema_query!(
         "wms",
-        r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2"#
+        r#"SELECT warehouse_id, org_id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(id)
     .bind(tenant)
     .fetch_optional(&mut scope)
     .await;
-    let warehouse_id = match warehouse_id {
-        Ok(Some(warehouse_id)) => warehouse_id,
-        Ok(None) => None,
+    let (warehouse_id, org_id) = match header {
+        Ok(Some(row)) => row,
+        Ok(None) => (None, None),
         Err(e) => {
             tracing::error!("查询盘点仓库失败: {}", e);
             let _ = scope.rollback().await;
             return ApiResponse::server_error("开始盘点失败");
         }
     };
+    let org_id = org_id.unwrap_or(tenant);
 
     if let Some(warehouse_id) = warehouse_id {
         let seeded = sqlx::query(only_own_schema_query!(
@@ -705,11 +741,12 @@ pub async fn start_stock_take(
             INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, line_number,
                                               material_code, material_name, specification,
                                               batch_number, location_id, system_quantity, unit,
-                                              quality_status, created_at, updated_at, tenant_id)
+                                              quality_status, created_at, updated_at, tenant_id,
+                                              org_id)
             SELECT uuid_generate_v4(), $3, $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
                    i.material_code, i.material_name, i.specification,
                    i.batch_number, i.location_id, i.quantity, i.unit,
-                   i.quality_status, NOW(), NOW(), $3
+                   i.quality_status, NOW(), NOW(), $3, $4
             FROM wms.inventory i
             WHERE i.warehouse_id = $2 AND i.tenant_id = $3 AND i.deleted_at IS NULL
             "#
@@ -717,6 +754,7 @@ pub async fn start_stock_take(
         .bind(id)
         .bind(warehouse_id)
         .bind(tenant)
+        .bind(org_id)
         .execute(&mut scope)
         .await;
         if let Err(e) = seeded {
@@ -925,6 +963,33 @@ pub async fn create_stock_take_item(
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
 
+    let org_id = {
+        let mut scope = match wms_db(&state.db).scope_with(txn).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("盘点明细创建失败".to_string()));
+            }
+        };
+        sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"SELECT org_id FROM wms.stock_takes
+               WHERE id = $1 AND tenant_id = $2"#
+        ))
+        .bind(id)
+        .bind(item_tenant)
+        .fetch_optional(&mut scope)
+        .await
+    };
+    let org_id = match org_id {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("盘点单不存在，无法创建明细"),
+        Err(e) => {
+            tracing::error!("查询盘点单组织失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("盘点明细创建失败".to_string()));
+        }
+    };
+
     let variance = if let Some(actual) = req.actual_quantity {
         Some(actual - req.expected_quantity)
     } else {
@@ -949,8 +1014,8 @@ pub async fn create_stock_take_item(
                                           material_name, specification, batch_number, location_id,
                                           system_quantity, counted_quantity, discrepancy_quantity,
                                           discrepancy_type, unit, unit_price, discrepancy_value,
-                                          notes, created_at, updated_at, tenant_id)
-        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                                          notes, created_at, updated_at, tenant_id, org_id)
+        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
@@ -974,6 +1039,7 @@ pub async fn create_stock_take_item(
     .bind(now)
     .bind(now)
     .bind(item_tenant)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 
