@@ -457,7 +457,8 @@ pub async fn list_suppliers(
         r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         FROM srm.suppliers
-          WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
+          WHERE status IN ('active','inactive','pending','blacklisted','archived','deleted')
+          AND ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
         ORDER BY {} {}
@@ -481,7 +482,8 @@ pub async fn list_suppliers(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM srm.suppliers
-                  WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
+                  WHERE status IN ('active','inactive','pending','blacklisted','archived','deleted')
+                  AND ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
                 "#,
@@ -781,7 +783,7 @@ pub async fn get_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM srm.suppliers WHERE id = $1
+        FROM srm.suppliers WHERE id = $1 AND status IN ('active','inactive','pending','blacklisted','archived','deleted')
         "#, "srm"),
     )
     .bind(id)
@@ -844,7 +846,7 @@ pub async fn update_supplier(
     };
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1", "srm"),
+        only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND status IN ('active','inactive','pending','blacklisted','archived','deleted')", "srm"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -884,7 +886,7 @@ pub async fn update_supplier(
         only_own_schema_query!("srm", r#"
         UPDATE srm.suppliers SET
             supplier_no = $2, name = $3, legal_name = $4, category = $5, status = $6, tax_id = $7, address = $8, contact_person = $9, phone = $10, email = $11, website = $12, credit_rating = $13, risk_level = $14, updated_at = $15
-        WHERE id = $1 AND tenant_id = $16
+        WHERE id = $1 AND tenant_id = $16 AND status IN ('active','inactive','pending','blacklisted','archived','deleted')
         RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         "#, "srm"),
     )
@@ -904,11 +906,11 @@ pub async fn update_supplier(
     .bind(risk_level)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(supplier) => {
+        Ok(Some(supplier)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -996,6 +998,7 @@ pub async fn update_supplier(
 
             ApiResponse::success(supplier, "供应商更新成功")
         }
+        Ok(None) => ApiResponse::<Supplier>::not_found("供应商不存在"),
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
             ApiResponse::<Supplier>::server_error("供应商更新失败")

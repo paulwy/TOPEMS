@@ -113,6 +113,7 @@ pub async fn list_contracts(
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         FROM srm.supplier_contracts
           WHERE deleted_at IS NULL
+          AND status IN ('draft','active','inactive','archived')
           AND ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -137,6 +138,7 @@ pub async fn list_contracts(
                 r#"
                 SELECT COUNT(*) FROM srm.supplier_contracts
                 WHERE deleted_at IS NULL
+                  AND status IN ('draft','active','inactive','archived')
                   AND ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -344,7 +346,7 @@ pub async fn get_contract(
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM srm.supplier_contracts WHERE id = $1
+        FROM srm.supplier_contracts WHERE id = $1 AND status IN ('draft','active','inactive','archived')
         "#, "srm"),
     )
     .bind(id)
@@ -464,7 +466,7 @@ pub async fn update_contract(
         only_own_schema_query!("srm", r#"
         UPDATE srm.supplier_contracts SET
             contract_no = $2, supplier_id = $3, supplier_name = $4, title = $5, contract_type = $6, total_amount = $7, currency = $8, sign_date = $9, start_date = $10, end_date = $11, status = $12, remarks = $13, updated_at = $14
-        WHERE id = $1 AND tenant_id = $15
+        WHERE id = $1 AND tenant_id = $15 AND status IN ('draft','active','inactive','archived')
         RETURNING id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         "#, "srm"),
     )
@@ -483,11 +485,11 @@ pub async fn update_contract(
     .bind(remarks)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(contract) => {
+        Ok(Some(contract)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
@@ -496,6 +498,7 @@ pub async fn update_contract(
             }
             ApiResponse::success(contract, "供应商合同更新成功")
         }
+        Ok(None) => ApiResponse::<SupplierContract>::not_found("供应商合同不存在"),
         Err(e) => {
             tracing::error!("更新供应商合同失败: {}", e);
             ApiResponse::<SupplierContract>::server_error("供应商合同更新失败")
