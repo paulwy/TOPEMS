@@ -12,34 +12,37 @@
 //! `FsmError` / `validate_status` / `check_pair` 已提取至 `topems_shared_core::fsm`。
 
 // 重导出公共 FSM 基础类型，保持 `use crate::shared::fsm::{...}` 调用方无需改动
+use crate::modules::inbound_status::{
+    InboundStatus, APPROVAL_TRANSITIONS, DB_VALUES, TERMINAL, TRANSITIONS,
+};
 pub use topems_shared_core::fsm::{FsmDef, FsmError};
 
 // ==================== FSM-1: InboundOrder ====================
+// 单一事实源在 `modules::inbound_status`；这里仅保留共享 FSM 投影，供存量调用方使用。
 pub const INBOUND_ORDER: FsmDef = FsmDef {
-    states: &["created", "confirmed", "received", "completed", "cancelled"],
-    terminal: &["completed", "cancelled"],
-    transitions: &[
-        ("created", "confirmed"),
-        ("confirmed", "created"),
-        ("confirmed", "received"),
-        ("received", "confirmed"),
-        ("received", "completed"),
-        ("created", "cancelled"),
-        ("confirmed", "cancelled"),
-    ],
-    approval_transitions: &[("received", "completed")],
+    states: DB_VALUES,
+    terminal: TERMINAL,
+    transitions: TRANSITIONS,
+    approval_transitions: APPROVAL_TRANSITIONS,
 };
 
+fn parse_inbound_status(raw: &str) -> Result<InboundStatus, FsmError> {
+    InboundStatus::from_db_str(raw).map_err(|_| FsmError::UnknownStatus(raw.to_string()))
+}
+
 pub fn inbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    INBOUND_ORDER.can_transition(from, to)
+    parse_inbound_status(from)?.can_transition_to(parse_inbound_status(to)?)
 }
 
 pub fn inbound_order_requires_approval(from: &str, to: &str) -> bool {
-    INBOUND_ORDER.requires_approval(from, to)
+    match (parse_inbound_status(from), parse_inbound_status(to)) {
+        (Ok(from), Ok(to)) => from.requires_approval(to),
+        _ => false,
+    }
 }
 
 pub fn is_valid_inbound_order_status(s: &str) -> bool {
-    INBOUND_ORDER.is_valid_status(s)
+    InboundStatus::from_db_str(s).is_ok()
 }
 
 // ==================== FSM-2: OutboundOrder ====================

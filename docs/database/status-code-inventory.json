@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 180,
-    "rust_enum_values": 178,
-    "rust_values_not_in_db_check": 139,
-    "frontend_status_keys": 193,
-    "frontend_keys_not_in_db_check": 153,
+    "rust_enums": 181,
+    "rust_enum_values": 179,
+    "rust_values_not_in_db_check": 140,
+    "frontend_status_keys": 194,
+    "frontend_keys_not_in_db_check": 154,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3156,6 +3156,25 @@
     },
     {
       "module": "wms",
+      "file": "svc/wms/src/modules/inbound_status.rs",
+      "name": "InboundStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Confirmed",
+        "Created",
+        "Received"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "created",
+        "received"
+      ]
+    },
+    {
+      "module": "wms",
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",
       "name": "ReplenishmentOrderStatus",
       "values": [
@@ -3239,6 +3258,7 @@
       "conflict",
       "consumed",
       "controlled",
+      "created",
       "critical",
       "danger",
       "degraded",
@@ -3424,6 +3444,7 @@
       "conflict",
       "consumed",
       "controlled",
+      "created",
       "critical",
       "danger",
       "degraded",
@@ -3566,6 +3587,7 @@
       "conflict",
       "consumed",
       "controlled",
+      "created",
       "critical",
       "danger",
       "degraded",

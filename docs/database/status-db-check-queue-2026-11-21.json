@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 124,
-    "uncovered_values": 139,
+    "uncovered_enums": 125,
+    "uncovered_values": 140,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 92,
-    "internal_state_enums": 54,
-    "persisted_unmapped_enums": 62,
+    "resolved_enums": 93,
+    "internal_state_enums": 55,
+    "persisted_unmapped_enums": 63,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 31,
-    "internal_state_values": 80,
+    "internal_state_values": 81,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -2262,6 +2262,27 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "健康度聚合计算值，不落库；与 shared-core 同名同值但 serde 输出 PascalCase vs lowercase，直接替换会改 API 契约"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/inbound_status.rs",
+      "enum": "InboundStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "created"
+        ],
+        "persisted_unmapped": [
+          "received"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/inbound_status.rs",
+        "enum": "InboundStatus",
+        "table": "wms.inbound_orders",
+        "column": "status",
+        "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
       }
     }
   ]

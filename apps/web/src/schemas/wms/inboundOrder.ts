@@ -97,9 +97,9 @@ export const inboundOrderSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: i18n.t('wms.inbound_order.k18') },
+          { value: 'created', label: i18n.t('wms.inbound_order.k18') },
           { value: 'confirmed', label: i18n.t('wms.inbound_order.k19') },
-          { value: 'receiving', label: i18n.t('wms.inbound_order.k20') },
+          { value: 'received', label: i18n.t('wms.inbound_order.k20') },
           { value: 'completed', label: i18n.t('wms.inbound_order.k21') },
           { value: 'cancelled', label: i18n.t('wms.inbound_order.k22') },
         ],
@@ -123,16 +123,16 @@ export const inboundOrderSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        pending: 'warning',
+        created: 'warning',
         confirmed: 'info',
-        receiving: 'primary',
+        received: 'info',
         completed: 'success',
         cancelled: 'error',
       },
       labelMap: {
-        pending: i18n.t('wms.inbound_order.k23'),
+        created: i18n.t('wms.inbound_order.k23'),
         confirmed: i18n.t('wms.inbound_order.k24'),
-        receiving: i18n.t('wms.inbound_order.k25'),
+        received: i18n.t('wms.inbound_order.k25'),
         completed: i18n.t('wms.inbound_order.k26'),
         cancelled: i18n.t('wms.inbound_order.k27'),
       },

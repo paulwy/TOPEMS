@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::models::inbound_order::*;
 use crate::modules::audit::log_audit_event;
+use crate::modules::inbound_status::{InboundStatus, DELETABLE};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{
@@ -143,7 +144,19 @@ pub async fn list_inbound_orders(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match InboundStatus::from_read_str(raw) {
+                Ok(status) => Some(status.as_db_str()),
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = InboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     // 显式租户过滤：超管→None（全部），普通用户→claims.tenant_id，RLS 之外双保险
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
@@ -169,13 +182,15 @@ pub async fn list_inbound_orders(
         FROM wms.inbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND status = ANY($3::text[])
           AND deleted_at IS NULL
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
+    .bind(&canonical_statuses)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -189,11 +204,13 @@ pub async fn list_inbound_orders(
                 SELECT COUNT(*) FROM wms.inbound_orders
                 WHERE ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($3::text[])
                   AND deleted_at IS NULL
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -267,7 +284,7 @@ pub async fn create_inbound_order(
                                        supplier_id, order_date, expected_arrival_date, total_value,
                                        status, notes, created_at, updated_at, tenant_id)
         VALUES ($1, $2, 'purchase', $3, $4, $5, $6, $7,
-               'created', $8, $9, $10, $11)
+               $12, $8, $9, $10, $11)
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -298,6 +315,7 @@ pub async fn create_inbound_order(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(InboundStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -414,6 +432,10 @@ pub async fn get_inbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let canonical_statuses: Vec<String> = InboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -434,10 +456,11 @@ pub async fn get_inbound_order(
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
                created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                created_at, updated_at
-        FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.inbound_orders WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -482,6 +505,10 @@ pub async fn update_inbound_order(
         Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
+    let canonical_statuses: Vec<String> = InboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let existing = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
@@ -503,10 +530,11 @@ pub async fn update_inbound_order(
                notes, notes AS remarks, quality_check_notes, receiving_notes, special_instructions,
                created_by, updated_by, approved_by, approved_at, tenant_id AS organization_id,
                created_at, updated_at 
-        FROM wms.inbound_orders WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.inbound_orders WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -523,7 +551,30 @@ pub async fn update_inbound_order(
     let expected_arrival = req.expected_arrival.or(existing.expected_arrival);
     let actual_arrival = req.actual_arrival.or(existing.actual_arrival);
     let total_amount = req.total_amount.or(existing.total_amount);
-    let status = req.status.unwrap_or(existing.status);
+    let current_status = match InboundStatus::from_db_str(&existing.status) {
+        Ok(status) => status,
+        Err(msg) => return ApiResponse::bad_request(&msg),
+    };
+    let requested_status = match req.status.as_deref() {
+        Some(raw) => match InboundStatus::from_read_str(raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+        None => current_status,
+    };
+    if requested_status != current_status {
+        // 通用编辑只允许「取消」这一条无副作用的迁移；确认/收货/完成必须走动作端点。
+        if requested_status != InboundStatus::Cancelled {
+            return ApiResponse::bad_request(
+                "状态只能通过确认、收货、完成动作接口变更；通用编辑仅允许取消",
+            );
+        }
+        if let Err(e) = current_status.can_transition_to(requested_status) {
+            return ApiResponse::bad_request(&format!("当前状态不允许取消: {e}"));
+        }
+    }
+    let status = requested_status.as_db_str().to_string();
+    let previous_status = current_status.as_db_str().to_string();
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
@@ -532,7 +583,7 @@ pub async fn update_inbound_order(
         UPDATE wms.inbound_orders SET
             warehouse_id = $2, supplier_id = $3, expected_arrival_date = $4, actual_arrival_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND status = $10 AND deleted_at IS NULL
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -561,6 +612,7 @@ pub async fn update_inbound_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
+    .bind(&previous_status)
     .fetch_one(&mut **txn)
     .await;
 
@@ -580,6 +632,11 @@ pub async fn update_inbound_order(
                 None,
             )
         }
+        Err(sqlx::Error::RowNotFound) => (
+            ApiResponse::conflict("入库单状态已被并发修改，请刷新后重试"),
+            "conflict",
+            Some("入库单状态已被并发修改".to_string()),
+        ),
         Err(e) => {
             tracing::error!("更新入库订单失败: {}", e);
             (
@@ -643,11 +700,17 @@ pub async fn delete_inbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let deletable_statuses: Vec<String> = DELETABLE
+        .iter()
+        .map(|status| status.as_db_str().to_string())
+        .collect();
+
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.inbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+        r#"UPDATE wms.inbound_orders SET deleted_at = NOW() WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL"#
     ))
     .bind(id)
+    .bind(&deletable_statuses)
     .execute(&mut **txn)
     .await;
 
@@ -666,9 +729,9 @@ pub async fn delete_inbound_order(
             )
         }
         Ok(_) => (
-            ApiResponse::from(TopemsError::ResourceNotFound("入库订单不存在".to_string())),
-            "error",
-            Some("入库订单不存在".to_string()),
+            ApiResponse::conflict("入库单不存在或当前状态不允许删除，请先取消"),
+            "conflict",
+            Some("入库单不存在或当前状态不允许删除".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除入库订单失败: {}", e);
@@ -1187,13 +1250,15 @@ pub async fn confirm_inbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
+    let target_status = InboundStatus::Confirmed;
+    let from_status = InboundStatus::Created;
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.inbound_orders SET
-            status = 'confirmed', updated_at = $2
-        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
+            status = $3, updated_at = $2
+        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -1215,6 +1280,8 @@ pub async fn confirm_inbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(target_status.as_db_str())
+    .bind(from_status.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1235,11 +1302,9 @@ pub async fn confirm_inbound_order(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound(
-                "入库订单不存在或当前状态不允许确认".to_string(),
-            )),
-            "not_found",
-            None,
+            ApiResponse::conflict("入库单状态已被并发修改，请刷新后重试"),
+            "conflict",
+            Some("入库单状态已被并发修改".to_string()),
         ),
         Err(e) => {
             tracing::error!("确认入库订单失败: {}", e);
@@ -1517,14 +1582,16 @@ pub async fn receive_inbound_order(
         "wms",
         r#"
         UPDATE wms.inbound_orders SET
-            status = 'received', actual_arrival_date = $1, updated_at = $1
+            status = $4, actual_arrival_date = $1, updated_at = $1
         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
-          AND status NOT IN ('received', 'completed', 'cancelled')
+          AND status = $5
         "#
     ))
     .bind(now)
     .bind(id)
     .bind(tenant)
+    .bind(InboundStatus::Received.as_db_str())
+    .bind(InboundStatus::Confirmed.as_db_str())
     .execute(&mut scope)
     .await;
     match status_updated {
@@ -1768,13 +1835,15 @@ pub async fn complete_inbound_order(
         Err(e) => return e.0,
     }
     let now = Utc::now();
+    let target_status = InboundStatus::Completed;
+    let from_status = InboundStatus::Received;
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.inbound_orders SET
-            status = 'completed', updated_at = $2
-        WHERE id = $1 AND status = 'received' AND deleted_at IS NULL
+            status = $3, updated_at = $2
+        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -1796,6 +1865,8 @@ pub async fn complete_inbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(target_status.as_db_str())
+    .bind(from_status.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1816,11 +1887,9 @@ pub async fn complete_inbound_order(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound(
-                "入库订单不存在或当前状态不允许完成".to_string(),
-            )),
-            "not_found",
-            None,
+            ApiResponse::conflict("入库单状态已被并发修改，请刷新后重试"),
+            "conflict",
+            Some("入库单状态已被并发修改".to_string()),
         ),
         Err(e) => {
             tracing::error!("完成入库订单失败: {}", e);
@@ -1903,8 +1972,12 @@ pub async fn start_inbound_approval(
 
     match current {
         Ok(row) => {
-            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !crate::shared::fsm::inbound_order_requires_approval(&current_status, "completed") {
+            let raw_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            let current_status = match InboundStatus::from_db_str(&raw_status) {
+                Ok(status) => status,
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            };
+            if !current_status.requires_approval(InboundStatus::Completed) {
                 return ApiResponse::bad_request("当前状态无需审批");
             }
             if let Err(e) = crate::models::audit_log::log_approval_event(
@@ -1914,8 +1987,8 @@ pub async fn start_inbound_approval(
                 &id.to_string(),
                 "start_approval",
                 &req.operator,
-                &current_status,
-                &current_status,
+                current_status.as_db_str(),
+                current_status.as_db_str(),
                 req.comment.as_deref(),
             )
             .await
@@ -1923,7 +1996,10 @@ pub async fn start_inbound_approval(
                 tracing::warn!("审计日志写入失败: {}", e);
             }
             ApiResponse::success(
-                serde_json::json!({"status": current_status, "approval_started": true}),
+                serde_json::json!({
+                    "status": current_status.as_db_str(),
+                    "approval_started": true
+                }),
                 "审批启动成功",
             )
         }
@@ -1974,18 +2050,22 @@ pub async fn approve_inbound(
 
     match current {
         Ok(row) => {
-            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if crate::shared::fsm::inbound_order_requires_approval(&current_status, "completed")
-                && crate::shared::fsm::inbound_order_can_transition(&current_status, "completed")
-                    .is_err()
-            {
-                return ApiResponse::bad_request("当前状态不允许审批通过");
+            let raw_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            let current_status = match InboundStatus::from_db_str(&raw_status) {
+                Ok(status) => status,
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            };
+            let target_status = InboundStatus::Completed;
+            if let Err(e) = current_status.can_transition_to(target_status) {
+                return ApiResponse::conflict(&format!("当前状态不允许审批通过: {e}"));
             }
             let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.inbound_orders SET status = 'completed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
+                only_own_schema_query!("wms", "UPDATE wms.inbound_orders SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4 AND deleted_at IS NULL RETURNING id"),
             )
             .bind(id)
             .bind(tenant_id)
+            .bind(target_status.as_db_str())
+            .bind(current_status.as_db_str())
             .fetch_one(&mut **txn)
             .await;
             match result {
@@ -1997,8 +2077,8 @@ pub async fn approve_inbound(
                         &id.to_string(),
                         "approve",
                         &req.operator,
-                        &current_status,
-                        "completed",
+                        current_status.as_db_str(),
+                        target_status.as_db_str(),
                         req.comment.as_deref(),
                     )
                     .await
@@ -2012,9 +2092,12 @@ pub async fn approve_inbound(
                         }
                     }
                     ApiResponse::success(
-                        serde_json::json!({"id": id, "status": "completed"}),
+                        serde_json::json!({"id": id, "status": target_status.as_db_str()}),
                         "审批通过",
                     )
+                }
+                Err(sqlx::Error::RowNotFound) => {
+                    ApiResponse::conflict("入库单状态已被并发修改，请刷新后重试")
                 }
                 Err(e) => {
                     tracing::error!("审批入库单失败: {}", e);
@@ -2069,17 +2152,22 @@ pub async fn reject_inbound(
 
     match current {
         Ok(row) => {
-            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if crate::shared::fsm::inbound_order_can_transition(&current_status, "confirmed")
-                .is_err()
-            {
-                return ApiResponse::bad_request("当前状态不允许驳回回流");
+            let raw_status = row.get::<Option<String>, _>("status").unwrap_or_default();
+            let current_status = match InboundStatus::from_db_str(&raw_status) {
+                Ok(status) => status,
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            };
+            let target_status = InboundStatus::Confirmed;
+            if let Err(e) = current_status.can_transition_to(target_status) {
+                return ApiResponse::conflict(&format!("当前状态不允许驳回回流: {e}"));
             }
             let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.inbound_orders SET status = 'confirmed', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
+                only_own_schema_query!("wms", "UPDATE wms.inbound_orders SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4 AND deleted_at IS NULL RETURNING id"),
             )
             .bind(id)
             .bind(tenant_id)
+            .bind(target_status.as_db_str())
+            .bind(current_status.as_db_str())
             .fetch_one(&mut **txn)
             .await;
             match result {
@@ -2091,8 +2179,8 @@ pub async fn reject_inbound(
                         &id.to_string(),
                         "reject",
                         &req.operator,
-                        &current_status,
-                        "confirmed",
+                        current_status.as_db_str(),
+                        target_status.as_db_str(),
                         req.comment.as_deref(),
                     )
                     .await
@@ -2106,9 +2194,12 @@ pub async fn reject_inbound(
                         }
                     }
                     ApiResponse::success(
-                        serde_json::json!({"id": id, "status": "confirmed"}),
+                        serde_json::json!({"id": id, "status": target_status.as_db_str()}),
                         "审批驳回，回流至 confirmed",
                     )
+                }
+                Err(sqlx::Error::RowNotFound) => {
+                    ApiResponse::conflict("入库单状态已被并发修改，请刷新后重试")
                 }
                 Err(e) => {
                     tracing::error!("驳回入库单失败: {}", e);

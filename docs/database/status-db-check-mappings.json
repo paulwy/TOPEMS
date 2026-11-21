@@ -744,6 +744,13 @@
       "table": "crm.billing_records",
       "column": "status",
       "candidate": "docs/database/crm-billing-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/inbound_status.rs",
+      "enum": "InboundStatus",
+      "table": "wms.inbound_orders",
+      "column": "status",
+      "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
     }
   ]
 }
