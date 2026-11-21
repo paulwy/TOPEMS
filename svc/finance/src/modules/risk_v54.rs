@@ -214,6 +214,13 @@ pub enum ReviewWorkflowStatus {
 }
 
 impl ReviewWorkflowStatus {
+    pub const ALL: [Self; 4] = [
+        ReviewWorkflowStatus::Pending,
+        ReviewWorkflowStatus::InProgress,
+        ReviewWorkflowStatus::Completed,
+        ReviewWorkflowStatus::Rejected,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             ReviewWorkflowStatus::Pending => "pending",
@@ -223,12 +230,14 @@ impl ReviewWorkflowStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "in_progress" => ReviewWorkflowStatus::InProgress,
-            "completed" => ReviewWorkflowStatus::Completed,
-            "rejected" => ReviewWorkflowStatus::Rejected,
-            _ => ReviewWorkflowStatus::Pending,
+    /// 严格解析：未知值返回 None，不再静默回退 pending。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "pending" => Some(ReviewWorkflowStatus::Pending),
+            "in_progress" => Some(ReviewWorkflowStatus::InProgress),
+            "completed" => Some(ReviewWorkflowStatus::Completed),
+            "rejected" => Some(ReviewWorkflowStatus::Rejected),
+            _ => None,
         }
     }
 }
@@ -1087,13 +1096,14 @@ impl AutoComplianceReviewer {
         let workflow = sqlx::query_as(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v54_review_workflows
                 (id, tenant_id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at"#),
         )
         .bind(id)
         .bind(tenant_id)
         .bind(&req.entity_type)
         .bind(&req.entity_id)
+        .bind(ReviewWorkflowStatus::Pending.as_str())
         .bind(req.assigned_to)
         .bind(steps_json)
         .bind(now)
@@ -1119,6 +1129,20 @@ impl AutoComplianceReviewer {
         .fetch_one(&mut scope)
         .await?;
 
+        match ReviewWorkflowStatus::from_str(&workflow.status) {
+            Some(ReviewWorkflowStatus::Pending) | Some(ReviewWorkflowStatus::InProgress) => {}
+            Some(ReviewWorkflowStatus::Completed) | Some(ReviewWorkflowStatus::Rejected) => {
+                // 终态工作流不可再推进，避免 rejected 被覆盖成 completed。
+                return Err(sqlx::Error::RowNotFound);
+            }
+            None => {
+                return Err(sqlx::Error::Protocol(format!(
+                    "未知审核工作流状态: {}",
+                    workflow.status
+                )));
+            }
+        }
+
         let mut steps: Vec<serde_json::Value> =
             serde_json::from_value(workflow.steps.clone()).unwrap_or_default();
 
@@ -1133,20 +1157,26 @@ impl AutoComplianceReviewer {
             }
         }
 
-        let new_status = if all_done { "completed" } else { "in_progress" };
+        let new_status = if all_done {
+            ReviewWorkflowStatus::Completed
+        } else {
+            ReviewWorkflowStatus::InProgress
+        };
 
         let now = Utc::now();
         let workflow = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v54_review_workflows
             SET status = $1, steps = $2, updated_at = $3
-            WHERE id = $4 AND tenant_id = $5
+            WHERE id = $4 AND tenant_id = $5 AND status IN ($6, $7)
             RETURNING id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at"#),
         )
-        .bind(new_status)
+        .bind(new_status.as_str())
         .bind(serde_json::Value::Array(steps))
         .bind(now)
         .bind(workflow_id)
         .bind(tenant_id)
+        .bind(ReviewWorkflowStatus::Pending.as_str())
+        .bind(ReviewWorkflowStatus::InProgress.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -2063,32 +2093,27 @@ mod tests {
     fn review_workflow_status_from_str_all_variants() {
         assert_eq!(
             ReviewWorkflowStatus::from_str("pending"),
-            ReviewWorkflowStatus::Pending
+            Some(ReviewWorkflowStatus::Pending)
         );
         assert_eq!(
             ReviewWorkflowStatus::from_str("in_progress"),
-            ReviewWorkflowStatus::InProgress
+            Some(ReviewWorkflowStatus::InProgress)
         );
         assert_eq!(
             ReviewWorkflowStatus::from_str("completed"),
-            ReviewWorkflowStatus::Completed
+            Some(ReviewWorkflowStatus::Completed)
         );
         assert_eq!(
             ReviewWorkflowStatus::from_str("rejected"),
-            ReviewWorkflowStatus::Rejected
+            Some(ReviewWorkflowStatus::Rejected)
         );
     }
 
     #[test]
-    fn review_workflow_status_from_str_unknown_defaults_to_pending() {
-        assert_eq!(
-            ReviewWorkflowStatus::from_str("unknown"),
-            ReviewWorkflowStatus::Pending
-        );
-        assert_eq!(
-            ReviewWorkflowStatus::from_str(""),
-            ReviewWorkflowStatus::Pending
-        );
+    fn review_workflow_status_rejects_unknown() {
+        assert_eq!(ReviewWorkflowStatus::from_str("unknown"), None);
+        assert_eq!(ReviewWorkflowStatus::from_str(""), None);
+        assert_eq!(ReviewWorkflowStatus::from_str("COMPLETED"), None);
     }
 
     #[test]
