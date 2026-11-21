@@ -25,6 +25,7 @@ pub mod inbound_status;
 pub mod inventory;
 pub mod inventory_alert;
 pub mod inventory_movement;
+pub mod inventory_quality_status;
 pub mod labor;
 pub mod location;
 pub mod openapi;

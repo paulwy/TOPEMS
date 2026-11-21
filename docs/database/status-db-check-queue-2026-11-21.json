@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 126,
-    "uncovered_values": 141,
+    "uncovered_enums": 127,
+    "uncovered_values": 142,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 94,
-    "internal_state_enums": 56,
+    "resolved_enums": 95,
+    "internal_state_enums": 57,
     "persisted_unmapped_enums": 63,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 31,
-    "internal_state_values": 82,
+    "internal_state_values": 83,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -2301,6 +2301,25 @@
         "table": "wms.inbound_orders",
         "column": "status",
         "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/inventory_quality_status.rs",
+      "enum": "InventoryQualityStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "qualified",
+          "unqualified"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/inventory_quality_status.rs",
+        "enum": "InventoryQualityStatus",
+        "table": "wms.inventory",
+        "column": "quality_status",
+        "candidate": "docs/database/wms-inventory-quality-check-candidates-2026-11-22.sql"
       }
     }
   ]

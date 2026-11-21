@@ -15,6 +15,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 use crate::modules::audit::log_audit_event;
+use crate::modules::inventory_quality_status::InventoryQualityStatus;
 use crate::modules::openapi::Inventory;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -221,7 +222,19 @@ pub async fn list_inventory(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match InventoryQualityStatus::from_db_str(raw) {
+                Ok(status) => Some(status.as_db_str()),
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = InventoryQualityStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let warehouse_id = params.warehouse_id;
 
     let result = sqlx::query(only_own_schema_query!(
@@ -235,6 +248,7 @@ pub async fn list_inventory(
         FROM wms.inventory
         WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
           AND ($2::text IS NULL OR quality_status = $2)
+          AND quality_status = ANY($6::text[])
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
@@ -242,10 +256,11 @@ pub async fn list_inventory(
         "#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
+    .bind(&canonical_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -257,13 +272,15 @@ pub async fn list_inventory(
                 SELECT COUNT(*) FROM wms.inventory
                 WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR quality_status = $2)
+                  AND quality_status = ANY($4::text[])
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
                   AND deleted_at IS NULL
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(warehouse_id)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -331,7 +348,7 @@ pub async fn create_inventory(
                 COALESCE($13, '00000000-0000-0000-0000-000000000002'),
                 COALESCE($13, '00000000-0000-0000-0000-000000000002'),
                 $2, $3, $4, $5, $6, $7, $8, $7, $9, $10,
-                'qualified', $11, $12, $13)
+                $14, $11, $12, $13)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id,
                   material_code as sku, material_name as name, specification, unit, quantity::float8,
                   location_id, warehouse_id, min_quantity::float8, max_quantity::float8, quality_status as status,
@@ -351,6 +368,7 @@ pub async fn create_inventory(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(InventoryQualityStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -434,6 +452,10 @@ pub async fn get_inventory(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let canonical_statuses: Vec<String> = InventoryQualityStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -443,10 +465,11 @@ pub async fn get_inventory(
                batch_number, lot_number, expiry_date, supplier_name, supplier_code, 
                purchase_price, total_value, last_movement_date, last_movement_type,
                created_at, updated_at
-        FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.inventory WHERE id = $1 AND quality_status = ANY($2::text[]) AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -519,17 +542,23 @@ pub async fn update_inventory(
         let _ = scope.rollback().await;
         return ApiResponse::server_error("开启事务失败");
     }
+    let canonical_statuses: Vec<String> = InventoryQualityStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let existing_result = sqlx::query(
         only_own_schema_query!("wms", r#"
         SELECT id, material_code, material_name, specification, unit, quantity::float8, 
                available_quantity::float8, location_id, warehouse_id, min_quantity::float8, max_quantity::float8, quality_status
-        FROM wms.inventory WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FROM wms.inventory WHERE id = $1 AND tenant_id = $2
+          AND quality_status = ANY($3::text[]) AND deleted_at IS NULL
         FOR UPDATE
         "#),
     )
     .bind(id)
     .bind(tenant)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut scope)
     .await;
 
@@ -597,11 +626,33 @@ pub async fn update_inventory(
             .ok()
             .flatten()
     });
-    let status = req.status.unwrap_or_else(|| {
-        existing
-            .try_get::<String, _>("quality_status")
-            .unwrap_or("normal".to_string())
-    });
+    let current_quality = match existing.try_get::<String, _>("quality_status") {
+        Ok(raw) => match InventoryQualityStatus::from_db_str(&raw) {
+            Ok(status) => status,
+            Err(msg) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::bad_request(&msg);
+            }
+        },
+        Err(e) => {
+            tracing::error!("读取库存质量状态失败: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("读取库存质量状态失败");
+        }
+    };
+    let requested_quality = match req.status.as_deref() {
+        Some(raw) => match InventoryQualityStatus::from_db_str(raw) {
+            Ok(status) => status,
+            Err(msg) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::bad_request(&msg);
+            }
+        },
+        None => current_quality,
+    };
+    // 属性型状态，不做终态限制；只允许在规范集合内改判。
+    let status = requested_quality.as_db_str().to_string();
+    let previous_status = current_quality.as_db_str().to_string();
     let now = Utc::now();
 
     let result = sqlx::query(only_own_schema_query!(
@@ -611,7 +662,7 @@ pub async fn update_inventory(
             material_code = $2, material_name = $3, specification = $4, unit = $5, 
             quantity = $6, available_quantity = $7, location_id = $8, warehouse_id = $9, 
             min_quantity = $10, max_quantity = $11, quality_status = $12, updated_at = $13
-        WHERE id = $1 AND tenant_id = $14 AND deleted_at IS NULL
+        WHERE id = $1 AND tenant_id = $14 AND quality_status = $15 AND deleted_at IS NULL
         RETURNING id, material_code as sku, material_name as name, specification, unit, quantity,
                   available_quantity, location_id, warehouse_id, min_quantity, max_quantity,
                   quality_status as status, created_at, updated_at, quantity::float8 AS quantity_f8
@@ -631,6 +682,7 @@ pub async fn update_inventory(
     .bind(&status)
     .bind(now)
     .bind(tenant)
+    .bind(&previous_status)
     .fetch_one(&mut scope)
     .await;
 
@@ -704,6 +756,10 @@ pub async fn update_inventory(
                 None,
                 Some(item_json),
             )
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("库存质量状态已被并发修改，请刷新后重试");
         }
         Err(e) => {
             tracing::error!("更新库存失败: {}", e);
