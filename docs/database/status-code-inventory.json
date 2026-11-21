@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 173,
+    "rust_enums": 174,
     "rust_enum_values": 170,
     "rust_values_not_in_db_check": 131,
     "frontend_status_keys": 185,
@@ -2056,6 +2056,27 @@
         "pending",
         "planned",
         "released"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/production_plan_status.rs",
+      "name": "ProductionPlanStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "InProgress",
+        "PendingApproval"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "in_progress",
+        "pending_approval"
       ]
     },
     {

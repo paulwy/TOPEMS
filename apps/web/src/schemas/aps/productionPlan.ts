@@ -69,10 +69,12 @@ export const productionPlanSchema: EntitySchema = {
       label: i18n.t('aps.production_plan_page.k33'),
       type: 'select',
       defaultValue: 'draft',
+      showInForm: false,
       options: {
         type: 'static',
         options: [
           { value: 'draft', label: i18n.t('aps.production_plan_page.k34') },
+          { value: 'pending_approval', label: i18n.t('aps.production_plan_page.k42') },
           { value: 'approved', label: i18n.t('aps.production_plan_page.k35') },
           { value: 'in_progress', label: i18n.t('aps.production_plan_page.k36') },
           { value: 'completed', label: i18n.t('aps.production_plan_page.k37') },
@@ -137,6 +139,7 @@ export const productionPlanSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('aps.production_plan_page.k34'), value: 'draft' },
+          { label: i18n.t('aps.production_plan_page.k42'), value: 'pending_approval' },
           { label: i18n.t('aps.production_plan_page.k35'), value: 'approved' },
           { label: i18n.t('aps.production_plan_page.k36'), value: 'in_progress' },
           { label: i18n.t('aps.production_plan_page.k37'), value: 'completed' },
@@ -151,7 +154,7 @@ export const productionPlanSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('aps.production_plan_page.k23'),
-      fields: ['plan_no', 'plan_name', 'plan_type', 'status'],
+      fields: ['plan_no', 'plan_name', 'plan_type'],
     },
     {
       title: i18n.t('aps.production_plan_page.k24'),

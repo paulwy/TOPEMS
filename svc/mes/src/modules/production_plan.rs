@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::modules::production_plan_status::ProductionPlanStatus;
 use crate::shared::aps_fsm::production_plan_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
@@ -139,7 +140,13 @@ pub async fn list_plans(
     };
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match ProductionPlanStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的生产计划状态"),
+        },
+    };
 
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
@@ -147,6 +154,7 @@ pub async fn list_plans(
                product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         FROM mes.production_plans
         WHERE tenant_id = $1
+          AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled')
           AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -167,6 +175,7 @@ pub async fn list_plans(
                 r#"
                 SELECT COUNT(*) FROM mes.production_plans
                 WHERE tenant_id = $1
+                  AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled')
                   AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -238,7 +247,7 @@ pub async fn get_plan(
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         FROM mes.production_plans
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled') AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -340,7 +349,7 @@ pub async fn update_plan(
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         FROM mes.production_plans
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled') AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -358,7 +367,15 @@ pub async fn update_plan(
     let plan_type = req.plan_type.unwrap_or(existing.plan_type);
     let start_date = req.start_date.or(existing.start_date);
     let end_date = req.end_date.or(existing.end_date);
-    let status = req.status.unwrap_or(existing.status);
+    if let Some(raw) = req.status.as_deref() {
+        match ProductionPlanStatus::from_db_str(raw) {
+            Some(v) if v.as_db_str() == existing.status => {}
+            Some(_) => {
+                return ApiResponse::bad_request("生产计划状态只能通过审批流变更");
+            }
+            None => return ApiResponse::bad_request("无效的生产计划状态"),
+        }
+    }
     let product_id = req.product_id.or(existing.product_id);
     let product_name = req.product_name.or(existing.product_name);
     let notes = req.notes.or(existing.notes);
@@ -372,6 +389,7 @@ pub async fn update_plan(
             status = $5, product_id = $6, product_name = $7, target_quantity = $8,
             notes = $9, updated_at = $10
         WHERE id = $11 AND tenant_id = $12
+          AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled')
         RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status,
                   product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         "#,
@@ -380,7 +398,7 @@ pub async fn update_plan(
     .bind(&plan_type)
     .bind(start_date)
     .bind(end_date)
-    .bind(&status)
+    .bind(Option::<String>::None)
     .bind(product_id)
     .bind(&product_name)
     .bind(target_quantity)
@@ -475,7 +493,7 @@ pub async fn submit_plan(
     };
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled') AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -493,16 +511,17 @@ pub async fn submit_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE mes.production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE mes.production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND status = 'draft' AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(plan) => ApiResponse::success(plan, "生产计划提交成功"),
+        Ok(Some(plan)) => ApiResponse::success(plan, "生产计划提交成功"),
+        Ok(None) => ApiResponse::conflict("生产计划状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("提交生产计划失败: {}", e);
             ApiResponse::server_error("提交生产计划失败")
@@ -544,7 +563,7 @@ pub async fn approve_plan(
     };
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled') AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -562,16 +581,17 @@ pub async fn approve_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE mes.production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE mes.production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND status = 'pending_approval' AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(plan) => ApiResponse::success(plan, "生产计划审批通过"),
+        Ok(Some(plan)) => ApiResponse::success(plan, "生产计划审批通过"),
+        Ok(None) => ApiResponse::conflict("生产计划状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("审批生产计划失败: {}", e);
             ApiResponse::server_error("审批生产计划失败")
@@ -613,7 +633,7 @@ pub async fn reject_plan(
     };
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND tenant_id = $2::uuid",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM mes.production_plans WHERE id = $1 AND status IN ('draft','pending_approval','approved','in_progress','completed','cancelled') AND tenant_id = $2::uuid",
     )
     .bind(id)
     .bind(tenant_id)
@@ -631,16 +651,17 @@ pub async fn reject_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE mes.production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
+        "UPDATE mes.production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND status = 'pending_approval' AND tenant_id = $3::uuid RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(plan) => ApiResponse::success(plan, "生产计划已驳回"),
+        Ok(Some(plan)) => ApiResponse::success(plan, "生产计划已驳回"),
+        Ok(None) => ApiResponse::conflict("生产计划状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("驳回生产计划失败: {}", e);
             ApiResponse::server_error("驳回生产计划失败")

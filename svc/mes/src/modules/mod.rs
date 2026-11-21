@@ -25,6 +25,7 @@ pub mod production_kanban;
 pub mod production_order;
 pub mod production_order_status;
 pub mod production_plan;
+pub mod production_plan_status;
 pub mod production_process;
 pub mod production_record;
 pub mod production_schedule_status;
