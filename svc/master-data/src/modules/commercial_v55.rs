@@ -84,19 +84,11 @@ fn tier_to_str(t: &ProductTier) -> String {
 }
 
 fn sub_status_from_str(s: &str) -> SubscriptionStatus {
-    match s {
-        "expired" => SubscriptionStatus::Expired,
-        "cancelled" => SubscriptionStatus::Cancelled,
-        "pending" => SubscriptionStatus::Pending,
-        _ => SubscriptionStatus::Active,
-    }
+    SubscriptionStatus::from_db_str(s).unwrap_or(SubscriptionStatus::Active)
 }
 
 fn sub_status_to_str(s: &SubscriptionStatus) -> String {
-    serde_json::to_value(s)
-        .ok()
-        .and_then(|v| v.as_str().map(|s| s.to_string()))
-        .unwrap_or_else(|| "active".to_string())
+    s.as_db_str().to_string()
 }
 
 /// 行 → Subscription。
@@ -180,6 +172,36 @@ pub enum SubscriptionStatus {
     Expired,
     Cancelled,
     Pending,
+}
+
+impl SubscriptionStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["active", "expired", "cancelled", "pending"];
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Active),
+            "expired" => Some(Self::Expired),
+            "cancelled" | "canceled" => Some(Self::Cancelled),
+            "pending" => Some(Self::Pending),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Expired => "expired",
+            Self::Cancelled => "cancelled",
+            Self::Pending => "pending",
+        }
+    }
+
+    /// 可取消的起始状态：已到期、已取消不可重复取消。
+    pub fn cancel_from() -> &'static [&'static str] {
+        &["active", "pending"]
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -795,7 +817,7 @@ pub async fn get_subscription(
     };
     // K1：真表读取。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"
+        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid AND status IN ('active','expired','cancelled','pending') LIMIT 1"
     )))
     .bind(id)
     .fetch_optional(&mut db_scope)
@@ -839,6 +861,7 @@ pub async fn list_subscriptions(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
              WHERE ($1::text IS NULL OR tenant_id::text = $1)
                AND ($2::text IS NULL OR api_product_id = $2)
+               AND status IN ('active','expired','cancelled','pending')
              ORDER BY starts_at DESC"
     )))
     .bind(&params.tenant_id)
@@ -888,19 +911,22 @@ pub async fn cancel_subscription(
     let tenant = tenant_of(&claims);
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
+        r#"UPDATE master_data.mdm_subscriptions SET status = $3
            WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
+             AND status = ANY($4::text[])
            RETURNING {SUBSCRIPTION_COLS}"#,
     )))
     .bind(id)
     .bind(tenant)
+    .bind(SubscriptionStatus::Cancelled.as_db_str())
+    .bind(SubscriptionStatus::cancel_from().to_vec())
     .fetch_optional(&mut db_scope)
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
         Err(e) => return ApiResponse::server_error(&format!("取消订阅失败: {e}")),
     }) else {
-        return ApiResponse::not_found("未找到订阅");
+        return ApiResponse::error(409, "订阅已到期、已取消或不存在，无法取消");
     };
     let updated = subscription_from_row(&row);
 
@@ -944,7 +970,7 @@ pub async fn upgrade_tier(
     let tenant = tenant_of(&claims);
     // K1：写真表（先查后更，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
+        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid AND status IN ('active','expired','cancelled','pending') LIMIT 1"#,
     )))
     .bind(id)
     .fetch_optional(&mut db_scope)
@@ -956,6 +982,9 @@ pub async fn upgrade_tier(
         return ApiResponse::not_found("未找到订阅");
     };
     let current = subscription_from_row(&row);
+    if SubscriptionStatus::from_db_str(&sub_status_to_str(&current.status)).is_none() {
+        return ApiResponse::error(409, "订阅当前状态非法，无法升级");
+    }
     let new_tier = req
         .tier
         .as_deref()
@@ -977,7 +1006,7 @@ pub async fn upgrade_tier(
     }
 
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
+        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid AND status IN ('active','expired','cancelled','pending') LIMIT 1"#,
     )))
     .bind(id)
     .fetch_optional(&mut db_scope)
@@ -2618,6 +2647,17 @@ mod tests {
             let back: ProductTier = serde_json::from_str(&json).unwrap();
             assert_eq!(v, back);
         }
+    }
+
+    #[test]
+    fn test_subscription_status_db_values_and_cancel_from() {
+        for raw in SubscriptionStatus::DB_VALUES {
+            let parsed = SubscriptionStatus::from_db_str(raw).expect("raw must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(SubscriptionStatus::from_db_str("suspended"), None);
+        assert!(SubscriptionStatus::cancel_from().contains(&"active"));
+        assert!(!SubscriptionStatus::cancel_from().contains(&"cancelled"));
     }
 
     #[test]
