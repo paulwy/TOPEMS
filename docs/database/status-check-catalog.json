@@ -1,6 +1,6 @@
 {
-  "catalog_version": 1,
-  "source": "postgres.pg_constraint CHECK on status/state columns",
+  "catalog_version": 2,
+  "source": "postgres.pg_constraint CHECK + enum types on status/state columns",
   "constraints": [
     {
       "schema": "ai",
@@ -3070,12 +3070,67 @@
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
     }
   ],
+  "enum_types": [
+    {
+      "schema": "public",
+      "name": "approval_status",
+      "values": [
+        "approved",
+        "cancelled",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "match_status",
+      "values": [
+        "diff",
+        "manual",
+        "matched",
+        "unmatched"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "period_status",
+      "values": [
+        "closed",
+        "closing",
+        "open"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "reconciliation_status",
+      "values": [
+        "cancelled",
+        "completed",
+        "pending",
+        "processing"
+      ]
+    },
+    {
+      "schema": "public",
+      "name": "voucher_status",
+      "values": [
+        "approved",
+        "cancelled",
+        "draft",
+        "posted",
+        "rejected",
+        "reversed",
+        "submitted"
+      ]
+    }
+  ],
   "uncovered": [
     {
       "schema": "ai",
       "table": "document_chunks",
       "column": "embedding_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3084,6 +3139,7 @@
       "table": "documents",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3092,6 +3148,7 @@
       "table": "usage_logs",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -3100,6 +3157,7 @@
       "table": "analytics_comparison_analyses",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3108,6 +3166,7 @@
       "table": "analytics_comparison_results",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -3116,6 +3175,7 @@
       "table": "analytics_datasets",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3124,6 +3184,7 @@
       "table": "analytics_datasources",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'inactive'::character varying"
     },
@@ -3132,6 +3193,7 @@
       "table": "analytics_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3140,6 +3202,7 @@
       "table": "audit_logs",
       "column": "response_status",
       "type": "integer",
+      "enum_type": "int4",
       "not_null": false,
       "default_expr": null
     },
@@ -3148,6 +3211,7 @@
       "table": "reports",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'draft'::bi.report_status"
     },
@@ -3156,6 +3220,7 @@
       "table": "core_notification_deliveries",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -3164,6 +3229,7 @@
       "table": "ai_faqs",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
     },
@@ -3172,6 +3238,7 @@
       "table": "core_plugin_instances",
       "column": "runtime_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'stopped'::character varying"
     },
@@ -3180,6 +3247,7 @@
       "table": "knowledge_documents",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -3188,6 +3256,7 @@
       "table": "contacts",
       "column": "approval_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'none'::character varying"
     },
@@ -3196,6 +3265,7 @@
       "table": "contracts",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'draft'::text"
     },
@@ -3204,6 +3274,7 @@
       "table": "crm_master_data_refs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -3212,6 +3283,7 @@
       "table": "customer_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -3220,6 +3292,7 @@
       "table": "customers",
       "column": "approval_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'none'::character varying"
     },
@@ -3228,6 +3301,7 @@
       "table": "interactions",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'scheduled'::character varying"
     },
@@ -3236,6 +3310,7 @@
       "table": "opportunities",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'open'::character varying"
     },
@@ -3244,6 +3319,7 @@
       "table": "sales_forecasts",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3252,6 +3328,7 @@
       "table": "sales_orders",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3260,6 +3337,7 @@
       "table": "documents",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -3268,6 +3346,7 @@
       "table": "emergency_plans",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3276,6 +3355,7 @@
       "table": "environmental_alerts",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3284,6 +3364,7 @@
       "table": "hazard_control_measures",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3292,6 +3373,7 @@
       "table": "health_checkups",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -3300,6 +3382,7 @@
       "table": "qa_ehs_accident_investigations",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3308,6 +3391,7 @@
       "table": "qa_ehs_accident_treatments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3316,6 +3400,7 @@
       "table": "qa_ehs_accidents",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'reported'::character varying"
     },
@@ -3324,6 +3409,7 @@
       "table": "qa_ehs_compliance_evaluations",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3332,6 +3418,7 @@
       "table": "qa_ehs_compliance_items",
       "column": "compliance_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -3340,6 +3427,7 @@
       "table": "qa_ehs_compliance_items",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3348,6 +3436,7 @@
       "table": "qa_ehs_detection_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -3356,6 +3445,7 @@
       "table": "qa_ehs_discharge_permits",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'valid'::character varying"
     },
@@ -3364,6 +3454,7 @@
       "table": "qa_ehs_disease_cases",
       "column": "compensation_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -3372,6 +3463,7 @@
       "table": "qa_ehs_drill_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planned'::character varying"
     },
@@ -3380,6 +3472,7 @@
       "table": "qa_ehs_drill_problems",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3388,6 +3481,7 @@
       "table": "qa_ehs_drill_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3396,6 +3490,7 @@
       "table": "qa_ehs_emergency_plan_approvals",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3404,6 +3499,7 @@
       "table": "qa_ehs_emergency_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -3412,6 +3508,7 @@
       "table": "qa_ehs_env_monitor_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -3420,6 +3517,7 @@
       "table": "qa_ehs_environment",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -3428,6 +3526,7 @@
       "table": "qa_ehs_environment_incidents",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'reported'::character varying"
     },
@@ -3436,6 +3535,7 @@
       "table": "qa_ehs_hazard_rectifications",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3444,6 +3544,7 @@
       "table": "qa_ehs_hazards",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'reported'::character varying"
     },
@@ -3452,6 +3553,7 @@
       "table": "qa_ehs_health_abnormalities",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3460,6 +3562,7 @@
       "table": "qa_ehs_health_exam_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planned'::character varying"
     },
@@ -3468,6 +3571,7 @@
       "table": "qa_ehs_health_trainings",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -3476,6 +3580,7 @@
       "table": "qa_ehs_incident_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3484,6 +3589,7 @@
       "table": "qa_ehs_inspection_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3492,6 +3598,7 @@
       "table": "qa_ehs_investigations",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3500,6 +3607,7 @@
       "table": "qa_ehs_material_stocks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -3508,6 +3616,7 @@
       "table": "qa_ehs_risk_controls",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -3516,6 +3625,7 @@
       "table": "qa_ehs_risks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'identified'::character varying"
     },
@@ -3524,6 +3634,7 @@
       "table": "qa_ehs_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3532,6 +3643,7 @@
       "table": "qa_ehs_training_certificates",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'valid'::character varying"
     },
@@ -3540,6 +3652,7 @@
       "table": "qa_ehs_trainings",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'scheduled'::character varying"
     },
@@ -3548,6 +3661,7 @@
       "table": "qa_ehs_treatment_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3556,6 +3670,7 @@
       "table": "qa_ehs_treatments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_progress'::character varying"
     },
@@ -3564,6 +3679,7 @@
       "table": "risk_assessments",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3572,6 +3688,7 @@
       "table": "risk_controls",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3580,6 +3697,7 @@
       "table": "safety_checks",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3588,6 +3706,7 @@
       "table": "safety_hazards",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3596,6 +3715,7 @@
       "table": "safety_incidents",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3604,6 +3724,7 @@
       "table": "training_programs",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3612,6 +3733,7 @@
       "table": "vaccination_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -3620,6 +3742,7 @@
       "table": "announcements",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3628,6 +3751,7 @@
       "table": "assets",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_use'::character varying"
     },
@@ -3636,6 +3760,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "''::character varying"
     },
@@ -3644,6 +3769,7 @@
       "table": "consolidation_reports",
       "column": "approval_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3652,6 +3778,7 @@
       "table": "consolidation_reports",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3660,6 +3787,7 @@
       "table": "consolidation_scopes",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3668,6 +3796,7 @@
       "table": "erp_production_orders",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3676,6 +3805,7 @@
       "table": "expenses",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3684,6 +3814,7 @@
       "table": "fin_reconciliations",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3692,6 +3823,7 @@
       "table": "financial_vouchers",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3700,6 +3832,7 @@
       "table": "leave_requests",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3708,6 +3841,7 @@
       "table": "meeting_bookings",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3716,6 +3850,7 @@
       "table": "meeting_rooms",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'available'::character varying"
     },
@@ -3724,6 +3859,7 @@
       "table": "office_supplies",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_stock'::character varying"
     },
@@ -3732,6 +3868,7 @@
       "table": "payables",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3740,6 +3877,7 @@
       "table": "purchase_orders",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3748,6 +3886,7 @@
       "table": "receivables",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3756,6 +3895,7 @@
       "table": "sales_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3764,6 +3904,7 @@
       "table": "vehicle_requests",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3772,6 +3913,7 @@
       "table": "vehicles",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'available'::character varying"
     },
@@ -3780,22 +3922,16 @@
       "table": "vouchers",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::text"
-    },
-    {
-      "schema": "finance",
-      "table": "core_finance_approval_workflows",
-      "column": "status",
-      "type": "approval_status",
-      "not_null": true,
-      "default_expr": "'pending'::approval_status"
     },
     {
       "schema": "finance",
       "table": "core_finance_payment_items",
       "column": "write_off_status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3804,6 +3940,7 @@
       "table": "core_finance_payment_workflow",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3812,46 +3949,16 @@
       "table": "core_finance_payments",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "core_finance_periods",
-      "column": "status",
-      "type": "period_status",
-      "not_null": true,
-      "default_expr": "'open'::period_status"
-    },
-    {
-      "schema": "finance",
-      "table": "core_finance_reconciliation_items",
-      "column": "match_status",
-      "type": "match_status",
-      "not_null": true,
-      "default_expr": "'unmatched'::match_status"
-    },
-    {
-      "schema": "finance",
-      "table": "core_finance_reconciliation_sessions",
-      "column": "status",
-      "type": "reconciliation_status",
-      "not_null": true,
-      "default_expr": "'pending'::reconciliation_status"
-    },
-    {
-      "schema": "finance",
-      "table": "core_finance_vouchers",
-      "column": "status",
-      "type": "voucher_status",
-      "not_null": true,
-      "default_expr": "'draft'::voucher_status"
     },
     {
       "schema": "finance",
       "table": "cqrs_snapshots",
       "column": "state",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": true,
       "default_expr": null
     },
@@ -3860,6 +3967,7 @@
       "table": "difference_adjustments",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3868,6 +3976,7 @@
       "table": "erp_collection_records",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": null
     },
@@ -3876,6 +3985,7 @@
       "table": "expense_approvals",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3884,6 +3994,7 @@
       "table": "expenses",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -3892,6 +4003,7 @@
       "table": "finance_v54_review_workflows",
       "column": "status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3900,6 +4012,7 @@
       "table": "finance_v55_invoices",
       "column": "status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3908,6 +4021,7 @@
       "table": "finance_v55_payment_results",
       "column": "status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3916,6 +4030,7 @@
       "table": "finance_v55_reconciliation_results",
       "column": "match_status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'unmatched'::character varying"
     },
@@ -3924,6 +4039,7 @@
       "table": "finance_v56_tax_forms",
       "column": "status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3932,6 +4048,7 @@
       "table": "finance_v56_tax_plans",
       "column": "status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3940,6 +4057,7 @@
       "table": "finance_v57_generated_reports",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3948,6 +4066,7 @@
       "table": "finance_v58_pool_transfers",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3956,6 +4075,7 @@
       "table": "finance_v60_decision_scenarios",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3964,6 +4084,7 @@
       "table": "finance_v60_schedule_executions",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3972,6 +4093,7 @@
       "table": "finance_v60_schedule_tasks",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -3980,6 +4102,7 @@
       "table": "financial_reports",
       "column": "approval_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3988,6 +4111,7 @@
       "table": "financial_reports",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -3996,6 +4120,7 @@
       "table": "payables",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4004,6 +4129,7 @@
       "table": "receivables",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4012,6 +4138,7 @@
       "table": "reconcile_items",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'unmatched'::text"
     },
@@ -4020,6 +4147,7 @@
       "table": "reconcile_orders",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -4028,6 +4156,7 @@
       "table": "reconciliation_item_snapshots",
       "column": "match_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4036,6 +4165,7 @@
       "table": "reconciliation_settlement_links",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'linked'::character varying"
     },
@@ -4044,6 +4174,7 @@
       "table": "vouchers",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'posted'::text"
     },
@@ -4052,6 +4183,7 @@
       "table": "approval_records",
       "column": "new_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4060,6 +4192,7 @@
       "table": "approval_records",
       "column": "previous_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4068,6 +4201,7 @@
       "table": "approvals",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4076,6 +4210,7 @@
       "table": "core_doc_documents",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4084,6 +4219,7 @@
       "table": "core_mdm_approvals",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -4092,6 +4228,7 @@
       "table": "core_operation_logs",
       "column": "response_status",
       "type": "integer",
+      "enum_type": "int4",
       "not_null": false,
       "default_expr": null
     },
@@ -4100,6 +4237,7 @@
       "table": "core_tenants",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'trial'::character varying"
     },
@@ -4108,6 +4246,7 @@
       "table": "core_workflows",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4116,6 +4255,7 @@
       "table": "spatial_analysis",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -4124,6 +4264,7 @@
       "table": "attendance_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'normal'::character varying"
     },
@@ -4132,6 +4273,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -4140,6 +4282,7 @@
       "table": "candidates",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'new'::character varying"
     },
@@ -4148,6 +4291,7 @@
       "table": "contract_renewals",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4156,6 +4300,7 @@
       "table": "employees",
       "column": "marital_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4164,6 +4309,7 @@
       "table": "initialization_status",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4172,6 +4318,7 @@
       "table": "interviews",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'scheduled'::character varying"
     },
@@ -4180,6 +4327,7 @@
       "table": "job_openings",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -4188,6 +4336,7 @@
       "table": "leave_records",
       "column": "approval_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4196,6 +4345,7 @@
       "table": "leave_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4204,6 +4354,7 @@
       "table": "payroll_items",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4212,6 +4363,7 @@
       "table": "payroll_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4220,6 +4372,7 @@
       "table": "payroll_runs",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -4228,6 +4381,7 @@
       "table": "performance_goals",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4236,6 +4390,7 @@
       "table": "performance_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4244,6 +4399,7 @@
       "table": "performance_reviews",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -4252,6 +4408,7 @@
       "table": "recruitment_applications",
       "column": "offer_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4260,6 +4417,7 @@
       "table": "recruitment_applications",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'submitted'::character varying"
     },
@@ -4268,6 +4426,7 @@
       "table": "recruitment_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -4276,6 +4435,7 @@
       "table": "salary_adjustments",
       "column": "approval_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4284,6 +4444,7 @@
       "table": "salary_adjustments",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4292,6 +4453,7 @@
       "table": "training_participants",
       "column": "completion_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4300,6 +4462,7 @@
       "table": "training_participants",
       "column": "participation_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'registered'::character varying"
     },
@@ -4308,6 +4471,7 @@
       "table": "training_records",
       "column": "attendance_status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4316,6 +4480,7 @@
       "table": "training_records",
       "column": "completion_status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4324,6 +4489,7 @@
       "table": "core_dashboard_refresh_log",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -4332,6 +4498,7 @@
       "table": "core_email_queue",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4340,6 +4507,7 @@
       "table": "core_inter_module_sync",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4348,6 +4516,7 @@
       "table": "core_tenants",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'trial'::character varying"
     },
@@ -4356,6 +4525,7 @@
       "table": "lims_dashboard_snapshots",
       "column": "instrument_status",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": false,
       "default_expr": "'[]'::jsonb"
     },
@@ -4364,6 +4534,7 @@
       "table": "lims_dashboard_snapshots",
       "column": "task_status",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": false,
       "default_expr": "'[]'::jsonb"
     },
@@ -4372,6 +4543,7 @@
       "table": "roles",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
     },
@@ -4380,6 +4552,7 @@
       "table": "async_tasks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4388,6 +4561,7 @@
       "table": "conversion_executions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4396,6 +4570,7 @@
       "table": "conversion_rules",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -4404,6 +4579,7 @@
       "table": "core_inter_module_sync",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4412,6 +4588,7 @@
       "table": "crm_erp_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4420,6 +4597,7 @@
       "table": "crm_scm_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4428,6 +4606,7 @@
       "table": "erp_connections",
       "column": "last_sync_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4436,6 +4615,7 @@
       "table": "erp_connections",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'inactive'::character varying"
     },
@@ -4444,6 +4624,7 @@
       "table": "erp_wms_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4452,6 +4633,7 @@
       "table": "external_erp_staging",
       "column": "process_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4460,6 +4642,7 @@
       "table": "external_erp_sync_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4468,6 +4651,7 @@
       "table": "hrm_finance_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4476,6 +4660,7 @@
       "table": "integration_events",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4484,6 +4669,7 @@
       "table": "lims_qms_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4492,6 +4678,7 @@
       "table": "mes_erp_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4500,6 +4687,7 @@
       "table": "mes_qms_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4508,6 +4696,7 @@
       "table": "wms_scm_sync",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4516,6 +4705,7 @@
       "table": "inspection_tasks",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4524,6 +4714,7 @@
       "table": "lab_ledger",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'available'::character varying"
     },
@@ -4532,6 +4723,7 @@
       "table": "lims_inspection_records",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'completed'::text"
     },
@@ -4540,6 +4732,7 @@
       "table": "lims_safety_tasks",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -4548,6 +4741,7 @@
       "table": "qa_lab_inspection_reports",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4556,6 +4750,7 @@
       "table": "qa_lab_instruments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -4564,6 +4759,7 @@
       "table": "qa_lab_reagents",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -4572,6 +4768,7 @@
       "table": "qa_lims_audit_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'success'::character varying"
     },
@@ -4580,6 +4777,7 @@
       "table": "qa_lims_instrument_data",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4588,6 +4786,7 @@
       "table": "qa_lims_method_validations",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -4596,6 +4795,7 @@
       "table": "qa_lims_pt_corrective_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4604,6 +4804,7 @@
       "table": "qa_lims_pt_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planning'::character varying"
     },
@@ -4612,6 +4813,7 @@
       "table": "qa_lims_pt_samples",
       "column": "sample_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'received'::character varying"
     },
@@ -4620,6 +4822,7 @@
       "table": "qa_lims_rfid_tags",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'unused'::character varying"
     },
@@ -4628,6 +4831,7 @@
       "table": "qa_lims_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4636,6 +4840,7 @@
       "table": "qa_lims_test_methods",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4644,6 +4849,7 @@
       "table": "qa_lims_uncertainty_projects",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4652,6 +4858,7 @@
       "table": "reagents",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_stock'::character varying"
     },
@@ -4660,6 +4867,7 @@
       "table": "samples",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'received'::character varying"
     },
@@ -4668,6 +4876,7 @@
       "table": "samples_tenant_null_backup_20260919",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4676,6 +4885,7 @@
       "table": "emails",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -4684,6 +4894,7 @@
       "table": "mdm_auto_fix_actions",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -4692,6 +4903,7 @@
       "table": "mdm_billing_records",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -4700,6 +4912,7 @@
       "table": "mdm_classification_models",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": null
     },
@@ -4708,6 +4921,7 @@
       "table": "mdm_continuity_plans",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::text"
     },
@@ -4716,6 +4930,7 @@
       "table": "mdm_data_products",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": null
     },
@@ -4724,6 +4939,7 @@
       "table": "mdm_failover_records",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'initiated'::text"
     },
@@ -4732,6 +4948,7 @@
       "table": "mdm_governance_suggestions",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -4740,6 +4957,7 @@
       "table": "mdm_improvement_plans",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": null
     },
@@ -4748,6 +4966,7 @@
       "table": "mdm_match_results",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": null
     },
@@ -4756,6 +4975,7 @@
       "table": "mdm_propagation_logs",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'propagated'::text"
     },
@@ -4764,6 +4984,7 @@
       "table": "mdm_quality_checks",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'passed'::text"
     },
@@ -4772,6 +4993,7 @@
       "table": "mdm_recovery_plans",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::text"
     },
@@ -4780,6 +5002,7 @@
       "table": "mdm_region_configs",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'online'::text"
     },
@@ -4788,6 +5011,7 @@
       "table": "mdm_replication_configs",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'stopped'::text"
     },
@@ -4796,6 +5020,7 @@
       "table": "mdm_sla_incidents",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'open'::text"
     },
@@ -4804,6 +5029,7 @@
       "table": "mdm_supplier_categories",
       "column": "status",
       "type": "character varying",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
     },
@@ -4812,6 +5038,7 @@
       "table": "mdm_suppliers",
       "column": "status",
       "type": "character varying",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -4820,6 +5047,7 @@
       "table": "mdm_version_branches",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'active'::text"
     },
@@ -4828,6 +5056,7 @@
       "table": "mdm_workflows",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": null
     },
@@ -4836,6 +5065,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -4844,6 +5074,7 @@
       "table": "batch_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -4852,6 +5083,7 @@
       "table": "capacities",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'available'::character varying"
     },
@@ -4860,6 +5092,7 @@
       "table": "core_billing_invoices",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4868,6 +5101,7 @@
       "table": "core_dashboard_refresh_log",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -4876,6 +5110,7 @@
       "table": "core_email_queue",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4884,6 +5119,7 @@
       "table": "core_inter_module_sync",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4892,6 +5128,7 @@
       "table": "core_tenants",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'trial'::character varying"
     },
@@ -4900,6 +5137,7 @@
       "table": "demand_forecasts",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4908,6 +5146,7 @@
       "table": "equipment",
       "column": "operating_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -4916,6 +5155,7 @@
       "table": "equipment",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'available'::character varying"
     },
@@ -4924,6 +5164,7 @@
       "table": "equipment_inspection_records",
       "column": "overall_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -4932,6 +5173,7 @@
       "table": "equipment_inspection_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -4940,6 +5182,7 @@
       "table": "equipment_inspections",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -4948,6 +5191,7 @@
       "table": "equipment_maintenance_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_progress'::character varying"
     },
@@ -4956,6 +5200,7 @@
       "table": "financial_records",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4964,6 +5209,7 @@
       "table": "lims_dashboard_snapshots",
       "column": "instrument_status",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": false,
       "default_expr": "'[]'::jsonb"
     },
@@ -4972,6 +5218,7 @@
       "table": "lims_dashboard_snapshots",
       "column": "task_status",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": false,
       "default_expr": "'[]'::jsonb"
     },
@@ -4980,6 +5227,7 @@
       "table": "material_boms",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -4988,6 +5236,7 @@
       "table": "material_issues",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -4996,6 +5245,7 @@
       "table": "material_plans",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -5004,6 +5254,7 @@
       "table": "material_requirements",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5012,6 +5263,7 @@
       "table": "material_returns",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5020,6 +5272,7 @@
       "table": "production_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'created'::character varying"
     },
@@ -5028,6 +5281,7 @@
       "table": "production_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5036,6 +5290,7 @@
       "table": "production_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_progress'::character varying"
     },
@@ -5044,6 +5299,7 @@
       "table": "production_schedules",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5052,6 +5308,7 @@
       "table": "quality_inspections",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5060,6 +5317,7 @@
       "table": "quality_patrol_items",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5068,6 +5326,7 @@
       "table": "quality_patrols",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5076,6 +5335,7 @@
       "table": "quality_records",
       "column": "quality_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5084,6 +5344,7 @@
       "table": "supply_chain_orders",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5092,6 +5353,7 @@
       "table": "teams",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
     },
@@ -5100,6 +5362,7 @@
       "table": "wips",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -5108,6 +5371,7 @@
       "table": "work_orders",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5116,6 +5380,7 @@
       "table": "work_reports",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5124,6 +5389,7 @@
       "table": "work_stations",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'available'::character varying"
     },
@@ -5132,6 +5398,7 @@
       "table": "core_mobile_offline_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5140,6 +5407,7 @@
       "table": "documents",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5148,6 +5416,7 @@
       "table": "mobile_attendance",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'not_checked_in'::character varying"
     },
@@ -5156,6 +5425,7 @@
       "table": "mobile_leave_applications",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5164,6 +5434,7 @@
       "table": "mobile_push_notifications",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5172,6 +5443,7 @@
       "table": "oa_meetings",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'scheduled'::character varying"
     },
@@ -5180,6 +5452,7 @@
       "table": "oa_tasks",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'todo'::character varying"
     },
@@ -5188,6 +5461,7 @@
       "table": "offline_operations",
       "column": "sync_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5196,6 +5470,7 @@
       "table": "offline_sync_records",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5204,6 +5479,7 @@
       "table": "patrol_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5212,6 +5488,7 @@
       "table": "photo_uploads",
       "column": "upload_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'uploading'::character varying"
     },
@@ -5220,6 +5497,7 @@
       "table": "push_notifications",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5228,6 +5506,7 @@
       "table": "pdm_boms",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5236,6 +5515,7 @@
       "table": "pdm_change_notices",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5244,6 +5524,7 @@
       "table": "pdm_document_versions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5252,6 +5533,7 @@
       "table": "pdm_drawings",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'active'::text"
     },
@@ -5260,6 +5542,7 @@
       "table": "pdm_production_batches",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5268,6 +5551,7 @@
       "table": "pdm_project_phases",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5276,6 +5560,7 @@
       "table": "pdm_projects",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planning'::character varying"
     },
@@ -5284,6 +5569,7 @@
       "table": "pdm_versions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5292,6 +5578,7 @@
       "table": "pdm_workflow_instances",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'running'::character varying"
     },
@@ -5300,6 +5587,7 @@
       "table": "difference_adjustments",
       "column": "status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5308,6 +5596,7 @@
       "table": "reconciliation_item_snapshots",
       "column": "match_status",
       "type": "character varying(30)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'unmatched'::character varying"
     },
@@ -5316,6 +5605,7 @@
       "table": "reconciliation_settlement_links",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'linked'::character varying"
     },
@@ -5324,6 +5614,7 @@
       "table": "reconciliation_snapshots",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5332,6 +5623,7 @@
       "table": "settlement_snapshots",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5340,6 +5632,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -5348,6 +5641,7 @@
       "table": "purchase_order_snapshots",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5356,6 +5650,7 @@
       "table": "acceptance_plans",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5364,6 +5659,7 @@
       "table": "acceptances",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5372,6 +5668,7 @@
       "table": "budgets",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5380,6 +5677,7 @@
       "table": "contract_milestones",
       "column": "payment_status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'unpaid'::character varying"
     },
@@ -5388,6 +5686,7 @@
       "table": "contract_milestones",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5396,6 +5695,7 @@
       "table": "contract_payment_schedule",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5404,6 +5704,7 @@
       "table": "contracts",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5412,6 +5713,7 @@
       "table": "defects",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'open'::character varying"
     },
@@ -5420,6 +5722,7 @@
       "table": "notifications",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5428,6 +5731,7 @@
       "table": "pm_tasks",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'todo'::character varying"
     },
@@ -5436,6 +5740,7 @@
       "table": "project_approvals",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5444,6 +5749,7 @@
       "table": "project_benefits",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5452,6 +5758,7 @@
       "table": "project_expenses",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5460,6 +5767,7 @@
       "table": "project_milestones",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5468,6 +5776,7 @@
       "table": "project_phases",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5476,6 +5785,7 @@
       "table": "project_reports",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5484,6 +5794,7 @@
       "table": "project_resources",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'allocated'::character varying"
     },
@@ -5492,6 +5803,7 @@
       "table": "project_risks",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'identified'::character varying"
     },
@@ -5500,6 +5812,7 @@
       "table": "projects",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5508,6 +5821,7 @@
       "table": "quality_checks",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5516,6 +5830,7 @@
       "table": "risks",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'identified'::character varying"
     },
@@ -5524,6 +5839,7 @@
       "table": "settlements",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5532,6 +5848,7 @@
       "table": "federation_compensation_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -5540,6 +5857,7 @@
       "table": "federation_execution_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -5548,6 +5866,7 @@
       "table": "federation_subgraphs",
       "column": "health_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'unknown'::character varying"
     },
@@ -5556,6 +5875,7 @@
       "table": "federation_transaction_steps",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5564,6 +5884,7 @@
       "table": "federation_transactions",
       "column": "state",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'init'::character varying"
     },
@@ -5572,6 +5893,7 @@
       "table": "graphql_streams",
       "column": "state",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
     },
@@ -5580,6 +5902,7 @@
       "table": "intelligent_gw_conflicts",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5588,6 +5911,7 @@
       "table": "intelligent_gw_stitch_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5596,6 +5920,7 @@
       "table": "portal_announcements",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5604,6 +5929,7 @@
       "table": "portal_canary_configs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5612,6 +5938,7 @@
       "table": "portal_consistency_checks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'passed'::character varying"
     },
@@ -5620,6 +5947,7 @@
       "table": "portal_dead_letter_queue",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5628,6 +5956,7 @@
       "table": "portal_deployment_steps",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5636,6 +5965,7 @@
       "table": "portal_deployments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5644,6 +5974,7 @@
       "table": "portal_distributed_queries",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5652,6 +5983,7 @@
       "table": "portal_edge_deployments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'deploying'::character varying"
     },
@@ -5660,6 +5992,7 @@
       "table": "portal_edge_entries",
       "column": "sync_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'synced'::character varying"
     },
@@ -5668,6 +6001,7 @@
       "table": "portal_edge_replication",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -5676,6 +6010,7 @@
       "table": "portal_execution_steps",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5684,6 +6019,7 @@
       "table": "portal_healing_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5692,6 +6028,7 @@
       "table": "portal_orchestration_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5700,6 +6037,7 @@
       "table": "portal_recovery_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5708,6 +6046,7 @@
       "table": "portal_replay_requests",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5716,6 +6055,7 @@
       "table": "portal_replay_results",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -5724,6 +6064,7 @@
       "table": "portal_rollback_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5732,6 +6073,7 @@
       "table": "portal_service_descriptors",
       "column": "health_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'healthy'::character varying"
     },
@@ -5740,6 +6082,7 @@
       "table": "portal_sub_queries",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5748,6 +6091,7 @@
       "table": "portal_subscribers",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'connected'::character varying"
     },
@@ -5756,6 +6100,7 @@
       "table": "portal_todos",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5764,6 +6109,7 @@
       "table": "_archive_core_doc_documents",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5772,6 +6118,7 @@
       "table": "_archive_core_workflow_instances",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5780,6 +6127,7 @@
       "table": "alerts",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -5788,6 +6136,7 @@
       "table": "analytics_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5796,6 +6145,7 @@
       "table": "approval_records",
       "column": "new_status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": null
     },
@@ -5804,6 +6154,7 @@
       "table": "approval_records",
       "column": "previous_status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": null
     },
@@ -5812,6 +6163,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -5820,6 +6172,7 @@
       "table": "automation_rules",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -5828,6 +6181,7 @@
       "table": "automation_runs",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -5836,6 +6190,7 @@
       "table": "core_doc_documents",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5844,6 +6199,7 @@
       "table": "core_email_queue",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5852,22 +6208,16 @@
       "table": "core_feedbacks",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "core_finance_vouchers",
-      "column": "status",
-      "type": "voucher_status",
-      "not_null": true,
-      "default_expr": "'draft'::voucher_status"
     },
     {
       "schema": "public",
       "table": "core_geofences",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -5876,6 +6226,7 @@
       "table": "core_inter_module_sync",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5884,6 +6235,7 @@
       "table": "core_login_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -5892,6 +6244,7 @@
       "table": "core_mdm_approvals",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -5900,6 +6253,7 @@
       "table": "core_operation_logs",
       "column": "response_status",
       "type": "integer",
+      "enum_type": "int4",
       "not_null": false,
       "default_expr": null
     },
@@ -5908,6 +6262,7 @@
       "table": "core_tenants",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'trial'::character varying"
     },
@@ -5916,6 +6271,7 @@
       "table": "core_workflow_instances",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5924,6 +6280,7 @@
       "table": "core_workflow_tasks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5932,6 +6289,7 @@
       "table": "core_workflows",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5940,6 +6298,7 @@
       "table": "equipment_inspections",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5948,6 +6307,7 @@
       "table": "equipment_maintenance_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5956,6 +6316,7 @@
       "table": "erp_connections",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'inactive'::character varying"
     },
@@ -5964,6 +6325,7 @@
       "table": "external_erp_sync_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -5972,6 +6334,7 @@
       "table": "financial_reports",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -5980,6 +6343,7 @@
       "table": "lims_dashboard_snapshots",
       "column": "instrument_status",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": false,
       "default_expr": "'[]'::jsonb"
     },
@@ -5988,6 +6352,7 @@
       "table": "lims_dashboard_snapshots",
       "column": "task_status",
       "type": "jsonb",
+      "enum_type": "jsonb",
       "not_null": false,
       "default_expr": "'[]'::jsonb"
     },
@@ -5996,6 +6361,7 @@
       "table": "pdm_change_notices",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6004,6 +6370,7 @@
       "table": "pdm_materials",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -6012,6 +6379,7 @@
       "table": "pdm_products",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -6020,6 +6388,7 @@
       "table": "qa_ehs_accident_investigations",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -6028,6 +6397,7 @@
       "table": "qa_ehs_accident_treatments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -6036,6 +6406,7 @@
       "table": "qa_ehs_accidents",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'reported'::character varying"
     },
@@ -6044,6 +6415,7 @@
       "table": "qa_ehs_compliance_items",
       "column": "compliance_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": null
     },
@@ -6052,6 +6424,7 @@
       "table": "qa_ehs_compliance_items",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6060,6 +6433,7 @@
       "table": "qa_ehs_detection_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -6068,6 +6442,7 @@
       "table": "qa_ehs_emergency_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6076,6 +6451,7 @@
       "table": "qa_ehs_environment",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -6084,6 +6460,7 @@
       "table": "qa_ehs_hazard_rectifications",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
     },
@@ -6092,6 +6469,7 @@
       "table": "qa_ehs_hazards",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'reported'::character varying"
     },
@@ -6100,6 +6478,7 @@
       "table": "qa_ehs_health_abnormalities",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6108,6 +6487,7 @@
       "table": "qa_ehs_health_exam_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planned'::character varying"
     },
@@ -6116,6 +6496,7 @@
       "table": "qa_ehs_health_trainings",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -6124,6 +6505,7 @@
       "table": "qa_ehs_material_stocks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -6132,6 +6514,7 @@
       "table": "qa_ehs_risks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'identified'::character varying"
     },
@@ -6140,6 +6523,7 @@
       "table": "qa_ehs_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6148,6 +6532,7 @@
       "table": "qa_ehs_trainings",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'scheduled'::character varying"
     },
@@ -6156,6 +6541,7 @@
       "table": "qa_lab_inspection_reports",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6164,6 +6550,7 @@
       "table": "qa_lab_instruments",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -6172,6 +6559,7 @@
       "table": "qa_lab_reagents",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
     },
@@ -6180,6 +6568,7 @@
       "table": "qa_lab_samples",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'received'::character varying"
     },
@@ -6188,6 +6577,7 @@
       "table": "qa_lab_tasks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6196,6 +6586,7 @@
       "table": "qa_lims_audit_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'success'::character varying"
     },
@@ -6204,6 +6595,7 @@
       "table": "qa_lims_instrument_data",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6212,6 +6604,7 @@
       "table": "qa_lims_method_validations",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'completed'::character varying"
     },
@@ -6220,6 +6613,7 @@
       "table": "qa_lims_pt_corrective_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6228,6 +6622,7 @@
       "table": "qa_lims_pt_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planning'::character varying"
     },
@@ -6236,6 +6631,7 @@
       "table": "qa_lims_pt_samples",
       "column": "sample_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'received'::character varying"
     },
@@ -6244,6 +6640,7 @@
       "table": "qa_lims_rfid_tags",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'unused'::character varying"
     },
@@ -6252,6 +6649,7 @@
       "table": "qa_lims_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6260,6 +6658,7 @@
       "table": "qa_lims_test_methods",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6268,6 +6667,7 @@
       "table": "qa_lims_uncertainty_projects",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6276,6 +6676,7 @@
       "table": "qa_qms_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6284,6 +6685,7 @@
       "table": "search_entity_projections",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": false,
       "default_expr": null
     },
@@ -6292,6 +6694,7 @@
       "table": "subscriptions",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'trial'::text"
     },
@@ -6300,6 +6703,7 @@
       "table": "versions",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6308,6 +6712,7 @@
       "table": "corrective_actions",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'planned'::character varying"
     },
@@ -6316,6 +6721,7 @@
       "table": "inspection_items",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6324,6 +6730,7 @@
       "table": "qa_apqp_approvals",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6332,6 +6739,7 @@
       "table": "qa_apqp_phases",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6340,6 +6748,7 @@
       "table": "qa_apqp_projects",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'planning'::character varying"
     },
@@ -6348,6 +6757,7 @@
       "table": "qa_apqp_risks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'open'::character varying"
     },
@@ -6356,6 +6766,7 @@
       "table": "qa_apqp_tasks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6364,6 +6775,7 @@
       "table": "qa_audit_findings",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'open'::character varying"
     },
@@ -6372,6 +6784,7 @@
       "table": "qa_audit_plans",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6380,6 +6793,7 @@
       "table": "qa_audit_tasks",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6388,6 +6802,7 @@
       "table": "qa_corrective_action_items",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6396,6 +6811,7 @@
       "table": "qa_corrective_actions",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6404,6 +6820,7 @@
       "table": "qa_ehs_hazards",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'open'::text"
     },
@@ -6412,6 +6829,7 @@
       "table": "qa_eightd_reports",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'new'::character varying"
     },
@@ -6420,6 +6838,7 @@
       "table": "qa_fmea_analyses",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
     },
@@ -6428,6 +6847,7 @@
       "table": "qa_fmea_items",
       "column": "action_status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'open'::character varying"
     },
@@ -6436,6 +6856,7 @@
       "table": "qa_qms_sync_records",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6444,6 +6865,7 @@
       "table": "qa_quality_inspections",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6452,6 +6874,7 @@
       "table": "qa_quality_issues",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'open'::character varying"
     },
@@ -6460,6 +6883,7 @@
       "table": "quality_inspections",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'planned'::character varying"
     },
@@ -6468,6 +6892,7 @@
       "table": "quality_issues",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'open'::character varying"
     },
@@ -6476,6 +6901,7 @@
       "table": "bugs",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'open'::text"
     },
@@ -6484,6 +6910,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'success'::character varying"
     },
@@ -6492,6 +6919,7 @@
       "table": "change_orders",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'planned'::text"
     },
@@ -6500,6 +6928,7 @@
       "table": "change_requests",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'submitted'::text"
     },
@@ -6508,6 +6937,7 @@
       "table": "experiments",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'planned'::character varying"
     },
@@ -6516,6 +6946,7 @@
       "table": "formulas",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6524,6 +6955,7 @@
       "table": "patents",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'applied'::text"
     },
@@ -6532,6 +6964,7 @@
       "table": "project_members",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'ACTIVE'::character varying"
     },
@@ -6540,6 +6973,7 @@
       "table": "project_milestones",
       "column": "acceptance_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6548,6 +6982,7 @@
       "table": "project_milestones",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'PENDING'::character varying"
     },
@@ -6556,6 +6991,7 @@
       "table": "project_phases",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'NOT_STARTED'::character varying"
     },
@@ -6564,6 +7000,7 @@
       "table": "projects",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
     },
@@ -6572,6 +7009,7 @@
       "table": "research_costs",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -6580,6 +7018,7 @@
       "table": "rs_projects",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -6588,6 +7027,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6596,6 +7036,7 @@
       "table": "incoming_inspections",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -6604,6 +7045,7 @@
       "table": "incoming_notices",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -6612,6 +7054,7 @@
       "table": "mrp_suggestions",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6620,6 +7063,7 @@
       "table": "purchase_contracts",
       "column": "approval_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6628,6 +7072,7 @@
       "table": "purchase_contracts",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6636,6 +7081,7 @@
       "table": "purchase_inquiries",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6644,6 +7090,7 @@
       "table": "purchase_items",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6652,6 +7099,7 @@
       "table": "purchase_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6660,6 +7108,7 @@
       "table": "purchase_requisitions",
       "column": "approval_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6668,6 +7117,7 @@
       "table": "purchase_requisitions",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6676,6 +7126,7 @@
       "table": "scm_master_data_refs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -6684,6 +7135,7 @@
       "table": "supplier_admissions",
       "column": "approval_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6692,6 +7144,7 @@
       "table": "supplier_admissions",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6700,6 +7153,7 @@
       "table": "supplier_delivery_appointments",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6708,6 +7162,7 @@
       "table": "supplier_evaluations",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6716,6 +7171,7 @@
       "table": "supplier_quotes",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'submitted'::character varying"
     },
@@ -6724,6 +7180,7 @@
       "table": "suppliers",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6732,6 +7189,7 @@
       "table": "sync_logs",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6740,6 +7198,7 @@
       "table": "sync_record_details",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6748,6 +7207,7 @@
       "table": "sync_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6756,6 +7216,7 @@
       "table": "wms_inbound_order_snapshots",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6764,6 +7225,7 @@
       "table": "wms_outbound_order_snapshots",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6772,6 +7234,7 @@
       "table": "wms_replenishment_suggestion_snapshots",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6780,6 +7243,7 @@
       "table": "bid_requests",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6788,6 +7252,7 @@
       "table": "biddings",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6796,6 +7261,7 @@
       "table": "bids",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6804,6 +7270,7 @@
       "table": "inquiries",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6812,6 +7279,7 @@
       "table": "purchase_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6820,6 +7288,7 @@
       "table": "quotations",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6828,6 +7297,7 @@
       "table": "supplier_contracts",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6836,6 +7306,7 @@
       "table": "supplier_evaluations",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6844,6 +7315,7 @@
       "table": "suppliers",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6852,6 +7324,7 @@
       "table": "tender_bids",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6860,6 +7333,7 @@
       "table": "tenders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -6868,6 +7342,7 @@
       "table": "files",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -6876,6 +7351,7 @@
       "table": "files",
       "column": "vector_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'none'::character varying"
     },
@@ -6884,6 +7360,7 @@
       "table": "core_tickets",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'open'::text"
     },
@@ -6892,6 +7369,7 @@
       "table": "tms_shipments",
       "column": "status",
       "type": "text",
+      "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
     },
@@ -6900,6 +7378,7 @@
       "table": "inter_module_sync",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6908,6 +7387,7 @@
       "table": "alerts",
       "column": "status",
       "type": "character varying(16)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
     },
@@ -6916,6 +7396,7 @@
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6924,6 +7405,7 @@
       "table": "batches",
       "column": "quality_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6932,6 +7414,7 @@
       "table": "discrepancy_records",
       "column": "adjustment_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6940,6 +7423,7 @@
       "table": "inbound_order_items",
       "column": "inspection_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6948,6 +7432,7 @@
       "table": "inbound_order_items",
       "column": "quality_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
     },
@@ -6956,6 +7441,7 @@
       "table": "inbound_orders",
       "column": "inspection_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -6964,6 +7450,7 @@
       "table": "inbound_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'created'::character varying"
     },
@@ -6972,6 +7459,7 @@
       "table": "inventory",
       "column": "quality_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'qualified'::character varying"
     },
@@ -6980,6 +7468,7 @@
       "table": "inventory_alert_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -6988,6 +7477,7 @@
       "table": "inventory_movements",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
     },
@@ -6996,6 +7486,7 @@
       "table": "labor_shifts",
       "column": "status",
       "type": "character varying(32)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'scheduled'::character varying"
     },
@@ -7004,6 +7495,7 @@
       "table": "locations",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'available'::character varying"
     },
@@ -7012,6 +7504,7 @@
       "table": "outbound_order_items",
       "column": "packing_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7020,6 +7513,7 @@
       "table": "outbound_order_items",
       "column": "picking_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7028,6 +7522,7 @@
       "table": "outbound_orders",
       "column": "packing_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7036,6 +7531,7 @@
       "table": "outbound_orders",
       "column": "picking_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7044,6 +7540,7 @@
       "table": "outbound_orders",
       "column": "shipping_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7052,6 +7549,7 @@
       "table": "outbound_orders",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'created'::character varying"
     },
@@ -7060,6 +7558,7 @@
       "table": "replenishment_order_items",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7068,6 +7567,7 @@
       "table": "replenishment_orders",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7076,6 +7576,7 @@
       "table": "replenishment_suggestions",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
     },
@@ -7084,6 +7585,7 @@
       "table": "serial_numbers",
       "column": "quality_status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7092,6 +7594,7 @@
       "table": "serial_numbers",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_stock'::character varying"
     },
@@ -7100,6 +7603,7 @@
       "table": "slotting_suggestions",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7108,6 +7612,7 @@
       "table": "stock_take_items",
       "column": "adjustment_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7116,6 +7621,7 @@
       "table": "stock_take_items",
       "column": "quality_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7124,6 +7630,7 @@
       "table": "stock_takes",
       "column": "adjustment_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7132,6 +7639,7 @@
       "table": "stock_takes",
       "column": "approval_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7140,6 +7648,7 @@
       "table": "stock_takes",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'planned'::character varying"
     },
@@ -7148,6 +7657,7 @@
       "table": "sync_record_details",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7156,6 +7666,7 @@
       "table": "sync_records",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7164,6 +7675,7 @@
       "table": "transfer_items",
       "column": "quality_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7172,6 +7684,7 @@
       "table": "transfer_items",
       "column": "receive_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7180,6 +7693,7 @@
       "table": "transfer_items",
       "column": "transfer_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7188,6 +7702,7 @@
       "table": "transfer_order_items",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7196,6 +7711,7 @@
       "table": "transfer_orders",
       "column": "status",
       "type": "character varying(50)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7204,6 +7720,7 @@
       "table": "transfers",
       "column": "approval_status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
     },
@@ -7212,6 +7729,7 @@
       "table": "transfers",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'created'::character varying"
     },
@@ -7220,6 +7738,7 @@
       "table": "wave_pick_items",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     },
@@ -7228,6 +7747,7 @@
       "table": "wave_picks",
       "column": "status",
       "type": "character varying(20)",
+      "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
     }

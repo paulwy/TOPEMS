@@ -117,7 +117,10 @@ function main() {
     process.exit(1);
   }
   const catalog = JSON.parse(fs.readFileSync(CATALOG, "utf8"));
-  const dbValues = new Set(catalog.constraints.flatMap((c) => c.values));
+  const dbValues = new Set([
+    ...catalog.constraints.flatMap((c) => c.values),
+    ...(catalog.enum_types ?? []).flatMap((e) => e.values),
+  ]);
   const enums = parseRustEnums();
   const frontendKeys = parseFrontendStatuses();
 
@@ -129,6 +132,7 @@ function main() {
     source: "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
     stats: {
       db_check_constraints: catalog.constraints.length,
+      db_enum_types: catalog.enum_types?.length ?? 0,
       db_check_values: dbValues.size,
       rust_enums: enums.length,
       rust_enum_values: enumValues.length,

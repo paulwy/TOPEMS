@@ -117,15 +117,18 @@ function buildCatalog(url) {
     from (
       select n.nspname as schema, c.relname as table, a.attname as column,
              format_type(a.atttypid, a.atttypmod) as type,
+             ty.typname as enum_type,
              a.attnotnull as not_null,
              pg_get_expr(d.adbin, d.adrelid) as default_expr
       from pg_attribute a
       join pg_class c on c.oid = a.attrelid
       join pg_namespace n on n.oid = c.relnamespace
+      join pg_type ty on ty.oid = a.atttypid
       left join pg_attrdef d on d.adrelid = a.attrelid and d.adnum = a.attnum
       where c.relkind = 'r'
         and a.attname ~* '(^|_)(status|state)$'
         and a.attnum > 0 and not a.attisdropped
+        and ty.typtype <> 'e'
         and n.nspname not in ('pg_catalog', 'information_schema')
         and not exists (
           select 1 from pg_constraint con
@@ -142,14 +145,44 @@ function buildCatalog(url) {
         table: r.table,
         column: r.column,
         type: r.type,
+        enum_type: r.enum_type,
         not_null: r.not_null,
         default_expr: r.default_expr,
       }))
     : [];
+  const enumSql = `
+    select json_agg(row_to_json(t))::text
+    from (
+      select n.nspname as schema, ty.typname as name,
+             string_agg(e.enumlabel, ',' order by e.enumsortorder) as labels
+      from pg_type ty
+      join pg_namespace n on n.oid = ty.typnamespace
+      join pg_enum e on e.enumtypid = ty.oid
+      where ty.typtype = 'e'
+        and exists (
+          select 1 from pg_attribute a
+          join pg_class c on c.oid = a.attrelid
+          where a.atttypid = ty.oid and c.relkind = 'r'
+            and a.attname ~* '(^|_)(status|state)$'
+            and a.attnum > 0 and not a.attisdropped
+        )
+      group by n.nspname, ty.typname
+      order by n.nspname, ty.typname
+    ) t;
+  `;
+  const enumRaw = psql(url, enumSql);
+  const enumTypes = enumRaw
+    ? JSON.parse(enumRaw).map((r) => ({
+        schema: r.schema,
+        name: r.name,
+        values: r.labels.split(",").sort(),
+      }))
+    : [];
   return {
-    catalog_version: 1,
-    source: "postgres.pg_constraint CHECK on status/state columns",
+    catalog_version: 2,
+    source: "postgres.pg_constraint CHECK + enum types on status/state columns",
     constraints,
+    enum_types: enumTypes,
     uncovered,
   };
 }
@@ -186,13 +219,13 @@ function main() {
       console.error(`${TAG} 修复：node scripts/ci/dump-status-checks.mjs --dsn '<url>' 后复核并提交`);
       process.exit(1);
     }
-    console.log(`${TAG} PASS: ${catalog.constraints.length} 条状态 CHECK + ${catalog.uncovered.length} 个无 CHECK 列与目录一致（db=${dbLabel(url)}）`);
+    console.log(`${TAG} PASS: ${catalog.constraints.length} 条状态 CHECK + ${catalog.enum_types.length} 个枚举类型 + ${catalog.uncovered.length} 个无约束列与目录一致（db=${dbLabel(url)}）`);
     return;
   }
 
   fs.mkdirSync(path.dirname(args.out), { recursive: true });
   fs.writeFileSync(args.out, body);
-  console.log(`${TAG} WROTE: ${catalog.constraints.length} 条状态 CHECK + ${catalog.uncovered.length} 个无 CHECK 列 -> ${path.relative(ROOT, args.out)}`);
+  console.log(`${TAG} WROTE: ${catalog.constraints.length} 条状态 CHECK + ${catalog.enum_types.length} 个枚举类型 + ${catalog.uncovered.length} 个无约束列 -> ${path.relative(ROOT, args.out)}`);
 }
 
 main();

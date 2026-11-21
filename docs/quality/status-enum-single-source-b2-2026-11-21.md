@@ -3,14 +3,14 @@
 ## 1. 结论
 
 B2 把代码侧手写状态源盘成了可复现清单：Rust 125 个 `*Status` 枚举、142 个归一化
-值；前端 `STATUS_COLOR_MAP` 61 个键。对照 B1 的 DB CHECK 值并集（39 个值）：
+值；前端 `STATUS_COLOR_MAP` 61 个键。对照 B1 的 DB 状态值并集（CHECK + 5 个
+ENUM 类型，共 47 个值）：
 
-- Rust 有 **113 个状态值**不在任何 DB CHECK 内；
-- 前端有 **38 个状态键**不在任何 DB CHECK 内；
+- Rust 有 **105 个状态值**不在任何 DB 约束内；
+- 前端有 **35 个状态键**不在任何 DB 约束内；
 - 不是少量漏配，而是业务 FSM 状态整体没有进 DB 约束。
 
-审计文档中的 108/113 是 `#[ignore]` 测试统计；本盘点恰好也得到 113 个未覆盖状态值，
-两者数字相同但含义不同，不能互相替代。
+审计文档中的 108/113 是 `#[ignore]` 测试统计，与状态枚举无关。
 
 ## 2. 生成物
 
@@ -23,7 +23,7 @@ B2 把代码侧手写状态源盘成了可复现清单：Rust 125 个 `*Status` 
 
 - `enums[]`：模块、文件、枚举名、原始值、归一化值；
 - `frontend.keys[]`：前端状态色板的全部键；
-- `not_in_db_check`：未进入 DB CHECK 的 Rust 值 / 前端键；
+- `not_in_db_check`：未进入 DB 约束（CHECK 或 ENUM）的 Rust 值 / 前端键；
 - `stats`：上述计数。
 
 ## 3. 模块分布
@@ -40,7 +40,10 @@ WMS 没有任何 `*Status` 枚举，只有 41 个无 CHECK 的 `status` / `state
 
 按“枚举最多、状态值最集中、可独立闭环”排序，B3 先做 **finance**：
 
-1. 把 23 个 finance 枚举与 DB 列建立显式映射；
+0. 先处理 5 个 PostgreSQL ENUM 状态列（`core_finance_vouchers`、`core_finance_periods`、
+   `core_finance_reconciliation_items`、`core_finance_reconciliation_sessions`、
+   `core_finance_approval_workflows`）；这 5 列已有 DB 单一源，是成本最低的试点；
+1. 再把 23 个 finance 枚举与剩余 28 个无约束状态列建立显式映射；
 2. 对已确认的业务状态补 DB CHECK（或确认该列不需要 CHECK）；
 3. 只对映射完成的枚举生成 OpenAPI `enum` 与前端常量；
 4. 其余模块按同一模板推进，不做一次性机械合并。

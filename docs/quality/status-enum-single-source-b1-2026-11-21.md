@@ -11,21 +11,24 @@ DEC-09 原口径「以 DB CHECK 为唯一源」只覆盖了数据库里一部分
 - 脚本：`scripts/ci/dump-status-checks.mjs`
 - 目录：`docs/database/status-check-catalog.json`
 - 数据源：`pg_constraint` 中作用在 `status` / `state` 列上的 CHECK 约束
-- 同时导出没有 CHECK 约束的 `status` / `state` 列，作为 B2 待确认清单
+- 同时收集 `status` / `state` 列使用的 PostgreSQL ENUM 类型（类型本身也是 DB 单一源）
+- 导出既无 CHECK、也不是 ENUM 类型的列，作为 B2 待确认清单
 - 排序：`schema.table.constraint`，输出稳定，可直接逐字比对
 
 实测（本地 `topems`，2026-11-21）：
 
 - 状态 CHECK 约束 **215 条**，覆盖 **32 个 schema**
+- PostgreSQL ENUM 状态类型 **5 个**（approval_status / match_status / period_status /
+  reconciliation_status / voucher_status），覆盖 6 个状态列
 - 不同状态集 **28 种**
 - 其中 `active, archived, inactive` 通用生命周期占 **187 条**
 - WMS 仅 **5 条**状态 CHECK
 
 ## 3. 关键缺口
 
-同一库中，`status` / `state` 列没有 CHECK 约束的有 **520 列**，按 schema 前几位：
+同一库中，`status` / `state` 列既没有 CHECK、也不是 ENUM 类型的有 **514 列**，按 schema 前几位：
 
-`public 68 / ehs 44 / wms 41 / mes 37 / finance 33 / portal 29 / hrm 25 /
+`public 67 / ehs 44 / wms 41 / mes 37 / finance 28 / portal 29 / hrm 25 /
 scm 24 / pm 22 / erp 21 / qms 21 / lims 20 ...`
 
 也就是说：
@@ -33,8 +36,8 @@ scm 24 / pm 22 / erp 21 / qms 21 / lims 20 ...`
 - 通用主数据/生命周期状态大部分有 CHECK，且高度同质（active/inactive/archived）；
 - 业务单据状态（入库/出库/盘点/工单/财务凭证等）多数没有 CHECK，状态集合由各模块
   FSM 与代码字面量维护，格式是自由文本；
-- 直接把 DB CHECK 当唯一源，只能覆盖约三成状态列（215 / 735），且无法表达模块
-  FSM 的迁移关系与初始态。
+- DB 侧有约束的状态列合计 221 / 735（CHECK 215 + ENUM 列 6），只覆盖约三成；
+  其余 514 列仍是自由文本，且 CHECK/ENUM 都表达不了模块 FSM 的迁移关系与初始态。
 
 ## 4. 使用方式
 
@@ -43,7 +46,8 @@ node scripts/ci/dump-status-checks.mjs --dsn 'postgres:///topems?host=/tmp'
 node scripts/ci/dump-status-checks.mjs --dsn 'postgres:///topems?host=/tmp' --check
 ```
 
-`--check` 与已提交目录逐字比对（215 条 CHECK + 520 个无 CHECK 列），漂移即非 0。当前未接入 hook：目录需要先固化，
+`--check` 与已提交目录逐字比对（215 条 CHECK + 5 个 ENUM 类型 + 514 个无约束列），
+漂移即非 0。当前未接入 hook：目录需要先固化，
 且迁移演练库与开发库的 schema 版本可能不同，接入前要选定唯一比对库。
 
 ## 5. 下一步（B2/B3）
