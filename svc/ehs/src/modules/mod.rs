@@ -20,6 +20,7 @@ pub mod occupational_health;
 pub mod openapi;
 pub mod rectification_status;
 pub mod risk;
+pub mod risk_control_status;
 pub mod risk_status;
 pub mod safety;
 pub mod training;

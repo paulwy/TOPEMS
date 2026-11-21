@@ -14,6 +14,7 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::modules::risk_control_status::RiskControlStatus;
 use crate::modules::risk_status::RiskStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
@@ -1057,7 +1058,7 @@ pub async fn list_control_measures(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "active".to_string()),
+                .unwrap_or_else(|| RiskControlStatus::DEFAULT.as_db_str().to_string()),
             created_at: r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
@@ -1163,7 +1164,7 @@ pub async fn create_control_measure(
     let result = sqlx::query(
         r#"
         INSERT INTO ehs.qa_ehs_risk_controls (risk_id, measure_no, title, description, measure_type, status, tenant_id)
-        VALUES ($1::uuid, $2, $3, $4, $5, 'active', $6::uuid)
+        VALUES ($1::uuid, $2, $3, $4, $5, $7, $6::uuid)
         RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
         "#,
     )
@@ -1173,6 +1174,7 @@ pub async fn create_control_measure(
     .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(tenant_id)
+    .bind(RiskControlStatus::DEFAULT.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
@@ -1209,7 +1211,7 @@ pub async fn create_control_measure(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "active".to_string()),
+                .unwrap_or_else(|| RiskControlStatus::DEFAULT.as_db_str().to_string()),
             created_at: row
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
@@ -1255,6 +1257,23 @@ pub async fn update_control_measure(
         id,
         req
     );
+    let status_target = match req.get("status").and_then(|v| v.as_str()) {
+        Some(raw) => match RiskControlStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的控制措施状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => RiskControlStatus::update_from(target)
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect(),
+        None => RiskControlStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
 
     let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
@@ -1276,7 +1295,8 @@ pub async fn update_control_measure(
                     status = COALESCE($6, status),
                     updated_at = NOW()
                 WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
-                  AND tenant_id = $7::uuid
+                  AND (status = ANY($7::text[]) OR status IS NULL)
+                  AND tenant_id = $8::uuid
                 RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at, tenant_id
                 "#,
             )
@@ -1285,7 +1305,8 @@ pub async fn update_control_measure(
             .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
             .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
             .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
-            .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(status_target.map(|v| v.as_db_str()))
+            .bind(&allowed_from)
             .bind(tenant)
             .fetch_optional(&mut scope)
             .await
@@ -1301,6 +1322,7 @@ pub async fn update_control_measure(
                     status = COALESCE($6, status),
                     updated_at = NOW()
                 WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                  AND (status = ANY($7::text[]) OR status IS NULL)
                 RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at, tenant_id
                 "#,
             )
@@ -1309,7 +1331,8 @@ pub async fn update_control_measure(
             .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
             .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
             .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
-            .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+            .bind(status_target.map(|v| v.as_db_str()))
+            .bind(&allowed_from)
             .fetch_optional(&mut scope)
             .await
         }
@@ -1324,7 +1347,7 @@ pub async fn update_control_measure(
     };
     let row = match row {
         Some(r) => r,
-        None => return ApiResponse::not_found("控制措施不存在或无权访问"),
+        None => return ApiResponse::conflict("控制措施不存在或状态不允许回退"),
     };
     if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit control update: {}", e);
@@ -1348,7 +1371,7 @@ pub async fn update_control_measure(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "active".to_string()),
+                .unwrap_or_else(|| RiskControlStatus::DEFAULT.as_db_str().to_string()),
             created_at: row
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()

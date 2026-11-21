@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 164,
+    "rust_enums": 165,
     "rust_enum_values": 163,
     "rust_values_not_in_db_check": 124,
     "frontend_status_keys": 178,
@@ -605,6 +605,19 @@
         "in_progress",
         "pending",
         "submitted"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/risk_control_status.rs",
+      "name": "RiskControlStatus",
+      "values": [
+        "Active",
+        "Completed"
+      ],
+      "normalized": [
+        "active",
+        "completed"
       ]
     },
     {

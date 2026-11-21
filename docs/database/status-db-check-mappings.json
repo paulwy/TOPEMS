@@ -639,6 +639,13 @@
       "table": "ehs.qa_ehs_hazard_rectifications",
       "column": "status",
       "candidate": "docs/database/ehs-hazard-rectification-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/risk_control_status.rs",
+      "enum": "RiskControlStatus",
+      "table": "ehs.qa_ehs_risk_controls",
+      "column": "status",
+      "candidate": "docs/database/ehs-risk-control-status-check-candidates-2026-11-21.sql"
     }
   ]
 }
