@@ -1448,7 +1448,7 @@ pub async fn list_plans(
         }
     };
     let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE status IN ('draft','active','tested','expired')"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -1487,7 +1487,7 @@ pub async fn get_plan(
         }
     };
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1 AND status IN ('draft','active','tested','expired')"
     )))
     .bind(&id)
     .fetch_optional(&mut db_scope)
@@ -1533,7 +1533,7 @@ pub async fn update_plan(
     };
     let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1 AND status IN ('draft','active','tested','expired')"
     )))
     .bind(&id)
     .fetch_optional(&mut db_scope)
@@ -1633,7 +1633,7 @@ pub async fn test_plan(
     };
     let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1 AND status IN ('draft','active','tested','expired')"
     )))
     .bind(&id)
     .fetch_optional(&mut db_scope)
@@ -1761,7 +1761,7 @@ pub async fn assess_impact(
         }
     };
     let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE status IN ('draft','active','tested','expired')"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -1855,7 +1855,7 @@ pub async fn get_continuity_score(
         }
     };
     let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE status IN ('draft','active','tested','expired')"
     )))
     .fetch_all(&mut db_scope)
     .await
