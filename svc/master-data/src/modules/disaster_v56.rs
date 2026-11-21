@@ -1136,6 +1136,12 @@ pub async fn execute_plan(
     let Some(mut plan) = plan else {
         return ApiResponse::not_found("未找到恢复计划");
     };
+    if matches!(
+        plan.status,
+        RecoveryPlanStatus::Completed | RecoveryPlanStatus::Failed
+    ) {
+        return ApiResponse::error(409, "恢复计划已完结，不能重复执行");
+    }
 
     plan.status = RecoveryPlanStatus::Completed;
     for step in plan.steps.iter_mut() {
@@ -1148,8 +1154,8 @@ pub async fn execute_plan(
     let rto_minutes = plan.rto_minutes;
     let rpo_minutes = plan.rpo_minutes;
 
-    if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4)"#,
+    match sqlx::query(
+        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4) AND status IN ('draft','active')"#,
     )
     .bind(&plan_id)
     .bind(recovery_plan_status_to_str(&plan.status))
@@ -1157,9 +1163,13 @@ pub async fn execute_plan(
     .bind(tenant)
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("更新恢复计划失败", e))
     {
-        return ApiResponse::from(e);
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "恢复计划不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新恢复计划失败", e)),
     }
 
     ApiResponse::success(
