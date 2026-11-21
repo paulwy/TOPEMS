@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import ScmIncomingNoticePage from '@/pages/scm/ScmIncomingNoticePage';
+import ScmEvaluationPage from '@/components/scm/ScmEvaluationPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (
@@ -13,39 +13,30 @@ vi.mock('@/components/templates/CrudPage', () => ({
   ),
 }));
 
+vi.mock('@/schema-dsl/crudPageAdapter', () => ({
+  createCrudPageAdapter: vi.fn(() => ({})),
+}));
+
 vi.mock('@/schemas/scm', () => ({
-  incomingNoticeSchema: { name: 'incomingNotice' },
+  evaluationSchema: { name: 'evaluation' },
 }));
 
 vi.mock('@/api/scm', () => ({
-  scmApi: {
-    incomingInspections: {
-      listNotices: vi.fn(),
-      createNotice: vi.fn(),
-      updateNotice: vi.fn(),
-      deleteNotice: vi.fn(),
-    },
-  },
+  scmApi: { evaluations: {} },
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock('@/i18n', () => ({
-  default: { t: (key: string) => key },
-}));
-
-describe('ScmIncomingNoticePage', () => {
+describe('ScmEvaluationPage', () => {
   it('渲染 CrudPage 并传入正确的 schema', () => {
-    render(<ScmIncomingNoticePage />);
-    expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe(
-      'incomingNotice'
-    );
+    render(<ScmEvaluationPage />);
+    expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe('evaluation');
   });
 
   it('渲染 2 个面包屑', () => {
-    render(<ScmIncomingNoticePage />);
+    render(<ScmEvaluationPage />);
     expect(document.querySelector('[data-testid="breadcrumbs"]')?.textContent).toBe('2');
   });
 });

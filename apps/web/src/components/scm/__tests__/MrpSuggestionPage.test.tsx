@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import MrpSuggestionPage from '@/pages/scm/MrpSuggestionPage';
+import MrpSuggestionPage from '@/components/scm/MrpSuggestionPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (

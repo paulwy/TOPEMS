@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import PurchaseRequisitionPage from '@/pages/scm/PurchaseRequisitionPage';
+import ScmPurchaseOrderPage from '@/components/scm/ScmPurchaseOrderPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (
@@ -18,35 +18,27 @@ vi.mock('@/schema-dsl/crudPageAdapter', () => ({
 }));
 
 vi.mock('@/schemas/scm', () => ({
-  purchaseRequisitionSchema: { name: 'purchaseRequisition' },
-}));
-
-vi.mock('@/schema-dsl', () => ({
-  EntitySchema: class {},
-}));
-
-vi.mock('@/schema-dsl/schemaExtensions', () => ({
-  SchemaExtensions: class {},
+  purchaseOrderSchema: { name: 'purchaseOrder' },
 }));
 
 vi.mock('@/api/scm', () => ({
-  scmApi: { purchaseRequisitions: {} },
+  scmApi: { purchaseOrders: {} },
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-describe('PurchaseRequisitionPage', () => {
+describe('ScmPurchaseOrderPage', () => {
   it('渲染 CrudPage 并传入正确的 schema', () => {
-    render(<PurchaseRequisitionPage />);
+    render(<ScmPurchaseOrderPage />);
     expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe(
-      'purchaseRequisition'
+      'purchaseOrder'
     );
   });
 
   it('渲染 2 个面包屑', () => {
-    render(<PurchaseRequisitionPage />);
+    render(<ScmPurchaseOrderPage />);
     expect(document.querySelector('[data-testid="breadcrumbs"]')?.textContent).toBe('2');
   });
 });

@@ -208,7 +208,7 @@ export const scmModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: SCM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/scm/DashboardPage'), 'DashboardPage'),
+      element: lazyWithRetry(() => import('@/components/scm/DashboardPage'), 'DashboardPage'),
       module: 'scm',
       code: 'scm-dashboard',
       title: i18n.t('scm.nav.scm-dashboard'),
@@ -221,7 +221,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.purchaseOrders,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmPurchaseOrderPage'),
+        () => import('@/components/scm/ScmPurchaseOrderPage'),
         'ScmPurchaseOrderPage'
       ),
       module: 'scm',
@@ -236,7 +236,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.purchaseRequisition,
       element: lazyWithRetry(
-        () => import('@/pages/scm/PurchaseRequisitionPage'),
+        () => import('@/components/scm/PurchaseRequisitionPage'),
         'PurchaseRequisitionPage'
       ),
       module: 'scm',
@@ -251,7 +251,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.purchaseItems,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmPurchaseItemPage'),
+        () => import('@/components/scm/ScmPurchaseItemPage'),
         'ScmPurchaseItemPage'
       ),
       module: 'scm',
@@ -265,7 +265,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<ScmPurchaseItemPageProps>,
     {
       path: SCM_PATHS.suppliers,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmSupplierPage'), 'ScmSupplierPage'),
+      element: lazyWithRetry(() => import('@/components/scm/ScmSupplierPage'), 'ScmSupplierPage'),
       module: 'scm',
       code: 'scm-suppliers',
       title: i18n.t('scm.nav.scm-suppliers'),
@@ -278,7 +278,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.supplierAdmission,
       element: lazyWithRetry(
-        () => import('@/pages/scm/SupplierAdmissionPage'),
+        () => import('@/components/scm/SupplierAdmissionPage'),
         'SupplierAdmissionPage'
       ),
       module: 'scm',
@@ -292,7 +292,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SupplierAdmissionPageProps>,
     {
       path: SCM_PATHS.supplierEvaluation,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmEvaluationPage'), 'ScmEvaluationPage'),
+      element: lazyWithRetry(
+        () => import('@/components/scm/ScmEvaluationPage'),
+        'ScmEvaluationPage'
+      ),
       module: 'scm',
       code: 'scm-supplier-evaluation',
       title: i18n.t('scm.nav.scm-supplier-evaluation'),
@@ -305,7 +308,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.deliveryAppointment,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmDeliveryAppointmentPage'),
+        () => import('@/components/scm/ScmDeliveryAppointmentPage'),
         'ScmDeliveryAppointmentPage'
       ),
       module: 'scm',
@@ -319,7 +322,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<ScmDeliveryAppointmentPageProps>,
     {
       path: SCM_PATHS.mrpPlan,
-      element: lazyWithRetry(() => import('@/pages/scm/MrpPlanPage'), 'MrpPlanPage'),
+      element: lazyWithRetry(() => import('@/components/scm/MrpPlanPage'), 'MrpPlanPage'),
       module: 'scm',
       code: 'scm-mrp-plan',
       title: i18n.t('scm.nav.scm-mrp-plan'),
@@ -331,7 +334,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<MrpPlanPageProps>,
     {
       path: SCM_PATHS.mrpSuggestion,
-      element: lazyWithRetry(() => import('@/pages/scm/MrpSuggestionPage'), 'MrpSuggestionPage'),
+      element: lazyWithRetry(
+        () => import('@/components/scm/MrpSuggestionPage'),
+        'MrpSuggestionPage'
+      ),
       module: 'scm',
       code: 'scm-mrp-suggestion',
       title: i18n.t('scm.nav.scm-mrp-suggestion'),
@@ -343,7 +349,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<MrpSuggestionPageProps>,
     {
       path: SCM_PATHS.overview,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmOverviewPage'), 'ScmOverviewPage'),
+      element: lazyWithRetry(() => import('@/components/scm/ScmOverviewPage'), 'ScmOverviewPage'),
       module: 'scm',
       code: 'scm-overview',
       title: i18n.t('scm.nav.scm-overview'),
@@ -356,7 +362,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.inventoryTurnover,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmInventoryTurnoverPage'),
+        () => import('@/components/scm/ScmInventoryTurnoverPage'),
         'ScmInventoryTurnoverPage'
       ),
       module: 'scm',
@@ -371,7 +377,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.priceComparison,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmPriceComparisonPage'),
+        () => import('@/components/scm/ScmPriceComparisonPage'),
         'ScmPriceComparisonPage'
       ),
       module: 'scm',
@@ -386,7 +392,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.purchaseContract,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmPurchaseContractPage'),
+        () => import('@/components/scm/ScmPurchaseContractPage'),
         'ScmPurchaseContractPage'
       ),
       module: 'scm',
@@ -401,7 +407,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.incomingNotices,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmIncomingNoticePage'),
+        () => import('@/components/scm/ScmIncomingNoticePage'),
         'ScmIncomingNoticePage'
       ),
       module: 'scm',
@@ -416,7 +422,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.incomingInspections,
       element: lazyWithRetry(
-        () => import('@/pages/scm/ScmIncomingInspectionPage'),
+        () => import('@/components/scm/ScmIncomingInspectionPage'),
         'ScmIncomingInspectionPage'
       ),
       module: 'scm',
@@ -431,7 +437,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.settingSourcingStrategy,
       element: lazyWithRetry(
-        () => import('@/pages/scm/setting/SourcingStrategyPage'),
+        () => import('@/components/scm/setting/SourcingStrategyPage'),
         'SourcingStrategyPage'
       ),
       module: 'scm',
@@ -446,7 +452,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.settingQuotaTemplate,
       element: lazyWithRetry(
-        () => import('@/pages/scm/setting/QuotaTemplatePage'),
+        () => import('@/components/scm/setting/QuotaTemplatePage'),
         'QuotaTemplatePage'
       ),
       module: 'scm',
@@ -461,7 +467,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.settingPurchaseThreshold,
       element: lazyWithRetry(
-        () => import('@/pages/scm/setting/PurchaseThresholdPage'),
+        () => import('@/components/scm/setting/PurchaseThresholdPage'),
         'PurchaseThresholdPage'
       ),
       module: 'scm',
@@ -476,7 +482,7 @@ export const scmModuleConfig: RouteModuleConfig = {
     {
       path: SCM_PATHS.settingSupplierTier,
       element: lazyWithRetry(
-        () => import('@/pages/scm/setting/SupplierTierPage'),
+        () => import('@/components/scm/setting/SupplierTierPage'),
         'SupplierTierPage'
       ),
       module: 'scm',

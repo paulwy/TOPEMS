@@ -16,7 +16,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/users',
         name: i18n.t('shared.core-modules.k1'),
-        component: () => import('@/pages/iam/UserManagementPage'),
+        component: () => import('@/components/iam/UserManagementPage'),
         componentPath: './pages/UserManagement',
         icon: 'Users',
         permissions: ['core:user:view'],
@@ -24,7 +24,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/roles',
         name: i18n.t('shared.core-modules.k2'),
-        component: () => import('@/pages/iam/RoleManagementPage'),
+        component: () => import('@/components/iam/RoleManagementPage'),
         componentPath: './pages/RoleManagement',
         icon: 'Shield',
         permissions: ['core:role:view'],

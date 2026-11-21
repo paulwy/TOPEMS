@@ -70,7 +70,7 @@ export const assetModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: ASSET_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/asset/DashboardPage'), 'DashboardPage'),
+      element: lazyWithRetry(() => import('@/components/asset/DashboardPage'), 'DashboardPage'),
       module: 'asset',
       title: i18n.t('asset.nav.asset-dashboard'),
       titleKey: 'asset.nav.asset-dashboard',
@@ -82,7 +82,7 @@ export const assetModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<DashboardPageProps>,
     {
       path: ASSET_PATHS.list,
-      element: lazyWithRetry(() => import('@/pages/asset/AssetListPage'), 'AssetListPage'),
+      element: lazyWithRetry(() => import('@/components/asset/AssetListPage'), 'AssetListPage'),
       module: 'asset',
       code: 'asset-list',
       title: i18n.t('asset.nav.asset-list'),
@@ -95,7 +95,7 @@ export const assetModuleConfig: RouteModuleConfig = {
     {
       path: ASSET_PATHS.categories,
       element: lazyWithRetry(
-        () => import('@/pages/asset/CategoryManagementPage'),
+        () => import('@/components/asset/CategoryManagementPage'),
         'CategoryManagementPage'
       ),
       module: 'asset',
@@ -109,7 +109,10 @@ export const assetModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<CategoryManagementPageProps>,
     {
       path: ASSET_PATHS.depreciation,
-      element: lazyWithRetry(() => import('@/pages/asset/DepreciationPage'), 'DepreciationPage'),
+      element: lazyWithRetry(
+        () => import('@/components/asset/DepreciationPage'),
+        'DepreciationPage'
+      ),
       module: 'asset',
       code: 'asset-depreciation',
       title: i18n.t('asset.nav.asset-depreciation'),
@@ -121,7 +124,7 @@ export const assetModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<DepreciationPageProps>,
     {
       path: ASSET_PATHS.transfers,
-      element: lazyWithRetry(() => import('@/pages/asset/TransferPage'), 'TransferPage'),
+      element: lazyWithRetry(() => import('@/components/asset/TransferPage'), 'TransferPage'),
       module: 'asset',
       code: 'asset-transfers',
       title: i18n.t('asset.nav.asset-transfers'),

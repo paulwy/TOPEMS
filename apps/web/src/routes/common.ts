@@ -16,8 +16,8 @@ const COMMON_PATHS = {
 const safeLazy = createSafeLazy();
 
 const V4DemoPage = safeLazy(() => import('../pages/shared/V4DemoPage'));
-const DesktopMonitorPage = safeLazy(() => import('../pages/desktop/DesktopMonitorPage'));
-const AuditLogPage = safeLazy(() => import('../pages/desktop/AuditLogPage'));
+const DesktopMonitorPage = safeLazy(() => import('../components/desktop/DesktopMonitorPage'));
+const AuditLogPage = safeLazy(() => import('../components/desktop/AuditLogPage'));
 
 export const commonRoutes: RouteConfig[] = [
   {

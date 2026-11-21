@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import ScmInventoryTurnoverPage from '@/pages/scm/ScmInventoryTurnoverPage';
+import ScmInventoryTurnoverPage from '@/components/scm/ScmInventoryTurnoverPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (

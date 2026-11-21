@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import ScmPurchaseOrderPage from '@/pages/scm/ScmPurchaseOrderPage';
+import ScmPurchaseContractPage from '@/components/scm/ScmPurchaseContractPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (
@@ -18,27 +18,27 @@ vi.mock('@/schema-dsl/crudPageAdapter', () => ({
 }));
 
 vi.mock('@/schemas/scm', () => ({
-  purchaseOrderSchema: { name: 'purchaseOrder' },
+  purchaseContractWizardSchema: { name: 'purchaseContractWizard' },
 }));
 
 vi.mock('@/api/scm', () => ({
-  scmApi: { purchaseOrders: {} },
+  scmApi: { purchaseContracts: {} },
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-describe('ScmPurchaseOrderPage', () => {
+describe('ScmPurchaseContractPage', () => {
   it('渲染 CrudPage 并传入正确的 schema', () => {
-    render(<ScmPurchaseOrderPage />);
+    render(<ScmPurchaseContractPage />);
     expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe(
-      'purchaseOrder'
+      'purchaseContractWizard'
     );
   });
 
   it('渲染 2 个面包屑', () => {
-    render(<ScmPurchaseOrderPage />);
+    render(<ScmPurchaseContractPage />);
     expect(document.querySelector('[data-testid="breadcrumbs"]')?.textContent).toBe('2');
   });
 });

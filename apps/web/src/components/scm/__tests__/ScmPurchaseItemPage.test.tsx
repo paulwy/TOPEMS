@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import ScmEvaluationPage from '@/pages/scm/ScmEvaluationPage';
+import ScmPurchaseItemPage from '@/components/scm/ScmPurchaseItemPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (
@@ -13,30 +13,30 @@ vi.mock('@/components/templates/CrudPage', () => ({
   ),
 }));
 
-vi.mock('@/schema-dsl/crudPageAdapter', () => ({
-  createCrudPageAdapter: vi.fn(() => ({})),
-}));
-
 vi.mock('@/schemas/scm', () => ({
-  evaluationSchema: { name: 'evaluation' },
+  purchaseItemSchema: { name: 'purchaseItem' },
 }));
 
 vi.mock('@/api/scm', () => ({
-  scmApi: { evaluations: {} },
+  scmApi: { purchaseItems: { list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() } },
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-describe('ScmEvaluationPage', () => {
+vi.mock('@/i18n', () => ({
+  default: { t: (key: string) => key },
+}));
+
+describe('ScmPurchaseItemPage', () => {
   it('渲染 CrudPage 并传入正确的 schema', () => {
-    render(<ScmEvaluationPage />);
-    expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe('evaluation');
+    render(<ScmPurchaseItemPage />);
+    expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe('purchaseItem');
   });
 
   it('渲染 2 个面包屑', () => {
-    render(<ScmEvaluationPage />);
+    render(<ScmPurchaseItemPage />);
     expect(document.querySelector('[data-testid="breadcrumbs"]')?.textContent).toBe('2');
   });
 });

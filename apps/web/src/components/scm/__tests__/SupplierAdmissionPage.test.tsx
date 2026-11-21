@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import SupplierAdmissionPage from '@/pages/scm/SupplierAdmissionPage';
+import SupplierAdmissionPage from '@/components/scm/SupplierAdmissionPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (

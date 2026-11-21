@@ -38,7 +38,7 @@ interface VehicleManagementPageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: OA_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/oa/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/oa/DashboardPage'), 'DashboardPage'),
   module: 'oa',
   title: i18n.t('oa.nav.oa-dashboard'),
   titleKey: 'oa.nav.oa-dashboard',
@@ -52,7 +52,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 const documentManagementRoute: RouteConfigV2<DocumentManagementPageProps> = {
   path: OA_PATHS.documents,
   element: lazyWithRetry(
-    () => import('@/pages/oa/DocumentManagementPage'),
+    () => import('@/components/oa/DocumentManagementPage'),
     'DocumentManagementPage'
   ),
   module: 'oa',
@@ -67,7 +67,7 @@ const documentManagementRoute: RouteConfigV2<DocumentManagementPageProps> = {
 
 const announcementRoute: RouteConfigV2<AnnouncementPageProps> = {
   path: OA_PATHS.announcements,
-  element: lazyWithRetry(() => import('@/pages/oa/AnnouncementPage'), 'AnnouncementPage'),
+  element: lazyWithRetry(() => import('@/components/oa/AnnouncementPage'), 'AnnouncementPage'),
   module: 'oa',
   code: 'oa-announcements',
   title: i18n.t('oa.nav.oa-announcements'),
@@ -80,7 +80,10 @@ const announcementRoute: RouteConfigV2<AnnouncementPageProps> = {
 
 const meetingManagementRoute: RouteConfigV2<MeetingManagementPageProps> = {
   path: OA_PATHS.meetings,
-  element: lazyWithRetry(() => import('@/pages/oa/MeetingManagementPage'), 'MeetingManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/oa/MeetingManagementPage'),
+    'MeetingManagementPage'
+  ),
   module: 'oa',
   code: 'oa-meetings',
   title: i18n.t('oa.nav.oa-meetings'),
@@ -93,7 +96,10 @@ const meetingManagementRoute: RouteConfigV2<MeetingManagementPageProps> = {
 
 const vehicleManagementRoute: RouteConfigV2<VehicleManagementPageProps> = {
   path: OA_PATHS.vehicles,
-  element: lazyWithRetry(() => import('@/pages/oa/VehicleManagementPage'), 'VehicleManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/oa/VehicleManagementPage'),
+    'VehicleManagementPage'
+  ),
   module: 'oa',
   code: 'oa-vehicles',
   title: i18n.t('oa.nav.oa-vehicles'),

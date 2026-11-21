@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import ScmOverviewPage from '@/pages/scm/ScmOverviewPage';
+import DashboardPage from '@/components/scm/DashboardPage';
 
 vi.mock('@/components/templates', () => ({
   DashboardTemplate: (props: any) => (
@@ -12,28 +12,34 @@ vi.mock('@/components/templates', () => ({
   ),
 }));
 
-vi.mock('@/components/charts', () => ({
-  LazyChart: () => <div data-testid='lazy-chart' />,
-}));
-
-vi.mock('@/lib/reactQuery', () => ({
-  QUERY_KEYS: {
-    AD_HOC: new Proxy({}, { get: (_t, key) => [String(key)] }),
-  },
-}));
+vi.mock('@/api/scm', () => {
+  const makeApi = (): any =>
+    new Proxy(function () {}, {
+      get: (_t, key) => (key === 'then' ? undefined : makeApi()),
+      apply: () => Promise.resolve({ success: true, data: null }),
+    });
+  return { scmApi: makeApi(), scmAnalyticsApi: makeApi() };
+});
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: vi.fn(() => ({ data: undefined, isLoading: false, refetch: vi.fn() })),
+  useQuery: vi.fn(() => ({
+    data: undefined,
+    isPending: false,
+    isLoading: false,
+    refetch: vi.fn(),
+  })),
+  QueryCache: vi.fn(),
+  MutationCache: vi.fn(),
+  QueryClient: vi.fn(),
 }));
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
-vi.mock('@/module-configs/scm/config', () => ({ SCM_PATHS: { root: '/scm' } }));
 vi.mock('@/i18n', () => ({ default: { t: (k: string) => k, exists: () => true } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 
-describe('ScmOverviewPage', () => {
+describe('ScmDashboardPage', () => {
   it('渲染 DashboardTemplate', () => {
-    render(<ScmOverviewPage />);
+    render(<DashboardPage />);
     expect(document.querySelector('[data-testid="dashboard-template"]')).toBeTruthy();
   });
 });

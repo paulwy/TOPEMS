@@ -25,9 +25,9 @@ const ProfilePage = safeLazy(() => import('../pages/shared/ProfilePage'));
 const FavoritesPage = safeLazy(() => import('../pages/shared/FavoritesPage'));
 const CommentsPage = safeLazy(() => import('../pages/shared/CommentsPage'));
 const AttachmentsPage = safeLazy(() => import('../pages/shared/AttachmentsPage'));
-const HelpCenterPage = safeLazy(() => import('../pages/help/HelpCenterPage'));
-const FaqPage = safeLazy(() => import('../pages/help/FaqPage'));
-const GuidePage = safeLazy(() => import('../pages/help/GuidePage'));
+const HelpCenterPage = safeLazy(() => import('../components/help/HelpCenterPage'));
+const FaqPage = safeLazy(() => import('../components/help/FaqPage'));
+const GuidePage = safeLazy(() => import('../components/help/GuidePage'));
 const SystemParamsPage = safeLazy(() => import('../pages/system/SystemParamsPage'));
 
 export const dashboardRoutes: RouteConfig[] = [

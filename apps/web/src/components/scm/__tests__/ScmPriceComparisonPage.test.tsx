@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import ScmPurchaseContractPage from '@/pages/scm/ScmPurchaseContractPage';
+import ScmPriceComparisonPage from '@/components/scm/ScmPriceComparisonPage';
 
 vi.mock('@/components/templates/CrudPage', () => ({
   default: ({ schema, breadcrumbs }: any) => (
@@ -18,27 +18,39 @@ vi.mock('@/schema-dsl/crudPageAdapter', () => ({
 }));
 
 vi.mock('@/schemas/scm', () => ({
-  purchaseContractWizardSchema: { name: 'purchaseContractWizard' },
+  priceComparisonSchema: { name: 'priceComparison' },
 }));
 
 vi.mock('@/api/scm', () => ({
-  scmApi: { purchaseContracts: {} },
+  scmApi: { priceComparisons: {} },
+}));
+
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: vi.fn(() => ({ invalidateQueries: vi.fn() })),
+}));
+
+vi.mock('@/store/notificationStore', () => ({
+  useNotificationStore: () => ({ addNotification: vi.fn() }),
+}));
+
+vi.mock('lucide-react', () => ({
+  CheckCircle: () => <div>icon</div>,
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-describe('ScmPurchaseContractPage', () => {
+describe('ScmPriceComparisonPage', () => {
   it('渲染 CrudPage 并传入正确的 schema', () => {
-    render(<ScmPurchaseContractPage />);
+    render(<ScmPriceComparisonPage />);
     expect(document.querySelector('[data-testid="schema-name"]')?.textContent).toBe(
-      'purchaseContractWizard'
+      'priceComparison'
     );
   });
 
   it('渲染 2 个面包屑', () => {
-    render(<ScmPurchaseContractPage />);
+    render(<ScmPriceComparisonPage />);
     expect(document.querySelector('[data-testid="breadcrumbs"]')?.textContent).toBe('2');
   });
 });

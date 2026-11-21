@@ -89,7 +89,7 @@
 
 | ID | 任务 | 当前读数 | 验收 |
 |---|---|---|---|
-| W3-B | 清理 `pages/` 残留（crm 已只剩 `__tests__`） | `pages/` 实测 41 个一级目录；2026-11-21 已外移 6 组共享模块/组件，页面本体未迁 | 残留目录清零 |
+| W3-B（进行中） | 清理 `pages/` 残留（crm 已只剩 `__tests__`） | 2026-11-21：已外移 6 组共享模块；第一批再迁 8 个模块（OA/工单/性能/桌面/资产/帮助/IAM/SCM）到 `components/`，`pages/` 41→33。剩余 18 个与 `components/<module>` 冲突，需按文件合并。证据 `docs/quality/pages-residue-batch1-2026-11-21.md` | 残留目录清零（分批） |
 | W3-C ✅（生产代码） | `@/pages/*` 引用收敛到路由层 | 生产代码跨层引用 **0**（2026-11-21）；`module-configs/**` 约 539 处属路由装配保留 | 仅路由入口引用 ✅ |
 | W3-D ✅（口径修正） | 合并 `schema/`、`schemas/`、`types.ts` | 2026-11-21 实测 `schema` 是 DSL 适配层（7 文件/414 引用）、`schemas` 是页面 schema（258 文件），不同层不合并；DSL 目录改名 `schema-dsl`，删除零引用空壳 `src/types.ts`，vitest include 同步。证据 `docs/quality/frontend-schema-table-clarification-2026-11-21.md` | 命名无歧义、空壳清零 ✅ |
 | W4-A ✅（口径修正） | `DataTable` 去重 | 2026-11-21 实测 4 处并非重复：shared-components 为 MUI 高级表、redesign 为轻量语义表、GIS 旧包装零引用、DashboardTemplate 为配置驱动内部件。删除 GIS 死代码（含测试）；保留两套按设计体系区分的公开实现与 Dashboard 内部件，不硬合并。证据同上 | 死代码清零、公开实现职责清晰 ✅ |
@@ -317,12 +317,12 @@
 | E3-13 ✅ | W2-§12.6 WS 消费组默认值区分 | 无 | — | 默认名不同，双实例互不抢占 |
 | E3-14 ✅ | B43-09 非 HTTP 入口租户上下文评估 | 无（只读分析） | — | 每类入口有上下文或书面豁免 ✅ |
 | E3-15 ✅ | W7-B 平台语料 5 表归一 | E3-9、E0-1 | DEC-15 | 归零哨兵归一 ✅；租户 GUC 8/48/16/1、空 GUC 0 ✅（生产窗口待执行） |
-| E4-1 | W3-B 清 `pages/` 残留 | 无 | — | 残留目录清零 |
-| E4-2 | W3-C `@/pages/*` 收敛 | E4-1 | — | 仅路由层引用 |
-| E4-3 | W3-D 合并 `schema/`、`schemas/`、`types.ts` | 无 | — | 目录唯一 |
-| E4-4 | W4-A `DataTable`、W4-C `StatusBadge` 去重 | 无 | — | 各剩 1 个定义并过视觉回归 |
+| E4-1（进行中） | W3-B 清 `pages/` 残留 | 无 | — | 2026-11-21 第一批：8 个模块迁移后 41→33 目录；剩余 18 个冲突模块按文件合并，其余 10 个继续整目录迁移 |
+| E4-2 ✅ | W3-C `@/pages/*` 收敛 | E4-1 | — | 2026-11-21 生产代码跨层引用 0；`module-configs/**` 约 539 处属路由装配 |
+| E4-3 ✅（口径修正） | W3-D schema 三分 | 无 | — | 2026-11-21 `schema` 改名 `schema-dsl`，删除空壳 `types.ts`，`schemas` 保留页面 schema；不强行合并 |
+| E4-4（部分完成） | W4-A `DataTable`、W4-C `StatusBadge` 去重 | 无 | — | 2026-11-21 W4-A 已删 GIS 死代码，保留两套设计体系实现；W4-C `StatusBadge` 11 个定义待处理 |
 | E4-5 ✅ | W4-B 表单字段收口 | E4-4 | — | 2026-11-21：FormBuilder + CrudAutoForm 的文本/数字/多行字段统一使用共享 `FormField`，两个引擎不强行合并 |
-| E4-6 | W4-D eslint 跨层 import 规则 | 无 | — | 规则生效且违规即红 |
+| E4-6 ✅ | W4-D eslint 跨层 import 规则 | 无 | — | 2026-11-21 规则已生效，`eslint apps/web/src --quiet` 0 error |
 | E4-7 | W1-2a 修脚本后重出权限快照 | E0-3 | — | 快照可重跑一致 |
 | E4-8 | W1-2b/c/d 权限码分流与对齐 | E4-7 | — | 交集上升、0 删除、非超管 403 实测 |
 | E4-9 | W1-3a/b/c 路由级权限验收（按服务清单三批） | E4-8 | — | 非超管 200 / 无权限 403；mobile 个人接口保持 auth-only |

@@ -82,7 +82,7 @@ if ('requestIdleCallback' in window) {
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 if (typeof window !== 'undefined' && window.location.pathname === '/performance') {
-  import('./pages/performance/PerformanceTestPage')
+  import('./components/performance/PerformanceTestPage')
     .then(({ default: PerformanceTestPage }) => {
       root.render(
         <React.StrictMode>

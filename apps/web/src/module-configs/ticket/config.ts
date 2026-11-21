@@ -19,7 +19,7 @@ interface TicketCenterPageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: TICKET_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/ticket/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/ticket/DashboardPage'), 'DashboardPage'),
   module: 'ticket',
   title: i18n.t('ticket.nav.ticket-dashboard'),
   titleKey: 'ticket.nav.ticket-dashboard',
@@ -32,7 +32,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const ticketCenterRoute: RouteConfigV2<TicketCenterPageProps> = {
   path: TICKET_PATHS.center,
-  element: lazyWithRetry(() => import('@/pages/ticket/TicketCenterPage'), 'TicketCenterPage'),
+  element: lazyWithRetry(() => import('@/components/ticket/TicketCenterPage'), 'TicketCenterPage'),
   module: 'ticket',
   code: 'ticket-center',
   title: i18n.t('ticket.nav.ticket-center'),

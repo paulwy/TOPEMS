@@ -23,13 +23,13 @@ const DynamicRouter = createSafeLazy(() => import('../lib/plugin-loader/DynamicR
 // G4 修复：/core/* 为平铺顶层路由，不经 v2 loadModuleConfig 的命名空间预加载，
 // 故懒加载前先注入 iam 命名空间，避免页面 i18n key 明文泄漏。
 const CoreUsersPage = createSafeLazy(() =>
-  ensureNamespacesLoaded(['iam']).then(() => import('../pages/iam/UserManagementPage'))
+  ensureNamespacesLoaded(['iam']).then(() => import('../components/iam/UserManagementPage'))
 );
 const CoreRolesPage = createSafeLazy(() =>
-  ensureNamespacesLoaded(['iam']).then(() => import('../pages/iam/RoleManagementPage'))
+  ensureNamespacesLoaded(['iam']).then(() => import('../components/iam/RoleManagementPage'))
 );
 const { lazy: PerformanceTestPage } = lazyWithPreload(
-  () => import('../pages/performance/PerformanceTestPage')
+  () => import('../components/performance/PerformanceTestPage')
 );
 
 /**

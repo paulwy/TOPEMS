@@ -58,7 +58,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const userManagementRoute: RouteConfigV2<UserManagementPageProps> = {
   path: IAM_PATHS.user,
-  element: lazyWithRetry(() => import('@/pages/iam/UserManagementPage'), 'UserManagementPage'),
+  element: lazyWithRetry(() => import('@/components/iam/UserManagementPage'), 'UserManagementPage'),
   module: 'iam',
   title: i18n.t('iam.nav.iam-user'),
   titleKey: 'iam.nav.iam-user',
@@ -71,7 +71,7 @@ const userManagementRoute: RouteConfigV2<UserManagementPageProps> = {
 
 const roleManagementRoute: RouteConfigV2<RoleManagementPageProps> = {
   path: IAM_PATHS.role,
-  element: lazyWithRetry(() => import('@/pages/iam/RoleManagementPage'), 'RoleManagementPage'),
+  element: lazyWithRetry(() => import('@/components/iam/RoleManagementPage'), 'RoleManagementPage'),
   module: 'iam',
   title: i18n.t('iam.nav.iam-role'),
   titleKey: 'iam.nav.iam-role',
@@ -85,7 +85,7 @@ const roleManagementRoute: RouteConfigV2<RoleManagementPageProps> = {
 const permissionManagementRoute: RouteConfigV2<PermissionManagementPageProps> = {
   path: IAM_PATHS.permission,
   element: lazyWithRetry(
-    () => import('@/pages/iam/PermissionManagementPage'),
+    () => import('@/components/iam/PermissionManagementPage'),
     'PermissionManagementPage'
   ),
   module: 'iam',
@@ -100,7 +100,7 @@ const permissionManagementRoute: RouteConfigV2<PermissionManagementPageProps> = 
 
 const resourceAclRoute: RouteConfigV2<ResourceAclPageProps> = {
   path: IAM_PATHS.resourceAcl,
-  element: lazyWithRetry(() => import('@/pages/iam/ResourceAclPage'), 'ResourceAclPage'),
+  element: lazyWithRetry(() => import('@/components/iam/ResourceAclPage'), 'ResourceAclPage'),
   module: 'iam',
   title: i18n.t('iam.nav.iam-resource-acl'),
   titleKey: 'iam.nav.iam-resource-acl',
@@ -113,7 +113,10 @@ const resourceAclRoute: RouteConfigV2<ResourceAclPageProps> = {
 
 const companyStructureRoute: RouteConfigV2<CompanyStructurePageProps> = {
   path: IAM_PATHS.companyStructure,
-  element: lazyWithRetry(() => import('@/pages/iam/CompanyStructurePage'), 'CompanyStructurePage'),
+  element: lazyWithRetry(
+    () => import('@/components/iam/CompanyStructurePage'),
+    'CompanyStructurePage'
+  ),
   module: 'iam',
   title: i18n.t('iam.nav.iam-company-structure'),
   titleKey: 'iam.nav.iam-company-structure',

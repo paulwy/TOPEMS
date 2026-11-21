@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import { SupplierTierPage } from '@/pages/scm/setting/SupplierTierPage';
+import { SupplierTierPage } from '@/components/scm/setting/SupplierTierPage';
 
 vi.mock('@/components/common', () => ({
   PageContainer: ({ children }: any) => <div>{children}</div>,

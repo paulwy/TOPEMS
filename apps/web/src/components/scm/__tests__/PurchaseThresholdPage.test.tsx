@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
-import { SourcingStrategyPage } from '@/pages/scm/setting/SourcingStrategyPage';
+import { PurchaseThresholdPage } from '@/components/scm/setting/PurchaseThresholdPage';
 
 vi.mock('@/components/common', () => ({
   PageContainer: ({ children }: any) => <div>{children}</div>,
@@ -28,9 +28,9 @@ vi.mock('@/i18n', () => ({
   default: { t: (key: string) => key },
 }));
 
-describe('SourcingStrategyPage', () => {
+describe('PurchaseThresholdPage', () => {
   it('渲染页面不报错', () => {
-    render(<SourcingStrategyPage />);
+    render(<PurchaseThresholdPage />);
     expect(document.body).toBeTruthy();
   });
 });
