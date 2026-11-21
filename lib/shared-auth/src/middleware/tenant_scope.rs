@@ -144,6 +144,33 @@ impl TenantScope {
         }
     }
 
+    /// 只读：当前请求声明的公司主体。
+    ///
+    /// 由 `tenant_middleware` 校验 `x-company-id` 后写入 task-local；未声明公司（或不在
+    /// 请求链路内）返回 `None`。本方法不改变租户通道语义，也不提供构造入口。
+    pub fn company_context(&self) -> Option<crate::company_context::CompanyContext> {
+        crate::company_context::current()
+    }
+
+    /// 只读：当前公司 ID；未声明公司时为 `None`。
+    pub fn company_id(&self) -> Option<Uuid> {
+        self.company_context().map(|ctx| ctx.company_id)
+    }
+
+    /// 只读：是否处于显式声明的母公司视角。
+    pub fn is_parent_view(&self) -> bool {
+        self.company_context()
+            .map(|ctx| ctx.actor_is_parent)
+            .unwrap_or(false)
+    }
+
+    /// 只读：母公司视角下额外可见的子公司集合（非母公司视角为空）。
+    pub fn visible_company_ids(&self) -> Vec<Uuid> {
+        self.company_context()
+            .map(|ctx| ctx.visible_company_ids)
+            .unwrap_or_default()
+    }
+
     /// 写入行要落库的 tenant_id。
     ///
     /// - 租户通道 → 真实租户；

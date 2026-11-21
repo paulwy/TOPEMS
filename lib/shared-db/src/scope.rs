@@ -466,13 +466,32 @@ impl ScopedTxn<'_> {
     }
 
     /// 显式设置租户通道 GUC（系统通道 = nil UUID + `rls_system='on'`）。
+    ///
+    /// 公司维度集中注入点：从 task-local 读取当前请求声明的公司上下文，
+    /// 与租户 GUC 一条语句落库。无公司上下文时写空值——`erp.current_company_id()`
+    /// 将其解析为 NULL，公司谓词 fail-closed（0 行），不会退回「租户内全可见」。
     async fn apply_explicit_tenant(&mut self, tenant: Uuid, system: bool) -> sqlx::Result<()> {
+        let (company_id, actor_is_parent, visible_ids) =
+            match topems_shared_auth::company_context::current() {
+                Some(ctx) => (
+                    ctx.company_id.to_string(),
+                    if ctx.actor_is_parent { "on" } else { "off" },
+                    ctx.visible_ids_csv(),
+                ),
+                None => (String::new(), "off", String::new()),
+            };
         sqlx::query(
             "SELECT set_config('app.tenant_id', $1, true), \
-                    set_config('app.rls_system', $2, true)",
+                    set_config('app.rls_system', $2, true), \
+                    set_config('app.company_id', $3, true), \
+                    set_config('app.actor_is_parent', $4, true), \
+                    set_config('app.visible_company_ids', $5, true)",
         )
         .bind(tenant.to_string())
         .bind(if system { "on" } else { "off" })
+        .bind(company_id)
+        .bind(actor_is_parent)
+        .bind(visible_ids)
         .execute(&mut *self)
         .await?;
         Ok(())

@@ -6,6 +6,7 @@
 //! 租户中间件、安全头部、限流、加密、审计日志等。
 
 pub mod auth;
+pub mod company_context;
 pub mod middleware;
 pub mod permission;
 pub mod permission_center;
@@ -23,6 +24,7 @@ pub use auth::{
     require_all_permissions, require_any_permission, require_superuser, token_permission_version,
     verify_jwt_token, AuthState, Claims, Permission, PermissionResolver, Role,
 };
+pub use company_context::CompanyContext;
 pub use middleware::{
     department_middleware, get_tenant_id, get_tenant_id_from_claims, require_department,
     require_module_active, require_module_permission, require_permission, require_role,

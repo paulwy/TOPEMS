@@ -1,3 +1,4 @@
+pub mod company;
 pub mod department;
 pub mod module;
 pub mod permission;
@@ -5,6 +6,10 @@ pub mod service_identity;
 pub mod tenant;
 pub mod tenant_scope;
 
+pub use company::{
+    resolve_company_context, resolve_company_context_isolated, set_company_gucs, X_COMPANY_ID,
+    X_COMPANY_SCOPE,
+};
 pub use department::{department_middleware, require_department};
 pub use module::{require_module_active, require_module_permission};
 pub use permission::{

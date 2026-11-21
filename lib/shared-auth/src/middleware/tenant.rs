@@ -713,6 +713,40 @@ pub fn tenant_middleware() -> impl Fn(
                 system
             );
 
+            // 公司维度上下文：租户 GUC 已就位，才能用 core_user_company_scopes 校验归属。
+            // 未声明 x-company-id 时 ctx=None，公司 GUC 写空值（数据库侧 fail-closed）。
+            let company_ctx = match super::company::resolve_company_context(
+                &mut *txn,
+                tenant_id,
+                user_id,
+                system,
+                req.headers(),
+            )
+            .await
+            {
+                Ok(ctx) => ctx,
+                Err((code, message)) => {
+                    let _ = txn.rollback().await;
+                    let status =
+                        StatusCode::from_u16(code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+                    return (
+                        status,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        format!(
+                            r#"{{"success":false,"message":"{message}","code":{}}}"#,
+                            status.as_u16()
+                        ),
+                    )
+                        .into_response();
+                }
+            };
+            if let Err(e) = super::company::set_company_gucs(&mut *txn, company_ctx.as_ref()).await
+            {
+                tracing::error!("Failed to set company RLS context: {}", e);
+                let _ = txn.rollback().await;
+                return internal_error("公司上下文设置失败");
+            }
+
             let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
             req.extensions_mut().insert(txn_cell.clone());
             req.extensions_mut()
@@ -722,12 +756,14 @@ pub fn tenant_middleware() -> impl Fn(
             let path = req.uri().path().to_string();
             let finalizers = RequestFinalizers::new();
             let post_commit = PostCommitQueue::new();
-            let resp = POST_COMMIT_QUEUE
-                .scope(
-                    post_commit.clone(),
-                    REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req)),
-                )
-                .await;
+            let next_fut = POST_COMMIT_QUEUE.scope(
+                post_commit.clone(),
+                REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req)),
+            );
+            let resp = match company_ctx {
+                Some(ctx) => crate::company_context::scope(ctx, next_fut).await,
+                None => next_fut.await,
+            };
             let response =
                 finish_response(resp, txn_cell, &method, &path, finalizers, post_commit).await;
             let outcome = if response.status().is_success() {
@@ -763,7 +799,7 @@ pub fn tenant_middleware_no_txn() -> impl Fn(
        + Clone
        + Send
        + Sync {
-    move |axum::extract::State(_pool): axum::extract::State<PgPool>,
+    move |axum::extract::State(pool): axum::extract::State<PgPool>,
           req: Request<Body>,
           next: Next| {
         Box::pin(async move {
@@ -771,17 +807,49 @@ pub fn tenant_middleware_no_txn() -> impl Fn(
             if is_public_path(req.uri().path()) {
                 return next.run(req).await;
             }
-            let (mut req, tenant_id, user_id, _system) = match prepare_tenant_request(req).await {
+            let (mut req, tenant_id, user_id, system) = match prepare_tenant_request(req).await {
                 Ok(v) => v,
                 Err(resp) => return resp,
             };
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 
+            // 公司上下文只在请求声明了 x-company-id 时解析：无公司头不申请连接。
+            let company_ctx = if req.headers().contains_key(super::company::X_COMPANY_ID) {
+                match super::company::resolve_company_context_isolated(
+                    &pool,
+                    tenant_id,
+                    user_id,
+                    system,
+                    req.headers(),
+                )
+                .await
+                {
+                    Ok(ctx) => ctx,
+                    Err((code, message)) => {
+                        let status =
+                            StatusCode::from_u16(code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+                        return (
+                            status,
+                            [(header::CONTENT_TYPE, "application/json")],
+                            format!(
+                                r#"{{"success":false,"message":"{message}","code":{}}}"#,
+                                status.as_u16()
+                            ),
+                        )
+                            .into_response();
+                    }
+                }
+            } else {
+                None
+            };
+
             let finalizers = RequestFinalizers::new();
-            let resp = REQUEST_FINALIZERS
-                .scope(finalizers.clone(), next.run(req))
-                .await;
+            let next_fut = REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req));
+            let resp = match company_ctx {
+                Some(ctx) => crate::company_context::scope(ctx, next_fut).await,
+                None => next_fut.await,
+            };
             // handler 内 ScopedTxn 的后台回滚仍需在响应写回前收尾。
             finalizers.drain().await;
             resp
