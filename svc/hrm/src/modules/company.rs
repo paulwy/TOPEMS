@@ -219,7 +219,7 @@ pub async fn create_company(
             let response_data = serde_json::to_value(&company).ok();
 
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "create".to_string(),
                 "company".to_string(),
                 Some(company.id),
@@ -396,7 +396,7 @@ pub async fn update_company(
             let response_data = serde_json::to_value(&company).ok();
 
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "update".to_string(),
                 "company".to_string(),
                 Some(company.id),
@@ -491,7 +491,7 @@ pub async fn delete_company(
                     let response_data = serde_json::to_value(&company).ok();
 
                     log_audit_event(
-                        &state.db,
+                        &state.system_pool,
                         "delete".to_string(),
                         "company".to_string(),
                         Some(company.id),

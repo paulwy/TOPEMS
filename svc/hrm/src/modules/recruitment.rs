@@ -349,7 +349,7 @@ pub async fn create_job_opening(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "job_opening".to_string(),
         Some(id),
@@ -520,7 +520,7 @@ pub async fn delete_job_opening(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "job_opening".to_string(),
         Some(id),
@@ -802,7 +802,7 @@ pub async fn create_candidate(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "candidate".to_string(),
         Some(id),
@@ -968,7 +968,7 @@ pub async fn delete_candidate(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "candidate".to_string(),
         Some(id),

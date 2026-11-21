@@ -335,7 +335,7 @@ pub async fn create_attendance(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "attendance".to_string(),
         Some(id),
@@ -553,7 +553,7 @@ pub async fn delete_attendance(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "attendance".to_string(),
         Some(id),

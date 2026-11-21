@@ -1,5 +1,4 @@
 use chrono::Utc;
-use sqlx::postgres::PgPool;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -8,7 +7,6 @@ use topems_shared_auth::security::encryption::FieldEncryptionService;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 
 pub struct EmployeeService {
-    db: PgPool,
     encryption: FieldEncryptionService,
     tenant_id: Uuid,
     /// 请求语言 SQL 值（`"zh"` / `"en"`），用于 `e.name` 的双语 CASE 切换。
@@ -16,22 +14,18 @@ pub struct EmployeeService {
 }
 
 impl EmployeeService {
-    pub fn new(
-        db: PgPool,
-        encryption: FieldEncryptionService,
-        tenant_id: Uuid,
-        locale: &'static str,
-    ) -> Self {
+    pub fn new(encryption: FieldEncryptionService, tenant_id: Uuid, locale: &'static str) -> Self {
         Self {
-            db,
             encryption,
             tenant_id,
             locale,
         }
     }
 
+    /// 查询一律走调用方传入的请求事务（`RlsTxnCell`），保证 RLS 租户上下文生效。
     pub async fn list_employees(
         &self,
+        conn: &mut sqlx::PgConnection,
         page: i64,
         page_size: i64,
         search: Option<String>,
@@ -74,7 +68,7 @@ impl EmployeeService {
         .bind(page_size)
         .bind(offset)
         .bind(self.locale)
-        .fetch_all(&self.db)
+        .fetch_all(&mut *conn)
         .await;
 
         match employees {
@@ -94,7 +88,7 @@ impl EmployeeService {
                 .bind(department_id)
                 .bind(org_id)
                 .bind(self.tenant_id)
-                .fetch_one(&self.db)
+                .fetch_one(&mut *conn)
                 .await
                 .unwrap_or(0);
 
@@ -116,7 +110,11 @@ impl EmployeeService {
         }
     }
 
-    pub async fn get_employee(&self, id: &Uuid) -> ApiResponse<Employee> {
+    pub async fn get_employee(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        id: &Uuid,
+    ) -> ApiResponse<Employee> {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
@@ -138,7 +136,7 @@ impl EmployeeService {
         .bind(id)
         .bind(self.tenant_id)
         .bind(self.locale)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut *conn)
         .await;
 
         match result {
@@ -154,7 +152,11 @@ impl EmployeeService {
         }
     }
 
-    pub async fn create_employee(&self, req: CreateEmployeeRequest) -> ApiResponse<Employee> {
+    pub async fn create_employee(
+        &self,
+        conn: &mut sqlx::PgConnection,
+        req: CreateEmployeeRequest,
+    ) -> ApiResponse<Employee> {
         if req.name.is_empty() {
             return ApiResponse::from(TopemsError::ValidationFailed(
                 "员工姓名不能为空".to_string(),
@@ -172,7 +174,7 @@ impl EmployeeService {
         )
         .bind(&req.employee_number)
         .bind(self.tenant_id)
-        .fetch_one(&self.db)
+        .fetch_one(&mut *conn)
         .await
         .unwrap_or(false);
 
@@ -287,7 +289,7 @@ impl EmployeeService {
         .bind(now)
         .bind(&req.name_en)
         .bind(self.locale)
-        .fetch_one(&self.db)
+        .fetch_one(&mut *conn)
         .await;
 
         match result {

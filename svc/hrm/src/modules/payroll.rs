@@ -273,7 +273,7 @@ pub async fn create_payroll_run(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "payroll_run".to_string(),
         Some(id),
@@ -399,7 +399,7 @@ pub async fn delete_payroll_run(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "payroll_run".to_string(),
         Some(id),

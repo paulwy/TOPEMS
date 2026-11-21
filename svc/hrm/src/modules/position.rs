@@ -294,7 +294,7 @@ pub async fn create_position(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "position".to_string(),
         Some(id),
@@ -522,7 +522,7 @@ pub async fn delete_position(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "position".to_string(),
         Some(id),

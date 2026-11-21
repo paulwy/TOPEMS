@@ -276,7 +276,7 @@ pub async fn create_review(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "performance_review".to_string(),
         Some(id),
@@ -442,7 +442,7 @@ pub async fn delete_review(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "performance_review".to_string(),
         Some(id),
@@ -721,7 +721,7 @@ pub async fn create_goal(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "performance_goal".to_string(),
         Some(id),
@@ -885,7 +885,7 @@ pub async fn delete_goal(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "performance_goal".to_string(),
         Some(id),

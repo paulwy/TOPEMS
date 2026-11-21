@@ -313,7 +313,7 @@ pub async fn create_leave(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "leave".to_string(),
         Some(id),
@@ -506,7 +506,7 @@ pub async fn delete_leave(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "leave".to_string(),
         Some(id),

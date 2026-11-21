@@ -138,7 +138,7 @@ pub async fn list_employees(
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ListResponse<Employee>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
@@ -155,13 +155,13 @@ pub async fn list_employees(
         }
     };
     let service = EmployeeService::new(
-        state.db.clone(),
         (*state.encryption).clone(),
         tenant_id,
         Locale::from_headers(&headers).as_sql(),
     );
     let result = service
         .list_employees(
+            &mut *txn,
             page,
             page_size,
             params.search,
@@ -240,12 +240,11 @@ pub async fn get_employee(
     }
 
     let service = EmployeeService::new(
-        state.db.clone(),
         (*state.encryption).clone(),
         tenant_id,
         Locale::from_headers(&headers).as_sql(),
     );
-    let result = service.get_employee(&id).await;
+    let result = service.get_employee(txn, &id).await;
 
     if let ApiResponse {
         code: 200,
@@ -389,7 +388,7 @@ pub async fn create_employee(
     axum::extract::Json(req): axum::extract::Json<CreateEmployeeRequest>,
 ) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
         return e;
     }
@@ -399,12 +398,22 @@ pub async fn create_employee(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let service = EmployeeService::new(
-        state.db.clone(),
         (*state.encryption).clone(),
         tenant_id,
         Locale::from_headers(&headers).as_sql(),
     );
-    let result = service.create_employee(req).await;
+    let result = service.create_employee(&mut *txn, req).await;
+
+    if result.code == 200 {
+        // create_employee 原先依赖连接池自动提交；改走请求事务后必须显式提交，
+        // 否则员工行随事务 Drop 回滚而事件已发=幽灵事件。先 commit，成功后再清缓存/发事件。
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("创建员工事务提交失败: {}", e);
+                return ApiResponse::server_error("事务提交失败");
+            }
+        }
+    }
 
     let status_str: String;
     let error_msg: Option<String>;
@@ -443,7 +452,7 @@ pub async fn create_employee(
                         email: emp_email,
                         department_id: dept_id,
                     };
-                    // D6：create_employee 已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
+                    // D6：create_employee 已显式提交，此处仅发布；失败入 ZSET 重试队列。
                     if let Err(e) = publisher
                         .publish_event(EventType::HrmEmployeeCreated, payload.clone())
                         .await
@@ -503,7 +512,7 @@ pub async fn create_employee(
     }
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "employee".to_string(),
         None,
@@ -557,7 +566,6 @@ pub async fn update_employee(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let service = EmployeeService::new(
-        state.db.clone(),
         (*state.encryption).clone(),
         tenant_id,
         Locale::from_headers(&headers).as_sql(),
@@ -648,7 +656,7 @@ pub async fn update_employee(
     }
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "employee".to_string(),
         Some(id),
@@ -705,7 +713,6 @@ pub async fn delete_employee(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let service = EmployeeService::new(
-        state.db.clone(),
         (*state.encryption).clone(),
         tenant_id,
         Locale::from_headers(&headers).as_sql(),
@@ -778,7 +785,7 @@ pub async fn delete_employee(
     }
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "employee".to_string(),
         Some(id),

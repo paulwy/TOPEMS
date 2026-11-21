@@ -366,7 +366,7 @@ pub async fn create_contract(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "contract".to_string(),
         Some(id),
@@ -594,7 +594,7 @@ pub async fn update_contract(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "contract".to_string(),
         Some(id),
@@ -679,7 +679,7 @@ pub async fn delete_contract(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "contract".to_string(),
         Some(id),

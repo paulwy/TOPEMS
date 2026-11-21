@@ -234,6 +234,15 @@ pub async fn check_module_permission<T>(
     claims: &Claims,
     permission: &ModulePermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
+    check_module_permission_claims(claims, permission).await
+}
+
+/// 不依赖数据库连接的权限校验入口。请求 state 改为受守卫的 `Db` 后，
+/// 调用方无法再提供 `PgPool`；权限判断本身是 claims-only，可直接复用本函数。
+pub async fn check_module_permission_claims<T>(
+    claims: &Claims,
+    permission: &ModulePermission,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
     if claims.is_superuser {
         return Ok(());
     }
@@ -262,6 +271,16 @@ pub async fn check_module_permission<T>(
 
 pub async fn check_resource_permission<T>(
     _db: &PgPool,
+    claims: &Claims,
+    resource_id: &Uuid,
+    resource_type: &str,
+    manage_permission: &str,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    check_resource_permission_claims(claims, resource_id, resource_type, manage_permission).await
+}
+
+/// `check_resource_permission` 的 claims-only 版本，供请求 state 不再持有 `PgPool` 的服务使用。
+pub async fn check_resource_permission_claims<T>(
     claims: &Claims,
     resource_id: &Uuid,
     resource_type: &str,

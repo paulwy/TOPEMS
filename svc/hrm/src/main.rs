@@ -19,6 +19,7 @@ use topems_shared_bootstrap::{
 use topems_shared_core::config::enhanced::RedisConfig;
 use topems_shared_core::config::CacheConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_db::scope::Db;
 use topems_shared_event::redis::{CacheService, RedisCacheService, RedisPool as RedisPoolTrait};
 
 #[tokio::main]
@@ -74,7 +75,12 @@ async fn main() -> Result<()> {
     }
 
     let api_state = ApiState {
-        db: ctx.db.clone(),
+        // 请求链路统一走受守卫的 Db；handler 复用 tenant_middleware 注入的请求事务。
+        db: Db::new(ctx.db.clone(), "hrm, public, shared")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
+        // 审计落库（hrm.audit_logs 仅系统通道）与健康探针使用原始池，不参与请求租户查询。
+        system_pool: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,

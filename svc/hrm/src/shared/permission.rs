@@ -1,10 +1,10 @@
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
-    check_module_permission, check_resource_permission, ModuleCode,
+    check_module_permission_claims, check_resource_permission_claims, ModuleCode,
     ModulePermission as SharedModulePermission, PermissionAction,
 };
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[allow(dead_code)]
@@ -96,23 +96,23 @@ impl std::fmt::Display for HrmPermission {
 pub type ModulePermission = HrmPermission;
 
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     permission: &HrmPermission,
 ) -> Result<(), ApiResponse<T>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm)
+    check_module_permission_claims(claims, &shared_perm)
         .await
         .map_err(|e| e.0)
 }
 
 #[allow(dead_code)]
 pub async fn check_employee_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     employee_id: &Uuid,
 ) -> Result<(), ApiResponse<T>> {
-    check_resource_permission(db, claims, employee_id, "employee", "hrm:admin")
+    check_resource_permission_claims(claims, employee_id, "employee", "hrm:admin")
         .await
         .map_err(|e| e.0)
 }
