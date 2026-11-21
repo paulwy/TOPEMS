@@ -1542,21 +1542,29 @@ pub async fn update_plan(
         plan.scope = scope;
     }
     if let Some(ref st) = req.recovery_strategy {
-        plan.recovery_strategy = strategy_from_str(st);
+        plan.recovery_strategy = match st.as_str() {
+            "cold_standby" => RecoveryStrategy::ColdStandby,
+            "warm_standby" => RecoveryStrategy::WarmStandby,
+            "hot_standby" => RecoveryStrategy::HotStandby,
+            "active_active" => RecoveryStrategy::ActiveActive,
+            "active_passive" => RecoveryStrategy::ActivePassive,
+            _ => return ApiResponse::bad_request("无效的恢复策略"),
+        };
     }
     if let Some(tf) = req.test_frequency {
         plan.test_frequency = tf;
     }
     if let Some(ref st) = req.status {
         plan.status = match st.as_str() {
+            "draft" => ContinuityPlanStatus::Draft,
             "active" => ContinuityPlanStatus::Active,
             "tested" => ContinuityPlanStatus::Tested,
             "expired" => ContinuityPlanStatus::Expired,
-            _ => ContinuityPlanStatus::Draft,
+            _ => return ApiResponse::bad_request("无效的连续性计划状态"),
         };
     }
 
-    if let Err(e) = sqlx::query(
+    match sqlx::query(
         r#"UPDATE master_data.mdm_continuity_plans SET
            name = $2, scope = $3, recovery_strategy = $4, test_frequency = $5, status = $6
            WHERE id = $1 AND ($7::uuid IS NULL OR tenant_id = $7)"#,
@@ -1570,9 +1578,13 @@ pub async fn update_plan(
     .bind(tenant)
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("更新连续性计划失败", e))
     {
-        return ApiResponse::from(e);
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "连续性计划不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新连续性计划失败", e)),
     }
 
     ApiResponse::success(plan, "连续性计划已更新")
@@ -2288,15 +2300,23 @@ pub async fn complete_failover(
     };
 
     let completed_at = chrono::Utc::now().to_rfc3339();
-    if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)"#,
+    match sqlx::query(
+        r#"UPDATE master_data.mdm_failover_records SET status = $4, completed_at = $2 WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)"#,
     )
     .bind(&record.id)
     .bind(&completed_at)
     .bind(tenant)
+    .bind(failover_status_to_str(&FailoverStatus::Completed))
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return ApiResponse::from(e); }
+    {
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "故障转移记录不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新故障转移记录失败", e)),
+    }
 
     match sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET status = $3, primary_flag = false WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
