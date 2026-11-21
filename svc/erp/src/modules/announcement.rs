@@ -1,6 +1,7 @@
 use super::ApiState;
 use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::content_status::AnnouncementStatus;
 use crate::utils::validate_required_field;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -320,7 +321,19 @@ pub async fn update_announcement(
     let title = req.title.unwrap_or(existing.title);
     let content = req.content.or(existing.content);
     let author = req.author.or(Some(existing.author));
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        None => existing.status.clone(),
+        Some(raw) => match AnnouncementStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "invalid announcement status \"{}\", allowed: {}",
+                    raw,
+                    AnnouncementStatus::DB_VALUES.join("/")
+                )))
+            }
+        },
+    };
     let priority = req.priority.or(existing.priority);
     let expire_at = req.expire_at.or(existing.expire_at);
     let now = Utc::now();

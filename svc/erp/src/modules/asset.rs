@@ -1,6 +1,7 @@
 use super::ApiState;
 use crate::models::{Asset, CreateAssetRequest, UpdateAssetRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::content_status::AssetStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -328,7 +329,19 @@ pub async fn update_asset(
     let purchase_amount = req.purchase_amount.or(existing.purchase_amount);
     let location = req.location.or(existing.location);
     let responsible_id = req.responsible_id.or(existing.responsible_id);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        None => existing.status.clone(),
+        Some(raw) => match AssetStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "invalid asset status \"{}\", allowed: {}",
+                    raw,
+                    AssetStatus::DB_VALUES.join("/")
+                )))
+            }
+        },
+    };
     let serial_number = req.serial_number.or(existing.serial_number);
     let manufacturer = req.manufacturer.or(existing.manufacturer);
     let rated_power = req.rated_power.or(existing.rated_power);

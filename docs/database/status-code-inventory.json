@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 137,
-    "rust_enum_values": 147,
-    "rust_values_not_in_db_check": 109,
-    "frontend_status_keys": 165,
-    "frontend_keys_not_in_db_check": 126,
+    "rust_enums": 139,
+    "rust_enum_values": 151,
+    "rust_values_not_in_db_check": 113,
+    "frontend_status_keys": 167,
+    "frontend_keys_not_in_db_check": 128,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -462,6 +462,42 @@
         "pending",
         "sending",
         "sent"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/content_status.rs",
+      "name": "AnnouncementStatus",
+      "values": [
+        "Archived",
+        "Draft",
+        "Expired",
+        "Published"
+      ],
+      "normalized": [
+        "archived",
+        "draft",
+        "expired",
+        "published"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/content_status.rs",
+      "name": "AssetStatus",
+      "values": [
+        "InStock",
+        "InUse",
+        "Maintenance",
+        "Scrapped",
+        "Transferred"
+      ],
+      "normalized": [
+        "in_stock",
+        "in_use",
+        "maintenance",
+        "scrapped",
+        "transferred"
       ]
     },
     {
@@ -2531,6 +2567,7 @@
       "in-progress",
       "in_progress",
       "in_review",
+      "in_stock",
       "in_transit",
       "in_use",
       "inactive",
@@ -2617,6 +2654,7 @@
       "testing",
       "timeout",
       "todo",
+      "transferred",
       "trial",
       "under_assessment",
       "under_review",
@@ -2676,6 +2714,8 @@
       "ignored",
       "impact_assessed",
       "in_review",
+      "in_stock",
+      "in_use",
       "initiated",
       "installed",
       "installing",
@@ -2718,6 +2758,7 @@
       "rolled_back",
       "rolling_back",
       "scheduled",
+      "scrapped",
       "sending",
       "sent",
       "settled",
@@ -2734,6 +2775,7 @@
       "tested",
       "timeout",
       "todo",
+      "transferred",
       "trial",
       "under_assessment",
       "under_review",
@@ -2793,6 +2835,7 @@
       "impact_assessed",
       "in-progress",
       "in_review",
+      "in_stock",
       "in_transit",
       "in_use",
       "info",
@@ -2860,6 +2903,7 @@
       "testing",
       "timeout",
       "todo",
+      "transferred",
       "trial",
       "under_assessment",
       "under_review",
