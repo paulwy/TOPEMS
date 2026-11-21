@@ -83,6 +83,29 @@ pub enum QualityStatus {
     Warning,
 }
 
+impl QualityStatus {
+    pub const DB_VALUES: [&'static str; 3] = ["passed", "failed", "warning"];
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "passed" => Some(Self::Passed),
+            "failed" => Some(Self::Failed),
+            "warning" => Some(Self::Warning),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Passed => "passed",
+            Self::Failed => "failed",
+            Self::Warning => "warning",
+        }
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct QualityCheckV51 {
     pub id: String,
@@ -450,11 +473,7 @@ pub struct PredictTrendRequest {
 // ==================== 内部辅助函数 ====================
 
 fn quality_status_from_str(s: &str) -> QualityStatus {
-    match s {
-        "failed" => QualityStatus::Failed,
-        "warning" => QualityStatus::Warning,
-        _ => QualityStatus::Passed,
-    }
+    QualityStatus::from_db_str(s).unwrap_or(QualityStatus::Passed)
 }
 
 fn fix_status_from_str(s: &str) -> FixStatus {
@@ -640,6 +659,13 @@ pub async fn list_quality_checks(
         }
     };
 
+    let status = match params.status.as_deref() {
+        Some(raw) => match QualityStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的质量状态"),
+        },
+        None => None,
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -650,12 +676,13 @@ pub async fn list_quality_checks(
            AND entity_id = COALESCE($2, entity_id)
            AND status = COALESCE($3, status)
            AND rule_id = COALESCE($4, rule_id)
+           AND status IN ('passed','failed','warning')
          ORDER BY checked_at DESC
          LIMIT $5 OFFSET $6"
     )))
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
-    .bind(params.status.as_deref())
+    .bind(status.as_deref())
     .bind(params.rule_id.as_deref())
     .bind(page_size)
     .bind(offset)
@@ -669,11 +696,12 @@ pub async fn list_quality_checks(
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
            AND status = COALESCE($3, status)
-           AND rule_id = COALESCE($4, rule_id)",
+           AND rule_id = COALESCE($4, rule_id)
+           AND status IN ('passed','failed','warning')",
     )
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
-    .bind(params.status.as_deref())
+    .bind(status.as_deref())
     .bind(params.rule_id.as_deref())
     .fetch_one(&mut db_scope)
     .await
@@ -724,7 +752,9 @@ pub async fn get_quality_check_results(
 
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
-         WHERE entity_type = $1 AND entity_id = $2 ORDER BY checked_at DESC"
+         WHERE entity_type = $1 AND entity_id = $2
+           AND status IN ('passed','failed','warning')
+         ORDER BY checked_at DESC"
     )))
     .bind(&entity_type)
     .bind(&entity_id)
@@ -1023,7 +1053,7 @@ pub async fn get_quality_score(
     };
 
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE status IN ('passed','failed','warning') ORDER BY checked_at DESC"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -1107,7 +1137,7 @@ pub async fn get_quality_dashboard(
     };
 
     let check_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE status IN ('passed','failed','warning') ORDER BY checked_at DESC"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -1989,7 +2019,7 @@ async fn build_quality_trend(
     days: i32,
 ) -> Vec<QualityTrendPoint> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1"
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1 AND status IN ('passed','failed','warning')"
     )))
     .bind(&entity_type)
     .fetch_all(&mut *scope)
@@ -2037,11 +2067,7 @@ const INSIGHT_COLS: &str =
     "insight_type, severity, affected_records, trend_analysis, recommendations";
 
 fn quality_status_to_str(s: &QualityStatus) -> &'static str {
-    match s {
-        QualityStatus::Passed => "passed",
-        QualityStatus::Failed => "failed",
-        QualityStatus::Warning => "warning",
-    }
+    s.as_db_str()
 }
 
 fn fix_status_to_str(s: &FixStatus) -> &'static str {
@@ -2300,6 +2326,19 @@ mod tests {
     #[test]
     fn test_quality_status_from_str_passed() {
         assert_eq!(quality_status_from_str("passed"), QualityStatus::Passed);
+    }
+
+    #[test]
+    fn test_quality_status_db_values() {
+        for raw in QualityStatus::DB_VALUES {
+            let parsed = QualityStatus::from_db_str(raw).expect("raw must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(QualityStatus::from_db_str("skipped"), None);
+        assert_eq!(
+            QualityStatus::from_db_str(" PASSED "),
+            Some(QualityStatus::Passed)
+        );
     }
 
     #[test]
