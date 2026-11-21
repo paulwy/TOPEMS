@@ -17,6 +17,7 @@ use uuid::Uuid;
 use super::document_processor::{
     chunk_document, generate_embeddings, vector_to_pgvector_string, ProcessorError,
 };
+use super::document_status::KnowledgeDocumentStatus;
 use super::models::*;
 use super::rag::{self, RetrievedChunk};
 
@@ -345,7 +346,7 @@ pub async fn create_document_from_content(
         r#"INSERT INTO core.knowledge_documents
             (tenant_id, kb_id, title, content, doc_type, file_size,
              chunk_count, status, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, 0, 'pending', $7)
+           VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8)
            RETURNING id, tenant_id, kb_id, title, content, doc_type, file_path,
                      file_size, chunk_count, status, error_message, created_by,
                      created_at, updated_at"#,
@@ -357,6 +358,7 @@ pub async fn create_document_from_content(
     .bind(&req.content)
     .bind(&req.doc_type)
     .bind(req.content.len() as i64)
+    .bind(KnowledgeDocumentStatus::DEFAULT.as_db_str())
     .bind(created_by)
     .fetch_one(&mut scope)
     .await?;
@@ -396,7 +398,7 @@ pub async fn create_document_from_file(
         r#"INSERT INTO core.knowledge_documents
             (tenant_id, kb_id, title, content, doc_type, file_path, file_size,
              chunk_count, status, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 0, 'pending', $8)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9)
            RETURNING id, tenant_id, kb_id, title, content, doc_type, file_path,
                      file_size, chunk_count, status, error_message, created_by,
                      created_at, updated_at"#,
@@ -409,6 +411,7 @@ pub async fn create_document_from_file(
     .bind(doc_type)
     .bind(file_path)
     .bind(file_size)
+    .bind(KnowledgeDocumentStatus::DEFAULT.as_db_str())
     .bind(created_by)
     .fetch_one(&mut scope)
     .await?;
@@ -447,7 +450,7 @@ pub async fn update_document(
                content = COALESCE($4, content),
                kb_id = COALESCE($5, kb_id),
                status = CASE
-                   WHEN $4 IS NOT NULL THEN 'pending'
+                   WHEN $4 IS NOT NULL THEN $7
                    ELSE COALESCE($6, status)
                END,
                error_message = CASE WHEN $4 IS NOT NULL THEN NULL ELSE error_message END,
@@ -464,6 +467,7 @@ pub async fn update_document(
     .bind(&req.content)
     .bind(req.kb_id)
     .bind(&req.status)
+    .bind(KnowledgeDocumentStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await?;
 
@@ -609,17 +613,52 @@ pub async fn process_document(
         .scope_for_tenant(tenant_id)
         .await
         .map_err(|e| ProcessorError::EmbeddingError(format!("开启事务失败: {}", e)))?;
-    let _ = sqlx::query(only_own_schema_query!(
+    let marked = sqlx::query(only_own_schema_query!(
         "ai",
         r#"UPDATE core.knowledge_documents
-           SET status = 'processing', error_message = NULL, updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#,
+           SET status = $3, error_message = NULL, updated_at = NOW()
+           WHERE id = $1 AND tenant_id = $2 AND status = ANY($4::text[])"#,
+        "core"
+    ))
+    .bind(document_id)
+    .bind(tenant_id)
+    .bind(KnowledgeDocumentStatus::Processing.as_db_str())
+    .bind(KnowledgeDocumentStatus::process_from().to_vec())
+    .execute(&mut scope)
+    .await;
+    match marked {
+        Ok(r) if r.rows_affected() == 1 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return Err(ProcessorError::InvalidInput(
+                "文档正在处理或状态不允许重新处理".to_string(),
+            ));
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return Err(ProcessorError::EmbeddingError(format!(
+                "标记处理中失败: {}",
+                e
+            )));
+        }
+    }
+    // 重建前清空旧分块，避免重复处理产生重复切片
+    if let Err(e) = sqlx::query(only_own_schema_query!(
+        "ai",
+        "DELETE FROM core.knowledge_chunks WHERE document_id = $1 AND tenant_id = $2",
         "core"
     ))
     .bind(document_id)
     .bind(tenant_id)
     .execute(&mut scope)
-    .await;
+    .await
+    {
+        let _ = scope.rollback().await;
+        return Err(ProcessorError::EmbeddingError(format!(
+            "清理旧分块失败: {}",
+            e
+        )));
+    }
     scope
         .commit()
         .await
@@ -743,20 +782,28 @@ pub async fn process_document(
 
     // 7. 更新文档状态为 ready 与 chunk_count
     let chunk_count = chunks.len() as i32;
-    sqlx::query(only_own_schema_query!(
+    let ready = sqlx::query(only_own_schema_query!(
         "ai",
         r#"UPDATE core.knowledge_documents
-           SET status = 'ready', chunk_count = $3, error_message = NULL,
+           SET status = $3, chunk_count = $4, error_message = NULL,
                updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND tenant_id = $2 AND status = $5"#,
         "core"
     ))
     .bind(document_id)
     .bind(tenant_id)
+    .bind(KnowledgeDocumentStatus::Ready.as_db_str())
     .bind(chunk_count)
+    .bind(KnowledgeDocumentStatus::Processing.as_db_str())
     .execute(&mut scope)
     .await
     .map_err(|e| ProcessorError::EmbeddingError(format!("更新文档状态失败: {}", e)))?;
+    if ready.rows_affected() != 1 {
+        let _ = scope.rollback().await;
+        return Err(ProcessorError::EmbeddingError(
+            "文档状态已变化，拒绝标记为就绪".to_string(),
+        ));
+    }
 
     scope
         .commit()
@@ -794,13 +841,15 @@ async fn mark_document_failed(db: &Db, tenant_id: Uuid, document_id: Uuid, error
     let _ = sqlx::query(only_own_schema_query!(
         "ai",
         r#"UPDATE core.knowledge_documents
-           SET status = 'failed', error_message = $3, updated_at = NOW()
-           WHERE id = $1 AND tenant_id = $2"#,
+           SET status = $3, error_message = $4, updated_at = NOW()
+           WHERE id = $1 AND tenant_id = $2 AND status = $5"#,
         "core"
     ))
     .bind(document_id)
     .bind(tenant_id)
+    .bind(KnowledgeDocumentStatus::Failed.as_db_str())
     .bind(error_msg)
+    .bind(KnowledgeDocumentStatus::Processing.as_db_str())
     .execute(&mut scope)
     .await;
     let _ = scope.commit().await;

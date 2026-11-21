@@ -21,6 +21,7 @@ use crate::shared::AppState;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use super::document_processor::parse_document;
+use super::document_status::KnowledgeDocumentStatus;
 use super::models::*;
 use super::rag;
 use super::service;
@@ -279,8 +280,18 @@ pub async fn list_documents(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Query(query): Query<DocumentQuery>,
+    Query(mut query): Query<DocumentQuery>,
 ) -> Json<ApiResponse<Vec<KnowledgeDocument>>> {
+    if let Some(raw) = query.status.as_deref() {
+        match KnowledgeDocumentStatus::from_db_str(raw) {
+            Some(v) => query.status = Some(v.as_db_str().to_string()),
+            None => {
+                return Json(ApiResponse::bad_request(
+                    "无效的文档状态，允许 pending/processing/ready/failed",
+                ))
+            }
+        }
+    }
     let tenant_id = current_tenant_id(&claims);
     match service::list_documents(&state.db, &txn_arc, tenant_id, &query).await {
         Ok(items) => Json(api_success(items)),
@@ -526,6 +537,63 @@ pub async fn update_document(
     Json(req): Json<UpdateDocumentRequest>,
 ) -> Json<ApiResponse<KnowledgeDocument>> {
     let tenant_id = current_tenant_id(&claims);
+    let requested_status = match req.status.as_deref() {
+        Some(raw) => match KnowledgeDocumentStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => {
+                return Json(ApiResponse::bad_request(
+                    "无效的文档状态，允许 pending/processing/ready/failed",
+                ))
+            }
+        },
+        None => None,
+    };
+    if req.content.is_some() {
+        if let Some(target) = requested_status {
+            if target != KnowledgeDocumentStatus::Pending {
+                return Json(ApiResponse::error(
+                    400,
+                    "内容变更时文档状态只能重置为 pending",
+                ));
+            }
+        }
+    }
+    if requested_status.is_some() || req.content.is_some() {
+        let detail = match service::get_document_detail(&state.db, &txn_arc, tenant_id, id).await {
+            Ok(Some(d)) => d,
+            Ok(None) => {
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "文档不存在".to_string(),
+                )))
+            }
+            Err(e) => {
+                tracing::error!("[AiKnowledge] update_document 读取现状失败: {}", e);
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "查询文档失败".to_string(),
+                )));
+            }
+        };
+        let current = match KnowledgeDocumentStatus::from_db_str(&detail.document.status) {
+            Some(v) => v,
+            None => return Json(ApiResponse::error(409, "文档当前状态非法，无法变更")),
+        };
+        let target = if req.content.is_some() {
+            KnowledgeDocumentStatus::Pending
+        } else {
+            match requested_status {
+                Some(v) => v,
+                None => return Json(ApiResponse::bad_request("缺少文档状态")),
+            }
+        };
+        if !current.can_transition_to(target) {
+            let msg = format!(
+                "文档状态不允许从 {} 变更为 {}",
+                current.as_db_str(),
+                target.as_db_str()
+            );
+            return Json(ApiResponse::error(409, &msg));
+        }
+    }
 
     match service::update_document(&state.db, &txn_arc, tenant_id, id, &req).await {
         Ok(Some(doc)) => {
@@ -626,9 +694,9 @@ pub async fn reprocess_document(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = current_tenant_id(&claims);
 
-    // 校验文档存在
-    match service::get_document_detail(&state.db, &txn_arc, tenant_id, id).await {
-        Ok(Some(_)) => {}
+    // 校验文档存在且不在处理中，避免并发重复切块
+    let detail = match service::get_document_detail(&state.db, &txn_arc, tenant_id, id).await {
+        Ok(Some(d)) => d,
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
                 "文档不存在".to_string(),
@@ -640,6 +708,15 @@ pub async fn reprocess_document(
                 "查询文档失败".to_string(),
             )));
         }
+    };
+    match KnowledgeDocumentStatus::from_db_str(&detail.document.status) {
+        Some(KnowledgeDocumentStatus::Processing) => {
+            return Json(ApiResponse::error(409, "文档正在处理中，不能重复提交"));
+        }
+        Some(KnowledgeDocumentStatus::Pending)
+        | Some(KnowledgeDocumentStatus::Failed)
+        | Some(KnowledgeDocumentStatus::Ready) => {}
+        None => return Json(ApiResponse::error(409, "文档当前状态非法，无法重新处理")),
     }
 
     // 异步处理

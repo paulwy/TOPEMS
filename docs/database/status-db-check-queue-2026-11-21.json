@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 117,
-    "uncovered_values": 126,
+    "uncovered_enums": 118,
+    "uncovered_values": 127,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 89,
-    "internal_state_enums": 48,
+    "resolved_enums": 90,
+    "internal_state_enums": 49,
     "persisted_unmapped_enums": 60,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 30,
-    "internal_state_values": 67,
+    "internal_state_values": 68,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -397,6 +397,24 @@
         "table": "ai.documents",
         "column": "status",
         "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql"
+      }
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/modules/ai_knowledge/document_status.rs",
+      "enum": "KnowledgeDocumentStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "ready"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ai/src/modules/ai_knowledge/document_status.rs",
+        "enum": "KnowledgeDocumentStatus",
+        "table": "core.knowledge_documents",
+        "column": "status",
+        "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql"
       }
     },
     {

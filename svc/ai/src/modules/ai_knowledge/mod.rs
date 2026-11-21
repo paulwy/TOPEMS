@@ -24,6 +24,7 @@
 //! - `failed`：处理失败（`error_message` 记录原因）
 
 pub mod document_processor;
+pub mod document_status;
 pub mod handlers;
 pub mod models;
 pub mod rag;
