@@ -18,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import i18n from '@/i18n';
+import FormField from '@/components/common/FormField';
 import styles from '../ListPageTemplate.module.css';
 import type { CrudFormFieldConfig, ListPageCrudConfig } from './types';
 import type { FormMode } from '../useListPageForm';
@@ -168,8 +169,9 @@ export function CrudAutoForm<T = Record<string, unknown>>({
       case 'email':
       case 'password':
         return (
-          <TextField
+          <FormField
             fullWidth
+            name={field.key}
             size='small'
             label={field.label}
             type={field.type}
@@ -185,8 +187,9 @@ export function CrudAutoForm<T = Record<string, unknown>>({
         );
       case 'number':
         return (
-          <TextField
+          <FormField
             fullWidth
+            name={field.key}
             size='small'
             label={field.label}
             type='number'
@@ -272,8 +275,9 @@ export function CrudAutoForm<T = Record<string, unknown>>({
         );
       case 'textarea':
         return (
-          <TextField
+          <FormField
             fullWidth
+            name={field.key}
             size='small'
             label={field.label}
             multiline

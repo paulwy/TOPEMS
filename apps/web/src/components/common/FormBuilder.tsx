@@ -17,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import i18n from '@/i18n';
+import FormField from './FormField';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -386,7 +387,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         case 'email':
         case 'password':
           return (
-            <TextField
+            <FormField
               key={field.name}
               name={field.name}
               label={field.label}
@@ -404,7 +405,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           );
         case 'number':
           return (
-            <TextField
+            <FormField
               key={field.name}
               name={field.name}
               label={field.label}
@@ -427,7 +428,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
           );
         case 'textarea':
           return (
-            <TextField
+            <FormField
               key={field.name}
               name={field.name}
               label={field.label}
