@@ -2849,3 +2849,11 @@ pending_forward_patches:
     effect: "把 mes.production_orders.quantity / completed_quantity 终态统一为 bigint；修复 20261120090000 误把 completed_quantity 改回 numeric(12,2) 造成的语义反转。依据：prod 只读镜像两列均为 bigint，且同表数量列必须同类型同精度。已是 bigint 时零操作"
     destructive_scan: "含 2 条 ALTER COLUMN TYPE（numeric→bigint，先用 count 断言无小数行，有小数即 RAISE EXCEPTION，不静默丢精度）；无 UPDATE/DELETE/TRUNCATE/DROP；幂等，重复执行 0 列变更"
     note: "不改已应用的 20261107000017 / 20261120090000（避免 checksums 与账本语义漂移），用新迁移拉回定稿语义；终态断言两列必须 int8。回滚 database/rollback/20261122100000_mes_production_orders_quantity_finalize_bigint.rollback.sql（恢复 completed_quantity=numeric(12,2) 的迁移前混合态）"
+
+  # ===== 2026-11-22：W10 public 审批/流程 4 表租户索引与策略归一 =====
+  - version: "20261122150000"
+    file: "database/migrations/20261122150000_public_approval_workflow_tenant_isolation.sql"
+    status: to_apply
+    effect: "只读复核更正前提：public.approvals / approval_records / core_workflow_instances / core_workflow_tasks 的 tenant_id 列与 rls_tenant_isolation 策略均已在生产存在，四表均为 0 行。本迁移补 4 条 tenant_id 索引；把 approvals / approval_records 的策略从「仅 USING」归一为 USING + 显式 WITH CHECK 的严格 B 范式（core_workflow_* 形状不变）；ADD COLUMN IF NOT EXISTS 为幂等守卫；按 P1-P4 值连接路径回填（0 行），推不出的保持 NULL"
+    destructive_scan: "含 4 条 UPDATE 回填（仅 tenant_id IS NULL 且上游 tenant_id 非 NULL）、1 个 DO 块内 DROP POLICY（每表前置断言恰好 1 条策略，随后重建）；无 DELETE/TRUNCATE/DROP TABLE/DROP COLUMN；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS，可重复执行"
+    note: "无代码依赖：approvals / approval_records 仓库内只读，core_workflow_* 写入点已显式绑定 tenant_id。回滚 database/rollback/20261122150000_public_approval_workflow_tenant_isolation.rollback.sql 删索引并把两张审批表还原为「严格 USING、无 WITH CHECK」的迁移前生产形态，保留 tenant_id 列与已回填值"

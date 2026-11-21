@@ -30,6 +30,7 @@
 | P1-1 | `20261118100000` | P1 首批 QMS 3 表严格 RLS | 3 表 / 0 行 / 3 策略 | qms | DEC-13；不归一数据，只补 RLS/FORCE/策略/索引 |
 | W8（W2-C） | `20261121220000` | `erp.opening_balances` 迁入 finance | 1 表 `SET SCHEMA` | finance | 必须排在 erp canonical `20261121100000` 之后；只移表，不复制数据 |
 | W9 | `20261121235940` + `20261122090000` | 合并报表公司维度 RLS + 默认公司回填 | 8 表 / 32 策略 / 6 新列 / 1 列+1 唯一索引 | erp、shared-auth、shared-db | **代码与迁移必须同窗口**；未接公司上下文的旧二进制读这 8 张表返回 0 行；回滚 B→A，详见 §4.12 |
+| W10 | `20261122150000` | `public` 审批/流程 4 表租户索引与策略归一 | 4 表 / 4 索引 / 4 策略（`approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks`） | 无（不依赖代码） | **独立成波，不并入 W9**：W9 是 ERP 公司维度且代码强耦合；本波四表均 0 行、无写入路径变更、策略已在生产生效，可独立执行与回滚，详见 §2.5 |
 
 - **新增候选 36 条（读数已失效）**：`20261119233000` 之后新增 26 条 `*_schema_canonical.sql`、6 条 `*_drop_resurrected_dead_tables.sql`、`20261120120000`（AI 重复索引）、`20261120090000`（MES typmod）、`20261120100000`（菜单/CRM 权限别名）、`20261121220000`（W2-C）。**2026-11-22 复核实为 42 条**，差额 6 条见 §2.3 失效标注；36 条仅为 11-21 中间读数。这些是否已在生产，必须用现场账本确认，不能仅凭版本号假定。
 - **硬依赖**：
@@ -271,6 +272,21 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 - **与 W6 / P1-1**：对象集合无交集（平台语料 5 表、QMS 3 表），可同窗、各自单事务回滚；前提是发布编排同时包含 erp、shared-auth、shared-db、finance、unified-core、mobile、qms。
 - **与 `20261120090000` / `20261122100000`（MES 数量列）**：无对象交集，语义互不影响；`20261122100000` 版本号更晚，落到同一待应用序列时按版本号自然排在 W9-B 之后。W9 不改变 `mes.production_orders` 的 bigint 终态。
 - **与 W1–W5**：无表交集；W9 不触碰归档目标，也不依赖 C16 的 `rows=0` 断言。
+
+### 2.5 W10 public 审批/流程 4 表（2026-11-22 增补）
+
+| 项 | 内容 |
+|---|---|
+| 版本 | `20261122150000_public_approval_workflow_tenant_isolation.sql`（回滚同名 `.rollback.sql`） |
+| 对象 | `public.approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks` |
+| 规模 | 4 表 / 4 条租户索引 / 4 条策略归一；0 行数据变化；列 `tenant_id` 已存在，`ADD COLUMN IF NOT EXISTS` 为幂等守卫 |
+| 同窗口二进制 | **无**。四张表无写入路径变更：`approvals` / `approval_records` 仓库内只读；`core_workflow_*` 写入点已显式绑定 `tenant_id` |
+| 前置 | `20261120235945`（unified core canonical）、`20260923160000`（四表建表/策略）、`20260917000005`、`20260918000017` 已应用；与 `20261121235940` 无表交集 |
+| 回滚 | 删 4 条索引；`approvals` / `approval_records` 回到「严格 USING、无 WITH CHECK」的迁移前生产形态；`core_workflow_*` 不变；保留 `tenant_id` 列与已回填值 |
+
+**为什么独立成波、不并入 W9**：W9 是 ERP 合并报表的公司维度改造，与 `erp` / `shared-auth` / `shared-db` 二进制强耦合；若把本波塞进 W9，会把「无代码依赖、0 行、可独立回滚」的低风险项绑到强耦合发布上，扩大回滚面。本波按版本号自然排在 W9 之后即可。
+
+**与相邻波次的关系**：与 W8（`erp.opening_balances`）、W6/P1-1（平台语料/QMS）无表交集；与 `20261120090000` / `20261122100000`（MES 数量列）无交集。只需保证在 unified core canonical 之后执行（版本号已保证）。
 
 ---
 

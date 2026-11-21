@@ -519,7 +519,7 @@
 | 范围 | 张数 | 默认动作 | 负责人角色 | 状态 |
 |---|---:|---|---|---|
 | 公共字典（附录 F） | 7 | 平台只读：已认证租户可 SELECT，写仅平台角色，不按 `tenant_id` 过滤 | 平台运维 + 产品 | 默认落定 |
-| 业务数据（附录 F） | 36 | 按 `tenant_id` 租户隔离；其中 `approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks` 先补 `tenant_id` 列 | 各业务域负责人 + DBA | 默认落定 |
+| 业务数据（附录 F） | 36 | 按 `tenant_id` 租户隔离；其中 `approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks` **已补列并开隔离**（`tenant_id` 列 2026-11-22 复核时已存在；W10 补租户索引并把策略归一为显式 `WITH CHECK`） | 各业务域负责人 + DBA | 默认落定 |
 | 不确定（附录 F） | 9 | 保持现状 + 逐张回答 3.6 表中那一个事实问题；未答前不收紧、不开放 | 业务方（按表归属）+ DBA | 待认领 |
 
 小计：**52 张 = 默认落定 43 + 待认领 9**。
@@ -547,6 +547,29 @@
   10. `search_entity_projections`（Q9，搜索是否跨公司）
   11. `system_settings`（Q9，平台级/公司级如何分组）
 - 另需业务回执（非逐表认领）：**Q-G3 1 条**。
+
+### 7.5 W10 执行记录：`public` 审批 / 流程 4 表（2026-11-22）
+
+| 表 | `tenant_id` | RLS / FORCE | 策略 | `tenant_id` 索引 | NULL 行 |
+|---|---|---|---|---|---|
+| `approvals` | 已有（可空 uuid） | 已开 | `rls_tenant_isolation`，补显式 `WITH CHECK` | 本次新增 `idx_approvals_tenant_id` | 0 |
+| `approval_records` | 已有（可空 uuid） | 已开 | 同上 | 本次新增 `idx_approval_records_tenant_id` | 0 |
+| `core_workflow_instances` | 已有（可空 uuid） | 已开 | 已是 `USING + WITH CHECK`，归一后不变 | 本次新增 `idx_core_workflow_instances_tenant_id` | 0 |
+| `core_workflow_tasks` | 已有（可空 uuid） | 已开 | 同上 | 本次新增 `idx_core_workflow_tasks_tenant_id` | 0 |
+
+**只读核实结论（2026-11-22，`topems_prod` / `topems_gate`）**：四张表均 0 行（`pg_stat_user_tables.n_tup_ins = 0`），无任何外键；数据归属只能按值连接推导：
+
+| 路径 | 推导 | 命中 / 总行 |
+|---|---|---:|
+| P1 | `approvals.workflow_instance_id → core_workflow_instances.id → tenant_id` | 0 / 0 |
+| P2 | `approval_records.approval_id → approvals.id → tenant_id` | 0 / 0 |
+| P3 | `core_workflow_instances.workflow_id → core_workflows.id → tenant_id` | 0 / 0 |
+| P4 | `core_workflow_tasks.instance_id → core_workflow_instances.id → tenant_id` | 0 / 0 |
+
+- **推不出归属、需业务确认回填口径的行数：0 行（四张表均为空）**，因此本波不产生待认领项。
+- 不采用「发起人 / 审批人 / 操作人 → 用户所属租户」：`iam.users` 无 `tenant_id`，`iam.core_tenant_users` 是多对多，无法推出唯一归属。后续若出现新数据，推不出的行保持 `NULL`，由策略 fail-closed 挡住，不写哨兵值。
+- 迁移：`database/migrations/20261122150000_public_approval_workflow_tenant_isolation.sql`；回滚：`database/rollback/20261122150000_public_approval_workflow_tenant_isolation.rollback.sql`。
+- 回滚后形态：`tenant_id` 列与已回填值保留（列是迁移前既有资产）；删除 4 条租户索引；`approvals` / `approval_records` 回到「严格 `USING`、无 `WITH CHECK`」的迁移前生产形态，`core_workflow_*` 形状不变。
 
 ---
 
@@ -699,14 +722,14 @@ ORDER BY 1;
 
 ## 附录 F：`public` 52 张分组建议（对应 Q9）
 
-> 依据：表名语义 + 仓库是否有表定义 + 是否带 `tenant_id`。实测：16 张在仓库无定义（生产独有），4 张（`approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks`）**没有 `tenant_id` 列**，收紧前需补列或明确平台级。最终以生产列与业务确认为准。
+> 依据：表名语义 + 仓库是否有表定义 + 是否带 `tenant_id`。实测：16 张在仓库无定义（生产独有）。**2026-11-22 更正**：`approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks` 四张表实际**已有 `tenant_id` 列**（生产与锚点库均为可空 `uuid`），此前"没有 `tenant_id` 列"的判断来自落后于生产的克隆库；W10 只需补索引并归一策略，见 7.5。最终以生产列与业务确认为准。
 
 | 表 | 建议分组 | 一句依据 |
 |---|---|---|
 | `_archive_core_workflow_instances` | 不确定 | 归档表，仓库无定义；需确认是否仍需在线保留 |
 | `_archive_core_workflow_versions` | 不确定 | 同上 |
-| `approval_records` | 业务数据 | 审批记录属公司业务；表缺 `tenant_id`，需补列 |
-| `approvals` | 业务数据 | 审批单属公司；表缺 `tenant_id`，需补列 |
+| `approval_records` | 业务数据 | 审批记录属公司业务；已有 `tenant_id`（2026-11-22 复核），W10 补索引并归一策略 |
+| `approvals` | 业务数据 | 审批单属公司；已有 `tenant_id`（2026-11-22 复核），W10 补索引并归一策略 |
 | `automation_rules` | 业务数据 | 公司自建自动化规则 |
 | `automation_runs` | 业务数据 | 规则执行记录 |
 | `automation_variables` | 业务数据 | 公司变量 |
@@ -734,8 +757,8 @@ ORDER BY 1;
 | `core_notifications` | 业务数据 | 通知属公司 |
 | `core_tenant_modules` | 不确定 | 租户开通模块：按租户键控，但含平台目录语义 |
 | `core_tenant_usage` | 业务数据 | 租户用量按租户 |
-| `core_workflow_instances` | 业务数据 | 流程实例；表缺 `tenant_id`，需补列 |
-| `core_workflow_tasks` | 业务数据 | 流程任务；表缺 `tenant_id`，需补列 |
+| `core_workflow_instances` | 业务数据 | 流程实例；已有 `tenant_id`（2026-11-22 复核），W10 补索引并归一策略 |
+| `core_workflow_tasks` | 业务数据 | 流程任务；已有 `tenant_id`（2026-11-22 复核），W10 补索引并归一策略 |
 | `core_workflow_versions` | 业务数据 | 流程版本属公司 |
 | `core_workflows` | 业务数据 | 流程定义属公司 |
 | `cqrs_events` | 不确定 | 事件总线，需确认是否含跨公司载荷 |
