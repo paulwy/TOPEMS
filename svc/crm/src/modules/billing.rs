@@ -10,6 +10,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::billing::CreateBillingRequest;
 use crate::models::{BillingQueryParams, BillingRecord, UpdateBillingRequest};
+use crate::modules::billing_status::BillingStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -68,7 +69,13 @@ pub async fn list_billing_records(
     let offset = (page - 1) * page_size;
 
     let customer_id_filter = params.customer_id;
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match BillingStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("账单状态非法"),
+        },
+        None => None,
+    };
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
@@ -201,6 +208,7 @@ async fn create_billing_record(
     });
     let items = serde_json::to_value(&req.items).unwrap_or(serde_json::json!([]));
     let now = chrono::Utc::now();
+    let status = BillingStatus::DEFAULT.as_db_str();
 
     // 反查客户名称（非租户维度，仅展示字段；缺失时留空）
     let locale = Locale::from_headers(&headers).as_sql();
@@ -219,7 +227,7 @@ async fn create_billing_record(
         r#"
         INSERT INTO crm.billing_records
         (tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NULL, $8, $9, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, $9, $10, $10)
         RETURNING id
         "#,
     )
@@ -229,6 +237,7 @@ async fn create_billing_record(
     .bind(&invoice_no)
     .bind(req.amount)
     .bind(req.currency.unwrap_or_else(|| "CNY".into()))
+    .bind(status)
     .bind(req.due_date)
     .bind(items)
     .bind(now)
@@ -280,6 +289,54 @@ async fn update_billing_record(
         Ok(t) => t,
         Err(resp) => return resp,
     };
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("账单事务作用域开启失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新账单失败".to_string()));
+        }
+    };
+    let existing = match sqlx::query_as::<_, BillingRecord>(
+        r#"
+        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at, deleted_at
+        FROM crm.billing_records WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(record)) => record,
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string()))
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询账单失败", e)),
+    };
+    drop(scope);
+
+    let current_status = match BillingStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("账单状态非法"),
+    };
+    let status = match req.status.as_deref() {
+        Some(raw) => match BillingStatus::from_db_str(raw) {
+            Some(next) => {
+                if next != current_status && !BillingStatus::can_transition(current_status, next) {
+                    return ApiResponse::conflict(&format!(
+                        "账单状态不可从 {} 变更为 {}",
+                        current_status.as_db_str(),
+                        next.as_db_str()
+                    ));
+                }
+                Some(next.as_db_str().to_string())
+            }
+            None => return ApiResponse::bad_request("账单状态非法"),
+        },
+        None => None,
+    };
+
     let items = req
         .items
         .as_ref()
@@ -295,9 +352,15 @@ async fn update_billing_record(
             currency = COALESCE($6, currency),
             due_date = COALESCE($7, due_date),
             status = COALESCE($8, status),
+            paid_at = CASE
+                WHEN $8::text = 'paid' THEN COALESCE(paid_at, $10)
+                WHEN $8::text IN ('pending', 'overdue', 'cancelled') THEN NULL
+                ELSE paid_at
+            END,
             items = COALESCE($9, items),
             updated_at = $10
         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND ($8::text IS NULL OR status = $11)
         RETURNING id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at, deleted_at
         "#,
     )
@@ -308,9 +371,10 @@ async fn update_billing_record(
     .bind(req.amount)
     .bind(req.currency.as_deref())
     .bind(req.due_date)
-    .bind(req.status.as_deref())
+    .bind(&status)
     .bind(items)
     .bind(now)
+    .bind(&existing.status)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -325,7 +389,7 @@ async fn update_billing_record(
             }
             ApiResponse::success(record, "更新账单成功")
         }
-        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
+        Ok(None) => ApiResponse::conflict("账单状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("更新账单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("更新账单失败".to_string()))
@@ -416,16 +480,71 @@ pub async fn mark_billing_paid(
         Err(resp) => return resp,
     };
     let now = chrono::Utc::now();
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("账单事务作用域开启失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新账单失败".to_string()));
+        }
+    };
+    let existing = match sqlx::query_as::<_, BillingRecord>(
+        r#"
+        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at, deleted_at
+        FROM crm.billing_records WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(record)) => record,
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string()))
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询账单失败", e)),
+    };
+    drop(scope);
+
+    let current_status = match BillingStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("账单状态非法"),
+    };
     // 幂等：已 paid 直接返回成功（与 PaymentReceived 事件链核销语义一致）
+    if current_status == BillingStatus::Paid {
+        return ApiResponse::success(
+            serde_json::json!({
+                "id": id,
+                "status": "paid",
+                "paid_at": existing.paid_at.unwrap_or(now),
+            }),
+            "账单已收款，无需重复核销",
+        );
+    }
+    if !BillingStatus::mark_paid_from().contains(&current_status.as_db_str()) {
+        return ApiResponse::conflict(&format!(
+            "账单状态 {} 不可核销为 paid",
+            current_status.as_db_str()
+        ));
+    }
+
+    let allowed_from: Vec<String> = BillingStatus::mark_paid_from()
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(
         r#"
-        UPDATE crm.billing_records SET status = 'paid', paid_at = $3, updated_at = $3
+        UPDATE crm.billing_records SET
+            status = 'paid', paid_at = COALESCE(paid_at, $3), updated_at = $3
         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND status = ANY($4::text[])
         "#,
     )
     .bind(id)
     .bind(tenant_id)
     .bind(now)
+    .bind(&allowed_from)
     .execute(&mut **txn)
     .await;
 
@@ -442,7 +561,7 @@ pub async fn mark_billing_paid(
                 "标记已收款成功",
             )
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
+        Ok(_) => ApiResponse::conflict("账单状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("标记已收款失败: {}", e);
             ApiResponse::from(TopemsError::Internal("标记已收款失败".to_string()))

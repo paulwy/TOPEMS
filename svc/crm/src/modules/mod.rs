@@ -12,6 +12,7 @@ pub mod aftersales;
 pub mod analytics;
 pub mod audit;
 pub mod billing;
+pub mod billing_status;
 pub mod contact;
 pub mod contact_approval_status;
 pub mod contact_status;
