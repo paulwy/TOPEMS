@@ -6,7 +6,7 @@
     "uncovered_enums": 101,
     "uncovered_values": 113,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 68,
+    "resolved_enums": 73,
     "internal_state_enums": 35,
     "persisted_unmapped_enums": 55,
     "api_projection_enums": 25,
@@ -300,7 +300,13 @@
           "under_assessment"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ai/src/dsh/governance_dashboard/mod.rs",
+        "enum": "ComplianceFrameworkStatus",
+        "persisted": false,
+        "reason": "框架合规评估结果，DSH 模块零 SQL，仅仪表盘展示"
+      }
     },
     {
       "module": "ai",
@@ -312,7 +318,13 @@
           "timeout"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ai/src/dsh/multi_agent/mod.rs",
+        "enum": "TaskStatus",
+        "persisted": false,
+        "reason": "多智能体任务在内存中的分配态（assigned/timeout），模块零 SQL"
+      }
     },
     {
       "module": "ai",
@@ -323,7 +335,13 @@
           "deprecated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ai/src/dsh/prompt/mod.rs",
+        "enum": "TemplateStatus",
+        "persisted": false,
+        "reason": "提示词模板内存生命周期（含 deprecated），无对应表列"
+      }
     },
     {
       "module": "ai",
@@ -337,7 +355,13 @@
           "timeout"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ai/src/dsh/workflow/mod.rs",
+        "enum": "NodeExecutionStatus",
+        "persisted": false,
+        "reason": "工作流节点执行态（含 skipped/timeout），执行引擎内存态"
+      }
     },
     {
       "module": "ai",
@@ -348,7 +372,13 @@
           "waiting"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ai/src/dsh/workflow/mod.rs",
+        "enum": "WorkflowExecutionStatus",
+        "persisted": false,
+        "reason": "工作流整体执行态（含 waiting），内存态；无执行记录表"
+      }
     },
     {
       "module": "analytics",

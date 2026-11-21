@@ -441,6 +441,36 @@
       "table": "erp.receivables",
       "column": "status",
       "candidate": "docs/database/erp-receivable-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ai/src/dsh/governance_dashboard/mod.rs",
+      "enum": "ComplianceFrameworkStatus",
+      "persisted": false,
+      "reason": "框架合规评估结果，DSH 模块零 SQL，仅仪表盘展示"
+    },
+    {
+      "file": "svc/ai/src/dsh/multi_agent/mod.rs",
+      "enum": "TaskStatus",
+      "persisted": false,
+      "reason": "多智能体任务在内存中的分配态（assigned/timeout），模块零 SQL"
+    },
+    {
+      "file": "svc/ai/src/dsh/prompt/mod.rs",
+      "enum": "TemplateStatus",
+      "persisted": false,
+      "reason": "提示词模板内存生命周期（含 deprecated），无对应表列"
+    },
+    {
+      "file": "svc/ai/src/dsh/workflow/mod.rs",
+      "enum": "NodeExecutionStatus",
+      "persisted": false,
+      "reason": "工作流节点执行态（含 skipped/timeout），执行引擎内存态"
+    },
+    {
+      "file": "svc/ai/src/dsh/workflow/mod.rs",
+      "enum": "WorkflowExecutionStatus",
+      "persisted": false,
+      "reason": "工作流整体执行态（含 waiting），内存态；无执行记录表"
     }
   ]
 }
