@@ -12,6 +12,7 @@ pub mod analytics;
 pub mod audit;
 pub mod billing;
 pub mod contact;
+pub mod contact_approval_status;
 pub mod contract;
 pub mod crm_plugin;
 pub mod customer;

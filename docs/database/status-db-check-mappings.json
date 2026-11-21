@@ -653,6 +653,13 @@
       "table": "crm.customers",
       "column": "approval_status",
       "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/contact_approval_status.rs",
+      "enum": "ContactApprovalStatus",
+      "table": "crm.contacts",
+      "column": "approval_status",
+      "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

@@ -3,11 +3,11 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 114,
+    "uncovered_enums": 115,
     "uncovered_values": 125,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 86,
-    "internal_state_enums": 45,
+    "resolved_enums": 87,
+    "internal_state_enums": 46,
     "persisted_unmapped_enums": 59,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 29,
@@ -423,6 +423,24 @@
         ]
       },
       "candidate_targets": []
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/contact_approval_status.rs",
+      "enum": "ContactApprovalStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "none"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/crm/src/modules/contact_approval_status.rs",
+        "enum": "ContactApprovalStatus",
+        "table": "crm.contacts",
+        "column": "approval_status",
+        "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "crm",
