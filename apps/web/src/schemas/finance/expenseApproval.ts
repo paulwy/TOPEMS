@@ -234,7 +234,7 @@ export const expenseApprovalSchema: EntitySchema & {
         type: 'static',
         options: [
           { label: i18n.t('finance.expense_approval.k44'), value: 'draft' },
-          { label: i18n.t('finance.expense_approval.k45'), value: 'pending_approval' },
+          { label: i18n.t('finance.expense_approval.k45'), value: 'pending' },
           { label: i18n.t('finance.expense_approval.k46'), value: 'approved' },
           { label: i18n.t('finance.expense_approval.k47'), value: 'rejected' },
           { label: i18n.t('finance.expense_approval.k48'), value: 'reimbursed' },

@@ -30,6 +30,7 @@ fn amount_decimal(req: &Value, key: &str) -> Decimal {
         .unwrap_or(Decimal::ZERO)
 }
 
+use crate::modules::expense_status::normalize as normalize_expense_status;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -304,6 +305,18 @@ pub async fn update_expense(
         }
     };
 
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => None,
+        Some(raw) => match normalize_expense_status(raw) {
+            Some(status) => Some(status.as_str()),
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/pending/approved/rejected/reimbursed",
+                )
+            }
+        },
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.expenses SET
@@ -340,11 +353,7 @@ pub async fn update_expense(
             .map(|i| i as i32)
             .unwrap_or(0),
     )
-    .bind(
-        req.get("status")
-            .and_then(|v| v.as_str())
-            .unwrap_or("pending"),
-    )
+    .bind(status)
     .bind(
         req.get("approver_id")
             .and_then(|v| v.as_str())

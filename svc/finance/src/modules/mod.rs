@@ -8,6 +8,7 @@ pub mod cqrs_routes;
 pub mod currencies;
 pub mod decision_v60;
 pub mod event_routes;
+pub mod expense_status;
 pub mod financial_reports;
 pub mod forecast_v53;
 pub mod forecasting;
@@ -43,6 +44,9 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::models::*;
+use crate::modules::expense_status::{
+    normalize as normalize_expense_status, ExpenseApprovalStatus,
+};
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -6393,7 +6397,19 @@ pub async fn create_expense_approval(
         }
         other => other,
     };
-    let status = req.status.unwrap_or_else(|| "pending".to_string());
+    let status = match req.status.as_deref() {
+        None => ExpenseApprovalStatus::Pending,
+        Some(raw) => match normalize_expense_status(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/pending/approved/rejected/reimbursed",
+                )
+            }
+        },
+    }
+    .as_str()
+    .to_string();
     let description = req.description;
 
     let mut guard = txn_arc.lock().await;
@@ -6530,6 +6546,17 @@ pub async fn update_expense_approval(
             return ApiResponse::unprocessable("total_amount 不能为负数");
         }
     }
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match normalize_expense_status(raw) {
+            Some(status) => Some(status.as_str()),
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/pending/approved/rejected/reimbursed",
+                )
+            }
+        },
+    };
     let employee_id = req
         .employee_id
         .as_deref()
@@ -6558,13 +6585,13 @@ pub async fn update_expense_approval(
         "finance",
         r#"UPDATE finance.expense_approvals SET
                employee_id = COALESCE($2, employee_id),
-               expense_no = COALESCE($3, expense_no),
-               employee_name = COALESCE($4, employee_name),
-               department = COALESCE($5, department),
-               expense_date = COALESCE($6, expense_date),
-               expense_type = COALESCE($7, expense_type),
-               total_amount = COALESCE($8, total_amount),
-               status = COALESCE($9, status),
+               status = COALESCE($3, status),
+               expense_no = COALESCE($4, expense_no),
+               employee_name = COALESCE($5, employee_name),
+               department = COALESCE($6, department),
+               expense_date = COALESCE($7, expense_date),
+               expense_type = COALESCE($8, expense_type),
+               total_amount = COALESCE($9, total_amount),
                description = COALESCE($10, description),
                approval_note = COALESCE($11, approval_note),
                approver_id = COALESCE($12, approver_id),
@@ -6577,13 +6604,13 @@ pub async fn update_expense_approval(
     ))
     .bind(id_uuid)
     .bind(employee_id)
+    .bind(status)
     .bind(req.expense_no.filter(|s| !s.trim().is_empty()))
     .bind(req.employee_name)
     .bind(req.department)
     .bind(expense_date)
     .bind(req.expense_type)
     .bind(req.total_amount)
-    .bind(req.status)
     .bind(req.description)
     .bind(req.approval_note)
     .bind(approver_id)
@@ -6666,26 +6693,42 @@ pub async fn delete_expense_approval(
 
 // gate: admin-only
 pub async fn submit_expense_approval(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(
-        serde_json::json!({"id": id, "status": "submitted"}),
+    transition_expense_approval(
+        &state,
+        txn_arc,
+        &id,
+        ExpenseApprovalStatus::Draft,
+        ExpenseApprovalStatus::Pending,
+        None,
+        None,
         "提交成功",
     )
+    .await
 }
 
 // gate: admin-only
 pub async fn approve_expense_approval(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(
-        serde_json::json!({"id": id, "status": "approved"}),
+    transition_expense_approval(
+        &state,
+        txn_arc,
+        &id,
+        ExpenseApprovalStatus::Pending,
+        ExpenseApprovalStatus::Approved,
+        Some(claims.username.as_str()),
+        None,
         "审批通过",
     )
+    .await
 }
 
 #[utoipa::path(
@@ -6701,15 +6744,79 @@ pub async fn approve_expense_approval(
     ),
 )]
 pub async fn reject_expense_approval(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
-    Json(_req): Json<serde_json::Value>,
+    Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(
-        serde_json::json!({"id": id, "status": "rejected"}),
+    let note = req.get("approval_note").and_then(|v| v.as_str());
+    transition_expense_approval(
+        &state,
+        txn_arc,
+        &id,
+        ExpenseApprovalStatus::Pending,
+        ExpenseApprovalStatus::Rejected,
+        None,
+        note,
         "驳回成功",
     )
+    .await
+}
+
+async fn transition_expense_approval(
+    state: &AppState,
+    txn_arc: topems_shared_auth::middleware::tenant::RlsTxnCell,
+    id: &str,
+    from: ExpenseApprovalStatus,
+    to: ExpenseApprovalStatus,
+    actor: Option<&str>,
+    note: Option<&str>,
+    success_message: &str,
+) -> ApiResponse<serde_json::Value> {
+    let Ok(id_uuid) = Uuid::parse_str(id) else {
+        return ApiResponse::not_found("费用审批不存在");
+    };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+            "请求事务缺失".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let row = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.expense_approvals SET
+               status = $3,
+               approver_name = CASE WHEN $3 = 'approved' THEN $4 ELSE approver_name END,
+               approval_note = COALESCE($5, approval_note),
+               updated_at = NOW()
+           WHERE id = $1 AND status = $2 AND deleted_at IS NULL
+           RETURNING status"#
+    ))
+    .bind(id_uuid)
+    .bind(from.as_str())
+    .bind(to.as_str())
+    .bind(actor)
+    .bind(note)
+    .fetch_optional(&mut scope)
+    .await;
+    match row {
+        Ok(Some(row)) => ApiResponse::success(
+            serde_json::json!({
+                "id": id_uuid,
+                "status": row.try_get::<String, _>("status").ok(),
+            }),
+            success_message,
+        ),
+        Ok(None) => ApiResponse::conflict("当前状态不允许该操作"),
+        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!(
+            "费用审批状态更新失败: {e}"
+        ))),
+    }
 }
 
 // ==================== RC4a 补齐: 报表基础 ====================
