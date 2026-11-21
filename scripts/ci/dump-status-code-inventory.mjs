@@ -12,6 +12,9 @@
  * 只做盘点与覆盖率统计，不生成枚举、不改代码。覆盖判定使用 DB CHECK 值并集；
  * 业务 FSM 状态多数不在 CHECK 内，因此“未覆盖”是待确认清单，不是立即失败。
  *
+ * B18 追加：Rust 枚举值 vs 前端 STATUS_COLOR_MAP 色板缺口（rust_values_not_in_palette）。
+ * 缺口只登记为队列，不失败；前端展示层漏登记会退化为灰色 fallback。
+ *
  * 用法：
  *   node scripts/ci/dump-status-code-inventory.mjs
  *   node scripts/ci/dump-status-code-inventory.mjs --check
@@ -127,6 +130,8 @@ function main() {
   const enumValues = [...new Set(enums.flatMap((e) => e.normalized))].sort();
   const enumUncovered = enumValues.filter((v) => !dbValues.has(v));
   const frontendUncovered = frontendKeys.filter((v) => !dbValues.has(v));
+  const palette = new Set(frontendKeys);
+  const paletteGaps = enumValues.filter((v) => !palette.has(v));
   const inventory = {
     inventory_version: 1,
     source: "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
@@ -139,6 +144,7 @@ function main() {
       rust_values_not_in_db_check: enumUncovered.length,
       frontend_status_keys: frontendKeys.length,
       frontend_keys_not_in_db_check: frontendUncovered.length,
+      rust_values_not_in_palette: paletteGaps.length,
     },
     enums,
     frontend: {
@@ -148,6 +154,9 @@ function main() {
     not_in_db_check: {
       rust_values: enumUncovered,
       frontend_keys: frontendUncovered,
+    },
+    not_in_palette: {
+      rust_values: paletteGaps,
     },
   };
   const body = `${JSON.stringify(inventory, null, 2)}\n`;
@@ -169,7 +178,7 @@ function main() {
 
   fs.writeFileSync(OUT, body);
   console.log(
-    `${TAG} WROTE: ${enums.length} 个 Rust 枚举（${enumValues.length} 值，${enumUncovered.length} 不在 DB CHECK）+ ${frontendKeys.length} 个前端键（${frontendUncovered.length} 不在 DB CHECK）`,
+    `${TAG} WROTE: ${enums.length} 个 Rust 枚举（${enumValues.length} 值，${enumUncovered.length} 不在 DB CHECK，${paletteGaps.length} 不在前端色板）+ ${frontendKeys.length} 个前端键（${frontendUncovered.length} 不在 DB CHECK）`,
   );
 }
 

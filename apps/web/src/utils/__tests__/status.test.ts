@@ -98,6 +98,16 @@ describe('finance 状态色板', () => {
     'generating',
     'reimbursed',
     'paid',
+    'aborted',
+    'compensated',
+    'compensating',
+    'skipped',
+    'partially_settled',
+    'settled',
+    'unsettled',
+    'closing',
+    'ignored',
+    'suppressed',
   ];
 
   it('每个 finance 状态都在全局色板里显式登记', () => {

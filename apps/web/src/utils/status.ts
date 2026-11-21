@@ -98,6 +98,17 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   executed: 'success',
   generating: 'primary',
   reimbursed: 'success',
+  // finance 其余 Rust 状态枚举（saga/结算/期间/审计/预测），B18 盘点闭环
+  aborted: 'error',
+  compensated: 'warning',
+  compensating: 'warning',
+  skipped: 'default',
+  partially_settled: 'warning',
+  settled: 'success',
+  unsettled: 'warning',
+  closing: 'warning',
+  ignored: 'default',
+  suppressed: 'default',
 };
 
 const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {
