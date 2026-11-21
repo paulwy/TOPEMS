@@ -33,6 +33,20 @@ impl ContactStatus {
         }
     }
 
+    /// 状态迁移：活跃↔停用，二者均可归档；归档只能先恢复为停用，避免直接复活。
+    #[must_use]
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        matches!(
+            (self, target),
+            (Self::Active, Self::Inactive | Self::Archived)
+                | (Self::Inactive, Self::Active | Self::Archived)
+                | (Self::Archived, Self::Inactive)
+        )
+    }
+
     #[must_use]
     pub fn as_db_str(self) -> &'static str {
         match self {
@@ -56,5 +70,10 @@ mod tests {
         }
         assert_eq!(ContactStatus::from_db_str("disabled"), None);
         assert_eq!(ContactStatus::DEFAULT.as_db_str(), "active");
+        assert!(ContactStatus::Active.can_transition_to(ContactStatus::Inactive));
+        assert!(ContactStatus::Inactive.can_transition_to(ContactStatus::Active));
+        assert!(ContactStatus::Archived.can_transition_to(ContactStatus::Inactive));
+        assert!(!ContactStatus::Archived.can_transition_to(ContactStatus::Active));
+        assert!(ContactStatus::Active.can_transition_to(ContactStatus::Active));
     }
 }

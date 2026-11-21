@@ -61,6 +61,7 @@ pub fn create_routes() -> Router<ApiState> {
         ("page" = Option<i64>, Query, description = "页码"),
         ("page_size" = Option<i64>, Query, description = "每页数量"),
         ("search" = Option<String>, Query, description = "搜索关键词"),
+        ("status" = Option<String>, Query, description = "状态过滤：active/inactive/archived"),
         ("customer_id" = Option<Uuid>, Query, description = "客户ID过滤"),
     ),
     responses(
@@ -375,7 +376,20 @@ async fn update_contact(
     let customer_id = req.customer_id.or(existing.customer_id);
     let status = match req.status.as_deref() {
         Some(raw) => match ContactStatus::from_db_str(raw) {
-            Some(v) => v.as_db_str().to_string(),
+            Some(next) => {
+                let Some(current) = ContactStatus::from_db_str(&existing.status) else {
+                    return ApiResponse::error(409, "联系人当前状态非法，无法变更");
+                };
+                if !current.can_transition_to(next) {
+                    let msg = format!(
+                        "联系人状态不允许从 {} 变更为 {}",
+                        current.as_db_str(),
+                        next.as_db_str()
+                    );
+                    return ApiResponse::error(409, &msg);
+                }
+                next.as_db_str().to_string()
+            }
             None => return ApiResponse::bad_request("无效的联系人状态"),
         },
         None => existing.status,
