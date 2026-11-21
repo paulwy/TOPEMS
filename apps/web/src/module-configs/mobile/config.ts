@@ -82,7 +82,7 @@ interface MobileSettingsPageProps {}
 
 const mobileHomeRoute: RouteConfigV2<MobileHomePageProps> = {
   path: MOBILE_PATHS.home,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileHomePage'), 'MobileHomePage'),
+  element: lazyWithRetry(() => import('@/components/mobile/MobileHomePage'), 'MobileHomePage'),
   module: 'mobile',
   code: 'mobile-home',
   title: i18n.t('mobile.nav.mobile-home'),
@@ -95,7 +95,10 @@ const mobileHomeRoute: RouteConfigV2<MobileHomePageProps> = {
 
 const mobileWorkbenchRoute: RouteConfigV2<MobileWorkbenchPageProps> = {
   path: MOBILE_PATHS.workbench,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileWorkbenchPage'), 'MobileWorkbenchPage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileWorkbenchPage'),
+    'MobileWorkbenchPage'
+  ),
   module: 'mobile',
   code: 'mobile-workbench',
   title: i18n.t('mobile.nav.mobile-workbench'),
@@ -109,7 +112,7 @@ const mobileWorkbenchRoute: RouteConfigV2<MobileWorkbenchPageProps> = {
 const mobileAttendanceRoute: RouteConfigV2<MobileAttendancePageProps> = {
   path: MOBILE_PATHS.attendance,
   element: lazyWithRetry(
-    () => import('@/pages/mobile/MobileAttendancePage'),
+    () => import('@/components/mobile/MobileAttendancePage'),
     'MobileAttendancePage'
   ),
   module: 'mobile',
@@ -124,7 +127,10 @@ const mobileAttendanceRoute: RouteConfigV2<MobileAttendancePageProps> = {
 
 const mobileTaskListRoute: RouteConfigV2<MobileTaskListPageProps> = {
   path: MOBILE_PATHS.tasks,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileTaskListPage'), 'MobileTaskListPage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileTaskListPage'),
+    'MobileTaskListPage'
+  ),
   module: 'mobile',
   code: 'mobile-tasks',
   title: i18n.t('mobile.nav.mobile-tasks'),
@@ -137,7 +143,10 @@ const mobileTaskListRoute: RouteConfigV2<MobileTaskListPageProps> = {
 
 const mobileApprovalRoute: RouteConfigV2<MobileApprovalPageProps> = {
   path: MOBILE_PATHS.approvals,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileApprovalPage'), 'MobileApprovalPage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileApprovalPage'),
+    'MobileApprovalPage'
+  ),
   module: 'mobile',
   code: 'mobile-approvals',
   title: i18n.t('mobile.nav.mobile-approvals'),
@@ -150,7 +159,10 @@ const mobileApprovalRoute: RouteConfigV2<MobileApprovalPageProps> = {
 
 const mobileInventoryRoute: RouteConfigV2<MobileInventoryPageProps> = {
   path: MOBILE_PATHS.inventory,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileInventoryPage'), 'MobileInventoryPage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileInventoryPage'),
+    'MobileInventoryPage'
+  ),
   module: 'mobile',
   code: 'mobile-inventory',
   title: i18n.t('mobile.nav.mobile-inventory'),
@@ -163,7 +175,10 @@ const mobileInventoryRoute: RouteConfigV2<MobileInventoryPageProps> = {
 
 const mobileQualityRoute: RouteConfigV2<MobileQualityPageProps> = {
   path: MOBILE_PATHS.quality,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileQualityPage'), 'MobileQualityPage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileQualityPage'),
+    'MobileQualityPage'
+  ),
   module: 'mobile',
   code: 'mobile-quality',
   title: i18n.t('mobile.nav.mobile-quality'),
@@ -177,7 +192,7 @@ const mobileQualityRoute: RouteConfigV2<MobileQualityPageProps> = {
 const mobileProductionRoute: RouteConfigV2<MobileProductionPageProps> = {
   path: MOBILE_PATHS.production,
   element: lazyWithRetry(
-    () => import('@/pages/mobile/MobileProductionPage'),
+    () => import('@/components/mobile/MobileProductionPage'),
     'MobileProductionPage'
   ),
   module: 'mobile',
@@ -192,7 +207,7 @@ const mobileProductionRoute: RouteConfigV2<MobileProductionPageProps> = {
 
 const mobileScanRoute: RouteConfigV2<MobileScanPageProps> = {
   path: MOBILE_PATHS.scan,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileScanPage'), 'MobileScanPage'),
+  element: lazyWithRetry(() => import('@/components/mobile/MobileScanPage'), 'MobileScanPage'),
   module: 'mobile',
   code: 'mobile-scan',
   title: i18n.t('mobile.nav.mobile-scan'),
@@ -206,7 +221,7 @@ const mobileScanRoute: RouteConfigV2<MobileScanPageProps> = {
 const mobileNotificationRoute: RouteConfigV2<MobileNotificationPageProps> = {
   path: MOBILE_PATHS.notifications,
   element: lazyWithRetry(
-    () => import('@/pages/mobile/MobileNotificationPage'),
+    () => import('@/components/mobile/MobileNotificationPage'),
     'MobileNotificationPage'
   ),
   module: 'mobile',
@@ -221,7 +236,10 @@ const mobileNotificationRoute: RouteConfigV2<MobileNotificationPageProps> = {
 
 const mobileProfileRoute: RouteConfigV2<MobileProfilePageProps> = {
   path: MOBILE_PATHS.profile,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileProfilePage'), 'MobileProfilePage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileProfilePage'),
+    'MobileProfilePage'
+  ),
   module: 'mobile',
   code: 'mobile-profile',
   title: i18n.t('mobile.nav.mobile-profile'),
@@ -234,7 +252,10 @@ const mobileProfileRoute: RouteConfigV2<MobileProfilePageProps> = {
 
 const mobileSettingsRoute: RouteConfigV2<MobileSettingsPageProps> = {
   path: MOBILE_PATHS.settings,
-  element: lazyWithRetry(() => import('@/pages/mobile/MobileSettingsPage'), 'MobileSettingsPage'),
+  element: lazyWithRetry(
+    () => import('@/components/mobile/MobileSettingsPage'),
+    'MobileSettingsPage'
+  ),
   module: 'mobile',
   code: 'mobile-settings',
   title: i18n.t('mobile.nav.mobile-settings'),

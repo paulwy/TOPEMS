@@ -12,10 +12,39 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const sampleRagStats = { total_retrievals: 128, total_documents_retrieved: 512, avg_documents_per_query: 4, query_rewrites: 32, rerank_count: 16, cache_hits: 64 };
+const sampleRagStats = {
+  total_retrievals: 128,
+  total_documents_retrieved: 512,
+  avg_documents_per_query: 4,
+  query_rewrites: 32,
+  rerank_count: 16,
+  cache_hits: 64,
+};
 const samplePerf = {
-  execution: { total_executions: 256, successful_executions: 250, failed_executions: 6, total_duration_ms: 10000, avg_duration_ms: 39, min_duration_ms: 5, max_duration_ms: 200, total_tool_calls: 1024, avg_tool_calls: 4, avg_iterations: 2, success_rate: 0.98 },
-  tools: [{ tool_name: 'search', call_count: 300, success_count: 295, failure_count: 5, total_duration_ms: 3000, avg_duration_ms: 10, success_rate: 0.98 }],
+  execution: {
+    total_executions: 256,
+    successful_executions: 250,
+    failed_executions: 6,
+    total_duration_ms: 10000,
+    avg_duration_ms: 39,
+    min_duration_ms: 5,
+    max_duration_ms: 200,
+    total_tool_calls: 1024,
+    avg_tool_calls: 4,
+    avg_iterations: 2,
+    success_rate: 0.98,
+  },
+  tools: [
+    {
+      tool_name: 'search',
+      call_count: 300,
+      success_count: 295,
+      failure_count: 5,
+      total_duration_ms: 3000,
+      avg_duration_ms: 10,
+      success_rate: 0.98,
+    },
+  ],
   history_size: 512,
 };
 
@@ -30,7 +59,7 @@ vi.mock('@/api/ai/dshEnhanced', () => ({
   },
 }));
 
-import DshRagPage from '@/pages/ai/DshRagPage';
+import DshRagPage from '@/components/ai/DshRagPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -38,10 +67,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -53,8 +84,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="rag" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='rag'
+                errors={captured}
+              >
                 <DshRagPage />
               </CaptureBoundary>
             </Suspense>

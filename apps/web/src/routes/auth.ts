@@ -8,9 +8,11 @@ export const AUTH_PATHS = {
 
 const safeLazy = createSafeLazy();
 
-const LoginPage = safeLazy(() => import('../pages/shared/LoginPage'));
-const ForgotPasswordPage = safeLazy(() => import('../pages/shared/ForgotPasswordPage'));
-const ForceChangePasswordPage = safeLazy(() => import('../pages/shared/ForceChangePasswordPage'));
+const LoginPage = safeLazy(() => import('../components/shared/LoginPage'));
+const ForgotPasswordPage = safeLazy(() => import('../components/shared/ForgotPasswordPage'));
+const ForceChangePasswordPage = safeLazy(
+  () => import('../components/shared/ForceChangePasswordPage')
+);
 
 export const authRoutes: RouteConfig[] = [
   {

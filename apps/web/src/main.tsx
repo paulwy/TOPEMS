@@ -40,7 +40,7 @@ const performDeferredInit = () => {
 
   loadPriority2
     .then(() => {
-      import('./pages/shared/DashboardPage').catch(() => {});
+      import('./components/shared/DashboardPage').catch(() => {});
     })
     .catch(() => {});
 

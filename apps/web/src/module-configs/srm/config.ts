@@ -117,7 +117,7 @@ export const srmModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: SRM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmDashboardPage'), 'SrmDashboardPage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmDashboardPage'), 'SrmDashboardPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-dashboard'),
       titleKey: 'srm.nav.srm-dashboard',
@@ -129,7 +129,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmDashboardPageProps>,
     {
       path: SRM_PATHS.supplier,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmSupplierPage'), 'SrmSupplierPage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmSupplierPage'), 'SrmSupplierPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-supplier'),
       titleKey: 'srm.nav.srm-supplier',
@@ -142,7 +142,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     {
       path: SRM_PATHS.supplierDetail,
       element: lazyWithRetry(
-        () => import('@/pages/srm/SrmSupplierDetailPage'),
+        () => import('@/components/srm/SrmSupplierDetailPage'),
         'SrmSupplierDetailPage'
       ),
       module: 'srm',
@@ -156,7 +156,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmSupplierDetailPageProps>,
     {
       path: SRM_PATHS.category,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmCategoryPage'), 'SrmCategoryPage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmCategoryPage'), 'SrmCategoryPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-category'),
       titleKey: 'srm.nav.srm-category',
@@ -169,7 +169,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     {
       path: SRM_PATHS.product,
       element: lazyWithRetry(
-        () => import('@/pages/srm/SrmSupplierProductPage'),
+        () => import('@/components/srm/SrmSupplierProductPage'),
         'SrmSupplierProductPage'
       ),
       module: 'srm',
@@ -183,7 +183,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmSupplierProductPageProps>,
     {
       path: SRM_PATHS.contract,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmContractPage'), 'SrmContractPage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmContractPage'), 'SrmContractPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-contract'),
       titleKey: 'srm.nav.srm-contract',
@@ -196,7 +196,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     {
       path: SRM_PATHS.contractDetail,
       element: lazyWithRetry(
-        () => import('@/pages/srm/SrmContractDetailPage'),
+        () => import('@/components/srm/SrmContractDetailPage'),
         'SrmContractDetailPage'
       ),
       module: 'srm',
@@ -210,7 +210,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmContractDetailPageProps>,
     {
       path: SRM_PATHS.order,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmOrderPage'), 'SrmOrderPage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmOrderPage'), 'SrmOrderPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-order'),
       titleKey: 'srm.nav.srm-order',
@@ -222,7 +222,10 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmOrderPageProps>,
     {
       path: SRM_PATHS.evaluation,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmEvaluationPage'), 'SrmEvaluationPage'),
+      element: lazyWithRetry(
+        () => import('@/components/srm/SrmEvaluationPage'),
+        'SrmEvaluationPage'
+      ),
       module: 'srm',
       title: i18n.t('srm.nav.srm-evaluation'),
       titleKey: 'srm.nav.srm-evaluation',
@@ -234,7 +237,10 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmEvaluationPageProps>,
     {
       path: SRM_PATHS.performance,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmPerformancePage'), 'SrmPerformancePage'),
+      element: lazyWithRetry(
+        () => import('@/components/srm/SrmPerformancePage'),
+        'SrmPerformancePage'
+      ),
       module: 'srm',
       title: i18n.t('srm.nav.srm-performance'),
       titleKey: 'srm.nav.srm-performance',
@@ -247,7 +253,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     {
       path: SRM_PATHS.scoringDimension,
       element: lazyWithRetry(
-        () => import('@/pages/srm/SrmScoringDimensionPage'),
+        () => import('@/components/srm/SrmScoringDimensionPage'),
         'SrmScoringDimensionPage'
       ),
       module: 'srm',
@@ -262,7 +268,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     {
       path: SRM_PATHS.inquiry,
       element: lazyWithRetry(
-        () => import('@/pages/srm/InquiryQuotationPage'),
+        () => import('@/components/srm/InquiryQuotationPage'),
         'InquiryQuotationPage'
       ),
       module: 'srm',
@@ -276,7 +282,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<InquiryQuotationPageProps>,
     {
       path: SRM_PATHS.bidding,
-      element: lazyWithRetry(() => import('@/pages/srm/BiddingPage'), 'BiddingPage'),
+      element: lazyWithRetry(() => import('@/components/srm/BiddingPage'), 'BiddingPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-bidding'),
       titleKey: 'srm.nav.srm-bidding',
@@ -288,7 +294,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<BiddingPageProps>,
     {
       path: SRM_PATHS.finance,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmFinancePage'), 'SrmFinancePage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmFinancePage'), 'SrmFinancePage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-finance'),
       titleKey: 'srm.nav.srm-finance',
@@ -300,7 +306,10 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SrmFinancePageProps>,
     {
       path: SRM_PATHS.portal,
-      element: lazyWithRetry(() => import('@/pages/srm/SupplierPortalPage'), 'SupplierPortalPage'),
+      element: lazyWithRetry(
+        () => import('@/components/srm/SupplierPortalPage'),
+        'SupplierPortalPage'
+      ),
       module: 'srm',
       title: i18n.t('srm.nav.srm-portal'),
       titleKey: 'srm.nav.srm-portal',
@@ -312,7 +321,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SupplierPortalPageProps>,
     {
       path: SRM_PATHS.quotation,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmQuotationPage'), 'SrmQuotationPage'),
+      element: lazyWithRetry(() => import('@/components/srm/SrmQuotationPage'), 'SrmQuotationPage'),
       module: 'srm',
       title: i18n.t('srm.nav.srm-quotation'),
       titleKey: 'srm.nav.srm-quotation',

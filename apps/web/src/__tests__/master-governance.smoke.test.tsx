@@ -60,7 +60,7 @@ vi.mock('@/api/master/governance', () => ({
   },
 }));
 
-import MasterGovernancePage from '@/pages/master/MasterGovernancePage';
+import MasterGovernancePage from '@/components/master/MasterGovernancePage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -68,10 +68,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -83,8 +85,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="governance" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='governance'
+                errors={captured}
+              >
                 <MasterGovernancePage />
               </CaptureBoundary>
             </Suspense>

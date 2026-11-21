@@ -147,7 +147,7 @@ interface RsSettingsPageProps {}
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: RD_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/rd/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/rd/DashboardPage'), 'DashboardPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-dashboard'),
   titleKey: 'rd.nav.rd-dashboard',
@@ -160,7 +160,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const rsOverviewRoute: RouteConfigV2<RsOverviewPageProps> = {
   path: RD_PATHS.overview,
-  element: lazyWithRetry(() => import('@/pages/rd/RsOverviewPage'), 'RsOverviewPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsOverviewPage'), 'RsOverviewPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-overview'),
   titleKey: 'rd.nav.rd-overview',
@@ -173,7 +173,7 @@ const rsOverviewRoute: RouteConfigV2<RsOverviewPageProps> = {
 
 const rsProjectListRoute: RouteConfigV2<RsProjectListPageProps> = {
   path: RD_PATHS.project,
-  element: lazyWithRetry(() => import('@/pages/rd/RsProjectListPage'), 'RsProjectListPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsProjectListPage'), 'RsProjectListPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-project'),
   titleKey: 'rd.nav.rd-project',
@@ -186,7 +186,10 @@ const rsProjectListRoute: RouteConfigV2<RsProjectListPageProps> = {
 
 const rsProjectCreateRoute: RouteConfigV2<RsProjectCreatePageProps> = {
   path: RD_PATHS.projectCreate,
-  element: lazyWithRetry(() => import('@/pages/rd/RsProjectCreatePage'), 'RsProjectCreatePage'),
+  element: lazyWithRetry(
+    () => import('@/components/rd/RsProjectCreatePage'),
+    'RsProjectCreatePage'
+  ),
   module: 'rd',
   title: i18n.t('rd.nav.rd-project-create'),
   titleKey: 'rd.nav.rd-project-create',
@@ -199,7 +202,10 @@ const rsProjectCreateRoute: RouteConfigV2<RsProjectCreatePageProps> = {
 
 const rsProjectDetailRoute: RouteConfigV2<RsProjectDetailPageProps> = {
   path: `${RD_PATHS.project}/:id`,
-  element: lazyWithRetry(() => import('@/pages/rd/RsProjectDetailPage'), 'RsProjectDetailPage'),
+  element: lazyWithRetry(
+    () => import('@/components/rd/RsProjectDetailPage'),
+    'RsProjectDetailPage'
+  ),
   module: 'rd',
   title: i18n.t('rd.nav.rd-project-detail'),
   titleKey: 'rd.nav.rd-project-detail',
@@ -212,7 +218,10 @@ const rsProjectDetailRoute: RouteConfigV2<RsProjectDetailPageProps> = {
 
 const rsExperimentListRoute: RouteConfigV2<RsExperimentListPageProps> = {
   path: RD_PATHS.experiment,
-  element: lazyWithRetry(() => import('@/pages/rd/RsExperimentListPage'), 'RsExperimentListPage'),
+  element: lazyWithRetry(
+    () => import('@/components/rd/RsExperimentListPage'),
+    'RsExperimentListPage'
+  ),
   module: 'rd',
   title: i18n.t('rd.nav.rd-experiment'),
   titleKey: 'rd.nav.rd-experiment',
@@ -226,7 +235,7 @@ const rsExperimentListRoute: RouteConfigV2<RsExperimentListPageProps> = {
 const rsExperimentCreateRoute: RouteConfigV2<RsExperimentCreatePageProps> = {
   path: RD_PATHS.experimentCreate,
   element: lazyWithRetry(
-    () => import('@/pages/rd/RsExperimentCreatePage'),
+    () => import('@/components/rd/RsExperimentCreatePage'),
     'RsExperimentCreatePage'
   ),
   module: 'rd',
@@ -242,7 +251,7 @@ const rsExperimentCreateRoute: RouteConfigV2<RsExperimentCreatePageProps> = {
 const rsExperimentDetailRoute: RouteConfigV2<RsExperimentDetailPageProps> = {
   path: `${RD_PATHS.experiment}/:id`,
   element: lazyWithRetry(
-    () => import('@/pages/rd/RsExperimentDetailPage'),
+    () => import('@/components/rd/RsExperimentDetailPage'),
     'RsExperimentDetailPage'
   ),
   module: 'rd',
@@ -257,7 +266,7 @@ const rsExperimentDetailRoute: RouteConfigV2<RsExperimentDetailPageProps> = {
 
 const rsFormulaListRoute: RouteConfigV2<RsFormulaListPageProps> = {
   path: RD_PATHS.formula,
-  element: lazyWithRetry(() => import('@/pages/rd/RsFormulaListPage'), 'RsFormulaListPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsFormulaListPage'), 'RsFormulaListPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-formula'),
   titleKey: 'rd.nav.rd-formula',
@@ -270,7 +279,10 @@ const rsFormulaListRoute: RouteConfigV2<RsFormulaListPageProps> = {
 
 const rsFormulaCreateRoute: RouteConfigV2<RsFormulaCreatePageProps> = {
   path: RD_PATHS.formulaCreate,
-  element: lazyWithRetry(() => import('@/pages/rd/RsFormulaCreatePage'), 'RsFormulaCreatePage'),
+  element: lazyWithRetry(
+    () => import('@/components/rd/RsFormulaCreatePage'),
+    'RsFormulaCreatePage'
+  ),
   module: 'rd',
   title: i18n.t('rd.nav.rd-formula-create'),
   titleKey: 'rd.nav.rd-formula-create',
@@ -283,7 +295,10 @@ const rsFormulaCreateRoute: RouteConfigV2<RsFormulaCreatePageProps> = {
 
 const rsFormulaDetailRoute: RouteConfigV2<RsFormulaDetailPageProps> = {
   path: `${RD_PATHS.formula}/:id`,
-  element: lazyWithRetry(() => import('@/pages/rd/RsFormulaDetailPage'), 'RsFormulaDetailPage'),
+  element: lazyWithRetry(
+    () => import('@/components/rd/RsFormulaDetailPage'),
+    'RsFormulaDetailPage'
+  ),
   module: 'rd',
   title: i18n.t('rd.nav.rd-formula-detail'),
   titleKey: 'rd.nav.rd-formula-detail',
@@ -296,7 +311,7 @@ const rsFormulaDetailRoute: RouteConfigV2<RsFormulaDetailPageProps> = {
 
 const rsMaterialListRoute: RouteConfigV2<RsMaterialListPageProps> = {
   path: RD_PATHS.material,
-  element: lazyWithRetry(() => import('@/pages/rd/RsMaterialListPage'), 'RsMaterialListPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsMaterialListPage'), 'RsMaterialListPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-material'),
   titleKey: 'rd.nav.rd-material',
@@ -309,7 +324,7 @@ const rsMaterialListRoute: RouteConfigV2<RsMaterialListPageProps> = {
 
 const rsCodeRoute: RouteConfigV2<RsCodePageProps> = {
   path: RD_PATHS.code,
-  element: lazyWithRetry(() => import('@/pages/rd/RsCodePage'), 'RsCodePage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsCodePage'), 'RsCodePage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-code'),
   titleKey: 'rd.nav.rd-code',
@@ -322,7 +337,7 @@ const rsCodeRoute: RouteConfigV2<RsCodePageProps> = {
 
 const rsBuildRoute: RouteConfigV2<RsBuildPageProps> = {
   path: RD_PATHS.build,
-  element: lazyWithRetry(() => import('@/pages/rd/RsBuildPage'), 'RsBuildPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsBuildPage'), 'RsBuildPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-build'),
   titleKey: 'rd.nav.rd-build',
@@ -335,7 +350,7 @@ const rsBuildRoute: RouteConfigV2<RsBuildPageProps> = {
 
 const rsTestRoute: RouteConfigV2<RsTestPageProps> = {
   path: RD_PATHS.test,
-  element: lazyWithRetry(() => import('@/pages/rd/RsTestPage'), 'RsTestPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsTestPage'), 'RsTestPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-test'),
   titleKey: 'rd.nav.rd-test',
@@ -348,7 +363,7 @@ const rsTestRoute: RouteConfigV2<RsTestPageProps> = {
 
 const rsBugRoute: RouteConfigV2<RsBugPageProps> = {
   path: RD_PATHS.bug,
-  element: lazyWithRetry(() => import('@/pages/rd/RsBugPage'), 'RsBugPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsBugPage'), 'RsBugPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-bug'),
   titleKey: 'rd.nav.rd-bug',
@@ -361,7 +376,7 @@ const rsBugRoute: RouteConfigV2<RsBugPageProps> = {
 
 const rsReviewRoute: RouteConfigV2<RsReviewPageProps> = {
   path: RD_PATHS.review,
-  element: lazyWithRetry(() => import('@/pages/rd/RsReviewPage'), 'RsReviewPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsReviewPage'), 'RsReviewPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-review'),
   titleKey: 'rd.nav.rd-review',
@@ -374,7 +389,7 @@ const rsReviewRoute: RouteConfigV2<RsReviewPageProps> = {
 
 const rsDeployRoute: RouteConfigV2<RsDeployPageProps> = {
   path: RD_PATHS.deploy,
-  element: lazyWithRetry(() => import('@/pages/rd/RsDeployPage'), 'RsDeployPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsDeployPage'), 'RsDeployPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-deploy'),
   titleKey: 'rd.nav.rd-deploy',
@@ -387,7 +402,7 @@ const rsDeployRoute: RouteConfigV2<RsDeployPageProps> = {
 
 const rsReleaseRoute: RouteConfigV2<RsReleasePageProps> = {
   path: RD_PATHS.release,
-  element: lazyWithRetry(() => import('@/pages/rd/RsReleasePage'), 'RsReleasePage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsReleasePage'), 'RsReleasePage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-release'),
   titleKey: 'rd.nav.rd-release',
@@ -400,7 +415,7 @@ const rsReleaseRoute: RouteConfigV2<RsReleasePageProps> = {
 
 const rsMilestoneRoute: RouteConfigV2<RsMilestonePageProps> = {
   path: RD_PATHS.milestone,
-  element: lazyWithRetry(() => import('@/pages/rd/RsMilestonePage'), 'RsMilestonePage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsMilestonePage'), 'RsMilestonePage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-milestone'),
   titleKey: 'rd.nav.rd-milestone',
@@ -413,7 +428,7 @@ const rsMilestoneRoute: RouteConfigV2<RsMilestonePageProps> = {
 
 const rsDocRoute: RouteConfigV2<RsDocPageProps> = {
   path: RD_PATHS.doc,
-  element: lazyWithRetry(() => import('@/pages/rd/RsDocPage'), 'RsDocPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsDocPage'), 'RsDocPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-doc'),
   titleKey: 'rd.nav.rd-doc',
@@ -426,7 +441,7 @@ const rsDocRoute: RouteConfigV2<RsDocPageProps> = {
 
 const rsReportRoute: RouteConfigV2<RsReportPageProps> = {
   path: RD_PATHS.report,
-  element: lazyWithRetry(() => import('@/pages/rd/RsReportPage'), 'RsReportPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsReportPage'), 'RsReportPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-report'),
   titleKey: 'rd.nav.rd-report',
@@ -439,7 +454,7 @@ const rsReportRoute: RouteConfigV2<RsReportPageProps> = {
 
 const rsSettingsRoute: RouteConfigV2<RsSettingsPageProps> = {
   path: RD_PATHS.settings,
-  element: lazyWithRetry(() => import('@/pages/rd/RsSettingsPage'), 'RsSettingsPage'),
+  element: lazyWithRetry(() => import('@/components/rd/RsSettingsPage'), 'RsSettingsPage'),
   module: 'rd',
   title: i18n.t('rd.nav.rd-settings'),
   titleKey: 'rd.nav.rd-settings',

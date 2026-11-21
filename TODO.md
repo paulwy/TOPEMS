@@ -89,7 +89,7 @@
 
 | ID | 任务 | 当前读数 | 验收 |
 |---|---|---|---|
-| W3-B（进行中） | 清理 `pages/` 残留（crm 已只剩 `__tests__`） | 2026-11-21：已外移 6 组共享模块；第一批再迁 8 个模块（OA/工单/性能/桌面/资产/帮助/IAM/SCM）到 `components/`，`pages/` 41→33。剩余 18 个与 `components/<module>` 冲突，需按文件合并。证据 `docs/quality/pages-residue-batch1-2026-11-21.md` | 残留目录清零（分批） |
+| W3-B ✅ | 清理 `pages/` 残留 | 2026-11-21 三批完成：8 个无冲突模块整目录迁移、11 个无冲突模块迁移、21 个同名模块按文件合并；130 个页面测试迁到 `components/__tests__`，Demo 页迁 `components/redesign`；`pages/` 一级目录 41→0，本地 `@/pages` 引用 0；139 文件/779 用例通过。证据 `docs/quality/pages-residue-final-2026-11-21.md` | 残留目录清零 ✅ |
 | W3-C ✅（生产代码） | `@/pages/*` 引用收敛到路由层 | 生产代码跨层引用 **0**（2026-11-21）；`module-configs/**` 约 539 处属路由装配保留 | 仅路由入口引用 ✅ |
 | W3-D ✅（口径修正） | 合并 `schema/`、`schemas/`、`types.ts` | 2026-11-21 实测 `schema` 是 DSL 适配层（7 文件/414 引用）、`schemas` 是页面 schema（258 文件），不同层不合并；DSL 目录改名 `schema-dsl`，删除零引用空壳 `src/types.ts`，vitest include 同步。证据 `docs/quality/frontend-schema-table-clarification-2026-11-21.md` | 命名无歧义、空壳清零 ✅ |
 | W4-A ✅（口径修正） | `DataTable` 去重 | 2026-11-21 实测 4 处并非重复：shared-components 为 MUI 高级表、redesign 为轻量语义表、GIS 旧包装零引用、DashboardTemplate 为配置驱动内部件。删除 GIS 死代码（含测试）；保留两套按设计体系区分的公开实现与 Dashboard 内部件，不硬合并。证据同上 | 死代码清零、公开实现职责清晰 ✅ |
@@ -317,7 +317,7 @@
 | E3-13 ✅ | W2-§12.6 WS 消费组默认值区分 | 无 | — | 默认名不同，双实例互不抢占 |
 | E3-14 ✅ | B43-09 非 HTTP 入口租户上下文评估 | 无（只读分析） | — | 每类入口有上下文或书面豁免 ✅ |
 | E3-15 ✅ | W7-B 平台语料 5 表归一 | E3-9、E0-1 | DEC-15 | 归零哨兵归一 ✅；租户 GUC 8/48/16/1、空 GUC 0 ✅（生产窗口待执行） |
-| E4-1（进行中） | W3-B 清 `pages/` 残留 | 无 | — | 2026-11-21 第一批：8 个模块迁移后 41→33 目录；剩余 18 个冲突模块按文件合并，其余 10 个继续整目录迁移 |
+| E4-1 ✅ | W3-B 清 `pages/` 残留 | 无 | — | 2026-11-21 三批完成，`pages/` 41→0；页面测试与 Demo 同步迁移，779 用例通过 |
 | E4-2 ✅ | W3-C `@/pages/*` 收敛 | E4-1 | — | 2026-11-21 生产代码跨层引用 0；`module-configs/**` 约 539 处属路由装配 |
 | E4-3 ✅（口径修正） | W3-D schema 三分 | 无 | — | 2026-11-21 `schema` 改名 `schema-dsl`，删除空壳 `types.ts`，`schemas` 保留页面 schema；不强行合并 |
 | E4-4（部分完成） | W4-A `DataTable`、W4-C `StatusBadge` 去重 | 无 | — | 2026-11-21 W4-A 已删 GIS 死代码，保留两套设计体系实现；W4-C `StatusBadge` 11 个定义待处理 |

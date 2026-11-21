@@ -48,7 +48,7 @@ interface AutomationVariablesPageProps {
 const automationDashboardRoute: RouteConfigV2<AutomationDashboardPageProps> = {
   path: AUTOMATION_PATHS.dashboard,
   element: lazyWithRetry(
-    () => import('@/pages/automation/AutomationDashboardPage'),
+    () => import('@/components/automation/AutomationDashboardPage'),
     'AutomationDashboardPage'
   ),
   module: 'automation',
@@ -64,7 +64,7 @@ const automationDashboardRoute: RouteConfigV2<AutomationDashboardPageProps> = {
 const automationRulesRoute: RouteConfigV2<AutomationRulesPageProps> = {
   path: AUTOMATION_PATHS.rules,
   element: lazyWithRetry(
-    () => import('@/pages/automation/AutomationRulesPage'),
+    () => import('@/components/automation/AutomationRulesPage'),
     'AutomationRulesPage'
   ),
   module: 'automation',
@@ -80,7 +80,7 @@ const automationRulesRoute: RouteConfigV2<AutomationRulesPageProps> = {
 const automationRunsRoute: RouteConfigV2<AutomationRunsPageProps> = {
   path: AUTOMATION_PATHS.runs,
   element: lazyWithRetry(
-    () => import('@/pages/automation/AutomationRunsPage'),
+    () => import('@/components/automation/AutomationRunsPage'),
     'AutomationRunsPage'
   ),
   module: 'automation',
@@ -96,7 +96,7 @@ const automationRunsRoute: RouteConfigV2<AutomationRunsPageProps> = {
 const automationDesignerRoute: RouteConfigV2<AutomationDesignerPageProps> = {
   path: AUTOMATION_PATHS.designer,
   element: lazyWithRetry(
-    () => import('@/pages/automation/AutomationDesignerPage'),
+    () => import('@/components/automation/AutomationDesignerPage'),
     'AutomationDesignerPage'
   ),
   module: 'automation',
@@ -112,7 +112,7 @@ const automationDesignerRoute: RouteConfigV2<AutomationDesignerPageProps> = {
 const automationVariablesRoute: RouteConfigV2<AutomationVariablesPageProps> = {
   path: AUTOMATION_PATHS.variables,
   element: lazyWithRetry(
-    () => import('@/pages/automation/AutomationVariablesPage'),
+    () => import('@/components/automation/AutomationVariablesPage'),
     'AutomationVariablesPage'
   ),
   module: 'automation',

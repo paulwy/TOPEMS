@@ -897,7 +897,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.dashboard,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionDashboardPage'),
+        () => import('@/components/mes/ProductionDashboardPage'),
         'ProductionDashboardPage'
       ),
       module: 'mes',
@@ -912,7 +912,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionOrders,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionOrderManagementPage'),
+        () => import('@/components/mes/ProductionOrderManagementPage'),
         'ProductionOrderManagementPage'
       ),
       module: 'mes',
@@ -927,7 +927,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionOrderDetail,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionOrderDetailPage'),
+        () => import('@/components/mes/ProductionOrderDetailPage'),
         'ProductionOrderDetailPage'
       ),
       module: 'mes',
@@ -942,7 +942,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.equipment,
       element: lazyWithRetry(
-        () => import('@/pages/mes/EquipmentManagementPage'),
+        () => import('@/components/mes/EquipmentManagementPage'),
         'EquipmentManagementPage'
       ),
       module: 'mes',
@@ -957,7 +957,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.equipmentDetail,
       element: lazyWithRetry(
-        () => import('@/pages/mes/EquipmentDetailPage'),
+        () => import('@/components/mes/EquipmentDetailPage'),
         'EquipmentDetailPage'
       ),
       module: 'mes',
@@ -971,7 +971,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<EquipmentDetailPageProps>,
     {
       path: MES_PATHS.workStations,
-      element: lazyWithRetry(() => import('@/pages/mes/WorkStationPage'), 'WorkStationPage'),
+      element: lazyWithRetry(() => import('@/components/mes/WorkStationPage'), 'WorkStationPage'),
       module: 'mes',
       code: 'mes-work-stations',
       title: i18n.t('mes.nav.mes-work-stations'),
@@ -983,7 +983,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<WorkStationPageProps>,
     {
       path: MES_PATHS.teams,
-      element: lazyWithRetry(() => import('@/pages/mes/TeamManagementPage'), 'TeamManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/TeamManagementPage'),
+        'TeamManagementPage'
+      ),
       module: 'mes',
       code: 'mes-teams',
       title: i18n.t('mes.nav.mes-teams'),
@@ -996,7 +999,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.materialRequirement,
       element: lazyWithRetry(
-        () => import('@/pages/mes/MaterialRequirementPage'),
+        () => import('@/components/mes/MaterialRequirementPage'),
         'MaterialRequirementPage'
       ),
       module: 'mes',
@@ -1010,7 +1013,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<MaterialRequirementPageProps>,
     {
       path: MES_PATHS.processRoutes,
-      element: lazyWithRetry(() => import('@/pages/mes/ProcessRoutePage'), 'ProcessRoutePage'),
+      element: lazyWithRetry(() => import('@/components/mes/ProcessRoutePage'), 'ProcessRoutePage'),
       module: 'mes',
       code: 'mes-process-routes',
       title: i18n.t('mes.nav.mes-process-routes'),
@@ -1022,7 +1025,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<ProcessRoutePageProps>,
     {
       path: MES_PATHS.processFlow,
-      element: lazyWithRetry(() => import('@/pages/mes/ProcessFlowPage'), 'ProcessFlowPage'),
+      element: lazyWithRetry(() => import('@/components/mes/ProcessFlowPage'), 'ProcessFlowPage'),
       module: 'mes',
       code: 'mes-process-flow',
       title: i18n.t('mes.nav.mes-process-flow'),
@@ -1035,7 +1038,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionProcess,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionProcessPage'),
+        () => import('@/components/mes/ProductionProcessPage'),
         'ProductionProcessPage'
       ),
       module: 'mes',
@@ -1050,7 +1053,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionSchedule,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionSchedulePage'),
+        () => import('@/components/mes/ProductionSchedulePage'),
         'ProductionSchedulePage'
       ),
       module: 'mes',
@@ -1065,7 +1068,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.wip,
       element: lazyWithRetry(
-        () => import('@/pages/mes/WIPPage') as unknown as Promise<{ default: React.ComponentType }>,
+        () =>
+          import('@/components/mes/WIPPage') as unknown as Promise<{
+            default: React.ComponentType;
+          }>,
         'WIPPage'
       ),
       module: 'mes',
@@ -1080,7 +1086,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.qualityInspection,
       element: lazyWithRetry(
-        () => import('@/pages/mes/QualityInspectionPage'),
+        () => import('@/components/mes/QualityInspectionPage'),
         'QualityInspectionPage'
       ),
       module: 'mes',
@@ -1095,7 +1101,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.traceability,
       element: lazyWithRetry(
-        () => import('@/pages/mes/QualityTraceabilityPage'),
+        () => import('@/components/mes/QualityTraceabilityPage'),
         'QualityTraceabilityPage'
       ),
       module: 'mes',
@@ -1110,7 +1116,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionKanban,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionKanbanPage'),
+        () => import('@/components/mes/ProductionKanbanPage'),
         'ProductionKanbanPage'
       ),
       module: 'mes',
@@ -1125,7 +1131,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionRecord,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionRecordPage'),
+        () => import('@/components/mes/ProductionRecordPage'),
         'ProductionRecordPage'
       ),
       module: 'mes',
@@ -1139,7 +1145,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<ProductionRecordPageProps>,
     {
       path: MES_PATHS.workReport,
-      element: lazyWithRetry(() => import('@/pages/mes/WorkReportPage'), 'WorkReportPage'),
+      element: lazyWithRetry(() => import('@/components/mes/WorkReportPage'), 'WorkReportPage'),
       module: 'mes',
       code: 'mes-work-report',
       title: i18n.t('mes.nav.mes-work-report'),
@@ -1151,7 +1157,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<WorkReportPageProps>,
     {
       path: MES_PATHS.equipmentOee,
-      element: lazyWithRetry(() => import('@/pages/mes/EquipmentOEEPage'), 'EquipmentOEEPage'),
+      element: lazyWithRetry(() => import('@/components/mes/EquipmentOEEPage'), 'EquipmentOEEPage'),
       module: 'mes',
       code: 'mes-equipment-oee',
       title: i18n.t('mes.nav.mes-equipment-oee'),
@@ -1163,7 +1169,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<EquipmentOEEPageProps>,
     {
       path: MES_PATHS.materialBom,
-      element: lazyWithRetry(() => import('@/pages/mes/MaterialBOMPage'), 'MaterialBOMPage'),
+      element: lazyWithRetry(() => import('@/components/mes/MaterialBOMPage'), 'MaterialBOMPage'),
       module: 'mes',
       code: 'mes-material-bom',
       title: i18n.t('mes.nav.mes-material-bom'),
@@ -1175,7 +1181,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<MaterialBOMPageProps>,
     {
       path: MES_PATHS.materialIssue,
-      element: lazyWithRetry(() => import('@/pages/mes/MaterialIssuePage'), 'MaterialIssuePage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/MaterialIssuePage'),
+        'MaterialIssuePage'
+      ),
       module: 'mes',
       code: 'mes-material-issue',
       title: i18n.t('mes.nav.mes-material-issue'),
@@ -1187,7 +1196,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<MaterialIssuePageProps>,
     {
       path: MES_PATHS.materialReturn,
-      element: lazyWithRetry(() => import('@/pages/mes/MaterialReturnPage'), 'MaterialReturnPage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/MaterialReturnPage'),
+        'MaterialReturnPage'
+      ),
       module: 'mes',
       code: 'mes-material-return',
       title: i18n.t('mes.nav.mes-material-return'),
@@ -1200,7 +1212,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.productionDashboard,
       element: lazyWithRetry(
-        () => import('@/pages/mes/ProductionDashboardPage'),
+        () => import('@/components/mes/ProductionDashboardPage'),
         'ProductionDashboardPage'
       ),
       module: 'mes',
@@ -1214,7 +1226,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<ProductionDashboardPageProps>,
     {
       path: MES_PATHS.apsScheduling,
-      element: lazyWithRetry(() => import('@/pages/mes/ApsSchedulingPage'), 'ApsSchedulingPage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/ApsSchedulingPage'),
+        'ApsSchedulingPage'
+      ),
       module: 'mes',
       code: 'mes-aps-scheduling',
       title: i18n.t('mes.nav.mes-aps-scheduling'),
@@ -1226,7 +1241,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<ApsSchedulingPageProps>,
     {
       path: MES_PATHS.productionCost,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionCostPage'), 'ProductionCostPage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/ProductionCostPage'),
+        'ProductionCostPage'
+      ),
       module: 'mes',
       code: 'mes-production-cost',
       title: i18n.t('mes.nav.mes-production-cost'),
@@ -1239,7 +1257,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.energyManagement,
       element: lazyWithRetry(
-        () => import('@/pages/mes/EnergyManagementPage'),
+        () => import('@/components/mes/EnergyManagementPage'),
         'EnergyManagementPage'
       ),
       module: 'mes',
@@ -1254,7 +1272,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.anomalyDetection,
       element: lazyWithRetry(
-        () => import('@/pages/mes/AnomalyDetectionPage'),
+        () => import('@/components/mes/AnomalyDetectionPage'),
         'AnomalyDetectionPage'
       ),
       module: 'mes',
@@ -1268,7 +1286,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<AnomalyDetectionPageProps>,
     {
       path: MES_PATHS.workOrder,
-      element: lazyWithRetry(() => import('@/pages/mes/MesWorkOrderPage'), 'MesWorkOrderPage'),
+      element: lazyWithRetry(() => import('@/components/mes/MesWorkOrderPage'), 'MesWorkOrderPage'),
       module: 'mes',
       code: 'mes-work-order',
       title: i18n.t('mes.nav.mes-work-order'),
@@ -1280,7 +1298,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<MesWorkOrderPageProps>,
     {
       path: MES_PATHS.quality,
-      element: lazyWithRetry(() => import('@/pages/mes/MesQualityPage'), 'MesQualityPage'),
+      element: lazyWithRetry(() => import('@/components/mes/MesQualityPage'), 'MesQualityPage'),
       module: 'mes',
       code: 'mes-quality',
       title: i18n.t('mes.nav.mes-quality'),
@@ -1293,7 +1311,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.analyticsOee,
       element: lazyWithRetry(
-        () => import('@/pages/mes/analytics/MesOeeDashboardPage'),
+        () => import('@/components/mes/analytics/MesOeeDashboardPage'),
         'MesOeeDashboardPage'
       ),
       module: 'mes',
@@ -1308,7 +1326,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.analyticsDelivery,
       element: lazyWithRetry(
-        () => import('@/pages/mes/analytics/MesDeliveryAnalyticsPage'),
+        () => import('@/components/mes/analytics/MesDeliveryAnalyticsPage'),
         'MesDeliveryAnalyticsPage'
       ),
       module: 'mes',
@@ -1323,7 +1341,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.analyticsQualityPareto,
       element: lazyWithRetry(
-        () => import('@/pages/mes/analytics/MesQualityParetoPage'),
+        () => import('@/components/mes/analytics/MesQualityParetoPage'),
         'MesQualityParetoPage'
       ),
       module: 'mes',
@@ -1338,7 +1356,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.analyticsMtbf,
       element: lazyWithRetry(
-        () => import('@/pages/mes/analytics/MesEquipmentMtbfPage'),
+        () => import('@/components/mes/analytics/MesEquipmentMtbfPage'),
         'MesEquipmentMtbfPage'
       ),
       module: 'mes',
@@ -1353,7 +1371,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.analyticsEnergy,
       element: lazyWithRetry(
-        () => import('@/pages/mes/analytics/MesEnergyCostPage'),
+        () => import('@/components/mes/analytics/MesEnergyCostPage'),
         'MesEnergyCostPage'
       ),
       module: 'mes',
@@ -1368,7 +1386,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.analyticsCapacity,
       element: lazyWithRetry(
-        () => import('@/pages/mes/analytics/MesCapacityUtilizationPage'),
+        () => import('@/components/mes/analytics/MesCapacityUtilizationPage'),
         'MesCapacityUtilizationPage'
       ),
       module: 'mes',
@@ -1383,7 +1401,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.settingQualityTemplate,
       element: lazyWithRetry(
-        () => import('@/pages/mes/setting/QualityTemplatePage'),
+        () => import('@/components/mes/setting/QualityTemplatePage'),
         'QualityTemplatePage'
       ),
       module: 'mes',
@@ -1398,7 +1416,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.settingBomVersionPolicy,
       element: lazyWithRetry(
-        () => import('@/pages/mes/setting/BomVersionPolicyPage'),
+        () => import('@/components/mes/setting/BomVersionPolicyPage'),
         'BomVersionPolicyPage'
       ),
       module: 'mes',
@@ -1412,7 +1430,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<BomVersionPolicyPageProps>,
     {
       path: MES_PATHS.settingApsConfig,
-      element: lazyWithRetry(() => import('@/pages/mes/setting/ApsConfigPage'), 'ApsConfigPage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/setting/ApsConfigPage'),
+        'ApsConfigPage'
+      ),
       module: 'mes',
       code: 'mes-aps-config',
       title: i18n.t('mes.nav.mes-aps-config'),
@@ -1425,7 +1446,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     {
       path: MES_PATHS.settingEquipmentThreshold,
       element: lazyWithRetry(
-        () => import('@/pages/mes/setting/EquipmentThresholdPage'),
+        () => import('@/components/mes/setting/EquipmentThresholdPage'),
         'EquipmentThresholdPage'
       ),
       module: 'mes',
@@ -1439,7 +1460,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<EquipmentThresholdPageProps>,
     {
       path: MES_PATHS.masterData,
-      element: lazyWithRetry(() => import('@/pages/mes/MesMasterDataPage'), 'MesMasterDataPage'),
+      element: lazyWithRetry(
+        () => import('@/components/mes/MesMasterDataPage'),
+        'MesMasterDataPage'
+      ),
       module: 'mes',
       code: 'mes-master-data',
       title: i18n.t('mes.nav.mes-master-data'),
@@ -1451,7 +1475,7 @@ export const mesModuleConfig: RouteModuleConfig = {
     } as unknown as RouteConfigV2<MesMasterDataPageProps>,
     {
       path: MES_PATHS.capacity,
-      element: lazyWithRetry(() => import('@/pages/mes/CapacityPage'), 'CapacityPage'),
+      element: lazyWithRetry(() => import('@/components/mes/CapacityPage'), 'CapacityPage'),
       module: 'mes',
       code: 'mes-capacity',
       title: i18n.t('mes.nav.mes-capacity'),

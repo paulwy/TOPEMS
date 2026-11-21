@@ -12,7 +12,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const sampleStats = { indexed_entities: 512, embeddings_dimension: 768, index_size_bytes: 10240, last_reindex_at: '2026-10-20T08:00:00Z' };
+const sampleStats = {
+  indexed_entities: 512,
+  embeddings_dimension: 768,
+  index_size_bytes: 10240,
+  last_reindex_at: '2026-10-20T08:00:00Z',
+};
 const sampleSubgraph = {
   nodes: [{ id: 'n1', label: '物料概念', type: 'concept' }],
   edges: [{ id: 'e1', from_id: 'n1', to_id: 'n2', relation: 'part_of' }],
@@ -31,7 +36,7 @@ vi.mock('@/api/master/semanticSearch', () => ({
   },
 }));
 
-import MasterSemanticSearchPage from '@/pages/master/MasterSemanticSearchPage';
+import MasterSemanticSearchPage from '@/components/master/MasterSemanticSearchPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -39,10 +44,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -54,8 +61,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="sem" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='sem'
+                errors={captured}
+              >
                 <MasterSemanticSearchPage />
               </CaptureBoundary>
             </Suspense>

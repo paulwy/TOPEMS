@@ -77,7 +77,10 @@ interface DshRagPageProps {}
 
 const aiDashboardRoute: RouteConfigV2<AiDashboardPageProps> = {
   path: AI_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/ai/AiDashboardPage'), '@/pages/ai/AiDashboardPage'),
+  element: lazyWithRetry(
+    () => import('@/components/ai/AiDashboardPage'),
+    '@/components/ai/AiDashboardPage'
+  ),
   module: 'ai',
   code: 'ai-dashboard',
   title: i18n.t('ai.nav.ai-dashboard'),
@@ -90,7 +93,7 @@ const aiDashboardRoute: RouteConfigV2<AiDashboardPageProps> = {
 
 const aiChatRoute: RouteConfigV2<AiChatPageProps> = {
   path: AI_PATHS.chat,
-  element: lazyWithRetry(() => import('@/pages/ai/AiChatPage'), '@/pages/ai/AiChatPage'),
+  element: lazyWithRetry(() => import('@/components/ai/AiChatPage'), '@/components/ai/AiChatPage'),
   module: 'ai',
   code: 'ai-chat',
   title: i18n.t('ai.nav.ai-chat'),
@@ -104,8 +107,8 @@ const aiChatRoute: RouteConfigV2<AiChatPageProps> = {
 const aiCodeAssistantRoute: RouteConfigV2<AiCodeAssistantPageProps> = {
   path: AI_PATHS.code,
   element: lazyWithRetry(
-    () => import('@/pages/ai/AiCodeAssistantPage'),
-    '@/pages/ai/AiCodeAssistantPage'
+    () => import('@/components/ai/AiCodeAssistantPage'),
+    '@/components/ai/AiCodeAssistantPage'
   ),
   module: 'ai',
   code: 'ai-code',
@@ -120,8 +123,8 @@ const aiCodeAssistantRoute: RouteConfigV2<AiCodeAssistantPageProps> = {
 const aiDocumentAnalysisRoute: RouteConfigV2<AiDocumentAnalysisPageProps> = {
   path: AI_PATHS.document,
   element: lazyWithRetry(
-    () => import('@/pages/ai/AiDocumentAnalysisPage'),
-    '@/pages/ai/AiDocumentAnalysisPage'
+    () => import('@/components/ai/AiDocumentAnalysisPage'),
+    '@/components/ai/AiDocumentAnalysisPage'
   ),
   module: 'ai',
   code: 'ai-document',
@@ -136,8 +139,8 @@ const aiDocumentAnalysisRoute: RouteConfigV2<AiDocumentAnalysisPageProps> = {
 const aiKnowledgeBaseRoute: RouteConfigV2<AiKnowledgeBasePageProps> = {
   path: AI_PATHS.knowledge,
   element: lazyWithRetry(
-    () => import('@/pages/ai/AiKnowledgeBasePage'),
-    '@/pages/ai/AiKnowledgeBasePage'
+    () => import('@/components/ai/AiKnowledgeBasePage'),
+    '@/components/ai/AiKnowledgeBasePage'
   ),
   module: 'ai',
   code: 'ai-knowledge',
@@ -152,8 +155,8 @@ const aiKnowledgeBaseRoute: RouteConfigV2<AiKnowledgeBasePageProps> = {
 const aiPromptLibraryRoute: RouteConfigV2<AiPromptLibraryPageProps> = {
   path: AI_PATHS.prompts,
   element: lazyWithRetry(
-    () => import('@/pages/ai/AiPromptLibraryPage'),
-    '@/pages/ai/AiPromptLibraryPage'
+    () => import('@/components/ai/AiPromptLibraryPage'),
+    '@/components/ai/AiPromptLibraryPage'
   ),
   module: 'ai',
   code: 'ai-prompts',
@@ -168,8 +171,8 @@ const aiPromptLibraryRoute: RouteConfigV2<AiPromptLibraryPageProps> = {
 const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
   path: AI_PATHS.settings,
   element: lazyWithRetry(
-    () => import('@/pages/ai/AiModelSettingsPage'),
-    '@/pages/ai/AiModelSettingsPage'
+    () => import('@/components/ai/AiModelSettingsPage'),
+    '@/components/ai/AiModelSettingsPage'
   ),
   module: 'ai',
   code: 'ai-settings',
@@ -183,7 +186,10 @@ const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
 
 const aiAssistantRoute: RouteConfigV2<AiAssistantPageProps> = {
   path: AI_PATHS.assistant,
-  element: lazyWithRetry(() => import('@/pages/ai/AiAssistantPage'), '@/pages/ai/AiAssistantPage'),
+  element: lazyWithRetry(
+    () => import('@/components/ai/AiAssistantPage'),
+    '@/components/ai/AiAssistantPage'
+  ),
   module: 'ai',
   code: 'ai-assistant',
   title: i18n.t('ai.nav.ai-assistant'),
@@ -196,7 +202,10 @@ const aiAssistantRoute: RouteConfigV2<AiAssistantPageProps> = {
 
 const difyChatRoute: RouteConfigV2<DifyChatPageProps> = {
   path: AI_PATHS.difyChat,
-  element: lazyWithRetry(() => import('@/pages/ai/DifyChatPage'), '@/pages/ai/DifyChatPage'),
+  element: lazyWithRetry(
+    () => import('@/components/ai/DifyChatPage'),
+    '@/components/ai/DifyChatPage'
+  ),
   module: 'ai',
   code: 'ai-dify-chat',
   title: i18n.t('ai.nav.ai-dify-chat'),
@@ -210,8 +219,8 @@ const difyChatRoute: RouteConfigV2<DifyChatPageProps> = {
 const businessCopilotRoute: RouteConfigV2<BusinessCopilotPageProps> = {
   path: AI_PATHS.businessCopilot,
   element: lazyWithRetry(
-    () => import('@/pages/ai/BusinessCopilotPage'),
-    '@/pages/ai/BusinessCopilotPage'
+    () => import('@/components/ai/BusinessCopilotPage'),
+    '@/components/ai/BusinessCopilotPage'
   ),
   module: 'ai',
   code: 'ai-businessCopilot',
@@ -225,7 +234,7 @@ const businessCopilotRoute: RouteConfigV2<BusinessCopilotPageProps> = {
 
 const dshRagRoute: RouteConfigV2<DshRagPageProps> = {
   path: AI_PATHS.dshRag,
-  element: lazyWithRetry(() => import('@/pages/ai/DshRagPage'), '@/pages/ai/DshRagPage'),
+  element: lazyWithRetry(() => import('@/components/ai/DshRagPage'), '@/components/ai/DshRagPage'),
   module: 'ai',
   code: 'ai-dsh-rag',
   title: i18n.t('ai.nav.ai-dshRag'),
@@ -239,8 +248,8 @@ const dshRagRoute: RouteConfigV2<DshRagPageProps> = {
 const dshKnowledgeRoute: RouteConfigV2<DshKnowledgePageProps> = {
   path: AI_PATHS.dshKnowledge,
   element: lazyWithRetry(
-    () => import('@/pages/ai/DshKnowledgePage'),
-    '@/pages/ai/DshKnowledgePage'
+    () => import('@/components/ai/DshKnowledgePage'),
+    '@/components/ai/DshKnowledgePage'
   ),
   module: 'ai',
   code: 'ai-dsh-knowledge',
@@ -255,8 +264,8 @@ const dshKnowledgeRoute: RouteConfigV2<DshKnowledgePageProps> = {
 const governanceDashboardRoute: RouteConfigV2<GovernanceDashboardPageProps> = {
   path: AI_PATHS.governanceDashboard,
   element: lazyWithRetry(
-    () => import('@/pages/ai/GovernanceDashboardPage'),
-    '@/pages/ai/GovernanceDashboardPage'
+    () => import('@/components/ai/GovernanceDashboardPage'),
+    '@/components/ai/GovernanceDashboardPage'
   ),
   module: 'ai',
   code: 'ai-governanceDashboard',

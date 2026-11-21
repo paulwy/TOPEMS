@@ -106,7 +106,7 @@ interface EhsDashboardPageProps {}
 
 const ehsCheckRoute: RouteConfigV2<EhsCheckPageProps> = {
   path: EHS_PATHS.check,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsCheckPage'), 'EhsCheckPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EhsCheckPage'), 'EhsCheckPage'),
   module: 'ehs',
   code: 'ehs-check',
   title: i18n.t('ehs.nav.ehs-check'),
@@ -119,7 +119,7 @@ const ehsCheckRoute: RouteConfigV2<EhsCheckPageProps> = {
 
 const ehsHazardRoute: RouteConfigV2<EhsHazardPageProps> = {
   path: EHS_PATHS.hazard,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsHazardPage'), 'EhsHazardPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EhsHazardPage'), 'EhsHazardPage'),
   module: 'ehs',
   code: 'ehs-hazard',
   title: i18n.t('ehs.nav.ehs-hazard'),
@@ -132,7 +132,10 @@ const ehsHazardRoute: RouteConfigV2<EhsHazardPageProps> = {
 
 const ehsHazardDetailRoute: RouteConfigV2<EhsHazardDetailPageProps> = {
   path: EHS_PATHS.hazardDetail,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsHazardDetailPage'), 'EhsHazardDetailPage'),
+  element: lazyWithRetry(
+    () => import('@/components/ehs/EhsHazardDetailPage'),
+    'EhsHazardDetailPage'
+  ),
   module: 'ehs',
   code: 'ehs-hazard-detail',
   title: i18n.t('ehs.nav.ehs-hazard-detail'),
@@ -145,7 +148,7 @@ const ehsHazardDetailRoute: RouteConfigV2<EhsHazardDetailPageProps> = {
 
 const ehsAccidentRoute: RouteConfigV2<EhsAccidentPageProps> = {
   path: EHS_PATHS.accident,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsAccidentPage'), 'EhsAccidentPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EhsAccidentPage'), 'EhsAccidentPage'),
   module: 'ehs',
   code: 'ehs-accident',
   title: i18n.t('ehs.nav.ehs-accident'),
@@ -158,7 +161,7 @@ const ehsAccidentRoute: RouteConfigV2<EhsAccidentPageProps> = {
 
 const ehsPlanRoute: RouteConfigV2<EhsPlanPageProps> = {
   path: EHS_PATHS.plan,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsPlanPage'), 'EhsPlanPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EhsPlanPage'), 'EhsPlanPage'),
   module: 'ehs',
   code: 'ehs-plan',
   title: i18n.t('ehs.nav.ehs-plan'),
@@ -171,7 +174,7 @@ const ehsPlanRoute: RouteConfigV2<EhsPlanPageProps> = {
 
 const complianceRoute: RouteConfigV2<CompliancePageProps> = {
   path: EHS_PATHS.compliance,
-  element: lazyWithRetry(() => import('@/pages/ehs/CompliancePage'), 'CompliancePage'),
+  element: lazyWithRetry(() => import('@/components/ehs/CompliancePage'), 'CompliancePage'),
   module: 'ehs',
   code: 'ehs-compliance',
   title: i18n.t('ehs.nav.ehs-compliance'),
@@ -184,7 +187,7 @@ const complianceRoute: RouteConfigV2<CompliancePageProps> = {
 
 const environmentRoute: RouteConfigV2<EnvironmentPageProps> = {
   path: EHS_PATHS.environment,
-  element: lazyWithRetry(() => import('@/pages/ehs/EnvironmentPage'), 'EnvironmentPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EnvironmentPage'), 'EnvironmentPage'),
   module: 'ehs',
   code: 'ehs-environment',
   title: i18n.t('ehs.nav.ehs-environment'),
@@ -197,7 +200,7 @@ const environmentRoute: RouteConfigV2<EnvironmentPageProps> = {
 
 const trainingRoute: RouteConfigV2<TrainingPageProps> = {
   path: EHS_PATHS.training,
-  element: lazyWithRetry(() => import('@/pages/ehs/TrainingPage'), 'TrainingPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/TrainingPage'), 'TrainingPage'),
   module: 'ehs',
   code: 'ehs-training',
   title: i18n.t('ehs.nav.ehs-training'),
@@ -211,7 +214,7 @@ const trainingRoute: RouteConfigV2<TrainingPageProps> = {
 const ehsOccupationalDiseaseRoute: RouteConfigV2<EhsOccupationalDiseasePageProps> = {
   path: EHS_PATHS.occupationalDisease,
   element: lazyWithRetry(
-    () => import('@/pages/ehs/EhsOccupationalDiseasePage'),
+    () => import('@/components/ehs/EhsOccupationalDiseasePage'),
     'EhsOccupationalDiseasePage'
   ),
   module: 'ehs',
@@ -226,7 +229,10 @@ const ehsOccupationalDiseaseRoute: RouteConfigV2<EhsOccupationalDiseasePageProps
 
 const healthManagementRoute: RouteConfigV2<HealthManagementPageProps> = {
   path: EHS_PATHS.healthManagement,
-  element: lazyWithRetry(() => import('@/pages/ehs/HealthManagementPage'), 'HealthManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/ehs/HealthManagementPage'),
+    'HealthManagementPage'
+  ),
   module: 'ehs',
   code: 'ehs-health-management',
   title: i18n.t('ehs.nav.ehs-health-management'),
@@ -240,7 +246,7 @@ const healthManagementRoute: RouteConfigV2<HealthManagementPageProps> = {
 const ehsHazardousMaterialRoute: RouteConfigV2<EhsHazardousMaterialPageProps> = {
   path: EHS_PATHS.hazardousMaterial,
   element: lazyWithRetry(
-    () => import('@/pages/ehs/EhsHazardousMaterialPage'),
+    () => import('@/components/ehs/EhsHazardousMaterialPage'),
     'EhsHazardousMaterialPage'
   ),
   module: 'ehs',
@@ -255,7 +261,7 @@ const ehsHazardousMaterialRoute: RouteConfigV2<EhsHazardousMaterialPageProps> = 
 
 const emergencyRoute: RouteConfigV2<EmergencyPageProps> = {
   path: EHS_PATHS.emergency,
-  element: lazyWithRetry(() => import('@/pages/ehs/EmergencyPage'), 'EmergencyPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EmergencyPage'), 'EmergencyPage'),
   module: 'ehs',
   code: 'ehs-emergency',
   title: i18n.t('ehs.nav.ehs-emergency'),
@@ -268,7 +274,7 @@ const emergencyRoute: RouteConfigV2<EmergencyPageProps> = {
 
 const ehsDrillRoute: RouteConfigV2<EhsDrillPageProps> = {
   path: EHS_PATHS.drill,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsDrillPage'), 'EhsDrillPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EhsDrillPage'), 'EhsDrillPage'),
   module: 'ehs',
   code: 'ehs-drill',
   title: i18n.t('ehs.nav.ehs-drill'),
@@ -282,7 +288,7 @@ const ehsDrillRoute: RouteConfigV2<EhsDrillPageProps> = {
 const ehsIncidentReportRoute: RouteConfigV2<EhsIncidentReportPageProps> = {
   path: EHS_PATHS.incidentReport,
   element: lazyWithRetry(
-    () => import('@/pages/ehs/EhsIncidentReportPage'),
+    () => import('@/components/ehs/EhsIncidentReportPage'),
     'EhsIncidentReportPage'
   ),
   module: 'ehs',
@@ -297,7 +303,7 @@ const ehsIncidentReportRoute: RouteConfigV2<EhsIncidentReportPageProps> = {
 
 const ehsDashboardRoute: RouteConfigV2<EhsDashboardPageProps> = {
   path: EHS_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/ehs/EhsDashboardPage'), 'EhsDashboardPage'),
+  element: lazyWithRetry(() => import('@/components/ehs/EhsDashboardPage'), 'EhsDashboardPage'),
   module: 'ehs',
   code: 'ehs-dashboard',
   title: i18n.t('ehs.nav.ehs-dashboard'),

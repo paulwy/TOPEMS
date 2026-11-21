@@ -60,7 +60,7 @@ export const CRM_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 const crmDashboardRoute: RouteConfigV2<CrmDashboardPageProps> = {
   path: CRM_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/crm/CrmDashboardPage'), 'CrmDashboardPage'),
+  element: lazyWithRetry(() => import('@/components/crm/CrmDashboardPage'), 'CrmDashboardPage'),
   module: 'crm',
   code: 'crm-dashboard',
   title: i18n.t('crm.nav.crm-dashboard'),
@@ -74,7 +74,7 @@ const crmDashboardRoute: RouteConfigV2<CrmDashboardPageProps> = {
 const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
   path: CRM_PATHS.customers,
   element: lazyWithRetry(
-    () => import('@/pages/crm/CrmCustomerRedesignPage'),
+    () => import('@/components/crm/CrmCustomerRedesignPage'),
     'CrmCustomerRedesignPage'
   ),
   module: 'crm',
@@ -89,7 +89,7 @@ const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
 
 const customerDetailRoute: RouteConfigV2<CustomerDetailProps> = {
   path: CRM_PATHS.customerDetail,
-  element: lazyWithRetry(() => import('@/pages/crm/CustomerDetailPage'), 'CustomerDetailPage'),
+  element: lazyWithRetry(() => import('@/components/crm/CustomerDetailPage'), 'CustomerDetailPage'),
   module: 'crm',
   code: 'crm-customer-detail',
   title: i18n.t('crm.nav.crm-customer-detail'),
@@ -103,7 +103,7 @@ const customerDetailRoute: RouteConfigV2<CustomerDetailProps> = {
 const contactManagementRoute: RouteConfigV2<ContactManagementPageProps> = {
   path: CRM_PATHS.contacts,
   element: lazyWithRetry(
-    () => import('@/pages/crm/ContactManagementPage'),
+    () => import('@/components/crm/ContactManagementPage'),
     'ContactManagementPage'
   ),
   module: 'crm',
@@ -118,7 +118,7 @@ const contactManagementRoute: RouteConfigV2<ContactManagementPageProps> = {
 
 const contactDetailRoute: RouteConfigV2<ContactDetailPageProps> = {
   path: CRM_PATHS.contactDetail,
-  element: lazyWithRetry(() => import('@/pages/crm/ContactDetailPage'), 'ContactDetailPage'),
+  element: lazyWithRetry(() => import('@/components/crm/ContactDetailPage'), 'ContactDetailPage'),
   module: 'crm',
   code: 'crm-contact-detail',
   title: i18n.t('crm.nav.crm-contact-detail'),
@@ -132,7 +132,7 @@ const contactDetailRoute: RouteConfigV2<ContactDetailPageProps> = {
 const opportunityManagementRoute: RouteConfigV2<OpportunityManagementPageProps> = {
   path: CRM_PATHS.opportunities,
   element: lazyWithRetry(
-    () => import('@/pages/crm/CrmOpportunityRedesignPage'),
+    () => import('@/components/crm/CrmOpportunityRedesignPage'),
     'CrmOpportunityRedesignPage'
   ),
   module: 'crm',
@@ -148,7 +148,7 @@ const opportunityManagementRoute: RouteConfigV2<OpportunityManagementPageProps> 
 const opportunityDetailRoute: RouteConfigV2<OpportunityDetailPageProps> = {
   path: CRM_PATHS.opportunityDetail,
   element: lazyWithRetry(
-    () => import('@/pages/crm/OpportunityDetailPage'),
+    () => import('@/components/crm/OpportunityDetailPage'),
     'OpportunityDetailPage'
   ),
   module: 'crm',
@@ -163,7 +163,7 @@ const opportunityDetailRoute: RouteConfigV2<OpportunityDetailPageProps> = {
 
 const salesFunnelRoute: RouteConfigV2<CRMSalesFunnelPageProps> = {
   path: CRM_PATHS.salesFunnel,
-  element: lazyWithRetry(() => import('@/pages/crm/CRMSalesFunnelPage'), 'CRMSalesFunnelPage'),
+  element: lazyWithRetry(() => import('@/components/crm/CRMSalesFunnelPage'), 'CRMSalesFunnelPage'),
   module: 'crm',
   code: 'crm-sales-funnel',
   title: i18n.t('crm.nav.crm-sales-funnel'),
@@ -177,7 +177,7 @@ const salesFunnelRoute: RouteConfigV2<CRMSalesFunnelPageProps> = {
 const crmContractsRoute: RouteConfigV2<Record<string, never>> = {
   path: CRM_PATHS.contracts,
   element: lazyWithRetry(
-    () => import('@/pages/crm/CrmContractRedesignPage'),
+    () => import('@/components/crm/CrmContractRedesignPage'),
     'CrmContractRedesignPage'
   ),
   module: 'crm',
@@ -192,7 +192,7 @@ const crmContractsRoute: RouteConfigV2<Record<string, never>> = {
 
 const billingRoute: RouteConfigV2<CRMBillingPageProps> = {
   path: CRM_PATHS.billing,
-  element: lazyWithRetry(() => import('@/pages/crm/CRMBillingPage'), 'CRMBillingPage'),
+  element: lazyWithRetry(() => import('@/components/crm/CRMBillingPage'), 'CRMBillingPage'),
   module: 'crm',
   code: 'crm-billing',
   title: i18n.t('crm.nav.crm-billing'),
@@ -208,7 +208,10 @@ const crmRoutes: RouteConfigV2[] = [
   customerManagementRoute,
   {
     path: CRM_PATHS.customerCreate,
-    element: lazyWithRetry(() => import('@/pages/crm/CustomerCreatePage'), 'CustomerCreatePage'),
+    element: lazyWithRetry(
+      () => import('@/components/crm/CustomerCreatePage'),
+      'CustomerCreatePage'
+    ),
     module: 'crm',
     code: 'crm-customer-create',
     title: i18n.t('crm.nav.crm-customer-create'),
@@ -221,7 +224,7 @@ const crmRoutes: RouteConfigV2[] = [
   customerDetailRoute,
   {
     path: CRM_PATHS.customerEdit,
-    element: lazyWithRetry(() => import('@/pages/crm/CustomerEditPage'), 'CustomerEditPage'),
+    element: lazyWithRetry(() => import('@/components/crm/CustomerEditPage'), 'CustomerEditPage'),
     module: 'crm',
     code: 'crm-customer-edit',
     title: i18n.t('crm.nav.crm-customer-edit'),
@@ -238,7 +241,7 @@ const crmRoutes: RouteConfigV2[] = [
   {
     path: CRM_PATHS.interactions,
     element: lazyWithRetry(
-      () => import('@/pages/crm/InteractionManagementPage'),
+      () => import('@/components/crm/InteractionManagementPage'),
       'InteractionManagementPage'
     ),
     module: 'crm',
@@ -254,7 +257,7 @@ const crmRoutes: RouteConfigV2[] = [
   {
     path: CRM_PATHS.customerScoring,
     element: lazyWithRetry(
-      () => import('@/pages/crm/CRMCustomerScoringPage'),
+      () => import('@/components/crm/CRMCustomerScoringPage'),
       'CRMCustomerScoringPage'
     ),
     module: 'crm',
@@ -269,7 +272,7 @@ const crmRoutes: RouteConfigV2[] = [
   {
     path: CRM_PATHS.salesForecast,
     element: lazyWithRetry(
-      () => import('@/pages/crm/CRMSalesForecastPage'),
+      () => import('@/components/crm/CRMSalesForecastPage'),
       'CRMSalesForecastPage'
     ),
     module: 'crm',
@@ -284,7 +287,7 @@ const crmRoutes: RouteConfigV2[] = [
   {
     path: CRM_PATHS.customerSegmentation,
     element: lazyWithRetry(
-      () => import('@/pages/crm/CRMCustomerSegmentationPage'),
+      () => import('@/components/crm/CRMCustomerSegmentationPage'),
       'CRMCustomerSegmentationPage'
     ),
     module: 'crm',
@@ -298,7 +301,7 @@ const crmRoutes: RouteConfigV2[] = [
   },
   {
     path: CRM_PATHS.rfm,
-    element: lazyWithRetry(() => import('@/pages/crm/CrmRfmPage'), 'CrmRfmPage'),
+    element: lazyWithRetry(() => import('@/components/crm/CrmRfmPage'), 'CrmRfmPage'),
     module: 'crm',
     code: 'crm-rfm',
     title: i18n.t('crm.nav.crm-rfm'),
@@ -311,7 +314,7 @@ const crmRoutes: RouteConfigV2[] = [
   {
     path: CRM_PATHS.forecastAlgorithm,
     element: lazyWithRetry(
-      () => import('@/pages/crm/CrmForecastAlgorithmPage'),
+      () => import('@/components/crm/CrmForecastAlgorithmPage'),
       'CrmForecastAlgorithmPage'
     ),
     module: 'crm',
@@ -326,7 +329,7 @@ const crmRoutes: RouteConfigV2[] = [
   {
     path: CRM_PATHS.recommendation,
     element: lazyWithRetry(
-      () => import('@/pages/crm/CRMRecommendationPage'),
+      () => import('@/components/crm/CRMRecommendationPage'),
       'CRMRecommendationPage'
     ),
     module: 'crm',
@@ -340,7 +343,7 @@ const crmRoutes: RouteConfigV2[] = [
   },
   {
     path: CRM_PATHS.returns,
-    element: lazyWithRetry(() => import('@/pages/crm/ReturnListPage'), 'ReturnListPage'),
+    element: lazyWithRetry(() => import('@/components/crm/ReturnListPage'), 'ReturnListPage'),
     module: 'crm',
     code: 'crm-returns',
     title: i18n.t('crm.nav.crm-returns'),
@@ -352,7 +355,7 @@ const crmRoutes: RouteConfigV2[] = [
   },
   {
     path: CRM_PATHS.returnDetail,
-    element: lazyWithRetry(() => import('@/pages/crm/ReturnDetailPage'), 'ReturnDetailPage'),
+    element: lazyWithRetry(() => import('@/components/crm/ReturnDetailPage'), 'ReturnDetailPage'),
     module: 'crm',
     code: 'crm-return-detail',
     title: i18n.t('crm.nav.crm-return-detail'),
@@ -364,7 +367,7 @@ const crmRoutes: RouteConfigV2[] = [
   },
   {
     path: CRM_PATHS.tags,
-    element: lazyWithRetry(() => import('@/pages/crm/TagPage'), 'TagPage'),
+    element: lazyWithRetry(() => import('@/components/crm/TagPage'), 'TagPage'),
     module: 'crm',
     code: 'crm-tags',
     title: i18n.t('crm.nav.crm-tags'),

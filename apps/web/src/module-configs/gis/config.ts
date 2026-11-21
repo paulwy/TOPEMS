@@ -28,7 +28,7 @@ interface GisFencePageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: GIS_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/gis/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/gis/DashboardPage'), 'DashboardPage'),
   module: 'gis',
   title: i18n.t('gis.nav.gis-dashboard'),
   titleKey: 'gis.nav.gis-dashboard',
@@ -41,7 +41,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const gisMapRoute: RouteConfigV2<GisMapPageProps> = {
   path: GIS_PATHS.map,
-  element: lazyWithRetry(() => import('@/pages/gis/index'), 'GisMapPage'),
+  element: lazyWithRetry(() => import('@/components/gis/index'), 'GisMapPage'),
   module: 'gis',
   title: i18n.t('gis.nav.gis-map'),
   titleKey: 'gis.nav.gis-map',
@@ -54,7 +54,7 @@ const gisMapRoute: RouteConfigV2<GisMapPageProps> = {
 
 const gisTrackingRoute: RouteConfigV2<GisTrackingPageProps> = {
   path: GIS_PATHS.tracking,
-  element: lazyWithRetry(() => import('@/pages/gis/GisTrackingPage'), 'GisTrackingPage'),
+  element: lazyWithRetry(() => import('@/components/gis/GisTrackingPage'), 'GisTrackingPage'),
   module: 'gis',
   title: i18n.t('gis.nav.gis-tracking'),
   titleKey: 'gis.nav.gis-tracking',
@@ -67,7 +67,7 @@ const gisTrackingRoute: RouteConfigV2<GisTrackingPageProps> = {
 
 const gisFenceRoute: RouteConfigV2<GisFencePageProps> = {
   path: GIS_PATHS.fence,
-  element: lazyWithRetry(() => import('@/pages/gis/GisFencePage'), 'GisFencePage'),
+  element: lazyWithRetry(() => import('@/components/gis/GisFencePage'), 'GisFencePage'),
   module: 'gis',
   title: i18n.t('gis.nav.gis-fence'),
   titleKey: 'gis.nav.gis-fence',
@@ -98,7 +98,7 @@ export const gisModuleConfig: RouteModuleConfig = {
     gisFenceRoute,
     {
       path: GIS_PATHS.devices,
-      element: lazyWithRetry(() => import('@/pages/gis/DevicePage'), 'DevicePage'),
+      element: lazyWithRetry(() => import('@/components/gis/DevicePage'), 'DevicePage'),
       module: 'gis',
       code: 'gis-devices',
       title: i18n.t('gis.nav.gis-devices'),

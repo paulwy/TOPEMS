@@ -16,7 +16,7 @@ import { DASHBOARD_PATHS } from './dashboard';
 const TemplateDemoPage = createSafeLazy(() =>
   import('../components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
 );
-const RedesignDemoPage = createSafeLazy(() => import('../pages/RedesignDemo'));
+const RedesignDemoPage = createSafeLazy(() => import('../components/redesign/RedesignDemo'));
 const DynamicRouter = createSafeLazy(() => import('../lib/plugin-loader/DynamicRouter'));
 // G9 修复：/core/users、/core/roles 显式注册本地组件（DynamicRouter 依赖运行时模块注册，
 // 加载失败时会渲染空白，导致 /core/* 主体空白——双机确认的 G9 问题）。

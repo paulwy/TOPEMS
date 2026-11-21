@@ -69,7 +69,7 @@ interface ChangeTemplatePageProps {}
 
 const productRoute: RouteConfigV2<ProductPageProps> = {
   path: PDM_PATHS.product,
-  element: lazyWithRetry(() => import('@/pages/pdm/ProductPage'), 'ProductPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/ProductPage'), 'ProductPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-product'),
   titleKey: 'pdm.nav.pdm-product',
@@ -82,7 +82,7 @@ const productRoute: RouteConfigV2<ProductPageProps> = {
 
 const materialRoute: RouteConfigV2<MaterialPageProps> = {
   path: PDM_PATHS.material,
-  element: lazyWithRetry(() => import('@/pages/pdm/MaterialPage'), 'MaterialPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/MaterialPage'), 'MaterialPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-material'),
   titleKey: 'pdm.nav.pdm-material',
@@ -95,7 +95,7 @@ const materialRoute: RouteConfigV2<MaterialPageProps> = {
 
 const bomRoute: RouteConfigV2<BomPageProps> = {
   path: PDM_PATHS.bom,
-  element: lazyWithRetry(() => import('@/pages/pdm/BomPage'), 'BomPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/BomPage'), 'BomPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-bom'),
   titleKey: 'pdm.nav.pdm-bom',
@@ -108,7 +108,7 @@ const bomRoute: RouteConfigV2<BomPageProps> = {
 
 const pdmBomRoute: RouteConfigV2<PdmBomPageProps> = {
   path: PDM_PATHS.pdmBom,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmBomPage'), 'PdmBomPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmBomPage'), 'PdmBomPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-pdm-bom'),
   titleKey: 'pdm.nav.pdm-pdm-bom',
@@ -121,7 +121,7 @@ const pdmBomRoute: RouteConfigV2<PdmBomPageProps> = {
 
 const documentRoute: RouteConfigV2<DocumentPageProps> = {
   path: PDM_PATHS.document,
-  element: lazyWithRetry(() => import('@/pages/pdm/DocumentPage'), 'DocumentPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/DocumentPage'), 'DocumentPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-document'),
   titleKey: 'pdm.nav.pdm-document',
@@ -134,7 +134,7 @@ const documentRoute: RouteConfigV2<DocumentPageProps> = {
 
 const pdmVersionRoute: RouteConfigV2<PdmVersionPageProps> = {
   path: PDM_PATHS.version,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmVersionPage'), 'PdmVersionPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmVersionPage'), 'PdmVersionPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-version'),
   titleKey: 'pdm.nav.pdm-version',
@@ -147,7 +147,7 @@ const pdmVersionRoute: RouteConfigV2<PdmVersionPageProps> = {
 
 const changeRoute: RouteConfigV2<ChangePageProps> = {
   path: PDM_PATHS.change,
-  element: lazyWithRetry(() => import('@/pages/pdm/ChangePage'), 'ChangePage'),
+  element: lazyWithRetry(() => import('@/components/pdm/ChangePage'), 'ChangePage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-change'),
   titleKey: 'pdm.nav.pdm-change',
@@ -160,7 +160,7 @@ const changeRoute: RouteConfigV2<ChangePageProps> = {
 
 const pdmProjectRoute: RouteConfigV2<PdmProjectPageProps> = {
   path: PDM_PATHS.project,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmProjectPage'), 'PdmProjectPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmProjectPage'), 'PdmProjectPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-project'),
   titleKey: 'pdm.nav.pdm-project',
@@ -173,7 +173,10 @@ const pdmProjectRoute: RouteConfigV2<PdmProjectPageProps> = {
 
 const pdmProductConfigRoute: RouteConfigV2<PdmProductConfigPageProps> = {
   path: PDM_PATHS.productConfig,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmProductConfigPage'), 'PdmProductConfigPage'),
+  element: lazyWithRetry(
+    () => import('@/components/pdm/PdmProductConfigPage'),
+    'PdmProductConfigPage'
+  ),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-product-config'),
   titleKey: 'pdm.nav.pdm-product-config',
@@ -186,7 +189,7 @@ const pdmProductConfigRoute: RouteConfigV2<PdmProductConfigPageProps> = {
 
 const pdmFormulaRoute: RouteConfigV2<PdmFormulaPageProps> = {
   path: PDM_PATHS.formula,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmFormulaPage'), 'PdmFormulaPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmFormulaPage'), 'PdmFormulaPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-formula'),
   titleKey: 'pdm.nav.pdm-formula',
@@ -199,7 +202,7 @@ const pdmFormulaRoute: RouteConfigV2<PdmFormulaPageProps> = {
 
 const pdmProcessRoute: RouteConfigV2<PdmProcessPageProps> = {
   path: PDM_PATHS.process,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmProcessPage'), 'PdmProcessPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmProcessPage'), 'PdmProcessPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-process'),
   titleKey: 'pdm.nav.pdm-process',
@@ -212,7 +215,7 @@ const pdmProcessRoute: RouteConfigV2<PdmProcessPageProps> = {
 
 const pdmBatchRoute: RouteConfigV2<PdmBatchPageProps> = {
   path: PDM_PATHS.batch,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmBatchPage'), 'PdmBatchPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmBatchPage'), 'PdmBatchPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-batch'),
   titleKey: 'pdm.nav.pdm-batch',
@@ -225,7 +228,7 @@ const pdmBatchRoute: RouteConfigV2<PdmBatchPageProps> = {
 
 const pdmStepRoute: RouteConfigV2<PdmStepPageProps> = {
   path: PDM_PATHS.step,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmStepPage'), 'PdmStepPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmStepPage'), 'PdmStepPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-step'),
   titleKey: 'pdm.nav.pdm-step',
@@ -238,7 +241,7 @@ const pdmStepRoute: RouteConfigV2<PdmStepPageProps> = {
 
 const pdmStatsRoute: RouteConfigV2<PdmStatsPageProps> = {
   path: PDM_PATHS.stats,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmStatsPage'), 'PdmStatsPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmStatsPage'), 'PdmStatsPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-stats'),
   titleKey: 'pdm.nav.pdm-stats',
@@ -251,7 +254,7 @@ const pdmStatsRoute: RouteConfigV2<PdmStatsPageProps> = {
 
 const pdmDashboardRoute: RouteConfigV2<PdmDashboardPageProps> = {
   path: PDM_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmDashboardPage'), 'PdmDashboardPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmDashboardPage'), 'PdmDashboardPage'),
   module: 'pdm',
   title: i18n.t('pdm.nav.pdm-dashboard'),
   titleKey: 'pdm.nav.pdm-dashboard',
@@ -265,7 +268,7 @@ const pdmDashboardRoute: RouteConfigV2<PdmDashboardPageProps> = {
 const pdmProductCategoryRoute: RouteConfigV2<PdmProductCategoryPageProps> = {
   path: PDM_PATHS.productCategory,
   element: lazyWithRetry(
-    () => import('@/pages/pdm/PdmProductCategoryPage'),
+    () => import('@/components/pdm/PdmProductCategoryPage'),
     'PdmProductCategoryPage'
   ),
   module: 'pdm',
@@ -280,7 +283,10 @@ const pdmProductCategoryRoute: RouteConfigV2<PdmProductCategoryPageProps> = {
 
 const bomTemplateRoute: RouteConfigV2<BomTemplatePageProps> = {
   path: PDM_PATHS.settingBomTemplate,
-  element: lazyWithRetry(() => import('@/pages/pdm/setting/BomTemplatePage'), 'BomTemplatePage'),
+  element: lazyWithRetry(
+    () => import('@/components/pdm/setting/BomTemplatePage'),
+    'BomTemplatePage'
+  ),
   module: 'pdm',
   code: 'pdm-bom-template',
   title: i18n.t('pdm.nav.pdm-bom-template'),
@@ -293,7 +299,10 @@ const bomTemplateRoute: RouteConfigV2<BomTemplatePageProps> = {
 
 const categoryRuleRoute: RouteConfigV2<CategoryRulePageProps> = {
   path: PDM_PATHS.settingCategoryRule,
-  element: lazyWithRetry(() => import('@/pages/pdm/setting/CategoryRulePage'), 'CategoryRulePage'),
+  element: lazyWithRetry(
+    () => import('@/components/pdm/setting/CategoryRulePage'),
+    'CategoryRulePage'
+  ),
   module: 'pdm',
   code: 'pdm-category-rule',
   title: i18n.t('pdm.nav.pdm-category-rule'),
@@ -307,7 +316,7 @@ const categoryRuleRoute: RouteConfigV2<CategoryRulePageProps> = {
 const docApprovalFlowRoute: RouteConfigV2<DocApprovalFlowPageProps> = {
   path: PDM_PATHS.settingDocApprovalFlow,
   element: lazyWithRetry(
-    () => import('@/pages/pdm/setting/DocApprovalFlowPage'),
+    () => import('@/components/pdm/setting/DocApprovalFlowPage'),
     'DocApprovalFlowPage'
   ),
   module: 'pdm',
@@ -323,7 +332,7 @@ const docApprovalFlowRoute: RouteConfigV2<DocApprovalFlowPageProps> = {
 const changeTemplateRoute: RouteConfigV2<ChangeTemplatePageProps> = {
   path: PDM_PATHS.settingChangeTemplate,
   element: lazyWithRetry(
-    () => import('@/pages/pdm/setting/ChangeTemplatePage'),
+    () => import('@/components/pdm/setting/ChangeTemplatePage'),
     'ChangeTemplatePage'
   ),
   module: 'pdm',
@@ -337,7 +346,7 @@ const changeTemplateRoute: RouteConfigV2<ChangeTemplatePageProps> = {
 };
 const pdmDrawingRoute: RouteConfigV2<Record<string, never>> = {
   path: PDM_PATHS.drawing,
-  element: lazyWithRetry(() => import('@/pages/pdm/PdmDrawingPage'), 'PdmDrawingPage'),
+  element: lazyWithRetry(() => import('@/components/pdm/PdmDrawingPage'), 'PdmDrawingPage'),
   module: 'pdm',
   code: 'pdm-drawing',
   title: i18n.t('pdm.drawing.title'),

@@ -12,21 +12,71 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const sampleStatus = { state: 'healthy', last_recovery_at: '2026-10-19T08:00:00Z', pending_jobs: 0 };
-const samplePoints = { items: [{ id: 'rp1', snapshot_type: 'full', created_at: '2026-10-20T08:00:00Z', size_bytes: 1024, created_by: 'ops' }], total: 1 };
-const sampleScore = { score: 92, total_plans: 5, tested_plans: 4, coverage_percentage: 80, risk_level: 'low' };
-const sampleContinuity = { items: [{ id: 'cp1', name: '核心订单连续性', critical_function: '订单履约', rto_minutes: 60, rpo_minutes: 30, status: 'active' }], total: 1 };
-const sampleRegions = [{ region: 'cn-north', status: 'healthy', latency_ms: 12, last_check: '2026-10-20T08:00:00Z' }];
-const sampleFailovers = [{ id: 'fo1', from_region: 'cn-east', to_region: 'cn-north', triggered_by: 'ops', status: 'completed', started_at: '2026-10-18T00:00:00Z' }];
+const sampleStatus = {
+  state: 'healthy',
+  last_recovery_at: '2026-10-19T08:00:00Z',
+  pending_jobs: 0,
+};
+const samplePoints = {
+  items: [
+    {
+      id: 'rp1',
+      snapshot_type: 'full',
+      created_at: '2026-10-20T08:00:00Z',
+      size_bytes: 1024,
+      created_by: 'ops',
+    },
+  ],
+  total: 1,
+};
+const sampleScore = {
+  score: 92,
+  total_plans: 5,
+  tested_plans: 4,
+  coverage_percentage: 80,
+  risk_level: 'low',
+};
+const sampleContinuity = {
+  items: [
+    {
+      id: 'cp1',
+      name: '核心订单连续性',
+      critical_function: '订单履约',
+      rto_minutes: 60,
+      rpo_minutes: 30,
+      status: 'active',
+    },
+  ],
+  total: 1,
+};
+const sampleRegions = [
+  { region: 'cn-north', status: 'healthy', latency_ms: 12, last_check: '2026-10-20T08:00:00Z' },
+];
+const sampleFailovers = [
+  {
+    id: 'fo1',
+    from_region: 'cn-east',
+    to_region: 'cn-north',
+    triggered_by: 'ops',
+    status: 'completed',
+    started_at: '2026-10-18T00:00:00Z',
+  },
+];
 
 vi.mock('@/api/master/disasterRecovery', () => ({
   disasterRecoveryApi: {
     getRecoveryStatus: vi.fn(async () => ({ code: 0, data: sampleStatus })),
     listRecoveryPoints: vi.fn(async () => ({ code: 0, data: samplePoints })),
-    getPlanProgress: vi.fn(async () => ({ code: 0, data: { plan_id: 'p1', current_step: 2, total_steps: 5, status: 'in_progress' } })),
+    getPlanProgress: vi.fn(async () => ({
+      code: 0,
+      data: { plan_id: 'p1', current_step: 2, total_steps: 5, status: 'in_progress' },
+    })),
     getContinuityScore: vi.fn(async () => ({ code: 0, data: sampleScore })),
     listContinuityPlans: vi.fn(async () => ({ code: 0, data: sampleContinuity })),
-    getReplicationStatus: vi.fn(async () => ({ code: 0, data: { source_region: 'cn-east', target_region: 'cn-north', status: 'active' } })),
+    getReplicationStatus: vi.fn(async () => ({
+      code: 0,
+      data: { source_region: 'cn-east', target_region: 'cn-north', status: 'active' },
+    })),
     getRegionHealth: vi.fn(async () => ({ code: 0, data: sampleRegions })),
     getFailoverHistory: vi.fn(async () => ({ code: 0, data: sampleFailovers })),
     createRecoveryPoint: vi.fn(),
@@ -40,7 +90,7 @@ vi.mock('@/api/master/disasterRecovery', () => ({
   },
 }));
 
-import MasterDisasterRecoveryPage from '@/pages/master/MasterDisasterRecoveryPage';
+import MasterDisasterRecoveryPage from '@/components/master/MasterDisasterRecoveryPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -48,10 +98,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -63,8 +115,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="dr" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='dr'
+                errors={captured}
+              >
                 <MasterDisasterRecoveryPage />
               </CaptureBoundary>
             </Suspense>

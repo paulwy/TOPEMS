@@ -34,7 +34,7 @@ export const REPORT_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 const reportDashboardRoute: RouteConfigV2<ReportDashboardPageProps> = {
   path: REPORT_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
+  element: lazyWithRetry(() => import('@/components/report/ReportPage'), 'ReportPage'),
   module: 'report',
   title: i18n.t('report.nav.report-dashboard'),
   titleKey: 'report.nav.report-dashboard',
@@ -47,7 +47,7 @@ const reportDashboardRoute: RouteConfigV2<ReportDashboardPageProps> = {
 
 const reportListRoute: RouteConfigV2<ReportListPageProps> = {
   path: REPORT_PATHS.list,
-  element: lazyWithRetry(() => import('@/pages/report/ReportListPage'), 'ReportListPage'),
+  element: lazyWithRetry(() => import('@/components/report/ReportListPage'), 'ReportListPage'),
   module: 'report',
   title: i18n.t('report.nav.report-list'),
   titleKey: 'report.nav.report-list',
@@ -60,7 +60,7 @@ const reportListRoute: RouteConfigV2<ReportListPageProps> = {
 
 const reportViewerRoute = {
   path: REPORT_PATHS.viewer,
-  element: lazyWithRetry(() => import('@/pages/report/ReportViewer'), 'ReportViewer'),
+  element: lazyWithRetry(() => import('@/components/report/ReportViewer'), 'ReportViewer'),
   module: 'report',
   title: i18n.t('report.nav.report-viewer'),
   titleKey: 'report.nav.report-viewer',
@@ -77,7 +77,10 @@ const reportRoutes: RouteConfigV2[] = [
   reportViewerRoute,
   {
     path: REPORT_PATHS.design,
-    element: lazyWithRetry(() => import('@/pages/report/ReportDesignPage'), 'ReportDesignPage'),
+    element: lazyWithRetry(
+      () => import('@/components/report/ReportDesignPage'),
+      'ReportDesignPage'
+    ),
     module: 'report',
     title: i18n.t('report.nav.report-design'),
     titleKey: 'report.nav.report-design',
@@ -89,7 +92,10 @@ const reportRoutes: RouteConfigV2[] = [
   } as RouteConfigV2<ReportDesignPageProps>,
   {
     path: REPORT_PATHS.builder,
-    element: lazyWithRetry(() => import('@/pages/report/ReportBuilderPage'), 'ReportBuilderPage'),
+    element: lazyWithRetry(
+      () => import('@/components/report/ReportBuilderPage'),
+      'ReportBuilderPage'
+    ),
     module: 'report',
     title: i18n.t('report.nav.report-builder'),
     titleKey: 'report.nav.report-builder',
@@ -101,7 +107,10 @@ const reportRoutes: RouteConfigV2[] = [
   } as RouteConfigV2<ReportBuilderPageProps>,
   {
     path: REPORT_PATHS.schedule,
-    element: lazyWithRetry(() => import('@/pages/report/ReportSchedulePage'), 'ReportSchedulePage'),
+    element: lazyWithRetry(
+      () => import('@/components/report/ReportSchedulePage'),
+      'ReportSchedulePage'
+    ),
     module: 'report',
     title: i18n.t('report.nav.report-schedule'),
     titleKey: 'report.nav.report-schedule',
@@ -114,7 +123,7 @@ const reportRoutes: RouteConfigV2[] = [
   {
     path: REPORT_PATHS.subscription,
     element: lazyWithRetry(
-      () => import('@/pages/report/ReportSubscriptionPage'),
+      () => import('@/components/report/ReportSubscriptionPage'),
       'ReportSubscriptionPage'
     ),
     module: 'report',
@@ -129,7 +138,7 @@ const reportRoutes: RouteConfigV2[] = [
   {
     path: REPORT_PATHS.template,
     element: lazyWithRetry(
-      () => import('@/pages/report/TemplateManagementPage'),
+      () => import('@/components/report/TemplateManagementPage'),
       'TemplateManagementPage'
     ),
     module: 'report',
@@ -143,7 +152,7 @@ const reportRoutes: RouteConfigV2[] = [
   } as RouteConfigV2<TemplateManagementPageProps>,
   {
     path: REPORT_PATHS.report,
-    element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
+    element: lazyWithRetry(() => import('@/components/report/ReportPage'), 'ReportPage'),
     module: 'report',
     title: i18n.t('report.nav.report-report'),
     titleKey: 'report.nav.report-report',

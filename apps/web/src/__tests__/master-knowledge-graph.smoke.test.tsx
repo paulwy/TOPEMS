@@ -14,7 +14,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const sampleStats = {
   total: 88,
-  by_type: [{ type: 'concept', count: 40 }, { type: 'document', count: 30 }],
+  by_type: [
+    { type: 'concept', count: 40 },
+    { type: 'document', count: 30 },
+  ],
   by_category: [{ category: 'mdm', count: 50 }],
 };
 const sampleCategories = [{ id: 'c1', name: '物料域', count: 50 }];
@@ -23,7 +26,13 @@ const sampleSubgraph = {
   edges: [{ id: 'e1', from_node: 'n1', to_node: 'n2', relation: '关联' }],
 };
 const sampleRecs = [
-  { id: 'r1', type: 'document', title: '物料编码规范', reason: '与你关注的物料域相关', confidence: 85 },
+  {
+    id: 'r1',
+    type: 'document',
+    title: '物料编码规范',
+    reason: '与你关注的物料域相关',
+    confidence: 85,
+  },
 ];
 
 vi.mock('@/api/master/knowledgeGraph', () => ({
@@ -39,7 +48,7 @@ vi.mock('@/api/master/knowledgeGraph', () => ({
   },
 }));
 
-import MasterKnowledgeGraphPage from '@/pages/master/MasterKnowledgeGraphPage';
+import MasterKnowledgeGraphPage from '@/components/master/MasterKnowledgeGraphPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -47,10 +56,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -62,8 +73,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="kg" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='kg'
+                errors={captured}
+              >
                 <MasterKnowledgeGraphPage />
               </CaptureBoundary>
             </Suspense>

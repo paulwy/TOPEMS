@@ -96,7 +96,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
     {
       path: MONITOR_PATHS.dashboard,
       element: lazyWithRetry(
-        () => import('@/pages/monitor/MonitorDashboardPage'),
+        () => import('@/components/monitor/MonitorDashboardPage'),
         'MonitorDashboardPage'
       ),
       module: 'monitor',
@@ -111,7 +111,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
     {
       path: MONITOR_PATHS.alerts,
       element: lazyWithRetry(
-        () => import('@/pages/monitor/MonitorAlertsPage'),
+        () => import('@/components/monitor/MonitorAlertsPage'),
         'MonitorAlertsPage'
       ),
       module: 'monitor',
@@ -126,7 +126,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
     {
       path: MONITOR_PATHS.alertHistory,
       element: lazyWithRetry(
-        () => import('@/pages/monitor/MonitorAlertHistoryPage'),
+        () => import('@/components/monitor/MonitorAlertHistoryPage'),
         'MonitorAlertHistoryPage'
       ),
       module: 'monitor',
@@ -141,7 +141,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
     {
       path: MONITOR_PATHS.rules,
       element: lazyWithRetry(
-        () => import('@/pages/monitor/MonitorAlertRulesPage'),
+        () => import('@/components/monitor/MonitorAlertRulesPage'),
         'MonitorAlertRulesPage'
       ),
       module: 'monitor',
@@ -156,7 +156,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
     {
       path: MONITOR_PATHS.metrics,
       element: lazyWithRetry(
-        () => import('@/pages/monitor/MonitorMetricsPage'),
+        () => import('@/components/monitor/MonitorMetricsPage'),
         'MonitorMetricsPage'
       ),
       module: 'monitor',
@@ -170,7 +170,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<MonitorMetricsPageProps>,
     {
       path: MONITOR_PATHS.logs,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorLogsPage'), 'MonitorLogsPage'),
+      element: lazyWithRetry(
+        () => import('@/components/monitor/MonitorLogsPage'),
+        'MonitorLogsPage'
+      ),
       module: 'monitor',
       code: 'monitor-logs',
       title: i18n.t('monitor.nav.monitor-logs'),
@@ -183,7 +186,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
     {
       path: MONITOR_PATHS.settings,
       element: lazyWithRetry(
-        () => import('@/pages/monitor/MonitorSettingsPage'),
+        () => import('@/components/monitor/MonitorSettingsPage'),
         'MonitorSettingsPage'
       ),
       module: 'monitor',

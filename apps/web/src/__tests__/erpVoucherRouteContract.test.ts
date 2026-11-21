@@ -34,9 +34,9 @@ describe('ERP 凭证入口收敛契约', () => {
 
   it('ERP 入口落点指向 finance 权威页', () => {
     const block = voucherRouteBlock();
-    expect(block).toContain("import('@/pages/finance/FinanceVoucherPage')");
+    expect(block).toContain("import('@/components/finance/FinanceVoucherPage')");
     expect(block).toContain("'FinanceVoucherPage'");
-    expect(block).not.toContain('@/pages/erp/VoucherPage');
+    expect(block).not.toContain('@/components/erp/VoucherPage');
   });
 
   it('路由权限码与后端鉴权一致（finance:voucher:read，避免可见但 403）', () => {

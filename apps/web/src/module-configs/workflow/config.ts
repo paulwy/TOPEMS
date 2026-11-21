@@ -59,7 +59,7 @@ interface WorkflowSettingsPageProps {}
 const workflowDashboardRoute: RouteConfigV2<WorkflowDashboardPageProps> = {
   path: WORKFLOW_PATHS.dashboard,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowDashboardPage'),
+    () => import('@/components/workflow/WorkflowDashboardPage'),
     'WorkflowDashboardPage'
   ),
   module: 'workflow',
@@ -75,7 +75,7 @@ const workflowDashboardRoute: RouteConfigV2<WorkflowDashboardPageProps> = {
 const workflowDefinitionsRoute: RouteConfigV2<WorkflowDefinitionsPageProps> = {
   path: WORKFLOW_PATHS.definitions,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowDefinitionsPage'),
+    () => import('@/components/workflow/WorkflowDefinitionsPage'),
     'WorkflowDefinitionsPage'
   ),
   module: 'workflow',
@@ -91,7 +91,7 @@ const workflowDefinitionsRoute: RouteConfigV2<WorkflowDefinitionsPageProps> = {
 const workflowDesignerRoute: RouteConfigV2<WorkflowDesignerPageProps> = {
   path: WORKFLOW_PATHS.designer,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowDesignerPage'),
+    () => import('@/components/workflow/WorkflowDesignerPage'),
     'WorkflowDesignerPage'
   ),
   module: 'workflow',
@@ -107,7 +107,7 @@ const workflowDesignerRoute: RouteConfigV2<WorkflowDesignerPageProps> = {
 const workflowVersionHistoryRoute: RouteConfigV2<WorkflowVersionHistoryPageProps> = {
   path: WORKFLOW_PATHS.versionHistory,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowVersionHistoryPage'),
+    () => import('@/components/workflow/WorkflowVersionHistoryPage'),
     'WorkflowVersionHistoryPage'
   ),
   module: 'workflow',
@@ -123,7 +123,7 @@ const workflowVersionHistoryRoute: RouteConfigV2<WorkflowVersionHistoryPageProps
 const workflowInstancesRoute: RouteConfigV2<WorkflowInstancesPageProps> = {
   path: WORKFLOW_PATHS.instances,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowInstancesPage'),
+    () => import('@/components/workflow/WorkflowInstancesPage'),
     'WorkflowInstancesPage'
   ),
   module: 'workflow',
@@ -139,7 +139,7 @@ const workflowInstancesRoute: RouteConfigV2<WorkflowInstancesPageProps> = {
 const workflowInstanceDetailRoute: RouteConfigV2<WorkflowInstanceDetailPageProps> = {
   path: WORKFLOW_PATHS.instanceDetail,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowInstanceDetailPage'),
+    () => import('@/components/workflow/WorkflowInstanceDetailPage'),
     'WorkflowInstanceDetailPage'
   ),
   module: 'workflow',
@@ -155,7 +155,7 @@ const workflowInstanceDetailRoute: RouteConfigV2<WorkflowInstanceDetailPageProps
 const workflowApprovalsRoute: RouteConfigV2<WorkflowApprovalsPageProps> = {
   path: WORKFLOW_PATHS.approvals,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowApprovalsPage'),
+    () => import('@/components/workflow/WorkflowApprovalsPage'),
     'WorkflowApprovalsPage'
   ),
   module: 'workflow',
@@ -171,7 +171,7 @@ const workflowApprovalsRoute: RouteConfigV2<WorkflowApprovalsPageProps> = {
 const workflowApprovalDetailRoute: RouteConfigV2<WorkflowApprovalDetailPageProps> = {
   path: WORKFLOW_PATHS.approvalDetail,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowApprovalDetailPage'),
+    () => import('@/components/workflow/WorkflowApprovalDetailPage'),
     'WorkflowApprovalDetailPage'
   ),
   module: 'workflow',
@@ -187,7 +187,7 @@ const workflowApprovalDetailRoute: RouteConfigV2<WorkflowApprovalDetailPageProps
 const workflowNotificationCenterRoute: RouteConfigV2<WorkflowNotificationCenterPageProps> = {
   path: WORKFLOW_PATHS.notificationCenter,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowNotificationCenterPage'),
+    () => import('@/components/workflow/WorkflowNotificationCenterPage'),
     'WorkflowNotificationCenterPage'
   ),
   module: 'workflow',
@@ -203,7 +203,7 @@ const workflowNotificationCenterRoute: RouteConfigV2<WorkflowNotificationCenterP
 const workflowMonitorRoute: RouteConfigV2<WorkflowMonitorPageProps> = {
   path: WORKFLOW_PATHS.monitor,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowMonitorPage'),
+    () => import('@/components/workflow/WorkflowMonitorPage'),
     'WorkflowMonitorPage'
   ),
   module: 'workflow',
@@ -219,7 +219,7 @@ const workflowMonitorRoute: RouteConfigV2<WorkflowMonitorPageProps> = {
 const workflowStatisticsRoute: RouteConfigV2<WorkflowStatisticsPageProps> = {
   path: WORKFLOW_PATHS.statistics,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowStatisticsPage'),
+    () => import('@/components/workflow/WorkflowStatisticsPage'),
     'WorkflowStatisticsPage'
   ),
   module: 'workflow',
@@ -235,7 +235,7 @@ const workflowStatisticsRoute: RouteConfigV2<WorkflowStatisticsPageProps> = {
 const workflowTemplateRoute: RouteConfigV2<WorkflowTemplatePageProps> = {
   path: WORKFLOW_PATHS.templates,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowTemplatePage'),
+    () => import('@/components/workflow/WorkflowTemplatePage'),
     'WorkflowTemplatePage'
   ),
   module: 'workflow',
@@ -251,7 +251,7 @@ const workflowTemplateRoute: RouteConfigV2<WorkflowTemplatePageProps> = {
 const workflowSettingsRoute: RouteConfigV2<WorkflowSettingsPageProps> = {
   path: WORKFLOW_PATHS.settings,
   element: lazyWithRetry(
-    () => import('@/pages/workflow/WorkflowSettingsPage'),
+    () => import('@/components/workflow/WorkflowSettingsPage'),
     'WorkflowSettingsPage'
   ),
   module: 'workflow',

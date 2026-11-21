@@ -54,7 +54,7 @@ interface NotificationSettingsPageProps {}
 const notificationDashboardRoute: RouteConfigV2<NotificationDashboardPageProps> = {
   path: NOTIFICATION_PATHS.dashboard,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationDashboardPage'),
+    () => import('@/components/notification/NotificationDashboardPage'),
     'NotificationDashboardPage'
   ),
   module: 'notification',
@@ -70,7 +70,7 @@ const notificationDashboardRoute: RouteConfigV2<NotificationDashboardPageProps> 
 const notificationListRoute: RouteConfigV2<NotificationListPageProps> = {
   path: NOTIFICATION_PATHS.list,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationListPage'),
+    () => import('@/components/notification/NotificationListPage'),
     'NotificationListPage'
   ),
   module: 'notification',
@@ -86,7 +86,7 @@ const notificationListRoute: RouteConfigV2<NotificationListPageProps> = {
 const notificationArchiveRoute: RouteConfigV2<NotificationArchivePageProps> = {
   path: NOTIFICATION_PATHS.archive,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationArchivePage'),
+    () => import('@/components/notification/NotificationArchivePage'),
     'NotificationArchivePage'
   ),
   module: 'notification',
@@ -102,7 +102,7 @@ const notificationArchiveRoute: RouteConfigV2<NotificationArchivePageProps> = {
 const notificationDetailRoute: RouteConfigV2<NotificationDetailPageProps> = {
   path: NOTIFICATION_PATHS.detail,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationDetailPage'),
+    () => import('@/components/notification/NotificationDetailPage'),
     'NotificationDetailPage'
   ),
   module: 'notification',
@@ -118,7 +118,7 @@ const notificationDetailRoute: RouteConfigV2<NotificationDetailPageProps> = {
 const notificationCenterRoute: RouteConfigV2<NotificationCenterPageProps> = {
   path: NOTIFICATION_PATHS.center,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationCenter'),
+    () => import('@/components/notification/NotificationCenter'),
     'NotificationCenter'
   ),
   module: 'notification',
@@ -134,7 +134,7 @@ const notificationCenterRoute: RouteConfigV2<NotificationCenterPageProps> = {
 const notificationTemplatesRoute: RouteConfigV2<NotificationTemplatesPageProps> = {
   path: NOTIFICATION_PATHS.templates,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationTemplatesPage'),
+    () => import('@/components/notification/NotificationTemplatesPage'),
     'NotificationTemplatesPage'
   ),
   module: 'notification',
@@ -150,7 +150,7 @@ const notificationTemplatesRoute: RouteConfigV2<NotificationTemplatesPageProps> 
 const notificationStatsRoute: RouteConfigV2<NotificationStatsPageProps> = {
   path: NOTIFICATION_PATHS.statistics,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationStatsPage'),
+    () => import('@/components/notification/NotificationStatsPage'),
     'NotificationStatsPage'
   ),
   module: 'notification',
@@ -166,7 +166,7 @@ const notificationStatsRoute: RouteConfigV2<NotificationStatsPageProps> = {
 const notificationSettingsRoute: RouteConfigV2<NotificationSettingsPageProps> = {
   path: NOTIFICATION_PATHS.settings,
   element: lazyWithRetry(
-    () => import('@/pages/notification/NotificationSettingsPage'),
+    () => import('@/components/notification/NotificationSettingsPage'),
     'NotificationSettingsPage'
   ),
   module: 'notification',

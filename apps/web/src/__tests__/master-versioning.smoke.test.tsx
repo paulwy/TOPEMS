@@ -58,13 +58,13 @@ vi.mock('@/api/master/versioning', () => ({
     getComplianceAudit: vi.fn(async () => ({
       code: 0,
       data: {
-      entity_type: 'mdm_material',
-      entity_id: 'MAT-001',
-      total_changes: 12,
-      retained_days: 365,
-      retention_policy: 'mdm_audit_retention',
-      compliance_status: 'compliant',
-      violations: [],
+        entity_type: 'mdm_material',
+        entity_id: 'MAT-001',
+        total_changes: 12,
+        retained_days: 365,
+        retention_policy: 'mdm_audit_retention',
+        compliance_status: 'compliant',
+        violations: [],
       },
     })),
     createSnapshot: vi.fn(),
@@ -73,7 +73,7 @@ vi.mock('@/api/master/versioning', () => ({
   },
 }));
 
-import MasterVersioningPage from '@/pages/master/MasterVersioningPage';
+import MasterVersioningPage from '@/components/master/MasterVersioningPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -81,10 +81,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -100,8 +102,11 @@ describe('MasterVersioningPage 数据 mock 深测', () => {
         <ThemeProvider theme={createTheme()}>
           <QueryClientProvider client={qc}>
             <MemoryRouter>
-              <Suspense fallback={<div data-testid="loading" />}>
-                <CaptureBoundary name="versioning" errors={captured}>
+              <Suspense fallback={<div data-testid='loading' />}>
+                <CaptureBoundary
+                  name='versioning'
+                  errors={captured}
+                >
                   <MasterVersioningPage />
                 </CaptureBoundary>
               </Suspense>
@@ -125,8 +130,11 @@ describe('MasterVersioningPage 数据 mock 深测', () => {
         <ThemeProvider theme={createTheme()}>
           <QueryClientProvider client={qc}>
             <MemoryRouter>
-              <Suspense fallback={<div data-testid="loading" />}>
-                <CaptureBoundary name="versioning-audit" errors={captured}>
+              <Suspense fallback={<div data-testid='loading' />}>
+                <CaptureBoundary
+                  name='versioning-audit'
+                  errors={captured}
+                >
                   <MasterVersioningPage />
                 </CaptureBoundary>
               </Suspense>

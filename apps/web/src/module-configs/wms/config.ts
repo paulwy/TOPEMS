@@ -82,7 +82,7 @@ export const WMS_PATHS = {
 // ---- 路由配置（供路由系统使用） ----
 const wmsDashboardRoute: RouteConfigV2<WmsDashboardPageProps> = {
   path: WMS_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/wms/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/wms/DashboardPage'), 'DashboardPage'),
   module: 'wms',
   code: 'wms-dashboard',
   title: i18n.t('wms.nav.wms-dashboard'),
@@ -96,7 +96,7 @@ const wmsDashboardRoute: RouteConfigV2<WmsDashboardPageProps> = {
 const warehouseManagementRoute: RouteConfigV2<WarehouseManagementPageProps> = {
   path: WMS_PATHS.warehouseManagement,
   element: lazyWithRetry(
-    () => import('@/pages/wms/WarehouseManagementPage'),
+    () => import('@/components/wms/WarehouseManagementPage'),
     'WarehouseManagementPage'
   ),
   module: 'wms',
@@ -111,7 +111,7 @@ const warehouseManagementRoute: RouteConfigV2<WarehouseManagementPageProps> = {
 
 const locationManagementRoute: RouteConfigV2<LocationPageProps> = {
   path: WMS_PATHS.locationManagement,
-  element: lazyWithRetry(() => import('@/pages/wms/LocationPage'), 'LocationPage'),
+  element: lazyWithRetry(() => import('@/components/wms/LocationPage'), 'LocationPage'),
   module: 'wms',
   code: 'wms-locations',
   title: i18n.t('wms.nav.wms-locations'),
@@ -124,7 +124,7 @@ const locationManagementRoute: RouteConfigV2<LocationPageProps> = {
 
 const inboundRoute: RouteConfigV2<InboundPageProps> = {
   path: WMS_PATHS.inbound,
-  element: lazyWithRetry(() => import('@/pages/wms/InboundPage'), 'InboundPage'),
+  element: lazyWithRetry(() => import('@/components/wms/InboundPage'), 'InboundPage'),
   module: 'wms',
   code: 'wms-inbound',
   title: i18n.t('wms.nav.wms-dashboard'),
@@ -140,7 +140,10 @@ const stockInFormRoute: RouteConfigV2<StockInFormProps> =
 
 const wmsInboundDetailRoute: RouteConfigV2<WmsInboundDetailPageProps> = {
   path: WMS_PATHS.WmsInboundDetail,
-  element: lazyWithRetry(() => import('@/pages/wms/WmsInboundDetailPage'), 'WmsInboundDetailPage'),
+  element: lazyWithRetry(
+    () => import('@/components/wms/WmsInboundDetailPage'),
+    'WmsInboundDetailPage'
+  ),
   module: 'wms',
   code: 'wms-inbound-detail',
   title: i18n.t('wms.nav.wms-dashboard'),
@@ -153,7 +156,7 @@ const wmsInboundDetailRoute: RouteConfigV2<WmsInboundDetailPageProps> = {
 
 const outboundRoute: RouteConfigV2<OutboundPageProps> = {
   path: WMS_PATHS.outbound,
-  element: lazyWithRetry(() => import('@/pages/wms/OutboundPage'), 'OutboundPage'),
+  element: lazyWithRetry(() => import('@/components/wms/OutboundPage'), 'OutboundPage'),
   module: 'wms',
   code: 'wms-outbound',
   title: i18n.t('wms.nav.wms-dashboard'),
@@ -167,7 +170,7 @@ const outboundRoute: RouteConfigV2<OutboundPageProps> = {
 const wmsOutboundDetailRoute: RouteConfigV2<WmsOutboundDetailPageProps> = {
   path: WMS_PATHS.WmsOutboundDetail,
   element: lazyWithRetry(
-    () => import('@/pages/wms/WmsOutboundDetailPage'),
+    () => import('@/components/wms/WmsOutboundDetailPage'),
     'WmsOutboundDetailPage'
   ),
   module: 'wms',
@@ -182,7 +185,7 @@ const wmsOutboundDetailRoute: RouteConfigV2<WmsOutboundDetailPageProps> = {
 
 const inventoryRoute: RouteConfigV2<InventoryPageProps> = {
   path: WMS_PATHS.inventory,
-  element: lazyWithRetry(() => import('@/pages/wms/InventoryPage'), 'InventoryPage'),
+  element: lazyWithRetry(() => import('@/components/wms/InventoryPage'), 'InventoryPage'),
   module: 'wms',
   code: 'wms-items',
   title: i18n.t('wms.nav.wms-dashboard'),
@@ -196,7 +199,7 @@ const inventoryRoute: RouteConfigV2<InventoryPageProps> = {
 const supplierManagementRoute: RouteConfigV2<SupplierManagementPageProps> = {
   path: WMS_PATHS.supplierManagement,
   element: lazyWithRetry(
-    () => import('@/pages/wms/SupplierManagementPage'),
+    () => import('@/components/wms/SupplierManagementPage'),
     'SupplierManagementPage'
   ),
   module: 'wms',
@@ -211,7 +214,7 @@ const supplierManagementRoute: RouteConfigV2<SupplierManagementPageProps> = {
 
 const supplierDetailRoute: RouteConfigV2<SupplierDetailPageProps> = {
   path: WMS_PATHS.supplierDetail,
-  element: lazyWithRetry(() => import('@/pages/wms/SupplierDetailPage'), 'SupplierDetailPage'),
+  element: lazyWithRetry(() => import('@/components/wms/SupplierDetailPage'), 'SupplierDetailPage'),
   module: 'wms',
   code: 'wms-supplier-detail',
   title: i18n.t('wms.nav.wms-dashboard'),
@@ -225,7 +228,7 @@ const supplierDetailRoute: RouteConfigV2<SupplierDetailPageProps> = {
 const wmsStockTakeDetailRoute: RouteConfigV2<WmsStockTakeDetailPageProps> = {
   path: WMS_PATHS.WmsStockTakeDetail,
   element: lazyWithRetry(
-    () => import('@/pages/wms/WmsStockTakeDetailPage'),
+    () => import('@/components/wms/WmsStockTakeDetailPage'),
     'WmsStockTakeDetailPage'
   ),
   module: 'wms',
@@ -240,7 +243,7 @@ const wmsStockTakeDetailRoute: RouteConfigV2<WmsStockTakeDetailPageProps> = {
 
 const wmsStocktakeRoute: RouteConfigV2<Record<string, never>> = {
   path: WMS_PATHS.stocktake,
-  element: lazyWithRetry(() => import('@/pages/wms/WmsStocktakePage'), 'WmsStocktakePage'),
+  element: lazyWithRetry(() => import('@/components/wms/WmsStocktakePage'), 'WmsStocktakePage'),
   module: 'wms',
   code: 'wms-stocktake',
   title: i18n.t('wms.nav.wms-stocktake'),
@@ -257,7 +260,10 @@ const wmsRoutes: RouteConfigV2[] = [
   locationManagementRoute,
   {
     path: WMS_PATHS.batchManagement,
-    element: lazyWithRetry(() => import('@/pages/wms/BatchManagementPage'), 'BatchManagementPage'),
+    element: lazyWithRetry(
+      () => import('@/components/wms/BatchManagementPage'),
+      'BatchManagementPage'
+    ),
     module: 'wms',
     code: 'wms-batches',
     title: i18n.t('wms.nav.wms-batches'),
@@ -269,7 +275,7 @@ const wmsRoutes: RouteConfigV2[] = [
   },
   {
     path: WMS_PATHS.serialNumber,
-    element: lazyWithRetry(() => import('@/pages/wms/SerialNumberPage'), 'SerialNumberPage'),
+    element: lazyWithRetry(() => import('@/components/wms/SerialNumberPage'), 'SerialNumberPage'),
     module: 'wms',
     code: 'wms-serial-number',
     title: i18n.t('wms.nav.wms-serial-number'),
@@ -282,7 +288,7 @@ const wmsRoutes: RouteConfigV2[] = [
   stockInFormRoute,
   {
     path: WMS_PATHS.inboundOrder,
-    element: lazyWithRetry(() => import('@/pages/wms/InboundOrderPage'), 'InboundOrderPage'),
+    element: lazyWithRetry(() => import('@/components/wms/InboundOrderPage'), 'InboundOrderPage'),
     module: 'wms',
     code: 'wms-inbound-order',
     title: i18n.t('wms.nav.wms-inbound-order'),
@@ -295,7 +301,7 @@ const wmsRoutes: RouteConfigV2[] = [
   outboundRoute,
   {
     path: WMS_PATHS.outboundOrder,
-    element: lazyWithRetry(() => import('@/pages/wms/OutboundOrderPage'), 'OutboundOrderPage'),
+    element: lazyWithRetry(() => import('@/components/wms/OutboundOrderPage'), 'OutboundOrderPage'),
     module: 'wms',
     code: 'wms-outbound-order',
     title: i18n.t('wms.nav.wms-outbound-order'),
@@ -307,7 +313,7 @@ const wmsRoutes: RouteConfigV2[] = [
   },
   {
     path: WMS_PATHS.transfer,
-    element: lazyWithRetry(() => import('@/pages/wms/TransferPage'), 'TransferPage'),
+    element: lazyWithRetry(() => import('@/components/wms/TransferPage'), 'TransferPage'),
     module: 'wms',
     code: 'wms-transfer',
     title: i18n.t('wms.nav.wms-transfer'),
@@ -319,7 +325,7 @@ const wmsRoutes: RouteConfigV2[] = [
   },
   {
     path: WMS_PATHS.stockTake,
-    element: lazyWithRetry(() => import('@/pages/wms/StockTakePage'), 'StockTakePage'),
+    element: lazyWithRetry(() => import('@/components/wms/StockTakePage'), 'StockTakePage'),
     module: 'wms',
     code: 'wms-inventory-check',
     title: i18n.t('wms.nav.wms-inventory-check'),
@@ -331,7 +337,7 @@ const wmsRoutes: RouteConfigV2[] = [
   },
   {
     path: WMS_PATHS.replenishment,
-    element: lazyWithRetry(() => import('@/pages/wms/ReplenishmentPage'), 'ReplenishmentPage'),
+    element: lazyWithRetry(() => import('@/components/wms/ReplenishmentPage'), 'ReplenishmentPage'),
     module: 'wms',
     code: 'wms-replenishment',
     title: i18n.t('wms.nav.wms-replenishment'),
@@ -344,7 +350,10 @@ const wmsRoutes: RouteConfigV2[] = [
   inventoryRoute,
   {
     path: WMS_PATHS.inventoryReport,
-    element: lazyWithRetry(() => import('@/pages/wms/InventoryReportPage'), 'InventoryReportPage'),
+    element: lazyWithRetry(
+      () => import('@/components/wms/InventoryReportPage'),
+      'InventoryReportPage'
+    ),
     module: 'wms',
     code: 'wms-inventory-report',
     title: i18n.t('wms.nav.wms-inventory-report'),
@@ -358,7 +367,7 @@ const wmsRoutes: RouteConfigV2[] = [
   supplierDetailRoute,
   {
     path: WMS_PATHS.area,
-    element: lazyWithRetry(() => import('@/pages/wms/WmsAreaPage'), 'WmsAreaPage'),
+    element: lazyWithRetry(() => import('@/components/wms/WmsAreaPage'), 'WmsAreaPage'),
     module: 'wms',
     code: 'wms-area',
     title: i18n.t('wms.nav.wms-area'),
@@ -371,7 +380,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.settingLocationRule,
     element: lazyWithRetry(
-      () => import('@/pages/wms/setting/LocationRulePage'),
+      () => import('@/components/wms/setting/LocationRulePage'),
       'LocationRulePage'
     ),
     module: 'wms',
@@ -385,7 +394,10 @@ const wmsRoutes: RouteConfigV2[] = [
   },
   {
     path: WMS_PATHS.settingFifoPolicy,
-    element: lazyWithRetry(() => import('@/pages/wms/setting/FifoPolicyPage'), 'FifoPolicyPage'),
+    element: lazyWithRetry(
+      () => import('@/components/wms/setting/FifoPolicyPage'),
+      'FifoPolicyPage'
+    ),
     module: 'wms',
     code: 'wms-fifo-policy',
     title: i18n.t('wms.nav.wms-fifo-policy'),
@@ -398,7 +410,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.settingInventoryCycle,
     element: lazyWithRetry(
-      () => import('@/pages/wms/setting/InventoryCyclePage'),
+      () => import('@/components/wms/setting/InventoryCyclePage'),
       'InventoryCyclePage'
     ),
     module: 'wms',
@@ -413,7 +425,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.settingInventoryThreshold,
     element: lazyWithRetry(
-      () => import('@/pages/wms/setting/InventoryThresholdPage'),
+      () => import('@/components/wms/setting/InventoryThresholdPage'),
       'InventoryThresholdPage'
     ),
     module: 'wms',
@@ -428,7 +440,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsInventoryTurnover,
     element: lazyWithRetry(
-      () => import('@/pages/wms/analytics/WmsInventoryTurnoverPage'),
+      () => import('@/components/wms/analytics/WmsInventoryTurnoverPage'),
       'WmsInventoryTurnoverPage'
     ),
     module: 'wms',
@@ -443,7 +455,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsAgePareto,
     element: lazyWithRetry(
-      () => import('@/pages/wms/analytics/WmsAgeParetoPage'),
+      () => import('@/components/wms/analytics/WmsAgeParetoPage'),
       'WmsAgeParetoPage'
     ),
     module: 'wms',
@@ -458,7 +470,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsFlowTrend,
     element: lazyWithRetry(
-      () => import('@/pages/wms/analytics/WmsFlowTrendPage'),
+      () => import('@/components/wms/analytics/WmsFlowTrendPage'),
       'WmsFlowTrendPage'
     ),
     module: 'wms',
@@ -473,7 +485,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsAbcAnalysis,
     element: lazyWithRetry(
-      () => import('@/pages/wms/analytics/WmsAbcAnalysisPage'),
+      () => import('@/components/wms/analytics/WmsAbcAnalysisPage'),
       'WmsAbcAnalysisPage'
     ),
     module: 'wms',
@@ -488,7 +500,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsLocationUtil,
     element: lazyWithRetry(
-      () => import('@/pages/wms/analytics/WmsLocationUtilizationPage'),
+      () => import('@/components/wms/analytics/WmsLocationUtilizationPage'),
       'WmsLocationUtilizationPage'
     ),
     module: 'wms',
@@ -503,7 +515,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsOrderFulfillment,
     element: lazyWithRetry(
-      () => import('@/pages/wms/analytics/WmsOrderFulfillmentPage'),
+      () => import('@/components/wms/analytics/WmsOrderFulfillmentPage'),
       'WmsOrderFulfillmentPage'
     ),
     module: 'wms',
@@ -522,7 +534,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsTransferDetail,
     element: lazyWithRetry(
-      () => import('@/pages/wms/WmsTransferDetailPage'),
+      () => import('@/components/wms/WmsTransferDetailPage'),
       'WmsTransferDetailPage'
     ),
     module: 'wms',
@@ -537,7 +549,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsWavePickDetail,
     element: lazyWithRetry(
-      () => import('@/pages/wms/WmsWavePickDetailPage'),
+      () => import('@/components/wms/WmsWavePickDetailPage'),
       'WmsWavePickDetailPage'
     ),
     module: 'wms',
@@ -552,7 +564,7 @@ const wmsRoutes: RouteConfigV2[] = [
   {
     path: WMS_PATHS.WmsMovementDetail,
     element: lazyWithRetry(
-      () => import('@/pages/wms/WmsInventoryMovementDetailPage'),
+      () => import('@/components/wms/WmsInventoryMovementDetailPage'),
       'WmsInventoryMovementDetailPage'
     ),
     module: 'wms',

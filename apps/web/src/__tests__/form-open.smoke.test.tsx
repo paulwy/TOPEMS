@@ -113,10 +113,10 @@ vi.mock('@/api/hrm/employee', () => ({
   },
 }));
 
-import QmsPage from '@/pages/qms/QmsInspectionRedesignPage';
-import CrmPage from '@/pages/crm/CrmCustomerRedesignPage';
-import ErpPage from '@/pages/erp/ErpSalesOrderRedesignPage';
-import HrmPage from '@/pages/hrm/HrmEmployeeRedesignPage';
+import QmsPage from '@/components/qms/QmsInspectionRedesignPage';
+import CrmPage from '@/components/crm/CrmCustomerRedesignPage';
+import ErpPage from '@/components/erp/ErpSalesOrderRedesignPage';
+import HrmPage from '@/components/hrm/HrmEmployeeRedesignPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };

@@ -44,7 +44,7 @@ interface FileDetailPageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: DOC_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/doc/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/doc/DashboardPage'), 'DashboardPage'),
   module: 'doc',
   code: 'doc-dashboard',
   title: i18n.t('doc.nav.doc-dashboard'),
@@ -57,7 +57,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const documentListRoute: RouteConfigV2<DocumentListPageProps> = {
   path: DOC_PATHS.list,
-  element: lazyWithRetry(() => import('@/pages/doc/DocumentListPage'), 'DocumentListPage'),
+  element: lazyWithRetry(() => import('@/components/doc/DocumentListPage'), 'DocumentListPage'),
   module: 'doc',
   code: 'doc-list',
   title: i18n.t('doc.nav.doc-list'),
@@ -70,7 +70,7 @@ const documentListRoute: RouteConfigV2<DocumentListPageProps> = {
 
 const documentsRoute: RouteConfigV2<DocumentsPageProps> = {
   path: DOC_PATHS.documents,
-  element: lazyWithRetry(() => import('@/pages/doc/DocumentsPage'), 'DocumentsPage'),
+  element: lazyWithRetry(() => import('@/components/doc/DocumentsPage'), 'DocumentsPage'),
   module: 'doc',
   code: 'doc-documents',
   title: i18n.t('doc.nav.doc-documents'),
@@ -83,7 +83,7 @@ const documentsRoute: RouteConfigV2<DocumentsPageProps> = {
 
 const documentCenterRoute: RouteConfigV2<DocumentCenterPageProps> = {
   path: DOC_PATHS.documentCenter,
-  element: lazyWithRetry(() => import('@/pages/doc/DocumentCenterPage'), 'DocumentCenterPage'),
+  element: lazyWithRetry(() => import('@/components/doc/DocumentCenterPage'), 'DocumentCenterPage'),
   module: 'doc',
   code: 'doc-document-center',
   title: i18n.t('doc.nav.doc-document-center'),
@@ -96,7 +96,7 @@ const documentCenterRoute: RouteConfigV2<DocumentCenterPageProps> = {
 
 const knowledgeBaseRoute: RouteConfigV2<KnowledgeBasePageProps> = {
   path: DOC_PATHS.knowledgeBase,
-  element: lazyWithRetry(() => import('@/pages/doc/KnowledgeBasePage'), 'KnowledgeBasePage'),
+  element: lazyWithRetry(() => import('@/components/doc/KnowledgeBasePage'), 'KnowledgeBasePage'),
   module: 'doc',
   code: 'doc-knowledge-base',
   title: i18n.t('doc.nav.doc-knowledge-base'),
@@ -109,7 +109,7 @@ const knowledgeBaseRoute: RouteConfigV2<KnowledgeBasePageProps> = {
 
 const fileDetailRoute: RouteConfigV2<FileDetailPageProps> = {
   path: DOC_PATHS.documentDetail,
-  element: lazyWithRetry(() => import('@/pages/doc/FileDetailPage'), 'FileDetailPage'),
+  element: lazyWithRetry(() => import('@/components/doc/FileDetailPage'), 'FileDetailPage'),
   module: 'doc',
   code: 'doc-file-detail',
   title: i18n.t('doc.nav.doc-file-detail'),

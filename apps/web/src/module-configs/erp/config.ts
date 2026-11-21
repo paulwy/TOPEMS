@@ -152,7 +152,7 @@ interface FinancialAnalysisPageProps {}
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: ERP_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/erp/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/erp/DashboardPage'), 'DashboardPage'),
   module: 'erp',
   code: 'erp-dashboard',
   title: i18n.t('erp.nav.erp-dashboard'),
@@ -168,7 +168,10 @@ const voucherRoute: RouteConfigV2<VoucherPageProps> = {
   path: ERP_PATHS.voucherManagement,
   // 批 21：凭证收敛至 finance 域权威页（原 erp/VoucherPage 为 finance 版子集，已删除）。
   // ERP 入口路径与权限要求保持不变，落点切到 FinanceVoucherPage，用户入口不丢。
-  element: lazyWithRetry(() => import('@/pages/finance/FinanceVoucherPage'), 'FinanceVoucherPage'),
+  element: lazyWithRetry(
+    () => import('@/components/finance/FinanceVoucherPage'),
+    'FinanceVoucherPage'
+  ),
   module: 'erp',
   code: 'erp-general-ledger',
   title: i18n.t('erp.nav.erp-general-ledger'),
@@ -187,7 +190,7 @@ const voucherRoute: RouteConfigV2<VoucherPageProps> = {
 const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
   path: ERP_PATHS.customerManagement,
   element: lazyWithRetry(
-    () => import('@/pages/erp/CustomerManagementPage'),
+    () => import('@/components/erp/CustomerManagementPage'),
     'CustomerManagementPage'
   ),
   module: 'erp',
@@ -204,7 +207,7 @@ const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
 const supplierManagementRoute: RouteConfigV2<SupplierManagementPageProps> = {
   path: ERP_PATHS.supplierManagement,
   element: lazyWithRetry(
-    () => import('@/pages/erp/SupplierManagementPage'),
+    () => import('@/components/erp/SupplierManagementPage'),
     'SupplierManagementPage'
   ),
   module: 'erp',
@@ -221,7 +224,7 @@ const supplierManagementRoute: RouteConfigV2<SupplierManagementPageProps> = {
 const inventoryManagementRoute: RouteConfigV2<InventoryManagementPageProps> = {
   path: ERP_PATHS.inventoryManagement,
   element: lazyWithRetry(
-    () => import('@/pages/erp/InventoryManagementPage'),
+    () => import('@/components/erp/InventoryManagementPage'),
     'InventoryManagementPage'
   ),
   module: 'erp',
@@ -238,7 +241,7 @@ const inventoryManagementRoute: RouteConfigV2<InventoryManagementPageProps> = {
 const materialManagementRoute: RouteConfigV2<MaterialManagementPageProps> = {
   path: ERP_PATHS.materialManagement,
   element: lazyWithRetry(
-    () => import('@/pages/erp/MaterialManagementPage'),
+    () => import('@/components/erp/MaterialManagementPage'),
     'MaterialManagementPage'
   ),
   module: 'erp',
@@ -254,7 +257,7 @@ const materialManagementRoute: RouteConfigV2<MaterialManagementPageProps> = {
 
 const purchaseOrderRoute: RouteConfigV2<PurchaseOrderPageProps> = {
   path: ERP_PATHS.purchaseOrder,
-  element: lazyWithRetry(() => import('@/pages/erp/PurchaseOrderPage'), 'PurchaseOrderPage'),
+  element: lazyWithRetry(() => import('@/components/erp/PurchaseOrderPage'), 'PurchaseOrderPage'),
   module: 'erp',
   code: 'erp-purchase-order',
   title: i18n.t('erp.nav.erp-purchase-order'),
@@ -268,7 +271,10 @@ const purchaseOrderRoute: RouteConfigV2<PurchaseOrderPageProps> = {
 
 const financialReportRoute: RouteConfigV2<FinancialReportPageProps> = {
   path: ERP_PATHS.financialReport,
-  element: lazyWithRetry(() => import('@/pages/erp/FinancialReportPage'), 'FinancialReportPage'),
+  element: lazyWithRetry(
+    () => import('@/components/erp/FinancialReportPage'),
+    'FinancialReportPage'
+  ),
   module: 'erp',
   code: 'erp-financial-statements',
   title: i18n.t('erp.nav.erp-financial-statements'),
@@ -282,7 +288,7 @@ const financialReportRoute: RouteConfigV2<FinancialReportPageProps> = {
 
 const dictManagementRoute: RouteConfigV2<DictManagementPageProps> = {
   path: ERP_PATHS.dictManagement,
-  element: lazyWithRetry(() => import('@/pages/erp/DictManagementPage'), 'DictManagementPage'),
+  element: lazyWithRetry(() => import('@/components/erp/DictManagementPage'), 'DictManagementPage'),
   module: 'erp',
   code: 'erp-dictionaries',
   title: i18n.t('erp.nav.erp-dictionaries'),
@@ -297,7 +303,7 @@ const dictManagementRoute: RouteConfigV2<DictManagementPageProps> = {
 const databaseManagementRoute: RouteConfigV2<DatabaseManagementPageProps> = {
   path: ERP_PATHS.databaseManagement,
   element: lazyWithRetry(
-    () => import('@/pages/erp/DatabaseManagementPage'),
+    () => import('@/components/erp/DatabaseManagementPage'),
     'DatabaseManagementPage'
   ),
   module: 'erp',
@@ -313,7 +319,7 @@ const databaseManagementRoute: RouteConfigV2<DatabaseManagementPageProps> = {
 
 const auditLogRoute: RouteConfigV2<AuditLogPageProps> = {
   path: ERP_PATHS.auditLog,
-  element: lazyWithRetry(() => import('@/pages/erp/AuditLogPage'), 'AuditLogPage'),
+  element: lazyWithRetry(() => import('@/components/erp/AuditLogPage'), 'AuditLogPage'),
   module: 'erp',
   code: 'erp-audit-log',
   title: i18n.t('erp.nav.erp-audit-log'),
@@ -327,7 +333,7 @@ const auditLogRoute: RouteConfigV2<AuditLogPageProps> = {
 
 const officeSuppliesRoute: RouteConfigV2<OfficeSuppliesPageProps> = {
   path: ERP_PATHS.officeSupplies,
-  element: lazyWithRetry(() => import('@/pages/erp/OfficeSuppliesPage'), 'OfficeSuppliesPage'),
+  element: lazyWithRetry(() => import('@/components/erp/OfficeSuppliesPage'), 'OfficeSuppliesPage'),
   module: 'erp',
   code: 'erp-office-supplies',
   title: i18n.t('erp.nav.erp-office-supplies'),
@@ -341,7 +347,7 @@ const officeSuppliesRoute: RouteConfigV2<OfficeSuppliesPageProps> = {
 
 const vehicleRoute: RouteConfigV2<VehiclePageProps> = {
   path: ERP_PATHS.vehicleManagement,
-  element: lazyWithRetry(() => import('@/pages/erp/VehiclePage'), 'VehiclePage'),
+  element: lazyWithRetry(() => import('@/components/erp/VehiclePage'), 'VehiclePage'),
   module: 'erp',
   code: 'erp-vehicle-management',
   title: i18n.t('erp.nav.erp-vehicle-management'),
@@ -356,7 +362,7 @@ const vehicleRoute: RouteConfigV2<VehiclePageProps> = {
 const receivablePayableRoute: RouteConfigV2<ReceivablePayablePageProps> = {
   path: ERP_PATHS.receivablePayable,
   element: lazyWithRetry(
-    () => import('@/pages/erp/ReceivablePayablePage'),
+    () => import('@/components/erp/ReceivablePayablePage'),
     'ReceivablePayablePage'
   ),
   module: 'erp',
@@ -372,7 +378,10 @@ const receivablePayableRoute: RouteConfigV2<ReceivablePayablePageProps> = {
 
 const assetManagementRoute: RouteConfigV2<AssetManagementPageProps> = {
   path: ERP_PATHS.assetManagement,
-  element: lazyWithRetry(() => import('@/pages/erp/AssetManagementPage'), 'AssetManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/erp/AssetManagementPage'),
+    'AssetManagementPage'
+  ),
   module: 'erp',
   code: 'erp-asset-management',
   title: i18n.t('erp.nav.erp-asset-management'),
@@ -386,7 +395,10 @@ const assetManagementRoute: RouteConfigV2<AssetManagementPageProps> = {
 
 const budgetManagementRoute: RouteConfigV2<BudgetManagementPageProps> = {
   path: ERP_PATHS.budgetManagement,
-  element: lazyWithRetry(() => import('@/pages/erp/BudgetManagementPage'), 'BudgetManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/erp/BudgetManagementPage'),
+    'BudgetManagementPage'
+  ),
   module: 'erp',
   code: 'erp-budget-management',
   title: i18n.t('erp.nav.erp-budget-management'),
@@ -400,7 +412,7 @@ const budgetManagementRoute: RouteConfigV2<BudgetManagementPageProps> = {
 
 const bankAccountRoute: RouteConfigV2<BankAccountPageProps> = {
   path: ERP_PATHS.bankAccount,
-  element: lazyWithRetry(() => import('@/pages/erp/BankAccountPage'), 'BankAccountPage'),
+  element: lazyWithRetry(() => import('@/components/erp/BankAccountPage'), 'BankAccountPage'),
   module: 'erp',
   code: 'erp-bank-account',
   title: i18n.t('erp.nav.erp-bank-account'),
@@ -415,7 +427,7 @@ const bankAccountRoute: RouteConfigV2<BankAccountPageProps> = {
 const accountingManagementRoute: RouteConfigV2<AccountingManagementPageProps> = {
   path: ERP_PATHS.accountingManagement,
   element: lazyWithRetry(
-    () => import('@/pages/erp/AccountingManagementPage'),
+    () => import('@/components/erp/AccountingManagementPage'),
     'AccountingManagementPage'
   ),
   module: 'erp',
@@ -431,7 +443,7 @@ const accountingManagementRoute: RouteConfigV2<AccountingManagementPageProps> = 
 
 const meetingRoomRoute: RouteConfigV2<MeetingRoomPageProps> = {
   path: ERP_PATHS.meetingRoom,
-  element: lazyWithRetry(() => import('@/pages/erp/MeetingRoomPage'), 'MeetingRoomPage'),
+  element: lazyWithRetry(() => import('@/components/erp/MeetingRoomPage'), 'MeetingRoomPage'),
   module: 'erp',
   code: 'erp-meeting-room',
   title: i18n.t('erp.nav.erp-meeting-room'),
@@ -445,7 +457,7 @@ const meetingRoomRoute: RouteConfigV2<MeetingRoomPageProps> = {
 
 const announcementRoute: RouteConfigV2<AnnouncementPageProps> = {
   path: ERP_PATHS.announcement,
-  element: lazyWithRetry(() => import('@/pages/erp/AnnouncementPage'), 'AnnouncementPage'),
+  element: lazyWithRetry(() => import('@/components/erp/AnnouncementPage'), 'AnnouncementPage'),
   module: 'erp',
   code: 'erp-announcement',
   title: i18n.t('erp.nav.erp-announcement'),
@@ -459,7 +471,7 @@ const announcementRoute: RouteConfigV2<AnnouncementPageProps> = {
 
 const vehicleRequestRoute: RouteConfigV2<VehicleRequestPageProps> = {
   path: ERP_PATHS.vehicleRequest,
-  element: lazyWithRetry(() => import('@/pages/erp/VehicleRequestPage'), 'VehicleRequestPage'),
+  element: lazyWithRetry(() => import('@/components/erp/VehicleRequestPage'), 'VehicleRequestPage'),
   module: 'erp',
   code: 'erp-vehicle-request',
   title: i18n.t('erp.nav.erp-vehicle-request'),
@@ -474,7 +486,7 @@ const vehicleRequestRoute: RouteConfigV2<VehicleRequestPageProps> = {
 const financialAnalysisRoute: RouteConfigV2<FinancialAnalysisPageProps> = {
   path: ERP_PATHS.financialAnalysis,
   element: lazyWithRetry(
-    () => import('@/pages/erp/FinancialAnalysisPage'),
+    () => import('@/components/erp/FinancialAnalysisPage'),
     'FinancialAnalysisPage'
   ),
   module: 'erp',
@@ -491,7 +503,7 @@ const financialAnalysisRoute: RouteConfigV2<FinancialAnalysisPageProps> = {
 const erpSalesOrdersRoute: RouteConfigV2<Record<string, never>> = {
   path: ERP_PATHS.salesOrders,
   element: lazyWithRetry(
-    () => import('@/pages/erp/ErpSalesOrderRedesignPage'),
+    () => import('@/components/erp/ErpSalesOrderRedesignPage'),
     'ErpSalesOrderRedesignPage'
   ),
   module: 'erp',
@@ -507,7 +519,7 @@ const erpSalesOrdersRoute: RouteConfigV2<Record<string, never>> = {
 const erpInventoryRoute: RouteConfigV2<Record<string, never>> = {
   path: ERP_PATHS.inventory,
   element: lazyWithRetry(
-    () => import('@/pages/erp/ErpInventoryRedesignPage'),
+    () => import('@/components/erp/ErpInventoryRedesignPage'),
     'ErpInventoryRedesignPage'
   ),
   module: 'erp',

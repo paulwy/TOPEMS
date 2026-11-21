@@ -97,8 +97,8 @@ import {
 import InventoryReportFilters, {
   TabPanel,
   InventoryReportFilterHint,
-} from '@/pages/wms/components/InventoryReportFilters';
-import InventoryReportSummary from '@/pages/wms/components/InventoryReportSummary';
+} from '@/components/wms/components/InventoryReportFilters';
+import InventoryReportSummary from '@/components/wms/components/InventoryReportSummary';
 import type { InventoryStatistics, Warehouse } from '@/api/wms/types';
 // SRM Dashboard 共用基础模板（来自 templates）
 import {

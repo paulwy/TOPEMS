@@ -73,7 +73,7 @@ interface GisPageProps {}
 
 const bIDashboardRoute: RouteConfigV2<BIDashboardPageProps> = {
   path: BI_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/bi/BIDashboardPage'), 'BIDashboardPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BIDashboardPage'), 'BIDashboardPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-dashboard'),
   titleKey: 'bi.nav.bi-dashboard',
@@ -86,7 +86,7 @@ const bIDashboardRoute: RouteConfigV2<BIDashboardPageProps> = {
 
 const bIAnalyticsRoute: RouteConfigV2<BIAnalyticsPageProps> = {
   path: BI_PATHS.analytics,
-  element: lazyWithRetry(() => import('@/pages/bi/BIAnalyticsPage'), 'BIAnalyticsPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BIAnalyticsPage'), 'BIAnalyticsPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-analytics'),
   titleKey: 'bi.nav.bi-analytics',
@@ -99,7 +99,7 @@ const bIAnalyticsRoute: RouteConfigV2<BIAnalyticsPageProps> = {
 
 const bIComparisonRoute: RouteConfigV2<BIComparisonPageProps> = {
   path: BI_PATHS.comparison,
-  element: lazyWithRetry(() => import('@/pages/bi/BIComparisonPage'), 'BIComparisonPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BIComparisonPage'), 'BIComparisonPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-comparison'),
   titleKey: 'bi.nav.bi-comparison',
@@ -112,7 +112,7 @@ const bIComparisonRoute: RouteConfigV2<BIComparisonPageProps> = {
 
 const bIDataSourceRoute: RouteConfigV2<BIDataSourcePageProps> = {
   path: BI_PATHS.dataSource,
-  element: lazyWithRetry(() => import('@/pages/bi/BIDataSourcePage'), 'BIDataSourcePage'),
+  element: lazyWithRetry(() => import('@/components/bi/BIDataSourcePage'), 'BIDataSourcePage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-data-source'),
   titleKey: 'bi.nav.bi-data-source',
@@ -125,7 +125,7 @@ const bIDataSourceRoute: RouteConfigV2<BIDataSourcePageProps> = {
 
 const datasetRoute: RouteConfigV2<DatasetPageProps> = {
   path: BI_PATHS.dataset,
-  element: lazyWithRetry(() => import('@/pages/bi/DatasetPage'), 'DatasetPage'),
+  element: lazyWithRetry(() => import('@/components/bi/DatasetPage'), 'DatasetPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-dataset'),
   titleKey: 'bi.nav.bi-dataset',
@@ -138,7 +138,7 @@ const datasetRoute: RouteConfigV2<DatasetPageProps> = {
 
 const bIReportRoute: RouteConfigV2<BIReportPageProps> = {
   path: BI_PATHS.report,
-  element: lazyWithRetry(() => import('@/pages/bi/BIReportPage'), 'BIReportPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BIReportPage'), 'BIReportPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-report'),
   titleKey: 'bi.nav.bi-report',
@@ -151,7 +151,10 @@ const bIReportRoute: RouteConfigV2<BIReportPageProps> = {
 
 const bIVisualizationRoute: RouteConfigV2<BIVisualizationPageProps> = {
   path: BI_PATHS.visualization,
-  element: lazyWithRetry(() => import('@/pages/bi/BIVisualizationPage'), 'BIVisualizationPage'),
+  element: lazyWithRetry(
+    () => import('@/components/bi/BIVisualizationPage'),
+    'BIVisualizationPage'
+  ),
   module: 'bi',
   title: i18n.t('bi.nav.bi-visualization'),
   titleKey: 'bi.nav.bi-visualization',
@@ -164,7 +167,7 @@ const bIVisualizationRoute: RouteConfigV2<BIVisualizationPageProps> = {
 
 const reportBuilderRoute: RouteConfigV2<ReportBuilderPageProps> = {
   path: BI_PATHS.reportBuilder,
-  element: lazyWithRetry(() => import('@/pages/bi/ReportBuilderPage'), 'ReportBuilderPage'),
+  element: lazyWithRetry(() => import('@/components/bi/ReportBuilderPage'), 'ReportBuilderPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-report-builder'),
   titleKey: 'bi.nav.bi-report-builder',
@@ -177,7 +180,7 @@ const reportBuilderRoute: RouteConfigV2<ReportBuilderPageProps> = {
 
 const biPermissionRoute: RouteConfigV2<BiPermissionPageProps> = {
   path: BI_PATHS.permission,
-  element: lazyWithRetry(() => import('@/pages/bi/BiPermissionPage'), 'BiPermissionPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BiPermissionPage'), 'BiPermissionPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-permission'),
   titleKey: 'bi.nav.bi-permission',
@@ -190,7 +193,7 @@ const biPermissionRoute: RouteConfigV2<BiPermissionPageProps> = {
 
 const biIndexRoute: RouteConfigV2<BiIndexPageProps> = {
   path: BI_PATHS.index,
-  element: lazyWithRetry(() => import('@/pages/bi/BiIndexPage'), 'BiIndexPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BiIndexPage'), 'BiIndexPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-index'),
   titleKey: 'bi.nav.bi-index',
@@ -203,7 +206,7 @@ const biIndexRoute: RouteConfigV2<BiIndexPageProps> = {
 
 const bIModuleDetailRoute: RouteConfigV2<BIModuleDetailPageProps> = {
   path: BI_PATHS.moduleDetail,
-  element: lazyWithRetry(() => import('@/pages/bi/BIModuleDetailPage'), 'BIModuleDetailPage'),
+  element: lazyWithRetry(() => import('@/components/bi/BIModuleDetailPage'), 'BIModuleDetailPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-module-detail'),
   titleKey: 'bi.nav.bi-module-detail',
@@ -216,7 +219,7 @@ const bIModuleDetailRoute: RouteConfigV2<BIModuleDetailPageProps> = {
 
 const dataAnalysisRoute: RouteConfigV2<DataAnalysisPageProps> = {
   path: BI_PATHS.dataAnalysis,
-  element: lazyWithRetry(() => import('@/pages/bi/DataAnalysisPage'), 'DataAnalysisPage'),
+  element: lazyWithRetry(() => import('@/components/bi/DataAnalysisPage'), 'DataAnalysisPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-data-analysis'),
   titleKey: 'bi.nav.bi-data-analysis',
@@ -229,7 +232,7 @@ const dataAnalysisRoute: RouteConfigV2<DataAnalysisPageProps> = {
 
 const gisRoute: RouteConfigV2<GisPageProps> = {
   path: BI_PATHS.gis,
-  element: lazyWithRetry(() => import('@/pages/bi/GisPage'), 'GisPage'),
+  element: lazyWithRetry(() => import('@/components/bi/GisPage'), 'GisPage'),
   module: 'bi',
   title: i18n.t('bi.nav.bi-gis'),
   titleKey: 'bi.nav.bi-gis',

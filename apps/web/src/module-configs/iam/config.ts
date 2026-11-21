@@ -45,7 +45,7 @@ interface CompanyStructurePageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: IAM_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/admin/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/admin/DashboardPage'), 'DashboardPage'),
   module: 'iam',
   code: 'iam-dashboard',
   title: i18n.t('iam.nav.iam-dashboard'),

@@ -216,7 +216,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.dashboard,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceDashboardPage'),
+        () => import('@/components/finance/FinanceDashboardPage'),
         'FinanceDashboardPage'
       ),
       module: 'finance',
@@ -231,7 +231,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.ledger,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceLedgerPage'),
+        () => import('@/components/finance/FinanceLedgerPage'),
         'FinanceLedgerPage'
       ),
       module: 'finance',
@@ -246,7 +246,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: '/finance/accounts',
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceLedgerPage'),
+        () => import('@/components/finance/FinanceLedgerPage'),
         'FinanceLedgerPage'
       ),
       module: 'finance',
@@ -261,7 +261,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.vouchers,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceVoucherPage'),
+        () => import('@/components/finance/FinanceVoucherPage'),
         'FinanceVoucherPage'
       ),
       module: 'finance',
@@ -276,7 +276,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.voucherCreate,
       element: lazyWithRetry(
-        () => import('@/pages/finance/VoucherCreatePage'),
+        () => import('@/components/finance/VoucherCreatePage'),
         'VoucherCreatePage'
       ),
       module: 'finance',
@@ -293,7 +293,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.voucherDetail,
       element: lazyWithRetry(
-        () => import('@/pages/finance/VoucherDetailPage'),
+        () => import('@/components/finance/VoucherDetailPage'),
         'VoucherDetailPage'
       ),
       module: 'finance',
@@ -308,7 +308,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.receivablePayable,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceReceivablePayablePage'),
+        () => import('@/components/finance/FinanceReceivablePayablePage'),
         'FinanceReceivablePayablePage'
       ),
       module: 'finance',
@@ -323,7 +323,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.receipts,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceReceiptPage'),
+        () => import('@/components/finance/FinanceReceiptPage'),
         'FinanceReceiptPage'
       ),
       module: 'finance',
@@ -338,7 +338,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.payments,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinancePaymentPage'),
+        () => import('@/components/finance/FinancePaymentPage'),
         'FinancePaymentPage'
       ),
       module: 'finance',
@@ -353,7 +353,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.approvalConfig,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceApprovalConfigPage'),
+        () => import('@/components/finance/FinanceApprovalConfigPage'),
         'FinanceApprovalConfigPage'
       ),
       module: 'finance',
@@ -368,7 +368,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.invoices,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceInvoicePage'),
+        () => import('@/components/finance/FinanceInvoicePage'),
         'FinanceInvoicePage'
       ),
       module: 'finance',
@@ -382,7 +382,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<FinanceInvoicePageProps>,
     {
       path: FINANCE_PATHS.tax,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceTaxPage'), 'FinanceTaxPage'),
+      element: lazyWithRetry(() => import('@/components/finance/FinanceTaxPage'), 'FinanceTaxPage'),
       module: 'finance',
       code: 'finance-tax',
       title: i18n.t('finance.nav.finance-tax'),
@@ -395,7 +395,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.currency,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceCurrencyPage'),
+        () => import('@/components/finance/FinanceCurrencyPage'),
         'FinanceCurrencyPage'
       ),
       module: 'finance',
@@ -410,7 +410,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.period,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinancePeriodPage'),
+        () => import('@/components/finance/FinancePeriodPage'),
         'FinancePeriodPage'
       ),
       module: 'finance',
@@ -425,7 +425,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.expense,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceExpensePage'),
+        () => import('@/components/finance/FinanceExpensePage'),
         'FinanceExpensePage'
       ),
       module: 'finance',
@@ -440,7 +440,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.expenseApproval,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceExpenseApprovalPage'),
+        () => import('@/components/finance/FinanceExpenseApprovalPage'),
         'FinanceExpenseApprovalPage'
       ),
       module: 'finance',
@@ -458,7 +458,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<FinanceExpenseApprovalPageProps>,
     {
       path: FINANCE_PATHS.cost,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceCostPage'), 'FinanceCostPage'),
+      element: lazyWithRetry(
+        () => import('@/components/finance/FinanceCostPage'),
+        'FinanceCostPage'
+      ),
       module: 'finance',
       code: 'finance-cost',
       title: i18n.t('finance.nav.finance-cost'),
@@ -470,7 +473,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<FinanceCostPageProps>,
     {
       path: FINANCE_PATHS.assets,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceAssetPage'), 'FinanceAssetPage'),
+      element: lazyWithRetry(
+        () => import('@/components/finance/FinanceAssetPage'),
+        'FinanceAssetPage'
+      ),
       module: 'finance',
       code: 'finance-assets',
       title: i18n.t('finance.nav.finance-assets'),
@@ -483,7 +489,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.budget,
       element: lazyWithRetry(
-        () => import('@/pages/finance/BudgetManagementPage'),
+        () => import('@/components/finance/BudgetManagementPage'),
         'BudgetManagementPage'
       ),
       module: 'finance',
@@ -498,7 +504,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.budgetDetail,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceBudgetDetailPage'),
+        () => import('@/components/finance/FinanceBudgetDetailPage'),
         'FinanceBudgetDetailPage'
       ),
       module: 'finance',
@@ -513,7 +519,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.openingBalance,
       element: lazyWithRetry(
-        () => import('@/pages/finance/OpeningBalancePage'),
+        () => import('@/components/finance/OpeningBalancePage'),
         'OpeningBalancePage'
       ),
       module: 'finance',
@@ -528,7 +534,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.consolidation,
       element: lazyWithRetry(
-        () => import('@/pages/finance/ConsolidationScopePage'),
+        () => import('@/components/finance/ConsolidationScopePage'),
         'ConsolidationScopePage'
       ),
       module: 'finance',
@@ -543,7 +549,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.consolidationReports,
       element: lazyWithRetry(
-        () => import('@/pages/finance/ConsolidationReportsPage'),
+        () => import('@/components/finance/ConsolidationReportsPage'),
         'ConsolidationReportsPage'
       ),
       module: 'finance',
@@ -558,7 +564,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.reports,
       element: lazyWithRetry(
-        () => import('@/pages/finance/FinanceReportsPage'),
+        () => import('@/components/finance/FinanceReportsPage'),
         'FinanceReportsPage'
       ),
       module: 'finance',
@@ -573,7 +579,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.accountBalanceReport,
       element: lazyWithRetry(
-        () => import('@/pages/finance/statutory/AccountBalanceReportPage'),
+        () => import('@/components/finance/statutory/AccountBalanceReportPage'),
         'AccountBalanceReportPage'
       ),
       module: 'finance',
@@ -588,7 +594,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.balanceSheetReport,
       element: lazyWithRetry(
-        () => import('@/pages/finance/statutory/BalanceSheetReportPage'),
+        () => import('@/components/finance/statutory/BalanceSheetReportPage'),
         'BalanceSheetReportPage'
       ),
       module: 'finance',
@@ -603,7 +609,7 @@ export const financeModuleConfig: RouteModuleConfig = {
     {
       path: FINANCE_PATHS.incomeStatementReport,
       element: lazyWithRetry(
-        () => import('@/pages/finance/statutory/IncomeStatementReportPage'),
+        () => import('@/components/finance/statutory/IncomeStatementReportPage'),
         'IncomeStatementReportPage'
       ),
       module: 'finance',

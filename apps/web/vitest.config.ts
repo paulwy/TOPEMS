@@ -46,7 +46,7 @@ function fixReactTransitionGroup(): Plugin {
         ROOT,
         path.resolve(
           __dirname,
-          '../../node_modules/.pnpm/react-transition-group@4.4.5_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/react-transition-group',
+          '../../node_modules/.pnpm/react-transition-group@4.4.5_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/react-transition-group'
         ),
       ];
       for (const root of fallbackRoots) {
@@ -54,7 +54,9 @@ function fixReactTransitionGroup(): Plugin {
         if (id.startsWith('react-transition-group/cjs/')) {
           const fileName = id.replace('react-transition-group/cjs/', '');
           const p = path.resolve(root, 'cjs', fileName);
-          console.log(`[fixReactTransitionGroup] Trying ${id} -> ${p} (exists: ${fs.existsSync(p)})`);
+          console.log(
+            `[fixReactTransitionGroup] Trying ${id} -> ${p} (exists: ${fs.existsSync(p)})`
+          );
           if (fs.existsSync(p)) return { id: p };
         }
         if (RTG_SUB_PATHS[id]) {
@@ -72,11 +74,7 @@ function fixReactTransitionGroup(): Plugin {
 }
 
 function resolveRtgCjs(file: string) {
-  return path.resolve(
-    __dirname,
-    '../../node_modules/react-transition-group/cjs/',
-    file,
-  );
+  return path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/', file);
 }
 
 /**
@@ -106,7 +104,7 @@ function fixOtelBareImports(): Plugin {
         const midDir = path.join(
           pnpmRoot,
           pkgDir,
-          'node_modules/@opentelemetry/resources/build/esm/detectors/platform/node/machine-id',
+          'node_modules/@opentelemetry/resources/build/esm/detectors/platform/node/machine-id'
         );
         if (!fs.existsSync(midDir)) continue;
         for (const bare of ['execAsync']) {
@@ -126,11 +124,7 @@ function fixOtelBareImports(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [
-    react(),
-    fixReactTransitionGroup(),
-    fixOtelBareImports(),
-  ],
+  plugins: [react(), fixReactTransitionGroup(), fixOtelBareImports()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -141,7 +135,9 @@ export default defineConfig({
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
       '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
       'react-transition-group/TransitionGroupContext': resolveRtgCjs('TransitionGroupContext.js'),
-      'react-transition-group/cjs/TransitionGroupContext.js': resolveRtgCjs('TransitionGroupContext.js'),
+      'react-transition-group/cjs/TransitionGroupContext.js': resolveRtgCjs(
+        'TransitionGroupContext.js'
+      ),
       'react-transition-group/Transition': resolveRtgCjs('Transition.js'),
       'react-transition-group/CSSTransition': resolveRtgCjs('CSSTransition.js'),
       'react-transition-group/SwitchTransition': resolveRtgCjs('SwitchTransition.js'),
@@ -299,8 +295,8 @@ export default defineConfig({
             'src/api/__tests__/crm/**/*.{test,spec}.{ts,tsx}',
             'src/schemas/__tests__/crm/**/*.{test,spec}.{ts,tsx}',
             'src/api/crm/__tests__/**/*.{test,spec}.{ts,tsx}',
-            'src/pages/__tests__/Crm*.{test,spec}.{ts,tsx}',
-            'src/pages/__tests__/Customer*.{test,spec}.{ts,tsx}',
+            'src/components/__tests__/Crm*.{test,spec}.{ts,tsx}',
+            'src/components/__tests__/Customer*.{test,spec}.{ts,tsx}',
           ],
           isolate: true,
           setupFiles: [setupEnv, setupCore, setupMocks],
@@ -321,12 +317,7 @@ export default defineConfig({
             'src/schemas/crm/**/*.{ts,tsx}',
             'src/module-configs/crm/**/*.{ts,tsx}',
           ],
-          exclude: [
-            'src/**/types.ts',
-            'src/**/types/**',
-            'src/**/__tests__/**',
-            'src/**/*.d.ts',
-          ],
+          exclude: ['src/**/types.ts', 'src/**/types/**', 'src/**/__tests__/**', 'src/**/*.d.ts'],
           all: false,
           skipFull: true,
           thresholds: {

@@ -105,7 +105,7 @@ interface TransportPlanDetailPageProps {
 
 const tmsDashboardRoute: RouteConfigV2<TmsDashboardPageProps> = {
   path: TMS_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/tms/TmsDashboardPage'), 'TmsDashboardPage'),
+  element: lazyWithRetry(() => import('@/components/tms/TmsDashboardPage'), 'TmsDashboardPage'),
   module: 'tms',
   code: 'tms-dashboard',
   title: i18n.t('tms.nav.tms-dashboard'),
@@ -119,7 +119,7 @@ const tmsDashboardRoute: RouteConfigV2<TmsDashboardPageProps> = {
 const vehicleManagementRoute: RouteConfigV2<VehicleManagementPageProps> = {
   path: TMS_PATHS.vehicles,
   element: lazyWithRetry(
-    () => import('@/pages/tms/VehicleManagementPage'),
+    () => import('@/components/tms/VehicleManagementPage'),
     'VehicleManagementPage'
   ),
   module: 'tms',
@@ -134,7 +134,10 @@ const vehicleManagementRoute: RouteConfigV2<VehicleManagementPageProps> = {
 
 const driverManagementRoute: RouteConfigV2<DriverManagementPageProps> = {
   path: TMS_PATHS.drivers,
-  element: lazyWithRetry(() => import('@/pages/tms/DriverManagementPage'), 'DriverManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/tms/DriverManagementPage'),
+    'DriverManagementPage'
+  ),
   module: 'tms',
   code: 'tms-drivers',
   title: i18n.t('tms.nav.tms-drivers'),
@@ -148,7 +151,7 @@ const driverManagementRoute: RouteConfigV2<DriverManagementPageProps> = {
 const carrierManagementRoute: RouteConfigV2<CarrierManagementPageProps> = {
   path: TMS_PATHS.carriers,
   element: lazyWithRetry(
-    () => import('@/pages/tms/CarrierManagementPage'),
+    () => import('@/components/tms/CarrierManagementPage'),
     'CarrierManagementPage'
   ),
   module: 'tms',
@@ -163,7 +166,10 @@ const carrierManagementRoute: RouteConfigV2<CarrierManagementPageProps> = {
 
 const routeManagementRoute: RouteConfigV2<RouteManagementPageProps> = {
   path: TMS_PATHS.routes,
-  element: lazyWithRetry(() => import('@/pages/tms/RouteManagementPage'), 'RouteManagementPage'),
+  element: lazyWithRetry(
+    () => import('@/components/tms/RouteManagementPage'),
+    'RouteManagementPage'
+  ),
   module: 'tms',
   code: 'tms-routes',
   title: i18n.t('tms.nav.tms-routes'),
@@ -177,7 +183,7 @@ const routeManagementRoute: RouteConfigV2<RouteManagementPageProps> = {
 const shipmentManagementRoute: RouteConfigV2<ShipmentManagementPageProps> = {
   path: TMS_PATHS.shipments,
   element: lazyWithRetry(
-    () => import('@/pages/tms/ShipmentManagementPage'),
+    () => import('@/components/tms/ShipmentManagementPage'),
     'ShipmentManagementPage'
   ),
   module: 'tms',
@@ -193,7 +199,7 @@ const shipmentManagementRoute: RouteConfigV2<ShipmentManagementPageProps> = {
 const shipmentTrendRoute: RouteConfigV2<ShipmentTrendPageProps> = {
   path: TMS_PATHS.shipmentTrend,
   element: lazyWithRetry(
-    () => import('@/pages/tms/analytics/ShipmentTrendPage'),
+    () => import('@/components/tms/analytics/ShipmentTrendPage'),
     'ShipmentTrendPage'
   ),
   module: 'tms',
@@ -209,7 +215,7 @@ const shipmentTrendRoute: RouteConfigV2<ShipmentTrendPageProps> = {
 const vehicleUtilizationRoute: RouteConfigV2<VehicleUtilizationPageProps> = {
   path: TMS_PATHS.vehicleUtilization,
   element: lazyWithRetry(
-    () => import('@/pages/tms/analytics/VehicleUtilizationPage'),
+    () => import('@/components/tms/analytics/VehicleUtilizationPage'),
     'VehicleUtilizationPage'
   ),
   module: 'tms',
@@ -225,7 +231,7 @@ const vehicleUtilizationRoute: RouteConfigV2<VehicleUtilizationPageProps> = {
 const driverPerformanceRoute: RouteConfigV2<DriverPerformancePageProps> = {
   path: TMS_PATHS.driverPerformance,
   element: lazyWithRetry(
-    () => import('@/pages/tms/analytics/DriverPerformancePage'),
+    () => import('@/components/tms/analytics/DriverPerformancePage'),
     'DriverPerformancePage'
   ),
   module: 'tms',
@@ -241,7 +247,7 @@ const driverPerformanceRoute: RouteConfigV2<DriverPerformancePageProps> = {
 const carrierPerformanceRoute: RouteConfigV2<CarrierPerformancePageProps> = {
   path: TMS_PATHS.carrierPerformance,
   element: lazyWithRetry(
-    () => import('@/pages/tms/analytics/CarrierPerformancePage'),
+    () => import('@/components/tms/analytics/CarrierPerformancePage'),
     'CarrierPerformancePage'
   ),
   module: 'tms',
@@ -257,7 +263,7 @@ const carrierPerformanceRoute: RouteConfigV2<CarrierPerformancePageProps> = {
 const routeEfficiencyRoute: RouteConfigV2<RouteEfficiencyPageProps> = {
   path: TMS_PATHS.routeEfficiency,
   element: lazyWithRetry(
-    () => import('@/pages/tms/analytics/RouteEfficiencyPage'),
+    () => import('@/components/tms/analytics/RouteEfficiencyPage'),
     'RouteEfficiencyPage'
   ),
   module: 'tms',
@@ -272,7 +278,10 @@ const routeEfficiencyRoute: RouteConfigV2<RouteEfficiencyPageProps> = {
 
 const freightCostRoute: RouteConfigV2<FreightCostPageProps> = {
   path: TMS_PATHS.freightCost,
-  element: lazyWithRetry(() => import('@/pages/tms/analytics/FreightCostPage'), 'FreightCostPage'),
+  element: lazyWithRetry(
+    () => import('@/components/tms/analytics/FreightCostPage'),
+    'FreightCostPage'
+  ),
   module: 'tms',
   code: 'tms-freight-cost',
   title: i18n.t('tms.nav.tms-freight-cost'),
@@ -285,7 +294,7 @@ const freightCostRoute: RouteConfigV2<FreightCostPageProps> = {
 
 const shipmentDetailRoute: RouteConfigV2<ShipmentDetailPageProps> = {
   path: TMS_PATHS.shipmentDetail,
-  element: lazyWithRetry(() => import('@/pages/tms/ShipmentDetailPage'), 'ShipmentDetailPage'),
+  element: lazyWithRetry(() => import('@/components/tms/ShipmentDetailPage'), 'ShipmentDetailPage'),
   module: 'tms',
   code: 'tms-shipment-detail',
   title: i18n.t('tms.nav.tms-shipment-detail'),
@@ -298,7 +307,7 @@ const shipmentDetailRoute: RouteConfigV2<ShipmentDetailPageProps> = {
 
 const vehicleDetailRoute: RouteConfigV2<VehicleDetailPageProps> = {
   path: TMS_PATHS.vehicleDetail,
-  element: lazyWithRetry(() => import('@/pages/tms/VehicleDetailPage'), 'VehicleDetailPage'),
+  element: lazyWithRetry(() => import('@/components/tms/VehicleDetailPage'), 'VehicleDetailPage'),
   module: 'tms',
   code: 'tms-vehicle-detail',
   title: i18n.t('tms.nav.tms-vehicle-detail'),
@@ -311,7 +320,7 @@ const vehicleDetailRoute: RouteConfigV2<VehicleDetailPageProps> = {
 
 const driverDetailRoute: RouteConfigV2<DriverDetailPageProps> = {
   path: TMS_PATHS.driverDetail,
-  element: lazyWithRetry(() => import('@/pages/tms/DriverDetailPage'), 'DriverDetailPage'),
+  element: lazyWithRetry(() => import('@/components/tms/DriverDetailPage'), 'DriverDetailPage'),
   module: 'tms',
   code: 'tms-driver-detail',
   title: i18n.t('tms.nav.tms-driver-detail'),
@@ -324,7 +333,7 @@ const driverDetailRoute: RouteConfigV2<DriverDetailPageProps> = {
 
 const carrierDetailRoute: RouteConfigV2<CarrierDetailPageProps> = {
   path: TMS_PATHS.carrierDetail,
-  element: lazyWithRetry(() => import('@/pages/tms/CarrierDetailPage'), 'CarrierDetailPage'),
+  element: lazyWithRetry(() => import('@/components/tms/CarrierDetailPage'), 'CarrierDetailPage'),
   module: 'tms',
   code: 'tms-carrier-detail',
   title: i18n.t('tms.nav.tms-carrier-detail'),
@@ -337,7 +346,7 @@ const carrierDetailRoute: RouteConfigV2<CarrierDetailPageProps> = {
 
 const routeDetailRoute: RouteConfigV2<RouteDetailPageProps> = {
   path: TMS_PATHS.routeDetail,
-  element: lazyWithRetry(() => import('@/pages/tms/RouteDetailPage'), 'RouteDetailPage'),
+  element: lazyWithRetry(() => import('@/components/tms/RouteDetailPage'), 'RouteDetailPage'),
   module: 'tms',
   code: 'tms-route-detail',
   title: i18n.t('tms.nav.tms-route-detail'),
@@ -351,7 +360,7 @@ const routeDetailRoute: RouteConfigV2<RouteDetailPageProps> = {
 const transportPlanDetailRoute: RouteConfigV2<TransportPlanDetailPageProps> = {
   path: TMS_PATHS.transportPlanDetail,
   element: lazyWithRetry(
-    () => import('@/pages/tms/TransportPlanDetailPage'),
+    () => import('@/components/tms/TransportPlanDetailPage'),
     'TransportPlanDetailPage'
   ),
   module: 'tms',

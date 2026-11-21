@@ -575,7 +575,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.setup,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/setup/HrmSetupWizardPage'),
+        () => import('@/components/hrm/setup/HrmSetupWizardPage'),
         'HrmSetupWizardPage'
       ),
       module: 'hrm',
@@ -590,7 +590,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmSetupWizardPageProps>,
     {
       path: HRM_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/hrm/DashboardPage'), 'HrmDashboardPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/DashboardPage'), 'HrmDashboardPage'),
       module: 'hrm',
       code: 'hrm-dashboard',
       title: i18n.t('hrm.nav.hrm-dashboard'),
@@ -603,7 +603,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.employees,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmEmployeeRedesignPage'),
+        () => import('@/components/hrm/HrmEmployeeRedesignPage'),
         'HrmEmployeeRedesignPage'
       ),
       module: 'hrm',
@@ -618,7 +618,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.employeeCreate,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmEmployeeCreatePage'),
+        () => import('@/components/hrm/HrmEmployeeCreatePage'),
         'HrmEmployeeCreatePage'
       ),
       module: 'hrm',
@@ -633,7 +633,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.employeeDetail,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmEmployeeDetailPage'),
+        () => import('@/components/hrm/HrmEmployeeDetailPage'),
         'HrmEmployeeDetailPage'
       ),
       module: 'hrm',
@@ -648,7 +648,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.employeeEdit,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmEmployeeEditPage'),
+        () => import('@/components/hrm/HrmEmployeeEditPage'),
         'HrmEmployeeEditPage'
       ),
       module: 'hrm',
@@ -662,7 +662,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmEmployeeEditPageProps>,
     {
       path: HRM_PATHS.departments,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmDepartmentPage'), 'HrmDepartmentPage'),
+      element: lazyWithRetry(
+        () => import('@/components/hrm/HrmDepartmentPage'),
+        'HrmDepartmentPage'
+      ),
       module: 'hrm',
       code: 'hrm-departments',
       title: i18n.t('hrm.nav.hrm-departments'),
@@ -675,7 +678,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.organization,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmOrganizationPage'),
+        () => import('@/components/hrm/HrmOrganizationPage'),
         'HrmOrganizationPage'
       ),
       module: 'hrm',
@@ -689,7 +692,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmOrganizationPageProps>,
     {
       path: HRM_PATHS.positions,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmPositionPage'), 'HrmPositionPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmPositionPage'), 'HrmPositionPage'),
       module: 'hrm',
       code: 'hrm-positions',
       title: i18n.t('hrm.nav.hrm-positions'),
@@ -701,7 +704,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmPositionPageProps>,
     {
       path: HRM_PATHS.contracts,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmContractPage'), 'HrmContractPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmContractPage'), 'HrmContractPage'),
       module: 'hrm',
       code: 'hrm-contracts',
       title: i18n.t('hrm.nav.hrm-contracts'),
@@ -714,7 +717,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.contractDetail,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmContractDetailPage'),
+        () => import('@/components/hrm/HrmContractDetailPage'),
         'HrmContractDetailPage'
       ),
       module: 'hrm',
@@ -728,7 +731,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmContractDetailPageProps>,
     {
       path: HRM_PATHS.company,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmCompanyPage'), 'HrmCompanyPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmCompanyPage'), 'HrmCompanyPage'),
       module: 'hrm',
       code: 'hrm-company',
       title: i18n.t('hrm.nav.hrm-company'),
@@ -741,7 +744,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.attendance,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmAttendanceRedesignPage'),
+        () => import('@/components/hrm/HrmAttendanceRedesignPage'),
         'HrmAttendanceRedesignPage'
       ),
       module: 'hrm',
@@ -755,7 +758,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmAttendancePageProps>,
     {
       path: HRM_PATHS.leave,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmLeavePage'), 'HrmLeavePage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmLeavePage'), 'HrmLeavePage'),
       module: 'hrm',
       code: 'hrm-leave',
       title: i18n.t('hrm.nav.hrm-leave'),
@@ -767,7 +770,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmLeavePageProps>,
     {
       path: HRM_PATHS.payroll,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmPayrollPage'), 'HrmPayrollPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmPayrollPage'), 'HrmPayrollPage'),
       module: 'hrm',
       code: 'hrm-payroll',
       title: i18n.t('hrm.nav.hrm-payroll'),
@@ -780,7 +783,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.salaryAdjustment,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmSalaryAdjustmentPage'),
+        () => import('@/components/hrm/HrmSalaryAdjustmentPage'),
         'HrmSalaryAdjustmentPage'
       ),
       module: 'hrm',
@@ -794,7 +797,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmSalaryAdjustmentPageProps>,
     {
       path: HRM_PATHS.recruitment,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmRecruitmentPage'), 'HrmRecruitmentPage'),
+      element: lazyWithRetry(
+        () => import('@/components/hrm/HrmRecruitmentPage'),
+        'HrmRecruitmentPage'
+      ),
       module: 'hrm',
       code: 'hrm-recruitment',
       title: i18n.t('hrm.nav.hrm-recruitment'),
@@ -806,7 +812,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmRecruitmentPageProps>,
     {
       path: HRM_PATHS.training,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmTrainingPage'), 'HrmTrainingPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmTrainingPage'), 'HrmTrainingPage'),
       module: 'hrm',
       code: 'hrm-training',
       title: i18n.t('hrm.nav.hrm-training'),
@@ -819,7 +825,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.performance,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/HrmPerformanceRedesignPage'),
+        () => import('@/components/hrm/HrmPerformanceRedesignPage'),
         'HrmPerformanceRedesignPage'
       ),
       module: 'hrm',
@@ -833,7 +839,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmPerformancePageProps>,
     {
       path: HRM_PATHS.reports,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmReportsPage'), 'HrmReportsPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmReportsPage'), 'HrmReportsPage'),
       module: 'hrm',
       code: 'hrm-reports',
       title: i18n.t('hrm.nav.hrm-reports'),
@@ -845,7 +851,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmReportsPageProps>,
     {
       path: HRM_PATHS.overview,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmOverviewPage'), 'HrmOverviewPage'),
+      element: lazyWithRetry(() => import('@/components/hrm/HrmOverviewPage'), 'HrmOverviewPage'),
       module: 'hrm',
       code: 'hrm-overview',
       title: i18n.t('hrm.nav.hrm-overview'),
@@ -858,7 +864,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.settingAttendanceRule,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/setting/AttendanceRulePage'),
+        () => import('@/components/hrm/setting/AttendanceRulePage'),
         'AttendanceRulePage'
       ),
       module: 'hrm',
@@ -873,7 +879,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.settingPayrollTemplate,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/setting/PayrollTemplatePage'),
+        () => import('@/components/hrm/setting/PayrollTemplatePage'),
         'PayrollTemplatePage'
       ),
       module: 'hrm',
@@ -888,7 +894,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.settingRecruitmentFlow,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/setting/RecruitmentFlowPage'),
+        () => import('@/components/hrm/setting/RecruitmentFlowPage'),
         'RecruitmentFlowPage'
       ),
       module: 'hrm',
@@ -903,7 +909,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
     {
       path: HRM_PATHS.settingTrainingPlan,
       element: lazyWithRetry(
-        () => import('@/pages/hrm/setting/TrainingPlanPage'),
+        () => import('@/components/hrm/setting/TrainingPlanPage'),
         'TrainingPlanPage'
       ),
       module: 'hrm',

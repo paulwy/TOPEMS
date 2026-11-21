@@ -21,7 +21,7 @@ interface MailPageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: IM_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/im/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/im/DashboardPage'), 'DashboardPage'),
   module: 'im',
   title: i18n.t('im.nav.im-dashboard'),
   titleKey: 'im.nav.im-dashboard',
@@ -34,7 +34,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const mailRoute: RouteConfigV2<MailPageProps> = {
   path: IM_PATHS.mail,
-  element: lazyWithRetry(() => import('@/pages/im/MailPage'), 'MailPage'),
+  element: lazyWithRetry(() => import('@/components/im/MailPage'), 'MailPage'),
   module: 'im',
   title: i18n.t('im.nav.im-mail'),
   titleKey: 'im.nav.im-mail',

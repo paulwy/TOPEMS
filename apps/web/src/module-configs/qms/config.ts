@@ -579,7 +579,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.inspectionStandard,
       element: lazyWithRetry(
-        () => import('@/pages/qms/InspectionStandardPage'),
+        () => import('@/components/qms/InspectionStandardPage'),
         'InspectionStandardPage'
       ),
       module: 'qms',
@@ -593,7 +593,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as unknown as RouteConfigV2<InspectionStandardPageProps>,
     {
       path: QMS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsDashboardPage'), 'QmsDashboardPage'),
+      element: lazyWithRetry(() => import('@/components/qms/QmsDashboardPage'), 'QmsDashboardPage'),
       module: 'qms',
       code: 'qms-dashboard',
       title: i18n.t('qms.nav.qms-dashboard'),
@@ -606,7 +606,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.inspection,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsInspectionRedesignPage'),
+        () => import('@/components/qms/QmsInspectionRedesignPage'),
         'QmsInspectionRedesignPage'
       ),
       module: 'qms',
@@ -621,7 +621,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.qualityControl,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsQualityControlPage'),
+        () => import('@/components/qms/QmsQualityControlPage'),
         'QmsQualityControlPage'
       ),
       module: 'qms',
@@ -636,7 +636,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.nonconformance,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsNonconformanceRedesignPage'),
+        () => import('@/components/qms/QmsNonconformanceRedesignPage'),
         'QmsNonconformanceRedesignPage'
       ),
       module: 'qms',
@@ -651,7 +651,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.correctiveActions,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsCorrectiveActionPage'),
+        () => import('@/components/qms/QmsCorrectiveActionPage'),
         'QmsCorrectiveActionPage'
       ),
       module: 'qms',
@@ -666,7 +666,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.auditManagement,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsAuditManagementPage'),
+        () => import('@/components/qms/QmsAuditManagementPage'),
         'QmsAuditManagementPage'
       ),
       module: 'qms',
@@ -681,7 +681,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.eightD,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsEightDRedesignPage'),
+        () => import('@/components/qms/QmsEightDRedesignPage'),
         'QmsEightDRedesignPage'
       ),
       module: 'qms',
@@ -696,7 +696,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.audit,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsAuditRedesignPage'),
+        () => import('@/components/qms/QmsAuditRedesignPage'),
         'QmsAuditRedesignPage'
       ),
       module: 'qms',
@@ -711,7 +711,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.standards,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsStandardListPage'),
+        () => import('@/components/qms/QmsStandardListPage'),
         'QmsStandardListPage'
       ),
       module: 'qms',
@@ -726,7 +726,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.standardDetail,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsStandardDetailPage'),
+        () => import('@/components/qms/QmsStandardDetailPage'),
         'QmsStandardDetailPage'
       ),
       module: 'qms',
@@ -740,7 +740,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsStandardDetailPageProps>,
     {
       path: QMS_PATHS.apqp,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsApqpPage'), 'QmsApqpPage'),
+      element: lazyWithRetry(() => import('@/components/qms/QmsApqpPage'), 'QmsApqpPage'),
       module: 'qms',
       code: 'qms-apqp',
       title: i18n.t('qms.nav.qms-apqp'),
@@ -752,7 +752,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsApqpPageProps>,
     {
       path: QMS_PATHS.fmea,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsFmeaPage'), 'QmsFmeaPage'),
+      element: lazyWithRetry(() => import('@/components/qms/QmsFmeaPage'), 'QmsFmeaPage'),
       module: 'qms',
       code: 'qms-fmea',
       title: i18n.t('qms.nav.qms-fmea'),
@@ -764,7 +764,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsFmeaPageProps>,
     {
       path: QMS_PATHS.spc,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsSpcPage'), 'QmsSpcPage'),
+      element: lazyWithRetry(() => import('@/components/qms/QmsSpcPage'), 'QmsSpcPage'),
       module: 'qms',
       code: 'qms-spc',
       title: i18n.t('qms.nav.qms-spc'),
@@ -776,7 +776,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsSpcPageProps>,
     {
       path: QMS_PATHS.eightd,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsEightDPage'), 'QmsEightDPage'),
+      element: lazyWithRetry(() => import('@/components/qms/QmsEightDPage'), 'QmsEightDPage'),
       module: 'qms',
       code: 'qms-eightd',
       title: i18n.t('qms.nav.qms-eightd'),
@@ -788,7 +788,10 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsEightDPageProps>,
     {
       path: QMS_PATHS.qualityCost,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsQualityCostPage'), 'QmsQualityCostPage'),
+      element: lazyWithRetry(
+        () => import('@/components/qms/QmsQualityCostPage'),
+        'QmsQualityCostPage'
+      ),
       module: 'qms',
       code: 'qms-quality-cost',
       title: i18n.t('qms.nav.qms-quality-cost'),
@@ -802,7 +805,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.qualityTrend,
       element: lazyWithRetry(
-        () => import('@/pages/qms/analytics/QmsQualityTrendPage'),
+        () => import('@/components/qms/analytics/QmsQualityTrendPage'),
         'QmsQualityTrendPage'
       ),
       module: 'qms',
@@ -817,7 +820,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.defectPareto,
       element: lazyWithRetry(
-        () => import('@/pages/qms/analytics/QmsDefectParetoPage'),
+        () => import('@/components/qms/analytics/QmsDefectParetoPage'),
         'QmsDefectParetoPage'
       ),
       module: 'qms',
@@ -832,7 +835,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.costAnalysis,
       element: lazyWithRetry(
-        () => import('@/pages/qms/analytics/QmsCostAnalysisPage'),
+        () => import('@/components/qms/analytics/QmsCostAnalysisPage'),
         'QmsCostAnalysisPage'
       ),
       module: 'qms',
@@ -847,7 +850,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.spcControlChart,
       element: lazyWithRetry(
-        () => import('@/pages/qms/analytics/QmsSpcControlChartPage'),
+        () => import('@/components/qms/analytics/QmsSpcControlChartPage'),
         'QmsSpcControlChartPage'
       ),
       module: 'qms',
@@ -862,7 +865,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.fmeaRiskMatrix,
       element: lazyWithRetry(
-        () => import('@/pages/qms/analytics/QmsFmeaRiskMatrixPage'),
+        () => import('@/components/qms/analytics/QmsFmeaRiskMatrixPage'),
         'QmsFmeaRiskMatrixPage'
       ),
       module: 'qms',
@@ -877,7 +880,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.auditCompliance,
       element: lazyWithRetry(
-        () => import('@/pages/qms/analytics/QmsAuditCompliancePage'),
+        () => import('@/components/qms/analytics/QmsAuditCompliancePage'),
         'QmsAuditCompliancePage'
       ),
       module: 'qms',
@@ -893,7 +896,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.inspectionDetail,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsInspectionDetailPage'),
+        () => import('@/components/qms/QmsInspectionDetailPage'),
         'QmsInspectionDetailPage'
       ),
       module: 'qms',
@@ -907,7 +910,10 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsInspectionDetailPageProps>,
     {
       path: QMS_PATHS.issueDetail,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsIssueDetailPage'), 'QmsIssueDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/components/qms/QmsIssueDetailPage'),
+        'QmsIssueDetailPage'
+      ),
       module: 'qms',
       code: 'qms-issue-detail',
       title: i18n.t('qms.nav.qms-issue-detail'),
@@ -920,7 +926,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.auditPlanDetail,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsAuditPlanDetailPage'),
+        () => import('@/components/qms/QmsAuditPlanDetailPage'),
         'QmsAuditPlanDetailPage'
       ),
       module: 'qms',
@@ -935,7 +941,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.eightDDetail,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsEightDDetailPage'),
+        () => import('@/components/qms/QmsEightDDetailPage'),
         'QmsEightDDetailPage'
       ),
       module: 'qms',
@@ -950,7 +956,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.apqpDetail,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsApqpProjectDetailPage'),
+        () => import('@/components/qms/QmsApqpProjectDetailPage'),
         'QmsApqpProjectDetailPage'
       ),
       module: 'qms',
@@ -964,7 +970,10 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsApqpProjectDetailPageProps>,
     {
       path: QMS_PATHS.fmeaDetail,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsFmeaDetailPage'), 'QmsFmeaDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/components/qms/QmsFmeaDetailPage'),
+        'QmsFmeaDetailPage'
+      ),
       module: 'qms',
       code: 'qms-fmea-detail',
       title: i18n.t('shared.config.fmea_9'),

@@ -18,17 +18,17 @@ export const DASHBOARD_PATHS = {
 
 const safeLazy = createSafeLazy();
 
-const DashboardPage = safeLazy(() => import('../pages/shared/DashboardPage'));
-const HybridHomePage = safeLazy(() => import('../pages/shared/HybridHomePage'));
-const ModulesOverviewPage = safeLazy(() => import('../pages/shared/ModulesOverviewPage'));
-const ProfilePage = safeLazy(() => import('../pages/shared/ProfilePage'));
-const FavoritesPage = safeLazy(() => import('../pages/shared/FavoritesPage'));
-const CommentsPage = safeLazy(() => import('../pages/shared/CommentsPage'));
-const AttachmentsPage = safeLazy(() => import('../pages/shared/AttachmentsPage'));
+const DashboardPage = safeLazy(() => import('../components/shared/DashboardPage'));
+const HybridHomePage = safeLazy(() => import('../components/shared/HybridHomePage'));
+const ModulesOverviewPage = safeLazy(() => import('../components/shared/ModulesOverviewPage'));
+const ProfilePage = safeLazy(() => import('../components/shared/ProfilePage'));
+const FavoritesPage = safeLazy(() => import('../components/shared/FavoritesPage'));
+const CommentsPage = safeLazy(() => import('../components/shared/CommentsPage'));
+const AttachmentsPage = safeLazy(() => import('../components/shared/AttachmentsPage'));
 const HelpCenterPage = safeLazy(() => import('../components/help/HelpCenterPage'));
 const FaqPage = safeLazy(() => import('../components/help/FaqPage'));
 const GuidePage = safeLazy(() => import('../components/help/GuidePage'));
-const SystemParamsPage = safeLazy(() => import('../pages/system/SystemParamsPage'));
+const SystemParamsPage = safeLazy(() => import('../components/system/SystemParamsPage'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {

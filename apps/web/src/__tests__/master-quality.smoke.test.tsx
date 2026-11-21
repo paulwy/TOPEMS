@@ -20,18 +20,50 @@ const sampleDashboard = {
   pass_rate: 97.5,
   checks_by_entity_type: [{ entity_type: 'mdm_material', total: 40, passed: 38, failed: 2 }],
 };
-const sampleScore = { overall_score: 91, total_checks: 120, passed_checks: 98, failed_checks: 3, warning_checks: 19 };
+const sampleScore = {
+  overall_score: 91,
+  total_checks: 120,
+  passed_checks: 98,
+  failed_checks: 3,
+  warning_checks: 19,
+};
 const sampleChecks = [
-  { id: 'c1', entity_type: 'mdm_material', entity_id: 'MAT-001', rule_id: 'R-1', status: 'passed', checked_at: '2026-10-20T08:00:00Z' },
+  {
+    id: 'c1',
+    entity_type: 'mdm_material',
+    entity_id: 'MAT-001',
+    rule_id: 'R-1',
+    status: 'passed',
+    checked_at: '2026-10-20T08:00:00Z',
+  },
 ];
 const sampleRules = [
-  { id: 'r1', name: '物料编码唯一性', entity_type: 'mdm_material', rule_type: 'uniqueness', severity: 'high', enabled: true },
+  {
+    id: 'r1',
+    name: '物料编码唯一性',
+    entity_type: 'mdm_material',
+    rule_type: 'uniqueness',
+    severity: 'high',
+    enabled: true,
+  },
 ];
 const sampleSuggestions = [
-  { id: 's1', entity_type: 'mdm_material', suggestion_type: 'standardize', reason: '字段格式不统一', status: 'pending' },
+  {
+    id: 's1',
+    entity_type: 'mdm_material',
+    suggestion_type: 'standardize',
+    reason: '字段格式不统一',
+    status: 'pending',
+  },
 ];
 const sampleFix = [
-  { id: 'f1', entity_type: 'mdm_material', entity_id: 'MAT-001', action_type: 'normalize', status: 'applied' },
+  {
+    id: 'f1',
+    entity_type: 'mdm_material',
+    entity_id: 'MAT-001',
+    action_type: 'normalize',
+    status: 'applied',
+  },
 ];
 
 vi.mock('@/api/master/quality', () => ({
@@ -50,7 +82,7 @@ vi.mock('@/api/master/quality', () => ({
   },
 }));
 
-import MasterQualityPage from '@/pages/master/MasterQualityPage';
+import MasterQualityPage from '@/components/master/MasterQualityPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -58,10 +90,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -73,8 +107,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="quality" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='quality'
+                errors={captured}
+              >
                 <MasterQualityPage />
               </CaptureBoundary>
             </Suspense>

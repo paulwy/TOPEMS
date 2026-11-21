@@ -211,7 +211,7 @@ export const limsModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: LIMS_PATHS.analytes,
-      element: lazyWithRetry(() => import('@/pages/lims/AnalytePage'), 'AnalytePage'),
+      element: lazyWithRetry(() => import('@/components/lims/AnalytePage'), 'AnalytePage'),
       module: 'lims',
       title: i18n.t('lims.nav.lims-analytes'),
       titleKey: 'lims.nav.lims-analytes',
@@ -223,7 +223,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<AnalytePageProps>,
     {
       path: LIMS_PATHS.sample,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsSamplePage'), 'LimsSamplePage'),
+      element: lazyWithRetry(() => import('@/components/lims/LimsSamplePage'), 'LimsSamplePage'),
       module: 'lims',
       title: i18n.t('lims.nav.lims-sample'),
       titleKey: 'lims.nav.lims-sample',
@@ -236,7 +236,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.sampleDetail,
       element: lazyWithRetry(
-        () => import('@/pages/lims/LimsSampleDetailPage'),
+        () => import('@/components/lims/LimsSampleDetailPage'),
         'LimsSampleDetailPage'
       ),
       module: 'lims',
@@ -250,7 +250,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsSampleDetailPageProps>,
     {
       path: LIMS_PATHS.sampleReceive,
-      element: lazyWithRetry(() => import('@/pages/lims/SampleReceivePage'), 'SampleReceivePage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/SampleReceivePage'),
+        'SampleReceivePage'
+      ),
       module: 'lims',
       title: i18n.t('lims.nav.lims-sample-receive'),
       titleKey: 'lims.nav.lims-sample-receive',
@@ -262,7 +265,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<SampleReceivePageProps>,
     {
       path: LIMS_PATHS.task,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsTaskPage'), 'LimsTaskPage'),
+      element: lazyWithRetry(() => import('@/components/lims/LimsTaskPage'), 'LimsTaskPage'),
       module: 'lims',
       title: i18n.t('lims.nav.lims-task'),
       titleKey: 'lims.nav.lims-task',
@@ -274,7 +277,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsTaskPageProps>,
     {
       path: LIMS_PATHS.taskDetail,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsTaskDetailPage'), 'LimsTaskDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/LimsTaskDetailPage'),
+        'LimsTaskDetailPage'
+      ),
       module: 'lims',
       title: i18n.t('lims.nav.lims-task-detail'),
       titleKey: 'lims.nav.lims-task-detail',
@@ -286,7 +292,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsTaskDetailPageProps>,
     {
       path: LIMS_PATHS.inspectionTask,
-      element: lazyWithRetry(() => import('@/pages/lims/InspectionTaskPage'), 'InspectionTaskPage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/InspectionTaskPage'),
+        'InspectionTaskPage'
+      ),
       module: 'lims',
       title: i18n.t('lims.nav.lims-inspection-task'),
       titleKey: 'lims.nav.lims-inspection-task',
@@ -298,7 +307,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<InspectionTaskPageProps>,
     {
       path: LIMS_PATHS.process,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsProcessPage'), 'LimsProcessPage'),
+      element: lazyWithRetry(() => import('@/components/lims/LimsProcessPage'), 'LimsProcessPage'),
       module: 'lims',
       title: i18n.t('lims.nav.lims-process'),
       titleKey: 'lims.nav.lims-process',
@@ -310,7 +319,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsProcessPageProps>,
     {
       path: LIMS_PATHS.instrument,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsInstrumentPage'), 'LimsInstrumentPage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/LimsInstrumentPage'),
+        'LimsInstrumentPage'
+      ),
       module: 'lims',
       title: i18n.t('lims.nav.lims-instrument'),
       titleKey: 'lims.nav.lims-instrument',
@@ -323,7 +335,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.instrumentDetail,
       element: lazyWithRetry(
-        () => import('@/pages/lims/LimsInstrumentDetailPage'),
+        () => import('@/components/lims/LimsInstrumentDetailPage'),
         'LimsInstrumentDetailPage'
       ),
       module: 'lims',
@@ -338,7 +350,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.instrumentData,
       element: lazyWithRetry(
-        () => import('@/pages/lims/LimsInstrumentDataPage'),
+        () => import('@/components/lims/LimsInstrumentDataPage'),
         'LimsInstrumentDataPage'
       ),
       module: 'lims',
@@ -353,7 +365,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.instrumentMaintenance,
       element: lazyWithRetry(
-        () => import('@/pages/lims/LimsInstrumentMaintenancePage'),
+        () => import('@/components/lims/LimsInstrumentMaintenancePage'),
         'LimsInstrumentMaintenancePage'
       ),
       module: 'lims',
@@ -367,7 +379,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsInstrumentMaintenancePageProps>,
     {
       path: LIMS_PATHS.reagent,
-      element: lazyWithRetry(() => import('@/pages/lims/ReagentPage'), 'ReagentPage'),
+      element: lazyWithRetry(() => import('@/components/lims/ReagentPage'), 'ReagentPage'),
       module: 'lims',
       title: i18n.t('lims.nav.lims-reagent'),
       titleKey: 'lims.nav.lims-reagent',
@@ -379,7 +391,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<ReagentPageProps>,
     {
       path: LIMS_PATHS.testMethod,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsTestMethodPage'), 'LimsTestMethodPage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/LimsTestMethodPage'),
+        'LimsTestMethodPage'
+      ),
       module: 'lims',
       title: i18n.t('lims.nav.lims-test-method'),
       titleKey: 'lims.nav.lims-test-method',
@@ -391,7 +406,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsTestMethodPageProps>,
     {
       path: LIMS_PATHS.barcode,
-      element: lazyWithRetry(() => import('@/pages/lims/BarcodePage'), 'BarcodePage'),
+      element: lazyWithRetry(() => import('@/components/lims/BarcodePage'), 'BarcodePage'),
       module: 'lims',
       title: i18n.t('lims.nav.lims-barcode'),
       titleKey: 'lims.nav.lims-barcode',
@@ -404,7 +419,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.uncertainty,
       element: lazyWithRetry(
-        () => import('@/pages/lims/LimsUncertaintyPage'),
+        () => import('@/components/lims/LimsUncertaintyPage'),
         'LimsUncertaintyPage'
       ),
       module: 'lims',
@@ -419,7 +434,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.inspectionResult,
       element: lazyWithRetry(
-        () => import('@/pages/lims/InspectionResultPage'),
+        () => import('@/components/lims/InspectionResultPage'),
         'InspectionResultPage'
       ),
       module: 'lims',
@@ -434,7 +449,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     {
       path: LIMS_PATHS.proficiencyTesting,
       element: lazyWithRetry(
-        () => import('@/pages/lims/LimsProficiencyTestingPage'),
+        () => import('@/components/lims/LimsProficiencyTestingPage'),
         'LimsProficiencyTestingPage'
       ),
       module: 'lims',
@@ -448,7 +463,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsProficiencyTestingPageProps>,
     {
       path: LIMS_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/lims/LimsDashboardPage'), 'LimsDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/LimsDashboardPage'),
+        'LimsDashboardPage'
+      ),
       module: 'lims',
       title: i18n.t('lims.nav.lims-dashboard'),
       titleKey: 'lims.nav.lims-dashboard',
@@ -460,7 +478,10 @@ export const limsModuleConfig: RouteModuleConfig = {
     } satisfies RouteConfigV2<LimsDashboardPageProps>,
     {
       path: LIMS_PATHS.methodCategories,
-      element: lazyWithRetry(() => import('@/pages/lims/MethodCategoryPage'), 'MethodCategoryPage'),
+      element: lazyWithRetry(
+        () => import('@/components/lims/MethodCategoryPage'),
+        'MethodCategoryPage'
+      ),
       module: 'lims',
       code: 'lims-method-categories',
       title: i18n.t('lims.nav.lims-method-categories'),

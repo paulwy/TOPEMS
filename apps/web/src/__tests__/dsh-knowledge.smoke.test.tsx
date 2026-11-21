@@ -12,9 +12,36 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-const sampleStats = { total_entities: 42, total_relations: 87, avg_entity_degree: 4.1, max_entity_degree: 12, connected_components: 3, graph_density: 0.25 };
-const sampleEntities = [{ id: 'e1', name: '物料A', entity_type: 'material', description: '', confidence: 0.98, created_at: '2026-10-20T08:00:00Z', updated_at: '2026-10-20T08:00:00Z' }];
-const sampleRelations = [{ id: 'r1', source_id: 'e1', target_id: 'e2', relation_type: 'belongs_to', weight: 1, confidence: 0.9, created_at: '2026-10-20T08:00:00Z' }];
+const sampleStats = {
+  total_entities: 42,
+  total_relations: 87,
+  avg_entity_degree: 4.1,
+  max_entity_degree: 12,
+  connected_components: 3,
+  graph_density: 0.25,
+};
+const sampleEntities = [
+  {
+    id: 'e1',
+    name: '物料A',
+    entity_type: 'material',
+    description: '',
+    confidence: 0.98,
+    created_at: '2026-10-20T08:00:00Z',
+    updated_at: '2026-10-20T08:00:00Z',
+  },
+];
+const sampleRelations = [
+  {
+    id: 'r1',
+    source_id: 'e1',
+    target_id: 'e2',
+    relation_type: 'belongs_to',
+    weight: 1,
+    confidence: 0.9,
+    created_at: '2026-10-20T08:00:00Z',
+  },
+];
 const sampleCommunities = [{ community_id: 1, entity_ids: ['e1', 'e2'], size: 2, density: 1 }];
 
 vi.mock('@/api/ai/dshEnhanced', () => ({
@@ -33,7 +60,7 @@ vi.mock('@/api/ai/dshEnhanced', () => ({
   },
 }));
 
-import DshKnowledgePage from '@/pages/ai/DshKnowledgePage';
+import DshKnowledgePage from '@/components/ai/DshKnowledgePage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };
@@ -41,10 +68,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -56,8 +85,11 @@ const renderPage = async (captured: string[]) => {
       <ThemeProvider theme={createTheme()}>
         <QueryClientProvider client={qc}>
           <MemoryRouter>
-            <Suspense fallback={<div data-testid="loading" />}>
-              <CaptureBoundary name="kg" errors={captured}>
+            <Suspense fallback={<div data-testid='loading' />}>
+              <CaptureBoundary
+                name='kg'
+                errors={captured}
+              >
                 <DshKnowledgePage />
               </CaptureBoundary>
             </Suspense>

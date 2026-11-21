@@ -56,7 +56,7 @@ export const PM_PATHS = {
 // 在前端未提供独立页面，故不在此配置。
 const pmDashboardRoute: RouteConfigV2<PmDashboardPageProps> = {
   path: PM_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/pm/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/pm/DashboardPage'), 'DashboardPage'),
   module: 'pm',
   code: 'pm-dashboard',
   title: i18n.t('pm.nav.pm-dashboard'),
@@ -70,7 +70,7 @@ const pmDashboardRoute: RouteConfigV2<PmDashboardPageProps> = {
 
 const pmProjectListRoute: RouteConfigV2<PmProjectListPageProps> = {
   path: PM_PATHS.projects,
-  element: lazyWithRetry(() => import('@/pages/pm/PmProjectListPage'), 'PmProjectListPage'),
+  element: lazyWithRetry(() => import('@/components/pm/PmProjectListPage'), 'PmProjectListPage'),
   module: 'pm',
   code: 'pm-projects',
   title: i18n.t('pm.nav.pm-projects'),
@@ -84,7 +84,10 @@ const pmProjectListRoute: RouteConfigV2<PmProjectListPageProps> = {
 
 const pmProjectDetailRoute: RouteConfigV2<PmProjectDetailPageProps> = {
   path: PM_PATHS.projectDetail,
-  element: lazyWithRetry(() => import('@/pages/pm/PmProjectDetailPage'), 'PmProjectDetailPage'),
+  element: lazyWithRetry(
+    () => import('@/components/pm/PmProjectDetailPage'),
+    'PmProjectDetailPage'
+  ),
   module: 'pm',
   code: 'pm-project-detail',
   title: i18n.t('pm.nav.pm-project-detail'),
@@ -98,7 +101,10 @@ const pmProjectDetailRoute: RouteConfigV2<PmProjectDetailPageProps> = {
 
 const taskKanbanRoute: RouteConfigV2<TaskBoardProps> = {
   path: PM_PATHS.taskKanban,
-  element: lazyWithRetry(() => import('@/pages/pm/ProjectTaskKanbanPage'), 'ProjectTaskKanbanPage'),
+  element: lazyWithRetry(
+    () => import('@/components/pm/ProjectTaskKanbanPage'),
+    'ProjectTaskKanbanPage'
+  ),
   module: 'pm',
   code: 'pm-task-kanban',
   title: i18n.t('pm.nav.pm-task-kanban'),
@@ -112,7 +118,7 @@ const taskKanbanRoute: RouteConfigV2<TaskBoardProps> = {
 
 const pmContractListRoute: RouteConfigV2<PmContractListPageProps> = {
   path: PM_PATHS.contracts,
-  element: lazyWithRetry(() => import('@/pages/pm/PmContractListPage'), 'PmContractListPage'),
+  element: lazyWithRetry(() => import('@/components/pm/PmContractListPage'), 'PmContractListPage'),
   module: 'pm',
   code: 'pm-contracts',
   title: i18n.t('pm.nav.pm-contracts'),
@@ -126,7 +132,10 @@ const pmContractListRoute: RouteConfigV2<PmContractListPageProps> = {
 
 const pmContractDetailRoute: RouteConfigV2<PmContractDetailPageProps> = {
   path: PM_PATHS.contractDetail,
-  element: lazyWithRetry(() => import('@/pages/pm/PmContractDetailPage'), 'PmContractDetailPage'),
+  element: lazyWithRetry(
+    () => import('@/components/pm/PmContractDetailPage'),
+    'PmContractDetailPage'
+  ),
   module: 'pm',
   code: 'pm-contract-detail',
   title: i18n.t('pm.nav.pm-contract-detail'),
@@ -140,7 +149,10 @@ const pmContractDetailRoute: RouteConfigV2<PmContractDetailPageProps> = {
 
 const projectTimelineRoute: RouteConfigV2<ProjectTimelinePageProps> = {
   path: PM_PATHS.timeline,
-  element: lazyWithRetry(() => import('@/pages/pm/ProjectTimelinePage'), 'ProjectTimelinePage'),
+  element: lazyWithRetry(
+    () => import('@/components/pm/ProjectTimelinePage'),
+    'ProjectTimelinePage'
+  ),
   module: 'pm',
   code: 'pm-timeline',
   title: i18n.t('pm.nav.pm-timeline'),
@@ -157,7 +169,10 @@ const pmRoutes: RouteConfigV2[] = [
   pmProjectListRoute,
   {
     path: PM_PATHS.projectCreate,
-    element: lazyWithRetry(() => import('@/pages/pm/PmProjectCreatePage'), 'PmProjectCreatePage'),
+    element: lazyWithRetry(
+      () => import('@/components/pm/PmProjectCreatePage'),
+      'PmProjectCreatePage'
+    ),
     module: 'pm',
     code: 'pm-project-create',
     title: i18n.t('pm.nav.pm-project-create'),
@@ -171,7 +186,7 @@ const pmRoutes: RouteConfigV2[] = [
   pmProjectDetailRoute,
   {
     path: PM_PATHS.projectEdit,
-    element: lazyWithRetry(() => import('@/pages/pm/PmProjectEditPage'), 'PmProjectEditPage'),
+    element: lazyWithRetry(() => import('@/components/pm/PmProjectEditPage'), 'PmProjectEditPage'),
     module: 'pm',
     code: 'pm-project-edit',
     title: i18n.t('pm.nav.pm-project-detail'),
@@ -185,7 +200,10 @@ const pmRoutes: RouteConfigV2[] = [
   pmContractListRoute,
   {
     path: PM_PATHS.contractCreate,
-    element: lazyWithRetry(() => import('@/pages/pm/PmContractCreatePage'), 'PmContractCreatePage'),
+    element: lazyWithRetry(
+      () => import('@/components/pm/PmContractCreatePage'),
+      'PmContractCreatePage'
+    ),
     module: 'pm',
     code: 'pm-contract-create',
     title: i18n.t('pm.nav.pm-contract-create'),
@@ -199,7 +217,7 @@ const pmRoutes: RouteConfigV2[] = [
   pmContractDetailRoute,
   {
     path: PM_PATHS.resources,
-    element: lazyWithRetry(() => import('@/pages/pm/PmResourcePage'), 'PmResourcePage'),
+    element: lazyWithRetry(() => import('@/components/pm/PmResourcePage'), 'PmResourcePage'),
     module: 'pm',
     code: 'pm-resources',
     title: i18n.t('pm.nav.pm-resources'),
@@ -212,7 +230,7 @@ const pmRoutes: RouteConfigV2[] = [
   },
   {
     path: PM_PATHS.templates,
-    element: lazyWithRetry(() => import('@/pages/pm/PmTemplatePage'), 'PmTemplatePage'),
+    element: lazyWithRetry(() => import('@/components/pm/PmTemplatePage'), 'PmTemplatePage'),
     module: 'pm',
     code: 'pm-templates',
     title: i18n.t('pm.nav.pm-templates'),
@@ -225,7 +243,7 @@ const pmRoutes: RouteConfigV2[] = [
   },
   {
     path: PM_PATHS.reports,
-    element: lazyWithRetry(() => import('@/pages/pm/PmReportPage'), 'PmReportPage'),
+    element: lazyWithRetry(() => import('@/components/pm/PmReportPage'), 'PmReportPage'),
     module: 'pm',
     code: 'pm-reports',
     title: i18n.t('pm.nav.pm-reports'),
@@ -240,7 +258,7 @@ const pmRoutes: RouteConfigV2[] = [
   {
     path: PM_PATHS.projectWizard,
     element: lazyWithRetry(
-      () => import('@/pages/pm/ProjectCreateWizardPage'),
+      () => import('@/components/pm/ProjectCreateWizardPage'),
       'ProjectCreateWizardPage'
     ),
     module: 'pm',
@@ -257,7 +275,7 @@ const pmRoutes: RouteConfigV2[] = [
   {
     path: PM_PATHS.projectList,
     element: lazyWithRetry(
-      () => import('@/pages/pm/ProjectMasterDetailPage'),
+      () => import('@/components/pm/ProjectMasterDetailPage'),
       'ProjectMasterDetailPage'
     ),
     module: 'pm',
@@ -273,7 +291,7 @@ const pmRoutes: RouteConfigV2[] = [
   {
     path: PM_PATHS.projectTypeConfig,
     element: lazyWithRetry(
-      () => import('@/pages/pm/PmProjectTypeConfigPage'),
+      () => import('@/components/pm/PmProjectTypeConfigPage'),
       'PmProjectTypeConfigPage'
     ),
     module: 'pm',

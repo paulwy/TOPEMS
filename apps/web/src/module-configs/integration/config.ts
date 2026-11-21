@@ -64,7 +64,7 @@ interface IntegrationSettingsPageProps {}
 const integrationDashboardRoute: RouteConfigV2<IntegrationDashboardPageProps> = {
   path: INTEGRATION_PATHS.dashboard,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationDashboardPage'),
+    () => import('@/components/integration/IntegrationDashboardPage'),
     'IntegrationDashboardPage'
   ),
   module: 'integration',
@@ -80,7 +80,7 @@ const integrationDashboardRoute: RouteConfigV2<IntegrationDashboardPageProps> = 
 const integrationConnectionsRoute: RouteConfigV2<IntegrationConnectionsPageProps> = {
   path: INTEGRATION_PATHS.connections,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationConnectionsPage'),
+    () => import('@/components/integration/IntegrationConnectionsPage'),
     'IntegrationConnectionsPage'
   ),
   module: 'integration',
@@ -96,7 +96,7 @@ const integrationConnectionsRoute: RouteConfigV2<IntegrationConnectionsPageProps
 const integrationMappingsRoute: RouteConfigV2<IntegrationMappingsPageProps> = {
   path: INTEGRATION_PATHS.mappings,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationMappingsPage'),
+    () => import('@/components/integration/IntegrationMappingsPage'),
     'IntegrationMappingsPage'
   ),
   module: 'integration',
@@ -112,7 +112,7 @@ const integrationMappingsRoute: RouteConfigV2<IntegrationMappingsPageProps> = {
 const integrationEventsRoute: RouteConfigV2<IntegrationEventsPageProps> = {
   path: INTEGRATION_PATHS.events,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationEventsPage'),
+    () => import('@/components/integration/IntegrationEventsPage'),
     'IntegrationEventsPage'
   ),
   module: 'integration',
@@ -128,7 +128,7 @@ const integrationEventsRoute: RouteConfigV2<IntegrationEventsPageProps> = {
 const integrationErpOverviewRoute: RouteConfigV2<IntegrationErpOverviewPageProps> = {
   path: INTEGRATION_PATHS.erpOverview,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationErpOverviewPage'),
+    () => import('@/components/integration/IntegrationErpOverviewPage'),
     'IntegrationErpOverviewPage'
   ),
   module: 'integration',
@@ -144,7 +144,7 @@ const integrationErpOverviewRoute: RouteConfigV2<IntegrationErpOverviewPageProps
 const integrationLimsQmsRoute: RouteConfigV2<IntegrationLimsQmsPageProps> = {
   path: INTEGRATION_PATHS.limsQms,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationLimsQmsPage'),
+    () => import('@/components/integration/IntegrationLimsQmsPage'),
     'IntegrationLimsQmsPage'
   ),
   module: 'integration',
@@ -160,7 +160,7 @@ const integrationLimsQmsRoute: RouteConfigV2<IntegrationLimsQmsPageProps> = {
 const integrationMesErpRoute: RouteConfigV2<IntegrationMesErpPageProps> = {
   path: INTEGRATION_PATHS.mesErp,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationMesErpPage'),
+    () => import('@/components/integration/IntegrationMesErpPage'),
     'IntegrationMesErpPage'
   ),
   module: 'integration',
@@ -176,7 +176,7 @@ const integrationMesErpRoute: RouteConfigV2<IntegrationMesErpPageProps> = {
 const integrationWmsScmRoute: RouteConfigV2<IntegrationWmsScmPageProps> = {
   path: INTEGRATION_PATHS.wmsScm,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationWmsScmPage'),
+    () => import('@/components/integration/IntegrationWmsScmPage'),
     'IntegrationWmsScmPage'
   ),
   module: 'integration',
@@ -192,7 +192,7 @@ const integrationWmsScmRoute: RouteConfigV2<IntegrationWmsScmPageProps> = {
 const integrationSettingsRoute: RouteConfigV2<IntegrationSettingsPageProps> = {
   path: INTEGRATION_PATHS.settings,
   element: lazyWithRetry(
-    () => import('@/pages/integration/IntegrationSettingsPage'),
+    () => import('@/components/integration/IntegrationSettingsPage'),
     'IntegrationSettingsPage'
   ),
   module: 'integration',

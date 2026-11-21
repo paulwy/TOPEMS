@@ -58,7 +58,7 @@ export const ADMIN_PATHS = {
 // ---- 第二部分：路由配置（供路由系统使用） ----
 const adminDashboardRoute: RouteConfigV2<AdminDashboardPageProps> = {
   path: ADMIN_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/admin/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/admin/DashboardPage'), 'DashboardPage'),
   module: 'admin',
   code: 'admin-dashboard',
   title: i18n.t('admin.nav.admin-dashboard'),
@@ -72,7 +72,7 @@ const adminDashboardRoute: RouteConfigV2<AdminDashboardPageProps> = {
 const tenantManagementRoute: RouteConfigV2<TenantManagementPageProps> = {
   path: ADMIN_PATHS.tenant,
   element: lazyWithRetry(
-    () => import('@/pages/admin/TenantManagementPage'),
+    () => import('@/components/admin/TenantManagementPage'),
     'TenantManagementPage'
   ),
   module: 'admin',
@@ -87,7 +87,7 @@ const tenantManagementRoute: RouteConfigV2<TenantManagementPageProps> = {
 
 const tenantDetailRoute: RouteConfigV2<TenantDetailPageProps> = {
   path: ADMIN_PATHS.tenantDetail,
-  element: lazyWithRetry(() => import('@/pages/admin/TenantDetailPage'), 'TenantDetailPage'),
+  element: lazyWithRetry(() => import('@/components/admin/TenantDetailPage'), 'TenantDetailPage'),
   module: 'admin',
   title: i18n.t('admin.nav.admin-tenant-detail'),
   titleKey: 'admin.nav.admin-tenant-detail',
@@ -101,7 +101,7 @@ const tenantDetailRoute: RouteConfigV2<TenantDetailPageProps> = {
 const accountManagementRoute: RouteConfigV2<AccountManagementPageProps> = {
   path: ADMIN_PATHS.account,
   element: lazyWithRetry(
-    () => import('@/pages/admin/AccountManagementPage'),
+    () => import('@/components/admin/AccountManagementPage'),
     'AccountManagementPage'
   ),
   module: 'admin',
@@ -119,7 +119,7 @@ const adminUserListRoute: RouteConfigV2<AdminUserListProps> =
 
 const auditLogRoute: RouteConfigV2<AuditLogPageProps> = {
   path: ADMIN_PATHS.auditLog,
-  element: lazyWithRetry(() => import('@/pages/admin/AuditLogPage'), 'AuditLogPage'),
+  element: lazyWithRetry(() => import('@/components/admin/AuditLogPage'), 'AuditLogPage'),
   module: 'admin',
   title: i18n.t('admin.nav.admin-audit-log'),
   titleKey: 'admin.nav.admin-audit-log',
@@ -132,7 +132,7 @@ const auditLogRoute: RouteConfigV2<AuditLogPageProps> = {
 
 const monitorRoute: RouteConfigV2<MonitorPageProps> = {
   path: ADMIN_PATHS.monitor,
-  element: lazyWithRetry(() => import('@/pages/admin/MonitorPage'), 'MonitorPage'),
+  element: lazyWithRetry(() => import('@/components/admin/MonitorPage'), 'MonitorPage'),
   module: 'admin',
   title: i18n.t('admin.nav.admin-monitor'),
   titleKey: 'admin.nav.admin-monitor',
@@ -145,7 +145,10 @@ const monitorRoute: RouteConfigV2<MonitorPageProps> = {
 
 const permissionAuditRoute: RouteConfigV2<PermissionAuditPageProps> = {
   path: ADMIN_PATHS.permissionAudit,
-  element: lazyWithRetry(() => import('@/pages/admin/PermissionAuditPage'), 'PermissionAuditPage'),
+  element: lazyWithRetry(
+    () => import('@/components/admin/PermissionAuditPage'),
+    'PermissionAuditPage'
+  ),
   module: 'admin',
   title: i18n.t('admin.nav.admin-permission-audit'),
   titleKey: 'admin.nav.admin-permission-audit',
@@ -165,7 +168,10 @@ const adminRoutes: RouteConfigV2[] = [
   tenantDetailRoute,
   {
     path: ADMIN_PATHS.tenantSettings,
-    element: lazyWithRetry(() => import('@/pages/admin/TenantSettingsPage'), 'TenantSettingsPage'),
+    element: lazyWithRetry(
+      () => import('@/components/admin/TenantSettingsPage'),
+      'TenantSettingsPage'
+    ),
     module: 'admin',
     title: i18n.t('admin.nav.admin-tenant-settings'),
     titleKey: 'admin.nav.admin-tenant-settings',
@@ -177,7 +183,10 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.tenantBilling,
-    element: lazyWithRetry(() => import('@/pages/admin/TenantBillingPage'), 'TenantBillingPage'),
+    element: lazyWithRetry(
+      () => import('@/components/admin/TenantBillingPage'),
+      'TenantBillingPage'
+    ),
     module: 'admin',
     title: i18n.t('admin.nav.admin-tenant-billing'),
     titleKey: 'admin.nav.admin-tenant-billing',
@@ -193,7 +202,7 @@ const adminRoutes: RouteConfigV2[] = [
   {
     path: ADMIN_PATHS.bankAccount,
     element: lazyWithRetry(
-      () => import('@/pages/admin/BankAccountManagementPage'),
+      () => import('@/components/admin/BankAccountManagementPage'),
       'BankAccountManagementPage'
     ),
     module: 'admin',
@@ -210,7 +219,7 @@ const adminRoutes: RouteConfigV2[] = [
   {
     path: ADMIN_PATHS.dictionary,
     element: lazyWithRetry(
-      () => import('@/pages/admin/DictionaryManagementPage'),
+      () => import('@/components/admin/DictionaryManagementPage'),
       'DictionaryManagementPage'
     ),
     module: 'admin',
@@ -225,7 +234,7 @@ const adminRoutes: RouteConfigV2[] = [
   {
     path: ADMIN_PATHS.system,
     element: lazyWithRetry(
-      () => import('@/pages/admin/SystemManagementPage'),
+      () => import('@/components/admin/SystemManagementPage'),
       'SystemManagementPage'
     ),
     module: 'admin',
@@ -239,7 +248,10 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.systemSettings,
-    element: lazyWithRetry(() => import('@/pages/admin/SystemSettingsPage'), 'SystemSettingsPage'),
+    element: lazyWithRetry(
+      () => import('@/components/admin/SystemSettingsPage'),
+      'SystemSettingsPage'
+    ),
     module: 'admin',
     title: i18n.t('admin.nav.admin-system-settings'),
     titleKey: 'admin.nav.admin-system-settings',
@@ -253,7 +265,7 @@ const adminRoutes: RouteConfigV2[] = [
     path: ADMIN_PATHS.plugin,
     // 审计 P2 PARTIAL(admin L106) 核销：后端已迁移至 svc/plugin-registry:8096（跨服务），前端经统一网关代理
     element: lazyWithRetry(
-      () => import('@/pages/admin/PluginManagementPage'),
+      () => import('@/components/admin/PluginManagementPage'),
       'PluginManagementPage'
     ),
     module: 'admin',
@@ -274,7 +286,7 @@ const adminRoutes: RouteConfigV2[] = [
   {
     path: ADMIN_PATHS.database,
     element: lazyWithRetry(
-      () => import('@/pages/admin/DatabaseStructurePage'),
+      () => import('@/components/admin/DatabaseStructurePage'),
       'DatabaseStructurePage'
     ),
     module: 'admin',
@@ -288,7 +300,10 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.migration,
-    element: lazyWithRetry(() => import('@/pages/admin/MigrationAdminPage'), 'MigrationAdminPage'),
+    element: lazyWithRetry(
+      () => import('@/components/admin/MigrationAdminPage'),
+      'MigrationAdminPage'
+    ),
     module: 'admin',
     title: i18n.t('admin.nav.admin-migration'),
     titleKey: 'admin.nav.admin-migration',
@@ -300,7 +315,7 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.configDebug,
-    element: lazyWithRetry(() => import('@/pages/admin/ConfigDebugPage'), 'ConfigDebugPage'),
+    element: lazyWithRetry(() => import('@/components/admin/ConfigDebugPage'), 'ConfigDebugPage'),
     module: 'admin',
     title: i18n.t('admin.nav.admin-config-debug'),
     titleKey: 'admin.nav.admin-config-debug',
@@ -316,7 +331,7 @@ const adminRoutes: RouteConfigV2[] = [
   {
     path: ADMIN_PATHS.rateLimit,
     element: lazyWithRetry(
-      () => import('@/pages/admin/RateLimitConfigPage'),
+      () => import('@/components/admin/RateLimitConfigPage'),
       'RateLimitConfigPage'
     ),
     module: 'admin',
@@ -330,7 +345,7 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.featureFlag,
-    element: lazyWithRetry(() => import('@/pages/system/FeatureFlagPage'), 'FeatureFlagPage'),
+    element: lazyWithRetry(() => import('@/components/system/FeatureFlagPage'), 'FeatureFlagPage'),
     module: 'admin',
     title: i18n.t('admin.nav.admin-feature-flag'),
     titleKey: 'admin.nav.admin-feature-flag',
@@ -342,7 +357,10 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.menu,
-    element: lazyWithRetry(() => import('@/pages/system/MenuManagementPage'), 'MenuManagementPage'),
+    element: lazyWithRetry(
+      () => import('@/components/system/MenuManagementPage'),
+      'MenuManagementPage'
+    ),
     module: 'admin',
     title: i18n.t('admin.nav.admin-menu'),
     titleKey: 'admin.nav.admin-menu',
@@ -356,7 +374,7 @@ const adminRoutes: RouteConfigV2[] = [
   {
     path: ADMIN_PATHS.performance,
     element: lazyWithRetry(
-      () => import('@/pages/admin/PerformanceMonitorPage'),
+      () => import('@/components/admin/PerformanceMonitorPage'),
       'PerformanceMonitorPage'
     ),
     module: 'admin',
@@ -373,7 +391,7 @@ const adminRoutes: RouteConfigV2[] = [
     path: ADMIN_PATHS.monitoringAlert,
     // 审计 P2 PARTIAL(admin L107) 核销：页面调用 svc/monitor:8095（跨服务），非 unified-core，已核实端点存在
     element: lazyWithRetry(
-      () => import('@/pages/admin/MonitoringAlertPage'),
+      () => import('@/components/admin/MonitoringAlertPage'),
       'MonitoringAlertPage'
     ),
     module: 'admin',

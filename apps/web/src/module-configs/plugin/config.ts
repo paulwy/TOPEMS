@@ -33,7 +33,7 @@ interface PluginDetailPageProps {
 
 const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
   path: PLUGIN_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/plugin/DashboardPage'), 'DashboardPage'),
+  element: lazyWithRetry(() => import('@/components/plugin/DashboardPage'), 'DashboardPage'),
   module: 'plugin',
   title: i18n.t('plugin.nav.plugin-dashboard'),
   titleKey: 'plugin.nav.plugin-dashboard',
@@ -47,7 +47,7 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 const pluginMarketplaceRoute: RouteConfigV2<PluginMarketplacePageProps> = {
   path: PLUGIN_PATHS.marketplace,
   element: lazyWithRetry(
-    () => import('@/pages/plugin/PluginMarketplacePage'),
+    () => import('@/components/plugin/PluginMarketplacePage'),
     'PluginMarketplacePage'
   ),
   module: 'plugin',
@@ -63,7 +63,7 @@ const pluginMarketplaceRoute: RouteConfigV2<PluginMarketplacePageProps> = {
 
 const pluginUploadRoute: RouteConfigV2<PluginUploadPageProps> = {
   path: PLUGIN_PATHS.upload,
-  element: lazyWithRetry(() => import('@/pages/plugin/PluginUploadPage'), 'PluginUploadPage'),
+  element: lazyWithRetry(() => import('@/components/plugin/PluginUploadPage'), 'PluginUploadPage'),
   module: 'plugin',
   title: i18n.t('plugin.nav.plugin-upload'),
   titleKey: 'plugin.nav.plugin-upload',
@@ -77,7 +77,7 @@ const pluginUploadRoute: RouteConfigV2<PluginUploadPageProps> = {
 
 const pluginDetailRoute: RouteConfigV2<PluginDetailPageProps> = {
   path: PLUGIN_PATHS.detail,
-  element: lazyWithRetry(() => import('@/pages/plugin/PluginDetailPage'), 'PluginDetailPage'),
+  element: lazyWithRetry(() => import('@/components/plugin/PluginDetailPage'), 'PluginDetailPage'),
   module: 'plugin',
   title: i18n.t('plugin.nav.plugin-detail'),
   titleKey: 'plugin.nav.plugin-detail',

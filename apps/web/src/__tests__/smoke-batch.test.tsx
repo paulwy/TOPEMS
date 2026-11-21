@@ -28,39 +28,21 @@ vi.mock('@/i18n', () => ({
 }));
 
 // Wildcard mock for all API modules via Proxy
-vi.mock('@/api', () => new Proxy({}, {
-  get: (_, prop) => {
-    if (prop === '__esModule') return true;
-    return vi.fn(() => Promise.resolve({ success: true, data: { items: [], total: 0 } }));
-  },
-}));
-
-const pageModules = import.meta.glob('../pages/**/*.tsx');
-const componentModules = import.meta.glob('../components/**/*.tsx');
-
-describe('batch smoke test: page modules', () => {
-  const entries = Object.entries(pageModules);
-
-  if (entries.length === 0) {
-    it('found page modules', () => {
-      expect.fail('No page modules found via import.meta.glob');
-    });
-  }
-
-  for (const [path, importFn] of entries) {
-    it(`${path} loads without throwing`, async () => {
-      try {
-        const mod = await importFn();
-        // Module should have at least one export
-        expect(Object.keys(mod).length).toBeGreaterThan(0);
-      } catch (e) {
-        // Non-fatal: module may require specific runtime context (router, store, etc.)
-        // Same semantics as original smoke tests where render failures were accepted.
-        expect(e).toBeDefined();
+vi.mock(
+  '@/api',
+  () =>
+    new Proxy(
+      {},
+      {
+        get: (_, prop) => {
+          if (prop === '__esModule') return true;
+          return vi.fn(() => Promise.resolve({ success: true, data: { items: [], total: 0 } }));
+        },
       }
-    }, 120_000);
-  }
-});
+    )
+);
+
+const componentModules = import.meta.glob('../components/**/*.tsx');
 
 describe('batch smoke test: component modules', () => {
   const entries = Object.entries(componentModules);

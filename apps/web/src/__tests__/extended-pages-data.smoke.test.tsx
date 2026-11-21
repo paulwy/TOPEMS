@@ -201,15 +201,15 @@ vi.mock('@/api/ehs', () => ({
   },
 }));
 
-import WmsStocktakePage from '@/pages/wms/WmsStocktakePage';
-import QmsIssuePage from '@/pages/qms/QmsNonconformanceRedesignPage';
-import QmsEightDPage from '@/pages/qms/QmsEightDRedesignPage';
-import QmsAuditPage from '@/pages/qms/QmsAuditRedesignPage';
-import CrmOpportunityPage from '@/pages/crm/CrmOpportunityRedesignPage';
-import HrmAttendancePage from '@/pages/hrm/HrmAttendanceRedesignPage';
-import HrmPerformancePage from '@/pages/hrm/HrmPerformanceRedesignPage';
-import ErpInventoryPage from '@/pages/erp/ErpInventoryRedesignPage';
-import EhsAccidentPage from '@/pages/ehs/EhsAccidentPage';
+import WmsStocktakePage from '@/components/wms/WmsStocktakePage';
+import QmsIssuePage from '@/components/qms/QmsNonconformanceRedesignPage';
+import QmsEightDPage from '@/components/qms/QmsEightDRedesignPage';
+import QmsAuditPage from '@/components/qms/QmsAuditRedesignPage';
+import CrmOpportunityPage from '@/components/crm/CrmOpportunityRedesignPage';
+import HrmAttendancePage from '@/components/hrm/HrmAttendanceRedesignPage';
+import HrmPerformancePage from '@/components/hrm/HrmPerformanceRedesignPage';
+import ErpInventoryPage from '@/components/erp/ErpInventoryRedesignPage';
+import EhsAccidentPage from '@/components/ehs/EhsAccidentPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
   state = { hasError: false };

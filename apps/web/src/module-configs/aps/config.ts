@@ -105,7 +105,7 @@ interface OeeDashboardPageProps {}
 
 const apsDashboardRoute: RouteConfigV2<ApsDashboardPageProps> = {
   path: APS_PATHS.dashboard,
-  element: lazyWithRetry(() => import('@/pages/aps/ApsDashboardPage'), 'ApsDashboardPage'),
+  element: lazyWithRetry(() => import('@/components/aps/ApsDashboardPage'), 'ApsDashboardPage'),
   module: 'aps',
   code: 'aps-dashboard',
   title: i18n.t('aps.nav.aps-dashboard'),
@@ -118,7 +118,7 @@ const apsDashboardRoute: RouteConfigV2<ApsDashboardPageProps> = {
 
 const productionPlanRoute: RouteConfigV2<ProductionPlanPageProps> = {
   path: APS_PATHS.productionPlans,
-  element: lazyWithRetry(() => import('@/pages/aps/ProductionPlanPage'), 'ProductionPlanPage'),
+  element: lazyWithRetry(() => import('@/components/aps/ProductionPlanPage'), 'ProductionPlanPage'),
   module: 'aps',
   code: 'aps-production-plans',
   title: i18n.t('aps.nav.aps-production-plans'),
@@ -132,7 +132,7 @@ const productionPlanRoute: RouteConfigV2<ProductionPlanPageProps> = {
 const scheduleManagementRoute: RouteConfigV2<ScheduleManagementPageProps> = {
   path: APS_PATHS.schedules,
   element: lazyWithRetry(
-    () => import('@/pages/aps/ScheduleManagementPage'),
+    () => import('@/components/aps/ScheduleManagementPage'),
     'ScheduleManagementPage'
   ),
   module: 'aps',
@@ -148,7 +148,7 @@ const scheduleManagementRoute: RouteConfigV2<ScheduleManagementPageProps> = {
 const capacityManagementRoute: RouteConfigV2<CapacityManagementPageProps> = {
   path: APS_PATHS.capacities,
   element: lazyWithRetry(
-    () => import('@/pages/aps/CapacityManagementPage'),
+    () => import('@/components/aps/CapacityManagementPage'),
     'CapacityManagementPage'
   ),
   module: 'aps',
@@ -163,7 +163,7 @@ const capacityManagementRoute: RouteConfigV2<CapacityManagementPageProps> = {
 
 const materialPlanRoute: RouteConfigV2<MaterialPlanPageProps> = {
   path: APS_PATHS.materialPlans,
-  element: lazyWithRetry(() => import('@/pages/aps/MaterialPlanPage'), 'MaterialPlanPage'),
+  element: lazyWithRetry(() => import('@/components/aps/MaterialPlanPage'), 'MaterialPlanPage'),
   module: 'aps',
   code: 'aps-material-plans',
   title: i18n.t('aps.nav.aps-material-plans'),
@@ -177,7 +177,7 @@ const materialPlanRoute: RouteConfigV2<MaterialPlanPageProps> = {
 const forecastManagementRoute: RouteConfigV2<ForecastManagementPageProps> = {
   path: APS_PATHS.forecasts,
   element: lazyWithRetry(
-    () => import('@/pages/aps/ForecastManagementPage'),
+    () => import('@/components/aps/ForecastManagementPage'),
     'ForecastManagementPage'
   ),
   module: 'aps',
@@ -193,7 +193,7 @@ const forecastManagementRoute: RouteConfigV2<ForecastManagementPageProps> = {
 const productionPlanDetailRoute: RouteConfigV2<ProductionPlanDetailPageProps> = {
   path: APS_PATHS.productionPlanDetail,
   element: lazyWithRetry(
-    () => import('@/pages/aps/ProductionPlanDetailPage'),
+    () => import('@/components/aps/ProductionPlanDetailPage'),
     'ProductionPlanDetailPage'
   ),
   module: 'aps',
@@ -208,7 +208,7 @@ const productionPlanDetailRoute: RouteConfigV2<ProductionPlanDetailPageProps> = 
 
 const scheduleDetailRoute: RouteConfigV2<ScheduleDetailPageProps> = {
   path: APS_PATHS.scheduleDetail,
-  element: lazyWithRetry(() => import('@/pages/aps/ScheduleDetailPage'), 'ScheduleDetailPage'),
+  element: lazyWithRetry(() => import('@/components/aps/ScheduleDetailPage'), 'ScheduleDetailPage'),
   module: 'aps',
   code: 'aps-schedule-detail',
   title: i18n.t('aps.nav.aps-schedule-detail'),
@@ -221,7 +221,7 @@ const scheduleDetailRoute: RouteConfigV2<ScheduleDetailPageProps> = {
 
 const capacityDetailRoute: RouteConfigV2<CapacityDetailPageProps> = {
   path: APS_PATHS.capacityDetail,
-  element: lazyWithRetry(() => import('@/pages/aps/CapacityDetailPage'), 'CapacityDetailPage'),
+  element: lazyWithRetry(() => import('@/components/aps/CapacityDetailPage'), 'CapacityDetailPage'),
   module: 'aps',
   code: 'aps-capacity-detail',
   title: i18n.t('aps.nav.aps-capacity-detail'),
@@ -235,7 +235,7 @@ const capacityDetailRoute: RouteConfigV2<CapacityDetailPageProps> = {
 const materialPlanDetailRoute: RouteConfigV2<MaterialPlanDetailPageProps> = {
   path: APS_PATHS.materialPlanDetail,
   element: lazyWithRetry(
-    () => import('@/pages/aps/MaterialPlanDetailPage'),
+    () => import('@/components/aps/MaterialPlanDetailPage'),
     'MaterialPlanDetailPage'
   ),
   module: 'aps',
@@ -250,7 +250,7 @@ const materialPlanDetailRoute: RouteConfigV2<MaterialPlanDetailPageProps> = {
 
 const forecastDetailRoute: RouteConfigV2<ForecastDetailPageProps> = {
   path: APS_PATHS.forecastDetail,
-  element: lazyWithRetry(() => import('@/pages/aps/ForecastDetailPage'), 'ForecastDetailPage'),
+  element: lazyWithRetry(() => import('@/components/aps/ForecastDetailPage'), 'ForecastDetailPage'),
   module: 'aps',
   code: 'aps-forecast-detail',
   title: i18n.t('aps.nav.aps-forecast-detail'),
@@ -264,7 +264,7 @@ const forecastDetailRoute: RouteConfigV2<ForecastDetailPageProps> = {
 const planComparisonDetailRoute: RouteConfigV2<PlanComparisonDetailPageProps> = {
   path: APS_PATHS.planComparison,
   element: lazyWithRetry(
-    () => import('@/pages/aps/PlanComparisonDetailPage'),
+    () => import('@/components/aps/PlanComparisonDetailPage'),
     'PlanComparisonDetailPage'
   ),
   module: 'aps',
@@ -280,7 +280,7 @@ const planComparisonDetailRoute: RouteConfigV2<PlanComparisonDetailPageProps> = 
 const planAdherenceRoute: RouteConfigV2<PlanAdherencePageProps> = {
   path: APS_PATHS.analytics.planAdherence,
   element: lazyWithRetry(
-    () => import('@/pages/aps/analytics/PlanAdherencePage'),
+    () => import('@/components/aps/analytics/PlanAdherencePage'),
     'PlanAdherencePage'
   ),
   module: 'aps',
@@ -296,7 +296,7 @@ const planAdherenceRoute: RouteConfigV2<PlanAdherencePageProps> = {
 const scheduleGanttRoute: RouteConfigV2<ScheduleGanttPageProps> = {
   path: APS_PATHS.analytics.scheduleGantt,
   element: lazyWithRetry(
-    () => import('@/pages/aps/analytics/ScheduleGanttPage'),
+    () => import('@/components/aps/analytics/ScheduleGanttPage'),
     'ScheduleGanttPage'
   ),
   module: 'aps',
@@ -312,7 +312,7 @@ const scheduleGanttRoute: RouteConfigV2<ScheduleGanttPageProps> = {
 const capacityUtilizationRoute: RouteConfigV2<CapacityUtilizationPageProps> = {
   path: APS_PATHS.analytics.capacityUtilization,
   element: lazyWithRetry(
-    () => import('@/pages/aps/analytics/CapacityUtilizationPage'),
+    () => import('@/components/aps/analytics/CapacityUtilizationPage'),
     'CapacityUtilizationPage'
   ),
   module: 'aps',
@@ -328,7 +328,7 @@ const capacityUtilizationRoute: RouteConfigV2<CapacityUtilizationPageProps> = {
 const materialShortageRoute: RouteConfigV2<MaterialShortagePageProps> = {
   path: APS_PATHS.analytics.materialShortage,
   element: lazyWithRetry(
-    () => import('@/pages/aps/analytics/MaterialShortagePage'),
+    () => import('@/components/aps/analytics/MaterialShortagePage'),
     'MaterialShortagePage'
   ),
   module: 'aps',
@@ -344,7 +344,7 @@ const materialShortageRoute: RouteConfigV2<MaterialShortagePageProps> = {
 const forecastAccuracyRoute: RouteConfigV2<ForecastAccuracyPageProps> = {
   path: APS_PATHS.analytics.forecastAccuracy,
   element: lazyWithRetry(
-    () => import('@/pages/aps/analytics/ForecastAccuracyPage'),
+    () => import('@/components/aps/analytics/ForecastAccuracyPage'),
     'ForecastAccuracyPage'
   ),
   module: 'aps',
@@ -360,7 +360,7 @@ const forecastAccuracyRoute: RouteConfigV2<ForecastAccuracyPageProps> = {
 const oeeDashboardRoute: RouteConfigV2<OeeDashboardPageProps> = {
   path: APS_PATHS.analytics.oeeDashboard,
   element: lazyWithRetry(
-    () => import('@/pages/aps/analytics/OeeDashboardPage'),
+    () => import('@/components/aps/analytics/OeeDashboardPage'),
     'OeeDashboardPage'
   ),
   module: 'aps',

@@ -43,7 +43,7 @@ const MASTER_PATHS = {
 const dataAssetCatalogRoute: RouteConfigV2<DataAssetCatalogPageProps> = {
   path: MASTER_PATHS.dataAssetCatalog,
   element: lazyWithRetry(
-    () => import('@/pages/master/DataAssetCatalogPage'),
+    () => import('@/components/master/DataAssetCatalogPage'),
     'DataAssetCatalogPage'
   ),
   module: 'master',
@@ -58,7 +58,10 @@ const dataAssetCatalogRoute: RouteConfigV2<DataAssetCatalogPageProps> = {
 
 const schemaRegistryRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.schemaRegistry,
-  element: lazyWithRetry(() => import('@/pages/master/SchemaRegistryPage'), 'SchemaRegistryPage'),
+  element: lazyWithRetry(
+    () => import('@/components/master/SchemaRegistryPage'),
+    'SchemaRegistryPage'
+  ),
   module: 'master',
   code: 'master-schema-registry',
   title: i18n.t('master.schemaRegistry'),
@@ -72,7 +75,7 @@ const schemaRegistryRoute: RouteConfigV2<Record<string, never>> = {
 const lineageAnalyticsRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.lineageAnalytics,
   element: lazyWithRetry(
-    () => import('@/pages/master/LineageAnalyticsPage'),
+    () => import('@/components/master/LineageAnalyticsPage'),
     'LineageAnalyticsPage'
   ),
   module: 'master',
@@ -87,7 +90,7 @@ const lineageAnalyticsRoute: RouteConfigV2<Record<string, never>> = {
 
 const aiGovernanceRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.aiGovernance,
-  element: lazyWithRetry(() => import('@/pages/master/AiGovernancePage'), 'AiGovernancePage'),
+  element: lazyWithRetry(() => import('@/components/master/AiGovernancePage'), 'AiGovernancePage'),
   module: 'master',
   code: 'master-ai-governance',
   title: i18n.t('master.aiGovernance'),
@@ -101,7 +104,7 @@ const aiGovernanceRoute: RouteConfigV2<Record<string, never>> = {
 const commercialRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.commercial,
   element: lazyWithRetry(
-    () => import('@/pages/master/CommercialConsolePage'),
+    () => import('@/components/master/CommercialConsolePage'),
     'CommercialConsolePage'
   ),
   module: 'master',
@@ -116,7 +119,7 @@ const commercialRoute: RouteConfigV2<Record<string, never>> = {
 const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.publicMasterData,
   element: lazyWithRetry(
-    () => import('@/pages/master/PublicMasterDataPage'),
+    () => import('@/components/master/PublicMasterDataPage'),
     'PublicMasterDataPage'
   ),
   module: 'master',
@@ -131,7 +134,7 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
 const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.disasterRecovery,
   element: lazyWithRetry(
-    () => import('@/pages/master/MasterDisasterRecoveryPage'),
+    () => import('@/components/master/MasterDisasterRecoveryPage'),
     'MasterDisasterRecoveryPage'
   ),
   module: 'master',
@@ -146,7 +149,7 @@ const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
 const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.semanticSearch,
   element: lazyWithRetry(
-    () => import('@/pages/master/MasterSemanticSearchPage'),
+    () => import('@/components/master/MasterSemanticSearchPage'),
     'MasterSemanticSearchPage'
   ),
   module: 'master',
@@ -161,7 +164,7 @@ const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
 const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.knowledgeGraph,
   element: lazyWithRetry(
-    () => import('@/pages/master/MasterKnowledgeGraphPage'),
+    () => import('@/components/master/MasterKnowledgeGraphPage'),
     'MasterKnowledgeGraphPage'
   ),
   module: 'master',
@@ -175,7 +178,10 @@ const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
 };
 const qualityRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.quality,
-  element: lazyWithRetry(() => import('@/pages/master/MasterQualityPage'), 'MasterQualityPage'),
+  element: lazyWithRetry(
+    () => import('@/components/master/MasterQualityPage'),
+    'MasterQualityPage'
+  ),
   module: 'master',
   code: 'master-quality',
   title: i18n.t('master.quality'),
@@ -187,7 +193,10 @@ const qualityRoute: RouteConfigV2<Record<string, never>> = {
 };
 const closedLoopRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.closedLoop,
-  element: lazyWithRetry(() => import('@/pages/master/MdmClosedLoopPage'), 'MdmClosedLoopPage'),
+  element: lazyWithRetry(
+    () => import('@/components/master/MdmClosedLoopPage'),
+    'MdmClosedLoopPage'
+  ),
   module: 'master',
   code: 'master-closed-loop',
   title: i18n.t('master.closedLoop.title'),
@@ -201,7 +210,7 @@ const closedLoopRoute: RouteConfigV2<Record<string, never>> = {
 const governanceRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.governance,
   element: lazyWithRetry(
-    () => import('@/pages/master/MasterGovernancePage'),
+    () => import('@/components/master/MasterGovernancePage'),
     'MasterGovernancePage'
   ),
   module: 'master',
@@ -216,7 +225,7 @@ const governanceRoute: RouteConfigV2<Record<string, never>> = {
 const versioningRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.versioning,
   element: lazyWithRetry(
-    () => import('@/pages/master/MasterVersioningPage'),
+    () => import('@/components/master/MasterVersioningPage'),
     'MasterVersioningPage'
   ),
   module: 'master',
