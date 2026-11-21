@@ -2857,3 +2857,11 @@ pending_forward_patches:
     effect: "只读复核更正前提：public.approvals / approval_records / core_workflow_instances / core_workflow_tasks 的 tenant_id 列与 rls_tenant_isolation 策略均已在生产存在，四表均为 0 行。本迁移补 4 条 tenant_id 索引；把 approvals / approval_records 的策略从「仅 USING」归一为 USING + 显式 WITH CHECK 的严格 B 范式（core_workflow_* 形状不变）；ADD COLUMN IF NOT EXISTS 为幂等守卫；按 P1-P4 值连接路径回填（0 行），推不出的保持 NULL"
     destructive_scan: "含 4 条 UPDATE 回填（仅 tenant_id IS NULL 且上游 tenant_id 非 NULL）、1 个 DO 块内 DROP POLICY（每表前置断言恰好 1 条策略，随后重建）；无 DELETE/TRUNCATE/DROP TABLE/DROP COLUMN；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS，可重复执行"
     note: "无代码依赖：approvals / approval_records 仓库内只读，core_workflow_* 写入点已显式绑定 tenant_id。回滚 database/rollback/20261122150000_public_approval_workflow_tenant_isolation.rollback.sql 删索引并把两张审批表还原为「严格 USING、无 WITH CHECK」的迁移前生产形态，保留 tenant_id 列与已回填值"
+
+  # ===== 2026-11-22：integration.mes_erp_sync 成功路径契约修复 =====
+  - version: "20261122160000"
+    file: "database/migrations/20261122160000_mes_erp_sync_mes_order_id_nullable.sql"
+    status: to_apply
+    effect: "把 integration.mes_erp_sync.mes_order_id 改为可空，并新增 CHECK (sync_status <> 'success' OR mes_order_id IS NOT NULL)；修复 ERP→MES「先建同步记录（此时无 MES 单号）→ 成功后回填」与 NOT NULL 冲突导致的 23502。同族核查：crm_erp_sync / crm_scm_sync / erp_wms_sync / mes_qms_sync / hrm_finance_sync 对端 id 本就可空；wms_scm_sync.wms_inventory_id、lims_qms_sync.lims_sample_id 为创建时必填，不属同类缺陷"
+    destructive_scan: "无 UPDATE/DELETE/TRUNCATE/DROP；1 条 ALTER COLUMN DROP NOT NULL + 1 条 ADD CONSTRAINT CHECK（NOT VALID 后 VALIDATE）。迁移前断言 success 且 mes_order_id IS NULL 的行数为 0（内部系统通道绕过 RLS 统计全租户），非 0 即 RAISE EXCEPTION"
+    note: "无新增代码依赖：代码早已按可空回填写入。窗口执行需在开启 ERP→MES 同步流量前完成；与其它 integration 迁移无先后冲突，按版本号顺序执行。回滚 database/rollback/20261122160000_mes_erp_sync_mes_order_id_nullable.rollback.sql 先断言无 NULL 行，存在则明确失败、不自动删数据"

@@ -105,6 +105,22 @@
       "source_tokens": ["[batch17]", "batch17"],
       "sql": "SELECT count(*) FROM public.core_permissions WHERE description LIKE '%batch17%'",
       "expected": 30
+    },
+    {
+      "id": "integration.mes_erp_sync.mes_order_id_nullable",
+      "kind": "data_rows",
+      "source": "20261122160000",
+      "source_tokens": ["mes_order_id", "DROP NOT NULL"],
+      "sql": "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'integration' AND table_name = 'mes_erp_sync' AND column_name = 'mes_order_id' AND is_nullable = 'YES'",
+      "expected": 1
+    },
+    {
+      "id": "integration.mes_erp_sync.ck_success_requires_mes_order",
+      "kind": "data_rows",
+      "source": "20261122160000",
+      "source_tokens": ["ck_mes_erp_sync_success_requires_mes_order", "VALIDATE CONSTRAINT"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'integration.mes_erp_sync'::regclass AND conname = 'ck_mes_erp_sync_success_requires_mes_order' AND convalidated",
+      "expected": 1
     }
   ]
 }

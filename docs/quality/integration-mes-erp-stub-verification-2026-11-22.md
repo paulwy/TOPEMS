@@ -18,6 +18,7 @@
   - `GET /api/erp/production-orders/{id}`：返回一条 ERP 生产订单（`data` 包裹）。
   - `POST /api/mes/production-orders/from-erp`：记录请求体，返回 `{"code":0,"data":{"id":"<mes uuid>","order_no":"..."}}`。
 - 数据库：`TEST_DATABASE_URL` 必填，缺失即 panic，不回退到 `DATABASE_URL` 或硬编码 DSN。
+- 前置 schema：测试库需已应用 `database/migrations/20261122160000_mes_erp_sync_mes_order_id_nullable.sql`（`mes_order_id` 可空 + successful 记录必须有 MES 单号）。测试直接跑真实 schema，不再临时放宽任何约束。
 - 请求事务：测试手工 `pool.begin()` 得到 `RlsTxnCell`，用 `scope_request_tenant` 注入租户上下文，再调用 `sync_erp_to_mes`；服务的 `Db::scope_with` 复用该事务并负责提交。
 - 测试标记 `#[ignore]`，常规 `cargo test` 不会执行。
 
@@ -51,12 +52,12 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
 - **鉴权细节**：ERP/MES 的真实鉴权头、签名、证书、IP 白名单、租户透传方式均未覆盖；桩不校验任何鉴权。
 - **真实 MES 的幂等与错误码**：重复下单、部分成功、业务错误码（`code!=0` 且 `success!=true`）、4xx/5xx 响应体形态未覆盖。
 - **网络异常与重试时长**：超时、连接拒绝、重试退避的真实耗时不覆盖；成功分支不发生重试。
-- **`mes_order_id NOT NULL` 的生产 schema 冲突**：本测试只在本地测试库临时放宽该约束（见下节），生产 schema 未改，冲突仍待决策。
+- **生产窗口未执行**：schema 修复件已就绪并在隔离库双向演练，但生产 DDL 尚未执行；生产上「本测试同样 PASS」需以窗口执行后的现场断言为准。
 - **RLS 之外的授权**：只验证了租户 GUC 下的读写，不覆盖角色权限、审计字段、跨租户访问。
 
-## 已知阻塞：schema 与代码契约冲突（需单独决策）
+## 已修复：schema 与代码契约冲突（迁移 `20261122160000`）
 
-首次原样运行即失败，证据：
+首次原样运行曾失败，证据保留如下：
 
 ```text
 DatabaseQuery("创建同步记录失败: error returned from database:
@@ -67,13 +68,11 @@ violates not-null constraint")
 根因：
 
 - `sync_erp_to_mes` 在 ERP→MES 方向先创建同步记录，此时 MES 订单尚未创建，`mes_order_id` 传 `None`；MES 返回成功后才回填。
-- 但 `integration.mes_erp_sync.mes_order_id` 当前为 `NOT NULL`（本地 `topems_test` 已核实；canonical 迁移 `database/migrations/20261121180000_integration_schema_canonical.sql:96` 同为 `NOT NULL`）。
-- 结果：成功分支在第一条 INSERT 就报 `23502`，永远到不了 MES 调用与状态更新。
+- 但 `integration.mes_erp_sync.mes_order_id` 原为 `NOT NULL`（canonical 迁移 `database/migrations/20261121180000_integration_schema_canonical.sql:96`），成功分支在第一条 INSERT 就报 `23502`。
 
-处理状态：
+修复（按方案 A）：
 
-- 本任务**未修改**生产 schema、未新增迁移、未改代码语义。
-- 为完成成功分支语义验证，测试内只对 `TEST_DATABASE_URL` 指向的本地测试库做**临时** `ALTER COLUMN mes_order_id DROP NOT NULL`，测试结束恢复 `SET NOT NULL`；本次运行后已核对恢复为 `NOT NULL`，测试行已清理。
-- 生产侧修复需二选一并经批准：
-  - A. 新增迁移将 `mes_order_id` 改为可空（贴合「先留痕、成功后回填」语义）；
-  - B. 调整代码为「先调 MES、拿到 id 后再落记录」（改变失败时无 pending 记录的审计语义）。
+- 新增迁移 `database/migrations/20261122160000_mes_erp_sync_mes_order_id_nullable.sql`：`mes_order_id` 改为可空；新增 `CHECK (sync_status <> 'success' OR mes_order_id IS NOT NULL)`，由数据库保证「成功必有 MES 单号」；迁移前断言不存在 `success + NULL` 行。
+- 回滚件 `database/rollback/20261122160000_mes_erp_sync_mes_order_id_nullable.rollback.sql`：恢复 `NOT NULL` 前断言无 NULL 行，存在则明确失败、不自动删数据。
+- 隔离库演练（`topems_drill_mes_erp_20261122`，已 drop）：迁移前 `NOT NULL`；迁移后 `pending + NULL` 允许、`success + NULL` 被 `23514` 拒绝；有 NULL 行时回滚明确失败，清理后回滚成功并恢复原形态。
+- 测试已移除临时放宽逻辑，直接跑在应用该迁移后的真实 schema 上，重跑 PASS。

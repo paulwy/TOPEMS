@@ -273,14 +273,93 @@ psql "$PROD_DSN" -v ON_ERROR_STOP=1 --single-transaction \
 
 回滚删 4 条索引、恢复 `approvals` / `approval_records` 为「严格 USING、无 WITH CHECK」，并自删账本行；保留 `tenant_id` 与已回填值。
 
+## 5A. W11：integration.mes_erp_sync 成功约束（`20261122160000`）
+
+**波次归属**：W11，独立小波。与 W9-A / W9-B / W10 无依赖，可与任一波同窗口执行；版本号最大，`apply-forward` 按版本顺序天然排在三波之后。
+
+**窗口内顺序约束**
+
+- 必须在 `20261121180000_integration_schema_canonical` 之后（本迁移依赖该表已存在）。
+- 必须在**恢复/开启 ERP→MES 同步流量之前**完成：当前代码按「先建记录（`mes_order_id` 可空）→ 成功后回填」写入，若生产列仍为 `NOT NULL`，每次同步都会在首条 INSERT 报 `23502`。
+- 与 W9/W10 可分别回滚，互不影响。
+
+**前置条件与断言**
+
+```sql
+-- 0) 现场记录行数（预期很小或 0；仅统计，不写库）
+SELECT count(*) AS total,
+       count(*) FILTER (WHERE sync_status='success') AS success_rows,
+       count(*) FILTER (WHERE sync_status='success' AND mes_order_id IS NULL) AS violating_rows
+FROM integration.mes_erp_sync;
+
+-- 1) 表与列存在、当前为 NOT NULL、约束尚不存在
+SELECT is_nullable FROM information_schema.columns
+WHERE table_schema='integration' AND table_name='mes_erp_sync' AND column_name='mes_order_id';
+-- 期望：NO
+
+SELECT count(*) FROM pg_constraint
+WHERE conrelid='integration.mes_erp_sync'::regclass
+  AND conname='ck_mes_erp_sync_success_requires_mes_order';
+-- 期望：0
+
+-- 2) 若 violating_rows > 0，停止：先人工核对，不得直接执行迁移
+```
+
+**执行**
+
+```bash
+PROD_CHANGE_TICKET=<现场工单号> \
+PGOPTIONS="-c app.rls_system=on" \
+bash scripts/migration/apply-forward.sh --db topems_prod --prod \
+  --apply-deferred 20261122160000 --ticket <现场工单号>
+```
+
+迁移内已开启系统通道做全租户断言；`PGOPTIONS` 为双保险。
+
+**执行后断言**
+
+```sql
+-- 5A.1 账本
+SELECT version, success FROM public._sqlx_migrations WHERE version=20261122160000;
+-- 期望：1 行，success=t
+
+-- 5A.2 列可空 + 约束已校验
+SELECT c.is_nullable, k.convalidated
+FROM information_schema.columns c
+LEFT JOIN pg_constraint k
+  ON k.conrelid='integration.mes_erp_sync'::regclass
+ AND k.conname='ck_mes_erp_sync_success_requires_mes_order'
+WHERE c.table_schema='integration' AND c.table_name='mes_erp_sync' AND c.column_name='mes_order_id';
+-- 期望：1 行，YES | t
+
+-- 5A.3 不存在违反成功约束的行
+SELECT count(*) FROM integration.mes_erp_sync
+WHERE sync_status='success' AND mes_order_id IS NULL;
+-- 期望：0
+```
+
+**失败回滚动作**
+
+```bash
+# 先确认 NULL 行数量；>0 时回滚会明确失败，需先人工处理
+PGOPTIONS="-c app.rls_system=on" psql "$PROD_DSN" -Atc \
+  "SELECT count(*) FROM integration.mes_erp_sync WHERE mes_order_id IS NULL"
+
+psql "$PROD_DSN" -v ON_ERROR_STOP=1 --single-transaction \
+  -f database/rollback/20261122160000_mes_erp_sync_mes_order_id_nullable.rollback.sql
+```
+
+回滚件先断言无 `mes_order_id IS NULL` 行（有则 `RAISE EXCEPTION` 并给出计数，不静默跳过、不删数据），再恢复 `NOT NULL`、删除成功约束、自删账本 1 行。回滚后 `mes_order_id` 恢复 `NOT NULL`，约束不存在。
+
 ## 6. 整组验收（三波都成功后）
 
 ```bash
 node scripts/ci/check-ledger-ddl-drift.mjs   # 或 bash scripts/ci/check-ledger-ddl-drift.sh
 ```
 
-- 账本：三条 `success=t`，W9-A/W9-B 指纹与 §2.4 逐字一致。
+- 账本：四条 `success=t`（W9-A / W9-B / W10 / W11），W9-A/W9-B 指纹与 §2.4 逐字一致。
 - erp 8 表各 4 条公司维度策略；public 4 表各 1 条严格租户策略 + 1 条租户索引。
+- W11：`integration.mes_erp_sync.mes_order_id` 可空、`ck_mes_erp_sync_success_requires_mes_order` 已校验、`success + NULL` 行数为 0。
 - 数据：演练库目标表均为 0 行，W9-B 回填 0 行；生产按 §4.12 现场记录回填行数（以实际记录为准）。
 - 应用冒烟：不带 `app.company_id` 的请求读 8 张合并表应为 0 行；带本公司头可读本公司；母公司按可见集合可读子公司；兄弟公司互不可见。
 
@@ -289,6 +368,7 @@ node scripts/ci/check-ledger-ddl-drift.mjs   # 或 bash scripts/ci/check-ledger-
 | 波次 | 触发条件 | 命令 | 断言 | 账本 |
 |---|---|---|---|---|
 | W10 | 5.x 任一断言失败 | `20261122150000_...rollback.sql` | 4 表各 1 策略、索引 0、`approvals/approval_records` 无 WITH CHECK | 自删 1 行 |
+| W11 | 5A.x 任一断言失败 | `20261122160000_...rollback.sql` | `mes_order_id` 恢复 NOT NULL、成功约束不存在 | 自删 1 行（有 NULL 行时明确失败） |
 | W9-B | 4.x 任一断言失败 | `20261122090000_...rollback.sql` | `is_default` 列与索引均不存在 | 自删 1 行 |
 | W9-A | 3.x 任一断言失败 | `20261121235940_...rollback.sql` | 8 表各 1 条 `rls_tenant_isolation`、6 列/3 函数已删 | **不自删，手工 DELETE 1 行** |
 
@@ -298,6 +378,7 @@ W9 两波必须 **B → A**；W10 独立，可与 W9 分别回滚。回滚后若
 
 - 演练库：`topems_drill_w9w10_20261121`（由本地全量库模板创建，76MB），演练后已 `DROP` 并确认不存在。
 - 路径：先按回滚件回退到迁移前 → 断言 PASS → 按 W9-A → W9-B → W10 前向 → §4.12/W10 断言 PASS → 再回滚 → 断言迁移前 PASS → 删 W9-A 账本行 → 重放三波 → 断言再次 PASS。
+- W11 单独演练（2026-11-22）：演练库 `topems_drill_mes_erp_20261122`（由 `topems_test` 模板创建，演练后已 `DROP`）。迁移前 `is_nullable=NO`、无约束、`pending + NULL` 插入报 `23502`；迁移后 `YES`、约束 `convalidated=t`、`pending + NULL` 成功、`success + NULL` 被 `23514` 拒绝、`success + uuid` 成功；保留 1 条 NULL 行回滚 → 明确失败（exit=3），清掉 NULL 行后回滚成功并恢复 `NOT NULL`、删除约束。
 - 账本指纹：W9-A `9989aa83…f9c7`、W9-B `19a04c01…33ee`，两者与文档 §2.4 逐字一致；W10 实测 `866f5644…681b5`。
 - 公司可见性（无数据、直接调函数）：无公司上下文 → 全拒绝；本公司 → 可见；兄弟公司 → 不可见；母公司 + 可见集合 → 可见集合内可读，集合外仍拒绝；集合为空 → 仅本公司。
 - 演练观察：`erp.consolidation_scope_companies.company_id` 是迁移前既有列（NOT NULL），不属于 W9-A 的「6 个新增列」；断言与验收时不要把它计入新增。

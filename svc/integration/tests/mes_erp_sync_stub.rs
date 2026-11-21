@@ -7,6 +7,8 @@
 //! - `deny_request_own_txn` / `deny_request_tenant_scope` 开启时不触发守卫。
 //!
 //! ERP 与 MES 都由本机 axum 桩服务模拟，不连接任何外部系统。
+//! 前置：测试库需已应用 `database/migrations/20261122160000_mes_erp_sync_mes_order_id_nullable.sql`
+//! （`mes_order_id` 可空 + successful 记录必须有 MES 单号），测试直接跑真实 schema，不再临时放宽约束。
 //! 运行方式见 `docs/quality/integration-mes-erp-stub-verification-2026-11-22.md`。
 
 #![allow(
@@ -96,50 +98,6 @@ async fn spawn_stub(state: StubState) -> String {
     format!("http://{addr}")
 }
 
-/// 本地测试库契约差异（仅测试用途，生产 schema 未改）：
-/// `integration.mes_erp_sync.mes_order_id` 当前为 NOT NULL，而 ERP→MES 是
-/// 「先建同步记录（MES 订单尚未创建）→ 成功后回填」，首条 INSERT 会写入 NULL。
-/// 为验证成功分支语义，这里只对 TEST_DATABASE_URL 指向的本地库临时 DROP NOT NULL，
-/// 测试结束恢复。该 schema/代码冲突需另行决策（迁移或改代码），见验证文档。
-async fn mes_order_id_is_not_null(pool: &PgPool) -> bool {
-    let is_nullable: Option<String> = sqlx::query_scalar(
-        "SELECT is_nullable FROM information_schema.columns
-         WHERE table_schema = 'integration' AND table_name = 'mes_erp_sync'
-           AND column_name = 'mes_order_id'",
-    )
-    .fetch_optional(pool)
-    .await
-    .expect("query mes_order_id nullability");
-    is_nullable.as_deref() == Some("NO")
-}
-
-async fn relax_mes_order_id(pool: &PgPool) -> bool {
-    let was_not_null = mes_order_id_is_not_null(pool).await;
-    if was_not_null {
-        sqlx::query(
-            "ALTER TABLE integration.mes_erp_sync ALTER COLUMN mes_order_id DROP NOT NULL",
-        )
-        .execute(pool)
-        .await
-        .expect("relax mes_order_id NOT NULL (local test db only)");
-    }
-    was_not_null
-}
-
-async fn restore_mes_order_id(pool: &PgPool, was_not_null: bool) {
-    if !was_not_null {
-        return;
-    }
-    if let Err(e) = sqlx::query(
-        "ALTER TABLE integration.mes_erp_sync ALTER COLUMN mes_order_id SET NOT NULL",
-    )
-    .execute(pool)
-    .await
-    {
-        eprintln!("[warn] 恢复 mes_order_id NOT NULL 失败（本地测试库可能残留 NULL 行）: {e}");
-    }
-}
-
 /// 系统通道清理本租户的测试行（FORCE RLS 对 owner 也生效，必须显式开系统通道）。
 async fn cleanup_tenant_rows(pool: &PgPool, tenant: Uuid) {
     let mut tx = pool.begin().await.expect("cleanup begin");
@@ -172,8 +130,6 @@ async fn erp_to_mes_success_branch_writes_state_and_log() {
         .connect(&url)
         .await
         .expect("connect test database");
-
-    let was_not_null = relax_mes_order_id(&pool).await;
 
     let tenant = Uuid::new_v4();
     let erp_id = Uuid::new_v4();
@@ -255,7 +211,6 @@ async fn erp_to_mes_success_branch_writes_state_and_log() {
 
     read_tx.commit().await.expect("read commit");
     cleanup_tenant_rows(&pool, tenant).await;
-    restore_mes_order_id(&pool, was_not_null).await;
 
     let result = result.expect("ERP→MES 成功分支不应返回错误");
     assert!(result.success, "result.success 应为 true");
