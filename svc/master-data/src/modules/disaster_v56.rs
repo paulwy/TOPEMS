@@ -2022,7 +2022,7 @@ pub async fn start_replication(
     };
     let tenant = tenant_of(&claims);
     let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
+        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1 AND status IN ('stopped','running','paused','lagging')"
     )))
     .bind(&req.replication_id)
     .fetch_optional(&mut db_scope)
@@ -2090,7 +2090,7 @@ pub async fn stop_replication(
         }
     };
     let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
+        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1 AND status IN ('stopped','running','paused','lagging')"
     )))
     .bind(&req.replication_id)
     .fetch_optional(&mut db_scope)
@@ -2152,7 +2152,7 @@ pub async fn get_replication_status(
         }
     };
     let configs: Vec<ReplicationConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs"
+        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE status IN ('stopped','running','paused','lagging')"
     )))
     .fetch_all(&mut db_scope)
     .await
