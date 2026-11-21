@@ -305,7 +305,7 @@
     }
   },
   "db_new": {
-    "total": 163,
+    "total": 162,
     "files": {
       "lib/shared-db/src/audit.rs": {
         "total": 2
@@ -517,14 +517,11 @@
       "svc/srm/src/event_handlers/mod.rs": {
         "total": 4
       },
-      "svc/srm/src/modules/bidding.rs": {
+      "svc/srm/src/main.rs": {
         "total": 1
       },
       "svc/srm/src/modules/supplier.rs": {
         "total": 3
-      },
-      "svc/srm/src/modules/supplier_contract.rs": {
-        "total": 1
       },
       "svc/ticket/src/main.rs": {
         "total": 1

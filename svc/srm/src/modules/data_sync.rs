@@ -11,6 +11,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -38,16 +39,20 @@ pub struct SyncLogsRequest {
 }
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
+    /// 系统通道专用连接池：仅用于同步日志落库，不得用于请求租户查询。
+    pub system_pool: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 pub async fn create_routes(
-    db: PgPool,
+    db: Db,
+    system_pool: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
 ) -> Result<Router> {
     let state = Arc::new(AppState {
         db,
+        system_pool,
         event_publisher,
     });
 
@@ -214,7 +219,7 @@ pub async fn sync_supplier_from_scm(
                     }
                 }
                 let _ = record_sync_log(
-                    &state.db,
+                    &state.system_pool,
                     tenant_id,
                     "supplier_sync",
                     "scm",
@@ -285,7 +290,7 @@ pub async fn sync_supplier_from_scm(
                     }
                 }
                 let _ = record_sync_log(
-                    &state.db,
+                    &state.system_pool,
                     tenant_id,
                     "supplier_sync",
                     "scm",
@@ -608,7 +613,7 @@ pub async fn sync_supplier_to_scm(
                     id
                 );
                 let _ = record_sync_log(
-                    &state.db,
+                    &state.system_pool,
                     tenant_id,
                     "supplier_sync",
                     "srm",
@@ -647,7 +652,7 @@ pub async fn sync_supplier_to_scm(
         id
     );
     let _ = record_sync_log(
-        &state.db,
+        &state.system_pool,
         tenant_id,
         "supplier_sync",
         "srm",

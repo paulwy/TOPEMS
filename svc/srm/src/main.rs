@@ -65,6 +65,13 @@ async fn main() -> Result<(), TopemsError> {
 
     let ctx = bootstrap_service_with_search_path(&config, "srm, public, shared").await?;
 
+    // 请求链路统一走受守卫的 Db：各模块 AppState 共享同一实例，handler 复用请求事务。
+    let request_db = topems_shared_db::scope::Db::new(ctx.db.clone(), "srm, public, shared")
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
+    // 系统通道专用原始池：审计落库、同步日志与后台 MDM 同步任务使用。
+    let system_pool = ctx.db.clone();
+
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let l2_config = L2CacheConfig {
         instance_prefix: "srm".to_string(),
@@ -173,27 +180,35 @@ async fn main() -> Result<(), TopemsError> {
     let admin_routes = axum::Router::new()
         .merge(
             create_supplier_routes(
-                ctx.db.clone(),
+                request_db.clone(),
+                system_pool.clone(),
                 ctx.event_publisher.clone(),
                 workflow_client,
                 supplier_cache,
             )
             .await?,
         )
-        .merge(create_category_routes(ctx.db.clone()).await?)
-        .merge(create_evaluation_routes(ctx.db.clone()).await?)
-        .merge(create_contract_routes(ctx.db.clone()).await?)
-        .merge(create_product_routes(ctx.db.clone()).await?)
-        .merge(create_purchase_order_routes(ctx.db.clone()).await?)
-        .merge(create_quotation_routes(ctx.db.clone()).await?)
-        .merge(create_bid_price_routes(ctx.db.clone()).await?)
-        .merge(create_bidding_routes(ctx.db.clone()).await?)
-        .merge(create_tender_routes(ctx.db.clone()).await?)
-        .merge(create_performance_routes(ctx.db.clone()).await?)
-        .merge(create_data_sync_routes(ctx.db.clone(), ctx.event_publisher.clone()).await?)
-        .merge(create_inquiry_routes(ctx.db.clone()).await?)
-        .merge(create_scoring_dimension_routes(ctx.db.clone()).await?)
-        .merge(create_statistics_routes(ctx.db.clone()))
+        .merge(create_category_routes(request_db.clone()).await?)
+        .merge(create_evaluation_routes(request_db.clone()).await?)
+        .merge(create_contract_routes(request_db.clone()).await?)
+        .merge(create_product_routes(request_db.clone()).await?)
+        .merge(create_purchase_order_routes(request_db.clone()).await?)
+        .merge(create_quotation_routes(request_db.clone()).await?)
+        .merge(create_bid_price_routes(request_db.clone()).await?)
+        .merge(create_bidding_routes(request_db.clone()).await?)
+        .merge(create_tender_routes(request_db.clone()).await?)
+        .merge(create_performance_routes(request_db.clone()).await?)
+        .merge(
+            create_data_sync_routes(
+                request_db.clone(),
+                system_pool.clone(),
+                ctx.event_publisher.clone(),
+            )
+            .await?,
+        )
+        .merge(create_inquiry_routes(request_db.clone()).await?)
+        .merge(create_scoring_dimension_routes(request_db.clone()).await?)
+        .merge(create_statistics_routes(request_db.clone()))
         // 预应用 tenant_middleware（build_application 会叠加 auth + rls + rate_limit）
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
@@ -208,7 +223,7 @@ async fn main() -> Result<(), TopemsError> {
     // 仅预应用 tenant_middleware；端点内部 check_permission(SupplierRead) 做细粒度校验，
     // 并按 path supplier_id + tenant_id 限定读自己的数据（管理写操作仍在 admin_routes）。
     let portal_routes = axum::Router::new()
-        .merge(create_supplier_portal_routes(ctx.db.clone()).await?)
+        .merge(create_supplier_portal_routes(request_db.clone()).await?)
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),

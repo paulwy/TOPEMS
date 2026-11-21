@@ -10,11 +10,12 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use std::sync::Arc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::Result;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
@@ -56,10 +57,10 @@ pub struct UpdateInquiryRequest {
 }
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: Db) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()

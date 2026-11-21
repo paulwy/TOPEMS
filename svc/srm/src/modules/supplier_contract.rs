@@ -6,11 +6,11 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::Deserialize;
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::{
@@ -34,10 +34,10 @@ pub struct ContractQueryParams {
 }
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: Db) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -670,7 +670,7 @@ pub async fn create_contract_terms(
         }
     }
 
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "srm, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(scope) => scope,
         Err(e) => {

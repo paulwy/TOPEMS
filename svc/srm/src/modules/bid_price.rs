@@ -6,12 +6,12 @@ use axum::{
 use bigdecimal::{BigDecimal, FromPrimitive, ToPrimitive};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 use sqlx::FromRow;
 use std::sync::Arc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -19,7 +19,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
@@ -53,7 +53,7 @@ pub struct Bid {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: Db) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()

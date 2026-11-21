@@ -68,20 +68,24 @@ impl ListQueryParams {
 }
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
+    /// 系统通道专用连接池：仅用于审计落库与后台 MDM 同步任务，不得用于请求租户查询。
+    pub system_pool: PgPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 }
 
 pub async fn create_routes(
-    db: PgPool,
+    db: Db,
+    system_pool: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
     workflow_client: TypedServiceClient<WorkflowApi>,
     supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<Router> {
     let state = Arc::new(AppState {
         db,
+        system_pool,
         event_publisher,
         workflow_client,
         supplier_cache,
@@ -612,7 +616,7 @@ pub async fn create_supplier(
             tracing::debug!("🗑️ 供应商缓存已清空（创建供应商）");
 
             // srm → mdm 反向同步（后台异步，失败落死信）
-            spawn_srm_supplier_to_mdm(state.db.clone(), id, tenant_id);
+            spawn_srm_supplier_to_mdm(state.system_pool.clone(), id, tenant_id);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -632,7 +636,7 @@ pub async fn create_supplier(
             }
 
             record_audit_log(
-                &state.db,
+                &state.system_pool,
                 "suppliers",
                 id,
                 "create",
@@ -918,7 +922,7 @@ pub async fn update_supplier(
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
 
             // srm → mdm 反向同步（后台异步，失败落死信）
-            spawn_srm_supplier_to_mdm(state.db.clone(), id, tenant_id);
+            spawn_srm_supplier_to_mdm(state.system_pool.clone(), id, tenant_id);
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -939,7 +943,7 @@ pub async fn update_supplier(
 
             let new_data = serde_json::to_value(&supplier).ok();
             record_audit_log(
-                &state.db,
+                &state.system_pool,
                 "suppliers",
                 id,
                 "update",
@@ -1084,7 +1088,7 @@ pub async fn delete_supplier(
 
             // srm 软删 → mdm 软删（后台异步；mdm 自建行不被软删）
             if let Some(sno) = existing_supplier_no {
-                spawn_srm_supplier_delete_to_mdm(state.db.clone(), sno, tenant_id);
+                spawn_srm_supplier_delete_to_mdm(state.system_pool.clone(), sno, tenant_id);
             }
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -1105,7 +1109,7 @@ pub async fn delete_supplier(
             }
 
             record_audit_log(
-                &state.db,
+                &state.system_pool,
                 "suppliers",
                 id,
                 "delete",
@@ -1570,7 +1574,7 @@ pub async fn start_supplier_approval(
     }
 
     record_audit_log(
-        &state.db,
+        &state.system_pool,
         "suppliers",
         id,
         "start_approval",
@@ -1703,7 +1707,7 @@ pub async fn approve_supplier(
     }
 
     record_audit_log(
-        &state.db,
+        &state.system_pool,
         "suppliers",
         id,
         "approve",
@@ -1834,7 +1838,7 @@ pub async fn reject_supplier(
     }
 
     record_audit_log(
-        &state.db,
+        &state.system_pool,
         "suppliers",
         id,
         "reject",

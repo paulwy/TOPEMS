@@ -1,10 +1,10 @@
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
-    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
+    check_module_permission_claims, ModuleCode, ModulePermission as SharedModulePermission,
     PermissionAction,
 };
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SrmPermission {
@@ -82,17 +82,18 @@ pub fn require_write_tenant<T>(claims: &Claims) -> Result<uuid::Uuid, ApiRespons
 }
 
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     permission: &SrmPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
+    check_module_permission_claims(claims, &shared_perm).await
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sqlx::PgPool;
     use topems_shared_auth::permission::{ModuleCode, PermissionAction};
 
     #[test]
@@ -261,6 +262,7 @@ mod tests {
     async fn test_check_permission_unreachable_db_returns_err() {
         let pool = PgPool::connect_lazy("postgres://unreachable:5432/nodb")
             .expect("connect_lazy should succeed");
+        let db = Db::new(pool, "srm, public, shared");
         let claims = Claims {
             sub: "00000000-0000-0000-0000-000000000001".to_string(),
             username: "test".to_string(),
@@ -279,7 +281,7 @@ mod tests {
             must_change_password: false,
         };
         let result: Result<(), axum::Json<ApiResponse<()>>> =
-            check_permission(&pool, &claims, &SrmPermission::SupplierRead).await;
+            check_permission(&db, &claims, &SrmPermission::SupplierRead).await;
         assert!(result.is_err(), "unreachable DB should return Err");
     }
 }

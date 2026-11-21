@@ -3,11 +3,11 @@ use axum::{
     routing::get,
     Router,
 };
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::purchase_order::PurchaseOrder;
@@ -16,10 +16,10 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: Db) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()

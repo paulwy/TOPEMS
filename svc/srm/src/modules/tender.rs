@@ -6,12 +6,12 @@ use axum::{
 use bigdecimal::{BigDecimal, FromPrimitive};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 use sqlx::FromRow;
 use std::sync::Arc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -21,7 +21,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
@@ -77,7 +77,7 @@ pub struct TenderAward {
     pub updated_at: DateTime<Utc>,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router> {
+pub async fn create_routes(db: Db) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
@@ -807,91 +807,89 @@ pub async fn award_tender(
         }
     };
 
-    let transaction = state.db.begin().await;
-
-    match transaction {
-        Ok(mut tx) => {
-            if let Err(e) = sqlx::query(
-                only_own_schema_query!("srm", "UPDATE srm.tenders SET status = 'awarded', updated_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"),
-            )
-            .bind(tender_uuid)
-            .bind(tenant_id)
-            .execute(&mut *tx)
-            .await
-            {
-                tracing::error!("更新招标状态失败: {}", e);
-                tx.rollback().await.unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
-            }
-
-            if let Err(e) = sqlx::query(
-                only_own_schema_query!("srm", "UPDATE srm.tender_bids SET status = CASE WHEN id = $1 THEN 'won' ELSE 'lost' END, updated_at = NOW() WHERE tender_id = $2 AND tenant_id = $3", "srm"),
-            )
-            .bind(winning_bid_uuid)
-            .bind(tender_uuid)
-            .bind(tenant_id)
-            .execute(&mut *tx)
-            .await
-            {
-                tracing::error!("更新投标状态失败: {}", e);
-                tx.rollback().await.unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
-            }
-
-            let award_no = format!("AW-{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
-
-            let award_result = sqlx::query_as::<_, TenderAward>(
-                only_own_schema_query!("srm", r#"
-                INSERT INTO srm.tender_awards (tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
-                RETURNING id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
-                "#, "srm"),
-            )
-            .bind(tenant_id)
-            .bind(&award_no)
-            .bind(tender_uuid)
-            .bind(winning_bid_uuid)
-            .bind(bid.supplier_id)
-            .bind(bid.supplier_name.clone())
-            .bind(bid.bid_price.clone())
-            .bind(bid.currency.clone())
-            .bind(claims.user_id().ok())
-            .fetch_one(&mut *tx)
-            .await;
-
-            let award = match award_result {
-                Ok(award) => award,
-                Err(e) => {
-                    tracing::error!("创建中标记录失败: {}", e);
-                    tx.rollback()
-                        .await
-                        .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                    return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
-                }
-            };
-
-            if tx.commit().await.is_err() {
-                return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
-            }
-
-            let data = serde_json::json!({
-                "award_no": award.award_no,
-                "tender_id": tender_id,
-                "winning_bid_id": winning_bid_id,
-                "supplier_id": award.supplier_id.map(|u| u.to_string()),
-                "supplier_name": award.supplier_name,
-                "award_price": award.award_price.map(|p| p.to_string()),
-                "currency": award.currency,
-                "status": award.status
-            });
-
-            ApiResponse::success(data, "中标处理成功")
-        }
+    // 复用请求事务，三条写语句原子提交；任一步失败直接返回，中间件回滚整个请求事务。
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("开启事务失败: {}", e);
-            ApiResponse::<serde_json::Value>::server_error("中标处理失败")
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
+        }
+    };
+
+    if let Err(e) = sqlx::query(
+        only_own_schema_query!("srm", "UPDATE srm.tenders SET status = 'awarded', updated_at = NOW() WHERE id = $1 AND tenant_id = $2", "srm"),
+    )
+    .bind(tender_uuid)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("更新招标状态失败: {}", e);
+        return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
+    }
+
+    if let Err(e) = sqlx::query(
+        only_own_schema_query!("srm", "UPDATE srm.tender_bids SET status = CASE WHEN id = $1 THEN 'won' ELSE 'lost' END, updated_at = NOW() WHERE tender_id = $2 AND tenant_id = $3", "srm"),
+    )
+    .bind(winning_bid_uuid)
+    .bind(tender_uuid)
+    .bind(tenant_id)
+    .execute(&mut scope)
+    .await
+    {
+        tracing::error!("更新投标状态失败: {}", e);
+        return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
+    }
+
+    let award_no = format!("AW-{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
+
+    let award_result = sqlx::query_as::<_, TenderAward>(
+        only_own_schema_query!("srm", r#"
+        INSERT INTO srm.tender_awards (tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
+        RETURNING id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
+        "#, "srm"),
+    )
+    .bind(tenant_id)
+    .bind(&award_no)
+    .bind(tender_uuid)
+    .bind(winning_bid_uuid)
+    .bind(bid.supplier_id)
+    .bind(bid.supplier_name.clone())
+    .bind(bid.bid_price.clone())
+    .bind(bid.currency.clone())
+    .bind(claims.user_id().ok())
+    .fetch_one(&mut scope)
+    .await;
+
+    let award = match award_result {
+        Ok(award) => award,
+        Err(e) => {
+            tracing::error!("创建中标记录失败: {}", e);
+            return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
+        }
+    };
+
+    drop(scope);
+    if let Some(t) = guard.take() {
+        if t.commit().await.is_err() {
+            return ApiResponse::<serde_json::Value>::server_error("中标处理失败");
         }
     }
+
+    let data = serde_json::json!({
+        "award_no": award.award_no,
+        "tender_id": tender_id,
+        "winning_bid_id": winning_bid_id,
+        "supplier_id": award.supplier_id.map(|u| u.to_string()),
+        "supplier_name": award.supplier_name,
+        "award_price": award.award_price.map(|p| p.to_string()),
+        "currency": award.currency,
+        "status": award.status
+    });
+
+    ApiResponse::success(data, "中标处理成功")
 }
 
 #[utoipa::path(

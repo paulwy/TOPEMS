@@ -1,9 +1,9 @@
 use axum::{extract::State, routing::get, Extension, Router};
-use sqlx::postgres::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 
 use crate::models::Supplier;
 use topems_shared_auth::auth::Claims;
@@ -156,10 +156,10 @@ pub fn summary_stats(values: &[Option<f64>]) -> (usize, usize, f64, f64, f64) {
 }
 
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Db,
 }
 
-pub fn create_routes(db: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     let state = Arc::new(AppState { db });
 
     Router::new()
