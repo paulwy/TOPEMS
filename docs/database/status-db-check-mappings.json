@@ -527,6 +527,13 @@
       "table": "crm.customers",
       "column": "status",
       "candidate": "existing:ck_customers_status_standard"
+    },
+    {
+      "file": "svc/wms/src/modules/sync_status.rs",
+      "enum": "SyncRecordStatus",
+      "table": "wms.sync_records",
+      "column": "status",
+      "candidate": "docs/database/wms-sync-record-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

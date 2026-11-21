@@ -820,13 +820,16 @@ interface CreateTransferOrderItemRequest {
   to_location_id?: string;
 }
 
+/** 与后端 `svc/wms/src/modules/sync_status.rs` 的 SyncRecordStatus 对齐；completed 仅历史数据 */
+export type SyncRecordStatus = 'pending' | 'running' | 'success' | 'failed' | 'completed';
+
 export interface SyncRecord {
   id: string;
   sync_type: string;
   sync_direction: string;
   source_system: string;
   target_system: string;
-  status: string;
+  status: SyncRecordStatus;
   total_count: number;
   success_count: number;
   failed_count: number;
@@ -867,7 +870,7 @@ export interface SyncStatistics {
 export interface SyncPaginationParams extends PaginationParams {
   sync_type?: string;
   sync_direction?: string;
-  status?: string;
+  status?: SyncRecordStatus;
   source_system?: string;
   target_system?: string;
 }

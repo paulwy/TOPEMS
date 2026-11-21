@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 148,
+    "rust_enums": 149,
     "rust_enum_values": 156,
     "rust_values_not_in_db_check": 117,
     "frontend_status_keys": 171,
@@ -2651,6 +2651,25 @@
         "active",
         "confirmed",
         "draft"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/sync_status.rs",
+      "name": "SyncRecordStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Success"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "success"
       ]
     }
   ],

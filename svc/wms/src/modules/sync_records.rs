@@ -16,6 +16,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use crate::modules::sync_status::SyncRecordStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -169,6 +170,13 @@ pub async fn list_sync_records(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match SyncRecordStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的同步状态过滤值"),
+        },
+        None => None,
+    };
 
     let result = sqlx::query_as::<_, SyncRecord>(only_own_schema_query!(
         "wms",
@@ -189,7 +197,7 @@ pub async fn list_sync_records(
     .bind(&params.source_system)
     .bind(&params.target_system)
     .bind(&params.sync_type)
-    .bind(&params.status)
+    .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -212,7 +220,7 @@ pub async fn list_sync_records(
             .bind(&params.source_system)
             .bind(&params.target_system)
             .bind(&params.sync_type)
-            .bind(&params.status)
+            .bind(&status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await
@@ -305,7 +313,7 @@ pub async fn create_sync_record(
         INSERT INTO wms.sync_records
             (sync_no, source_system, target_system, sync_type, sync_direction, status,
              started_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'running', $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, sync_no, source_system, target_system, sync_type, sync_direction,
                   status, total_count, success_count, failed_count, skipped_count,
                   started_at, completed_at, duration_seconds, error_message, created_at
@@ -316,6 +324,7 @@ pub async fn create_sync_record(
     .bind(req.target_system.unwrap_or_else(|| "scm".to_string()))
     .bind(&req.sync_type)
     .bind(req.sync_direction.unwrap_or_else(|| "push".to_string()))
+    .bind(SyncRecordStatus::Running.as_db_str())
     .bind(started)
     .bind(tenant_id)
     .fetch_one(&mut **txn)
@@ -328,7 +337,7 @@ pub async fn create_sync_record(
                 "wms",
                 r#"
                 UPDATE wms.sync_records
-                SET status = 'success', total_count = 0, success_count = 0,
+                SET status = $3, total_count = 0, success_count = 0,
                     failed_count = 0, skipped_count = 0, completed_at = NOW(),
                     duration_seconds = 0, updated_at = NOW()
                 WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
@@ -336,6 +345,7 @@ pub async fn create_sync_record(
             ))
             .bind(rid)
             .bind(tenant_id)
+            .bind(SyncRecordStatus::Success.as_db_str())
             .execute(&mut **txn)
             .await;
             match status_updated {
@@ -461,7 +471,7 @@ pub async fn retry_sync_record(
         "wms",
         r#"
         UPDATE wms.sync_records
-        SET status = 'success', started_at = $2, completed_at = NOW(),
+        SET status = $4, started_at = $2, completed_at = NOW(),
             duration_seconds = 0, error_message = NULL, updated_at = NOW()
         WHERE id = $1
           AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
@@ -471,6 +481,7 @@ pub async fn retry_sync_record(
     .bind(id)
     .bind(now)
     .bind(tenant_bind)
+    .bind(SyncRecordStatus::Success.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -533,7 +544,7 @@ pub async fn retry_failed_items(
             "wms",
             r#"
             UPDATE wms.sync_record_details
-            SET status = 'success', error_message = NULL
+            SET status = $4, error_message = NULL
             WHERE sync_record_id = $1 AND id = ANY($2::uuid[])
               AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
             "#
@@ -541,6 +552,7 @@ pub async fn retry_failed_items(
         .bind(id)
         .bind(&req.item_ids)
         .bind(tenant_bind)
+        .bind(SyncRecordStatus::Success.as_db_str())
         .execute(&mut **txn)
         .await;
 
@@ -590,25 +602,28 @@ pub async fn get_sync_statistics(
 
         let (successful_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE status = 'success' AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE status = ANY($2::text[]) AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
+        .bind(SyncRecordStatus::success_values().to_vec())
         .fetch_one(&mut **txn)
         .await?;
 
         let (failed_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE status = 'failed' AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE status = ANY($2::text[]) AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
+        .bind(SyncRecordStatus::failed_values().to_vec())
         .fetch_one(&mut **txn)
         .await?;
 
         let (in_progress_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE status IN ('running','pending') AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE status = ANY($2::text[]) AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
+        .bind(SyncRecordStatus::active_values().to_vec())
         .fetch_one(&mut **txn)
         .await?;
 
@@ -685,7 +700,7 @@ async fn trigger_sync(
         INSERT INTO wms.sync_records
             (sync_no, source_system, target_system, sync_type, sync_direction, status,
              started_at, completed_at, total_count, success_count, failed_count, tenant_id)
-        VALUES ($1, 'wms', 'scm', $2, 'push', 'success', $3, NOW(), 0, 0, 0, $4)
+        VALUES ($1, 'wms', 'scm', $2, 'push', $5, $3, NOW(), 0, 0, 0, $4)
         RETURNING id
         "#
     ))
@@ -693,6 +708,7 @@ async fn trigger_sync(
     .bind(&sync_type)
     .bind(now)
     .bind(tenant_id)
+    .bind(SyncRecordStatus::Success.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
