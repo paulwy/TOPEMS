@@ -3,6 +3,8 @@ use serde_json::{json, Value};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use crate::modules::collection_status::{normalize_collection_status, CollectionStatus};
+
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
 
@@ -26,14 +28,14 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
+            "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, COALESCE(status, 'pending') AS status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
                 .to_string();
         let mut count_sql =
             "SELECT COUNT(*) FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)".to_string();
 
         let mut cond = Vec::new();
         if status.is_some() {
-            cond.push("status = $2".to_string());
+            cond.push("COALESCE(status, 'pending') = $2".to_string());
         }
         if customer_id.is_some() {
             let idx = if status.is_some() { 3 } else { 2 };
@@ -117,7 +119,7 @@ impl FinanceService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let row =
-            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query(only_own_schema_query!("finance", "SELECT id, tenant_id, collection_no, customer_id, customer_name, invoice_no, amount, currency, collected_amount, payment_method, COALESCE(status, 'pending') AS status, collection_date, reference_no, remark, created_by, created_at, updated_at FROM finance.erp_collection_records WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(collection_id)
                 .fetch_optional(&mut scope)
@@ -193,7 +195,23 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let customer_name = req.get("customer_name").and_then(|v| v.as_str());
         let amount = decimal_from_value(req.get("amount"));
-        let status = req.get("status").and_then(|v| v.as_str());
+        let status = match req
+            .get("status")
+            .and_then(|v| v.as_str())
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
+            Some(raw) => match normalize_collection_status(Some(raw)) {
+                Some(CollectionStatus::Pending) => Some(CollectionStatus::Pending.as_str()),
+                Some(CollectionStatus::Confirmed) => Some(CollectionStatus::Confirmed.as_str()),
+                _ => {
+                    return Err(TopemsError::ValidationFailed(
+                        "status 仅支持 pending/confirmed；核销请走 write-off 接口".to_string(),
+                    ))
+                }
+            },
+            None => None,
+        };
 
         let mut scope = self.write_scope(txn).await?;
         let row = sqlx::query(only_own_schema_query!(
@@ -270,12 +288,16 @@ impl FinanceService {
             "UPDATE finance.erp_collection_records
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
+               AND COALESCE(status, 'pending') IN ('pending', 'confirmed')
              RETURNING id, collection_no, COALESCE(status, 'pending') AS status"
         ))
         .bind(tenant_id)
         .bind(collection_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("收款记录不存在或当前状态不可核销".to_string())
+        })?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let status: String = sqlx::Row::get(&row, "status");

@@ -3,6 +3,7 @@
 pub mod accounting_subjects;
 pub mod audit_v52;
 pub mod bootstrap;
+pub mod collection_status;
 pub mod compliance_v51;
 pub mod cqrs_routes;
 pub mod currencies;

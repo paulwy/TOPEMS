@@ -1162,13 +1162,17 @@ pub async fn confirm_collection(
     if status == "confirmed" {
         return ApiResponse::<CollectionOut>::conflict("回款记录已确认，请勿重复确认");
     }
+    if status == "written_off" {
+        return ApiResponse::<CollectionOut>::conflict("回款记录已核销，不能再次确认");
+    }
 
-    // 原子谓词：AND status != 'confirmed' AND deleted_at IS NULL。
+    // 原子谓词：AND COALESCE(status,'pending') = 'pending' AND deleted_at IS NULL。
+    // 历史 NULL 行按 pending 处理，否则 NULL != 'confirmed' 永远为 NULL，无法确认。
     // 并发下另一事务已确认时 rows_affected=0，显式拒绝（409），不再静默成功。
     let affected = match sqlx::query(
         "UPDATE finance.erp_collection_records
          SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW()
-         WHERE id = $1 AND tenant_id = $2 AND status != 'confirmed' AND deleted_at IS NULL",
+         WHERE id = $1 AND tenant_id = $2 AND COALESCE(status, 'pending') = 'pending' AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
@@ -1327,7 +1331,7 @@ pub async fn batch_confirm_collections(
         let affected = match sqlx::query(
             "UPDATE finance.erp_collection_records
              SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW()
-             WHERE id = $1 AND tenant_id = $2 AND status != 'confirmed' AND deleted_at IS NULL",
+             WHERE id = $1 AND tenant_id = $2 AND COALESCE(status, 'pending') = 'pending' AND deleted_at IS NULL",
         )
         .bind(rid)
         .bind(tenant_id)

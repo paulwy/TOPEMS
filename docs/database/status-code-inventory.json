@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 130,
+    "rust_enums": 131,
     "rust_enum_values": 145,
     "rust_values_not_in_db_check": 107,
     "frontend_status_keys": 61,
@@ -843,6 +843,21 @@
         "ignored",
         "open",
         "resolved"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/collection_status.rs",
+      "name": "CollectionStatus",
+      "values": [
+        "Confirmed",
+        "Pending",
+        "WrittenOff"
+      ],
+      "normalized": [
+        "confirmed",
+        "pending",
+        "written_off"
       ]
     },
     {
