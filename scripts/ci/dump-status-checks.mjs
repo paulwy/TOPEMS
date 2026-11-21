@@ -129,6 +129,7 @@ function buildCatalog(url) {
         and a.attname ~* '(^|_)(status|state)$'
         and a.attnum > 0 and not a.attisdropped
         and ty.typtype <> 'e'
+        and ty.typname not in ('json', 'jsonb')
         and n.nspname not in ('pg_catalog', 'information_schema')
         and not exists (
           select 1 from pg_constraint con

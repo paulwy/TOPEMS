@@ -2,7 +2,7 @@
 
 ## 1. 结论
 
-B2 把代码侧手写状态源盘成了可复现清单：Rust 125 个 `*Status` 枚举、142 个归一化
+B2 把代码侧手写状态源盘成了可复现清单：Rust 124 个 `*Status` 枚举、142 个归一化
 值；前端 `STATUS_COLOR_MAP` 61 个键。对照 B1 的 DB 状态值并集（CHECK + 5 个
 ENUM 类型，共 47 个值）：
 
@@ -30,7 +30,7 @@ ENUM 类型，共 47 个值）：
 
 Rust 枚举值数量前几位：
 
-`erp 11 个枚举 / 47 值`、`finance 23 / 46`、`portal 32 / 45`、
+`erp 11 个枚举 / 47 值`、`finance 22 / 46`、`portal 32 / 45`、
 `master-data 16 / 39`、`lib/shared-event 5 / 17`、`ai 6 / 17`。
 
 WMS 没有任何 `*Status` 枚举，只有 41 个无 CHECK 的 `status` / `state` 列，状态值全部
@@ -43,7 +43,7 @@ WMS 没有任何 `*Status` 枚举，只有 41 个无 CHECK 的 `status` / `state
 0. 先处理 5 个 PostgreSQL ENUM 状态列（`core_finance_vouchers`、`core_finance_periods`、
    `core_finance_reconciliation_items`、`core_finance_reconciliation_sessions`、
    `core_finance_approval_workflows`）；这 5 列已有 DB 单一源，是成本最低的试点；
-1. 再把 23 个 finance 枚举与剩余 28 个无约束状态列建立显式映射；
+1. 再把 22 个 finance 枚举与剩余 27 个无约束状态列建立显式映射；
 2. 对已确认的业务状态补 DB CHECK（或确认该列不需要 CHECK）；
 3. 只对映射完成的枚举生成 OpenAPI `enum` 与前端常量；
 4. 其余模块按同一模板推进，不做一次性机械合并。

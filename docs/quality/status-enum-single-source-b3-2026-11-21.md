@@ -56,6 +56,6 @@ i18n 统一补 18 个 `finance.status.*` 键（zh/en），详情页原有 4 个
 
 ## 5. 剩余
 
-finance 的 5 个 PostgreSQL ENUM 状态列已全部生成。还剩 28 个无约束状态列与
+finance 的 5 个 PostgreSQL ENUM 状态列已全部生成。还剩 27 个无约束状态列与
 23 个 Rust `*Status` 枚举需要逐列确认真实取值后再纳入，不能把代码枚举直接当
 DB 约束。其它模块复用本结构，只替换 DB 类型与目标文件。

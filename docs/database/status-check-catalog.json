@@ -3955,15 +3955,6 @@
     },
     {
       "schema": "finance",
-      "table": "cqrs_snapshots",
-      "column": "state",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": true,
-      "default_expr": null
-    },
-    {
-      "schema": "finance",
       "table": "difference_adjustments",
       "column": "status",
       "type": "character varying(20)",
@@ -4519,24 +4510,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'trial'::character varying"
-    },
-    {
-      "schema": "iam",
-      "table": "lims_dashboard_snapshots",
-      "column": "instrument_status",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": false,
-      "default_expr": "'[]'::jsonb"
-    },
-    {
-      "schema": "iam",
-      "table": "lims_dashboard_snapshots",
-      "column": "task_status",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": false,
-      "default_expr": "'[]'::jsonb"
     },
     {
       "schema": "iam",
@@ -5203,24 +5176,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "lims_dashboard_snapshots",
-      "column": "instrument_status",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": false,
-      "default_expr": "'[]'::jsonb"
-    },
-    {
-      "schema": "mes",
-      "table": "lims_dashboard_snapshots",
-      "column": "task_status",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": false,
-      "default_expr": "'[]'::jsonb"
     },
     {
       "schema": "mes",
@@ -6337,24 +6292,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "lims_dashboard_snapshots",
-      "column": "instrument_status",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": false,
-      "default_expr": "'[]'::jsonb"
-    },
-    {
-      "schema": "public",
-      "table": "lims_dashboard_snapshots",
-      "column": "task_status",
-      "type": "jsonb",
-      "enum_type": "jsonb",
-      "not_null": false,
-      "default_expr": "'[]'::jsonb"
     },
     {
       "schema": "public",

@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 125,
+    "rust_enums": 124,
     "rust_enum_values": 142,
     "rust_values_not_in_db_check": 105,
     "frontend_status_keys": 61,
@@ -739,25 +739,6 @@
         "settled",
         "unsettled",
         "written_off"
-      ]
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/domain/value_objects.rs",
-      "name": "VoucherStatus",
-      "values": [
-        "Approved",
-        "Draft",
-        "Posted",
-        "Reversed",
-        "Submitted"
-      ],
-      "normalized": [
-        "approved",
-        "draft",
-        "posted",
-        "reversed",
-        "submitted"
       ]
     },
     {
