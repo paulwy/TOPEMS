@@ -17,6 +17,7 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::modules::accident_status::AccidentStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
@@ -247,6 +248,13 @@ pub async fn list_accidents(
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let status_filter = match q.status.as_deref() {
+        Some(raw) => match AccidentStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的事故状态过滤值"),
+        },
+        None => None,
+    };
     // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
     let mut params: Vec<String> = Vec::new();
     let (mut where_clause, filter_base) = match tenant_scope.tenant_id() {
@@ -256,9 +264,9 @@ pub async fn list_accidents(
         ),
         None => (String::from(" WHERE deleted_at IS NULL"), 1),
     };
-    if let Some(status) = &q.status {
+    if let Some(status) = status_filter {
         where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
-        params.push(status.clone());
+        params.push(status.as_db_str().to_string());
     }
     if let Some(severity) = &q.severity {
         where_clause.push_str(&format!(" AND severity = ${}", params.len() + filter_base));
@@ -317,7 +325,7 @@ fn accident_from_row(r: &sqlx::postgres::PgRow) -> Accident {
             .and_then(|s| s.parse::<f64>().ok()),
         status: r
             .try_get("status")
-            .unwrap_or_else(|_| "reported".to_string()),
+            .unwrap_or_else(|_| AccidentStatus::DEFAULT.as_db_str().to_string()),
         reported_by: r.try_get("reported_by").ok().flatten(),
         created_at: r.try_get("created_at").ok().flatten(),
         updated_at: r.try_get("updated_at").ok().flatten(),
@@ -376,7 +384,7 @@ pub async fn report_accident(
         occurred_at: occurred_at.clone(),
         casualties: req.casualties.or(Some(0)),
         economic_loss: req.economic_loss.or(Some(0.0)),
-        status: "reported".to_string(),
+        status: AccidentStatus::DEFAULT.as_db_str().to_string(),
         reported_by: req.reported_by.clone(),
         created_at: Some(chrono::Utc::now()),
         updated_at: Some(chrono::Utc::now()),
@@ -400,7 +408,7 @@ pub async fn report_accident(
     .bind(accident.occurred_at)
     .bind(accident.casualties)
     .bind(accident.economic_loss)
-    .bind(&accident.status)
+    .bind(AccidentStatus::DEFAULT.as_db_str())
     .bind(&accident.reported_by)
     .bind(tenant_id);
     if let Err(e) = insert.execute(&mut scope).await {
@@ -1052,31 +1060,41 @@ pub async fn close_accident(
     };
     tracing::info!("Closing accident: {}", id);
 
+    let close_from: Vec<String> = AccidentStatus::close_from()
+        .iter()
+        .map(|s| s.as_db_str().to_string())
+        .collect();
     let sql = if tenant_scope.tenant_id().is_some() {
-        r#"UPDATE ehs.qa_ehs_accidents SET status='closed', updated_at=now()
+        r#"UPDATE ehs.qa_ehs_accidents SET status=$3, updated_at=now()
            WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
+             AND (status = ANY($4::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
                      location, occurred_at AS occurred_at, casualties,
                      economic_loss::text AS economic_loss, status, reported_by,
                      created_at AS created_at, updated_at AS updated_at,
                      tenant_id::text AS tenant_id"#
     } else {
-        r#"UPDATE ehs.qa_ehs_accidents SET status='closed', updated_at=now()
+        r#"UPDATE ehs.qa_ehs_accidents SET status=$2, updated_at=now()
            WHERE id = $1::uuid AND deleted_at IS NULL
+             AND (status = ANY($3::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
                      location, occurred_at AS occurred_at, casualties,
                      economic_loss::text AS economic_loss, status, reported_by,
                      created_at AS created_at, updated_at AS updated_at,
                      tenant_id::text AS tenant_id"#
     };
-    let mut query = sqlx::query(sql).bind(&id);
+    let mut query = sqlx::query(sql)
+        .bind(&id)
+        .bind(AccidentStatus::Closed.as_db_str());
     if let Some(tenant) = tenant_scope.tenant_id() {
-        query = query.bind(tenant);
+        query = query.bind(tenant).bind(&close_from);
+    } else {
+        query = query.bind(&close_from);
     }
     let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("事故不存在"),
+        Ok(None) => return ApiResponse::conflict("事故不存在或当前状态不允许结案"),
         Err(e) => {
             tracing::error!("Failed to close accident: {}", e);
             return ApiResponse::server_error("事故关闭失败");

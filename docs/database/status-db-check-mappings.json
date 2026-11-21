@@ -562,6 +562,13 @@
       "table": "ehs.qa_ehs_risks",
       "column": "status",
       "candidate": "docs/database/ehs-risk-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/accident_status.rs",
+      "enum": "AccidentStatus",
+      "table": "ehs.qa_ehs_accidents",
+      "column": "status",
+      "candidate": "docs/database/ehs-accident-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

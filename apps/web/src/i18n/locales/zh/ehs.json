@@ -1947,5 +1947,7 @@
   "ehs.contraindication.k18": "编辑禁忌症",
   "ehs.contraindication.k19": "禁忌症详情",
   "ehs.safety_issue.k78": "审批中",
-  "ehs.safety_issue.k79": "已解决"
+  "ehs.safety_issue.k79": "已解决",
+  "ehs": {},
+  "ehs.accident.k80": "已上报"
 }

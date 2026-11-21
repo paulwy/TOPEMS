@@ -1,4 +1,5 @@
 pub mod accident;
+pub mod accident_status;
 pub mod dashboard;
 pub mod data_sync;
 pub mod ehs_plugin;

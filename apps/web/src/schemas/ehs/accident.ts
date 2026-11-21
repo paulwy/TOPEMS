@@ -114,14 +114,12 @@ export const accidentSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('ehs.accident.k24'),
       type: 'select',
-      defaultValue: i18n.t('ehs.accident.k25'),
+      defaultValue: 'reported',
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('ehs.accident.k26'), label: i18n.t('ehs.accident.k27') },
-          { value: i18n.t('ehs.accident.k28'), label: i18n.t('ehs.accident.k29') },
-          { value: i18n.t('ehs.accident.k30'), label: i18n.t('ehs.accident.k31') },
-          { value: i18n.t('ehs.accident.k32'), label: i18n.t('ehs.accident.k33') },
+          { value: 'reported', label: i18n.t('ehs.accident.k80') },
+          { value: 'closed', label: i18n.t('ehs.accident.k30') },
         ],
       },
       listWidth: 100,
@@ -142,16 +140,12 @@ export const accidentSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        [i18n.t('schemas.accident.k0')]: 'warning',
-        [i18n.t('schemas.accident.k1')]: 'primary',
-        [i18n.t('schemas.accident.k2')]: 'success',
-        [i18n.t('schemas.accident.k3')]: 'default',
+        reported: 'warning',
+        closed: 'success',
       },
       labelMap: {
-        [i18n.t('schemas.accident.k4')]: i18n.t('ehs.accident.k35'),
-        [i18n.t('schemas.accident.k5')]: i18n.t('ehs.accident.k36'),
-        [i18n.t('schemas.accident.k6')]: i18n.t('ehs.accident.k37'),
-        [i18n.t('schemas.accident.k7')]: i18n.t('ehs.accident.k38'),
+        reported: i18n.t('ehs.accident.k80'),
+        closed: i18n.t('ehs.accident.k30'),
       },
     },
     filters: [

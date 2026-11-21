@@ -3069,5 +3069,6 @@
   "ehs.contraindication.k18": "Edit Contraindication",
   "ehs.contraindication.k19": "Contraindication Details",
   "ehs.safety_issue.k78": "Pending Approval",
-  "ehs.safety_issue.k79": "Resolved"
+  "ehs.safety_issue.k79": "Resolved",
+  "ehs.accident.k80": "Reported"
 }
