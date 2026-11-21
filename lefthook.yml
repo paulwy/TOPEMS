@@ -476,6 +476,16 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-scope-api.mjs --changed-only
 
+    # [Gate ORG] 组织字段口径门禁（W5-C / E4-15）：V69.1 已定 tenant_id/org_id/company_id
+    # 三义，organization_id 废弃。存量迁移次数冻结在 org-field-baseline.json，新迁移出现
+    # organization_id 或既有文件上升即阻断；下降用 --update-baseline 核销。
+    org-field:
+      tags: database schema org
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^database/migrations/.*\.sql$|^scripts/ci/check-org-field\.mjs$|^scripts/ci/org-field-baseline\.json$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-org-field.mjs --changed-only
+
     # [Gate TWS] 零租户写入源头扫描（2026-11-16 接入，report-only 起步）
     # 扫描 svc/lib/scripts 中「裸零 UUID 当 tenant 写」的疑似点；显式
     # PLATFORM_TENANT_ID / SYSTEM_TENANT_ID 与测试代码在白名单内。
