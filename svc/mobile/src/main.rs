@@ -73,8 +73,10 @@ async fn main() -> Result<()> {
     let app_state = AppState {
         auth_state: ctx.auth_state.clone(),
         // M-1：请求链路内禁止自开事务，handler 复用 tenant_middleware 的请求事务；
-        // 后台事件订阅（无请求上下文）不受影响，仍可自开事务。
-        pool: Db::new(ctx.db.clone(), "mobile, public, shared").deny_request_own_txn(),
+        // 请求内也不得再自开租户作用域（应复用请求事务）。后台事件订阅（无请求上下文）不受影响。
+        pool: Db::new(ctx.db.clone(), "mobile, public, shared")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
         event_publisher: ctx.event_publisher.clone(),
         wms_client,
         hrm_client,
