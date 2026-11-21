@@ -518,7 +518,23 @@ pub async fn update_customer(
     let source = req.source.or(existing.source);
     let status = match req.status {
         Some(raw) => match CustomerStatus::from_db_str(&raw) {
-            Some(v) => Some(v.as_db_str().to_string()),
+            Some(next) => {
+                if let Some(cur_raw) = existing.status.as_deref() {
+                    match CustomerStatus::from_db_str(cur_raw) {
+                        Some(cur) if cur.can_transition_to(next) => {}
+                        Some(cur) => {
+                            let msg = format!(
+                                "客户状态不允许从 {} 变更为 {}",
+                                cur.as_db_str(),
+                                next.as_db_str()
+                            );
+                            return ApiResponse::error(409, &msg);
+                        }
+                        None => return ApiResponse::error(409, "客户当前状态非法，无法变更"),
+                    }
+                }
+                Some(next.as_db_str().to_string())
+            }
             None => return ApiResponse::bad_request("无效的客户状态"),
         },
         None => existing.status,
@@ -1554,7 +1570,26 @@ pub async fn update_customer_finance(
         last_transaction_date: req.last_transaction_date.or(cur.last_transaction_date),
         payment_terms: req.payment_terms.unwrap_or(cur.payment_terms),
         risklevel: req.risklevel.unwrap_or(cur.risklevel),
-        status: req.status.unwrap_or(cur.status),
+        status: match req.status.as_deref() {
+            Some(raw) => match CustomerStatus::from_db_str(raw) {
+                Some(next) => match CustomerStatus::from_db_str(&cur.status) {
+                    Some(current) if current.can_transition_to(next) => {
+                        next.as_db_str().to_string()
+                    }
+                    Some(current) => {
+                        let msg = format!(
+                            "客户财务状态不允许从 {} 变更为 {}",
+                            current.as_db_str(),
+                            next.as_db_str()
+                        );
+                        return ApiResponse::error(409, &msg);
+                    }
+                    None => return ApiResponse::error(409, "客户财务当前状态非法，无法变更"),
+                },
+                None => return ApiResponse::bad_request("无效的客户财务状态"),
+            },
+            None => cur.status,
+        },
         bank_name: req.bank_name.or(cur.bank_name),
         bank_account: req.bank_account.or(cur.bank_account),
         account_name: req.account_name.or(cur.account_name),

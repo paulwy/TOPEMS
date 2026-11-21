@@ -32,6 +32,20 @@ impl CustomerStatus {
         }
     }
 
+    /// 状态迁移：活跃↔停用，二者均可归档；归档只能先恢复为停用，避免直接复活。
+    #[must_use]
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        matches!(
+            (self, target),
+            (Self::Active, Self::Inactive | Self::Archived)
+                | (Self::Inactive, Self::Active | Self::Archived)
+                | (Self::Archived, Self::Inactive)
+        )
+    }
+
     pub fn as_db_str(&self) -> &'static str {
         match self {
             Self::Active => "active",
@@ -62,5 +76,10 @@ mod tests {
         }
         assert_eq!(CustomerStatus::from_db_str("deleted"), None);
         assert_eq!(CustomerStatus::DEFAULT.as_db_str(), "active");
+        assert!(CustomerStatus::Active.can_transition_to(CustomerStatus::Inactive));
+        assert!(CustomerStatus::Inactive.can_transition_to(CustomerStatus::Archived));
+        assert!(CustomerStatus::Archived.can_transition_to(CustomerStatus::Inactive));
+        assert!(!CustomerStatus::Archived.can_transition_to(CustomerStatus::Active));
+        assert!(CustomerStatus::Active.can_transition_to(CustomerStatus::Active));
     }
 }
