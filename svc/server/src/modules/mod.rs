@@ -74,3 +74,17 @@ pub mod wms_real_module;
 
 #[cfg(feature = "module-core")]
 pub mod unified_core_real_module;
+
+/// 为统一入口 real module 构造请求作用域数据库句柄。
+///
+/// 统一入口与独立部署必须使用同一口径：业务查询走 `Db` 并携带
+/// `deny_request_own_txn` / `deny_request_tenant_scope`，防止绕过请求事务与租户上下文；
+/// 审计落库、健康探针等系统通道仍使用原始 `PgPool`。
+pub(crate) fn request_scope_db(
+    ctx: &topems_shared_bootstrap::ServiceContext,
+    search_path: &str,
+) -> topems_shared_db::scope::Db {
+    topems_shared_db::scope::Db::new(ctx.db.clone(), search_path)
+        .deny_request_own_txn()
+        .deny_request_tenant_scope()
+}

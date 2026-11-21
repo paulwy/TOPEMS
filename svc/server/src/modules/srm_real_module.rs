@@ -63,34 +63,44 @@ impl SrmRealModule {
             .map_err(|e| TopemsError::internal("SRM 工作流客户端初始化失败", e))?;
 
         let db = ctx.db.clone();
+        let request_db = crate::modules::request_scope_db(&ctx, "srm, public, shared");
+        let system_pool = db.clone();
         let ep = ctx.event_publisher.clone();
 
         // 业务路由（各模块自管 State，merge 后叠加认证）
         let protected_routes = axum::Router::new()
             .merge(
                 modules::create_supplier_routes(
-                    db.clone(),
+                    request_db.clone(),
+                    system_pool.clone(),
                     ep.clone(),
                     workflow_client,
                     supplier_cache,
                 )
                 .await?,
             )
-            .merge(modules::create_category_routes(db.clone()).await?)
-            .merge(modules::create_evaluation_routes(db.clone()).await?)
-            .merge(modules::create_contract_routes(db.clone()).await?)
-            .merge(modules::create_product_routes(db.clone()).await?)
-            .merge(modules::create_purchase_order_routes(db.clone()).await?)
-            .merge(modules::create_quotation_routes(db.clone()).await?)
-            .merge(modules::create_bid_price_routes(db.clone()).await?)
-            .merge(modules::create_bidding_routes(db.clone()).await?)
-            .merge(modules::create_tender_routes(db.clone()).await?)
-            .merge(modules::create_supplier_portal_routes(db.clone()).await?)
-            .merge(modules::create_performance_routes(db.clone()).await?)
-            .merge(modules::create_data_sync_routes(db.clone(), ep.clone()).await?)
-            .merge(modules::create_inquiry_routes(db.clone()).await?)
-            .merge(modules::create_scoring_dimension_routes(db.clone()).await?)
-            .merge(modules::create_statistics_routes(db.clone()))
+            .merge(modules::create_category_routes(request_db.clone()).await?)
+            .merge(modules::create_evaluation_routes(request_db.clone()).await?)
+            .merge(modules::create_contract_routes(request_db.clone()).await?)
+            .merge(modules::create_product_routes(request_db.clone()).await?)
+            .merge(modules::create_purchase_order_routes(request_db.clone()).await?)
+            .merge(modules::create_quotation_routes(request_db.clone()).await?)
+            .merge(modules::create_bid_price_routes(request_db.clone()).await?)
+            .merge(modules::create_bidding_routes(request_db.clone()).await?)
+            .merge(modules::create_tender_routes(request_db.clone()).await?)
+            .merge(modules::create_supplier_portal_routes(request_db.clone()).await?)
+            .merge(modules::create_performance_routes(request_db.clone()).await?)
+            .merge(
+                modules::create_data_sync_routes(
+                    request_db.clone(),
+                    system_pool.clone(),
+                    ep.clone(),
+                )
+                .await?,
+            )
+            .merge(modules::create_inquiry_routes(request_db.clone()).await?)
+            .merge(modules::create_scoring_dimension_routes(request_db.clone()).await?)
+            .merge(modules::create_statistics_routes(request_db.clone()))
             .layer(axum::middleware::from_fn_with_state(
                 db.clone(),
                 topems_shared_auth::tenant_middleware(),

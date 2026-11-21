@@ -69,8 +69,11 @@ impl ScmRealModule {
             l1_capacity: 10_000,
             ..Default::default()
         };
+        let request_db = crate::modules::request_scope_db(&ctx, "scm, public, shared");
         let state = ApiState {
-            db: ctx.db.clone(),
+            db: request_db,
+            // 审计落库与健康探针使用原始池（系统通道），不参与请求租户查询。
+            system_pool: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             cache: None,
             event_publisher: ctx.event_publisher.clone(),
@@ -107,7 +110,7 @@ impl ScmRealModule {
 
         tracing::info!(
             "✅ 真实 scm 模块已接入统一入口（db={}，prefix={}）",
-            state.db.size(),
+            state.db.stats().size,
             config.api_prefix
         );
 
@@ -134,11 +137,11 @@ impl Module for ScmRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("scm-real", ModuleGroup::Erp);
-        let db_ok = self.api_state.db.size() > 0;
+        let db_ok = self.api_state.db.stats().size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.api_state.db.size()),
+            detail: format!("连接池大小 {}", self.api_state.db.stats().size),
         });
         if self.api_state.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

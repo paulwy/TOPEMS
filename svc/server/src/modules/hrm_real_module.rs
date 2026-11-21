@@ -69,8 +69,11 @@ impl HrmRealModule {
             l1_capacity: 10_000,
             ..Default::default()
         };
+        let request_db = crate::modules::request_scope_db(&ctx, "hrm, public, shared");
         let state = ApiState {
-            db: ctx.db.clone(),
+            db: request_db,
+            // 审计落库与健康探针使用原始池（系统通道），不参与请求租户查询。
+            system_pool: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,
@@ -113,7 +116,7 @@ impl HrmRealModule {
 
         tracing::info!(
             "✅ 真实 hrm 模块已接入统一入口（db={}，prefix={}）",
-            state.db.size(),
+            state.db.stats().size,
             config.api_prefix
         );
 
@@ -140,11 +143,11 @@ impl Module for HrmRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("hrm-real", ModuleGroup::Core);
-        let db_ok = self.api_state.db.size() > 0;
+        let db_ok = self.api_state.db.stats().size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.api_state.db.size()),
+            detail: format!("连接池大小 {}", self.api_state.db.stats().size),
         });
         if self.api_state.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

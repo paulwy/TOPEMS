@@ -53,8 +53,11 @@ impl RdRealModule {
         let config_app = topems_shared_core::config::Config::load()
             .await
             .map_err(|e| TopemsError::internal("RD 配置加载失败", e))?;
+        let request_db = crate::modules::request_scope_db(&ctx, "rs, public, shared");
         let api_state = ApiState {
-            db: ctx.db.clone(),
+            db: request_db,
+            // 审计落库与健康探针使用原始池（系统通道），不参与请求租户查询。
+            system_pool: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             config: config_app,
             metrics: ctx.metrics.clone(),

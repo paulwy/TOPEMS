@@ -109,8 +109,11 @@ impl ErpRealModule {
             l1_capacity: 10_000,
             ..Default::default()
         };
+        let request_db = crate::modules::request_scope_db(&ctx, "erp, public, shared");
         let api_state = ApiState {
-            db: ctx.db.clone(),
+            db: request_db,
+            // 审计落库与健康探针使用原始池（系统通道），不参与请求租户查询。
+            system_pool: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: ctx.start_time,
@@ -165,7 +168,7 @@ impl ErpRealModule {
         // 6. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件 + 开发验证模拟认证）
         let protected_routes = topems_erp::modules::create_routes()
             .layer(axum::middleware::from_fn_with_state(
-                api_state.db.clone(),
+                ctx.db.clone(),
                 tenant_middleware(),
             ))
             .layer(axum::middleware::from_fn(require_module_access("erp")))
@@ -179,7 +182,7 @@ impl ErpRealModule {
 
         tracing::info!(
             "✅ 真实 erp 模块已接入统一入口（db={}，prefix={}）",
-            api_state.db.size(),
+            api_state.db.stats().size,
             config.api_prefix
         );
 
@@ -203,11 +206,11 @@ impl Module for ErpRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("erp-real", ModuleGroup::Erp);
-        let db_ok = self.api_state.db.size() > 0;
+        let db_ok = self.api_state.db.stats().size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.api_state.db.size()),
+            detail: format!("连接池大小 {}", self.api_state.db.stats().size),
         });
         if self.api_state.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {
