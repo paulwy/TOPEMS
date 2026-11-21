@@ -159,6 +159,39 @@ pub enum AutoFixActionType {
     Standardize,
 }
 
+impl AutoFixActionType {
+    pub const ACTION_VALUES: [&'static str; 5] = [
+        "normalize",
+        "default_value",
+        "map_value",
+        "remove_duplicate",
+        "standardize",
+    ];
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "normalize" | "normalize_text" => Some(Self::Normalize),
+            "default_value" | "fill_missing_defaults" => Some(Self::DefaultValue),
+            "map_value" | "map_to_standard_values" => Some(Self::MapValue),
+            "remove_duplicate" | "remove_duplicates" => Some(Self::RemoveDuplicate),
+            "standardize" => Some(Self::Standardize),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Normalize => "normalize",
+            Self::DefaultValue => "default_value",
+            Self::MapValue => "map_value",
+            Self::RemoveDuplicate => "remove_duplicate",
+            Self::Standardize => "standardize",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum FixStatus {
@@ -438,13 +471,7 @@ fn suggestion_type_from_str(s: &str) -> SuggestionType {
 }
 
 fn action_type_from_str(s: &str) -> AutoFixActionType {
-    match s {
-        "default_value" => AutoFixActionType::DefaultValue,
-        "map_value" => AutoFixActionType::MapValue,
-        "remove_duplicate" => AutoFixActionType::RemoveDuplicate,
-        "standardize" => AutoFixActionType::Standardize,
-        _ => AutoFixActionType::Normalize,
-    }
+    AutoFixActionType::from_db_str(s).unwrap_or(AutoFixActionType::Normalize)
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -1183,8 +1210,16 @@ pub async fn apply_auto_fix(
     };
 
     let tenant = tenant_of(&claims);
-    let strategy = req.strategy.as_deref().unwrap_or("normalize_text");
-    let action_type = action_type_from_str(strategy);
+    let strategy = match req.strategy.as_deref() {
+        Some(raw) => match AutoFixActionType::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::bad_request(
+                "无效的修复策略，允许 normalize/default_value/map_value/remove_duplicate/standardize",
+            ),
+        },
+        None => AutoFixActionType::Normalize.as_db_str().to_string(),
+    };
+    let action_type = action_type_from_str(&strategy);
 
     let now = chrono::Utc::now();
 
@@ -2036,13 +2071,7 @@ fn suggestion_status_to_str(s: &SuggestionStatus) -> &'static str {
 }
 
 fn action_type_to_str(s: &AutoFixActionType) -> &'static str {
-    match s {
-        AutoFixActionType::Normalize => "normalize",
-        AutoFixActionType::DefaultValue => "default_value",
-        AutoFixActionType::MapValue => "map_value",
-        AutoFixActionType::RemoveDuplicate => "remove_duplicate",
-        AutoFixActionType::Standardize => "standardize",
-    }
+    s.as_db_str()
 }
 
 fn quality_check_from_row(r: &sqlx::postgres::PgRow) -> QualityCheckV51 {
@@ -2389,6 +2418,23 @@ mod tests {
             action_type_from_str("unknown"),
             AutoFixActionType::Normalize
         );
+    }
+
+    #[test]
+    fn test_action_type_strict_values_and_legacy_aliases() {
+        for raw in AutoFixActionType::ACTION_VALUES {
+            let parsed = AutoFixActionType::from_db_str(raw).expect("raw must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(
+            AutoFixActionType::from_db_str("normalize_text"),
+            Some(AutoFixActionType::Normalize)
+        );
+        assert_eq!(
+            AutoFixActionType::from_db_str("remove_duplicates"),
+            Some(AutoFixActionType::RemoveDuplicate)
+        );
+        assert_eq!(AutoFixActionType::from_db_str("unknown"), None);
     }
 
     // ---------- compute_score ----------
