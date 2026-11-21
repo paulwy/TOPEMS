@@ -35,6 +35,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   completed: 'success',
   cancelled: 'error',
   canceled: 'error',
+  terminated: 'error',
   paused: 'default',
   released: 'info',
   in_progress: 'primary',

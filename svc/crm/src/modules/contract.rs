@@ -8,6 +8,7 @@ use chrono::Utc;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
+use super::contract_status::ContractStatus;
 use super::ApiState;
 use crate::models::{Contract, ContractQueryParams, CreateContractRequest, UpdateContractRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -67,7 +68,13 @@ pub async fn list_contracts(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match ContractStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("合同状态非法"),
+        },
+        None => None,
+    };
     let type_filter = params.contract_type.clone();
 
     let result = sqlx::query_as::<_, Contract>(
@@ -166,6 +173,14 @@ pub async fn create_contract(
         ));
     }
 
+    let status = match req.status.as_deref() {
+        Some(raw) => match ContractStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("合同状态非法"),
+        },
+        None => ContractStatus::DEFAULT,
+    };
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
@@ -179,7 +194,7 @@ pub async fn create_contract(
             id, tenant_id, contract_no, title, customer_name, amount,
             status, sign_date, start_date, end_date, owner, type, remark,
             created_at, updated_at, title_en
-        ) VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'draft'),
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7,
                   $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id, tenant_id, org_id, contract_no,
                   CASE WHEN $17 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
@@ -194,7 +209,7 @@ pub async fn create_contract(
     .bind(&req.title)
     .bind(&req.customer_name)
     .bind(req.amount)
-    .bind(&req.status)
+    .bind(status.as_db_str())
     .bind(req.sign_date)
     .bind(req.start_date)
     .bind(req.end_date)
@@ -352,6 +367,14 @@ pub async fn update_contract(
     };
     let now = Utc::now();
 
+    let status = match req.status.as_deref() {
+        Some(raw) => match ContractStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("合同状态非法"),
+        },
+        None => None,
+    };
+
     let result = sqlx::query_as::<_, Contract>(
         r#"
         UPDATE crm.contracts SET
@@ -382,7 +405,7 @@ pub async fn update_contract(
     .bind(&req.title)
     .bind(&req.customer_name)
     .bind(req.amount)
-    .bind(&req.status)
+    .bind(&status)
     .bind(req.sign_date)
     .bind(req.start_date)
     .bind(req.end_date)

@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 176,
-    "rust_enum_values": 175,
-    "rust_values_not_in_db_check": 136,
-    "frontend_status_keys": 190,
-    "frontend_keys_not_in_db_check": 150,
+    "rust_enums": 177,
+    "rust_enum_values": 176,
+    "rust_values_not_in_db_check": 137,
+    "frontend_status_keys": 191,
+    "frontend_keys_not_in_db_check": 151,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -526,6 +526,27 @@
         "active",
         "archived",
         "inactive"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/contract_status.rs",
+      "name": "ContractStatus",
+      "values": [
+        "Active",
+        "Completed",
+        "Draft",
+        "Expired",
+        "Pending",
+        "Terminated"
+      ],
+      "normalized": [
+        "active",
+        "completed",
+        "draft",
+        "expired",
+        "pending",
+        "terminated"
       ]
     },
     {
@@ -3297,6 +3318,7 @@
       "suspended",
       "synced",
       "syncing",
+      "terminated",
       "tested",
       "testing",
       "timeout",
@@ -3442,6 +3464,7 @@
       "suppressed",
       "synced",
       "syncing",
+      "terminated",
       "tested",
       "timeout",
       "todo",
@@ -3591,6 +3614,7 @@
       "suppressed",
       "synced",
       "syncing",
+      "terminated",
       "tested",
       "testing",
       "timeout",

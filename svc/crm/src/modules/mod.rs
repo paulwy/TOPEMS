@@ -16,6 +16,7 @@ pub mod contact;
 pub mod contact_approval_status;
 pub mod contact_status;
 pub mod contract;
+pub mod contract_status;
 pub mod crm_plugin;
 pub mod customer;
 pub mod customer_approval_status;
