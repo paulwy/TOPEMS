@@ -464,10 +464,15 @@ MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh
 | `拒绝：以超级用户连接` | DSN 落到了 owner/superuser | 检查解析顺序，确认命中 `.env` 的 `MIGRATION_DRIFT_DB_URL` |
 | `FAILED N 项漂移` | 账本声称的结构与实际不符 | 见输出中的「源 <version>」；先确认是迁移链冲突还是库陈旧，再决定重放幂等迁移或修迁移 |
 
-### 11.5 已知迁移链冲突（待裁决）
+### 11.5 已定稿：production_orders 数量列同为 BIGINT
 
-`20261107000017`（`mes.production_orders.completed_quantity → bigint`）与
-`20261120090000`（同列 `→ numeric(12,2)`）互相反转。凡前向迁移越过 `20261120090000` 的库
-（如 `topems_web_smoke`、临时 scratch 库）都会触发该断言漂移；基线夹具停在锚点
-`20261117235500`，不受影响。修法需先确定列语义（prod 基线为 bigint、计数为整数；
-`20261120090000` 将其改为 numeric(12,2)），再决定新增纠正迁移或调整断言，见 TODO DRIFT-03。
+`20261107000017`（`quantity` / `completed_quantity → bigint`）与
+`20261120090000`（`completed_quantity → numeric(12,2)`）曾互相反转：后者沿用
+`20260928120000` 的「同 4 列」清单，把该列误改回 numeric。
+
+**2026-11-21 裁决**：prod 只读镜像实测两列均为 `bigint`；按「同表数量列必须同类型同精度」
+与生产事实，统一为 **bigint**（订单数量是整数件数，小数量在 `mes.production_records`）。
+由新迁移 `20261122100000_mes_production_orders_quantity_finalize_bigint` 拉回终态，
+不修改已应用的 `1107/1200`；迁移含小数行守卫与终态 `int8` 断言，配套回滚。
+凡越过 `20261120090000` 的库应用该迁移后漂移消失；基线夹具停在锚点
+`20261117235500`，本就不受影响。

@@ -2841,3 +2841,11 @@ pending_forward_patches:
     effect: "public.core_user_company_scopes 新增 is_default boolean NOT NULL DEFAULT false；建部分唯一索引 uq_user_company_scopes_default (tenant_id, user_id) WHERE is_default，保证同租户同用户最多一个默认公司；为原本没有任何 true 的用户回填其最早一条成员记录（created_at 升序、同刻按 id）为默认，已有 true 的用户整体跳过"
     destructive_scan: "1 条 UPDATE 回填，带完整 destructive 豁免标记（ticket COMPANY-DEFAULT-20261121，max-rows 100000，backup 窗口前 pg_dump -t public.core_user_company_scopes）；带 NOT EXISTS 守卫，可重复执行；无 DELETE/TRUNCATE/DROP"
     note: "中间件优先级：显式 x-company-id > is_default > 唯一成员推断 > 无上下文；无默认且多成员仍 fail-closed（下游 0 行）。单条记录用户回填后为 true，与「唯一成员推断」结果一致。回滚 database/rollback/20261122090000_core_user_company_scopes_is_default.rollback.sql"
+
+  # ===== 2026-11-21：production_orders 数量列语义定稿（同表同型 = bigint） =====
+  - version: "20261122100000"
+    file: "database/migrations/20261122100000_mes_production_orders_quantity_finalize_bigint.sql"
+    status: to_apply
+    effect: "把 mes.production_orders.quantity / completed_quantity 终态统一为 bigint；修复 20261120090000 误把 completed_quantity 改回 numeric(12,2) 造成的语义反转。依据：prod 只读镜像两列均为 bigint，且同表数量列必须同类型同精度。已是 bigint 时零操作"
+    destructive_scan: "含 2 条 ALTER COLUMN TYPE（numeric→bigint，先用 count 断言无小数行，有小数即 RAISE EXCEPTION，不静默丢精度）；无 UPDATE/DELETE/TRUNCATE/DROP；幂等，重复执行 0 列变更"
+    note: "不改已应用的 20261107000017 / 20261120090000（避免 checksums 与账本语义漂移），用新迁移拉回定稿语义；终态断言两列必须 int8。回滚 database/rollback/20261122100000_mes_production_orders_quantity_finalize_bigint.rollback.sql（恢复 completed_quantity=numeric(12,2) 的迁移前混合态）"
