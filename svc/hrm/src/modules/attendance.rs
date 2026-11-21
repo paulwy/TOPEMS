@@ -289,9 +289,9 @@ pub async fn create_attendance(
         "hrm",
         r#"
         INSERT INTO hrm.attendance_records (
-            id, tenant_id, organization_id, employee_id, date, check_in_time, check_out_time,
+            id, tenant_id, employee_id, date, check_in_time, check_out_time,
             status, work_hours, notes, created_at, updated_at
-        ) VALUES ($1, $2, $2, $3, $4, $5::TIME, $6::TIME, $7, $8, $9, $10, $11)
+        ) VALUES ($1, $2, $3, $4, $5::TIME, $6::TIME, $7, $8, $9, $10, $11)
         RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
@@ -838,9 +838,9 @@ pub async fn check_in(
             let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
                 "hrm",
                 r#"INSERT INTO hrm.attendance_records (
-                       id, tenant_id, organization_id, employee_id, date, check_in_time, check_out_time,
+                       id, tenant_id, employee_id, date, check_in_time, check_out_time,
                        status, work_hours, notes, created_at, updated_at
-                   ) VALUES ($1, $2, $2, $3, $4, $5::TIME, NULL, 'active', NULL, NULL, $6, $6)
+                   ) VALUES ($1, $2, $3, $4, $5::TIME, NULL, 'active', NULL, NULL, $6, $6)
                    RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                              check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                              status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#

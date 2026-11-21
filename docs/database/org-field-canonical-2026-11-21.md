@@ -31,18 +31,25 @@ B/C 类法人主体表。
 - `20261120210000_wms_schema_canonical.sql`：WMS 多表出现
   `tenant_id` + `organization_id` + `org_id` 三列并存。
 
-本地 `topems` 库实测：
+本地 `topems` 库实测，WMS 内部也不是同一口径：
 
-- `wms.inbound_orders` 的 `organization_id` 与 `tenant_id` 逐行相等，`org_id`
-  在 16/18 行与 `tenant_id` 不同，说明 `org_id` 已承载独立组织语义；
-- `hrm.employees` 的 `organization_id` 与 `tenant_id` 19/19 行相等；
-- `hrm.departments`、`hrm.employees`、`hrm.positions` 三列并存，且
-  `departments_company_id_fkey` 实际是 `FOREIGN KEY (org_id) REFERENCES hrm.companies(id)`，
-  约束名与列名不一致，不能按名字推断语义。
+| 表 | `organization_id` 与 `tenant_id` | `organization_id` 与 `org_id` | 判定 |
+| --- | --- | --- | --- |
+| `wms.inbound_orders` | 18/18 行相等 | 16/18 行不同 | `organization_id` 是租户重复列，`org_id` 才是独立组织值 |
+| `wms.warehouses` | 29/29 行不同 | 29/29 行不同 | `organization_id` 是独立组织值，`org_id` 反而接近租户值 |
+| `wms.locations` | 10/10 行不同 | 10/10 行不同 | 同上，不能按租户别名处理 |
+| `wms.inventory` | 74/74 行不同 | 4/74 行不同 | 多数等于 `org_id`，少数不等，需保留待人工定性 |
+| `wms.audit_logs` | 6403/7243 行不同 | 0 行不同 | `organization_id` 是 `org_id` 的重复列 |
 
-结论：当前 `organization_id` 大部分是 `tenant_id` 的重复列，少部分是历史 API 字段。
-清理必须先改代码读取口径，再按模块删列；不能全库直接 `DROP COLUMN`，也不能把
-`org_id` 全量改名为 `organization_id`。
+HRM 侧则相对统一：`hrm.departments`、`hrm.employees`、`hrm.positions`、
+`hrm.attendance_records` 的 `organization_id` 逐行等于 `tenant_id`，且代码已只读
+`tenant_id`/`org_id`。另 `hrm.departments`/`employees`/`positions` 三列并存，且
+`departments_company_id_fkey` 实际是 `FOREIGN KEY (org_id) REFERENCES hrm.companies(id)`，
+约束名与列名不一致，不能按名字推断语义。
+
+结论：不能把 `organization_id` 一概当作 `tenant_id` 重复列。必须先做**表级**比对
+（`organization_id IS DISTINCT FROM tenant_id`、`IS DISTINCT FROM org_id`），
+只在“逐行相等且代码不再读取”的表上删列；WMS 至少存在两种相反分布，必须逐表处理。
 
 ## 3. 计数口径
 
@@ -73,14 +80,16 @@ node scripts/ci/check-org-field.mjs --changed-only
 node scripts/ci/check-org-field.mjs --update-baseline
 ```
 
-## 4. 清理顺序（待排期）
+## 4. 清理顺序（按表比对后执行）
 
 按“代码先改、数据后删、单模块回滚”的顺序执行，不跨模块一把梭：
 
-1. **WMS**：`organization_id` 读取改 `tenant_id`；`org_id` 保留组织语义；
-   `inbound_orders`/`outbound_orders`/`inventory` 等表确认无外部 API 依赖后删列。
-2. **HRM**：`setup.rs`/`attendance.rs` 的 `organization_id` 改 `tenant_id`；
-   `departments`/`employees`/`positions` 的空 `company_id`/`org_id` 先定性再删。
+1. **HRM（已完成首批）**：`departments`/`employees`/`positions`/`attendance_records`
+   四表 `organization_id` 逐行等于 `tenant_id`，已删列；`setup.rs` 的
+   `initialization_logs`/`companies` 仍保留，待单独定性。
+2. **WMS**：按表分流。`inbound_orders` 可改 `tenant_id` 后删列；
+   `audit_logs` 应改 `org_id` 后删列；`warehouses`/`locations`/`inventory`
+   的 `organization_id` 是独立组织值，保留，先纠正 `org_id` 语义。
 3. **AI / LIMS / MES**：canonical 迁移改为 `tenant_id` 建列；测试夹具同步。
 4. **CRM / Finance**：只保留 `org_id` 与确有法人语义的 `company_id`，
    `organization_id` 不再新增。
@@ -90,6 +99,7 @@ node scripts/ci/check-org-field.mjs --update-baseline
 
 ## 5. 明确未完成
 
-- 存量 250 个生产列尚未删除，生产计数未变化；
-- 代码中 `organization_id` 仍有约 130 处，集中在 WMS/HRM/LIMS/MES；
-- 本文件只完成“口径定案 + 新增冻结 + 计数基线”，不等于三套字段已合并。
+- 首批 HRM 4 列已在迁移中删除（待生产窗口执行），其余存量未删除；
+- 代码中 `organization_id` 仍有约 120 处，集中在 WMS/LIMS/MES/HRM setup；
+- 本文件完成“口径定案 + 新增冻结 + 计数基线 + HRM 首批删列”，
+  不等于三套字段已全部合并。
