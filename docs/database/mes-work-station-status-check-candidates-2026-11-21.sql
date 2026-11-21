@@ -23,6 +23,8 @@ ALTER TABLE mes.work_stations
 --   active→inactive（谓词 active）→ UPDATE 1
 --   inactive→active → UPDATE 1
 --   active→'bogus' → 23514
+-- B54 演练：available→inactive（谓词 available/active）→ UPDATE 1；
+--   inactive→inactive（同谓词）→ UPDATE 0；active→'maintenance' → 23514。
 
 -- available 清理候选（需业务确认 available 与 active 是否等价）：
 -- UPDATE mes.work_stations SET status='active', updated_at=NOW() WHERE status='available';

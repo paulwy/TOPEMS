@@ -43,9 +43,10 @@ impl WorkStationStatus {
         }
     }
 
-    /// 停用允许的起始状态：仅启用中
+    /// 停用允许的起始状态：启用中或历史种子可用态。
+    /// `available` 与 `active` 语义等价，若不纳入，10 行种子工位永远无法停用。
     pub fn deactivate_from() -> &'static [&'static str] {
-        &["active"]
+        &["available", "active"]
     }
 }
 
@@ -71,5 +72,6 @@ mod tests {
         assert_eq!(WorkStationStatus::from_db_str("maintenance"), None);
         assert_eq!(WorkStationStatus::DEFAULT.as_db_str(), "active");
         assert!(WorkStationStatus::deactivate_from().contains(&"active"));
+        assert!(WorkStationStatus::deactivate_from().contains(&"available"));
     }
 }

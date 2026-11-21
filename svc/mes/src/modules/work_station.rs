@@ -219,9 +219,13 @@ pub async fn list_work_stations(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE ws.deleted_at IS NULL");
 
-    if let Some(status) = query.status {
+    if let Some(status) = query.status.as_deref() {
+        let parsed = match WorkStationStatus::from_db_str(status) {
+            Some(v) => v,
+            None => return ApiResponse::bad_request("无效的工位状态"),
+        };
         where_clause.push_str(" AND ws.status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(serde_json::Value::String(parsed.as_db_str().to_string()));
     }
 
     if let Some(search) = query.search {
@@ -800,7 +804,7 @@ pub async fn deactivate_work_station(
 
     match result {
         Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位停用成功"),
-        None => ApiResponse::not_found("工位不存在或状态不允许停用"),
+        None => ApiResponse::conflict("工位不存在或状态不允许停用"),
     }
 }
 
