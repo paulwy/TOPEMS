@@ -158,9 +158,10 @@ async fn erp_to_mes_success_branch_writes_state_and_log() {
         system: false,
     };
 
-    let result =
-        scope_request_tenant(tenant_ctx, async { service.sync_erp_to_mes(&cell, tenant, erp_id).await })
-            .await;
+    let result = scope_request_tenant(tenant_ctx, async {
+        service.sync_erp_to_mes(&cell, tenant, erp_id).await
+    })
+    .await;
 
     // 失败时先把未提交的请求事务回滚，避免 DDL/清理被行锁阻塞；成功时 cell 已为空。
     {
@@ -221,7 +222,11 @@ async fn erp_to_mes_success_branch_writes_state_and_log() {
         .and_then(|v| v.get("id"))
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    assert_eq!(details_id, Some(mes_id.to_string()), "details.id 应为 MES 订单 id");
+    assert_eq!(
+        details_id,
+        Some(mes_id.to_string()),
+        "details.id 应为 MES 订单 id"
+    );
 
     let row = row.expect("应能读到同步记录");
     assert_eq!(row.get::<String, _>("sync_direction"), "erp_to_mes");
@@ -246,8 +251,16 @@ async fn erp_to_mes_success_branch_writes_state_and_log() {
     assert_eq!(log_row.get::<i32, _>("attempt"), 1);
     assert!(log_row.get::<Option<String>, _>("error_message").is_none());
 
-    assert_eq!(stub_state.erp_hits.load(Ordering::SeqCst), 1, "ERP 桩应命中 1 次");
-    assert_eq!(stub_state.mes_hits.load(Ordering::SeqCst), 1, "MES 桩应命中 1 次");
+    assert_eq!(
+        stub_state.erp_hits.load(Ordering::SeqCst),
+        1,
+        "ERP 桩应命中 1 次"
+    );
+    assert_eq!(
+        stub_state.mes_hits.load(Ordering::SeqCst),
+        1,
+        "MES 桩应命中 1 次"
+    );
 
     let body = stub_state
         .last_mes_body
