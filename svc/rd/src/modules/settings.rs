@@ -15,7 +15,6 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -70,7 +69,7 @@ pub async fn get_settings(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let db = Db::new(state.db.clone(), "rs, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(scope) => scope,
         Err(e) => {
@@ -135,7 +134,7 @@ pub async fn update_settings(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let db = Db::new(state.db.clone(), "rs, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(scope) => scope,
         Err(e) => {

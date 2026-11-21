@@ -305,7 +305,7 @@
     }
   },
   "db_new": {
-    "total": 164,
+    "total": 163,
     "files": {
       "lib/shared-db/src/audit.rs": {
         "total": 2
@@ -424,8 +424,8 @@
       "svc/rd/src/event_handlers/mod.rs": {
         "total": 2
       },
-      "svc/rd/src/modules/settings.rs": {
-        "total": 2
+      "svc/rd/src/main.rs": {
+        "total": 1
       },
       "svc/scm/src/event_handlers/mod.rs": {
         "total": 11

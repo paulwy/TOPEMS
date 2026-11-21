@@ -350,7 +350,7 @@ pub async fn create_material_test(
             }
             let response_data = serde_json::to_value(&record).ok();
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "create".to_string(),
                 "material_test".to_string(),
                 Some(id),
@@ -369,7 +369,7 @@ pub async fn create_material_test(
         Err(e) => {
             tracing::error!("创建原料试验记录失败: {}", e);
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "create".to_string(),
                 "material_test".to_string(),
                 Some(id),
@@ -494,7 +494,7 @@ pub async fn update_material_test(
             }
             let response_data = serde_json::to_value(&record).ok();
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "update".to_string(),
                 "material_test".to_string(),
                 Some(id),
@@ -513,7 +513,7 @@ pub async fn update_material_test(
         Err(e) => {
             tracing::error!("更新原料试验记录失败: {}", e);
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "update".to_string(),
                 "material_test".to_string(),
                 Some(id),
@@ -584,7 +584,7 @@ pub async fn delete_material_test(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "material_test".to_string(),
         Some(id),

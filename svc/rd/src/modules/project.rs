@@ -285,7 +285,7 @@ pub async fn create_project(
 
     if let Some(id) = project_id {
         crate::modules::audit::log_audit_event(
-            &state.db,
+            &state.system_pool,
             "create".to_string(),
             "project".to_string(),
             Some(id),
@@ -534,7 +534,7 @@ pub async fn update_project(
     };
 
     crate::modules::audit::log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "project".to_string(),
         Some(id),
@@ -629,7 +629,7 @@ pub async fn delete_project(
     };
 
     crate::modules::audit::log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "project".to_string(),
         Some(id),
@@ -671,7 +671,7 @@ pub async fn batch_create_projects(
     Json(req): Json<BatchCreateRequest>,
 ) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() {
+    let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
@@ -687,14 +687,14 @@ pub async fn batch_create_projects(
     let mut success = 0;
     let mut errors = Vec::new();
 
-    // 使用事务批量插入，确保原子性（全部成功或全部失败）
-    let mut tx = match state.db.begin().await {
-        Ok(tx) => tx,
+    // 复用请求事务批量插入，确保原子性（全部成功或全部失败）。
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            return ApiResponse::from(TopemsError::internal("开启事务失败", e));
+            tracing::error!("开启请求事务作用域失败: {}", e);
+            return ApiResponse::server_error("批量创建失败");
         }
     };
-
     for (index, project_req) in req.projects.iter().enumerate() {
         let id = Uuid::new_v4();
         let now = Utc::now();
@@ -735,16 +735,20 @@ pub async fn batch_create_projects(
         .bind(serde_json::Value::Array(vec![]))
         .bind(None::<Uuid>)
         .bind(None::<Uuid>)
-        .execute(&mut *tx)
+        .execute(&mut scope)
         .await;
 
         match result {
             Ok(_) => success += 1,
             Err(e) => {
-                // PostgreSQL 事务中一旦失败，后续所有 SQL 都会失败
-                // 回滚整个事务，确保数据一致性
+                // PostgreSQL 事务中一旦失败，后续所有 SQL 都会失败。
+                // 请求事务由 middleware 在非 2xx 时回滚，但本接口失败仍返回 200，
+                // 因此必须在此显式回滚，避免 2xx 收尾把已插入的部分行提交。
                 tracing::error!("批量创建项目失败 (索引 {}): {}", index, e);
-                let _ = tx.rollback().await;
+                drop(scope);
+                if let Some(t) = guard.take() {
+                    let _ = t.rollback().await;
+                }
                 errors.push(format!("项目 {}: {}", index + 1, e));
                 let total = req.projects.len();
                 let result = BatchOperationResult {
@@ -758,11 +762,7 @@ pub async fn batch_create_projects(
         }
     }
 
-    // 提交事务
-    if let Err(e) = tx.commit().await {
-        return ApiResponse::from(TopemsError::internal("提交事务失败", e));
-    }
-
+    drop(scope);
     let total = req.projects.len();
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
@@ -786,7 +786,7 @@ pub async fn batch_create_projects(
     let response_data = serde_json::to_value(&result).ok();
 
     crate::modules::audit::log_audit_event(
-        &state.db,
+        &state.system_pool,
         "batch_create".to_string(),
         "project".to_string(),
         None,
@@ -877,7 +877,7 @@ pub async fn batch_delete_projects(
             let response_data = serde_json::to_value(&result).ok();
 
             crate::modules::audit::log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "batch_delete".to_string(),
                 "project".to_string(),
                 None,
@@ -902,7 +902,7 @@ pub async fn batch_delete_projects(
             tracing::error!("批量删除项目失败: {}", e);
 
             crate::modules::audit::log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "batch_delete".to_string(),
                 "project".to_string(),
                 None,
@@ -991,7 +991,7 @@ pub async fn export_projects(
                 tracing::error!("导出项目 CSV 头部失败: {}", e);
 
                 crate::modules::audit::log_audit_event(
-                    &state.db,
+                    &state.system_pool,
                     "export".to_string(),
                     "project".to_string(),
                     None,
@@ -1037,7 +1037,7 @@ pub async fn export_projects(
                     tracing::error!("导出项目 CSV 行失败: {}", e);
 
                     crate::modules::audit::log_audit_event(
-                        &state.db,
+                        &state.system_pool,
                         "export".to_string(),
                         "project".to_string(),
                         None,
@@ -1065,7 +1065,7 @@ pub async fn export_projects(
                     let filename = format!("projects_{}.csv", Utc::now().format("%Y%m%d_%H%M%S"));
 
                     crate::modules::audit::log_audit_event(
-                        &state.db,
+                        &state.system_pool,
                         "export".to_string(),
                         "project".to_string(),
                         None,
@@ -1096,7 +1096,7 @@ pub async fn export_projects(
                     tracing::error!("导出项目 CSV 完成失败: {}", e);
 
                     crate::modules::audit::log_audit_event(
-                        &state.db,
+                        &state.system_pool,
                         "export".to_string(),
                         "project".to_string(),
                         None,
@@ -1123,7 +1123,7 @@ pub async fn export_projects(
             tracing::error!("导出项目失败: {}", e);
 
             crate::modules::audit::log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "export".to_string(),
                 "project".to_string(),
                 None,
@@ -1190,7 +1190,7 @@ pub async fn import_projects(
             tracing::error!("解析 CSV 头部失败: {}", e);
 
             crate::modules::audit::log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "import".to_string(),
                 "project".to_string(),
                 None,
@@ -1332,7 +1332,7 @@ pub async fn import_projects(
     let response_data = serde_json::to_value(&result).ok();
 
     crate::modules::audit::log_audit_event(
-        &state.db,
+        &state.system_pool,
         "import".to_string(),
         "project".to_string(),
         None,

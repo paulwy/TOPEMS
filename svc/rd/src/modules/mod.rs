@@ -6,6 +6,7 @@ use topems_shared_auth::auth::AuthState;
 use topems_shared_core::config::Config;
 use topems_shared_core::health::SystemMetrics;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 
 pub mod ai_integration;
@@ -30,7 +31,12 @@ pub mod statistics;
 
 #[derive(Clone)]
 pub struct ApiState {
-    pub db: PgPool,
+    /// 请求链路统一入口：已开启 `deny_request_own_txn` + `deny_request_tenant_scope`。
+    /// handler 通过 `RlsTxnCell` 复用请求事务，不得再自开租户作用域。
+    pub db: Db,
+    /// 系统通道专用连接池：仅用于审计落库、健康探针与池指标，
+    /// 不得用于请求租户查询。
+    pub system_pool: PgPool,
     pub auth_state: AuthState,
     pub config: Config,
     pub metrics: Arc<SystemMetrics>,
@@ -44,7 +50,7 @@ impl FromRef<ApiState> for AuthState {
     }
 }
 
-impl FromRef<ApiState> for PgPool {
+impl FromRef<ApiState> for Db {
     fn from_ref(state: &ApiState) -> Self {
         state.db.clone()
     }
@@ -75,7 +81,10 @@ pub fn create_routes() -> Router<ApiState> {
 
 /// RD 模块健康检查（业务面）：返回 ok + 数据库探活。
 async fn rd_health(State(state): State<ApiState>) -> ApiResponse<String> {
-    let db_ok = sqlx::query("SELECT 1").fetch_one(&state.db).await.is_ok();
+    let db_ok = sqlx::query("SELECT 1")
+        .fetch_one(&state.system_pool)
+        .await
+        .is_ok();
     if db_ok {
         ApiResponse::success("ok".to_string(), "rd 服务健康")
     } else {

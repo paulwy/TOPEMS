@@ -290,7 +290,7 @@ pub async fn create_formula(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "formula".to_string(),
         Some(id),
@@ -467,7 +467,7 @@ pub async fn update_formula(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "formula".to_string(),
         Some(id),
@@ -538,7 +538,7 @@ pub async fn delete_formula(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "formula".to_string(),
         Some(id),

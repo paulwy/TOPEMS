@@ -10,6 +10,7 @@ use topems_shared_bootstrap::{
 };
 use topems_shared_core::config::Config;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use utoipa::OpenApi;
 
 mod cache;
@@ -80,7 +81,12 @@ async fn main() -> anyhow::Result<()> {
 
     // ── 构建自定义 modules::ApiState ─────────────────────────────────────
     let api_state = ApiState {
-        db: ctx.db.clone(),
+        // 请求链路统一走受守卫的 Db；handler 复用 tenant_middleware 注入的请求事务。
+        db: Db::new(ctx.db.clone(), "rs, public, shared")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
+        // 审计落库、健康探针与池指标使用原始池，不参与请求租户查询。
+        system_pool: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
         config: config_app.clone(),
         metrics: ctx.metrics.clone(),
@@ -195,14 +201,14 @@ async fn main() -> anyhow::Result<()> {
 async fn health_check(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<String>> {
-    build_simple_status_response(&state.db).await
+    build_simple_status_response(&state.system_pool).await
 }
 
 async fn health_check_detailed(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<topems_shared_core::health::ServiceHealth>> {
     build_detailed_service_health(
-        &state.db,
+        &state.system_pool,
         "topems-rd",
         Some(&state.metrics.get_uptime()),
         vec![],
@@ -235,6 +241,7 @@ struct RdServiceMetrics {
 async fn get_metrics(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<RdServiceMetrics>> {
+    let pool_stats = state.db.stats();
     let metrics = RdServiceMetrics {
         service_name: "topems-rd".to_string(),
         uptime_seconds: state.metrics.get_uptime_seconds(),
@@ -242,8 +249,8 @@ async fn get_metrics(
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),
-        database_pool_size: state.db.size(),
-        database_pool_idle: state.db.num_idle(),
+        database_pool_size: pool_stats.size,
+        database_pool_idle: pool_stats.idle,
     };
 
     Json(ApiResponse::success(metrics, "服务指标"))
