@@ -2012,22 +2012,27 @@ pub async fn start_replication(
         return ApiResponse::not_found("未找到复制配置");
     };
 
-    if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+    match sqlx::query(
+        "UPDATE master_data.mdm_replication_configs SET status = $3 WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(&config.id)
     .bind(tenant)
+    .bind(replication_status_to_str(&ReplicationStatus::Running))
     .execute(&mut db_scope)
     .await
-    .map_err(|e| TopemsError::internal("启动复制失败", e))
     {
-        return ApiResponse::from(e);
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "复制配置不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("启动复制失败", e)),
     }
 
     ApiResponse::success(
         serde_json::json!({
             "replication_id": config.id,
-            "status": "running",
+            "status": replication_status_to_str(&ReplicationStatus::Running),
             "source_region": config.source_region,
             "target_region": config.target_region,
             "started_at": chrono::Utc::now().to_rfc3339(),
@@ -2075,21 +2080,24 @@ pub async fn stop_replication(
         return ApiResponse::not_found("未找到复制配置");
     };
 
-    if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_replication_configs SET status = 'stopped' WHERE id = $1",
-    )
-    .bind(&config.id)
-    .execute(&mut db_scope)
-    .await
-    .map_err(|e| TopemsError::internal("停止复制失败", e))
+    match sqlx::query("UPDATE master_data.mdm_replication_configs SET status = $2 WHERE id = $1")
+        .bind(&config.id)
+        .bind(replication_status_to_str(&ReplicationStatus::Stopped))
+        .execute(&mut db_scope)
+        .await
     {
-        return ApiResponse::from(e);
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = db_scope.rollback().await;
+            return ApiResponse::error(409, "复制配置不存在或不可更新");
+        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("停止复制失败", e)),
     }
 
     ApiResponse::success(
         serde_json::json!({
             "replication_id": config.id,
-            "status": "stopped",
+            "status": replication_status_to_str(&ReplicationStatus::Stopped),
             "stopped_at": chrono::Utc::now().to_rfc3339(),
         }),
         "复制已停止",
