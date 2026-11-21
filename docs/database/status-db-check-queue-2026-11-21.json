@@ -6,6 +6,7 @@
     "uncovered_enums": 99,
     "uncovered_values": 108,
     "finance_candidate_constraints": 25,
+    "resolved_enums": 13,
     "internal_state_enums": 32,
     "persisted_unmapped_enums": 56,
     "api_projection_enums": 25,
@@ -699,7 +700,14 @@
           "invoiced"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/commercial_v55.rs",
+        "enum": "BillingStatus",
+        "table": "master_data.mdm_billing_records",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -710,7 +718,14 @@
           "investigating"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/commercial_v55.rs",
+        "enum": "IncidentStatus",
+        "table": "master_data.mdm_sla_incidents",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -721,7 +736,14 @@
           "expired"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/commercial_v55.rs",
+        "enum": "SubscriptionStatus",
+        "table": "master_data.mdm_subscriptions",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -733,7 +755,14 @@
           "tested"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/disaster_v56.rs",
+        "enum": "ContinuityPlanStatus",
+        "table": "master_data.mdm_continuity_plans",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -747,7 +776,14 @@
           "rolled_back"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/disaster_v56.rs",
+        "enum": "FailoverStatus",
+        "table": "master_data.mdm_failover_records",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -758,7 +794,14 @@
           "executing"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/disaster_v56.rs",
+        "enum": "RecoveryPlanStatus",
+        "table": "master_data.mdm_recovery_plans",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -773,7 +816,14 @@
           "online"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/disaster_v56.rs",
+        "enum": "RegionStatus",
+        "table": "master_data.mdm_region_configs",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -790,7 +840,14 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/master-data/src/modules/disaster_v56.rs",
+        "enum": "ReplicationStatus",
+        "table": "master_data.mdm_replication_configs",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -805,7 +862,14 @@
           "retired"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/governance_v58.rs",
+        "enum": "DataProductStatus",
+        "table": "master_data.mdm_data_products",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -818,7 +882,14 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/master-data/src/modules/governance_v58.rs",
+        "enum": "WorkflowStatus",
+        "table": "master_data.mdm_workflows",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -829,7 +900,15 @@
           "skipped"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/governance_v58.rs",
+        "enum": "WorkflowStepStatus",
+        "table": "master_data.mdm_workflows",
+        "column": "steps(jsonb)",
+        "persisted": false,
+        "reason": "步骤状态嵌在 steps jsonb 数组里，没有独立列，无法用列级 CHECK 约束"
+      }
     },
     {
       "module": "master-data",
@@ -845,7 +924,14 @@
       },
       "candidate_targets": [
         "finance.finance_v55_invoices.v55_invoices_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/master-data/src/modules/quality_v51.rs",
+        "enum": "FixStatus",
+        "table": "master_data.mdm_auto_fix_actions",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "master-data",
@@ -857,7 +943,14 @@
           "warning"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/master-data/src/modules/quality_v51.rs",
+        "enum": "QualityStatus",
+        "table": "master_data.mdm_quality_checks",
+        "column": "status",
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "mes",

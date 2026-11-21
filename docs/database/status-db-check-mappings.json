@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "note": "人工确认的枚举→表列映射；只登记已读代码与 DB 列核对过的项",
+  "mappings": [
+    { "file": "svc/master-data/src/modules/commercial_v55.rs", "enum": "SubscriptionStatus", "table": "master_data.mdm_subscriptions", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/commercial_v55.rs", "enum": "BillingStatus", "table": "master_data.mdm_billing_records", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/commercial_v55.rs", "enum": "IncidentStatus", "table": "master_data.mdm_sla_incidents", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "RecoveryPlanStatus", "table": "master_data.mdm_recovery_plans", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "ContinuityPlanStatus", "table": "master_data.mdm_continuity_plans", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "RegionStatus", "table": "master_data.mdm_region_configs", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "ReplicationStatus", "table": "master_data.mdm_replication_configs", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/disaster_v56.rs", "enum": "FailoverStatus", "table": "master_data.mdm_failover_records", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/governance_v58.rs", "enum": "DataProductStatus", "table": "master_data.mdm_data_products", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/quality_v51.rs", "enum": "QualityStatus", "table": "master_data.mdm_quality_checks", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/governance_v58.rs", "enum": "WorkflowStatus", "table": "master_data.mdm_workflows", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" },
+    { "file": "svc/master-data/src/modules/governance_v58.rs", "enum": "WorkflowStepStatus", "table": "master_data.mdm_workflows", "column": "steps(jsonb)", "persisted": false, "reason": "步骤状态嵌在 steps jsonb 数组里，没有独立列，无法用列级 CHECK 约束" },
+    { "file": "svc/master-data/src/modules/quality_v51.rs", "enum": "FixStatus", "table": "master_data.mdm_auto_fix_actions", "column": "status", "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql" }
+  ]
+}

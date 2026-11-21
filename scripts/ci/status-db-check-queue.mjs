@@ -25,6 +25,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const INV = path.join(ROOT, "docs/database/status-code-inventory.json");
 const SQL = path.join(ROOT, "docs/database/finance-status-check-candidates-2026-11-21.sql");
 const OUT = path.join(ROOT, "docs/database/status-db-check-queue-2026-11-21.json");
+const MAPPINGS = path.join(ROOT, "docs/database/status-db-check-mappings.json");
 
 function parseCandidateColumns() {
   if (!fs.existsSync(SQL)) return [];
@@ -82,6 +83,12 @@ function main() {
     }
   }
 
+  const resolvedMap = new Map();
+  if (fs.existsSync(MAPPINGS)) {
+    const { mappings = [] } = JSON.parse(fs.readFileSync(MAPPINGS, "utf8"));
+    for (const m of mappings) resolvedMap.set(`${m.file}#${m.enum}`, m);
+  }
+
   const rows = [];
   for (const { e } of enumSignals) {
     const values = e.normalized.filter((v) => gaps.has(v));
@@ -94,6 +101,7 @@ function main() {
       enum: e.name,
       values_by_bucket: byBucket,
       candidate_targets: [...new Set(values.flatMap((v) => candidateValues.get(v) ?? []))],
+      ...(resolvedMap.has(`${e.file}#${e.name}`) ? { resolved: resolvedMap.get(`${e.file}#${e.name}`) } : {}),
     });
   }
   const buckets = {};
@@ -111,6 +119,7 @@ function main() {
       uncovered_enums: rows.length,
       uncovered_values: gaps.size,
       finance_candidate_constraints: cols.length,
+      resolved_enums: rows.filter((r) => r.resolved).length,
       ...Object.fromEntries(Object.entries(buckets).map(([k, v]) => [`${k}_enums`, v.enums])),
       ...Object.fromEntries(Object.entries(buckets).map(([k, v]) => [`${k}_values`, v.values])),
     },
