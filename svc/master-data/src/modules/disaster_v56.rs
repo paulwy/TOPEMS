@@ -2296,7 +2296,7 @@ pub async fn complete_failover(
     };
     let tenant = tenant_of(&claims);
     let record = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE id = $1 OR id = $2"
+        "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE (id = $1 OR id = $2) AND status IN ('initiated','in_progress','completed','rolled_back')"
     )))
     .bind(&id)
     .bind(&req.failover_id)
@@ -2400,7 +2400,7 @@ pub async fn get_failover_history(
         }
     };
     let records: Vec<FailoverRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records"
+        "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE status IN ('initiated','in_progress','completed','rolled_back')"
     )))
     .fetch_all(&mut db_scope)
     .await
