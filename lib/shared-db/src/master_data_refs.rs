@@ -397,8 +397,26 @@ impl MasterDataRefService {
     /// 按 tenant_id + domain + code 查询
     ///
     /// 替代 unified-core get_ref_by_code 的 SELECT * FROM ... WHERE tenant_id AND domain AND code。
+    /// **Standalone（非事务）**：自开只读租户作用域，仅限后台/事件/脚本；
+    /// 请求链路请用 [`Self::get_by_domain_and_code_tx`]。
     pub async fn get_by_domain_and_code(
         &self,
+        tenant_id: Uuid,
+        domain: &str,
+        code: &str,
+    ) -> Result<Option<MasterDataRef>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let result = self
+            .get_by_domain_and_code_tx(&mut scope, tenant_id, domain, code)
+            .await?;
+        scope.commit().await?;
+        Ok(result)
+    }
+
+    /// 按 tenant_id + domain + code 查询（复用调用方事务）
+    pub async fn get_by_domain_and_code_tx(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         domain: &str,
         code: &str,
@@ -409,15 +427,12 @@ impl MasterDataRefService {
                FROM {} WHERE tenant_id = $1 AND domain = $2 AND code = $3"#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let result = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(code)
-            .fetch_optional(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(result)
+            .fetch_optional(&mut *scope)
+            .await
     }
 
     /// 分页列表查询（含动态过滤 + COUNT）
@@ -426,6 +441,36 @@ impl MasterDataRefService {
     /// code/name 使用 ILIKE 模糊匹配，domain/status 精确匹配。
     pub async fn list_by_tenant(
         &self,
+        tenant_id: Uuid,
+        offset: i64,
+        limit: i64,
+        domain: Option<&str>,
+        code: Option<&str>,
+        name: Option<&str>,
+        status: Option<&str>,
+    ) -> Result<(Vec<MasterDataRef>, i64), sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let result = self
+            .list_by_tenant_in_scope(
+                &mut scope,
+                tenant_id,
+                offset,
+                limit,
+                domain,
+                code,
+                name,
+                status,
+            )
+            .await?;
+        scope.commit().await?;
+        Ok(result)
+    }
+
+    /// 分页列表查询（复用调用方事务）
+    #[allow(clippy::too_many_arguments)]
+    pub async fn list_by_tenant_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         offset: i64,
         limit: i64,
@@ -487,10 +532,8 @@ impl MasterDataRefService {
             list_query = list_query.bind(s);
         }
 
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let total: i64 = count_query.fetch_one(&mut scope).await?;
-        let items = list_query.fetch_all(&mut scope).await?;
-        scope.commit().await?;
+        let total: i64 = count_query.fetch_one(&mut *scope).await?;
+        let items = list_query.fetch_all(&mut *scope).await?;
         Ok((items, total))
     }
 
@@ -498,33 +541,52 @@ impl MasterDataRefService {
 
     /// 按 tenant_id 统计总数
     pub async fn count_by_tenant(&self, tenant_id: Uuid) -> Result<i64, sqlx::Error> {
-        let sql = format!(
-            "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
-            self.table_name
-        );
         let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
-            .bind(tenant_id)
-            .fetch_one(&mut scope)
-            .await?;
+        let count = self.count_by_tenant_in_scope(&mut scope, tenant_id).await?;
         scope.commit().await?;
         Ok(count)
     }
 
+    /// 按 tenant_id 统计总数（复用调用方事务）
+    pub async fn count_by_tenant_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+    ) -> Result<i64, sqlx::Error> {
+        let sql = format!(
+            "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
+            self.table_name
+        );
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+            .bind(tenant_id)
+            .fetch_one(&mut *scope)
+            .await
+    }
+
     /// 按 tenant_id + domain 统计总数
     pub async fn count_by_domain(&self, tenant_id: Uuid, domain: &str) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self.count_by_domain_in_scope(&mut scope, tenant_id, domain).await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 按 tenant_id + domain 统计总数（复用调用方事务）
+    pub async fn count_by_domain_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 按 tenant_id + domain + status(=) 统计
@@ -534,19 +596,32 @@ impl MasterDataRefService {
         domain: &str,
         status: &str,
     ) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_by_domain_status_in_scope(&mut scope, tenant_id, domain, status)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 按 tenant_id + domain + status(=) 统计（复用调用方事务）
+    pub async fn count_by_domain_status_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+        status: &str,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2 AND status = $3",
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(status)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 按 tenant_id + domain + status(!=) 统计
@@ -556,19 +631,32 @@ impl MasterDataRefService {
         domain: &str,
         status: &str,
     ) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_by_domain_status_not_in_scope(&mut scope, tenant_id, domain, status)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 按 tenant_id + domain + status(!=) 统计（复用调用方事务）
+    pub async fn count_by_domain_status_not_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+        status: &str,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2 AND status != $3",
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(status)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 按 tenant_id + status(=) 统计（无 domain 过滤）
@@ -577,18 +665,30 @@ impl MasterDataRefService {
         tenant_id: Uuid,
         status: &str,
     ) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_by_tenant_status_in_scope(&mut scope, tenant_id, status)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 按 tenant_id + status(=) 统计（复用调用方事务）
+    pub async fn count_by_tenant_status_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        status: &str,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(status)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 统计 active 且 last_synced_at < threshold 的记录数（按 domain）
@@ -598,20 +698,33 @@ impl MasterDataRefService {
         domain: &str,
         threshold: DateTime<Utc>,
     ) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_stale_by_domain_in_scope(&mut scope, tenant_id, domain, threshold)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 统计 active 且 last_synced_at < threshold 的记录数（按 domain，复用调用方事务）
+    pub async fn count_stale_by_domain_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+        threshold: DateTime<Utc>,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             r#"SELECT COUNT(*) FROM {}
                WHERE tenant_id = $1 AND domain = $2 AND status = 'active' AND last_synced_at < $3"#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(threshold)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 统计 active 且 last_synced_at < threshold 的记录数（全 domain）
@@ -620,19 +733,31 @@ impl MasterDataRefService {
         tenant_id: Uuid,
         threshold: DateTime<Utc>,
     ) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_stale_total_in_scope(&mut scope, tenant_id, threshold)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 统计 active 且 last_synced_at < threshold 的记录数（全 domain，复用调用方事务）
+    pub async fn count_stale_total_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        threshold: DateTime<Utc>,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             r#"SELECT COUNT(*) FROM {}
                WHERE tenant_id = $1 AND status = 'active' AND last_synced_at < $2"#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(threshold)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 查询 MAX(updated_at)（按 domain）
@@ -641,19 +766,31 @@ impl MasterDataRefService {
         tenant_id: Uuid,
         domain: &str,
     ) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let result = self
+            .get_max_updated_at_in_scope(&mut scope, tenant_id, domain)
+            .await?;
+        scope.commit().await?;
+        Ok(result)
+    }
+
+    /// 查询 MAX(updated_at)（按 domain，复用调用方事务）
+    pub async fn get_max_updated_at_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+    ) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
         let sql = format!(
             "SELECT MAX(updated_at) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_optional(&mut scope)
-            .await?
-            .flatten();
-        scope.commit().await?;
-        Ok(result)
+            .fetch_optional(&mut *scope)
+            .await
+            .map(Option::flatten)
     }
 
     /// 查询 MAX(last_synced_at)（按 domain）
@@ -662,25 +799,51 @@ impl MasterDataRefService {
         tenant_id: Uuid,
         domain: &str,
     ) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let result = self
+            .get_max_last_synced_at_in_scope(&mut scope, tenant_id, domain)
+            .await?;
+        scope.commit().await?;
+        Ok(result)
+    }
+
+    /// 查询 MAX(last_synced_at)（按 domain，复用调用方事务）
+    pub async fn get_max_last_synced_at_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+    ) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
         let sql = format!(
             "SELECT MAX(last_synced_at) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_optional(&mut scope)
-            .await?
-            .flatten();
-        scope.commit().await?;
-        Ok(result)
+            .fetch_optional(&mut *scope)
+            .await
+            .map(Option::flatten)
     }
 
     // ==================== core schema：复杂聚合（质量看板） ====================
 
     /// 统计重复编码组数（全 domain，GROUP BY code, domain HAVING COUNT > 1）
     pub async fn count_duplicate_groups(&self, tenant_id: Uuid) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_duplicate_groups_in_scope(&mut scope, tenant_id)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 统计重复编码组数（全 domain，复用调用方事务）
+    pub async fn count_duplicate_groups_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+    ) -> Result<i64, sqlx::Error> {
         let sql = format!(
             r#"
             SELECT COUNT(*) FROM (
@@ -691,18 +854,30 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 统计重复编码组数（按 domain，GROUP BY code HAVING COUNT > 1）
     pub async fn count_duplicate_groups_by_domain(
         &self,
+        tenant_id: Uuid,
+        domain: &str,
+    ) -> Result<i64, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let count = self
+            .count_duplicate_groups_by_domain_in_scope(&mut scope, tenant_id, domain)
+            .await?;
+        scope.commit().await?;
+        Ok(count)
+    }
+
+    /// 统计重复编码组数（按 domain，复用调用方事务）
+    pub async fn count_duplicate_groups_by_domain_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         domain: &str,
     ) -> Result<i64, sqlx::Error> {
@@ -716,19 +891,28 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .fetch_one(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(count)
+            .fetch_one(&mut *scope)
+            .await
     }
 
     /// 查询重复编码详情（含 master_data_ids 聚合）
     pub async fn list_duplicates(
         &self,
+        tenant_id: Uuid,
+    ) -> Result<Vec<DuplicateRecord>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let rows = self.list_duplicates_in_scope(&mut scope, tenant_id).await?;
+        scope.commit().await?;
+        Ok(rows)
+    }
+
+    /// 查询重复编码详情（复用调用方事务）
+    pub async fn list_duplicates_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
     ) -> Result<Vec<DuplicateRecord>, sqlx::Error> {
         let sql = format!(
@@ -742,18 +926,30 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let rows = sqlx::query_as::<_, DuplicateRecord>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_as::<_, DuplicateRecord>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
-            .fetch_all(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(rows)
+            .fetch_all(&mut *scope)
+            .await
     }
 
     /// 查询过期数据详情（含 hours_since_sync 计算列）
     pub async fn list_stale(
         &self,
+        tenant_id: Uuid,
+        threshold: DateTime<Utc>,
+    ) -> Result<Vec<StaleRecord>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let rows = self
+            .list_stale_in_scope(&mut scope, tenant_id, threshold)
+            .await?;
+        scope.commit().await?;
+        Ok(rows)
+    }
+
+    /// 查询过期数据详情（复用调用方事务）
+    pub async fn list_stale_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         threshold: DateTime<Utc>,
     ) -> Result<Vec<StaleRecord>, sqlx::Error> {
@@ -767,14 +963,11 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let rows = sqlx::query_as::<_, StaleRecord>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_as::<_, StaleRecord>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(threshold)
-            .fetch_all(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(rows)
+            .fetch_all(&mut *scope)
+            .await
     }
 
     // ==================== local schema：crm/scm UPSERT ====================

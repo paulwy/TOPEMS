@@ -137,6 +137,21 @@ impl ReconciliationLogService {
         tenant_id: Uuid,
         domain: &str,
     ) -> Result<u64, sqlx::Error> {
+        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
+        let result = self
+            .insert_from_master_data_refs_in_scope(&mut scope, tenant_id, domain)
+            .await?;
+        scope.commit().await?;
+        Ok(result)
+    }
+
+    /// 在调用方已开启的租户作用域内写入待同步对账问题；提交边界由调用方负责。
+    pub async fn insert_from_master_data_refs_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+    ) -> Result<u64, sqlx::Error> {
         let sql = format!(
             r#"
             INSERT INTO {log} (tenant_id, domain, master_data_id, issue_type, description, detected_at, resolved)
@@ -156,22 +171,37 @@ impl ReconciliationLogService {
             log = self.table_name,
             refs = self.refs_table_name
         );
-        let mut scope = self.db.scope_for_tenant(tenant_id).await?;
-        let result = sqlx::query(sqlx::AssertSqlSafe(sql))
+        sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
-            .execute(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(result.rows_affected())
+            .execute(&mut *scope)
+            .await
+            .map(|result| result.rows_affected())
     }
 
     /// 查询对账日志（支持 unresolved_only 过滤）
     ///
     /// 封装 unified-core list_reconciliation_logs 的 SQL。
-    /// **Standalone（非事务）**：自开只读租户作用域，仅限后台/事件路径；请求链路应由调用方事务承载。
+    /// **Standalone（非事务）**：自开只读租户作用域，仅限后台/事件路径；
+    /// 请求链路请用 [`Self::query_reconciliation_logs_in_scope`]。
     pub async fn query_reconciliation_logs(
         &self,
+        tenant_id: Uuid,
+        unresolved_only: bool,
+        limit: i64,
+    ) -> Result<Vec<ReconciliationLog>, sqlx::Error> {
+        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
+        let rows = self
+            .query_reconciliation_logs_in_scope(&mut scope, tenant_id, unresolved_only, limit)
+            .await?;
+        scope.commit().await?;
+        Ok(rows)
+    }
+
+    /// 查询对账日志（复用调用方事务）
+    pub async fn query_reconciliation_logs_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         unresolved_only: bool,
         limit: i64,
@@ -194,14 +224,11 @@ impl ReconciliationLogService {
                 base
             )
         };
-        let mut scope = self.db.scope_read_for_tenant(tenant_id).await?;
-        let rows = sqlx::query_as::<_, ReconciliationLog>(sqlx::AssertSqlSafe(sql))
+        sqlx::query_as::<_, ReconciliationLog>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(limit)
-            .fetch_all(&mut scope)
-            .await?;
-        scope.commit().await?;
-        Ok(rows)
+            .fetch_all(&mut *scope)
+            .await
     }
 
     /// 标记对账问题已解决

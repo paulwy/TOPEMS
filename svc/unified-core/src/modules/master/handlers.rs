@@ -439,6 +439,21 @@ impl MasterDataService {
         Ok(result)
     }
 
+    /// 按 ID 查询（复用请求事务）
+    pub async fn get_ref_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        master_data_id: &str,
+    ) -> Result<Option<MasterDataRef>, sqlx::Error> {
+        let result = self
+            .ref_service
+            .get_by_id_tx(scope, master_data_id, tenant_id)
+            .await?
+            .map(MasterDataRef::from);
+        Ok(result)
+    }
+
     /// 按业务编码查询
     pub async fn get_ref_by_code(
         &self,
@@ -454,9 +469,26 @@ impl MasterDataService {
         Ok(result)
     }
 
+    /// 按业务编码查询（复用请求事务）
+    pub async fn get_ref_by_code_in_scope(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+        domain: &str,
+        code: &str,
+    ) -> Result<Option<MasterDataRef>, sqlx::Error> {
+        let result = self
+            .ref_service
+            .get_by_domain_and_code_tx(scope, tenant_id, domain, code)
+            .await?
+            .map(MasterDataRef::from);
+        Ok(result)
+    }
+
     /// 列表查询
     pub async fn list_refs(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         query: MasterDataQuery,
     ) -> Result<(Vec<MasterDataRef>, i64), sqlx::Error> {
@@ -466,7 +498,8 @@ impl MasterDataService {
 
         let (items, total) = self
             .ref_service
-            .list_by_tenant(
+            .list_by_tenant_in_scope(
+                scope,
                 tenant_id,
                 offset,
                 page_size,
@@ -509,7 +542,10 @@ impl MasterDataService {
         scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
     ) -> Result<MdmOverallStats, sqlx::Error> {
-        let total: i64 = self.ref_service.count_by_tenant(tenant_id).await?;
+        let total: i64 = self
+            .ref_service
+            .count_by_tenant_in_scope(scope, tenant_id)
+            .await?;
 
         let since = Utc::now() - Duration::hours(24);
         let recent: i64 = sqlx::query_scalar(
@@ -530,17 +566,17 @@ impl MasterDataService {
         ] {
             let count: i64 = self
                 .ref_service
-                .count_by_domain(tenant_id, domain_str)
+                .count_by_domain_in_scope(scope, tenant_id, domain_str)
                 .await?;
 
             let active: i64 = self
                 .ref_service
-                .count_by_domain_status(tenant_id, domain_str, "active")
+                .count_by_domain_status_in_scope(scope, tenant_id, domain_str, "active")
                 .await?;
 
             let last_updated = self
                 .ref_service
-                .get_max_updated_at(tenant_id, domain_str)
+                .get_max_updated_at_in_scope(scope, tenant_id, domain_str)
                 .await?;
 
             by_domain.push(DomainStats {
@@ -560,7 +596,11 @@ impl MasterDataService {
     }
 
     /// 同步状态
-    pub async fn get_sync_status(&self, tenant_id: Uuid) -> Result<Vec<SyncStatus>, sqlx::Error> {
+    pub async fn get_sync_status(
+        &self,
+        scope: &mut ScopedTxn<'_>,
+        tenant_id: Uuid,
+    ) -> Result<Vec<SyncStatus>, sqlx::Error> {
         let mut statuses = Vec::new();
         for (domain, source) in [
             ("customer", "crm"),
@@ -572,12 +612,12 @@ impl MasterDataService {
         ] {
             let last_sync = self
                 .ref_service
-                .get_max_last_synced_at(tenant_id, domain)
+                .get_max_last_synced_at_in_scope(scope, tenant_id, domain)
                 .await?;
 
             let pending: i64 = self
                 .ref_service
-                .count_by_domain_status(tenant_id, domain, "pending_sync")
+                .count_by_domain_status_in_scope(scope, tenant_id, domain, "pending_sync")
                 .await
                 .unwrap_or(0);
 
@@ -635,22 +675,29 @@ impl MasterDataService {
     /// 生成主数据质量报告
     pub async fn get_quality_report(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         stale_threshold_hours: i64,
     ) -> Result<QualityReport, sqlx::Error> {
-        let total: i64 = self.ref_service.count_by_tenant(tenant_id).await?;
+        let total: i64 = self
+            .ref_service
+            .count_by_tenant_in_scope(scope, tenant_id)
+            .await?;
 
-        let duplicate_count: i64 = self.ref_service.count_duplicate_groups(tenant_id).await?;
+        let duplicate_count: i64 = self
+            .ref_service
+            .count_duplicate_groups_in_scope(scope, tenant_id)
+            .await?;
 
         let stale_threshold = Utc::now() - Duration::hours(stale_threshold_hours);
         let stale_count: i64 = self
             .ref_service
-            .count_stale_total(tenant_id, stale_threshold)
+            .count_stale_total_in_scope(scope, tenant_id, stale_threshold)
             .await?;
 
         let inconsistency_count: i64 = self
             .ref_service
-            .count_by_tenant_status(tenant_id, "pending_sync")
+            .count_by_tenant_status_in_scope(scope, tenant_id, "pending_sync")
             .await?;
 
         let mut by_domain = Vec::new();
@@ -664,32 +711,32 @@ impl MasterDataService {
         ] {
             let d_total: i64 = self
                 .ref_service
-                .count_by_domain_status_not(tenant_id, domain_str, "deleted")
+                .count_by_domain_status_not_in_scope(scope, tenant_id, domain_str, "deleted")
                 .await?;
 
             let d_active: i64 = self
                 .ref_service
-                .count_by_domain_status(tenant_id, domain_str, "active")
+                .count_by_domain_status_in_scope(scope, tenant_id, domain_str, "active")
                 .await?;
 
             let d_dup: i64 = self
                 .ref_service
-                .count_duplicate_groups_by_domain(tenant_id, domain_str)
+                .count_duplicate_groups_by_domain_in_scope(scope, tenant_id, domain_str)
                 .await?;
 
             let d_stale: i64 = self
                 .ref_service
-                .count_stale_by_domain(tenant_id, domain_str, stale_threshold)
+                .count_stale_by_domain_in_scope(scope, tenant_id, domain_str, stale_threshold)
                 .await?;
 
             let d_inconsist: i64 = self
                 .ref_service
-                .count_by_domain_status(tenant_id, domain_str, "pending_sync")
+                .count_by_domain_status_in_scope(scope, tenant_id, domain_str, "pending_sync")
                 .await?;
 
             let last_synced = self
                 .ref_service
-                .get_max_last_synced_at(tenant_id, domain_str)
+                .get_max_last_synced_at_in_scope(scope, tenant_id, domain_str)
                 .await?;
 
             let score = if d_total > 0 {
@@ -748,20 +795,28 @@ impl MasterDataService {
     /// 查询重复编码
     pub async fn list_duplicates(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
     ) -> Result<Vec<DuplicateRecord>, sqlx::Error> {
-        let rows = self.ref_service.list_duplicates(tenant_id).await?;
+        let rows = self
+            .ref_service
+            .list_duplicates_in_scope(scope, tenant_id)
+            .await?;
         Ok(rows.into_iter().map(DuplicateRecord::from).collect())
     }
 
     /// 查询过期数据
     pub async fn list_stale(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         threshold_hours: i64,
     ) -> Result<Vec<StaleRecord>, sqlx::Error> {
         let threshold = Utc::now() - Duration::hours(threshold_hours);
-        let rows = self.ref_service.list_stale(tenant_id, threshold).await?;
+        let rows = self
+            .ref_service
+            .list_stale_in_scope(scope, tenant_id, threshold)
+            .await?;
         Ok(rows.into_iter().map(StaleRecord::from).collect())
     }
 
@@ -770,6 +825,7 @@ impl MasterDataService {
     /// 执行对账检查
     pub async fn run_reconciliation(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
     ) -> Result<ReconciliationResult, sqlx::Error> {
         let domains = vec![
@@ -798,17 +854,17 @@ impl MasterDataService {
 
             let mdm_count: i64 = self
                 .ref_service
-                .count_by_domain_status_not(tenant_id, domain, "deleted")
+                .count_by_domain_status_not_in_scope(scope, tenant_id, domain, "deleted")
                 .await?;
 
             let active_count: i64 = self
                 .ref_service
-                .count_by_domain_status(tenant_id, domain, "active")
+                .count_by_domain_status_in_scope(scope, tenant_id, domain, "active")
                 .await?;
 
             let pending_count: i64 = self
                 .ref_service
-                .count_by_domain_status(tenant_id, domain, "pending_sync")
+                .count_by_domain_status_in_scope(scope, tenant_id, domain, "pending_sync")
                 .await
                 .unwrap_or(0);
 
@@ -835,7 +891,7 @@ impl MasterDataService {
             });
 
             if pending_count > 0 {
-                self.record_reconciliation_issues(tenant_id, domain, pending_count)
+                self.record_reconciliation_issues(scope, tenant_id, domain, pending_count)
                     .await?;
             }
         }
@@ -856,13 +912,14 @@ impl MasterDataService {
     /// V285: INSERT...SELECT 跨表写下沉到 ReconciliationLogService::insert_from_master_data_refs。
     async fn record_reconciliation_issues(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         domain: &str,
         count: i64,
     ) -> Result<(), sqlx::Error> {
         let affected = self
             .recon_service
-            .insert_from_master_data_refs(tenant_id, domain)
+            .insert_from_master_data_refs_in_scope(scope, tenant_id, domain)
             .await?;
 
         tracing::warn!(
@@ -879,13 +936,14 @@ impl MasterDataService {
     /// V285: SELECT SQL 下沉到 ReconciliationLogService::query_reconciliation_logs。
     pub async fn list_reconciliation_logs(
         &self,
+        scope: &mut ScopedTxn<'_>,
         tenant_id: Uuid,
         unresolved_only: bool,
         limit: i64,
     ) -> Result<Vec<ReconciliationLog>, sqlx::Error> {
         let rows = self
             .recon_service
-            .query_reconciliation_logs(tenant_id, unresolved_only, limit)
+            .query_reconciliation_logs_in_scope(scope, tenant_id, unresolved_only, limit)
             .await?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
@@ -1488,12 +1546,34 @@ pub async fn delete_ref_handler(
 pub async fn get_ref_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(master_data_id): Path<String>,
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::from_db(state.db.clone());
 
-    match service.get_ref(tenant_id, &master_data_id).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::error(500, "数据库事务上下文缺失");
+    };
+    let scope = if tenant_id.is_nil() {
+        state.db.scope_with_system(txn).await
+    } else {
+        state.db.scope_with(txn).await
+    };
+    let mut scope = match scope {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据查询事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("get_ref_handler", e));
+        }
+    };
+
+    match service
+        .get_ref_in_scope(&mut scope, tenant_id, &master_data_id)
+        .await
+    {
         Ok(Some(r)) => ApiResponse::success(r, "查询成功"),
         Ok(None) => ApiResponse::not_found("主数据引用不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_ref_handler", e)),
@@ -1504,12 +1584,34 @@ pub async fn get_ref_handler(
 pub async fn get_ref_by_code_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path((domain, code)): Path<(String, String)>,
 ) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::from_db(state.db.clone());
 
-    match service.get_ref_by_code(tenant_id, &domain, &code).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::error(500, "数据库事务上下文缺失");
+    };
+    let scope = if tenant_id.is_nil() {
+        state.db.scope_with_system(txn).await
+    } else {
+        state.db.scope_with(txn).await
+    };
+    let mut scope = match scope {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据查询事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("get_ref_by_code_handler", e));
+        }
+    };
+
+    match service
+        .get_ref_by_code_in_scope(&mut scope, tenant_id, &domain, &code)
+        .await
+    {
         Ok(Some(r)) => ApiResponse::success(r, "查询成功"),
         Ok(None) => ApiResponse::not_found("主数据引用不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_ref_by_code_handler", e)),
@@ -1520,6 +1622,7 @@ pub async fn get_ref_by_code_handler(
 pub async fn list_refs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<MasterDataQuery>,
 ) -> ApiResponse<MasterDataListResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -1528,7 +1631,21 @@ pub async fn list_refs_handler(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
 
-    match service.list_refs(tenant_id, query).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据列表事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据列表事务作用域失败".to_string(),
+            ));
+        }
+    };
+
+    match service.list_refs(&mut scope, tenant_id, query).await {
         Ok((items, total)) => ApiResponse::success(
             MasterDataListResponse {
                 items,
@@ -1601,11 +1718,25 @@ pub async fn get_overall_stats_handler(
 pub async fn get_sync_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<SyncStatus>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::from_db(state.db.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据同步状态事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据同步状态事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.get_sync_status(tenant_id).await {
+    match service.get_sync_status(&mut scope, tenant_id).await {
         Ok(status) => ApiResponse::success(status, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_sync_status_handler", e)),
     }
@@ -1617,13 +1748,30 @@ pub async fn get_sync_status_handler(
 pub async fn get_quality_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<QualityReportQuery>,
 ) -> ApiResponse<QualityReport> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let stale_hours = params.stale_threshold_hours.unwrap_or(24);
     let service = MasterDataService::from_db(state.db.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据质量报告事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据质量报告事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.get_quality_report(tenant_id, stale_hours).await {
+    match service
+        .get_quality_report(&mut scope, tenant_id, stale_hours)
+        .await
+    {
         Ok(report) => ApiResponse::success(report, "质量报告生成成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("get_quality_report_handler", e)),
     }
@@ -1633,11 +1781,25 @@ pub async fn get_quality_report_handler(
 pub async fn list_duplicates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<DuplicateRecord>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::from_db(state.db.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据重复编码事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据重复编码事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.list_duplicates(tenant_id).await {
+    match service.list_duplicates(&mut scope, tenant_id).await {
         Ok(dups) => ApiResponse::success(dups, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_duplicates_handler", e)),
     }
@@ -1647,13 +1809,27 @@ pub async fn list_duplicates_handler(
 pub async fn list_stale_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<StaleQuery>,
 ) -> ApiResponse<Vec<StaleRecord>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = params.stale_threshold_hours.unwrap_or(24);
     let service = MasterDataService::from_db(state.db.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据过期数据事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据过期数据事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.list_stale(tenant_id, threshold).await {
+    match service.list_stale(&mut scope, tenant_id, threshold).await {
         Ok(records) => ApiResponse::success(records, "查询成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("list_stale_handler", e)),
     }
@@ -1665,11 +1841,25 @@ pub async fn list_stale_handler(
 pub async fn run_reconciliation_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<ReconciliationResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::from_db(state.db.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据对账事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据对账事务作用域失败".to_string(),
+            ));
+        }
+    };
 
-    match service.run_reconciliation(tenant_id).await {
+    match service.run_reconciliation(&mut scope, tenant_id).await {
         Ok(result) => ApiResponse::success(result, "对账完成"),
         Err(e) => ApiResponse::from(TopemsError::internal("run_reconciliation_handler", e)),
     }
@@ -1679,15 +1869,29 @@ pub async fn run_reconciliation_handler(
 pub async fn list_reconciliation_logs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<ReconciliationLogQuery>,
 ) -> ApiResponse<Vec<ReconciliationLog>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let unresolved = params.unresolved_only.unwrap_or(false);
     let limit = params.limit.unwrap_or(50).min(200);
     let service = MasterDataService::from_db(state.db.clone());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务上下文缺失".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化主数据对账日志事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "初始化主数据对账日志事务作用域失败".to_string(),
+            ));
+        }
+    };
 
     match service
-        .list_reconciliation_logs(tenant_id, unresolved, limit)
+        .list_reconciliation_logs(&mut scope, tenant_id, unresolved, limit)
         .await
     {
         Ok(logs) => ApiResponse::success(logs, "查询成功"),
