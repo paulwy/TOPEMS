@@ -19,7 +19,7 @@
 - 每题都有 A/B/C 选项。**在选项后写「选 X」即可**；如果有选项都不符合，直接写实际场景，不用勉强选。
 - 涉及具体表的题，附件里按业务族列出了表名；不需要逐表回答，**按族回答一次即可**，只有个别表例外时单独注明。
 - 不确定的题请写「暂不确定」，不要默认选 A。默认选错会导致上线后返工。
-- 第 5 节是我们自己能查清、不需要你们回答的；第 6 节是需要你们回答的汇总，按优先级排序。
+- 第 6.1 节是我们自己能查清、不需要你们回答的；第 6.2 节是需要你们回答的汇总，按优先级排序。
 
 ### 0.3 术语速查
 
@@ -27,7 +27,7 @@
 |---|---|
 | 租户 | 一家使用系统的公司/组织。正常情况下，一家公司只能看到自己的数据。 |
 | 平台级数据 | 不属于任何一家公司、所有公司都能看的公共数据，例如系统菜单、字典、平台模板。 |
-| 集团 / 成员 | 如果一家集团下有多家公司分别开户，需要明确「集团能否汇总查看成员公司数据」。当前系统**没有**落地集团层级，默认一家公司就是一个隔离边界。 |
+| 集团 / 成员 | 业务已定性（2026-11-21）：**集团 = 一个租户下挂多家公司**（`hrm.companies` 的行），不是多家租户同属一个集团。母公司是其中一家，可看全部子公司；**子公司之间不可互看**（含同一母公司下的兄弟公司）。 |
 | 严格隔离 | 数据库强制只返回「当前公司」的行，任何代码漏过滤也看不到别家。 |
 | 宽松策略 | 数据库策略里带了「不属于任何公司也放行」的分支，等于部分放行。 |
 | allow_all | 数据库策略写死「全部放行」，完全不看公司。 |
@@ -53,9 +53,11 @@
 
 如果时间有限，请优先回答这三题，其余可以后补：
 
-1. **Q1**：ERP 合并报表 8 张表，集团内多公司数据是否允许互相可见？
-2. **Q14**：55 张「生产未开数据库隔离」的表，是否存在不带公司上下文的访问（定时任务、报表、服务账号、旧部署）？
-3. **Q9**：`public` 下 52 张表里，哪些是「所有公司都能看的平台公共数据」，哪些是「各公司自己的业务数据」？
+1. **Q14**：55 张「生产未开数据库隔离」的表，是否存在不带公司上下文的访问（定时任务、报表、服务账号、旧部署）？
+2. **Q9**：`public` 下 52 张表里，哪些是「所有公司都能看的平台公共数据」，哪些是「各公司自己的业务数据」？
+3. **Q-G3**：合并报表是否按「各公司关账后的期间快照 + 版本」出？请确认期间口径，以及合并取数是否只认子公司上报的关账数据。
+
+> 集团边界与子公司可见性已由业务定性（Q-G1/Q-G2 关闭），技术结论见 2.3、2.5。Q-G3～Q-G5 属「按通行做法暂定，待业务确认」，见 2.7。附录 E/F 是对应 Q14/Q9 的两份逐表材料。
 
 ---
 
@@ -67,12 +69,12 @@
   `系统通道开启时放行全量，否则 tenant_id = 当前公司`。
 - 数据库隔离（RLS）和强制隔离（FORCE）都已开启；普通用户查询只能看到当前公司。
 - 生产实测 **8 张表均为 0 行**（功能尚未产生数据），因此现在调整策略没有数据搬迁风险。
-- 仓库里另有一版「集团函数」写法 `erp.group_tenant_of()`，但该函数当前是**恒等函数**（输入什么返回什么），并没有真正的集团层级。也就是说：**即使把策略切到仓库写法，集团跨公司可见也不会自动生效**，必须先有集团-成员关系的数据模型。
+- 仓库里另有一版「集团函数」写法 `erp.group_tenant_of()`，但该函数当前是**恒等函数**（输入什么返回什么），解析结果就是租户自身。迁移注释已明确：**本模型里 tenant 本身就是集团边界，成员公司是同一 tenant 下的 `hrm.companies` 行**。也就是说：切到仓库写法仍是租户级隔离，**不会**自动产生「母公司看子公司」的效果；缺的是公司（company）维度，不是租户上层的集团层。
 - 唯一的实质行为差异在「系统通道」：生产版允许系统通道看全量，仓库版不允许。若有服务账号调用合并接口，切到仓库版会从「能看全量」静默变成「看到 0 行」。
 
 ### 2.2 逐表说明与需要确认的那一句
 
-| 表（均在 `erp` 下） | 当前策略 | 生产实际可见范围 | 需要业务确认的那一句 |
+| 表（均在 `erp` 下） | 当前策略 | 生产实际可见范围 | 逐表核对项（总口径已由 2.3/2.7 定性覆盖，保留用于逐表验收） |
 |---|---|---|---|
 | `company_relations`（公司关系） | 系统通道全量，否则本公司 | 普通用户仅本公司；系统通道全量 | 集团内公司之间的持股/关联关系，是由集团统一维护、多家公司共享，还是每家公司各自维护自己的关系？ |
 | `internal_transactions`（内部交易） | 同上 | 同上 | 内部交易台账是否允许集团财务跨多家公司汇总查看？ |
@@ -83,28 +85,104 @@
 | `elimination_rules`（抵消规则） | 同上 | 同上 | 抵消规则是集团统一模板，还是每家公司维护自己的规则？ |
 | `elimination_candidates`（抵消候选） | 同上 | 同上 | 抵消候选需要跨公司配对内部交易吗？如果需要，配对双方的数据是否都要可见？ |
 
-### 2.3 需要业务回答的问题
+### 2.3 业务定性（2026-11-21）
 
-**Q1（必须回答）合并报表的可见范围是哪一种？**
+业务方先给出集团口径（原 Q1-Q3），随后又补了两条硬定性：
 
-| 选项 | 含义 | 技术后果 |
+**已定性（不再作为开放问题）**
+
+| 编号 | 结论 | 对原问题的处理 |
 |---|---|---|
-| A. 仅本公司 | 合并报表只服务单家公司内部管理 | 可直接切严格隔离；若存在集团服务账号调用，会读到 0 行，需要同时清理调用方 |
-| B. 集团内跨公司 | 集团总部可以汇总查看成员公司 | 不能只改策略：要先建「集团-成员」关系（当前 `group_tenant_of` 是恒等函数），属于数据模型改造，需单独立项 |
-| C. 平台全量（仅特定角色） | 只有集团财务/审计等少数角色能看全部 | 保留系统通道，但必须明确「谁能拿到系统通道身份」，否则等于全部放行 |
-| D. 暂不确定 | — | 开窗时只能维持现状，合并报表族不纳入本轮回迁；其余批次不受影响 |
+| Q-G1 集团边界形态 | **集团 = 一个租户下挂多家公司**（同一 `tenant_id` 下的多条 `hrm.companies`），不是多家租户同属一个集团；母公司是集团内一家，可看全部子公司 | 原 Q1「合并报表可见范围」关闭；原 Q3「是否启用集团-成员模式」关闭 |
+| Q-G2 子公司可见性 | **子公司之间不可互看**，包括同一母公司下的兄弟公司；只有母公司向下看 | 新增定性，直接约束 2.5/2.6 的策略形状 |
+| — 系统账号 | 是否有服务账号调用合并接口，并入 Q16「系统通道白名单」统一回答 | 原 Q2 合并 |
 
-**Q2（必须回答）是否有系统账号/后台任务会调用合并报表接口？**
+**按通行做法暂定，待业务确认（Q-G3～Q-G5，详见 2.7）**
 
-- A. 没有，只有用户在前端操作 → 可以安全取消系统通道旁路。
-- B. 有，定时合并/对账任务 → 需要保留系统通道，或把这些任务改成显式传入公司身份。
-- C. 不确定 → 我们先查网关与调用日志（只读），但需要你们确认「是否有外部系统对接合并接口」。
+| 编号 | 暂定规则 |
+|---|---|
+| Q-G3 期间与版本 | 合并报表按各公司关账后的**期间快照**出；表需带「期间 + 版本」；合并以子公司上报的关账数据为准 |
+| Q-G4 管理动作边界 | 母公司对子公司允许管理性动作与流程操作（审批、下达、冻结、开关账期），但**不代子公司记账**；跨公司写默认禁止且必留痕 |
+| Q-G5 历史归属 | 组织归属按**当时归属**看历史；关系需存期间快照，组织调整**不回溯改写**历史合并数 |
 
-**Q3（必须回答）未来 12 个月是否会启用「集团-成员公司」模式？**
+### 2.4 三类动作分别要怎么表达
 
-- A. 不会 → 合并族按「单公司」设计即可。
-- B. 会，且要跨公司汇总 → 现在就要定集团边界的数据来源（哪张表、谁维护）。
-- C. 会，但只做数据上报、不做实时跨公司查询 → 可用离线汇总，不需要放开在线隔离。
+定性里其实包含三种不同动作，不能都用同一种「放开」解决：
+
+| 动作 | 数据边界 | 读/写 | 现在的技术可行性 | 应使用的授权表达 |
+|---|---|---|---|---|
+| 合并读（看合并报表/内部交易/抵消） | 同一租户内：本公司 + 母公司可见的子公司 | 读 | 租户策略不会挡（同一 `tenant_id`），但**策略里没有 company 维度**，现状是"同租户内公司彼此可见"→ 与「子公司不可互看」冲突，必须补 company 维度 | 母公司角色 + 可见子公司集合；子公司请求只放行本公司；不能用「集团内全可见」宽松策略 |
+| 母子公司管理（维护合并范围、公司关系、子公司主数据） | 母公司对子公司 | 写 | 写仍落本公司 `company_id`；对子公司的管理动作需显式动作白名单 + 留痕，不代记账（Q-G4 暂定） | 集团管理员角色 + 动作白名单；审计记录操作人、目标公司、动作类型 |
+| 浏览（查看子公司单据/报表详情） | 母公司读子公司明细 | 读 | 必须按业务域限定；若全业务放开，等于全库互相可见 | 集团浏览角色 + 只读；建议先只覆盖财务域 |
+
+**三种动作的共同底线**：① 租户仍是隔离边界，不引入跨租户读；② 子公司之间（含兄弟公司）不共享读集合；③ 系统通道（`app.rls_system='on'`）只留给后台任务，不作为「集团可见」的实现手段。
+
+### 2.5 模型核查：现有模型能不能承载集团层
+
+先说结论（对应「零改动 / 加字段 / 新增一层」）：
+- **不需要新增一层。** 租户已经是隔离边界，且迁移注释与真实外键都已把母子公司定义为同一 `tenant_id` 下的 `hrm.companies` 行。
+- **也不是零改动。** 8 张合并表的策略只按 `tenant_id` 过滤，公司维度没有进策略；按「子公司不可互看」，现状「同租户内公司彼此可见」必须收紧。
+- **准确说法：已有公司主体与母子公司关系（结构基本就位），缺的是 company 维度的策略与角色；只需给 4 张表补公司列，不是加集团层。**
+
+依据（均为仓库现有代码/迁移）：
+
+| 检查项 | 现状 | 证据 |
+|---|---|---|
+| 租户表没有上级/集团字段 | `core_tenants` 只有 `tenant_type`、`plan`、配额等，无 `parent_id` / `group_id` | `database/migrations/20261120235945_unified_core_schema_canonical.sql:328-353` |
+| `hrm.companies` 就是公司（法人主体）主表 | 有 `legal_person`、`tax_number`、`registration_number`、`functional_currency`、`tenant_id`、`organization_id`；公司从属于租户 | `database/migrations/20261120235900_hrm_schema_canonical.sql:77-101` |
+| 母子关系已存在且限定同租户 | `erp.company_relations` 有 `parent_company_id` / `child_company_id` / `effective_date` / `expiry_date`；外键为 `(tenant_id, company_id) → hrm.companies` | `database/migrations/20261121100000_erp_schema_canonical.sql:107-124`、`:898-905` |
+| 合并迁移注释已固化「tenant 即集团边界」 | 原文：成员公司是同一 tenant 下的 `hrm.companies` 行；`group_tenant_of()` 只做恒等解析 | `database/migrations/20261114180000_erp_consolidation_group_tenant_rls.sql:12-23`、`:49-63`、`:65-71` |
+| 合并族已有 4 张带公司列 | `consolidation_scope_companies.company_id NOT NULL`、`internal_transactions.from_company_id/to_company_id`、`elimination_candidates.from_company_id/to_company_id`、`company_relations.parent/child_company_id` | `20261121100000_erp_schema_canonical.sql:178-194`、`:410-433`；`20261109140100_p4_elimination_candidates.sql:10-24` |
+| 另 4 张没有公司列 | `consolidation_scopes`、`consolidation_reports`、`consolidation_report_lines`、`elimination_rules` 只有 `organization_id` / `scope_id` / `report_id`，无 `company_id` | `20261121100000_erp_schema_canonical.sql:126-141`、`:143-177`、`:196-213`、`:268-286` |
+| 期间有、版本无 | `consolidation_reports` 有 `period` / `year` / `month` / `quarter`，无版本列；`consolidation_report_lines` 只有 `current_period` / `prior_period`（金额），无期间与版本列 | `20261121100000_erp_schema_canonical.sql:143-177`、`:126-141` |
+| 8 张策略只按 tenant | 策略形状 `tenant_id = app.tenant_id`（生产另含系统通道旁路），没有任何 company 谓词 | `20261121100000_erp_schema_canonical.sql:988-1004`；`20261114180000_erp_consolidation_group_tenant_rls.sql:30-37` |
+| 身份只携带一个租户 | `Claims.tenant_id: Option<String>`，没有 company / 可见公司集合 | `lib/shared-auth/src/auth.rs:44` |
+| 作用域只有「租户 / 系统」两态 | `ScopeInner::Tenant(Uuid)` / `ScopeInner::System`；无公司维度 | `lib/shared-auth/src/middleware/tenant_scope.rs:53-63`、`:100-122` |
+| 数据权限按租户键控 | `iam.data_permissions.tenant_id NOT NULL`，无公司维度授权 | `database/migrations/20260716000002_create_resource_permissions_table.sql:12-19` |
+
+### 2.6 最小改动面（公司维度）与实测影响
+
+按「一步到位 + 通用」的目标，最小方案是把**公司维度**接进策略与授权，不碰租户边界：
+
+1. **结构（1 个迁移，4 张表）**：给 `consolidation_scopes`、`consolidation_reports`、`consolidation_report_lines`、`elimination_rules` 补 `company_id`；`consolidation_reports` / `report_lines` 另补 `period_version`（Q-G3 暂定规则）。其余 4 张已带公司列，不动结构。
+2. **身份与作用域（2 个文件）**：`Claims` 增加 `company_id`（可由租户默认公司解析）；`TenantScope` 增加公司只读维度与「母公司可见集合」；新增 GUC `app.company_id` / `app.visible_company_ids`。**不引入跨租户读。**
+3. **策略（8 张表）**：
+   - 写：`company_id = app.company_id`（写仍限本公司，不代子公司记账）；
+   - 读：`company_id = app.company_id OR (app.actor_is_parent AND company_id = ANY(app.visible_company_ids))`；
+   - 可见集合按 `erp.company_relations` 的有效期解析；**兄弟公司不进入彼此集合**。
+4. **授权（iam 1-2 张）**：母公司合并读角色、集团管理员动作白名单（审批/下达/冻结/开关账期，均留痕）；可复用 `iam.data_permissions` 加公司维度，或新增公司授权表。
+5. **影响数量（实测）**：结构 4 张 + 策略 8 张 + 身份 2 个文件 + 授权 1-2 张。若「浏览」扩到全部业务 → **290 张**（附录 A）+ **55 张**（附录 E），接近全库放开，必须先限定财务域。
+6. **系统通道复核（不改表）**：集团能力落地后，把靠系统通道实现跨公司读写的任务逐条迁到公司授权，收缩白名单。
+
+**必须等业务再确认的**：Q-G3（期间 + 版本，决定报表头/行是否加列）、Q-G4（管理动作清单与留痕粒度，决定授权表设计）、Q-G5（历史归属快照，决定 `company_relations` 是否按期间存快照）。
+
+### 2.7 问题状态：已定性 / 按通行做法暂定
+
+**Q-G1（已定性，仅需回执）集团与母子公司在系统里是什么关系？**
+
+业务口径：**一个租户下挂多家公司**（同一 `tenant_id` 的多条 `hrm.companies`），母公司是其中一家，可看全部子公司。技术侧据此确认：不新增租户级集团层，公司维度复用现有 `hrm.companies` + `erp.company_relations`。
+
+**Q-G2（已定性，仅需回执）子公司之间能否互看？**
+
+业务口径：**不可互看，包括同一母公司下的兄弟公司**；只有母公司向下看。技术侧据此确认：不能使用「同租户内全可见」的宽松读策略，必须按公司集合收敛。
+
+**Q-G3（按通行做法暂定，待确认）合并报表的期间口径与版本**
+
+- 暂定：按各公司关账后的**期间快照**出；表带「期间 + 版本」；合并以子公司上报的关账数据为准。
+- 待确认：关账口径（月/季/年）、版本是否允许重述、重述后历史版本是否保留。
+- 技术后果：`consolidation_reports` / `report_lines` 需要补 `period_version`；若允许重述，读路径要能指定版本。
+
+**Q-G4（按通行做法暂定，待确认）母公司对子公司的管理动作边界**
+
+- 暂定：允许管理性动作与流程操作（审批、下达、冻结、开关账期），**不代子公司记账**；跨公司写默认禁止且**必留痕**。
+- 待确认：动作清单（哪些算管理动作）、留痕字段（操作人/目标公司/动作/前后值）、由谁维护母子关系（集团管理员 or 平台运维）。
+- 技术后果：决定授权表与审计字段；写路径仍落本公司 `company_id`，不开放代记账。
+
+**Q-G5（按通行做法暂定，待确认）组织归属与历史合并数**
+
+- 暂定：按**当时归属**看历史；关系存期间快照；组织调整**不回溯改写**历史合并数。
+- 待确认：归属快照按期间存还是按变更事件存；跨期调整是否需要「追溯重述」例外。
+- 技术后果：`erp.company_relations` 已有 `effective_date` / `expiry_date`，可支撑「当时归属」；若要求逐期快照，需新增关系快照表或按期间归档。层级深度（单层/多层）由实际关系数据决定，按递归解析，不再单独提问。
 
 ---
 
@@ -275,7 +353,7 @@
 
 ### 4.3 生产「RLS 关闭」55 张（必须先确认访问路径）
 
-现状：这 55 张表在生产**没有开启数据库隔离**，仓库侧已经写好严格策略，回迁时会一次性打开。仓库未落盘逐表名单，开窗前会用只读查询导出（附录 D 提供 SQL），并与仓库迁移做差分。
+现状：这 55 张表在生产**没有开启数据库隔离**，仓库侧已经写好严格策略，回迁时会一次性打开。逐表名单与代码调用点见**附录 E**；开窗前仍建议按附录 D 的只读查询复核一次。
 
 当前它们靠什么隔离，只有三种可能，需要逐一确认：
 
@@ -290,7 +368,7 @@
 - A. 全部走应用层过滤，没有后台任务/报表/服务账号直连 → 可以开窗打开隔离。
 - B. 有定时任务/报表/对账程序在无公司上下文下读写 → 需要先列出这些程序，改成显式传入公司身份，或加入系统通道白名单。
 - C. 存在单租户/嵌入式旧部署直连 → 需要先确认旧部署是否还在运行。
-- D. 不清楚，需要我们按表导出「代码调用点 + 是否有租户条件」后，你们再确认。
+- D. 不清楚 → 附录 E 已给出逐表功能与调用点，可直接按表勾选「应用层过滤 / 单租户部署 / 无隔离 / 可下线」。
 
 技术后果：选 A 可直接开；选 B 打开隔离后相关任务会静默读到 0 行或写入被拒（表现为报表为空、同步失败）；选 C 可能导致旧部署不可用；选 D 我们可先做代码侧自查，但仍需要你们确认「是否有外部程序直连数据库」。
 
@@ -341,19 +419,33 @@
 | S3 | 318 张线下收紧回迁的机械性 | 用终态库对生产镜像重算：317 张已严格，1 张 `bi.audit_logs` 两侧同为放行 | 回迁脚本可机械生成；只剩 8 张合并族与 55 张未开隔离需要定性 |
 | S4 | 87 张无策略表是否为空、是否有代码引用 | 生产实测全部 0 行；全仓检索仅少量在用表有引用 | 43 张 `iam` + 18 张 `flow` + 11 张 `public` + 1 张 `plugin_erp` 属历史副本，可列 DROP 候选 |
 | S5 | 16 张 allow_all 的行数与代码路径 | 仅 `hrm.initialization_logs` 有 1 行；其余 0 行；逐表代码路径已盘点 | 目录类与业务类可先分组，等 Q12 确认 |
-| S6 | 合并报表族是否已有集团层级模型 | `erp.group_tenant_of()` 当前为恒等函数 | 现在切仓库写法不会产生跨公司可见，必须先有集团-成员数据 |
+| S6 | 合并报表族是否已有集团层级模型 | `hrm.companies` 是公司主表；`erp.company_relations` 有母子公司与有效期，外键限定同租户；`group_tenant_of()` 为恒等函数 | 租户即边界已固化，公司维度已有；缺的是 4 张表的公司列与 8 张表的策略/角色 |
 | S7 | 55 张未开隔离表的「仓库有策略 / 生产无隔离」差分 | 需生产只读导出（附录 D） | 导出后即可给出逐表清单，不需要业务参与 |
 
 ### 6.2 必须等业务的（开窗前置）
 
 | 优先级 | 问题 | 阻塞对象 | 不回答的后果 |
 |---|---|---|---|
-| P0 | Q1、Q2、Q3 | ERP 合并报表 8 张 | 无法决定策略形态；选错会出现跨公司可见或集团查询全空 |
+| P0 | Q-G1、Q-G2 | —（已定性，仅需回执） | 已关闭；技术方案见 2.5/2.6，无需等待 |
 | P0 | Q14 | 55 张生产未开隔离表 | 打开隔离后后台任务/旧部署可能静默失效 |
 | P0 | Q9 | `public` 52 张 | 误判会导致菜单/字典全空或业务数据互相可见 |
+| P0 | Q-G3 | 合并报表 8 张 | 期间/版本口径决定报表头与行是否补列，影响迁移设计 |
 | P1 | Q4-Q8、Q10、Q11 | 8 批宽松策略 | 选错会导致合法跨公司查询被挡或越权可见 |
-| P1 | Q12、Q13 | allow_all 16 张 / 无策略 87 张 | 影响是否可在本轮回迁中一并清理 |
-| P2 | Q15、Q16、Q17 | 平台级数据与系统通道总则 | 影响所有批次的白名单与平台级策略范围 |
+| P1 | Q-G4、Q-G5 | 合并族写权限与历史归属 | 决定授权表、审计字段与关系快照设计 |
+| P2 | Q15、Q16 | 平台级数据与系统通道总则 | 影响所有批次的白名单与平台级策略范围 |
+| P2 | Q12、Q13、Q17（已降级为抽认） | allow_all 16 张 / 无策略 87 张 / 无公司身份调用 | 技术侧已自查；业务只需抽认是否有例外 |
+
+### 6.3 相对原 17 题的变化
+
+| 变化 | 原题 | 说明 |
+|---|---|---|
+| 关闭（2） | Q1、Q3 | 业务已定性「集团口径」，且明确集团 = 同一租户下多家公司 |
+| 合并（1） | Q2 → Q16 | 系统账号问题统一并入系统通道白名单 |
+| 降级为「技术自查 + 业务抽认」（3） | Q12、Q13、Q17 | Q13 的 87 张已实测 0 行、无仓库运行期引用；Q17 已全仓扫描，只剩外部直连需确认；Q12 已给出目录类/业务类分组 |
+| 保留待答（11） | Q4-Q11、Q14、Q15、Q16 | 仍需业务按族/按表确认 |
+| 新增（5） | Q-G1～Q-G5 | Q-G1、Q-G2 当日已定性（仅回执）；Q-G3～Q-G5 按通行做法暂定，待确认 |
+
+计数核对：17 = 关闭 2 + 合并 1 + 降级 3 + 保留 11；新增 5 不在原 17 题内。
 
 ---
 
@@ -420,7 +512,7 @@
 
 ## 附录 D：55 张「生产 RLS 关闭」清单导出方法（只读）
 
-仓库未落盘逐表名单，开窗前用下列只读查询导出，并与仓库迁移做差分：
+逐表名单已按仓库既有生产盘点在附录 E 落盘；开窗前仍建议用下列只读查询复核一次，确认生产现状与附录 E 一致：
 
 ```sql
 -- 生产库只读执行：列出未开启行级隔离的表
@@ -435,7 +527,135 @@ WHERE c.relkind = 'r'
 ORDER BY 1;
 ```
 
-导出后我们会补一份「表名 + 当前隔离方式（应用层过滤 / 单租户部署 / 无隔离）」的逐表清单，再请业务确认 Q14。**该查询不写数据，不影响生产。**
+导出后按附录 E 的「表名 + 功能 + 调用点」逐条核对，再请业务确认 Q14。**该查询不写数据，不影响生产。**
+
+---
+
+## 附录 E：55 张「生产 RLS 关闭」逐表清单与调用点
+
+口径：87 张无策略（附录 C）− 14 张活表（`bi` 8 + `qms` 3 + `public.core_file_permissions` + `public.monitor_thresholds` + `iam.core_tenant_plugins`）− 18 张 `flow` 影子 = **55 张 = `public` 11 + `iam` 43 + `plugin_erp` 1**。名单来自 [loose-rls-prod-inventory-2026-11-18.md](./loose-rls-prod-inventory-2026-11-18.md) 附录 C.3（机器可读段）。
+
+### E.1 `public` 11 张
+
+| 表 | 功能 | 代码调用点（仓库实测） | 打开隔离前的风险 |
+|---|---|---|---|
+| `public.core_tickets` | 工单主表影子 | `svc/ticket/src/handlers.rs`（裸名 `core_tickets`） | 若仍读写 `public`，需确认每次都带租户条件 |
+| `public.core_ticket_activities` | 工单活动 | 无 schema 限定引用 | 随工单族一起确认 |
+| `public.core_ticket_comments` | 工单评论 | 无 | 同上 |
+| `public.core_ticket_sla_escalations` | 工单 SLA 升级 | 无 | 同上 |
+| `public.core_ticket_sla_policies` | 工单 SLA 策略 | 无 | 同上 |
+| `public.conversion_rules` | 集成转换规则 | `svc/integration/src/rule_engine.rs`（`conversion_rules` 模块，裸名） | 规则可能被所有公司共用，需确认是否平台模板 |
+| `public.conversion_executions` | 转换执行记录 | `svc/integration` 同一模块 | 执行记录应属公司 |
+| `public.analytics_sync_records` | 分析同步记录 | 无 | 需确认同步任务是否带公司上下文 |
+| `public.pm_master_data_refs` | 主数据引用 | 仅 `lib/shared-db/src/database/mod.rs:287` 注释提及裸名历史，无 SQL 调用 | 低风险 |
+| `public.qa_qms_sync_records` | QMS 同步记录 | 无 | 随 QMS 同步任务确认 |
+| `public.core_users` | 用户镜像 | `svc/analytics/src/main.rs:328/385/426`（只读，带 `tenant_id` 谓词）；全仓无写入 | 收紧后看板用户计数仍为 0（现状即 0） |
+
+### E.2 `iam` 43 张
+
+统一结论：`iam` 不在任何服务的 `search_path`，全仓唯一的 `iam.` 限定运行期引用是 `iam.core_tenant_plugins`（不在这 43 张内）。因此这 43 张**没有仓库内运行期调用点**；打开隔离的真实风险是外部直连/旧部署（Q14 的 B/C）。其中 34 张在 `public`/`core`/`portal`/`communication` 有同名权威表，另 9 张（billing/chat/subscriptions 等）只存在于 `iam`，仅有 `schema_defense.rs` 注释引用。
+
+| # | 表（`iam.` 下） | 功能 | # | 表（`iam.` 下） | 功能 |
+|---:|---|---|---:|---|---|
+| 1 | `core_billing_invoices` | 账单发票 | 23 | `core_notification_templates` | 通知模板 |
+| 2 | `core_billing_plans` | 套餐 | 24 | `core_notifications` | 通知 |
+| 3 | `core_chat_members` | 聊天成员 | 25 | `core_plugin_categories` | 插件分类 |
+| 4 | `core_chat_messages` | 聊天消息 | 26 | `core_plugin_instances` | 插件实例 |
+| 5 | `core_chat_rooms` | 聊天房间 | 27 | `core_plugin_permissions` | 插件权限 |
+| 6 | `core_dashboard_refresh_log` | 看板刷新日志 | 28 | `core_plugin_pricing` | 插件定价 |
+| 7 | `core_dict_items` | 字典项 | 29 | `core_plugin_reviews` | 插件评价 |
+| 8 | `core_dict_types` | 字典类型 | 30 | `core_plugins` | 插件 |
+| 9 | `core_email_queue` | 邮件队列 | 31 | `core_roles` | 角色 |
+| 10 | `core_email_templates` | 邮件模板 | 32 | `core_subscriptions` | 订阅 |
+| 11 | `core_emails` | 邮件 | 33 | `core_tenant_modules` | 租户模块 |
+| 12 | `core_faqs` | FAQ | 34 | `core_tenant_settings` | 租户设置 |
+| 13 | `core_file_folders` | 文件目录 | 35 | `core_tenant_usage` | 租户用量 |
+| 14 | `core_files` | 文件 | 36 | `core_tenant_users` | 租户用户 |
+| 15 | `core_guide_lessons` | 引导课节 | 37 | `core_usage_records` | 用量记录 |
+| 16 | `core_guide_progress` | 引导进度 | 38 | `core_users` | 用户 |
+| 17 | `core_guides` | 引导 | 39 | `core_workflow_instances` | 流程实例 |
+| 18 | `core_inter_module_sync` | 模块间同步 | 40 | `core_workflow_tasks` | 流程任务 |
+| 19 | `core_login_logs` | 登录日志 | 41 | `core_workflows` | 流程定义 |
+| 20 | `core_menu_groups` | 菜单分组 | 42 | `tenant_permissions` | 租户级工具权限 |
+| 21 | `core_menus` | 菜单 | 43 | `core_migration_history` | 迁移历史 |
+| 22 | `core_mobile_offline_records` | 移动离线记录 | | | |
+
+**唯一例外**：`iam.tenant_permissions` 有真实运行期调用——`svc/unified-core/src/routes/business_tools/database_permission_store.rs:220/285/338/366/396/428/479/574`（读写都显式带 `tenant_id`）。打开隔离前必须确认这些连接都设置了请求事务的租户 GUC，否则权限读写会变成 0 行。
+
+### E.3 `plugin_erp` 1 张
+
+| 表 | 功能 | 调用点 | 建议 |
+|---|---|---|---|
+| `plugin_erp.accounting_subjects` | 会计科目影子 | 无；权威表为 `finance.accounting_subjects`（`svc/finance` 走 `finance,public`） | DROP 候选，不建议单独补策略 |
+
+### E.4 核对结论
+
+- 55 张里，**只有 2 张有仓库内运行期调用**：`iam.tenant_permissions`（读写，需补租户 GUC）和 `public.core_users`（analytics 只读，已带租户谓词）。
+- 其余 53 张无 schema 限定调用；打开隔离的风险主要来自**外部直连、定时任务、旧部署**，需业务按功能确认（Q14）。
+- 43 张 `iam` 表名来自生产只读导出，仓库无 `CREATE TABLE` 定义，逐表名以附录 C.3 为准。
+
+---
+
+## 附录 F：`public` 52 张分组建议（对应 Q9）
+
+> 依据：表名语义 + 仓库是否有表定义 + 是否带 `tenant_id`。实测：16 张在仓库无定义（生产独有），4 张（`approvals`、`approval_records`、`core_workflow_instances`、`core_workflow_tasks`）**没有 `tenant_id` 列**，收紧前需补列或明确平台级。最终以生产列与业务确认为准。
+
+| 表 | 建议分组 | 一句依据 |
+|---|---|---|
+| `_archive_core_workflow_instances` | 不确定 | 归档表，仓库无定义；需确认是否仍需在线保留 |
+| `_archive_core_workflow_versions` | 不确定 | 同上 |
+| `approval_records` | 业务数据 | 审批记录属公司业务；表缺 `tenant_id`，需补列 |
+| `approvals` | 业务数据 | 审批单属公司；表缺 `tenant_id`，需补列 |
+| `automation_rules` | 业务数据 | 公司自建自动化规则 |
+| `automation_runs` | 业务数据 | 规则执行记录 |
+| `automation_variables` | 业务数据 | 公司变量 |
+| `core_doc_documents` | 业务数据 | 公司文档 |
+| `core_doc_folders` | 业务数据 | 公司文档目录 |
+| `core_doc_templates` | 公共字典 | 平台文档模板，各公司只读；若允许公司自建则改业务 |
+| `core_email_queue` | 业务数据 | 发件队列属公司 |
+| `core_emails` | 业务数据 | 邮件属公司 |
+| `core_faqs` | 公共字典 | 平台 FAQ |
+| `core_file_folders` | 业务数据 | 公司文件目录 |
+| `core_files` | 业务数据 | 公司文件 |
+| `core_finance_accounts` | 业务数据 | 公司财务账户 |
+| `core_finance_vouchers` | 业务数据 | 公司凭证 |
+| `core_flow_categories` | 公共字典 | 流程分类目录 |
+| `core_guide_lessons` | 公共字典 | 平台引导内容 |
+| `core_guide_progress` | 业务数据 | 用户引导进度，按人/公司 |
+| `core_guides` | 公共字典 | 平台引导 |
+| `core_inter_module_sync` | 不确定 | 模块间同步游标，需确认按模块还是按公司 |
+| `core_master_data_change_log` | 业务数据 | 主数据变更日志属公司 |
+| `core_master_data_refs` | 业务数据 | 主数据引用属公司 |
+| `core_mdm_approvals` | 业务数据 | MDM 审批属公司 |
+| `core_mdm_reconciliation_log` | 业务数据 | 对账日志属公司 |
+| `core_migration_history` | 不确定 | 迁移历史，平台/运维专用语义 |
+| `core_notification_templates` | 公共字典 | 通知模板由平台维护 |
+| `core_notifications` | 业务数据 | 通知属公司 |
+| `core_tenant_modules` | 不确定 | 租户开通模块：按租户键控，但含平台目录语义 |
+| `core_tenant_usage` | 业务数据 | 租户用量按租户 |
+| `core_workflow_instances` | 业务数据 | 流程实例；表缺 `tenant_id`，需补列 |
+| `core_workflow_tasks` | 业务数据 | 流程任务；表缺 `tenant_id`，需补列 |
+| `core_workflow_versions` | 业务数据 | 流程版本属公司 |
+| `core_workflows` | 业务数据 | 流程定义属公司 |
+| `cqrs_events` | 不确定 | 事件总线，需确认是否含跨公司载荷 |
+| `crm_dashboard_snapshots` | 业务数据 | CRM 看板快照（按命名；仓库无定义） |
+| `ehs_dashboard_snapshots` | 业务数据 | EHS 看板快照（按命名；仓库无定义） |
+| `finance_voucher_templates` | 公共字典 | 凭证模板平台预置 |
+| `financial_reports` | 业务数据 | 财务报表属公司 |
+| `hrm_dashboard_snapshots` | 业务数据 | HR 看板快照（按命名；仓库无定义） |
+| `lims_dashboard_snapshots` | 业务数据 | LIMS 看板快照（按命名；仓库无定义） |
+| `monitor_settings` | 不确定 | 监控设置，可能平台级也可能公司级 |
+| `pdm_change_notices` | 业务数据 | 变更通知属公司 |
+| `pdm_dashboard_snapshots` | 业务数据 | PDM 看板快照（按命名；仓库无定义） |
+| `pdm_materials` | 业务数据 | 物料主数据属公司；若集团统一维护则为混合 |
+| `pdm_products` | 业务数据 | 产品主数据属公司 |
+| `permission_audit_logs` | 业务数据 | 权限审计属公司；平台审计只读为例外 |
+| `search_entity_projections` | 不确定 | 搜索投影，需确认是否混合多公司 |
+| `system_settings` | 不确定 | 系统设置可能是平台级 + 公司级混合 |
+| `tenant_permissions` | 业务数据 | 租户级工具权限，按租户键控 |
+| `wms_dashboard_snapshots` | 业务数据 | WMS 看板快照（按命名；仓库无定义） |
+
+**分组计数**：公共字典 **7** 张、业务数据 **36** 张、不确定 **9** 张。不确定的 9 张需要业务逐张确认，其余两组可按「平台级只读 / 公司隔离」先出策略草案。
 
 ---
 
