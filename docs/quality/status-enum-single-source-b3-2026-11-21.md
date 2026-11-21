@@ -39,6 +39,14 @@ B3 覆盖 finance 的 5 个 PostgreSQL ENUM 状态列，全部已在 DB 层拒�
 i18n 统一补 18 个 `finance.status.*` 键（zh/en），详情页原有 4 个
 `status_approved / status_submitted / status_cancelled / status_rejected` 保留。
 
+
+## 3.1 Rust 侧重复枚举
+
+`svc/finance/src/domain/value_objects.rs` 另有一份 `VoucherStatus`，只有
+`draft/submitted/approved/posted/reversed` 五态，读不到 DB 的 `rejected/cancelled`。
+已删除该重复定义，改为 `pub use crate::models::VoucherStatus`，域层聚合与仓储
+统一复用带 `sqlx::Type` 的完整七态实现；补 `rejected/cancelled` 序列化往返用例。
+
 ## 4. 验证
 
 - `node scripts/ci/gen-finance-status.mjs --check` 通过

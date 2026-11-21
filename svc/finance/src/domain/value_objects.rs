@@ -16,15 +16,8 @@ pub struct AgingBucket {
     pub amount: f64,
 }
 
-// 凭证状态
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum VoucherStatus {
-    Draft,
-    Submitted,
-    Approved,
-    Posted,
-    Reversed,
-}
+// 凭证状态：唯一实现复用 models::VoucherStatus（含 DB 的 rejected/cancelled）。
+pub use crate::models::VoucherStatus;
 
 // 收付款状态
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, utoipa::ToSchema)]
@@ -107,6 +100,14 @@ mod tests {
     #[test]
     fn rt_voucher_status_reversed() {
         roundtrip(&VoucherStatus::Reversed);
+    }
+    #[test]
+    fn rt_voucher_status_rejected() {
+        roundtrip(&VoucherStatus::Rejected);
+    }
+    #[test]
+    fn rt_voucher_status_cancelled() {
+        roundtrip(&VoucherStatus::Cancelled);
     }
     #[test]
     fn rt_settlement_status_unsettled() {
