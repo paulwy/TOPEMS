@@ -217,8 +217,14 @@ async fn main() -> Result<()> {
         tracing::warn!("⚠️ SCM 事件订阅者启动失败: {}", e);
     }
 
+    // 请求链路统一走受守卫的 Db；handler 复用 tenant_middleware 注入的请求事务。
+    let request_db = topems_shared_db::scope::Db::new(ctx.db.clone(), "scm, public, shared")
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
     let api_state = ApiState {
-        db: ctx.db.clone(),
+        db: request_db,
+        // 审计落库、补偿短事务、健康探针与后台同步任务使用原始池（系统通道）。
+        system_pool: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
         cache: redis_cache,
         event_publisher: ctx.event_publisher.clone(),

@@ -211,7 +211,7 @@ pub async fn create_order(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "purchase_order".to_string(),
         Some(id),
@@ -392,7 +392,7 @@ pub async fn update_order(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "purchase_order".to_string(),
         Some(id),
@@ -488,7 +488,7 @@ pub async fn delete_order(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "purchase_order".to_string(),
         Some(id),
@@ -693,7 +693,7 @@ pub async fn approve_order(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "approve".to_string(),
         "purchase_order".to_string(),
         Some(id),
@@ -841,7 +841,7 @@ pub async fn reject_order(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "reject".to_string(),
         "purchase_order".to_string(),
         Some(id),
@@ -972,7 +972,7 @@ async fn transition_order(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         audit_action.to_string(),
         "purchase_order".to_string(),
         Some(id),

@@ -435,7 +435,7 @@ pub async fn create_notice(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "incoming_notice".to_string(),
         Some(id),
@@ -620,7 +620,7 @@ pub async fn update_notice(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "incoming_notice".to_string(),
         Some(id),
@@ -848,7 +848,7 @@ pub async fn create_inspection(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "incoming_inspection".to_string(),
         Some(id),
@@ -1029,7 +1029,7 @@ pub async fn update_inspection(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "incoming_inspection".to_string(),
         Some(id),
@@ -1183,7 +1183,7 @@ pub async fn inspection_pass(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "pass".to_string(),
         "incoming_inspection".to_string(),
         Some(id),
@@ -1330,7 +1330,7 @@ pub async fn inspection_fail(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "fail".to_string(),
         "incoming_inspection".to_string(),
         Some(id),

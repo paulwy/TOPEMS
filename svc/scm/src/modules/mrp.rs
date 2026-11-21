@@ -661,7 +661,7 @@ pub async fn compute_mrp(
         Err(e) => {
             tracing::error!("MRP计算失败: {}", e);
             log_audit_event(
-                &state.db,
+                &state.system_pool,
                 "compute".to_string(),
                 "mrp_suggestion".to_string(),
                 None,
@@ -694,7 +694,7 @@ pub async fn compute_mrp(
     );
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "compute".to_string(),
         "mrp_suggestion".to_string(),
         None,
@@ -840,7 +840,7 @@ pub async fn confirm_suggestion(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "confirm".to_string(),
         "mrp_suggestion".to_string(),
         Some(id),
@@ -1056,7 +1056,7 @@ pub async fn import_demand_forecasts(
         rows.push((material_code.to_string(), item.quantity, forecast_date));
     }
 
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(scope) => scope,
         Err(e) => {

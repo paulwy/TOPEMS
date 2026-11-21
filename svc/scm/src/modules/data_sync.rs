@@ -772,7 +772,7 @@ async fn begin_tenant_txn(
     state: &ApiState,
     tenant_bind: Uuid,
 ) -> Result<sqlx::Transaction<'static, sqlx::Postgres>, sqlx::Error> {
-    let mut txn = state.db.begin().await?;
+    let mut txn = state.system_pool.begin().await?;
     let system = tenant_bind.is_nil();
     sqlx::query(
         "SELECT set_config('app.tenant_id', $1, true), \

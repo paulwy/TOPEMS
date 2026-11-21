@@ -17,7 +17,6 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_db::scope::Db;
 
 // ===== 数据类型 =====
 
@@ -69,7 +68,7 @@ pub async fn get_purchase_trend(
 
     // B-2 之后 scm 全表 fail-closed：裸池读会 0 行，必须走带租户 GUC 的读作用域。
     // M-1：复用 tenant_middleware 注入的请求事务，禁止再自开事务。
-    let db = Db::new(state.db.clone(), "scm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("请求事务缺失".to_string()));
@@ -152,7 +151,7 @@ pub async fn get_purchase_status(
         Err(e) => return e.0,
     };
 
-    let db = Db::new(state.db.clone(), "scm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("请求事务缺失".to_string()));
@@ -246,7 +245,7 @@ pub async fn get_supplier_ranking(
         Err(e) => return e.0,
     };
 
-    let db = Db::new(state.db.clone(), "scm, public, shared").deny_request_own_txn();
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("请求事务缺失".to_string()));

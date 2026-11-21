@@ -1,10 +1,10 @@
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
-    check_module_permission, check_resource_permission, ModuleCode,
+    check_module_permission_claims, check_resource_permission_claims, ModuleCode,
     ModulePermission as SharedModulePermission, PermissionAction,
 };
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -108,20 +108,20 @@ pub fn require_tenant_bind<T>(claims: &Claims) -> Result<Uuid, axum::Json<ApiRes
 }
 
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     permission: &ScmPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
+    check_module_permission_claims(claims, &shared_perm).await
 }
 
 pub async fn check_supplier_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     supplier_id: &Uuid,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_resource_permission(db, claims, supplier_id, "supplier", "scm:admin").await
+    check_resource_permission_claims(claims, supplier_id, "supplier", "scm:admin").await
 }
 
 #[cfg(test)]

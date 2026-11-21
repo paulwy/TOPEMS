@@ -204,7 +204,7 @@ pub async fn create_item(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "purchase_item".to_string(),
         Some(id),
@@ -375,7 +375,7 @@ pub async fn update_item(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "purchase_item".to_string(),
         Some(id),
@@ -458,7 +458,7 @@ pub async fn delete_item(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "purchase_item".to_string(),
         Some(id),

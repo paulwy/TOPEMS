@@ -186,7 +186,7 @@ pub async fn update_settings(
     });
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "module_settings".to_string(),
         None,

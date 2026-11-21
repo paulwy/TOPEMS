@@ -130,7 +130,7 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     tag = "scm_plugin"
 )]
 pub async fn plugin_health_check(State(state): State<ApiState>) -> ApiResponse<()> {
-    match sqlx::query("SELECT 1").fetch_one(&state.db).await {
+    match sqlx::query("SELECT 1").fetch_one(&state.system_pool).await {
         Ok(_) => ApiResponse::success((), "Healthy"),
         Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);

@@ -562,7 +562,7 @@ pub async fn create_supplier(
         tracing::debug!("🗑️ 供应商内存缓存已清空（创建供应商）");
 
         // scm → mdm 反向同步（后台异步，失败落死信，不阻塞主请求）
-        spawn_scm_supplier_to_mdm(state.db.clone(), id);
+        spawn_scm_supplier_to_mdm(state.system_pool.clone(), id);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
@@ -588,7 +588,7 @@ pub async fn create_supplier(
     });
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "supplier".to_string(),
         Some(id),
@@ -887,7 +887,7 @@ pub async fn update_supplier(
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
 
         // scm → mdm 反向同步（后台异步，失败落死信）
-        spawn_scm_supplier_to_mdm(state.db.clone(), id);
+        spawn_scm_supplier_to_mdm(state.system_pool.clone(), id);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
@@ -913,7 +913,7 @@ pub async fn update_supplier(
     });
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "supplier".to_string(),
         Some(id),
@@ -1077,7 +1077,7 @@ pub async fn delete_supplier(
 
         // scm 软删 → mdm 软删（后台异步；mdm 自建行不被软删）
         if let Some((sno, tid)) = deleted_info {
-            spawn_scm_supplier_delete_to_mdm(state.db.clone(), sno, tid);
+            spawn_scm_supplier_delete_to_mdm(state.system_pool.clone(), sno, tid);
         }
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -1105,7 +1105,7 @@ pub async fn delete_supplier(
     });
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "supplier".to_string(),
         Some(id),

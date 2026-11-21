@@ -305,7 +305,7 @@
     }
   },
   "db_new": {
-    "total": 155,
+    "total": 145,
     "files": {
       "lib/shared-db/src/audit.rs": {
         "total": 2
@@ -430,20 +430,14 @@
       "svc/scm/src/event_handlers/mod.rs": {
         "total": 11
       },
-      "svc/scm/src/modules/analytics.rs": {
-        "total": 3
+      "svc/scm/src/main.rs": {
+        "total": 1
       },
       "svc/scm/src/modules/audit.rs": {
         "total": 1
       },
-      "svc/scm/src/modules/mrp.rs": {
-        "total": 1
-      },
-      "svc/scm/src/modules/supply_chain_dashboard.rs": {
-        "total": 1
-      },
       "svc/scm/src/modules/sync_records.rs": {
-        "total": 7
+        "total": 1
       },
       "svc/search/src/main.rs": {
         "total": 1

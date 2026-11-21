@@ -94,7 +94,7 @@ pub fn create_routes() -> Router<ApiState> {
 /// GET /health — 前端 scmApi.health() 探测服务存活。
 /// 轻量兜底：探一次 DB 连接，返回 ok 字符串。
 pub async fn scm_health(State(state): State<ApiState>) -> ApiResponse<String> {
-    match sqlx::query("SELECT 1").execute(&state.db).await {
+    match sqlx::query("SELECT 1").execute(&state.system_pool).await {
         Ok(_) => ApiResponse::success("ok".to_string(), "SCM 服务正常"),
         Err(e) => {
             tracing::error!("SCM health 检查失败: {}", e);
@@ -142,7 +142,7 @@ pub async fn list_sync_records(
     };
 
     // B-2 后 scm 全表 fail-closed：裸池读会 0 行，必须复用请求级 RLS 事务。
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -246,7 +246,7 @@ pub async fn get_sync_record(
         Ok(v) => v,
         Err(e) => return e.0,
     };
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -296,7 +296,7 @@ pub async fn create_sync_record(
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let started = Utc::now();
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -337,7 +337,7 @@ pub async fn create_sync_record(
             // 异步模拟完成：标记 completed。
             // 后台任务没有请求上下文，用系统写作用域（显式 nil 租户），否则严格 RLS 下会被拒写。
             let rid = record.id;
-            let pool = state.db.clone();
+            let pool = state.system_pool.clone();
             let tenant = tenant_id;
             tokio::spawn(async move {
                 let db = topems_shared_db::scope::Db::new(pool, "scm, public, shared");
@@ -399,7 +399,7 @@ pub async fn retry_sync_record(
         Err(e) => return e.0,
     };
     let now = Utc::now();
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -481,7 +481,7 @@ pub async fn list_sync_details(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -555,7 +555,7 @@ async fn trigger_sync(
     let now = Utc::now();
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");

@@ -3,6 +3,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::l2_cache::AsyncL2Cache;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_event::redis::RedisCacheService;
 
@@ -31,7 +32,12 @@ pub mod sync_status;
 
 #[derive(Clone)]
 pub struct ApiState {
-    pub db: PgPool,
+    /// 请求链路统一入口：已开启 `deny_request_own_txn` + `deny_request_tenant_scope`。
+    /// handler 通过 `RlsTxnCell` 复用请求事务，不得再自开租户作用域。
+    pub db: Db,
+    /// 系统通道专用连接池：仅用于审计落库、补偿短事务、健康探针与后台同步任务，
+    /// 不得用于请求租户查询。
+    pub system_pool: PgPool,
     pub auth_state: AuthState,
     pub cache: Option<Arc<RedisCacheService>>,
     pub event_publisher: Option<Arc<EventPublisher>>,
@@ -46,7 +52,7 @@ impl FromRef<ApiState> for AuthState {
     }
 }
 
-impl FromRef<ApiState> for PgPool {
+impl FromRef<ApiState> for Db {
     fn from_ref(state: &ApiState) -> Self {
         state.db.clone()
     }

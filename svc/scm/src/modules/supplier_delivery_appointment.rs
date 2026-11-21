@@ -555,7 +555,7 @@ pub async fn create_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "create".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -771,7 +771,7 @@ pub async fn update_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "update".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -862,7 +862,7 @@ pub async fn delete_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "delete".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -1021,7 +1021,7 @@ pub async fn approve_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "approve".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -1177,7 +1177,7 @@ pub async fn reject_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "reject".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -1320,7 +1320,7 @@ pub async fn confirm_arrival(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "confirm_arrival".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -1460,7 +1460,7 @@ pub async fn complete_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "complete".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),
@@ -1600,7 +1600,7 @@ pub async fn cancel_appointment(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         "cancel".to_string(),
         "supplier_delivery_appointment".to_string(),
         Some(id),

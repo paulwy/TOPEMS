@@ -766,7 +766,7 @@ pub async fn generate_replenishment_snapshots(
         Err(e) => return e.0,
     };
 
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "scm, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(scope) => scope,
         Err(e) => {
