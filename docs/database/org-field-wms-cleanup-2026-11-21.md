@@ -64,3 +64,29 @@ WMS 内部 `organization_id` 语义相反，不能按模块统一处理。本地
 - `inventory`/`locations`/`warehouses` 的 `organization_id` 是业务组织值，
   需先纠正 `org_id` 与 `organization_id` 的角色，再决定是否合并；
 - `inbound_order_items`、`outbound_orders`、`stock_takes` 等表仍未处理。
+
+## 6. 先修创建路径：`org_id` 无绑定（2026-11-21 补）
+
+排查 `outbound_orders` 删列可行性时发现：canonical 中 `wms.outbound_orders.org_id`
+与 `wms.outbound_order_items.org_id` 都是 `NOT NULL` 且无默认值，但两条创建语句
+只写 `organization_id`/`tenant_id`，未写 `org_id`。空表不是“没人用”，而是创建
+必然 `23502`。在删 `organization_id` 之前先修掉这个前置缺陷。
+
+改动：
+
+- `create_outbound_order`：要求 `warehouse_id`，先经 `Db::scope_with` 复用请求事务，按
+  `id + tenant_id + deleted_at IS NULL` 取仓库 `org_id`，再写入订单 `org_id`；
+  仓库不存在返回 409；`organization_id` 仍写租户值，列表查询与 API 形状不变。
+- `create_outbound_order_item`：同样经 `Db::scope_with`，按 `order_id + tenant_id` 取出订单 `org_id`，
+  写入明细；订单不存在返回 409。
+- `svc/wms/tests/outbound_order_e2e.rs`：补 `org_id`/`tenant_id`/`order_type`/
+  `order_date` 与最小 `wms.warehouses` 表，新增创建用例，断言订单 `org_id`
+  来自仓库、`tenant_id`/`organization_id` 来自 claims。
+
+验证：`cargo fmt -p topems-wms -- --check` 通过；`cargo clippy -p topems-wms
+--all-targets --features db-tests -- -D warnings` 通过；`cargo test -p topems-wms
+--lib` 541 passed；`cargo test -p topems-wms --features db-tests --test
+outbound_order_e2e` 4 passed（含新增创建用例）。
+
+本批不改 DDL、不删 `organization_id`：生产存量是否 `organization_id = tenant_id`
+仍未知，删列迁移必须等生产只读核对后再执行。

@@ -223,8 +223,8 @@ pub async fn create_outbound_order(
 
     // 租户绑定对齐新惯例（与 mobile sync-policy v3 同款）：超管/服务 claims 绑 SQL NULL
     // （命中 RLS 严格策略 `tenant_id IS NULL` 分支，零 uuid/NULL/污染真实租户任何连接池
-    // 上下文都放行）；普通用户绑 claims.tenant_id。organization_id 为业务 NOT NULL 列，
-    // 不在此处理（保持单租户默认值）。
+    // 上下文都放行）；普通用户绑 claims.tenant_id。organization_id 为历史重复列，
+    // 仍按租户值写入；org_id 取自仓库，避免 canonical 的 NOT NULL 列无绑定。
     let tenant_id: Option<Uuid> = match claims
         .tenant_id
         .as_deref()
@@ -233,20 +233,50 @@ pub async fn create_outbound_order(
         Some(t) => Some(t),
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
+    let warehouse_id = match req.warehouse_id {
+        Some(v) => v,
+        None => return ApiResponse::bad_request("缺少仓库"),
+    };
+    let org_id = {
+        let mut scope = match wms_db(&state.db).scope_with(txn).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("创建出库订单失败".to_string()));
+            }
+        };
+        sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"SELECT org_id FROM wms.warehouses
+               WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+        ))
+        .bind(warehouse_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+    };
+    let org_id = match org_id {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("仓库不存在，无法创建出库订单"),
+        Err(e) => {
+            tracing::error!("查询仓库组织失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建出库订单失败".to_string()));
+        }
+    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         INSERT INTO wms.outbound_orders (id, organization_id, order_number, order_type, warehouse_id,
                                         customer_id, order_date, expected_ship_date, total_value,
-                                        status, notes, created_at, updated_at, tenant_id)
+                                        status, notes, created_at, updated_at, tenant_id, org_id)
         VALUES ($1, $11, $2, 'sales', $3, $4, $5,
                CASE WHEN $6::timestamptz IS NULL THEN NULL
                     ELSE date_trunc('day', $6::timestamptz AT TIME ZONE 'Asia/Shanghai')
                          AT TIME ZONE 'Asia/Shanghai'
                END,
                $7,
-               'created', $8, $9, $10, $11)
+               'created', $8, $9, $10, $11, $12)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -259,7 +289,7 @@ pub async fn create_outbound_order(
     ))
     .bind(id)
     .bind(&req.order_number)
-    .bind(req.warehouse_id)
+    .bind(warehouse_id)
     .bind(req.customer_id)
     .bind(req.order_date)
     .bind(req.expected_delivery)
@@ -268,6 +298,7 @@ pub async fn create_outbound_order(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -740,6 +771,7 @@ pub async fn create_outbound_order_item(
     });
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    // organization_id 仍写租户值；org_id 跟单头，避免 NOT NULL 列无绑定。
     let tenant_id: Option<Uuid> = match claims
         .tenant_id
         .as_deref()
@@ -748,6 +780,34 @@ pub async fn create_outbound_order_item(
         Some(t) => Some(t),
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
+    let org_id = {
+        let mut scope = match wms_db(&state.db).scope_with(txn).await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "创建出库订单明细失败".to_string(),
+                ));
+            }
+        };
+        sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+            "wms",
+            r#"SELECT org_id FROM wms.outbound_orders
+               WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+    };
+    let org_id = match org_id {
+        Ok(Some(v)) => v,
+        Ok(None) => return ApiResponse::conflict("出库订单不存在，无法创建明细"),
+        Err(e) => {
+            tracing::error!("查询出库订单组织失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建出库订单明细失败".to_string()));
+        }
+    };
 
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
@@ -755,9 +815,9 @@ pub async fn create_outbound_order_item(
                                               material_code, material_name, material_type,
                                               specification, batch_number, lot_number, serial_number,
                                               requested_quantity, unit, source_location_id, unit_price,
-                                              total_value, notes, created_at, updated_at, tenant_id)
+                                              total_value, notes, created_at, updated_at, tenant_id, org_id)
         VALUES ($1, $19, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
                   requested_quantity::float8, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit,
                   source_location_id, source_location_code, destination_location_id, destination_location_code,
@@ -784,6 +844,7 @@ pub async fn create_outbound_order_item(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 

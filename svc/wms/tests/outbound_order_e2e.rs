@@ -7,13 +7,17 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, empty_params, tenant_claims};
+use api_state::{api_state, empty_params, tenant_claims, test_tenant};
 use axum::extract::{Query, State};
-use axum::Extension;
+use axum::http::HeaderMap;
+use axum::{Extension, Json};
+use chrono::Utc;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use topems_wms::modules::outbound_order::list_outbound_orders;
+use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTenant};
+use topems_wms::models::outbound_order::CreateOutboundOrderRequest;
+use topems_wms::modules::outbound_order::{create_outbound_order, list_outbound_orders};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
@@ -24,7 +28,10 @@ async fn setup_schema(pool: &sqlx::PgPool) {
         r#"CREATE TABLE IF NOT EXISTS wms.outbound_orders (
             id UUID PRIMARY KEY,
             organization_id UUID NOT NULL,
+            org_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
             order_number TEXT NOT NULL,
+            order_type TEXT,
+            order_date TIMESTAMPTZ,
             warehouse_id UUID,
             warehouse_name TEXT,
             customer_id UUID,
@@ -47,7 +54,19 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             approved_by UUID,
             approved_at TIMESTAMPTZ,
             updated_at TIMESTAMPTZ DEFAULT NOW(),
+            tenant_id UUID,
             deleted_at TIMESTAMP
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS wms.warehouses (
+            id UUID PRIMARY KEY,
+            tenant_id UUID,
+            org_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
+            deleted_at TIMESTAMPTZ
         )"#,
     )
     .execute(pool)
@@ -157,4 +176,58 @@ async fn list_filters_by_status(pool: sqlx::PgPool) {
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(body["total"], 1);
     assert_eq!(body["orders"][0]["status"], "shipped");
+}
+
+#[sqlx::test(migrations = false)]
+async fn create_order_takes_org_id_from_warehouse(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let tenant = test_tenant();
+    let org_id = uuid::Uuid::new_v4();
+    let warehouse_id = uuid::Uuid::new_v4();
+    let mut txn = pool.begin().await.unwrap();
+    sqlx::query("INSERT INTO wms.warehouses (id, tenant_id, org_id) VALUES ($1, $2, $3)")
+        .bind(warehouse_id)
+        .bind(tenant)
+        .bind(org_id)
+        .execute(&mut *txn)
+        .await
+        .unwrap();
+    let txn_arc = Arc::new(Mutex::new(Some(txn)));
+
+    let req: CreateOutboundOrderRequest = serde_json::from_value(serde_json::json!({
+        "order_number": "SO-ORG-001",
+        "warehouse_id": warehouse_id,
+        "order_date": Utc::now(),
+    }))
+    .unwrap();
+    let resp = scope_request_tenant(
+        RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        create_outbound_order(
+            State(api_state(pool.clone())),
+            Extension(tenant_claims()),
+            HeaderMap::new(),
+            Extension(txn_arc),
+            Json(req),
+        ),
+    )
+    .await;
+    let order = resp
+        .data
+        .clone()
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
+    assert_eq!(order.warehouse_id, Some(warehouse_id));
+
+    let row: (uuid::Uuid, uuid::Uuid, uuid::Uuid) = sqlx::query_as(
+        "SELECT org_id, tenant_id, organization_id FROM wms.outbound_orders WHERE id = $1",
+    )
+    .bind(order.id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(row.0, org_id);
+    assert_eq!(row.1, tenant);
+    assert_eq!(row.2, tenant);
 }
