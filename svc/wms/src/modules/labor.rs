@@ -16,6 +16,7 @@ use uuid::Uuid;
 
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::wms_db;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginatedResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -612,7 +613,42 @@ pub async fn create_labor_shift(
         Some(t) if !t.is_nil() => t,
         _ => return ApiResponse::error(400, "缺少租户上下文：拒绝创建班次"),
     };
-    let organization_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
+    // organization_id 是已废弃的租户别名，固定写租户；org_id 优先取仓库组织，
+    // 无仓库时回落租户。旧实现把两者都写成 claims.sub（用户 ID），语义错误。
+    let organization_id = tenant_id;
+    let org_id = match req.warehouse_id {
+        Some(warehouse_id) => {
+            let lookup = {
+                let mut scope = match wms_db(&state.db).scope_with(txn).await {
+                    Ok(scope) => scope,
+                    Err(e) => {
+                        tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                        return ApiResponse::from(TopemsError::Internal(
+                            "班次创建失败".to_string(),
+                        ));
+                    }
+                };
+                sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
+                    "wms",
+                    r#"SELECT org_id FROM wms.warehouses
+                       WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
+                ))
+                .bind(warehouse_id)
+                .bind(tenant_id)
+                .fetch_optional(&mut scope)
+                .await
+            };
+            match lookup {
+                Ok(Some(v)) => v,
+                Ok(None) => return ApiResponse::conflict("仓库不存在，无法创建班次"),
+                Err(e) => {
+                    tracing::error!("查询仓库组织失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal("班次创建失败".to_string()));
+                }
+            }
+        }
+        None => tenant_id,
+    };
 
     let row = sqlx::query_as::<_, LaborShift>(only_own_schema_query!(
         "wms",
@@ -636,7 +672,7 @@ pub async fn create_labor_shift(
     .bind(req.warehouse_id)
     .bind(&req.zone)
     .bind(req.status.unwrap_or_else(|| "scheduled".into()))
-    .bind(organization_id)
+    .bind(org_id)
     .fetch_one(&mut **txn)
     .await;
 

@@ -117,3 +117,17 @@ outbound_order_e2e` 4 passed（含新增创建用例）。
 
 验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、4 个 cycle e2e 通过；
 `request-txn` 保持 `1655` 基线。
+
+## 9. 语义修正：`labor_shifts` 的 `organization_id` / `org_id`（2026-11-21 补）
+
+原实现把两列都写成 `claims.sub`（用户 ID），既不是租户也不是组织。现改为：
+
+- `organization_id` = `tenant_id`（废弃列仍是租户别名）；
+- `org_id`：有 `warehouse_id` 时取仓库 `org_id`，无仓库时回落 `tenant_id`；
+- 指定仓库不存在返回 409。
+
+`svc/wms/tests/labor_e2e.rs` 增加无仓库回落断言与指定仓库派生断言；该表本地 0 行，
+无历史数据需要回填。
+
+验证：`cargo fmt`、`clippy -D warnings`、541 个 lib 测试、5 个 labor e2e 通过；
+`request-txn` 保持 `1655` 基线。

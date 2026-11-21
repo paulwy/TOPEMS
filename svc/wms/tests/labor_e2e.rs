@@ -7,7 +7,7 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
-use api_state::{api_state, empty_params, tenant_claims};
+use api_state::{api_state, empty_params, tenant_claims, test_tenant};
 use axum::extract::{Json, Query, State};
 use axum::Extension;
 use serde_json::Value;
@@ -40,6 +40,17 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             created_at TIMESTAMPTZ DEFAULT NOW(),
             deleted_at TIMESTAMPTZ,
             org_id UUID NOT NULL
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS wms.warehouses (
+            id UUID PRIMARY KEY,
+            tenant_id UUID,
+            org_id UUID NOT NULL,
+            deleted_at TIMESTAMPTZ
         )"#,
     )
     .execute(pool)
@@ -167,6 +178,15 @@ async fn create_shift_creates(pool: sqlx::PgPool) {
     assert_eq!(shift["user_id"], serde_json::to_value(uid).unwrap());
     assert_eq!(shift["status"], "scheduled");
     assert_eq!(shift["zone"], "A区");
+    let tenant = serde_json::to_value(test_tenant()).unwrap();
+    assert_eq!(shift["organization_id"], tenant);
+    let org_id: uuid::Uuid =
+        sqlx::query_scalar("SELECT org_id FROM wms.labor_shifts WHERE user_id = $1")
+            .bind(uid)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(org_id, test_tenant());
 
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM wms.labor_shifts")
         .fetch_one(&pool)
@@ -221,4 +241,57 @@ async fn efficiency_computes_from_wave_picks(pool: sqlx::PgPool) {
     assert_eq!(rows[0]["user_name"], "王五");
     assert_eq!(rows[0]["total_lists"], 2);
     assert_eq!(rows[0]["completed_lists"], 1);
+}
+
+#[sqlx::test(migrations = false)]
+async fn create_shift_takes_org_id_from_warehouse(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let tenant = test_tenant();
+    let org_id = uuid::Uuid::new_v4();
+    let warehouse_id = uuid::Uuid::new_v4();
+    sqlx::query("INSERT INTO wms.warehouses (id, tenant_id, org_id) VALUES ($1, $2, $3)")
+        .bind(warehouse_id)
+        .bind(tenant)
+        .bind(org_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let txn = pool.begin().await.unwrap();
+    let txn_arc = Arc::new(Mutex::new(Some(txn)));
+    let req = CreateShiftRequest {
+        user_id: uuid::Uuid::new_v4(),
+        user_name: Some("王五".to_string()),
+        shift_date: chrono::NaiveDate::from_ymd_opt(2026, 11, 21).unwrap(),
+        start_time: None,
+        end_time: None,
+        warehouse_id: Some(warehouse_id),
+        zone: None,
+        status: None,
+    };
+    let resp = topems_shared_auth::middleware::tenant::scope_request_tenant(
+        topems_shared_auth::middleware::tenant::RlsRequestTenant {
+            tenant,
+            system: false,
+        },
+        create_labor_shift(
+            State(api_state(pool.clone())),
+            Extension(tenant_claims()),
+            Extension(txn_arc),
+            Json(req),
+        ),
+    )
+    .await;
+    let shift = resp
+        .data
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
+    let row: (uuid::Uuid, uuid::Uuid, uuid::Uuid) = sqlx::query_as(
+        "SELECT org_id, organization_id, tenant_id FROM wms.labor_shifts WHERE id = $1",
+    )
+    .bind(shift.id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(row.0, org_id);
+    assert_eq!(row.1, tenant);
+    assert_eq!(row.2, tenant);
 }
