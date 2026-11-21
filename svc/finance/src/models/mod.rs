@@ -1105,6 +1105,7 @@ pub struct Payment {
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
     pub payment_method: String,
+    pub status: String,
     pub bank_account_id: Option<Uuid>,
     pub bank_name: Option<String>,
     pub bank_account_no: Option<String>,
@@ -1192,7 +1193,9 @@ pub struct PaymentResponse {
     pub bank_transaction_no: Option<String>,
     pub executed_by: Option<Uuid>,
     pub executed_at: Option<DateTime<Utc>>,
-    pub status: VoucherStatus,
+    /// 付款单自身状态（draft/pending/processing/completed/failed/cancelled），
+    /// 不再复用凭证状态。
+    pub status: String,
     pub remark: Option<String>,
     pub items: Vec<PaymentItem>,
     /// 与读模型一致：兜底/历史行可能无关联凭证，故为 Option。

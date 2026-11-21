@@ -18,6 +18,9 @@ interface PaymentItem {
   createdAt?: string;
 }
 
+export type PaymentStatus =
+  'draft' | 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+
 export interface Payment {
   id: string;
   paymentNo: string;
@@ -34,7 +37,7 @@ export interface Payment {
   bankTransactionNo?: string;
   executedBy?: string;
   executedAt?: string;
-  status: string;
+  status: PaymentStatus;
   remark?: string;
   items?: PaymentItem[];
   voucherId: string;

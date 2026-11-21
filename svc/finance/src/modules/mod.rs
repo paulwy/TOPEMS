@@ -1,6 +1,7 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
 pub mod accounting_subjects;
+pub mod ap_payment_status;
 pub mod audit_v52;
 pub mod bootstrap;
 pub mod collection_status;
@@ -1255,6 +1256,10 @@ pub async fn get_payment_handler(
 
 #[derive(Debug, Clone, Deserialize, IntoParams)]
 pub struct PaymentListParams {
+    pub supplier_id: Option<Uuid>,
+    pub status: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
     pub page: Option<i64>,
     pub page_size: Option<i64>,
 }
@@ -1288,10 +1293,10 @@ pub async fn list_payments_handler(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let query = crate::models::PaymentQueryParams {
-        supplier_id: None,
-        status: None,
-        start_date: None,
-        end_date: None,
+        supplier_id: params.supplier_id,
+        status: params.status,
+        start_date: params.start_date,
+        end_date: params.end_date,
         page: params.page,
         page_size: params.page_size,
     };

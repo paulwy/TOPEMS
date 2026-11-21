@@ -79,10 +79,12 @@ export const paymentSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('finance.payment.k11'),
       type: 'select',
-      defaultValue: 'pending',
+      defaultValue: 'draft',
+      readonly: true,
       options: {
         type: 'static',
         options: [
+          { value: 'draft', label: i18n.t('finance.payment.k43') },
           { value: 'pending', label: i18n.t('finance.payment.k12') },
           { value: 'processing', label: i18n.t('finance.payment.k13') },
           { value: 'completed', label: i18n.t('finance.payment.k14') },
@@ -121,6 +123,7 @@ export const paymentSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
+        draft: 'default',
         pending: 'warning',
         processing: 'info',
         completed: 'success',
@@ -128,6 +131,7 @@ export const paymentSchema: EntitySchema = {
         cancelled: 'default',
       },
       labelMap: {
+        draft: i18n.t('finance.payment.k43'),
         pending: i18n.t('finance.payment.k19'),
         processing: i18n.t('finance.payment.k20'),
         completed: i18n.t('finance.payment.k21'),
@@ -154,6 +158,7 @@ export const paymentSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('finance.payment.k31'), value: 'all' },
+          { label: i18n.t('finance.payment.k43'), value: 'draft' },
           { label: i18n.t('finance.payment.k32'), value: 'pending' },
           { label: i18n.t('finance.payment.k33'), value: 'processing' },
           { label: i18n.t('finance.payment.k34'), value: 'completed' },

@@ -43,6 +43,14 @@ impl FinanceService {
             payment.supplier_name.as_deref().unwrap_or("")
         );
 
+        if crate::modules::ap_payment_status::normalize_payment_status(&payment.status)
+            != Some(crate::modules::ap_payment_status::PaymentStatus::Draft)
+        {
+            return Err(TopemsError::ValidationFailed(
+                "仅草稿状态的付款单可提交".to_string(),
+            ));
+        }
+
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
@@ -133,11 +141,9 @@ impl FinanceService {
                         wf_id,
                         e
                     );
-                    tracing::warn!(
-                        "工作流创建失败但继续提交付款单, 将使用默认审批流程, payment_id={}",
-                        payment_id
-                    );
-                    None
+                    return Err(TopemsError::ValidationFailed(format!(
+                        "付款单审批流程创建失败，未提交付款单: {e}"
+                    )));
                 }
             }
         } else {
@@ -159,6 +165,25 @@ impl FinanceService {
             voucher_id,
             payment_id
         );
+
+        // 付款单状态由 draft 推进到 pending；谓词兜底并发重复提交。
+        let mut scope = self.write_scope(txn).await?;
+        let updated = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE finance.core_finance_payments SET status = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 AND status = $4"
+        ))
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Pending.as_str())
+        .bind(tenant_id)
+        .bind(payment_id)
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Draft.as_str())
+        .execute(&mut scope)
+        .await?;
+        scope.commit().await?;
+        if updated.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "付款单状态已变化，提交未生效".to_string(),
+            ));
+        }
 
         let result = self.get_payment_response(tenant_id, payment_id, txn).await;
         tracing::info!(
@@ -231,6 +256,13 @@ impl FinanceService {
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        if crate::modules::ap_payment_status::normalize_payment_status(&payment.status)
+            != Some(crate::modules::ap_payment_status::PaymentStatus::Pending)
+        {
+            return Err(TopemsError::ValidationFailed(
+                "仅待审批状态的付款单可审批".to_string(),
+            ));
+        }
         let voucher = self.get_voucher(tenant_id, voucher_id, txn).await?;
         if voucher.status != VoucherStatus::Submitted {
             tracing::warn!(
@@ -331,10 +363,9 @@ impl FinanceService {
                         payment_id,
                         e
                     );
-                    tracing::warn!(
-                        "工作流审批失败但继续处理, 将使用默认审批逻辑, payment_id={}",
-                        payment_id
-                    );
+                    return Err(TopemsError::ValidationFailed(format!(
+                        "工作流审批失败，付款单未审批: {e}"
+                    )));
                 }
             }
         } else {
@@ -361,15 +392,22 @@ impl FinanceService {
             );
 
             let mut scope = self.write_scope(txn).await?;
-            sqlx::query(
-                only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3"),
+            let updated = sqlx::query(
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND id = $4 AND status = $5"),
             )
             .bind(approver_id)
+            .bind(crate::modules::ap_payment_status::PaymentStatus::Processing.as_str())
             .bind(tenant_id)
             .bind(payment_id)
+            .bind(crate::modules::ap_payment_status::PaymentStatus::Pending.as_str())
             .execute(&mut scope)
             .await?;
             scope.commit().await?;
+            if updated.rows_affected() == 0 {
+                return Err(TopemsError::ValidationFailed(
+                    "付款单状态已变化，审批未生效".to_string(),
+                ));
+            }
 
             tracing::info!(
                 "付款单审批信息更新成功, payment_id={}, approved_by={}",
@@ -429,6 +467,13 @@ impl FinanceService {
             payment.supplier_name.as_deref().unwrap_or("")
         );
 
+        if crate::modules::ap_payment_status::normalize_payment_status(&payment.status)
+            != Some(crate::modules::ap_payment_status::PaymentStatus::Pending)
+        {
+            return Err(TopemsError::ValidationFailed(
+                "仅待审批状态的付款单可拒绝".to_string(),
+            ));
+        }
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
@@ -514,10 +559,9 @@ impl FinanceService {
                         payment_id,
                         e
                     );
-                    tracing::warn!(
-                        "工作流拒绝失败但继续处理, 将使用默认拒绝逻辑, payment_id={}",
-                        payment_id
-                    );
+                    return Err(TopemsError::ValidationFailed(format!(
+                        "工作流拒绝失败，付款单未拒绝: {e}"
+                    )));
                 }
             }
         }
@@ -535,6 +579,24 @@ impl FinanceService {
             voucher_id,
             payment_id
         );
+
+        let mut scope = self.write_scope(txn).await?;
+        let updated = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE finance.core_finance_payments SET status = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 AND status = $4"
+        ))
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Failed.as_str())
+        .bind(tenant_id)
+        .bind(payment_id)
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Pending.as_str())
+        .execute(&mut scope)
+        .await?;
+        scope.commit().await?;
+        if updated.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "付款单状态已变化，拒绝未生效".to_string(),
+            ));
+        }
 
         let result = self.get_payment_response(tenant_id, payment_id, txn).await;
         tracing::info!(
@@ -567,6 +629,13 @@ impl FinanceService {
         // 释放写作用域借用，凭证读取复用同一请求事务。
         scope.commit().await?;
 
+        if crate::modules::ap_payment_status::normalize_payment_status(&payment.status)
+            != Some(crate::modules::ap_payment_status::PaymentStatus::Processing)
+        {
+            return Err(TopemsError::ValidationFailed(
+                "仅审批通过待付款的付款单可执行付款".to_string(),
+            ));
+        }
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
@@ -578,18 +647,25 @@ impl FinanceService {
         }
 
         let mut scope = self.write_scope(txn).await?;
-        sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5"),
+        let updated = sqlx::query(
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), status = $6, updated_at = NOW() WHERE tenant_id = $4 AND id = $5 AND status = $7"),
         )
         .bind(req.actual_payment_date)
         .bind(&req.bank_transaction_no)
         .bind(executed_by)
         .bind(tenant_id)
         .bind(payment_id)
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Completed.as_str())
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Processing.as_str())
         .execute(&mut scope)
         .await?;
 
         scope.commit().await?;
+        if updated.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "付款单状态已变化，执行付款未生效".to_string(),
+            ));
+        }
 
         self.get_payment_response(tenant_id, payment_id, txn).await
     }

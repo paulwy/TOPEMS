@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 131,
+    "rust_enums": 132,
     "rust_enum_values": 145,
     "rust_values_not_in_db_check": 107,
     "frontend_status_keys": 61,
@@ -828,6 +828,27 @@
         "rejected",
         "reversed",
         "submitted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/ap_payment_status.rs",
+      "name": "PaymentStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Failed",
+        "Pending",
+        "Processing"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "draft",
+        "failed",
+        "pending",
+        "processing"
       ]
     },
     {

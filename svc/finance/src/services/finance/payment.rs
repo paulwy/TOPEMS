@@ -88,8 +88,8 @@ impl FinanceService {
             .await?;
 
         let payment: Payment = sqlx::query_as(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payments (tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, payment_date, remark, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_payments (tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, payment_date, remark, created_by, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
              RETURNING *"),
         )
         .bind(tenant_id)
@@ -106,6 +106,7 @@ impl FinanceService {
         .bind(payment_date)
         .bind(&req.remark)
         .bind(created_by)
+        .bind(crate::modules::ap_payment_status::PaymentStatus::Draft.as_str())
         .fetch_one(&mut tx)
         .await?;
 
@@ -146,7 +147,7 @@ impl FinanceService {
             bank_transaction_no: payment.bank_transaction_no,
             executed_by: payment.executed_by,
             executed_at: payment.executed_at,
-            status: voucher.status,
+            status: payment.status.clone(),
             remark: payment.remark,
             items,
             voucher_id: Some(voucher.id),
@@ -164,7 +165,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, status, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&mut scope)
@@ -180,21 +181,6 @@ impl FinanceService {
         // 释放读作用域借用，凭证读取复用同一请求事务。
         scope.commit().await?;
 
-        let voucher = match payment.voucher_id {
-            Some(vid) => match self.get_voucher(tenant_id, vid, txn).await {
-                Ok(v) => Some(v),
-                Err(e) => {
-                    tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
-                    None
-                }
-            },
-            None => None,
-        };
-        let voucher_status = voucher
-            .as_ref()
-            .map(|v| v.status.clone())
-            .unwrap_or(VoucherStatus::Draft);
-
         Ok(PaymentResponse {
             id: payment.id,
             payment_no: payment.payment_no,
@@ -208,7 +194,7 @@ impl FinanceService {
             bank_transaction_no: payment.bank_transaction_no,
             executed_by: payment.executed_by,
             executed_at: payment.executed_at,
-            status: voucher_status,
+            status: payment.status.clone(),
             remark: payment.remark,
             items,
             voucher_id: payment.voucher_id,
@@ -227,18 +213,71 @@ impl FinanceService {
         let page_size = params.page_size.unwrap_or(20);
         let offset = (page - 1) * page_size;
 
+        let status = match params
+            .status
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
+            Some(raw) => Some(
+                crate::modules::ap_payment_status::normalize_payment_status(raw).ok_or_else(
+                    || {
+                        TopemsError::ValidationFailed(format!(
+                            "非法付款单状态: {raw}，可选值: {}",
+                            crate::modules::ap_payment_status::PaymentStatus::ALL
+                                .iter()
+                                .map(|s| s.as_str())
+                                .collect::<Vec<_>>()
+                                .join("/")
+                        ))
+                    },
+                )?,
+            ),
+            None => None,
+        };
+        let start_date = params
+            .start_date
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    .map_err(|_| TopemsError::ValidationFailed(format!("非法开始日期: {s}")))
+            })
+            .transpose()?;
+        let end_date = params
+            .end_date
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    .map_err(|_| TopemsError::ValidationFailed(format!("非法结束日期: {s}")))
+            })
+            .transpose()?;
+
         let mut scope = self.read_scope(txn).await?;
 
-        let total: (i64,) =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"))
-                .bind(tenant_id)
-                .fetch_one(&mut scope)
-                .await?;
+        let total: (i64,) = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT COUNT(*) FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND ($2::uuid IS NULL OR supplier_id = $2) AND ($3::text IS NULL OR status = $3) AND ($4::date IS NULL OR payment_date >= $4) AND ($5::date IS NULL OR payment_date <= $5)"
+        ))
+        .bind(tenant_id)
+        .bind(params.supplier_id)
+        .bind(status.map(|s| s.as_str()))
+        .bind(start_date)
+        .bind(end_date)
+        .fetch_one(&mut scope)
+        .await?;
 
         let payments: Vec<Payment> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, status, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND ($2::uuid IS NULL OR supplier_id = $2) AND ($3::text IS NULL OR status = $3) AND ($4::date IS NULL OR payment_date >= $4) AND ($5::date IS NULL OR payment_date <= $5) ORDER BY created_at DESC LIMIT $6 OFFSET $7"),
         )
         .bind(tenant_id)
+        .bind(params.supplier_id)
+        .bind(status.map(|s| s.as_str()))
+        .bind(start_date)
+        .bind(end_date)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut scope)
@@ -248,20 +287,6 @@ impl FinanceService {
 
         let mut results = Vec::new();
         for payment in payments {
-            let voucher = match payment.voucher_id {
-                Some(vid) => match self.get_voucher(tenant_id, vid, txn).await {
-                    Ok(v) => Some(v),
-                    Err(e) => {
-                        tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
-                        None
-                    }
-                },
-                None => None,
-            };
-            let voucher_status = voucher
-                .as_ref()
-                .map(|v| v.status.clone())
-                .unwrap_or(VoucherStatus::Draft);
             results.push(PaymentResponse {
                 id: payment.id,
                 payment_no: payment.payment_no,
@@ -275,7 +300,7 @@ impl FinanceService {
                 bank_transaction_no: payment.bank_transaction_no,
                 executed_by: payment.executed_by,
                 executed_at: payment.executed_at,
-                status: voucher_status,
+                status: payment.status.clone(),
                 remark: payment.remark,
                 items: vec![],
                 voucher_id: payment.voucher_id,
@@ -296,7 +321,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, status, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&mut scope)
@@ -312,21 +337,6 @@ impl FinanceService {
         // 释放读作用域借用，凭证读取复用同一请求事务。
         scope.commit().await?;
 
-        let voucher = match payment.voucher_id {
-            Some(vid) => match self.get_voucher(tenant_id, vid, txn).await {
-                Ok(v) => Some(v),
-                Err(e) => {
-                    tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
-                    None
-                }
-            },
-            None => None,
-        };
-        let voucher_status = voucher
-            .as_ref()
-            .map(|v| v.status.clone())
-            .unwrap_or(VoucherStatus::Draft);
-
         Ok(PaymentResponse {
             id: payment.id,
             payment_no: payment.payment_no,
@@ -340,7 +350,7 @@ impl FinanceService {
             bank_transaction_no: payment.bank_transaction_no,
             executed_by: payment.executed_by,
             executed_at: payment.executed_at,
-            status: voucher_status,
+            status: payment.status.clone(),
             remark: payment.remark,
             items,
             voucher_id: payment.voucher_id,
@@ -365,12 +375,19 @@ impl FinanceService {
         let mut tx = self.write_scope(txn).await?;
 
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, status, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&mut tx)
                 .await?;
 
+        if crate::modules::ap_payment_status::normalize_payment_status(&payment.status)
+            != Some(crate::modules::ap_payment_status::PaymentStatus::Draft)
+        {
+            return Err(TopemsError::ValidationFailed(
+                "仅草稿状态的付款单可编辑".to_string(),
+            ));
+        }
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
@@ -493,12 +510,19 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let payment: Payment =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, status, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
                 .bind(tenant_id)
                 .bind(payment_id)
                 .fetch_one(&mut scope)
                 .await?;
 
+        if crate::modules::ap_payment_status::normalize_payment_status(&payment.status)
+            != Some(crate::modules::ap_payment_status::PaymentStatus::Draft)
+        {
+            return Err(TopemsError::ValidationFailed(
+                "仅草稿状态的付款单可删除".to_string(),
+            ));
+        }
         let voucher_id = payment
             .voucher_id
             .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
@@ -563,32 +587,52 @@ impl FinanceService {
             req.end_date.as_deref().unwrap_or("None")
         );
 
+        let status = match req
+            .status
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
+            Some(raw) => Some(
+                crate::modules::ap_payment_status::normalize_payment_status(raw).ok_or_else(
+                    || TopemsError::ValidationFailed(format!("非法付款单状态: {raw}")),
+                )?,
+            ),
+            None => None,
+        };
+        let start_date = req
+            .start_date
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    .map_err(|_| TopemsError::ValidationFailed(format!("非法开始日期: {s}")))
+            })
+            .transpose()?;
+        let end_date = req
+            .end_date
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    .map_err(|_| TopemsError::ValidationFailed(format!("非法结束日期: {s}")))
+            })
+            .transpose()?;
+
         let mut scope = self.read_scope(txn).await?;
 
-        let mut query =
-            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid)"
-                .to_string();
-
-        if let Some(status) = req.status {
-            if !status.is_empty() {
-                query.push_str(" AND status = $2");
-            }
-        }
-        if let Some(start_date) = req.start_date {
-            if !start_date.is_empty() {
-                query.push_str(" AND payment_date >= $3");
-            }
-        }
-        if let Some(end_date) = req.end_date {
-            if !end_date.is_empty() {
-                query.push_str(" AND payment_date <= $4");
-            }
-        }
-
-        let rows = sqlx::query_as::<_, Payment>(sqlx::AssertSqlSafe(query))
-            .bind(tenant_id)
-            .fetch_all(&mut scope)
-            .await?;
+        let rows = sqlx::query_as::<_, Payment>(only_own_schema_query!(
+            "finance",
+            "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, status, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND (tenant_id = $1::uuid) AND ($2::text IS NULL OR status = $2) AND ($3::date IS NULL OR payment_date >= $3) AND ($4::date IS NULL OR payment_date <= $4) ORDER BY created_at DESC"
+        ))
+        .bind(tenant_id)
+        .bind(status.map(|s| s.as_str()))
+        .bind(start_date)
+        .bind(end_date)
+        .fetch_all(&mut scope)
+        .await?;
         // 释放读作用域借用，循环内凭证读取复用同一请求事务。
         scope.commit().await?;
 
