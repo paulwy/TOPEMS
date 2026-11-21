@@ -6,6 +6,7 @@
 > 仓库侧证据：W1–W5 五个迁移文件的 SHA-256 与 11-19 指纹一致，回滚文件亦未改写；`20261119233000` 之后新增 36 条迁移；W7-B `20261118110000`、P1 首批 `20261118100000`、W2-C `20261121220000` 均未进生产。
 > 只读预检连接：`topems_drift`（非特权、非 superuser、无 BYPASSRLS）。
 > 配套可执行预检：`docs/database/window-preflight-2026-11-19.sql`（132 张清单仍适用，行数需重跑）。
+> **2026-11-22 增补**：新增 **W9 公司上下文波次**（`20261121235940` + `20261122090000`），代码与迁移必须同窗口，详见 §0、§2.4、§3、§4.12。§2.3 的「36 条」等中间读数已失效，按 §2.3 的失效标注执行。
 
 ---
 
@@ -21,24 +22,26 @@
 | W4 | `20261119233000` | IAM 遗留权限码收敛 | 0 | 2（DELETE） | 44 条遗留码 + 其授权清理；补 2 条字典码；ticket `IAM-PERM-20261119` |
 | W5 | `20261119140000` | `iam.core_tenant_plugins` 严格 RLS | 0 | 0 | `20261118124000` 的前向承载；dev/prod 均未落；ticket `RESIDUAL-RLS-20261118`；无闸门 GUC |
 
-- **新增窗口项 3 条**（此前不在本包内）：
+- **新增窗口项 4 条**（此前不在本包内）：
 
 | 波 | 版本 | 主题 | 对象规模 | 同窗口二进制 | 备注 |
 |---|---|---|---:|---|---|
 | W6（W7-B） | `20261118110000` | 平台语料 5 表严格 RLS + 平台读 | 5 表 / 83 行（其中 74 行归一）/ 9 策略 | finance、unified-core、mobile | NULL→全零哨兵；`mobile.sync_policies` 是唯一“租户可见范围净减少” |
 | P1-1 | `20261118100000` | P1 首批 QMS 3 表严格 RLS | 3 表 / 0 行 / 3 策略 | qms | DEC-13；不归一数据，只补 RLS/FORCE/策略/索引 |
 | W8（W2-C） | `20261121220000` | `erp.opening_balances` 迁入 finance | 1 表 `SET SCHEMA` | finance | 必须排在 erp canonical `20261121100000` 之后；只移表，不复制数据 |
+| W9 | `20261121235940` + `20261122090000` | 合并报表公司维度 RLS + 默认公司回填 | 8 表 / 32 策略 / 6 新列 / 1 列+1 唯一索引 | erp、shared-auth、shared-db | **代码与迁移必须同窗口**；未接公司上下文的旧二进制读这 8 张表返回 0 行；回滚 B→A，详见 §4.12 |
 
-- **新增候选 36 条**：`20261119233000` 之后新增 26 条 `*_schema_canonical.sql`、6 条 `*_drop_resurrected_dead_tables.sql`、`20261120120000`（AI 重复索引）、`20261120090000`（MES typmod）、`20261120100000`（菜单/CRM 权限别名）、`20261121220000`（W2-C）。这些是否已在生产，必须用现场账本确认，不能仅凭版本号假定。
+- **新增候选 36 条（读数已失效）**：`20261119233000` 之后新增 26 条 `*_schema_canonical.sql`、6 条 `*_drop_resurrected_dead_tables.sql`、`20261120120000`（AI 重复索引）、`20261120090000`（MES typmod）、`20261120100000`（菜单/CRM 权限别名）、`20261121220000`（W2-C）。**2026-11-22 复核实为 42 条**，差额 6 条见 §2.3 失效标注；36 条仅为 11-21 中间读数。这些是否已在生产，必须用现场账本确认，不能仅凭版本号假定。
 - **硬依赖**：
   - **W3 ← W2** 仍成立；但 `iam.core_tenants` 入向 FK 的 `8/1/4→1/1/4` 是 11-19 实测，必须在开窗前重测（§1.5）。新增 36 条迁移里没有新增指向 `iam.core_tenants` 的 FK。
   - **W8 ← erp canonical**：`20261121100000_erp_schema_canonical.sql` 会 `CREATE TABLE IF NOT EXISTS erp.opening_balances`，随后 `20261121220000` 才把它移入 finance；若先跑 W8，再跑 erp canonical 会重新造出 `erp.opening_balances`，形成双表。必须按版本顺序先 canonical、后 W8。
   - **W6 / P1-1 ← canonical**：pm/mobile/qms 的 canonical 会重建同名 RLS 策略；W6、P1-1 必须排在对应 canonical 之后，否则严格策略会被覆盖。
   - **W1–W5 与 W6/P1-1/W8 无表集合交集**；W6 触碰 `public.core_roles`、finance 两表、`pm.project_type_configs`、`mobile.sync_policies`，均不在 132 张归档目标内。
-- **建议顺序**：W1 → W2 → W3 → W4 → canonical 26 条 + 6 条 drop（按版本号）→ W8（W2-C）→ W5 → W6（W7-B）→ P1-1。
+  - **W9 ← erp/hrm canonical**：8 张合并报表表由 `20261121100000` 建表并带租户策略，`hrm.companies` 的 `(tenant_id,id)` 唯一键由 `20261120235900` 提供；两者 `success=t` 后才可跑 W9-A。W9 与 W1–W8/W6/P1-1 无表交集，可与 W8 同窗；但同窗发布必须包含 `erp`、`shared-auth`、`shared-db`（其余使用公司上下文的服务建议一并重编）。W9 与 `20261120090000`/`20261122100000` 的数量列语义无关（MES 对象），只需按版本号自然排序。
+- **建议顺序**：W1 → W2 → W3 → W4 → canonical 26 条 + 6 条 drop（按版本号）→ W8（W2-C）→ **W9（A→B）** → W5 → W6（W7-B）→ P1-1。
 - **P1-1 可与 W6 同窗口，但不合并成一个迁移**：3 张 QMS 表与 5 张平台表无交集，各自单事务、可独立回滚；前提是同窗口发布包含 `finance`、`unified-core`、`mobile`、`qms` 四个二进制。若发布编排只能带 W6 的三件套，则 P1-1 拆到下一窗口，W6 优先。
-- **回滚逆序**：P1-1 → W6 → W8 → W5 → W4 → W3 → W2 → W1；canonical 26 条与代码同窗口、无独立回滚文件，不纳入逆序演练。
-- **终态不再给单一数字**：11-19 的「账本 721→726、表 1344→1351、RLS 959→914、策略 1050→1004」已失效。新增 36 条迁移与三条窗口项都会改变终态，必须以开窗前 preflight 的现场值为起点逐波记录（§4.7）。
+- **回滚逆序**：P1-1 → W6 → W5 → **W9（B→A）** → W8 → W4 → W3 → W2 → W1；canonical 26 条与代码同窗口、无独立回滚文件，不纳入逆序演练。
+- **终态不再给单一数字**：11-19 的「账本 721→726、表 1344→1351、RLS 959→914、策略 1050→1004」已失效。新增 42 条迁移（11-22 复核；§2.3 的 36 条为中间读数）与四条窗口项都会改变终态，必须以开窗前 preflight 的现场值为起点逐波记录（§4.7）。
 - **不纳入**：29 条 prod-only 版本、9 条早间计划版本（`20261119010000` 等）、孤儿 `20261103000005`。W7-B 与 QMS 首批虽版本号低于旧 prod max，但明确未进生产，不能靠版本差集发现，必须按本表纳入。详见 §7。
 
 ---
@@ -106,14 +109,14 @@
 |---|---|
 | W1–W5 文件 | 5 条迁移存在且 SHA-256 与 11-19 指纹一致；5 条回滚文件存在且 SHA-256 亦一致；内容未被远端 81 条提交改写 |
 | W1/W2/W3 归档目标 | 仍为 16 / 108 / 8，合计 132；文件未变，数量不变 |
-| 新增迁移 | `20261119233000` 之后 36 条：26 条 canonical、6 条 drop dead、AI 重复索引 1、MES typmod 1、菜单/CRM 权限别名 1、W2-C 1 |
+| 新增迁移 | `20261119233000` 之后 36 条（11-22 复核为 42 条，见 §2.3 失效标注）：26 条 canonical、6 条 drop dead、AI 重复索引 1、MES typmod 1、菜单/CRM 权限别名 1、W2-C 1 |
 | 旧版本但未落生产 | W7-B `20261118110000`、P1 首批 `20261118100000`；版本号低于旧 prod max，**账本差集扫不到**，只能按 manifest note 与本包纳入 |
-| 同窗口二进制 | finance（W6 + W8）、unified-core（W6）、mobile（W6）、qms（P1-1） |
-| 仓库侧 FK 影响 | 新增 36 条中无 `REFERENCES iam.core_tenants`；6 条 drop dead 的目标与 W1/W2/W3 的 132 张无交集（脚本比对） |
+| 同窗口二进制 | finance（W6 + W8）、unified-core（W6）、mobile（W6）、qms（P1-1）、**erp + shared-auth + shared-db（W9）** |
+| 仓库侧 FK 影响 | 新增 36 条（11-22 的 42 条亦然）中无 `REFERENCES iam.core_tenants`；6 条 drop dead 的目标与 W1/W2/W3 的 132 张无交集（脚本比对）；W9-A 的 4 条 FK 指向 `hrm.companies`，不在 132 张归档目标内 |
 | W3 前置 | `iam.core_tenants` 8 / `iam.core_users` 1 / `flow.core_tenants` 4 是 11-19 实测，必须现场重测；W2 后 `1/1/4` 的推算也只在现场仍为 `8/1/4` 时成立 |
 | C16 | 132 张清单仍适用；`rows=0` 是 11-19 结论，必须在窗口前 24h 与开窗前 30min 重跑 |
 
-**已失效、不得沿用的旧数字**：prod 账本 721 行 / `max=20261119000002`；dev 账本 698 行 / `max=20261119233000`；全局表 1344、RLS 959、策略 1050；权限码 1157 / 角色授权 2917；archive 0；W3 FK `8/1/4` 与 W2 后 `1/1/4`；132 张 `rows=0`；终态 726 / 1351 / 914 / 1004；dev 落地读数 470 / 524 / 139 / 1257 / 1396。
+**已失效、不得沿用的旧数字**：prod 账本 721 行 / `max=20261119000002`；dev 账本 698 行 / `max=20261119233000`；全局表 1344、RLS 959、策略 1050；权限码 1157 / 角色授权 2917；archive 0；W3 FK `8/1/4` 与 W2 后 `1/1/4`；132 张 `rows=0`；终态 726 / 1351 / 914 / 1004；dev 落地读数 470 / 524 / 139 / 1257 / 1396；§2.3「新增候选 36 条」（2026-11-22 复核为 42 条）。
 
 ---
 
@@ -188,6 +191,13 @@ done
 
 ### 2.3 2026-11-21 新增候选（36 条）
 
+> **失效标注（2026-11-22）**：本节标题与下表合计的「36 条」是 11-21 中间读数，**已失效**。当前 `> 20261119233000` 实为 42 条，差额 6 条：
+> - W5C 3 条：`20261121230000`、`20261121235900`、`20261121235930`（不属于本包，是否入窗另行评估）；
+> - 本波公司上下文 2 条：`20261121235940`、`20261122090000`（见 §2.4）；
+> - MES 数量列 1 条：`20261122100000`（语义见 §4.12 末尾，不属本波）。
+>
+> 下表其余 36 条的归类与顺序判断继续有效，不追溯改写历史读数。
+
 | 类别 | 条数 | 说明 |
 |---|---:|---|
 | `*_schema_canonical.sql` | 26 | ai/tms/master-data/ticket/plugin-registry/finance/portal/ehs/lims/wms/qms/hrm/unified-core/scm/erp/mobile/gis/pm/pdm/srm/mes/crm/integration/rd/analytics/communication |
@@ -203,6 +213,64 @@ done
 - **W7-B 与 P1-1 互相独立**：对象集合无交集，可同窗口、分事务顺序执行。
 
 W7-B 文件头已声明：5 表共 83 行，其中 74 行 `tenant_id NULL → 全零哨兵`（8/48/16/1/1），删除 `rls_global_read`，前 4 表加 `rls_platform_read`，`mobile.sync_policies` 不加平台读；回滚文件 `database/rollback/20261118110000_platform_corpus_rls_strict.rollback.sql` 逆向恢复 NULL 行与 `rls_global_read`。
+
+### 2.4 W9 公司上下文波次（2026-11-22 增补）
+
+本波不在 11-21 的 36 条候选内，是 11-22 新增；两笔迁移都属于「代码与迁移必须同窗口」的强耦合项。
+
+| 子波 | 版本 | 主题 | 对象规模 | 同窗口二进制 | 迁移提交 |
+|---|---|---|---:|---|---|
+| W9-A | `20261121235940` | ERP 合并报表族公司维度 RLS | 8 表 / 32 策略（每表 4）/ 4 张补 `company_id`、其中 2 张另补 `period_version`（共 6 列）/ 4 条 FK / 4 条索引 / 3 个新函数（复用 `erp.group_tenant_of`） | erp | `db1da5e28` |
+| W9-B | `20261122090000` | `core_user_company_scopes.is_default` + 部分唯一索引 + 回填 | 1 表 / 1 列 / 1 唯一索引 / 1 条 UPDATE | shared-auth、shared-db（其余使用公司上下文的服务建议同批重编） | `7d92a571e` |
+
+账本 checksum 是**迁移文件字节的 SHA-384**；下表同时给出迁移与回滚的 SHA-256，便于开窗前后比对文件未被改写。
+
+| 版本 | sha384（账本） | sha256（迁移） | sha256（回滚） |
+|---|---|---|---|
+| `20261121235940` | `9989aa836c96530ba3bdbe22d6c23e13d984e16957fbe9971069bac660a262e866b82b6cc682e6c7a98ab0578146f9c7` | `117c2b9d86a74d64898200e5783c47858b69196f023578ac51079b3013f7fbb8` | `f8b686492cc2ad6d447c185ee369a996a34605d5b5d3e7213cdd45606eb46654` |
+| `20261122090000` | `19a04c0122968ff6caede8dc002a06816acfac50ef31dd8507e757b01ff25596db8581994ddfd88d6aa7ce6349f333ee` | `bb606c17395ccaac3520ef6f13469185d5688d5e1839f4b8b11ba69c19a09583` | `fb3b3089e8fbcce012a2efd03dd659b19bd036c0f6a3c9f9789e6da4d47ca4e9` |
+
+**执行顺序：W9-A → W9-B**（版本号已保证）。
+
+```bash
+# W9-A（无闸门 GUC；--strict 破坏性检查已实测 OK，无需 --allow-destructive）
+PROD_CHANGE_TICKET=ERP-COMPANY-RLS-20261122 \
+PGOPTIONS="-c app.rls_system=on" \
+bash scripts/migration/apply-forward.sh --db topems_prod --prod \
+  --apply-deferred 20261121235940 --ticket ERP-COMPANY-RLS-20261122
+
+# W9-B（带 destructive 标记：ticket COMPANY-DEFAULT-20261121）
+PROD_CHANGE_TICKET=COMPANY-DEFAULT-20261121 \
+PGOPTIONS="-c app.rls_system=on" \
+bash scripts/migration/apply-forward.sh --db topems_prod --prod \
+  --apply-deferred 20261122090000 --ticket COMPANY-DEFAULT-20261121
+```
+
+**前置（缺一不可）**
+
+1. 账本中 W9 两个版本均未 `success=t`（现场只读确认；不能凭版本号低于 prod max 判断）。
+2. `20261120235900`（hrm canonical）与 `20261121100000`（erp canonical）已 `success=t`：
+   - 8 张表已存在且各只有 1 条 `rls_tenant_isolation`、`FORCE RLS` 已开；
+   - `hrm.companies` 具备 `(tenant_id, id)` 唯一键（W9-A 的 4 条 FK 依赖）。
+3. 同窗口二进制已构建并待发布：`erp`（合并报表读写走请求事务）、`shared-auth`（`company_context.rs` + `middleware/company.rs`，`7d92a571e`）、`shared-db`（`app.company_id` / `app.actor_is_parent` / `app.visible_company_ids` GUC 注入）。
+   - **口径校正**：`Claims` 当前未新增 `company_id`，公司上下文按请求解析（头 > `is_default` > 唯一成员）；发布核对以代码为准，不要按「token 携带 company_id」检查。
+4. 备份：`pg_dump` 覆盖 8 张 erp 表 + `public.core_user_company_scopes`（W9-B 的标记只要求后者，建议一并备份前者）。
+
+**硬约束：代码与迁移必须同窗口。** 未接公司上下文（不注入 `app.company_id`）的二进制读这 8 张表会返回 **0 行**（系统读通道除外）。分批执行的结果：
+
+| 分批方式 | 发生什么 |
+|---|---|
+| 先库后码 | 8 张表切到公司维度；旧二进制不设 `app.company_id` → 普通会话读 **0 行**、写被 `WITH CHECK` 拒绝；ERP 合并报表页表现为空/写失败。`is_default` 列虽在，但旧中间件不读它，无 500。 |
+| 先码后库 | 新二进制设 `app.company_id`，但策略仍是租户级 → 同租户各公司**互相可见**（越权可见，安全缺口）；中间件查 `is_default` 失败被吞掉 → 隐式默认公司与唯一成员推断同时失效，未带 `x-company-id` 的请求落为「无公司上下文」。 |
+| 同窗口 | 读写按公司维度收敛；`is_default` 兜底可用；回滚按 B→A 恢复。 |
+
+**与相邻波次的关系**
+
+- **← erp canonical `20261121100000`（必须先于任何 `SET SCHEMA`/策略重建）**：合并报表 8 表由它建表；租户策略与 `erp.group_tenant_of()` 来自更早的 `20261114180000`。W8 的 `SET SCHEMA finance` 必须在 canonical 之后；W9-A 版本号在其后，按版本顺序天然满足。
+- **与 W8（`20261121220000`）**：无表交集；W8 只移动 `erp.opening_balances`。建议同窗，顺序 W8 → W9。
+- **与 W6 / P1-1**：对象集合无交集（平台语料 5 表、QMS 3 表），可同窗、各自单事务回滚；前提是发布编排同时包含 erp、shared-auth、shared-db、finance、unified-core、mobile、qms。
+- **与 `20261120090000` / `20261122100000`（MES 数量列）**：无对象交集，语义互不影响；`20261122100000` 版本号更晚，落到同一待应用序列时按版本号自然排在 W9-B 之后。W9 不改变 `mes.production_orders` 的 bigint 终态。
+- **与 W1–W5**：无表交集；W9 不触碰归档目标，也不依赖 C16 的 `rows=0` 断言。
 
 ---
 
@@ -220,6 +288,9 @@ W7-B 文件头已声明：5 表共 83 行，其中 74 行 `tenant_id NULL → �
 8. **W6（W7-B）/ P1-1 ← canonical**：pm/mobile/qms canonical 会重建同名策略；两条 RLS 批必须排在对应 canonical 之后，才能保证最终策略不被覆盖。W6 与 W1–W5 无表交集。
 9. **W6 与 P1-1 互相独立**：5 张平台语料表与 3 张 QMS 检验表无交集，可同窗口分事务执行；但 W6 的 `mobile.sync_policies` 与 mobile canonical 同表，必须按“canonical → W6”顺序。
 10. **canonical 26 条无独立回滚文件**：它们与代码同窗口；若在 canonical 之后、W6/P1-1 之前失败，只能停止后续波次并评估是否整批回退代码，不进入 §3.3 的逆序演练。
+11. **W9-A ← `20261114180000` + hrm canonical `20261120235900` + erp canonical `20261121100000`**：8 张表由 `20261114180000` 建立 `tenant_isolation_<表名>` 租户策略与 `erp.group_tenant_of()`，由 erp canonical 建表/补列；4 条公司列 FK 依赖 `hrm.companies(tenant_id, id)`（约束 `uq_companies_tenant_id_id`）。三者未 `success=t` 时 W9-A 会因函数/表/约束缺失中止。注意 `20261114180000` 版本号低于旧 prod max，不能靠「版本号 > max」判定已应用。
+12. **W9-A ← 公司上下文二进制（硬约束）**：未注入 `app.company_id` 的二进制读 8 张表返回 0 行；因此迁移与 `erp` + `shared-auth` + `shared-db` 必须同窗口（§2.4 已列分批后果）。这是本包内唯一「先库后码会造成可用性中断」的波次。
+13. **W9-B 与 W9-A 无对象依赖，但固定 A→B**：`is_default` 只影响中间件缺省公司解析，不改 8 表策略；按版本号执行以保持账本顺序。W9-B 与 MES 数量列 `20261120090000` / `20261122100000` 无交集，后者按版本号自然排在 W9-B 之后。
 
 ### 3.2 分波（每波单文件、单事务、可独立回滚与验收）
 
@@ -234,10 +305,15 @@ W7-B 文件头已声明：5 表共 83 行，其中 74 行 `tenant_id NULL → �
 | W5 | `20261119140000` | 0 | 第 7 段（排在 W3 之后） | `20261119140000` 回滚文件（删策略 + 关闭 RLS） |
 | W6 | `20261118110000` | 0（5 表 RLS + 74 行归一） | 第 8 段（必须在 pm/mobile canonical 之后） | `20261118110000` 回滚文件（恢复 NULL + `rls_global_read`） |
 | P1-1 | `20261118100000` | 0（3 表 RLS） | 第 9 段（必须在 qms canonical 之后） | `20261118100000` 回滚文件（关 RLS + 删策略/索引） |
+| W9 | `20261121235940` + `20261122090000` | 0（8 表 RLS 收紧 + 1 列回填） | 第 6.5 段（W8 之后、W5 之前；A→B） | 两个回滚文件，按 B→A；A 的回滚不自删账本，需手工清理 |
 
 ### 3.3 回滚逆序
 
-`P1-1 → W6 → W5 → W8 → W4 → W3 → W2 → W1`（canonical 26 条不纳入逆序演练，见 §3.1 第 10 条）。
+`P1-1 → W6 → W5 → W9（B→A） → W8 → W4 → W3 → W2 → W1`（canonical 26 条不纳入逆序演练，见 §3.1 第 10 条）。
+
+- W9 回滚顺序为 **B → A**：B 先删部分唯一索引与 `is_default` 列（回滚文件会自删账本行）；A 再删除 8 张表的 32 条公司维度策略、恢复每表 1 条租户策略，并删除新增的 6 列、4 条 FK、4 条索引与 3 个函数。**A 的回滚文件不自删账本**，须按 §5.2 手工 `DELETE FROM public._sqlx_migrations WHERE version=20261121235940`。
+- 注意：A 回滚件写入的策略名是 `rls_tenant_isolation`（表达式 `系统通道 OR 租户`），语义回到租户级，但与 W9 前 `20261114180000` 的 `tenant_isolation_<表名>`（纯租户）在名字与表达式上不完全一致；这是回滚件的既定形状，不是漂移，记录时应注明。
+- W9 回滚后语义：8 张表退回「同租户各公司互相可见」，`company_id` / `period_version` 的回填值随列删除而丢失，`is_default` 标记丢失；因此开窗前必须保留 8 张 erp 表与 `core_user_company_scopes` 的 `pg_dump`。
 
 - W5 回滚删除 `rls_tenant_isolation` 策略并关闭 `iam.core_tenant_plugins` 的 RLS/FORCE；表结构与数据不变，与其他波无交集，可在任意时点执行。
 - W4 回滚删除 2 条字典码、恢复 44 条遗留码及其角色授权；与其他三波无交集，可在任意时点最先执行。
@@ -492,7 +568,7 @@ WHERE schemaname='iam' AND tablename='core_tenant_plugins';
 
 ### 4.7 累计预期读数（2026-11-19 表已失效）
 
-> 11-19 的起点值（账本 721、表 1344、RLS 959、策略 1050、权限 1157/2917）已经被远端 81 条提交与新增 36 条迁移破坏，**不得作为验收依据**。开窗起点必须以 preflight 现场值为准。
+> 11-19 的起点值（账本 721、表 1344、RLS 959、策略 1050、权限 1157/2917）已经被远端 81 条提交与新增 36 条迁移（2026-11-22 复核为 42 条）破坏，**不得作为验收依据**。开窗起点必须以 preflight 现场值为准。
 
 **当前有效口径**：
 
@@ -501,6 +577,7 @@ WHERE schemaname='iam' AND tablename='core_tenant_plugins';
 - **W6（W7-B）**：5 张表 RLS/FORCE 保持启用；策略从「5 条 `rls_global_read`」变为「5 条 `rls_tenant_isolation` + 4 条 `rls_platform_read`」，净 `+4`（终态 9 条）；74 行 `tenant_id` 从 NULL 变为全零哨兵；表总数、行总数不变。
 - **P1-1**：3 张 QMS 表从「无 RLS」变为「RLS+FORCE」；RLS `+3`、策略 `+3`、索引 `+3`；行数保持 0；表总数不变。
 - **W8（W2-C）**：表总数不变（同一张表换 schema）；RLS/策略随表移动，计数不变；行数不变。
+- **W9（公司上下文）**：表总数不变；8 张表本就 ENABLE+FORCE，RLS 表数不变；这 8 张表的策略 **8 → 32（净 +24）**；列 **+6**（`company_id`×4、`period_version`×2）、FK **+4**、索引 **+4**、函数 **+3**；`public.core_user_company_scopes` 新增 1 列 + 1 条部分唯一索引，回填 UPDATE 行数 = 开窗时「尚无 `is_default=true` 的用户数」（须 ≤ 标记的 `max-rows: 100000`，实测值记入记录）；W9-A 另有 3 条带 `IS NULL` 前置条件的可推导回填（reports / report_lines / elimination_rules），行数按现场记录。**与旧口径冲突**：任何「8 张表各 1 条租户策略」的描述在本波后失效，终态为每表 4 条。
 - **canonical 26 条 + 6 条 drop + 3 条修补**：表总数、RLS、策略、权限码都可能变化，逐条按迁移内 `DO` 断言记录，不汇总成单一终态。
 
 **已失效的旧表**：账本 `721→722→…→726`、表 `1344→1350→1351`、archive `0→22→130→139`、RLS `959→943→913→914`、策略 `1050→1034→1003→1004`、权限码 `1157→1159`、授权 `2917`。仅作历史对照，不再执行对照验收。
@@ -605,6 +682,121 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 
 **执行后**：3 表 `relrowsecurity=t`、`relforcerowsecurity=t`；各 1 条 `rls_tenant_isolation`；各 1 条 `idx_*_tenant_id` 索引；行数仍为 0。回滚 `database/rollback/20261118100000_qms_inspection_tables_rls_strict.rollback.sql` 关闭 RLS 并删除策略/索引。
 
+### 4.12 W9：公司上下文两笔（`20261121235940` + `20261122090000`）
+
+**同窗口二进制**：`erp`、`shared-auth`、`shared-db`。**不允许只上库或只上码**（§2.4 已列两种分批的后果）。
+
+**前置只读校验**
+
+1. 账本：两版本均不存在或 `success=f`；`20261114180000`、`20261120235900`、`20261121100000` 为 `success=t`（前两者版本号可能低于旧 prod max，须逐条查）。
+2. 8 张表均存在、`relrowsecurity=t`、`relforcerowsecurity=t`、各 1 条租户策略（名 `tenant_isolation_<表名>`，表达式走 `erp.group_tenant_of`）；`hrm.companies` 有 `(tenant_id, id)` 唯一约束 `uq_companies_tenant_id_id`；`erp.group_tenant_of(uuid)` 存在。
+3. 8 张表的 `company_id` 若已存在（重复执行场景），其非 NULL 行必须能通过 `company_readable()`；`period_version` 已存在时须为 `integer NOT NULL DEFAULT 1`。
+4. `public.core_user_company_scopes.is_default` 不存在；同一 `(tenant_id,user_id)` 的 `is_default=true` 行数 ≤ 1（列已存在时）。
+5. 同窗口发布物已就绪；`pg_dump` 备份完成（8 张 erp 表 + `core_user_company_scopes`）。
+
+以上 1–5 与 C16 同节奏：窗口前 24h 与开窗前 30min 各只读复跑一次；任一项与预期不符即停。
+
+**执行后断言（只读）**
+
+```sql
+-- 账本与指纹：两行 success=t，checksum 等于 §2.4 的 sha384
+SELECT version, success, encode(checksum, 'hex')
+FROM public._sqlx_migrations
+WHERE version IN (20261121235940, 20261122090000);
+
+-- 8 表：FORCE RLS + 每表 4 条策略
+SELECT c.relname, c.relrowsecurity, c.relforcerowsecurity, count(p.policyname) AS policies
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+LEFT JOIN pg_policies p ON p.schemaname = n.nspname AND p.tablename = c.relname
+WHERE n.nspname = 'erp'
+  AND c.relname IN ('company_relations','internal_transactions','consolidation_scopes',
+                    'consolidation_scope_companies','consolidation_reports',
+                    'consolidation_report_lines','elimination_rules','elimination_candidates')
+GROUP BY 1,2,3 ORDER BY 1;
+-- 期望：每行 t | t | 4（策略名为 <表名>_company_select / _insert / _update / _delete）
+
+-- 新列形状
+SELECT table_name, column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_schema = 'erp'
+  AND column_name IN ('company_id','period_version')
+  AND table_name IN ('company_relations','internal_transactions','consolidation_scopes',
+                     'consolidation_scope_companies','consolidation_reports',
+                     'consolidation_report_lines','elimination_rules','elimination_candidates')
+ORDER BY 1,2;
+-- 期望：company_id uuid 可空（consolidation_scopes / consolidation_reports /
+--       consolidation_report_lines / elimination_rules 共 4 张）；
+--       period_version integer NOT NULL DEFAULT 1（仅 consolidation_reports / report_lines）
+
+-- 3 个解析函数存在且 SECURITY INVOKER
+SELECT proname, prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'erp'
+  AND proname IN ('current_company_id','parent_visible_company_ids','company_readable');
+```
+
+**行数表现（同一租户 T 内，A 为母公司，B/C 为子公司）**
+
+| 会话 GUC / 头 | 8 表的 SELECT 预期 |
+|---|---|
+| 仅 `app.tenant_id=T`（无公司头、无系统通道） | **0 行**（fail-closed；含 `company_id IS NULL` 的历史行） |
+| `app.company_id=A` | 公司列 = A 的行；双向表（`company_relations` / `internal_transactions` / `elimination_candidates`）任一侧 = A |
+| `app.company_id=B` | 仅 B；看不到 A/C（兄弟公司互不可见） |
+| `app.company_id=A` + `app.actor_is_parent=on` + `app.visible_company_ids={B,C}` | A + B + C（**只放读**；写仍仅 A） |
+| 同上但 `visible_company_ids` 为空 | 仅 A |
+| `app.rls_system=on`（仍需 tenant） | 租户内全部（含 NULL 公司历史行）；**写不豁免** |
+| 跨租户（tenant=T1，行属 T2） | 0 行（租户谓词恒在） |
+
+写侧不是「任一侧」：`company_relations` 要求 `parent_company_id = 当前公司`（子公司不能自行维护关系）；
+`internal_transactions` / `elimination_candidates` 要求 from/to 任一侧等于当前公司；
+其余 4 表要求 `company_id = 当前公司`。系统通道只放宽读，不放宽写。
+
+**`is_default` 回填抽查（只读）**
+
+```sql
+-- 同一用户至多一条默认：应为 0 行
+SELECT tenant_id, user_id, count(*) AS defaults
+FROM public.core_user_company_scopes
+WHERE is_default
+GROUP BY 1,2 HAVING count(*) > 1;
+
+-- 回填后不应有「无默认」的用户：应为 0 行
+SELECT tenant_id, user_id
+FROM public.core_user_company_scopes
+GROUP BY 1,2
+HAVING count(*) FILTER (WHERE is_default) = 0;
+
+-- 默认必须是该用户最早一条：应为 0 行
+SELECT s.tenant_id, s.user_id, s.id
+FROM public.core_user_company_scopes s
+WHERE s.is_default
+  AND EXISTS (
+      SELECT 1 FROM public.core_user_company_scopes e
+      WHERE e.tenant_id = s.tenant_id AND e.user_id = s.user_id
+        AND (e.created_at, e.id) < (s.created_at, s.id)
+  );
+
+-- 列与部分唯一索引
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='core_user_company_scopes'
+  AND column_name='is_default';
+-- 期望：boolean | NO | false
+
+SELECT indexdef FROM pg_indexes
+WHERE schemaname='public' AND indexname='uq_user_company_scopes_default';
+-- 期望：UNIQUE ... (tenant_id, user_id) WHERE is_default
+
+-- 抽样 20 条人工核对
+SELECT id, tenant_id, user_id, company_id, is_default, created_at
+FROM public.core_user_company_scopes
+ORDER BY tenant_id, user_id, created_at LIMIT 20;
+```
+
+**回滚**：按 B→A 执行 `database/rollback/20261122090000_...rollback.sql`（删索引与列、自删账本行）与 `database/rollback/20261121235940_...rollback.sql`（每表删 4 条公司策略、恢复 1 条租户策略，删 6 列/4 FK/4 索引/3 函数）；A 不删账本行，需手工清理。回滚后同租户各公司恢复互相可见，回填值丢失。
+
+**与 MES 数量列的边界**：本波不触碰 `mes.*`；`20261120090000` 与 `20261122100000` 只保证 `mes.production_orders.quantity/completed_quantity` 同为 bigint，W9 前后该终态不变。二者仅共享「按版本号顺序应用」这一约束，无对象依赖。
+
 ---
 
 ## 5. 风险分级与回滚后状态
@@ -622,6 +814,9 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 | R2 权限/策略语义 | W6（W7-B） | 5 表 83 行中 74 行 `tenant_id` NULL→全零哨兵；删除 `rls_global_read`，`mobile.sync_policies` 可见范围净减少 | 迁移内断言 NULL=0、哨兵数、政策数；A/B 对抗与回滚演练通过；同窗口三二进制；回滚恢复 NULL 与全局读 |
 | R3 对象迁移 | W8（W2-C） | `erp.opening_balances` 整体移入 finance；旧 finance 二进制读 erp 会 0 行/报错 | 仅 `SET SCHEMA`、不复制数据；无入向 FK 断言；同窗口 finance；回滚一句 `SET SCHEMA erp` |
 | R2 权限/策略语义 | P1-1 | 3 张 QMS 表首次 FORCE RLS，旧 qms 缺 `app.tenant_id` 会返回 0 行 | 0 行表、只加 RLS/策略/索引；A/B 对抗；同窗口 qms；回滚即关 RLS 删策略 |
+| R2 权限/策略语义 | W9-A | 8 张合并报表表从租户级收紧到公司维度；未接公司上下文的旧二进制 **读 0 行、写被拒** | 迁移无闸门 GUC、可重复执行；文件内先断言无越界数据；A/B 对抗（带/不带公司头、集团视角）；强制同窗口发布 erp + shared-auth + shared-db |
+| R2 权限/策略语义 | W9-B | 回填改变隐式公司解析：多公司用户从「无上下文 → 0 行」变为「自动取最早一条为默认 → 可见」 | 属本波预期的可见性放开（仅租户内）；部分唯一索引保证至多一条；回滚删列即恢复旧行为 |
+| R3 外键/回填 | W9-A/B | `company_id` / `period_version` 可推导回填，推导不出保持 NULL；FK 指向 `hrm.companies` | UPDATE 均带 `IS NULL` 前置条件且限定本租户；开窗前备份 8 表与 `core_user_company_scopes`；B 的标记 `max-rows: 100000` |
 | R1 destructive | canonical 26 + drop 6 | 6 条 `drop_resurrected_dead_tables` 会删重启的死表；canonical 可能建表/加列 | 已核对与 132 张归档目标无交集；与代码同窗口、无独立回滚；执行前逐条看文件头 destructive 标记 |
 
 ### 5.2 回滚后状态
@@ -635,6 +830,7 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 | W6 | 恢复 74 行 `tenant_id` 为 NULL → 删除 `rls_platform_read` → 重建 `rls_global_read` | 5 表回到「全局读 + NULL」状态；RLS/FORCE 保持；行数不变 |
 | W8 | `ALTER TABLE finance.opening_balances SET SCHEMA erp` | 表回到 erp；数据/索引/约束/RLS 随表回移；行数不变 |
 | P1-1 | 关闭 3 表 RLS/FORCE → 删除策略与 tenant_id 索引 | 3 表回到无 RLS、0 策略、无新增索引；行数仍为 0 |
+| W9 | B：删部分唯一索引与 `is_default` 列（自删账本行）；A：每表删 4 条公司策略 → 恢复 1 条 `rls_tenant_isolation`（系统通道 OR 租户）→ 删 6 列、4 FK、4 索引、3 函数 | 8 表回到「租户内各公司互相可见」；`company_id` / `period_version` 回填值随列删除丢失；`is_default` 标记丢失。**A 的回滚不自删账本**，需手工删除 `20261121235940` 行；回滚后的策略名是 `rls_tenant_isolation`，与 W9 前的 `tenant_isolation_<表名>` 不同但语义同为租户级 |
 
 - 回滚只重建结构与数据，不恢复 GRANT/COMMENT；不写账本。
 - 回到窗口前账本水位需手工删除对应 `_sqlx_migrations` 行；行数取开窗前现场值（11-19 旧值为 721，已失效）。
@@ -645,17 +841,18 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 ## 6. 开窗执行顺序（照抄）
 
 1. T-0 四项门禁（§4.1）全过。
-2. 按 §4.8 的命令由 DBA 用 `topems_prod` 只读复跑，132 张全部 READABLE 且 0 行，C16 转 PASS；同时记录 W6/W8/P1-1 的前置值（§4.9–§4.11）。
+2. 按 §4.8 的命令由 DBA 用 `topems_prod` 只读复跑，132 张全部 READABLE 且 0 行，C16 转 PASS；同时记录 W6/W8/W9/P1-1 的前置值（§4.9–§4.12）。
 3. W1：执行命令 → 跑 §4.2 五条验收 → 记录输出。
 4. W2：执行命令 → 跑 §4.3 验收 + `1/1/4` 确认（现场值，不是旧值）→ 记录输出。
 5. W3：执行命令 → 跑 §4.4 五条验收 → 记录输出。
 6. W4：执行命令 → 跑 §4.5 三条验收（账本/权限码/无意外变化）→ 记录输出。
 7. canonical 26 条 + 6 条 drop + 3 条修补：按版本号执行；逐条看文件头 destructive 标记；每批后核对账本 +1 与迁移内断言。
 8. W8（W2-C）：确认 erp canonical 已应用、恰好一个 `opening_balances` 存在 → 执行 → 核对 finance 存在/erp 消失/行数不变。
+8b. W9（公司上下文）：确认 **erp + shared-auth + shared-db 发布物已就绪**、§4.12 前置全过 → A → B → 跑 §4.12 的账本/结构/GUC 行数/`is_default` 抽查 → 记录回填行数。
 9. W5：执行命令 → 跑 §4.6 三条验收（账本/RLS+策略/现场读数）→ 记录输出。
 10. W6（W7-B）：核 §4.9 前置（16/48/17/1/1 与 8/48/16/1/1）→ 执行 → 核 §4.9 后置（NULL=0、9 策略、RLS+FORCE）→ A/B 查询。
 11. P1-1：核 §4.11 前置（3 表 0 行、无 RLS）→ 执行 → 核后置（RLS+FORCE、3 策略、3 索引）。
-12. 终态核对：按 §4.7 的“现场起点 + 相对增量”逐波记录；`check-ledger-ddl-drift.mjs` 再跑一次仍 PASS；不再对照 11-19 的 726/1351/914/1004。
+12. 终态核对：按 §4.7 的“现场起点 + 相对增量”逐波记录（含 W9 的 8→32 策略、+6 列）；`check-ledger-ddl-drift.mjs` 再跑一次仍 PASS；不再对照 11-19 的 726/1351/914/1004。
 13. 任一步失败：停止后续波次；该文件事务已整体回滚；按 §3.3 逆序恢复已成功的波次，再重新评审。
 
 ---
@@ -666,8 +863,11 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 - 29 条 prod-only 版本：prod 已有、dev 没有；与本窗口五条无表集合交集，不纳入。
 - 9 条早间计划版本（`20261119010000`、`20261119120000`、`20261119130000`、`20261119131000`、`20261119141000`、`20261119150000`、`20261119151000`、`20261119161000`、`20261119170000`）：dev/prod 均未落地，旧版文档曾纳入，本版剔除。`20261119140000` 已按拍板移出该清单，作为 W5 纳入本窗口。
 - 工作树 `.verify/` 及其他线未跟踪文件：不动。
-- 本包只给 W4 补 destructive 标记块（§2.2）；W5 不新增任何标记（文件无破坏性语句）。不改任何迁移/回滚的 SQL 逻辑；不 push。
+- 11-19 版只给 W4 补 destructive 标记块（§2.2），W5 不新增任何标记；**11-22 增补 W9 只改本文件，未改任何迁移/回滚/代码，不 push**。
 - **W7-B `20261118110000` 与 P1 首批 `20261118100000` 的版本号低于旧 prod max `20261119000002`，不能用「版本号 > max」的差集发现**；本包按 manifest note 与迁移文件显式纳入。开窗前仍须以 `_sqlx_migrations` 实际缺失行为准。
-- **新增 36 条候选不默认全部待上**：其中可能有已随其他窗口进入生产的版本；本包只给仓库侧候选集与顺序依赖，生产差集必须现场重算。
+- **新增候选（11-19 版写 36 条，11-22 实为 42 条）不默认全部待上**：其中可能有已随其他窗口进入生产的版本；本包只给仓库侧候选集与顺序依赖，生产差集必须现场重算。
 - **已失效、需要重新取证**：prod/dev 账本行数与 max、全局表/RLS/策略数、权限码/授权数、archive 表数、W3 的 `iam.core_tenants` FK `8/1/4` 与 W2 后 `1/1/4`、132 张 `rows=0`、终态 `726/1351/914/1004`。旧值仅保留在 §1.1–§1.4 与 §4.7 作为历史对照。
 - P1 首批与 W6 可以同窗口：两者对象集合无交集、均可在独立事务内回滚；但同窗口二进制需同时包含 `finance`、`unified-core`、`mobile`、`qms`，发布编排做不到时拆窗，W6 优先。
+- **W9 与 W8/W6/P1-1 同窗的额外前提**：发布编排必须同时包含 `erp`、`shared-auth`、`shared-db`；若发布只能含其中一部分，W9 单独成窗，其余照旧。W9 不能拆成「先库后码」或「先码后库」（§2.4）。
+- **W9 之外的三类新增不属本包**：W5C 三条（`20261121230000`/`20261121235900`/`20261121235930`）、MES 数量列 `20261122100000`、以及 11-22 之后可能继续进入主干的版本。`20261122100000` 只定稿 `mes.production_orders` 两列同为 bigint，与 W9 无交集；若生产账本尚未应用，按普通前向补丁随发布处理，不列为 RLS 窗口项。
+- **旧读数失效补记**：§2.3「36 条」已失效（11-22 实为 42 条）；任何「合并报表 8 表各 1 条租户策略」的旧描述在 W9-A 后失效，终态为每表 4 条。
