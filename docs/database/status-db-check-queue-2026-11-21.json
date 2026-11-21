@@ -3,12 +3,12 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 104,
+    "uncovered_enums": 105,
     "uncovered_values": 116,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 76,
-    "internal_state_enums": 37,
-    "persisted_unmapped_enums": 55,
+    "resolved_enums": 77,
+    "internal_state_enums": 38,
+    "persisted_unmapped_enums": 56,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 27,
     "internal_state_values": 57,
@@ -1235,6 +1235,27 @@
         "table": "mes.production_orders",
         "column": "status",
         "candidate": "docs/database/mes-production-order-status-check-candidates-2026-11-21.sql"
+      }
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/production_schedule_status.rs",
+      "enum": "ProductionScheduleStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "released"
+        ],
+        "persisted_unmapped": [
+          "scheduled"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/mes/src/modules/production_schedule_status.rs",
+        "enum": "ProductionScheduleStatus",
+        "table": "mes.production_schedules",
+        "column": "status",
+        "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql"
       }
     },
     {

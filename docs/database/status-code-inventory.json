@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 143,
+    "rust_enums": 144,
     "rust_enum_values": 155,
     "rust_values_not_in_db_check": 116,
     "frontend_status_keys": 170,
@@ -1774,6 +1774,27 @@
         "pending",
         "planned",
         "released"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/production_schedule_status.rs",
+      "name": "ProductionScheduleStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Pending",
+        "Released",
+        "Running",
+        "Scheduled"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "pending",
+        "released",
+        "running",
+        "scheduled"
       ]
     },
     {

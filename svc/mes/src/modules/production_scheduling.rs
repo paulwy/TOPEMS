@@ -18,9 +18,9 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
-use crate::shared::aps_fsm::schedule_can_transition;
 use topems_shared_db::decimal::big_decimal_to_f64;
 
+use crate::modules::production_schedule_status::ProductionScheduleStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -762,6 +762,49 @@ pub async fn update_production_schedule(
         }
     };
 
+    let status_value = match req.status.as_deref() {
+        Some(raw) => match ProductionScheduleStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的排产状态"),
+        },
+        None => None,
+    };
+
+    // 状态若随编辑提交，必须走与流转端点相同的状态机，禁止跳态
+    if let Some(target_raw) = status_value.as_deref() {
+        let target = match ProductionScheduleStatus::from_db_str(target_raw) {
+            Some(v) => v,
+            None => return ApiResponse::bad_request("无效的排产状态"),
+        };
+        let current: Option<(String,)> = match sqlx::query_as(
+            "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(row) => row,
+            Err(e) => {
+                tracing::error!("查询排产单当前状态失败: {}", e);
+                return ApiResponse::server_error("更新生产排产失败");
+            }
+        };
+        let Some((current_raw,)) = current else {
+            return ApiResponse::not_found("排产单不存在");
+        };
+        let Some(current_status) = ProductionScheduleStatus::from_db_str(&current_raw) else {
+            return ApiResponse::conflict("排产单当前状态非法，需人工处理");
+        };
+        if !current_status.can_transition_to(target) {
+            return ApiResponse::conflict(&format!(
+                "当前状态 {} 不允许切换到 {}",
+                current_status.as_db_str(),
+                target.as_db_str()
+            ));
+        }
+    }
+
     let result = sqlx::query_as::<_, ProductionScheduleRow>(
         r#"
         UPDATE mes.production_schedules SET
@@ -794,7 +837,7 @@ pub async fn update_production_schedule(
     .bind(req.planned_end_time)
     .bind(req.priority)
     .bind(req.sequence)
-    .bind(req.status)
+    .bind(status_value)
     .bind(req.notes)
     .bind(Utc::now())
     .bind(tenant_id)
@@ -896,11 +939,12 @@ pub async fn delete_production_schedule(
     let result = sqlx::query(
         r#"
         UPDATE mes.production_schedules SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled') AND tenant_id = $2::uuid
+        WHERE id = $1 AND status = ANY($3) AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(ProductionScheduleStatus::delete_from())
     .execute(&mut scope)
     .await;
 
@@ -979,7 +1023,7 @@ pub async fn adjust_schedule(
                 work_station_id = COALESCE($2, work_station_id),
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
-            WHERE id = $1 AND status IN ('pending', 'in_progress') AND tenant_id = $5::uuid
+            WHERE id = $1 AND status = ANY($6) AND tenant_id = $5::uuid
             "#,
         )
         .bind(schedule_id)
@@ -987,6 +1031,7 @@ pub async fn adjust_schedule(
         .bind(req.new_start_time)
         .bind(now)
         .bind(tenant_id)
+        .bind(ProductionScheduleStatus::adjustable_from())
         .execute(&mut scope)
         .await;
 
@@ -1318,22 +1363,32 @@ async fn transition_schedule(
         return ApiResponse::not_found("排产单不存在");
     };
 
-    if let Err(_e) = schedule_can_transition(&current_status, to_status) {
+    let current = match ProductionScheduleStatus::from_db_str(&current_status) {
+        Some(v) => v,
+        None => return ApiResponse::conflict("排产单当前状态非法，需人工处理"),
+    };
+    let target = match ProductionScheduleStatus::from_db_str(to_status) {
+        Some(v) => v,
+        None => return ApiResponse::bad_request("无效的排产状态"),
+    };
+    if !current.can_transition_to(target) {
         return ApiResponse::conflict(&format!(
             "当前状态 {} 不允许切换到 {}",
-            current_status, to_status
+            current.as_db_str(),
+            target.as_db_str()
         ));
     }
 
     let now = Utc::now();
     let updated = sqlx::query(
-        "UPDATE mes.production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
+        "UPDATE mes.production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND status = $6 AND tenant_id = $5 AND deleted_at IS NULL",
     )
-    .bind(to_status)
+    .bind(target.as_db_str())
     .bind(&comment)
     .bind(now)
     .bind(id)
     .bind(tenant_id)
+    .bind(current.as_db_str())
     .execute(&mut scope)
     .await;
 
