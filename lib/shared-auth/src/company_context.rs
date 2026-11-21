@@ -17,7 +17,7 @@ pub struct CompanyContext {
     pub company_id: Uuid,
     /// 是否显式声明母公司视角（`x-company-scope: group` 且关系数据成立）。
     pub actor_is_parent: bool,
-    /// 母公司视角下额外可见的子公司（已与用户主体范围求交）。
+    /// 母公司视角下可见的子公司（全部活跃后代，不与用户主体范围求交）。
     pub visible_company_ids: Vec<Uuid>,
 }
 

@@ -3,8 +3,9 @@
 //! 请求头契约：
 //! - `x-company-id`：当前公司 UUID。缺省 = 不声明公司（数据库侧 fail-closed 返回 0 行）；
 //!   非法/nil → 400；不属于当前租户或当前用户无 `core_user_company_scopes` 记录 → 403。
-//! - `x-company-scope`：`company`（默认）或 `group`。`group` 仅在当前公司确有活跃子关系时
-//!   生效（由 `erp.company_relations` 递归推导，并与用户主体范围求交）；否则按 `company` 处理。
+//! - `x-company-scope`：`company`（默认）或 `group`。`group` 仅当当前公司处于集团根位置
+//!   （有活跃子关系、无活跃上级）时生效：可见范围 = 全部活跃后代，不与用户主体范围求交；
+//!   否则按 `company` 处理（单公司 + warn）。
 //!
 //! 解析必须在**已设置 `app.tenant_id` 的事务**内执行：`core_user_company_scopes` 的 RLS
 //! 依赖该 GUC；母公司视角的递归推导需要临时打开系统读通道。
@@ -46,14 +47,29 @@ WITH RECURSIVE descendants(company_id) AS (
 SELECT company_id FROM descendants
 "#;
 
-/// 用户在当前租户下持有主体范围的公司（用于与子公司集合求交）。
-const USER_SCOPED_COMPANIES_SQL: &str = r#"
-SELECT company_id
-  FROM public.core_user_company_scopes
- WHERE tenant_id = $1
-   AND user_id = $2
-   AND company_id = ANY ($3)
+/// 当前公司是否存在活跃上级（用于判定集团根位置）。
+const HAS_ACTIVE_PARENT_SQL: &str = r#"
+SELECT EXISTS (
+    SELECT 1
+      FROM erp.company_relations
+     WHERE tenant_id = $1
+       AND child_company_id = $2
+       AND status = 'active'
+       AND deleted_at IS NULL
+       AND effective_date <= CURRENT_DATE
+       AND (expiry_date IS NULL OR expiry_date >= CURRENT_DATE)
+)
 "#;
+
+/// 集团视角判定：无活跃后代或存在活跃上级时，声明不生效。
+fn decide_group_view(mut descendants: Vec<Uuid>, has_parent: bool) -> Option<Vec<Uuid>> {
+    if descendants.is_empty() || has_parent {
+        return None;
+    }
+    descendants.sort();
+    descendants.dedup();
+    Some(descendants)
+}
 
 async fn set_system_flag(conn: &mut PgConnection, on: bool) -> Result<(), sqlx::Error> {
     sqlx::query("SELECT set_config('app.rls_system', $1, true)")
@@ -130,18 +146,29 @@ pub async fn resolve_company_context(
         return Ok(Some(CompanyContext::single(company_id)));
     }
 
-    let descendants = match set_system_flag(conn, true).await {
+    let (descendants, has_parent) = match set_system_flag(conn, true).await {
         Ok(()) => {
             let rows = sqlx::query_scalar::<_, Uuid>(ACTIVE_DESCENDANTS_SQL)
                 .bind(tenant_id)
                 .bind(company_id)
                 .fetch_all(&mut *conn)
                 .await;
+            let parent = if rows.is_ok() {
+                sqlx::query_scalar::<_, bool>(HAS_ACTIVE_PARENT_SQL)
+                    .bind(tenant_id)
+                    .bind(company_id)
+                    .fetch_one(&mut *conn)
+                    .await
+            } else {
+                // 子关系查询已失败，无需再判上级；占位值不会进入结果。
+                Ok(true)
+            };
             let restore = set_system_flag(conn, system).await;
-            match (rows, restore) {
-                (_, Err(e)) => Err(sqlx::Error::from(e)),
-                (Err(e), _) => Err(e),
-                (Ok(rows), Ok(())) => Ok(rows),
+            match (rows, parent, restore) {
+                (Ok(rows), Ok(parent), Ok(())) => Ok((rows, parent)),
+                (_, _, Err(e)) => Err(e),
+                (Err(e), _, _) => Err(e),
+                (_, Err(e), _) => Err(e),
             }
         }
         Err(e) => Err(e),
@@ -151,33 +178,14 @@ pub async fn resolve_company_context(
         (500, "母公司视角解析失败".to_string())
     })?;
 
-    if descendants.is_empty() {
+    let Some(visible) = decide_group_view(descendants, has_parent) else {
         tracing::warn!(
             %company_id,
-            "请求声明 x-company-scope: group，但当前公司没有活跃子关系，按单公司处理"
+            has_parent,
+            "请求声明 x-company-scope: group，但当前公司不处于集团根位置（需有活跃子关系且无活跃上级），按单公司处理"
         );
         return Ok(Some(CompanyContext::single(company_id)));
-    }
-
-    let visible = sqlx::query_scalar::<_, Uuid>(USER_SCOPED_COMPANIES_SQL)
-        .bind(tenant_id)
-        .bind(user_id)
-        .bind(&descendants)
-        .fetch_all(&mut *conn)
-        .await
-        .map_err(|e| {
-            tracing::error!(error = %e, "子公司可见范围求交失败");
-            (500, "母公司视角解析失败".to_string())
-        })?;
-
-    if visible.is_empty() {
-        tracing::warn!(
-            %company_id,
-            candidates = descendants.len(),
-            "母公司视角候选子公司均不在用户主体范围内，降级为单公司"
-        );
-        return Ok(Some(CompanyContext::single(company_id)));
-    }
+    };
 
     Ok(Some(CompanyContext {
         company_id,
@@ -241,4 +249,47 @@ pub async fn resolve_company_context_isolated(
     // 只读解析，事务一律回滚，不留任何写入。
     let _ = tx.rollback().await;
     resolved
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    const CHILD_A: Uuid = Uuid::from_u128(11);
+    const CHILD_B: Uuid = Uuid::from_u128(12);
+
+    #[test]
+    fn group_view_effective_only_for_group_root() {
+        let ids = decide_group_view(vec![CHILD_B, CHILD_A], false).unwrap();
+        assert_eq!(
+            ids,
+            vec![CHILD_A, CHILD_B],
+            "集团根：全部活跃后代且稳定排序"
+        );
+    }
+
+    #[test]
+    fn group_view_rejected_when_company_has_parent() {
+        assert_eq!(
+            decide_group_view(vec![CHILD_A], true),
+            None,
+            "有活跃上级 = 非集团根，声明不生效"
+        );
+    }
+
+    #[test]
+    fn group_view_rejected_without_descendants() {
+        assert_eq!(
+            decide_group_view(Vec::new(), false),
+            None,
+            "无活跃子关系，声明不生效"
+        );
+    }
+
+    #[test]
+    fn group_view_deduplicates_children() {
+        let ids = decide_group_view(vec![CHILD_A, CHILD_A, CHILD_B], false).unwrap();
+        assert_eq!(ids, vec![CHILD_A, CHILD_B]);
+    }
 }
