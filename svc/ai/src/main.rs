@@ -73,7 +73,11 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service_shared(&config).await?;
 
     // AI 专用 Database：共享池 + 事务级 search_path = ai, public
-    let db = Database::from_parts(Db::new(ctx.db.clone(), "ai, public").deny_request_own_txn());
+    let db = Database::from_parts(
+        Db::new(ctx.db.clone(), "ai, public")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
+    );
     tracing::info!("✅ 数据库连接成功");
 
     if let Err(e) =
