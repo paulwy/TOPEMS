@@ -15,6 +15,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::work_station_status::WorkStationStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -379,7 +380,7 @@ pub async fn create_work_station(
             station_no, station_name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11)
         RETURNING
             id, station_no, station_name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -390,6 +391,7 @@ pub async fn create_work_station(
     .bind(&req.name)
     .bind(workshop_id)
     .bind(&req.location)
+    .bind(WorkStationStatus::DEFAULT.as_db_str())
     .bind(req.capacity.unwrap_or(1))
     .bind(equipment_id)
     .bind(process_id)
@@ -526,6 +528,14 @@ pub async fn update_work_station(
         }
     };
 
+    let status_value = match req.status.as_deref() {
+        Some(raw) => match WorkStationStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的工位状态"),
+        },
+        None => None,
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE mes.work_stations SET
@@ -550,7 +560,7 @@ pub async fn update_work_station(
     .bind(&req.name)
     .bind(workshop_id)
     .bind(&req.location)
-    .bind(&req.status)
+    .bind(status_value)
     .bind(req.capacity)
     .bind(equipment_id)
     .bind(process_id)
@@ -679,7 +689,7 @@ pub async fn activate_work_station(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_stations SET
-            status = 'active',
+            status = $4,
             updated_at = $2
         WHERE id = $1
           AND tenant_id = $3::uuid
@@ -692,6 +702,7 @@ pub async fn activate_work_station(
     .bind(id)
     .bind(Utc::now())
     .bind(get_tenant_id(&claims))
+    .bind(WorkStationStatus::Active.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
@@ -756,9 +767,9 @@ pub async fn deactivate_work_station(
     let result = sqlx::query(
         r#"
         UPDATE mes.work_stations SET
-            status = 'inactive',
+            status = $4,
             updated_at = $2
-        WHERE id = $1 AND status = 'active'
+        WHERE id = $1 AND status = ANY($5)
           AND tenant_id = $3::uuid
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
@@ -769,6 +780,8 @@ pub async fn deactivate_work_station(
     .bind(id)
     .bind(Utc::now())
     .bind(get_tenant_id(&claims))
+    .bind(WorkStationStatus::Inactive.as_db_str())
+    .bind(WorkStationStatus::deactivate_from())
     .fetch_optional(&mut scope)
     .await;
 

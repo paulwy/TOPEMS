@@ -499,6 +499,13 @@
       "table": "mes.production_schedules",
       "column": "status",
       "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/work_station_status.rs",
+      "enum": "WorkStationStatus",
+      "table": "mes.work_stations",
+      "column": "status",
+      "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

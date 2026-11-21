@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 144,
-    "rust_enum_values": 155,
-    "rust_values_not_in_db_check": 116,
-    "frontend_status_keys": 170,
-    "frontend_keys_not_in_db_check": 130,
+    "rust_enums": 145,
+    "rust_enum_values": 156,
+    "rust_values_not_in_db_check": 117,
+    "frontend_status_keys": 171,
+    "frontend_keys_not_in_db_check": 131,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -1817,6 +1817,21 @@
       ]
     },
     {
+      "module": "mes",
+      "file": "svc/mes/src/modules/work_station_status.rs",
+      "name": "WorkStationStatus",
+      "values": [
+        "Active",
+        "Available",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "available",
+        "inactive"
+      ]
+    },
+    {
       "module": "plugin-registry",
       "file": "svc/plugin-registry/src/modules/plugin/models.rs",
       "name": "UpgradeQueueStatus",
@@ -2606,6 +2621,7 @@
       "approved",
       "archived",
       "assigned",
+      "available",
       "blacklisted",
       "blocked",
       "breaching",
@@ -2775,6 +2791,7 @@
       "achieved",
       "applied",
       "assigned",
+      "available",
       "blocked",
       "breaching",
       "calculated",
@@ -2893,6 +2910,7 @@
       "achieved",
       "applied",
       "assigned",
+      "available",
       "blocked",
       "breaching",
       "calculated",

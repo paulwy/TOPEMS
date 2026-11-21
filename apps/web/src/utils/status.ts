@@ -19,6 +19,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   approved: 'success',
   processed: 'success',
   planned: 'default',
+  available: 'success',
   empty: 'default',
   rejected: 'error',
   pending: 'warning',
