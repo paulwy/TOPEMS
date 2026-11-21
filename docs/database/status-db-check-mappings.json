@@ -543,6 +543,13 @@
       "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql"
     },
     {
+      "file": "svc/crm/src/modules/finance_risk.rs",
+      "enum": "FinanceRiskLevel",
+      "table": "crm.customer_finance",
+      "column": "risklevel",
+      "candidate": "docs/database/crm-customer-finance-risklevel-check-candidates-2026-11-21.sql"
+    },
+    {
       "file": "svc/crm/src/modules/customer_status.rs",
       "enum": "CustomerStatus",
       "table": "crm.customers",

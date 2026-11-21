@@ -14,6 +14,7 @@ use crate::models::customer::{CreateCustomerRequest, Customer, UpdateCustomerReq
 use crate::modules::audit::{log_audit_event_with_actor, AuditActor, AuditEventParams};
 use crate::modules::customer_approval_status::CustomerApprovalStatus;
 use crate::modules::customer_status::CustomerStatus;
+use crate::modules::finance_risk::FinanceRiskLevel;
 use crate::shared::permission::{check_permission, ModulePermission};
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
@@ -1400,33 +1401,38 @@ pub async fn get_customer_finance(
     .await;
 
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            CustomerFinanceInfo {
-                customer_id: r.customer_id,
-                customer_name: r.resolved_name.unwrap_or_default(),
-                credit_limit: num_f64(r.credit_limit),
-                credit_used: num_f64(r.credit_used),
-                credit_available: num_f64(r.credit_available),
-                credit_term_days: r.credit_term_days as i64,
-                receivable_balance: num_f64(r.receivable_balance),
-                accounts_receivable: num_f64(r.accounts_receivable),
-                overdue_amount: rust_decimal::Decimal::from_str(&r.overdue_amount.to_string())
-                    .unwrap_or_default(),
-                overdue_receivable: num_f64(r.overdue_receivable),
-                avg_collection_days: r.avg_collection_days as i64,
-                total_sales: num_f64(r.total_sales),
-                total_received: num_f64(r.total_received),
-                last_transaction_date: r.last_transaction_date,
-                payment_terms: r.payment_terms,
-                risklevel: r.risklevel,
-                status: r.status,
-                bank_name: r.bank_name,
-                bank_account: r.bank_account,
-                account_name: r.account_name,
-                tax_number: r.tax_number,
-            },
-            "获取客户财务信息成功",
-        ),
+        Ok(Some(r)) => {
+            if FinanceRiskLevel::from_db_str(&r.risklevel).is_none() {
+                return ApiResponse::error(409, "客户财务风险等级非法，拒绝读取");
+            }
+            ApiResponse::success(
+                CustomerFinanceInfo {
+                    customer_id: r.customer_id,
+                    customer_name: r.resolved_name.unwrap_or_default(),
+                    credit_limit: num_f64(r.credit_limit),
+                    credit_used: num_f64(r.credit_used),
+                    credit_available: num_f64(r.credit_available),
+                    credit_term_days: r.credit_term_days as i64,
+                    receivable_balance: num_f64(r.receivable_balance),
+                    accounts_receivable: num_f64(r.accounts_receivable),
+                    overdue_amount: rust_decimal::Decimal::from_str(&r.overdue_amount.to_string())
+                        .unwrap_or_default(),
+                    overdue_receivable: num_f64(r.overdue_receivable),
+                    avg_collection_days: r.avg_collection_days as i64,
+                    total_sales: num_f64(r.total_sales),
+                    total_received: num_f64(r.total_received),
+                    last_transaction_date: r.last_transaction_date,
+                    payment_terms: r.payment_terms,
+                    risklevel: r.risklevel,
+                    status: r.status,
+                    bank_name: r.bank_name,
+                    bank_account: r.bank_account,
+                    account_name: r.account_name,
+                    tax_number: r.tax_number,
+                },
+                "获取客户财务信息成功",
+            )
+        }
         Ok(None) => {
             // 无财务记录：返回默认财务信息（前端依赖默认展示，不 404）
             let name = sqlx::query_scalar::<_, String>(
@@ -1555,6 +1561,17 @@ pub async fn update_customer_finance(
         }
     };
 
+    if FinanceRiskLevel::from_db_str(&cur.risklevel).is_none() {
+        return ApiResponse::error(409, "客户财务当前风险等级非法，无法变更");
+    }
+    let risklevel = match req.risklevel.as_deref() {
+        None => cur.risklevel.clone(),
+        Some(raw) => match FinanceRiskLevel::from_db_str(raw) {
+            Some(level) => level.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的风险等级"),
+        },
+    };
+
     let merged = CustomerFinanceInfo {
         credit_limit: req.credit_limit.unwrap_or(cur.credit_limit),
         credit_used: req.credit_used.unwrap_or(cur.credit_used),
@@ -1569,7 +1586,7 @@ pub async fn update_customer_finance(
         total_received: req.total_received.unwrap_or(cur.total_received),
         last_transaction_date: req.last_transaction_date.or(cur.last_transaction_date),
         payment_terms: req.payment_terms.unwrap_or(cur.payment_terms),
-        risklevel: req.risklevel.unwrap_or(cur.risklevel),
+        risklevel,
         status: match req.status.as_deref() {
             Some(raw) => match CustomerStatus::from_db_str(raw) {
                 Some(next) => match CustomerStatus::from_db_str(&cur.status) {

@@ -24,6 +24,7 @@ pub mod customer_recommendation;
 pub mod customer_scoring;
 pub mod customer_segmentation;
 pub mod customer_status;
+pub mod finance_risk;
 pub mod forecast;
 pub mod interaction;
 pub mod openapi;
