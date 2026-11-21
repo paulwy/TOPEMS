@@ -346,6 +346,66 @@
       "enum": "VersionStatus",
       "persisted": false,
       "reason": "API 版本生命周期，仅中间件内存表，无同名共享源"
+    },
+    {
+      "file": "svc/erp/src/modules/customer_calc.rs",
+      "enum": "CreditStatus",
+      "persisted": false,
+      "reason": "按 credit_limit/used_credit 比例实时计算的展示分级，模块无 SQL；erp.customers.status 存的是客户生命周期（active/inactive，已有 CHECK），不是信用状态"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_compliance_audit.rs",
+      "enum": "ComplianceStatus",
+      "persisted": false,
+      "reason": "内存审计引擎的规则评估结果，模块零 SQL，仅作报告输出"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_compliance_audit.rs",
+      "enum": "FindingStatus",
+      "persisted": false,
+      "reason": "内存审计发现的处理态，模块零 SQL，无对应表列"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_dashboard.rs",
+      "enum": "KpiStatus",
+      "persisted": false,
+      "reason": "仪表盘 KPI 阈值分级（good/warning/critical），计算值不落库"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_quality_loop.rs",
+      "enum": "QualityTicketStatus",
+      "persisted": false,
+      "reason": "内存质量工单 FSM，模块零 SQL；工单经 mdm_collections JSONB 快照，无独立 status 列"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_report_automation.rs",
+      "enum": "ReportStatus",
+      "persisted": false,
+      "reason": "内存报告生成 FSM（pending/generating/completed/failed/delivered），模块零 SQL；public.reports 由其他服务写入"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_sync.rs",
+      "enum": "SyncStatus",
+      "persisted": false,
+      "reason": "内存同步编排态（含 compensating/compensated），模块零 SQL；public.external_erp_sync_logs 属另一模块"
+    },
+    {
+      "file": "svc/erp/src/modules/mdm_v49_types.rs",
+      "enum": "TaskStatus",
+      "persisted": false,
+      "reason": "生命周期任务态，仅随 LifecycleEntity.tasks 进 mdm_collections JSONB，无独立列"
+    },
+    {
+      "file": "svc/erp/src/modules/mdm_v49_types.rs",
+      "enum": "RetirementStatus",
+      "persisted": false,
+      "reason": "退役计划态，仅随实体进 mdm_collections JSONB，无独立列"
+    },
+    {
+      "file": "svc/erp/src/modules/order_calc.rs",
+      "enum": "ProductionStatusCategory",
+      "persisted": false,
+      "reason": "把外部 erp_production_orders.status 自由文本归类的展示投影（pending/released/completed/cancelled），本身不写库"
     }
   ]
 }
