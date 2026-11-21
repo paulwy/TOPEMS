@@ -173,7 +173,7 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 | 30 秒事务超时 | **代码就绪（2026-11-21）** | `tenant_middleware` 与请求内 `Db::scope*` 已设事务级 `statement_timeout=30s`（`TOPEMS_STATEMENT_TIMEOUT` 可覆盖）；WebSocket 短读同样设置。仍缺生产阈值确认、连接预算与压测 | `lib/shared-db` / `lib/shared-auth`；运维确认生产取值 |
 | 长请求监控 | **部分就绪** | 已有 `http_request_duration_seconds`、`DB_QUERY_DURATION`、500ms 慢查询阈值；缺「请求事务存活时长」指标与告警 | observability 增 `rls_txn_open_seconds` + 告警规则 |
 | 压测口径 | **未就绪** | 有 k6 脚本与验收表（p95/p99、>100 RPS），但无当前连接预算/并发基线；`repo-wide-rls-pool-closure` 明确 wms 20 线程压测未做 | QA/perf + 各服务 owner |
-| 守卫覆盖 | **部分** | unified-core/finance/mes/qms/analytics 已开启（宿主 `svc/server` analytics 模块同步）；qms 已 0 处，其余残留均为后台。逐服务可开/阻塞清单见 §7 | B3 按服务推进 |
+| 守卫覆盖 | **部分** | unified-core/finance/mes/qms/analytics 已开启；2026-11-21 新增 communication/monitor/pdm/plugin-registry/ticket/tms；integration/gis 阻塞、EHS/WMS 豁免，逐服务结论见 §7.3 | B3 按服务推进 |
 | 基线门禁 | **缺失** | 无脚本防止 190/155 回涨 | B0 |
 
 ---
@@ -202,6 +202,9 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 | B4 | 已完成（2026-11-21） | shared-db 的 8 个非事务包装（`MasterDataRefService` 5 个 + `ReconciliationLogService` 3 个）在方法文档标注 **Standalone（非事务）**，明确请求链路应改用对应 `_tx` / `_in_scope` 变体 |
 | B5 | 已完成（2026-11-21） | EHS/WMS 写作用域豁免落注释：实际 **EHS 44**（41 `no-request-txn` + 3 `bg-event`）、**WMS 12**（10 `short-txn-exempt` + 2 `bg-event`）；同时修正门禁 `EXEMPT_RE` 缺 `m` 标志导致「同行豁免」不计数的缺陷。门禁读数 `total 154 / marked 56 / unmarked 98`，基线已核销 |
 | B3 | 已完成（代码，2026-11-21） | 33 个 BI 读 handler + 2 处 reports-center 读路径改为复用 `RlsTxnCell` 的 `scope_with`；WebSocket 订阅保留每轮短读，但改走 `scope_read_for_tenant_stream`，门禁只允许该入口出现在 `websocket.rs`；`deny_request_tenant_scope` 已在独立部署 `analytics/main.rs` 与宿主 `svc/server` analytics 模块同时开启。新增 `topems_rls_request_txn_duration_seconds` / `topems_rls_request_txn_total`，按 success/error 观测请求事务 P99 |
+| B4 读路径补齐 | 已完成（2026-11-21） | unified-core 主数据 10 个读/对账 handler 全部改为 `RlsTxnCell` + `scope_with`；shared-db 补 `_in_scope` 读变体（`list_by_tenant` / `count_*` / `max_*` / `duplicates` / `stale` / `query_reconciliation_logs` / `insert_from_master_data_refs`）；standalone 版本保留给后台。`cargo check -p topems-unified-core` 通过 |
+| B3 门禁扩口径 | 已完成（2026-11-21） | `check-scope-api.mjs` 合并统计 `scope_for_tenant` + `scope_read_for_tenant`，基线结构迁移为 `scope_calls.files` 并给出分项；新读数 `total 239 / marked 56 / unmarked 183（for 98 + read 85）`、`Db::new 163`，基线已核销 |
+| B3 守卫 rollout | 部分完成（2026-11-21） | communication、monitor、pdm、plugin-registry、ticket、tms 已开 `.deny_request_tenant_scope()`，`cargo check` 6 包通过；integration/gis 阻塞原因见 §7.3，EHS/WMS 维持豁免 |
 | B3 生产前置 | 部分完成（2026-11-21） | 30s `statement_timeout` 已落在请求事务、请求内作用域与 WebSocket 短读（`TOPEMS_STATEMENT_TIMEOUT` 可覆盖）；连接预算/并发基线仍需按服务压测。代码守卫已开，但生产阈值未拍板前不得据此认定容量安全 |
 
 > B2 的 e2e `master_ten_endpoints_form_closed_loop` 仍因测试库 `core_mdm_reconciliation_log.detected_at` 为 `timestamp without time zone`、Rust 侧 `DateTime<Utc>` 解码不匹配而无法端到端跑通（该用例原即 `#[ignore]`），本次改由 shared-db 事务边界回归覆盖；该时间类型漂移独立于 B2，另行处理。
@@ -216,26 +219,37 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 - 请求上下文由 **`auth_middleware` 写入**（[auth.rs](file:///Users/xingzhai/TOPEMS/lib/shared-auth/src/auth.rs#L1045-L1049)、[auth.rs](file:///Users/xingzhai/TOPEMS/lib/shared-auth/src/auth.rs#L1205-L1212)），**不依赖** `tenant_middleware`。因此：`tenant_middleware_no_txn` 的服务（EHS）一旦开守卫同样会打到自身 handler，豁免理由成立。
 - `tokio::spawn` / 事件消费者不继承 task-local，后台调用不受守卫影响；这是「未标记存量集中在 event_handlers / spawn」仍可开守卫的依据。
 
-### 7.2 门禁口径缺口（本次发现）
+### 7.2 门禁口径（已扩展，2026-11-21）
 
-`check-scope-api.mjs` 的 `SCOPE_CALL_RE` 只统计 `scope_for_tenant`，**不统计 `scope_read_for_tenant`**（[check-scope-api.mjs](file:///Users/xingzhai/TOPEMS/scripts/ci/check-scope-api.mjs#L53-L57)）。后者在运行期同样被守卫拦截，故「门禁 0 未标记」不等于「请求面已可开守卫」。
+原 `check-scope-api.mjs` 只统计 `scope_for_tenant`，漏掉同样被守卫拦截的 `scope_read_for_tenant`，形成「0 未标记」假绿。本次已合并统计：
 
-### 7.3 分服务结论
+| 项 | 读数 | 说明 |
+|---|---|---|
+| `scope_calls.total` | **239** | `scope_for_tenant` + `scope_read_for_tenant` 生产调用点 |
+| `scope_calls.marked` | **56** | 带 `// scope-exempt: <理由>` 的调用点 |
+| `scope_calls.unmarked` | **183** | 98 `for_tenant` + 85 `read_for_tenant`，已作为新基线锁定，只减不增 |
+| `db_new` | **163** | 与旧基线一致 |
+
+- `scope_read_for_tenant_stream` 为 WebSocket 专用入口，单独统计（当前 1 处，仅允许 `websocket.rs`），不计入合计。
+- 基线文件结构由 `scope_for_tenant.files` 迁移为 `scope_calls.files`，每文件同时给出 `for_tenant` / `read_for_tenant` 未标记分项；旧基线首次扩口径时允许 `--update-baseline` 重建，后续恢复正常「只减不增」校验。
+- 未标记 183 的构成：98 写入口（历史基线值）+ 85 读入口；后者集中在 EHS/WMS 豁免面、integration 后台同步与 gis WebSocket 等明确不开守卫的服务，以及 shared-db standalone helper（由调用方事务替代后逐步核销）。
+
+### 7.3 分服务结论（2026-11-21 执行后）
 
 | 分组 | 服务 | 依据 | 结论 |
 |---|---|---|---|
-| 已开守卫 | unified-core（`main.rs` + `embedded.rs`）、finance、mes、qms、analytics（独立 `main.rs`）、`svc/server` analytics 模块 | `deny_request_tenant_scope` 6 处 + 宿主 1 处 | 保持 |
-| 书面豁免 | EHS、WMS | EHS `tenant_middleware_no_txn` 下 44 处标记 + 11 处 `scope_read_for_tenant`（请求模块）；WMS 12 处标记 + 16 处 `scope_read_for_tenant`（outbound/inbound/transfer/analytics/stock_take） | 不开守卫，维持 §5 T2 书面豁免 |
-| 请求面干净、可开 | communication、monitor、pdm、plugin-registry、ticket、tms（0 未标记、0 `scope_read_for_tenant`）；crm、erp、hrm、lims、master-data、mobile、pm、portal、rd、scm、srm、ai、search（未标记全部落在 `event_handlers` / `tokio::spawn` / 启动期缓存预热 / 后台同步） | 逐文件核对调用点上下文 | 可开，建议小批推进并做冒烟 |
-| 阻塞 | integration | HTTP handler 同步 `await` `sync_erp_to_mes` / `sync_mes_progress_to_erp` / `trigger_qms_inspection` 等，内部直接 `scope_for_tenant`（[mes_erp_sync.rs](file:///Users/xingzhai/TOPEMS/svc/integration/src/mes_erp_sync.rs#L617-L630)、[mes_qms_integration.rs](file:///Users/xingzhai/TOPEMS/svc/integration/src/mes_qms_integration.rs#L1208-L1220)） | 开守卫即 500，需先把同步入口改为请求事务复用 |
+| 已开守卫 | unified-core（`main.rs` + `embedded.rs`）、finance、mes、qms、analytics（独立 `main.rs`）、`svc/server` analytics 模块 | 既有 | 保持 |
+| **本次已开** | communication、monitor、pdm、plugin-registry、ticket、tms | 请求面零未标记、零 `scope_read_for_tenant`；`cargo check` 6 包通过 | 已加 `.deny_request_tenant_scope()` |
+| 书面豁免 | EHS、WMS | EHS `tenant_middleware_no_txn` 下 44 处标记 + 11 处 `scope_read_for_tenant`；WMS 12 处标记 + 16 处 `scope_read_for_tenant` | 不开守卫，维持 §5 T2 |
+| 暂缓 | crm、erp、hrm、lims、master-data、mobile、pm、portal、rd、scm、srm、ai、search | 未标记均落在 `event_handlers` / `tokio::spawn` / 启动期预热 / 后台同步，可开但需逐服务冒烟 | 下一批 |
+| 阻塞 | integration | HTTP handler 同步 `await` `sync_erp_to_mes` / `sync_mes_progress_to_erp` / `trigger_qms_inspection` 等，内部直接 `scope_for_tenant`（[mes_erp_sync.rs](file:///Users/xingzhai/TOPEMS/svc/integration/src/mes_erp_sync.rs#L617-L630)、[mes_qms_integration.rs](file:///Users/xingzhai/TOPEMS/svc/integration/src/mes_qms_integration.rs#L1208-L1220)） | 开守卫即 500；需先把同步入口改为请求事务复用 |
 | 阻塞 | gis | WebSocket 循环内 `scope_read_for_tenant`（[websocket.rs](file:///Users/xingzhai/TOPEMS/svc/gis/src/modules/websocket.rs#L278-L284)），请求 task-local 仍在 | 需按 analytics 模式改用 `scope_read_for_tenant_stream` 后再开 |
 
-### 7.4 摸底暴露的既有缺陷（待决策，未改动）
+### 7.4 unified-core 主数据读路径修复（已完成，2026-11-21）
 
-unified-core 已开守卫，但主数据**读** handler 仍走非事务 helper：
+摸底发现的读路径缺陷已全部修复，不再局限于两个 GET：
 
-- [get_ref_handler](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/master/handlers.rs#L1487-L1500) / [get_ref_by_code_handler](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/master/handlers.rs#L1502-L1516) → `MasterDataService::get_ref` → `MasterDataRefService::get_by_id` → `scope_read_for_tenant`（[master_data_refs.rs](file:///Users/xingzhai/TOPEMS/lib/shared-db/src/master_data_refs.rs#L363-L376)）。
-- 守卫命中后返回 `Protocol`，即这两个 GET 在主数据请求上下文里会失败；同文件 `list_by_tenant` / `count_*` 等读方法同理。
-- 这与 B4「请求路径统一走 `_tx` 变体」的目标不一致：B4 只标注了 8 个写包装，读方法未收敛，且门禁不统计读入口（见 7.2），所以未被发现。
-
-建议顺序：先修读路径（改走 `RlsTxnCell` + `get_by_id_tx` 等）→ 门禁补统计 `scope_read_for_tenant` → 再按 7.3「可开」组小批开守卫。
+- 读 handler 统一取 `Extension<RlsTxnCell>`，经 `state.db.scope_with(&mut txn)`（nil 租户走 `scope_with_system`）复用请求事务；
+- `MasterDataRefService` 新增 `_in_scope` 变体：`get_by_domain_and_code_in_scope`、`list_by_tenant_in_scope`、`count_by_*_in_scope`、`get_max_updated_at/last_synced_at_in_scope`、`count/list_duplicates_in_scope`、`count/list_stale_in_scope`；`ReconciliationLogService` 新增 `insert_from_master_data_refs_in_scope`、`query_reconciliation_logs_in_scope`；
+- 覆盖 handler：`get_ref` / `get_ref_by_code` / `list_refs` / `get_overall_stats` / `get_sync_status` / `get_quality_report` / `list_duplicates` / `list_stale` / `run_reconciliation` / `list_reconciliation_logs`；
+- standalone 方法保留给后台/事件路径，语义不变；`cargo check -p topems-unified-core` 通过。
