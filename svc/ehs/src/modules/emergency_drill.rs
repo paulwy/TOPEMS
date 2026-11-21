@@ -15,6 +15,7 @@ use utoipa::ToSchema;
 
 use uuid::Uuid;
 
+use crate::modules::drill_status::{DrillPlanStatus, DrillRecordStatus};
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
@@ -308,6 +309,13 @@ pub async fn list_drill_plans(
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match q.status.as_deref() {
+        Some(raw) => match DrillPlanStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的演练计划状态"),
+        },
+        None => None,
+    };
 
     // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
     let query = match tenant_scope.tenant_id() {
@@ -315,7 +323,7 @@ pub async fn list_drill_plans(
             let mut params: Vec<String> = Vec::new();
             let mut where_clause =
                 String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
-            if let Some(s) = &q.status {
+            if let Some(s) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
                 params.push(s.clone());
             }
@@ -362,7 +370,7 @@ pub async fn list_drill_plans(
         None => {
             let mut params: Vec<String> = Vec::new();
             let mut where_clause = String::from(" WHERE deleted_at IS NULL");
-            if let Some(s) = &q.status {
+            if let Some(s) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
                 params.push(s.clone());
             }
@@ -434,7 +442,7 @@ pub async fn list_drill_plans(
             organizer: r.try_get::<Option<String>, _>("organizer").ok().flatten(),
             status: r
                 .try_get::<String, _>("status")
-                .unwrap_or_else(|_| "planned".to_string()),
+                .unwrap_or_else(|_| DrillPlanStatus::DEFAULT.as_db_str().to_string()),
             related_plan_id: r
                 .try_get::<Option<String>, _>("related_plan_id")
                 .ok()
@@ -506,14 +514,14 @@ pub async fn create_drill_plan(
             plan_no, title, description, drill_type, plan_date, location,
             participants, estimated_duration, content, organizer, status,
             related_plan_id, tenant_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5::date, $6, $7, $8, $9, $10, COALESCE($11, 'planned'), $12::uuid, $13, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5::date, $6, $7, $8, $9, $10, $11, $12::uuid, $13, NOW(), NOW())
         RETURNING
             id::text AS id, plan_no, title, description, drill_type,
             plan_date::text AS plan_date, location, participants, estimated_duration,
             content, organizer, status, related_plan_id::text AS related_plan_id,
             created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
-        "#
+        "#,
     )
     .bind(&plan_no)
     .bind(&req.title)
@@ -525,7 +533,7 @@ pub async fn create_drill_plan(
     .bind(req.estimated_duration)
     .bind(req.content.as_deref())
     .bind(req.organizer.as_deref())
-    .bind("planned")
+    .bind(DrillPlanStatus::DEFAULT.as_db_str())
     .bind(req.related_plan_id.as_deref())
     .bind(tenant)
     .fetch_one(&mut scope)
@@ -559,7 +567,7 @@ pub async fn create_drill_plan(
         organizer: row.try_get::<Option<String>, _>("organizer").ok().flatten(),
         status: row
             .try_get::<String, _>("status")
-            .unwrap_or_else(|_| "planned".to_string()),
+            .unwrap_or_else(|_| DrillPlanStatus::DEFAULT.as_db_str().to_string()),
         related_plan_id: row
             .try_get::<Option<String>, _>("related_plan_id")
             .ok()
@@ -749,6 +757,13 @@ pub async fn list_drill_records(
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match q.status.as_deref() {
+        Some(raw) => match DrillRecordStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的演练记录状态"),
+        },
+        None => None,
+    };
 
     // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
     let query = match tenant_scope.tenant_id() {
@@ -756,7 +771,7 @@ pub async fn list_drill_records(
             let mut params: Vec<String> = Vec::new();
             let mut where_clause =
                 String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
-            if let Some(s) = &q.status {
+            if let Some(s) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
                 params.push(s.clone());
             }
@@ -797,7 +812,7 @@ pub async fn list_drill_records(
         None => {
             let mut params: Vec<String> = Vec::new();
             let mut where_clause = String::from(" WHERE deleted_at IS NULL");
-            if let Some(s) = &q.status {
+            if let Some(s) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
                 params.push(s.clone());
             }
@@ -911,7 +926,7 @@ pub async fn create_drill_record(
         .bind(&req.issues_found)
         .bind(&req.improvements)
         .bind(attachments)
-        .bind("in_progress")
+        .bind(DrillRecordStatus::DEFAULT.as_db_str())
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
@@ -1041,6 +1056,23 @@ pub async fn update_drill_record(
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
+    let status_target = match req.status.as_deref() {
+        Some(raw) => match DrillRecordStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的演练记录状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => DrillRecordStatus::update_from(target)
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect(),
+        None => DrillRecordStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
     if let Some(v) = req.drill_name {
@@ -1080,9 +1112,9 @@ pub async fn update_drill_record(
         sets.push(format!("attachments = ${}", params.len() + 1));
         params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
     }
-    if let Some(v) = req.status {
+    if let Some(target) = status_target {
         sets.push(format!("status = ${}", params.len() + 1));
-        params.push(v);
+        params.push(target.as_db_str().to_string());
     }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
@@ -1090,12 +1122,14 @@ pub async fn update_drill_record(
         // 租户通道：tenant_id = $N::uuid
         Some(tenant) => {
             let id_idx = params.len() + 1;
-            let tenant_idx = params.len() + 2;
+            let allowed_idx = params.len() + 2;
+            let tenant_idx = params.len() + 3;
             let sql = format!(
                 r#"
                 UPDATE ehs.qa_ehs_drill_records
                 SET {set_clause}
                 WHERE id::text = ${id_idx}
+                  AND (status = ANY(${allowed_idx}::text[]) OR status IS NULL)
                   AND tenant_id = ${tenant_idx}::uuid
                   AND deleted_at IS NULL
                 RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
@@ -1110,16 +1144,22 @@ pub async fn update_drill_record(
             for p in &params {
                 q = q.bind(p);
             }
-            q.bind(&id).bind(tenant).fetch_optional(&mut scope).await
+            q.bind(&id)
+                .bind(&allowed_from)
+                .bind(tenant)
+                .fetch_optional(&mut scope)
+                .await
         }
         // 系统通道（超管跨租户）：SQL 里显式不含任何 tenant_id 谓词。
         None => {
             let id_idx = params.len() + 1;
+            let allowed_idx = params.len() + 2;
             let sql = format!(
                 r#"
                 UPDATE ehs.qa_ehs_drill_records
                 SET {set_clause}
                 WHERE id::text = ${id_idx}
+                  AND (status = ANY(${allowed_idx}::text[]) OR status IS NULL)
                   AND deleted_at IS NULL
                 RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
                           started_at AS drill_date, participant_list AS participants,
@@ -1133,7 +1173,10 @@ pub async fn update_drill_record(
             for p in &params {
                 q = q.bind(p);
             }
-            q.bind(&id).fetch_optional(&mut scope).await
+            q.bind(&id)
+                .bind(&allowed_from)
+                .fetch_optional(&mut scope)
+                .await
         }
     };
     let row = match row {
@@ -1469,7 +1512,7 @@ fn drill_record_from_row(r: &sqlx::postgres::PgRow) -> DrillRecord {
         attachments,
         status: r
             .try_get("status")
-            .unwrap_or_else(|_| "in_progress".to_string()),
+            .unwrap_or_else(|_| DrillRecordStatus::DEFAULT.as_db_str().to_string()),
         created_by: r.try_get("created_by").ok().flatten(),
         created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
         updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),

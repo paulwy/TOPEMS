@@ -618,6 +618,20 @@
       "table": "ehs.qa_ehs_incident_actions",
       "column": "status",
       "candidate": "docs/database/ehs-incident-action-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/drill_status.rs",
+      "enum": "DrillPlanStatus",
+      "table": "ehs.qa_ehs_drill_plans",
+      "column": "status",
+      "candidate": "docs/database/ehs-drill-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/drill_status.rs",
+      "enum": "DrillRecordStatus",
+      "table": "ehs.qa_ehs_drill_records",
+      "column": "status",
+      "candidate": "docs/database/ehs-drill-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

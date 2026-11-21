@@ -51,13 +51,13 @@ const drillAdapter: CrudApiAdapter<DrillRecord> = {
 };
 
 const statusColorMap: Record<string, { bg: string; color: string }> = {
-  scheduled: { bg: 'info.lighter', color: 'info.dark' },
+  planned: { bg: 'info.lighter', color: 'info.dark' },
   in_progress: { bg: 'warning.lighter', color: 'warning.dark' },
   completed: { bg: 'success.lighter', color: 'success.dark' },
 };
 
 const statusLabelMap: Record<string, string> = {
-  scheduled: i18n.t('ehs.ehs_drill_page.k0'),
+  planned: i18n.t('ehs.ehs_drill_page.k0'),
   in_progress: i18n.t('ehs.ehs_drill_page.k1'),
   completed: i18n.t('ehs.ehs_drill_page.k2'),
 };
@@ -90,8 +90,7 @@ const EhsDrillPage: React.FC = () => {
     return {
       total: drills.length,
       completed: drills.filter((d) => d.status === 'completed').length,
-      scheduled: drills.filter((d) => d.status === 'scheduled' || d.status === 'in_progress')
-        .length,
+      scheduled: drills.filter((d) => d.status === 'planned' || d.status === 'in_progress').length,
     };
   }, [drillsResp]);
 

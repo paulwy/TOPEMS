@@ -2,6 +2,7 @@ pub mod accident;
 pub mod accident_status;
 pub mod dashboard;
 pub mod data_sync;
+pub mod drill_status;
 pub mod ehs_plugin;
 pub mod emergency_drill;
 pub mod emergency_plan;

@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 161,
+    "rust_enums": 163,
     "rust_enum_values": 163,
     "rust_values_not_in_db_check": 124,
     "frontend_status_keys": 178,
@@ -505,6 +505,36 @@
       "normalized": [
         "closed",
         "reported"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/drill_status.rs",
+      "name": "DrillPlanStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Planned"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "planned"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/drill_status.rs",
+      "name": "DrillRecordStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress"
       ]
     },
     {
