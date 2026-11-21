@@ -41,7 +41,9 @@ async fn main() -> anyhow::Result<()> {
     let app_state = AppState {
         // 沿用模块原有 SEARCH_PATH：public。
         // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务（兜底守卫）。
-        db: Db::new(ctx.db.clone(), "public").deny_request_own_txn(),
+        db: Db::new(ctx.db.clone(), "public")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::new(SystemMetrics::new()),
         start_time,

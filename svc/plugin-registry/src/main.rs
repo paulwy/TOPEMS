@@ -47,7 +47,9 @@ async fn main() -> anyhow::Result<()> {
 
     let start_time = Instant::now();
     let app_state = AppState {
-        db: Db::new(ctx.db.clone(), "public").deny_request_own_txn(),
+        db: Db::new(ctx.db.clone(), "public")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::new(SystemMetrics::new()),
         start_time,

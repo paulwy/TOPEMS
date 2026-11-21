@@ -42,7 +42,8 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service_shared(&config).await?;
 
     // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
-    let db = Db::new(ctx.db.clone(), "pdm, public");
+    // 请求内再自开租户作用域会直接报 Protocol 错误（事件消费等后台路径不受影响）。
+    let db = Db::new(ctx.db.clone(), "pdm, public").deny_request_tenant_scope();
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let l2_config = topems_shared_core::l2_cache::L2CacheConfig {

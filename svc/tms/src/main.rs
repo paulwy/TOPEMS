@@ -43,7 +43,9 @@ async fn main() -> Result<()> {
 
     // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
     // M-1 试点：请求上下文内禁止自开事务（scope / scope_read），必须复用请求事务
-    let db = Db::new(ctx.db.clone(), "tms, public").deny_request_own_txn();
+    let db = Db::new(ctx.db.clone(), "tms, public")
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let l2_config = L2CacheConfig {

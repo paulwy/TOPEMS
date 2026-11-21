@@ -40,7 +40,9 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service_shared(&config).await?;
     // M-1：请求链路禁止自开事务，必须复用 tenant_middleware 注入的请求事务；
     // 后台任务（邮件队列落库/消费）改用 scope_system()。
-    let db = Db::new(ctx.db.clone(), "communication, public").deny_request_own_txn();
+    let db = Db::new(ctx.db.clone(), "communication, public")
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
 
     // ===== 通知读取路由（需要认证） =====
     let notification_read = Router::new()
