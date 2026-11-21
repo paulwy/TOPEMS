@@ -72,7 +72,8 @@ async fn main() -> anyhow::Result<()> {
     // 与嵌入态（portal_real_module.rs）统一：共享运行时池 + 事务级 `public, portal`。
     // 帮助中心表（core_faqs/core_guides/core_guide_lessons/core_guide_progress）在 portal
     // schema 的副本已废弃（prod 全 0 行），权威数据在 public；顺序必须 public 在前。
-    let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "public, portal");
+    let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "public, portal")
+        .deny_request_tenant_scope();
     let app_state = AppState::new(db, ctx.event_publisher.clone())
         .await
         .with_permission_resolver(ctx.db.clone());
