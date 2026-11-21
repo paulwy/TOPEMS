@@ -280,9 +280,13 @@ pub async fn list_production_orders(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+    let mut where_clause = String::from(" WHERE deleted_at IS NULL AND status IN ('pending','released','in_progress','paused','completed','closed','cancelled','planned')");
 
-    if let Some(status) = query.status {
+    if let Some(raw) = query.status {
+        let status = match ProductionOrderStatus::from_db_str(&raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的生产订单状态"),
+        };
         where_clause.push_str(" AND status = $1");
         params.push(serde_json::Value::String(status));
     }
@@ -818,7 +822,7 @@ pub async fn get_production_order(
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM mes.production_orders
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND status IN ('pending','released','in_progress','paused','completed','closed','cancelled','planned')
           AND tenant_id = $2::uuid
         "#,
     )

@@ -4,6 +4,8 @@
 -- 历史遗留 planned（本地 67 行、当前无写入方）保留在集合内，仅允许取消；清理后再评估移除。
 -- 写入方：production_order.rs（release/start/complete/cancel + update/delete 谓词）、event_handlers.rs（创建 pending）。
 -- 预检（本地 134 行）：pending 52 / planned 67 / released 10 / in_progress 5，集合外 0。
+-- B95：读取侧已加八值过滤并严格校验列表参数；注意 DB 列默认值仍为历史 'created'，
+--      代码创建显式写 'pending'，窗口内应把默认值改为 'pending' 后再 VALIDATE。
 -- 回滚：文件末尾。
 
 ALTER TABLE mes.production_orders

@@ -312,9 +312,13 @@ pub async fn list_work_orders(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE wo.deleted_at IS NULL");
+    let mut where_clause = String::from(" WHERE wo.deleted_at IS NULL AND wo.status IN ('pending','in_progress','paused','completed','cancelled')");
 
-    if let Some(status) = query.status {
+    if let Some(raw) = query.status {
+        let status = match WorkOrderStatus::from_db_str(&raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的工单状态"),
+        };
         where_clause.push_str(" AND wo.status = $1");
         params.push(serde_json::Value::String(status));
     }
@@ -562,7 +566,7 @@ pub async fn get_work_order(
             status, priority, remark,
             created_at, updated_at
         FROM mes.work_orders wo
-        WHERE wo.id = $1
+        WHERE wo.id = $1 AND wo.status IN ('pending','in_progress','paused','completed','cancelled')
           AND wo.tenant_id = $2::uuid
         "#,
     )
