@@ -555,6 +555,13 @@
       "table": "ehs.qa_ehs_hazards",
       "column": "status",
       "candidate": "docs/database/ehs-hazard-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/risk_status.rs",
+      "enum": "RiskStatus",
+      "table": "ehs.qa_ehs_risks",
+      "column": "status",
+      "candidate": "docs/database/ehs-risk-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

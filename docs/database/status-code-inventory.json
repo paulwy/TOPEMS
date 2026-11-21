@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 152,
-    "rust_enum_values": 160,
-    "rust_values_not_in_db_check": 121,
-    "frontend_status_keys": 175,
-    "frontend_keys_not_in_db_check": 135,
+    "rust_enums": 153,
+    "rust_enum_values": 163,
+    "rust_values_not_in_db_check": 124,
+    "frontend_status_keys": 178,
+    "frontend_keys_not_in_db_check": 138,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -517,6 +517,21 @@
         "reported",
         "resolved",
         "verified"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/risk_status.rs",
+      "name": "RiskStatus",
+      "values": [
+        "Assessed",
+        "Controlled",
+        "Identified"
+      ],
+      "normalized": [
+        "assessed",
+        "controlled",
+        "identified"
       ]
     },
     {
@@ -2747,6 +2762,7 @@
       "applied",
       "approved",
       "archived",
+      "assessed",
       "assigned",
       "available",
       "awarded",
@@ -2766,6 +2782,7 @@
       "compliant",
       "confirmed",
       "conflict",
+      "controlled",
       "critical",
       "danger",
       "degraded",
@@ -2799,6 +2816,7 @@
       "generating",
       "good",
       "healthy",
+      "identified",
       "idle",
       "ignored",
       "impact_assessed",
@@ -2921,6 +2939,7 @@
       "aborted",
       "achieved",
       "applied",
+      "assessed",
       "assigned",
       "available",
       "awarded",
@@ -2933,6 +2952,7 @@
       "compensating",
       "compliant",
       "conflict",
+      "controlled",
       "critical",
       "danger",
       "degraded",
@@ -2957,6 +2977,7 @@
       "generating",
       "good",
       "healthy",
+      "identified",
       "ignored",
       "impact_assessed",
       "in_review",
@@ -3044,6 +3065,7 @@
       "aborted",
       "achieved",
       "applied",
+      "assessed",
       "assigned",
       "available",
       "awarded",
@@ -3057,6 +3079,7 @@
       "compensating",
       "compliant",
       "conflict",
+      "controlled",
       "critical",
       "danger",
       "degraded",
@@ -3084,6 +3107,7 @@
       "generating",
       "good",
       "healthy",
+      "identified",
       "idle",
       "ignored",
       "impact_assessed",

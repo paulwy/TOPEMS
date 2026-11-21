@@ -14,6 +14,7 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::modules::risk_status::RiskStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
@@ -98,6 +99,13 @@ pub async fn list_risks(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match query.status.as_deref() {
+        Some(raw) => match RiskStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的风险状态过滤值"),
+        },
+        None => None,
+    };
 
     let fetch_query = match tenant_scope.tenant_id() {
         // 租户通道：tenant_id = $1::uuid
@@ -105,9 +113,9 @@ pub async fn list_risks(
             let mut params: Vec<String> = Vec::new();
             let mut where_clause =
                 String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
-            if let Some(status) = &query.status {
+            if let Some(status) = status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
-                params.push(status.clone());
+                params.push(status.as_db_str().to_string());
             }
             if let Some(level) = &query.risk_level {
                 where_clause.push_str(&format!(" AND risk_level = ${}", params.len() + 2));
@@ -136,9 +144,9 @@ pub async fn list_risks(
         None => {
             let mut params: Vec<String> = Vec::new();
             let mut where_clause = String::from(" WHERE deleted_at IS NULL");
-            if let Some(status) = &query.status {
+            if let Some(status) = status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
-                params.push(status.clone());
+                params.push(status.as_db_str().to_string());
             }
             if let Some(level) = &query.risk_level {
                 where_clause.push_str(&format!(" AND risk_level = ${}", params.len() + 1));
@@ -196,7 +204,7 @@ pub async fn list_risks(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "identified".to_string()),
+                .unwrap_or_else(|| RiskStatus::DEFAULT.as_db_str().to_string()),
             tenant_id: uuid::Uuid::nil(),
         })
         .collect();
@@ -235,6 +243,13 @@ pub async fn create_risk(
         .and_then(|v| v.as_str())
         .unwrap_or("未命名风险")
         .to_string();
+    if let Some(raw) = req.get("status").and_then(|v| v.as_str()) {
+        match RiskStatus::from_db_str(raw) {
+            Some(RiskStatus::Identified) => {}
+            Some(_) => return ApiResponse::bad_request("风险创建仅支持 identified 初始状态"),
+            None => return ApiResponse::bad_request("无效的风险状态"),
+        }
+    }
 
     let mut scope = match state.db.scope_for_tenant(tenant_id).await {
         // scope-exempt: no-request-txn
@@ -264,7 +279,7 @@ pub async fn create_risk(
     .bind(req.get("severity").and_then(|v| v.as_i64()).map(|i| i as i32))
     .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
     .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
-    .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("identified").to_string())
+    .bind(RiskStatus::DEFAULT.as_db_str())
     .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
@@ -309,7 +324,7 @@ pub async fn create_risk(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "identified".to_string()),
+                .unwrap_or_else(|| RiskStatus::DEFAULT.as_db_str().to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "风险创建成功",
@@ -423,7 +438,7 @@ pub async fn get_risk(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "identified".to_string()),
+                .unwrap_or_else(|| RiskStatus::DEFAULT.as_db_str().to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "获取风险成功",
@@ -454,6 +469,23 @@ pub async fn update_risk(
         Err(resp) => return resp,
     };
     tracing::debug!("Updating risk {}: {:?}", id, req);
+    let status_target = match req.get("status").and_then(|v| v.as_str()) {
+        Some(raw) => match RiskStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的风险状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => RiskStatus::db_values(target.update_from())
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        None => RiskStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
 
     let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
@@ -479,6 +511,7 @@ pub async fn update_risk(
                     status = COALESCE($11, status),
                     updated_at = NOW()
                 WHERE tenant_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                  AND (status = ANY($12::text[]) OR status IS NULL)
                 RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
                     likelihood, severity, risk_level, control_measures, status,
                     created_at AS created_at, updated_at AS updated_at
@@ -526,11 +559,8 @@ pub async fn update_risk(
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
             )
-            .bind(
-                req.get("status")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string()),
-            )
+            .bind(status_target.map(RiskStatus::as_db_str))
+            .bind(&allowed_from)
             .fetch_optional(&mut scope)
             .await
         }
@@ -550,6 +580,7 @@ pub async fn update_risk(
                     status = COALESCE($10, status),
                     updated_at = NOW()
                 WHERE id = $1::uuid AND deleted_at IS NULL
+                  AND (status = ANY($11::text[]) OR status IS NULL)
                 RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
                     likelihood, severity, risk_level, control_measures, status,
                     created_at AS created_at, updated_at AS updated_at
@@ -596,11 +627,8 @@ pub async fn update_risk(
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
             )
-            .bind(
-                req.get("status")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string()),
-            )
+            .bind(status_target.map(RiskStatus::as_db_str))
+            .bind(&allowed_from)
             .fetch_optional(&mut scope)
             .await
         }
@@ -615,7 +643,7 @@ pub async fn update_risk(
     };
     let row = match row {
         Some(r) => r,
-        None => return ApiResponse::not_found("风险不存在或无权访问"),
+        None => return ApiResponse::conflict("风险不存在或当前状态不允许变更为目标状态"),
     };
     if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit risk update: {}", e);
@@ -650,7 +678,7 @@ pub async fn update_risk(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "identified".to_string()),
+                .unwrap_or_else(|| RiskStatus::DEFAULT.as_db_str().to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "风险更新成功",
@@ -682,6 +710,11 @@ pub async fn assess_risk(
     };
     tracing::debug!("Assessing risk {}: {:?}", id, req);
     let assessed_by = claims.username.clone();
+    let assessment_from: Vec<String> =
+        RiskStatus::db_values(RiskStatus::Assessed.assessment_from())
+            .into_iter()
+            .map(str::to_string)
+            .collect();
 
     let mut scope = match open_write_scope(&state.db, &tenant_scope).await {
         Ok(s) => s,
@@ -700,11 +733,12 @@ pub async fn assess_risk(
                     severity = COALESCE($4, severity),
                     risk_level = COALESCE($5, risk_level),
                     control_measures = COALESCE($6, control_measures),
-                    status = COALESCE($7, status),
+                    status = $7,
                     assessed_by = $8,
                     assessed_at = NOW(),
                     updated_at = NOW()
                 WHERE tenant_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+                  AND (status = ANY($9::text[]) OR status IS NULL)
                 RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
                     likelihood, severity, risk_level, control_measures, status,
                     assessed_by, assessed_at AS assessed_at,
@@ -733,12 +767,9 @@ pub async fn assess_risk(
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
             )
-            .bind(
-                req.get("status")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string()),
-            )
+            .bind(RiskStatus::Assessed.as_db_str())
             .bind(assessed_by.clone())
+            .bind(&assessment_from)
             .fetch_optional(&mut scope)
             .await
         }
@@ -751,11 +782,12 @@ pub async fn assess_risk(
                     severity = COALESCE($3, severity),
                     risk_level = COALESCE($4, risk_level),
                     control_measures = COALESCE($5, control_measures),
-                    status = COALESCE($6, status),
+                    status = $6,
                     assessed_by = $7,
                     assessed_at = NOW(),
                     updated_at = NOW()
                 WHERE id = $1::uuid AND deleted_at IS NULL
+                  AND (status = ANY($8::text[]) OR status IS NULL)
                 RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
                     likelihood, severity, risk_level, control_measures, status,
                     assessed_by, assessed_at AS assessed_at,
@@ -783,12 +815,9 @@ pub async fn assess_risk(
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string()),
             )
-            .bind(
-                req.get("status")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string()),
-            )
+            .bind(RiskStatus::Assessed.as_db_str())
             .bind(assessed_by)
+            .bind(&assessment_from)
             .fetch_optional(&mut scope)
             .await
         }
@@ -803,7 +832,7 @@ pub async fn assess_risk(
     };
     let row = match row {
         Some(r) => r,
-        None => return ApiResponse::not_found("风险不存在或无权访问"),
+        None => return ApiResponse::conflict("风险不存在或当前状态不允许评估"),
     };
     if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit risk assess: {}", e);
@@ -838,7 +867,7 @@ pub async fn assess_risk(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "identified".to_string()),
+                .unwrap_or_else(|| RiskStatus::DEFAULT.as_db_str().to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "风险评估成功",
