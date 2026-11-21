@@ -38,7 +38,8 @@ async fn main() -> anyhow::Result<()> {
 
     // U4：注入持久化 DB 句柄（v51-v60 MDM 集合快照落库），幂等确保表存在。
     // 快照无租户上下文，persist 内部走显式系统通道（scope_system / scope_read_system）。
-    let app_db = topems_shared_db::Db::new(ctx.db.clone(), "master_data, public, shared");
+    let app_db = topems_shared_db::Db::new(ctx.db.clone(), "master_data, public, shared")
+        .deny_request_tenant_scope();
     modules::persist::init(app_db.clone());
 
     // 表/索引/触发器/RLS 全部由迁移链维护，启动阶段不再执行任何静态 DDL。
