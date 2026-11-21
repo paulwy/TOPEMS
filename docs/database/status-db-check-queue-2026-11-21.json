@@ -1,0 +1,1346 @@
+{
+  "version": 1,
+  "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
+  "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
+  "stats": {
+    "uncovered_enums": 99,
+    "uncovered_values": 108,
+    "finance_candidate_constraints": 25,
+    "internal_state_enums": 32,
+    "persisted_unmapped_enums": 56,
+    "api_projection_enums": 25,
+    "finance_candidate_ready_enums": 25,
+    "internal_state_values": 48,
+    "persisted_unmapped_values": 34,
+    "api_projection_values": 11,
+    "finance_candidate_ready_values": 15
+  },
+  "rows": [
+    {
+      "module": "lib/shared-auth",
+      "file": "lib/shared-auth/src/tenant.rs",
+      "enum": "TenantStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "deleted"
+        ],
+        "persisted_unmapped": [
+          "trial"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-auth",
+      "file": "lib/shared-auth/src/tenant.rs",
+      "enum": "UserStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "invited"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-auth",
+      "file": "lib/shared-auth/src/tier.rs",
+      "enum": "SubscriptionStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "canceled"
+        ],
+        "persisted_unmapped": [
+          "expired",
+          "trial"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-core",
+      "file": "lib/shared-core/src/common_types.rs",
+      "enum": "ApprovalStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-core",
+      "file": "lib/shared-core/src/health.rs",
+      "enum": "HealthStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "unhealthy"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-db",
+      "file": "lib/shared-db/src/backup.rs",
+      "enum": "BackupStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "restored"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-db",
+      "file": "lib/shared-db/src/data_governance.rs",
+      "enum": "DsrRequestStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired",
+          "verifying"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/cluster.rs",
+      "enum": "NodeStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "offline"
+        ],
+        "persisted_unmapped": [
+          "online"
+        ],
+        "internal_state": [
+          "standby"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/event/monitor.rs",
+      "enum": "TraceStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "published",
+          "received"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/saga/orchestrator.rs",
+      "enum": "SagaStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "aborted",
+          "compensated",
+          "compensating"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/saga/step.rs",
+      "enum": "StepStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "compensated",
+          "compensating"
+        ],
+        "api_projection": [
+          "skipped"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-observability",
+      "file": "lib/shared-observability/src/monitoring.rs",
+      "enum": "ServiceStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "unhealthy"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-observability",
+      "file": "lib/shared-observability/src/observability/slo.rs",
+      "enum": "SLOStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "breaching",
+          "insufficient_data"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "warning"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "lib/shared-service-client",
+      "file": "lib/shared-service-client/src/notification.rs",
+      "enum": "TemplateStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/governance_dashboard/mod.rs",
+      "enum": "ComplianceFrameworkStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "compliant",
+          "non_compliant",
+          "partially_compliant",
+          "under_assessment"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/multi_agent/mod.rs",
+      "enum": "TaskStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "assigned",
+          "timeout"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/prompt/mod.rs",
+      "enum": "TemplateStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/workflow/mod.rs",
+      "enum": "NodeExecutionStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "skipped"
+        ],
+        "internal_state": [
+          "timeout"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/workflow/mod.rs",
+      "enum": "WorkflowExecutionStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "waiting"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "analytics",
+      "file": "svc/analytics/src/modules/report/schedule.rs",
+      "enum": "ScheduleStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "communication",
+      "file": "svc/communication/src/mail.rs",
+      "enum": "EmailQueueStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "sending",
+          "sent"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/customer_calc.rs",
+      "enum": "CreditStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "danger",
+          "frozen",
+          "normal"
+        ],
+        "persisted_unmapped": [
+          "warning"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_compliance_audit.rs",
+      "enum": "ComplianceStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "compliant",
+          "non_compliant",
+          "not_applicable",
+          "partially_compliant"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_compliance_audit.rs",
+      "enum": "FindingStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "false_positive"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_dashboard.rs",
+      "enum": "KpiStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "critical",
+          "good",
+          "neutral"
+        ],
+        "persisted_unmapped": [
+          "warning"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_quality_loop.rs",
+      "enum": "QualityTicketStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "assigned"
+        ],
+        "finance_candidate_ready": [
+          "verified"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_invoices.v55_invoices_status_check"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_report_automation.rs",
+      "enum": "ReportStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "delivered"
+        ],
+        "finance_candidate_ready": [
+          "generating"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v57_generated_reports.v57_generated_reports_status_check"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_sync.rs",
+      "enum": "SyncStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "compensated",
+          "compensating",
+          "partially_failed"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/mdm_v49_types.rs",
+      "enum": "RetirementStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "executing"
+        ],
+        "internal_state": [
+          "impact_assessed",
+          "stakeholder_notified"
+        ],
+        "api_projection": [
+          "rolled_back"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/mdm_v49_types.rs",
+      "enum": "TaskStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "blocked",
+          "done",
+          "in_review",
+          "todo"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/order_calc.rs",
+      "enum": "ProductionStatusCategory",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "not_started"
+        ],
+        "internal_state": [
+          "other"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/saga.rs",
+      "enum": "SagaStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "aborted",
+          "compensated",
+          "compensating"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/saga.rs",
+      "enum": "SagaStepStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "compensated"
+        ],
+        "api_projection": [
+          "skipped"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/value_objects.rs",
+      "enum": "SettlementStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "partially_settled",
+          "settled",
+          "unsettled"
+        ],
+        "finance_candidate_ready": [
+          "written_off"
+        ]
+      },
+      "candidate_targets": [
+        "finance.erp_collection_records.erp_collection_records_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/models/mod.rs",
+      "enum": "InvoiceStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "recognized",
+          "verified"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_invoices.v55_invoices_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "enum": "FindingStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "ignored"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/collection_status.rs",
+      "enum": "CollectionStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "written_off"
+        ]
+      },
+      "candidate_targets": [
+        "finance.erp_collection_records.erp_collection_records_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "enum": "DecisionStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "evaluated"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_decision_scenarios.v60_decision_scenarios_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "enum": "ScheduleTaskStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/expense_status.rs",
+      "enum": "ExpenseApprovalStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "reimbursed"
+        ]
+      },
+      "candidate_targets": [
+        "finance.expense_approvals.expense_approvals_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/financial_report_status.rs",
+      "enum": "FinancialReportStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "locked"
+        ]
+      },
+      "candidate_targets": [
+        "finance.financial_reports.financial_reports_status_check",
+        "finance.financial_reports.financial_reports_approval_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/forecasting.rs",
+      "enum": "AlertStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "suppressed"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/reports_v57.rs",
+      "enum": "ReportStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "generating"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v57_generated_reports.v57_generated_reports_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_center_status.rs",
+      "enum": "SettlementLinkStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "linked"
+        ]
+      },
+      "candidate_targets": [
+        "finance.reconciliation_settlement_links.settlement_links_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "enum": "InvoiceStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "recognized",
+          "verified"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_invoices.v55_invoices_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "enum": "MatchStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "discrepancy",
+          "partial"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_reconciliation_results.v55_recon_results_match_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/tax_v56.rs",
+      "enum": "TaxFormStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "calculated"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v56_tax_forms.v56_tax_forms_status_check"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/tax_v56.rs",
+      "enum": "TaxPlanStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "executed",
+          "proposed",
+          "under_review"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/async_task_queue.rs",
+      "enum": "AsyncTaskStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "max_retries_exceeded"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/sync_retry.rs",
+      "enum": "SyncStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "max_retries_exceeded"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "BillingStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "invoiced"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "IncidentStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "investigating"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "SubscriptionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "ContinuityPlanStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired",
+          "tested"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "FailoverStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "initiated"
+        ],
+        "api_projection": [
+          "rolled_back"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "RecoveryPlanStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "executing"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "RegionStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded",
+          "offline"
+        ],
+        "persisted_unmapped": [
+          "online"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "ReplicationStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "lagging",
+          "stopped"
+        ],
+        "finance_candidate_ready": [
+          "paused"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "enum": "DataProductStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated",
+          "published"
+        ],
+        "api_projection": [
+          "retired"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "enum": "WorkflowStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "enum": "WorkflowStepStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "skipped"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "enum": "FixStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "applied"
+        ],
+        "finance_candidate_ready": [
+          "verified"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_invoices.v55_invoices_status_check"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "enum": "QualityStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "passed",
+          "warning"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/aps_scheduling.rs",
+      "enum": "ConstraintStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "passed",
+          "warning"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "plugin-registry",
+      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+      "enum": "UpgradeQueueStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "scheduled"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "plugin-registry",
+      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+      "enum": "UpgradeStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "downloaded",
+          "downloading",
+          "installed",
+          "installing",
+          "rollback",
+          "verifying"
+        ],
+        "api_projection": [
+          "rolled_back"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/models/project.rs",
+      "enum": "ProjectStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ],
+        "persisted_unmapped": [
+          "pending_approval"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/models/mod.rs",
+      "enum": "HealthStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "unhealthy"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/ai_ops.rs",
+      "enum": "HealingStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "executing"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "enum": "AuthStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired"
+        ],
+        "internal_state": [
+          "invalid",
+          "revoked"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "enum": "CheckStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "passed",
+          "warning"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "enum": "DeploymentStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "deploying",
+          "rolling_back"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "enum": "RollbackActionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "executing"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/gateway_monitoring.rs",
+      "enum": "HealthStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "unhealthy"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+      "enum": "DeploymentStatusGql",
+      "values_by_bucket": {
+        "api_projection": [
+          "canary",
+          "rolled_back"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+      "enum": "EdgeExecutionStatusGql",
+      "values_by_bucket": {
+        "api_projection": [
+          "skipped"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_federation_v4.rs",
+      "enum": "ClusterStatusV4",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded",
+          "offline"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_governance.rs",
+      "enum": "SchemaVersionStatusGql",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated"
+        ],
+        "api_projection": [
+          "retired",
+          "staging"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_security.rs",
+      "enum": "DiscoveryStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "new"
+        ],
+        "finance_candidate_ready": [
+          "under_review"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_semantic_cache.rs",
+      "enum": "MutationStatusGql",
+      "values_by_bucket": {
+        "api_projection": [
+          "conflict",
+          "synced",
+          "syncing"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/intelligent_gateway.rs",
+      "enum": "ConflictStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "escalated"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/intelligent_gateway.rs",
+      "enum": "StitchStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "discovering",
+          "planning",
+          "validating"
+        ],
+        "persisted_unmapped": [
+          "executing"
+        ],
+        "api_projection": [
+          "rolled_back"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/orchestration.rs",
+      "enum": "HealthStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "unhealthy"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/persisted_query.rs",
+      "enum": "QueryStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/persisted_query.rs",
+      "enum": "SyncStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "synced"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/query_governance.rs",
+      "enum": "ApprovalStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/query_governance.rs",
+      "enum": "QueryStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/realtime_processing.rs",
+      "enum": "SubscriptionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired"
+        ],
+        "finance_candidate_ready": [
+          "paused"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/schema_versioning/types.rs",
+      "enum": "VersionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated",
+          "sunset"
+        ],
+        "internal_state": [
+          "unsupported"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/streaming_processing.rs",
+      "enum": "StreamStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/version_control.rs",
+      "enum": "APIVersionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated",
+          "sunset"
+        ],
+        "internal_state": [
+          "preview"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/version_control.rs",
+      "enum": "CanaryStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ],
+        "api_projection": [
+          "rolled_back"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project_milestone.rs",
+      "enum": "MilestoneStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "achieved",
+          "delayed"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project_phase.rs",
+      "enum": "PhaseStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "delayed",
+          "not_started"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project.rs",
+      "enum": "ProjectStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "paused"
+        ],
+        "persisted_unmapped": [
+          "pending_approval"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
+      ]
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/middleware/versioning.rs",
+      "enum": "VersionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "deprecated",
+          "sunset"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/modules/subscription/mod.rs",
+      "enum": "SubscriptionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired",
+          "trial"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/modules/tenant/models.rs",
+      "enum": "TenantStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "expired",
+          "trial"
+        ]
+      },
+      "candidate_targets": []
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/shared/util.rs",
+      "enum": "HealthStatus",
+      "values_by_bucket": {
+        "api_projection": [
+          "degraded"
+        ],
+        "persisted_unmapped": [
+          "healthy",
+          "unhealthy"
+        ]
+      },
+      "candidate_targets": []
+    }
+  ]
+}

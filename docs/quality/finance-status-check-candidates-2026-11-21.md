@@ -2,7 +2,7 @@
 
 - 日期：2026-11-21
 - 范围：`docs/database/finance-status-check-candidates-2026-11-21.sql`
-- 结论：B4～B16 代码收口的 24 个 finance 状态列，候选 CHECK 全部写成 `NOT VALID`；本地事务内 24 条 ALTER 全部成功，存量更新不报错，非法值写入被 `23514` 拦下，事务已回滚。生产未执行。
+- 结论：B4～B16 代码收口的 25 个 finance 状态列（24 张表，`financial_reports` 双列），候选 CHECK 全部写成 `NOT VALID`；本地事务内 25 条 ALTER 全部成功，存量更新不报错，非法值写入被 `23514` 拦下，事务已回滚。生产未执行。
 
 ## 1. 为什么现在只做候选
 
@@ -10,7 +10,7 @@
 - `NOT VALID` 只约束后续写入，不扫描存量，适合“先立规矩、再清存量”。
 - 本地演练证明 DDL 可执行、约束真的拦得住非法值，窗口期只需按文件顺序执行。
 
-## 2. 覆盖的 24 列
+## 2. 覆盖的 25 列 / 24 张表
 
 | 表 | 列 | 唯一集合 |
 | --- | --- | --- |
@@ -54,8 +54,8 @@
 
 ```text
 BEGIN + app.rls_system=on
-\i 第 1 节（24 条 ALTER ... NOT VALID）      → 24 次 ALTER TABLE 成功
-pg_constraint 校验                          → 24 条新约束全部在位
+\i 第 1 节（25 条 ALTER ... NOT VALID）      → 25 次 ALTER TABLE 成功
+pg_constraint 校验                          → 25 条新约束全部在位
 UPDATE core_finance_payments SET status=status → UPDATE 1（存量合法行不被 NOT VALID 拦截）
 INSERT difference_adjustments(status='bogus')  → ERROR 23514，被 difference_adjustments_status_check 拦下
 （连接终止 → 事务回滚）
