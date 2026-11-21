@@ -94,6 +94,7 @@ pub async fn list_biddings(
                supplier_count, creator, department, items, remarks, created_at, updated_at
         FROM srm.biddings
         WHERE deleted_at IS NULL
+          AND status IN ('draft','published','opened','evaluated','awarded')
           AND ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
@@ -116,7 +117,7 @@ pub async fn list_biddings(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM srm.biddings
-                WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
+                WHERE deleted_at IS NULL AND status IN ('draft','published','opened','evaluated','awarded') AND ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
                 "#,
@@ -263,7 +264,7 @@ pub async fn get_bidding(
         SELECT id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
                publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
                supplier_count, creator, department, items, remarks, created_at, updated_at
-        FROM srm.biddings WHERE id = $1
+        FROM srm.biddings WHERE id = $1 AND status IN ('draft','published','opened','evaluated','awarded')
         "#, "srm"),
     )
     .bind(id)
@@ -319,7 +320,7 @@ pub async fn update_bidding(
             items = COALESCE($10, items),
             remarks = COALESCE($11, remarks),
             updated_at = $12
-        WHERE id = $1
+        WHERE id = $1 AND status IN ('draft','published','opened','evaluated','awarded')
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
