@@ -1,0 +1,2487 @@
+{
+  "inventory_version": 1,
+  "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
+  "stats": {
+    "db_check_constraints": 215,
+    "db_check_values": 39,
+    "rust_enums": 125,
+    "rust_enum_values": 142,
+    "rust_values_not_in_db_check": 113,
+    "frontend_status_keys": 61,
+    "frontend_keys_not_in_db_check": 38
+  },
+  "enums": [
+    {
+      "module": "lib/shared-auth",
+      "file": "lib/shared-auth/src/tenant.rs",
+      "name": "TenantStatus",
+      "values": [
+        "Active",
+        "Deleted",
+        "Suspended",
+        "Trial"
+      ],
+      "normalized": [
+        "active",
+        "deleted",
+        "suspended",
+        "trial"
+      ]
+    },
+    {
+      "module": "lib/shared-auth",
+      "file": "lib/shared-auth/src/tenant.rs",
+      "name": "UserStatus",
+      "values": [
+        "Active",
+        "Invited",
+        "Suspended"
+      ],
+      "normalized": [
+        "active",
+        "invited",
+        "suspended"
+      ]
+    },
+    {
+      "module": "lib/shared-auth",
+      "file": "lib/shared-auth/src/tier.rs",
+      "name": "SubscriptionStatus",
+      "values": [
+        "Active",
+        "Canceled",
+        "Expired",
+        "Trial"
+      ],
+      "normalized": [
+        "active",
+        "canceled",
+        "expired",
+        "trial"
+      ]
+    },
+    {
+      "module": "lib/shared-core",
+      "file": "lib/shared-core/src/common_types.rs",
+      "name": "ApprovalStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Expired",
+        "InProgress",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "expired",
+        "in_progress",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "lib/shared-core",
+      "file": "lib/shared-core/src/health.rs",
+      "name": "HealthStatus",
+      "values": [
+        "degraded",
+        "healthy",
+        "unhealthy"
+      ],
+      "normalized": [
+        "degraded",
+        "healthy",
+        "unhealthy"
+      ]
+    },
+    {
+      "module": "lib/shared-core",
+      "file": "lib/shared-core/src/supplier.rs",
+      "name": "SupplierStatus",
+      "values": [
+        "Active",
+        "Blacklisted",
+        "Inactive",
+        "Pending"
+      ],
+      "normalized": [
+        "active",
+        "blacklisted",
+        "inactive",
+        "pending"
+      ]
+    },
+    {
+      "module": "lib/shared-core",
+      "file": "lib/shared-core/src/testing.rs",
+      "name": "UserStatus",
+      "values": [
+        "Active",
+        "Inactive",
+        "Suspended"
+      ],
+      "normalized": [
+        "active",
+        "inactive",
+        "suspended"
+      ]
+    },
+    {
+      "module": "lib/shared-db",
+      "file": "lib/shared-db/src/backup.rs",
+      "name": "BackupStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "InProgress",
+        "Pending",
+        "Restored"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "in_progress",
+        "pending",
+        "restored"
+      ]
+    },
+    {
+      "module": "lib/shared-db",
+      "file": "lib/shared-db/src/data_governance.rs",
+      "name": "DsrRequestStatus",
+      "values": [
+        "Completed",
+        "Expired",
+        "PendingReview",
+        "Processing",
+        "Rejected",
+        "Submitted",
+        "Verifying"
+      ],
+      "normalized": [
+        "completed",
+        "expired",
+        "pending_review",
+        "processing",
+        "rejected",
+        "submitted",
+        "verifying"
+      ]
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/cluster.rs",
+      "name": "NodeStatus",
+      "values": [
+        "Maintenance",
+        "Offline",
+        "Online",
+        "Standby"
+      ],
+      "normalized": [
+        "maintenance",
+        "offline",
+        "online",
+        "standby"
+      ]
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/event/monitor.rs",
+      "name": "TraceStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Processing",
+        "Published",
+        "Received"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "processing",
+        "published",
+        "received"
+      ]
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/saga/orchestrator.rs",
+      "name": "SagaStatus",
+      "values": [
+        "Aborted",
+        "Compensated",
+        "Compensating",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "aborted",
+        "compensated",
+        "compensating",
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/saga/step.rs",
+      "name": "StepStatus",
+      "values": [
+        "Compensated",
+        "Compensating",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Skipped"
+      ],
+      "normalized": [
+        "compensated",
+        "compensating",
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "skipped"
+      ]
+    },
+    {
+      "module": "lib/shared-event",
+      "file": "lib/shared-event/src/service_discovery.rs",
+      "name": "ServiceRegistryStatus",
+      "values": [
+        "Active",
+        "Inactive",
+        "Maintenance"
+      ],
+      "normalized": [
+        "active",
+        "inactive",
+        "maintenance"
+      ]
+    },
+    {
+      "module": "lib/shared-observability",
+      "file": "lib/shared-observability/src/monitoring.rs",
+      "name": "ServiceStatus",
+      "values": [
+        "Degraded",
+        "Healthy",
+        "Unhealthy",
+        "Unknown"
+      ],
+      "normalized": [
+        "degraded",
+        "healthy",
+        "unhealthy",
+        "unknown"
+      ]
+    },
+    {
+      "module": "lib/shared-observability",
+      "file": "lib/shared-observability/src/observability/slo.rs",
+      "name": "SLOStatus",
+      "values": [
+        "Breaching",
+        "Healthy",
+        "InsufficientData",
+        "Warning"
+      ],
+      "normalized": [
+        "breaching",
+        "healthy",
+        "insufficient_data",
+        "warning"
+      ]
+    },
+    {
+      "module": "lib/shared-service-client",
+      "file": "lib/shared-service-client/src/notification.rs",
+      "name": "TemplateStatus",
+      "values": [
+        "Active",
+        "Deprecated",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "deprecated",
+        "inactive"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/business_copilot/mod.rs",
+      "name": "ToolCallStatus",
+      "values": [
+        "Cancelled",
+        "Failed",
+        "Pending",
+        "Running",
+        "Success"
+      ],
+      "normalized": [
+        "cancelled",
+        "failed",
+        "pending",
+        "running",
+        "success"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/governance_dashboard/mod.rs",
+      "name": "ComplianceFrameworkStatus",
+      "values": [
+        "Compliant",
+        "NonCompliant",
+        "PartiallyCompliant",
+        "UnderAssessment"
+      ],
+      "normalized": [
+        "compliant",
+        "non_compliant",
+        "partially_compliant",
+        "under_assessment"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/multi_agent/mod.rs",
+      "name": "TaskStatus",
+      "values": [
+        "Assigned",
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Timeout"
+      ],
+      "normalized": [
+        "assigned",
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "timeout"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/prompt/mod.rs",
+      "name": "TemplateStatus",
+      "values": [
+        "Active",
+        "Deprecated",
+        "Draft"
+      ],
+      "normalized": [
+        "active",
+        "deprecated",
+        "draft"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/workflow/mod.rs",
+      "name": "NodeExecutionStatus",
+      "values": [
+        "Failed",
+        "Skipped",
+        "Success",
+        "Timeout"
+      ],
+      "normalized": [
+        "failed",
+        "skipped",
+        "success",
+        "timeout"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/dsh/workflow/mod.rs",
+      "name": "WorkflowExecutionStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Waiting"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "waiting"
+      ]
+    },
+    {
+      "module": "analytics",
+      "file": "svc/analytics/src/modules/report/schedule.rs",
+      "name": "ScheduleStatus",
+      "values": [
+        "Active",
+        "Completed",
+        "Failed",
+        "Paused"
+      ],
+      "normalized": [
+        "active",
+        "completed",
+        "failed",
+        "paused"
+      ]
+    },
+    {
+      "module": "communication",
+      "file": "svc/communication/src/mail.rs",
+      "name": "EmailQueueStatus",
+      "values": [
+        "Failed",
+        "Pending",
+        "Sending",
+        "Sent"
+      ],
+      "normalized": [
+        "failed",
+        "pending",
+        "sending",
+        "sent"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/customer_calc.rs",
+      "name": "CreditStatus",
+      "values": [
+        "Danger",
+        "Frozen",
+        "Normal",
+        "Warning"
+      ],
+      "normalized": [
+        "danger",
+        "frozen",
+        "normal",
+        "warning"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_compliance_audit.rs",
+      "name": "ComplianceStatus",
+      "values": [
+        "Compliant",
+        "NonCompliant",
+        "NotApplicable",
+        "PartiallyCompliant",
+        "PendingReview"
+      ],
+      "normalized": [
+        "compliant",
+        "non_compliant",
+        "not_applicable",
+        "partially_compliant",
+        "pending_review"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_compliance_audit.rs",
+      "name": "FindingStatus",
+      "values": [
+        "Accepted",
+        "FalsePositive",
+        "InProgress",
+        "Open",
+        "Resolved"
+      ],
+      "normalized": [
+        "accepted",
+        "false_positive",
+        "in_progress",
+        "open",
+        "resolved"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_crud.rs",
+      "name": "LifecycleStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Destroyed",
+        "PendingDestruction"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "destroyed",
+        "pending_destruction"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_dashboard.rs",
+      "name": "KpiStatus",
+      "values": [
+        "Critical",
+        "Good",
+        "Neutral",
+        "Warning"
+      ],
+      "normalized": [
+        "critical",
+        "good",
+        "neutral",
+        "warning"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_quality_loop.rs",
+      "name": "QualityTicketStatus",
+      "values": [
+        "Assigned",
+        "Closed",
+        "InProgress",
+        "Open",
+        "PendingReview",
+        "Rejected",
+        "Resolved",
+        "Verified"
+      ],
+      "normalized": [
+        "assigned",
+        "closed",
+        "in_progress",
+        "open",
+        "pending_review",
+        "rejected",
+        "resolved",
+        "verified"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_report_automation.rs",
+      "name": "ReportStatus",
+      "values": [
+        "Completed",
+        "Delivered",
+        "Failed",
+        "Generating",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "delivered",
+        "failed",
+        "generating",
+        "pending"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/master_data_sync.rs",
+      "name": "SyncStatus",
+      "values": [
+        "Compensated",
+        "Compensating",
+        "Completed",
+        "Failed",
+        "PartiallyFailed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "compensated",
+        "compensating",
+        "completed",
+        "failed",
+        "partially_failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/mdm_v49_types.rs",
+      "name": "RetirementStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Confirmed",
+        "Draft",
+        "Executing",
+        "ImpactAssessed",
+        "RolledBack",
+        "StakeholderNotified"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "draft",
+        "executing",
+        "impact_assessed",
+        "rolled_back",
+        "stakeholder_notified"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/mdm_v49_types.rs",
+      "name": "TaskStatus",
+      "values": [
+        "Blocked",
+        "Done",
+        "InProgress",
+        "InReview",
+        "Todo"
+      ],
+      "normalized": [
+        "blocked",
+        "done",
+        "in_progress",
+        "in_review",
+        "todo"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/order_calc.rs",
+      "name": "ProductionStatusCategory",
+      "values": [
+        "Closed",
+        "Completed",
+        "InProgress",
+        "NotStarted",
+        "Other"
+      ],
+      "normalized": [
+        "closed",
+        "completed",
+        "in_progress",
+        "not_started",
+        "other"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/saga.rs",
+      "name": "SagaStatus",
+      "values": [
+        "Aborted",
+        "Compensated",
+        "Compensating",
+        "Completed",
+        "Failed",
+        "Running"
+      ],
+      "normalized": [
+        "aborted",
+        "compensated",
+        "compensating",
+        "completed",
+        "failed",
+        "running"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/saga.rs",
+      "name": "SagaStepStatus",
+      "values": [
+        "Compensated",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Skipped"
+      ],
+      "normalized": [
+        "compensated",
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "skipped"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/value_objects.rs",
+      "name": "SettlementStatus",
+      "values": [
+        "PartiallySettled",
+        "Settled",
+        "Unsettled",
+        "WrittenOff"
+      ],
+      "normalized": [
+        "partially_settled",
+        "settled",
+        "unsettled",
+        "written_off"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/domain/value_objects.rs",
+      "name": "VoucherStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Posted",
+        "Reversed",
+        "Submitted"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "posted",
+        "reversed",
+        "submitted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/models/mod.rs",
+      "name": "InvoiceStatus",
+      "values": [
+        "Pending",
+        "Posted",
+        "Recognized",
+        "Verified"
+      ],
+      "normalized": [
+        "pending",
+        "posted",
+        "recognized",
+        "verified"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/models/mod.rs",
+      "name": "MatchStatus",
+      "values": [
+        "Diff",
+        "Manual",
+        "Matched",
+        "Unmatched"
+      ],
+      "normalized": [
+        "diff",
+        "manual",
+        "matched",
+        "unmatched"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/models/mod.rs",
+      "name": "PeriodStatus",
+      "values": [
+        "Closed",
+        "Closing",
+        "Open"
+      ],
+      "normalized": [
+        "closed",
+        "closing",
+        "open"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/models/mod.rs",
+      "name": "ReconciliationStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Pending",
+        "Processing"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "pending",
+        "processing"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/models/mod.rs",
+      "name": "VoucherStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Draft",
+        "Posted",
+        "Rejected",
+        "Reversed",
+        "Submitted"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "draft",
+        "posted",
+        "rejected",
+        "reversed",
+        "submitted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "name": "FindingStatus",
+      "values": [
+        "Ignored",
+        "Open",
+        "Resolved"
+      ],
+      "normalized": [
+        "ignored",
+        "open",
+        "resolved"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "name": "AlertStatus",
+      "values": [
+        "Acknowledged",
+        "Active",
+        "Resolved"
+      ],
+      "normalized": [
+        "acknowledged",
+        "active",
+        "resolved"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "name": "DecisionStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Draft",
+        "Evaluated"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "draft",
+        "evaluated"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "name": "ScheduleExecutionStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "name": "ScheduleTaskStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Paused",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "paused",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/forecasting.rs",
+      "name": "AlertStatus",
+      "values": [
+        "Acknowledged",
+        "Active",
+        "Resolved",
+        "Suppressed"
+      ],
+      "normalized": [
+        "acknowledged",
+        "active",
+        "resolved",
+        "suppressed"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/reports_v57.rs",
+      "name": "ReportStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Generating",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "generating",
+        "pending"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/risk_v54.rs",
+      "name": "ReviewWorkflowStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "name": "InvoiceStatus",
+      "values": [
+        "Pending",
+        "Posted",
+        "Recognized",
+        "Verified"
+      ],
+      "normalized": [
+        "pending",
+        "posted",
+        "recognized",
+        "verified"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "name": "MatchStatus",
+      "values": [
+        "Discrepancy",
+        "Matched",
+        "Partial",
+        "Unmatched"
+      ],
+      "normalized": [
+        "discrepancy",
+        "matched",
+        "partial",
+        "unmatched"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "name": "PaymentStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Processing",
+        "Reversed"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "processing",
+        "reversed"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/tax_v56.rs",
+      "name": "TaxFormStatus",
+      "values": [
+        "Accepted",
+        "Calculated",
+        "Draft",
+        "Rejected",
+        "Submitted"
+      ],
+      "normalized": [
+        "accepted",
+        "calculated",
+        "draft",
+        "rejected",
+        "submitted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/tax_v56.rs",
+      "name": "TaxPlanStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Executed",
+        "Proposed",
+        "Rejected",
+        "UnderReview"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "executed",
+        "proposed",
+        "rejected",
+        "under_review"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/treasury_v58.rs",
+      "name": "TransferStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/async_task_queue.rs",
+      "name": "AsyncTaskStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "InProgress",
+        "MaxRetriesExceeded",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "in_progress",
+        "max_retries_exceeded",
+        "pending"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/conversion_rules.rs",
+      "name": "RuleStatus",
+      "values": [
+        "Active",
+        "Draft",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "draft",
+        "inactive"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/event_bus.rs",
+      "name": "EventStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Processing"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "processing"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/retry_handler.rs",
+      "name": "RetryTaskStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/sync_retry.rs",
+      "name": "SyncStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "InProgress",
+        "MaxRetriesExceeded",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "in_progress",
+        "max_retries_exceeded",
+        "pending"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/ai_governance_v59.rs",
+      "name": "ClassificationStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/ai_governance_v59.rs",
+      "name": "MatchStatus",
+      "values": [
+        "Confirmed",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "confirmed",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "name": "BillingStatus",
+      "values": [
+        "Invoiced",
+        "Overdue",
+        "Paid",
+        "Pending"
+      ],
+      "normalized": [
+        "invoiced",
+        "overdue",
+        "paid",
+        "pending"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "name": "IncidentStatus",
+      "values": [
+        "Closed",
+        "Investigating",
+        "Open",
+        "Resolved"
+      ],
+      "normalized": [
+        "closed",
+        "investigating",
+        "open",
+        "resolved"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "name": "SubscriptionStatus",
+      "values": [
+        "Active",
+        "Cancelled",
+        "Expired",
+        "Pending"
+      ],
+      "normalized": [
+        "active",
+        "cancelled",
+        "expired",
+        "pending"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "name": "ContinuityPlanStatus",
+      "values": [
+        "Active",
+        "Draft",
+        "Expired",
+        "Tested"
+      ],
+      "normalized": [
+        "active",
+        "draft",
+        "expired",
+        "tested"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "name": "FailoverStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Initiated",
+        "RolledBack"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "initiated",
+        "rolled_back"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "name": "RecoveryPlanStatus",
+      "values": [
+        "Active",
+        "Completed",
+        "Draft",
+        "Executing",
+        "Failed"
+      ],
+      "normalized": [
+        "active",
+        "completed",
+        "draft",
+        "executing",
+        "failed"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "name": "RegionStatus",
+      "values": [
+        "Degraded",
+        "Offline",
+        "Online"
+      ],
+      "normalized": [
+        "degraded",
+        "offline",
+        "online"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "name": "ReplicationStatus",
+      "values": [
+        "Lagging",
+        "Paused",
+        "Running",
+        "Stopped"
+      ],
+      "normalized": [
+        "lagging",
+        "paused",
+        "running",
+        "stopped"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "name": "DataProductStatus",
+      "values": [
+        "Deprecated",
+        "Draft",
+        "Published",
+        "Retired"
+      ],
+      "normalized": [
+        "deprecated",
+        "draft",
+        "published",
+        "retired"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "name": "WorkflowStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Paused",
+        "Running"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "draft",
+        "paused",
+        "running"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/governance_v58.rs",
+      "name": "WorkflowStepStatus",
+      "values": [
+        "Approved",
+        "InProgress",
+        "Pending",
+        "Rejected",
+        "Skipped"
+      ],
+      "normalized": [
+        "approved",
+        "in_progress",
+        "pending",
+        "rejected",
+        "skipped"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "name": "FixStatus",
+      "values": [
+        "Applied",
+        "Failed",
+        "Pending",
+        "Verified"
+      ],
+      "normalized": [
+        "applied",
+        "failed",
+        "pending",
+        "verified"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "name": "QualityStatus",
+      "values": [
+        "Failed",
+        "Passed",
+        "Warning"
+      ],
+      "normalized": [
+        "failed",
+        "passed",
+        "warning"
+      ]
+    },
+    {
+      "module": "master-data",
+      "file": "svc/master-data/src/modules/quality_v51.rs",
+      "name": "SuggestionStatus",
+      "values": [
+        "Approved",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/aps_scheduling.rs",
+      "name": "ConstraintStatus",
+      "values": [
+        "Failed",
+        "Passed",
+        "Warning"
+      ],
+      "normalized": [
+        "failed",
+        "passed",
+        "warning"
+      ]
+    },
+    {
+      "module": "plugin-registry",
+      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+      "name": "UpgradeQueueStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Scheduled"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "scheduled"
+      ]
+    },
+    {
+      "module": "plugin-registry",
+      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+      "name": "UpgradeStatus",
+      "values": [
+        "Completed",
+        "Downloaded",
+        "Downloading",
+        "Failed",
+        "Installed",
+        "Installing",
+        "Pending",
+        "Rollback",
+        "RolledBack",
+        "Verifying"
+      ],
+      "normalized": [
+        "completed",
+        "downloaded",
+        "downloading",
+        "failed",
+        "installed",
+        "installing",
+        "pending",
+        "rollback",
+        "rolled_back",
+        "verifying"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/models/project.rs",
+      "name": "ProjectStatus",
+      "values": [
+        "Active",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Paused",
+        "PendingApproval"
+      ],
+      "normalized": [
+        "active",
+        "cancelled",
+        "completed",
+        "draft",
+        "paused",
+        "pending_approval"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/models/mod.rs",
+      "name": "HealthStatus",
+      "values": [
+        "degraded",
+        "healthy",
+        "unhealthy"
+      ],
+      "normalized": [
+        "degraded",
+        "healthy",
+        "unhealthy"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/ai_ops.rs",
+      "name": "HealingStatus",
+      "values": [
+        "Completed",
+        "Executing",
+        "Failed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "executing",
+        "failed",
+        "pending"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/ai_ops.rs",
+      "name": "RecoveryStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "in_progress",
+        "pending"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "name": "AuthStatus",
+      "values": [
+        "Active",
+        "Expired",
+        "Invalid",
+        "Revoked"
+      ],
+      "normalized": [
+        "active",
+        "expired",
+        "invalid",
+        "revoked"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "name": "CheckStatus",
+      "values": [
+        "Failed",
+        "Passed",
+        "Warning"
+      ],
+      "normalized": [
+        "failed",
+        "passed",
+        "warning"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "name": "QueryStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deep_federation.rs",
+      "name": "SubQueryStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "name": "DeploymentStatus",
+      "values": [
+        "Completed",
+        "Deploying",
+        "Failed",
+        "Pending",
+        "RollingBack"
+      ],
+      "normalized": [
+        "completed",
+        "deploying",
+        "failed",
+        "pending",
+        "rolling_back"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "name": "RollbackActionStatus",
+      "values": [
+        "Completed",
+        "Executing",
+        "Failed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "executing",
+        "failed",
+        "pending"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/deployment_manager.rs",
+      "name": "StepStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/gateway_monitoring.rs",
+      "name": "HealthStatus",
+      "values": [
+        "Degraded",
+        "Healthy",
+        "Unhealthy"
+      ],
+      "normalized": [
+        "degraded",
+        "healthy",
+        "unhealthy"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+      "name": "DeploymentStatusGql",
+      "values": [
+        "Canary",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Failed",
+        "Pending",
+        "RolledBack",
+        "Running"
+      ],
+      "normalized": [
+        "canary",
+        "cancelled",
+        "completed",
+        "draft",
+        "failed",
+        "pending",
+        "rolled_back",
+        "running"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_edge_v2.rs",
+      "name": "EdgeExecutionStatusGql",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running",
+        "Skipped"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "skipped"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_federation_v4.rs",
+      "name": "ClusterStatusV4",
+      "values": [
+        "Active",
+        "Degraded",
+        "Maintenance",
+        "Offline"
+      ],
+      "normalized": [
+        "active",
+        "degraded",
+        "maintenance",
+        "offline"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_governance.rs",
+      "name": "SchemaVersionStatusGql",
+      "values": [
+        "Active",
+        "Deprecated",
+        "Draft",
+        "Retired",
+        "Staging"
+      ],
+      "normalized": [
+        "active",
+        "deprecated",
+        "draft",
+        "retired",
+        "staging"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_security.rs",
+      "name": "DiscoveryStatus",
+      "values": [
+        "Approved",
+        "New",
+        "Rejected",
+        "UnderReview"
+      ],
+      "normalized": [
+        "approved",
+        "new",
+        "rejected",
+        "under_review"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/graphql_semantic_cache.rs",
+      "name": "MutationStatusGql",
+      "values": [
+        "Conflict",
+        "Failed",
+        "Pending",
+        "Synced",
+        "Syncing"
+      ],
+      "normalized": [
+        "conflict",
+        "failed",
+        "pending",
+        "synced",
+        "syncing"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/intelligent_gateway.rs",
+      "name": "ConflictStatus",
+      "values": [
+        "Escalated",
+        "Pending",
+        "Rejected",
+        "Resolved"
+      ],
+      "normalized": [
+        "escalated",
+        "pending",
+        "rejected",
+        "resolved"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/intelligent_gateway.rs",
+      "name": "StitchStatus",
+      "values": [
+        "Completed",
+        "Discovering",
+        "Executing",
+        "Failed",
+        "Pending",
+        "Planning",
+        "RolledBack",
+        "Validating"
+      ],
+      "normalized": [
+        "completed",
+        "discovering",
+        "executing",
+        "failed",
+        "pending",
+        "planning",
+        "rolled_back",
+        "validating"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/orchestration.rs",
+      "name": "HealthStatus",
+      "values": [
+        "Degraded",
+        "Healthy",
+        "Unhealthy",
+        "Unknown"
+      ],
+      "normalized": [
+        "degraded",
+        "healthy",
+        "unhealthy",
+        "unknown"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/orchestration.rs",
+      "name": "PlanStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/orchestration.rs",
+      "name": "StepStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Pending",
+        "Running"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/persisted_query.rs",
+      "name": "QueryStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Deprecated"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "deprecated"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/persisted_query.rs",
+      "name": "SyncStatus",
+      "values": [
+        "Failed",
+        "Pending",
+        "Synced"
+      ],
+      "normalized": [
+        "failed",
+        "pending",
+        "synced"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/query_governance.rs",
+      "name": "ApprovalStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Expired",
+        "InProgress",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "expired",
+        "in_progress",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/query_governance.rs",
+      "name": "QueryStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Deprecated",
+        "Draft"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "deprecated",
+        "draft"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/realtime_processing.rs",
+      "name": "ReplayStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "in_progress",
+        "pending"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/realtime_processing.rs",
+      "name": "SubscriptionStatus",
+      "values": [
+        "Active",
+        "Expired",
+        "Failed",
+        "Paused"
+      ],
+      "normalized": [
+        "active",
+        "expired",
+        "failed",
+        "paused"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/schema_versioning/types.rs",
+      "name": "VersionStatus",
+      "values": [
+        "Active",
+        "Deprecated",
+        "Sunset",
+        "Unsupported"
+      ],
+      "normalized": [
+        "active",
+        "deprecated",
+        "sunset",
+        "unsupported"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/streaming_processing.rs",
+      "name": "StreamStatus",
+      "values": [
+        "Active",
+        "Completed",
+        "Failed",
+        "Paused"
+      ],
+      "normalized": [
+        "active",
+        "completed",
+        "failed",
+        "paused"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/version_control.rs",
+      "name": "APIVersionStatus",
+      "values": [
+        "Active",
+        "Deprecated",
+        "Preview",
+        "Sunset"
+      ],
+      "normalized": [
+        "active",
+        "deprecated",
+        "preview",
+        "sunset"
+      ]
+    },
+    {
+      "module": "portal",
+      "file": "svc/portal/src/modules/version_control.rs",
+      "name": "CanaryStatus",
+      "values": [
+        "Completed",
+        "Draft",
+        "Paused",
+        "RolledBack",
+        "Running"
+      ],
+      "normalized": [
+        "completed",
+        "draft",
+        "paused",
+        "rolled_back",
+        "running"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project_member.rs",
+      "name": "MemberStatus",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "inactive"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project_milestone.rs",
+      "name": "MilestoneStatus",
+      "values": [
+        "Achieved",
+        "Delayed",
+        "Pending"
+      ],
+      "normalized": [
+        "achieved",
+        "delayed",
+        "pending"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project_phase.rs",
+      "name": "PhaseStatus",
+      "values": [
+        "Completed",
+        "Delayed",
+        "InProgress",
+        "NotStarted"
+      ],
+      "normalized": [
+        "completed",
+        "delayed",
+        "in_progress",
+        "not_started"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/project.rs",
+      "name": "ProjectStatus",
+      "values": [
+        "Active",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Paused",
+        "PendingApproval"
+      ],
+      "normalized": [
+        "active",
+        "cancelled",
+        "completed",
+        "draft",
+        "paused",
+        "pending_approval"
+      ]
+    },
+    {
+      "module": "ticket",
+      "file": "svc/ticket/src/models.rs",
+      "name": "TicketStatus",
+      "values": [
+        "Cancelled",
+        "Closed",
+        "InProgress",
+        "Open",
+        "Pending",
+        "Resolved"
+      ],
+      "normalized": [
+        "cancelled",
+        "closed",
+        "in_progress",
+        "open",
+        "pending",
+        "resolved"
+      ]
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/middleware/versioning.rs",
+      "name": "VersionStatus",
+      "values": [
+        "Active",
+        "Deprecated",
+        "Sunset"
+      ],
+      "normalized": [
+        "active",
+        "deprecated",
+        "sunset"
+      ]
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/modules/subscription/mod.rs",
+      "name": "SubscriptionStatus",
+      "values": [
+        "Active",
+        "Cancelled",
+        "Expired",
+        "Trial"
+      ],
+      "normalized": [
+        "active",
+        "cancelled",
+        "expired",
+        "trial"
+      ]
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/modules/tenant/models.rs",
+      "name": "TenantStatus",
+      "values": [
+        "Active",
+        "Expired",
+        "Suspended",
+        "Trial"
+      ],
+      "normalized": [
+        "active",
+        "expired",
+        "suspended",
+        "trial"
+      ]
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/shared/util.rs",
+      "name": "HealthStatus",
+      "values": [
+        "Degraded",
+        "Healthy",
+        "Unhealthy"
+      ],
+      "normalized": [
+        "degraded",
+        "healthy",
+        "unhealthy"
+      ]
+    }
+  ],
+  "frontend": {
+    "file": "apps/web/src/utils/status.ts",
+    "keys": [
+      "acknowledged",
+      "active",
+      "approved",
+      "archived",
+      "canceled",
+      "cancelled",
+      "claimed",
+      "closed",
+      "completed",
+      "confirmed",
+      "critical",
+      "degraded",
+      "delivered",
+      "deprecated",
+      "disabled",
+      "dismissed",
+      "draft",
+      "enabled",
+      "error",
+      "escalated",
+      "expired",
+      "failed",
+      "healthy",
+      "idle",
+      "in-progress",
+      "in_progress",
+      "in_transit",
+      "in_use",
+      "inactive",
+      "info",
+      "interval",
+      "invalid",
+      "maintenance",
+      "manual",
+      "normal",
+      "open",
+      "overdue",
+      "paid",
+      "partial",
+      "paused",
+      "pending",
+      "processing",
+      "progressing",
+      "receiving",
+      "rejected",
+      "released",
+      "resolved",
+      "running",
+      "scheduled",
+      "scrapped",
+      "shipped",
+      "stopped",
+      "submitted",
+      "success",
+      "suspended",
+      "testing",
+      "unhealthy",
+      "unpaid",
+      "valid",
+      "waiting",
+      "warning"
+    ]
+  },
+  "not_in_db_check": {
+    "rust_values": [
+      "aborted",
+      "achieved",
+      "applied",
+      "assigned",
+      "blocked",
+      "breaching",
+      "calculated",
+      "canary",
+      "canceled",
+      "closed",
+      "closing",
+      "compensated",
+      "compensating",
+      "compliant",
+      "conflict",
+      "critical",
+      "danger",
+      "degraded",
+      "delayed",
+      "deleted",
+      "delivered",
+      "deploying",
+      "deprecated",
+      "diff",
+      "discovering",
+      "discrepancy",
+      "done",
+      "downloaded",
+      "downloading",
+      "escalated",
+      "evaluated",
+      "executed",
+      "executing",
+      "expired",
+      "false_positive",
+      "frozen",
+      "generating",
+      "good",
+      "healthy",
+      "ignored",
+      "impact_assessed",
+      "in_review",
+      "initiated",
+      "installed",
+      "installing",
+      "insufficient_data",
+      "invalid",
+      "investigating",
+      "invited",
+      "invoiced",
+      "lagging",
+      "manual",
+      "matched",
+      "max_retries_exceeded",
+      "neutral",
+      "new",
+      "non_compliant",
+      "normal",
+      "not_applicable",
+      "not_started",
+      "offline",
+      "online",
+      "other",
+      "partial",
+      "partially_compliant",
+      "partially_failed",
+      "partially_settled",
+      "passed",
+      "paused",
+      "pending_approval",
+      "planning",
+      "posted",
+      "preview",
+      "proposed",
+      "published",
+      "received",
+      "recognized",
+      "restored",
+      "retired",
+      "reversed",
+      "revoked",
+      "rollback",
+      "rolled_back",
+      "rolling_back",
+      "scheduled",
+      "sending",
+      "sent",
+      "settled",
+      "skipped",
+      "staging",
+      "stakeholder_notified",
+      "standby",
+      "stopped",
+      "submitted",
+      "sunset",
+      "suppressed",
+      "synced",
+      "syncing",
+      "tested",
+      "timeout",
+      "todo",
+      "trial",
+      "under_assessment",
+      "under_review",
+      "unhealthy",
+      "unsettled",
+      "unsupported",
+      "validating",
+      "verified",
+      "verifying",
+      "waiting",
+      "warning",
+      "written_off"
+    ],
+    "frontend_keys": [
+      "canceled",
+      "claimed",
+      "closed",
+      "critical",
+      "degraded",
+      "delivered",
+      "deprecated",
+      "disabled",
+      "dismissed",
+      "enabled",
+      "escalated",
+      "expired",
+      "healthy",
+      "idle",
+      "in-progress",
+      "in_transit",
+      "in_use",
+      "info",
+      "interval",
+      "invalid",
+      "manual",
+      "normal",
+      "partial",
+      "paused",
+      "progressing",
+      "receiving",
+      "released",
+      "scheduled",
+      "scrapped",
+      "shipped",
+      "stopped",
+      "submitted",
+      "testing",
+      "unhealthy",
+      "unpaid",
+      "valid",
+      "waiting",
+      "warning"
+    ]
+  }
+}
