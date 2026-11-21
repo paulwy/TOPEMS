@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 140,
-    "rust_enum_values": 151,
-    "rust_values_not_in_db_check": 113,
-    "frontend_status_keys": 167,
-    "frontend_keys_not_in_db_check": 128,
+    "rust_enums": 141,
+    "rust_enum_values": 153,
+    "rust_values_not_in_db_check": 115,
+    "frontend_status_keys": 169,
+    "frontend_keys_not_in_db_check": 130,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -428,6 +428,21 @@
         "pending",
         "running",
         "waiting"
+      ]
+    },
+    {
+      "module": "ai",
+      "file": "svc/ai/src/models/document_status.rs",
+      "name": "DocumentStatus",
+      "values": [
+        "Empty",
+        "Pending",
+        "Processed"
+      ],
+      "normalized": [
+        "empty",
+        "pending",
+        "processed"
       ]
     },
     {
@@ -2561,6 +2576,7 @@
       "downloaded",
       "downloading",
       "draft",
+      "empty",
       "enabled",
       "error",
       "escalated",
@@ -2626,6 +2642,7 @@
       "planning",
       "posted",
       "preview",
+      "processed",
       "processing",
       "progressing",
       "proposed",
@@ -2714,6 +2731,7 @@
       "done",
       "downloaded",
       "downloading",
+      "empty",
       "escalated",
       "evaluated",
       "executed",
@@ -2759,6 +2777,7 @@
       "pending_approval",
       "planning",
       "preview",
+      "processed",
       "proposed",
       "published",
       "received",
@@ -2832,6 +2851,7 @@
       "done",
       "downloaded",
       "downloading",
+      "empty",
       "enabled",
       "escalated",
       "evaluated",
@@ -2883,6 +2903,7 @@
       "pending_approval",
       "planning",
       "preview",
+      "processed",
       "progressing",
       "proposed",
       "published",

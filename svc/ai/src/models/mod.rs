@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 pub mod audit_log;
+pub mod document_status;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};

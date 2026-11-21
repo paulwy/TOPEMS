@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use crate::models::document_status::DocumentStatus;
 use crate::services::pdf::PdfParser;
 use crate::services::vector::{
     CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService,
@@ -143,9 +144,15 @@ impl DocumentService {
 
         if chunks.is_empty() {
             let vs = self.vector_service.read().await;
-            vs.update_document_status(doc_id, "empty", Some("文档内容为空"), tenant_id, txn_arc)
-                .await
-                .ok();
+            vs.update_document_status(
+                doc_id,
+                DocumentStatus::Empty,
+                Some("文档内容为空"),
+                tenant_id,
+                txn_arc,
+            )
+            .await
+            .ok();
             return Err(TopemsError::BusinessLogic("文档内容为空".to_string()));
         }
 
@@ -158,7 +165,7 @@ impl DocumentService {
         // 更新文档状态
         {
             let vs = self.vector_service.read().await;
-            vs.update_document_status(doc_id, "processed", None, tenant_id, txn_arc)
+            vs.update_document_status(doc_id, DocumentStatus::Processed, None, tenant_id, txn_arc)
                 .await
                 .ok();
         }
@@ -882,7 +889,7 @@ impl DocumentService {
             let mut all_chunks: Vec<SearchResult> = Vec::new();
 
             for doc in docs {
-                if doc.status != "processed" {
+                if doc.status != DocumentStatus::Processed.as_db_str() {
                     continue;
                 }
 

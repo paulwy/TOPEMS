@@ -471,6 +471,13 @@
       "enum": "WorkflowExecutionStatus",
       "persisted": false,
       "reason": "工作流整体执行态（含 waiting），内存态；无执行记录表"
+    },
+    {
+      "file": "svc/ai/src/models/document_status.rs",
+      "enum": "DocumentStatus",
+      "table": "ai.documents",
+      "column": "status",
+      "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

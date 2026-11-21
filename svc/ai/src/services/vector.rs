@@ -1,3 +1,4 @@
+use crate::models::document_status::DocumentStatus;
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -98,7 +99,7 @@ impl VectorService {
         .bind(&doc.category)
         .bind(&doc.tags)
         .bind(&doc.description)
-        .bind("pending")
+        .bind(DocumentStatus::DEFAULT.as_db_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -110,7 +111,7 @@ impl VectorService {
     pub async fn update_document_status(
         &self,
         id: Uuid,
-        status: &str,
+        status: DocumentStatus,
         error_message: Option<&str>,
         tenant_id: Uuid,
         txn_arc: &RlsTxnCell,
@@ -129,7 +130,7 @@ impl VectorService {
             "#,
             "plugin_ai"
         ))
-        .bind(status)
+        .bind(status.as_db_str())
         .bind(error_message)
         .bind(id)
         .bind(tenant_id)
