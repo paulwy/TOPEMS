@@ -2,17 +2,18 @@
 
 ## 1. 现状
 
-`finance.expense_approvals.status` 与 `finance.expenses.status` 都是自由文本列，
-DB 默认值 `pending`，没有 CHECK。实际写入方有三套口径：
+`finance.expense_approvals.status` 是自由文本列，DB 默认值 `pending`，没有 CHECK。
+实际写入方有三套口径：
 
 | 来源 | 值 |
 | --- | --- |
 | DB 默认 / 后端创建 | `pending` |
-| 后端费用报销更新 | 请求体任意字符串 |
+| 后端费用审批更新 | 请求体任意字符串 |
 | 前端费用审批表单 | `draft / pending_approval / approved / rejected / reimbursed` |
 
-本地数据（2026-11-21）：`expense_approvals` 178 行全部 `pending`，`expenses` 3 行全部
-`pending`，没有 `pending_approval`。
+本地数据（2026-11-21）：`expense_approvals` 178 行全部 `pending`，没有
+`pending_approval`。`finance.expenses` 是另一张表、另一套 `draft/submitted/approved/
+rejected/paid` 口径，本批不动。
 
 另有两个纯回显桩：`submit` 返回 `submitted`、`approve`/`reject` 返回目标状态，
 但不写库，前端会收到成功。
@@ -31,7 +32,6 @@ DB 默认值 `pending`，没有 CHECK。实际写入方有三套口径：
 
 - `POST /expense-approvals`：缺省 `pending`，显式值必须归一成功；
 - `PUT /expense-approvals/{id}`：`status` 可空，非空必须归一成功；
-- `PUT /expenses/{id}`：请求体 `status` 可空，非空必须归一成功；
 - `POST /expense-approvals/{id}/submit`：真实更新 `draft → pending`；
 - `POST /expense-approvals/{id}/approve`：真实更新 `pending → approved`，写
   `approver_name`；
@@ -50,14 +50,12 @@ SQL 的 `status = $3` 条件更新已在本地库用事务回滚验证：`pendin
 ALTER TABLE finance.expense_approvals
   ADD CONSTRAINT expense_approvals_status_check
   CHECK (status IN ('draft','pending','approved','rejected','reimbursed')) NOT VALID;
-ALTER TABLE finance.expenses
-  ADD CONSTRAINT expenses_status_check
-  CHECK (status IN ('draft','pending','approved','rejected','reimbursed')) NOT VALID;
 ```
 
-- 生产若有 `pending_approval` 行，需要窗口内一次性归一为 `pending`，再
+- 生产 `expense_approvals` 若有 `pending_approval` 行，需要窗口内一次性归一为 `pending`，再
   `VALIDATE CONSTRAINT`；
-- `reimbursed` 目前无状态迁移入口，仅作为可写终态保留。
+- `reimbursed` 目前无状态迁移入口，仅作为可写终态保留；
+- `finance.expenses.status` 的 `draft/submitted/approved/rejected/paid` 留到下一批单独收口。
 
 ## 5. 验证
 

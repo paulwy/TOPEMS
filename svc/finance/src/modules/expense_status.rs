@@ -1,6 +1,6 @@
 //! W5-B：费用审批/报销状态唯一口径（代码侧）
 //!
-//! DB 列 `finance.expense_approvals.status`、`finance.expenses.status` 目前都是自由文本，
+//! DB 列 `finance.expense_approvals.status` 目前是自由文本，
 //! 前端与后端各自写值。本模块先固定代码侧集合，接收入口统一经过 `normalize`，
 //! 历史别名 `pending_approval` 归一为 `pending`。DB CHECK 待生产窗口再补。
 
