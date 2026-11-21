@@ -22,6 +22,7 @@ use topems_shared_auth::middleware::{get_tenant_id_from_claims, resolve_create_t
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
+use crate::modules::material_plan_status::MaterialPlanStatus;
 use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -134,7 +135,18 @@ pub async fn list_material_plans(
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let status = params.status.clone();
+    let status = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match MaterialPlanStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的材料计划状态"),
+                ))
+            }
+        },
+    };
     let search = params.search.clone();
     let plan_id = params.plan_id;
 
@@ -155,7 +167,8 @@ pub async fn list_material_plans(
 
     let total: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM mes.material_plans \
-         WHERE ($1::text IS NULL OR status = $1) \
+         WHERE status IN ('pending','requisitioned','sourced','satisfied','shortage','cancelled') \
+           AND ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR plan_no ILIKE '%' || $2 || '%' \
              OR material_code ILIKE '%' || $2 || '%' \
              OR material_name ILIKE '%' || $2 || '%') \
@@ -175,7 +188,8 @@ pub async fn list_material_plans(
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
                 supply_type, status, tenant_id::text, created_at, updated_at \
          FROM mes.material_plans \
-         WHERE ($1::text IS NULL OR status = $1) \
+         WHERE status IN ('pending','requisitioned','sourced','satisfied','shortage','cancelled') \
+           AND ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR plan_no ILIKE '%' || $2 || '%' \
              OR material_code ILIKE '%' || $2 || '%' \
              OR material_name ILIKE '%' || $2 || '%') \
@@ -245,6 +259,7 @@ pub async fn get_material_plan(
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
                 supply_type, status, tenant_id::text, created_at, updated_at \
          FROM mes.material_plans WHERE id = $1 \
+           AND status IN ('pending','requisitioned','sourced','satisfied','shortage','cancelled') \
            AND tenant_id = $2::uuid",
     )
     .bind(id)
@@ -284,7 +299,18 @@ pub async fn create_material_plan(
     let available_qty = req.available_quantity.unwrap_or(0.0);
     let shortfall = (required_qty - available_qty).max(0.0);
     let supply_type = req.supply_type.unwrap_or_else(|| "purchase".to_string());
-    let status = req.status.unwrap_or_else(|| "pending".to_string());
+    let status = match req.status.as_deref() {
+        None => MaterialPlanStatus::DEFAULT.as_db_str().to_string(),
+        Some(raw) => match MaterialPlanStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的材料计划状态"),
+                ))
+            }
+        },
+    };
     let required_date = parse_datetime(&req.required_date);
 
     let mut guard = txn_arc.lock().await;
@@ -352,6 +378,18 @@ pub async fn update_material_plan(
         Ok(t) => t,
         Err(resp) => return Err((StatusCode::BAD_REQUEST, resp)),
     };
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match MaterialPlanStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的材料计划状态"),
+                ))
+            }
+        },
+    };
     let required_date = parse_datetime(&req.required_date);
 
     let mut guard = txn_arc.lock().await;
@@ -382,6 +420,7 @@ pub async fn update_material_plan(
          status = COALESCE($10, status), \
          updated_at = NOW() \
          WHERE id = $1 \
+           AND status IN ('pending','requisitioned','sourced','satisfied','shortage','cancelled') \
            AND tenant_id = $11::uuid \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
@@ -396,7 +435,7 @@ pub async fn update_material_plan(
     .bind(req.available_quantity)
     .bind(required_date)
     .bind(&req.supply_type)
-    .bind(&req.status)
+    .bind(&status)
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -478,13 +517,20 @@ pub async fn delete_material_plan(
     }
 }
 
+enum TransitionOutcome {
+    Updated(sqlx::postgres::PgRow),
+    NotFound,
+    InvalidState,
+}
+
 async fn transition_status(
     state: &AppState,
     id: Uuid,
     new_status: &str,
+    allowed_from: &[&str],
     tenant_id: Uuid,
     txn_arc: &RlsTxnCell,
-) -> Result<Option<sqlx::postgres::PgRow>, sqlx::Error> {
+) -> Result<TransitionOutcome, sqlx::Error> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -495,6 +541,7 @@ async fn transition_status(
     let row = sqlx::query(
         "UPDATE mes.material_plans SET status = $2, updated_at = NOW() \
          WHERE id = $1 \
+           AND status = ANY($4::text[]) \
            AND tenant_id = $3::uuid \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
@@ -502,11 +549,29 @@ async fn transition_status(
     )
     .bind(id)
     .bind(new_status)
+    .bind(allowed_from)
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await?;
+    let outcome = match row {
+        Some(row) => TransitionOutcome::Updated(row),
+        None => {
+            let exists: bool = sqlx::query_scalar(
+                "SELECT EXISTS(SELECT 1 FROM mes.material_plans WHERE id = $1 AND tenant_id = $2::uuid)",
+            )
+            .bind(id)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await?;
+            if exists {
+                TransitionOutcome::InvalidState
+            } else {
+                TransitionOutcome::NotFound
+            }
+        }
+    };
     scope.commit().await?;
-    Ok(row)
+    Ok(outcome)
 }
 
 #[utoipa::path(
@@ -532,15 +597,22 @@ pub async fn submit_material_plan(
         &state,
         id,
         "requisitioned",
+        MaterialPlanStatus::submit_from(),
         get_tenant_id_from_claims(&claims),
         &txn_arc,
     )
     .await;
     match row {
-        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已提交")),
-        Ok(None) => Err((
+        Ok(TransitionOutcome::Updated(row)) => {
+            Ok(ApiResponse::success(row_to_json(&row), "材料计划已提交"))
+        }
+        Ok(TransitionOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
             ApiResponse::not_found("材料计划不存在"),
+        )),
+        Ok(TransitionOutcome::InvalidState) => Err((
+            StatusCode::CONFLICT,
+            ApiResponse::conflict("材料计划当前状态不允许提交"),
         )),
         Err(e) => {
             tracing::error!("提交材料计划失败: {}", e);
@@ -572,15 +644,22 @@ pub async fn requisition_material_plan(
         &state,
         id,
         "sourced",
+        MaterialPlanStatus::requisition_from(),
         get_tenant_id_from_claims(&claims),
         &txn_arc,
     )
     .await;
     match row {
-        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已请购")),
-        Ok(None) => Err((
+        Ok(TransitionOutcome::Updated(row)) => {
+            Ok(ApiResponse::success(row_to_json(&row), "材料计划已请购"))
+        }
+        Ok(TransitionOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
             ApiResponse::not_found("材料计划不存在"),
+        )),
+        Ok(TransitionOutcome::InvalidState) => Err((
+            StatusCode::CONFLICT,
+            ApiResponse::conflict("材料计划当前状态不允许请购"),
         )),
         Err(e) => {
             tracing::error!("请购材料计划失败: {}", e);
@@ -612,15 +691,22 @@ pub async fn cancel_material_plan(
         &state,
         id,
         "cancelled",
+        MaterialPlanStatus::cancel_from(),
         get_tenant_id_from_claims(&claims),
         &txn_arc,
     )
     .await;
     match row {
-        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已取消")),
-        Ok(None) => Err((
+        Ok(TransitionOutcome::Updated(row)) => {
+            Ok(ApiResponse::success(row_to_json(&row), "材料计划已取消"))
+        }
+        Ok(TransitionOutcome::NotFound) => Err((
             StatusCode::NOT_FOUND,
             ApiResponse::not_found("材料计划不存在"),
+        )),
+        Ok(TransitionOutcome::InvalidState) => Err((
+            StatusCode::CONFLICT,
+            ApiResponse::conflict("材料计划当前状态不允许取消"),
         )),
         Err(e) => {
             tracing::error!("取消材料计划失败: {}", e);

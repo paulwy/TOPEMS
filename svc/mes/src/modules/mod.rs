@@ -13,6 +13,7 @@ pub mod equipment;
 pub mod equipment_oee;
 pub mod material_bom;
 pub mod material_plan;
+pub mod material_plan_status;
 pub mod material_requirement;
 pub mod mes_plugin;
 pub mod oee_logic;
