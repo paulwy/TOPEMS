@@ -36,7 +36,9 @@ async fn main() -> anyhow::Result<()> {
 
     // 连接治理 B 试点：模块只拿到 Db（PgPool 私有），所有查询走事务级 search_path。
     // M-1: 请求事务唯一化后，Db 上不再允许自建请求事务（兜底守卫）。
-    let db = Db::new(ctx.db.clone(), "public").deny_request_own_txn();
+    let db = Db::new(ctx.db.clone(), "public")
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
 
     // B1/F-37 终态：自举实体投影表 + 启动事件订阅者（erp 发事件 → search 本地投影）。
     // 失败不阻塞启动——投影未就绪时客户/订单搜索为空结果，待事件追平。
