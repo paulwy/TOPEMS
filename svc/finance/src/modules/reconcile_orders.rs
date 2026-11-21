@@ -4,7 +4,7 @@
 // （orderId 粒度），后端此前仅 2 条桩实现（不查库）。本模块补齐真实现。
 // 表：finance.reconcile_orders + finance.reconcile_items（迁移 20260908000005）
 //
-// 状态机：draft → pending → confirmed / disputed / cancelled
+// 状态机：draft/pending → confirmed；draft/pending/disputed → disputed；confirmed/cancelled 为终态
 // 匹配逻辑：updateItem 计算 difference = source_amount - match_amount；
 //           列表/详情实时聚合 order 的 matched/unmatched 金额。
 
@@ -24,6 +24,9 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
+use crate::modules::reconcile_status::{
+    normalize_reconcile_item, normalize_reconcile_order, ReconcileOrderStatus,
+};
 use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
@@ -116,6 +119,10 @@ fn not_found(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (StatusCode::OK, ApiResponse::not_found(msg))
 }
 
+fn conflict(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
+    (StatusCode::OK, ApiResponse::conflict(msg))
+}
+
 fn parse_date(s: &Option<String>) -> Option<NaiveDate> {
     s.as_deref()
         .and_then(|v| v.parse::<chrono::NaiveDate>().ok())
@@ -179,6 +186,26 @@ pub async fn list_reconcile_orders(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
+    let status_filter = match params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        Some(raw) => match normalize_reconcile_order(raw) {
+            Some(status) => Some(status),
+            None => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request(
+                        "status 仅支持 draft/pending/confirmed/disputed/cancelled",
+                    ),
+                ))
+            }
+        },
+        None => None,
+    };
+
     let keyword = params.keyword.clone();
     let tenant_id = require_tenant(topems_shared_auth::middleware::get_tenant_id_from_claims(
         &claims,
@@ -204,7 +231,7 @@ pub async fn list_reconcile_orders(
              OR counterparty_name ILIKE '%' || $4 || '%') \
            AND (tenant_id = $5::uuid)"
     ))
-    .bind(&params.status)
+    .bind(status_filter.map(|s| s.as_str()))
     .bind(params.counterparty_id)
     .bind(&params.period)
     .bind(&keyword)
@@ -231,7 +258,7 @@ pub async fn list_reconcile_orders(
              OR counterparty_name ILIKE '%' || $4 || '%') \
            AND (tenant_id = $7::uuid) \
          ORDER BY created_at DESC LIMIT $5 OFFSET $6"))
-        .bind(&params.status)
+        .bind(status_filter.map(|s| s.as_str()))
         .bind(params.counterparty_id)
         .bind(&params.period)
         .bind(&keyword)
@@ -457,7 +484,7 @@ pub async fn create_reconcile_order(
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
              (order_no, counterparty_id, period, start_date, end_date, status, tenant_id) \
-             VALUES ($1, $2, $3, $4, $5, 'pending', $6) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7) \
              RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                        total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
             .bind(&order_no)
@@ -465,6 +492,7 @@ pub async fn create_reconcile_order(
             .bind(&req.period)
             .bind(start_date)
             .bind(end_date)
+            .bind(ReconcileOrderStatus::Draft.as_str())
             .bind(tenant_opt)
             .fetch_one(&mut scope)
             .await
@@ -532,7 +560,7 @@ pub async fn auto_reconcile(
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
              (order_no, counterparty_id, period, start_date, end_date, status, tenant_id) \
-             VALUES ($1, $2, $3, $4, $5, 'draft', $6) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7) \
              RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                        total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
             .bind(&order_no)
@@ -540,6 +568,7 @@ pub async fn auto_reconcile(
             .bind(&req.period)
             .bind(start_date)
             .bind(end_date)
+            .bind(ReconcileOrderStatus::Draft.as_str())
             .bind(tenant_opt)
             .fetch_one(&mut scope)
             .await
@@ -602,6 +631,7 @@ pub async fn confirm_reconcile_order(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'confirmed', updated_at = NOW() \
          WHERE id = $1 \
+           AND status IN ('draft', 'pending', 'disputed') \
            AND (tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
@@ -612,7 +642,21 @@ pub async fn confirm_reconcile_order(
     .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(not_found("对账订单不存在")),
+        Ok(None) => {
+            let exists = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
+                "finance",
+                "SELECT EXISTS(SELECT 1 FROM finance.reconcile_orders WHERE id = $1 AND tenant_id = $2::uuid)"
+            ))
+            .bind(order_id)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await
+            .unwrap_or(false);
+            if exists {
+                return Err(conflict("对账订单当前状态不允许确认"));
+            }
+            return Err(not_found("对账订单不存在"));
+        }
         Err(e) => {
             tracing::error!("确认对账订单失败: {}", e);
             return Err(internal_error("确认对账订单失败"));
@@ -666,6 +710,7 @@ pub async fn dispute_reconcile_order(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'disputed', updated_at = NOW() \
          WHERE id = $1 \
+           AND status IN ('draft', 'pending', 'disputed') \
            AND (tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
@@ -676,7 +721,21 @@ pub async fn dispute_reconcile_order(
     .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(not_found("对账订单不存在")),
+        Ok(None) => {
+            let exists = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
+                "finance",
+                "SELECT EXISTS(SELECT 1 FROM finance.reconcile_orders WHERE id = $1 AND tenant_id = $2::uuid)"
+            ))
+            .bind(order_id)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await
+            .unwrap_or(false);
+            if exists {
+                return Err(conflict("对账订单当前状态不允许标记争议"));
+            }
+            return Err(not_found("对账订单不存在"));
+        }
         Err(e) => {
             tracing::error!("争议对账订单失败: {}", e);
             return Err(internal_error("争议对账订单失败"));
@@ -783,7 +842,23 @@ pub async fn update_reconcile_item(
     let source_date = parse_date(&req.source_date);
     let matched = req.matched;
     let match_amount = req.match_amount;
-    let status = req.status.clone();
+    let item_status = match req
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        Some(raw) => match normalize_reconcile_item(raw) {
+            Some(status) => Some(status),
+            None => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("status 仅支持 unmatched/matched/disputed"),
+                ))
+            }
+        },
+        None => None,
+    };
 
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -811,6 +886,7 @@ pub async fn update_reconcile_item(
          updated_at = NOW() \
          WHERE id = $2 AND order_id = $1 \
            AND EXISTS (SELECT 1 FROM finance.reconcile_orders o WHERE o.id = $1 \
+             AND o.status IN ('draft', 'pending', 'disputed') \
              AND (o.tenant_id = $12::uuid)) \
          RETURNING id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                    matched, match_id, match_amount, difference, status, remark, created_at, updated_at"))
@@ -823,14 +899,29 @@ pub async fn update_reconcile_item(
         .bind(matched)
         .bind(req.match_id)
         .bind(match_amount)
-        .bind(&status)
+        .bind(item_status.map(|s| s.as_str()))
         .bind(&req.remark)
         .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(not_found("对账明细不存在")),
+        Ok(None) => {
+            let item_exists = sqlx::query_scalar::<_, bool>(only_own_schema_query!(
+                "finance",
+                "SELECT EXISTS(SELECT 1 FROM finance.reconcile_items i JOIN finance.reconcile_orders o ON o.id = i.order_id WHERE i.id = $1 AND i.order_id = $2 AND o.tenant_id = $3::uuid)"
+            ))
+            .bind(item_id)
+            .bind(order_id)
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await
+            .unwrap_or(false);
+            if item_exists {
+                return Err(conflict("所属对账订单已确认或取消，明细不可修改"));
+            }
+            return Err(not_found("对账明细不存在"));
+        }
         Err(e) => {
             tracing::error!("更新对账明细失败: {}", e);
             return Err(internal_error("更新对账明细失败"));

@@ -15,6 +15,7 @@ pub mod forecasting;
 pub mod operational;
 pub mod receivable_payable_status;
 pub mod reconcile_orders;
+pub mod reconcile_status;
 pub mod reconciliation;
 pub mod report_center;
 pub mod reports_v57;

@@ -5,8 +5,8 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 127,
-    "rust_enum_values": 143,
+    "rust_enums": 129,
+    "rust_enum_values": 144,
     "rust_values_not_in_db_check": 106,
     "frontend_status_keys": 61,
     "frontend_keys_not_in_db_check": 35
@@ -985,6 +985,40 @@
         "cancelled",
         "draft",
         "posted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/reconcile_status.rs",
+      "name": "ReconcileItemStatus",
+      "values": [
+        "Disputed",
+        "Matched",
+        "Unmatched"
+      ],
+      "normalized": [
+        "disputed",
+        "matched",
+        "unmatched"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/reconcile_status.rs",
+      "name": "ReconcileOrderStatus",
+      "values": [
+        "Cancelled",
+        "Confirmed",
+        "Disputed",
+        "Draft",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "confirmed",
+        "disputed",
+        "draft",
+        "pending"
       ]
     },
     {
