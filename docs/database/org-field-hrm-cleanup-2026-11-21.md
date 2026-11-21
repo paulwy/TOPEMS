@@ -70,3 +70,20 @@ scratch 库（`topems_test_full` 克隆）执行：
 - WMS/HRM setup/AI/LIMS/MES 仍有引用，下一批按表比对后再删；
 - 回滚只按 `tenant_id` 派生恢复列，不恢复删除前与 `tenant_id` 不同的历史值；
   本批四表已核对逐行相等，因此等价。
+
+## 6. 第三批：`hrm.initialization_status`（2026-11-21 补）
+
+迁移 `database/migrations/20261121235930_w5c_hrm_init_status_drop_organization_id.sql`，
+回滚同名 `.rollback.sql`，ticket `W5C-ORG-HRM-INIT-20261121`。
+
+依据：
+
+- 本地 5 行，`organization_id` 与 `tenant_id` 逐行相等（0 行不同、0 个 NULL）；
+- 唯一约束已由 V69.1 重建为 `(tenant_id, step_name)`；
+- `svc/hrm/src/modules/setup.rs` 的进度查询与更新全部按 `tenant_id` 过滤，
+  `SELECT tenant_id AS organization_id` 仅为保留 API 字段名，列本身无读者；
+- `initialization_logs`（1 行，值与 `tenant_id` 不同）和 `companies`（4/5 行不同）
+  保留，不在本批。
+
+验证：`topems` 克隆库正向执行 `DO + ALTER TABLE`，列消失；回滚 `ADD COLUMN` +
+按 `tenant_id` 回填 5 行 + 置 `NOT NULL`，列形状恢复。本次无 Rust 代码改动。

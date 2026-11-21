@@ -2817,3 +2817,11 @@ pending_forward_patches:
     effect: "删除 wms.audit_logs（organization_id 逐行等于 org_id）与 wms.inbound_orders（逐行等于 tenant_id）的废弃 organization_id；inbound_order.rs 改为只读 tenant_id，organization_id 仅保留 API 别名；e2e 插入改 tenant_id"
     destructive_scan: "2 条 ALTER TABLE DROP COLUMN，均带 destructive 标记；前置守卫 audit_logs organization_id <> org_id、inbound_orders organization_id <> tenant_id 任一非 0 即中止；无 DELETE/UPDATE/TRUNCATE"
     note: "WMS 内部口径相反：warehouses/locations/inventory 的 organization_id 是业务组织值，本批不动。回滚 database/rollback/20261121235900_w5c_wms_audit_inbound_drop_organization_id.rollback.sql 分别按 org_id/tenant_id 派生恢复"
+
+  # ===== 2026-11-21：W5-C 第三批组织字段收敛（HRM initialization_status） =====
+  - version: "20261121235930"
+    file: "database/migrations/20261121235930_w5c_hrm_init_status_drop_organization_id.sql"
+    status: to_apply
+    effect: "删除 hrm.initialization_status 的废弃 organization_id；该列逐行等于 tenant_id，唯一约束已为 (tenant_id, step_name)，setup.rs 只按 tenant_id 读写"
+    destructive_scan: "1 条 ALTER TABLE DROP COLUMN，带 destructive 标记；前置守卫 organization_id IS DISTINCT FROM tenant_id 非 0 即中止；无 DELETE/UPDATE/TRUNCATE"
+    note: "回滚 database/rollback/20261121235930_w5c_hrm_init_status_drop_organization_id.rollback.sql 按 tenant_id 派生恢复并置 NOT NULL；initialization_logs/companies 存在差异值，保留"
