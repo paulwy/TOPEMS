@@ -429,6 +429,13 @@ pub enum WorkflowStartOutcome {
     Conflict,
 }
 
+#[derive(Debug, Clone)]
+pub enum WorkflowTransitionOutcome {
+    Updated(WorkflowV58),
+    NotFound,
+    Conflict,
+}
+
 struct MDMWorkflowEngine;
 
 impl MDMWorkflowEngine {
@@ -527,15 +534,16 @@ impl MDMWorkflowEngine {
     async fn advance_step(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
-    ) -> Result<Option<WorkflowV58>, TopemsError> {
+    ) -> Result<WorkflowTransitionOutcome, TopemsError> {
         let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
-            return Ok(None);
+            return Ok(WorkflowTransitionOutcome::NotFound);
         };
         if workflow.status != WorkflowStatus::Running {
-            return Ok(None);
+            return Ok(WorkflowTransitionOutcome::Conflict);
         }
 
+        let previous_updated_at = workflow.updated_at.to_rfc3339();
         let now = chrono::Utc::now();
         let mut current_idx = None;
         for (i, step) in workflow.steps.iter_mut().enumerate() {
@@ -546,31 +554,37 @@ impl MDMWorkflowEngine {
                 break;
             }
         }
-
-        if let Some(idx) = current_idx {
-            if idx + 1 < workflow.steps.len() {
-                let next = &mut workflow.steps[idx + 1];
-                next.status = WorkflowStepStatus::InProgress;
-                next.started_at = Some(now.clone());
-            } else {
-                workflow.status = WorkflowStatus::Completed;
-            }
+        let Some(idx) = current_idx else {
+            return Ok(WorkflowTransitionOutcome::Conflict);
+        };
+        if idx + 1 < workflow.steps.len() {
+            let next = &mut workflow.steps[idx + 1];
+            next.status = WorkflowStepStatus::InProgress;
+            next.started_at = Some(now.clone());
+        } else {
+            workflow.status = WorkflowStatus::Completed;
         }
 
         workflow.updated_at = now;
 
-        sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        let updated = sqlx::query(
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4
+             WHERE id = $1 AND status = 'running' AND updated_at::timestamptz = $5::timestamptz
+               AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
+        .bind(previous_updated_at)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
+        if updated.rows_affected() == 0 {
+            return Ok(WorkflowTransitionOutcome::Conflict);
+        }
 
-        Ok(Some(workflow))
+        Ok(WorkflowTransitionOutcome::Updated(workflow))
     }
 
     async fn get_workflow_status(
@@ -615,19 +629,23 @@ impl MDMWorkflowEngine {
         scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
         step_id: &str,
-    ) -> Result<Option<WorkflowV58>, TopemsError> {
+    ) -> Result<WorkflowTransitionOutcome, TopemsError> {
         let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
-            return Ok(None);
+            return Ok(WorkflowTransitionOutcome::NotFound);
         };
-
-        let Some(step) = workflow.steps.iter_mut().find(|s| s.id == step_id) else {
-            return Ok(None);
-        };
-        if step.status != WorkflowStepStatus::InProgress {
-            return Ok(None);
+        if workflow.status != WorkflowStatus::Running {
+            return Ok(WorkflowTransitionOutcome::Conflict);
         }
 
+        let Some(step) = workflow.steps.iter_mut().find(|s| s.id == step_id) else {
+            return Ok(WorkflowTransitionOutcome::NotFound);
+        };
+        if step.status != WorkflowStepStatus::InProgress {
+            return Ok(WorkflowTransitionOutcome::Conflict);
+        }
+
+        let previous_updated_at = workflow.updated_at.to_rfc3339();
         let now = chrono::Utc::now();
         step.status = WorkflowStepStatus::Approved;
         step.completed_at = Some(now.clone());
@@ -637,16 +655,24 @@ impl MDMWorkflowEngine {
             .unwrap_or_else(|| "system".to_string());
         workflow.updated_at = now;
 
-        sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        let updated = sqlx::query(
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4
+             WHERE id = $1 AND status = 'running' AND updated_at::timestamptz = $5::timestamptz
+               AND steps @> $6::jsonb
+               AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
+        .bind(previous_updated_at)
+        .bind(serde_json::json!([{"id": step_id, "status": "in_progress"}]))
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
+        if updated.rows_affected() == 0 {
+            return Ok(WorkflowTransitionOutcome::Conflict);
+        }
         sqlx::query(
             "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
@@ -662,26 +688,30 @@ impl MDMWorkflowEngine {
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
 
-        Ok(Some(workflow))
+        Ok(WorkflowTransitionOutcome::Updated(workflow))
     }
 
     async fn reject_step(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
         workflow_id: &str,
         step_id: &str,
-    ) -> Result<Option<WorkflowV58>, TopemsError> {
+    ) -> Result<WorkflowTransitionOutcome, TopemsError> {
         let workflows = fetch_workflows(scope).await?;
         let Some(mut workflow) = workflows.into_iter().find(|w| w.id == workflow_id) else {
-            return Ok(None);
+            return Ok(WorkflowTransitionOutcome::NotFound);
         };
-
-        let Some(step) = workflow.steps.iter_mut().find(|s| s.id == step_id) else {
-            return Ok(None);
-        };
-        if step.status != WorkflowStepStatus::InProgress {
-            return Ok(None);
+        if workflow.status != WorkflowStatus::Running {
+            return Ok(WorkflowTransitionOutcome::Conflict);
         }
 
+        let Some(step) = workflow.steps.iter_mut().find(|s| s.id == step_id) else {
+            return Ok(WorkflowTransitionOutcome::NotFound);
+        };
+        if step.status != WorkflowStepStatus::InProgress {
+            return Ok(WorkflowTransitionOutcome::Conflict);
+        }
+
+        let previous_updated_at = workflow.updated_at.to_rfc3339();
         let now = chrono::Utc::now();
         step.status = WorkflowStepStatus::Rejected;
         step.completed_at = Some(now.clone());
@@ -692,16 +722,24 @@ impl MDMWorkflowEngine {
         workflow.status = WorkflowStatus::Cancelled;
         workflow.updated_at = now;
 
-        sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        let updated = sqlx::query(
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4
+             WHERE id = $1 AND status = 'running' AND updated_at::timestamptz = $5::timestamptz
+               AND steps @> $6::jsonb
+               AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
         .bind(workflow.updated_at.to_rfc3339())
+        .bind(previous_updated_at)
+        .bind(serde_json::json!([{"id": step_id, "status": "in_progress"}]))
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
+        if updated.rows_affected() == 0 {
+            return Ok(WorkflowTransitionOutcome::Conflict);
+        }
         sqlx::query(
             "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7, NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
@@ -717,7 +755,7 @@ impl MDMWorkflowEngine {
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
 
-        Ok(Some(workflow))
+        Ok(WorkflowTransitionOutcome::Updated(workflow))
     }
 
     async fn get_workflow_history(
@@ -1706,8 +1744,11 @@ pub async fn advance_step(
     };
 
     match db_exec!(MDMWorkflowEngine::advance_step(&mut db_scope, &id).await) {
-        Some(w) => ApiResponse::success(w, "步骤已推进"),
-        None => ApiResponse::bad_request("无法推进工作流"),
+        WorkflowTransitionOutcome::Updated(w) => ApiResponse::success(w, "步骤已推进"),
+        WorkflowTransitionOutcome::NotFound => ApiResponse::not_found("未找到工作流"),
+        WorkflowTransitionOutcome::Conflict => {
+            ApiResponse::error(409, "工作流状态或当前步骤已变更，无法推进")
+        }
     }
 }
 
@@ -1852,10 +1893,11 @@ pub async fn approve_step(
     let (workflow_id, step_id) = parse_step_path(&id);
 
     match db_exec!(MDMWorkflowEngine::approve_step(&mut db_scope, &workflow_id, &step_id).await) {
-        Some(w) => {
+        WorkflowTransitionOutcome::Updated(w) => {
             ApiResponse::success(w, &req.comment.unwrap_or_else(|| "步骤已批准".to_string()))
         }
-        None => ApiResponse::bad_request("无法批准该步骤"),
+        WorkflowTransitionOutcome::NotFound => ApiResponse::not_found("未找到工作流或步骤"),
+        WorkflowTransitionOutcome::Conflict => ApiResponse::error(409, "步骤状态已变更，无法批准"),
     }
 }
 
@@ -1893,8 +1935,11 @@ pub async fn reject_step(
     let (workflow_id, step_id) = parse_step_path(&id);
 
     match db_exec!(MDMWorkflowEngine::reject_step(&mut db_scope, &workflow_id, &step_id).await) {
-        Some(w) => ApiResponse::success(w, &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string())),
-        None => ApiResponse::bad_request("无法拒绝该步骤"),
+        WorkflowTransitionOutcome::Updated(w) => {
+            ApiResponse::success(w, &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string()))
+        }
+        WorkflowTransitionOutcome::NotFound => ApiResponse::not_found("未找到工作流或步骤"),
+        WorkflowTransitionOutcome::Conflict => ApiResponse::error(409, "步骤状态已变更，无法拒绝"),
     }
 }
 
