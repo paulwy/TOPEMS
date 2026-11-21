@@ -41,8 +41,13 @@ async fn main() -> Result<()> {
     };
     let ctx = bootstrap_service_shared(&config).await?;
     // 连接治理 B：模块 schema 作用域固化在 Db 中（事务内 SET LOCAL search_path）。
-    // M-1：请求链路禁止自开事务，统一复用 tenant_middleware 的请求级 RLS 事务（scope_with）。
-    let db = Db::new(ctx.db.clone(), "gis, public").deny_request_own_txn();
+    // 事件订阅等后台任务按事件租户自建作用域，使用未加请求守卫的 Db。
+    let background_db = Db::new(ctx.db.clone(), "gis, public");
+    // M-1：请求链路禁止自开事务/租户作用域，统一复用 tenant_middleware 的请求级 RLS 事务（scope_with）。
+    let db = background_db
+        .clone()
+        .deny_request_own_txn()
+        .deny_request_tenant_scope();
 
     // 自定义 Prometheus Gauge
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
@@ -63,7 +68,7 @@ async fn main() -> Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(background_db.clone()).await {
         tracing::warn!("⚠️ GIS 事件订阅者启动失败: {}", e);
     }
 

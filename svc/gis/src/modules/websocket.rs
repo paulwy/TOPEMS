@@ -21,6 +21,16 @@ use uuid::Uuid;
 
 type ConnectionId = Uuid;
 
+/// 连接建立时解析一次的租户作用域上下文：长连接循环内不再从 claims 重新推导，
+/// 避免连接生命周期内租户上下文漂移或跨连接串用。
+#[derive(Debug, Clone, Copy)]
+enum WsTenantScope {
+    /// 超管：系统通道（跨租户只读）。
+    System,
+    /// 普通用户：固定租户；解析失败取 nil，由作用域入口 fail-closed 拒绝。
+    Tenant(Uuid),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum WebSocketMessage {
@@ -226,6 +236,20 @@ async fn handle_socket(
     // 未认证 / token 无效的连接仅允许 Ping/Pong/Close；Subscribe/Unsubscribe 一律拒绝。
     let claims: Option<Claims> = token.and_then(|tok| verify_jwt_token(&tok, &jwt_secret).ok());
 
+    // 连接建立即固化租户作用域上下文；订阅循环只按此上下文打开 stream 读作用域。
+    let ws_tenant_scope: Option<WsTenantScope> = claims.as_ref().map(|c| {
+        if c.is_superuser {
+            WsTenantScope::System
+        } else {
+            WsTenantScope::Tenant(
+                c.tenant_id
+                    .as_deref()
+                    .and_then(|t| Uuid::parse_str(t).ok())
+                    .unwrap_or_else(Uuid::nil),
+            )
+        }
+    });
+
     let (sender, receiver) = socket.split();
     let idle_timeout = ws_manager.get_config().idle_timeout_secs;
 
@@ -262,26 +286,19 @@ async fn handle_socket(
                                             )
                                             .await;
                                         }
-                                        Some(claims) => {
-                                            let tenant_filter: Option<Uuid> = if claims.is_superuser
-                                            {
-                                                None
-                                            } else {
-                                                claims
-                                                    .tenant_id
-                                                    .as_deref()
-                                                    .and_then(|t| Uuid::parse_str(t).ok())
-                                            };
-                                            // WS 任务在 spawn 后没有请求 task-local，必须显式选通道：
-                                            // 超管 = 系统通道；普通用户 = 指定租户（解析失败取 nil，fail-closed）。
-                                            let is_system = claims.is_superuser;
-                                            let scope_res = if is_system {
-                                                db.scope_read_system().await
-                                            } else {
-                                                db.scope_read_for_tenant(
-                                                    tenant_filter.unwrap_or_else(Uuid::nil),
-                                                )
-                                                .await
+                                        Some(_claims) => {
+                                            // 连接建立时已固化租户上下文（ws_tenant_scope）：
+                                            // 循环内只按该上下文打开 stream 读作用域，不再从 claims 推导。
+                                            let scope_res = match ws_tenant_scope {
+                                                Some(WsTenantScope::System) => {
+                                                    db.scope_read_system().await
+                                                }
+                                                Some(WsTenantScope::Tenant(tenant)) => {
+                                                    db.scope_read_for_tenant_stream(tenant).await
+                                                }
+                                                None => unreachable!(
+                                                    "claims 存在时租户上下文必然已在连接建立时解析"
+                                                ),
                                             };
                                             let allowed: Vec<String> = match scope_res {
                                                 Ok(mut scope) => {
@@ -431,12 +448,13 @@ async fn handle_device_socket(
                         .as_deref()
                         .and_then(|t| Uuid::parse_str(t).ok())
                 };
-                // WS 升级任务没有请求 task-local：超管走系统通道，普通用户按租户显式开作用域。
+                // WS 升级任务没有请求 task-local：超管走系统通道，
+                // 普通用户按连接建立时解析的租户打开 stream 专用读作用域（fail-closed）。
                 let is_system = claims.is_superuser;
                 let scope_res = if is_system {
                     db.scope_read_system().await
                 } else {
-                    db.scope_read_for_tenant(tenant_filter.unwrap_or_else(Uuid::nil))
+                    db.scope_read_for_tenant_stream(tenant_filter.unwrap_or_else(Uuid::nil))
                         .await
                 };
                 let status: Option<String> = match scope_res {

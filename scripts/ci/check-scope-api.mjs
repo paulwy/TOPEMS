@@ -58,7 +58,10 @@ const FOR_TENANT_RE = /(?:\.|Db::)scope_for_tenant\s*\(/g;
 const READ_FOR_TENANT_RE = /(?:\.|Db::)scope_read_for_tenant\s*\(/g;
 const DB_NEW_RE = /\bDb::new\s*\(/g;
 const STREAM_SCOPE_RE = /\.scope_read_for_tenant_stream\s*\(/g;
-const STREAM_ALLOWED_FILES = new Set(['svc/analytics/src/modules/bi/websocket.rs']);
+const STREAM_ALLOWED_FILES = new Set([
+  'svc/analytics/src/modules/bi/websocket.rs',
+  'svc/gis/src/modules/websocket.rs',
+]);
 const EXEMPT_RE = /\/\/\s*scope-exempt:\s*(\S.*?)\s*$/m;
 
 const EXEMPT_REASONS = [

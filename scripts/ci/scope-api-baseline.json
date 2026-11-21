@@ -2,14 +2,14 @@
   "generated": "2026-11-21",
   "note": "§17.2 作用域 API 收敛基线。scope_calls 计 `scope_for_tenant` 与 `scope_read_for_tenant`（两者在请求上下文都会被 deny_request_tenant_scope 拦截）的未标记生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/short-txn-exempt/lib-standalone）。每文件同时给出 for_tenant / read_for_tenant 分项。db_new 计 Db::new( 构造点，只减不增。口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。",
   "scope_calls": {
-    "total": 234,
+    "total": 232,
     "marked": 56,
-    "unmarked": 178,
+    "unmarked": 176,
     "for_tenant": {
       "unmarked": 94
     },
     "read_for_tenant": {
-      "unmarked": 84
+      "unmarked": 82
     },
     "files": {
       "lib/shared-db/src/master_data_refs.rs": {
@@ -136,11 +136,6 @@
         "unmarked": 1,
         "for_tenant": 1,
         "read_for_tenant": 0
-      },
-      "svc/gis/src/modules/websocket.rs": {
-        "unmarked": 2,
-        "for_tenant": 0,
-        "read_for_tenant": 2
       },
       "svc/hrm/src/event_handlers/mod.rs": {
         "unmarked": 1,
