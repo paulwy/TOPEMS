@@ -534,6 +534,13 @@
       "table": "wms.sync_records",
       "column": "status",
       "candidate": "docs/database/wms-sync-record-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/srm/src/modules/inquiry_status.rs",
+      "enum": "InquiryStatus",
+      "table": "srm.inquiries",
+      "column": "status",
+      "candidate": "docs/database/srm-inquiry-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

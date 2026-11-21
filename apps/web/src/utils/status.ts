@@ -46,6 +46,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   info: 'info.main',
   warning: 'warning.main',
   draft: 'warning',
+  awarded: 'success',
   archived: 'default',
   submitted: 'info',
   confirmed: 'info',

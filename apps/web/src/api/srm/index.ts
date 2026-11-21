@@ -374,6 +374,10 @@ export interface SupplierPortalStats {
 }
 
 // Inquiry & Quotation types
+/** 与后端 `svc/srm/src/modules/inquiry_status.rs` 的 InquiryStatus 六态对齐 */
+export type InquiryStatus =
+  'draft' | 'published' | 'in_progress' | 'closed' | 'awarded' | 'cancelled';
+
 export interface Inquiry {
   id: string;
   inquiry_no: string;
@@ -381,7 +385,7 @@ export interface Inquiry {
   description?: string;
   category?: string;
   urgency?: string;
-  status: string;
+  status: InquiryStatus;
   published_at?: string;
   deadline?: string;
   creator?: string;

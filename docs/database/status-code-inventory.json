@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 149,
-    "rust_enum_values": 156,
-    "rust_values_not_in_db_check": 117,
-    "frontend_status_keys": 171,
-    "frontend_keys_not_in_db_check": 131,
+    "rust_enums": 150,
+    "rust_enum_values": 157,
+    "rust_values_not_in_db_check": 118,
+    "frontend_status_keys": 172,
+    "frontend_keys_not_in_db_check": 132,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2556,6 +2556,27 @@
       ]
     },
     {
+      "module": "srm",
+      "file": "svc/srm/src/modules/inquiry_status.rs",
+      "name": "InquiryStatus",
+      "values": [
+        "Awarded",
+        "Cancelled",
+        "Closed",
+        "Draft",
+        "InProgress",
+        "Published"
+      ],
+      "normalized": [
+        "awarded",
+        "cancelled",
+        "closed",
+        "draft",
+        "in_progress",
+        "published"
+      ]
+    },
+    {
       "module": "ticket",
       "file": "svc/ticket/src/models.rs",
       "name": "TicketStatus",
@@ -2686,6 +2707,7 @@
       "archived",
       "assigned",
       "available",
+      "awarded",
       "blacklisted",
       "blocked",
       "breaching",
@@ -2856,6 +2878,7 @@
       "applied",
       "assigned",
       "available",
+      "awarded",
       "blocked",
       "breaching",
       "calculated",
@@ -2975,6 +2998,7 @@
       "applied",
       "assigned",
       "available",
+      "awarded",
       "blocked",
       "breaching",
       "calculated",

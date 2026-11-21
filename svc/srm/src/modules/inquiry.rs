@@ -2,6 +2,7 @@
 //! 数据源：srm.inquiries（event_handlers 写入，收敛自 srm_inquiries）
 //! 走 RLS txn（tenant_middleware 注入）
 
+use crate::modules::inquiry_status::InquiryStatus;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -106,7 +107,13 @@ pub async fn list_inquiries(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match InquiryStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的询价单状态过滤值"),
+        },
+        None => None,
+    };
 
     let result = sqlx::query_as::<_, Inquiry>(
         r#"
@@ -225,6 +232,13 @@ pub async fn create_inquiry(
     let tenant_id = current_tenant_id(&claims).await.unwrap_or_else(Uuid::nil);
     let creator = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
     let inquiry_no = format!("INQ-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
+    let initial_status = match req.status.as_deref() {
+        Some(raw) => match InquiryStatus::from_db_str(raw) {
+            Some(s) => s,
+            None => return ApiResponse::bad_request("无效的询价单状态"),
+        },
+        None => InquiryStatus::DEFAULT,
+    };
 
     let result = sqlx::query_as::<_, Inquiry>(
         r#"
@@ -237,7 +251,7 @@ pub async fn create_inquiry(
     .bind(inquiry_no)
     .bind(&req.title)
     .bind(&req.description)
-    .bind(req.status.unwrap_or_else(|| "draft".to_string()))
+    .bind(initial_status.as_db_str())
     .bind(creator)
     .bind(tenant_id)
     .fetch_one(&mut **txn)
@@ -272,6 +286,14 @@ pub async fn update_inquiry(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let next_status = match req.status.as_deref() {
+        Some(raw) => match InquiryStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str()),
+            None => return ApiResponse::bad_request("无效的询价单状态"),
+        },
+        None => None,
+    };
+
     let result = sqlx::query_as::<_, Inquiry>(
         r#"
         UPDATE srm.inquiries
@@ -287,7 +309,7 @@ pub async fn update_inquiry(
     .bind(id)
     .bind(&req.title)
     .bind(&req.description)
-    .bind(&req.status)
+    .bind(next_status)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -364,7 +386,14 @@ pub async fn publish_inquiry(
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Inquiry> {
-    transition_inquiry(id, "published", &["draft", "closed"], "发布", txn_arc).await
+    transition_inquiry(
+        id,
+        InquiryStatus::Published,
+        InquiryStatus::publish_from(),
+        "发布",
+        txn_arc,
+    )
+    .await
 }
 
 #[utoipa::path(
@@ -386,12 +415,19 @@ pub async fn close_inquiry(
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Inquiry> {
-    transition_inquiry(id, "closed", &["published"], "关闭", txn_arc).await
+    transition_inquiry(
+        id,
+        InquiryStatus::Closed,
+        InquiryStatus::close_from(),
+        "关闭",
+        txn_arc,
+    )
+    .await
 }
 
 async fn transition_inquiry(
     id: Uuid,
-    target_status: &str,
+    target_status: InquiryStatus,
     allowed_from: &[&str],
     action: &str,
     txn_arc: RlsTxnCell,
@@ -436,7 +472,7 @@ async fn transition_inquiry(
         "#,
     )
     .bind(id)
-    .bind(target_status)
+    .bind(target_status.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
