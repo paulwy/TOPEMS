@@ -14,9 +14,8 @@ use super::ApiState;
 use crate::models::material::{
     CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest,
 };
-use crate::modules::material_calc::{
-    calculate_purchase_order_amounts, default_purchase_order_status,
-};
+use crate::modules::material_calc::calculate_purchase_order_amounts;
+use crate::modules::purchase_order_status::PurchaseOrderStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{PaginatedResponse, PaginationParams};
@@ -237,7 +236,7 @@ pub async fn create_purchase_order(
     .bind(tax_amount)
     .bind(discount_amount)
     .bind(payable_amount)
-    .bind(default_purchase_order_status())
+    .bind(PurchaseOrderStatus::DEFAULT.as_db_str())
     .bind(req.remark)
     .fetch_one(&mut **txn)
     .await;
@@ -481,13 +480,15 @@ pub async fn approve_purchase_order(
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET status = 'approved', updated_at = $1
-            WHERE id = $2 AND status = 'pending'
+        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET status = $3, updated_at = $1
+            WHERE id = $2 AND status = $4
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
                       total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
     .bind(Utc::now())
     .bind(id)
+    .bind(PurchaseOrderStatus::Approved.as_db_str())
+    .bind(&[PurchaseOrderStatus::Pending.as_db_str()][..])
     .fetch_optional(&mut **txn)
     .await;
 
@@ -588,13 +589,18 @@ pub async fn cancel_purchase_order(
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
-        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET status = 'cancelled', updated_at = $1
-            WHERE id = $2 AND status IN ('pending', 'approved')
+        only_own_schema_query!("erp", r#"UPDATE erp.purchase_orders SET status = $3, updated_at = $1
+            WHERE id = $2 AND status = ANY($4)
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
                       total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
     .bind(Utc::now())
     .bind(id)
+    .bind(PurchaseOrderStatus::Cancelled.as_db_str())
+    .bind(&[
+        PurchaseOrderStatus::Pending.as_db_str(),
+        PurchaseOrderStatus::Approved.as_db_str(),
+    ][..])
     .fetch_optional(&mut **txn)
     .await;
 

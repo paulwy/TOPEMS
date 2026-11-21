@@ -413,6 +413,13 @@
       "table": "erp.sales_orders",
       "column": "status",
       "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/purchase_order_status.rs",
+      "enum": "PurchaseOrderStatus",
+      "table": "erp.purchase_orders",
+      "column": "status",
+      "candidate": "docs/database/erp-purchase-order-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

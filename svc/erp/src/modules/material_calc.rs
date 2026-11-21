@@ -84,10 +84,6 @@ pub fn calculate_sales_order_amounts(
     }
 }
 
-pub fn default_purchase_order_status() -> &'static str {
-    "pending"
-}
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
@@ -194,10 +190,5 @@ mod tests {
         assert_eq!(r.tax_amount, 0.0);
         assert_eq!(r.discount_amount, 0.0);
         assert_eq!(r.payable_amount, 0.0);
-    }
-
-    #[test]
-    fn test_purchase_default_status_pending() {
-        assert_eq!(default_purchase_order_status(), "pending");
     }
 }
