@@ -632,6 +632,13 @@
       "table": "ehs.qa_ehs_drill_records",
       "column": "status",
       "candidate": "docs/database/ehs-drill-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/rectification_status.rs",
+      "enum": "RectificationStatus",
+      "table": "ehs.qa_ehs_hazard_rectifications",
+      "column": "status",
+      "candidate": "docs/database/ehs-hazard-rectification-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

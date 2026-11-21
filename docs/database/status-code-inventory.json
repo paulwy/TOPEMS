@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 163,
+    "rust_enums": 164,
     "rust_enum_values": 163,
     "rust_values_not_in_db_check": 124,
     "frontend_status_keys": 178,
@@ -590,6 +590,21 @@
       "normalized": [
         "completed",
         "in_progress"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/rectification_status.rs",
+      "name": "RectificationStatus",
+      "values": [
+        "InProgress",
+        "Pending",
+        "Submitted"
+      ],
+      "normalized": [
+        "in_progress",
+        "pending",
+        "submitted"
       ]
     },
     {

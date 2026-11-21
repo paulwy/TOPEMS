@@ -18,6 +18,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::hazard_status::HazardStatus;
+use crate::modules::rectification_status::RectificationStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 use topems_shared_service_client::service_client::CreateInstanceRequest;
@@ -1102,7 +1103,7 @@ pub async fn create_rectification(
         r#"
         INSERT INTO ehs.qa_ehs_hazard_rectifications
             (hazard_id, description, responsible, deadline, status, progress, tenant_id)
-        VALUES ($1::uuid, $2, $3, $4::date, 'pending', 0, $5)
+        VALUES ($1::uuid, $2, $3, $4::date, $6, 0, $5)
         RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
                   deadline::text AS deadline, status, progress,
                   started_at AS started_at, completed_at AS completed_at,
@@ -1114,6 +1115,7 @@ pub async fn create_rectification(
     .bind(&responsible)
     .bind(&deadline)
     .bind(tenant_id)
+    .bind(RectificationStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await;
     let row = match row {
@@ -1167,7 +1169,7 @@ pub async fn create_rectification(
             "description": row.try_get::<String, _>("description").unwrap_or_default(),
             "responsible": row.try_get::<Option<String>, _>("responsible").ok().flatten(),
             "deadline": row.try_get::<Option<String>, _>("deadline").ok().flatten(),
-            "status": row.try_get::<String, _>("status").unwrap_or_else(|_| "pending".to_string()),
+            "status": row.try_get::<String, _>("status").unwrap_or_else(|_| RectificationStatus::DEFAULT.as_db_str().to_string()),
             "progress": row.try_get::<i32, _>("progress").unwrap_or(0),
             "started_at": row.try_get::<Option<DateTime<Utc>>, _>("started_at").ok().flatten(),
             "completed_at": row.try_get::<Option<DateTime<Utc>>, _>("completed_at").ok().flatten(),
@@ -1211,6 +1213,23 @@ pub async fn update_rectification(
     let deadline = req.get("deadline").and_then(|v| v.as_str());
     let progress = req.get("progress").and_then(|v| v.as_i64());
     let status = req.get("status").and_then(|v| v.as_str());
+    let status_target = match status {
+        Some(raw) => match RectificationStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的整改状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => RectificationStatus::update_from(target)
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect(),
+        None => RectificationStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
 
     let row = match tenant_scope.tenant_id() {
         // 租户通道：tenant_id = $7::uuid
@@ -1226,7 +1245,8 @@ pub async fn update_rectification(
                     started_at = COALESCE(started_at, now()),
                     updated_at = now()
                 WHERE hazard_id = $1::uuid
-                  AND tenant_id = $7::uuid
+                  AND (status = ANY($7::text[]) OR status IS NULL)
+                  AND tenant_id = $8::uuid
                   AND deleted_at IS NULL
                 RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
                           deadline::text AS deadline, status, progress,
@@ -1239,7 +1259,8 @@ pub async fn update_rectification(
             .bind(responsible)
             .bind(deadline)
             .bind(progress)
-            .bind(status)
+            .bind(status_target.map(|v| v.as_db_str()))
+            .bind(&allowed_from)
             .bind(tenant)
             .fetch_optional(&mut scope)
             .await
@@ -1257,6 +1278,7 @@ pub async fn update_rectification(
                     started_at = COALESCE(started_at, now()),
                     updated_at = now()
                 WHERE hazard_id = $1::uuid
+                  AND (status = ANY($7::text[]) OR status IS NULL)
                   AND deleted_at IS NULL
                 RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
                           deadline::text AS deadline, status, progress,
@@ -1269,14 +1291,15 @@ pub async fn update_rectification(
             .bind(responsible)
             .bind(deadline)
             .bind(progress)
-            .bind(status)
+            .bind(status_target.map(|v| v.as_db_str()))
+            .bind(&allowed_from)
             .fetch_optional(&mut scope)
             .await
         }
     };
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("整改方案不存在"),
+        Ok(None) => return ApiResponse::conflict("整改方案不存在或状态不允许回退"),
         Err(e) => {
             tracing::error!("Failed to update rectification: {}", e);
             if let sqlx::Error::Database(db) = &e {
@@ -1305,7 +1328,7 @@ pub async fn update_rectification(
             "description": row.try_get::<String, _>("description").unwrap_or_default(),
             "responsible": row.try_get::<Option<String>, _>("responsible").ok().flatten(),
             "deadline": row.try_get::<Option<String>, _>("deadline").ok().flatten(),
-            "status": row.try_get::<String, _>("status").unwrap_or_else(|_| "in_progress".to_string()),
+            "status": row.try_get::<String, _>("status").unwrap_or_else(|_| RectificationStatus::DEFAULT.as_db_str().to_string()),
             "progress": row.try_get::<i32, _>("progress").unwrap_or(0),
             "started_at": row.try_get::<Option<DateTime<Utc>>, _>("started_at").ok().flatten(),
             "completed_at": row.try_get::<Option<DateTime<Utc>>, _>("completed_at").ok().flatten(),
@@ -1345,19 +1368,27 @@ pub async fn submit_rectification(
     let upd = sqlx::query(
         r#"
         UPDATE ehs.qa_ehs_hazard_rectifications
-        SET status = 'submitted', completed_at = now(), updated_at = now()
+        SET status = $3, completed_at = now(), updated_at = now()
         WHERE hazard_id = $1::uuid
           AND tenant_id = $2
+          AND status = ANY($4::text[])
           AND deleted_at IS NULL
         "#,
     )
     .bind(&id)
     .bind(tenant_id)
+    .bind(RectificationStatus::Submitted.as_db_str())
+    .bind(
+        RectificationStatus::submit_from()
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .execute(&mut scope)
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return ApiResponse::not_found("整改方案不存在");
+            return ApiResponse::conflict("整改方案不存在或已提交");
         }
         Ok(_) => {}
         Err(e) => {
@@ -1402,7 +1433,7 @@ pub async fn submit_rectification(
     ApiResponse::success(
         serde_json::json!({
             "hazard_id": id,
-            "status": "submitted",
+            "status": RectificationStatus::Submitted.as_db_str(),
             "submitted_at": chrono::Utc::now(),
             "tenant_id": tenant_id.to_string(),
         }),
@@ -2617,7 +2648,7 @@ fn hazard_control_measure_from_row(r: &sqlx::postgres::PgRow) -> ControlMeasure 
         deadline: r.try_get("deadline").ok().flatten(),
         status: r
             .try_get("status")
-            .unwrap_or_else(|_| "pending".to_string()),
+            .unwrap_or_else(|_| RectificationStatus::DEFAULT.as_db_str().to_string()),
         effectiveness: r.try_get("effectiveness").ok().flatten(),
         created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
     }
