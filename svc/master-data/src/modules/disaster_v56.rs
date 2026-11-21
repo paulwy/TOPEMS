@@ -2159,7 +2159,7 @@ pub async fn get_replication_status(
     .map(|rows| rows.iter().map(replication_config_from_row).collect())
     .unwrap_or_default();
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE status IN ('online','offline','degraded')"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -2438,7 +2438,7 @@ pub async fn switch_regions(
     };
     let tenant = tenant_of(&claims);
     let target = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1"
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1 AND status IN ('online','offline','degraded')"
     )))
     .bind(&req.primary_region)
     .fetch_optional(&mut db_scope)
@@ -2479,7 +2479,7 @@ pub async fn switch_regions(
     }
 
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE status IN ('online','offline','degraded')"
     )))
     .fetch_all(&mut db_scope)
     .await
@@ -2533,7 +2533,7 @@ pub async fn get_region_health(
         }
     };
     let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
-        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE status IN ('online','offline','degraded')"
     )))
     .fetch_all(&mut db_scope)
     .await
