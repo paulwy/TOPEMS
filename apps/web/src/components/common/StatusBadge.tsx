@@ -29,7 +29,21 @@ interface StatusBadgeProps {
   fallbackColor?: string;
 }
 
-const GRAY = 'bg-gray-100 text-gray-700';
+/** 统一状态色板：各模块仅声明状态→颜色映射，不再重复颜色字面量。 */
+export const STATUS_PALETTE = {
+  gray: 'bg-gray-100 text-gray-700',
+  blue: 'bg-blue-100 text-blue-700',
+  orange: 'bg-orange-100 text-orange-700',
+  green: 'bg-green-100 text-green-700',
+  red: 'bg-red-100 text-red-700',
+  purple: 'bg-purple-100 text-purple-700',
+  indigo: 'bg-indigo-100 text-indigo-700',
+  cyan: 'bg-cyan-100 text-cyan-700',
+  yellow: 'bg-yellow-100 text-yellow-700',
+  amber: 'bg-amber-100 text-amber-700',
+} as const;
+
+const GRAY = STATUS_PALETTE.gray;
 
 export function StatusBadge({
   status,
@@ -56,3 +70,33 @@ export function StatusBadge({
 }
 
 export default StatusBadge;
+
+export interface FsmStatusBadgeProps<F extends string> {
+  fsm: F;
+  status: string;
+  label?: string;
+}
+
+/**
+ * FSM 徽章工厂：aps/qms/tms/wms 等模块只需注入 FSM 颜色映射与文案，
+ * 组件渲染与回退逻辑只在 common 实现一次。
+ */
+export function createFsmStatusBadge<F extends string>(
+  fsmColors: Record<F, Record<string, string>>,
+  labelMap: Record<string, string>,
+  options?: { fallbackColor?: string; className?: string }
+) {
+  return function FsmStatusBadge({ fsm, status, label }: FsmStatusBadgeProps<F>) {
+    return (
+      <StatusBadge
+        status={status}
+        label={label}
+        fsm={fsm}
+        fsmColors={fsmColors}
+        labelMap={labelMap}
+        fallbackColor={options?.fallbackColor}
+        className={options?.className}
+      />
+    );
+  };
+}

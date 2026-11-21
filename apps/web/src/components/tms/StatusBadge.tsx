@@ -1,4 +1,4 @@
-import { StatusBadge as BaseStatusBadge } from '@/components/common/StatusBadge';
+import { STATUS_PALETTE, createFsmStatusBadge } from '@/components/common/StatusBadge';
 import i18n from '@/i18n';
 /**
  * TMS 状态徽章组件
@@ -20,46 +20,40 @@ import i18n from '@/i18n';
 
 export type TmsFsmType = 'vehicle' | 'driver' | 'carrier' | 'route' | 'shipment';
 
-const GRAY = 'bg-gray-100 text-gray-700';
-const BLUE = 'bg-blue-100 text-blue-700';
-const ORANGE = 'bg-orange-100 text-orange-700';
-const GREEN = 'bg-green-100 text-green-700';
-const RED = 'bg-red-100 text-red-700';
-
 // 每个 FSM 的状态 → 颜色映射
 const FSM_STATUS_COLORS: Record<TmsFsmType, Record<string, string>> = {
   vehicle: {
-    active: GRAY,
-    maintenance: BLUE,
-    inactive: ORANGE,
-    retired: GREEN,
+    active: STATUS_PALETTE.gray,
+    maintenance: STATUS_PALETTE.blue,
+    inactive: STATUS_PALETTE.orange,
+    retired: STATUS_PALETTE.green,
   },
   driver: {
-    active: GRAY,
-    on_leave: BLUE,
-    suspended: ORANGE,
-    inactive: RED,
+    active: STATUS_PALETTE.gray,
+    on_leave: STATUS_PALETTE.blue,
+    suspended: STATUS_PALETTE.orange,
+    inactive: STATUS_PALETTE.red,
   },
   carrier: {
-    pending_review: GRAY,
-    active: BLUE,
-    suspended: ORANGE,
-    blacklisted: RED,
-    rejected: RED,
+    pending_review: STATUS_PALETTE.gray,
+    active: STATUS_PALETTE.blue,
+    suspended: STATUS_PALETTE.orange,
+    blacklisted: STATUS_PALETTE.red,
+    rejected: STATUS_PALETTE.red,
   },
   route: {
-    planning: GRAY,
-    active: BLUE,
-    closed: ORANGE,
-    deprecated: GREEN,
-    cancelled: RED,
+    planning: STATUS_PALETTE.gray,
+    active: STATUS_PALETTE.blue,
+    closed: STATUS_PALETTE.orange,
+    deprecated: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   shipment: {
-    draft: GRAY,
-    pending: BLUE,
-    in_transit: BLUE,
-    delivered: GREEN,
-    cancelled: RED,
+    draft: STATUS_PALETTE.gray,
+    pending: STATUS_PALETTE.blue,
+    in_transit: STATUS_PALETTE.blue,
+    delivered: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
 };
 
@@ -84,25 +78,6 @@ const STATUS_LABELS: Record<string, string> = {
   delivered: i18n.t('components.status_badge.k16'),
 };
 
-interface StatusBadgeProps {
-  /** FSM 类型 */
-  fsm: TmsFsmType;
-  /** 当前状态值 */
-  status: string;
-  /** 自定义标签（不传则使用内置中文标签，再退化到原始 status） */
-  label?: string;
-}
-
-export function StatusBadge({ fsm, status, label }: StatusBadgeProps) {
-  return (
-    <BaseStatusBadge
-      status={status}
-      label={label}
-      fsm={fsm}
-      fsmColors={FSM_STATUS_COLORS}
-      labelMap={STATUS_LABELS}
-    />
-  );
-}
+export const StatusBadge = createFsmStatusBadge<TmsFsmType>(FSM_STATUS_COLORS, STATUS_LABELS);
 
 export default StatusBadge;

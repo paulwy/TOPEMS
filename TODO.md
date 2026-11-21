@@ -94,7 +94,7 @@
 | W3-D ✅（口径修正） | 合并 `schema/`、`schemas/`、`types.ts` | 2026-11-21 实测 `schema` 是 DSL 适配层（7 文件/414 引用）、`schemas` 是页面 schema（258 文件），不同层不合并；DSL 目录改名 `schema-dsl`，删除零引用空壳 `src/types.ts`，vitest include 同步。证据 `docs/quality/frontend-schema-table-clarification-2026-11-21.md` | 命名无歧义、空壳清零 ✅ |
 | W4-A ✅（口径修正） | `DataTable` 去重 | 2026-11-21 实测 4 处并非重复：shared-components 为 MUI 高级表、redesign 为轻量语义表、GIS 旧包装零引用、DashboardTemplate 为配置驱动内部件。删除 GIS 死代码（含测试）；保留两套按设计体系区分的公开实现与 Dashboard 内部件，不硬合并。证据同上 | 死代码清零、公开实现职责清晰 ✅ |
 | W4-B ✅（口径修正） | 表单字段重复实现收口 | 2026-11-21：全仓无第二套字段组件；两个表单引擎（FormBuilder / CrudAutoForm）状态模型不同不合并，`text/email/password/number/textarea` 已统一改用共享 `FormField`；组合控件保留引擎实现。证据 `docs/quality/form-field-dedupe-2026-11-21.md` | 字段控件共享 ✅；web typecheck/lint 0 error，18 用例通过 |
-| W4-C ✅（口径修正） | `StatusBadge` 去重 | 旧口径“11 个定义”已过期：Tailwind 5 份实现已由 `4f02796a2` 合一为 `components/common/StatusBadge.tsx` 单一渲染；`tms/mes/aps/qms/wms` 的 `StatusBadge` 全是薄包装（只提供各自 FSM/颜色/文案映射，内部 import common），不是重复实现；`ehs/EHSStatusBadge` 走 MUI `Chip` 体系，`packages/shared-components` 另有 MUI 主实现+11 个 typed 包装，均属另一设计体系 | Tailwind 侧单一实现 ✅；跨 MUI/Tailwind 体系不合并 |
+| W4-C ✅（口径修正） | `StatusBadge` 去重 | 旧口径“11 个定义”不是 11 份渲染实现：MUI 主实现+typed 包装属另一体系；Tailwind 侧 `common/StatusBadge` 为唯一渲染。2026-11-21 再收口：`createFsmStatusBadge` 工厂统一 aps/qms/tms/wms 包装，`STATUS_PALETTE` 统一色板，MES/EHS 仅保留数据映射。证据 `docs/quality/status-badge-dedupe-2026-11-21.md` | Tailwind 侧单一渲染+工厂 ✅；跨 MUI/Tailwind 不合并 |
 | W4-D ✅ | eslint 限制跨层 import 规则落地 | 2026-11-21：`no-restricted-imports` 禁 `@/pages/*`，仅 `module-configs`/`routes`/`DynamicRoutes`/测试豁免；`eslint apps/web/src --quiet` 0 error；web typecheck 0 error；证据见 `docs/quality/frontend-page-boundary-2026-11-21.md` | 规则生效 ✅ |
 | W5-B | 状态枚举单一源（前端/后端/DB CHECK 三处对齐） | 无生成物 | 三方一致校验通过 |
 | W5-C | 组织字段口径收敛 | `company_id` 404 / `org_id` 382 / `organization_id` 250 | 选定口径后计数只降 |
@@ -320,7 +320,7 @@
 | E4-1 ✅ | W3-B 清 `pages/` 残留 | 无 | — | 2026-11-21 三批完成，`pages/` 41→0；页面测试与 Demo 同步迁移，779 用例通过 |
 | E4-2 ✅ | W3-C `@/pages/*` 收敛 | E4-1 | — | 2026-11-21 生产代码跨层引用 0；`module-configs/**` 约 539 处属路由装配 |
 | E4-3 ✅（口径修正） | W3-D schema 三分 | 无 | — | 2026-11-21 `schema` 改名 `schema-dsl`，删除空壳 `types.ts`，`schemas` 保留页面 schema；不强行合并 |
-| E4-4（部分完成） | W4-A `DataTable`、W4-C `StatusBadge` 去重 | 无 | — | 2026-11-21 W4-A 已删 GIS 死代码，保留两套设计体系实现；W4-C `StatusBadge` 11 个定义待处理 |
+| E4-4 ✅ | W4-A `DataTable`、W4-C `StatusBadge` 去重 | 无 | — | 2026-11-21：W4-A 删除 GIS 死代码，保留 MUI/redesign 两套设计体系；W4-C 确认 11 个定义非重复，aps/qms/tms/wms 改由 `createFsmStatusBadge` 工厂生成，统一 `STATUS_PALETTE`，94 用例通过。证据 `docs/quality/status-badge-dedupe-2026-11-21.md` |
 | E4-5 ✅ | W4-B 表单字段收口 | E4-4 | — | 2026-11-21：FormBuilder + CrudAutoForm 的文本/数字/多行字段统一使用共享 `FormField`，两个引擎不强行合并 |
 | E4-6 ✅ | W4-D eslint 跨层 import 规则 | 无 | — | 2026-11-21 规则已生效，`eslint apps/web/src --quiet` 0 error |
 | E4-7 | W1-2a 修脚本后重出权限快照 | E0-3 | — | 快照可重跑一致 |

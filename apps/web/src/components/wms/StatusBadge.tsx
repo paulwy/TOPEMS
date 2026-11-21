@@ -1,4 +1,4 @@
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { STATUS_PALETTE, createFsmStatusBadge } from '@/components/common/StatusBadge';
 import i18n from '@/i18n';
 /**
  * WMS 状态徽章组件
@@ -24,61 +24,55 @@ import i18n from '@/i18n';
 export type WmsFsm =
   'inbound' | 'outbound' | 'stocktake' | 'transfer' | 'wavepick' | 'movement' | 'serial';
 
-const GRAY = 'bg-gray-100 text-gray-700';
-const BLUE = 'bg-blue-100 text-blue-700';
-const ORANGE = 'bg-orange-100 text-orange-700';
-const GREEN = 'bg-green-100 text-green-700';
-const RED = 'bg-red-100 text-red-700';
-
 const FSM_STATUS_COLORS: Record<WmsFsm, Record<string, string>> = {
   inbound: {
-    created: GRAY,
-    confirmed: BLUE,
-    received: ORANGE,
-    completed: GREEN,
-    cancelled: RED,
+    created: STATUS_PALETTE.gray,
+    confirmed: STATUS_PALETTE.blue,
+    received: STATUS_PALETTE.orange,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   outbound: {
-    created: GRAY,
-    confirmed: BLUE,
-    picking: BLUE,
-    packing: ORANGE,
-    shipping: BLUE,
-    completed: GREEN,
-    cancelled: RED,
+    created: STATUS_PALETTE.gray,
+    confirmed: STATUS_PALETTE.blue,
+    picking: STATUS_PALETTE.blue,
+    packing: STATUS_PALETTE.orange,
+    shipping: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   stocktake: {
-    planned: GRAY,
-    in_progress: ORANGE,
-    completed: GREEN,
-    cancelled: RED,
+    planned: STATUS_PALETTE.gray,
+    in_progress: STATUS_PALETTE.orange,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   transfer: {
-    pending: GRAY,
-    confirmed: ORANGE,
-    shipped: BLUE,
-    received: BLUE,
-    completed: GREEN,
-    cancelled: RED,
+    pending: STATUS_PALETTE.gray,
+    confirmed: STATUS_PALETTE.orange,
+    shipped: STATUS_PALETTE.blue,
+    received: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   wavepick: {
-    created: GRAY,
-    assigned: BLUE,
-    picking: BLUE,
-    completed: GREEN,
-    cancelled: RED,
+    created: STATUS_PALETTE.gray,
+    assigned: STATUS_PALETTE.blue,
+    picking: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   movement: {
-    draft: GRAY,
-    posted: ORANGE,
-    completed: GREEN,
-    cancelled: RED,
+    draft: STATUS_PALETTE.gray,
+    posted: STATUS_PALETTE.orange,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   serial: {
-    pending: GRAY,
-    assigned: BLUE,
-    used: BLUE,
-    archived: GREEN,
+    pending: STATUS_PALETTE.gray,
+    assigned: STATUS_PALETTE.blue,
+    used: STATUS_PALETTE.blue,
+    archived: STATUS_PALETTE.green,
   },
 };
 
@@ -102,23 +96,8 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: i18n.t('components.status_badge.k16'),
 };
 
-interface WmsStatusBadgeProps {
-  fsm: WmsFsm;
-  status: string;
-  label?: string;
-}
-
-export function WmsStatusBadge({ fsm, status, label }: WmsStatusBadgeProps) {
-  return (
-    <StatusBadge
-      status={status}
-      label={label}
-      fsm={fsm}
-      fsmColors={FSM_STATUS_COLORS}
-      labelMap={STATUS_LABELS}
-      fallbackColor='bg-yellow-50 text-yellow-700'
-    />
-  );
-}
+export const WmsStatusBadge = createFsmStatusBadge<WmsFsm>(FSM_STATUS_COLORS, STATUS_LABELS, {
+  fallbackColor: 'bg-yellow-50 text-yellow-700',
+});
 
 export default WmsStatusBadge;

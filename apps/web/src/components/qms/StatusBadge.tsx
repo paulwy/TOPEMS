@@ -1,4 +1,4 @@
-import { StatusBadge as BaseStatusBadge } from '@/components/common/StatusBadge';
+import { STATUS_PALETTE, createFsmStatusBadge } from '@/components/common/StatusBadge';
 import i18n from '@/i18n';
 /**
  * QMS 状态徽章组件
@@ -24,66 +24,59 @@ import i18n from '@/i18n';
 export type QmsFsmType =
   'inspection' | 'issue' | 'action' | 'audit_plan' | 'audit_finding' | 'eight_d' | 'apqp';
 
-const GRAY = 'bg-gray-100 text-gray-700';
-const BLUE = 'bg-blue-100 text-blue-700';
-const ORANGE = 'bg-orange-100 text-orange-700';
-const GREEN = 'bg-green-100 text-green-700';
-const RED = 'bg-red-100 text-red-700';
-const PURPLE = 'bg-purple-100 text-purple-700';
-
 // 每个 FSM 的状态 → 颜色映射
 const FSM_STATUS_COLORS: Record<QmsFsmType, Record<string, string>> = {
   inspection: {
-    pending: GRAY,
-    in_progress: BLUE,
-    pending_audit: ORANGE,
-    completed: GREEN,
-    rejected: RED,
+    pending: STATUS_PALETTE.gray,
+    in_progress: STATUS_PALETTE.blue,
+    pending_audit: STATUS_PALETTE.orange,
+    completed: STATUS_PALETTE.green,
+    rejected: STATUS_PALETTE.red,
   },
   issue: {
-    open: GRAY,
-    in_progress: BLUE,
-    resolved: ORANGE,
-    closed: GREEN,
-    cancelled: RED,
+    open: STATUS_PALETTE.gray,
+    in_progress: STATUS_PALETTE.blue,
+    resolved: STATUS_PALETTE.orange,
+    closed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   action: {
-    pending: GRAY,
-    in_progress: BLUE,
-    completed: ORANGE,
-    verified: GREEN,
-    cancelled: RED,
+    pending: STATUS_PALETTE.gray,
+    in_progress: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.orange,
+    verified: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   audit_plan: {
-    draft: GRAY,
-    scheduled: BLUE,
-    in_progress: BLUE,
-    completed: GREEN,
-    cancelled: RED,
+    draft: STATUS_PALETTE.gray,
+    scheduled: STATUS_PALETTE.blue,
+    in_progress: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   audit_finding: {
-    open: GRAY,
-    in_progress: BLUE,
-    verified: ORANGE,
-    closed: GREEN,
+    open: STATUS_PALETTE.gray,
+    in_progress: STATUS_PALETTE.blue,
+    verified: STATUS_PALETTE.orange,
+    closed: STATUS_PALETTE.green,
   },
   eight_d: {
-    initiated: GRAY,
-    in_progress: BLUE,
-    containment: BLUE,
-    root_cause: PURPLE,
-    permanent_action: ORANGE,
-    verified: ORANGE,
-    closed: GREEN,
-    cancelled: RED,
+    initiated: STATUS_PALETTE.gray,
+    in_progress: STATUS_PALETTE.blue,
+    containment: STATUS_PALETTE.blue,
+    root_cause: STATUS_PALETTE.purple,
+    permanent_action: STATUS_PALETTE.orange,
+    verified: STATUS_PALETTE.orange,
+    closed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   apqp: {
-    planning: GRAY,
-    in_design: BLUE,
-    in_pilot: ORANGE,
-    in_production: ORANGE,
-    completed: GREEN,
-    cancelled: RED,
+    planning: STATUS_PALETTE.gray,
+    in_design: STATUS_PALETTE.blue,
+    in_pilot: STATUS_PALETTE.orange,
+    in_production: STATUS_PALETTE.orange,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
 };
 
@@ -111,25 +104,6 @@ const STATUS_LABELS: Record<string, string> = {
   in_production: i18n.t('components.status_badge.k19'),
 };
 
-interface StatusBadgeProps {
-  /** FSM 类型 */
-  fsm: QmsFsmType;
-  /** 当前状态值 */
-  status: string;
-  /** 自定义标签（不传则使用内置中文标签，再退化到原始 status） */
-  label?: string;
-}
-
-export function StatusBadge({ fsm, status, label }: StatusBadgeProps) {
-  return (
-    <BaseStatusBadge
-      status={status}
-      label={label}
-      fsm={fsm}
-      fsmColors={FSM_STATUS_COLORS}
-      labelMap={STATUS_LABELS}
-    />
-  );
-}
+export const StatusBadge = createFsmStatusBadge<QmsFsmType>(FSM_STATUS_COLORS, STATUS_LABELS);
 
 export default StatusBadge;

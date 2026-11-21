@@ -1,4 +1,4 @@
-import { StatusBadge as BaseStatusBadge } from '@/components/common/StatusBadge';
+import { STATUS_PALETTE, createFsmStatusBadge } from '@/components/common/StatusBadge';
 import i18n from '@/i18n';
 /**
  * APS 状态徽章组件
@@ -21,52 +21,45 @@ import i18n from '@/i18n';
 
 export type ApsFsmType = 'production_plan' | 'schedule' | 'capacity' | 'material_plan' | 'forecast';
 
-const GRAY = 'bg-gray-100 text-gray-700';
-const BLUE = 'bg-blue-100 text-blue-700';
-const ORANGE = 'bg-orange-100 text-orange-700';
-const GREEN = 'bg-green-100 text-green-700';
-const RED = 'bg-red-100 text-red-700';
-const PURPLE = 'bg-purple-100 text-purple-700';
-
 // 每个 FSM 的状态 → 颜色映射
 const FSM_STATUS_COLORS: Record<ApsFsmType, Record<string, string>> = {
   production_plan: {
-    draft: GRAY,
-    pending_approval: ORANGE,
-    approved: BLUE,
-    in_progress: BLUE,
-    completed: GREEN,
-    cancelled: RED,
+    draft: STATUS_PALETTE.gray,
+    pending_approval: STATUS_PALETTE.orange,
+    approved: STATUS_PALETTE.blue,
+    in_progress: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   schedule: {
-    pending: GRAY,
-    released: BLUE,
-    running: BLUE,
-    completed: GREEN,
-    cancelled: RED,
+    pending: STATUS_PALETTE.gray,
+    released: STATUS_PALETTE.blue,
+    running: STATUS_PALETTE.blue,
+    completed: STATUS_PALETTE.green,
+    cancelled: STATUS_PALETTE.red,
   },
   capacity: {
-    available: GRAY,
-    allocated: ORANGE,
-    consumed: GREEN,
-    maintenance: PURPLE,
-    released: BLUE,
+    available: STATUS_PALETTE.gray,
+    allocated: STATUS_PALETTE.orange,
+    consumed: STATUS_PALETTE.green,
+    maintenance: STATUS_PALETTE.purple,
+    released: STATUS_PALETTE.blue,
   },
   material_plan: {
-    pending: GRAY,
-    requisitioned: ORANGE,
-    sourced: BLUE,
-    satisfied: GREEN,
-    shortage: RED,
-    cancelled: RED,
+    pending: STATUS_PALETTE.gray,
+    requisitioned: STATUS_PALETTE.orange,
+    sourced: STATUS_PALETTE.blue,
+    satisfied: STATUS_PALETTE.green,
+    shortage: STATUS_PALETTE.red,
+    cancelled: STATUS_PALETTE.red,
   },
   forecast: {
-    draft: GRAY,
-    calculated: BLUE,
-    validated: ORANGE,
-    adopted: GREEN,
-    superseded: PURPLE,
-    cancelled: RED,
+    draft: STATUS_PALETTE.gray,
+    calculated: STATUS_PALETTE.blue,
+    validated: STATUS_PALETTE.orange,
+    adopted: STATUS_PALETTE.green,
+    superseded: STATUS_PALETTE.purple,
+    cancelled: STATUS_PALETTE.red,
   },
 };
 
@@ -95,25 +88,6 @@ const STATUS_LABELS: Record<string, string> = {
   superseded: i18n.t('components.status_badge.k20'),
 };
 
-interface StatusBadgeProps {
-  /** FSM 类型 */
-  fsm: ApsFsmType;
-  /** 当前状态值 */
-  status: string;
-  /** 自定义标签（不传则使用内置中文标签，再退化到原始 status） */
-  label?: string;
-}
-
-export function StatusBadge({ fsm, status, label }: StatusBadgeProps) {
-  return (
-    <BaseStatusBadge
-      status={status}
-      label={label}
-      fsm={fsm}
-      fsmColors={FSM_STATUS_COLORS}
-      labelMap={STATUS_LABELS}
-    />
-  );
-}
+export const StatusBadge = createFsmStatusBadge<ApsFsmType>(FSM_STATUS_COLORS, STATUS_LABELS);
 
 export default StatusBadge;
