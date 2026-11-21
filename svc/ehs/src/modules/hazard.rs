@@ -932,7 +932,8 @@ pub async fn start_hazard_approval(
     };
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return ApiResponse::not_found("隐患不存在");
+            let _ = scope.rollback().await;
+            return ApiResponse::error(409, "隐患状态不允许启动审批或不存在");
         }
         Ok(_) => {}
         Err(e) => {
@@ -1010,11 +1011,13 @@ pub async fn close_hazard(
                 UPDATE ehs.qa_ehs_hazards
                 SET status = $3, updated_at = now()
                 WHERE id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
+                  AND status = ANY($4::text[])
                 "#,
             )
             .bind(&id)
             .bind(tenant)
             .bind(HazardStatus::Closed.as_db_str())
+            .bind(HazardStatus::close_from().to_vec())
             .execute(&mut scope)
             .await
         }
@@ -1025,17 +1028,20 @@ pub async fn close_hazard(
                 UPDATE ehs.qa_ehs_hazards
                 SET status = $2, updated_at = now()
                 WHERE id = $1::uuid AND deleted_at IS NULL
+                  AND status = ANY($3::text[])
                 "#,
             )
             .bind(&id)
             .bind(HazardStatus::Closed.as_db_str())
+            .bind(HazardStatus::close_from().to_vec())
             .execute(&mut scope)
             .await
         }
     };
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return ApiResponse::not_found("隐患不存在");
+            let _ = scope.rollback().await;
+            return ApiResponse::error(409, "隐患状态不允许关闭或不存在");
         }
         Ok(_) => {}
         Err(e) => {
@@ -1479,6 +1485,38 @@ pub async fn verify_hazard(
             return ApiResponse::server_error("隐患验收失败");
         }
     };
+
+    // 验收前先确认状态，避免先插验收记录再因状态不符回滚
+    let current_status = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM ehs.qa_ehs_hazards \
+         WHERE id = $1::uuid AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(&id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    match current_status {
+        Ok(Some(raw)) => match HazardStatus::from_db_str(&raw) {
+            Some(HazardStatus::PendingVerification) => {}
+            Some(other) => {
+                let _ = scope.rollback().await;
+                let msg = format!("隐患当前状态为 {}，不允许验收", other.as_db_str());
+                return ApiResponse::error(409, &msg);
+            }
+            None => {
+                let _ = scope.rollback().await;
+                return ApiResponse::error(409, "隐患当前状态非法，不允许验收");
+            }
+        },
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("隐患不存在");
+        }
+        Err(e) => {
+            tracing::error!("Failed to read hazard status before verify: {}", e);
+            return ApiResponse::server_error("隐患验收失败");
+        }
+    }
 
     let row = sqlx::query(
         r#"

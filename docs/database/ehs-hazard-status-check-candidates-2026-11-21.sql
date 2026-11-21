@@ -27,3 +27,8 @@ ALTER TABLE ehs.qa_ehs_hazards
 --   列表 status 过滤与编辑接口原本接受任意字符串，改为严格解析后 400；
 --   启动审批/关闭/创建整改/提交整改/验收的状态改绑枚举，并加起始态谓词；
 --   前端补 pending_approval（审批中）与 resolved（已解决），修掉启动审批后灰色 fallback。
+
+-- B76 关闭/验收写入口加固（2026-11-21）：
+--   关闭 UPDATE 增加 status = ANY(close_from)，closed 不再可改；resolved 可借关闭动作归一为 closed。
+--   验收前先 SELECT 确认 pending_verification，状态不符直接 409，不会先插验收记录。
+--   启动审批/关闭 0 行由 404 改为 409（状态不符或不存在）。

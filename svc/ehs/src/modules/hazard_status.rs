@@ -68,6 +68,19 @@ impl HazardStatus {
         &["pending_verification"]
     }
 
+    /// 关闭允许的起始状态：除已关闭外的所有态；历史 resolved 可借关闭动作归一到 closed。
+    pub fn close_from() -> &'static [&'static str] {
+        &[
+            "reported",
+            "pending_approval",
+            "rectifying",
+            "pending_verification",
+            "verified",
+            "rejected",
+            "resolved",
+        ]
+    }
+
     /// 是否终态（不可再流转）
     pub fn is_terminal(&self) -> bool {
         matches!(self, Self::Closed | Self::Resolved)
@@ -121,5 +134,7 @@ mod tests {
         assert!(HazardStatus::verify_from().contains(&"pending_verification"));
         assert!(HazardStatus::Closed.is_terminal());
         assert!(!HazardStatus::Rectifying.is_terminal());
+        assert!(HazardStatus::close_from().contains(&"resolved"));
+        assert!(!HazardStatus::close_from().contains(&"closed"));
     }
 }
