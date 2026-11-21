@@ -590,6 +590,13 @@
       "table": "mes.material_issues",
       "column": "status",
       "candidate": "docs/database/mes-material-issue-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/investigation_status.rs",
+      "enum": "InvestigationStatus",
+      "table": "ehs.qa_ehs_investigations",
+      "column": "status",
+      "candidate": "docs/database/ehs-investigation-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

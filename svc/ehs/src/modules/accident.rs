@@ -18,6 +18,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::accident_status::AccidentStatus;
+use crate::modules::investigation_status::InvestigationStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
@@ -712,7 +713,7 @@ pub async fn start_investigation(
     let inv_id = uuid::Uuid::new_v4();
     let row = sqlx::query(
         r#"INSERT INTO ehs.qa_ehs_investigations (id, accident_id, team, findings, root_cause, status, started_at, tenant_id)
-           VALUES ($1, $2, $3::jsonb, $4, $5, 'in_progress', now(), $6)
+           VALUES ($1, $2, $3::jsonb, $4, $5, $7, now(), $6)
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
@@ -722,7 +723,8 @@ pub async fn start_investigation(
     .bind(serde_json::to_string(&req.team).unwrap_or_else(|_| "null".into()))
     .bind(&req.findings)
     .bind(&req.root_cause)
-    .bind(tenant_id);
+    .bind(tenant_id)
+    .bind(InvestigationStatus::DEFAULT.as_db_str());
     let row = match row.fetch_one(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
@@ -755,7 +757,7 @@ fn investigation_from_row(r: &sqlx::postgres::PgRow) -> Investigation {
             .and_then(|v| serde_json::from_value(v).ok()),
         status: r
             .try_get("status")
-            .unwrap_or_else(|_| "in_progress".to_string()),
+            .unwrap_or_else(|_| InvestigationStatus::DEFAULT.as_db_str().to_string()),
         started_at: r.try_get("started_at").ok().flatten(),
         completed_at: r.try_get("completed_at").ok().flatten(),
         created_at: r.try_get("created_at").ok().flatten(),
@@ -798,11 +800,29 @@ pub async fn update_investigation(
         }
     };
     tracing::debug!("Updating investigation for accident {}: {:?}", id, req);
+    let status_target = match req.status.as_deref() {
+        Some(raw) => match InvestigationStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的事故调查状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => InvestigationStatus::update_from(target)
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect(),
+        None => InvestigationStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
     let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_investigations
            SET findings=COALESCE($1, findings), root_cause=COALESCE($2, root_cause),
                timeline=$3::jsonb, status=COALESCE($4, status), updated_at=now()
            WHERE accident_id = $5::uuid AND tenant_id = $6::uuid AND deleted_at IS NULL
+             AND (status = ANY($7::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
@@ -811,6 +831,7 @@ pub async fn update_investigation(
            SET findings=COALESCE($1, findings), root_cause=COALESCE($2, root_cause),
                timeline=$3::jsonb, status=COALESCE($4, status), updated_at=now()
            WHERE accident_id = $5::uuid AND deleted_at IS NULL
+             AND (status = ANY($6::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
@@ -820,14 +841,15 @@ pub async fn update_investigation(
         .bind(&req.root_cause)
         .bind(serde_json::to_string(&req.timeline).unwrap_or_else(|_| "null".into()))
         .bind(&req.status)
-        .bind(&id);
+        .bind(&id)
+        .bind(&allowed_from);
     if let Some(tenant) = tenant_scope.tenant_id() {
         query = query.bind(tenant);
     }
     let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("调查记录不存在"),
+        Ok(None) => return ApiResponse::conflict("调查记录不存在或状态不允许更新"),
         Err(e) => {
             tracing::error!("Failed to update investigation: {}", e);
             return ApiResponse::server_error("调查更新失败");
@@ -1142,27 +1164,36 @@ pub async fn complete_investigation(
     tracing::info!("Completing investigation for accident: {}", id);
     let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_investigations
-           SET status='completed', completed_at=now(), updated_at=now()
+           SET status=$3, completed_at=now(), updated_at=now()
            WHERE accident_id = $1::uuid AND tenant_id = $2::uuid AND deleted_at IS NULL
+             AND (status = ANY($4::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
     } else {
         r#"UPDATE ehs.qa_ehs_investigations
-           SET status='completed', completed_at=now(), updated_at=now()
+           SET status=$2, completed_at=now(), updated_at=now()
            WHERE accident_id = $1::uuid AND deleted_at IS NULL
+             AND (status = ANY($3::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
                      timeline, status, started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#
     };
-    let mut query = sqlx::query(sql).bind(&id);
+    let allowed_from: Vec<String> = InvestigationStatus::complete_from()
+        .iter()
+        .map(|v| v.as_db_str().to_string())
+        .collect();
+    let mut query = sqlx::query(sql)
+        .bind(&id)
+        .bind(InvestigationStatus::Completed.as_db_str())
+        .bind(&allowed_from);
     if let Some(tenant) = tenant_scope.tenant_id() {
         query = query.bind(tenant);
     }
     let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("调查记录不存在"),
+        Ok(None) => return ApiResponse::conflict("调查记录不存在或已完成"),
         Err(e) => {
             tracing::error!("Failed to complete investigation: {}", e);
             return ApiResponse::server_error("调查完成失败");
