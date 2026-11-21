@@ -1964,12 +1964,16 @@ pub async fn create_incident(
         Err(resp) => return resp,
     };
     // K1：写真表 master_data.mdm_sla_incidents。
-    let incident_type = sla_incident_type_from_str(&req.incident_type);
-    let impact_severity = req
-        .impact_severity
-        .as_deref()
-        .map(impact_severity_from_str)
-        .unwrap_or(ImpactSeverity::Medium);
+    let Some(incident_type) = SLAIncidentType::from_db_str(&req.incident_type) else {
+        return ApiResponse::bad_request("无效的事故类型");
+    };
+    let impact_severity = match req.impact_severity.as_deref() {
+        None => ImpactSeverity::Medium,
+        Some(raw) => match ImpactSeverity::from_db_str(raw) {
+            Some(severity) => severity,
+            None => return ApiResponse::bad_request("无效的影响级别"),
+        },
+    };
 
     let config_row = sqlx::query(
         "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1::uuid LIMIT 1",
@@ -2046,14 +2050,22 @@ pub async fn get_incidents(
         }
     };
     // K1：真表 COALESCE 过滤。
+    let status = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match IncidentStatus::from_db_str(raw) {
+            Some(s) => Some(s.as_db_str()),
+            None => return ApiResponse::bad_request("无效的事故状态"),
+        },
+    };
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR status = $2)
+             AND status IN ('open','investigating','resolved','closed')
            ORDER BY id"#,
     )))
     .bind(params.tenant_id.as_deref())
-    .bind(params.status.as_deref())
+    .bind(status)
     .fetch_all(&mut db_scope)
     .await;
     let filtered: Vec<SLAIncident> = match rows {
@@ -2116,7 +2128,8 @@ pub async fn generate_sla_report(
     };
 
     let incident_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents ORDER BY id"#,
+        r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
+           WHERE status IN ('open','investigating','resolved','closed') ORDER BY id"#,
     )))
     .fetch_all(&mut db_scope)
     .await;
@@ -2321,13 +2334,38 @@ fn sla_measurement_from_row(row: &sqlx::postgres::PgRow) -> SLAMeasurement {
     }
 }
 
-fn sla_incident_type_from_str(s: &str) -> SLAIncidentType {
-    match s {
-        "degraded_performance" => SLAIncidentType::DegradedPerformance,
-        "data_loss" => SLAIncidentType::DataLoss,
-        "security_breach" => SLAIncidentType::SecurityBreach,
-        _ => SLAIncidentType::Downtime,
+impl SLAIncidentType {
+    pub const DB_VALUES: [&'static str; 4] = [
+        "downtime",
+        "degraded_performance",
+        "data_loss",
+        "security_breach",
+    ];
+
+    #[must_use]
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "downtime" => Some(Self::Downtime),
+            "degraded_performance" => Some(Self::DegradedPerformance),
+            "data_loss" => Some(Self::DataLoss),
+            "security_breach" => Some(Self::SecurityBreach),
+            _ => None,
+        }
     }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Downtime => "downtime",
+            Self::DegradedPerformance => "degraded_performance",
+            Self::DataLoss => "data_loss",
+            Self::SecurityBreach => "security_breach",
+        }
+    }
+}
+
+fn sla_incident_type_from_str(s: &str) -> SLAIncidentType {
+    SLAIncidentType::from_db_str(s).unwrap_or(SLAIncidentType::Downtime)
 }
 
 fn sla_incident_type_to_str(t: &SLAIncidentType) -> String {
@@ -2339,40 +2377,70 @@ fn sla_incident_type_to_str(t: &SLAIncidentType) -> String {
     }
 }
 
-fn impact_severity_from_str(s: &str) -> ImpactSeverity {
-    match s {
-        "low" => ImpactSeverity::Low,
-        "high" => ImpactSeverity::High,
-        "critical" => ImpactSeverity::Critical,
-        _ => ImpactSeverity::Medium,
+impl ImpactSeverity {
+    pub const DB_VALUES: [&'static str; 4] = ["low", "medium", "high", "critical"];
+
+    #[must_use]
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "low" => Some(Self::Low),
+            "medium" => Some(Self::Medium),
+            "high" => Some(Self::High),
+            "critical" => Some(Self::Critical),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Low => "low",
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::Critical => "critical",
+        }
     }
 }
 
+fn impact_severity_from_str(s: &str) -> ImpactSeverity {
+    ImpactSeverity::from_db_str(s).unwrap_or(ImpactSeverity::Medium)
+}
+
 fn impact_severity_to_str(s: &ImpactSeverity) -> String {
-    match s {
-        ImpactSeverity::Low => "low".to_string(),
-        ImpactSeverity::Medium => "medium".to_string(),
-        ImpactSeverity::High => "high".to_string(),
-        ImpactSeverity::Critical => "critical".to_string(),
+    s.as_db_str().to_string()
+}
+
+impl IncidentStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["open", "investigating", "resolved", "closed"];
+
+    #[must_use]
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "open" => Some(Self::Open),
+            "investigating" => Some(Self::Investigating),
+            "resolved" => Some(Self::Resolved),
+            "closed" => Some(Self::Closed),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Open => "open",
+            Self::Investigating => "investigating",
+            Self::Resolved => "resolved",
+            Self::Closed => "closed",
+        }
     }
 }
 
 fn incident_status_from_str(s: &str) -> IncidentStatus {
-    match s {
-        "investigating" => IncidentStatus::Investigating,
-        "resolved" => IncidentStatus::Resolved,
-        "closed" => IncidentStatus::Closed,
-        _ => IncidentStatus::Open,
-    }
+    IncidentStatus::from_db_str(s).unwrap_or(IncidentStatus::Open)
 }
 
 fn incident_status_to_str(s: &IncidentStatus) -> String {
-    match s {
-        IncidentStatus::Open => "open".to_string(),
-        IncidentStatus::Investigating => "investigating".to_string(),
-        IncidentStatus::Resolved => "resolved".to_string(),
-        IncidentStatus::Closed => "closed".to_string(),
-    }
+    s.as_db_str().to_string()
 }
 
 fn sla_incident_from_row(row: &sqlx::postgres::PgRow) -> SLAIncident {
@@ -2752,6 +2820,31 @@ mod tests {
             let back: ImpactSeverity = serde_json::from_str(&json).unwrap();
             assert_eq!(v, back);
         }
+    }
+
+    #[test]
+    fn test_sla_incident_db_values() {
+        for raw in SLAIncidentType::DB_VALUES {
+            let parsed = SLAIncidentType::from_db_str(raw).expect("incident type");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(SLAIncidentType::from_db_str("outage"), None);
+
+        for raw in IncidentStatus::DB_VALUES {
+            let parsed = IncidentStatus::from_db_str(raw).expect("incident status");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(IncidentStatus::from_db_str("reopened"), None);
+
+        for raw in ImpactSeverity::DB_VALUES {
+            let parsed = ImpactSeverity::from_db_str(raw).expect("impact severity");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(ImpactSeverity::from_db_str("severe"), None);
+        assert_eq!(
+            ImpactSeverity::from_db_str(" Critical "),
+            Some(ImpactSeverity::Critical)
+        );
     }
 
     // ---------- 结构体 serde 往返 ----------

@@ -103,6 +103,20 @@
     },
     {
       "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "SLAIncidentType",
+      "table": "master_data.mdm_sla_incidents",
+      "column": "incident_type",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
+      "enum": "ImpactSeverity",
+      "table": "master_data.mdm_sla_incidents",
+      "column": "impact_severity",
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/commercial_v55.rs",
       "enum": "SubscriptionStatus",
       "table": "master_data.mdm_subscriptions",
       "column": "status",

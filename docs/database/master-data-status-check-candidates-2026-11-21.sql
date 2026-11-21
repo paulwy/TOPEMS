@@ -44,6 +44,14 @@ ALTER TABLE master_data.mdm_sla_incidents
   ADD CONSTRAINT mdm_sla_incidents_status_check
   CHECK (status IN ('open','investigating','resolved','closed')) NOT VALID;
 
+ALTER TABLE master_data.mdm_sla_incidents
+  ADD CONSTRAINT mdm_sla_incidents_type_check
+  CHECK (incident_type IN ('downtime','degraded_performance','data_loss','security_breach')) NOT VALID;
+
+ALTER TABLE master_data.mdm_sla_incidents
+  ADD CONSTRAINT mdm_sla_incidents_severity_check
+  CHECK (impact_severity IN ('low','medium','high','critical')) NOT VALID;
+
 ALTER TABLE master_data.mdm_recovery_plans
   ADD CONSTRAINT mdm_recovery_plans_status_check
   CHECK (status IN ('draft','active','executing','completed','failed')) NOT VALID;
