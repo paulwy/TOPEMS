@@ -75,6 +75,12 @@ pub enum TransferStatus {
 }
 
 impl TransferStatus {
+    pub const ALL: [Self; 3] = [
+        TransferStatus::Pending,
+        TransferStatus::Completed,
+        TransferStatus::Failed,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             TransferStatus::Pending => "pending",
@@ -83,11 +89,13 @@ impl TransferStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "completed" => TransferStatus::Completed,
-            "failed" => TransferStatus::Failed,
-            _ => TransferStatus::Pending,
+    /// 严格解析：未知值返回 None，不再静默回退 pending。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "pending" => Some(TransferStatus::Pending),
+            "completed" => Some(TransferStatus::Completed),
+            "failed" => Some(TransferStatus::Failed),
+            _ => None,
         }
     }
 }
@@ -458,7 +466,7 @@ impl CashPoolManager {
             "finance",
             r#"INSERT INTO finance.finance_v58_pool_transfers
                 (id, tenant_id, from_pool, to_pool, amount, currency, reference, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, from_pool, to_pool, amount, currency, reference, status, created_at"#
         ))
         .bind(id)
@@ -468,6 +476,7 @@ impl CashPoolManager {
         .bind(req.amount)
         .bind(&currency)
         .bind(&req.reference)
+        .bind(TransferStatus::Completed.as_str())
         .bind(now)
         .fetch_one(&mut scope)
         .await?;
@@ -1970,9 +1979,14 @@ mod tests {
             TransferStatus::Failed,
         ] {
             let s = v.as_str();
-            assert_eq!(TransferStatus::from_str(s), v);
+            assert_eq!(TransferStatus::from_str(s), Some(v.clone()));
         }
-        assert_eq!(TransferStatus::from_str("unknown"), TransferStatus::Pending);
+        assert_eq!(
+            TransferStatus::from_str("unknown"),
+            None,
+            "未知状态必须拒绝，不能静默回退 pending"
+        );
+        assert_eq!(TransferStatus::from_str(""), None);
     }
 
     #[test]

@@ -138,6 +138,13 @@ pub enum ReportStatus {
 }
 
 impl ReportStatus {
+    pub const ALL: [Self; 4] = [
+        ReportStatus::Pending,
+        ReportStatus::Generating,
+        ReportStatus::Completed,
+        ReportStatus::Failed,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             ReportStatus::Pending => "pending",
@@ -147,12 +154,14 @@ impl ReportStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "generating" => ReportStatus::Generating,
-            "completed" => ReportStatus::Completed,
-            "failed" => ReportStatus::Failed,
-            _ => ReportStatus::Pending,
+    /// 严格解析：未知值返回 None，不再静默回退 pending。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "pending" => Some(ReportStatus::Pending),
+            "generating" => Some(ReportStatus::Generating),
+            "completed" => Some(ReportStatus::Completed),
+            "failed" => Some(ReportStatus::Failed),
+            _ => None,
         }
     }
 }
@@ -420,7 +429,7 @@ impl AutomatedReportEngine {
         let report = sqlx::query_as::<_, GeneratedReport>(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v57_generated_reports
                 (id, tenant_id, template_id, period_start, period_end, data, generated_at, status, format)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id, template_id, period_start, period_end, data, generated_at, status, format"#),
         )
         .bind(id)
@@ -430,6 +439,7 @@ impl AutomatedReportEngine {
         .bind(req.period_end)
         .bind(&data)
         .bind(now)
+        .bind(ReportStatus::Completed.as_str())
         .bind(&format)
         .fetch_one(&mut scope)
         .await?;
@@ -1387,6 +1397,19 @@ pub async fn list_reports_handler(
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
+    if let Some(raw) = params.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if ReportStatus::from_str(raw).is_none() {
+            let allowed = ReportStatus::ALL
+                .iter()
+                .map(ReportStatus::as_str)
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::bad_request(&format!(
+                "非法报表状态: {}，可选值: {}",
+                raw, allowed
+            ));
+        }
+    }
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2081,19 +2104,26 @@ mod tests {
 
     #[test]
     fn report_status_from_str_all_variants() {
-        assert_eq!(ReportStatus::from_str("pending"), ReportStatus::Pending);
+        assert_eq!(
+            ReportStatus::from_str("pending"),
+            Some(ReportStatus::Pending)
+        );
         assert_eq!(
             ReportStatus::from_str("generating"),
-            ReportStatus::Generating
+            Some(ReportStatus::Generating)
         );
-        assert_eq!(ReportStatus::from_str("completed"), ReportStatus::Completed);
-        assert_eq!(ReportStatus::from_str("failed"), ReportStatus::Failed);
+        assert_eq!(
+            ReportStatus::from_str("completed"),
+            Some(ReportStatus::Completed)
+        );
+        assert_eq!(ReportStatus::from_str("failed"), Some(ReportStatus::Failed));
     }
 
     #[test]
-    fn report_status_from_str_unknown_defaults_to_pending() {
-        assert_eq!(ReportStatus::from_str("unknown"), ReportStatus::Pending);
-        assert_eq!(ReportStatus::from_str(""), ReportStatus::Pending);
+    fn report_status_from_str_rejects_unknown() {
+        assert_eq!(ReportStatus::from_str("unknown"), None);
+        assert_eq!(ReportStatus::from_str(""), None);
+        assert_eq!(ReportStatus::from_str("COMPLETED"), None);
     }
 
     #[test]
