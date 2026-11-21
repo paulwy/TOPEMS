@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::models::inbound_order::*;
 use crate::modules::audit::log_audit_event;
+use crate::modules::inbound_item_quality_status::InboundItemQualityStatus;
 use crate::modules::inbound_status::{InboundStatus, DELETABLE};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -915,11 +916,10 @@ pub async fn create_inbound_order_item(
         INSERT INTO wms.inbound_order_items (id, organization_id, org_id, order_id, line_number,
                                              material_code, material_name, material_type,
                                              specification, batch_number, lot_number, serial_number,
-                                             expected_quantity, unit, location_id, unit_price,
-                                             total_value, notes, created_at, updated_at, tenant_id,
-                                             org_id)
+                                             expected_quantity, unit, location_id, quality_status, unit_price,
+                                             total_value, notes, created_at, updated_at, tenant_id)
         VALUES ($1, $20, $21, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                $11, $12, $13, $14, $15, $16, $17, $18, $19, $21)
+                $11, $12, $13, $22, $14, $15, $16, $17, $18, $19)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
                   expected_quantity::float8, received_quantity::float8, rejected_quantity::float8, unit,
                   location_id, quality_status, unit_price, total_value, notes as remarks,
@@ -946,6 +946,7 @@ pub async fn create_inbound_order_item(
     .bind(now)
     .bind(tenant_id)
     .bind(org_id)
+    .bind(InboundItemQualityStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1024,27 +1025,35 @@ pub async fn update_inbound_order_item(
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
+    let requested_quality = match InboundItemQualityStatus::from_db_str(&req.quality_status) {
+        Ok(status) => status,
+        Err(msg) => return ApiResponse::bad_request(&msg),
+    };
 
     // P2 明细更新数量前置校验：received_quantity 非负且不超过应收(expected_quantity)。
-    let expected_qty: Option<f64> = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
+    // 同时读取当前质量结论，禁止 qualified/rejected 被通用编辑回退。
+    let existing = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        SELECT expected_quantity::float8 FROM wms.inbound_order_items
+        SELECT expected_quantity::float8, quality_status FROM wms.inbound_order_items
         WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
     .bind(item_id)
     .fetch_optional(&mut **txn)
-    .await
-    .ok()
-    .flatten();
+    .await;
 
-    match expected_qty {
-        None => {
+    match existing {
+        Ok(None) => {
             return ApiResponse::not_found("入库订单明细不存在");
         }
-        Some(expected) => {
+        Err(e) => {
+            tracing::error!("更新入库明细前查询失败: {}", e);
+            return ApiResponse::server_error("更新入库明细失败");
+        }
+        Ok(Some(row)) => {
+            let expected: f64 = row.try_get("expected_quantity").unwrap_or(0.0);
             if req.received_quantity < 0.0 {
                 return ApiResponse::bad_request(&format!(
                     "收货数量不能为负: {}",
@@ -1056,6 +1065,21 @@ pub async fn update_inbound_order_item(
                     "收货数量超出应收: 应收 {} 实收 {}",
                     expected, req.received_quantity
                 ));
+            }
+            let raw_quality: Option<String> = row.try_get("quality_status").ok();
+            let current_quality = match raw_quality.as_deref() {
+                Some(raw) if !raw.trim().is_empty() => {
+                    match InboundItemQualityStatus::from_db_str(raw) {
+                        Ok(status) => status,
+                        Err(msg) => return ApiResponse::bad_request(&msg),
+                    }
+                }
+                _ => InboundItemQualityStatus::DEFAULT,
+            };
+            if requested_quality != current_quality {
+                if let Err(e) = current_quality.can_transition_to(requested_quality) {
+                    return ApiResponse::conflict(&format!("当前质量结论不允许变更: {e}"));
+                }
             }
         }
     }
@@ -1073,7 +1097,7 @@ pub async fn update_inbound_order_item(
         "#
     ))
     .bind(req.received_quantity)
-    .bind(&req.quality_status)
+    .bind(requested_quality.as_db_str())
     .bind(&req.remarks)
     .bind(now)
     .bind(id)
@@ -1404,7 +1428,7 @@ pub async fn receive_inbound_order(
         let lines = sqlx::query(only_own_schema_query!(
             "wms",
             r#"
-            SELECT id, expected_quantity::float8 FROM wms.inbound_order_items
+            SELECT id, expected_quantity::float8, quality_status FROM wms.inbound_order_items
             WHERE order_id = $1 AND id = ANY($2) AND tenant_id = $3 AND deleted_at IS NULL
             "#
         ))
@@ -1422,12 +1446,22 @@ pub async fn receive_inbound_order(
             }
         };
 
-        let mut expected_by_id: std::collections::HashMap<Uuid, f64> =
+        let mut expected_by_id: std::collections::HashMap<Uuid, (f64, InboundItemQualityStatus)> =
             std::collections::HashMap::new();
         for row in &lines {
             let lid: Uuid = row.try_get::<Uuid, _>("id").unwrap_or_default();
             let exp: f64 = row.try_get::<f64, _>("expected_quantity").unwrap_or(0.0);
-            expected_by_id.insert(lid, exp);
+            let raw_quality: Option<String> = row.try_get("quality_status").ok();
+            let current_quality = match raw_quality.as_deref() {
+                Some(raw) if !raw.trim().is_empty() => {
+                    match InboundItemQualityStatus::from_db_str(raw) {
+                        Ok(status) => status,
+                        Err(msg) => return ApiResponse::bad_request(&msg),
+                    }
+                }
+                _ => InboundItemQualityStatus::DEFAULT,
+            };
+            expected_by_id.insert(lid, (exp, current_quality));
         }
 
         for item in &items {
@@ -1437,6 +1471,11 @@ pub async fn receive_inbound_order(
                     item.item_id, item.received_quantity
                 ));
             }
+            let requested_quality =
+                match InboundItemQualityStatus::from_db_str(&item.quality_status) {
+                    Ok(status) => status,
+                    Err(msg) => return ApiResponse::bad_request(&msg),
+                };
             match expected_by_id.get(&item.item_id) {
                 None => {
                     return ApiResponse::bad_request(&format!(
@@ -1444,12 +1483,20 @@ pub async fn receive_inbound_order(
                         item.item_id
                     ));
                 }
-                Some(&expected) => {
+                Some(&(expected, current_quality)) => {
                     if item.received_quantity > expected + f64::EPSILON {
                         return ApiResponse::bad_request(&format!(
                             "收货数量超出应收: 明细 {} 应收 {} 实收 {}",
                             item.item_id, expected, item.received_quantity
                         ));
+                    }
+                    if requested_quality != current_quality {
+                        if let Err(e) = current_quality.can_transition_to(requested_quality) {
+                            return ApiResponse::conflict(&format!(
+                                "明细 {} 当前质量结论不允许变更: {e}",
+                                item.item_id
+                            ));
+                        }
                     }
                 }
             }
@@ -1457,6 +1504,13 @@ pub async fn receive_inbound_order(
     }
 
     for item in &items {
+        let requested_quality = match InboundItemQualityStatus::from_db_str(&item.quality_status) {
+            Ok(status) => status,
+            Err(msg) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::bad_request(&msg);
+            }
+        };
         // 明细必须属于该单且同租户：0 行 → 404（父行不动，整笔回滚）。
         let item_updated = sqlx::query(only_own_schema_query!(
             "wms",
@@ -1467,7 +1521,7 @@ pub async fn receive_inbound_order(
             "#
         ))
         .bind(item.received_quantity)
-        .bind(&item.quality_status)
+        .bind(requested_quality.as_db_str())
         .bind(&item.remarks)
         .bind(now)
         .bind(id)
@@ -1491,7 +1545,7 @@ pub async fn receive_inbound_order(
             }
         }
 
-        if item.quality_status == "qualified" {
+        if requested_quality == InboundItemQualityStatus::Qualified {
             let upsert = sqlx::query(only_own_schema_query!(
                 "wms",
                 r#"

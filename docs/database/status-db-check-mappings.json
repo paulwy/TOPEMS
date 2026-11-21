@@ -751,6 +751,13 @@
       "table": "wms.inbound_orders",
       "column": "status",
       "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/inbound_item_quality_status.rs",
+      "enum": "InboundItemQualityStatus",
+      "table": "wms.inbound_order_items",
+      "column": "quality_status",
+      "candidate": "docs/database/wms-inbound-item-quality-check-candidates-2026-11-22.sql"
     }
   ]
 }

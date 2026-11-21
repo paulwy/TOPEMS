@@ -116,6 +116,8 @@ export interface InboundOrder {
   updated_at: string;
 }
 
+export type InboundItemQualityStatus = 'pending' | 'qualified' | 'rejected';
+
 export interface InboundOrderItem {
   id: string;
   order_id: string;
@@ -128,6 +130,7 @@ export interface InboundOrderItem {
   unit: string;
   expected_quantity: number;
   received_quantity: number;
+  quality_status?: InboundItemQualityStatus;
   status: string;
   created_at: string;
   updated_at: string;
@@ -156,6 +159,8 @@ export interface CreateInboundOrderItemRequest {
 export interface ReceiveItemRequest {
   item_id: string;
   received_quantity: number;
+  quality_status: InboundItemQualityStatus;
+  remarks?: string;
 }
 
 export interface UpdateInboundOrderRequest {

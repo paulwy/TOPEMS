@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 181,
-    "rust_enum_values": 179,
-    "rust_values_not_in_db_check": 140,
-    "frontend_status_keys": 194,
-    "frontend_keys_not_in_db_check": 154,
+    "rust_enums": 182,
+    "rust_enum_values": 180,
+    "rust_values_not_in_db_check": 141,
+    "frontend_status_keys": 195,
+    "frontend_keys_not_in_db_check": 155,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3156,6 +3156,21 @@
     },
     {
       "module": "wms",
+      "file": "svc/wms/src/modules/inbound_item_quality_status.rs",
+      "name": "InboundItemQualityStatus",
+      "values": [
+        "Pending",
+        "Qualified",
+        "Rejected"
+      ],
+      "normalized": [
+        "pending",
+        "qualified",
+        "rejected"
+      ]
+    },
+    {
+      "module": "wms",
       "file": "svc/wms/src/modules/inbound_status.rs",
       "name": "InboundStatus",
       "values": [
@@ -3355,6 +3370,7 @@
       "progressing",
       "proposed",
       "published",
+      "qualified",
       "ready",
       "received",
       "receiving",
@@ -3512,6 +3528,7 @@
       "processed",
       "proposed",
       "published",
+      "qualified",
       "ready",
       "received",
       "recognized",
@@ -3664,6 +3681,7 @@
       "progressing",
       "proposed",
       "published",
+      "qualified",
       "ready",
       "received",
       "receiving",
