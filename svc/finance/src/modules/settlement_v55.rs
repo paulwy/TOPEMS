@@ -442,6 +442,13 @@ pub enum MatchStatus {
 }
 
 impl MatchStatus {
+    pub const ALL: [Self; 4] = [
+        MatchStatus::Matched,
+        MatchStatus::Partial,
+        MatchStatus::Unmatched,
+        MatchStatus::Discrepancy,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             MatchStatus::Matched => "matched",
@@ -451,12 +458,14 @@ impl MatchStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "partial" => MatchStatus::Partial,
-            "unmatched" => MatchStatus::Unmatched,
-            "discrepancy" => MatchStatus::Discrepancy,
-            _ => MatchStatus::Matched,
+    /// 严格解析：未知值返回 None，不再静默回退 matched。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "matched" => Some(MatchStatus::Matched),
+            "partial" => Some(MatchStatus::Partial),
+            "unmatched" => Some(MatchStatus::Unmatched),
+            "discrepancy" => Some(MatchStatus::Discrepancy),
+            _ => None,
         }
     }
 }
@@ -498,6 +507,13 @@ pub enum InvoiceStatus {
 }
 
 impl InvoiceStatus {
+    pub const ALL: [Self; 4] = [
+        InvoiceStatus::Pending,
+        InvoiceStatus::Recognized,
+        InvoiceStatus::Verified,
+        InvoiceStatus::Posted,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             InvoiceStatus::Pending => "pending",
@@ -507,12 +523,14 @@ impl InvoiceStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "recognized" => InvoiceStatus::Recognized,
-            "verified" => InvoiceStatus::Verified,
-            "posted" => InvoiceStatus::Posted,
-            _ => InvoiceStatus::Pending,
+    /// 严格解析：未知值返回 None，不再静默回退 pending。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "pending" => Some(InvoiceStatus::Pending),
+            "recognized" => Some(InvoiceStatus::Recognized),
+            "verified" => Some(InvoiceStatus::Verified),
+            "posted" => Some(InvoiceStatus::Posted),
+            _ => None,
         }
     }
 }
@@ -574,6 +592,14 @@ pub enum PaymentStatus {
 }
 
 impl PaymentStatus {
+    pub const ALL: [Self; 5] = [
+        PaymentStatus::Pending,
+        PaymentStatus::Processing,
+        PaymentStatus::Completed,
+        PaymentStatus::Failed,
+        PaymentStatus::Reversed,
+    ];
+
     fn as_str(&self) -> &'static str {
         match self {
             PaymentStatus::Pending => "pending",
@@ -584,13 +610,15 @@ impl PaymentStatus {
         }
     }
 
-    fn from_str(s: &str) -> Self {
-        match s {
-            "processing" => PaymentStatus::Processing,
-            "completed" => PaymentStatus::Completed,
-            "failed" => PaymentStatus::Failed,
-            "reversed" => PaymentStatus::Reversed,
-            _ => PaymentStatus::Pending,
+    /// 严格解析：未知值返回 None，不再静默回退 pending。
+    fn from_str(s: &str) -> Option<Self> {
+        match s.trim() {
+            "pending" => Some(PaymentStatus::Pending),
+            "processing" => Some(PaymentStatus::Processing),
+            "completed" => Some(PaymentStatus::Completed),
+            "failed" => Some(PaymentStatus::Failed),
+            "reversed" => Some(PaymentStatus::Reversed),
+            _ => None,
         }
     }
 }
@@ -1121,7 +1149,7 @@ impl AutoReconciler {
         status: Option<String>,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results",
+            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results WHERE 1=1",
         );
         if status.is_some() {
             query.push_str(" AND match_status = $1");
@@ -1169,12 +1197,13 @@ impl AutoReconciler {
         let mut scope = db.scope_with(txn).await?;
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v55_reconciliation_results
-            SET disputed = true, match_status = 'discrepancy'
+            SET disputed = true, match_status = $3
             WHERE id = $1 AND tenant_id = $2
             RETURNING id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes"#),
         )
         .bind(result_id)
         .bind(tenant_id)
+        .bind(MatchStatus::Discrepancy.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1268,7 +1297,7 @@ impl InvoiceRecognizer {
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance.finance_v55_invoices
                 (id, tenant_id, number, vendor, invoice_date, total_amount, tax_amount, status, recognized_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'recognized', $8)"#),
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1277,6 +1306,7 @@ impl InvoiceRecognizer {
         .bind(invoice_date)
         .bind(total_amount)
         .bind(tax_amount)
+        .bind(InvoiceStatus::Recognized.as_str())
         .bind(now)
         .execute(&mut scope)
         .await?;
@@ -1437,6 +1467,19 @@ impl InvoiceRecognizer {
         .fetch_all(&mut scope)
         .await?;
 
+        match InvoiceStatus::from_str(&invoice.status) {
+            Some(InvoiceStatus::Recognized) => {}
+            Some(InvoiceStatus::Pending)
+            | Some(InvoiceStatus::Verified)
+            | Some(InvoiceStatus::Posted) => return Err(sqlx::Error::RowNotFound),
+            None => {
+                return Err(sqlx::Error::Protocol(format!(
+                    "未知发票状态: {}",
+                    invoice.status
+                )));
+            }
+        }
+
         let with_items = InvoiceWithItems {
             invoice: invoice.clone(),
             items,
@@ -1449,13 +1492,15 @@ impl InvoiceRecognizer {
         let updated = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v55_invoices
-            SET status = 'verified', validated_at = $1
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, validated_at = $1
+            WHERE id = $2 AND tenant_id = $3 AND status = $5
             RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#
         ))
         .bind(now)
         .bind(invoice_id)
         .bind(tenant_id)
+        .bind(InvoiceStatus::Verified.as_str())
+        .bind(InvoiceStatus::Recognized.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1495,7 +1540,7 @@ impl InvoiceRecognizer {
         status: Option<String>,
     ) -> Result<Vec<Invoice>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices",
+            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE 1=1",
         );
         if status.is_some() {
             query.push_str(" AND status = $1");
@@ -1536,6 +1581,19 @@ impl InvoiceRecognizer {
         .fetch_all(&mut scope)
         .await?;
 
+        match InvoiceStatus::from_str(&invoice.status) {
+            Some(InvoiceStatus::Verified) => {}
+            Some(InvoiceStatus::Pending)
+            | Some(InvoiceStatus::Recognized)
+            | Some(InvoiceStatus::Posted) => return Err(sqlx::Error::RowNotFound),
+            None => {
+                return Err(sqlx::Error::Protocol(format!(
+                    "未知发票状态: {}",
+                    invoice.status
+                )));
+            }
+        }
+
         let with_items = InvoiceWithItems {
             invoice: invoice.clone(),
             items,
@@ -1547,13 +1605,15 @@ impl InvoiceRecognizer {
         let updated = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.finance_v55_invoices
-            SET status = 'posted', posted_at = $1
-            WHERE id = $2 AND tenant_id = $3
+            SET status = $4, posted_at = $1
+            WHERE id = $2 AND tenant_id = $3 AND status = $5
             RETURNING id, number, vendor, invoice_date, total_amount, tax_amount, status"#
         ))
         .bind(now)
         .bind(invoice_id)
         .bind(tenant_id)
+        .bind(InvoiceStatus::Posted.as_str())
+        .bind(InvoiceStatus::Verified.as_str())
         .fetch_one(&mut scope)
         .await?;
         scope.commit().await?;
@@ -1709,11 +1769,12 @@ impl ElectronicPaymentProcessor {
             "finance",
             r#"INSERT INTO finance.finance_v55_payment_results
                 (id, tenant_id, request_id, status, transaction_ref, fee, processed_at)
-            VALUES ($1, $2, $3, 'completed', $4, $5, $6)"#
+            VALUES ($1, $2, $3, $4, $5, $6, $7)"#
         ))
         .bind(result_id)
         .bind(tenant_id)
         .bind(request_id)
+        .bind(PaymentStatus::Completed.as_str())
         .bind(&transaction_ref)
         .bind(fee)
         .bind(now)
@@ -1790,12 +1851,13 @@ impl ElectronicPaymentProcessor {
             "finance",
             r#"INSERT INTO finance.finance_v55_payment_results
                 (id, tenant_id, request_id, status, transaction_ref, fee, processed_at)
-            VALUES ($1, $2, $3, 'reversed', $4, $5, $6)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id, request_id, status, transaction_ref, fee, processed_at"#
         ))
         .bind(result_id)
         .bind(tenant_id)
         .bind(payment_id)
+        .bind(PaymentStatus::Reversed.as_str())
         .bind(&reversed_ref)
         .bind(0.0)
         .bind(now)
@@ -1812,7 +1874,7 @@ impl ElectronicPaymentProcessor {
         status: Option<String>,
     ) -> Result<Vec<PaymentRequest>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests",
+            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests WHERE 1=1",
         );
         if status.is_some() {
             query.push_str(
@@ -2023,6 +2085,19 @@ pub async fn get_recon_results_handler(
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
+    if let Some(raw) = params.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if MatchStatus::from_str(raw).is_none() {
+            let allowed = MatchStatus::ALL
+                .iter()
+                .map(MatchStatus::as_str)
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::bad_request(&format!(
+                "非法对账匹配状态: {}，可选值: {}",
+                raw, allowed
+            ));
+        }
+    }
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2184,6 +2259,19 @@ pub async fn list_invoices_handler(
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
+    if let Some(raw) = params.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if InvoiceStatus::from_str(raw).is_none() {
+            let allowed = InvoiceStatus::ALL
+                .iter()
+                .map(InvoiceStatus::as_str)
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::bad_request(&format!(
+                "非法发票状态: {}，可选值: {}",
+                raw, allowed
+            ));
+        }
+    }
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2379,6 +2467,19 @@ pub async fn list_payments_handler(
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
     };
+    if let Some(raw) = params.status.as_deref().filter(|s| !s.trim().is_empty()) {
+        if PaymentStatus::from_str(raw).is_none() {
+            let allowed = PaymentStatus::ALL
+                .iter()
+                .map(PaymentStatus::as_str)
+                .collect::<Vec<_>>()
+                .join("/");
+            return ApiResponse::bad_request(&format!(
+                "非法支付状态: {}，可选值: {}",
+                raw, allowed
+            ));
+        }
+    }
     let db = state.db.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -4247,9 +4348,14 @@ mod tests {
             MatchStatus::Discrepancy,
         ] {
             let s = v.as_str();
-            assert_eq!(MatchStatus::from_str(s), v);
+            assert_eq!(MatchStatus::from_str(s), Some(v.clone()));
         }
-        assert_eq!(MatchStatus::from_str("unknown"), MatchStatus::Matched);
+        assert_eq!(
+            MatchStatus::from_str("unknown"),
+            None,
+            "未知状态必须拒绝，不能静默回退 matched"
+        );
+        assert_eq!(MatchStatus::from_str(""), None);
     }
 
     #[test]
@@ -4277,9 +4383,14 @@ mod tests {
             InvoiceStatus::Posted,
         ] {
             let s = v.as_str();
-            assert_eq!(InvoiceStatus::from_str(s), v);
+            assert_eq!(InvoiceStatus::from_str(s), Some(v.clone()));
         }
-        assert_eq!(InvoiceStatus::from_str("unknown"), InvoiceStatus::Pending);
+        assert_eq!(
+            InvoiceStatus::from_str("unknown"),
+            None,
+            "未知状态必须拒绝，不能静默回退 pending"
+        );
+        assert_eq!(InvoiceStatus::from_str(""), None);
     }
 
     #[test]
@@ -4321,9 +4432,14 @@ mod tests {
             PaymentStatus::Reversed,
         ] {
             let s = v.as_str();
-            assert_eq!(PaymentStatus::from_str(s), v);
+            assert_eq!(PaymentStatus::from_str(s), Some(v.clone()));
         }
-        assert_eq!(PaymentStatus::from_str("unknown"), PaymentStatus::Pending);
+        assert_eq!(
+            PaymentStatus::from_str("unknown"),
+            None,
+            "未知状态必须拒绝，不能静默回退 pending"
+        );
+        assert_eq!(PaymentStatus::from_str(""), None);
     }
 
     // --- Invoice::can_post ---
