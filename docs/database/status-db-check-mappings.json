@@ -597,6 +597,20 @@
       "table": "ehs.qa_ehs_investigations",
       "column": "status",
       "candidate": "docs/database/ehs-investigation-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/treatment_status.rs",
+      "enum": "TreatmentStatus",
+      "table": "ehs.qa_ehs_treatments",
+      "column": "status",
+      "candidate": "docs/database/ehs-treatment-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/treatment_status.rs",
+      "enum": "TreatmentActionStatus",
+      "table": "ehs.qa_ehs_treatment_actions",
+      "column": "status",
+      "candidate": "docs/database/ehs-treatment-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

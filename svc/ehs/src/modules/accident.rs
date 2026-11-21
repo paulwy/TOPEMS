@@ -19,6 +19,7 @@ use uuid::Uuid;
 
 use crate::modules::accident_status::AccidentStatus;
 use crate::modules::investigation_status::InvestigationStatus;
+use crate::modules::treatment_status::{TreatmentActionStatus, TreatmentStatus};
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
@@ -898,16 +899,18 @@ pub async fn create_treatment(
     // INSERT treatment 主行
     if let Err(e) = sqlx::query(
         r#"INSERT INTO ehs.qa_ehs_treatments (id, accident_id, responsible, status, started_at, tenant_id)
-           VALUES ($1, $2, $3, 'in_progress', now(), $4)"#,
+           VALUES ($1, $2, $3, $5, now(), $4)"#,
     )
     .bind(tx_id)
     .bind(accident_uuid)
     .bind(&req.responsible)
     .bind(tenant_id)
+    .bind(TreatmentStatus::DEFAULT.as_db_str())
     .execute(&mut scope)
     .await
     {
         tracing::error!("Failed to insert treatment: {}", e);
+        let _ = scope.rollback().await;
         return ApiResponse::server_error("处理方案创建失败");
     }
 
@@ -917,7 +920,7 @@ pub async fn create_treatment(
         let act_id = uuid::Uuid::new_v4();
         if let Err(e) = sqlx::query(
             r#"INSERT INTO ehs.qa_ehs_treatment_actions (id, treatment_id, description, responsible, deadline, status, tenant_id)
-               VALUES ($1, $2, $3, $4, $5, 'pending', $6)"#,
+               VALUES ($1, $2, $3, $4, $5, $7, $6)"#,
         )
         .bind(act_id)
         .bind(tx_id)
@@ -925,17 +928,20 @@ pub async fn create_treatment(
         .bind(&a.responsible)
         .bind(a.deadline.clone().and_then(|d| chrono::DateTime::parse_from_rfc3339(&d).ok().map(|t| t.with_timezone(&chrono::Utc))))
         .bind(tenant_id)
+        .bind(TreatmentActionStatus::DEFAULT.as_db_str())
         .execute(&mut scope)
         .await
         {
             tracing::error!("Failed to insert treatment action: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("处理动作创建失败");
         }
         actions.push(TreatmentAction {
             id: act_id.to_string(),
             description: a.description,
             responsible: a.responsible,
             deadline: a.deadline,
-            status: "pending".to_string(),
+            status: TreatmentActionStatus::DEFAULT.as_db_str().to_string(),
             completed_at: None,
             tenant_id,
         });
@@ -951,7 +957,7 @@ pub async fn create_treatment(
             accident_id: id,
             actions,
             responsible: req.responsible,
-            status: "in_progress".to_string(),
+            status: TreatmentStatus::DEFAULT.as_db_str().to_string(),
             started_at: Some(chrono::Utc::now()),
             completed_at: None,
             created_at: Some(chrono::Utc::now()),
@@ -997,16 +1003,39 @@ pub async fn update_treatment_action(
         }
     };
     tracing::debug!("Updating treatment action {}: {:?}", action_id, req);
+    let status_target = match req.status.as_deref() {
+        Some(raw) => match TreatmentActionStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的处置行动状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => TreatmentActionStatus::update_from(target)
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect(),
+        None => TreatmentActionStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
     let sql = if tenant_scope.tenant_id().is_some() {
         r#"UPDATE ehs.qa_ehs_treatment_actions
-           SET status=COALESCE($1, status), completed_at=$2, updated_at=now()
+           SET status=COALESCE($1, status),
+               completed_at=CASE WHEN $1 = $5 THEN COALESCE($2, completed_at, now()) ELSE COALESCE($2, completed_at) END,
+               updated_at=now()
            WHERE id = $3::uuid AND tenant_id = $4::uuid AND deleted_at IS NULL
+             AND (status = ANY($6::text[]) OR status IS NULL)
            RETURNING id::text AS id, description, responsible, deadline::text AS deadline,
                      status, completed_at AS completed_at, tenant_id::text AS tenant_id"#
     } else {
         r#"UPDATE ehs.qa_ehs_treatment_actions
-           SET status=COALESCE($1, status), completed_at=$2, updated_at=now()
+           SET status=COALESCE($1, status),
+               completed_at=CASE WHEN $1 = $4 THEN COALESCE($2, completed_at, now()) ELSE COALESCE($2, completed_at) END,
+               updated_at=now()
            WHERE id = $3::uuid AND deleted_at IS NULL
+             AND (status = ANY($5::text[]) OR status IS NULL)
            RETURNING id::text AS id, description, responsible, deadline::text AS deadline,
                      status, completed_at AS completed_at, tenant_id::text AS tenant_id"#
     };
@@ -1017,14 +1046,16 @@ pub async fn update_treatment_action(
                 .ok()
                 .map(|t| t.with_timezone(&chrono::Utc))
         }))
-        .bind(&action_id);
+        .bind(&action_id)
+        .bind(TreatmentActionStatus::Completed.as_db_str())
+        .bind(&allowed_from);
     if let Some(tenant) = tenant_scope.tenant_id() {
         query = query.bind(tenant);
     }
     let row = query.fetch_optional(&mut scope).await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("处置行动不存在"),
+        Ok(None) => return ApiResponse::conflict("处置行动不存在或状态不允许更新"),
         Err(e) => {
             tracing::error!("Failed to update treatment action: {}", e);
             return ApiResponse::server_error("处置行动更新失败");
@@ -1243,20 +1274,28 @@ pub async fn complete_treatment(
 
     // UPDATE treatments 主行 + 其下 actions 全部置 completed（同一事务）
     let result = sqlx::query(
-        r#"UPDATE ehs.qa_ehs_treatments SET status='completed', completed_at=now(), updated_at=now()
+        r#"UPDATE ehs.qa_ehs_treatments SET status=$3, completed_at=now(), updated_at=now()
            WHERE tenant_id = $2
              AND accident_id = $1::uuid AND deleted_at IS NULL
+             AND (status = ANY($4::text[]) OR status IS NULL)
            RETURNING id::text AS id, accident_id::text AS accident_id, responsible, status,
                      started_at AS started_at, completed_at AS completed_at,
                      created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&id)
     .bind(tenant_id)
+    .bind(TreatmentStatus::Completed.as_db_str())
+    .bind(
+        TreatmentStatus::complete_from()
+            .iter()
+            .map(|v| v.as_db_str().to_string())
+            .collect::<Vec<_>>(),
+    )
     .fetch_optional(&mut scope)
     .await;
     let row = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("处理方案不存在"),
+        Ok(None) => return ApiResponse::conflict("处理方案不存在或已完成"),
         Err(e) => {
             tracing::error!("Failed to complete treatment: {}", e);
             return ApiResponse::server_error("处理完成失败");
@@ -1264,20 +1303,18 @@ pub async fn complete_treatment(
     };
 
     let actions = sqlx::query(
-        "UPDATE ehs.qa_ehs_treatment_actions SET status='completed', completed_at=now() \
+        "UPDATE ehs.qa_ehs_treatment_actions SET status=$3, completed_at=COALESCE(completed_at, now()) \
          WHERE treatment_id = (SELECT id FROM ehs.qa_ehs_treatments \
                                WHERE accident_id=$1::uuid AND tenant_id=$2 AND deleted_at IS NULL LIMIT 1) \
            AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(&id)
     .bind(tenant_id)
+    .bind(TreatmentActionStatus::Completed.as_db_str())
     .execute(&mut scope)
     .await;
 
     match actions {
-        Ok(r) if r.rows_affected() == 0 => {
-            return ApiResponse::error(409, "处理动作状态已变化，请刷新后重试");
-        }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to complete treatment actions: {}", e);
