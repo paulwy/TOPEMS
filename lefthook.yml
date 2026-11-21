@@ -146,6 +146,17 @@ pre-commit:
           node scripts/ci/check-axum-layer-order.cjs
         fi
 
+    # [Gate RMT] real_module 必须同时挂 tenant_middleware（2026-11-21 B1 回归防线）
+    # 背景：analytics_real_module 只挂 auth，BI 写 handler 拿不到 RlsTxnCell → 500。
+    # 触发：单体 real_module / 本门禁脚本 / 基线变更；无变更秒级跳过。
+    # 既存例外登记 scripts/ci/real-module-tenant-baseline.json（委托挂载 / EHS no_txn）。
+    real-module-tenant:
+      tags: rust axum tenant
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/server/src/modules/.*_real_module\.rs$|^scripts/ci/check-real-module-tenant-middleware\.mjs$|^scripts/ci/real-module-tenant-baseline\.json$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-real-module-tenant-middleware.mjs
+
     # [Gate S] SQLx offline cache integrity (V300: WARN-only → BLOCKING)
     # 历史教训：静态启发式（文件数/脏标记）抓不住"缓存缺查询"（53 个文件也曾全 PASS）。
     # 真正可靠的验证只有离线编译：SQLX_OFFLINE=true cargo check 宏服务，缓存缺失必报错。

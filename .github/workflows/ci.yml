@@ -283,6 +283,9 @@ jobs:
       - name: Module write parity gate (monolith vs standalone)
         run: node scripts/ci/check-module-write-parity.mjs
 
+      - name: Real module tenant middleware gate (fail-closed)
+        run: node scripts/ci/check-real-module-tenant-middleware.mjs
+
       - name: Pool direct + system scope gate
         run: python3 scripts/ci/check-pool-direct-system-scope.py
 

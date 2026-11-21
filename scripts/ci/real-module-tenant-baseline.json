@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "updated_at": "2026-11-21",
+  "description": "real_module 租户中间件门禁的既存例外。仅登记已人工核对的委托/自开事务通道；新增漏挂必须修复，不得追加此表。",
+  "exceptions": [
+    {
+      "file": "svc/server/src/modules/unified_core_real_module.rs",
+      "kind": "delegated",
+      "reason": "tenant_middleware 由 topems_unified_core 的路由构造器内部挂载（auth 在其外层）",
+      "evidence": "svc/unified-core/src/routes/mod.rs:247-261"
+    },
+    {
+      "file": "svc/server/src/modules/integration_real_module.rs",
+      "kind": "delegated",
+      "reason": "tenant_middleware 由 topems_integration::routes::create_routes_embedded 内部挂载（auth 在其外层）",
+      "evidence": "svc/integration/src/routes.rs:203-214"
+    },
+    {
+      "file": "svc/server/src/modules/ehs_real_module.rs",
+      "kind": "no_txn",
+      "reason": "EHS 使用 tenant_middleware_no_txn，handler 走 scope_for_tenant 自开事务（§17.2 B 类，已论证不改造）",
+      "evidence": "docs/quality/scope-api-convergence-mapping-2026-11-21.md"
+    }
+  ]
+}
