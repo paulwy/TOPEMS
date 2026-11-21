@@ -37,9 +37,9 @@ pub async fn list_elimination_rules(
     }
 
     let scope_id = params.scope_id.unwrap_or_default();
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"

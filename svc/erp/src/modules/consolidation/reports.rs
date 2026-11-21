@@ -33,9 +33,9 @@ pub async fn list_reports(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"

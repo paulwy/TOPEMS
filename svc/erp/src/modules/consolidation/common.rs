@@ -5,7 +5,7 @@ use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::{repository::ListQueryParams, AuditLogService};
+use topems_shared_db::AuditLogService;
 use topems_shared_service_client::service_client::{
     api::finance_api::FinanceApi, TypedServiceClient,
 };
@@ -318,14 +318,34 @@ mod tests {
 
 #[derive(Debug, Deserialize)]
 pub struct ConsolidationListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+    #[serde(
+        default,
+        alias = "pagesize",
+        alias = "pageSize",
+        alias = "size",
+        alias = "limit"
+    )]
+    pub page_size: Option<i64>,
     pub keyword: Option<String>,
     pub status: Option<String>,
     pub scope_id: Option<Uuid>,
     pub report_type: Option<String>,
     pub period_from: Option<String>,
     pub period_to: Option<String>,
+}
+
+impl ConsolidationListParams {
+    pub fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+    pub fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).clamp(1, 100)
+    }
+    pub fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
 }
 
 #[cfg(test)]

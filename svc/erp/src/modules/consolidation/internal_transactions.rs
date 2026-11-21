@@ -36,9 +36,9 @@ pub async fn list_internal_transactions(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
     let period_from = match params.period_from.as_deref() {
         Some(p) => match normalize_accounting_period(p) {
