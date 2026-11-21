@@ -406,6 +406,13 @@
       "enum": "ProductionStatusCategory",
       "persisted": false,
       "reason": "把外部 erp_production_orders.status 自由文本归类的展示投影（pending/released/completed/cancelled），本身不写库"
+    },
+    {
+      "file": "svc/erp/src/modules/sales_order_status.rs",
+      "enum": "SalesOrderStatus",
+      "table": "erp.sales_orders",
+      "column": "status",
+      "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

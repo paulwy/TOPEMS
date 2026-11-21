@@ -5,9 +5,9 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 135,
-    "rust_enum_values": 146,
-    "rust_values_not_in_db_check": 108,
+    "rust_enums": 136,
+    "rust_enum_values": 147,
+    "rust_values_not_in_db_check": 109,
     "frontend_status_keys": 165,
     "frontend_keys_not_in_db_check": 126,
     "rust_values_not_in_palette": 0
@@ -681,6 +681,27 @@
         "in_progress",
         "not_started",
         "other"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/sales_order_status.rs",
+      "name": "SalesOrderStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Pending",
+        "Shipped"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "pending",
+        "shipped"
       ]
     },
     {
@@ -2685,6 +2706,7 @@
       "sending",
       "sent",
       "settled",
+      "shipped",
       "skipped",
       "staging",
       "stakeholder_notified",

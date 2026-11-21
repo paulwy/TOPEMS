@@ -84,12 +84,6 @@ pub fn calculate_sales_order_amounts(
     }
 }
 
-// ── 订单状态缺省 ───────────────────────────────────────
-
-pub fn default_sales_order_status(status: Option<String>) -> String {
-    status.unwrap_or_else(|| "draft".to_string())
-}
-
 pub fn default_purchase_order_status() -> &'static str {
     "pending"
 }
@@ -200,19 +194,6 @@ mod tests {
         assert_eq!(r.tax_amount, 0.0);
         assert_eq!(r.discount_amount, 0.0);
         assert_eq!(r.payable_amount, 0.0);
-    }
-
-    #[test]
-    fn test_sales_default_status_none_is_draft() {
-        assert_eq!(default_sales_order_status(None), "draft");
-    }
-
-    #[test]
-    fn test_sales_default_status_some() {
-        assert_eq!(
-            default_sales_order_status(Some("approved".into())),
-            "approved"
-        );
     }
 
     #[test]

@@ -76,6 +76,7 @@ pub mod procurement_e2e;
 pub mod production_order;
 pub mod purchase_order;
 pub mod sales_order;
+pub mod sales_order_status;
 pub mod search;
 pub mod searchable_projection;
 pub mod settings;

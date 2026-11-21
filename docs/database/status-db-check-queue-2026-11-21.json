@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 98,
-    "uncovered_values": 108,
+    "uncovered_enums": 99,
+    "uncovered_values": 109,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 65,
-    "internal_state_enums": 33,
+    "resolved_enums": 66,
+    "internal_state_enums": 34,
     "persisted_unmapped_enums": 54,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 25,
-    "internal_state_values": 49,
+    "internal_state_values": 50,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -581,6 +581,24 @@
         "enum": "ProductionStatusCategory",
         "persisted": false,
         "reason": "把外部 erp_production_orders.status 自由文本归类的展示投影（pending/released/completed/cancelled），本身不写库"
+      }
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/sales_order_status.rs",
+      "enum": "SalesOrderStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "shipped"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/erp/src/modules/sales_order_status.rs",
+        "enum": "SalesOrderStatus",
+        "table": "erp.sales_orders",
+        "column": "status",
+        "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql"
       }
     },
     {

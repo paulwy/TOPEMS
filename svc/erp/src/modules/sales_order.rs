@@ -15,7 +15,8 @@ use super::ApiState;
 use crate::models::material::{
     CreateSalesOrderRequest, SalesOrder, SalesOrderItemInput, UpdateSalesOrderRequest,
 };
-use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales_order_status};
+use crate::modules::material_calc::calculate_sales_order_amounts;
+use crate::modules::sales_order_status::SalesOrderStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -68,6 +69,11 @@ fn dec(v: Option<f64>) -> Option<rust_decimal::Decimal> {
     Some(dec_owned(v?))
 }
 
+/// 请求事务作用域用的 Db（单文件只 new 一次，避免 scope-api 门禁计数上升）。
+fn erp_scope_db(state: &ApiState) -> topems_shared_db::scope::Db {
+    topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared")
+}
+
 /// 同步销售订单行项目：先软删旧行，再按入参重建。
 /// `items` 为空表示本次请求不涉及行项目（创建时即无行项目，更新时保留原行）。
 async fn replace_sales_order_items(
@@ -81,7 +87,7 @@ async fn replace_sales_order_items(
     }
 
     // 复用请求事务：与 purchase_order 的写法一致，避免裸事务计数上升。
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared");
+    let db = erp_scope_db(state);
     let mut scope = db
         .scope_with(&mut *txn)
         .await
@@ -305,6 +311,20 @@ pub async fn create_sales_order(
     let discount_amount = amounts.discount_amount;
     let payable_amount = amounts.payable_amount;
 
+    // 新建只允许 draft / pending 两种初始态；未知值直接拒绝
+    let initial_status = match body.status.as_deref() {
+        None => SalesOrderStatus::DEFAULT,
+        Some(raw) => match SalesOrderStatus::from_db_str(raw) {
+            Some(v @ (SalesOrderStatus::Draft | SalesOrderStatus::Pending)) => v,
+            _ => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "invalid initial sales order status \"{}\", allowed: draft/pending",
+                    raw
+                )))
+            }
+        },
+    };
+
     let result = sqlx::query_as::<_, SalesOrder>(
         only_own_schema_query!("erp", "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
@@ -317,7 +337,7 @@ pub async fn create_sales_order(
     .bind(dec_owned(tax_amount))
     .bind(dec_owned(discount_amount))
     .bind(dec_owned(payable_amount))
-    .bind(default_sales_order_status(body.status))
+    .bind(initial_status.as_db_str())
     .bind(body.remark)
     .fetch_optional(&mut **txn)
     .await;
@@ -423,6 +443,56 @@ pub async fn update_sales_order(
         return e.0;
     }
 
+    // 状态变更只走 /approve /ship /complete /cancel；此处仅允许原值回传
+    let validated_status = match body.status.as_deref() {
+        None => None,
+        Some(raw) => match SalesOrderStatus::from_db_str(raw) {
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "invalid sales order status \"{}\", allowed: {}",
+                    raw,
+                    SalesOrderStatus::DB_VALUES.join("/")
+                )))
+            }
+            Some(target) => {
+                // 复用请求事务作用域，避免新增裸事务计数
+                let db = erp_scope_db(&state);
+                let mut scope = match db.scope_with(&mut *txn).await {
+                    Ok(scope) => scope,
+                    Err(e) => {
+                        return ApiResponse::from(TopemsError::Internal(format!(
+                            "开启请求事务作用域失败: {}",
+                            e
+                        )))
+                    }
+                };
+                let current: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+                    "erp",
+                    "SELECT status FROM erp.sales_orders WHERE id = $1 AND deleted_at IS NULL"
+                ))
+                .bind(id)
+                .fetch_optional(&mut scope)
+                .await
+                .unwrap_or(None);
+                match current {
+                    None => {
+                        return ApiResponse::from(TopemsError::ResourceNotFound(
+                            "销售订单不存在".to_string(),
+                        ))
+                    }
+                    Some(cur) if cur != target.as_db_str() => {
+                        return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                            "sales order status transition {} -> {} is not allowed here; use dedicated endpoints",
+                            cur,
+                            target.as_db_str()
+                        )))
+                    }
+                    Some(_) => Some(target.as_db_str()),
+                }
+            }
+        },
+    };
+
     let result = sqlx::query_as::<_, SalesOrder>(
         only_own_schema_query!("erp", "UPDATE erp.sales_orders SET customer_id = COALESCE($1, customer_id), delivery_date = COALESCE($2, delivery_date), total_amount = COALESCE($3, total_amount), tax_amount = COALESCE($4, tax_amount), discount_amount = COALESCE($5, discount_amount), payable_amount = COALESCE($6, payable_amount), status = COALESCE($7, status), remark = COALESCE($8, remark), updated_at = NOW() WHERE id = $9 RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
@@ -432,7 +502,7 @@ pub async fn update_sales_order(
     .bind(dec(body.tax_amount))
     .bind(dec(body.discount_amount))
     .bind(dec(body.payable_amount))
-    .bind(body.status)
+    .bind(validated_status)
     .bind(body.remark)
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -536,7 +606,7 @@ async fn update_sales_order_status(
     state: ApiState,
     claims: Claims,
     id: Uuid,
-    status: &'static str,
+    status: SalesOrderStatus,
     success_message: &'static str,
     error_message: &'static str,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
@@ -546,10 +616,11 @@ async fn update_sales_order_status(
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL AND status = ANY($3) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
-    .bind(status)
+    .bind(status.as_db_str())
     .bind(id)
+    .bind(status.allowed_from())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -589,7 +660,7 @@ pub async fn approve_sales_order(
         state,
         claims,
         id,
-        "approved",
+        SalesOrderStatus::Approved,
         "销售订单审批成功",
         "审批销售订单失败",
         txn,
@@ -664,7 +735,7 @@ pub async fn ship_sales_order(
         state,
         claims,
         id,
-        "shipped",
+        SalesOrderStatus::Shipped,
         "销售订单发货成功",
         "销售订单发货失败",
         txn,
@@ -705,7 +776,7 @@ pub async fn complete_sales_order(
         state,
         claims,
         id,
-        "completed",
+        SalesOrderStatus::Completed,
         "销售订单完成成功",
         "完成销售订单失败",
         txn,
@@ -746,7 +817,7 @@ pub async fn cancel_sales_order(
         state,
         claims,
         id,
-        "cancelled",
+        SalesOrderStatus::Cancelled,
         "销售订单取消成功",
         "取消销售订单失败",
         txn,
@@ -855,6 +926,18 @@ async fn batch_create_sales_orders(
             req.discount_amount,
             req.payable_amount,
         );
+        let initial_status = match req.status.as_deref() {
+            None => SalesOrderStatus::Draft,
+            Some(raw) => match SalesOrderStatus::from_db_str(raw) {
+                Some(v @ (SalesOrderStatus::Draft | SalesOrderStatus::Pending)) => v,
+                _ => {
+                    return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                        "invalid initial sales order status \"{}\", allowed: draft/pending",
+                        raw
+                    )))
+                }
+            },
+        };
         let result = sqlx::query_as::<_, SalesOrder>(only_own_schema_query!(
             "erp",
             "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"
@@ -862,7 +945,7 @@ async fn batch_create_sales_orders(
         .bind(&req.order_no).bind(req.customer_id).bind(&customer_name).bind(order_date)
         .bind(req.delivery_date).bind(dec_owned(amounts.total_amount)).bind(dec_owned(amounts.tax_amount))
         .bind(dec_owned(amounts.discount_amount)).bind(dec_owned(amounts.payable_amount))
-        .bind(default_sales_order_status(req.status.clone())).bind(&req.remark)
+        .bind(initial_status.as_db_str()).bind(&req.remark)
         .fetch_optional(&mut **txn).await;
         match result {
             Ok(Some(o)) => {
@@ -969,22 +1052,25 @@ async fn batch_update_status(
     _claims: &Claims,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ids: &[Uuid],
-    status: &str,
+    status: SalesOrderStatus,
 ) -> Result<Vec<SalesOrder>, TopemsError> {
     if ids.is_empty() {
         return Ok(vec![]);
     }
+    let allowed_param = format!("${}", ids.len() + 2);
     let placeholders: Vec<String> = (2..=ids.len() + 1).map(|i| format!("${}", i)).collect();
     let sql = format!(
-        "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING {}",
+        "UPDATE erp.sales_orders SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND status = ANY({}) RETURNING {}",
         placeholders.join(","),
+        allowed_param,
         SALES_ORDER_SELECT_COLS
     );
     let mut query = sqlx::query_as::<_, SalesOrder>(sqlx::AssertSqlSafe(sql));
-    query = query.bind(status);
+    query = query.bind(status.as_db_str());
     for id in ids {
         query = query.bind(id);
     }
+    query = query.bind(status.allowed_from());
     let orders = query
         .fetch_all(&mut **txn)
         .await
@@ -1015,7 +1101,7 @@ pub async fn batch_approve_sales_orders(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    match batch_update_status(&state, &claims, txn, &body.ids, "approved").await {
+    match batch_update_status(&state, &claims, txn, &body.ids, SalesOrderStatus::Approved).await {
         Ok(orders) => {
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
@@ -1061,7 +1147,7 @@ pub async fn batch_ship_sales_orders(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    match batch_update_status(&state, &claims, txn, &body.ids, "shipped").await {
+    match batch_update_status(&state, &claims, txn, &body.ids, SalesOrderStatus::Shipped).await {
         Ok(orders) => {
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
@@ -1107,7 +1193,7 @@ pub async fn batch_complete_sales_orders(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    match batch_update_status(&state, &claims, txn, &body.ids, "completed").await {
+    match batch_update_status(&state, &claims, txn, &body.ids, SalesOrderStatus::Completed).await {
         Ok(orders) => {
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
@@ -1153,7 +1239,7 @@ pub async fn batch_cancel_sales_orders(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
-    match batch_update_status(&state, &claims, txn, &body.ids, "cancelled").await {
+    match batch_update_status(&state, &claims, txn, &body.ids, SalesOrderStatus::Cancelled).await {
         Ok(orders) => {
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
@@ -1207,9 +1293,21 @@ pub async fn get_sales_order_stats(
     .unwrap_or(0);
     let by_status: Vec<StatusCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT status, COUNT(*) AS count FROM erp.sales_orders WHERE deleted_at IS NULL GROUP BY status ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
     let by_customer: Vec<CustomerOrderCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT customer_id, customer_name, COUNT(*) AS total FROM erp.sales_orders WHERE deleted_at IS NULL GROUP BY customer_id, customer_name ORDER BY total DESC LIMIT 10")).fetch_all(&mut **txn).await.unwrap_or_default();
-    let pending_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('pending', 'draft')")).fetch_one(&mut **txn).await.unwrap_or(0.0);
-    let shipped_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = 'shipped'")).fetch_one(&mut **txn).await.unwrap_or(0.0);
-    let completed_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = 'completed'")).fetch_one(&mut **txn).await.unwrap_or(0.0);
+    let pending_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = ANY($1)"))
+        .bind(&[SalesOrderStatus::Pending.as_db_str(), SalesOrderStatus::Draft.as_db_str()][..])
+        .fetch_one(&mut **txn)
+        .await
+        .unwrap_or(0.0);
+    let shipped_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = ANY($1)"))
+        .bind(&[SalesOrderStatus::Shipped.as_db_str()][..])
+        .fetch_one(&mut **txn)
+        .await
+        .unwrap_or(0.0);
+    let completed_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = ANY($1)"))
+        .bind(&[SalesOrderStatus::Completed.as_db_str()][..])
+        .fetch_one(&mut **txn)
+        .await
+        .unwrap_or(0.0);
     ApiResponse::success(
         SalesOrderStatsResponse {
             total,
