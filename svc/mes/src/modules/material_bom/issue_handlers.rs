@@ -14,7 +14,24 @@ use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared_core::response::ApiResponse;
 
+use super::issue_status::MaterialIssueStatus;
 use super::models::*;
+
+#[derive(Debug, sqlx::FromRow)]
+struct MaterialIssueRow {
+    id: Uuid,
+    issue_no: String,
+    order_id: Option<Uuid>,
+    order_no: Option<String>,
+    bom_id: Option<Uuid>,
+    status: Option<String>,
+    warehouse_id: Option<Uuid>,
+    operator_id: Option<Uuid>,
+    issue_time: Option<DateTime<Utc>>,
+    notes: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
 
 pub async fn create_material_issue(
     State(state): State<AppState>,
@@ -72,27 +89,28 @@ pub async fn create_material_issue(
 
     let order_no_flat = order_no;
     let order_no_arg = order_no_flat;
-    let issue_result = sqlx::query!(
+    let issue_result = sqlx::query_as::<_, MaterialIssueRow>(
         r#"
         INSERT INTO mes.material_issues (
             issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, notes, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $10)
         RETURNING 
             id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
             created_at, updated_at
         "#,
-        issue_no,
-        req.order_id,
-        order_no_arg.unwrap_or_default(),
-        req.bom_id,
-        req.warehouse_id,
-        req.operator_id,
-        req.notes,
-        now,
-        tenant_id,
     )
+    .bind(&issue_no)
+    .bind(req.order_id)
+    .bind(order_no_arg.unwrap_or_default())
+    .bind(req.bom_id)
+    .bind(MaterialIssueStatus::DEFAULT.as_db_str())
+    .bind(req.warehouse_id)
+    .bind(req.operator_id)
+    .bind(req.notes)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -147,7 +165,9 @@ pub async fn create_material_issue(
         order_id: issue.order_id.map(|u| u.to_string()),
         order_no: issue.order_no,
         bom_id: issue.bom_id.map(|u| u.to_string()),
-        status: issue.status.unwrap_or_else(|| "pending".to_string()),
+        status: issue
+            .status
+            .unwrap_or_else(|| MaterialIssueStatus::DEFAULT.as_db_str().to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
         issue_time: issue.issue_time,
@@ -202,9 +222,16 @@ pub async fn list_material_issues(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
+    let status_filter = match query.status.as_deref() {
+        Some(raw) => match MaterialIssueStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的物料领用单状态过滤值"),
+        },
+        None => None,
+    };
+    if let Some(status) = status_filter {
         where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(serde_json::Value::String(status.as_db_str().to_string()));
     }
 
     if let Some(search) = query.search {
@@ -292,7 +319,7 @@ pub async fn list_material_issues(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "pending".to_string()),
+                .unwrap_or_else(|| MaterialIssueStatus::DEFAULT.as_db_str().to_string()),
             warehouse_id: r
                 .try_get::<Option<Uuid>, _>("warehouse_id")
                 .ok()
@@ -419,7 +446,7 @@ pub async fn get_material_issue(
         "order_id": issue.order_id.map(|u| u.to_string()),
         "order_no": issue.order_no,
         "bom_id": issue.bom_id.map(|u| u.to_string()),
-        "status": issue.status.unwrap_or_else(|| "pending".to_string()),
+        "status": issue.status.unwrap_or_else(|| MaterialIssueStatus::DEFAULT.as_db_str().to_string()),
         "warehouse_id": issue.warehouse_id.map(|u| u.to_string()),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
@@ -472,27 +499,48 @@ pub async fn update_material_issue(
         }
     };
 
-    let result = sqlx::query!(
+    let status_target = match req.status.as_deref() {
+        Some(raw) => match MaterialIssueStatus::from_db_str(raw) {
+            Some(v) => Some(v),
+            None => return ApiResponse::bad_request("无效的物料领用单状态"),
+        },
+        None => None,
+    };
+    let allowed_from: Vec<String> = match status_target {
+        Some(target) => MaterialIssueStatus::db_values(target.update_from())
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        None => MaterialIssueStatus::DB_VALUES
+            .iter()
+            .map(|s| (*s).to_string())
+            .collect(),
+    };
+
+    let result = sqlx::query_as::<_, MaterialIssueRow>(
         r#"
         UPDATE mes.material_issues SET
             status = COALESCE($2, status),
             warehouse_id = COALESCE($3, warehouse_id),
             operator_id = COALESCE($4, operator_id),
             notes = COALESCE($5, notes),
-            issue_time = CASE WHEN $2 = 'completed' AND issue_time IS NULL THEN $6 ELSE issue_time END,
+            issue_time = CASE WHEN $2 = $7 AND issue_time IS NULL THEN $6 ELSE issue_time END,
             updated_at = $6
         WHERE id = $1
+          AND (status = ANY($8::text[]) OR status IS NULL)
         RETURNING id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
             created_at, updated_at
         "#,
-        id,
-        req.status,
-        req.warehouse_id,
-        req.operator_id,
-        req.notes,
-now,
     )
+    .bind(id)
+    .bind(req.status)
+    .bind(req.warehouse_id)
+    .bind(req.operator_id)
+    .bind(req.notes)
+    .bind(now)
+    .bind(MaterialIssueStatus::Completed.as_db_str())
+    .bind(&allowed_from)
     .fetch_optional(&mut scope)
     .await;
 
@@ -500,7 +548,7 @@ now,
         Ok(Some(i)) => i,
         Ok(None) => {
             let _ = scope.rollback().await;
-            return ApiResponse::not_found("物料领用单不存在");
+            return ApiResponse::conflict("物料领用单不存在或当前状态不允许变更");
         }
         Err(e) => {
             let _ = scope.rollback().await;
@@ -520,7 +568,7 @@ now,
         "order_id": issue.order_id.map(|u| u.to_string()),
         "order_no": issue.order_no,
         "bom_id": issue.bom_id.map(|u| u.to_string()),
-        "status": issue.status.unwrap_or_else(|| "pending".to_string()),
+        "status": issue.status.unwrap_or_else(|| MaterialIssueStatus::DEFAULT.as_db_str().to_string()),
         "warehouse_id": issue.warehouse_id.map(|u| u.to_string()),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
@@ -558,17 +606,12 @@ pub async fn delete_material_issue(
         }
     };
 
-    let _ = sqlx::query!(
-        "DELETE FROM mes.material_issue_items WHERE issue_id = $1",
-        id
+    let deletable_from: Vec<String> = vec![MaterialIssueStatus::Pending.as_db_str().to_string()];
+    let result = sqlx::query(
+        "UPDATE mes.material_issues SET deleted_at = NOW() WHERE id = $1 AND status = ANY($2::text[])",
     )
-    .execute(&mut scope)
-    .await;
-
-    let result = sqlx::query!(
-        "UPDATE mes.material_issues SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
-        id
-    )
+    .bind(id)
+    .bind(&deletable_from)
     .execute(&mut scope)
     .await;
 
@@ -580,15 +623,25 @@ pub async fn delete_material_issue(
             return ApiResponse::server_error("删除物料领用单失败");
         }
     };
+    if result.rows_affected() == 0 {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict("物料领用单不存在或状态不允许删除");
+    }
+
+    if let Err(e) = sqlx::query("DELETE FROM mes.material_issue_items WHERE issue_id = $1")
+        .bind(id)
+        .execute(&mut scope)
+        .await
+    {
+        let _ = scope.rollback().await;
+        tracing::error!("Failed to delete material issue items: {}", e);
+        return ApiResponse::server_error("删除物料领用单失败");
+    }
 
     if let Err(e) = scope.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
         return ApiResponse::server_error("删除物料领用单失败");
     }
 
-    if result.rows_affected() > 0 {
-        ApiResponse::success("".to_string(), "物料领用单删除成功")
-    } else {
-        ApiResponse::not_found("物料领用单不存在或状态不允许删除")
-    }
+    ApiResponse::success("".to_string(), "物料领用单删除成功")
 }

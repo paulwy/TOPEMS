@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 156,
+    "rust_enums": 157,
     "rust_enum_values": 163,
     "rust_values_not_in_db_check": 124,
     "frontend_status_keys": 178,
@@ -1817,6 +1817,19 @@
         "failed",
         "passed",
         "warning"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/material_bom/issue_status.rs",
+      "name": "MaterialIssueStatus",
+      "values": [
+        "Completed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "pending"
       ]
     },
     {

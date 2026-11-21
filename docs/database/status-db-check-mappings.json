@@ -583,6 +583,13 @@
       "table": "srm.quotations",
       "column": "status",
       "candidate": "docs/database/srm-quotation-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/issue_status.rs",
+      "enum": "MaterialIssueStatus",
+      "table": "mes.material_issues",
+      "column": "status",
+      "candidate": "docs/database/mes-material-issue-status-check-candidates-2026-11-21.sql"
     }
   ]
 }
