@@ -22,7 +22,9 @@
  *   MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1 node scripts/migration/check-ledger-ddl-drift.mjs  # 仅演练用
  *   MIGRATION_DRIFT_ALLOW_SUPERUSER=1 node scripts/migration/check-ledger-ddl-drift.mjs    # 仅演练用
  *
- * 目标库解析顺序：MIGRATION_DRIFT_DB_URL → DATABASE_URL → .env 的 MIGRATE_URL。
+ * 目标库解析顺序：进程环境 MIGRATION_DRIFT_DB_URL → 进程环境 DATABASE_URL
+ *   → .env 的 MIGRATION_DRIFT_DB_URL（默认指向只读夹具库 topems_gate）
+ *   → .env 的 MIGRATE_URL。
  *   - 连接串不含口令且未设置 PGPASSWORD/PGPASSFILE → 回落 socket
  *     （postgresql:///<库名>，本机 peer 认证），并打印实际用的是哪个来源。
  *   - 本机 pg_hba 把 127.0.0.1/32 改成 scram-sha-256 后，无口令 TCP 连接必然认证失败；
@@ -98,14 +100,23 @@ function emptyLedgerFailure(summary, detailLines, label, assertionCount, source)
   process.exit(0);
 }
 
-function readEnvMigrateUrl() {
+function readEnvValue(key) {
   const envFile = path.join(REPO_ROOT, ".env");
   if (!fs.existsSync(envFile)) return null;
+  const pattern = new RegExp(`^\\s*${key}=(.*)$`);
   for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
-    const m = /^\s*MIGRATE_URL=(.*)$/.exec(line);
+    const m = pattern.exec(line);
     if (m) return m[1].trim().replace(/^["']|["']$/g, "");
   }
   return null;
+}
+
+function readEnvMigrateUrl() {
+  return readEnvValue("MIGRATE_URL");
+}
+
+function readEnvDriftUrl() {
+  return readEnvValue("MIGRATION_DRIFT_DB_URL");
 }
 
 function parseUrl(url) {
@@ -148,9 +159,13 @@ function resolveDbUrl() {
     url = process.env.DATABASE_URL;
     source = "DATABASE_URL（环境变量/外层 shell 导出）";
   } else {
-    const fromEnvFile = readEnvMigrateUrl();
-    if (fromEnvFile) {
-      url = fromEnvFile;
+    const fromEnvFileDrift = readEnvDriftUrl();
+    const fromEnvFileMigrate = readEnvMigrateUrl();
+    if (fromEnvFileDrift) {
+      url = fromEnvFileDrift;
+      source = ".env 的 MIGRATION_DRIFT_DB_URL";
+    } else if (fromEnvFileMigrate) {
+      url = fromEnvFileMigrate;
       source = ".env 的 MIGRATE_URL";
     }
   }
