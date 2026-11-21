@@ -6,6 +6,14 @@
 --   * 删除本迁移新增的公司维度策略与解析函数；
 --   * 删除 4 张表的 company_id / period_version 列（含其外键与索引）。
 --
+-- 「迁移前」以全窗口执行顺序为准（2026-11-22 隔离库实测）：
+--   生产现存 tenant_isolation_<表名> 会先被 20261119210000 改名为
+--   rls_tenant_isolation，erp canonical 20261121100000 再按同名重建；
+--   因此 W9-A 执行前 8 张表各恰好 1 条 rls_tenant_isolation（ALL/PERMISSIVE/
+--   {public}，表达式 = 系统通道 OR 租户）。本文件按该形状逐表原样还原，
+--   自检逐表比对 policyname / cmd / permissive / roles / USING / WITH CHECK。
+--   若跳过 20261119210000、只单独补投 W9-A，则需改用另一套口径（不在本文件范围）。
+--
 -- 注意：
 --   * 回滚会丢失 company_id / period_version 的已填数据，仅用于功能回退。
 --   * 恢复后的策略是租户级（同租户内公司彼此可见），不得作为长期口径。
@@ -113,7 +121,7 @@ DROP FUNCTION IF EXISTS erp.parent_visible_company_ids();
 DROP FUNCTION IF EXISTS erp.current_company_id();
 
 -- ------------------------------------------------------------
--- 5. 回滚自检：8 张表策略数各为 1，且新增列/函数已不存在
+-- 5. 回滚自检：逐表比对策略名/命令类型/roles/表达式，且新增列与函数已不存在
 -- ------------------------------------------------------------
 DO $verify_rollback$
 DECLARE
@@ -127,16 +135,34 @@ DECLARE
         'elimination_rules',
         'elimination_candidates'
     ];
+    -- 与 20261119210000 改名后、canonical 重建后的迁移前表达式逐字一致
+    v_strict constant text :=
+        '((COALESCE(current_setting(''app.rls_system''::text, true), ''off''::text) = ''on''::text) OR (tenant_id = (NULLIF(current_setting(''app.tenant_id''::text, true), ''''::text))::uuid))';
     v_table text;
     v_cnt int;
+    v_bad int;
+    v_detail text;
 BEGIN
     FOREACH v_table IN ARRAY v_tables
     LOOP
-        SELECT count(*) INTO v_cnt
+        SELECT count(*),
+               coalesce(string_agg(policyname || '/' || cmd || '/' || permissive, ', ' ORDER BY policyname), '<none>'),
+               count(*) FILTER (
+                   WHERE policyname IS DISTINCT FROM 'rls_tenant_isolation'
+                      OR cmd IS DISTINCT FROM 'ALL'
+                      OR permissive IS DISTINCT FROM 'PERMISSIVE'
+                      OR roles IS DISTINCT FROM '{public}'::name[]
+                      OR qual IS DISTINCT FROM v_strict
+                      OR with_check IS DISTINCT FROM v_strict
+               )
+          INTO v_cnt, v_detail, v_bad
           FROM pg_policies
          WHERE schemaname = 'erp' AND tablename = v_table;
-        IF v_cnt <> 1 THEN
-            RAISE EXCEPTION 'rollback ABORT: erp.% 策略数=%（期望 1）', v_table, v_cnt;
+
+        IF v_cnt <> 1 OR v_bad <> 0 THEN
+            RAISE EXCEPTION
+                'rollback ABORT: erp.% 策略数=%（期望 1），实际=%；不符项=% 条（期望 rls_tenant_isolation/ALL/PERMISSIVE/{public} 且 USING/WITH CHECK=%）',
+                v_table, v_cnt, v_detail, v_bad, v_strict;
         END IF;
     END LOOP;
 
@@ -162,6 +188,6 @@ BEGIN
         RAISE EXCEPTION 'rollback ABORT: 公司维度解析函数仍存在';
     END IF;
 
-    RAISE NOTICE 'rollback 完成：8 张表恢复为租户级策略，公司维度列与函数已移除';
+    RAISE NOTICE 'rollback 完成：8 张表逐表还原为 rls_tenant_isolation（ALL/PERMISSIVE/{public}，表达式与迁移前逐字一致），公司维度列与函数已移除';
 END
 $verify_rollback$;

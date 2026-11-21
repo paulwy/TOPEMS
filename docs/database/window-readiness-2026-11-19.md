@@ -250,7 +250,7 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 
 1. 账本中 W9 两个版本均未 `success=t`（现场只读确认；不能凭版本号低于 prod max 判断）。
 2. `20261120235900`（hrm canonical）与 `20261121100000`（erp canonical）已 `success=t`：
-   - 8 张表已存在且各只有 1 条 `rls_tenant_isolation`、`FORCE RLS` 已开；
+   - 8 张表已存在且各只有 1 条 `rls_tenant_isolation`、`FORCE RLS` 已开（由 `20261119210000` 改名 + erp canonical 重建；生产现存的 `tenant_isolation_<表名>` 届时不应再出现）；
    - `hrm.companies` 具备 `(tenant_id, id)` 唯一键（W9-A 的 4 条 FK 依赖）。
 3. 同窗口二进制已构建并待发布：`erp`（合并报表读写走请求事务）、`shared-auth`（`company_context.rs` + `middleware/company.rs`，`7d92a571e`）、`shared-db`（`app.company_id` / `app.actor_is_parent` / `app.visible_company_ids` GUC 注入）。
    - **口径校正**：`Claims` 当前未新增 `company_id`，公司上下文按请求解析（头 > `is_default` > 唯一成员）；发布核对以代码为准，不要按「token 携带 company_id」检查。
@@ -266,7 +266,7 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 
 **与相邻波次的关系**
 
-- **← erp canonical `20261121100000`（必须先于任何 `SET SCHEMA`/策略重建）**：合并报表 8 表由它建表；租户策略与 `erp.group_tenant_of()` 来自更早的 `20261114180000`。W8 的 `SET SCHEMA finance` 必须在 canonical 之后；W9-A 版本号在其后，按版本顺序天然满足。
+- **← erp canonical `20261121100000`（必须先于任何 `SET SCHEMA`/策略重建）**：合并报表 8 表由它建表；租户策略来自更早的 `20261114180000`（`20261119210000` 后统一为 `rls_tenant_isolation`），`erp.group_tenant_of()` 也由其创建并仅供 W9-A 的公司维度策略复用，不在旧租户策略表达式内。W8 的 `SET SCHEMA finance` 必须在 canonical 之后；W9-A 版本号在其后，按版本顺序天然满足。
 - **与 W8（`20261121220000`）**：无表交集；W8 只移动 `erp.opening_balances`。建议同窗，顺序 W8 → W9。
 - **与 W6 / P1-1**：对象集合无交集（平台语料 5 表、QMS 3 表），可同窗、各自单事务回滚；前提是发布编排同时包含 erp、shared-auth、shared-db、finance、unified-core、mobile、qms。
 - **与 `20261120090000` / `20261122100000`（MES 数量列）**：无对象交集，语义互不影响；`20261122100000` 版本号更晚，落到同一待应用序列时按版本号自然排在 W9-B 之后。W9 不改变 `mes.production_orders` 的 bigint 终态。
@@ -288,7 +288,7 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 8. **W6（W7-B）/ P1-1 ← canonical**：pm/mobile/qms canonical 会重建同名策略；两条 RLS 批必须排在对应 canonical 之后，才能保证最终策略不被覆盖。W6 与 W1–W5 无表交集。
 9. **W6 与 P1-1 互相独立**：5 张平台语料表与 3 张 QMS 检验表无交集，可同窗口分事务执行；但 W6 的 `mobile.sync_policies` 与 mobile canonical 同表，必须按“canonical → W6”顺序。
 10. **canonical 26 条无独立回滚文件**：它们与代码同窗口；若在 canonical 之后、W6/P1-1 之前失败，只能停止后续波次并评估是否整批回退代码，不进入 §3.3 的逆序演练。
-11. **W9-A ← `20261114180000` + hrm canonical `20261120235900` + erp canonical `20261121100000`**：8 张表由 `20261114180000` 建立 `tenant_isolation_<表名>` 租户策略与 `erp.group_tenant_of()`，由 erp canonical 建表/补列；4 条公司列 FK 依赖 `hrm.companies(tenant_id, id)`（约束 `uq_companies_tenant_id_id`）。三者未 `success=t` 时 W9-A 会因函数/表/约束缺失中止。注意 `20261114180000` 版本号低于旧 prod max，不能靠「版本号 > max」判定已应用。
+11. **W9-A ← `20261114180000` + hrm canonical `20261120235900` + erp canonical `20261121100000`**：8 张表由 `20261114180000` 建立 `tenant_isolation_<表名>` 租户策略与 `erp.group_tenant_of()`，随后 `20261119210000` 把这些策略改名为 `rls_tenant_isolation`，erp canonical 再按同名重建；4 条公司列 FK 依赖 `hrm.companies(tenant_id, id)`（约束 `uq_companies_tenant_id_id`）。三者未 `success=t` 时 W9-A 会因函数/表/约束缺失中止。注意 `20261114180000` 版本号低于旧 prod max，不能靠「版本号 > max」判定已应用。
 12. **W9-A ← 公司上下文二进制（硬约束）**：未注入 `app.company_id` 的二进制读 8 张表返回 0 行；因此迁移与 `erp` + `shared-auth` + `shared-db` 必须同窗口（§2.4 已列分批后果）。这是本包内唯一「先库后码会造成可用性中断」的波次。
 13. **W9-B 与 W9-A 无对象依赖，但固定 A→B**：`is_default` 只影响中间件缺省公司解析，不改 8 表策略；按版本号执行以保持账本顺序。W9-B 与 MES 数量列 `20261120090000` / `20261122100000` 无交集，后者按版本号自然排在 W9-B 之后。
 
@@ -312,7 +312,7 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 `P1-1 → W6 → W5 → W9（B→A） → W8 → W4 → W3 → W2 → W1`（canonical 26 条不纳入逆序演练，见 §3.1 第 10 条）。
 
 - W9 回滚顺序为 **B → A**：B 先删部分唯一索引与 `is_default` 列（回滚文件会自删账本行）；A 再删除 8 张表的 32 条公司维度策略、恢复每表 1 条租户策略，并删除新增的 6 列、4 条 FK、4 条索引与 3 个函数。**A 的回滚文件不自删账本**，须按 §5.2 手工 `DELETE FROM public._sqlx_migrations WHERE version=20261121235940`。
-- 注意：A 回滚件写入的策略名是 `rls_tenant_isolation`（表达式 `系统通道 OR 租户`），语义回到租户级，但与 W9 前 `20261114180000` 的 `tenant_isolation_<表名>`（纯租户）在名字与表达式上不完全一致；这是回滚件的既定形状，不是漂移，记录时应注明。
+- A 回滚件按窗口顺序**原样还原**：8 张表各 1 条 `rls_tenant_isolation`（ALL / PERMISSIVE / {public}，表达式 `系统通道 OR 租户`），与 `20261119210000` 改名 + erp canonical 重建后的 W9 前置逐表逐字一致；回滚脚本自检逐表比对 `policyname`、命令类型、`permissive`、roles 与 `USING`/`WITH CHECK`，不符即失败。限定：若跳过 `20261119210000`、只单独补投 W9-A，则 W9 前置是 `tenant_isolation_<表名>`，需改用另一套回滚口径。
 - W9 回滚后语义：8 张表退回「同租户各公司互相可见」，`company_id` / `period_version` 的回填值随列删除而丢失，`is_default` 标记丢失；因此开窗前必须保留 8 张 erp 表与 `core_user_company_scopes` 的 `pg_dump`。
 
 - W5 回滚删除 `rls_tenant_isolation` 策略并关闭 `iam.core_tenant_plugins` 的 RLS/FORCE；表结构与数据不变，与其他波无交集，可在任意时点执行。
@@ -689,7 +689,7 @@ SELECT count(*) FROM erp.opening_balances;  -- 记录行数，执行后必须不
 **前置只读校验**
 
 1. 账本：两版本均不存在或 `success=f`；`20261114180000`、`20261120235900`、`20261121100000` 为 `success=t`（前两者版本号可能低于旧 prod max，须逐条查）。
-2. 8 张表均存在、`relrowsecurity=t`、`relforcerowsecurity=t`、各 1 条租户策略（名 `tenant_isolation_<表名>`，表达式走 `erp.group_tenant_of`）；`hrm.companies` 有 `(tenant_id, id)` 唯一约束 `uq_companies_tenant_id_id`；`erp.group_tenant_of(uuid)` 存在。
+2. 8 张表均存在、`relrowsecurity=t`、`relforcerowsecurity=t`、各 1 条 `rls_tenant_isolation`（ALL / PERMISSIVE / {public}，表达式 `COALESCE(current_setting('app.rls_system', true), 'off') = 'on' OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid`；原 `tenant_isolation_<表名>` 已被 `20261119210000` 改名）；`hrm.companies` 有 `(tenant_id, id)` 唯一约束 `uq_companies_tenant_id_id`；`erp.group_tenant_of(uuid)` 存在（W9-A 新策略的解析函数，不参与旧策略表达式）。
 3. 8 张表的 `company_id` 若已存在（重复执行场景），其非 NULL 行必须能通过 `company_readable()`；`period_version` 已存在时须为 `integer NOT NULL DEFAULT 1`。
 4. `public.core_user_company_scopes.is_default` 不存在；同一 `(tenant_id,user_id)` 的 `is_default=true` 行数 ≤ 1（列已存在时）。
 5. 同窗口发布物已就绪；`pg_dump` 备份完成（8 张 erp 表 + `core_user_company_scopes`）。
@@ -830,7 +830,7 @@ ORDER BY tenant_id, user_id, created_at LIMIT 20;
 | W6 | 恢复 74 行 `tenant_id` 为 NULL → 删除 `rls_platform_read` → 重建 `rls_global_read` | 5 表回到「全局读 + NULL」状态；RLS/FORCE 保持；行数不变 |
 | W8 | `ALTER TABLE finance.opening_balances SET SCHEMA erp` | 表回到 erp；数据/索引/约束/RLS 随表回移；行数不变 |
 | P1-1 | 关闭 3 表 RLS/FORCE → 删除策略与 tenant_id 索引 | 3 表回到无 RLS、0 策略、无新增索引；行数仍为 0 |
-| W9 | B：删部分唯一索引与 `is_default` 列（自删账本行）；A：每表删 4 条公司策略 → 恢复 1 条 `rls_tenant_isolation`（系统通道 OR 租户）→ 删 6 列、4 FK、4 索引、3 函数 | 8 表回到「租户内各公司互相可见」；`company_id` / `period_version` 回填值随列删除丢失；`is_default` 标记丢失。**A 的回滚不自删账本**，需手工删除 `20261121235940` 行；回滚后的策略名是 `rls_tenant_isolation`，与 W9 前的 `tenant_isolation_<表名>` 不同但语义同为租户级 |
+| W9 | B：删部分唯一索引与 `is_default` 列（自删账本行）；A：每表删 4 条公司策略 → 恢复 1 条 `rls_tenant_isolation`（ALL / PERMISSIVE / {public}，系统通道 OR 租户）→ 删 6 列、4 FK、4 索引、3 函数 | 8 表回到「租户内各公司互相可见」；`company_id` / `period_version` 回填值随列删除丢失；`is_default` 标记丢失。**A 的回滚不自删账本**，需手工删除 `20261121235940` 行；回滚后逐表策略名/命令类型/roles/表达式与窗口前置（`20261119210000` 改名 + canonical 重建后的 `rls_tenant_isolation`）完全一致，可原样还原；仅当跳过 `20261119210000` 单独补投 W9-A 时，前置才是 `tenant_isolation_<表名>`，需换口径 |
 
 - 回滚只重建结构与数据，不恢复 GRANT/COMMENT；不写账本。
 - 回到窗口前账本水位需手工删除对应 `_sqlx_migrations` 行；行数取开窗前现场值（11-19 旧值为 721，已失效）。

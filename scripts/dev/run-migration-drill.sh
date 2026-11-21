@@ -40,6 +40,12 @@
 #   闸门 GUC（如 app.drop_dead_tables_gate）由 apply-forward.sh --drill-gate-guc-auto
 #   按迁移文件语义逐文件注入，prod/SSH 模式拒绝该参数。
 #
+# W9-A 回滚循环（[4b/6]，anchor 早于 20261121235940 时执行）：
+#   回滚 → 逐表断言（policyname=ALL/PERMISSIVE/{public} 且表达式逐字等于严格 B）
+#   → 删账本行 → apply-forward --apply-deferred 重放，共 3 轮。
+#   期望「迁移前」以全窗口顺序为准：20261119210000 改名 + erp canonical 重建后，
+#   8 张表各 1 条 rls_tenant_isolation。
+#
 # 策略快照门禁（§6.3）与菜单权限码门禁（W1-2c）：
 #   [5/6] 用同一个非特权演练库比对 database/rls_policy_expected.json 与实测
 #   pg_policies / pg_class；多/少表、多/少策略、表达式、ENABLE/FORCE 变化一律失败。
@@ -454,6 +460,122 @@ gzip -dc "$DATA_GZ" | psql "$DSN" -v ON_ERROR_STOP=1 -q >/dev/null
 restore_forced_rls || { echo "FAIL: 重放前恢复 FORCE RLS 失败" >&2; exit 1; }
 bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto >/dev/null || { echo "FAIL: 重放前向迁移失败" >&2; exit 1; }
 phase_end "up-down-up"
+
+echo "[4b/6] W9-A 回滚→重放 ×3（逐表断言策略名/命令/roles/表达式）"
+phase
+# 仅当基线水位早于 W9-A 时才有可回滚对象；anchor 已含 W9-A 时跳过。
+W9_VERSION=20261121235940
+W9_TICKET="${MIGRATION_DRILL_W9_TICKET:-ERP-COMPANY-RLS-20261122}"
+W9_ROLLBACK="$ROOT/database/rollback/${W9_VERSION}_erp_consolidation_company_rls.rollback.sql"
+if [[ ! -f "$W9_ROLLBACK" ]]; then
+    echo "SKIP: 未找到 ${W9_ROLLBACK}（HEAD 无该回滚件）"
+elif [[ "$ANCHOR" -ge "$W9_VERSION" ]]; then
+    echo "SKIP: anchor=${ANCHOR} 已不早于 W9-A=${W9_VERSION}，无需回滚演练"
+else
+    W9_ASSERT_SQL="$(mktemp "${TMPDIR:-/tmp}/topems-drill-w9-assert.XXXXXX")"
+    cat > "$W9_ASSERT_SQL" <<'SQL'
+-- 期望：迁移前（20261119210000 改名 + canonical 重建后）8 张表各 1 条
+-- rls_tenant_isolation / ALL / PERMISSIVE / {public}，表达式为严格 B。
+WITH expected(tablename) AS (
+    VALUES
+        ('company_relations'),
+        ('consolidation_scope_companies'),
+        ('internal_transactions'),
+        ('elimination_candidates'),
+        ('consolidation_scopes'),
+        ('consolidation_reports'),
+        ('consolidation_report_lines'),
+        ('elimination_rules')
+), actual AS (
+    SELECT e.tablename,
+           p.policyname,
+           p.cmd::text AS cmd,
+           p.permissive,
+           p.roles::text AS roles,
+           p.qual,
+           p.with_check
+      FROM expected e
+      LEFT JOIN pg_policies p
+        ON p.schemaname = 'erp' AND p.tablename = e.tablename
+), bad AS (
+    SELECT tablename,
+           count(*) AS n,
+           count(*) FILTER (
+               WHERE policyname IS DISTINCT FROM 'rls_tenant_isolation'
+                  OR cmd IS DISTINCT FROM 'ALL'
+                  OR permissive IS DISTINCT FROM 'PERMISSIVE'
+                  OR roles IS DISTINCT FROM '{public}'
+                  OR qual IS DISTINCT FROM
+                     $strict$((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))$strict$
+                  OR with_check IS DISTINCT FROM
+                     $strict$((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))$strict$
+           ) AS mismatch
+      FROM actual
+     GROUP BY tablename
+)
+SELECT tablename || '|policies=' || n || '|mismatch=' || mismatch
+  FROM bad
+ WHERE n <> 1 OR mismatch <> 0;
+SQL
+    W9_FWD_SQL="$(mktemp "${TMPDIR:-/tmp}/topems-drill-w9-fwd.XXXXXX")"
+    cat > "$W9_FWD_SQL" <<'SQL'
+-- 重放后：8 张表各 4 条公司维度策略，且无其他策略。
+WITH expected(tablename) AS (
+    VALUES
+        ('company_relations'),
+        ('consolidation_scope_companies'),
+        ('internal_transactions'),
+        ('elimination_candidates'),
+        ('consolidation_scopes'),
+        ('consolidation_reports'),
+        ('consolidation_report_lines'),
+        ('elimination_rules')
+), bad AS (
+    SELECT e.tablename,
+           count(p.policyname) AS n,
+           count(*) FILTER (WHERE p.policyname NOT LIKE '%\_company\_%') AS non_company
+      FROM expected e
+      LEFT JOIN pg_policies p
+        ON p.schemaname = 'erp' AND p.tablename = e.tablename
+     GROUP BY e.tablename
+)
+SELECT tablename || '|policies=' || n || '|non_company=' || non_company
+  FROM bad
+ WHERE n <> 4 OR non_company <> 0;
+SQL
+    for cycle in 1 2 3; do
+        echo "  [4b] 第 ${cycle}/3 轮：回滚 → 断言"
+        psql "$DSN" -v ON_ERROR_STOP=1 --single-transaction -q -f "$W9_ROLLBACK" \
+            || { echo "FAIL: 第 ${cycle} 轮 W9-A 回滚失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+        W9_VIOLATIONS="$(psql "$DSN" -v ON_ERROR_STOP=1 -tA -f "$W9_ASSERT_SQL")" \
+            || { echo "FAIL: 第 ${cycle} 轮策略断言查询失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+        if [[ -n "$W9_VIOLATIONS" ]]; then
+            echo "FAIL: 第 ${cycle} 轮回滚后策略与迁移前不一致：" >&2
+            printf '%s\n' "$W9_VIOLATIONS" >&2
+            rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"
+            exit 1
+        fi
+        echo "  OK: 第 ${cycle} 轮回滚后 8 表逐表 = rls_tenant_isolation/ALL/PERMISSIVE/{public} + 严格 B 表达式"
+
+        psql "$DSN" -v ON_ERROR_STOP=1 -q -c \
+            "DELETE FROM public._sqlx_migrations WHERE version = ${W9_VERSION}" \
+            || { echo "FAIL: 第 ${cycle} 轮删除 W9-A 账本行失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+        bash scripts/migration/apply-forward.sh --dsn "$DSN" \
+            --apply-deferred "$W9_VERSION" --ticket "$W9_TICKET" --drill-gate-guc-auto \
+            || { echo "FAIL: 第 ${cycle} 轮 W9-A 重放失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+        W9_VIOLATIONS="$(psql "$DSN" -v ON_ERROR_STOP=1 -tA -f "$W9_FWD_SQL")" \
+            || { echo "FAIL: 第 ${cycle} 轮重放后断言查询失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+        if [[ -n "$W9_VIOLATIONS" ]]; then
+            echo "FAIL: 第 ${cycle} 轮重放后公司维度策略不完整：" >&2
+            printf '%s\n' "$W9_VIOLATIONS" >&2
+            rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"
+            exit 1
+        fi
+        echo "  OK: 第 ${cycle} 轮重放后 8 表各 4 条公司维度策略"
+    done
+    rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"
+fi
+phase_end "W9 回滚循环"
 
 echo "[5/6] 策略期望快照（非特权连接 + 实测 pg_policies/pg_class）"
 phase
