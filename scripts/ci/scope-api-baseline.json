@@ -1,172 +1,306 @@
 {
-  "generated": "2026-11-20",
-  "note": "§17.2 作用域 API 收敛基线。scope_for_tenant 计未标记（无 // scope-exempt: <理由>）的生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/short-txn-exempt/lib-standalone）。db_new 计 Db::new( 构造点，只减不增。口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。",
-  "scope_for_tenant": {
-    "total": 154,
+  "generated": "2026-11-21",
+  "note": "§17.2 作用域 API 收敛基线。scope_calls 计 `scope_for_tenant` 与 `scope_read_for_tenant`（两者在请求上下文都会被 deny_request_tenant_scope 拦截）的未标记生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/short-txn-exempt/lib-standalone）。每文件同时给出 for_tenant / read_for_tenant 分项。db_new 计 Db::new( 构造点，只减不增。口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。",
+  "scope_calls": {
+    "total": 239,
     "marked": 56,
-    "unmarked": 98,
+    "unmarked": 183,
+    "for_tenant": {
+      "unmarked": 98
+    },
+    "read_for_tenant": {
+      "unmarked": 85
+    },
     "files": {
       "lib/shared-db/src/master_data_refs.rs": {
-        "unmarked": 5
+        "unmarked": 21,
+        "for_tenant": 5,
+        "read_for_tenant": 16
       },
       "lib/shared-db/src/reconciliation_log.rs": {
-        "unmarked": 3
+        "unmarked": 4,
+        "for_tenant": 3,
+        "read_for_tenant": 1
       },
       "svc/ai/src/event_handlers/mod.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/ai/src/modules/ai_knowledge/service.rs": {
-        "unmarked": 5
+        "unmarked": 6,
+        "for_tenant": 5,
+        "read_for_tenant": 1
       },
       "svc/crm/src/event_handlers/mod.rs": {
-        "unmarked": 6
+        "unmarked": 7,
+        "for_tenant": 6,
+        "read_for_tenant": 1
       },
       "svc/ehs/src/event_handlers/mod.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/accident.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/data_sync.rs": {
-        "unmarked": 0
+        "unmarked": 2,
+        "for_tenant": 0,
+        "read_for_tenant": 2
       },
       "svc/ehs/src/modules/emergency_drill.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/emergency_plan.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/environment.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/environmental_compliance.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/hazard.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/hazardous_material.rs": {
-        "unmarked": 0
+        "unmarked": 2,
+        "for_tenant": 0,
+        "read_for_tenant": 2
       },
       "svc/ehs/src/modules/health.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/integration.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/occupational_disease.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/occupational_health.rs": {
-        "unmarked": 0
+        "unmarked": 6,
+        "for_tenant": 0,
+        "read_for_tenant": 6
       },
       "svc/ehs/src/modules/risk.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/safety.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/modules/training.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/ehs/src/shared/permission.rs": {
-        "unmarked": 0
+        "unmarked": 1,
+        "for_tenant": 0,
+        "read_for_tenant": 1
       },
       "svc/erp/src/event_handlers/mod.rs": {
-        "unmarked": 13
+        "unmarked": 13,
+        "for_tenant": 13,
+        "read_for_tenant": 0
       },
       "svc/finance/src/event_handlers/mod.rs": {
-        "unmarked": 8
+        "unmarked": 9,
+        "for_tenant": 8,
+        "read_for_tenant": 1
       },
       "svc/gis/src/event_handlers/mod.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
+      },
+      "svc/gis/src/modules/websocket.rs": {
+        "unmarked": 2,
+        "for_tenant": 0,
+        "read_for_tenant": 2
       },
       "svc/hrm/src/event_handlers/mod.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/integration/src/crm_erp_sync.rs": {
-        "unmarked": 3
+        "unmarked": 10,
+        "for_tenant": 3,
+        "read_for_tenant": 7
       },
       "svc/integration/src/crm_scm_sync.rs": {
-        "unmarked": 3
+        "unmarked": 9,
+        "for_tenant": 3,
+        "read_for_tenant": 6
       },
       "svc/integration/src/erp_wms_sync.rs": {
-        "unmarked": 3
+        "unmarked": 11,
+        "for_tenant": 3,
+        "read_for_tenant": 8
       },
       "svc/integration/src/event_handlers/mod.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/integration/src/hrm_finance_sync.rs": {
-        "unmarked": 3
+        "unmarked": 10,
+        "for_tenant": 3,
+        "read_for_tenant": 7
       },
       "svc/integration/src/mes_erp_sync.rs": {
-        "unmarked": 4
+        "unmarked": 5,
+        "for_tenant": 4,
+        "read_for_tenant": 1
       },
       "svc/integration/src/mes_qms_integration.rs": {
-        "unmarked": 4
+        "unmarked": 4,
+        "for_tenant": 4,
+        "read_for_tenant": 0
       },
       "svc/integration/src/sync_scheduler.rs": {
-        "unmarked": 2
+        "unmarked": 2,
+        "for_tenant": 2,
+        "read_for_tenant": 0
       },
       "svc/lims/src/event_handlers/mod.rs": {
-        "unmarked": 2
+        "unmarked": 2,
+        "for_tenant": 2,
+        "read_for_tenant": 0
+      },
+      "svc/lims/src/main.rs": {
+        "unmarked": 2,
+        "for_tenant": 0,
+        "read_for_tenant": 2
       },
       "svc/master-data/src/modules/supplier_sync.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/mes/src/event_handlers.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/mobile/src/event_handlers/mod.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/pm/src/event_handlers/mod.rs": {
-        "unmarked": 4
+        "unmarked": 5,
+        "for_tenant": 4,
+        "read_for_tenant": 1
       },
       "svc/portal/src/event_handlers/mod.rs": {
-        "unmarked": 2
+        "unmarked": 2,
+        "for_tenant": 2,
+        "read_for_tenant": 0
       },
       "svc/rd/src/event_handlers/mod.rs": {
-        "unmarked": 2
+        "unmarked": 2,
+        "for_tenant": 2,
+        "read_for_tenant": 0
       },
       "svc/scm/src/event_handlers/mod.rs": {
-        "unmarked": 10
+        "unmarked": 10,
+        "for_tenant": 10,
+        "read_for_tenant": 0
       },
       "svc/search/src/handlers.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
+      },
+      "svc/search/src/mcp.rs": {
+        "unmarked": 3,
+        "for_tenant": 0,
+        "read_for_tenant": 3
       },
       "svc/search/src/projection.rs": {
-        "unmarked": 1
+        "unmarked": 1,
+        "for_tenant": 1,
+        "read_for_tenant": 0
       },
       "svc/srm/src/event_handlers/mod.rs": {
-        "unmarked": 4
+        "unmarked": 4,
+        "for_tenant": 4,
+        "read_for_tenant": 0
       },
       "svc/srm/src/modules/supplier.rs": {
-        "unmarked": 2
+        "unmarked": 2,
+        "for_tenant": 2,
+        "read_for_tenant": 0
       },
       "svc/unified-core/src/modules/audit/service.rs": {
-        "unmarked": 1
+        "unmarked": 2,
+        "for_tenant": 1,
+        "read_for_tenant": 1
       },
       "svc/wms/src/event_handlers/mod.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
+      },
+      "svc/wms/src/modules/analytics.rs": {
+        "unmarked": 10,
+        "for_tenant": 0,
+        "read_for_tenant": 10
       },
       "svc/wms/src/modules/inbound_order.rs": {
-        "unmarked": 0
+        "unmarked": 1,
+        "for_tenant": 0,
+        "read_for_tenant": 1
       },
       "svc/wms/src/modules/inventory.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/wms/src/modules/outbound_order.rs": {
-        "unmarked": 0
+        "unmarked": 1,
+        "for_tenant": 0,
+        "read_for_tenant": 1
       },
       "svc/wms/src/modules/smart_replenishment/suggestions.rs": {
-        "unmarked": 0
+        "unmarked": 0,
+        "for_tenant": 0,
+        "read_for_tenant": 0
       },
       "svc/wms/src/modules/stock_take.rs": {
-        "unmarked": 0
+        "unmarked": 2,
+        "for_tenant": 0,
+        "read_for_tenant": 2
       },
       "svc/wms/src/modules/transfer_order.rs": {
-        "unmarked": 0
+        "unmarked": 2,
+        "for_tenant": 0,
+        "read_for_tenant": 2
       }
     }
   },

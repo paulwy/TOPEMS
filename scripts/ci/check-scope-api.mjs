@@ -9,12 +9,14 @@
  * 因此口径不是「降为 0」，而是「未标记的存量只减不增 + 新增必须显式豁免」。
  *
  * 度量（`svc/` + `lib/`，排除测试代码与字符串/注释）：
- *   scope_for_tenant_total     生产调用点总数
- *   scope_for_tenant_marked    同行/上一行带 `// scope-exempt: <理由>` 的调用点
- *   scope_for_tenant_unmarked  total - marked（**入基线、只减不增**）
- *   db_new                     `Db::new(` 构造次数（**入基线、只减不增**；
- *                              请求 handler 内重建 Db 会绕过 deny_request_*
- *                              运行期守卫，见测绘文档 §2.1 第 6 条）
+ *   scope_calls.total            `scope_for_tenant` + `scope_read_for_tenant` 生产调用点总数
+ *   scope_calls.marked           同行/上一行带 `// scope-exempt: <理由>` 的调用点
+ *   scope_calls.unmarked         total - marked（**入基线、只减不增**）
+ *   其中 for_tenant / read_for_tenant 分别给出上述三项；两者在请求上下文里
+ *   都会被 `deny_request_tenant_scope` 拦截，故必须合并计入。
+ *   db_new                       `Db::new(` 构造次数（**入基线、只减不增**；
+ *                                请求 handler 内重建 Db 会绕过 deny_request_*
+ *                                运行期守卫，见测绘文档 §2.1 第 6 条）
  *
  * 规则：
  *   1) 某文件 unmarked 高于基线 → 退出码 1；
@@ -50,7 +52,10 @@ const UPDATE_BASELINE = args.includes('--update-baseline');
 
 const SKIP_DIRS = new Set(['target', 'node_modules', '.git', 'vendor', 'dist', 'build', 'tests']);
 
-const SCOPE_CALL_RE = /(?:\.|Db::)scope_for_tenant\s*\(/g;
+// scope_for_tenant 与 scope_read_for_tenant 都会被 deny_request_tenant_scope 拦截；
+// scope_read_for_tenant_stream 是 WebSocket 专用入口，单独统计（STREAM_SCOPE_RE），不计入本合计数。
+const FOR_TENANT_RE = /(?:\.|Db::)scope_for_tenant\s*\(/g;
+const READ_FOR_TENANT_RE = /(?:\.|Db::)scope_read_for_tenant\s*\(/g;
 const DB_NEW_RE = /\bDb::new\s*\(/g;
 const STREAM_SCOPE_RE = /\.scope_read_for_tenant_stream\s*\(/g;
 const STREAM_ALLOWED_FILES = new Set(['svc/analytics/src/modules/bi/websocket.rs']);
@@ -219,19 +224,27 @@ for (const abs of allFiles) {
 
   let total = 0;
   let marked = 0;
+  const kindTotals = { for_tenant: 0, read_for_tenant: 0 };
+  const kindMarked = { for_tenant: 0, read_for_tenant: 0 };
   const unmarkedLines = [];
   const markedLines = [];
   const nonstandardMarkers = [];
 
   codeLines.forEach((line, idx) => {
-    const hits = countMatches(line, SCOPE_CALL_RE);
+    const forHits = countMatches(line, FOR_TENANT_RE);
+    const readHits = countMatches(line, READ_FOR_TENANT_RE);
+    const hits = forHits + readHits;
     if (!hits) return;
     total += hits;
+    kindTotals.for_tenant += forHits;
+    kindTotals.read_for_tenant += readHits;
     const markerSrc = `${rawLines[idx] || ''}\n${rawLines[idx - 1] || ''}\n${rawLines[idx + 1] || ''}`;
     const m = EXEMPT_RE.exec(markerSrc);
     const reason = m ? m[1].trim() : '';
     if (reason) {
       marked += hits;
+      kindMarked.for_tenant += forHits;
+      kindMarked.read_for_tenant += readHits;
       markedLines.push(idx + 1);
       if (!EXEMPT_REASONS.includes(reason)) nonstandardMarkers.push({ line: idx + 1, reason });
     } else {
@@ -249,6 +262,16 @@ for (const abs of allFiles) {
       total,
       marked,
       unmarked: total - marked,
+      for_tenant: {
+        total: kindTotals.for_tenant,
+        marked: kindMarked.for_tenant,
+        unmarked: kindTotals.for_tenant - kindMarked.for_tenant,
+      },
+      read_for_tenant: {
+        total: kindTotals.read_for_tenant,
+        marked: kindMarked.read_for_tenant,
+        unmarked: kindTotals.read_for_tenant - kindMarked.read_for_tenant,
+      },
       unmarked_lines: unmarkedLines,
       marked_lines: markedLines,
       nonstandard_markers: nonstandardMarkers,
@@ -276,7 +299,11 @@ for (const abs of allFiles) {
 const baseline = existsSync(BASELINE_FILE)
   ? JSON.parse(readFileSync(BASELINE_FILE, 'utf8'))
   : null;
-const baseScope = (baseline && baseline.scope_for_tenant && baseline.scope_for_tenant.files) || {};
+const baseScope =
+  (baseline && ((baseline.scope_calls && baseline.scope_calls.files) || (baseline.scope_for_tenant && baseline.scope_for_tenant.files))) ||
+  {};
+// 旧基线只统计 scope_for_tenant，缺少 scope_calls 结构：首次扩口径时允许以本次扫描重建基线。
+const LEGACY_BASELINE = Boolean(baseline && !baseline.scope_calls);
 const baseDbNew = (baseline && baseline.db_new && baseline.db_new.files) || {};
 
 const scopeFiles = staged
@@ -290,6 +317,8 @@ let curTotal = 0;
 let curMarked = 0;
 let curUnmarked = 0;
 let baseUnmarked = 0;
+let curForTenant = 0;
+let curReadForTenant = 0;
 let curDbNew = 0;
 let baseDbNewTotal = 0;
 
@@ -299,6 +328,8 @@ for (const file of scopeFiles) {
   curTotal += now.total;
   curMarked += now.marked;
   curUnmarked += now.unmarked;
+  curForTenant += now.for_tenant ? now.for_tenant.unmarked : 0;
+  curReadForTenant += now.read_for_tenant ? now.read_for_tenant.unmarked : 0;
   baseUnmarked += was.unmarked;
   if (now.unmarked > was.unmarked) {
     violations.push({
@@ -341,11 +372,13 @@ for (const [file, info] of Object.entries(current.scope)) {
 
 const summary = {
   scanned_files: staged ? staged.size : allFiles.length,
-  scope_for_tenant: {
+  scope_calls: {
     total: curTotal,
     marked: curMarked,
     unmarked: curUnmarked,
     baseline_unmarked: baseUnmarked,
+    for_tenant_unmarked: curForTenant,
+    read_for_tenant_unmarked: curReadForTenant,
   },
   db_new: { total: curDbNew, baseline: baseDbNewTotal },
   stream_scope: Object.values(current.streamScope).reduce((n, v) => n + v.total, 0),
@@ -353,7 +386,7 @@ const summary = {
 };
 
 if (UPDATE_BASELINE) {
-  if (violations.length > 0 && baseline) {
+  if (violations.length > 0 && baseline && !LEGACY_BASELINE) {
     console.error('[scope-api] 拒绝更新基线：存在未标记新增或 Db::new 新增（先解释合法性）：');
     for (const v of violations) {
       console.error(`  ↑ ${v.file} ${v.kind}: ${v.was} → ${v.now}`);
@@ -365,21 +398,29 @@ if (UPDATE_BASELINE) {
   const scopeOut = {};
   for (const file of Object.keys(current.scope).sort()) {
     const s = current.scope[file];
-    scopeOut[file] = { unmarked: s.unmarked };
+    scopeOut[file] = {
+      unmarked: s.unmarked,
+      for_tenant: s.for_tenant.unmarked,
+      read_for_tenant: s.read_for_tenant.unmarked,
+    };
   }
   const dbNewOut = {};
   for (const file of Object.keys(current.dbNew).sort()) dbNewOut[file] = { total: current.dbNew[file].total };
   const payload = {
     generated: new Date().toISOString().slice(0, 10),
     note:
-      '§17.2 作用域 API 收敛基线。scope_for_tenant 计未标记（无 // scope-exempt: <理由>）的' +
-      '生产调用点，只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/' +
-      'short-txn-exempt/lib-standalone）。db_new 计 Db::new( 构造点，只减不增。' +
+      '§17.2 作用域 API 收敛基线。scope_calls 计 `scope_for_tenant` 与 `scope_read_for_tenant`' +
+      '（两者在请求上下文都会被 deny_request_tenant_scope 拦截）的未标记生产调用点，' +
+      '只减不增；新增调用必须带理由（bg-event/bg-spawn/no-request-txn/' +
+      'short-txn-exempt/lib-standalone）。每文件同时给出 for_tenant / read_for_tenant 分项。' +
+      'db_new 计 Db::new( 构造点，只减不增。' +
       '口径见 docs/quality/scope-api-convergence-mapping-2026-11-21.md。',
-    scope_for_tenant: {
+    scope_calls: {
       total: curTotal,
       marked: curMarked,
       unmarked: curUnmarked,
+      for_tenant: { unmarked: curForTenant },
+      read_for_tenant: { unmarked: curReadForTenant },
       files: scopeOut,
     },
     db_new: { total: curDbNew, files: dbNewOut },
@@ -387,7 +428,8 @@ if (UPDATE_BASELINE) {
   writeFileSync(BASELINE_FILE, JSON.stringify(payload, null, 2) + '\n');
   console.log(
     `[scope-api] 基线已写入 ${relative(ROOT, BASELINE_FILE)}：` +
-      `scope_for_tenant total=${curTotal} marked=${curMarked} unmarked=${curUnmarked}，` +
+      `scope_calls total=${curTotal} marked=${curMarked} unmarked=${curUnmarked} ` +
+      `(for_tenant=${curForTenant}, read_for_tenant=${curReadForTenant})，` +
       `db_new=${curDbNew}`
   );
   process.exit(0);
@@ -397,8 +439,9 @@ if (JSON_MODE) {
   console.log(JSON.stringify({ summary, violations, decreases, bad_markers: badMarkers }, null, 2));
 } else {
   console.log(
-    `[scope-api] 扫描 ${summary.scanned_files} 个文件：scope_for_tenant 调用 ${curTotal} ` +
-      `（已豁免 ${curMarked}，未标记 ${curUnmarked}/基线 ${baseUnmarked}），` +
+    `[scope-api] 扫描 ${summary.scanned_files} 个文件：scope_calls 调用 ${curTotal} ` +
+      `（已豁免 ${curMarked}，未标记 ${curUnmarked}/基线 ${baseUnmarked}；` +
+      `其中 for_tenant ${curForTenant}、read_for_tenant ${curReadForTenant}），` +
       `Db::new ${curDbNew}/基线 ${baseDbNewTotal}，` +
       `stream 专用入口 ${summary.stream_scope}`
   );
@@ -428,9 +471,9 @@ for (const v of violations) {
 }
 console.error(
   '修复：\n' +
-    '  1) 事件消费者/定时任务/spawn 请保留 Db::scope_for_tenant，并在调用行或上一行写\n' +
+    '  1) 事件消费者/定时任务/spawn 请保留 Db::scope_for_tenant / Db::scope_read_for_tenant，并在调用行或上一行写\n' +
     '     `// scope-exempt: bg-event`（或 bg-spawn / no-request-txn / short-txn-exempt / lib-standalone）；\n' +
-    '  2) 请求 handler 请改用 Db::scope_with(&mut req_txn) 复用请求事务，不要新建 Db；\n' +
+    '  2) 请求 handler 请改用 Db::scope_with(&mut req_txn) + 对应 *_in_scope 方法复用请求事务，不要新建 Db；\n' +
     '  3) 确属既有面下降后核销，运行 `node scripts/ci/check-scope-api.mjs --update-baseline` 并 review diff。'
 );
 process.exit(1);
