@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 179,
+    "rust_enums": 180,
     "rust_enum_values": 178,
     "rust_values_not_in_db_check": 139,
     "frontend_status_keys": 193,
@@ -613,6 +613,29 @@
         "lost",
         "open",
         "won"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/return_status.rs",
+      "name": "ReturnStatus",
+      "values": [
+        "Accepted",
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "Pending",
+        "Processing",
+        "Rejected"
+      ],
+      "normalized": [
+        "accepted",
+        "approved",
+        "cancelled",
+        "completed",
+        "pending",
+        "processing",
+        "rejected"
       ]
     },
     {

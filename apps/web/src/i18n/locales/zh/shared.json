@@ -1141,6 +1141,8 @@
   "shared.return.k30": "已收货",
   "shared.return.k31": "已完成",
   "shared.return.k32": "已取消",
+  "shared.return.status_accepted": "已受理",
+  "shared.return.status_processing": "处理中",
   "shared.return.k33": "类型",
   "shared.return.k34": "全部",
   "shared.return.k35": "退货",

@@ -723,6 +723,27 @@
       "table": "core.knowledge_documents",
       "column": "status",
       "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/contract_status.rs",
+      "enum": "ContractStatus",
+      "table": "crm.contracts",
+      "column": "status",
+      "candidate": "docs/database/crm-contract-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/opportunity_status.rs",
+      "enum": "OpportunityStatus",
+      "table": "crm.opportunities",
+      "column": "status",
+      "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/billing_status.rs",
+      "enum": "BillingStatus",
+      "table": "crm.billing_records",
+      "column": "status",
+      "candidate": "docs/database/crm-billing-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

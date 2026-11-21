@@ -17,6 +17,7 @@ use crate::models::{
     ReturnQuery, UpdateReturnRequest,
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::return_status::ReturnStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
@@ -25,48 +26,6 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{
     commit_retry, EventType, ReturnCompletedPayload, ReturnProcessedPayload,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ReturnStage {
-    Pending,
-    Accepted,
-    Processing,
-    Resolving,
-    Done,
-    Rejected,
-    Cancelled,
-}
-
-impl ReturnStage {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "pending" => Some(Self::Pending),
-            "accepted" => Some(Self::Accepted),
-            "processing" => Some(Self::Processing),
-            "resolving" => Some(Self::Resolving),
-            "done" => Some(Self::Done),
-            "rejected" => Some(Self::Rejected),
-            "cancelled" => Some(Self::Cancelled),
-            _ => None,
-        }
-    }
-
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Pending => "pending",
-            Self::Accepted => "accepted",
-            Self::Processing => "processing",
-            Self::Resolving => "resolving",
-            Self::Done => "done",
-            Self::Rejected => "rejected",
-            Self::Cancelled => "cancelled",
-        }
-    }
-
-    pub fn is_terminal(&self) -> bool {
-        matches!(self, Self::Done | Self::Rejected | Self::Cancelled)
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReturnDecision {
@@ -86,33 +45,11 @@ pub enum ProcessType {
     Repair,
 }
 
-pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), TopemsError> {
-    use ReturnStage::*;
-    if from.is_terminal() {
-        return Err(TopemsError::BusinessLogic(
-            "TERMINAL_CANNOT_TRANSITION".to_string(),
-        ));
-    }
-    let ok = matches!(
-        (from, to),
-        (Pending, Accepted)
-            | (Accepted, Processing)
-            | (Processing, Resolving)
-            | (Resolving, Done)
-            | (Resolving, Processing)
-            | (Resolving, Rejected)
-            | (Pending, Cancelled)
-            | (Accepted, Cancelled)
-            | (Processing, Cancelled)
-            | (Resolving, Cancelled)
-    );
-    if ok {
-        Ok(())
-    } else {
-        Err(TopemsError::ValidationFailed(
-            "INVALID_TRANSITION".to_string(),
-        ))
-    }
+fn db_status_values() -> Vec<String> {
+    ReturnStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect()
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -240,6 +177,19 @@ pub async fn list_returns(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match ReturnStatus::from_read_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "无效的退换货状态: {}",
+                    raw
+                )))
+            }
+        },
+        None => None,
+    };
+    let db_values = db_status_values();
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -248,20 +198,23 @@ pub async fn list_returns(
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
         FROM crm.returns
-        WHERE ($1::text IS NULL OR status = $1)
+        WHERE deleted_at IS NULL
+          AND status = ANY($6::text[])
+          AND ($1::text IS NULL OR status = $1)
           AND ($2::text IS NULL OR return_type = $2)
           AND ($3::uuid IS NULL OR customer_id = $3)
           AND ($4::uuid IS NULL OR order_id = $4)
           AND ($5::text IS NULL OR return_no ILIKE $5 OR reason ILIKE $5)
         ORDER BY created_at DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $7 OFFSET $8
         "#,
     )
-    .bind(&params.status)
+    .bind(&status_filter)
     .bind(&params.return_type)
     .bind(params.customer_id)
     .bind(params.order_id)
     .bind(&search_pattern)
+    .bind(&db_values)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -273,6 +226,7 @@ pub async fn list_returns(
                 r#"
                 SELECT COUNT(*) FROM crm.returns
                 WHERE deleted_at IS NULL
+                  AND status = ANY($6::text[])
                   AND ($1::text IS NULL OR status = $1)
                   AND ($2::text IS NULL OR return_type = $2)
                   AND ($3::uuid IS NULL OR customer_id = $3)
@@ -280,11 +234,12 @@ pub async fn list_returns(
                   AND ($5::text IS NULL OR return_no ILIKE $5 OR reason ILIKE $5)
                 "#,
             )
-            .bind(&params.status)
+            .bind(&status_filter)
             .bind(&params.return_type)
             .bind(params.customer_id)
             .bind(params.order_id)
             .bind(&search_pattern)
+            .bind(&db_values)
             .fetch_one(&mut **txn)
             .await;
 
@@ -344,7 +299,7 @@ async fn create_return(
             id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
             status, refund_amount, exchange_product_id, received, created_by, updated_by, created_at, updated_at,
             ticket_id, warehouse_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', COALESCE($14, 0), $9, FALSE, $10, $10, $11, $11, $12, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $14, COALESCE($15, 0), $9, FALSE, $10, $10, $11, $11, $12, $13)
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -364,6 +319,7 @@ async fn create_return(
     .bind(now)
     .bind(req.ticket_id)
     .bind(req.warehouse_id)
+    .bind(ReturnStatus::DEFAULT.as_db_str())
     .bind(req.refund_amount)
     .fetch_one(&mut **txn)
     .await;
@@ -450,16 +406,19 @@ pub async fn get_return(
         Err(e) => return e.0,
     }
 
+    let db_values = db_status_values();
     let result = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -496,16 +455,19 @@ async fn update_return(
         Err(resp) => return resp,
     };
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -539,7 +501,8 @@ async fn update_return(
             ticket_id = $8, warehouse_id = $9,
             refund_amount = COALESCE($10, refund_amount),
             updated_by = $11, updated_at = $12
-        WHERE id = $1 AND tenant_id = $13
+        WHERE id = $1 AND tenant_id = $13 AND deleted_at IS NULL
+          AND status = ANY($14::text[])
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -559,14 +522,20 @@ async fn update_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(&db_values)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(return_record) => (
+        Ok(Some(return_record)) => (
             ApiResponse::success(return_record.clone(), "退换货更新成功"),
             "success".to_string(),
             None,
+        ),
+        Ok(None) => (
+            ApiResponse::conflict("退换货状态或数据已被并发变更，请刷新后重试"),
+            "error".to_string(),
+            Some("退换货状态或数据已被并发变更".to_string()),
         ),
         Err(e) => {
             tracing::error!("更新退换货失败: {}", e);
@@ -577,7 +546,7 @@ async fn update_return(
             )
         }
     };
-    if result.is_ok() {
+    if matches!(&result, Ok(Some(_))) {
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
@@ -586,7 +555,7 @@ async fn update_return(
         }
     }
 
-    let response_data = if let Ok(return_record) = &result {
+    let response_data = if let Ok(Some(return_record)) = &result {
         serde_json::to_value(return_record).ok()
     } else {
         None
@@ -636,16 +605,19 @@ async fn delete_return(
     };
 
     // 先查询退换单状态
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -658,25 +630,31 @@ async fn delete_return(
     };
 
     // 仅允许 pending/cancelled 状态的退换单被删除
-    if existing.status != "pending" && existing.status != "cancelled" {
-        return ApiResponse::from(TopemsError::ValidationFailed(
-            "仅 pending/cancelled 状态的退换单可删除".to_string(),
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
+    };
+    if !matches!(current, ReturnStatus::Pending | ReturnStatus::Cancelled) {
+        return ApiResponse::conflict(&format!(
+            "当前状态 {} 不允许删除，仅 pending/cancelled 可删除",
+            current.as_db_str()
         ));
     }
 
-    let result =
-        sqlx::query("UPDATE crm.returns SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&mut **txn)
-            .await;
-
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("提交事务失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
-        }
-    }
+    let deletable: Vec<String> = ReturnStatus::DELETABLE
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
+    let result = sqlx::query(
+        "UPDATE crm.returns SET deleted_at = NOW() \
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL \
+           AND status = ANY($3::text[])",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&deletable)
+    .execute(&mut **txn)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -685,9 +663,9 @@ async fn delete_return(
             None,
         ),
         Ok(_) => (
-            ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string())),
+            ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
             "error".to_string(),
-            Some("退换货不存在".to_string()),
+            Some("退换货状态已被并发变更".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除退换货失败: {}", e);
@@ -698,6 +676,14 @@ async fn delete_return(
             )
         }
     };
+    if matches!(&result, Ok(r) if r.rows_affected() > 0) {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("提交事务失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
+            }
+        }
+    }
 
     let response_data = if let Ok(r) = &result {
         Some(serde_json::json!({ "rows_affected": r.rows_affected() }))
@@ -764,16 +750,19 @@ pub async fn approve_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -786,19 +775,25 @@ pub async fn approve_return(
     };
 
     // 状态流转校验：pending → approved
-    if existing.status != "pending" {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "当前状态 {} 不允许审批通过，仅 pending 状态可审批",
-            existing.status
-        )));
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
+    };
+    if !current.can_transition_to(ReturnStatus::Approved) {
+        return ApiResponse::conflict(&format!("当前状态 {} 不允许审批通过", current.as_db_str()));
     }
 
+    let approvable: Vec<String> = ReturnStatus::APPROVABLE_FROM
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'approved', approved_by = $2, approved_at = $3,
+            status = $5, approved_by = $2, approved_at = $3,
             updated_by = $2, updated_at = $3
-        WHERE id = $1 AND tenant_id = $4
+        WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL
+          AND status = ANY($6::text[])
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -809,11 +804,13 @@ pub async fn approve_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Approved.as_db_str())
+    .bind(&approvable)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
+        Ok(Some(return_record)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
@@ -827,6 +824,7 @@ pub async fn approve_return(
             );
             ApiResponse::success(return_record, "退换货审批通过")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("审批退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("审批退换货失败".to_string()))
@@ -872,16 +870,19 @@ pub async fn reject_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -894,19 +895,25 @@ pub async fn reject_return(
     };
 
     // 状态流转校验：pending → rejected
-    if existing.status != "pending" {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "当前状态 {} 不允许拒绝，仅 pending 状态可拒绝",
-            existing.status
-        )));
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
+    };
+    if !current.can_transition_to(ReturnStatus::Rejected) {
+        return ApiResponse::conflict(&format!("当前状态 {} 不允许拒绝", current.as_db_str()));
     }
 
+    let approvable: Vec<String> = ReturnStatus::APPROVABLE_FROM
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'rejected', approved_by = $2, approved_at = $3,
+            status = $5, approved_by = $2, approved_at = $3,
             updated_by = $2, updated_at = $3
-        WHERE id = $1 AND tenant_id = $4
+        WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL
+          AND status = ANY($6::text[])
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -917,11 +924,13 @@ pub async fn reject_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Rejected.as_db_str())
+    .bind(&approvable)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
+        Ok(Some(return_record)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
@@ -935,6 +944,7 @@ pub async fn reject_return(
             );
             ApiResponse::success(return_record, "退换货已拒绝")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("拒绝退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("拒绝退换货失败".to_string()))
@@ -980,16 +990,19 @@ pub async fn receive_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1002,19 +1015,21 @@ pub async fn receive_return(
     };
 
     // 状态流转校验：approved → processing，记录 received_at
-    if existing.status != "approved" {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "当前状态 {} 不允许确认收货，仅 approved 状态可确认收货",
-            existing.status
-        )));
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
+    };
+    if !current.can_transition_to(ReturnStatus::Processing) {
+        return ApiResponse::conflict(&format!("当前状态 {} 不允许确认收货", current.as_db_str()));
     }
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'processing', received = TRUE, received_at = $2,
+            status = $6, received = TRUE, received_at = $2,
             updated_by = $3, updated_at = $4
-        WHERE id = $1 AND tenant_id = $5
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = $7
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -1026,11 +1041,13 @@ pub async fn receive_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Processing.as_db_str())
+    .bind(ReturnStatus::Approved.as_db_str())
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
+        Ok(Some(return_record)) => {
             tracing::debug!(
                 "退换货 {} 已确认收货，操作备注: {:?}",
                 return_record.return_no,
@@ -1050,6 +1067,7 @@ pub async fn receive_return(
             }
             ApiResponse::success(return_record, "退换货已确认收货")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("确认收货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("确认收货失败".to_string()))
@@ -1096,16 +1114,19 @@ pub async fn complete_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1118,19 +1139,21 @@ pub async fn complete_return(
     };
 
     // 状态流转校验：processing → completed，记录 completed_at
-    if existing.status != "processing" {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "当前状态 {} 不允许完成，仅 processing 状态可完成",
-            existing.status
-        )));
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
+    };
+    if !current.can_transition_to(ReturnStatus::Completed) {
+        return ApiResponse::conflict(&format!("当前状态 {} 不允许完成", current.as_db_str()));
     }
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'completed', completed_at = $2,
+            status = $6, completed_at = $2,
             updated_by = $3, updated_at = $4
-        WHERE id = $1 AND tenant_id = $5
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = $7
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -1142,11 +1165,13 @@ pub async fn complete_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Completed.as_db_str())
+    .bind(ReturnStatus::Processing.as_db_str())
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
+        Ok(Some(return_record)) => {
             tracing::debug!(
                 "退换货 {} 已完成，操作备注: {:?}",
                 return_record.return_no,
@@ -1246,6 +1271,7 @@ pub async fn complete_return(
 
             ApiResponse::success(return_record, "退换货已完成")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("完成退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("完成退换货失败".to_string()))
@@ -1291,16 +1317,19 @@ pub async fn cancel_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1312,19 +1341,25 @@ pub async fn cancel_return(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
-    // 状态流转校验：pending → cancelled（已完成/已拒绝的不可取消）
-    if existing.status == "completed" || existing.status == "cancelled" {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "当前状态 {} 不允许取消",
-            existing.status
-        )));
+    // 状态流转校验：终态不可取消，仅非终态可取消
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
+    };
+    if !current.can_transition_to(ReturnStatus::Cancelled) {
+        return ApiResponse::conflict(&format!("当前状态 {} 不允许取消", current.as_db_str()));
     }
+    let cancellable: Vec<String> = ReturnStatus::CANCELLABLE
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'cancelled', updated_by = $2, updated_at = $3
-        WHERE id = $1 AND tenant_id = $4
+            status = $5, updated_by = $2, updated_at = $3
+        WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL
+          AND status = ANY($6::text[])
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -1335,11 +1370,13 @@ pub async fn cancel_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Cancelled.as_db_str())
+    .bind(&cancellable)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
+        Ok(Some(return_record)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
@@ -1353,6 +1390,7 @@ pub async fn cancel_return(
             );
             ApiResponse::success(return_record, "退换货已取消")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("取消退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("取消退换货失败".to_string()))
@@ -1753,13 +1791,17 @@ pub async fn get_return_finance_status(
     }
 
     // 校验退换单存在（租户隔离由严格 RLS 承担）
-    let exists: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1")
-            .bind(id)
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten();
+    let db_values = db_status_values();
+    let exists: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM crm.returns \
+         WHERE deleted_at IS NULL AND id = $1 AND status = ANY($2::text[])",
+    )
+    .bind(id)
+    .bind(&db_values)
+    .fetch_optional(&mut **txn)
+    .await
+    .ok()
+    .flatten();
 
     if exists.is_none() {
         return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
@@ -1841,13 +1883,17 @@ pub async fn get_return_inventory_status(
     }
 
     // 校验退换单存在（租户隔离由严格 RLS 承担）
-    let exists: Option<Uuid> =
-        sqlx::query_scalar("SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1")
-            .bind(id)
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten();
+    let db_values = db_status_values();
+    let exists: Option<Uuid> = sqlx::query_scalar(
+        "SELECT id FROM crm.returns \
+         WHERE deleted_at IS NULL AND id = $1 AND status = ANY($2::text[])",
+    )
+    .bind(id)
+    .bind(&db_values)
+    .fetch_optional(&mut **txn)
+    .await
+    .ok()
+    .flatten();
 
     if exists.is_none() {
         return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
@@ -1943,16 +1989,19 @@ async fn accept_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1964,29 +2013,21 @@ async fn accept_return(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
-    let from = match ReturnStage::from_str(&existing.status) {
-        Some(s) => s,
-        None => {
-            return ApiResponse::from(TopemsError::ValidationFailed(format!(
-                "未知状态: {}",
-                existing.status
-            )))
-        }
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
     };
-
-    if let Err(e) = can_transition(from, ReturnStage::Accepted) {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "状态 {} → accepted 流转被拒绝: {}",
-            existing.status, e
-        )));
+    if !current.can_transition_to(ReturnStatus::Accepted) {
+        return ApiResponse::conflict(&format!("状态 {} 不允许受理", current.as_db_str()));
     }
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'accepted', approved_by = $2, approved_at = $3,
+            status = $5, approved_by = $2, approved_at = $3,
             updated_by = $2, updated_at = $3
-        WHERE id = $1 AND tenant_id = $4
+        WHERE id = $1 AND tenant_id = $4 AND deleted_at IS NULL
+          AND status = $6
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -1997,11 +2038,13 @@ async fn accept_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Accepted.as_db_str())
+    .bind(ReturnStatus::Pending.as_db_str())
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(Some(r)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
@@ -2010,6 +2053,7 @@ async fn accept_return(
             }
             ApiResponse::success(r, "退换货已受理")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("受理退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("受理退换货失败".to_string()))
@@ -2055,16 +2099,19 @@ pub async fn process_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2076,29 +2123,25 @@ pub async fn process_return(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
-    let from = match ReturnStage::from_str(&existing.status) {
-        Some(s) => s,
-        None => {
-            return ApiResponse::from(TopemsError::ValidationFailed(format!(
-                "未知状态: {}",
-                existing.status
-            )))
-        }
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
     };
-
-    if let Err(e) = can_transition(from, ReturnStage::Processing) {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "状态 {} → processing 流转被拒绝: {}",
-            existing.status, e
-        )));
+    if !current.can_transition_to(ReturnStatus::Processing) {
+        return ApiResponse::conflict(&format!("状态 {} 不允许进入处理", current.as_db_str()));
     }
+    let process_from: Vec<String> = ReturnStatus::PROCESS_FROM
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = 'processing', received = TRUE, received_at = $2,
+            status = $6, received = TRUE, received_at = $2,
             updated_by = $3, updated_at = $4
-        WHERE id = $1 AND tenant_id = $5
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = ANY($7::text[])
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -2110,11 +2153,13 @@ pub async fn process_return(
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Processing.as_db_str())
+    .bind(&process_from)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
+        Ok(Some(return_record)) => {
             if let Err(e) = sync_return_to_inventory(&state, txn, return_record.id, tenant_id).await
             {
                 tracing::warn!("退换货 {} 库存联动失败: {}", return_record.return_no, e);
@@ -2128,6 +2173,7 @@ pub async fn process_return(
             }
             ApiResponse::success(return_record, "退换货进入处理中")
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("处理退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("处理退换货失败".to_string()))
@@ -2173,16 +2219,19 @@ pub async fn resolve_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2194,34 +2243,28 @@ pub async fn resolve_return(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
-    let from = match ReturnStage::from_str(&existing.status) {
-        Some(s) => s,
-        None => {
-            return ApiResponse::from(TopemsError::ValidationFailed(format!(
-                "未知状态: {}",
-                existing.status
-            )))
-        }
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
     };
-
-    let target = match req.process_type.as_deref() {
-        Some("returned") => ReturnStage::Processing,
-        _ => ReturnStage::Resolving,
-    };
-
-    if let Err(_) = can_transition(from, target) {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
-            "状态 {} → {} 流转被拒绝",
-            existing.status,
-            target.as_str()
-        )));
+    if !matches!(
+        current,
+        ReturnStatus::Accepted | ReturnStatus::Approved | ReturnStatus::Processing
+    ) {
+        return ApiResponse::conflict(&format!("状态 {} 不允许方案确认", current.as_db_str()));
     }
+    let resolve_from: Vec<String> = ReturnStatus::RESOLVE_FROM
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = $2, updated_by = $3, updated_at = $4
-        WHERE id = $1 AND tenant_id = $5
+            status = $2, resolved_at = COALESCE(resolved_at, $4),
+            updated_by = $3, updated_at = $4
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = ANY($6::text[])
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -2229,28 +2272,30 @@ pub async fn resolve_return(
         "#,
     )
     .bind(id)
-    .bind(target.as_str())
+    .bind(ReturnStatus::Processing.as_db_str())
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(&resolve_from)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(Some(r)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
                     return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            let msg = match target {
-                ReturnStage::Resolving => "退换货进入方案确认".to_string(),
-                ReturnStage::Processing => "退换货已退回重新处理".to_string(),
-                _ => "退换货状态更新成功".to_string(),
+            let msg = if req.process_type.as_deref() == Some("returned") {
+                "退换货已退回重新处理"
+            } else {
+                "退换货进入方案确认"
             };
-            ApiResponse::success(r, &msg)
+            ApiResponse::success(r, msg)
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("方案确认失败: {}", e);
             ApiResponse::from(TopemsError::Internal("方案确认失败".to_string()))
@@ -2297,16 +2342,19 @@ pub async fn confirm_return(
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
+    let db_values = db_status_values();
     let existing = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1
+        FROM crm.returns
+        WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2::text[])
         "#,
     )
     .bind(id)
+    .bind(&db_values)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2318,35 +2366,30 @@ pub async fn confirm_return(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
-    let from = match ReturnStage::from_str(&existing.status) {
-        Some(s) => s,
-        None => {
-            return ApiResponse::from(TopemsError::ValidationFailed(format!(
-                "未知状态: {}",
-                existing.status
-            )))
-        }
+    let current = match ReturnStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("退换货状态非法，需先修复数据"),
     };
-
     let target = match req.process_type.as_deref() {
-        Some("reject") => ReturnStage::Rejected,
-        _ => ReturnStage::Done,
+        Some("reject") => ReturnStatus::Rejected,
+        _ => ReturnStatus::Completed,
     };
-
-    if let Err(_) = can_transition(from, target) {
-        return ApiResponse::from(TopemsError::ValidationFailed(format!(
+    if !current.can_transition_to(target) {
+        return ApiResponse::conflict(&format!(
             "状态 {} → {} 流转被拒绝",
-            existing.status,
-            target.as_str()
-        )));
+            current.as_db_str(),
+            target.as_db_str()
+        ));
     }
 
     let result = sqlx::query_as::<_, Return>(
         r#"
         UPDATE crm.returns SET
-            status = $2, resolved_at = $3, completed_at = $3,
+            status = $2, resolved_at = $3,
+            completed_at = CASE WHEN $2 = 'completed' THEN $3 ELSE completed_at END,
             updated_by = $4, updated_at = $3
-        WHERE id = $1 AND tenant_id = $5
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = $6
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -2354,16 +2397,17 @@ pub async fn confirm_return(
         "#,
     )
     .bind(id)
-    .bind(target.as_str())
+    .bind(target.as_db_str())
     .bind(now)
     .bind(operator_id)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .bind(ReturnStatus::Processing.as_db_str())
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(return_record) => {
-            if matches!(target, ReturnStage::Done) {
+        Ok(Some(return_record)) => {
+            if matches!(target, ReturnStatus::Completed) {
                 // 财务对账仍在事务内
                 if let Err(e) =
                     sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
@@ -2380,7 +2424,7 @@ pub async fn confirm_return(
             }
 
             // D6：commit 成功后再 emit ReturnCompleted；发布失败入 ZSET 重试。
-            if matches!(target, ReturnStage::Done) {
+            if matches!(target, ReturnStatus::Completed) {
                 if let Some(publisher) = state.event_publisher.clone() {
                     let return_id = return_record.id;
                     let return_no = return_record.return_no.clone();
@@ -2427,12 +2471,13 @@ pub async fn confirm_return(
                 }
             }
             let msg = match target {
-                ReturnStage::Done => "退换货已完成结案".to_string(),
-                ReturnStage::Rejected => "退换货已拒绝结案".to_string(),
+                ReturnStatus::Completed => "退换货已完成结案".to_string(),
+                ReturnStatus::Rejected => "退换货已拒绝结案".to_string(),
                 _ => "退换货确认成功".to_string(),
             };
             ApiResponse::success(return_record, &msg)
         }
+        Ok(None) => ApiResponse::conflict("退换货状态已被并发变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("确认退换货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("确认退换货失败".to_string()))
@@ -2444,72 +2489,6 @@ pub async fn confirm_return(
 mod tests {
     use super::*;
     use uuid::Uuid;
-
-    #[test]
-    fn return_stage_from_str_all() {
-        assert_eq!(ReturnStage::from_str("pending"), Some(ReturnStage::Pending));
-        assert_eq!(
-            ReturnStage::from_str("accepted"),
-            Some(ReturnStage::Accepted)
-        );
-        assert_eq!(
-            ReturnStage::from_str("processing"),
-            Some(ReturnStage::Processing)
-        );
-        assert_eq!(
-            ReturnStage::from_str("resolving"),
-            Some(ReturnStage::Resolving)
-        );
-        assert_eq!(ReturnStage::from_str("done"), Some(ReturnStage::Done));
-        assert_eq!(
-            ReturnStage::from_str("rejected"),
-            Some(ReturnStage::Rejected)
-        );
-        assert_eq!(
-            ReturnStage::from_str("cancelled"),
-            Some(ReturnStage::Cancelled)
-        );
-        assert_eq!(ReturnStage::from_str("unknown"), None);
-        assert_eq!(ReturnStage::from_str(""), None);
-    }
-
-    #[test]
-    fn return_stage_as_str_roundtrip() {
-        let all = [
-            ReturnStage::Pending,
-            ReturnStage::Accepted,
-            ReturnStage::Processing,
-            ReturnStage::Resolving,
-            ReturnStage::Done,
-            ReturnStage::Rejected,
-            ReturnStage::Cancelled,
-        ];
-        for s in all {
-            let txt = s.as_str();
-            let back = ReturnStage::from_str(txt).unwrap();
-            assert_eq!(back, s);
-        }
-    }
-
-    #[test]
-    fn return_stage_terminal_states() {
-        assert!(ReturnStage::Done.is_terminal());
-        assert!(ReturnStage::Rejected.is_terminal());
-        assert!(ReturnStage::Cancelled.is_terminal());
-        assert!(!ReturnStage::Pending.is_terminal());
-        assert!(!ReturnStage::Accepted.is_terminal());
-        assert!(!ReturnStage::Processing.is_terminal());
-        assert!(!ReturnStage::Resolving.is_terminal());
-    }
-
-    #[test]
-    fn return_stage_copy_clone_eq() {
-        let a = ReturnStage::Processing;
-        let b = a;
-        assert_eq!(a, b);
-        let c = a.clone();
-        assert_eq!(c, a);
-    }
 
     #[test]
     fn return_decision_copy_clone() {
@@ -2534,69 +2513,6 @@ mod tests {
         for t in [Refund, Exchange, Repair] {
             assert_eq!(t.clone(), t);
         }
-    }
-
-    #[test]
-    fn can_transition_valid_forward_path() {
-        use ReturnStage::*;
-        assert!(can_transition(Pending, Accepted).is_ok());
-        assert!(can_transition(Accepted, Processing).is_ok());
-        assert!(can_transition(Processing, Resolving).is_ok());
-        assert!(can_transition(Resolving, Done).is_ok());
-    }
-
-    #[test]
-    fn can_transition_resolving_loop_and_reject() {
-        use ReturnStage::*;
-        assert!(can_transition(Resolving, Processing).is_ok());
-        assert!(can_transition(Resolving, Rejected).is_ok());
-    }
-
-    #[test]
-    fn can_transition_cancel_from_non_terminal() {
-        use ReturnStage::*;
-        assert!(can_transition(Pending, Cancelled).is_ok());
-        assert!(can_transition(Accepted, Cancelled).is_ok());
-        assert!(can_transition(Processing, Cancelled).is_ok());
-        assert!(can_transition(Resolving, Cancelled).is_ok());
-    }
-
-    #[test]
-    fn can_transition_blocks_terminal_sources() {
-        use ReturnStage::*;
-        assert!(matches!(
-            can_transition(Done, Pending),
-            Err(TopemsError::BusinessLogic(_))
-        ));
-        assert!(matches!(
-            can_transition(Rejected, Accepted),
-            Err(TopemsError::BusinessLogic(_))
-        ));
-        assert!(matches!(
-            can_transition(Cancelled, Processing),
-            Err(TopemsError::BusinessLogic(_))
-        ));
-    }
-
-    #[test]
-    fn can_transition_invalid_cross_stage() {
-        use ReturnStage::*;
-        assert!(matches!(
-            can_transition(Pending, Processing),
-            Err(TopemsError::ValidationFailed(_))
-        ));
-        assert!(matches!(
-            can_transition(Accepted, Done),
-            Err(TopemsError::ValidationFailed(_))
-        ));
-        assert!(matches!(
-            can_transition(Processing, Accepted),
-            Err(TopemsError::ValidationFailed(_))
-        ));
-        assert!(matches!(
-            can_transition(Done, Cancelled),
-            Err(TopemsError::BusinessLogic(_))
-        ));
     }
 
     fn make_claims(sub: &str, tenant_id: Option<&str>) -> topems_shared::auth::Claims {

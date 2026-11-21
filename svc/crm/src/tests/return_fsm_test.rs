@@ -1,131 +1,96 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
-use crate::modules::aftersales::{can_transition, ProcessType, ReturnDecision, ReturnStage};
-use topems_shared_core::error::TopemsError;
+use crate::modules::aftersales::{ProcessType, ReturnDecision};
+use crate::modules::return_status::ReturnStatus;
 
 #[test]
-fn return_fsm_happy_path_refund_done() {
-    use ReturnStage::*;
-    assert!(can_transition(Pending, Accepted).is_ok());
-    assert!(can_transition(Accepted, Processing).is_ok());
-    assert!(can_transition(Processing, Resolving).is_ok());
-    assert!(can_transition(Resolving, Done).is_ok());
+fn return_status_happy_paths() {
+    use ReturnStatus::*;
+    assert!(Pending.can_transition_to(Accepted));
+    assert!(Accepted.can_transition_to(Processing));
+    assert!(Processing.can_transition_to(Completed));
+
+    assert!(Pending.can_transition_to(Approved));
+    assert!(Approved.can_transition_to(Processing));
+    assert!(Processing.can_transition_to(Completed));
 }
 
 #[test]
-fn return_fsm_returned_branch_loops_back_to_processing() {
-    use ReturnStage::*;
-    assert!(can_transition(Resolving, Processing).is_ok());
-    assert!(can_transition(Resolving, Rejected).is_ok());
+fn return_status_reject_branch() {
+    use ReturnStatus::*;
+    assert!(Pending.can_transition_to(Rejected));
+    assert!(Accepted.can_transition_to(Rejected));
+    assert!(Processing.can_transition_to(Rejected));
 }
 
 #[test]
-fn return_fsm_three_terminal_protection() {
-    use ReturnStage::*;
-    assert!(matches!(
-        can_transition(Done, Processing).unwrap_err(),
-        TopemsError::BusinessLogic(_)
-    ));
-    assert!(matches!(
-        can_transition(Rejected, Resolving).unwrap_err(),
-        TopemsError::BusinessLogic(_)
-    ));
-    assert!(matches!(
-        can_transition(Cancelled, Accepted).unwrap_err(),
-        TopemsError::BusinessLogic(_)
-    ));
-}
-
-#[test]
-fn return_fsm_cancel_from_any_non_terminal() {
-    use ReturnStage::*;
-    assert!(can_transition(Pending, Cancelled).is_ok());
-    assert!(can_transition(Accepted, Cancelled).is_ok());
-    assert!(can_transition(Processing, Cancelled).is_ok());
-    assert!(can_transition(Resolving, Cancelled).is_ok());
-}
-
-#[test]
-fn return_fsm_invalid_cross_stage_rejected() {
-    use ReturnStage::*;
-    assert!(matches!(
-        can_transition(Pending, Processing).unwrap_err(),
-        TopemsError::ValidationFailed(_)
-    ));
-    assert!(matches!(
-        can_transition(Pending, Resolving).unwrap_err(),
-        TopemsError::ValidationFailed(_)
-    ));
-    assert!(matches!(
-        can_transition(Pending, Done).unwrap_err(),
-        TopemsError::ValidationFailed(_)
-    ));
-    assert!(matches!(
-        can_transition(Accepted, Done).unwrap_err(),
-        TopemsError::ValidationFailed(_)
-    ));
-    assert!(matches!(
-        can_transition(Processing, Done).unwrap_err(),
-        TopemsError::ValidationFailed(_)
-    ));
-    assert!(matches!(
-        can_transition(Processing, Accepted).unwrap_err(),
-        TopemsError::ValidationFailed(_)
-    ));
-}
-
-#[test]
-fn return_fsm_stage_from_str_roundtrip() {
-    let all = [
-        ("pending", ReturnStage::Pending),
-        ("accepted", ReturnStage::Accepted),
-        ("processing", ReturnStage::Processing),
-        ("resolving", ReturnStage::Resolving),
-        ("done", ReturnStage::Done),
-        ("rejected", ReturnStage::Rejected),
-        ("cancelled", ReturnStage::Cancelled),
-    ];
-    for (s, stage) in &all {
-        let parsed = ReturnStage::from_str(s).expect("should parse");
-        assert_eq!(&parsed, stage);
-        assert_eq!(parsed.as_str(), *s);
-    }
-    assert!(ReturnStage::from_str("unknown").is_none());
-    assert!(ReturnStage::from_str("").is_none());
-}
-
-#[test]
-fn return_fsm_is_terminal_matches_three() {
-    use ReturnStage::*;
-    assert!(Done.is_terminal());
-    assert!(Rejected.is_terminal());
-    assert!(Cancelled.is_terminal());
-    assert!(!Pending.is_terminal());
-    assert!(!Accepted.is_terminal());
-    assert!(!Processing.is_terminal());
-    assert!(!Resolving.is_terminal());
-}
-
-#[test]
-fn return_fsm_returned_loop_processing_resolving_cycle() {
-    use ReturnStage::*;
-    for _ in 0..3 {
-        assert!(can_transition(Processing, Resolving).is_ok());
-        assert!(can_transition(Resolving, Processing).is_ok());
+fn return_status_terminal_protection() {
+    use ReturnStatus::*;
+    for terminal in [Completed, Rejected, Cancelled] {
+        assert!(terminal.is_terminal());
+        for target in [
+            Pending, Accepted, Approved, Processing, Completed, Rejected, Cancelled,
+        ] {
+            assert!(!terminal.can_transition_to(target));
+        }
     }
 }
 
 #[test]
-fn return_fsm_enums_variants_debug_not_empty() {
-    use ReturnStage::*;
-    for s in [
-        Pending, Accepted, Processing, Resolving, Done, Rejected, Cancelled,
+fn return_status_cancel_from_non_terminal() {
+    use ReturnStatus::*;
+    for status in [Pending, Accepted, Approved, Processing] {
+        assert!(status.can_transition_to(Cancelled));
+    }
+}
+
+#[test]
+fn return_status_invalid_cross_stage_rejected() {
+    use ReturnStatus::*;
+    assert!(!Pending.can_transition_to(Processing));
+    assert!(!Pending.can_transition_to(Completed));
+    assert!(!Accepted.can_transition_to(Completed));
+    assert!(!Processing.can_transition_to(Accepted));
+    assert!(!Processing.can_transition_to(Approved));
+}
+
+#[test]
+fn return_status_db_roundtrip_and_read_aliases() {
+    for value in ReturnStatus::DB_VALUES {
+        let parsed = ReturnStatus::from_db_str(value).expect("should parse");
+        assert_eq!(parsed.as_db_str(), value);
+    }
+    assert_eq!(
+        ReturnStatus::from_read_str("resolving"),
+        Some(ReturnStatus::Processing)
+    );
+    assert_eq!(
+        ReturnStatus::from_read_str("received"),
+        Some(ReturnStatus::Processing)
+    );
+    assert_eq!(
+        ReturnStatus::from_read_str("done"),
+        Some(ReturnStatus::Completed)
+    );
+    assert!(ReturnStatus::from_db_str("unknown").is_none());
+    assert!(ReturnStatus::from_db_str("").is_none());
+}
+
+#[test]
+fn return_status_debug_not_empty() {
+    for status in [
+        ReturnStatus::Pending,
+        ReturnStatus::Accepted,
+        ReturnStatus::Approved,
+        ReturnStatus::Processing,
+        ReturnStatus::Completed,
+        ReturnStatus::Rejected,
+        ReturnStatus::Cancelled,
     ] {
-        let dbg = format!("{:?}", s);
-        assert!(!dbg.is_empty());
+        assert!(!format!("{:?}", status).is_empty());
     }
 
     use ReturnDecision::*;
-    for d in [
+    for decision in [
         Accept,
         Process,
         Resolve,
@@ -134,27 +99,22 @@ fn return_fsm_enums_variants_debug_not_empty() {
         Reject,
         Cancel,
     ] {
-        let dbg = format!("{:?}", d);
-        assert!(!dbg.is_empty());
+        assert!(!format!("{:?}", decision).is_empty());
     }
 
     use ProcessType::*;
-    for p in [Refund, Exchange, Repair] {
-        let dbg = format!("{:?}", p);
-        assert!(!dbg.is_empty());
+    for process_type in [Refund, Exchange, Repair] {
+        assert!(!format!("{:?}", process_type).is_empty());
     }
 }
 
-#[allow(clippy::as_conversions)]
 #[test]
-fn return_fsm_clone_eq_partial_ord_sanity() {
-    use ReturnStage::*;
-    let a = Pending;
+fn return_status_clone_eq_sanity() {
+    let a = ReturnStatus::Pending;
     let b = a;
     assert_eq!(a, b);
-    let c = Accepted;
+    let c = ReturnStatus::Accepted;
     assert_ne!(a, c);
-    let cloned = c.clone();
+    let cloned = c;
     assert_eq!(cloned, c);
-    assert_eq!(cloned as u32, Accepted as u32);
 }

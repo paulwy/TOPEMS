@@ -6,7 +6,7 @@
     "uncovered_enums": 124,
     "uncovered_values": 139,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 90,
+    "resolved_enums": 92,
     "internal_state_enums": 54,
     "persisted_unmapped_enums": 62,
     "api_projection_enums": 25,
@@ -472,7 +472,14 @@
           "terminated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/crm/src/modules/contract_status.rs",
+        "enum": "ContractStatus",
+        "table": "crm.contracts",
+        "column": "status",
+        "candidate": "docs/database/crm-contract-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "crm",
@@ -502,7 +509,14 @@
           "won"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/crm/src/modules/opportunity_status.rs",
+        "enum": "OpportunityStatus",
+        "table": "crm.opportunities",
+        "column": "status",
+        "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "ehs",

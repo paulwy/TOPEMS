@@ -391,7 +391,7 @@ export interface RecommendationQueryParams extends PaginationParams {
 
 // ---- Returns / Aftersales ----
 export type ReturnStatus =
-  'pending' | 'approved' | 'rejected' | 'received' | 'completed' | 'cancelled';
+  'pending' | 'accepted' | 'approved' | 'rejected' | 'processing' | 'completed' | 'cancelled';
 export type ReturnType = 'return' | 'exchange';
 
 export interface ReturnRecord {

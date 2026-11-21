@@ -936,6 +936,8 @@
   "shared.return.k30": "Received",
   "shared.return.k31": "Completed",
   "shared.return.k32": "Cancelled",
+  "shared.return.status_accepted": "Accepted",
+  "shared.return.status_processing": "Processing",
   "shared.return.k33": "Type",
   "shared.return.k34": "All",
   "shared.return.k35": "Return",

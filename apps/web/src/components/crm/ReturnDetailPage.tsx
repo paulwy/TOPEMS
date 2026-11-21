@@ -18,9 +18,10 @@ import i18n from '@/i18n';
 
 const statusLabelMap: Record<ReturnStatus, string> = {
   pending: i18n.t('crm.returnDetail.status_pending'),
+  accepted: i18n.t('crm.returnDetail.status_accepted'),
   approved: i18n.t('crm.returnDetail.status_approved'),
   rejected: i18n.t('crm.returnDetail.status_rejected'),
-  received: i18n.t('crm.returnDetail.status_received'),
+  processing: i18n.t('crm.returnDetail.status_processing'),
   completed: i18n.t('crm.returnDetail.status_completed'),
   cancelled: i18n.t('crm.returnDetail.status_cancelled'),
 };
@@ -30,9 +31,10 @@ const statusColorMap: Record<
   'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
 > = {
   pending: 'warning',
+  accepted: 'info',
   approved: 'success',
   rejected: 'error',
-  received: 'info',
+  processing: 'info',
   completed: 'success',
   cancelled: 'primary',
 };
@@ -42,7 +44,7 @@ const returnTypeLabelMap: Record<ReturnType, string> = {
   exchange: i18n.t('crm.returnDetail.type_exchange'),
 };
 
-const timelineSteps: ReturnStatus[] = ['pending', 'approved', 'received', 'completed'];
+const timelineSteps: ReturnStatus[] = ['pending', 'approved', 'processing', 'completed'];
 
 const getStatusChip = (status: ReturnStatus) => (
   <Chip
@@ -226,7 +228,9 @@ const ReturnDetailPage: React.FC = () => {
 
   const timelineSection = useMemo(() => {
     if (!record) return null;
-    const currentIdx = timelineSteps.indexOf(record.status as ReturnStatus);
+    // accepted 是受理待审批的兼容态，时间线按待处理展示
+    const timelineStatus = record.status === 'accepted' ? 'pending' : record.status;
+    const currentIdx = timelineSteps.indexOf(timelineStatus as ReturnStatus);
     const isRejected = record.status === 'rejected';
     const isCancelled = record.status === 'cancelled';
 
@@ -510,7 +514,7 @@ const ReturnDetailPage: React.FC = () => {
     const buttons: React.ReactNode[] = [];
     const btnSx = { mr: 1, mb: 1 };
 
-    if (record.status === 'pending') {
+    if (['pending', 'accepted'].includes(record.status)) {
       buttons.push(
         <Button
           key='approve'
@@ -557,7 +561,7 @@ const ReturnDetailPage: React.FC = () => {
         </Button>
       );
     }
-    if (record.status === 'received') {
+    if (record.status === 'processing') {
       buttons.push(
         <Button
           key='complete'
@@ -574,7 +578,7 @@ const ReturnDetailPage: React.FC = () => {
         </Button>
       );
     }
-    if (['pending', 'approved'].includes(record.status)) {
+    if (['pending', 'accepted', 'approved', 'processing'].includes(record.status)) {
       buttons.push(
         <Button
           key='cancel'

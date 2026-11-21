@@ -32,6 +32,7 @@ pub mod interaction;
 pub mod openapi;
 pub mod opportunity;
 pub mod opportunity_status;
+pub mod return_status;
 pub mod rfm;
 pub mod sales_forecast;
 pub mod sales_funnel;
