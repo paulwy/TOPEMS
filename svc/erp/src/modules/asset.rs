@@ -59,13 +59,20 @@ pub async fn list_assets(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match AssetStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的资产状态"),
+        },
+        None => None,
+    };
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
-        SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, CASE WHEN status = 'active' THEN 'in_use' ELSE status END AS status, created_at, updated_at,
                serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
         FROM erp.assets
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR name ILIKE $1 OR asset_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
@@ -150,8 +157,8 @@ pub async fn create_asset(
         only_own_schema_query!("erp", "
         INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                                  serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
-        RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $22, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, CASE WHEN status = 'active' THEN 'in_use' ELSE status END AS status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
         "),
     )
@@ -176,6 +183,7 @@ pub async fn create_asset(
     .bind(&req.image_url)
     .bind(&req.department)
     .bind(tenant_id)
+    .bind(AssetStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
     let (response, status, error_msg) = match &result {
@@ -257,7 +265,7 @@ pub async fn get_asset(
     }
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
-        SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, CASE WHEN status = 'active' THEN 'in_use' ELSE status END AS status, created_at, updated_at,
                serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
         FROM erp.assets WHERE id = $1
         "),
@@ -306,7 +314,7 @@ pub async fn update_asset(
         return e.0;
     }
     let existing = sqlx::query_as::<_, Asset>(
-        only_own_schema_query!("erp", "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        only_own_schema_query!("erp", "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, CASE WHEN status = 'active' THEN 'in_use' ELSE status END AS status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
            FROM erp.assets WHERE id = $1"),
     )
@@ -357,7 +365,7 @@ pub async fn update_asset(
             name = $2, category = $3, brand = $4, model = $5, purchase_date = $6, purchase_amount = $7, location = $8, responsible_id = $9, status = $10, updated_at = $11,
             serial_number = $12, manufacturer = $13, rated_power = $14, rated_voltage = $15, rated_current = $16, specifications = $17, image_url = $18, department = $19
         WHERE id = $1 AND (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
-        RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
+        RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, CASE WHEN status = 'active' THEN 'in_use' ELSE status END AS status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
         "),
     )

@@ -65,7 +65,8 @@ impl AssetStatus {
     pub fn from_db_str(s: &str) -> Option<Self> {
         match s.trim().to_ascii_lowercase().as_str() {
             "in_stock" => Some(Self::InStock),
-            "in_use" => Some(Self::InUse),
+            // 历史旧默认值，B29 候选要求窗口内归一为 in_use；读取时按 in_use 兼容。
+            "in_use" | "active" => Some(Self::InUse),
             "maintenance" => Some(Self::Maintenance),
             "scrapped" => Some(Self::Scrapped),
             "transferred" => Some(Self::Transferred),
@@ -111,7 +112,12 @@ mod tests {
             assert_eq!(AssetStatus::from_db_str(s).map(|v| v.as_db_str()), Some(s));
         }
         assert_eq!(AssetStatus::DEFAULT.as_db_str(), "in_use");
-        assert_eq!(AssetStatus::from_db_str("active"), None);
+        assert_eq!(
+            AssetStatus::from_db_str("active"),
+            Some(AssetStatus::InUse),
+            "历史旧默认值按 in_use 兼容"
+        );
+        assert_eq!(AssetStatus::from_db_str("bogus"), None);
         assert_eq!(AssetStatus::from_db_str("IN_USE"), Some(AssetStatus::InUse));
     }
 }
