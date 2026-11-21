@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 115,
-    "uncovered_values": 125,
+    "uncovered_enums": 116,
+    "uncovered_values": 126,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 87,
-    "internal_state_enums": 46,
-    "persisted_unmapped_enums": 59,
+    "resolved_enums": 88,
+    "internal_state_enums": 47,
+    "persisted_unmapped_enums": 60,
     "api_projection_enums": 25,
-    "finance_candidate_ready_enums": 29,
-    "internal_state_values": 66,
+    "finance_candidate_ready_enums": 30,
+    "internal_state_values": 67,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -2005,6 +2005,33 @@
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
       ]
+    },
+    {
+      "module": "srm",
+      "file": "svc/srm/src/modules/bidding_status.rs",
+      "enum": "BiddingStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "awarded",
+          "opened"
+        ],
+        "finance_candidate_ready": [
+          "evaluated"
+        ],
+        "persisted_unmapped": [
+          "published"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v60_decision_scenarios.v60_decision_scenarios_status_check"
+      ],
+      "resolved": {
+        "file": "svc/srm/src/modules/bidding_status.rs",
+        "enum": "BiddingStatus",
+        "table": "srm.biddings",
+        "column": "status",
+        "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql"
+      }
     },
     {
       "module": "srm",

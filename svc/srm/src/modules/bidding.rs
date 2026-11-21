@@ -16,6 +16,7 @@ use crate::models::{
     AwardBiddingRequest, Bidding, CreateBiddingRequest, SetBiddingSuppliersRequest,
     UpdateBiddingRequest,
 };
+use crate::modules::bidding_status::BiddingStatus;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -77,7 +78,13 @@ pub async fn list_biddings(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) => match BiddingStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的招标状态"),
+        },
+        None => None,
+    };
     let category_filter = params.category.clone();
 
     let query = format!(
@@ -86,7 +93,8 @@ pub async fn list_biddings(
                publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
                supplier_count, creator, department, items, remarks, created_at, updated_at
         FROM srm.biddings
-        WHERE ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR title ILIKE $1 OR bidding_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
         ORDER BY created_at DESC
@@ -198,7 +206,7 @@ pub async fn create_bidding(
     .bind(&req.description)
     .bind(&req.category)
     .bind(&req.bidding_type)
-    .bind("draft")
+    .bind(BiddingStatus::DEFAULT.as_db_str())
     .bind(req.budget_amount)
     .bind(&req.currency)
     .bind(bid_deadline)
@@ -417,16 +425,18 @@ pub async fn publish_bidding(
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
-        UPDATE srm.biddings SET status = 'published', publish_date = $2, updated_at = $3
-        WHERE id = $1 AND status = 'draft'
+        UPDATE srm.biddings SET status = $2, publish_date = $3, updated_at = $4
+        WHERE id = $1 AND status = $5
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
+    .bind(BiddingStatus::Published.as_db_str())
     .bind(now)
     .bind(now)
+    .bind(BiddingStatus::Published.publish_from())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -440,7 +450,7 @@ pub async fn publish_bidding(
             }
             ApiResponse::success(bidding, "招标发布成功")
         }
-        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在或当前状态不允许发布"),
+        Ok(None) => ApiResponse::<Bidding>::conflict("招标不存在或当前状态不允许发布"),
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
             ApiResponse::<Bidding>::server_error("发布招标失败")
@@ -476,16 +486,18 @@ pub async fn open_bidding(
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
-        UPDATE srm.biddings SET status = 'opened', open_date = $2, updated_at = $3
-        WHERE id = $1 AND status = 'published'
+        UPDATE srm.biddings SET status = $2, open_date = $3, updated_at = $4
+        WHERE id = $1 AND status = $5
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
+    .bind(BiddingStatus::Opened.as_db_str())
     .bind(now)
     .bind(now)
+    .bind(BiddingStatus::Opened.open_from())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -499,7 +511,7 @@ pub async fn open_bidding(
             }
             ApiResponse::success(bidding, "开标成功")
         }
-        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在或当前状态不允许开标"),
+        Ok(None) => ApiResponse::<Bidding>::conflict("招标不存在或当前状态不允许开标"),
         Err(e) => {
             tracing::error!("开标失败: {}", e);
             ApiResponse::<Bidding>::server_error("开标失败")
@@ -535,15 +547,17 @@ pub async fn evaluate_bidding(
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
-        UPDATE srm.biddings SET status = 'evaluated', updated_at = $2
-        WHERE id = $1 AND status = 'opened'
+        UPDATE srm.biddings SET status = $2, updated_at = $3
+        WHERE id = $1 AND status = $4
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
+    .bind(BiddingStatus::Evaluated.as_db_str())
     .bind(now)
+    .bind(BiddingStatus::Evaluated.evaluate_from())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -557,7 +571,7 @@ pub async fn evaluate_bidding(
             }
             ApiResponse::success(bidding, "评标完成")
         }
-        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在或当前状态不允许评标"),
+        Ok(None) => ApiResponse::<Bidding>::conflict("招标不存在或当前状态不允许评标"),
         Err(e) => {
             tracing::error!("评标失败: {}", e);
             ApiResponse::<Bidding>::server_error("评标失败")
@@ -609,23 +623,25 @@ pub async fn award_bidding(
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
-        UPDATE srm.biddings SET status = 'awarded', winner_supplier_id = $2,
-            winner_supplier_name = $3, updated_at = $4
-        WHERE id = $1 AND status = 'evaluated'
+        UPDATE srm.biddings SET status = $2, winner_supplier_id = $3,
+            winner_supplier_name = $4, updated_at = $5
+        WHERE id = $1 AND status = $6
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
+    .bind(BiddingStatus::Awarded.as_db_str())
     .bind(supplier_id)
     .bind(supplier_name)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .bind(BiddingStatus::Awarded.award_from())
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => {
+        Ok(Some(bidding)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
@@ -634,6 +650,7 @@ pub async fn award_bidding(
             }
             ApiResponse::success(bidding, "中标结果已确定")
         }
+        Ok(None) => ApiResponse::<Bidding>::conflict("招标不存在或当前状态不允许定标"),
         Err(e) => {
             tracing::error!("确定中标结果失败: {}", e);
             ApiResponse::<Bidding>::server_error("确定中标结果失败")

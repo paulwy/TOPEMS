@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 168,
-    "rust_enum_values": 164,
-    "rust_values_not_in_db_check": 125,
-    "frontend_status_keys": 179,
-    "frontend_keys_not_in_db_check": 139,
+    "rust_enums": 169,
+    "rust_enum_values": 165,
+    "rust_values_not_in_db_check": 126,
+    "frontend_status_keys": 180,
+    "frontend_keys_not_in_db_check": 140,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2818,6 +2818,25 @@
     },
     {
       "module": "srm",
+      "file": "svc/srm/src/modules/bidding_status.rs",
+      "name": "BiddingStatus",
+      "values": [
+        "Awarded",
+        "Draft",
+        "Evaluated",
+        "Opened",
+        "Published"
+      ],
+      "normalized": [
+        "awarded",
+        "draft",
+        "evaluated",
+        "opened",
+        "published"
+      ]
+    },
+    {
+      "module": "srm",
       "file": "svc/srm/src/modules/inquiry_status.rs",
       "name": "InquiryStatus",
       "values": [
@@ -3073,6 +3092,7 @@
       "offline",
       "online",
       "open",
+      "opened",
       "other",
       "overdue",
       "paid",
@@ -3224,6 +3244,7 @@
       "not_started",
       "offline",
       "online",
+      "opened",
       "other",
       "partial",
       "partially_compliant",
@@ -3360,6 +3381,7 @@
       "not_started",
       "offline",
       "online",
+      "opened",
       "other",
       "partial",
       "partially_compliant",

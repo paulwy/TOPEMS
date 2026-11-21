@@ -667,6 +667,13 @@
       "table": "crm.contacts",
       "column": "status",
       "candidate": "existing:ck_contacts_status_standard"
+    },
+    {
+      "file": "svc/srm/src/modules/bidding_status.rs",
+      "enum": "BiddingStatus",
+      "table": "srm.biddings",
+      "column": "status",
+      "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

@@ -1,5 +1,6 @@
 pub mod bid_price;
 pub mod bidding;
+pub mod bidding_status;
 pub mod data_sync;
 pub mod inquiry;
 pub mod inquiry_status;
