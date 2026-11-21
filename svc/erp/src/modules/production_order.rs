@@ -7,7 +7,6 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -21,9 +20,31 @@ use topems_shared_event::event::{ErpProductionOrderDispatchedPayload, EventType}
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ProductionOrderListParams {
-    #[serde(flatten)]
-    pub base: ListQueryParams,
+    #[serde(default, alias = "p")]
+    pub page: Option<i64>,
+    #[serde(
+        default,
+        alias = "pagesize",
+        alias = "pageSize",
+        alias = "size",
+        alias = "limit"
+    )]
+    pub page_size: Option<i64>,
+    #[serde(default, alias = "q", alias = "keyword")]
+    pub search: Option<String>,
     pub status: Option<String>,
+}
+
+impl ProductionOrderListParams {
+    fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+    fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).clamp(1, 100)
+    }
+    fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -78,11 +99,11 @@ pub async fn list_production_orders(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let _page = params.base.page_or_default();
-    let page_size = params.base.page_size_or_default();
-    let offset = params.base.offset();
+    let _page = params.page_or_default();
+    let page_size = params.page_size_or_default();
+    let offset = params.offset();
 
-    let search_pattern = params.base.search.as_deref().map(|s| format!("%{}%", s));
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
     let result = sqlx::query_as::<_, ProductionOrder>(
