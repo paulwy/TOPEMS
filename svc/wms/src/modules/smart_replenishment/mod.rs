@@ -10,6 +10,7 @@ mod models;
 pub mod orders;
 pub mod rules;
 pub mod safety_stock;
+pub mod status;
 pub mod suggestions;
 
 pub use models::{

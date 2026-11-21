@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 145,
+    "rust_enums": 147,
     "rust_enum_values": 156,
     "rust_values_not_in_db_check": 117,
     "frontend_status_keys": 171,
@@ -2606,6 +2606,36 @@
         "degraded",
         "healthy",
         "unhealthy"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "name": "ReplenishmentOrderStatus",
+      "values": [
+        "Completed",
+        "Confirmed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "confirmed",
+        "pending"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "name": "ReplenishmentSuggestionStatus",
+      "values": [
+        "Active",
+        "Confirmed",
+        "Draft"
+      ],
+      "normalized": [
+        "active",
+        "confirmed",
+        "draft"
       ]
     }
   ],

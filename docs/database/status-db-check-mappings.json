@@ -506,6 +506,20 @@
       "table": "mes.work_stations",
       "column": "status",
       "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "enum": "ReplenishmentSuggestionStatus",
+      "table": "wms.replenishment_suggestions",
+      "column": "status",
+      "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "enum": "ReplenishmentOrderStatus",
+      "table": "wms.replenishment_orders",
+      "column": "status",
+      "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql"
     }
   ]
 }

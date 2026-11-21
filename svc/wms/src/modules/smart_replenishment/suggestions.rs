@@ -9,6 +9,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
+use crate::modules::smart_replenishment::status::ReplenishmentSuggestionStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{arm_short_txn, release_request_txn, tenant_of, wms_db, ShortTxnTimer};
@@ -295,7 +296,7 @@ pub async fn compute_replenishment(
             END as suggested_quantity,
             NULL::uuid as supplier_id,
             NULL::text as supplier_name,
-            'active' as status,
+            $7 as status,
             CASE
                 WHEN i.available_quantity < COALESCE(r.safety_stock, i.min_quantity, 0) THEN 'urgent'
                 WHEN i.available_quantity < COALESCE(r.reorder_point, i.reorder_point, 0) THEN 'high'
@@ -357,6 +358,7 @@ pub async fn compute_replenishment(
     .bind(req.warehouse_id)
     .bind(req.rule_based_only.unwrap_or(false))
     .bind(tenant)
+    .bind(ReplenishmentSuggestionStatus::DEFAULT.as_db_str())
     .fetch_all(&mut tx)
     .await;
 
@@ -477,10 +479,19 @@ pub async fn confirm_suggestion(
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
-    if status != "draft" {
+    let current = match ReplenishmentSuggestionStatus::from_db_str(&status) {
+        Some(v) => v,
+        None => {
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "补货建议当前状态为{}，无法确认",
+                status
+            )))
+        }
+    };
+    if !ReplenishmentSuggestionStatus::confirm_from().contains(&current.as_db_str()) {
         return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "补货建议当前状态为{}，无法确认",
-            status
+            current.as_db_str()
         )));
     }
 
@@ -491,7 +502,7 @@ pub async fn confirm_suggestion(
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_suggestions SET
-            status = 'confirmed',
+            status = $6,
             suggested_quantity = $2,
             supplier_id = COALESCE($3, supplier_id),
             remarks = CASE 
@@ -499,7 +510,7 @@ pub async fn confirm_suggestion(
                 ELSE $4
             END,
             updated_at = $5
-        WHERE id = $1
+        WHERE id = $1 AND status = ANY($7)
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
                   safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
@@ -512,6 +523,8 @@ pub async fn confirm_suggestion(
     .bind(req.supplier_id)
     .bind(req.remarks.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
+    .bind(ReplenishmentSuggestionStatus::Confirmed.as_db_str())
+    .bind(ReplenishmentSuggestionStatus::confirm_from())
     .fetch_one(&mut **txn)
     .await;
 

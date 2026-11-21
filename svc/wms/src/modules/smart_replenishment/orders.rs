@@ -8,6 +8,7 @@ use sqlx::Row;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
+use crate::modules::smart_replenishment::status::ReplenishmentOrderStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::tenant_of;
@@ -136,7 +137,7 @@ pub async fn create_order(
         INSERT INTO wms.replenishment_orders (
             id, order_number, warehouse_id, warehouse_name, status,
             total_quantity, total_amount, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3::uuid, $4, 'active', $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
                   total_quantity, total_amount, created_at, updated_at
         "#,
@@ -145,6 +146,7 @@ pub async fn create_order(
     .bind(&order_number)
     .bind(req.get("warehouse_id").and_then(|v| v.as_str()))
     .bind(req.get("warehouse_name").and_then(|v| v.as_str()))
+    .bind(ReplenishmentOrderStatus::DEFAULT.as_db_str())
     .bind(
         req.get("total_quantity")
             .and_then(|v| v.as_i64())
@@ -320,6 +322,14 @@ pub async fn update_order(
 
     let now = Utc::now().naive_utc();
 
+    let status_value = match req.get("status").and_then(|v| v.as_str()) {
+        Some(raw) => match ReplenishmentOrderStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str()),
+            None => return ApiResponse::bad_request("无效的补货订单状态"),
+        },
+        None => None,
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
@@ -335,7 +345,7 @@ pub async fn update_order(
     .bind(id)
     .bind(req.get("warehouse_id").and_then(|v| v.as_str()))
     .bind(req.get("warehouse_name").and_then(|v| v.as_str()))
-    .bind(req.get("status").and_then(|v| v.as_str()))
+    .bind(status_value)
     .bind(now)
     .fetch_one(&mut **txn)
     .await;
@@ -550,14 +560,16 @@ pub async fn confirm_order(
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
-            status = 'confirmed',
+            status = $3,
             updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = ANY($4)
         RETURNING id, order_number, status, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
+    .bind(ReplenishmentOrderStatus::Confirmed.as_db_str())
+    .bind(ReplenishmentOrderStatus::confirm_from())
     .fetch_one(&mut **txn)
     .await;
 
@@ -621,14 +633,16 @@ pub async fn complete_order(
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
-            status = 'completed',
+            status = $3,
             updated_at = $2
-        WHERE id = $1 AND status = 'confirmed'
+        WHERE id = $1 AND status = ANY($4)
         RETURNING id, order_number, status, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
+    .bind(ReplenishmentOrderStatus::Completed.as_db_str())
+    .bind(ReplenishmentOrderStatus::complete_from())
     .fetch_one(&mut **txn)
     .await;
 
