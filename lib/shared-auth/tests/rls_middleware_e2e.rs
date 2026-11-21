@@ -134,9 +134,20 @@ async fn seed_and_build(pool: &PgPool) -> (Uuid, Uuid) {
     (t1, t2)
 }
 
+async fn read_txn_timeout(Extension(txn_arc): Extension<TxnExt>) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let timeout: String = sqlx::query_scalar("SHOW statement_timeout")
+        .fetch_one(&mut **txn)
+        .await
+        .unwrap();
+    Json(json!({ "statement_timeout": timeout }))
+}
+
 fn build_app(pool: PgPool) -> Router {
     Router::new()
         .route("/items", get(list_items))
+        .route("/txn-settings", get(read_txn_timeout))
         .with_state(pool.clone())
         .layer(middleware::from_fn_with_state(
             pool.clone(),
@@ -162,6 +173,32 @@ async fn get_body(app: &Router, claims: Option<Claims>) -> (StatusCode, Value) {
 }
 
 topems_test_support::sqlx_dsn_guard!();
+#[sqlx::test(migrations = false)]
+async fn tenant_middleware_sets_statement_timeout(pool: PgPool) {
+    let app = build_app(pool);
+    let mut req = Request::builder()
+        .uri("/txn-settings")
+        .body(Body::empty())
+        .unwrap();
+    req.extensions_mut().insert(make_claims(
+        Some("00000000-0000-0000-0000-0000000000aa"),
+        "123e4567-e89b-12d3-a456-426614174010",
+        "user",
+    ));
+    let resp = app.oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let v: Value = serde_json::from_slice(&body).unwrap();
+    let timeout = v["statement_timeout"].as_str().unwrap();
+    if std::env::var("TOPEMS_STATEMENT_TIMEOUT").is_err() {
+        assert_eq!(timeout, "30s");
+    } else {
+        assert_ne!(timeout, "0", "显式超时不得退化为无限制");
+    }
+}
+
 #[sqlx::test(migrations = false)]
 async fn tenant_middleware_filters_by_claims_tenant(pool: PgPool) {
     let (t1, t2) = seed_and_build(&pool).await;

@@ -230,7 +230,15 @@ impl Db {
     /// 被长连接整段占住，不能复用。普通请求 handler 一律用 [`Db::scope_with`]。
     /// 静态门禁只允许该入口出现在 WebSocket 实现文件中。
     pub async fn scope_read_for_tenant_stream(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
-        self.open_read_for_tenant(tenant).await
+        let mut scope = self.open_read_for_tenant(tenant).await?;
+        // 长连接每轮短读同样受 30s 语句超时保护，避免一条慢查询卡住订阅循环。
+        let timeout =
+            std::env::var("TOPEMS_STATEMENT_TIMEOUT").unwrap_or_else(|_| "30s".to_string());
+        sqlx::query("SELECT set_config('statement_timeout', $1, true)")
+            .bind(timeout)
+            .execute(&mut scope)
+            .await?;
+        Ok(scope)
     }
 
     async fn open_read_for_tenant(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
@@ -446,7 +454,15 @@ impl ScopedTxn<'_> {
                     .into(),
             ));
         };
-        self.apply_explicit_tenant(ctx.tenant, ctx.system).await
+        self.apply_explicit_tenant(ctx.tenant, ctx.system).await?;
+        // no_txn 服务不经过请求中间件；在请求上下文内的自开作用域同样加 30s 语句超时。
+        let timeout =
+            std::env::var("TOPEMS_STATEMENT_TIMEOUT").unwrap_or_else(|_| "30s".to_string());
+        sqlx::query("SELECT set_config('statement_timeout', $1, true)")
+            .bind(timeout)
+            .execute(&mut *self)
+            .await?;
+        Ok(())
     }
 
     /// 显式设置租户通道 GUC（系统通道 = nil UUID + `rls_system='on'`）。

@@ -185,7 +185,7 @@ async fn scope_with_reuses_request_txn() {
         tenant: test_tenant(),
         system: false,
     };
-    let (p, tenant, rls_system) = scope_request_tenant(ctx, async {
+    let (p, tenant, rls_system, statement_timeout) = scope_request_tenant(ctx, async {
         let mut scope = db.scope_with(&mut txn).await.unwrap();
         let p = show_in_scope(&mut scope).await;
         let tenant: String = sqlx::query_scalar("SELECT current_setting('app.tenant_id', true)")
@@ -197,16 +197,27 @@ async fn scope_with_reuses_request_txn() {
                 .fetch_one(&mut scope)
                 .await
                 .unwrap();
+        let statement_timeout: String =
+            sqlx::query_scalar("SELECT current_setting('statement_timeout', true)")
+                .fetch_one(&mut scope)
+                .await
+                .unwrap();
         scope.commit().await.unwrap(); // 借用事务：空操作，由中间件提交
-        (p, tenant, rls_system)
+        (p, tenant, rls_system, statement_timeout)
     })
     .await;
     println!(
-        "[scope_with] SHOW search_path = {p}, app.tenant_id = {tenant}, app.rls_system = {rls_system}"
+        "[scope_with] SHOW search_path = {p}, app.tenant_id = {tenant}, \
+         app.rls_system = {rls_system}, statement_timeout = {statement_timeout}"
     );
     assert_eq!(p, "public");
     assert_eq!(tenant, test_tenant().to_string());
     assert_eq!(rls_system, "off");
+    if std::env::var("TOPEMS_STATEMENT_TIMEOUT").is_err() {
+        assert_eq!(statement_timeout, "30s");
+    } else {
+        assert_ne!(statement_timeout, "0");
+    }
     txn.commit().await.unwrap();
 
     // 借用事务由中间件提交后，连接同样恢复基线

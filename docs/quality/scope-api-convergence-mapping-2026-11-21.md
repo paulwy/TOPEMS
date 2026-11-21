@@ -170,7 +170,7 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 
 | 前置 | 状态 | 缺口 | 归属 |
 |---|---|---|---|
-| 30 秒事务超时 | **未就绪** | 全仓无 `statement_timeout` / `idle_in_transaction_session_timeout`；仅有池 `acquire_timeout`(15s)。共享请求事务后，一条卡住的查询会占住唯一连接 | `lib/shared-db` 定义 `SET LOCAL statement_timeout`；运维确认生产取值 |
+| 30 秒事务超时 | **代码就绪（2026-11-21）** | `tenant_middleware` 与请求内 `Db::scope*` 已设事务级 `statement_timeout=30s`（`TOPEMS_STATEMENT_TIMEOUT` 可覆盖）；WebSocket 短读同样设置。仍缺生产阈值确认、连接预算与压测 | `lib/shared-db` / `lib/shared-auth`；运维确认生产取值 |
 | 长请求监控 | **部分就绪** | 已有 `http_request_duration_seconds`、`DB_QUERY_DURATION`、500ms 慢查询阈值；缺「请求事务存活时长」指标与告警 | observability 增 `rls_txn_open_seconds` + 告警规则 |
 | 压测口径 | **未就绪** | 有 k6 脚本与验收表（p95/p99、>100 RPS），但无当前连接预算/并发基线；`repo-wide-rls-pool-closure` 明确 wms 20 线程压测未做 | QA/perf + 各服务 owner |
 | 守卫覆盖 | **部分** | 仅 unified-core/finance/mes/qms 开启；qms 已 0 处，其余三处残留均为后台 | B3 按服务推进 |
@@ -202,6 +202,6 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 | B4 | 已完成（2026-11-21） | shared-db 的 8 个非事务包装（`MasterDataRefService` 5 个 + `ReconciliationLogService` 3 个）在方法文档标注 **Standalone（非事务）**，明确请求链路应改用对应 `_tx` / `_in_scope` 变体 |
 | B5 | 已完成（2026-11-21） | EHS/WMS 写作用域豁免落注释：实际 **EHS 44**（41 `no-request-txn` + 3 `bg-event`）、**WMS 12**（10 `short-txn-exempt` + 2 `bg-event`）；同时修正门禁 `EXEMPT_RE` 缺 `m` 标志导致「同行豁免」不计数的缺陷。门禁读数 `total 154 / marked 56 / unmarked 98`，基线已核销 |
 | B3 | 已完成（代码，2026-11-21） | 33 个 BI 读 handler + 2 处 reports-center 读路径改为复用 `RlsTxnCell` 的 `scope_with`；WebSocket 订阅保留每轮短读，但改走 `scope_read_for_tenant_stream`，门禁只允许该入口出现在 `websocket.rs`；`deny_request_tenant_scope` 已在独立部署 `analytics/main.rs` 与宿主 `svc/server` analytics 模块同时开启。新增 `topems_rls_request_txn_duration_seconds` / `topems_rls_request_txn_total`，按 success/error 观测请求事务 P99 |
-| B3 生产前置 | 未完成 | 30s `statement_timeout`、连接预算/并发基线仍需按服务配置并在停写窗口前压测；代码守卫已开，但生产阈值未拍板前不得据此认定容量安全 |
+| B3 生产前置 | 部分完成（2026-11-21） | 30s `statement_timeout` 已落在请求事务、请求内作用域与 WebSocket 短读（`TOPEMS_STATEMENT_TIMEOUT` 可覆盖）；连接预算/并发基线仍需按服务压测。代码守卫已开，但生产阈值未拍板前不得据此认定容量安全 |
 
 > B2 的 e2e `master_ten_endpoints_form_closed_loop` 仍因测试库 `core_mdm_reconciliation_log.detected_at` 为 `timestamp without time zone`、Rust 侧 `DateTime<Utc>` 解码不匹配而无法端到端跑通（该用例原即 `#[ignore]`），本次改由 shared-db 事务边界回归覆盖；该时间类型漂移独立于 B2，另行处理。

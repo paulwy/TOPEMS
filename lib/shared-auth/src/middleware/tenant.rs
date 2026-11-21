@@ -148,6 +148,13 @@ fn internal_error(message: &str) -> Response {
         .into_response()
 }
 
+/// 请求级事务的语句超时；默认 30s，按服务可用 `TOPEMS_STATEMENT_TIMEOUT` 覆盖。
+/// 取值直接交给 PostgreSQL `set_config('statement_timeout', ...)`，非法值由 PG 拒绝，
+/// 中间件按「租户上下文设置失败」返回 500，不会静默退化成无超时。
+fn request_statement_timeout() -> String {
+    std::env::var("TOPEMS_STATEMENT_TIMEOUT").unwrap_or_else(|_| "30s".to_string())
+}
+
 fn bad_request(message: &str) -> Response {
     (
         StatusCode::BAD_REQUEST,
@@ -683,13 +690,16 @@ pub fn tenant_middleware() -> impl Fn(
             };
             // 事务级租户上下文：service 身份走 nil + 系统通道，普通租户走真实租户 +
             // 关闭系统通道（即使连接上有残留会话级开关也不会被提升为跨租户放行）。
-            // 两个 GUC 合成一条语句设置，省一次往返；均为 set_config(..., true) 仅本事务生效。
+            // 三个 GUC 合成一条语句设置，省往返；均为 set_config(..., true) 仅本事务生效。
+            // statement_timeout 兜住「一条卡住的查询长期占用唯一连接」，默认 30s。
             if let Err(e) = sqlx::query(
                 "SELECT set_config('app.tenant_id', $1, true), \
-                        set_config('app.rls_system', $2, true)",
+                        set_config('app.rls_system', $2, true), \
+                        set_config('statement_timeout', $3, true)",
             )
             .bind(tenant_id.to_string())
             .bind(if system { "on" } else { "off" })
+            .bind(request_statement_timeout())
             .execute(&mut *txn)
             .await
             {
