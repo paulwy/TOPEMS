@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use crate::modules::capacity_status::CapacityStatus;
 use crate::shared::aps_fsm::capacity_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
@@ -129,6 +130,13 @@ pub async fn list_capacities(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match CapacityStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的产能状态"),
+        },
+    };
 
     // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:page_size:{page_size}:{params}）
     let cache_key = format!(
@@ -137,7 +145,7 @@ pub async fn list_capacities(
         page,
         page_size,
         params.search.clone().unwrap_or_else(|| "none".to_string()),
-        params.status.clone().unwrap_or_else(|| "all".to_string()),
+        status_filter.clone().unwrap_or_else(|| "all".to_string()),
         params
             .work_center_id
             .map(|id| id.to_string())
@@ -170,7 +178,6 @@ pub async fn list_capacities(
         }
     };
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
     let wc_filter = params.work_center_id;
 
     let result = sqlx::query_as::<_, Capacity>(
@@ -180,6 +187,7 @@ pub async fn list_capacities(
                status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         FROM mes.capacities
         WHERE tenant_id = $1
+          AND status IN ('available','allocated','consumed','maintenance','released')
           AND ($2::text IS NULL OR work_center_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR work_center_id = $4)
@@ -202,6 +210,7 @@ pub async fn list_capacities(
                 r#"
                 SELECT COUNT(*) FROM mes.capacities
                 WHERE tenant_id = $1
+                  AND status IN ('available','allocated','consumed','maintenance','released')
                   AND ($2::text IS NULL OR work_center_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR work_center_id = $4)
@@ -290,7 +299,7 @@ pub async fn get_capacity(
                available_hours::float8, used_hours::float8, utilization_rate::float8,
                status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         FROM mes.capacities
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND status IN ('available','allocated','consumed','maintenance','released') AND tenant_id = $2
         "#,
     )
     .bind(id)
@@ -331,7 +340,13 @@ pub async fn create_capacity(
             return ApiResponse::server_error("数据库事务上下文缺失");
         }
     };
-    let status = req.status.unwrap_or_else(|| "available".to_string());
+    let status = match req.status.as_deref() {
+        None => CapacityStatus::DEFAULT.as_db_str().to_string(),
+        Some(raw) => match CapacityStatus::from_db_str(raw) {
+            Some(v) => v.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的产能状态"),
+        },
+    };
     let used_hours = req.used_hours.unwrap_or(0.0);
     let utilization_rate = calc_utilization(req.available_hours, Some(used_hours));
 
@@ -412,7 +427,7 @@ pub async fn update_capacity(
     };
 
     let existing = sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND status IN ('available','allocated','consumed','maintenance','released') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -429,7 +444,13 @@ pub async fn update_capacity(
     let capacity_date = req.capacity_date.or(existing.capacity_date);
     let available_hours = req.available_hours.or(existing.available_hours);
     let used_hours = req.used_hours.or(existing.used_hours);
-    let status = req.status.unwrap_or(existing.status);
+    if let Some(raw) = req.status.as_deref() {
+        match CapacityStatus::from_db_str(raw) {
+            Some(v) if v.as_db_str() == existing.status => {}
+            Some(_) => return ApiResponse::bad_request("产能状态只能通过分配/释放/维护流程变更"),
+            None => return ApiResponse::bad_request("无效的产能状态"),
+        }
+    }
     let utilization_rate = calc_utilization(available_hours, used_hours);
     let now = Utc::now();
 
@@ -439,6 +460,7 @@ pub async fn update_capacity(
             work_center_name = $1, capacity_date = $2, available_hours = $3,
             used_hours = $4, utilization_rate = $5, status = $6, updated_at = $7
         WHERE id = $8 AND tenant_id = $9
+          AND status IN ('available','allocated','consumed','maintenance','released')
         RETURNING id, work_center_id, work_center_name, capacity_date,
                   available_hours::float8, used_hours::float8, utilization_rate::float8,
                   status, tenant_id, created_at::timestamptz, updated_at::timestamptz
@@ -449,7 +471,7 @@ pub async fn update_capacity(
     .bind(available_hours)
     .bind(used_hours)
     .bind(utilization_rate)
-    .bind(&status)
+    .bind(Option::<String>::None)
     .bind(now)
     .bind(id)
     .bind(tenant_id)
@@ -583,7 +605,7 @@ pub async fn allocate_capacity(
     };
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND status IN ('available','allocated','consumed','maintenance','released') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -617,7 +639,7 @@ pub async fn allocate_capacity(
         r#"
         UPDATE mes.capacities SET
             used_hours = $1, utilization_rate = $2, status = 'allocated', updated_at = $3
-        WHERE id = $4 AND tenant_id = $5
+        WHERE id = $4 AND status = 'available' AND tenant_id = $5
         RETURNING id, work_center_id, work_center_name, capacity_date,
                   available_hours::float8, used_hours::float8, utilization_rate::float8,
                   status, tenant_id, created_at::timestamptz, updated_at::timestamptz
@@ -628,11 +650,12 @@ pub async fn allocate_capacity(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(cap) => ApiResponse::success(cap, "产能分配成功"),
+        Ok(Some(cap)) => ApiResponse::success(cap, "产能分配成功"),
+        Ok(None) => ApiResponse::conflict("产能状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("分配产能失败: {}", e);
             ApiResponse::server_error("分配产能失败")
@@ -674,7 +697,7 @@ pub async fn release_capacity(
     };
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND status IN ('available','allocated','consumed','maintenance','released') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -700,7 +723,7 @@ pub async fn release_capacity(
         r#"
         UPDATE mes.capacities SET
             used_hours = $1, utilization_rate = $2, status = 'released', updated_at = $3
-        WHERE id = $4 AND tenant_id = $5
+        WHERE id = $4 AND status = 'allocated' AND tenant_id = $5
         RETURNING id, work_center_id, work_center_name, capacity_date,
                   available_hours::float8, used_hours::float8, utilization_rate::float8,
                   status, tenant_id, created_at::timestamptz, updated_at::timestamptz
@@ -711,11 +734,12 @@ pub async fn release_capacity(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(cap) => ApiResponse::success(cap, "产能释放成功"),
+        Ok(Some(cap)) => ApiResponse::success(cap, "产能释放成功"),
+        Ok(None) => ApiResponse::conflict("产能状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("释放产能失败: {}", e);
             ApiResponse::server_error("释放产能失败")
@@ -756,7 +780,7 @@ pub async fn maintenance_capacity(
     };
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND status IN ('available','allocated','consumed','maintenance','released') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -768,10 +792,10 @@ pub async fn maintenance_capacity(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
-    let target_status = if existing.status == "maintenance" {
-        "available"
+    let (target_status, allowed_from) = if existing.status == "maintenance" {
+        ("available", CapacityStatus::restore_from())
     } else {
-        "maintenance"
+        ("maintenance", CapacityStatus::maintenance_from())
     };
 
     if !can_transition(&existing.status, target_status) {
@@ -785,7 +809,7 @@ pub async fn maintenance_capacity(
     let result = sqlx::query_as::<_, Capacity>(
         r#"
         UPDATE mes.capacities SET status = $1, updated_at = $2
-        WHERE id = $3 AND tenant_id = $4
+        WHERE id = $3 AND status = ANY($5::text[]) AND tenant_id = $4
         RETURNING id, work_center_id, work_center_name, capacity_date,
                   available_hours::float8, used_hours::float8, utilization_rate::float8,
                   status, tenant_id, created_at::timestamptz, updated_at::timestamptz
@@ -795,11 +819,12 @@ pub async fn maintenance_capacity(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .bind(allowed_from)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(cap) => {
+        Ok(Some(cap)) => {
             let msg = if target_status == "maintenance" {
                 "产能已标记为维护中"
             } else {
@@ -807,6 +832,7 @@ pub async fn maintenance_capacity(
             };
             ApiResponse::success(cap, msg)
         }
+        Ok(None) => ApiResponse::conflict("产能状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("切换产能维护状态失败: {}", e);
             ApiResponse::server_error("切换产能维护状态失败")
@@ -889,7 +915,7 @@ pub async fn submit_capacity(
     };
 
     let existing = match sqlx::query_as::<_, Capacity>(
-        "SELECT * FROM mes.capacities WHERE id = $1 AND tenant_id = $2",
+        "SELECT * FROM mes.capacities WHERE id = $1 AND status IN ('available','allocated','consumed','maintenance','released') AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -910,7 +936,7 @@ pub async fn submit_capacity(
         r#"
         UPDATE mes.capacities SET
             status = 'allocated', updated_at = $1
-        WHERE id = $2 AND tenant_id = $3
+        WHERE id = $2 AND status = 'available' AND tenant_id = $3
         RETURNING id, work_center_id, work_center_name, capacity_date,
                   available_hours::float8, used_hours::float8, utilization_rate::float8,
                   status, tenant_id, created_at::timestamptz, updated_at::timestamptz
@@ -919,11 +945,12 @@ pub async fn submit_capacity(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(cap) => ApiResponse::success(cap, "产能提交成功"),
+        Ok(Some(cap)) => ApiResponse::success(cap, "产能提交成功"),
+        Ok(None) => ApiResponse::conflict("产能状态已变更，请刷新后重试"),
         Err(e) => {
             tracing::error!("提交产能失败: {}", e);
             ApiResponse::server_error("提交产能失败")

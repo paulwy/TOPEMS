@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 175,
-    "rust_enum_values": 173,
-    "rust_values_not_in_db_check": 134,
-    "frontend_status_keys": 188,
-    "frontend_keys_not_in_db_check": 148,
+    "rust_enums": 176,
+    "rust_enum_values": 175,
+    "rust_values_not_in_db_check": 136,
+    "frontend_status_keys": 190,
+    "frontend_keys_not_in_db_check": 150,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2001,6 +2001,25 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/capacity_status.rs",
+      "name": "CapacityStatus",
+      "values": [
+        "Allocated",
+        "Available",
+        "Consumed",
+        "Maintenance",
+        "Released"
+      ],
+      "normalized": [
+        "allocated",
+        "available",
+        "consumed",
+        "maintenance",
+        "released"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/demand_forecast_status.rs",
       "name": "DemandForecastStatus",
       "values": [
@@ -3116,6 +3135,7 @@
       "acknowledged",
       "active",
       "adopted",
+      "allocated",
       "applied",
       "approved",
       "archived",
@@ -3139,6 +3159,7 @@
       "compliant",
       "confirmed",
       "conflict",
+      "consumed",
       "controlled",
       "critical",
       "danger",
@@ -3305,6 +3326,7 @@
       "aborted",
       "achieved",
       "adopted",
+      "allocated",
       "applied",
       "assessed",
       "assigned",
@@ -3319,6 +3341,7 @@
       "compensating",
       "compliant",
       "conflict",
+      "consumed",
       "controlled",
       "critical",
       "danger",
@@ -3441,6 +3464,7 @@
       "aborted",
       "achieved",
       "adopted",
+      "allocated",
       "applied",
       "assessed",
       "assigned",
@@ -3456,6 +3480,7 @@
       "compensating",
       "compliant",
       "conflict",
+      "consumed",
       "controlled",
       "critical",
       "danger",

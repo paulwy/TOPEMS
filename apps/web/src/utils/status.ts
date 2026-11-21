@@ -26,6 +26,8 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   satisfied: 'success',
   shortage: 'error',
   available: 'success',
+  allocated: 'info',
+  consumed: 'success',
   opened: 'info',
   empty: 'default',
   rejected: 'error',

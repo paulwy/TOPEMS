@@ -6,6 +6,7 @@ pub mod aps_scheduling;
 pub mod audit;
 pub mod basics;
 pub mod capacity;
+pub mod capacity_status;
 pub mod dashboard_ws;
 pub mod demand_forecast;
 pub mod demand_forecast_status;
