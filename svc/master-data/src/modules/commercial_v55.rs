@@ -216,6 +216,36 @@ pub enum BillingStatus {
     Overdue,
 }
 
+impl BillingStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["pending", "invoiced", "paid", "overdue"];
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "pending" => Some(Self::Pending),
+            "invoiced" => Some(Self::Invoiced),
+            "paid" => Some(Self::Paid),
+            "overdue" => Some(Self::Overdue),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Invoiced => "invoiced",
+            Self::Paid => "paid",
+            Self::Overdue => "overdue",
+        }
+    }
+
+    /// 标记已支付允许的起始状态：已支付不可重复支付。
+    pub fn pay_from() -> &'static [&'static str] {
+        &["pending", "invoiced", "overdue"]
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct UsageRecord {
     pub id: String,
@@ -1280,6 +1310,13 @@ pub async fn get_billing_history(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<BillingHistoryQuery>,
 ) -> ApiResponse<PaginatedResponse<BillingRecord>> {
+    let status = match params.status.as_deref() {
+        Some(raw) => match BillingStatus::from_db_str(raw) {
+            Some(v) => Some(v.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的账单状态"),
+        },
+        None => None,
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("缺少请求事务上下文".to_string()));
@@ -1296,9 +1333,10 @@ pub async fn get_billing_history(
     let page_size = params.page_size.unwrap_or(20).min(100);
 
     let count_rows = sqlx::query(
-        "SELECT COUNT(*) AS total FROM master_data.mdm_billing_records WHERE ($1::text IS NULL OR tenant_id::text = $1)",
+        "SELECT COUNT(*) AS total FROM master_data.mdm_billing_records WHERE ($1::text IS NULL OR tenant_id::text = $1) AND ($2::text IS NULL OR status = $2)",
     )
     .bind(params.tenant_id.as_deref())
+    .bind(status.as_deref())
     .fetch_one(&mut db_scope)
     .await;
     let total: i64 = match count_rows {
@@ -1309,10 +1347,12 @@ pub async fn get_billing_history(
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {BILLING_COLS} FROM master_data.mdm_billing_records
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
+             AND ($2::text IS NULL OR status = $2)
            ORDER BY period_end DESC
-           LIMIT $2 OFFSET $3"#,
+           LIMIT $3 OFFSET $4"#,
     )))
     .bind(params.tenant_id.as_deref())
+    .bind(status.as_deref())
     .bind(page_size)
     .bind((page - 1) * page_size)
     .fetch_all(&mut db_scope)
@@ -1464,19 +1504,22 @@ pub async fn mark_bill_paid(
     let tenant = tenant_of(&claims);
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
-        r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
+        r#"UPDATE master_data.mdm_billing_records SET status = $3
            WHERE id = $1::uuid AND ($2::uuid IS NULL OR tenant_id = $2)
+             AND status = ANY($4::text[])
            RETURNING {BILLING_COLS}"#,
     )))
     .bind(id)
     .bind(tenant)
+    .bind(BillingStatus::Paid.as_db_str())
+    .bind(BillingStatus::pay_from().to_vec())
     .fetch_optional(&mut db_scope)
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
         Err(e) => return ApiResponse::server_error(&format!("标记账单失败: {e}")),
     }) else {
-        return ApiResponse::not_found("未找到账单");
+        return ApiResponse::error(409, "账单已支付或状态不允许，未找到可支付账单");
     };
     let updated = billing_record_from_row(&row);
 
@@ -2167,21 +2210,11 @@ fn usage_record_from_row(row: &sqlx::postgres::PgRow) -> UsageRecord {
 }
 
 fn billing_status_from_str(s: &str) -> BillingStatus {
-    match s {
-        "invoiced" => BillingStatus::Invoiced,
-        "paid" => BillingStatus::Paid,
-        "overdue" => BillingStatus::Overdue,
-        _ => BillingStatus::Pending,
-    }
+    BillingStatus::from_db_str(s).unwrap_or(BillingStatus::Pending)
 }
 
 fn billing_status_to_str(b: &BillingStatus) -> String {
-    match b {
-        BillingStatus::Pending => "pending".to_string(),
-        BillingStatus::Invoiced => "invoiced".to_string(),
-        BillingStatus::Paid => "paid".to_string(),
-        BillingStatus::Overdue => "overdue".to_string(),
-    }
+    b.as_db_str().to_string()
 }
 
 fn billing_record_from_row(row: &sqlx::postgres::PgRow) -> BillingRecord {
@@ -2599,6 +2632,17 @@ mod tests {
             let back: SubscriptionStatus = serde_json::from_str(&json).unwrap();
             assert_eq!(v, back);
         }
+    }
+
+    #[test]
+    fn test_billing_status_db_values_and_pay_from() {
+        for raw in BillingStatus::DB_VALUES {
+            let parsed = BillingStatus::from_db_str(raw).expect("raw must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(BillingStatus::from_db_str("refunded"), None);
+        assert!(BillingStatus::pay_from().contains(&"overdue"));
+        assert!(!BillingStatus::pay_from().contains(&"paid"));
     }
 
     #[test]
