@@ -77,6 +77,27 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   error: 'error',
   normal: 'success',
   'in-progress': 'info',
+  // finance 状态单一源（W5-B B4～B16）补充键，避免业务单据状态落到灰色 fallback
+  posted: 'success',
+  reversed: 'warning',
+  disputed: 'error',
+  discrepancy: 'error',
+  matched: 'success',
+  unmatched: 'warning',
+  diff: 'warning',
+  linked: 'info',
+  locked: 'default',
+  written_off: 'success',
+  evaluated: 'info',
+  recognized: 'info',
+  verified: 'success',
+  calculated: 'info',
+  accepted: 'success',
+  proposed: 'info',
+  under_review: 'warning',
+  executed: 'success',
+  generating: 'primary',
+  reimbursed: 'success',
 };
 
 const LIMS_STATUS_COLOR_MAP: Record<string, StatusColor> = {

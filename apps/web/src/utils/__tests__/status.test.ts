@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getStatusColor, getChipStatusColor } from '@/utils/status';
+import { getStatusColor, getChipStatusColor, STATUS_COLOR_MAP } from '@/utils/status';
 
 // status.ts 的 lims 分支在模块加载期用 i18n.t 构造映射键，这里按 zh 真实文案 mock
 vi.mock('@/i18n', () => ({
@@ -59,6 +59,51 @@ describe('getStatusColor', () => {
     expect(getStatusColor('待登记', { category: 'lims' })).toBe('grey.100');
     expect(getStatusColor('已完成', { category: 'lims' })).toBe('success.lighter');
     expect(getStatusColor('检测中', { category: 'lims' })).toBe('primary.light');
+  });
+});
+
+describe('finance 状态色板', () => {
+  // 与 W5-B B4～B16 收口的 finance 状态集合保持一致；新增状态必须同步补色板
+  const FINANCE_STATUSES = [
+    'draft',
+    'pending',
+    'approved',
+    'rejected',
+    'posted',
+    'cancelled',
+    'reversed',
+    'submitted',
+    'confirmed',
+    'disputed',
+    'unmatched',
+    'matched',
+    'diff',
+    'manual',
+    'locked',
+    'written_off',
+    'processing',
+    'completed',
+    'failed',
+    'linked',
+    'evaluated',
+    'recognized',
+    'verified',
+    'partial',
+    'discrepancy',
+    'calculated',
+    'accepted',
+    'proposed',
+    'under_review',
+    'executed',
+    'generating',
+    'reimbursed',
+    'paid',
+  ];
+
+  it('每个 finance 状态都在全局色板里显式登记', () => {
+    for (const status of FINANCE_STATUSES) {
+      expect(STATUS_COLOR_MAP[status]).toBeDefined();
+    }
   });
 });
 
