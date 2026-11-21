@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 132,
+    "rust_enums": 133,
     "rust_enum_values": 145,
     "rust_values_not_in_db_check": 107,
     "frontend_status_keys": 61,
@@ -1023,6 +1023,19 @@
         "active",
         "resolved",
         "suppressed"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/payment_item_write_off_status.rs",
+      "name": "PaymentItemWriteOffStatus",
+      "values": [
+        "Completed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "pending"
       ]
     },
     {

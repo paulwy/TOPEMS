@@ -16,6 +16,7 @@ pub mod financial_reports;
 pub mod forecast_v53;
 pub mod forecasting;
 pub mod operational;
+pub mod payment_item_write_off_status;
 pub mod receivable_payable_status;
 pub mod reconcile_orders;
 pub mod reconcile_status;
@@ -1549,14 +1550,16 @@ pub async fn write_off_payment_item_handler(
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let write_off_by = claims.username.clone();
+    let Some(write_off_by) = Uuid::parse_str(&claims.sub).ok() else {
+        return ApiResponse::from(TopemsError::Unauthorized);
+    };
 
     match service
         .write_off_payment_item(
             tenant_id,
             req.item_id,
             req.write_off_amount,
-            &write_off_by,
+            write_off_by,
             txn,
         )
         .await

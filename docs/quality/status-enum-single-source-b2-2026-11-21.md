@@ -2,7 +2,7 @@
 
 ## 1. 结论
 
-B2 把代码侧手写状态源盘成了可复现清单：Rust 132 个 `*Status` 枚举（B8 新增 `ap_payment_status`）、145 个归一化
+B2 把代码侧手写状态源盘成了可复现清单：Rust 133 个 `*Status` 枚举（B8 新增 `ap_payment_status`、B9 新增 `payment_item_write_off_status`）、145 个归一化
 值；前端 `STATUS_COLOR_MAP` 61 个键。对照 B1 的 DB 状态值并集（CHECK + 5 个
 ENUM 类型，共 47 个值）：
 

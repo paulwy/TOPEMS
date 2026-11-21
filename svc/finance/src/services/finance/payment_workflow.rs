@@ -675,20 +675,37 @@ impl FinanceService {
         tenant_id: Uuid,
         item_id: Uuid,
         write_off_amount: Decimal,
-        write_off_by: &str,
+        write_off_by: Uuid,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<PaymentResponse, TopemsError> {
         let mut scope = self.write_scope(txn).await?;
 
         let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(only_own_schema_query!(
             "finance",
-            "SELECT * FROM finance.core_finance_payment_items WHERE tenant_id = $1 AND id = $2"
+            "SELECT * FROM finance.core_finance_payment_items WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
         ))
         .bind(tenant_id)
         .bind(item_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::DatabaseRecordNotFound("付款明细不存在或已删除".to_string())
+        })?;
 
+        if write_off_amount <= Decimal::ZERO {
+            return Err(TopemsError::ValidationFailed(
+                "核销金额必须大于 0".to_string(),
+            ));
+        }
+        if crate::modules::payment_item_write_off_status::normalize_write_off_status(
+            item.write_off_status.as_deref(),
+        ) != Some(
+            crate::modules::payment_item_write_off_status::PaymentItemWriteOffStatus::Pending,
+        ) {
+            return Err(TopemsError::ValidationFailed(
+                "该付款明细已核销或核销状态非法，不可重复核销".to_string(),
+            ));
+        }
         if write_off_amount > item.payment_amount {
             return Err(TopemsError::ValidationFailed(
                 "核销金额不能超过付款金额".to_string(),
@@ -697,18 +714,25 @@ impl FinanceService {
 
         let payment_id = item.payment_id;
 
-        sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_items SET write_off_amount = $1, write_off_status = 'completed', write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5"),
+        let updated = sqlx::query(
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_items SET write_off_amount = $1, write_off_status = $6, write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5 AND deleted_at IS NULL AND COALESCE(write_off_status, 'pending') = $7"),
         )
         .bind(write_off_amount)
         .bind(write_off_by)
         .bind(item.payable_amount - write_off_amount)
         .bind(tenant_id)
         .bind(item_id)
+        .bind(crate::modules::payment_item_write_off_status::PaymentItemWriteOffStatus::Completed.as_str())
+        .bind(crate::modules::payment_item_write_off_status::PaymentItemWriteOffStatus::Pending.as_str())
         .execute(&mut scope)
         .await?;
 
         scope.commit().await?;
+        if updated.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "该付款明细已核销或状态已变化，核销未生效".to_string(),
+            ));
+        }
 
         self.get_payment_response(tenant_id, payment_id, txn).await
     }
