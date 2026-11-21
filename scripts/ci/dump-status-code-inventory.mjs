@@ -18,6 +18,7 @@
  * 用法：
  *   node scripts/ci/dump-status-code-inventory.mjs
  *   node scripts/ci/dump-status-code-inventory.mjs --check
+ *   node scripts/ci/dump-status-code-inventory.mjs --check --strict-palette
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -115,6 +116,7 @@ function parseFrontendStatuses() {
 
 function main() {
   const check = process.argv.includes("--check");
+  const strictPalette = process.argv.includes("--strict-palette");
   if (!fs.existsSync(CATALOG)) {
     console.error(`${TAG} FAIL: 缺少 ${path.relative(ROOT, CATALOG)}，先跑 B1 目录`);
     process.exit(1);
@@ -170,8 +172,15 @@ function main() {
       console.error(`${TAG} FAIL: 代码侧状态盘点与仓库不一致，重跑后复核并提交`);
       process.exit(1);
     }
+    if (strictPalette && paletteGaps.length > 0) {
+      console.error(
+        `${TAG} FAIL: ${paletteGaps.length} 个 Rust 状态值缺前端色板：${paletteGaps.join(", ")}`,
+      );
+      process.exit(1);
+    }
     console.log(
-      `${TAG} PASS: ${enums.length} 个 Rust 枚举 / ${frontendKeys.length} 个前端状态键与盘点一致`,
+      `${TAG} PASS: ${enums.length} 个 Rust 枚举 / ${frontendKeys.length} 个前端状态键与盘点一致` +
+        (strictPalette ? `；色板缺口 0` : ""),
     );
     return;
   }
