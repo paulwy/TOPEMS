@@ -22,9 +22,8 @@
  *   MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1 node scripts/migration/check-ledger-ddl-drift.mjs  # 仅演练用
  *   MIGRATION_DRIFT_ALLOW_SUPERUSER=1 node scripts/migration/check-ledger-ddl-drift.mjs    # 仅演练用
  *
- * 目标库解析顺序：进程环境 MIGRATION_DRIFT_DB_URL → 进程环境 DATABASE_URL
- *   → .env 的 MIGRATION_DRIFT_DB_URL（默认指向只读夹具库 topems_gate）
- *   → .env 的 MIGRATE_URL。
+ * 目标库解析顺序：进程环境 MIGRATION_DRIFT_DB_URL → .env 的 MIGRATION_DRIFT_DB_URL
+ *   （默认指向只读夹具库 topems_gate）→ 进程环境 DATABASE_URL → .env 的 MIGRATE_URL。
  *   - 连接串不含口令且未设置 PGPASSWORD/PGPASSFILE → 回落 socket
  *     （postgresql:///<库名>，本机 peer 认证），并打印实际用的是哪个来源。
  *   - 本机 pg_hba 把 127.0.0.1/32 改成 scram-sha-256 后，无口令 TCP 连接必然认证失败；
@@ -152,19 +151,21 @@ function socketFallbackUrl(url) {
 function resolveDbUrl() {
   let url = null;
   let source = null;
+  const fromEnvFileDrift = readEnvDriftUrl();
   if (process.env.MIGRATION_DRIFT_DB_URL) {
     url = process.env.MIGRATION_DRIFT_DB_URL;
     source = "MIGRATION_DRIFT_DB_URL（环境变量）";
+  } else if (fromEnvFileDrift) {
+    // 专用变量优先于通用 DATABASE_URL：DATABASE_URL 常是某个 shell 里遗留的通用连接，
+    // 不该覆盖本仓库显式配置的门禁目标库（见 .env.example 解析顺序说明）。
+    url = fromEnvFileDrift;
+    source = ".env 的 MIGRATION_DRIFT_DB_URL";
   } else if (process.env.DATABASE_URL) {
     url = process.env.DATABASE_URL;
     source = "DATABASE_URL（环境变量/外层 shell 导出）";
   } else {
-    const fromEnvFileDrift = readEnvDriftUrl();
     const fromEnvFileMigrate = readEnvMigrateUrl();
-    if (fromEnvFileDrift) {
-      url = fromEnvFileDrift;
-      source = ".env 的 MIGRATION_DRIFT_DB_URL";
-    } else if (fromEnvFileMigrate) {
+    if (fromEnvFileMigrate) {
       url = fromEnvFileMigrate;
       source = ".env 的 MIGRATE_URL";
     }
