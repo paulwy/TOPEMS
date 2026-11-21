@@ -173,7 +173,7 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 | 30 秒事务超时 | **代码就绪（2026-11-21）** | `tenant_middleware` 与请求内 `Db::scope*` 已设事务级 `statement_timeout=30s`（`TOPEMS_STATEMENT_TIMEOUT` 可覆盖）；WebSocket 短读同样设置。仍缺生产阈值确认、连接预算与压测 | `lib/shared-db` / `lib/shared-auth`；运维确认生产取值 |
 | 长请求监控 | **部分就绪** | 已有 `http_request_duration_seconds`、`DB_QUERY_DURATION`、500ms 慢查询阈值；缺「请求事务存活时长」指标与告警 | observability 增 `rls_txn_open_seconds` + 告警规则 |
 | 压测口径 | **未就绪** | 有 k6 脚本与验收表（p95/p99、>100 RPS），但无当前连接预算/并发基线；`repo-wide-rls-pool-closure` 明确 wms 20 线程压测未做 | QA/perf + 各服务 owner |
-| 守卫覆盖 | **部分** | 仅 unified-core/finance/mes/qms 开启；qms 已 0 处，其余三处残留均为后台 | B3 按服务推进 |
+| 守卫覆盖 | **部分** | unified-core/finance/mes/qms/analytics 已开启（宿主 `svc/server` analytics 模块同步）；qms 已 0 处，其余残留均为后台。逐服务可开/阻塞清单见 §7 | B3 按服务推进 |
 | 基线门禁 | **缺失** | 无脚本防止 190/155 回涨 | B0 |
 
 ---
@@ -205,3 +205,37 @@ EHS 在 [main.rs](file:///Users/xingzhai/TOPEMS/svc/ehs/src/main.rs#L245-L251) �
 | B3 生产前置 | 部分完成（2026-11-21） | 30s `statement_timeout` 已落在请求事务、请求内作用域与 WebSocket 短读（`TOPEMS_STATEMENT_TIMEOUT` 可覆盖）；连接预算/并发基线仍需按服务压测。代码守卫已开，但生产阈值未拍板前不得据此认定容量安全 |
 
 > B2 的 e2e `master_ten_endpoints_form_closed_loop` 仍因测试库 `core_mdm_reconciliation_log.detected_at` 为 `timestamp without time zone`、Rust 侧 `DateTime<Utc>` 解码不匹配而无法端到端跑通（该用例原即 `#[ignore]`），本次改由 shared-db 事务边界回归覆盖；该时间类型漂移独立于 B2，另行处理。
+
+---
+
+## 7. B3 守卫「按服务 rollout」可行性摸底（2026-11-21）
+
+### 7.1 守卫生效口径（本次核对）
+
+- 守卫只在 `current_request_tenant()` 为 `Some` 时触发（[scope.rs](file:///Users/xingzhai/TOPEMS/lib/shared-db/src/scope.rs#L117-L131)），同时拦 `scope_for_tenant` 与 `scope_read_for_tenant`。
+- 请求上下文由 **`auth_middleware` 写入**（[auth.rs](file:///Users/xingzhai/TOPEMS/lib/shared-auth/src/auth.rs#L1045-L1049)、[auth.rs](file:///Users/xingzhai/TOPEMS/lib/shared-auth/src/auth.rs#L1205-L1212)），**不依赖** `tenant_middleware`。因此：`tenant_middleware_no_txn` 的服务（EHS）一旦开守卫同样会打到自身 handler，豁免理由成立。
+- `tokio::spawn` / 事件消费者不继承 task-local，后台调用不受守卫影响；这是「未标记存量集中在 event_handlers / spawn」仍可开守卫的依据。
+
+### 7.2 门禁口径缺口（本次发现）
+
+`check-scope-api.mjs` 的 `SCOPE_CALL_RE` 只统计 `scope_for_tenant`，**不统计 `scope_read_for_tenant`**（[check-scope-api.mjs](file:///Users/xingzhai/TOPEMS/scripts/ci/check-scope-api.mjs#L53-L57)）。后者在运行期同样被守卫拦截，故「门禁 0 未标记」不等于「请求面已可开守卫」。
+
+### 7.3 分服务结论
+
+| 分组 | 服务 | 依据 | 结论 |
+|---|---|---|---|
+| 已开守卫 | unified-core（`main.rs` + `embedded.rs`）、finance、mes、qms、analytics（独立 `main.rs`）、`svc/server` analytics 模块 | `deny_request_tenant_scope` 6 处 + 宿主 1 处 | 保持 |
+| 书面豁免 | EHS、WMS | EHS `tenant_middleware_no_txn` 下 44 处标记 + 11 处 `scope_read_for_tenant`（请求模块）；WMS 12 处标记 + 16 处 `scope_read_for_tenant`（outbound/inbound/transfer/analytics/stock_take） | 不开守卫，维持 §5 T2 书面豁免 |
+| 请求面干净、可开 | communication、monitor、pdm、plugin-registry、ticket、tms（0 未标记、0 `scope_read_for_tenant`）；crm、erp、hrm、lims、master-data、mobile、pm、portal、rd、scm、srm、ai、search（未标记全部落在 `event_handlers` / `tokio::spawn` / 启动期缓存预热 / 后台同步） | 逐文件核对调用点上下文 | 可开，建议小批推进并做冒烟 |
+| 阻塞 | integration | HTTP handler 同步 `await` `sync_erp_to_mes` / `sync_mes_progress_to_erp` / `trigger_qms_inspection` 等，内部直接 `scope_for_tenant`（[mes_erp_sync.rs](file:///Users/xingzhai/TOPEMS/svc/integration/src/mes_erp_sync.rs#L617-L630)、[mes_qms_integration.rs](file:///Users/xingzhai/TOPEMS/svc/integration/src/mes_qms_integration.rs#L1208-L1220)） | 开守卫即 500，需先把同步入口改为请求事务复用 |
+| 阻塞 | gis | WebSocket 循环内 `scope_read_for_tenant`（[websocket.rs](file:///Users/xingzhai/TOPEMS/svc/gis/src/modules/websocket.rs#L278-L284)），请求 task-local 仍在 | 需按 analytics 模式改用 `scope_read_for_tenant_stream` 后再开 |
+
+### 7.4 摸底暴露的既有缺陷（待决策，未改动）
+
+unified-core 已开守卫，但主数据**读** handler 仍走非事务 helper：
+
+- [get_ref_handler](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/master/handlers.rs#L1487-L1500) / [get_ref_by_code_handler](file:///Users/xingzhai/TOPEMS/svc/unified-core/src/modules/master/handlers.rs#L1502-L1516) → `MasterDataService::get_ref` → `MasterDataRefService::get_by_id` → `scope_read_for_tenant`（[master_data_refs.rs](file:///Users/xingzhai/TOPEMS/lib/shared-db/src/master_data_refs.rs#L363-L376)）。
+- 守卫命中后返回 `Protocol`，即这两个 GET 在主数据请求上下文里会失败；同文件 `list_by_tenant` / `count_*` 等读方法同理。
+- 这与 B4「请求路径统一走 `_tx` 变体」的目标不一致：B4 只标注了 8 个写包装，读方法未收敛，且门禁不统计读入口（见 7.2），所以未被发现。
+
+建议顺序：先修读路径（改走 `RlsTxnCell` + `get_by_id_tx` 等）→ 门禁补统计 `scope_read_for_tenant` → 再按 7.3「可开」组小批开守卫。
