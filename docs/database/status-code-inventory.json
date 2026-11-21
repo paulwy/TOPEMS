@@ -5,10 +5,10 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 142,
-    "rust_enum_values": 153,
-    "rust_values_not_in_db_check": 115,
-    "frontend_status_keys": 169,
+    "rust_enums": 143,
+    "rust_enum_values": 155,
+    "rust_values_not_in_db_check": 116,
+    "frontend_status_keys": 170,
     "frontend_keys_not_in_db_check": 130,
     "rust_values_not_in_palette": 0
   },
@@ -1753,6 +1753,31 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/production_order_status.rs",
+      "name": "ProductionOrderStatus",
+      "values": [
+        "Cancelled",
+        "Closed",
+        "Completed",
+        "InProgress",
+        "Paused",
+        "Pending",
+        "Planned",
+        "Released"
+      ],
+      "normalized": [
+        "cancelled",
+        "closed",
+        "completed",
+        "in_progress",
+        "paused",
+        "pending",
+        "planned",
+        "released"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/work_order_status.rs",
       "name": "WorkOrderStatus",
       "values": [
@@ -2658,6 +2683,7 @@
       "pending_approval",
       "pending_destruction",
       "pending_review",
+      "planned",
       "planning",
       "posted",
       "preview",
@@ -2802,6 +2828,7 @@
       "received",
       "recognized",
       "reimbursed",
+      "released",
       "restored",
       "retired",
       "revoked",

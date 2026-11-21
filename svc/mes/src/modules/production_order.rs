@@ -23,6 +23,7 @@ use crate::modules::approval_common::{
     build_approve_response, build_reject_response, build_start_response,
     create_approval_and_log_db, execute_transition_and_log_db, reject_and_log_db,
 };
+use crate::modules::production_order_status::ProductionOrderStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -219,31 +220,19 @@ pub fn validate_state_transition(
     current_status: &str,
     target_status: &str,
 ) -> Result<(), TopemsError> {
-    let valid_transitions = [
-        ("pending", "released"),
-        ("pending", "cancelled"),
-        ("released", "in_progress"),
-        ("released", "cancelled"),
-        ("in_progress", "completed"),
-        ("in_progress", "paused"),
-        ("paused", "in_progress"),
-        ("paused", "cancelled"),
-        ("completed", "closed"),
-    ];
-
-    if current_status == target_status {
+    let from = ProductionOrderStatus::from_db_str(current_status).ok_or_else(|| {
+        TopemsError::BusinessLogic(format!("Unknown current status: {current_status}"))
+    })?;
+    let to = ProductionOrderStatus::from_db_str(target_status).ok_or_else(|| {
+        TopemsError::BusinessLogic(format!("Unknown target status: {target_status}"))
+    })?;
+    if from.can_transition_to(to) {
         return Ok(());
     }
-
-    for &(from, to) in &valid_transitions {
-        if current_status == from && target_status == to {
-            return Ok(());
-        }
-    }
-
     Err(TopemsError::BusinessLogic(format!(
         "Invalid state transition: {} -> {}",
-        current_status, target_status
+        from.as_db_str(),
+        to.as_db_str()
     )))
 }
 
@@ -974,7 +963,7 @@ pub async fn update_production_order(
             workshop_id = COALESCE($7, workshop_id),
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND status = 'pending' AND tenant_id = $10::uuid
+        WHERE id = $1 AND status = ANY($11) AND tenant_id = $10::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -994,6 +983,7 @@ pub async fn update_production_order(
     .bind(req.notes)
     .bind(Utc::now())
     .bind(tenant_id)
+    .bind(ProductionOrderStatus::update_from())
     .fetch_optional(&mut scope)
     .await;
 
@@ -1088,12 +1078,13 @@ pub async fn delete_production_order(
     let result = sqlx::query(
         r#"
         UPDATE mes.production_orders SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled') AND deleted_at IS NULL
+        WHERE id = $1 AND status = ANY($3) AND deleted_at IS NULL
           AND tenant_id = $2::uuid
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(ProductionOrderStatus::delete_from())
     .execute(&mut scope)
     .await;
 
@@ -1167,10 +1158,10 @@ pub async fn start_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = 'in_progress',
+            status = $5,
             actual_start_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'released' AND tenant_id = $4::uuid
+        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1279,11 +1270,11 @@ pub async fn complete_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = 'completed',
+            status = $5,
             completed_quantity = quantity,
             actual_end_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'in_progress' AND tenant_id = $4::uuid
+        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1392,9 +1383,9 @@ pub async fn cancel_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = 'cancelled',
+            status = $4,
             updated_at = $2
-        WHERE id = $1 AND status IN ('pending', 'released', 'paused') AND tenant_id = $3::uuid
+        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1502,9 +1493,9 @@ pub async fn release_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = 'released',
+            status = $4,
             updated_at = $2
-        WHERE id = $1 AND status = 'pending' AND tenant_id = $3::uuid
+        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
