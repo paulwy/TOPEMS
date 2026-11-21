@@ -714,7 +714,8 @@ pub fn tenant_middleware() -> impl Fn(
             );
 
             // 公司维度上下文：租户 GUC 已就位，才能用 core_user_company_scopes 校验归属。
-            // 未声明 x-company-id 时 ctx=None，公司 GUC 写空值（数据库侧 fail-closed）。
+            // 未声明 x-company-id 时按「唯一成员推断」兜底（多条或无记录 → ctx=None，
+            // 公司 GUC 写空值，数据库侧 fail-closed）。
             let company_ctx = match super::company::resolve_company_context(
                 &mut *txn,
                 tenant_id,
@@ -815,6 +816,8 @@ pub fn tenant_middleware_no_txn() -> impl Fn(
                 .insert(TenantContext { tenant_id, user_id });
 
             // 公司上下文只在请求声明了 x-company-id 时解析：无公司头不申请连接。
+            // 注：此处不套用「唯一成员 / is_default 推断」——那需要每请求多开一条解析事务，
+            // 与本中间件「不申请连接」的前提（W7-B4-EHS-FOLLOWUP-1）冲突。
             let company_ctx = if req.headers().contains_key(super::company::X_COMPANY_ID) {
                 match super::company::resolve_company_context_isolated(
                     &pool,

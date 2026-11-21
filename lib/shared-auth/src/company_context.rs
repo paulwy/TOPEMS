@@ -1,12 +1,12 @@
 //! 公司（法人主体）请求上下文。
 //!
 //! 集团 = 同一 `tenant_id` 下的多家 `hrm.companies`。租户仍是最外层隔离边界，
-//! 公司维度只在其内部进一步收窄：请求必须显式声明当前公司（`x-company-id`），
-//! 该公司须属于当前租户且当前用户持有 `public.core_user_company_scopes` 记录。
+//! 公司维度只在其内部进一步收窄：公司由请求显式声明（`x-company-id`），或在该头缺失时
+//! 按「用户在当前租户只有一条 `public.core_user_company_scopes` 记录」自动推断；
+//! 该公司须属于当前租户且当前用户持有对应范围记录。
 //!
-//! 未声明公司上下文时本 task-local 为 `None`，下游 GUC（`app.company_id` 等）
-//! 一律写空值，数据库侧 fail-closed 返回 0 行——不提供「取用户默认公司」的兜底：
-//! `core_user_company_scopes` 没有默认标记，多公司用户不存在唯一口径。
+//! 无法确定公司上下文时本 task-local 为 `None`，下游 GUC（`app.company_id` 等）
+//! 一律写空值，数据库侧 fail-closed 返回 0 行——多成员用户不声明公司时不猜。
 
 use uuid::Uuid;
 

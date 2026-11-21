@@ -1,7 +1,9 @@
 //! 公司（法人主体）请求上下文解析与 GUC 注入。
 //!
 //! 请求头契约：
-//! - `x-company-id`：当前公司 UUID。缺省 = 不声明公司（数据库侧 fail-closed 返回 0 行）；
+//! - `x-company-id`：当前公司 UUID。缺省时按「唯一成员自动推断」处理：用户在当前租户
+//!   只有一条 `core_user_company_scopes` 记录则直接采用它（等价于显式声明）；多条或
+//!   无记录则维持无上下文（数据库侧 fail-closed 返回 0 行），不猜。
 //!   非法/nil → 400；不属于当前租户或当前用户无 `core_user_company_scopes` 记录 → 403。
 //! - `x-company-scope`：`company`（默认）或 `group`。`group` 仅当当前公司处于集团根位置
 //!   （有活跃子关系、无活跃上级）时生效：可见范围 = 全部活跃后代，不与用户主体范围求交；
@@ -71,43 +73,23 @@ fn decide_group_view(mut descendants: Vec<Uuid>, has_parent: bool) -> Option<Vec
     Some(descendants)
 }
 
-async fn set_system_flag(conn: &mut PgConnection, on: bool) -> Result<(), sqlx::Error> {
-    sqlx::query("SELECT set_config('app.rls_system', $1, true)")
-        .bind(if on { "on" } else { "off" })
-        .execute(&mut *conn)
-        .await?;
-    Ok(())
+/// 显式公司头缺失时的隐式推断：仅当用户在当前租户只有一条成员记录时采用它。
+///
+/// 多条或无记录一律返回 `None`（维持 fail-closed），不做任何猜测。
+fn decide_single_member(members: &[Uuid]) -> Option<Uuid> {
+    match members {
+        [only] => Some(*only),
+        _ => None,
+    }
 }
 
-/// 解析请求头中的公司上下文并校验归属。
-///
-/// `conn` 必须位于事务内且已设置 `app.tenant_id`；`system` 是调用方原本的系统通道标志，
-/// 母公司视角推导结束后会原样恢复，避免扩大系统通道。
-pub async fn resolve_company_context(
+/// 校验「公司属于当前租户且当前用户持有该公司数据范围」。
+async fn ensure_member(
     conn: &mut PgConnection,
     tenant_id: Uuid,
     user_id: Uuid,
-    system: bool,
-    headers: &HeaderMap,
-) -> Result<Option<CompanyContext>, (u16, String)> {
-    let raw = match headers
-        .get(X_COMPANY_ID)
-        .and_then(|v| v.to_str().ok())
-        .map(str::trim)
-    {
-        Some(s) if !s.is_empty() => s,
-        _ => return Ok(None),
-    };
-
-    let company_id = Uuid::parse_str(raw)
-        .ok()
-        .filter(|c| !c.is_nil())
-        .ok_or_else(|| (400, "无效的公司ID格式".to_string()))?;
-
-    if user_id.is_nil() {
-        return Err((400, "公司上下文仅适用于用户身份".to_string()));
-    }
-
+    company_id: Uuid,
+) -> Result<(), (u16, String)> {
     let member: Option<Uuid> = sqlx::query_scalar(
         "SELECT company_id FROM public.core_user_company_scopes \
          WHERE tenant_id = $1 AND user_id = $2 AND company_id = $3",
@@ -128,6 +110,93 @@ pub async fn resolve_company_context(
             "公司主体不属于当前租户或当前用户无数据范围".to_string(),
         ));
     }
+    Ok(())
+}
+
+/// 读取用户在当前租户的全部成员记录，供唯一成员推断。
+///
+/// 查询失败按无上下文处理（保持改造前的 fail-closed 行为），不把无头请求变成 500。
+async fn load_members(conn: &mut PgConnection, tenant_id: Uuid, user_id: Uuid) -> Vec<Uuid> {
+    match sqlx::query_scalar::<_, Uuid>(
+        "SELECT company_id FROM public.core_user_company_scopes \
+         WHERE tenant_id = $1 AND user_id = $2",
+    )
+    .bind(tenant_id)
+    .bind(user_id)
+    .fetch_all(&mut *conn)
+    .await
+    {
+        Ok(members) => members,
+        Err(e) => {
+            tracing::error!(error = %e, "公司上下文隐式推断查询失败，按无上下文处理");
+            Vec::new()
+        }
+    }
+}
+
+async fn set_system_flag(conn: &mut PgConnection, on: bool) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT set_config('app.rls_system', $1, true)")
+        .bind(if on { "on" } else { "off" })
+        .execute(&mut *conn)
+        .await?;
+    Ok(())
+}
+
+/// 解析请求头中的公司上下文并校验归属。
+///
+/// 解析优先级：显式 `x-company-id` > 唯一成员推断 > 无上下文（fail-closed）。
+///
+/// `conn` 必须位于事务内且已设置 `app.tenant_id`；`system` 是调用方原本的系统通道标志，
+/// 母公司视角推导结束后会原样恢复，避免扩大系统通道。
+pub async fn resolve_company_context(
+    conn: &mut PgConnection,
+    tenant_id: Uuid,
+    user_id: Uuid,
+    system: bool,
+    headers: &HeaderMap,
+) -> Result<Option<CompanyContext>, (u16, String)> {
+    let explicit_id = match headers
+        .get(X_COMPANY_ID)
+        .and_then(|v| v.to_str().ok())
+        .map(str::trim)
+    {
+        Some(s) if !s.is_empty() => Some(
+            Uuid::parse_str(s)
+                .ok()
+                .filter(|c| !c.is_nil())
+                .ok_or_else(|| (400, "无效的公司ID格式".to_string()))?,
+        ),
+        _ => None,
+    };
+
+    let company_id = match explicit_id {
+        Some(company_id) => {
+            if user_id.is_nil() {
+                return Err((400, "公司上下文仅适用于用户身份".to_string()));
+            }
+            ensure_member(conn, tenant_id, user_id, company_id).await?;
+            company_id
+        }
+        None => {
+            // 无显式公司头：仅当用户在当前租户只有一条成员记录时自动采用。
+            if user_id.is_nil() {
+                return Ok(None);
+            }
+            let members = load_members(conn, tenant_id, user_id).await;
+            match decide_single_member(&members) {
+                Some(company_id) => company_id,
+                None => {
+                    if members.len() > 1 {
+                        tracing::debug!(
+                            candidates = members.len(),
+                            "用户存在多条公司范围记录且未声明 x-company-id，按无上下文处理"
+                        );
+                    }
+                    return Ok(None);
+                }
+            }
+        }
+    };
 
     let scope_header = headers
         .get(X_COMPANY_SCOPE)
@@ -291,5 +360,30 @@ mod tests {
     fn group_view_deduplicates_children() {
         let ids = decide_group_view(vec![CHILD_A, CHILD_A, CHILD_B], false).unwrap();
         assert_eq!(ids, vec![CHILD_A, CHILD_B]);
+    }
+
+    const COMPANY: Uuid = Uuid::from_u128(1);
+
+    #[test]
+    fn single_member_is_inferred() {
+        assert_eq!(
+            decide_single_member(&[COMPANY]),
+            Some(COMPANY),
+            "只有一条成员记录时自动采用它"
+        );
+    }
+
+    #[test]
+    fn multiple_members_are_not_inferred() {
+        assert_eq!(
+            decide_single_member(&[COMPANY, CHILD_A]),
+            None,
+            "多成员不带头时必须维持无上下文（fail-closed），不猜"
+        );
+    }
+
+    #[test]
+    fn no_member_is_not_inferred() {
+        assert_eq!(decide_single_member(&[]), None, "无成员记录时维持无上下文");
     }
 }
