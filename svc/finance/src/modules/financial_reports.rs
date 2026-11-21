@@ -13,6 +13,7 @@ use topems_shared_db::scope::Db;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
+use crate::modules::financial_report_status::{can_regenerate, normalize_financial_report};
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
@@ -1245,8 +1246,27 @@ async fn upsert_report(
     currency_code: &str,
     data: serde_json::Value,
     generated_by: &str,
-) -> Result<serde_json::Value, sqlx::Error> {
+) -> Result<Option<serde_json::Value>, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
+    // 已提交/已审批/已锁定的报表不允许重算覆盖；只有草稿/被驳回可重新生成。
+    let current_status: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        r#"SELECT status FROM finance.financial_reports
+           WHERE report_type = $1 AND org_id = $2 AND period = $3 AND currency_code = $4"#
+    ))
+    .bind(report_type)
+    .bind(company_id)
+    .bind(period)
+    .bind(currency_code)
+    .fetch_optional(&mut scope)
+    .await?;
+    if let Some(raw) = current_status {
+        match normalize_financial_report(&raw) {
+            Some(status) if can_regenerate(status) => {}
+            _ => return Ok(None),
+        }
+    }
+
     // org_id 承接公司维度（历史唯一键 (report_type, org_id, period, currency_code) 不重建），
     // 与 P3 迁移 20261109110200 的回填口径一致。
     let row = sqlx::query(
@@ -1254,7 +1274,9 @@ async fn upsert_report(
         INSERT INTO finance.financial_reports (report_type, org_id, tenant_id, company_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
         VALUES ($1, $3, $2, $3, $4, $5, 'draft', 'draft', $6, $7, NOW())
         ON CONFLICT (report_type, org_id, period, currency_code)
-        DO UPDATE SET data = EXCLUDED.data, company_id = EXCLUDED.company_id, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW()
+        DO UPDATE SET data = EXCLUDED.data, company_id = EXCLUDED.company_id, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW(),
+                      status = 'draft', approval_status = 'draft', approval_comment = NULL, approved_by = NULL, approved_at = NULL, rejection_reason = NULL
+        WHERE finance.financial_reports.status IN ('draft', 'rejected')
         RETURNING id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at
         "#),
     )
@@ -1265,11 +1287,14 @@ async fn upsert_report(
     .bind(currency_code)
     .bind(data)
     .bind(generated_by)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await?;
     scope.commit().await?;
 
-    Ok(serde_json::json!({
+    let Some(row) = row else {
+        return Ok(None);
+    };
+    Ok(Some(serde_json::json!({
         "id": row.get::<Uuid, _>("id"),
         "report_type": row.get::<String, _>("report_type"),
         "org_id": row.get::<Option<Uuid>, _>("org_id"),
@@ -1280,7 +1305,20 @@ async fn upsert_report(
         "approval_status": row.get::<String, _>("approval_status"),
         "data": row.get::<serde_json::Value, _>("data"),
         "generated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
-    }))
+    })))
+}
+
+async fn financial_report_exists(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    report_id: Uuid,
+) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT EXISTS(SELECT 1 FROM finance.financial_reports WHERE id = $1)"
+    ))
+    .bind(report_id)
+    .fetch_one(&mut *scope)
+    .await
 }
 
 async fn fetch_report(
@@ -1464,7 +1502,7 @@ pub async fn generate_balance_sheet(
             )
             .await
             {
-                Ok(report) => ApiResponse::success(
+                Ok(Some(report)) => ApiResponse::success(
                     report,
                     if has_business {
                         "生成资产负债表成功"
@@ -1472,6 +1510,7 @@ pub async fn generate_balance_sheet(
                         "生成资产负债表成功（该期间无业务数据）"
                     },
                 ),
+                Ok(None) => ApiResponse::error(409, "报表已提交、已审批或已锁定，不能重新生成"),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
@@ -1696,7 +1735,7 @@ pub async fn generate_income_statement(
             )
             .await
             {
-                Ok(report) => ApiResponse::success(
+                Ok(Some(report)) => ApiResponse::success(
                     report,
                     if has_business {
                         "生成利润表成功"
@@ -1704,6 +1743,7 @@ pub async fn generate_income_statement(
                         "生成利润表成功（该期间无业务数据）"
                     },
                 ),
+                Ok(None) => ApiResponse::error(409, "报表已提交、已审批或已锁定，不能重新生成"),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
@@ -1874,7 +1914,8 @@ pub async fn generate_cash_flow(
             )
             .await
             {
-                Ok(report) => ApiResponse::success(report, "生成现金流量表成功"),
+                Ok(Some(report)) => ApiResponse::success(report, "生成现金流量表成功"),
+                Ok(None) => ApiResponse::error(409, "报表已提交、已审批或已锁定，不能重新生成"),
                 Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
@@ -2037,20 +2078,26 @@ pub async fn submit_report_for_approval(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1 AND status IN ('draft', 'rejected') AND approval_status IN ('draft', 'rejected')"))
         .bind(report_id)
         .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if result.rows_affected() == 0 {
+                let exists = financial_report_exists(&mut scope, report_id)
+                    .await
+                    .unwrap_or(false);
+                return if exists {
+                    ApiResponse::conflict("报表当前状态不允许提交审批")
+                } else {
+                    ApiResponse::not_found("报表不存在")
+                };
+            }
             if let Err(e) = scope.commit().await {
                 return ApiResponse::from(TopemsError::internal("提交失败", e));
             }
-            if result.rows_affected() == 0 {
-                ApiResponse::not_found("报表不存在")
-            } else {
-                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "pending"}), "提交审批成功")
-            }
+            ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "pending"}), "提交审批成功")
         }
         Err(e) => ApiResponse::from(TopemsError::internal("提交失败", e)),
     }
@@ -2077,7 +2124,7 @@ pub async fn approve_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1 AND status = 'pending' AND approval_status = 'pending'"))
         .bind(report_id)
         .bind(req.comment)
         .bind(&claims.username)
@@ -2085,14 +2132,20 @@ pub async fn approve_report(
         .await
     {
         Ok(result) => {
+            if result.rows_affected() == 0 {
+                let exists = financial_report_exists(&mut scope, report_id)
+                    .await
+                    .unwrap_or(false);
+                return if exists {
+                    ApiResponse::conflict("报表当前状态不允许审批")
+                } else {
+                    ApiResponse::not_found("报表不存在")
+                };
+            }
             if let Err(e) = scope.commit().await {
                 return ApiResponse::from(TopemsError::internal("审批失败", e));
             }
-            if result.rows_affected() == 0 {
-                ApiResponse::not_found("报表不存在")
-            } else {
-                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "审批成功")
-            }
+            ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "审批成功")
         }
         Err(e) => ApiResponse::from(TopemsError::internal("审批失败", e)),
     }
@@ -2119,21 +2172,27 @@ pub async fn reject_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending' AND approval_status = 'pending'"))
         .bind(report_id)
         .bind(req.reason)
         .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if result.rows_affected() == 0 {
+                let exists = financial_report_exists(&mut scope, report_id)
+                    .await
+                    .unwrap_or(false);
+                return if exists {
+                    ApiResponse::conflict("报表当前状态不允许驳回")
+                } else {
+                    ApiResponse::not_found("报表不存在")
+                };
+            }
             if let Err(e) = scope.commit().await {
                 return ApiResponse::from(TopemsError::internal("驳回失败", e));
             }
-            if result.rows_affected() == 0 {
-                ApiResponse::not_found("报表不存在")
-            } else {
-                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "rejected"}), "驳回成功")
-            }
+            ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "rejected"}), "驳回成功")
         }
         Err(e) => ApiResponse::from(TopemsError::internal("驳回失败", e)),
     }
@@ -2173,20 +2232,26 @@ pub async fn lock_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1 AND status = 'approved' AND approval_status = 'approved'"))
         .bind(report_id)
         .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if result.rows_affected() == 0 {
+                let exists = financial_report_exists(&mut scope, report_id)
+                    .await
+                    .unwrap_or(false);
+                return if exists {
+                    ApiResponse::conflict("只有已批准的报表可以锁定")
+                } else {
+                    ApiResponse::not_found("报表不存在")
+                };
+            }
             if let Err(e) = scope.commit().await {
                 return ApiResponse::from(TopemsError::internal("锁定失败", e));
             }
-            if result.rows_affected() == 0 {
-                ApiResponse::not_found("报表不存在")
-            } else {
-                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "locked"}), "锁定成功")
-            }
+            ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "locked"}), "锁定成功")
         }
         Err(e) => ApiResponse::from(TopemsError::internal("锁定失败", e)),
     }
@@ -2213,20 +2278,26 @@ pub async fn unlock_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1 AND status = 'locked' AND approval_status = 'locked'"))
         .bind(report_id)
         .execute(&mut scope)
         .await
     {
         Ok(result) => {
+            if result.rows_affected() == 0 {
+                let exists = financial_report_exists(&mut scope, report_id)
+                    .await
+                    .unwrap_or(false);
+                return if exists {
+                    ApiResponse::conflict("只有已锁定的报表可以解锁")
+                } else {
+                    ApiResponse::not_found("报表不存在")
+                };
+            }
             if let Err(e) = scope.commit().await {
                 return ApiResponse::from(TopemsError::internal("解锁失败", e));
             }
-            if result.rows_affected() == 0 {
-                ApiResponse::not_found("报表不存在")
-            } else {
-                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "解锁成功")
-            }
+            ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "解锁成功")
         }
         Err(e) => ApiResponse::from(TopemsError::internal("解锁失败", e)),
     }

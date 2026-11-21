@@ -5,9 +5,9 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 129,
-    "rust_enum_values": 144,
-    "rust_values_not_in_db_check": 106,
+    "rust_enums": 130,
+    "rust_enum_values": 145,
+    "rust_values_not_in_db_check": 107,
     "frontend_status_keys": 61,
     "frontend_keys_not_in_db_check": 35
   },
@@ -951,6 +951,25 @@
         "paid",
         "rejected",
         "submitted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/financial_report_status.rs",
+      "name": "FinancialReportStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Locked",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "locked",
+        "pending",
+        "rejected"
       ]
     },
     {
@@ -2448,6 +2467,7 @@
       "invited",
       "invoiced",
       "lagging",
+      "locked",
       "max_retries_exceeded",
       "neutral",
       "new",
