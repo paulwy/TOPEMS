@@ -8,6 +8,7 @@ use topems_shared_auth::auth::AuthState;
 use topems_shared_auth::security::FieldEncryptionService;
 use topems_shared_core::health::SystemMetrics;
 use topems_shared_core::l2_cache::AsyncL2Cache;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::notification::NotificationServiceClient;
 use topems_shared_service_client::service_client::{
@@ -88,7 +89,10 @@ pub mod vehicles;
 
 #[derive(Clone)]
 pub struct ApiState {
-    pub db: PgPool,
+    /// 请求面统一入口：受守卫的 Db（禁止请求内自开事务/租户作用域）。
+    pub db: Db,
+    /// 仅用于审计/事件重试/健康探针/后台任务等系统通道，不得用于请求查询。
+    pub system_pool: PgPool,
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
@@ -109,9 +113,17 @@ impl FromRef<ApiState> for AuthState {
     }
 }
 
-impl FromRef<ApiState> for PgPool {
+impl FromRef<ApiState> for Db {
     fn from_ref(state: &ApiState) -> Self {
         state.db.clone()
+    }
+}
+
+/// `public.system_settings` 等平台级配置的存量处理器仍以 `PgPool` 提取；
+/// 统一指向系统池，语义与改造前一致，且不经过请求事务。
+impl FromRef<ApiState> for PgPool {
+    fn from_ref(state: &ApiState) -> Self {
+        state.system_pool.clone()
     }
 }
 

@@ -647,8 +647,9 @@ pub async fn receive_mes_progress(
         Some(_txn) => _txn,
         None => unreachable!("rls txn missing"),
     };
-    // 服务间调用（service token）：事务内设置 nil 租户上下文，确保同连接（RLS 放行）
-    let mut tx = match state.db.begin().await {
+    // 服务间调用（service token）：请求事务按租户上下文开启，本接口需要 nil 租户放行 RLS，
+    // 因此在事务外单独取一条系统连接完成短事务，语义与改造前一致。
+    let mut tx = match state.system_pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("begin tx failed in receive_mes_progress: {}", e);

@@ -173,7 +173,7 @@ pub async fn get_report_lines(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(scope) => scope,
         Err(e) => {
@@ -273,7 +273,7 @@ pub async fn submit_report(
 
     if let Err(e) = call_finance_core_approval(
         &state.finance_client,
-        &state.db,
+        &state.system_pool,
         "consolidation_report",
         report_id,
         &report.report_no,
@@ -302,7 +302,7 @@ pub async fn submit_report(
     match result {
         Ok(report) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "submit",
                 "consolidation_report",
                 Some(report_id),
@@ -367,7 +367,7 @@ pub async fn approve_report(
 
     if let Err(e) = call_finance_core_approval(
         &state.finance_client,
-        &state.db,
+        &state.system_pool,
         "consolidation_report",
         report_id,
         &report.report_no,
@@ -396,7 +396,7 @@ pub async fn approve_report(
     match result {
         Ok(report) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "approve",
                 "consolidation_report",
                 Some(report_id),
@@ -474,7 +474,7 @@ pub async fn delete_report(
                 ))
             } else {
                 log_audit(
-                    &state.db,
+                    &state.system_pool,
                     "delete",
                     "consolidation_report",
                     Some(report_id),

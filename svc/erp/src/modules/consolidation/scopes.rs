@@ -155,7 +155,7 @@ pub async fn create_scope(
     match result {
         Ok(scope) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "create",
                 "consolidation_scope",
                 Some(id),
@@ -220,7 +220,7 @@ pub async fn update_scope(
     match result {
         Ok(Some(scope)) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "update",
                 "consolidation_scope",
                 Some(scope_id),
@@ -274,7 +274,7 @@ pub async fn delete_scope(
                 ))
             } else {
                 log_audit(
-                    &state.db,
+                    &state.system_pool,
                     "delete",
                     "consolidation_scope",
                     Some(scope_id),

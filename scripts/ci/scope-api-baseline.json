@@ -305,7 +305,7 @@
     }
   },
   "db_new": {
-    "total": 145,
+    "total": 143,
     "files": {
       "lib/shared-db/src/audit.rs": {
         "total": 2
@@ -341,16 +341,7 @@
         "total": 13
       },
       "svc/erp/src/main.rs": {
-        "total": 1
-      },
-      "svc/erp/src/modules/consolidation/reports.rs": {
-        "total": 1
-      },
-      "svc/erp/src/modules/purchase_order.rs": {
-        "total": 1
-      },
-      "svc/erp/src/modules/sales_order.rs": {
-        "total": 1
+        "total": 2
       },
       "svc/erp/src/modules/searchable_projection.rs": {
         "total": 2

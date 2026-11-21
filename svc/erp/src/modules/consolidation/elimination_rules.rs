@@ -174,7 +174,14 @@ pub async fn create_elimination_rule(
 
     match result {
         Ok(rule) => {
-            log_audit(&state.db, "create", "elimination_rule", Some(id), &headers).await;
+            log_audit(
+                &state.system_pool,
+                "create",
+                "elimination_rule",
+                Some(id),
+                &headers,
+            )
+            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -250,7 +257,7 @@ pub async fn update_elimination_rule(
     match result {
         Ok(Some(rule)) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "update",
                 "elimination_rule",
                 Some(rule_id),
@@ -304,7 +311,7 @@ pub async fn delete_elimination_rule(
                 ))
             } else {
                 log_audit(
-                    &state.db,
+                    &state.system_pool,
                     "delete",
                     "elimination_rule",
                     Some(rule_id),

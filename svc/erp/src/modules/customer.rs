@@ -302,7 +302,7 @@ pub async fn create_customer(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "customer",
                 customer.id,
@@ -380,7 +380,7 @@ pub async fn update_customer(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "customer",
                 customer.id,
@@ -440,7 +440,7 @@ pub async fn delete_customer(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "customer",
                 id,
@@ -641,7 +641,7 @@ pub async fn batch_create_customers(
     }
     for c in &created {
         crate::modules::searchable_projection::emit_after_commit(
-            &state.db,
+            &state.system_pool,
             &state.event_publisher,
             "customer",
             c.id,
@@ -690,7 +690,7 @@ async fn batch_update_customers(
     }
     for c in &updated {
         crate::modules::searchable_projection::emit_after_commit(
-            &state.db,
+            &state.system_pool,
             &state.event_publisher,
             "customer",
             c.id,
@@ -736,7 +736,7 @@ async fn batch_delete_customers(
             }
             for id in &body.ids {
                 crate::modules::searchable_projection::emit_after_commit(
-                    &state.db,
+                    &state.system_pool,
                     &state.event_publisher,
                     "customer",
                     *id,
@@ -794,7 +794,7 @@ pub async fn change_customer_status(
                 let _ = t.commit().await;
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "customer",
                 customer.id,
@@ -856,7 +856,7 @@ pub async fn batch_change_status(
             }
             for c in &customers {
                 crate::modules::searchable_projection::emit_after_commit(
-                    &state.db,
+                    &state.system_pool,
                     &state.event_publisher,
                     "customer",
                     c.id,

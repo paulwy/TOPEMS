@@ -216,7 +216,7 @@ pub async fn create_asset(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "asset".to_string(),
@@ -419,7 +419,7 @@ pub async fn update_asset(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "asset".to_string(),
@@ -508,7 +508,7 @@ pub async fn delete_asset(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "asset".to_string(),

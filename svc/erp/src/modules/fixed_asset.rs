@@ -298,7 +298,7 @@ pub async fn create_fixed_asset(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "fixed_asset".to_string(),
@@ -495,7 +495,7 @@ pub async fn update_fixed_asset(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "fixed_asset".to_string(),
@@ -584,7 +584,7 @@ pub async fn delete_fixed_asset(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "fixed_asset".to_string(),
@@ -782,7 +782,7 @@ pub async fn depreciate_assets(
     let response_data = Some(result.clone());
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "depreciate".to_string(),
             entity_type: "fixed_asset".to_string(),

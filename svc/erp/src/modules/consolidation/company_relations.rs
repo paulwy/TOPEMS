@@ -208,7 +208,14 @@ pub async fn create_company_relation(
 
     match result {
         Ok(relation) => {
-            log_audit(&state.db, "create", "company_relation", Some(id), &headers).await;
+            log_audit(
+                &state.system_pool,
+                "create",
+                "company_relation",
+                Some(id),
+                &headers,
+            )
+            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -299,7 +306,7 @@ pub async fn update_company_relation(
     match result {
         Ok(Some(relation)) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "update",
                 "company_relation",
                 Some(relation_id),
@@ -381,7 +388,7 @@ pub async fn delete_company_relation(
                 ))
             } else {
                 log_audit(
-                    &state.db,
+                    &state.system_pool,
                     "delete",
                     "company_relation",
                     Some(relation_id),

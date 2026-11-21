@@ -250,7 +250,7 @@ pub async fn create_purchase_order(
     };
 
     // tenant_id 必须在请求事务内读取：commit 后走裸池没有 app.tenant_id，RLS fail-closed 会读空。
-    let db = topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared");
+    let db = state.db.clone();
     let mut scope = match db.scope_with(&mut *txn).await {
         Ok(s) => s,
         Err(e) => {
@@ -308,7 +308,7 @@ pub async fn create_purchase_order(
         }
     }
     crate::modules::searchable_projection::emit_after_commit(
-        &state.db,
+        &state.system_pool,
         &state.event_publisher,
         "purchase_order",
         purchase_order.id,
@@ -382,7 +382,7 @@ pub async fn update_purchase_order(
         }
     }
     crate::modules::searchable_projection::emit_after_commit(
-        &state.db,
+        &state.system_pool,
         &state.event_publisher,
         "purchase_order",
         purchase_order.id,
@@ -436,7 +436,7 @@ pub async fn delete_purchase_order(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "purchase_order",
                 id,
@@ -508,7 +508,7 @@ pub async fn approve_purchase_order(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "purchase_order",
                 order.id,
@@ -613,7 +613,7 @@ pub async fn cancel_purchase_order(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "purchase_order",
                 r.id,

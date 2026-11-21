@@ -31,7 +31,7 @@ pub async fn check_database(_state: State<ApiState>) -> &'static str {
     responses((status = 200, description = "ERP 服务健康检查成功"))
 )]
 pub async fn health_check(State(state): State<ApiState>) -> ServiceHealth {
-    let cfg = SimpleHealthConfig::new("topems-erp").with_db(state.db);
+    let cfg = SimpleHealthConfig::new("topems-erp").with_db(state.system_pool.clone());
     simple_health_check(&cfg).await
 }
 

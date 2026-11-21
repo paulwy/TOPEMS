@@ -285,7 +285,7 @@ pub async fn create_internal_transaction(
     match result {
         Ok(transaction) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "create",
                 "internal_transaction",
                 Some(id),
@@ -427,7 +427,7 @@ pub async fn update_internal_transaction(
     match result {
         Ok(transaction) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "update",
                 "internal_transaction",
                 Some(transaction_id),
@@ -518,7 +518,7 @@ pub async fn confirm_internal_transaction(
     match result {
         Ok(transaction) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "confirm",
                 "internal_transaction",
                 Some(transaction_id),
@@ -613,7 +613,7 @@ pub async fn dispute_internal_transaction(
     match result {
         Ok(transaction) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "dispute",
                 "internal_transaction",
                 Some(transaction_id),

@@ -199,7 +199,10 @@ async fn main() -> Result<()> {
     };
 
     let api_state = ApiState {
-        db: ctx.db.clone(),
+        db: topems_shared_db::scope::Db::new(ctx.db.clone(), "erp, public, shared")
+            .deny_request_own_txn()
+            .deny_request_tenant_scope(),
+        system_pool: ctx.db.clone(),
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,

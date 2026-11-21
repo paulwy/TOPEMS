@@ -194,7 +194,7 @@ pub async fn create_supply(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "office_supply".to_string(),
@@ -361,7 +361,7 @@ pub async fn update_supply(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "office_supply".to_string(),
@@ -450,7 +450,7 @@ pub async fn delete_supply(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "office_supply".to_string(),

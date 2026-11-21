@@ -69,9 +69,9 @@ fn dec(v: Option<f64>) -> Option<rust_decimal::Decimal> {
     Some(dec_owned(v?))
 }
 
-/// 请求事务作用域用的 Db（单文件只 new 一次，避免 scope-api 门禁计数上升）。
+/// 请求事务作用域用的 Db（复用组装根受守卫实例，避免 scope-api 门禁计数上升）。
 fn erp_scope_db(state: &ApiState) -> topems_shared_db::scope::Db {
-    topems_shared_db::scope::Db::new(state.db.clone(), "erp, public, shared")
+    state.db.clone()
 }
 
 /// 同步销售订单行项目：先软删旧行，再按入参重建。
@@ -397,7 +397,7 @@ pub async fn create_sales_order(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "sales_order",
                 sales_order.id,
@@ -525,7 +525,7 @@ pub async fn update_sales_order(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "sales_order",
                 sales_order.id,
@@ -586,7 +586,7 @@ pub async fn delete_sales_order(
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
-                &state.db,
+                &state.system_pool,
                 &state.event_publisher,
                 "sales_order",
                 id,
@@ -653,7 +653,7 @@ pub async fn approve_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let db = state.db.clone();
+    let db = state.system_pool.clone();
     let publisher = state.event_publisher.clone();
     let approved_by = claims.sub.clone();
     let resp = update_sales_order_status(
@@ -729,7 +729,7 @@ pub async fn ship_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let db = state.db.clone();
+    let db = state.system_pool.clone();
     let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
@@ -770,7 +770,7 @@ pub async fn complete_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let db = state.db.clone();
+    let db = state.system_pool.clone();
     let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
@@ -811,7 +811,7 @@ pub async fn cancel_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    let db = state.db.clone();
+    let db = state.system_pool.clone();
     let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
@@ -974,7 +974,7 @@ async fn batch_create_sales_orders(
     }
     for o in &created {
         crate::modules::searchable_projection::emit_after_commit(
-            &state.db,
+            &state.system_pool,
             &state.event_publisher,
             "sales_order",
             o.id,
@@ -1037,7 +1037,7 @@ async fn batch_update_sales_orders(
     }
     for o in &updated {
         crate::modules::searchable_projection::emit_after_commit(
-            &state.db,
+            &state.system_pool,
             &state.event_publisher,
             "sales_order",
             o.id,
@@ -1108,7 +1108,7 @@ pub async fn batch_approve_sales_orders(
             }
             for o in &orders {
                 crate::modules::searchable_projection::emit_after_commit(
-                    &state.db,
+                    &state.system_pool,
                     &state.event_publisher,
                     "sales_order",
                     o.id,
@@ -1154,7 +1154,7 @@ pub async fn batch_ship_sales_orders(
             }
             for o in &orders {
                 crate::modules::searchable_projection::emit_after_commit(
-                    &state.db,
+                    &state.system_pool,
                     &state.event_publisher,
                     "sales_order",
                     o.id,
@@ -1200,7 +1200,7 @@ pub async fn batch_complete_sales_orders(
             }
             for o in &orders {
                 crate::modules::searchable_projection::emit_after_commit(
-                    &state.db,
+                    &state.system_pool,
                     &state.event_publisher,
                     "sales_order",
                     o.id,
@@ -1246,7 +1246,7 @@ pub async fn batch_cancel_sales_orders(
             }
             for o in &orders {
                 crate::modules::searchable_projection::emit_after_commit(
-                    &state.db,
+                    &state.system_pool,
                     &state.event_publisher,
                     "sales_order",
                     o.id,

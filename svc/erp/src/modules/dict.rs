@@ -476,7 +476,7 @@ pub async fn create_dict_type(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "dict_type".to_string(),
@@ -652,7 +652,7 @@ pub async fn update_dict_type(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "dict_type".to_string(),
@@ -773,7 +773,7 @@ pub async fn delete_dict_type(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "dict_type".to_string(),
@@ -948,7 +948,7 @@ pub async fn create_dict_item(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "dict_item".to_string(),
@@ -1105,7 +1105,7 @@ pub async fn update_dict_item(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "dict_item".to_string(),
@@ -1190,7 +1190,7 @@ pub async fn delete_dict_item(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "dict_item".to_string(),
@@ -1276,7 +1276,7 @@ pub async fn batch_create_dict_items(
     let response_data = serde_json::to_value(&created_items).ok();
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "batch_create".to_string(),
             entity_type: "dict_item".to_string(),

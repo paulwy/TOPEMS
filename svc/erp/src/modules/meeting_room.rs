@@ -204,7 +204,7 @@ pub async fn create_room(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "meeting_room".to_string(),
@@ -370,7 +370,7 @@ pub async fn update_room(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "meeting_room".to_string(),
@@ -460,7 +460,7 @@ pub async fn delete_room(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "meeting_room".to_string(),
@@ -679,7 +679,7 @@ pub async fn create_booking(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "meeting_booking".to_string(),
@@ -841,7 +841,7 @@ pub async fn update_booking(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "meeting_booking".to_string(),
@@ -930,7 +930,7 @@ pub async fn delete_booking(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "meeting_booking".to_string(),

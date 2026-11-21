@@ -213,7 +213,7 @@ pub async fn searchable_snapshot(
     State(state): State<ApiState>,
 ) -> ApiResponse<Vec<SearchableEntityChangedPayload>> {
     // 内部 backfill 入口没有请求租户，需要全量快照：显式系统只读通道。
-    let scoped_db = topems_shared_db::scope::Db::new(state.db.clone(), "public, shared");
+    let scoped_db = topems_shared_db::scope::Db::new(state.system_pool.clone(), "public, shared");
     let mut scope = match scoped_db.scope_read_system().await {
         Ok(scope) => scope,
         Err(e) => {

@@ -216,7 +216,7 @@ pub async fn create_vehicle(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "vehicle".to_string(),
@@ -386,7 +386,7 @@ pub async fn update_vehicle(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "vehicle".to_string(),
@@ -475,7 +475,7 @@ pub async fn delete_vehicle(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "vehicle".to_string(),
@@ -706,7 +706,7 @@ pub async fn create_vehicle_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "vehicle_request".to_string(),
@@ -866,7 +866,7 @@ pub async fn update_vehicle_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "vehicle_request".to_string(),
@@ -955,7 +955,7 @@ pub async fn delete_vehicle_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "vehicle_request".to_string(),

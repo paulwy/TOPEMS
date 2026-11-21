@@ -220,7 +220,7 @@ pub async fn create_announcement(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "announcement".to_string(),
@@ -400,7 +400,7 @@ pub async fn update_announcement(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "announcement".to_string(),
@@ -484,7 +484,7 @@ pub async fn delete_announcement(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "announcement".to_string(),
@@ -578,7 +578,7 @@ pub async fn publish_announcement(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "announcement".to_string(),
@@ -671,7 +671,7 @@ pub async fn unpublish_announcement(
         None
     };
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "announcement".to_string(),

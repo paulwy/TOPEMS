@@ -24,7 +24,8 @@ use topems_shared_service_client::service_client::{
 
 pub fn test_api_state(pool: PgPool) -> ApiState {
     ApiState {
-        db: pool,
+        db: topems_shared_db::scope::Db::new(pool.clone(), "erp, public, shared"),
+        system_pool: pool,
         auth_state: AuthState::new(
             "test-secret-0123456789abcdef0123456789abcdef".to_string(),
             "test-refresh-0123456789abcdef0123456789abcdef".to_string(),

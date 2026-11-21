@@ -124,7 +124,7 @@ pub async fn add_scope_company(
     match result {
         Ok(company) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "add_company",
                 "consolidation_scope",
                 Some(req.scope_id),
@@ -228,7 +228,7 @@ pub async fn update_scope_company(
     match result {
         Ok(Some(company)) => {
             log_audit(
-                &state.db,
+                &state.system_pool,
                 "update",
                 "consolidation_scope_company",
                 Some(company_id),
@@ -314,7 +314,7 @@ pub async fn remove_scope_company(
                 ))
             } else {
                 log_audit(
-                    &state.db,
+                    &state.system_pool,
                     "remove_company",
                     "consolidation_scope",
                     Some(company_id),

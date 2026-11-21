@@ -341,7 +341,7 @@ pub async fn create_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "create".to_string(),
             entity_type: "leave_request".to_string(),
@@ -536,7 +536,7 @@ pub async fn update_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "update".to_string(),
             entity_type: "leave_request".to_string(),
@@ -625,7 +625,7 @@ pub async fn delete_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "delete".to_string(),
             entity_type: "leave_request".to_string(),
@@ -725,7 +725,7 @@ pub async fn submit_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "submit".to_string(),
             entity_type: "leave_request".to_string(),
@@ -834,7 +834,7 @@ pub async fn approve_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "approve".to_string(),
             entity_type: "leave_request".to_string(),
@@ -947,7 +947,7 @@ pub async fn reject_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "reject".to_string(),
             entity_type: "leave_request".to_string(),
@@ -1047,7 +1047,7 @@ pub async fn cancel_leave_request(
     };
 
     log_audit_event(
-        &state.db,
+        &state.system_pool,
         AuditEventParams {
             action: "cancel".to_string(),
             entity_type: "leave_request".to_string(),
