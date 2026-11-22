@@ -17,6 +17,20 @@
       "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text, 'maintenance'::text])))"
     },
     {
+      "schema": "ai",
+      "table": "documents",
+      "constraint": "documents_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "empty",
+        "pending",
+        "processed"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'processed'::text, 'empty'::text]))) NOT VALID"
+    },
+    {
       "schema": "analytics",
       "table": "analytics_sync_records",
       "constraint": "ck_analytics_sync_records_status_standard",
@@ -146,6 +160,21 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))"
+    },
+    {
+      "schema": "core",
+      "table": "knowledge_documents",
+      "constraint": "knowledge_documents_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "pending",
+        "processing",
+        "ready"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'ready'::text, 'failed'::text]))) NOT VALID"
     },
     {
       "schema": "crm",
@@ -426,6 +455,19 @@
     },
     {
       "schema": "ehs",
+      "table": "qa_ehs_accidents",
+      "constraint": "qa_ehs_accidents_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "reported"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['reported'::text, 'closed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "qa_ehs_alerts",
       "constraint": "ck_qa_ehs_alerts_status_standard",
       "columns": [
@@ -466,6 +508,34 @@
         "suspected"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ('{active,inactive,archived,suspected}'::text[]))))"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_drill_plans",
+      "constraint": "qa_ehs_drill_plans_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "planned"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['planned'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_drill_records",
+      "constraint": "qa_ehs_drill_records_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -526,6 +596,20 @@
     },
     {
       "schema": "ehs",
+      "table": "qa_ehs_hazard_rectifications",
+      "constraint": "qa_ehs_hazard_rectifications_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "in_progress",
+        "pending",
+        "submitted"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'submitted'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "qa_ehs_hazardous_materials",
       "constraint": "ck_qa_ehs_hazardous_materials_status_standard",
       "columns": [
@@ -537,6 +621,40 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_hazards",
+      "constraint": "qa_ehs_hazards_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "pending_approval",
+        "pending_verification",
+        "rectifying",
+        "rejected",
+        "reported",
+        "resolved",
+        "verified"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['reported'::text, 'pending_approval'::text, 'rectifying'::text, 'pending_verification'::text, 'verified'::text, 'closed'::text, 'rejected'::text, 'resolved'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_incident_actions",
+      "constraint": "qa_ehs_incident_actions_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending",
+        "verified"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'verified'::text]))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -554,6 +672,19 @@
     },
     {
       "schema": "ehs",
+      "table": "qa_ehs_investigations",
+      "constraint": "qa_ehs_investigations_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['in_progress'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "qa_ehs_protection_measures",
       "constraint": "ck_qa_ehs_protection_measures_status_standard",
       "columns": [
@@ -565,6 +696,59 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_risk_controls",
+      "constraint": "qa_ehs_risk_controls_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "completed"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'completed'::text])))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_risks",
+      "constraint": "qa_ehs_risks_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "assessed",
+        "controlled",
+        "identified"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['identified'::text, 'assessed'::text, 'controlled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_treatment_actions",
+      "constraint": "qa_ehs_treatment_actions_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_treatments",
+      "constraint": "qa_ehs_treatments_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['in_progress'::text, 'completed'::text]))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -851,6 +1035,33 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "erp",
+      "table": "purchase_orders",
+      "constraint": "purchase_orders_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'approved'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
+      "table": "receivables",
+      "constraint": "receivables_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "paid",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'paid'::text]))) NOT VALID"
     },
     {
       "schema": "erp",
@@ -2284,6 +2495,19 @@
     },
     {
       "schema": "mes",
+      "table": "material_issues",
+      "constraint": "material_issues_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "material_plans",
       "constraint": "ck_material_plans_status_standard",
       "columns": [
@@ -2357,6 +2581,25 @@
     },
     {
       "schema": "mes",
+      "table": "production_orders",
+      "constraint": "production_orders_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "closed",
+        "completed",
+        "in_progress",
+        "paused",
+        "pending",
+        "planned",
+        "released"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'released'::text, 'in_progress'::text, 'paused'::text, 'completed'::text, 'closed'::text, 'cancelled'::text, 'planned'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "production_plans",
       "constraint": "ck_production_plans_status_standard",
       "columns": [
@@ -2385,6 +2628,23 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "mes",
+      "table": "production_schedules",
+      "constraint": "production_schedules_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "pending",
+        "released",
+        "running",
+        "scheduled"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'scheduled'::text, 'released'::text, 'running'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "mes",
@@ -2427,6 +2687,36 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "mes",
+      "table": "work_orders",
+      "constraint": "work_orders_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "paused",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'paused'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
+      "table": "work_stations",
+      "constraint": "work_stations_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "available",
+        "inactive"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['available'::text, 'active'::text, 'inactive'::text]))) NOT VALID"
     },
     {
       "schema": "mes",
@@ -2965,6 +3255,21 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "public",
+      "table": "core_tenants",
+      "constraint": "core_tenants_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "deleted",
+        "suspended",
+        "trial"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'suspended'::character varying, 'trial'::character varying, 'deleted'::character varying])::text[]))) NOT VALID"
     },
     {
       "schema": "public",
@@ -3534,6 +3839,21 @@
       "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))"
     },
     {
+      "schema": "scm",
+      "table": "sync_records",
+      "constraint": "sync_records_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'running'::text, 'completed'::text, 'failed'::text]))) NOT VALID"
+    },
+    {
       "schema": "shared",
       "table": "audit_logs",
       "constraint": "ck_audit_logs_status_standard",
@@ -3650,6 +3970,23 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "srm",
+      "table": "suppliers",
+      "constraint": "ck_suppliers_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "blacklisted",
+        "deleted",
+        "inactive",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'pending'::text, 'blacklisted'::text, 'archived'::text, 'deleted'::text]))) NOT VALID"
     },
     {
       "schema": "srm",
@@ -3819,6 +4156,20 @@
     },
     {
       "schema": "wms",
+      "table": "inbound_order_items",
+      "constraint": "ck_inbound_order_items_quality_status_standard",
+      "columns": [
+        "quality_status"
+      ],
+      "values": [
+        "pending",
+        "qualified",
+        "rejected"
+      ],
+      "definition": "CHECK (((quality_status IS NULL) OR ((quality_status)::text = ANY (ARRAY['pending'::text, 'qualified'::text, 'rejected'::text])))) NOT VALID"
+    },
+    {
+      "schema": "wms",
       "table": "inbound_orders",
       "constraint": "ck_inbound_orders_status_standard",
       "columns": [
@@ -3832,6 +4183,20 @@
         "received"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['created'::text, 'confirmed'::text, 'received'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "inventory",
+      "constraint": "ck_inventory_quality_status_standard",
+      "columns": [
+        "quality_status"
+      ],
+      "values": [
+        "pending",
+        "qualified",
+        "unqualified"
+      ],
+      "definition": "CHECK (((quality_status)::text = ANY (ARRAY['qualified'::text, 'unqualified'::text, 'pending'::text]))) NOT VALID"
     },
     {
       "schema": "wms",
@@ -4095,6 +4460,22 @@
     },
     {
       "schema": "wms",
+      "table": "sync_records",
+      "constraint": "sync_records_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "pending",
+        "running",
+        "success"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'running'::text, 'success'::text, 'failed'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
       "table": "transfer_order_items",
       "constraint": "ck_transfer_order_items_status_standard",
       "columns": [
@@ -4251,15 +4632,6 @@
     },
     {
       "schema": "ai",
-      "table": "documents",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ai",
       "table": "usage_logs",
       "column": "status",
       "type": "character varying(20)",
@@ -4358,15 +4730,6 @@
       "default_expr": "'stopped'::character varying"
     },
     {
-      "schema": "core",
-      "table": "knowledge_documents",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
       "schema": "doc",
       "table": "documents",
       "column": "status",
@@ -4431,15 +4794,6 @@
     },
     {
       "schema": "ehs",
-      "table": "qa_ehs_accidents",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'reported'::character varying"
-    },
-    {
-      "schema": "ehs",
       "table": "qa_ehs_compliance_evaluations",
       "column": "status",
       "type": "character varying(32)",
@@ -4494,30 +4848,12 @@
     },
     {
       "schema": "ehs",
-      "table": "qa_ehs_drill_plans",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'planned'::character varying"
-    },
-    {
-      "schema": "ehs",
       "table": "qa_ehs_drill_problems",
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_drill_records",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'in_progress'::character varying"
     },
     {
       "schema": "ehs",
@@ -4566,24 +4902,6 @@
     },
     {
       "schema": "ehs",
-      "table": "qa_ehs_hazard_rectifications",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'in_progress'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_hazards",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'reported'::character varying"
-    },
-    {
-      "schema": "ehs",
       "table": "qa_ehs_health_abnormalities",
       "column": "status",
       "type": "character varying(32)",
@@ -4611,29 +4929,11 @@
     },
     {
       "schema": "ehs",
-      "table": "qa_ehs_incident_actions",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ehs",
       "table": "qa_ehs_inspection_records",
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
-      "default_expr": "'in_progress'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_investigations",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
       "default_expr": "'in_progress'::character varying"
     },
     {
@@ -4644,24 +4944,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_risk_controls",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_risks",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'identified'::character varying"
     },
     {
       "schema": "ehs",
@@ -4689,24 +4971,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'scheduled'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_treatment_actions",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_treatments",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'in_progress'::character varying"
     },
     {
       "schema": "ehs",
@@ -4882,24 +5146,6 @@
     {
       "schema": "erp",
       "table": "payables",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "purchase_orders",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "receivables",
       "column": "status",
       "type": "character varying(50)",
       "enum_type": "varchar",
@@ -5961,15 +6207,6 @@
     },
     {
       "schema": "mes",
-      "table": "material_issues",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
       "table": "material_requirements",
       "column": "status",
       "type": "character varying(32)",
@@ -5988,30 +6225,12 @@
     },
     {
       "schema": "mes",
-      "table": "production_orders",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'created'::character varying"
-    },
-    {
-      "schema": "mes",
       "table": "production_records",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_progress'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "production_schedules",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "mes",
@@ -6078,30 +6297,12 @@
     },
     {
       "schema": "mes",
-      "table": "work_orders",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
       "table": "work_reports",
       "column": "status",
       "type": "character varying(50)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "work_stations",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'available'::character varying"
     },
     {
       "schema": "mobile",
@@ -6948,15 +7149,6 @@
       "enum_type": "int4",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "public",
-      "table": "core_tenants",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'trial'::character varying"
     },
     {
       "schema": "public",
@@ -7851,15 +8043,6 @@
     },
     {
       "schema": "scm",
-      "table": "sync_records",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "scm",
       "table": "wms_inbound_order_snapshots",
       "column": "status",
       "type": "character varying(20)",
@@ -7920,15 +8103,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "srm",
-      "table": "suppliers",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "srm",
@@ -8013,30 +8187,12 @@
     },
     {
       "schema": "wms",
-      "table": "inbound_order_items",
-      "column": "quality_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
       "table": "inbound_orders",
       "column": "inspection_status",
       "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "inventory",
-      "column": "quality_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'qualified'::character varying"
     },
     {
       "schema": "wms",
@@ -8086,15 +8242,6 @@
     {
       "schema": "wms",
       "table": "sync_record_details",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "sync_records",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",

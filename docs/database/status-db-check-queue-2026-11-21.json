@@ -3,32 +3,14 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 52,
-    "uncovered_values": 70,
+    "uncovered_enums": 45,
+    "uncovered_values": 60,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 52,
-    "internal_state_enums": 52,
-    "internal_state_values": 70
+    "resolved_enums": 45,
+    "internal_state_enums": 45,
+    "internal_state_values": 60
   },
   "rows": [
-    {
-      "module": "lib/shared-auth",
-      "file": "lib/shared-auth/src/tenant.rs",
-      "enum": "TenantStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "trial"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "lib/shared-auth/src/tenant.rs",
-        "enum": "TenantStatus",
-        "table": "public.core_tenants",
-        "column": "status",
-        "candidate": "docs/database/tenant-status-check-candidates-2026-11-21.sql"
-      }
-    },
     {
       "module": "lib/shared-auth",
       "file": "lib/shared-auth/src/tenant.rs",
@@ -52,8 +34,7 @@
       "enum": "SubscriptionStatus",
       "values_by_bucket": {
         "internal_state": [
-          "canceled",
-          "trial"
+          "canceled"
         ]
       },
       "candidate_targets": [],
@@ -281,43 +262,6 @@
       }
     },
     {
-      "module": "ai",
-      "file": "svc/ai/src/models/document_status.rs",
-      "enum": "DocumentStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "empty",
-          "processed"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/ai/src/models/document_status.rs",
-        "enum": "DocumentStatus",
-        "table": "ai.documents",
-        "column": "status",
-        "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "ai",
-      "file": "svc/ai/src/modules/ai_knowledge/document_status.rs",
-      "enum": "KnowledgeDocumentStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "ready"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/ai/src/modules/ai_knowledge/document_status.rs",
-        "enum": "KnowledgeDocumentStatus",
-        "table": "core.knowledge_documents",
-        "column": "status",
-        "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql"
-      }
-    },
-    {
       "module": "communication",
       "file": "svc/communication/src/mail.rs",
       "enum": "EmailQueueStatus",
@@ -332,64 +276,6 @@
         "enum": "EmailQueueStatus",
         "persisted": false,
         "reason": "邮件 DashMap 队列内存态"
-      }
-    },
-    {
-      "module": "ehs",
-      "file": "svc/ehs/src/modules/accident_status.rs",
-      "enum": "AccidentStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "reported"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/ehs/src/modules/accident_status.rs",
-        "enum": "AccidentStatus",
-        "table": "ehs.qa_ehs_accidents",
-        "column": "status",
-        "candidate": "docs/database/ehs-accident-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "ehs",
-      "file": "svc/ehs/src/modules/hazard_status.rs",
-      "enum": "HazardStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "pending_verification",
-          "rectifying",
-          "reported"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/ehs/src/modules/hazard_status.rs",
-        "enum": "HazardStatus",
-        "table": "ehs.qa_ehs_hazards",
-        "column": "status",
-        "candidate": "docs/database/ehs-hazard-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "ehs",
-      "file": "svc/ehs/src/modules/risk_status.rs",
-      "enum": "RiskStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "assessed",
-          "controlled",
-          "identified"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/ehs/src/modules/risk_status.rs",
-        "enum": "RiskStatus",
-        "table": "ehs.qa_ehs_risks",
-        "column": "status",
-        "candidate": "docs/database/ehs-risk-status-check-candidates-2026-11-21.sql"
       }
     },
     {
@@ -918,23 +804,6 @@
         "enum": "VersionStatus",
         "persisted": false,
         "reason": "中间件版本兼容判断内存态"
-      }
-    },
-    {
-      "module": "unified-core",
-      "file": "svc/unified-core/src/modules/subscription/mod.rs",
-      "enum": "SubscriptionStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "trial"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/unified-core/src/modules/subscription/mod.rs",
-        "enum": "SubscriptionStatus",
-        "persisted": false,
-        "reason": "纯内存订阅状态计算，无 SQL；与 shared-auth 同值集但 Canceled/Cancelled 拼写与 serde 输出不同，收敛需 API 契约决策"
       }
     },
     {
