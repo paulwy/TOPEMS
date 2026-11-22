@@ -28,6 +28,7 @@ pub mod inventory_movement;
 pub mod inventory_quality_status;
 pub mod labor;
 pub mod location;
+pub mod location_status;
 pub mod openapi;
 pub mod outbound_order;
 pub mod outbound_status;

@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 184,
-    "rust_enum_values": 184,
-    "rust_values_not_in_db_check": 145,
-    "frontend_status_keys": 199,
-    "frontend_keys_not_in_db_check": 159,
+    "rust_enums": 185,
+    "rust_enum_values": 185,
+    "rust_values_not_in_db_check": 146,
+    "frontend_status_keys": 200,
+    "frontend_keys_not_in_db_check": 160,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3205,6 +3205,23 @@
     },
     {
       "module": "wms",
+      "file": "svc/wms/src/modules/location_status.rs",
+      "name": "LocationStatus",
+      "values": [
+        "Available",
+        "Full",
+        "Inactive",
+        "Partial"
+      ],
+      "normalized": [
+        "available",
+        "full",
+        "inactive",
+        "partial"
+      ]
+    },
+    {
+      "module": "wms",
       "file": "svc/wms/src/modules/outbound_status.rs",
       "name": "OutboundStatus",
       "values": [
@@ -3342,6 +3359,7 @@
       "failed",
       "false_positive",
       "frozen",
+      "full",
       "generating",
       "good",
       "healthy",
@@ -3524,6 +3542,7 @@
       "expired",
       "false_positive",
       "frozen",
+      "full",
       "generating",
       "good",
       "healthy",
@@ -3675,6 +3694,7 @@
       "expired",
       "false_positive",
       "frozen",
+      "full",
       "generating",
       "good",
       "healthy",

@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateLocationRequest, Location, UpdateLocationRequest};
 use crate::modules::audit::log_audit_event;
+use crate::modules::location_status::LocationStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -95,7 +96,19 @@ pub async fn list_locations(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match LocationStatus::from_read_str(raw) {
+                Ok(status) => Some(status.as_db_str()),
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = LocationStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let warehouse_id = params.warehouse_id.and_then(|s| Uuid::parse_str(&s).ok());
 
     let result = sqlx::query_as::<_, Location>(
@@ -105,15 +118,18 @@ pub async fn list_locations(
         WHERE ($1::text IS NULL OR location_name ILIKE $1 OR location_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR warehouse_id = $3)
+          AND status = ANY($6::text[])
+          AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#),
     )
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(warehouse_id)
     .bind(page_size)
     .bind(offset)
+    .bind(&canonical_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -126,11 +142,13 @@ pub async fn list_locations(
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR location_name ILIKE $1 OR location_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
+                  AND status = ANY($4::text[])
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(warehouse_id)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -198,7 +216,7 @@ pub async fn create_location(
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at, tenant_id, organization_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $10, $7, $8, $9, $9)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
@@ -211,6 +229,7 @@ pub async fn create_location(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(LocationStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -294,13 +313,18 @@ pub async fn get_location(
         }
     };
 
+    let canonical_statuses: Vec<String> = LocationStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
         SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
-        FROM wms.locations WHERE id = $1
+        FROM wms.locations WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
         "#),
     )
     .bind(location_id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -354,12 +378,17 @@ pub async fn update_location(
 
     let request_data = serde_json::to_value(&req).ok();
 
+    let canonical_statuses: Vec<String> = LocationStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let existing = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1 AND status = ANY($2::text[])
         "#),
     )
     .bind(location_id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -376,7 +405,19 @@ pub async fn update_location(
     let name = req.name.or(existing.name);
     let r#type = req.r#type.or(existing.r#type);
     let capacity = req.capacity.or(existing.capacity);
-    let status = req.status.unwrap_or(existing.status);
+    let current_status = match LocationStatus::from_db_str(&existing.status) {
+        Ok(status) => status,
+        Err(msg) => return ApiResponse::bad_request(&msg),
+    };
+    let requested_status = match req.status.as_deref() {
+        Some(raw) => match LocationStatus::from_db_str(raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+        None => current_status,
+    };
+    let status = requested_status.as_db_str().to_string();
+    let previous_status = current_status.as_db_str().to_string();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Location>(
@@ -384,7 +425,7 @@ pub async fn update_location(
         UPDATE wms.locations SET
             warehouse_id = $2, location_code = $3, location_name = $4, location_type = $5, capacity = $6, 
             status = $7, updated_at = $8
-        WHERE id = $1
+        WHERE id = $1 AND status = $9 AND deleted_at IS NULL
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
@@ -396,6 +437,7 @@ pub async fn update_location(
     .bind(capacity)
     .bind(&status)
     .bind(now)
+    .bind(&previous_status)
     .fetch_one(&mut **txn)
     .await;
 
@@ -403,6 +445,11 @@ pub async fn update_location(
         Ok(location) => (
             ApiResponse::success(location.clone(), "库位更新成功"),
             "success",
+            None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            ApiResponse::conflict("库位状态已变化，请刷新后重试"),
+            "conflict",
             None,
         ),
         Err(e) => {

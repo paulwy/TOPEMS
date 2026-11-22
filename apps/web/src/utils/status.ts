@@ -94,6 +94,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   lost: 'error',
   closed: 'default',
   partial: 'warning',
+  full: 'error',
   claimed: 'info',
   receiving: 'primary',
   processing: 'primary',

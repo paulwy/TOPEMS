@@ -89,8 +89,8 @@ export const locationSchema: EntitySchema = {
       readonly: true,
       renderCell: (row: Record<string, unknown>) => {
         const statusMap: Record<string, string> = {
-          empty: i18n.t('wms.location.k22'),
-          partially_filled: i18n.t('wms.location.k23'),
+          available: i18n.t('wms.location.k22'),
+          partial: i18n.t('wms.location.k23'),
           full: i18n.t('wms.location.k24'),
           inactive: i18n.t('wms.location.k25'),
         };

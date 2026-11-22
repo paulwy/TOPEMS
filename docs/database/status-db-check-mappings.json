@@ -772,6 +772,13 @@
       "table": "wms.outbound_orders",
       "column": "status",
       "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/location_status.rs",
+      "enum": "LocationStatus",
+      "table": "wms.locations",
+      "column": "status",
+      "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql"
     }
   ]
 }
