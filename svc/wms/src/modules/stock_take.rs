@@ -167,6 +167,10 @@ pub async fn list_stock_takes(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_approval_statuses: Vec<String> = StockTakeApprovalStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let warehouse_id = params.warehouse_id;
 
     let result = sqlx::query(only_own_schema_query!(
@@ -183,6 +187,7 @@ pub async fn list_stock_takes(
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND status = ANY($6::text[])
           AND adjustment_status = ANY($7::text[])
+          AND COALESCE(approval_status, 'pending') = ANY($8::text[])
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
@@ -195,6 +200,7 @@ pub async fn list_stock_takes(
     .bind(offset)
     .bind(&canonical_statuses)
     .bind(&canonical_adjustment_statuses)
+    .bind(&canonical_approval_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -209,6 +215,7 @@ pub async fn list_stock_takes(
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
                   AND status = ANY($4::text[])
                   AND adjustment_status = ANY($5::text[])
+                  AND COALESCE(approval_status, 'pending') = ANY($6::text[])
                   AND deleted_at IS NULL
                 "#
             ))
@@ -217,6 +224,7 @@ pub async fn list_stock_takes(
             .bind(warehouse_id)
             .bind(&canonical_statuses)
             .bind(&canonical_adjustment_statuses)
+            .bind(&canonical_approval_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -320,9 +328,10 @@ pub async fn create_stock_take(
     let result = sqlx::query_as::<_, StockTake>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type,
-                                     warehouse_id, location_id, status, adjustment_status,
-                                     planned_date, remarks, created_at, updated_at, tenant_id, org_id)
-        VALUES ($1, $9, $2, 'full', $3, $4, $11, $12, $5, $6, $7, $8, $9, $10)
+                                     warehouse_id, location_id, status, approval_status,
+                                     adjustment_status, planned_date, remarks, created_at,
+                                     updated_at, tenant_id, org_id)
+        VALUES ($1, $9, $2, 'full', $3, $4, $11, $13, $12, $5, $6, $7, $8, $9, $10)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_id, stock_take_number, status,
                   start_time, end_time, remarks, created_at, updated_at
         "#),
@@ -339,6 +348,7 @@ pub async fn create_stock_take(
     .bind(org_id)
     .bind(StockTakeStatus::DEFAULT.as_db_str())
     .bind(StockTakeAdjustmentStatus::DEFAULT.as_db_str())
+    .bind(StockTakeApprovalStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -421,6 +431,10 @@ pub async fn get_stock_take(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_approval_statuses: Vec<String> = StockTakeApprovalStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -432,12 +446,14 @@ pub async fn get_stock_take(
         FROM wms.stock_takes
         WHERE id = $1 AND status = ANY($2::text[])
           AND adjustment_status = ANY($3::text[])
+          AND COALESCE(approval_status, 'pending') = ANY($4::text[])
           AND deleted_at IS NULL
         "#
     ))
     .bind(id)
     .bind(&canonical_statuses)
     .bind(&canonical_adjustment_statuses)
+    .bind(&canonical_approval_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2446,20 +2462,44 @@ pub async fn approve_stock_take(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
-    let current = sqlx::query_scalar::<_, String>(only_own_schema_query!(
+    let current = sqlx::query(only_own_schema_query!(
         "wms",
-        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
+        "SELECT status, approval_status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
-    let current_status = match current {
-        Ok(Some(raw)) => match StockTakeStatus::from_db_str(&raw) {
-            Ok(status) => status,
-            Err(msg) => return ApiResponse::conflict(&msg),
-        },
+    let (current_status, current_approval) = match current {
+        Ok(Some(row)) => {
+            let raw_status = match row.try_get::<String, _>("status") {
+                Ok(value) => value,
+                Err(e) => {
+                    tracing::error!("读取盘点单状态失败: {}", e);
+                    return ApiResponse::server_error("审批失败");
+                }
+            };
+            let status = match StockTakeStatus::from_db_str(&raw_status) {
+                Ok(status) => status,
+                Err(msg) => return ApiResponse::conflict(&msg),
+            };
+            let raw_approval = match row.try_get::<Option<String>, _>("approval_status") {
+                Ok(value) => value,
+                Err(e) => {
+                    tracing::error!("读取盘点审批状态失败: {}", e);
+                    return ApiResponse::server_error("审批失败");
+                }
+            };
+            let approval = match raw_approval.as_deref() {
+                Some(raw) => match StockTakeApprovalStatus::from_db_str(raw) {
+                    Ok(value) => value,
+                    Err(msg) => return ApiResponse::conflict(&msg),
+                },
+                None => StockTakeApprovalStatus::DEFAULT,
+            };
+            (status, approval)
+        }
         Ok(None) => {
             return ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()))
         }
@@ -2470,6 +2510,9 @@ pub async fn approve_stock_take(
     };
     if current_status != StockTakeStatus::InProgress {
         return ApiResponse::conflict("当前状态不允许审批通过");
+    }
+    if current_approval == StockTakeApprovalStatus::Approved {
+        return ApiResponse::conflict("盘点单已审批通过，不能重复审批");
     }
 
     // 审批只记录批准闸门，不直接完成盘点：完成必须走 complete，
@@ -2484,6 +2527,7 @@ pub async fn approve_stock_take(
             approval_notes = $3,
             updated_at = NOW()
         WHERE id = $4 AND tenant_id = $5 AND status = $6 AND deleted_at IS NULL
+          AND COALESCE(approval_status, 'pending') = ANY($7::text[])
         RETURNING id, status, approval_status
         "#
     ))
@@ -2493,6 +2537,10 @@ pub async fn approve_stock_take(
     .bind(id)
     .bind(tenant_id)
     .bind(StockTakeStatus::InProgress.as_db_str())
+    .bind(vec![
+        StockTakeApprovalStatus::Pending.as_db_str().to_string(),
+        StockTakeApprovalStatus::Rejected.as_db_str().to_string(),
+    ])
     .fetch_optional(&mut **txn)
     .await;
 
@@ -2568,20 +2616,44 @@ pub async fn reject_stock_take(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
-    let current = sqlx::query_scalar::<_, String>(only_own_schema_query!(
+    let current = sqlx::query(only_own_schema_query!(
         "wms",
-        "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
+        "SELECT status, approval_status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
-    let current_status = match current {
-        Ok(Some(raw)) => match StockTakeStatus::from_db_str(&raw) {
-            Ok(status) => status,
-            Err(msg) => return ApiResponse::conflict(&msg),
-        },
+    let (current_status, current_approval) = match current {
+        Ok(Some(row)) => {
+            let raw_status = match row.try_get::<String, _>("status") {
+                Ok(value) => value,
+                Err(e) => {
+                    tracing::error!("读取盘点单状态失败: {}", e);
+                    return ApiResponse::server_error("驳回失败");
+                }
+            };
+            let status = match StockTakeStatus::from_db_str(&raw_status) {
+                Ok(status) => status,
+                Err(msg) => return ApiResponse::conflict(&msg),
+            };
+            let raw_approval = match row.try_get::<Option<String>, _>("approval_status") {
+                Ok(value) => value,
+                Err(e) => {
+                    tracing::error!("读取盘点审批状态失败: {}", e);
+                    return ApiResponse::server_error("驳回失败");
+                }
+            };
+            let approval = match raw_approval.as_deref() {
+                Some(raw) => match StockTakeApprovalStatus::from_db_str(raw) {
+                    Ok(value) => value,
+                    Err(msg) => return ApiResponse::conflict(&msg),
+                },
+                None => StockTakeApprovalStatus::DEFAULT,
+            };
+            (status, approval)
+        }
         Ok(None) => {
             return ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()))
         }
@@ -2592,6 +2664,9 @@ pub async fn reject_stock_take(
     };
     if current_status != StockTakeStatus::InProgress {
         return ApiResponse::conflict("当前状态不允许驳回返工");
+    }
+    if current_approval != StockTakeApprovalStatus::Pending {
+        return ApiResponse::conflict("盘点单当前不在待审批状态，不能重复驳回");
     }
 
     let db = wms_db(&state.db);
@@ -2612,6 +2687,7 @@ pub async fn reject_stock_take(
             approval_notes = $3,
             updated_at = NOW()
         WHERE id = $4 AND tenant_id = $5 AND status = $6 AND deleted_at IS NULL
+          AND COALESCE(approval_status, 'pending') = $7
         RETURNING id, status, approval_status
         "#
     ))
@@ -2621,6 +2697,7 @@ pub async fn reject_stock_take(
     .bind(id)
     .bind(tenant_id)
     .bind(StockTakeStatus::InProgress.as_db_str())
+    .bind(StockTakeApprovalStatus::Pending.as_db_str())
     .fetch_optional(&mut scope)
     .await;
     drop(scope);

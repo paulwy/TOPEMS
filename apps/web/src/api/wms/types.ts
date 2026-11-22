@@ -118,6 +118,8 @@ export interface InboundOrder {
 
 export type InboundItemQualityStatus = 'pending' | 'qualified' | 'rejected';
 
+export type StockTakeApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 export interface InboundOrderItem {
   id: string;
   order_id: string;
@@ -327,7 +329,7 @@ export interface StockTake {
   discrepancy_quantity?: number;
   discrepancy_value?: number;
   accuracy_rate?: number;
-  approval_status?: string;
+  approval_status?: StockTakeApprovalStatus;
   adjustment_status?: 'pending' | 'completed';
   remarks?: string;
   created_at: string;
