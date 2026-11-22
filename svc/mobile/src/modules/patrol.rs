@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
+use super::mobile_content_status::MobilePatrolStatus;
 use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
@@ -82,10 +83,7 @@ pub fn is_patrol_overdue(scheduled_time: i64, deadline: i64, now: i64) -> bool {
 
 /// 判断给定的巡逻状态字符串是否有效。
 pub fn is_valid_patrol_status(status: &str) -> bool {
-    matches!(
-        status,
-        "pending" | "in_progress" | "completed" | "cancelled"
-    )
+    MobilePatrolStatus::from_db_str(status).is_some()
 }
 
 /// 根据完成率返回表示进度的状态字符串。
@@ -310,7 +308,18 @@ pub async fn create_patrol_record(
     };
 
     let patrol_id = Uuid::new_v4();
-    let status = payload.status.unwrap_or_else(|| "pending".to_string());
+    let status = match payload.status.as_deref() {
+        None | Some("") => MobilePatrolStatus::DEFAULT,
+        Some(raw) => match MobilePatrolStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的巡逻状态"),
+                )
+            }
+        },
+    };
 
     if let Err(e) = sqlx::query(
         only_own_schema_query!("mobile", "INSERT INTO mobile.patrol_records (id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, created_at, tenant_id)
@@ -323,7 +332,7 @@ pub async fn create_patrol_record(
     .bind(payload.location_lng)
     .bind(&payload.address)
     .bind(&payload.patrol_type)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(Utc::now())
     .bind(tenant_filter(&claims))
@@ -343,7 +352,7 @@ pub async fn create_patrol_record(
             location_lng: payload.location_lng,
             address: payload.address,
             patrol_type: payload.patrol_type,
-            status,
+            status: status.as_db_str().to_string(),
             checked_by: Uuid::parse_str(&user_id).ok(),
             checked_at: None,
             created_at: Utc::now(),
@@ -421,7 +430,26 @@ pub async fn update_patrol_record(
     let location_lat = payload.location_lat.unwrap_or(current_record.location_lat);
     let location_lng = payload.location_lng.unwrap_or(current_record.location_lng);
     let address = payload.address.or(current_record.address);
-    let status = payload.status.unwrap_or(current_record.status);
+    let status = match payload.status.as_deref() {
+        None | Some("") => match MobilePatrolStatus::from_db_str(&current_record.status) {
+            Some(status) => status,
+            None => {
+                return (
+                    StatusCode::CONFLICT,
+                    ApiResponse::conflict("巡逻记录当前状态异常，请刷新后重试"),
+                )
+            }
+        },
+        Some(raw) => match MobilePatrolStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的巡逻状态"),
+                )
+            }
+        },
+    };
 
     if let Err(e) = sqlx::query(
         only_own_schema_query!("mobile", "UPDATE mobile.patrol_records
@@ -433,7 +461,7 @@ pub async fn update_patrol_record(
     .bind(location_lat)
     .bind(location_lng)
     .bind(&address)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
     .execute(&mut scope)

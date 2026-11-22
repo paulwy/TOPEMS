@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 319,
+    "db_check_constraints": 321,
     "db_enum_types": 5,
     "db_check_values": 146,
-    "rust_enums": 213,
+    "rust_enums": 215,
     "rust_enum_values": 198,
     "rust_values_not_in_db_check": 60,
     "frontend_status_keys": 211,
@@ -2381,6 +2381,42 @@
         "active",
         "available",
         "inactive"
+      ]
+    },
+    {
+      "module": "mobile",
+      "file": "svc/mobile/src/modules/mobile_content_status.rs",
+      "name": "MobileDocumentStatus",
+      "values": [
+        "Approved",
+        "Archived",
+        "Draft",
+        "PendingReview",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "archived",
+        "draft",
+        "pending_review",
+        "rejected"
+      ]
+    },
+    {
+      "module": "mobile",
+      "file": "svc/mobile/src/modules/mobile_content_status.rs",
+      "name": "MobilePatrolStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
       ]
     },
     {

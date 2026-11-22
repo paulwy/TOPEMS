@@ -14,6 +14,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
+use super::mobile_content_status::MobileDocumentStatus;
 use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
@@ -281,6 +282,19 @@ pub async fn create_document(
         }
     };
 
+    let status = match req.status.as_deref() {
+        None | Some("") => MobileDocumentStatus::DEFAULT,
+        Some(raw) => match MobileDocumentStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的文档状态"),
+                )
+            }
+        },
+    };
+
     let id = Uuid::new_v4();
     let tenant_id = match tenant_filter(&claims) {
         Some(t) if !t.is_nil() => t,
@@ -306,7 +320,7 @@ pub async fn create_document(
     .bind(req.file_size.unwrap_or(0))
     .bind(req.file_type.as_deref().unwrap_or(""))
     .bind(req.url.as_deref().unwrap_or(""))
-    .bind(req.status.as_deref().unwrap_or("draft"))
+    .bind(status.as_db_str())
     .bind(&user_id)
     .bind(tenant_id)
     .execute(&mut scope)
@@ -373,7 +387,18 @@ pub async fn update_document(
 
     let title = req.get("title").and_then(|v| v.as_str());
     let category = req.get("category").and_then(|v| v.as_str());
-    let status = req.get("status").and_then(|v| v.as_str());
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => None,
+        Some(raw) => match MobileDocumentStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::bad_request("无效的文档状态"),
+                )
+            }
+        },
+    };
 
     let result = sqlx::query(
         only_own_schema_query!(
@@ -389,23 +414,24 @@ pub async fn update_document(
     .execute(&mut scope)
     .await;
 
-    let __mobile_response = {
-        match result {
-            Ok(r) if r.rows_affected() > 0 => {
-                (StatusCode::OK, ApiResponse::success((), "更新文档成功"))
-            }
-            Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
-            Err(e) => {
-                tracing::error!("更新文档失败: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("更新文档失败"),
-                )
-            }
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            let _ = scope.commit().await;
+            (StatusCode::OK, ApiResponse::success((), "更新文档成功"))
         }
-    };
-    let _ = scope.commit().await;
-    __mobile_response
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            (StatusCode::NOT_FOUND, ApiResponse::not_found("文档不存在"))
+        }
+        Err(e) => {
+            tracing::error!("更新文档失败: {}", e);
+            let _ = scope.rollback().await;
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("更新文档失败"),
+            )
+        }
+    }
 }
 
 /// 删除文档（前端 DELETE /documents/{id}）

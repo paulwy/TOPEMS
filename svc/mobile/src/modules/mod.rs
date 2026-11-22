@@ -10,6 +10,7 @@ pub mod document;
 pub mod inventory;
 pub mod media;
 pub mod missing_endpoints;
+pub mod mobile_content_status;
 pub mod mobile_plugin;
 pub mod notifications;
 pub mod oa;

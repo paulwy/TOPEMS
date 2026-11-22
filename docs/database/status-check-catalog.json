@@ -2749,6 +2749,22 @@
     },
     {
       "schema": "mobile",
+      "table": "documents",
+      "constraint": "ck_mobile_documents_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "archived",
+        "draft",
+        "pending_review",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending_review'::text, 'approved'::text, 'rejected'::text, 'archived'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mobile",
       "table": "mobile_tasks",
       "constraint": "ck_mobile_tasks_status_standard",
       "columns": [
@@ -2762,6 +2778,21 @@
         "pending"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('in_progress'::character varying)::text, ('completed'::character varying)::text, ('cancelled'::character varying)::text, ('on_hold'::character varying)::text]))))"
+    },
+    {
+      "schema": "mobile",
+      "table": "patrol_records",
+      "constraint": "ck_mobile_patrol_records_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "mobile",
@@ -6392,15 +6423,6 @@
     },
     {
       "schema": "mobile",
-      "table": "documents",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "mobile",
       "table": "mobile_attendance",
       "column": "status",
       "type": "character varying(20)",
@@ -6458,15 +6480,6 @@
       "table": "offline_sync_records",
       "column": "status",
       "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mobile",
-      "table": "patrol_records",
-      "column": "status",
-      "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"

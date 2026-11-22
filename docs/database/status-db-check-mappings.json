@@ -1205,6 +1205,20 @@
       "table": "qms.qa_quality_issues",
       "column": "status",
       "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mobile/src/modules/mobile_content_status.rs",
+      "enum": "MobileDocumentStatus",
+      "table": "mobile.documents",
+      "column": "status",
+      "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mobile/src/modules/mobile_content_status.rs",
+      "enum": "MobilePatrolStatus",
+      "table": "mobile.patrol_records",
+      "column": "status",
+      "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql"
     }
   ]
 }
