@@ -131,6 +131,7 @@ export const qualitySchema: EntitySchema = {
           { value: 'failed', label: i18n.t('mes.quality.k23') },
           { value: 'rework', label: i18n.t('mes.quality.k24') },
           { value: 'scrapped', label: i18n.t('mes.quality.k25') },
+          { value: 'concession_received', label: i18n.t('mes.quality.k56') },
         ],
       },
       listWidth: 90,
@@ -178,6 +179,7 @@ export const qualitySchema: EntitySchema = {
         failed: 'error',
         rework: 'warning',
         scrapped: 'default',
+        concession_received: 'warning',
       },
       labelMap: {
         pending: i18n.t('mes.quality.k28'),
@@ -186,6 +188,7 @@ export const qualitySchema: EntitySchema = {
         failed: i18n.t('mes.quality.k31'),
         rework: i18n.t('mes.quality.k32'),
         scrapped: i18n.t('mes.quality.k33'),
+        concession_received: i18n.t('mes.quality.k56'),
       },
     },
     filters: [
@@ -201,6 +204,7 @@ export const qualitySchema: EntitySchema = {
           { label: i18n.t('mes.quality.k39'), value: 'failed' },
           { label: i18n.t('mes.quality.k40'), value: 'rework' },
           { label: i18n.t('mes.quality.k41'), value: 'scrapped' },
+          { label: i18n.t('mes.quality.k56'), value: 'concession_received' },
         ],
       },
       {

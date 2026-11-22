@@ -20,6 +20,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use super::big_decimal_to_f64;
+use super::inspection_status::InspectionStatus;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
@@ -123,15 +124,21 @@ pub async fn list_inspections(
         where_clause.push_str(" WHERE qi.tenant_id = $1::uuid");
     }
 
-    if let Some(status) = query.status {
-        let idx = params.len() + 1;
-        let prefix = if where_clause.is_empty() {
-            " WHERE"
-        } else {
-            " AND"
-        };
-        where_clause.push_str(&format!("{} qi.status = ${}", prefix, idx));
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = InspectionStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的检验状态");
+            };
+            let idx = params.len() + 1;
+            let prefix = if where_clause.is_empty() {
+                " WHERE"
+            } else {
+                " AND"
+            };
+            where_clause.push_str(&format!("{} qi.status = ${}", prefix, idx));
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(inspection_type) = query.inspection_type {
@@ -466,6 +473,14 @@ pub async fn create_inspection(
     let unqualified_quantity = body
         .unqualified_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let status = match body.status.as_deref() {
+        None => InspectionStatus::DEFAULT,
+        Some(raw) if raw.trim().is_empty() => InspectionStatus::DEFAULT,
+        Some(raw) => match InspectionStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的检验状态"),
+        },
+    };
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_unchecked!(
         r#"
@@ -511,7 +526,7 @@ pub async fn create_inspection(
                         .and_then(|d| d.and_hms_opt(0, 0, 0))
                 })
         }),
-        body.status.unwrap_or_else(|| "pending".to_string()),
+        status.as_db_str(),
         body.result,
         body.memo,
         tenant_id,
@@ -613,6 +628,14 @@ pub async fn update_inspection(
     let unqualified_quantity = body
         .unqualified_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let status = match body.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match InspectionStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的检验状态"),
+        },
+    };
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_as::<_, InspectionUpdateRow>(
         r#"
@@ -644,7 +667,7 @@ pub async fn update_inspection(
     .bind(unqualified_quantity)
     .bind(body.inspector)
     .bind(body.inspection_time)
-    .bind(body.status)
+    .bind(status.map(InspectionStatus::as_db_str))
     .bind(body.result)
     .bind(body.memo)
     .bind(uuid)
@@ -793,8 +816,8 @@ pub async fn start_concession_approval(
         &state.db,
         "quality_inspection",
         record_id,
-        "failed",
-        "concession_received",
+        InspectionStatus::Failed.as_db_str(),
+        InspectionStatus::ConcessionReceived.as_db_str(),
         approver_id,
     )
     .await
@@ -846,8 +869,8 @@ pub async fn approve_concession(
         "quality_inspection",
         record_id,
         req.approval_id,
-        "failed",
-        "concession_received",
+        InspectionStatus::Failed.as_db_str(),
+        InspectionStatus::ConcessionReceived.as_db_str(),
     )
     .await
     {

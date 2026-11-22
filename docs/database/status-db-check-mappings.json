@@ -1415,6 +1415,13 @@
       "table": "scm.supplier_admissions",
       "column": "status",
       "candidate": "docs/database/supplier-admission-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/inspection_status.rs",
+      "enum": "InspectionStatus",
+      "table": "mes.quality_inspections",
+      "column": "status",
+      "candidate": "docs/database/mes-inspection-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -2857,6 +2857,24 @@
     },
     {
       "schema": "mes",
+      "table": "quality_inspections",
+      "constraint": "ck_mes_quality_inspections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "concession_received",
+        "failed",
+        "inspecting",
+        "passed",
+        "pending",
+        "rework",
+        "scrapped"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'inspecting'::text, 'passed'::text, 'failed'::text, 'rework'::text, 'scrapped'::text, 'concession_received'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "quality_standards",
       "constraint": "ck_quality_standards_status_standard",
       "columns": [
@@ -6851,15 +6869,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'in_progress'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "quality_inspections",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "mes",

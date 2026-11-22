@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 356,
+    "db_check_constraints": 357,
     "db_enum_types": 5,
-    "db_check_values": 156,
-    "rust_enums": 239,
-    "rust_enum_values": 210,
+    "db_check_values": 158,
+    "rust_enums": 240,
+    "rust_enum_values": 212,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 220,
+    "frontend_status_keys": 222,
     "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
@@ -2508,6 +2508,29 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/quality_management/inspection_status.rs",
+      "name": "InspectionStatus",
+      "values": [
+        "ConcessionReceived",
+        "Failed",
+        "Inspecting",
+        "Passed",
+        "Pending",
+        "Rework",
+        "Scrapped"
+      ],
+      "normalized": [
+        "concession_received",
+        "failed",
+        "inspecting",
+        "passed",
+        "pending",
+        "rework",
+        "scrapped"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/work_order_status.rs",
       "name": "WorkOrderStatus",
       "values": [
@@ -4301,6 +4324,7 @@
       "compensating",
       "completed",
       "compliant",
+      "concession_received",
       "confirmed",
       "conflict",
       "consumed",
@@ -4437,6 +4461,7 @@
       "reversed",
       "reviewing",
       "revoked",
+      "rework",
       "rollback",
       "rolled_back",
       "rolling_back",
