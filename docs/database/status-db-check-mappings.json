@@ -814,6 +814,20 @@
       "table": "wms.stock_takes",
       "column": "approval_status",
       "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/wave_pick_status.rs",
+      "enum": "WavePickStatus",
+      "table": "wms.wave_picks",
+      "column": "status",
+      "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/wave_pick_status.rs",
+      "enum": "WavePickItemStatus",
+      "table": "wms.wave_pick_items",
+      "column": "status",
+      "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

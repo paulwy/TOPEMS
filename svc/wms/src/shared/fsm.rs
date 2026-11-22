@@ -30,6 +30,11 @@ use crate::modules::transfer_status::{
     DB_VALUES as TRANSFER_DB_VALUES, TERMINAL as TRANSFER_TERMINAL,
     TRANSITIONS as TRANSFER_TRANSITIONS,
 };
+use crate::modules::wave_pick_status::{
+    WavePickStatus, APPROVAL_TRANSITIONS as WAVE_PICK_APPROVAL_TRANSITIONS,
+    DB_VALUES as WAVE_PICK_DB_VALUES, TERMINAL as WAVE_PICK_TERMINAL,
+    TRANSITIONS as WAVE_PICK_TRANSITIONS,
+};
 pub use topems_shared_core::fsm::{FsmDef, FsmError};
 
 // ==================== FSM-1: InboundOrder ====================
@@ -151,17 +156,10 @@ pub fn is_valid_transfer_order_status(s: &str) -> bool {
 
 // ==================== FSM-5: WavePick ====================
 pub const WAVE_PICK: FsmDef = FsmDef {
-    states: &["created", "assigned", "picking", "completed", "cancelled"],
-    terminal: &["completed", "cancelled"],
-    transitions: &[
-        ("created", "assigned"),
-        ("assigned", "picking"),
-        ("picking", "completed"),
-        ("created", "cancelled"),
-        ("assigned", "cancelled"),
-        ("picking", "cancelled"),
-    ],
-    approval_transitions: &[],
+    states: WAVE_PICK_DB_VALUES,
+    terminal: WAVE_PICK_TERMINAL,
+    transitions: WAVE_PICK_TRANSITIONS,
+    approval_transitions: WAVE_PICK_APPROVAL_TRANSITIONS,
 };
 
 pub fn wave_pick_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
@@ -173,7 +171,7 @@ pub fn wave_pick_requires_approval(from: &str, to: &str) -> bool {
 }
 
 pub fn is_valid_wave_pick_status(s: &str) -> bool {
-    WAVE_PICK.is_valid_status(s)
+    WavePickStatus::from_db_str(s).is_ok()
 }
 
 // ==================== FSM-6: InventoryMovement ====================

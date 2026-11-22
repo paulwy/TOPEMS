@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 131,
-    "uncovered_values": 146,
+    "uncovered_enums": 133,
+    "uncovered_values": 148,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 99,
-    "internal_state_enums": 61,
+    "resolved_enums": 101,
+    "internal_state_enums": 63,
     "persisted_unmapped_enums": 64,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 33,
-    "internal_state_values": 87,
+    "internal_state_values": 89,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -2409,6 +2409,45 @@
         "table": "wms.transfer_orders",
         "column": "status",
         "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/wave_pick_status.rs",
+      "enum": "WavePickItemStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "picked",
+          "short_picked"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/wave_pick_status.rs",
+        "enum": "WavePickItemStatus",
+        "table": "wms.wave_pick_items",
+        "column": "status",
+        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/wave_pick_status.rs",
+      "enum": "WavePickStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "assigned",
+          "created",
+          "picking"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/wave_pick_status.rs",
+        "enum": "WavePickStatus",
+        "table": "wms.wave_picks",
+        "column": "status",
+        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
       }
     }
   ]

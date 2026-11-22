@@ -15,6 +15,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::wave_pick::{WavePick, WavePickItem};
+use crate::modules::wave_pick_status::WavePickStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -61,18 +62,27 @@ pub async fn list_picking_lists(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match WavePickStatus::from_read_str(raw) {
+            Ok(status) => Some(status.as_db_str().to_string()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
         r#"
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
-               status, priority, assigned_to, assigned_user_name, batch_id,
+               CASE WHEN status = 'pending' THEN 'created' ELSE status END AS status,
+               priority, assigned_to, assigned_user_name, batch_id,
                start_time, end_time, total_items, picked_items,
                total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+          AND ($2::text IS NULL OR status = $2 OR ($2 = 'created' AND status = 'pending'))
+          AND (status = ANY(ARRAY['created','assigned','picking','completed','cancelled'])
+               OR status = 'pending')
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
@@ -92,7 +102,9 @@ pub async fn list_picking_lists(
                 r#"
                 SELECT COUNT(*) FROM wms.wave_picks
                 WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                  AND ($2::text IS NULL OR status = $2 OR ($2 = 'created' AND status = 'pending'))
+                  AND (status = ANY(ARRAY['created','assigned','picking','completed','cancelled'])
+                       OR status = 'pending')
                   AND deleted_at IS NULL
                 "#
             ))
@@ -151,11 +163,14 @@ pub async fn get_picking_list(
         "wms",
         r#"
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
-               status, priority, assigned_to, assigned_user_name, batch_id,
+               CASE WHEN status = 'pending' THEN 'created' ELSE status END AS status,
+               priority, assigned_to, assigned_user_name, batch_id,
                start_time, end_time, total_items, picked_items,
                total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE id = $1 AND deleted_at IS NULL
+          AND (status = ANY(ARRAY['created','assigned','picking','completed','cancelled'])
+               OR status = 'pending')
         "#
     ))
     .bind(id)
@@ -173,6 +188,7 @@ pub async fn get_picking_list(
                        created_at, updated_at
                 FROM wms.wave_pick_items
                 WHERE wave_pick_id = $1
+                  AND status = ANY(ARRAY['pending','picked','short_picked'])
                 ORDER BY material_code
                 "#
             ))
@@ -237,7 +253,8 @@ pub async fn picking_statistics(
 
     let pending = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "wms",
-        "SELECT COUNT(*) FROM wms.wave_picks WHERE status = 'pending' AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM wms.wave_picks
+         WHERE status IN ('created','assigned','pending') AND deleted_at IS NULL"
     ))
     .fetch_one(&mut **txn)
     .await
@@ -245,7 +262,7 @@ pub async fn picking_statistics(
 
     let in_progress = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "wms",
-        "SELECT COUNT(*) FROM wms.wave_picks WHERE status = 'in_progress' AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM wms.wave_picks WHERE status = 'picking' AND deleted_at IS NULL"
     ))
     .fetch_one(&mut **txn)
     .await
@@ -263,7 +280,7 @@ pub async fn picking_statistics(
         "wms",
         r#"
         SELECT COUNT(*) FROM wms.wave_picks
-        WHERE status NOT IN ('completed', 'cancelled') AND end_time < now() AND deleted_at IS NULL
+        WHERE status IN ('created','assigned','picking') AND end_time < now() AND deleted_at IS NULL
         "#
     ))
     .fetch_one(&mut **txn)

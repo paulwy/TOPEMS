@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 190,
-    "rust_enum_values": 185,
-    "rust_values_not_in_db_check": 146,
-    "frontend_status_keys": 200,
-    "frontend_keys_not_in_db_check": 160,
+    "rust_enums": 192,
+    "rust_enum_values": 187,
+    "rust_values_not_in_db_check": 148,
+    "frontend_status_keys": 202,
+    "frontend_keys_not_in_db_check": 162,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3378,6 +3378,40 @@
         "inactive",
         "maintenance"
       ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/wave_pick_status.rs",
+      "name": "WavePickItemStatus",
+      "values": [
+        "Pending",
+        "Picked",
+        "ShortPicked"
+      ],
+      "normalized": [
+        "pending",
+        "picked",
+        "short_picked"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/wave_pick_status.rs",
+      "name": "WavePickStatus",
+      "values": [
+        "Assigned",
+        "Cancelled",
+        "Completed",
+        "Created",
+        "Picking"
+      ],
+      "normalized": [
+        "assigned",
+        "cancelled",
+        "completed",
+        "created",
+        "picking"
+      ]
     }
   ],
   "frontend": {
@@ -3505,6 +3539,7 @@
       "pending_destruction",
       "pending_review",
       "pending_verification",
+      "picked",
       "picking",
       "planned",
       "planning",
@@ -3543,6 +3578,7 @@
       "settled",
       "shipped",
       "shipping",
+      "short_picked",
       "shortage",
       "skipped",
       "sourced",
@@ -3672,6 +3708,7 @@
       "paused",
       "pending_approval",
       "pending_verification",
+      "picked",
       "picking",
       "planning",
       "preview",
@@ -3701,6 +3738,7 @@
       "settled",
       "shipped",
       "shipping",
+      "short_picked",
       "shortage",
       "skipped",
       "sourced",
@@ -3829,6 +3867,7 @@
       "paused",
       "pending_approval",
       "pending_verification",
+      "picked",
       "picking",
       "planning",
       "preview",
@@ -3860,6 +3899,7 @@
       "settled",
       "shipped",
       "shipping",
+      "short_picked",
       "shortage",
       "skipped",
       "sourced",

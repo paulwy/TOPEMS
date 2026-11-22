@@ -71,6 +71,8 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   confirmed: 'info',
   waiting: 'warning',
   picking: 'info',
+  picked: 'success',
+  short_picked: 'warning',
   packing: 'warning',
   shipping: 'success',
   shipped: 'primary',

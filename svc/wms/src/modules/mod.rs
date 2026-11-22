@@ -44,6 +44,7 @@ pub mod transfer_status;
 pub mod warehouse;
 pub mod warehouse_status;
 pub mod wave_pick;
+pub mod wave_pick_status;
 pub mod wms_plugin;
 
 #[derive(Clone)]

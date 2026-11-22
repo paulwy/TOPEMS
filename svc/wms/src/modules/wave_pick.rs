@@ -12,6 +12,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
+use crate::modules::wave_pick_status::{WavePickItemStatus, WavePickStatus};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{tenant_of, wms_db};
@@ -54,7 +55,8 @@ pub struct CreateWavePickRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AssignWavePickRequest {
-    pub assigned_to: Uuid,
+    /// 用户 UUID，或前端约定的 `current`（表示当前登录人）。
+    pub assigned_to: String,
 }
 
 pub fn create_routes<S>() -> Router<S>
@@ -118,18 +120,27 @@ pub async fn list_wave_picks(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match WavePickStatus::from_read_str(raw) {
+            Ok(status) => Some(status.as_db_str().to_string()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
         r#"
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
-               status, priority, assigned_to, assigned_user_name, batch_id,
+               CASE WHEN status = 'pending' THEN 'created' ELSE status END AS status,
+               priority, assigned_to, assigned_user_name, batch_id,
                start_time, end_time, total_items, picked_items,
                total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+          AND ($2::text IS NULL OR status = $2 OR ($2 = 'created' AND status = 'pending'))
+          AND (status = ANY(ARRAY['created','assigned','picking','completed','cancelled'])
+               OR status = 'pending')
           AND deleted_at IS NULL
           AND tenant_id = $5::uuid
         ORDER BY created_at DESC
@@ -151,7 +162,9 @@ pub async fn list_wave_picks(
                 r#"
                 SELECT COUNT(*) FROM wms.wave_picks
                 WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                  AND ($2::text IS NULL OR status = $2 OR ($2 = 'created' AND status = 'pending'))
+                  AND (status = ANY(ARRAY['created','assigned','picking','completed','cancelled'])
+                       OR status = 'pending')
                   AND deleted_at IS NULL
                   AND tenant_id = $3::uuid
                 "#
@@ -254,7 +267,7 @@ pub async fn create_wave_pick(
                                     warehouse_id, status, priority, batch_id, remarks,
                                     total_items, picked_items, total_quantity, picked_quantity,
                                     created_at, updated_at, tenant_id, org_id)
-        VALUES ($1, $10, $2, $3, $4, 'pending', $5, $6, $7, 0, 0, 0, 0, $8, $9, $10, $11)
+        VALUES ($1, $10, $2, $3, $4, $12, $5, $6, $7, 0, 0, 0, 0, $8, $9, $10, $11)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -272,6 +285,7 @@ pub async fn create_wave_pick(
     .bind(now)
     .bind(tenant_id)
     .bind(org_id)
+    .bind(WavePickStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -348,11 +362,14 @@ pub async fn get_wave_pick(
         "wms",
         r#"
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
-               status, priority, assigned_to, assigned_user_name, batch_id,
+               CASE WHEN status = 'pending' THEN 'created' ELSE status END AS status,
+               priority, assigned_to, assigned_user_name, batch_id,
                start_time, end_time, total_items, picked_items,
                total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE id = $1 AND deleted_at IS NULL
+          AND (status = ANY(ARRAY['created','assigned','picking','completed','cancelled'])
+               OR status = 'pending')
         "#
     ))
     .bind(id)
@@ -396,6 +413,10 @@ pub async fn update_wave_pick(
     let request_data = Some(req.clone());
     let now = Utc::now();
 
+    if req.get("status").is_some() {
+        return ApiResponse::bad_request("通用更新不能修改状态，请使用分配/开始/完成/取消接口");
+    }
+
     let priority: Option<String> = req
         .get("priority")
         .and_then(|v| v.as_str())
@@ -413,8 +434,10 @@ pub async fn update_wave_pick(
             remarks = COALESCE($3, remarks),
             updated_at = $4
         WHERE id = $1 AND deleted_at IS NULL
+          AND status IN ($5, $6)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
-                  status, priority, assigned_to, assigned_user_name, batch_id,
+                  CASE WHEN status = 'pending' THEN 'created' ELSE status END AS status,
+                  priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#
@@ -423,6 +446,8 @@ pub async fn update_wave_pick(
     .bind(priority)
     .bind(remarks)
     .bind(now)
+    .bind(WavePickStatus::Created.as_db_str())
+    .bind(WavePickStatus::Assigned.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -434,9 +459,9 @@ pub async fn update_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound("波次拣货不存在".to_string())),
+            ApiResponse::conflict("波次拣货不存在或当前状态不允许编辑"),
             "error",
-            Some("波次拣货不存在".to_string()),
+            Some("波次拣货不存在或当前状态不允许编辑".to_string()),
             None,
         ),
         Err(e) => {
@@ -504,9 +529,13 @@ pub async fn delete_wave_pick(
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.wave_picks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE wms.wave_picks SET deleted_at = NOW()
+         WHERE id = $1 AND deleted_at IS NULL
+           AND status IN ($2, $3)"
     ))
     .bind(id)
+    .bind(WavePickStatus::Created.as_db_str())
+    .bind(WavePickStatus::Cancelled.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -617,6 +646,7 @@ pub async fn list_wave_pick_items(
                created_at, updated_at
         FROM wms.wave_pick_items
         WHERE wave_pick_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
+          AND status = ANY(ARRAY['pending','picked','short_picked'])
         ORDER BY created_at DESC
         "#
     ))
@@ -670,13 +700,28 @@ pub async fn assign_wave_pick(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
+    let (assigned_to, assigned_user_name) = if req.assigned_to == "current" {
+        match claims.user_id() {
+            Ok(user_id) => (user_id, Some(claims.username.clone())),
+            Err(e) => return ApiResponse::from(e),
+        }
+    } else {
+        match Uuid::parse_str(req.assigned_to.trim()) {
+            Ok(user_id) => (user_id, None),
+            Err(_) => return ApiResponse::bad_request("assigned_to 必须是用户 UUID 或 current"),
+        }
+    };
+
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.wave_picks SET
             assigned_to = $2,
+            assigned_user_name = COALESCE($4, assigned_user_name),
+            status = $5,
             updated_at = $3
         WHERE id = $1 AND deleted_at IS NULL
+          AND status = $6
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -684,8 +729,11 @@ pub async fn assign_wave_pick(
         "#
     ))
     .bind(id)
-    .bind(req.assigned_to)
+    .bind(assigned_to)
     .bind(now)
+    .bind(assigned_user_name)
+    .bind(WavePickStatus::Assigned.as_db_str())
+    .bind(WavePickStatus::Created.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -697,9 +745,9 @@ pub async fn assign_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound("波次拣货不存在".to_string())),
+            ApiResponse::conflict("波次拣货不存在或只有 created 状态可分配"),
             "error",
-            Some("波次拣货不存在".to_string()),
+            Some("波次拣货不存在或只有 created 状态可分配".to_string()),
             None,
         ),
         Err(e) => {
@@ -770,10 +818,12 @@ pub async fn start_wave_pick(
         "wms",
         r#"
         UPDATE wms.wave_picks SET
-            status = 'picking',
-            start_time = $2,
-            updated_at = $3
-        WHERE id = $1 AND deleted_at IS NULL AND status = 'pending'
+            status = $2,
+            start_time = $3,
+            updated_at = $4
+        WHERE id = $1 AND deleted_at IS NULL
+          AND status = $5
+          AND assigned_to IS NOT NULL
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -781,8 +831,10 @@ pub async fn start_wave_pick(
         "#
     ))
     .bind(id)
+    .bind(WavePickStatus::Picking.as_db_str())
     .bind(now)
     .bind(now)
+    .bind(WavePickStatus::Assigned.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -794,11 +846,9 @@ pub async fn start_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ValidationFailed(
-                "波次拣货不存在或状态不允许开始".to_string(),
-            )),
+            ApiResponse::conflict("波次拣货不存在或只有 assigned 状态可开始"),
             "error",
-            Some("波次拣货不存在或状态不允许开始".to_string()),
+            Some("波次拣货不存在或只有 assigned 状态可开始".to_string()),
             None,
         ),
         Err(e) => {
@@ -868,20 +918,41 @@ pub async fn complete_wave_pick(
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
         "wms",
         r#"
-        UPDATE wms.wave_picks SET
-            status = 'completed',
-            end_time = $2,
-            updated_at = $3
-        WHERE id = $1 AND deleted_at IS NULL AND status = 'picking'
+        UPDATE wms.wave_picks w SET
+            status = $2,
+            end_time = $3,
+            updated_at = $4,
+            total_items = (SELECT COUNT(*) FROM wms.wave_pick_items i
+                           WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL),
+            picked_items = (SELECT COUNT(*) FROM wms.wave_pick_items i
+                            WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL
+                              AND i.status IN ('picked','short_picked')),
+            total_quantity = (SELECT COALESCE(SUM(i.planned_quantity), 0)::float8
+                              FROM wms.wave_pick_items i
+                              WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL),
+            picked_quantity = (SELECT COALESCE(SUM(i.picked_quantity), 0)::float8
+                               FROM wms.wave_pick_items i
+                               WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL)
+        WHERE w.id = $1 AND w.deleted_at IS NULL AND w.status = $5
+          AND EXISTS (SELECT 1 FROM wms.wave_pick_items i
+                      WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL)
+          AND NOT EXISTS (SELECT 1 FROM wms.wave_pick_items i
+                          WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL
+                            AND i.status = 'pending')
+          AND NOT EXISTS (SELECT 1 FROM wms.wave_pick_items i
+                          WHERE i.wave_pick_id = w.id AND i.deleted_at IS NULL
+                            AND i.status <> ALL(ARRAY['pending','picked','short_picked']))
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
+                  total_quantity, picked_quantity, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
+    .bind(WavePickStatus::Completed.as_db_str())
     .bind(now)
     .bind(now)
+    .bind(WavePickStatus::Picking.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -893,11 +964,9 @@ pub async fn complete_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ValidationFailed(
-                "波次拣货不存在或状态不允许完成".to_string(),
-            )),
+            ApiResponse::conflict("波次拣货不存在、只有 picking 状态可完成，或仍有未拣/异常明细"),
             "error",
-            Some("波次拣货不存在或状态不允许完成".to_string()),
+            Some("波次拣货不存在、只有 picking 状态可完成，或仍有未拣/异常明细".to_string()),
             None,
         ),
         Err(e) => {
@@ -968,9 +1037,10 @@ pub async fn cancel_wave_pick(
         "wms",
         r#"
         UPDATE wms.wave_picks SET
-            status = 'cancelled',
-            updated_at = $2
-        WHERE id = $1 AND deleted_at IS NULL AND status IN ('pending', 'picking')
+            status = $2,
+            updated_at = $3
+        WHERE id = $1 AND deleted_at IS NULL
+          AND status IN ($4, $5, $6)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
@@ -978,7 +1048,11 @@ pub async fn cancel_wave_pick(
         "#
     ))
     .bind(id)
+    .bind(WavePickStatus::Cancelled.as_db_str())
     .bind(now)
+    .bind(WavePickStatus::Created.as_db_str())
+    .bind(WavePickStatus::Assigned.as_db_str())
+    .bind(WavePickStatus::Picking.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -990,11 +1064,9 @@ pub async fn cancel_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ValidationFailed(
-                "波次拣货不存在或状态不允许取消".to_string(),
-            )),
+            ApiResponse::conflict("波次拣货不存在或只有 created/assigned/picking 状态可取消"),
             "error",
-            Some("波次拣货不存在或状态不允许取消".to_string()),
+            Some("波次拣货不存在或只有 created/assigned/picking 状态可取消".to_string()),
             None,
         ),
         Err(e) => {
@@ -1070,16 +1142,25 @@ pub async fn pick_line(
         Err(e) => return e.0,
     }
     let now = Utc::now();
+    if req.quantity.is_some_and(|q| q < 0.0) {
+        return ApiResponse::bad_request("拣货数量不能为负数");
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
             UPDATE wms.wave_pick_items
-            SET picked_quantity = $3,
-                status = 'picked',
+            SET picked_quantity = COALESCE($3, planned_quantity),
+                status = $7,
                 remarks = COALESCE($4, remarks),
                 updated_at = $5
             WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND tenant_id = $6::uuid
+              AND status = $8
+              AND ($3::float8 IS NULL OR ($3 >= 0 AND $3 <= planned_quantity))
+              AND EXISTS (
+                  SELECT 1 FROM wms.wave_picks w
+                  WHERE w.id = $2 AND w.deleted_at IS NULL AND w.status = $9
+              )
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
                       planned_quantity::float8, picked_quantity::float8, status, remarks
@@ -1087,10 +1168,13 @@ pub async fn pick_line(
     ))
     .bind(line_id)
     .bind(task_id)
-    .bind(req.quantity.unwrap_or(-1.0))
+    .bind(req.quantity)
     .bind(&req.remarks)
     .bind(now)
     .bind(tenant)
+    .bind(WavePickItemStatus::Picked.as_db_str())
+    .bind(WavePickItemStatus::Pending.as_db_str())
+    .bind(WavePickStatus::Picking.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1121,7 +1205,7 @@ pub async fn pick_line(
             }
             ApiResponse::success(value, "拣货完成")
         }
-        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("拣货明细不存在".to_string())),
+        Ok(None) => ApiResponse::conflict("拣货明细不存在、波次未开始、数量非法或该行已拣货"),
         Err(e) => {
             tracing::error!("拣货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("拣货失败".to_string()))
@@ -1152,16 +1236,25 @@ pub async fn short_pick_line(
         Err(e) => return e.0,
     }
     let now = Utc::now();
+    if req.quantity.is_some_and(|q| q < 0.0) {
+        return ApiResponse::bad_request("缺量拣货数量不能为负数");
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
             UPDATE wms.wave_pick_items
-            SET picked_quantity = $3,
-                status = 'short_picked',
+            SET picked_quantity = COALESCE($3, 0),
+                status = $7,
                 remarks = COALESCE($4, remarks),
                 updated_at = $5
             WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND tenant_id = $6::uuid
+              AND status = $8
+              AND ($3::float8 IS NULL OR ($3 >= 0 AND $3 < planned_quantity))
+              AND EXISTS (
+                  SELECT 1 FROM wms.wave_picks w
+                  WHERE w.id = $2 AND w.deleted_at IS NULL AND w.status = $9
+              )
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
                       planned_quantity::float8, picked_quantity::float8, status, remarks
@@ -1169,10 +1262,13 @@ pub async fn short_pick_line(
     ))
     .bind(line_id)
     .bind(task_id)
-    .bind(req.quantity.unwrap_or(0.0))
+    .bind(req.quantity)
     .bind(&req.remarks)
     .bind(now)
     .bind(tenant)
+    .bind(WavePickItemStatus::ShortPicked.as_db_str())
+    .bind(WavePickItemStatus::Pending.as_db_str())
+    .bind(WavePickStatus::Picking.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1205,7 +1301,7 @@ pub async fn short_pick_line(
             }
             ApiResponse::success(value, "缺量拣货完成")
         }
-        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("拣货明细不存在".to_string())),
+        Ok(None) => ApiResponse::conflict("拣货明细不存在、波次未开始、数量非法或该行已拣货"),
         Err(e) => {
             tracing::error!("缺量拣货失败: {}", e);
             ApiResponse::from(TopemsError::Internal("缺量拣货失败".to_string()))
@@ -1335,7 +1431,7 @@ mod tests {
     #[test]
     fn test_assign_wave_pick_request_serialization() {
         let request = AssignWavePickRequest {
-            assigned_to: Uuid::nil(),
+            assigned_to: "00000000-0000-0000-0000-000000000000".to_string(),
         };
         let json = serde_json::to_value(&request).unwrap();
         assert_eq!(json["assigned_to"], "00000000-0000-0000-0000-000000000000");
@@ -1343,9 +1439,9 @@ mod tests {
 
     #[test]
     fn test_assign_wave_pick_request_deserialize() {
-        let json = r#"{"assigned_to": "00000000-0000-0000-0000-000000000000"}"#;
+        let json = r#"{"assigned_to": "current"}"#;
         let request: AssignWavePickRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(request.assigned_to, Uuid::nil());
+        assert_eq!(request.assigned_to, "current");
     }
 
     #[test]
