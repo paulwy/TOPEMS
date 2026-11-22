@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 192,
-    "rust_enum_values": 187,
-    "rust_values_not_in_db_check": 148,
-    "frontend_status_keys": 202,
-    "frontend_keys_not_in_db_check": 162,
+    "rust_enums": 194,
+    "rust_enum_values": 190,
+    "rust_values_not_in_db_check": 151,
+    "frontend_status_keys": 205,
+    "frontend_keys_not_in_db_check": 165,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3156,6 +3156,42 @@
     },
     {
       "module": "wms",
+      "file": "svc/wms/src/modules/batch_status.rs",
+      "name": "BatchQualityStatus",
+      "values": [
+        "Inspecting",
+        "Pending",
+        "Qualified",
+        "Unqualified"
+      ],
+      "normalized": [
+        "inspecting",
+        "pending",
+        "qualified",
+        "unqualified"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/batch_status.rs",
+      "name": "BatchStatus",
+      "values": [
+        "Frozen",
+        "InStock",
+        "OutStock",
+        "Reserved",
+        "Scrapped"
+      ],
+      "normalized": [
+        "frozen",
+        "in_stock",
+        "out_stock",
+        "reserved",
+        "scrapped"
+      ]
+    },
+    {
+      "module": "wms",
       "file": "svc/wms/src/modules/inbound_item_quality_status.rs",
       "name": "InboundItemQualityStatus",
       "values": [
@@ -3497,6 +3533,7 @@
       "inactive",
       "info",
       "initiated",
+      "inspecting",
       "installed",
       "installing",
       "insufficient_data",
@@ -3525,6 +3562,7 @@
       "open",
       "opened",
       "other",
+      "out_stock",
       "overdue",
       "packing",
       "paid",
@@ -3561,6 +3599,7 @@
       "released",
       "reported",
       "requisitioned",
+      "reserved",
       "resolved",
       "restored",
       "retired",
@@ -3676,6 +3715,7 @@
       "in_stock",
       "in_use",
       "initiated",
+      "inspecting",
       "installed",
       "installing",
       "insufficient_data",
@@ -3699,6 +3739,7 @@
       "online",
       "opened",
       "other",
+      "out_stock",
       "packing",
       "partial",
       "partially_compliant",
@@ -3724,6 +3765,7 @@
       "released",
       "reported",
       "requisitioned",
+      "reserved",
       "restored",
       "retired",
       "revoked",
@@ -3834,6 +3876,7 @@
       "in_use",
       "info",
       "initiated",
+      "inspecting",
       "installed",
       "installing",
       "insufficient_data",
@@ -3858,6 +3901,7 @@
       "online",
       "opened",
       "other",
+      "out_stock",
       "packing",
       "partial",
       "partially_compliant",
@@ -3885,6 +3929,7 @@
       "released",
       "reported",
       "requisitioned",
+      "reserved",
       "restored",
       "retired",
       "revoked",

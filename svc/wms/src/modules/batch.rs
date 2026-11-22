@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use sqlx::Row;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
@@ -11,6 +12,7 @@ use uuid::Uuid;
 use crate::models::{
     Batch, BatchQueryParams, BatchStatistics, CreateBatchRequest, UpdateBatchRequest,
 };
+use crate::modules::batch_status::{BatchQualityStatus, BatchStatus};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::tenant_of;
@@ -67,15 +69,33 @@ pub async fn list_batches(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let quality_filter = match params.quality_status.as_deref() {
+        None => None,
+        Some(raw) => match BatchQualityStatus::from_db_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match BatchStatus::from_read_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, CASE WHEN status = 'active' THEN 'in_stock' ELSE status END AS status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
           AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
           AND ($5::text IS NULL OR quality_status = $5)
-          AND ($6::text IS NULL OR status = $6)
+          AND ($6::text IS NULL OR status = $6 OR ($6 = 'in_stock' AND status = 'active'))
+          AND (status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+               OR status = 'active')
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
           AND tenant_id = $9::uuid
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
@@ -85,8 +105,8 @@ pub async fn list_batches(
     .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
     .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
     .bind(params.supplier_id)
-    .bind(&params.quality_status)
-    .bind(&params.status)
+    .bind(quality_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant)
@@ -104,7 +124,10 @@ pub async fn list_batches(
                   AND ($3::text IS NULL OR batch_no ILIKE $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
                   AND ($5::text IS NULL OR quality_status = $5)
-                  AND ($6::text IS NULL OR status = $6)
+                  AND ($6::text IS NULL OR status = $6 OR ($6 = 'in_stock' AND status = 'active'))
+                  AND (status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+                       OR status = 'active')
+                  AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
                   AND tenant_id = $7::uuid
                 "#
             ))
@@ -112,8 +135,8 @@ pub async fn list_batches(
             .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
             .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
             .bind(params.supplier_id)
-            .bind(&params.quality_status)
-            .bind(&params.status)
+            .bind(quality_filter)
+            .bind(status_filter)
             .bind(tenant)
             .fetch_one(&mut **txn)
             .await
@@ -176,6 +199,14 @@ pub async fn create_batch(
         None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
     };
 
+    let quality_status = match req.quality_status.as_deref() {
+        None => BatchQualityStatus::DEFAULT,
+        Some(raw) => match BatchQualityStatus::from_db_str(raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.batches (
@@ -208,10 +239,9 @@ pub async fn create_batch(
     .bind(&req.production_date)
     .bind(&req.expiry_date)
     .bind(&req.receipt_date)
-    .bind(req.quality_status.as_deref().unwrap_or("pending"))
-    .bind("active")
-    .bind(&req.manufacture_date)
-    .bind(req.shelf_life_days)
+    .bind(quality_status.as_db_str())
+    .bind(BatchStatus::DEFAULT.as_db_str())
+    .bind(&req.manufacture_date)    .bind(req.shelf_life_days)
     .bind(req.unit_price)
     .bind(&req.remark)
     .bind(now)
@@ -278,7 +308,7 @@ pub async fn get_batch(
     };
 
     let result = sqlx::query_as::<_, Batch>(
-        only_own_schema_query!("wms", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"),
+        only_own_schema_query!("wms", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, CASE WHEN status = 'active' THEN 'in_stock' ELSE status END AS status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid AND (status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped']) OR status = 'active') AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])"),
     )
     .bind(batch_id)
     .bind(tenant)
@@ -334,6 +364,21 @@ pub async fn update_batch(
 
     let now = Utc::now();
 
+    let requested_quality = match req.quality_status.as_deref() {
+        None => None,
+        Some(raw) => match BatchQualityStatus::from_db_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match BatchStatus::from_read_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+
     let result = sqlx::query_as::<_, Batch>(only_own_schema_query!(
         "wms",
         r#"
@@ -350,13 +395,38 @@ pub async fn update_batch(
             production_date = COALESCE($10::date, production_date),
             expiry_date = COALESCE($11::date, expiry_date),
             quality_status = COALESCE($12, quality_status),
-            status = COALESCE($13, status),
+            status = COALESCE($13, CASE WHEN status = 'active' THEN 'in_stock' ELSE status END),
             manufacture_date = COALESCE($14::date, manufacture_date),
             shelf_life_days = COALESCE($15, shelf_life_days),
             unit_price = COALESCE($16, unit_price),
             remark = COALESCE($17, remark),
             updated_at = $18
-        WHERE id = $19
+        WHERE id = $19 AND deleted_at IS NULL
+          AND (status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+               OR status = 'active')
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
+          AND (
+              $12::text IS NULL OR $12 = quality_status
+              OR CASE quality_status
+                  WHEN 'pending' THEN $12 IN ('inspecting','qualified','unqualified')
+                  WHEN 'inspecting' THEN $12 IN ('qualified','unqualified')
+                  WHEN 'qualified' THEN $12 IN ('inspecting','unqualified')
+                  WHEN 'unqualified' THEN $12 IN ('inspecting','qualified')
+                  ELSE FALSE
+              END
+          )
+          AND (
+              $13::text IS NULL OR $13 = status
+              OR ($13 = 'in_stock' AND status = 'active')
+              OR CASE status
+                  WHEN 'in_stock' THEN $13 IN ('reserved','out_stock','frozen','scrapped')
+                  WHEN 'active' THEN $13 = 'in_stock'
+                  WHEN 'reserved' THEN $13 IN ('in_stock','out_stock','frozen','scrapped')
+                  WHEN 'out_stock' THEN $13 IN ('in_stock','scrapped')
+                  WHEN 'frozen' THEN $13 IN ('in_stock','scrapped')
+                  ELSE FALSE
+              END
+          )
         RETURNING *
         "#
     ))
@@ -371,8 +441,8 @@ pub async fn update_batch(
     .bind(req.supplier_id)
     .bind(&req.production_date)
     .bind(&req.expiry_date)
-    .bind(&req.quality_status)
-    .bind(&req.status)
+    .bind(requested_quality)
+    .bind(requested_status)
     .bind(&req.manufacture_date)
     .bind(req.shelf_life_days)
     .bind(req.unit_price)
@@ -393,7 +463,7 @@ pub async fn update_batch(
             ApiResponse::success(batch, "更新批次成功")
         }
         Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string()))
+            ApiResponse::conflict("批次不存在、当前状态非法或不允许该状态流转")
         }
         Err(e) => {
             tracing::error!("更新批次失败: {}", e);
@@ -439,7 +509,7 @@ pub async fn delete_batch(
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.batches SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(batch_id)
     .execute(&mut **txn)
@@ -491,38 +561,36 @@ pub async fn get_batch_statistics(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
-        SELECT 
-            COUNT(*) as total_batches,
-            SUM(quantity) as total_quantity,
-            SUM(total_value) as total_value,
-            SUM(CASE WHEN remaining_days <= 30 AND remaining_days > 0 THEN 1 ELSE 0 END) as expiring_soon_count,
-            SUM(CASE WHEN remaining_days <= 0 THEN 1 ELSE 0 END) as expired_count,
-            SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END) as quality_pending_count
+        SELECT
+            COUNT(*)::bigint as total_batches,
+            COALESCE(SUM(quantity), 0)::float8 as total_quantity,
+            COALESCE(SUM(total_value), 0)::float8 as total_value,
+            COALESCE(SUM(CASE WHEN remaining_days <= 30 AND remaining_days > 0 THEN 1 ELSE 0 END), 0)::bigint as expiring_soon_count,
+            COALESCE(SUM(CASE WHEN remaining_days <= 0 THEN 1 ELSE 0 END), 0)::bigint as expired_count,
+            COALESCE(SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END), 0)::bigint as quality_pending_count
         FROM wms.batches
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid)
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
+          AND (status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+               OR status = 'active')
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
         "#,
-        warehouse_id
     )
+    .bind(warehouse_id)
     .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(row) => {
             let statistics = BatchStatistics {
-                total_batches: row.total_batches.unwrap_or(0),
-                total_quantity: row
-                    .total_quantity
-                    .and_then(|v| v.to_string().parse::<f64>().ok())
-                    .unwrap_or(0.0),
-                total_value: row
-                    .total_value
-                    .and_then(|v| v.to_string().parse::<f64>().ok())
-                    .unwrap_or(0.0),
-                expiring_soon_count: row.expiring_soon_count.unwrap_or(0),
-                expired_count: row.expired_count.unwrap_or(0),
-                quality_pending_count: row.quality_pending_count.unwrap_or(0),
+                total_batches: row.try_get("total_batches").unwrap_or(0),
+                total_quantity: row.try_get("total_quantity").unwrap_or(0.0),
+                total_value: row.try_get("total_value").unwrap_or(0.0),
+                expiring_soon_count: row.try_get("expiring_soon_count").unwrap_or(0),
+                expired_count: row.try_get("expired_count").unwrap_or(0),
+                quality_pending_count: row.try_get("quality_pending_count").unwrap_or(0),
             };
             ApiResponse::success(statistics, "获取批次统计成功")
         }
@@ -573,10 +641,12 @@ pub async fn get_expiring_soon(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, CASE WHEN status = 'active' THEN 'in_stock' ELSE status END AS status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= $1 AND remaining_days > 0
           AND (warehouse_id = $2 OR $2 IS NULL)
           AND tenant_id = $3::uuid
+          AND status IN ('in_stock','reserved','frozen')
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
         ORDER BY remaining_days ASC
         "#),
     )
@@ -633,10 +703,12 @@ pub async fn get_expired(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, CASE WHEN status = 'active' THEN 'in_stock' ELSE status END AS status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= 0
           AND (warehouse_id = $1::uuid OR $1 IS NULL)
           AND tenant_id = $2::uuid
+          AND status IN ('in_stock','reserved','frozen')
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
         ORDER BY remaining_days ASC
         "#),
     )
@@ -697,7 +769,8 @@ pub async fn adjust_quantity(
             quantity = quantity + $1,
             available_quantity = available_quantity + $1,
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2 AND deleted_at IS NULL
+          AND status IN ('in_stock','reserved')
         RETURNING *
         "#
     ))
@@ -717,7 +790,7 @@ pub async fn adjust_quantity(
             ApiResponse::success(batch, "调整数量成功")
         }
         Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string()))
+            ApiResponse::conflict("批次不存在或当前状态不允许调整数量")
         }
         Err(e) => {
             tracing::error!("调整数量失败: {}", e);
@@ -777,7 +850,8 @@ pub async fn transfer_location(
         UPDATE wms.batches SET
             location_id = COALESCE($1::uuid, location_id),
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2 AND deleted_at IS NULL
+          AND status IN ('in_stock','reserved')
         RETURNING *
         "#
     ))
@@ -797,7 +871,7 @@ pub async fn transfer_location(
             ApiResponse::success(batch, "转移库位成功")
         }
         Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string()))
+            ApiResponse::conflict("批次不存在或当前状态不允许转移库位")
         }
         Err(e) => {
             tracing::error!("转移库位失败: {}", e);

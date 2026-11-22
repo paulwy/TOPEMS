@@ -134,7 +134,7 @@ export const batchSchema: EntitySchema = {
       label: i18n.t('wms.batch.k15'),
       type: 'select',
       required: true,
-      defaultValue: 'qualified',
+      defaultValue: 'pending',
       listWidth: 100,
       options: {
         type: 'static',

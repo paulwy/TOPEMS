@@ -9,6 +9,7 @@ use topems_shared_event::event::EventPublisher;
 
 pub mod audit;
 pub mod batch;
+pub mod batch_status;
 pub mod discrepancy_logic;
 pub mod replenishment_logic;
 // V514-2: 恢复此前被注释的已实现模块（InventoryCyclePage 前端真实消费 /cycle-counts）

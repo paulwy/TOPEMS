@@ -828,6 +828,20 @@
       "table": "wms.wave_pick_items",
       "column": "status",
       "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/batch_status.rs",
+      "enum": "BatchStatus",
+      "table": "wms.batches",
+      "column": "status",
+      "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/batch_status.rs",
+      "enum": "BatchQualityStatus",
+      "table": "wms.batches",
+      "column": "quality_status",
+      "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
     }
   ]
 }
