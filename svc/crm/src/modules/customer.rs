@@ -1328,7 +1328,7 @@ impl CustomerFinanceInfo {
             last_transaction_date: None,
             payment_terms: String::new(),
             risklevel: "low".to_string(),
-            status: "active".to_string(),
+            status: CustomerStatus::DEFAULT.as_db_str().to_string(),
             bank_name: None,
             bank_account: None,
             account_name: None,
@@ -1450,6 +1450,9 @@ pub async fn get_customer_finance(
             if FinanceRiskLevel::from_db_str(&r.risklevel).is_none() {
                 return ApiResponse::error(409, "客户财务风险等级非法，拒绝读取");
             }
+            if CustomerStatus::from_db_str(&r.status).is_none() {
+                return ApiResponse::error(409, "客户财务状态非法，拒绝读取");
+            }
             ApiResponse::success(
                 CustomerFinanceInfo {
                     customer_id: r.customer_id,
@@ -1537,6 +1540,7 @@ pub async fn update_customer_finance(
     let locale = Locale::from_headers(&headers).as_sql();
 
     // 读取现值（无则默认），与请求合并
+    let mut had_existing = false;
     let cur = {
         let row = sqlx::query!(
             r#"
@@ -1558,30 +1562,33 @@ pub async fn update_customer_finance(
         .fetch_optional(&mut **txn)
         .await;
         match row {
-            Ok(Some(r)) => CustomerFinanceInfo {
-                customer_id: id,
-                customer_name: r.resolved_name.unwrap_or_default(),
-                credit_limit: num_f64(r.credit_limit),
-                credit_used: num_f64(r.credit_used),
-                credit_available: num_f64(r.credit_available),
-                credit_term_days: r.credit_term_days as i64,
-                receivable_balance: num_f64(r.receivable_balance),
-                accounts_receivable: num_f64(r.accounts_receivable),
-                overdue_amount: rust_decimal::Decimal::from_str(&r.overdue_amount.to_string())
-                    .unwrap_or_default(),
-                overdue_receivable: num_f64(r.overdue_receivable),
-                avg_collection_days: r.avg_collection_days as i64,
-                total_sales: num_f64(r.total_sales),
-                total_received: num_f64(r.total_received),
-                last_transaction_date: r.last_transaction_date,
-                payment_terms: r.payment_terms,
-                risklevel: r.risklevel,
-                status: r.status,
-                bank_name: r.bank_name,
-                bank_account: r.bank_account,
-                account_name: r.account_name,
-                tax_number: r.tax_number,
-            },
+            Ok(Some(r)) => {
+                had_existing = true;
+                CustomerFinanceInfo {
+                    customer_id: id,
+                    customer_name: r.resolved_name.unwrap_or_default(),
+                    credit_limit: num_f64(r.credit_limit),
+                    credit_used: num_f64(r.credit_used),
+                    credit_available: num_f64(r.credit_available),
+                    credit_term_days: r.credit_term_days as i64,
+                    receivable_balance: num_f64(r.receivable_balance),
+                    accounts_receivable: num_f64(r.accounts_receivable),
+                    overdue_amount: rust_decimal::Decimal::from_str(&r.overdue_amount.to_string())
+                        .unwrap_or_default(),
+                    overdue_receivable: num_f64(r.overdue_receivable),
+                    avg_collection_days: r.avg_collection_days as i64,
+                    total_sales: num_f64(r.total_sales),
+                    total_received: num_f64(r.total_received),
+                    last_transaction_date: r.last_transaction_date,
+                    payment_terms: r.payment_terms,
+                    risklevel: r.risklevel,
+                    status: r.status,
+                    bank_name: r.bank_name,
+                    bank_account: r.bank_account,
+                    account_name: r.account_name,
+                    tax_number: r.tax_number,
+                }
+            }
             Ok(None) => {
                 let name = sqlx::query!(
                     "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
@@ -1609,6 +1616,10 @@ pub async fn update_customer_finance(
     if FinanceRiskLevel::from_db_str(&cur.risklevel).is_none() {
         return ApiResponse::error(409, "客户财务当前风险等级非法，无法变更");
     }
+    let current_status = match CustomerStatus::from_db_str(&cur.status) {
+        Some(status) => status,
+        None => return ApiResponse::error(409, "客户财务当前状态非法，无法变更"),
+    };
     let risklevel = match req.risklevel.as_deref() {
         None => cur.risklevel.clone(),
         Some(raw) => match FinanceRiskLevel::from_db_str(raw) {
@@ -1634,23 +1645,20 @@ pub async fn update_customer_finance(
         risklevel,
         status: match req.status.as_deref() {
             Some(raw) => match CustomerStatus::from_db_str(raw) {
-                Some(next) => match CustomerStatus::from_db_str(&cur.status) {
-                    Some(current) if current.can_transition_to(next) => {
-                        next.as_db_str().to_string()
-                    }
-                    Some(current) => {
-                        let msg = format!(
-                            "客户财务状态不允许从 {} 变更为 {}",
-                            current.as_db_str(),
-                            next.as_db_str()
-                        );
-                        return ApiResponse::error(409, &msg);
-                    }
-                    None => return ApiResponse::error(409, "客户财务当前状态非法，无法变更"),
-                },
+                Some(next) if current_status.can_transition_to(next) => {
+                    next.as_db_str().to_string()
+                }
+                Some(next) => {
+                    let msg = format!(
+                        "客户财务状态不允许从 {} 变更为 {}",
+                        current_status.as_db_str(),
+                        next.as_db_str()
+                    );
+                    return ApiResponse::error(409, &msg);
+                }
                 None => return ApiResponse::bad_request("无效的客户财务状态"),
             },
-            None => cur.status,
+            None => current_status.as_db_str().to_string(),
         },
         bank_name: req.bank_name.or(cur.bank_name),
         bank_account: req.bank_account.or(cur.bank_account),
@@ -1660,7 +1668,7 @@ pub async fn update_customer_finance(
     };
 
     // upsert：先 UPDATE，0 行受影响则 INSERT
-    let updated = sqlx::query!(
+    let updated = sqlx::query(
         r#"
         UPDATE crm.customer_finance
         SET customer_name = $3, credit_limit = $4, credit_used = $5, credit_available = $6,
@@ -1670,35 +1678,46 @@ pub async fn update_customer_finance(
             payment_terms = $16, risklevel = $17, status = $18, bank_name = $19,
             bank_account = $20, account_name = $21, tax_number = $22, updated_at = NOW()
         WHERE customer_id = $1 AND tenant_id = $2
+          AND status = $23
         "#,
-        id,
-        tenant_id,
-        merged.customer_name,
-        to_bd(merged.credit_limit),
-        to_bd(merged.credit_used),
-        to_bd(merged.credit_available),
-        merged.credit_term_days as i32,
-        to_bd(merged.receivable_balance),
-        to_bd(merged.accounts_receivable),
-        sqlx::types::BigDecimal::from_str(&merged.overdue_amount.to_string()).unwrap_or_default(),
-        to_bd(merged.overdue_receivable),
-        merged.avg_collection_days as i32,
-        to_bd(merged.total_sales),
-        to_bd(merged.total_received),
-        merged.last_transaction_date,
-        merged.payment_terms,
-        merged.risklevel,
-        merged.status,
-        merged.bank_name,
-        merged.bank_account,
-        merged.account_name,
-        merged.tax_number,
     )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&merged.customer_name)
+    .bind(to_bd(merged.credit_limit))
+    .bind(to_bd(merged.credit_used))
+    .bind(to_bd(merged.credit_available))
+    .bind(merged.credit_term_days as i32)
+    .bind(to_bd(merged.receivable_balance))
+    .bind(to_bd(merged.accounts_receivable))
+    .bind(sqlx::types::BigDecimal::from_str(&merged.overdue_amount.to_string()).unwrap_or_default())
+    .bind(to_bd(merged.overdue_receivable))
+    .bind(merged.avg_collection_days as i32)
+    .bind(to_bd(merged.total_sales))
+    .bind(to_bd(merged.total_received))
+    .bind(merged.last_transaction_date)
+    .bind(&merged.payment_terms)
+    .bind(&merged.risklevel)
+    .bind(&merged.status)
+    .bind(&merged.bank_name)
+    .bind(&merged.bank_account)
+    .bind(&merged.account_name)
+    .bind(&merged.tax_number)
+    .bind(current_status.as_db_str())
     .execute(&mut **txn)
     .await;
 
     match updated {
         Ok(res) if res.rows_affected() == 0 => {
+            if had_existing {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.rollback().await {
+                        tracing::error!("并发冲突回滚失败: {}", e);
+                        return ApiResponse::server_error("回滚事务失败");
+                    }
+                }
+                return ApiResponse::error(409, "客户财务状态已被并发修改，请刷新后重试");
+            }
             let inserted = sqlx::query!(
                 r#"
                 INSERT INTO crm.customer_finance

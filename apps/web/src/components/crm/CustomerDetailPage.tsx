@@ -196,8 +196,7 @@ const CustomerDetailPage: React.FC = () => {
       > = {
         active: { label: t('crm.customerDetail.status_active'), color: 'success' },
         inactive: { label: t('crm.customerDetail.status_inactive'), color: 'default' },
-        prospect: { label: t('crm.customerDetail.status_prospect'), color: 'info' },
-        blocked: { label: t('crm.customerDetail.status_blocked'), color: 'error' },
+        archived: { label: t('crm.customerDetail.status_archived'), color: 'default' },
       };
       const s = statusMap[status] || { label: status, color: 'default' };
       return (
@@ -349,15 +348,7 @@ const CustomerDetailPage: React.FC = () => {
             <Typography color='text.secondary'>
               {t('crm.customerDetail.field_customer_status')}
             </Typography>
-            <Chip
-              size='small'
-              color={finInfo?.status === 'normal' ? 'success' : 'default'}
-              label={
-                finInfo?.status === 'normal'
-                  ? t('crm.customerDetail.status_normal')
-                  : finInfo?.status || '-'
-              }
-            />
+            {getStatusBadge(finInfo?.status || 'active')}
           </Box>
         </Box>
 

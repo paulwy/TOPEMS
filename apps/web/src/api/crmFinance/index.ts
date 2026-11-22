@@ -27,7 +27,7 @@ interface CustomerFinanceInfo {
   last_transaction_date?: string;
   payment_terms: string;
   risklevel: 'low' | 'medium' | 'high';
-  status: string;
+  status: 'active' | 'inactive' | 'archived';
   bank_name?: string;
   bank_account?: string;
   account_name?: string;
