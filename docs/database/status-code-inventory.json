@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 350,
+    "db_check_constraints": 351,
     "db_enum_types": 5,
-    "db_check_values": 153,
-    "rust_enums": 233,
-    "rust_enum_values": 207,
+    "db_check_values": 155,
+    "rust_enums": 234,
+    "rust_enum_values": 209,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 217,
+    "frontend_status_keys": 219,
     "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
@@ -3363,6 +3363,33 @@
     },
     {
       "module": "scm",
+      "file": "svc/scm/src/modules/purchase_contract_status.rs",
+      "name": "PurchaseContractStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Draft",
+        "Expired",
+        "Pending",
+        "Rejected",
+        "Reviewing",
+        "Signed",
+        "Terminated"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "draft",
+        "expired",
+        "pending",
+        "rejected",
+        "reviewing",
+        "signed",
+        "terminated"
+      ]
+    },
+    {
+      "module": "scm",
       "file": "svc/scm/src/modules/purchase_order_status.rs",
       "name": "PurchaseOrderStatus",
       "values": [
@@ -4316,6 +4343,7 @@
       "retired",
       "retrieved",
       "reversed",
+      "reviewing",
       "revoked",
       "rollback",
       "rolled_back",
@@ -4331,6 +4359,7 @@
       "shipping",
       "short_picked",
       "shortage",
+      "signed",
       "skipped",
       "sourced",
       "staging",

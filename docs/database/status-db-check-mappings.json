@@ -1373,6 +1373,13 @@
       "table": "scm.purchase_requisitions",
       "column": "status",
       "candidate": "docs/database/purchase-requisition-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/purchase_contract_status.rs",
+      "enum": "PurchaseContractStatus",
+      "table": "scm.purchase_contracts",
+      "column": "status",
+      "candidate": "docs/database/purchase-contract-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

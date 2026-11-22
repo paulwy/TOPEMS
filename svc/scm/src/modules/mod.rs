@@ -18,6 +18,7 @@ pub mod mrp;
 pub mod openapi;
 pub mod price_comparison;
 pub mod purchase_contract;
+pub mod purchase_contract_status;
 pub mod purchase_item;
 pub mod purchase_order;
 pub mod purchase_order_status;
