@@ -4443,6 +4443,21 @@
     },
     {
       "schema": "scm",
+      "table": "supplier_evaluations",
+      "constraint": "ck_scm_supplier_evaluations_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "completed",
+        "draft",
+        "submitted"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "supplier_products",
       "constraint": "ck_supplier_products_status_standard",
       "columns": [
@@ -8358,15 +8373,6 @@
       "table": "supplier_admissions",
       "column": "status",
       "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "scm",
-      "table": "supplier_evaluations",
-      "column": "status",
-      "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"

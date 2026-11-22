@@ -10,6 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::supplier_evaluation_status::SupplierEvaluationStatus;
 use super::ApiState;
 use crate::models::supplier_evaluation::{
     CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
@@ -25,6 +26,7 @@ pub struct SupplierEvaluationQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
     pub supplier_id: Option<Uuid>,
+    pub status: Option<String>,
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -79,18 +81,31 @@ pub async fn list_evaluations(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SupplierEvaluationStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商评价状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
-        SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
+        SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, status, created_at, updated_at
         FROM scm.supplier_evaluations
         WHERE ($1::uuid IS NULL OR supplier_id = $1)
-          AND tenant_id = $4::uuid
+          AND ($2::text IS NULL OR status = $2)
+          AND tenant_id = $5::uuid
         ORDER BY evaluation_date DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
         "#),
     )
     .bind(params.supplier_id)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -104,10 +119,12 @@ pub async fn list_evaluations(
                 r#"
                 SELECT COUNT(*) FROM scm.supplier_evaluations
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR supplier_id = $1)
-                  AND tenant_id = $2::uuid
+                  AND ($2::text IS NULL OR status = $2)
+                  AND tenant_id = $3::uuid
                 "#
             ))
             .bind(params.supplier_id)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -158,15 +175,26 @@ pub async fn create_evaluation(
         Err(e) => return e.0,
     };
     let request_data = serde_json::to_value(&req).ok();
+    let status = match req.status.as_deref() {
+        None | Some("") => SupplierEvaluationStatus::DEFAULT.as_db_str(),
+        Some(raw) => match SupplierEvaluationStatus::from_db_str(raw) {
+            Some(status) => status.as_db_str(),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商评价状态".to_string(),
+                ))
+            }
+        },
+    };
     let id = Uuid::new_v4();
     let evaluation_no = format!("EVAL-{}", &id.simple().to_string()[..12]);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.supplier_evaluations (id, evaluation_no, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric, $10, $11, $12, $13, $14)
-        RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
+        INSERT INTO scm.supplier_evaluations (id, evaluation_no, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric, $10, $11, $12, $13, $14, $15)
+        RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -180,6 +208,7 @@ pub async fn create_evaluation(
     .bind(req.overall_score)
     .bind(&req.comments)
     .bind(&req.evaluator)
+    .bind(status)
     .bind(now)
     .bind(now)
     .bind(tenant_bind)
@@ -276,7 +305,7 @@ pub async fn get_evaluation(
     };
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
-        SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
+        SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, status, created_at, updated_at
         FROM scm.supplier_evaluations WHERE id = $1 AND tenant_id = $2::uuid
         "#),
     )
@@ -327,7 +356,7 @@ pub async fn update_evaluation(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        only_own_schema_query!("scm", "SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"),
+        only_own_schema_query!("scm", "SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, status, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2::uuid"),
     )
     .bind(id)
     .bind(tenant_bind)
@@ -351,14 +380,25 @@ pub async fn update_evaluation(
     let overall_score = req.overall_score.or(existing.overall_score);
     let comments = req.comments.or(existing.comments);
     let evaluator = req.evaluator.or(existing.evaluator);
+    let status = match req.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match SupplierEvaluationStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商评价状态".to_string(),
+                ))
+            }
+        },
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
         UPDATE scm.supplier_evaluations SET
-            quality_score = $2::numeric, delivery_score = $3::numeric, service_score = $4::numeric, price_score = $5::numeric, overall_score = $6::numeric, comments = $7, evaluator = $8, updated_at = $9
+            quality_score = $2::numeric, delivery_score = $3::numeric, service_score = $4::numeric, price_score = $5::numeric, overall_score = $6::numeric, comments = $7, evaluator = $8, status = COALESCE($11, status), updated_at = $9
         WHERE id = $1 AND tenant_id = $10::uuid
-        RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
+        RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -371,6 +411,7 @@ pub async fn update_evaluation(
     .bind(&evaluator)
     .bind(now)
     .bind(tenant_bind)
+    .bind(status)
     .fetch_one(&mut **txn)
     .await;
 

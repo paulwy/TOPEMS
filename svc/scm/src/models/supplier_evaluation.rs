@@ -15,6 +15,7 @@ pub struct SupplierEvaluation {
     pub overall_score: Option<f64>,
     pub comments: Option<String>,
     pub evaluator: Option<String>,
+    pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -30,6 +31,7 @@ pub struct CreateSupplierEvaluationRequest {
     pub overall_score: Option<f64>,
     pub comments: Option<String>,
     pub evaluator: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -41,6 +43,7 @@ pub struct UpdateSupplierEvaluationRequest {
     pub overall_score: Option<f64>,
     pub comments: Option<String>,
     pub evaluator: Option<String>,
+    pub status: Option<String>,
 }
 
 #[cfg(test)]
@@ -79,6 +82,7 @@ mod tests {
             overall_score: Some(87.5),
             comments: Some("表现良好".to_string()),
             evaluator: Some("张三".to_string()),
+            status: "draft".to_string(),
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
         };
@@ -98,6 +102,7 @@ mod tests {
             overall_score: None,
             comments: None,
             evaluator: None,
+            status: "draft".to_string(),
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
         };
@@ -117,6 +122,7 @@ mod tests {
             "overall_score": 81.25,
             "comments": "良好",
             "evaluator": "李四",
+            "status": "draft",
             "created_at": "2026-08-15T08:00:00Z",
             "updated_at": "2026-08-16T08:00:00Z"
         }"#;
@@ -138,6 +144,7 @@ mod tests {
             overall_score: Some(81.25),
             comments: Some("备注".to_string()),
             evaluator: Some("王五".to_string()),
+            status: Some("submitted".to_string()),
         };
         roundtrip(&req);
     }
@@ -154,6 +161,7 @@ mod tests {
             overall_score: None,
             comments: None,
             evaluator: None,
+            status: None,
         };
         roundtrip(&req);
     }
@@ -168,6 +176,7 @@ mod tests {
             overall_score: None,
             comments: None,
             evaluator: None,
+            status: None,
         };
         roundtrip(&req);
     }
@@ -182,6 +191,7 @@ mod tests {
             overall_score: Some(80.0),
             comments: Some("更新".to_string()),
             evaluator: None,
+            status: Some("approved".to_string()),
         };
         roundtrip(&req);
     }
@@ -199,6 +209,7 @@ mod tests {
             overall_score: Some(87.5),
             comments: Some("cloned".to_string()),
             evaluator: Some("admin".to_string()),
+            status: "approved".to_string(),
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
         };
