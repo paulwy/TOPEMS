@@ -2416,7 +2416,8 @@
         "Completed",
         "Draft",
         "Paused",
-        "PendingApproval"
+        "PendingApproval",
+        "Rejected"
       ],
       "normalized": [
         "active",
@@ -2424,7 +2425,8 @@
         "completed",
         "draft",
         "paused",
-        "pending_approval"
+        "pending_approval",
+        "rejected"
       ]
     },
     {

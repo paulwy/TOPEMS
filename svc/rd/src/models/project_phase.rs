@@ -14,14 +14,35 @@ pub enum PhaseStatus {
     Delayed,
 }
 
+impl PhaseStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["not_started", "in_progress", "completed", "delayed"];
+    pub const DEFAULT: Self = Self::NotStarted;
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::NotStarted => "not_started",
+            Self::InProgress => "in_progress",
+            Self::Completed => "completed",
+            Self::Delayed => "delayed",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "not_started" => Some(Self::NotStarted),
+            "in_progress" => Some(Self::InProgress),
+            "completed" => Some(Self::Completed),
+            "delayed" => Some(Self::Delayed),
+            _ => None,
+        }
+    }
+}
+
 impl std::fmt::Display for PhaseStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            PhaseStatus::NotStarted => write!(f, "NOT_STARTED"),
-            PhaseStatus::InProgress => write!(f, "IN_PROGRESS"),
-            PhaseStatus::Completed => write!(f, "COMPLETED"),
-            PhaseStatus::Delayed => write!(f, "DELAYED"),
-        }
+        f.write_str(self.as_db_str())
     }
 }
 
@@ -101,10 +122,10 @@ mod tests {
 
     #[test]
     fn test_phase_status_display() {
-        assert_eq!(format!("{}", PhaseStatus::NotStarted), "NOT_STARTED");
-        assert_eq!(format!("{}", PhaseStatus::InProgress), "IN_PROGRESS");
-        assert_eq!(format!("{}", PhaseStatus::Completed), "COMPLETED");
-        assert_eq!(format!("{}", PhaseStatus::Delayed), "DELAYED");
+        assert_eq!(format!("{}", PhaseStatus::NotStarted), "not_started");
+        assert_eq!(format!("{}", PhaseStatus::InProgress), "in_progress");
+        assert_eq!(format!("{}", PhaseStatus::Completed), "completed");
+        assert_eq!(format!("{}", PhaseStatus::Delayed), "delayed");
     }
 
     #[test]

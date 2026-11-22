@@ -14,6 +14,47 @@ pub enum ProjectStatus {
     Paused,
     Completed,
     Cancelled,
+    Rejected,
+}
+
+impl ProjectStatus {
+    pub const DB_VALUES: [&'static str; 7] = [
+        "draft",
+        "pending_approval",
+        "active",
+        "paused",
+        "completed",
+        "cancelled",
+        "rejected",
+    ];
+    pub const DEFAULT: Self = Self::Draft;
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::PendingApproval => "pending_approval",
+            Self::Active => "active",
+            Self::Paused => "paused",
+            Self::Completed => "completed",
+            Self::Cancelled => "cancelled",
+            Self::Rejected => "rejected",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "draft" => Some(Self::Draft),
+            "pending_approval" => Some(Self::PendingApproval),
+            "active" => Some(Self::Active),
+            "paused" => Some(Self::Paused),
+            "completed" => Some(Self::Completed),
+            "cancelled" | "canceled" => Some(Self::Cancelled),
+            "rejected" => Some(Self::Rejected),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]

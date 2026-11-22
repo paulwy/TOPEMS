@@ -76,16 +76,46 @@ impl std::fmt::Display for RiskLevel {
     }
 }
 
+impl ProjectStatus {
+    pub const DB_VALUES: [&'static str; 6] = [
+        "draft",
+        "pending_approval",
+        "active",
+        "paused",
+        "completed",
+        "cancelled",
+    ];
+    pub const DEFAULT: Self = Self::Draft;
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::PendingApproval => "pending_approval",
+            Self::Active => "active",
+            Self::Paused => "paused",
+            Self::Completed => "completed",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "draft" => Some(Self::Draft),
+            "pending_approval" => Some(Self::PendingApproval),
+            "active" => Some(Self::Active),
+            "paused" => Some(Self::Paused),
+            "completed" => Some(Self::Completed),
+            "cancelled" | "canceled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+}
+
 impl std::fmt::Display for ProjectStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ProjectStatus::Draft => write!(f, "DRAFT"),
-            ProjectStatus::PendingApproval => write!(f, "PENDING_APPROVAL"),
-            ProjectStatus::Active => write!(f, "ACTIVE"),
-            ProjectStatus::Paused => write!(f, "PAUSED"),
-            ProjectStatus::Completed => write!(f, "COMPLETED"),
-            ProjectStatus::Cancelled => write!(f, "CANCELLED"),
-        }
+        f.write_str(self.as_db_str())
     }
 }
 
@@ -283,14 +313,14 @@ mod tests {
 
     #[test]
     fn test_project_status_display() {
-        assert_eq!(format!("{}", ProjectStatus::Draft), "DRAFT");
+        assert_eq!(format!("{}", ProjectStatus::Draft), "draft");
         assert_eq!(
             format!("{}", ProjectStatus::PendingApproval),
-            "PENDING_APPROVAL"
+            "pending_approval"
         );
-        assert_eq!(format!("{}", ProjectStatus::Active), "ACTIVE");
-        assert_eq!(format!("{}", ProjectStatus::Completed), "COMPLETED");
-        assert_eq!(format!("{}", ProjectStatus::Cancelled), "CANCELLED");
+        assert_eq!(format!("{}", ProjectStatus::Active), "active");
+        assert_eq!(format!("{}", ProjectStatus::Completed), "completed");
+        assert_eq!(format!("{}", ProjectStatus::Cancelled), "cancelled");
     }
 
     // ===== RiskLevel enum =====

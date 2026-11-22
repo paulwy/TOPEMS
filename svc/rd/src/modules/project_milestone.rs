@@ -292,7 +292,7 @@ pub async fn update_milestone(
     .bind(payload.description.as_deref())
     .bind(payload.target_date)
     .bind(payload.actual_date)
-    .bind(payload.status.map(|s| s.to_string()))
+    .bind(payload.status.map(|s| s.as_db_str()))
     .fetch_one(&mut **txn)
     .await;
 

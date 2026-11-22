@@ -22,7 +22,7 @@ use crate::modules::effective_tenant_id;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::models::project::{CreateProjectRequest, Project, UpdateProjectRequest};
+use crate::models::project::{CreateProjectRequest, Project, ProjectStatus, UpdateProjectRequest};
 use crate::services::audit::PmAuditService;
 
 // ==================== Pure functions ====================
@@ -183,6 +183,15 @@ async fn list_projects(
 ) -> ApiResponse<ProjectListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
+    let filter_status = match query.status.as_deref() {
+        None => None,
+        Some(raw) => match ProjectStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request(
+                "status 仅支持 draft/pending_approval/active/paused/completed/cancelled/rejected",
+            ),
+        },
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -234,7 +243,9 @@ async fn list_projects(
                 .project_type
                 .as_ref()
                 .is_none_or(|t| &p.project_type == t);
-            let status_ok = query.status.as_ref().is_none_or(|s| &p.status == s);
+            let status_ok = filter_status
+                .as_deref()
+                .is_none_or(|status| p.status == status);
             type_ok && status_ok
         })
         .collect();
@@ -525,7 +536,16 @@ async fn update_project(
 ) -> ApiResponse<Project> {
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"status": req.status}));
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match ProjectStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request(
+                "status 仅支持 draft/pending_approval/active/paused/completed/cancelled/rejected",
+            ),
+        },
+    };
+    let details = Some(serde_json::json!({"status": status}));
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -587,7 +607,7 @@ async fn update_project(
     ))
     .bind(&req.name)
     .bind(&req.description)
-    .bind(&req.status)
+    .bind(&status)
     .bind(&req.leader)
     .bind(req.end_date)
     .bind(req.budget)

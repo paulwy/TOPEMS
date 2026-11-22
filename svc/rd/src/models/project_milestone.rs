@@ -13,13 +13,33 @@ pub enum MilestoneStatus {
     Delayed,
 }
 
+impl MilestoneStatus {
+    pub const DB_VALUES: [&'static str; 3] = ["pending", "achieved", "delayed"];
+    pub const DEFAULT: Self = Self::Pending;
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Pending => "pending",
+            Self::Achieved => "achieved",
+            Self::Delayed => "delayed",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "pending" => Some(Self::Pending),
+            "achieved" => Some(Self::Achieved),
+            "delayed" => Some(Self::Delayed),
+            _ => None,
+        }
+    }
+}
+
 impl std::fmt::Display for MilestoneStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MilestoneStatus::Pending => write!(f, "PENDING"),
-            MilestoneStatus::Achieved => write!(f, "ACHIEVED"),
-            MilestoneStatus::Delayed => write!(f, "DELAYED"),
-        }
+        f.write_str(self.as_db_str())
     }
 }
 
@@ -105,9 +125,9 @@ mod tests {
 
     #[test]
     fn test_milestone_status_display() {
-        assert_eq!(format!("{}", MilestoneStatus::Pending), "PENDING");
-        assert_eq!(format!("{}", MilestoneStatus::Achieved), "ACHIEVED");
-        assert_eq!(format!("{}", MilestoneStatus::Delayed), "DELAYED");
+        assert_eq!(format!("{}", MilestoneStatus::Pending), "pending");
+        assert_eq!(format!("{}", MilestoneStatus::Achieved), "achieved");
+        assert_eq!(format!("{}", MilestoneStatus::Delayed), "delayed");
     }
 
     #[test]

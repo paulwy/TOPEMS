@@ -348,7 +348,7 @@ pub async fn update_phase(
     .bind(payload.description.as_deref())
     .bind(payload.start_date)
     .bind(payload.end_date)
-    .bind(payload.status.map(|s| s.to_string()))
+    .bind(payload.status.map(|s| s.as_db_str()))
     .bind(payload.progress)
     .bind(payload.weight)
     .bind(payload.predecessor_id)
