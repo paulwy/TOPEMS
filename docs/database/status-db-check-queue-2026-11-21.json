@@ -3,16 +3,16 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 79,
-    "uncovered_values": 92,
+    "uncovered_enums": 53,
+    "uncovered_values": 71,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 79,
-    "internal_state_enums": 40,
-    "api_projection_enums": 25,
-    "persisted_unmapped_enums": 41,
-    "internal_state_values": 58,
-    "api_projection_values": 11,
-    "persisted_unmapped_values": 23
+    "resolved_enums": 53,
+    "internal_state_enums": 36,
+    "persisted_unmapped_enums": 13,
+    "api_projection_enums": 10,
+    "internal_state_values": 54,
+    "persisted_unmapped_values": 10,
+    "api_projection_values": 7
   },
   "rows": [
     {
@@ -73,9 +73,6 @@
       "file": "lib/shared-core/src/health.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "degraded"
-        ],
         "persisted_unmapped": [
           "healthy",
           "unhealthy"
@@ -128,12 +125,6 @@
       "file": "lib/shared-event/src/cluster.rs",
       "enum": "NodeStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "offline"
-        ],
-        "persisted_unmapped": [
-          "online"
-        ],
         "internal_state": [
           "standby"
         ]
@@ -144,23 +135,6 @@
         "enum": "NodeStatus",
         "persisted": false,
         "reason": "集群节点状态内存态"
-      }
-    },
-    {
-      "module": "lib/shared-event",
-      "file": "lib/shared-event/src/event/monitor.rs",
-      "enum": "TraceStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "published"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "lib/shared-event/src/event/monitor.rs",
-        "enum": "TraceStatus",
-        "persisted": false,
-        "reason": "事件轨迹监控内存态"
       }
     },
     {
@@ -208,9 +182,6 @@
       "file": "lib/shared-observability/src/monitoring.rs",
       "enum": "ServiceStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "degraded"
-        ],
         "persisted_unmapped": [
           "healthy",
           "unhealthy"
@@ -234,8 +205,7 @@
           "insufficient_data"
         ],
         "persisted_unmapped": [
-          "healthy",
-          "warning"
+          "healthy"
         ]
       },
       "candidate_targets": [],
@@ -244,23 +214,6 @@
         "enum": "SLOStatus",
         "persisted": false,
         "reason": "SLO 计算态，不落库"
-      }
-    },
-    {
-      "module": "lib/shared-service-client",
-      "file": "lib/shared-service-client/src/notification.rs",
-      "enum": "TemplateStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "lib/shared-service-client/src/notification.rs",
-        "enum": "TemplateStatus",
-        "persisted": false,
-        "reason": "public.core_notification_templates 无 status 列，模板状态仅内存/API"
       }
     },
     {
@@ -298,23 +251,6 @@
         "enum": "TaskStatus",
         "persisted": false,
         "reason": "多智能体任务在内存中的分配态（assigned/timeout），模块零 SQL"
-      }
-    },
-    {
-      "module": "ai",
-      "file": "svc/ai/src/dsh/prompt/mod.rs",
-      "enum": "TemplateStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/ai/src/dsh/prompt/mod.rs",
-        "enum": "TemplateStatus",
-        "persisted": false,
-        "reason": "提示词模板内存生命周期（含 deprecated），无对应表列"
       }
     },
     {
@@ -397,8 +333,7 @@
       "enum": "EmailQueueStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "sending",
-          "sent"
+          "sending"
         ]
       },
       "candidate_targets": [],
@@ -469,52 +404,12 @@
     },
     {
       "module": "erp",
-      "file": "svc/erp/src/modules/content_status.rs",
-      "enum": "AnnouncementStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "published"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/erp/src/modules/content_status.rs",
-        "enum": "AnnouncementStatus",
-        "table": "erp.announcements",
-        "column": "status",
-        "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "erp",
-      "file": "svc/erp/src/modules/content_status.rs",
-      "enum": "AssetStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "in_use",
-          "transferred"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/erp/src/modules/content_status.rs",
-        "enum": "AssetStatus",
-        "table": "erp.assets",
-        "column": "status",
-        "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "erp",
       "file": "svc/erp/src/modules/customer_calc.rs",
       "enum": "CreditStatus",
       "values_by_bucket": {
         "internal_state": [
           "danger",
           "normal"
-        ],
-        "persisted_unmapped": [
-          "warning"
         ]
       },
       "candidate_targets": [],
@@ -571,9 +466,6 @@
           "critical",
           "good",
           "neutral"
-        ],
-        "persisted_unmapped": [
-          "warning"
         ]
       },
       "candidate_targets": [],
@@ -625,15 +517,9 @@
       "file": "svc/erp/src/modules/mdm_v49_types.rs",
       "enum": "RetirementStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "executing"
-        ],
         "internal_state": [
           "impact_assessed",
           "stakeholder_notified"
-        ],
-        "api_projection": [
-          "rolled_back"
         ]
       },
       "candidate_targets": [],
@@ -741,162 +627,6 @@
     },
     {
       "module": "master-data",
-      "file": "svc/master-data/src/modules/commercial_v55.rs",
-      "enum": "BillingStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "invoiced"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/commercial_v55.rs",
-        "enum": "BillingStatus",
-        "table": "master_data.mdm_billing_records",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/commercial_v55.rs",
-      "enum": "IncidentStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "investigating"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/commercial_v55.rs",
-        "enum": "IncidentStatus",
-        "table": "master_data.mdm_sla_incidents",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/disaster_v56.rs",
-      "enum": "ContinuityPlanStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "tested"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/disaster_v56.rs",
-        "enum": "ContinuityPlanStatus",
-        "table": "master_data.mdm_continuity_plans",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/disaster_v56.rs",
-      "enum": "FailoverStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "initiated"
-        ],
-        "api_projection": [
-          "rolled_back"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/disaster_v56.rs",
-        "enum": "FailoverStatus",
-        "table": "master_data.mdm_failover_records",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/disaster_v56.rs",
-      "enum": "RecoveryPlanStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "executing"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/disaster_v56.rs",
-        "enum": "RecoveryPlanStatus",
-        "table": "master_data.mdm_recovery_plans",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/disaster_v56.rs",
-      "enum": "RegionStatus",
-      "values_by_bucket": {
-        "api_projection": [
-          "degraded",
-          "offline"
-        ],
-        "persisted_unmapped": [
-          "online"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/disaster_v56.rs",
-        "enum": "RegionStatus",
-        "table": "master_data.mdm_region_configs",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/disaster_v56.rs",
-      "enum": "ReplicationStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "lagging",
-          "stopped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/disaster_v56.rs",
-        "enum": "ReplicationStatus",
-        "table": "master_data.mdm_replication_configs",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/governance_v58.rs",
-      "enum": "DataProductStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated",
-          "published"
-        ],
-        "api_projection": [
-          "retired"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/governance_v58.rs",
-        "enum": "DataProductStatus",
-        "table": "master_data.mdm_data_products",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
       "file": "svc/master-data/src/modules/governance_v58.rs",
       "enum": "WorkflowStepStatus",
       "values_by_bucket": {
@@ -915,61 +645,6 @@
       }
     },
     {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/quality_v51.rs",
-      "enum": "QualityStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "passed",
-          "warning"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/quality_v51.rs",
-        "enum": "QualityStatus",
-        "table": "master_data.mdm_quality_checks",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/aps_scheduling.rs",
-      "enum": "ConstraintStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "passed",
-          "warning"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mes/src/modules/aps_scheduling.rs",
-        "enum": "ConstraintStatus",
-        "persisted": false,
-        "reason": "APS 求解过程约束结果，不落库"
-      }
-    },
-    {
-      "module": "mobile",
-      "file": "svc/mobile/src/modules/push_status.rs",
-      "enum": "PushNotificationStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "sent"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mobile/src/modules/push_status.rs",
-        "enum": "PushNotificationStatus",
-        "table": "mobile.push_notifications",
-        "column": "status",
-        "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
       "module": "plugin-registry",
       "file": "svc/plugin-registry/src/modules/plugin/models.rs",
       "enum": "UpgradeStatus",
@@ -981,9 +656,6 @@
           "installing",
           "rollback",
           "verifying"
-        ],
-        "api_projection": [
-          "rolled_back"
         ]
       },
       "candidate_targets": [],
@@ -999,9 +671,6 @@
       "file": "svc/portal/src/models/mod.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "degraded"
-        ],
         "persisted_unmapped": [
           "healthy",
           "unhealthy"
@@ -1011,23 +680,6 @@
       "resolved": {
         "file": "svc/portal/src/models/mod.rs",
         "enum": "HealthStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
-      "file": "svc/portal/src/modules/ai_ops.rs",
-      "enum": "HealingStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "executing"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/ai_ops.rs",
-        "enum": "HealingStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
       }
@@ -1052,24 +704,6 @@
     },
     {
       "module": "portal",
-      "file": "svc/portal/src/modules/deep_federation.rs",
-      "enum": "CheckStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "passed",
-          "warning"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/deep_federation.rs",
-        "enum": "CheckStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
       "file": "svc/portal/src/modules/deployment_manager.rs",
       "enum": "DeploymentStatus",
       "values_by_bucket": {
@@ -1088,29 +722,9 @@
     },
     {
       "module": "portal",
-      "file": "svc/portal/src/modules/deployment_manager.rs",
-      "enum": "RollbackActionStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "executing"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/deployment_manager.rs",
-        "enum": "RollbackActionStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
       "file": "svc/portal/src/modules/gateway_monitoring.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "degraded"
-        ],
         "persisted_unmapped": [
           "healthy",
           "unhealthy"
@@ -1130,8 +744,7 @@
       "enum": "DeploymentStatusGql",
       "values_by_bucket": {
         "api_projection": [
-          "canary",
-          "rolled_back"
+          "canary"
         ]
       },
       "candidate_targets": [],
@@ -1161,32 +774,10 @@
     },
     {
       "module": "portal",
-      "file": "svc/portal/src/modules/graphql_federation_v4.rs",
-      "enum": "ClusterStatusV4",
-      "values_by_bucket": {
-        "api_projection": [
-          "degraded",
-          "offline"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/graphql_federation_v4.rs",
-        "enum": "ClusterStatusV4",
-        "persisted": false,
-        "reason": "GraphQL/API 投影，无表列"
-      }
-    },
-    {
-      "module": "portal",
       "file": "svc/portal/src/modules/graphql_governance.rs",
       "enum": "SchemaVersionStatusGql",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated"
-        ],
         "api_projection": [
-          "retired",
           "staging"
         ]
       },
@@ -1260,12 +851,6 @@
           "discovering",
           "planning",
           "validating"
-        ],
-        "persisted_unmapped": [
-          "executing"
-        ],
-        "api_projection": [
-          "rolled_back"
         ]
       },
       "candidate_targets": [],
@@ -1281,9 +866,6 @@
       "file": "svc/portal/src/modules/orchestration.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "degraded"
-        ],
         "persisted_unmapped": [
           "healthy",
           "unhealthy"
@@ -1293,23 +875,6 @@
       "resolved": {
         "file": "svc/portal/src/modules/orchestration.rs",
         "enum": "HealthStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
-      "file": "svc/portal/src/modules/persisted_query.rs",
-      "enum": "QueryStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/persisted_query.rs",
-        "enum": "QueryStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
       }
@@ -1333,28 +898,10 @@
     },
     {
       "module": "portal",
-      "file": "svc/portal/src/modules/query_governance.rs",
-      "enum": "QueryStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/query_governance.rs",
-        "enum": "QueryStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
       "file": "svc/portal/src/modules/schema_versioning/types.rs",
       "enum": "VersionStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "deprecated",
           "sunset"
         ],
         "internal_state": [
@@ -1374,12 +921,11 @@
       "file": "svc/portal/src/modules/version_control.rs",
       "enum": "APIVersionStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "deprecated",
-          "sunset"
-        ],
         "internal_state": [
           "preview"
+        ],
+        "persisted_unmapped": [
+          "sunset"
         ]
       },
       "candidate_targets": [],
@@ -1391,90 +937,11 @@
       }
     },
     {
-      "module": "portal",
-      "file": "svc/portal/src/modules/version_control.rs",
-      "enum": "CanaryStatus",
-      "values_by_bucket": {
-        "api_projection": [
-          "rolled_back"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/version_control.rs",
-        "enum": "CanaryStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "srm",
-      "file": "svc/srm/src/modules/bidding_status.rs",
-      "enum": "BiddingStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "awarded",
-          "opened"
-        ],
-        "persisted_unmapped": [
-          "published"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/srm/src/modules/bidding_status.rs",
-        "enum": "BiddingStatus",
-        "table": "srm.biddings",
-        "column": "status",
-        "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "srm",
-      "file": "svc/srm/src/modules/inquiry_status.rs",
-      "enum": "InquiryStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "awarded"
-        ],
-        "persisted_unmapped": [
-          "published"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/srm/src/modules/inquiry_status.rs",
-        "enum": "InquiryStatus",
-        "table": "srm.inquiries",
-        "column": "status",
-        "candidate": "docs/database/srm-inquiry-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "srm",
-      "file": "svc/srm/src/modules/quotation_status.rs",
-      "enum": "QuotationStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "awarded"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/srm/src/modules/quotation_status.rs",
-        "enum": "QuotationStatus",
-        "table": "srm.quotations",
-        "column": "status",
-        "candidate": "docs/database/srm-quotation-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
       "module": "unified-core",
       "file": "svc/unified-core/src/middleware/versioning.rs",
       "enum": "VersionStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "deprecated",
           "sunset"
         ]
       },
@@ -1508,9 +975,6 @@
       "file": "svc/unified-core/src/shared/util.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "degraded"
-        ],
         "persisted_unmapped": [
           "healthy",
           "unhealthy"

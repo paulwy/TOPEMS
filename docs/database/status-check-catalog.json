@@ -582,6 +582,21 @@
     },
     {
       "schema": "erp",
+      "table": "announcements",
+      "constraint": "announcements_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "archived",
+        "draft",
+        "expired",
+        "published"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'published'::text, 'expired'::text, 'archived'::text]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "asset_categories",
       "constraint": "ck_asset_categories_status_standard",
       "columns": [
@@ -593,6 +608,22 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))"
+    },
+    {
+      "schema": "erp",
+      "table": "assets",
+      "constraint": "assets_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "in_stock",
+        "in_use",
+        "maintenance",
+        "scrapped",
+        "transferred"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['in_stock'::text, 'in_use'::text, 'maintenance'::text, 'scrapped'::text, 'transferred'::text]))) NOT VALID"
     },
     {
       "schema": "erp",
@@ -1942,18 +1973,183 @@
     },
     {
       "schema": "master_data",
-      "table": "mdm_subscriptions",
-      "constraint": "ck_mdm_subscriptions_status_standard",
+      "table": "mdm_auto_fix_actions",
+      "constraint": "mdm_auto_fix_actions_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "applied",
+        "failed",
+        "pending",
+        "verified"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'applied'::text, 'verified'::text, 'failed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_billing_records",
+      "constraint": "mdm_billing_records_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "invoiced",
+        "overdue",
+        "paid",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'invoiced'::text, 'paid'::text, 'overdue'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_continuity_plans",
+      "constraint": "mdm_continuity_plans_status_check",
       "columns": [
         "status"
       ],
       "values": [
         "active",
-        "archived",
-        "cancelled",
-        "inactive"
+        "draft",
+        "expired",
+        "tested"
       ],
-      "definition": "CHECK (((status IS NULL) OR (status = ANY ('{active,inactive,archived,cancelled}'::text[]))))"
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'active'::text, 'tested'::text, 'expired'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_data_products",
+      "constraint": "mdm_data_products_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "deprecated",
+        "draft",
+        "published",
+        "retired"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'published'::text, 'deprecated'::text, 'retired'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_failover_records",
+      "constraint": "mdm_failover_records_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "initiated",
+        "rolled_back"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['initiated'::text, 'in_progress'::text, 'completed'::text, 'rolled_back'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_quality_checks",
+      "constraint": "mdm_quality_checks_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "passed",
+        "warning"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['passed'::text, 'failed'::text, 'warning'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_recovery_plans",
+      "constraint": "mdm_recovery_plans_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "completed",
+        "draft",
+        "executing",
+        "failed"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'active'::text, 'executing'::text, 'completed'::text, 'failed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_region_configs",
+      "constraint": "mdm_region_configs_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "degraded",
+        "offline",
+        "online"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['online'::text, 'offline'::text, 'degraded'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_replication_configs",
+      "constraint": "mdm_replication_configs_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "lagging",
+        "paused",
+        "running",
+        "stopped"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['stopped'::text, 'running'::text, 'paused'::text, 'lagging'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_sla_incidents",
+      "constraint": "mdm_sla_incidents_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "investigating",
+        "open",
+        "resolved"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['open'::text, 'investigating'::text, 'resolved'::text, 'closed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_subscriptions",
+      "constraint": "mdm_subscriptions_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "cancelled",
+        "expired",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'expired'::text, 'cancelled'::text, 'pending'::text]))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
+      "table": "mdm_workflows",
+      "constraint": "mdm_workflows_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "draft",
+        "paused",
+        "running"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'running'::text, 'paused'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "master_data",
@@ -2261,6 +2457,20 @@
         "pending"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('in_progress'::character varying)::text, ('completed'::character varying)::text, ('cancelled'::character varying)::text, ('on_hold'::character varying)::text]))))"
+    },
+    {
+      "schema": "mobile",
+      "table": "push_notifications",
+      "constraint": "push_notifications_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "pending",
+        "sent"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text]))) NOT VALID"
     },
     {
       "schema": "pdm",
@@ -3350,6 +3560,53 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "srm",
+      "table": "biddings",
+      "constraint": "biddings_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "awarded",
+        "draft",
+        "evaluated",
+        "opened",
+        "published"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'published'::text, 'opened'::text, 'evaluated'::text, 'awarded'::text]))) NOT VALID"
+    },
+    {
+      "schema": "srm",
+      "table": "inquiries",
+      "constraint": "inquiries_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "awarded",
+        "cancelled",
+        "closed",
+        "draft",
+        "in_progress",
+        "published"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'published'::text, 'in_progress'::text, 'closed'::text, 'awarded'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "srm",
+      "table": "quotations",
+      "constraint": "quotations_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "awarded",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'awarded'::text, 'rejected'::text]))) NOT VALID"
     },
     {
       "schema": "srm",
@@ -4500,24 +4757,6 @@
     },
     {
       "schema": "erp",
-      "table": "announcements",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "assets",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'in_use'::character varying"
-    },
-    {
-      "schema": "erp",
       "table": "audit_logs",
       "column": "status",
       "type": "character varying(50)",
@@ -5499,57 +5738,12 @@
     },
     {
       "schema": "master_data",
-      "table": "mdm_auto_fix_actions",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_billing_records",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "master_data",
       "table": "mdm_classification_models",
       "column": "status",
       "type": "text",
       "enum_type": "text",
       "not_null": true,
       "default_expr": null
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_continuity_plans",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'draft'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_data_products",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": null
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_failover_records",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'initiated'::text"
     },
     {
       "schema": "master_data",
@@ -5589,51 +5783,6 @@
     },
     {
       "schema": "master_data",
-      "table": "mdm_quality_checks",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'passed'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_recovery_plans",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'draft'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_region_configs",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'online'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_replication_configs",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'stopped'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_sla_incidents",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'open'::text"
-    },
-    {
-      "schema": "master_data",
       "table": "mdm_supplier_categories",
       "column": "status",
       "type": "character varying",
@@ -5658,15 +5807,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'active'::text"
-    },
-    {
-      "schema": "master_data",
-      "table": "mdm_workflows",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": null
     },
     {
       "schema": "mes",
@@ -6045,15 +6185,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'uploading'::character varying"
-    },
-    {
-      "schema": "mobile",
-      "table": "push_notifications",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "pdm",
@@ -7749,15 +7880,6 @@
     },
     {
       "schema": "srm",
-      "table": "biddings",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "srm",
       "table": "bids",
       "column": "status",
       "type": "character varying(20)",
@@ -7767,25 +7889,7 @@
     },
     {
       "schema": "srm",
-      "table": "inquiries",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "srm",
       "table": "purchase_orders",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "srm",
-      "table": "quotations",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",
