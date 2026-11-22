@@ -3,18 +3,16 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 144,
-    "uncovered_values": 152,
+    "uncovered_enums": 79,
+    "uncovered_values": 92,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 144,
-    "internal_state_enums": 72,
-    "persisted_unmapped_enums": 66,
+    "resolved_enums": 79,
+    "internal_state_enums": 40,
     "api_projection_enums": 25,
-    "finance_candidate_ready_enums": 33,
-    "internal_state_values": 93,
-    "persisted_unmapped_values": 33,
+    "persisted_unmapped_enums": 41,
+    "internal_state_values": 58,
     "api_projection_values": 11,
-    "finance_candidate_ready_values": 15
+    "persisted_unmapped_values": 23
   },
   "rows": [
     {
@@ -23,7 +21,6 @@
       "enum": "TenantStatus",
       "values_by_bucket": {
         "internal_state": [
-          "deleted",
           "trial"
         ]
       },
@@ -61,9 +58,6 @@
         "internal_state": [
           "canceled",
           "trial"
-        ],
-        "persisted_unmapped": [
-          "expired"
         ]
       },
       "candidate_targets": [],
@@ -72,23 +66,6 @@
         "enum": "SubscriptionStatus",
         "persisted": false,
         "reason": "unified-core 订阅模块无 SQL，纯内存 tier 计算"
-      }
-    },
-    {
-      "module": "lib/shared-core",
-      "file": "lib/shared-core/src/common_types.rs",
-      "enum": "ApprovalStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "lib/shared-core/src/common_types.rs",
-        "enum": "ApprovalStatus",
-        "persisted": false,
-        "reason": "共享审批值类型，实际落库在各服务自己的审批表，无固定列"
       }
     },
     {
@@ -135,7 +112,6 @@
       "enum": "DsrRequestStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "expired",
           "verifying"
         ]
       },
@@ -176,8 +152,7 @@
       "enum": "TraceStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "published",
-          "received"
+          "published"
         ]
       },
       "candidate_targets": [],
@@ -314,7 +289,6 @@
       "enum": "TaskStatus",
       "values_by_bucket": {
         "internal_state": [
-          "assigned",
           "timeout"
         ]
       },
@@ -418,26 +392,6 @@
       }
     },
     {
-      "module": "analytics",
-      "file": "svc/analytics/src/modules/report/schedule.rs",
-      "enum": "ScheduleStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/analytics/src/modules/report/schedule.rs",
-        "enum": "ScheduleStatus",
-        "table": "bi.report_schedules",
-        "column": "status",
-        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
       "module": "communication",
       "file": "svc/communication/src/mail.rs",
       "enum": "EmailQueueStatus",
@@ -453,172 +407,6 @@
         "enum": "EmailQueueStatus",
         "persisted": false,
         "reason": "邮件发送 DashMap 队列内存态，core_emails 只存发送结果"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/contact_approval_status.rs",
-      "enum": "ContactApprovalStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "none"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/contact_approval_status.rs",
-        "enum": "ContactApprovalStatus",
-        "table": "crm.contacts",
-        "column": "approval_status",
-        "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/contract_status.rs",
-      "enum": "ContractStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ],
-        "internal_state": [
-          "terminated"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/contract_status.rs",
-        "enum": "ContractStatus",
-        "table": "crm.contracts",
-        "column": "status",
-        "candidate": "docs/database/crm-contract-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/customer_approval_status.rs",
-      "enum": "CustomerApprovalStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "none"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/customer_approval_status.rs",
-        "enum": "CustomerApprovalStatus",
-        "table": "crm.customers",
-        "column": "approval_status",
-        "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/customer_order_status.rs",
-      "enum": "CustomerOrderStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "shipped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/customer_order_status.rs",
-        "enum": "CustomerOrderStatus",
-        "table": "crm.customer_orders",
-        "column": "status",
-        "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/interaction_status.rs",
-      "enum": "InteractionStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "scheduled"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/interaction_status.rs",
-        "enum": "InteractionStatus",
-        "table": "crm.interactions",
-        "column": "status",
-        "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/master_data_ref_status.rs",
-      "enum": "MasterDataRefStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "deleted"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/master_data_ref_status.rs",
-        "enum": "MasterDataRefStatus",
-        "table": "crm.crm_master_data_refs",
-        "column": "status",
-        "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/opportunity_status.rs",
-      "enum": "OpportunityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "lost",
-          "won"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/opportunity_status.rs",
-        "enum": "OpportunityStatus",
-        "table": "crm.opportunities",
-        "column": "status",
-        "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/sales_forecast_status.rs",
-      "enum": "SalesForecastStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "generated"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/sales_forecast_status.rs",
-        "enum": "SalesForecastStatus",
-        "table": "crm.sales_forecasts",
-        "column": "status",
-        "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "crm",
-      "file": "svc/crm/src/modules/sales_order_status.rs",
-      "enum": "SalesOrderStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "shipped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/crm/src/modules/sales_order_status.rs",
-        "enum": "SalesOrderStatus",
-        "table": "crm.sales_orders",
-        "column": "status",
-        "candidate": "docs/database/crm-sales-order-status-check-candidates-2026-11-22.sql"
       }
     },
     {
@@ -644,47 +432,19 @@
       "file": "svc/ehs/src/modules/hazard_status.rs",
       "enum": "HazardStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "pending_approval"
-        ],
         "internal_state": [
           "pending_verification",
           "rectifying",
           "reported"
-        ],
-        "finance_candidate_ready": [
-          "verified"
         ]
       },
-      "candidate_targets": [
-        "finance.finance_v55_invoices.v55_invoices_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/ehs/src/modules/hazard_status.rs",
         "enum": "HazardStatus",
         "table": "ehs.qa_ehs_hazards",
         "column": "status",
         "candidate": "docs/database/ehs-hazard-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "ehs",
-      "file": "svc/ehs/src/modules/incident_action_status.rs",
-      "enum": "IncidentActionStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "verified"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_invoices.v55_invoices_status_check"
-      ],
-      "resolved": {
-        "file": "svc/ehs/src/modules/incident_action_status.rs",
-        "enum": "IncidentActionStatus",
-        "table": "ehs.qa_ehs_incident_actions",
-        "column": "status",
-        "candidate": "docs/database/ehs-incident-action-status-check-candidates-2026-11-21.sql"
       }
     },
     {
@@ -713,7 +473,6 @@
       "enum": "AnnouncementStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "expired",
           "published"
         ]
       },
@@ -732,9 +491,7 @@
       "enum": "AssetStatus",
       "values_by_bucket": {
         "internal_state": [
-          "in_stock",
           "in_use",
-          "scrapped",
           "transferred"
         ]
       },
@@ -754,7 +511,6 @@
       "values_by_bucket": {
         "internal_state": [
           "danger",
-          "frozen",
           "normal"
         ],
         "persisted_unmapped": [
@@ -830,41 +586,14 @@
     },
     {
       "module": "erp",
-      "file": "svc/erp/src/modules/master_data_quality_loop.rs",
-      "enum": "QualityTicketStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "assigned"
-        ],
-        "finance_candidate_ready": [
-          "verified"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_invoices.v55_invoices_status_check"
-      ],
-      "resolved": {
-        "file": "svc/erp/src/modules/master_data_quality_loop.rs",
-        "enum": "QualityTicketStatus",
-        "persisted": false,
-        "reason": "内存质量工单 FSM，模块零 SQL；工单经 mdm_collections JSONB 快照，无独立 status 列"
-      }
-    },
-    {
-      "module": "erp",
       "file": "svc/erp/src/modules/master_data_report_automation.rs",
       "enum": "ReportStatus",
       "values_by_bucket": {
         "internal_state": [
           "delivered"
-        ],
-        "finance_candidate_ready": [
-          "generating"
         ]
       },
-      "candidate_targets": [
-        "finance.finance_v57_generated_reports.v57_generated_reports_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/erp/src/modules/master_data_report_automation.rs",
         "enum": "ReportStatus",
@@ -940,9 +669,6 @@
       "file": "svc/erp/src/modules/order_calc.rs",
       "enum": "ProductionStatusCategory",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "not_started"
-        ],
         "internal_state": [
           "other"
         ]
@@ -953,24 +679,6 @@
         "enum": "ProductionStatusCategory",
         "persisted": false,
         "reason": "把外部 erp_production_orders.status 自由文本归类的展示投影（pending/released/completed/cancelled），本身不写库"
-      }
-    },
-    {
-      "module": "erp",
-      "file": "svc/erp/src/modules/sales_order_status.rs",
-      "enum": "SalesOrderStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "shipped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/erp/src/modules/sales_order_status.rs",
-        "enum": "SalesOrderStatus",
-        "table": "erp.sales_orders",
-        "column": "status",
-        "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql"
       }
     },
     {
@@ -1021,336 +729,14 @@
           "partially_settled",
           "settled",
           "unsettled"
-        ],
-        "finance_candidate_ready": [
-          "written_off"
         ]
       },
-      "candidate_targets": [
-        "finance.erp_collection_records.erp_collection_records_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/finance/src/domain/value_objects.rs",
         "enum": "SettlementStatus",
         "persisted": false,
         "reason": "财务应收/应付聚合的核销进度 DTO，无对应表列；不与 erp_collection_records.status 混用"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/models/mod.rs",
-      "enum": "InvoiceStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "recognized",
-          "verified"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_invoices.v55_invoices_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/models/mod.rs",
-        "enum": "InvoiceStatus",
-        "table": "finance.finance_v55_invoices",
-        "column": "status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/audit_v52.rs",
-      "enum": "FindingStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "ignored"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/finance/src/modules/audit_v52.rs",
-        "enum": "FindingStatus",
-        "table": "finance.finance_audit_findings_v52",
-        "column": "status",
-        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/collection_status.rs",
-      "enum": "CollectionStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "written_off"
-        ]
-      },
-      "candidate_targets": [
-        "finance.erp_collection_records.erp_collection_records_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/collection_status.rs",
-        "enum": "CollectionStatus",
-        "table": "finance.erp_collection_records",
-        "column": "status",
-        "candidate": "docs/database/finance-collection-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/decision_v60.rs",
-      "enum": "DecisionStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "evaluated"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_decision_scenarios.v60_decision_scenarios_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/decision_v60.rs",
-        "enum": "DecisionStatus",
-        "table": "finance.finance_v60_decision_scenarios",
-        "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/decision_v60.rs",
-      "enum": "ScheduleTaskStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/decision_v60.rs",
-        "enum": "ScheduleTaskStatus",
-        "table": "finance.finance_v60_schedule_tasks",
-        "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/expense_status.rs",
-      "enum": "ExpenseApprovalStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "reimbursed"
-        ]
-      },
-      "candidate_targets": [
-        "finance.expense_approvals.expense_approvals_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/expense_status.rs",
-        "enum": "ExpenseApprovalStatus",
-        "table": "finance.expense_approvals",
-        "column": "status",
-        "candidate": "docs/database/finance-expense-approval-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/financial_report_status.rs",
-      "enum": "FinancialReportStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "locked"
-        ]
-      },
-      "candidate_targets": [
-        "finance.financial_reports.financial_reports_status_check",
-        "finance.financial_reports.financial_reports_approval_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/financial_report_status.rs",
-        "enum": "FinancialReportStatus",
-        "table": "finance.financial_reports",
-        "column": "approval_status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/forecasting.rs",
-      "enum": "AlertStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "suppressed"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/finance/src/modules/forecasting.rs",
-        "enum": "AlertStatus",
-        "table": "finance.finance_v60_alerts",
-        "column": "status",
-        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/reports_v57.rs",
-      "enum": "ReportStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "generating"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v57_generated_reports.v57_generated_reports_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/reports_v57.rs",
-        "enum": "ReportStatus",
-        "table": "finance.finance_v57_generated_reports",
-        "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/settlement_center_status.rs",
-      "enum": "SettlementLinkStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "linked"
-        ]
-      },
-      "candidate_targets": [
-        "finance.reconciliation_settlement_links.settlement_links_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/settlement_center_status.rs",
-        "enum": "SettlementLinkStatus",
-        "table": "finance.reconciliation_settlement_links",
-        "column": "status",
-        "candidate": "docs/database/finance-settlement-link-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/settlement_v55.rs",
-      "enum": "InvoiceStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "recognized",
-          "verified"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_invoices.v55_invoices_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/settlement_v55.rs",
-        "enum": "InvoiceStatus",
-        "table": "finance.finance_v55_invoices",
-        "column": "status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/settlement_v55.rs",
-      "enum": "MatchStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "discrepancy",
-          "partial"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_reconciliation_results.v55_recon_results_match_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/settlement_v55.rs",
-        "enum": "MatchStatus",
-        "table": "finance.finance_v55_reconciliation_results",
-        "column": "match_status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/tax_v56.rs",
-      "enum": "TaxFormStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "calculated"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v56_tax_forms.v56_tax_forms_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/tax_v56.rs",
-        "enum": "TaxFormStatus",
-        "table": "finance.finance_v56_tax_forms",
-        "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "finance",
-      "file": "svc/finance/src/modules/tax_v56.rs",
-      "enum": "TaxPlanStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "executed",
-          "proposed",
-          "under_review"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
-      ],
-      "resolved": {
-        "file": "svc/finance/src/modules/tax_v56.rs",
-        "enum": "TaxPlanStatus",
-        "table": "finance.finance_v56_tax_plans",
-        "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "integration",
-      "file": "svc/integration/src/async_task_queue.rs",
-      "enum": "AsyncTaskStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "max_retries_exceeded"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/integration/src/async_task_queue.rs",
-        "enum": "AsyncTaskStatus",
-        "table": "integration.async_tasks",
-        "column": "status",
-        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "integration",
-      "file": "svc/integration/src/sync_retry.rs",
-      "enum": "SyncStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "max_retries_exceeded"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/integration/src/sync_retry.rs",
-        "enum": "SyncStatus",
-        "persisted": false,
-        "reason": "同步重试执行器内存态，无对应表列"
       }
     },
     {
@@ -1391,29 +777,10 @@
     },
     {
       "module": "master-data",
-      "file": "svc/master-data/src/modules/commercial_v55.rs",
-      "enum": "SubscriptionStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/master-data/src/modules/commercial_v55.rs",
-        "enum": "SubscriptionStatus",
-        "table": "master_data.mdm_subscriptions",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
       "file": "svc/master-data/src/modules/disaster_v56.rs",
       "enum": "ContinuityPlanStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
-          "expired",
           "tested"
         ]
       },
@@ -1495,14 +862,9 @@
         "persisted_unmapped": [
           "lagging",
           "stopped"
-        ],
-        "finance_candidate_ready": [
-          "paused"
         ]
       },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/master-data/src/modules/disaster_v56.rs",
         "enum": "ReplicationStatus",
@@ -1536,26 +898,6 @@
     {
       "module": "master-data",
       "file": "svc/master-data/src/modules/governance_v58.rs",
-      "enum": "WorkflowStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/master-data/src/modules/governance_v58.rs",
-        "enum": "WorkflowStatus",
-        "table": "master_data.mdm_workflows",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/governance_v58.rs",
       "enum": "WorkflowStepStatus",
       "values_by_bucket": {
         "api_projection": [
@@ -1570,29 +912,6 @@
         "column": "steps(jsonb)",
         "persisted": false,
         "reason": "步骤状态嵌在 steps jsonb 数组里，没有独立列，无法用列级 CHECK 约束"
-      }
-    },
-    {
-      "module": "master-data",
-      "file": "svc/master-data/src/modules/quality_v51.rs",
-      "enum": "FixStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "applied"
-        ],
-        "finance_candidate_ready": [
-          "verified"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_invoices.v55_invoices_status_check"
-      ],
-      "resolved": {
-        "file": "svc/master-data/src/modules/quality_v51.rs",
-        "enum": "FixStatus",
-        "table": "master_data.mdm_auto_fix_actions",
-        "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
       }
     },
     {
@@ -1633,173 +952,6 @@
       }
     },
     {
-      "module": "mes",
-      "file": "svc/mes/src/modules/capacity_status.rs",
-      "enum": "CapacityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "allocated",
-          "available",
-          "consumed",
-          "released"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mes/src/modules/capacity_status.rs",
-        "enum": "CapacityStatus",
-        "table": "mes.capacities",
-        "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/demand_forecast_status.rs",
-      "enum": "DemandForecastStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "adopted",
-          "superseded",
-          "validated"
-        ],
-        "finance_candidate_ready": [
-          "calculated"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v56_tax_forms.v56_tax_forms_status_check"
-      ],
-      "resolved": {
-        "file": "svc/mes/src/modules/demand_forecast_status.rs",
-        "enum": "DemandForecastStatus",
-        "table": "mes.demand_forecasts",
-        "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/material_plan_status.rs",
-      "enum": "MaterialPlanStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "requisitioned",
-          "satisfied",
-          "shortage",
-          "sourced"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mes/src/modules/material_plan_status.rs",
-        "enum": "MaterialPlanStatus",
-        "table": "mes.material_plans",
-        "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/production_order_status.rs",
-      "enum": "ProductionOrderStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ],
-        "internal_state": [
-          "released"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/mes/src/modules/production_order_status.rs",
-        "enum": "ProductionOrderStatus",
-        "table": "mes.production_orders",
-        "column": "status",
-        "candidate": "docs/database/mes-production-order-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/production_plan_status.rs",
-      "enum": "ProductionPlanStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "pending_approval"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mes/src/modules/production_plan_status.rs",
-        "enum": "ProductionPlanStatus",
-        "table": "mes.production_plans",
-        "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/production_schedule_status.rs",
-      "enum": "ProductionScheduleStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "released"
-        ],
-        "persisted_unmapped": [
-          "scheduled"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mes/src/modules/production_schedule_status.rs",
-        "enum": "ProductionScheduleStatus",
-        "table": "mes.production_schedules",
-        "column": "status",
-        "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/work_order_status.rs",
-      "enum": "WorkOrderStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/mes/src/modules/work_order_status.rs",
-        "enum": "WorkOrderStatus",
-        "table": "mes.work_orders",
-        "column": "status",
-        "candidate": "docs/database/mes-work-order-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "mes",
-      "file": "svc/mes/src/modules/work_station_status.rs",
-      "enum": "WorkStationStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "available"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/mes/src/modules/work_station_status.rs",
-        "enum": "WorkStationStatus",
-        "table": "mes.work_stations",
-        "column": "status",
-        "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
       "module": "mobile",
       "file": "svc/mobile/src/modules/push_status.rs",
       "enum": "PushNotificationStatus",
@@ -1815,23 +967,6 @@
         "table": "mobile.push_notifications",
         "column": "status",
         "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
-      "module": "plugin-registry",
-      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
-      "enum": "UpgradeQueueStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "scheduled"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/plugin-registry/src/modules/plugin/models.rs",
-        "enum": "UpgradeQueueStatus",
-        "persisted": false,
-        "reason": "插件升级队列内存态，无对应状态列"
       }
     },
     {
@@ -1857,29 +992,6 @@
         "enum": "UpgradeStatus",
         "persisted": false,
         "reason": "插件升级编排内存态，无对应状态列"
-      }
-    },
-    {
-      "module": "pm",
-      "file": "svc/pm/src/models/project.rs",
-      "enum": "ProjectStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ],
-        "persisted_unmapped": [
-          "pending_approval"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/pm/src/models/project.rs",
-        "enum": "ProjectStatus",
-        "table": "pm.projects",
-        "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
       }
     },
     {
@@ -1925,9 +1037,6 @@
       "file": "svc/portal/src/modules/deep_federation.rs",
       "enum": "AuthStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ],
         "internal_state": [
           "invalid",
           "revoked"
@@ -2096,14 +1205,9 @@
       "values_by_bucket": {
         "api_projection": [
           "new"
-        ],
-        "finance_candidate_ready": [
-          "under_review"
         ]
       },
-      "candidate_targets": [
-        "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/portal/src/modules/graphql_security.rs",
         "enum": "DiscoveryStatus",
@@ -2230,23 +1334,6 @@
     {
       "module": "portal",
       "file": "svc/portal/src/modules/query_governance.rs",
-      "enum": "ApprovalStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/query_governance.rs",
-        "enum": "ApprovalStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
-      "file": "svc/portal/src/modules/query_governance.rs",
       "enum": "QueryStatus",
       "values_by_bucket": {
         "persisted_unmapped": [
@@ -2257,28 +1344,6 @@
       "resolved": {
         "file": "svc/portal/src/modules/query_governance.rs",
         "enum": "QueryStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
-      "file": "svc/portal/src/modules/realtime_processing.rs",
-      "enum": "SubscriptionStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ],
-        "finance_candidate_ready": [
-          "paused"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/portal/src/modules/realtime_processing.rs",
-        "enum": "SubscriptionStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
       }
@@ -2300,25 +1365,6 @@
       "resolved": {
         "file": "svc/portal/src/modules/schema_versioning/types.rs",
         "enum": "VersionStatus",
-        "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "portal",
-      "file": "svc/portal/src/modules/streaming_processing.rs",
-      "enum": "StreamStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/portal/src/modules/streaming_processing.rs",
-        "enum": "StreamStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
       }
@@ -2349,82 +1395,16 @@
       "file": "svc/portal/src/modules/version_control.rs",
       "enum": "CanaryStatus",
       "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ],
         "api_projection": [
           "rolled_back"
         ]
       },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/portal/src/modules/version_control.rs",
         "enum": "CanaryStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
-    },
-    {
-      "module": "rd",
-      "file": "svc/rd/src/models/project_milestone.rs",
-      "enum": "MilestoneStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "achieved",
-          "delayed"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/rd/src/models/project_milestone.rs",
-        "enum": "MilestoneStatus",
-        "table": "rs.project_milestones",
-        "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "rd",
-      "file": "svc/rd/src/models/project_phase.rs",
-      "enum": "PhaseStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "delayed",
-          "not_started"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/rd/src/models/project_phase.rs",
-        "enum": "PhaseStatus",
-        "table": "rs.project_phases",
-        "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "rd",
-      "file": "svc/rd/src/models/project.rs",
-      "enum": "ProjectStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "paused"
-        ],
-        "persisted_unmapped": [
-          "pending_approval"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ],
-      "resolved": {
-        "file": "svc/rd/src/models/project.rs",
-        "enum": "ProjectStatus",
-        "table": "rs.projects",
-        "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
       }
     },
     {
@@ -2436,16 +1416,11 @@
           "awarded",
           "opened"
         ],
-        "finance_candidate_ready": [
-          "evaluated"
-        ],
         "persisted_unmapped": [
           "published"
         ]
       },
-      "candidate_targets": [
-        "finance.finance_v60_decision_scenarios.v60_decision_scenarios_status_check"
-      ],
+      "candidate_targets": [],
       "resolved": {
         "file": "svc/srm/src/modules/bidding_status.rs",
         "enum": "BiddingStatus",
@@ -2494,24 +1469,6 @@
       }
     },
     {
-      "module": "srm",
-      "file": "svc/srm/src/modules/supplier_record_status.rs",
-      "enum": "SupplierRecordStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "deleted"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/srm/src/modules/supplier_record_status.rs",
-        "enum": "SupplierRecordStatus",
-        "table": "srm.suppliers",
-        "column": "status",
-        "candidate": "docs/database/srm-supplier-status-check-candidates-2026-11-21.sql"
-      }
-    },
-    {
       "module": "unified-core",
       "file": "svc/unified-core/src/middleware/versioning.rs",
       "enum": "VersionStatus",
@@ -2534,9 +1491,6 @@
       "file": "svc/unified-core/src/modules/subscription/mod.rs",
       "enum": "SubscriptionStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "expired"
-        ],
         "internal_state": [
           "trial"
         ]
@@ -2568,313 +1522,6 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "健康度聚合计算值，不落库；与 shared-core 同名同值但 serde 输出 PascalCase vs lowercase，直接替换会改 API 契约"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/batch_status.rs",
-      "enum": "BatchQualityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "inspecting",
-          "qualified",
-          "unqualified"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/batch_status.rs",
-        "enum": "BatchQualityStatus",
-        "table": "wms.batches",
-        "column": "quality_status",
-        "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/batch_status.rs",
-      "enum": "BatchStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "frozen",
-          "in_stock",
-          "out_stock",
-          "reserved",
-          "scrapped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/batch_status.rs",
-        "enum": "BatchStatus",
-        "table": "wms.batches",
-        "column": "status",
-        "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/inbound_item_quality_status.rs",
-      "enum": "InboundItemQualityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "qualified"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/inbound_item_quality_status.rs",
-        "enum": "InboundItemQualityStatus",
-        "table": "wms.inbound_order_items",
-        "column": "quality_status",
-        "candidate": "docs/database/wms-inbound-item-quality-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/inbound_status.rs",
-      "enum": "InboundStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "created"
-        ],
-        "persisted_unmapped": [
-          "received"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/inbound_status.rs",
-        "enum": "InboundStatus",
-        "table": "wms.inbound_orders",
-        "column": "status",
-        "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/inventory_quality_status.rs",
-      "enum": "InventoryQualityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "qualified",
-          "unqualified"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/inventory_quality_status.rs",
-        "enum": "InventoryQualityStatus",
-        "table": "wms.inventory",
-        "column": "quality_status",
-        "candidate": "docs/database/wms-inventory-quality-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/location_status.rs",
-      "enum": "LocationStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "available",
-          "full"
-        ],
-        "finance_candidate_ready": [
-          "partial"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_reconciliation_results.v55_recon_results_match_status_check"
-      ],
-      "resolved": {
-        "file": "svc/wms/src/modules/location_status.rs",
-        "enum": "LocationStatus",
-        "table": "wms.locations",
-        "column": "status",
-        "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/outbound_status.rs",
-      "enum": "OutboundStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "created",
-          "packing",
-          "picking",
-          "shipping"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/outbound_status.rs",
-        "enum": "OutboundStatus",
-        "table": "wms.outbound_orders",
-        "column": "status",
-        "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/serial_number_status.rs",
-      "enum": "SerialNumberQualityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "inspecting",
-          "qualified",
-          "unqualified"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/serial_number_status.rs",
-        "enum": "SerialNumberQualityStatus",
-        "table": "wms.serial_numbers",
-        "column": "quality_status",
-        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/serial_number_status.rs",
-      "enum": "SerialNumberStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "frozen",
-          "in_stock",
-          "out_stock",
-          "reserved",
-          "scrapped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/serial_number_status.rs",
-        "enum": "SerialNumberStatus",
-        "table": "wms.serial_numbers",
-        "column": "status",
-        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/slotting_status.rs",
-      "enum": "SlottingSuggestionStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "applied"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/slotting_status.rs",
-        "enum": "SlottingSuggestionStatus",
-        "table": "wms.slotting_suggestions",
-        "column": "status",
-        "candidate": "docs/database/wms-slotting-suggestion-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/stock_take_item_quality_status.rs",
-      "enum": "StockTakeItemQualityStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "qualified",
-          "unqualified"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/stock_take_item_quality_status.rs",
-        "enum": "StockTakeItemQualityStatus",
-        "table": "wms.stock_take_items",
-        "column": "quality_status",
-        "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/transfer_status.rs",
-      "enum": "TransferItemStatus",
-      "values_by_bucket": {
-        "finance_candidate_ready": [
-          "partial"
-        ],
-        "internal_state": [
-          "shipped"
-        ]
-      },
-      "candidate_targets": [
-        "finance.finance_v55_reconciliation_results.v55_recon_results_match_status_check"
-      ],
-      "resolved": {
-        "file": "svc/wms/src/modules/transfer_status.rs",
-        "enum": "TransferItemStatus",
-        "table": "wms.transfer_order_items",
-        "column": "status",
-        "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/transfer_status.rs",
-      "enum": "TransferOrderStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "received"
-        ],
-        "internal_state": [
-          "shipped"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/transfer_status.rs",
-        "enum": "TransferOrderStatus",
-        "table": "wms.transfer_orders",
-        "column": "status",
-        "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/wave_pick_status.rs",
-      "enum": "WavePickItemStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "picked",
-          "short_picked"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/wave_pick_status.rs",
-        "enum": "WavePickItemStatus",
-        "table": "wms.wave_pick_items",
-        "column": "status",
-        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
-      }
-    },
-    {
-      "module": "wms",
-      "file": "svc/wms/src/modules/wave_pick_status.rs",
-      "enum": "WavePickStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "assigned",
-          "created",
-          "picking"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/wms/src/modules/wave_pick_status.rs",
-        "enum": "WavePickStatus",
-        "table": "wms.wave_picks",
-        "column": "status",
-        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
       }
     }
   ]
