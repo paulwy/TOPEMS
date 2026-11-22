@@ -6288,10 +6288,17 @@ pub async fn list_expense_approvals(
         .get("search")
         .and_then(|v| v.as_str())
         .map(|s| format!("%{}%", s));
-    let status_filter = params
-        .get("status")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let status_filter: Vec<&'static str> = match params.get("status").and_then(|v| v.as_str()) {
+        None => ExpenseApprovalStatus::DB_VALUES.to_vec(),
+        Some(raw) => match ExpenseApprovalStatus::from_db_str(raw) {
+            Some(status) => vec![status.as_str()],
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/pending/approved/rejected/reimbursed",
+                )
+            }
+        },
+    };
 
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -6315,7 +6322,7 @@ pub async fn list_expense_approvals(
            FROM finance.expense_approvals
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR expense_no ILIKE $1 OR employee_name ILIKE $1)
-             AND ($2::text IS NULL OR status = $2)
+             AND status = ANY($2::text[])
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search)
@@ -6348,8 +6355,13 @@ pub async fn list_expense_approvals(
             }).collect();
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
                 "finance",
-                r#"SELECT COUNT(*) FROM finance.expense_approvals WHERE deleted_at IS NULL"#
+                r#"SELECT COUNT(*) FROM finance.expense_approvals
+                   WHERE deleted_at IS NULL
+                     AND ($1::text IS NULL OR expense_no ILIKE $1 OR employee_name ILIKE $1)
+                     AND status = ANY($2::text[])"#
             ))
+            .bind(&search)
+            .bind(&status_filter)
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
@@ -6411,9 +6423,12 @@ pub async fn create_expense_approval(
         other => other,
     };
     let status = match req.status.as_deref() {
-        None => ExpenseApprovalStatus::Pending,
+        None => ExpenseApprovalStatus::DEFAULT,
         Some(raw) => match normalize_expense_status(raw) {
-            Some(status) => status,
+            Some(status @ (ExpenseApprovalStatus::Draft | ExpenseApprovalStatus::Pending)) => {
+                status
+            }
+            Some(_) => return ApiResponse::bad_request("新建费用审批仅支持 draft/pending"),
             None => {
                 return ApiResponse::bad_request(
                     "status 仅支持 draft/pending/approved/rejected/reimbursed",
@@ -6510,26 +6525,37 @@ pub async fn get_expense_approval(
     .await;
 
     match row {
-        Ok(Some(row)) => ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "expense_no": row.try_get::<String, _>("expense_no").ok(),
-                "employee_id": row.try_get::<Option<Uuid>, _>("employee_id").ok().flatten(),
-                "employee_name": row.try_get::<Option<String>, _>("employee_name").ok().flatten(),
-                "department": row.try_get::<Option<String>, _>("department").ok().flatten(),
-                "expense_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("expense_date").ok().flatten(),
-                "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
-                "total_amount": row.try_get::<Option<rust_decimal::Decimal>, _>("total_amount").ok().flatten(),
-                "status": row.try_get::<Option<String>, _>("status").ok().flatten(),
-                "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
-                "approver_id": row.try_get::<Option<Uuid>, _>("approver_id").ok().flatten(),
-                "approver_name": row.try_get::<Option<String>, _>("approver_name").ok().flatten(),
-                "approval_note": row.try_get::<Option<String>, _>("approval_note").ok().flatten(),
-                "created_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("created_at").ok().flatten(),
-                "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
-            }),
-            "查询成功",
-        ),
+        Ok(Some(row)) => {
+            let Some(status) = row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .as_deref()
+                .and_then(ExpenseApprovalStatus::from_db_str)
+            else {
+                return ApiResponse::conflict("费用审批状态不在规范集合内");
+            };
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "expense_no": row.try_get::<String, _>("expense_no").ok(),
+                    "employee_id": row.try_get::<Option<Uuid>, _>("employee_id").ok().flatten(),
+                    "employee_name": row.try_get::<Option<String>, _>("employee_name").ok().flatten(),
+                    "department": row.try_get::<Option<String>, _>("department").ok().flatten(),
+                    "expense_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("expense_date").ok().flatten(),
+                    "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
+                    "total_amount": row.try_get::<Option<rust_decimal::Decimal>, _>("total_amount").ok().flatten(),
+                    "status": status.as_str(),
+                    "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
+                    "approver_id": row.try_get::<Option<Uuid>, _>("approver_id").ok().flatten(),
+                    "approver_name": row.try_get::<Option<String>, _>("approver_name").ok().flatten(),
+                    "approval_note": row.try_get::<Option<String>, _>("approval_note").ok().flatten(),
+                    "created_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("created_at").ok().flatten(),
+                    "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
+                }),
+                "查询成功",
+            )
+        }
         Ok(None) => ApiResponse::from(TopemsError::NotFound("费用审批不存在".to_string())),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
@@ -6559,10 +6585,10 @@ pub async fn update_expense_approval(
             return ApiResponse::unprocessable("total_amount 不能为负数");
         }
     }
-    let status = match req.status.as_deref() {
-        None => None,
+    let (status, allowed_from) = match req.status.as_deref() {
+        None => (None, Some(ExpenseApprovalStatus::DB_VALUES.to_vec())),
         Some(raw) => match normalize_expense_status(raw) {
-            Some(status) => Some(status.as_str()),
+            Some(status) => (Some(status.as_str()), Some(status.allowed_from().to_vec())),
             None => {
                 return ApiResponse::bad_request(
                     "status 仅支持 draft/pending/approved/rejected/reimbursed",
@@ -6611,6 +6637,7 @@ pub async fn update_expense_approval(
                approver_name = COALESCE($13, approver_name),
                updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
+             AND status = ANY($14::text[])
            RETURNING id, expense_no, employee_id, employee_name, department, expense_date,
                      expense_type, total_amount, status, description, approver_id, approver_name,
                      approval_note, created_at, updated_at"#
@@ -6628,6 +6655,7 @@ pub async fn update_expense_approval(
     .bind(req.approval_note)
     .bind(approver_id)
     .bind(req.approver_name)
+    .bind(&allowed_from)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -6651,7 +6679,13 @@ pub async fn update_expense_approval(
             }),
             "更新成功",
         ),
-        Ok(None) => ApiResponse::not_found("费用审批不存在"),
+        Ok(None) => {
+            drop(scope);
+            if let Some(txn) = guard.take() {
+                let _ = txn.rollback().await;
+            }
+            ApiResponse::conflict("当前状态不允许该操作")
+        }
         Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!(
             "更新费用审批失败: {}",
             e

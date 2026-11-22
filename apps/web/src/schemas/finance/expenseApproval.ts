@@ -285,14 +285,14 @@ export const expenseApprovalSchema: EntitySchema & {
       field: 'status',
       colorMap: {
         draft: 'default',
-        pending_approval: 'warning',
+        pending: 'warning',
         approved: 'success',
         rejected: 'error',
         reimbursed: 'primary',
       },
       labelMap: {
         draft: i18n.t('finance.expense_approval.k53'),
-        pending_approval: i18n.t('finance.expense_approval.k54'),
+        pending: i18n.t('finance.expense_approval.k54'),
         approved: i18n.t('finance.expense_approval.k55'),
         rejected: i18n.t('finance.expense_approval.k56'),
         reimbursed: i18n.t('finance.expense_approval.k57'),

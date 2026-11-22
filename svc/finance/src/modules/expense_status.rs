@@ -14,6 +14,36 @@ pub enum ExpenseApprovalStatus {
 }
 
 impl ExpenseApprovalStatus {
+    pub const DB_VALUES: [&'static str; 5] =
+        ["draft", "pending", "approved", "rejected", "reimbursed"];
+
+    /// 新建费用审批默认进入草稿，提交动作再转 pending。
+    pub const DEFAULT: Self = Self::Draft;
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "draft" => Some(Self::Draft),
+            "pending" | "pending_approval" => Some(Self::Pending),
+            "approved" => Some(Self::Approved),
+            "rejected" => Some(Self::Rejected),
+            "reimbursed" => Some(Self::Reimbursed),
+            _ => None,
+        }
+    }
+
+    /// 该状态允许迁入的起始态；同态也允许，供原值回传。
+    #[must_use]
+    pub fn allowed_from(self) -> &'static [&'static str] {
+        match self {
+            Self::Draft => &["draft"],
+            Self::Pending => &["draft", "pending"],
+            Self::Approved => &["pending", "approved"],
+            Self::Rejected => &["pending", "rejected"],
+            Self::Reimbursed => &["approved", "reimbursed"],
+        }
+    }
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -90,6 +120,19 @@ mod tests {
         ] {
             assert_eq!(normalize(raw), Some(expected));
         }
+        for raw in ExpenseApprovalStatus::DB_VALUES {
+            assert_eq!(
+                ExpenseApprovalStatus::from_db_str(raw).map(|v| v.as_str()),
+                Some(raw)
+            );
+        }
+        assert_eq!(ExpenseApprovalStatus::DEFAULT.as_str(), "draft");
+        assert!(ExpenseApprovalStatus::Approved
+            .allowed_from()
+            .contains(&"pending"));
+        assert!(!ExpenseApprovalStatus::Pending
+            .allowed_from()
+            .contains(&"approved"));
     }
 
     #[test]
