@@ -17,6 +17,7 @@ use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{TaskActionRequest, Workflow, WorkflowInstance, WorkflowTask};
+use super::workflow_instance_status::WorkflowInstanceStatus;
 
 #[derive(Debug, FromRow)]
 pub struct ApprovalTaskRow {
@@ -1287,12 +1288,13 @@ pub async fn create_approval(
 
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         r#"INSERT INTO public.core_workflow_instances (workflow_id, title, initiator_id, status, started_at, tenant_id)
-           VALUES ($1, $2, $3, 'running', NOW(), $4)
+           VALUES ($1, $2, $3, $4, NOW(), $5)
            RETURNING id, workflow_id, title, initiator_id, current_node_id, variables, status, started_at, completed_at, created_at, updated_at, tenant_id"#,
     )
     .bind(workflow_id)
     .bind(title)
     .bind(initiator_id)
+    .bind(WorkflowInstanceStatus::DEFAULT.as_db_str())
     .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await

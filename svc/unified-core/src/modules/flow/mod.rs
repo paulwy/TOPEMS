@@ -16,4 +16,5 @@ pub mod task;
 pub mod template;
 pub mod variable;
 pub mod workflow;
+pub mod workflow_instance_status;
 pub mod workflow_status;

@@ -16,6 +16,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use super::models::{CreateInstanceRequest, WorkflowInstance};
+use super::workflow_instance_status::WorkflowInstanceStatus;
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[schema(as = InstanceQueryParams)]
@@ -75,7 +76,17 @@ pub async fn list_instances(
     };
 
     let search = params.search.clone().unwrap_or_default();
-    let status = params.status.clone();
+    let status = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match WorkflowInstanceStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的工作流实例状态".to_string(),
+                ))
+            }
+        },
+    };
     let workflow_id = params.workflow_id.clone();
 
     let has_filters = !search.is_empty() || status.is_some() || workflow_id.is_some();
@@ -141,7 +152,7 @@ pub async fn list_instances(
             scope.sql_predicate("tenant_id", "$5")
         )))
         .bind(format!("%{}%", search.clone()))
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .bind(workflow_uuid)
         .bind(user_uuid)
         .bind_tenant_scope(&scope)
@@ -228,7 +239,7 @@ pub async fn list_instances(
             scope.sql_predicate("i.tenant_id", "$7")
         )))
         .bind(format!("%{}%", search.clone()))
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .bind(workflow_uuid)
         .bind(user_uuid)
         .bind(page_size)
@@ -348,7 +359,7 @@ pub async fn create_instance(
     .bind(payload.title)
     .bind(payload.initiator_id)
     .bind(payload.variables)
-    .bind("running")
+    .bind(WorkflowInstanceStatus::DEFAULT.as_db_str())
     .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
@@ -394,11 +405,12 @@ pub async fn start_instance(
         }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE public.core_workflow_instances SET status = 'running', started_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = $2, started_at = NOW(), updated_at = NOW() 
          WHERE id = $1
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowInstanceStatus::Running.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -446,11 +458,12 @@ pub async fn approve_instance(
         }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE public.core_workflow_instances SET status = 'approved', completed_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = $2, completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowInstanceStatus::Approved.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -498,11 +511,12 @@ pub async fn reject_instance(
         }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE public.core_workflow_instances SET status = 'rejected', completed_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = $2, completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowInstanceStatus::Rejected.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -550,11 +564,12 @@ pub async fn cancel_instance(
         }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE public.core_workflow_instances SET status = 'cancelled', completed_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = $2, completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowInstanceStatus::Cancelled.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -602,11 +617,12 @@ pub async fn resume_instance(
         }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE public.core_workflow_instances SET status = 'running', completed_at = NULL, updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = $2, completed_at = NULL, updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowInstanceStatus::Running.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -654,11 +670,12 @@ pub async fn suspend_instance(
         }
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE public.core_workflow_instances SET status = 'suspended', updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = $2, updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowInstanceStatus::Suspended.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -859,7 +876,7 @@ pub async fn retry_instance(
     let node_id = payload.and_then(|p| p.node_id);
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE public.core_workflow_instances
-         SET status = 'running',
+         SET status = $3,
              current_node_id = COALESCE($2, current_node_id),
              completed_at = NULL,
              updated_at = NOW()
@@ -868,6 +885,7 @@ pub async fn retry_instance(
     )
     .bind(id)
     .bind(node_id)
+    .bind(WorkflowInstanceStatus::Running.as_db_str())
     .fetch_one(&mut scope)
     .await;
 

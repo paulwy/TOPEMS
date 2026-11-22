@@ -3610,6 +3610,25 @@
     },
     {
       "schema": "public",
+      "table": "core_workflow_instances",
+      "constraint": "ck_core_workflow_instances_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "completed",
+        "error",
+        "pending",
+        "rejected",
+        "running",
+        "suspended"
+      ],
+      "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['pending'::text, 'running'::text, 'approved'::text, 'rejected'::text, 'cancelled'::text, 'suspended'::text, 'completed'::text, 'error'::text])))) NOT VALID"
+    },
+    {
+      "schema": "public",
       "table": "core_workflows",
       "constraint": "ck_core_workflows_status_standard",
       "columns": [
@@ -7563,15 +7582,6 @@
       "enum_type": "int4",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "public",
-      "table": "core_workflow_instances",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "public",
