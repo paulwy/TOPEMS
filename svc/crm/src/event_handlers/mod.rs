@@ -7,6 +7,7 @@
 //! - `OpportunityWon` → 自动创建跟进任务记录
 //! - `CustomerCreated` → 触发欢迎邮件（记录日志，邮件发送由通知服务异步处理）
 
+use crate::modules::billing_status::BillingStatus;
 use crate::modules::customer_order_status::CustomerOrderStatus;
 use crate::modules::interaction_status::InteractionStatus;
 use crate::modules::master_data_ref_status::MasterDataRefStatus;
@@ -403,7 +404,7 @@ impl CrmEventHandlers {
                 r#"INSERT INTO crm.billing_records
                    (tenant_id, customer_id, customer_name, invoice_no, amount,
                     currency, status, due_date, paid_at, items, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, 'CNY', 'pending', $6, NULL, $7, $8, $8)
+                   VALUES ($1, $2, $3, $4, $5, 'CNY', $7, $6, NULL, $8, $9, $9)
                    ON CONFLICT DO NOTHING"#,
             )
             .bind(tenant_id)
@@ -412,6 +413,7 @@ impl CrmEventHandlers {
             .bind(&invoice_no)
             .bind(billing_amount)
             .bind(due_date)
+            .bind(BillingStatus::DEFAULT.as_db_str())
             .bind(items)
             .bind(now)
             .execute(&mut scope)
@@ -537,32 +539,34 @@ impl CrmEventHandlers {
         let result = if let Some(name) = payload.customer_name.as_deref() {
             sqlx::query(
                 r#"UPDATE crm.billing_records
-                   SET status = 'paid',
+                   SET status = $2,
                        paid_at = $1,
                        updated_at = $1
-                   WHERE customer_name = $2
-                     AND tenant_id = $4
-                     AND status = 'pending'
-                     AND amount = $3
+                   WHERE customer_name = $3
+                     AND tenant_id = $5
+                     AND status = ANY($4::text[])
+                     AND amount = $6
                    RETURNING invoice_no"#,
             )
             .bind(now)
+            .bind(BillingStatus::Paid.as_db_str())
             .bind(name)
-            .bind(payload.amount)
+            .bind(BillingStatus::mark_paid_from())
             .bind(tenant_id)
+            .bind(payload.amount)
             .fetch_optional(&mut scope)
             .await
         } else {
             sqlx::query(
                 r#"UPDATE crm.billing_records b
-                   SET status = 'paid',
+                   SET status = $2,
                        paid_at = $1,
                        updated_at = $1
                    FROM (
                        SELECT id FROM crm.billing_records
-                       WHERE status = 'pending'
-                         AND tenant_id = $3
-                         AND amount = $2
+                       WHERE status = ANY($3::text[])
+                         AND tenant_id = $4
+                         AND amount = $5
                        ORDER BY created_at ASC
                        LIMIT 1
                    ) s
@@ -570,8 +574,10 @@ impl CrmEventHandlers {
                    RETURNING b.invoice_no"#,
             )
             .bind(now)
-            .bind(payload.amount)
+            .bind(BillingStatus::Paid.as_db_str())
+            .bind(BillingStatus::mark_paid_from())
             .bind(tenant_id)
+            .bind(payload.amount)
             .fetch_optional(&mut scope)
             .await
         };
@@ -1128,12 +1134,13 @@ mod rls_scope_tests {
         sqlx::query(
             r#"INSERT INTO crm.billing_records
                (tenant_id, customer_name, invoice_no, amount, status, due_date)
-               VALUES ($1, $2, $3, $4, 'pending', NOW() + INTERVAL '7 days')"#,
+               VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days')"#,
         )
         .bind(tenant)
         .bind(customer_name)
         .bind(invoice_no)
         .bind(rust_decimal::Decimal::from(amount))
+        .bind(BillingStatus::DEFAULT.as_db_str())
         .execute(&mut *tx)
         .await
         .unwrap();

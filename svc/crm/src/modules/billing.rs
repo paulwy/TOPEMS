@@ -69,12 +69,15 @@ pub async fn list_billing_records(
     let offset = (page - 1) * page_size;
 
     let customer_id_filter = params.customer_id;
-    let status_filter = match params.status.as_deref() {
+    let status_values: Vec<String> = match params.status.as_deref() {
         Some(raw) => match BillingStatus::from_db_str(raw) {
-            Some(status) => Some(status.as_db_str().to_string()),
+            Some(status) => vec![status.as_db_str().to_string()],
             None => return ApiResponse::bad_request("账单状态非法"),
         },
-        None => None,
+        None => BillingStatus::DB_VALUES
+            .iter()
+            .map(std::string::ToString::to_string)
+            .collect(),
     };
 
     let result = sqlx::query_as::<_, BillingRecord>(
@@ -83,13 +86,13 @@ pub async fn list_billing_records(
         FROM crm.billing_records
         WHERE deleted_at IS NULL
           AND ($1::uuid IS NULL OR customer_id = $1)
-          AND ($2::text IS NULL OR status = $2)
+          AND status = ANY($2::text[])
         ORDER BY due_date DESC
         LIMIT $3 OFFSET $4
         "#,
     )
     .bind(customer_id_filter)
-    .bind(&status_filter)
+    .bind(&status_values)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -102,11 +105,11 @@ pub async fn list_billing_records(
                 SELECT COUNT(*) FROM crm.billing_records
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR customer_id = $1)
-                  AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($2::text[])
                 "#,
             )
             .bind(customer_id_filter)
-            .bind(&status_filter)
+            .bind(&status_values)
             .fetch_one(&mut **txn)
             .await;
 
@@ -170,7 +173,12 @@ pub async fn get_billing_record(
     .await;
 
     match result {
-        Ok(Some(record)) => ApiResponse::success(record, "获取账单成功"),
+        Ok(Some(record)) => {
+            if BillingStatus::from_db_str(&record.status).is_none() {
+                return ApiResponse::conflict("账单状态非法，需先修复数据");
+            }
+            ApiResponse::success(record, "获取账单成功")
+        }
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
         Err(e) => {
             tracing::error!("获取账单失败: {}", e);
@@ -389,7 +397,12 @@ async fn update_billing_record(
             }
             ApiResponse::success(record, "更新账单成功")
         }
-        Ok(None) => ApiResponse::conflict("账单状态已被并发变更，请刷新后重试"),
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                let _ = t.rollback().await;
+            }
+            ApiResponse::conflict("账单状态已被并发变更，请刷新后重试")
+        }
         Err(e) => {
             tracing::error!("更新账单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("更新账单失败".to_string()))
@@ -536,7 +549,7 @@ pub async fn mark_billing_paid(
     let result = sqlx::query(
         r#"
         UPDATE crm.billing_records SET
-            status = 'paid', paid_at = COALESCE(paid_at, $3), updated_at = $3
+            status = $5, paid_at = COALESCE(paid_at, $3), updated_at = $3
         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
           AND status = ANY($4::text[])
         "#,
@@ -545,6 +558,7 @@ pub async fn mark_billing_paid(
     .bind(tenant_id)
     .bind(now)
     .bind(&allowed_from)
+    .bind(BillingStatus::Paid.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -561,7 +575,12 @@ pub async fn mark_billing_paid(
                 "标记已收款成功",
             )
         }
-        Ok(_) => ApiResponse::conflict("账单状态已被并发变更，请刷新后重试"),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                let _ = t.rollback().await;
+            }
+            ApiResponse::conflict("账单状态已被并发变更，请刷新后重试")
+        }
         Err(e) => {
             tracing::error!("标记已收款失败: {}", e);
             ApiResponse::from(TopemsError::Internal("标记已收款失败".to_string()))
