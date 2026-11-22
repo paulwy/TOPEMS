@@ -10,6 +10,7 @@ use topems_shared_event::redis::RedisCacheService;
 pub mod analytics;
 pub mod audit;
 pub mod data_sync;
+pub mod delivery_appointment_status;
 pub mod evaluation_logic;
 pub mod incoming_inspection;
 pub mod inventory_turnover;

@@ -10,6 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::delivery_appointment_status::DeliveryAppointmentStatus;
 use super::ApiState;
 use crate::models::supplier_delivery_appointment::{
     ArrivalConfirmRequest, CancelRequest, CompleteRequest,
@@ -378,6 +379,17 @@ pub async fn list_appointments(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match DeliveryAppointmentStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的送货预约状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let query = format!(
         r#"
@@ -396,7 +408,7 @@ pub async fn list_appointments(
 
     let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(query))
         .bind(&search_pattern)
-        .bind(&params.status)
+        .bind(status_filter)
         .bind(params.supplier_id)
         .bind(params.start_date)
         .bind(params.end_date)
@@ -419,7 +431,7 @@ pub async fn list_appointments(
                 "#.to_string();
             let count_result = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query))
                 .bind(&search_pattern)
-                .bind(&params.status)
+                .bind(status_filter)
                 .bind(params.supplier_id)
                 .bind(params.start_date)
                 .bind(params.end_date)
@@ -501,7 +513,7 @@ pub async fn create_appointment(
             destination_warehouse, expected_arrival_time, status,
             applicant, remarks, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'pending', $18, $19, $20, $21, $22)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -524,6 +536,7 @@ pub async fn create_appointment(
         .bind(req.total_weight)
         .bind(&req.destination_warehouse)
         .bind(req.expected_arrival_time)
+        .bind(DeliveryAppointmentStatus::DEFAULT.as_db_str())
         .bind(req.applicant.as_deref().unwrap_or(&claims.username))
         .bind(&req.remarks)
         .bind(now)
@@ -706,7 +719,24 @@ pub async fn update_appointment(
     let total_weight = req.total_weight.or(existing.total_weight);
     let destination_warehouse = req.destination_warehouse.or(existing.destination_warehouse);
     let expected_arrival_time = req.expected_arrival_time.or(existing.expected_arrival_time);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        None | Some("") => match DeliveryAppointmentStatus::from_db_str(&existing.status) {
+            Some(status) => status.as_db_str().to_string(),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "送货预约存量状态非法".to_string(),
+                ))
+            }
+        },
+        Some(raw) => match DeliveryAppointmentStatus::from_db_str(raw) {
+            Some(status) => status.as_db_str().to_string(),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的送货预约状态".to_string(),
+                ))
+            }
+        },
+    };
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
@@ -741,7 +771,7 @@ pub async fn update_appointment(
             .bind(total_weight)
             .bind(&destination_warehouse)
             .bind(expected_arrival_time)
-            .bind(&status)
+            .bind(status.as_str())
             .bind(&remarks)
             .bind(now)
             .bind(tenant_bind)
@@ -975,7 +1005,7 @@ pub async fn approve_appointment(
     let update_query = format!(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
-            status = 'approved', approver = $2, approved_at = $3, remarks = $4, updated_at = $3
+            status = $6, approver = $2, approved_at = $3, remarks = $4, updated_at = $3
         WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
           AND tenant_id = $5::uuid
         RETURNING {SELECT_COLUMNS}
@@ -988,6 +1018,7 @@ pub async fn approve_appointment(
             .bind(&approver)
             .bind(now)
             .bind(&new_remarks)
+            .bind(DeliveryAppointmentStatus::Approved.as_db_str())
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -1129,7 +1160,7 @@ pub async fn reject_appointment(
     let update_query = format!(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
-            status = 'rejected', approver = $2, approved_at = $3,
+            status = $7, approver = $2, approved_at = $3,
             rejection_reason = $4, remarks = $5, updated_at = $3
         WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
           AND tenant_id = $6::uuid
@@ -1144,6 +1175,7 @@ pub async fn reject_appointment(
             .bind(now)
             .bind(&reject_reason)
             .bind(&new_remarks)
+            .bind(DeliveryAppointmentStatus::Rejected.as_db_str())
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -1279,7 +1311,7 @@ pub async fn confirm_arrival(
     let update_query = format!(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
-            status = 'arrived', actual_arrival_time = $2,
+            status = $6, actual_arrival_time = $2,
             remarks = $3, updated_at = $4
         WHERE id = $1 AND tenant_id = $5::uuid
         RETURNING {SELECT_COLUMNS}
@@ -1293,6 +1325,7 @@ pub async fn confirm_arrival(
             .bind(&new_remarks)
             .bind(now)
             .bind(tenant_bind)
+            .bind(DeliveryAppointmentStatus::Arrived.as_db_str())
             .fetch_one(&mut **txn)
             .await;
 
@@ -1421,7 +1454,7 @@ pub async fn complete_appointment(
     let update_query = format!(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
-            status = 'completed', remarks = $2, updated_at = $3
+            status = $5, remarks = $2, updated_at = $3
         WHERE id = $1 AND tenant_id = $4::uuid
         RETURNING {SELECT_COLUMNS}
         "#
@@ -1433,6 +1466,7 @@ pub async fn complete_appointment(
             .bind(&new_remarks)
             .bind(now)
             .bind(tenant_bind)
+            .bind(DeliveryAppointmentStatus::Completed.as_db_str())
             .fetch_one(&mut **txn)
             .await;
 
@@ -1561,7 +1595,7 @@ pub async fn cancel_appointment(
     let update_query = format!(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
-            status = 'cancelled', remarks = $2, updated_at = $3
+            status = $5, remarks = $2, updated_at = $3
         WHERE id = $1 AND tenant_id = $4::uuid
         RETURNING {SELECT_COLUMNS}
         "#
@@ -1573,6 +1607,7 @@ pub async fn cancel_appointment(
             .bind(&new_remarks)
             .bind(now)
             .bind(tenant_bind)
+            .bind(DeliveryAppointmentStatus::Cancelled.as_db_str())
             .fetch_one(&mut **txn)
             .await;
 

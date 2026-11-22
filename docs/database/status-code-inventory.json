@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 351,
+    "db_check_constraints": 352,
     "db_enum_types": 5,
-    "db_check_values": 155,
-    "rust_enums": 234,
-    "rust_enum_values": 209,
+    "db_check_values": 156,
+    "rust_enums": 235,
+    "rust_enum_values": 210,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 219,
+    "frontend_status_keys": 220,
     "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
@@ -3348,6 +3348,27 @@
     },
     {
       "module": "scm",
+      "file": "svc/scm/src/modules/delivery_appointment_status.rs",
+      "name": "DeliveryAppointmentStatus",
+      "values": [
+        "Approved",
+        "Arrived",
+        "Cancelled",
+        "Completed",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "arrived",
+        "cancelled",
+        "completed",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "scm",
       "file": "svc/scm/src/modules/master_data_ref_status.rs",
       "name": "MasterDataRefStatus",
       "values": [
@@ -4191,6 +4212,7 @@
       "applied",
       "approved",
       "archived",
+      "arrived",
       "assessed",
       "assigned",
       "available",
