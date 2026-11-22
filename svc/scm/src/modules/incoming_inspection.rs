@@ -12,6 +12,7 @@ use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::incoming_inspection_status::IncomingInspectionStatus;
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
@@ -679,7 +680,17 @@ pub async fn list_inspections(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match IncomingInspectionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的来料检验状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let result = sqlx::query(
         only_own_schema_query!("scm", r#"
@@ -697,7 +708,7 @@ pub async fn list_inspections(
         "#),
     )
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -715,7 +726,7 @@ pub async fn list_inspections(
                 "#),
             )
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -802,7 +813,7 @@ pub async fn create_inspection(
          batch_number, inspected_quantity, passed_quantity, failed_quantity,
          sampling_quantity, inspection_result, status, inspection_items,
          remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 0, $11, 'pending', 'pending', COALESCE($12, '{}'::jsonb), $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 0, $11, $12, 'pending', COALESCE($13, '{}'::jsonb), $14, $15, $16, $17)
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
                   batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
@@ -821,6 +832,7 @@ pub async fn create_inspection(
     .bind(&req.batch_number)
     .bind(req.inspected_quantity)
     .bind(req.sampling_quantity)
+    .bind(IncomingInspectionStatus::DEFAULT.as_db_str())
     .bind(&req.inspection_items)
     .bind(&req.remarks)
     .bind(now.naive_utc())
@@ -937,6 +949,7 @@ pub struct UpdateInspectionRequest {
     pub failed_quantity: Option<f64>,
     pub inspection_items: Option<serde_json::Value>,
     pub remarks: Option<String>,
+    pub status: Option<String>,
 }
 
 pub async fn update_inspection(
@@ -961,6 +974,17 @@ pub async fn update_inspection(
         Err(e) => return e.0,
     };
     let request_data = serde_json::to_value(&req).ok();
+    let status = match req.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match IncomingInspectionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的来料检验状态".to_string(),
+                ))
+            }
+        },
+    };
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(only_own_schema_query!(
@@ -991,6 +1015,7 @@ pub async fn update_inspection(
                 WHEN remarks IS NOT NULL AND $5::text IS NOT NULL THEN remarks || ' | ' || $5::text
                 ELSE COALESCE(remarks, $5::text)
             END,
+            status = COALESCE($8, status),
             updated_at = $6
         WHERE id = $1 AND tenant_id = $7::uuid
         RETURNING id, inspection_number, notice_id, notice_number,
@@ -1007,6 +1032,7 @@ pub async fn update_inspection(
     .bind(&req.remarks)
     .bind(now)
     .bind(tenant_bind)
+    .bind(status)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1138,7 +1164,7 @@ pub async fn inspection_pass(
         "scm",
         r#"
         UPDATE scm.incoming_inspections SET
-            status = 'passed',
+            status = $7,
             inspection_result = 'pass',
             passed_quantity = $2,
             failed_quantity = $3,
@@ -1161,6 +1187,7 @@ pub async fn inspection_pass(
     .bind(&req.remarks)
     .bind(now)
     .bind(tenant_bind)
+    .bind(IncomingInspectionStatus::Passed.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1285,7 +1312,7 @@ pub async fn inspection_fail(
         "scm",
         r#"
         UPDATE scm.incoming_inspections SET
-            status = 'failed',
+            status = $7,
             inspection_result = 'fail',
             passed_quantity = $2,
             failed_quantity = $3,
@@ -1308,6 +1335,7 @@ pub async fn inspection_fail(
     .bind(&req.remarks)
     .bind(now)
     .bind(tenant_bind)
+    .bind(IncomingInspectionStatus::Failed.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 

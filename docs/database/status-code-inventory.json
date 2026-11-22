@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 352,
+    "db_check_constraints": 353,
     "db_enum_types": 5,
     "db_check_values": 156,
-    "rust_enums": 235,
+    "rust_enums": 236,
     "rust_enum_values": 210,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 220,
@@ -3365,6 +3365,21 @@
         "completed",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/incoming_inspection_status.rs",
+      "name": "IncomingInspectionStatus",
+      "values": [
+        "Failed",
+        "Passed",
+        "Pending"
+      ],
+      "normalized": [
+        "failed",
+        "passed",
+        "pending"
       ]
     },
     {

@@ -13,6 +13,7 @@ pub mod data_sync;
 pub mod delivery_appointment_status;
 pub mod evaluation_logic;
 pub mod incoming_inspection;
+pub mod incoming_inspection_status;
 pub mod inventory_turnover;
 pub mod master_data_ref_status;
 pub mod mrp;

@@ -1387,6 +1387,13 @@
       "table": "scm.supplier_delivery_appointments",
       "column": "status",
       "candidate": "docs/database/delivery-appointment-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/incoming_inspection_status.rs",
+      "enum": "IncomingInspectionStatus",
+      "table": "scm.incoming_inspections",
+      "column": "status",
+      "candidate": "docs/database/incoming-inspection-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

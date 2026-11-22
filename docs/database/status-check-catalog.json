@@ -4328,6 +4328,20 @@
     },
     {
       "schema": "scm",
+      "table": "incoming_inspections",
+      "constraint": "ck_scm_incoming_inspections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "passed",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'passed'::text, 'failed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "purchase_contracts",
       "constraint": "ck_scm_purchase_contracts_status_standard",
       "columns": [
@@ -8270,15 +8284,6 @@
     {
       "schema": "rs",
       "table": "rs_projects",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "scm",
-      "table": "incoming_inspections",
       "column": "status",
       "type": "text",
       "enum_type": "text",
