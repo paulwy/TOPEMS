@@ -40,6 +40,7 @@ pub mod sync_records;
 pub mod sync_status;
 pub mod transfer_order;
 pub mod warehouse;
+pub mod warehouse_status;
 pub mod wave_pick;
 pub mod wms_plugin;
 

@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
 use crate::modules::audit::log_audit_event;
+use crate::modules::warehouse_status::WarehouseStatus;
 use crate::modules::ApiState;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
@@ -117,7 +118,19 @@ pub async fn list_warehouses(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> = match params.status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match WarehouseStatus::from_db_str(raw) {
+                Ok(status) => Some(status.as_db_str().to_string()),
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = WarehouseStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let tenant_id: Option<Uuid> = match require_tenant(&claims, &headers) {
         Ok(t) => Some(t),
@@ -129,7 +142,7 @@ pub async fn list_warehouses(
         page,
         page_size,
         &params.search,
-        &params.status,
+        &status_filter,
         Some(Locale::from_headers(&headers).as_sql()),
     );
 
@@ -144,6 +157,7 @@ pub async fn list_warehouses(
         FROM wms.warehouses
           WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND status = ANY($6::text[])
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
@@ -154,6 +168,7 @@ pub async fn list_warehouses(
     .bind(page_size)
     .bind(offset)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&canonical_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -165,11 +180,13 @@ pub async fn list_warehouses(
                 SELECT COUNT(*) FROM wms.warehouses
                   WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($3::text[])
                   AND deleted_at IS NULL
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -235,8 +252,8 @@ pub async fn create_warehouse(
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.warehouses (id, tenant_id, org_id, organization_id, warehouse_name, name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at, warehouse_name_en)
-        VALUES ($1, $2, $2, $2, $3, $3, $4, $5, $6, $7, 'active', $8, $9, $10)
-        RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        VALUES ($1, $2, $2, $2, $3, $3, $4, $5, $6, $7, $11, $8, $9, $10)
+        RETURNING id, tenant_id, CASE WHEN $12 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -249,6 +266,7 @@ pub async fn create_warehouse(
     .bind(now)
     .bind(now)
     .bind(&req.warehouse_name_en)
+    .bind(WarehouseStatus::DEFAULT.as_db_str())
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
@@ -360,14 +378,19 @@ pub async fn get_warehouse(
         }
     }
 
+    let canonical_statuses: Vec<String> = WarehouseStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.warehouses WHERE id = $1 AND status = ANY($3::text[]) AND deleted_at IS NULL
         "#),
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -422,13 +445,18 @@ pub async fn update_warehouse(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
+    let canonical_statuses: Vec<String> = WarehouseStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let existing = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.warehouses WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
         "#),
     )
     .bind(id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -445,15 +473,27 @@ pub async fn update_warehouse(
     let address = req.address.or(existing.address);
     let manager = req.manager.or(existing.manager);
     let phone = req.phone.or(existing.phone);
-    let status = req.status.unwrap_or(existing.status);
+    let current_status = match WarehouseStatus::from_db_str(&existing.status) {
+        Ok(status) => status,
+        Err(msg) => return ApiResponse::bad_request(&msg),
+    };
+    let requested_status = match req.status.as_deref() {
+        Some(raw) => match WarehouseStatus::from_db_str(raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+        None => current_status,
+    };
+    let status = requested_status.as_db_str().to_string();
+    let previous_status = current_status.as_db_str().to_string();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.warehouses SET
             warehouse_name = $2, name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8, warehouse_name_en = COALESCE($9, warehouse_name_en)
-        WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, tenant_id, CASE WHEN $10 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        WHERE id = $1 AND status = $10 AND deleted_at IS NULL
+        RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -465,6 +505,7 @@ pub async fn update_warehouse(
     .bind(&status)
     .bind(now)
     .bind(&req.warehouse_name_en)
+    .bind(&previous_status)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
@@ -473,6 +514,11 @@ pub async fn update_warehouse(
         Ok(warehouse) => (
             ApiResponse::success(warehouse.clone(), "仓库更新成功"),
             "success",
+            None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            ApiResponse::conflict("仓库状态已变化，请刷新后重试"),
+            "conflict",
             None,
         ),
         Err(e) => {

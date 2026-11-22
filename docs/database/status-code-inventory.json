@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 185,
+    "rust_enums": 186,
     "rust_enum_values": 185,
     "rust_values_not_in_db_check": 146,
     "frontend_status_keys": 200,
@@ -3290,6 +3290,21 @@
         "pending",
         "running",
         "success"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/warehouse_status.rs",
+      "name": "WarehouseStatus",
+      "values": [
+        "Active",
+        "Inactive",
+        "Maintenance"
+      ],
+      "normalized": [
+        "active",
+        "inactive",
+        "maintenance"
       ]
     }
   ],

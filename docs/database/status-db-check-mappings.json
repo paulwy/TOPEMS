@@ -779,6 +779,13 @@
       "table": "wms.locations",
       "column": "status",
       "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/warehouse_status.rs",
+      "enum": "WarehouseStatus",
+      "table": "wms.warehouses",
+      "column": "status",
+      "candidate": "docs/database/wms-warehouse-status-check-candidates-2026-11-22.sql"
     }
   ]
 }
