@@ -1170,6 +1170,13 @@
       "table": "pm.projects",
       "column": "status",
       "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/tms/src/modules/shipment_status.rs",
+      "enum": "ShipmentStatus",
+      "table": "tms.tms_shipments",
+      "column": "status",
+      "candidate": "docs/database/tms-shipment-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

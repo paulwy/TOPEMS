@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 287,
+    "db_check_constraints": 288,
     "db_enum_types": 5,
-    "db_check_values": 128,
-    "rust_enums": 208,
-    "rust_enum_values": 191,
-    "rust_values_not_in_db_check": 71,
+    "db_check_values": 130,
+    "rust_enums": 209,
+    "rust_enum_values": 192,
+    "rust_values_not_in_db_check": 70,
     "frontend_status_keys": 206,
-    "frontend_keys_not_in_db_check": 85,
+    "frontend_keys_not_in_db_check": 83,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3199,6 +3199,25 @@
       ]
     },
     {
+      "module": "tms",
+      "file": "svc/tms/src/modules/shipment_status.rs",
+      "name": "ShipmentStatus",
+      "values": [
+        "Cancelled",
+        "Delivered",
+        "Draft",
+        "InTransit",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "delivered",
+        "draft",
+        "in_transit",
+        "pending"
+      ]
+    },
+    {
       "module": "unified-core",
       "file": "svc/unified-core/src/middleware/versioning.rs",
       "name": "VersionStatus",
@@ -3906,7 +3925,6 @@
       "controlled",
       "critical",
       "danger",
-      "delivered",
       "deploying",
       "discovering",
       "done",
@@ -3980,7 +3998,6 @@
       "controlled",
       "critical",
       "danger",
-      "delivered",
       "deploying",
       "disabled",
       "discovering",
@@ -3999,7 +4016,6 @@
       "impact_assessed",
       "in-progress",
       "in_review",
-      "in_transit",
       "info",
       "installed",
       "installing",

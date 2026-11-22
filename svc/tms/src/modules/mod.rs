@@ -9,6 +9,7 @@ pub mod openapi;
 pub mod optimization;
 pub mod route;
 pub mod shipment;
+pub mod shipment_status;
 pub mod tms_plugin;
 pub mod vehicle;
 

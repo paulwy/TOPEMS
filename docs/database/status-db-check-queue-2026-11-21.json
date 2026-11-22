@@ -3,12 +3,12 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 53,
-    "uncovered_values": 71,
+    "uncovered_enums": 52,
+    "uncovered_values": 70,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 53,
-    "internal_state_enums": 53,
-    "internal_state_values": 71
+    "resolved_enums": 52,
+    "internal_state_enums": 52,
+    "internal_state_values": 70
   },
   "rows": [
     {
@@ -464,23 +464,6 @@
         "enum": "KpiStatus",
         "persisted": false,
         "reason": "仪表盘 KPI 阈值分级（good/warning/critical），计算值不落库"
-      }
-    },
-    {
-      "module": "erp",
-      "file": "svc/erp/src/modules/master_data_report_automation.rs",
-      "enum": "ReportStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "delivered"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/erp/src/modules/master_data_report_automation.rs",
-        "enum": "ReportStatus",
-        "persisted": false,
-        "reason": "内存报告生成 FSM（pending/generating/completed/failed/delivered），模块零 SQL；public.reports 由其他服务写入"
       }
     },
     {

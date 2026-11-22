@@ -14,6 +14,7 @@ use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::modules::shipment_status::ShipmentStatus;
 use crate::shared::fsm::{shipment_can_transition, shipment_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
@@ -131,7 +132,17 @@ pub async fn list_shipments(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match ShipmentStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/pending/in_transit/delivered/cancelled",
+                )
+            }
+        },
+    };
 
     let result = sqlx::query_as::<_, Shipment>(
         r#"
@@ -220,7 +231,7 @@ pub async fn create_shipment(
         r#"
         INSERT INTO tms.tms_shipments (id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id,
             origin, destination, status, freight_amount, planned_departure, planned_arrival, notes, tenant_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                notes, tenant_id, created_at, updated_at
@@ -235,6 +246,7 @@ pub async fn create_shipment(
     .bind(req.route_id)
     .bind(&req.origin)
     .bind(&req.destination)
+    .bind(ShipmentStatus::DEFAULT.as_db_str())
     .bind(&req.freight_amount)
     .bind(req.planned_departure)
     .bind(req.planned_arrival)
@@ -487,18 +499,24 @@ pub async fn dispatch_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if shipment_can_transition(&status, "in_transit").is_err() {
-                return ApiResponse::from(TopemsError::ValidationFailed(
-                    "当前状态不允许发车".to_string(),
-                ));
+            let Some(current_status) = ShipmentStatus::from_db_str(&status) else {
+                return ApiResponse::conflict("运单状态数据异常");
+            };
+            if shipment_can_transition(
+                current_status.as_db_str(),
+                ShipmentStatus::InTransit.as_db_str(),
+            )
+            .is_err()
+            {
+                return ApiResponse::conflict("当前状态不允许发车");
             }
             let result = sqlx::query_as::<_, Shipment>(
                 r#"
                 UPDATE tms.tms_shipments SET
-                    status = 'in_transit',
+                    status = $5,
                     actual_departure = $2,
                     updated_at = $3
-                WHERE id = $1 AND tenant_id = $4 AND status = 'pending'
+                WHERE id = $1 AND tenant_id = $4 AND status = $6
                 RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                        status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                        notes, tenant_id, created_at, updated_at
@@ -508,14 +526,14 @@ pub async fn dispatch_shipment(
             .bind(now)
             .bind(now)
             .bind(tenant_id)
+            .bind(ShipmentStatus::InTransit.as_db_str())
+            .bind(ShipmentStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await;
 
             match result {
                 Ok(Some(shipment)) => ApiResponse::success(shipment, "运单已发车"),
-                Ok(None) => {
-                    ApiResponse::from(TopemsError::ResourceNotFound("运单不存在".to_string()))
-                }
+                Ok(None) => ApiResponse::conflict("运单状态已变化，请刷新后重试"),
                 Err(e) => {
                     tracing::error!("发车失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("发车失败".to_string()))
@@ -575,18 +593,24 @@ pub async fn arrive_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if shipment_can_transition(&status, "delivered").is_err() {
-                return ApiResponse::from(TopemsError::ValidationFailed(
-                    "当前状态不允许到达".to_string(),
-                ));
+            let Some(current_status) = ShipmentStatus::from_db_str(&status) else {
+                return ApiResponse::conflict("运单状态数据异常");
+            };
+            if shipment_can_transition(
+                current_status.as_db_str(),
+                ShipmentStatus::Delivered.as_db_str(),
+            )
+            .is_err()
+            {
+                return ApiResponse::conflict("当前状态不允许到达");
             }
             let result = sqlx::query_as::<_, Shipment>(
                 r#"
                 UPDATE tms.tms_shipments SET
-                    status = 'delivered',
+                    status = $5,
                     actual_arrival = $2,
                     updated_at = $3
-                WHERE id = $1 AND tenant_id = $4 AND status = 'in_transit'
+                WHERE id = $1 AND tenant_id = $4 AND status = $6
                 RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                        status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                        notes, tenant_id, created_at, updated_at
@@ -596,14 +620,14 @@ pub async fn arrive_shipment(
             .bind(now)
             .bind(now)
             .bind(tenant_id)
+            .bind(ShipmentStatus::Delivered.as_db_str())
+            .bind(ShipmentStatus::InTransit.as_db_str())
             .fetch_optional(&mut scope)
             .await;
 
             match result {
                 Ok(Some(shipment)) => ApiResponse::success(shipment, "运单已到达"),
-                Ok(None) => {
-                    ApiResponse::from(TopemsError::ResourceNotFound("运单不存在".to_string()))
-                }
+                Ok(None) => ApiResponse::conflict("运单状态已变化，请刷新后重试"),
                 Err(e) => {
                     tracing::error!("到达确认失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("到达确认失败".to_string()))
@@ -663,17 +687,23 @@ pub async fn cancel_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if shipment_can_transition(&status, "cancelled").is_err() {
-                return ApiResponse::from(TopemsError::ValidationFailed(
-                    "当前状态不允许取消".to_string(),
-                ));
+            let Some(current_status) = ShipmentStatus::from_db_str(&status) else {
+                return ApiResponse::conflict("运单状态数据异常");
+            };
+            if shipment_can_transition(
+                current_status.as_db_str(),
+                ShipmentStatus::Cancelled.as_db_str(),
+            )
+            .is_err()
+            {
+                return ApiResponse::conflict("当前状态不允许取消");
             }
             let result = sqlx::query_as::<_, Shipment>(
                 r#"
                 UPDATE tms.tms_shipments SET
-                    status = 'cancelled',
+                    status = $4,
                     updated_at = $2
-                WHERE id = $1 AND tenant_id = $3 AND status NOT IN ('delivered','cancelled')
+                WHERE id = $1 AND tenant_id = $3 AND status NOT IN ($5, $6)
                 RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                        status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                        notes, tenant_id, created_at, updated_at
@@ -682,14 +712,15 @@ pub async fn cancel_shipment(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
+            .bind(ShipmentStatus::Cancelled.as_db_str())
+            .bind(ShipmentStatus::Delivered.as_db_str())
+            .bind(ShipmentStatus::Cancelled.as_db_str())
             .fetch_optional(&mut scope)
             .await;
 
             match result {
                 Ok(Some(shipment)) => ApiResponse::success(shipment, "运单已取消"),
-                Ok(None) => {
-                    ApiResponse::from(TopemsError::ResourceNotFound("运单不存在".to_string()))
-                }
+                Ok(None) => ApiResponse::conflict("运单状态已变化，请刷新后重试"),
                 Err(e) => {
                     tracing::error!("取消运单失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("取消运单失败".to_string()))
@@ -763,19 +794,27 @@ pub async fn submit_approval(
 
     match current {
         Ok(Some(status)) => {
-            if shipment_can_transition(&status, "pending").is_err() {
-                return ApiResponse::from(TopemsError::ValidationFailed(
-                    "当前状态不允许提交审批".to_string(),
-                ));
+            let Some(current_status) = ShipmentStatus::from_db_str(&status) else {
+                return ApiResponse::conflict("运单状态数据异常");
+            };
+            if shipment_can_transition(
+                current_status.as_db_str(),
+                ShipmentStatus::Pending.as_db_str(),
+            )
+            .is_err()
+            {
+                return ApiResponse::conflict("当前状态不允许提交审批");
             }
             let result = sqlx::query_as::<_, Shipment>(sqlx::AssertSqlSafe(format!(
-                r#"UPDATE tms.tms_shipments SET status = 'pending', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 AND status = 'draft' RETURNING {}"#,
+                r#"UPDATE tms.tms_shipments SET status = $4, updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 AND status = $5 RETURNING {}"#,
                 SHIPMENT_RETURN
             )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
+            .bind(ShipmentStatus::Pending.as_db_str())
+            .bind(ShipmentStatus::Draft.as_db_str())
             .fetch_optional(&mut scope)
             .await;
 
@@ -789,9 +828,7 @@ pub async fn submit_approval(
                     );
                     ApiResponse::success(shipment, "运单已提交调度审批")
                 }
-                Ok(None) => {
-                    ApiResponse::from(TopemsError::ResourceNotFound("运单不存在".to_string()))
-                }
+                Ok(None) => ApiResponse::conflict("运单状态已变化，请刷新后重试"),
                 Err(e) => {
                     tracing::error!("提交审批失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("提交审批失败".to_string()))
@@ -854,23 +891,29 @@ pub async fn approve_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if shipment_can_transition(&status, "in_transit").is_err() {
-                return ApiResponse::from(TopemsError::ValidationFailed(
-                    "当前状态不允许审批发车".to_string(),
-                ));
+            let Some(current_status) = ShipmentStatus::from_db_str(&status) else {
+                return ApiResponse::conflict("运单状态数据异常");
+            };
+            if shipment_can_transition(
+                current_status.as_db_str(),
+                ShipmentStatus::InTransit.as_db_str(),
+            )
+            .is_err()
+            {
+                return ApiResponse::conflict("当前状态不允许审批发车");
             }
             let requires_approval = shipment_requires_approval(&status, "in_transit");
             let result = sqlx::query_as::<_, Shipment>(sqlx::AssertSqlSafe(format!(
-                    r#"UPDATE tms.tms_shipments SET status = 'in_transit', actual_departure = $2, updated_at = $3
-                    WHERE id = $1 AND tenant_id = $4 AND status = 'pending' RETURNING {}"#,
-                    SHIPMENT_RETURN
-                ),
-            ),
-            )
+                r#"UPDATE tms.tms_shipments SET status = $5, actual_departure = $2, updated_at = $3
+                    WHERE id = $1 AND tenant_id = $4 AND status = $6 RETURNING {}"#,
+                SHIPMENT_RETURN
+            )))
             .bind(id)
             .bind(now)
             .bind(now)
             .bind(tenant_id)
+            .bind(ShipmentStatus::InTransit.as_db_str())
+            .bind(ShipmentStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await;
 
@@ -885,9 +928,7 @@ pub async fn approve_shipment(
                     );
                     ApiResponse::success(shipment, "运单审批通过，已发车")
                 }
-                Ok(None) => {
-                    ApiResponse::from(TopemsError::ResourceNotFound("运单不存在".to_string()))
-                }
+                Ok(None) => ApiResponse::conflict("运单状态已变化，请刷新后重试"),
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("审批失败".to_string()))
@@ -950,19 +991,28 @@ pub async fn reject_shipment(
 
     match current {
         Ok(Some(status)) => {
-            if shipment_can_transition(&status, "cancelled").is_err() {
-                return ApiResponse::from(TopemsError::ValidationFailed(
-                    "当前状态不允许驳回".to_string(),
-                ));
+            let Some(current_status) = ShipmentStatus::from_db_str(&status) else {
+                return ApiResponse::conflict("运单状态数据异常");
+            };
+            if shipment_can_transition(
+                current_status.as_db_str(),
+                ShipmentStatus::Cancelled.as_db_str(),
+            )
+            .is_err()
+            {
+                return ApiResponse::conflict("当前状态不允许驳回");
             }
             let result = sqlx::query_as::<_, Shipment>(sqlx::AssertSqlSafe(format!(
-                r#"UPDATE tms.tms_shipments SET status = 'cancelled', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 AND status NOT IN ('delivered','cancelled') RETURNING {}"#,
+                r#"UPDATE tms.tms_shipments SET status = $4, updated_at = $2
+                    WHERE id = $1 AND tenant_id = $3 AND status NOT IN ($5, $6) RETURNING {}"#,
                 SHIPMENT_RETURN
             )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
+            .bind(ShipmentStatus::Cancelled.as_db_str())
+            .bind(ShipmentStatus::Delivered.as_db_str())
+            .bind(ShipmentStatus::Cancelled.as_db_str())
             .fetch_optional(&mut scope)
             .await;
 
@@ -976,9 +1026,7 @@ pub async fn reject_shipment(
                     );
                     ApiResponse::success(shipment, "运单已驳回")
                 }
-                Ok(None) => {
-                    ApiResponse::from(TopemsError::ResourceNotFound("运单不存在".to_string()))
-                }
+                Ok(None) => ApiResponse::conflict("运单状态已变化，请刷新后重试"),
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("驳回失败".to_string()))

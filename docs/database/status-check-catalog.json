@@ -3742,6 +3742,22 @@
     },
     {
       "schema": "tms",
+      "table": "tms_shipments",
+      "constraint": "ck_tms_shipments_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "delivered",
+        "draft",
+        "in_transit",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'pending'::text, 'in_transit'::text, 'delivered'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "tms",
       "table": "tms_vehicles",
       "constraint": "ck_tms_vehicles_status_standard",
       "columns": [
@@ -7958,15 +7974,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'open'::text"
-    },
-    {
-      "schema": "tms",
-      "table": "tms_shipments",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
     },
     {
       "schema": "unified_core",
