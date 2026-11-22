@@ -2505,6 +2505,21 @@
     },
     {
       "schema": "master_data",
+      "table": "mdm_suppliers",
+      "constraint": "ck_mdm_suppliers_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "blacklisted",
+        "inactive",
+        "pending"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'pending'::text, 'blacklisted'::text])))) NOT VALID"
+    },
+    {
+      "schema": "master_data",
       "table": "mdm_workflows",
       "constraint": "mdm_workflows_status_check",
       "columns": [
@@ -4242,6 +4257,20 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))"
+    },
+    {
+      "schema": "scm",
+      "table": "suppliers",
+      "constraint": "ck_suppliers_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "inactive",
+        "pending"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'pending'::text])))) NOT VALID"
     },
     {
       "schema": "scm",
@@ -6413,15 +6442,6 @@
     },
     {
       "schema": "master_data",
-      "table": "mdm_suppliers",
-      "column": "status",
-      "type": "character varying",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": null
-    },
-    {
-      "schema": "master_data",
       "table": "mdm_version_branches",
       "column": "status",
       "type": "text",
@@ -8246,15 +8266,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'submitted'::character varying"
-    },
-    {
-      "schema": "scm",
-      "table": "suppliers",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "scm",

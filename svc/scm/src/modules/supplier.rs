@@ -21,6 +21,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::supplier::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::modules::audit::log_audit_event;
+use crate::modules::supplier_status::SupplierStatus;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -364,7 +365,13 @@ pub async fn list_suppliers(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None | Some("" | "all") => None,
+        Some(raw) => match SupplierStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的供应商状态"),
+        },
+    };
 
     // 从 claims 中获取 tenant_id，用于多租户缓存隔离
     let tenant_id = claims
@@ -414,7 +421,7 @@ pub async fn list_suppliers(
         "#),
     )
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -433,7 +440,7 @@ pub async fn list_suppliers(
                 "#),
             )
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -507,8 +514,8 @@ pub async fn create_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
         INSERT INTO scm.suppliers (id, supplier_no, name, legal_name, contact_person, phone, email, address, bank_account, tax_id, status, created_at, updated_at, name_en, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', $11, $12, $13, $15)
-        RETURNING id, supplier_no, CASE WHEN $14 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING id, supplier_no, CASE WHEN $15 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -521,6 +528,7 @@ pub async fn create_supplier(
     .bind(&req.address)
     .bind(&req.bank_account)
     .bind(&req.tax_number)
+    .bind(SupplierStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(&req.name_en)

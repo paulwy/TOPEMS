@@ -1296,6 +1296,20 @@
       "table": "public.external_erp_sync_logs",
       "column": "status",
       "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/master-data/src/modules/supplier_status.rs",
+      "enum": "SupplierStatus",
+      "table": "master_data.mdm_suppliers",
+      "column": "status",
+      "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/supplier_status.rs",
+      "enum": "SupplierStatus",
+      "table": "scm.suppliers",
+      "column": "status",
+      "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

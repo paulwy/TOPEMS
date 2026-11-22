@@ -9,6 +9,7 @@ use axum::{
 };
 
 pub mod ai_governance_v59;
+pub mod supplier_status;
 // Web 前端契约收口兜底（mdm-v66 预埋 + 静态提取伪动态段）—— 待上游支持
 pub mod commercial_v55;
 pub mod contract_fallbacks;

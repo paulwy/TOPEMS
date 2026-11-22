@@ -43,6 +43,7 @@ use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use crate::modules::supplier_status::SupplierStatus;
 use crate::modules::supplier_sync::{spawn_mdm_to_downstream, SupplierSyncPayload, SyncOp};
 use crate::shared::{tenant_read_scope, tenant_write_scope, AppState};
 
@@ -150,6 +151,17 @@ pub async fn list_suppliers(
         }
     };
 
+    let status_filter = match query.status.as_deref() {
+        None | Some("" | "all") => None,
+        Some(raw) => match SupplierStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商状态".to_string(),
+                ))
+            }
+        },
+    };
     let count_sql = format!(
         r#"SELECT COUNT(*) FROM master_data.mdm_suppliers
            WHERE {}
@@ -158,7 +170,7 @@ pub async fn list_suppliers(
         scope.sql_predicate("tenant_id", "$4")
     );
     let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
-        .bind(query.status.clone())
+        .bind(status_filter)
         .bind(query.category.clone())
         .bind(query.keyword.clone())
         .bind_tenant_scope(&scope)
@@ -183,7 +195,7 @@ pub async fn list_suppliers(
         scope.sql_predicate("tenant_id", "$6")
     );
     let items: Vec<Supplier> = match sqlx::query_as(sqlx::AssertSqlSafe(list_sql))
-        .bind(query.status)
+        .bind(status_filter)
         .bind(query.category)
         .bind(query.keyword)
         .bind(page_size)
@@ -390,11 +402,17 @@ pub async fn create_supplier(
     if name.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed("name 为必填字段".to_string()));
     }
-    let status = req
-        .status
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "active".to_string());
+    let status = match req.status.as_deref() {
+        None | Some("") => SupplierStatus::DEFAULT,
+        Some(raw) => match SupplierStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商状态".to_string(),
+                ))
+            }
+        },
+    };
     let risk_level = req
         .risk_level
         .map(|s| s.trim().to_string())
@@ -452,7 +470,7 @@ pub async fn create_supplier(
     .bind(&req.legal_name)
     .bind(&req.category)
     .bind(&req.category_code)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(&risk_level)
     .bind(&req.tax_id)
     .bind(&req.address)
@@ -541,6 +559,17 @@ pub async fn update_supplier(
             ));
         }
     }
+    let status = match req.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match SupplierStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商状态".to_string(),
+                ))
+            }
+        },
+    };
     if let Some(v) = req.risk_level.as_ref() {
         if v.trim().is_empty() {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -602,7 +631,7 @@ pub async fn update_supplier(
     )
     .bind(id)
     .bind(req.name)
-    .bind(req.status)
+    .bind(status)
     .bind(req.risk_level)
     .bind(req.legal_name)
     .bind(req.category)
