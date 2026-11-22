@@ -20,6 +20,17 @@ pub enum SettlementLinkStatus {
 
 impl SettlementLinkStatus {
     pub const ALL: [Self; 2] = [Self::Linked, Self::Cancelled];
+    pub const DB_VALUES: [&'static str; 2] = ["linked", "cancelled"];
+    pub const DEFAULT: Self = Self::Linked;
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "linked" => Some(Self::Linked),
+            "cancelled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
 
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -39,11 +50,7 @@ impl FromStr for SettlementLinkStatus {
     type Err = ();
 
     fn from_str(raw: &str) -> Result<Self, Self::Err> {
-        match raw.trim() {
-            "linked" => Ok(Self::Linked),
-            "cancelled" => Ok(Self::Cancelled),
-            _ => Err(()),
-        }
+        Self::from_db_str(raw).ok_or(())
     }
 }
 
