@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 321,
+    "db_check_constraints": 329,
     "db_enum_types": 5,
-    "db_check_values": 146,
-    "rust_enums": 215,
-    "rust_enum_values": 198,
+    "db_check_values": 147,
+    "rust_enums": 216,
+    "rust_enum_values": 201,
     "rust_values_not_in_db_check": 60,
-    "frontend_status_keys": 211,
+    "frontend_status_keys": 213,
     "frontend_keys_not_in_db_check": 72,
     "rust_values_not_in_palette": 0
   },
@@ -128,6 +128,35 @@
         "active",
         "inactive",
         "suspended"
+      ]
+    },
+    {
+      "module": "lib/shared-db",
+      "file": "lib/shared-db/src/audit.rs",
+      "name": "AuditLogStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Error",
+        "Failed",
+        "Failure",
+        "Inactive",
+        "NotFound",
+        "Pending",
+        "Success",
+        "Unknown"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
       ]
     },
     {
@@ -3886,6 +3915,7 @@
       "executing",
       "expired",
       "failed",
+      "failure",
       "false_positive",
       "frozen",
       "full",
@@ -3929,6 +3959,7 @@
       "none",
       "normal",
       "not_applicable",
+      "not_found",
       "not_started",
       "offline",
       "online",

@@ -7,18 +7,82 @@ use topems_shared_auth::security::audit_logger::current_audit_context;
 use topems_shared_core::audit::redact_sensitive_json;
 use uuid::Uuid;
 
-/// 审计日志 status 标准值集合（与 DB `ck_audit_logs_status_standard` 保持同步）。
+/// 审计日志 status 唯一集合（与各 schema `audit_logs.status` CHECK 同步）。
 ///
-/// 包含 `error`：审计日志必须能记录失败结果，禁止把失败写成 success 或旁路到其他表。
-/// `active`/`inactive`/`archived` 为历史 CHECK 兼容值；`failed`/`failure`/`pending`/`unknown`
-/// 为运行时既有写入值（4xx 中间件、同步任务、SRM 审计）。
-pub const AUDIT_LOG_STATUS_STANDARD: &[&str] = &[
-    "active", "inactive", "archived", "success", "failure", "failed", "error", "pending", "unknown",
-];
+/// 包含 `error`/`failed`：审计必须能记录失败结果，禁止把失败写成 success 或旁路到其他表。
+/// `active`/`inactive`/`archived` 为历史 CHECK 兼容值；`pending`/`unknown`/`not_found`
+/// 为运行时既有写入值（4xx 中间件、同步任务、WMS 查询审计）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AuditLogStatus {
+    Active,
+    Inactive,
+    Archived,
+    Success,
+    Failure,
+    Failed,
+    Error,
+    Pending,
+    Unknown,
+    NotFound,
+}
+
+impl AuditLogStatus {
+    pub const DEFAULT: Self = Self::Success;
+
+    pub const DB_VALUES: [&'static str; 10] = [
+        "active",
+        "inactive",
+        "archived",
+        "success",
+        "failure",
+        "failed",
+        "error",
+        "pending",
+        "unknown",
+        "not_found",
+    ];
+
+    #[must_use]
+    pub fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Inactive => "inactive",
+            Self::Archived => "archived",
+            Self::Success => "success",
+            Self::Failure => "failure",
+            Self::Failed => "failed",
+            Self::Error => "error",
+            Self::Pending => "pending",
+            Self::Unknown => "unknown",
+            Self::NotFound => "not_found",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Active),
+            "inactive" => Some(Self::Inactive),
+            "archived" => Some(Self::Archived),
+            "success" => Some(Self::Success),
+            "failure" => Some(Self::Failure),
+            "failed" => Some(Self::Failed),
+            "error" => Some(Self::Error),
+            "pending" => Some(Self::Pending),
+            "unknown" => Some(Self::Unknown),
+            "not_found" => Some(Self::NotFound),
+            _ => None,
+        }
+    }
+}
+
+/// 审计日志 status 标准值集合（与 `AuditLogStatus` 同一来源）。
+pub const AUDIT_LOG_STATUS_STANDARD: &[&str] = &AuditLogStatus::DB_VALUES;
 
 /// 判断审计日志 status 是否属于标准值集合。
 pub fn is_valid_audit_log_status(status: &str) -> bool {
-    AUDIT_LOG_STATUS_STANDARD.contains(&status)
+    AuditLogStatus::from_db_str(status).is_some()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
@@ -875,6 +939,20 @@ impl SchemaAwareAuditLogService {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn audit_log_status_roundtrip() {
+        for raw in AuditLogStatus::DB_VALUES {
+            let parsed = AuditLogStatus::from_db_str(raw).expect("db value must parse");
+            assert_eq!(parsed.as_db_str(), raw);
+        }
+        assert_eq!(
+            AuditLogStatus::from_db_str("NOT_FOUND").map(|s| s.as_db_str()),
+            Some("not_found")
+        );
+        assert_eq!(AuditLogStatus::from_db_str("bogus"), None);
+        assert_eq!(AuditLogStatus::DEFAULT.as_db_str(), "success");
+    }
 
     #[test]
     fn test_audit_log_status_standard_includes_error() {

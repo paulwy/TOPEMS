@@ -1219,6 +1219,13 @@
       "table": "mobile.patrol_records",
       "column": "status",
       "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "public.audit_logs",
+      "column": "status",
+      "candidate": "docs/database/audit-logs-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

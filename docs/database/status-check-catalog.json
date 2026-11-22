@@ -100,9 +100,16 @@
       "values": [
         "active",
         "archived",
-        "inactive"
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "bi",
@@ -190,11 +197,12 @@
         "failed",
         "failure",
         "inactive",
+        "not_found",
         "pending",
         "success",
         "unknown"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying, 'success'::character varying, 'failure'::character varying, 'failed'::character varying, 'error'::character varying, 'pending'::character varying, 'unknown'::character varying])::text[]))))"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "crm",
@@ -808,6 +816,27 @@
         "transferred"
       ],
       "definition": "CHECK (((status)::text = ANY (ARRAY['in_stock'::text, 'in_use'::text, 'maintenance'::text, 'scrapped'::text, 'transferred'::text]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "erp",
@@ -1764,6 +1793,27 @@
     },
     {
       "schema": "hrm",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
       "table": "companies",
       "constraint": "ck_companies_status_standard",
       "columns": [
@@ -1901,9 +1951,16 @@
       "values": [
         "active",
         "archived",
-        "inactive"
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "iam",
@@ -2404,6 +2461,27 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "mes",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "mes",
@@ -2935,6 +3013,27 @@
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
     },
     {
+      "schema": "plugin_mes",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
+    },
+    {
       "schema": "pm",
       "table": "acceptance_records",
       "constraint": "ck_acceptance_records_status_standard",
@@ -3133,6 +3232,27 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))"
+    },
+    {
+      "schema": "public",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "public",
@@ -3841,6 +3961,27 @@
     },
     {
       "schema": "rs",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
+    },
+    {
+      "schema": "rs",
       "table": "formulas",
       "constraint": "ck_formulas_approval_status",
       "columns": [
@@ -3929,6 +4070,27 @@
     },
     {
       "schema": "scm",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "srm_supplier_snapshots",
       "constraint": "ck_srm_supplier_snapshots_status_standard",
       "columns": [
@@ -3980,9 +4142,16 @@
       "values": [
         "active",
         "archived",
-        "inactive"
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "srm",
@@ -3994,9 +4163,16 @@
       "values": [
         "active",
         "archived",
-        "inactive"
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "srm",
@@ -4224,6 +4400,27 @@
         "maintenance"
       ],
       "definition": "CHECK (((status IS NULL) OR (status = ANY ('{active,inactive,archived,maintenance}'::text[]))))"
+    },
+    {
+      "schema": "wms",
+      "table": "audit_logs",
+      "constraint": "ck_audit_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "error",
+        "failed",
+        "failure",
+        "inactive",
+        "not_found",
+        "pending",
+        "success",
+        "unknown"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
     },
     {
       "schema": "wms",
@@ -5154,15 +5351,6 @@
     },
     {
       "schema": "erp",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "''::character varying"
-    },
-    {
-      "schema": "erp",
       "table": "consolidation_reports",
       "column": "approval_status",
       "type": "character varying(20)",
@@ -5520,15 +5708,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'normal'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'success'::character varying"
     },
     {
       "schema": "hrm",
@@ -6180,15 +6359,6 @@
     },
     {
       "schema": "mes",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'success'::character varying"
-    },
-    {
-      "schema": "mes",
       "table": "batch_records",
       "column": "status",
       "type": "character varying(32)",
@@ -6618,15 +6788,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "plugin_mes",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'success'::character varying"
     },
     {
       "schema": "plugin_wms",
@@ -7140,15 +7301,6 @@
       "enum_type": "text",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "public",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'success'::character varying"
     },
     {
       "schema": "public",
@@ -7827,15 +7979,6 @@
     },
     {
       "schema": "rs",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'success'::character varying"
-    },
-    {
-      "schema": "rs",
       "table": "change_orders",
       "column": "status",
       "type": "text",
@@ -7914,15 +8057,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "scm",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
     },
     {
       "schema": "scm",
@@ -8220,15 +8354,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "audit_logs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
     },
     {
       "schema": "wms",
