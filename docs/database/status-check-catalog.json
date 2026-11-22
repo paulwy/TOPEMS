@@ -2110,6 +2110,47 @@
     },
     {
       "schema": "integration",
+      "table": "erp_connections",
+      "constraint": "ck_erp_connections_last_sync_status_standard",
+      "columns": [
+        "last_sync_status"
+      ],
+      "values": [
+        "failed",
+        "running",
+        "success"
+      ],
+      "definition": "CHECK (((last_sync_status IS NULL) OR ((last_sync_status)::text = ANY (ARRAY['running'::text, 'success'::text, 'failed'::text])))) NOT VALID"
+    },
+    {
+      "schema": "integration",
+      "table": "erp_connections",
+      "constraint": "ck_erp_connections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "inactive"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text])))) NOT VALID"
+    },
+    {
+      "schema": "integration",
+      "table": "external_erp_sync_logs",
+      "constraint": "ck_external_erp_sync_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "running",
+        "success"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['running'::text, 'success'::text, 'failed'::text])))) NOT VALID"
+    },
+    {
+      "schema": "integration",
       "table": "integration_sync_logs",
       "constraint": "ck_integration_sync_logs_status_standard",
       "columns": [
@@ -3508,6 +3549,33 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "public",
+      "table": "erp_connections",
+      "constraint": "ck_erp_connections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "inactive"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text])))) NOT VALID"
+    },
+    {
+      "schema": "public",
+      "table": "external_erp_sync_logs",
+      "constraint": "ck_external_erp_sync_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "running",
+        "success"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['running'::text, 'success'::text, 'failed'::text])))) NOT VALID"
     },
     {
       "schema": "public",
@@ -6039,24 +6107,6 @@
     },
     {
       "schema": "integration",
-      "table": "erp_connections",
-      "column": "last_sync_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "integration",
-      "table": "erp_connections",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'inactive'::character varying"
-    },
-    {
-      "schema": "integration",
       "table": "erp_wms_sync",
       "column": "sync_status",
       "type": "character varying(50)",
@@ -6069,15 +6119,6 @@
       "table": "external_erp_staging",
       "column": "process_status",
       "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "integration",
-      "table": "external_erp_sync_logs",
-      "column": "status",
-      "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
@@ -7462,24 +7503,6 @@
     {
       "schema": "public",
       "table": "equipment_maintenance_records",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "erp_connections",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'inactive'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "external_erp_sync_logs",
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",

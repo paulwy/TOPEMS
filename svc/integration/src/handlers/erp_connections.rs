@@ -9,6 +9,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
+use crate::erp_status::ErpConnectionStatus;
 use crate::models::{
     AppState, CreateErpConnectionRequest, ErpConnection, ErpConnectionResponse,
     TestConnectionRequest, TestConnectionResponse, UpdateErpConnectionRequest,
@@ -161,7 +162,7 @@ pub async fn create_connection(
         "INSERT INTO integration.erp_connections \
          (id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
-         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
+         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
@@ -180,6 +181,7 @@ pub async fn create_connection(
     )
     .bind(req.sync_mode.unwrap_or_else(|| "manual".to_string()))
     .bind(req.sync_interval)
+    .bind(ErpConnectionStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -204,6 +206,13 @@ pub async fn update_connection(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
 ) -> ApiResponse<ErpConnectionResponse> {
+    let status = match req.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match ErpConnectionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的 ERP 连接状态"),
+        },
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
@@ -244,7 +253,7 @@ pub async fn update_connection(
     .bind(req.sync_mode)
     .bind(req.sync_interval)
     .bind(req.isactive)
-    .bind(req.status)
+    .bind(status)
     .bind(id)
     .fetch_optional(&mut scope)
     .await

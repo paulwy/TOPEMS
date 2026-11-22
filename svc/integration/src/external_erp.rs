@@ -12,6 +12,7 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_db::scope::ScopedTxn;
 use uuid::Uuid;
 
+use crate::erp_status::{ErpConnectionStatus, ErpSyncLogStatus};
 use crate::models::{AppState, ErpConnection, ErpConnectionResponse, ErpMapping};
 
 /// 写入路径租户：缺失或零租户时返回 None，调用方必须拒绝写入（400），
@@ -505,7 +506,7 @@ pub async fn create_connection(
         "INSERT INTO integration.erp_connections \
          (id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
-         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
+         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
@@ -521,6 +522,7 @@ pub async fn create_connection(
     .bind(&sync_direction)
     .bind(&sync_mode)
     .bind(sync_interval)
+    .bind(ErpConnectionStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -700,10 +702,13 @@ pub async fn update_connection(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
     let isactive = body.get("isactive").and_then(|v| v.as_bool());
-    let status = body
-        .get("status")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let status = match body.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => None,
+        Some(raw) => match ErpConnectionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的 ERP 连接状态"),
+        },
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1135,7 +1140,7 @@ async fn call_erp_api(
 async fn update_sync_log_status(
     scope: &mut ScopedTxn<'_>,
     task_id: Uuid,
-    status: &str,
+    status: ErpSyncLogStatus,
     total_records: i32,
     success_count: i32,
     failed_count: i32,
@@ -1148,7 +1153,7 @@ async fn update_sync_log_status(
              error_message = $5, completed_at = NOW() \
          WHERE id = $6"
     ))
-    .bind(status)
+    .bind(status.as_db_str())
     .bind(total_records)
     .bind(success_count)
     .bind(failed_count)
@@ -1285,13 +1290,14 @@ pub async fn sync_entity(
         "integration",
         "INSERT INTO integration.external_erp_sync_logs \
          (id, tenant_id, connection_id, entity, direction, status, started_at, created_at) \
-         VALUES ($1,$2::uuid,$3,$4,$5,'running',NOW(),NOW())"
+         VALUES ($1,$2::uuid,$3,$4,$5,$6,NOW(),NOW())"
     ))
     .bind(task_id)
     .bind(tenant_id)
     .bind(connection_id)
     .bind(&entity)
     .bind(&direction)
+    .bind(ErpSyncLogStatus::DEFAULT.as_db_str())
     .execute(&mut scope)
     .await
     {
@@ -1306,7 +1312,7 @@ pub async fn sync_entity(
             update_sync_log_status(
                 &mut scope,
                 task_id,
-                "failed",
+                ErpSyncLogStatus::Failed,
                 0,
                 0,
                 0,
@@ -1324,7 +1330,7 @@ pub async fn sync_entity(
             update_sync_log_status(
                 &mut scope,
                 task_id,
-                "failed",
+                ErpSyncLogStatus::Failed,
                 0,
                 0,
                 0,
@@ -1336,7 +1342,16 @@ pub async fn sync_entity(
     };
 
     if !connection.isactive {
-        update_sync_log_status(&mut scope, task_id, "failed", 0, 0, 0, Some("连接已禁用")).await;
+        update_sync_log_status(
+            &mut scope,
+            task_id,
+            ErpSyncLogStatus::Failed,
+            0,
+            0,
+            0,
+            Some("连接已禁用"),
+        )
+        .await;
         return ApiResponse::bad_request("ERP 连接已禁用");
     }
 
@@ -1375,7 +1390,13 @@ pub async fn sync_entity(
                     );
 
                         update_sync_log_status(
-                            &mut scope, task_id, "success", total, inserted, skipped, None,
+                            &mut scope,
+                            task_id,
+                            ErpSyncLogStatus::Success,
+                            total,
+                            inserted,
+                            skipped,
+                            None,
                         )
                         .await;
                         Ok((total, inserted, skipped))
@@ -1384,7 +1405,7 @@ pub async fn sync_entity(
                         update_sync_log_status(
                             &mut scope,
                             task_id,
-                            "failed",
+                            ErpSyncLogStatus::Failed,
                             0,
                             0,
                             0,
@@ -1412,7 +1433,13 @@ pub async fn sync_entity(
                             .and_then(|v| v.as_i64())
                             .unwrap_or(1) as i32;
                         update_sync_log_status(
-                            &mut scope, task_id, "success", created, created, 0, None,
+                            &mut scope,
+                            task_id,
+                            ErpSyncLogStatus::Success,
+                            created,
+                            created,
+                            0,
+                            None,
                         )
                         .await;
                         Ok((created, created, 0))
@@ -1421,7 +1448,7 @@ pub async fn sync_entity(
                         update_sync_log_status(
                             &mut scope,
                             task_id,
-                            "failed",
+                            ErpSyncLogStatus::Failed,
                             0,
                             0,
                             0,
@@ -1434,7 +1461,16 @@ pub async fn sync_entity(
             }
             _ => {
                 let msg = format!("不支持的同步方向: {}", direction);
-                update_sync_log_status(&mut scope, task_id, "failed", 0, 0, 0, Some(&msg)).await;
+                update_sync_log_status(
+                    &mut scope,
+                    task_id,
+                    ErpSyncLogStatus::Failed,
+                    0,
+                    0,
+                    0,
+                    Some(&msg),
+                )
+                .await;
                 Err(TopemsError::ValidationFailed(msg))
             }
         };

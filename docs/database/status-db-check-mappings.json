@@ -1261,6 +1261,41 @@
       "table": "scm.scm_master_data_refs",
       "column": "status",
       "candidate": "docs/database/scm-master-data-ref-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/erp_status.rs",
+      "enum": "ErpConnectionStatus",
+      "table": "integration.erp_connections",
+      "column": "status",
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/erp_status.rs",
+      "enum": "ErpSyncLogStatus",
+      "table": "integration.erp_connections",
+      "column": "last_sync_status",
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/erp_status.rs",
+      "enum": "ErpSyncLogStatus",
+      "table": "integration.external_erp_sync_logs",
+      "column": "status",
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/erp_status.rs",
+      "enum": "ErpConnectionStatus",
+      "table": "public.erp_connections",
+      "column": "status",
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/erp_status.rs",
+      "enum": "ErpSyncLogStatus",
+      "table": "public.external_erp_sync_logs",
+      "column": "status",
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

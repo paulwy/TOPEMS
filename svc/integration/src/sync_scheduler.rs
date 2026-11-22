@@ -16,6 +16,7 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
+use crate::erp_status::ErpSyncLogStatus;
 use crate::erp_wms_sync::sync_incremental_all;
 
 // ===== 配置 =====
@@ -489,11 +490,12 @@ impl SyncScheduler {
             "UPDATE integration.erp_connections
              SET last_sync_at = NOW(),
                  updated_at = NOW(),
-                 last_sync_status = 'success',
+                 last_sync_status = $1,
                  last_sync_error = NULL,
                  consecutive_failures = 0
-             WHERE id = $1",
+             WHERE id = $2",
         )
+        .bind(ErpSyncLogStatus::Success.as_db_str())
         .bind(conn.id)
         .execute(&mut scope)
         .await
@@ -533,13 +535,14 @@ impl SyncScheduler {
         sqlx::query(
             "UPDATE integration.erp_connections
              SET updated_at = NOW(),
-                 last_sync_status = 'failed',
+                 last_sync_status = $2,
                  last_sync_error = $1,
                  consecutive_failures = COALESCE(consecutive_failures, 0) + 1,
                  last_failure_at = NOW()
-             WHERE id = $2",
+             WHERE id = $3",
         )
         .bind(truncated_error)
+        .bind(ErpSyncLogStatus::Failed.as_db_str())
         .bind(conn.id)
         .execute(&mut scope)
         .await

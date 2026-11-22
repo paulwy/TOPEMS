@@ -5,6 +5,7 @@
 pub mod conversion_rules;
 pub mod crm_erp_sync;
 pub mod crm_scm_sync;
+pub mod erp_status;
 pub mod erp_wms_sync;
 pub mod event_bus;
 pub mod event_handlers;

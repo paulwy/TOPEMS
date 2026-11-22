@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 333,
+    "db_check_constraints": 338,
     "db_enum_types": 5,
     "db_check_values": 149,
-    "rust_enums": 221,
+    "rust_enums": 223,
     "rust_enum_values": 203,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 214,
@@ -1919,6 +1919,34 @@
         "active",
         "draft",
         "inactive"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/erp_status.rs",
+      "name": "ErpConnectionStatus",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "inactive"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/erp_status.rs",
+      "name": "ErpSyncLogStatus",
+      "values": [
+        "Failed",
+        "Running",
+        "Success"
+      ],
+      "normalized": [
+        "failed",
+        "running",
+        "success"
       ]
     },
     {
