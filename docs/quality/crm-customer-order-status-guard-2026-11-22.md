@@ -33,7 +33,7 @@
 - 设 `NOT NULL`；
 - 同名 CHECK 不存在时追加 `ck_customer_orders_status_standard ... NOT VALID` 六值约束；
 - 同步列注释为精确六值；
-- 未在任何环境应用。
+- 2026-11-22 已应用到本地 `topems`（事务提交）；生产快照与生产环境未应用，部署仍需窗口。
 
 ## 本地事务演练（全部 ROLLBACK）
 - 模拟生产：删除同名约束、解除 `NOT NULL`、清空默认，并把 1 行置 NULL。
