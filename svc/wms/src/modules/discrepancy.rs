@@ -14,6 +14,7 @@ use crate::models::inventory_alert::{
     ApproveDiscrepancyRequest, CreateDiscrepancyRequest, DiscrepancyRecord,
 };
 use crate::modules::audit::log_audit_event;
+use crate::modules::discrepancy_status::DiscrepancyStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{tenant_of, wms_db};
@@ -93,7 +94,24 @@ pub async fn list_discrepancies(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let stock_take_id = params.stock_take_id;
-    let adjustment_status = params.adjustment_status;
+    let adjustment_status: Option<String> = match params.adjustment_status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match DiscrepancyStatus::from_db_str(raw) {
+                Some(status) => Some(status.as_db_str().to_string()),
+                None => {
+                    return ApiResponse::bad_request(&format!(
+                        "无效的差异调整状态: {raw}，允许值 {}",
+                        DiscrepancyStatus::DB_VALUES.join("/")
+                    ))
+                }
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = DiscrepancyStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
@@ -105,6 +123,7 @@ pub async fn list_discrepancies(
         FROM wms.discrepancy_records
         WHERE ($1::uuid IS NULL OR stock_take_id = $1)
           AND ($2::text IS NULL OR adjustment_status = $2)
+          AND adjustment_status = ANY($6::text[])
           AND deleted_at IS NULL
           AND tenant_id = $5::uuid
         ORDER BY created_at DESC
@@ -116,6 +135,7 @@ pub async fn list_discrepancies(
     .bind(page_size)
     .bind(offset)
     .bind(tenant)
+    .bind(&canonical_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -127,6 +147,7 @@ pub async fn list_discrepancies(
                 SELECT COUNT(*) FROM wms.discrepancy_records
                 WHERE ($1::uuid IS NULL OR stock_take_id = $1)
                   AND ($2::text IS NULL OR adjustment_status = $2)
+                  AND adjustment_status = ANY($4::text[])
                   AND deleted_at IS NULL
                   AND tenant_id = $3::uuid
                 "#
@@ -134,30 +155,37 @@ pub async fn list_discrepancies(
             .bind(stock_take_id)
             .bind(&adjustment_status)
             .bind(tenant)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             // 统计汇总
-            let summary = sqlx::query_as::<_, DiscrepancySummary>(
-                only_own_schema_query!("wms", r#"
+            let summary = sqlx::query_as::<_, DiscrepancySummary>(only_own_schema_query!(
+                "wms",
+                r#"
                 SELECT 
                     COUNT(*) as total_count,
-                    SUM(CASE WHEN adjustment_status = 'pending' THEN 1 ELSE 0 END) as pending_count,
-                    SUM(CASE WHEN adjustment_status = 'approved' THEN 1 ELSE 0 END) as approved_count,
-                    SUM(CASE WHEN adjustment_status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+                    SUM(CASE WHEN adjustment_status = $4 THEN 1 ELSE 0 END) as pending_count,
+                    SUM(CASE WHEN adjustment_status = $5 THEN 1 ELSE 0 END) as approved_count,
+                    SUM(CASE WHEN adjustment_status = $6 THEN 1 ELSE 0 END) as completed_count,
                     SUM(discrepancy_quantity) as total_discrepancy
                 FROM wms.discrepancy_records
                 WHERE ($1::uuid IS NULL OR stock_take_id = $1)
                   AND ($2::text IS NULL OR adjustment_status = $2)
+                  AND adjustment_status = ANY($7::text[])
                   AND deleted_at IS NULL
                   AND tenant_id = $3::uuid
-                "#),
-            )
+                "#
+            ))
             .bind(stock_take_id)
             .bind(&adjustment_status)
             .bind(tenant)
+            .bind(DiscrepancyStatus::Pending.as_db_str())
+            .bind(DiscrepancyStatus::Approved.as_db_str())
+            .bind(DiscrepancyStatus::Completed.as_db_str())
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -222,6 +250,11 @@ pub async fn get_discrepancy(
         Err(e) => return e.0,
     }
 
+    let canonical_statuses: Vec<String> = DiscrepancyStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
+
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
         r#"
@@ -231,10 +264,12 @@ pub async fn get_discrepancy(
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
+          AND adjustment_status = ANY($3::text[])
         "#
     ))
     .bind(id)
     .bind(tenant)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -263,7 +298,7 @@ async fn fetch_stock_take_org(
         .map_err(|e| format!("建立 RLS 事务作用域失败: {e}"))?;
     sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
         "wms",
-        r#"SELECT org_id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2"#
+        r#"SELECT org_id FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#
     ))
     .bind(stock_take_id)
     .bind(tenant_id)
@@ -295,25 +330,60 @@ pub async fn create_discrepancy(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    // 获取盘点明细信息
-    let stock_take_item = sqlx::query!(
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Uuid = match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) => t,
+        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
+    };
+
+    // 盘点明细、盘点单、库存必须同租户；库存按盘点仓库匹配，避免同物料跨仓/跨租户错绑。
+    let stock_take_item = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            String,
+            String,
+            sqlx::types::BigDecimal,
+            Option<sqlx::types::BigDecimal>,
+            Option<sqlx::types::BigDecimal>,
+            Uuid,
+        ),
+    >(
         r#"
         SELECT sti.id, sti.stock_take_id, sti.material_code, sti.material_name,
                sti.system_quantity, sti.counted_quantity, sti.discrepancy_quantity,
-               i.id as inventory_id
+               i.id AS inventory_id
         FROM wms.stock_take_items sti
-        JOIN wms.inventory i ON sti.material_code = i.material_code
+        JOIN wms.stock_takes st
+          ON st.id = sti.stock_take_id
+         AND st.tenant_id = $2
+         AND st.deleted_at IS NULL
+        JOIN wms.inventory i
+          ON i.material_code = sti.material_code
+         AND i.tenant_id = $2
+         AND i.deleted_at IS NULL
+         AND (st.warehouse_id IS NULL OR i.warehouse_id = st.warehouse_id)
         WHERE sti.id = $1
+          AND sti.tenant_id = $2
+          AND sti.deleted_at IS NULL
         "#,
-        req.stock_take_item_id
     )
+    .bind(req.stock_take_item_id)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
     let stock_take_item = match stock_take_item {
         Ok(Some(item)) => item,
         Ok(None) => {
-            return ApiResponse::from(TopemsError::ResourceNotFound("盘点明细不存在".to_string()))
+            return ApiResponse::from(TopemsError::ResourceNotFound(
+                "盘点明细不存在或不在当前租户".to_string(),
+            ))
         }
         Err(e) => return ApiResponse::from(TopemsError::internal("查询盘点明细失败", e)),
     };
@@ -326,20 +396,8 @@ pub async fn create_discrepancy(
         "none"
     };
 
-    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
-    let tenant_id: Uuid = match claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
-        Some(t) => t,
-        None => return ApiResponse::bad_request("缺少租户上下文（超管需携带 x-tenant-id）"),
-    };
     // 差异记录继承盘点单的组织；单头不存在则 409。
-    let stock_take_id = match stock_take_item.stock_take_id {
-        Some(v) => v,
-        None => return ApiResponse::conflict("盘点明细未关联盘点单"),
-    };
+    let stock_take_id = stock_take_item.1;
     let org_id = match fetch_stock_take_org(&state, txn, stock_take_id, tenant_id).await {
         Ok(v) => v,
         Err(msg) => return ApiResponse::server_error(&msg),
@@ -354,7 +412,7 @@ pub async fn create_discrepancy(
             adjustment_quantity, adjustment_status, reason, notes, created_at, updated_at,
             tenant_id, organization_id, org_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, $16, $17)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $18)
         RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -363,15 +421,16 @@ pub async fn create_discrepancy(
     ))
     .bind(id)
     .bind(stock_take_id)
-    .bind(req.stock_take_item_id)
-    .bind(stock_take_item.inventory_id)
-    .bind(&stock_take_item.material_code)
-    .bind(&stock_take_item.material_name)
-    .bind(stock_take_item.system_quantity)
-    .bind(stock_take_item.counted_quantity)
-    .bind(stock_take_item.discrepancy_quantity)
+    .bind(stock_take_item.0)
+    .bind(stock_take_item.7)
+    .bind(&stock_take_item.2)
+    .bind(&stock_take_item.3)
+    .bind(stock_take_item.4)
+    .bind(stock_take_item.5)
+    .bind(stock_take_item.6)
     .bind(discrepancy_type)
     .bind(req.adjustment_quantity)
+    .bind(DiscrepancyStatus::DEFAULT.as_db_str())
     .bind(&req.reason)
     .bind(&req.notes)
     .bind(now)
@@ -464,9 +523,13 @@ pub async fn approve_discrepancy(
     }
 
     let now = Utc::now();
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let approval_status = match req.action.as_str() {
-        "approve" => "approved",
-        "reject" => "rejected",
+        "approve" => DiscrepancyStatus::Approved,
+        "reject" => DiscrepancyStatus::Rejected,
         _ => return ApiResponse::from(TopemsError::ValidationFailed("无效的操作类型".to_string())),
     };
 
@@ -474,7 +537,7 @@ pub async fn approve_discrepancy(
         only_own_schema_query!("wms", r#"
         UPDATE wms.discrepancy_records SET
             adjustment_status = $2, approved_by = $3, approval_date = $4, notes = COALESCE($5, notes), updated_at = $6
-        WHERE id = $1 AND adjustment_status = 'pending'
+        WHERE id = $1 AND tenant_id = $7::uuid AND adjustment_status = $8 AND deleted_at IS NULL
         RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -482,11 +545,13 @@ pub async fn approve_discrepancy(
         "#),
     )
     .bind(id)
-    .bind(approval_status)
+    .bind(approval_status.as_db_str())
     .bind(claims.sub.to_string())
     .bind(now)
     .bind(&req.notes)
     .bind(now)
+    .bind(tenant)
+    .bind(DiscrepancyStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -507,9 +572,7 @@ pub async fn approve_discrepancy(
             None,
         ),
         Ok(None) => (
-            ApiResponse::from(TopemsError::ValidationFailed(
-                "差异处理记录不存在或已处理".to_string(),
-            )),
+            ApiResponse::conflict("差异处理记录状态已变化，审批未生效"),
             "error",
             Some("记录不存在或已处理".to_string()),
         ),
@@ -589,8 +652,16 @@ pub async fn adjust_inventory(
     }
 
     let now = Utc::now();
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let canonical_statuses: Vec<String> = DiscrepancyStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
-    // 获取已审批的差异处理记录
+    // 获取当前租户已审批的差异处理记录
     let record = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
         r#"
@@ -599,20 +670,20 @@ pub async fn adjust_inventory(
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
-        WHERE id = $1 AND adjustment_status = 'approved' AND deleted_at IS NULL
+        WHERE id = $1 AND tenant_id = $2::uuid AND adjustment_status = $3
+          AND adjustment_status = ANY($4::text[]) AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(tenant)
+    .bind(DiscrepancyStatus::Approved.as_db_str())
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
     let record = match record {
         Ok(Some(r)) => r,
-        Ok(None) => {
-            return ApiResponse::from(TopemsError::ValidationFailed(
-                "差异处理记录不存在或未审批".to_string(),
-            ))
-        }
+        Ok(None) => return ApiResponse::conflict("差异处理记录不存在、未审批或不在当前租户"),
         Err(e) => return ApiResponse::from(TopemsError::internal("查询差异处理记录失败", e)),
     };
 
@@ -673,8 +744,8 @@ pub async fn adjust_inventory(
         "wms",
         r#"
         UPDATE wms.discrepancy_records SET
-            adjustment_status = 'completed', adjustment_date = $2, updated_at = $2
-        WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL
+            adjustment_status = $4, adjustment_date = $2, updated_at = $2
+        WHERE id = $1 AND tenant_id = $3 AND adjustment_status = $5 AND deleted_at IS NULL
         RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -684,6 +755,8 @@ pub async fn adjust_inventory(
     .bind(id)
     .bind(now)
     .bind(record.tenant_id)
+    .bind(DiscrepancyStatus::Completed.as_db_str())
+    .bind(DiscrepancyStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -773,18 +846,48 @@ pub async fn process_stock_take_discrepancies(
         Err(msg) => return ApiResponse::server_error(&msg),
     };
 
-    // 获取盘点单已完成的所有盘点明细
-    let items = sqlx::query!(
+    // 获取盘点单中已完成、且有差异、尚未生成差异记录的全部明细；
+    // 明细、盘点单、库存必须同租户，库存按盘点仓库匹配。
+    let items = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            String,
+            String,
+            sqlx::types::BigDecimal,
+            Option<sqlx::types::BigDecimal>,
+            Option<sqlx::types::BigDecimal>,
+            Uuid,
+        ),
+    >(
         r#"
         SELECT sti.id, sti.stock_take_id, sti.material_code, sti.material_name,
                sti.system_quantity, sti.counted_quantity, sti.discrepancy_quantity,
-               i.id as inventory_id
+               i.id AS inventory_id
         FROM wms.stock_take_items sti
-        JOIN wms.inventory i ON sti.material_code = i.material_code
-        WHERE sti.stock_take_id = $1 AND sti.adjustment_status = 'completed' AND sti.discrepancy_quantity != 0
+        JOIN wms.stock_takes st
+          ON st.id = sti.stock_take_id
+         AND st.tenant_id = $2
+         AND st.deleted_at IS NULL
+        JOIN wms.inventory i
+          ON i.material_code = sti.material_code
+         AND i.tenant_id = $2
+         AND i.deleted_at IS NULL
+         AND (st.warehouse_id IS NULL OR i.warehouse_id = st.warehouse_id)
+        WHERE sti.stock_take_id = $1
+          AND sti.tenant_id = $2
+          AND sti.deleted_at IS NULL
+          AND sti.adjustment_status = 'completed'
+          AND sti.discrepancy_quantity != 0
+          AND NOT EXISTS (
+              SELECT 1 FROM wms.discrepancy_records d
+              WHERE d.stock_take_item_id = sti.id AND d.deleted_at IS NULL
+          )
         "#,
-        stock_take_id
     )
+    .bind(stock_take_id)
+    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await;
 
@@ -799,7 +902,7 @@ pub async fn process_stock_take_discrepancies(
     for item in items {
         let discrepancy_id = Uuid::new_v4();
         let discrepancy_q = item
-            .discrepancy_quantity
+            .6
             .as_ref()
             .and_then(|b| b.to_string().parse::<f64>().ok())
             .unwrap_or(0.0);
@@ -814,23 +917,24 @@ pub async fn process_stock_take_discrepancies(
                 adjustment_quantity, adjustment_status, created_at, updated_at, tenant_id,
                 organization_id, org_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, $14, $11, $11, $12, $12, $13)
             RETURNING id
             "#
         ))
         .bind(discrepancy_id)
-        .bind(item.stock_take_id)
-        .bind(item.id)
-        .bind(item.inventory_id)
-        .bind(item.material_code.as_deref().unwrap_or(""))
-        .bind(item.material_name.as_deref().unwrap_or(""))
-        .bind(&item.system_quantity)
-        .bind(&item.counted_quantity)
-        .bind(&item.discrepancy_quantity)
+        .bind(item.1)
+        .bind(item.0)
+        .bind(item.7)
+        .bind(&item.2)
+        .bind(&item.3)
+        .bind(&item.4)
+        .bind(&item.5)
+        .bind(&item.6)
         .bind(discrepancy_type)
         .bind(now)
         .bind(tenant_id)
         .bind(org_id)
+        .bind(DiscrepancyStatus::DEFAULT.as_db_str())
         .fetch_one(&mut **txn)
         .await;
 
@@ -838,9 +942,9 @@ pub async fn process_stock_take_discrepancies(
             created_count += 1;
             results.push(serde_json::json!({
                 "discrepancy_id": discrepancy_id,
-                "material_code": item.material_code,
-                "material_name": item.material_name,
-                "discrepancy_quantity": item.discrepancy_quantity
+                "material_code": item.2,
+                "material_name": item.3,
+                "discrepancy_quantity": item.6
             }));
         }
     }

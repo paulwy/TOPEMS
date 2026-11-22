@@ -26,7 +26,7 @@ interface DiscrepancyRecord {
   discrepancy_quantity: number;
   discrepancy_type: 'surplus' | 'shortage' | 'damaged' | 'expired';
   adjustment_quantity?: number;
-  adjustment_status: 'pending' | 'approved' | 'adjusted' | 'rejected';
+  adjustment_status: 'pending' | 'approved' | 'rejected' | 'completed';
   approved_by?: string;
   approval_date?: string;
   adjustment_date?: string;
@@ -59,7 +59,7 @@ interface DiscrepancyQueryParams {
   page?: number;
   page_size?: number;
   stock_take_id?: string;
-  adjustment_status?: 'pending' | 'approved' | 'adjusted' | 'rejected';
+  adjustment_status?: 'pending' | 'approved' | 'rejected' | 'completed';
 }
 
 const buildQuery = (params?: DiscrepancyQueryParams): string => {

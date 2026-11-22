@@ -21,6 +21,7 @@ pub mod slotting_status;
 pub mod analytics;
 pub mod data_sync;
 pub mod discrepancy;
+pub mod discrepancy_status;
 pub mod inbound_item_quality_status;
 pub mod inbound_order;
 pub mod inbound_status;

@@ -877,6 +877,13 @@
       "table": "wms.replenishment_orders",
       "column": "status",
       "candidate": "docs/database/wms-replenishment-order-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/discrepancy_status.rs",
+      "enum": "DiscrepancyStatus",
+      "table": "wms.discrepancy_records",
+      "column": "adjustment_status",
+      "candidate": "docs/database/wms-discrepancy-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

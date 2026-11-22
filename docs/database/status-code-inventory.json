@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 198,
+    "rust_enums": 199,
     "rust_enum_values": 190,
     "rust_values_not_in_db_check": 151,
     "frontend_status_keys": 205,
@@ -3188,6 +3188,23 @@
         "out_stock",
         "reserved",
         "scrapped"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/discrepancy_status.rs",
+      "name": "DiscrepancyStatus",
+      "values": [
+        "Approved",
+        "Completed",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "completed",
+        "pending",
+        "rejected"
       ]
     },
     {
