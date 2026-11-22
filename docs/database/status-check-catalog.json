@@ -4442,6 +4442,22 @@
     },
     {
       "schema": "scm",
+      "table": "supplier_admissions",
+      "constraint": "ck_scm_supplier_admissions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "approved",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'active'::text]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "supplier_delivery_appointments",
       "constraint": "ck_scm_supplier_delivery_appointments_status_standard",
       "columns": [
@@ -8374,15 +8390,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "scm",
-      "table": "supplier_admissions",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "scm",

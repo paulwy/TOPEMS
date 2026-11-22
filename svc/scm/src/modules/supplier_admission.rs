@@ -7,6 +7,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::supplier_admission_status::SupplierAdmissionStatus;
 use super::ApiState;
 use crate::models::supplier_admission::{
     AuditRequest, CreateSupplierAdmissionRequest, SupplierAdmission, SupplierAdmissionQueryParams,
@@ -72,10 +73,22 @@ pub async fn list_admissions(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SupplierAdmissionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商准入状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let admissions = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND tenant_id = $3::uuid ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND tenant_id = $4::uuid ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
     )
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -84,8 +97,9 @@ pub async fn list_admissions(
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND tenant_id = $1::uuid"
+        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND tenant_id = $2::uuid"
     ))
+    .bind(status_filter)
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
@@ -136,7 +150,7 @@ pub async fn create_admission(
             tax_registration, organization_code, legal_representative,
             registered_capital, established_date, business_scope,
             supplier_category, applicant, remarks, status, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::date, $14, $15, $16, $17, 'draft', $18)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::date, $14, $15, $16, $17, $18, $19)
         RETURNING *
         "#),
     )
@@ -157,6 +171,7 @@ pub async fn create_admission(
     .bind(&data.supplier_category)
     .bind(&data.applicant)
     .bind(&data.remarks)
+    .bind(SupplierAdmissionStatus::DEFAULT.as_db_str())
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
@@ -270,6 +285,17 @@ pub async fn update_admission(
         }
     };
 
+    let status = match data.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match SupplierAdmissionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商准入状态".to_string(),
+                ))
+            }
+        },
+    };
     let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
         "scm",
         r#"
@@ -311,7 +337,7 @@ pub async fn update_admission(
     .bind(&data.business_scope)
     .bind(&data.supplier_category)
     .bind(&data.risk_level)
-    .bind(&data.status)
+    .bind(status)
     .bind(&data.remarks)
     .bind(admission_id)
     .bind(tenant_bind)
@@ -444,8 +470,9 @@ pub async fn submit_admission(
         .map(|s| s.to_string());
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND tenant_id = $3::uuid RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = $1, remarks = COALESCE($2, remarks) WHERE id = $3 AND deleted_at IS NULL AND status = 'draft' AND tenant_id = $4::uuid RETURNING *"),
     )
+    .bind(SupplierAdmissionStatus::Pending.as_db_str())
     .bind(remarks)
     .bind(admission_id)
     .bind(tenant_bind)
@@ -524,7 +551,7 @@ pub async fn approve_admission(
         "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
-            status = 'approved', approval_status = 'approved', 
+            status = $5, approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
           AND tenant_id = $4::uuid
@@ -535,6 +562,7 @@ pub async fn approve_admission(
     .bind(remarks)
     .bind(admission_id)
     .bind(tenant_bind)
+    .bind(SupplierAdmissionStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -610,7 +638,7 @@ pub async fn reject_admission(
         "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
-            status = 'rejected', approval_status = 'rejected', 
+            status = $5, approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
           AND tenant_id = $4::uuid
@@ -621,6 +649,7 @@ pub async fn reject_admission(
     .bind(remarks)
     .bind(admission_id)
     .bind(tenant_bind)
+    .bind(SupplierAdmissionStatus::Rejected.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -724,7 +753,11 @@ pub async fn audit_admission(
     }
 
     let all_passed = data.audit_items.iter().all(|i| i.audit_result == "passed");
-    let status = if all_passed { "approved" } else { "rejected" };
+    let status = if all_passed {
+        SupplierAdmissionStatus::Approved.as_db_str()
+    } else {
+        SupplierAdmissionStatus::Rejected.as_db_str()
+    };
     let approval_status = status;
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
@@ -809,8 +842,9 @@ pub async fn activate_supplier(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND tenant_id = $2::uuid RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = $1 WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' AND tenant_id = $3::uuid RETURNING *"),
     )
+    .bind(SupplierAdmissionStatus::Active.as_db_str())
     .bind(admission_id)
     .bind(tenant_bind)
     .fetch_one(&mut **txn)

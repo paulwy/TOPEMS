@@ -31,6 +31,7 @@ pub mod scm_plugin;
 pub mod settings;
 pub mod supplier;
 pub mod supplier_admission;
+pub mod supplier_admission_status;
 pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supplier_evaluation_status;

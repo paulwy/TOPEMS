@@ -1408,6 +1408,13 @@
       "table": "scm.mrp_suggestions",
       "column": "status",
       "candidate": "docs/database/mrp-suggestion-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/supplier_admission_status.rs",
+      "enum": "SupplierAdmissionStatus",
+      "table": "scm.supplier_admissions",
+      "column": "status",
+      "candidate": "docs/database/supplier-admission-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
