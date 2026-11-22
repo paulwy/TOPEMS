@@ -81,7 +81,7 @@ interface Customer {
   customer_name_en?: string | null;
   industry: string;
   level: 'A' | 'B' | 'C' | 'D';
-  status: 'active' | 'inactive' | 'potential';
+  status: 'active' | 'inactive' | 'archived';
   customer_type?: string;
   contact_person: string;
   contact_phone: string;
@@ -112,7 +112,10 @@ const mapApiCustomers = (apiCustomers: ApiCustomer[]): Customer[] => {
     customer_name_en: c.name_en,
     industry: c.industry || '-',
     level: (c.rating as Customer['level']) || 'C',
-    status: (c.status as Customer['status']) || 'potential',
+    status:
+      c.status === 'active' || c.status === 'inactive' || c.status === 'archived'
+        ? c.status
+        : 'active',
     customer_type: c.customer_type,
     contact_person: sanitizeContactPerson(c.notes),
     contact_phone: c.phone || '-',
@@ -159,10 +162,10 @@ const CrmCustomerRedesignPage: React.FC = () => {
   const statusConfig = {
     active: { label: t('crm.customer_list_page.status_active'), variant: 'success' as const },
     inactive: { label: t('crm.customer_list_page.status_inactive'), variant: 'default' as const },
-    potential: { label: t('crm.customer_list_page.status_potential'), variant: 'info' as const },
+    archived: { label: t('crm.customer_list_page.status_archived'), variant: 'default' as const },
   };
 
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive' | 'potential'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive' | 'archived'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
@@ -320,9 +323,9 @@ const CrmCustomerRedesignPage: React.FC = () => {
       { id: 'all', label: t('crm.customer_list_page.tab_all') },
       { id: 'active', label: t('crm.customer_list_page.status_active'), badge: stats.active },
       {
-        id: 'potential',
-        label: t('crm.customer_list_page.status_potential'),
-        badge: customers.filter((c) => c.status === 'potential').length,
+        id: 'archived',
+        label: t('crm.customer_list_page.status_archived'),
+        badge: customers.filter((c) => c.status === 'archived').length,
       },
       {
         id: 'inactive',
@@ -539,7 +542,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as 'all' | 'active' | 'inactive' | 'potential')}
+          onChange={(id) => setActiveTab(id as 'all' | 'active' | 'inactive' | 'archived')}
         />
       </ListPageTemplate>
 

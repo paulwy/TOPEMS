@@ -937,7 +937,7 @@
   "crm.customer_list_page.toast_update_fail": "更新失败，请重试",
   "crm.customer_list_page.tab_all": "全部",
   "crm.customer_list_page.status_active": "活跃",
-  "crm.customer_list_page.status_potential": "潜在",
+  "crm.customer_list_page.status_archived": "已归档",
   "crm.customer_list_page.status_inactive": "休眠",
   "crm.customer_list_page.badge_level_a": "A级",
   "crm.customer_list_page.badge_level_b": "B级",

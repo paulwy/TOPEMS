@@ -36,6 +36,8 @@ pub struct CustomerPaginationParams {
     pub industry: Option<String>,
     #[serde(default)]
     pub rating: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
 }
 
 fn default_page() -> i64 {
@@ -90,10 +92,11 @@ fn customer_list_cache_key(
     page: i64,
     page_size: i64,
     search: &Option<String>,
+    status: &str,
 ) -> String {
     format!(
-        "crm:customer:list:{}:{}:page:{}:size:{}:search:{:?}",
-        locale, tenant_id, page, page_size, search
+        "crm:customer:list:{}:{}:page:{}:size:{}:search:{:?}:status:{}",
+        locale, tenant_id, page, page_size, search, status
     )
 }
 
@@ -160,13 +163,36 @@ pub async fn list_customers(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
-    // 缓存命中则直接返回（含 tenant_id 的隔离 key）
+    let status_filter: Vec<String> = match params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        Some(raw) => match CustomerStatus::from_db_str(raw) {
+            Some(status) => vec![status.as_db_str().to_string()],
+            None => return ApiResponse::bad_request("无效的客户状态"),
+        },
+        None => CustomerStatus::DB_VALUES
+            .iter()
+            .map(|value| (*value).to_string())
+            .collect(),
+    };
+    let status_cache_key = params
+        .status
+        .as_deref()
+        .map(|value| value.trim().to_ascii_lowercase())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_default();
+
+    // 缓存命中则直接返回（含 tenant_id 与状态过滤维度的隔离 key）
     let list_cache_key = customer_list_cache_key(
         Locale::from_headers(&headers).as_sql(),
         tenant_id,
         page,
         page_size,
         &search,
+        &status_cache_key,
     );
     if let Some(cached) = state.customer_cache.get(&list_cache_key).await {
         match serde_json::from_value::<ListResponse<Customer>>(cached) {
@@ -186,29 +212,32 @@ pub async fn list_customers(
         .collect();
     let mut count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "crm",
-        "SELECT COUNT(*) FROM crm.customers WHERE deleted_at IS NULL AND approval_status = ANY($1::text[])"
+        "SELECT COUNT(*) FROM crm.customers WHERE deleted_at IS NULL AND approval_status = ANY($1::text[]) AND status = ANY($2::text[])"
     ))
-    .bind(&canonical_approval_statuses);
+    .bind(&canonical_approval_statuses)
+    .bind(&status_filter);
     let mut list_qb = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE deleted_at IS NULL AND approval_status = ANY($4::text[]) ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+        only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE deleted_at IS NULL AND approval_status = ANY($4::text[]) AND status = ANY($5::text[]) ORDER BY created_at DESC LIMIT $1 OFFSET $2")
     );
     list_qb = list_qb
         .bind(page_size)
         .bind(offset)
         .bind(Locale::from_headers(&headers).as_sql())
-        .bind(&canonical_approval_statuses);
+        .bind(&canonical_approval_statuses)
+        .bind(&status_filter);
 
     if let Some(s) = search.clone() {
         let like = format!("%{}%", s.replace('%', "\\%").replace('_', "\\_"));
         count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "crm",
-            "SELECT COUNT(*) FROM crm.customers WHERE name ILIKE $1 AND deleted_at IS NULL AND approval_status = ANY($2::text[])"
+            "SELECT COUNT(*) FROM crm.customers WHERE name ILIKE $1 AND deleted_at IS NULL AND approval_status = ANY($2::text[]) AND status = ANY($3::text[])"
         ))
         .bind(like.clone())
-        .bind(&canonical_approval_statuses);
+        .bind(&canonical_approval_statuses)
+        .bind(&status_filter);
         list_qb = sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE name ILIKE $1 AND deleted_at IS NULL AND approval_status = ANY($5::text[]) ORDER BY created_at DESC LIMIT $2 OFFSET $3")
-        ).bind(like).bind(page_size).bind(offset).bind(Locale::from_headers(&headers).as_sql()).bind(&canonical_approval_statuses);
+            only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE name ILIKE $1 AND deleted_at IS NULL AND approval_status = ANY($5::text[]) AND status = ANY($6::text[]) ORDER BY created_at DESC LIMIT $2 OFFSET $3")
+        ).bind(like).bind(page_size).bind(offset).bind(Locale::from_headers(&headers).as_sql()).bind(&canonical_approval_statuses).bind(&status_filter);
     }
 
     let total: i64 = count_qb.fetch_one(&mut **txn).await.unwrap_or(0);
@@ -304,7 +333,7 @@ pub async fn create_customer(
     .bind(owner_id)
     // tags 未传时绑定空数组（列定义 TEXT[] NOT NULL DEFAULT '{}'，避免 NULL 违反约束）
     .bind(req.tags.as_deref().unwrap_or(&[]))
-    .bind("none")
+    .bind(CustomerApprovalStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     // organization_id：CreateCustomerRequest 无该字段，落 NULL（勿误绑 tenant_id）
@@ -524,28 +553,32 @@ pub async fn update_customer(
     let employee_count = req.employee_count.or(existing.employee_count);
     let revenue = req.revenue.or(existing.revenue);
     let source = req.source.or(existing.source);
+    let current_status_value = existing
+        .status
+        .as_deref()
+        .unwrap_or(CustomerStatus::DEFAULT.as_db_str())
+        .to_string();
+    let current_status = match CustomerStatus::from_db_str(&current_status_value) {
+        Some(status) => status,
+        None => return ApiResponse::error(409, "客户当前状态非法，无法变更"),
+    };
     let status = match req.status {
         Some(raw) => match CustomerStatus::from_db_str(&raw) {
-            Some(next) => {
-                if let Some(cur_raw) = existing.status.as_deref() {
-                    match CustomerStatus::from_db_str(cur_raw) {
-                        Some(cur) if cur.can_transition_to(next) => {}
-                        Some(cur) => {
-                            let msg = format!(
-                                "客户状态不允许从 {} 变更为 {}",
-                                cur.as_db_str(),
-                                next.as_db_str()
-                            );
-                            return ApiResponse::error(409, &msg);
-                        }
-                        None => return ApiResponse::error(409, "客户当前状态非法，无法变更"),
-                    }
-                }
+            Some(next) if current_status.can_transition_to(next) => {
                 Some(next.as_db_str().to_string())
+            }
+            Some(next) => {
+                let msg = format!(
+                    "客户状态不允许从 {} 变更为 {}",
+                    current_status.as_db_str(),
+                    next.as_db_str()
+                );
+                return ApiResponse::error(409, &msg);
             }
             None => return ApiResponse::bad_request("无效的客户状态"),
         },
-        None => existing.status,
+        // 未传状态时回写当前规范值：顺带把历史 NULL 归一为默认 active
+        None => Some(current_status.as_db_str().to_string()),
     };
     let fax = req.fax.or(existing.fax);
     let postal_code = req.postal_code.or(existing.postal_code);
@@ -558,6 +591,7 @@ pub async fn update_customer(
             name = $2, customer_type = $3, industry = $4, rating = $5, region = $6, owner_id = $7, tags = $8, updated_at = $9, name_en = COALESCE($11, name_en),
             code = COALESCE($12, code), email = COALESCE($13, email), phone = COALESCE($14, phone), website = COALESCE($15, website), address = COALESCE($16, address), city = COALESCE($17, city), province = COALESCE($18, province), country = COALESCE($19, country), company_size = COALESCE($20, company_size), employee_count = COALESCE($21, employee_count), revenue = COALESCE($22, revenue), source = COALESCE($23, source), status = COALESCE($24, status), fax = COALESCE($25, fax), postal_code = COALESCE($26, postal_code), notes = COALESCE($27, notes)
         WHERE id = $1 AND tenant_id = $10 AND deleted_at IS NULL
+          AND COALESCE(status, $29) = $29
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $28 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at
         "#
     )
@@ -589,6 +623,7 @@ pub async fn update_customer(
     .bind(postal_code.as_deref())
     .bind(notes.as_deref())
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&current_status_value)
     .fetch_one(&mut **txn)
     .await
     {
@@ -624,6 +659,9 @@ pub async fn update_customer(
                 .await;
             });
             ApiResponse::success(customer, "客户更新成功")
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::error(409, "客户不存在、已删除或状态已被并发修改")
         }
         Err(e) => {
             tracing::error!("更新客户失败: {}", e);

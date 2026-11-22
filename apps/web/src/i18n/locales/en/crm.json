@@ -1166,7 +1166,7 @@
   "crm.customer_list_page.toast_update_fail": "Failed to update. Please try again.",
   "crm.customer_list_page.tab_all": "All",
   "crm.customer_list_page.status_active": "Active",
-  "crm.customer_list_page.status_potential": "Potential",
+  "crm.customer_list_page.status_archived": "Archived",
   "crm.customer_list_page.status_inactive": "Inactive",
   "crm.customer_list_page.badge_level_a": "Grade A",
   "crm.customer_list_page.badge_level_b": "Grade B",
