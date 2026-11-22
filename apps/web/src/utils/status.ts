@@ -167,6 +167,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   standby: 'info',
   published: 'success',
   deployed: 'primary',
+  delegated: 'info',
   received: 'info',
   registered: 'info',
   stored: 'success',

@@ -18,3 +18,4 @@ pub mod variable;
 pub mod workflow;
 pub mod workflow_instance_status;
 pub mod workflow_status;
+pub mod workflow_task_status;

@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 348,
+    "db_check_constraints": 349,
     "db_enum_types": 5,
-    "db_check_values": 150,
-    "rust_enums": 231,
-    "rust_enum_values": 204,
+    "db_check_values": 152,
+    "rust_enums": 232,
+    "rust_enum_values": 206,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 215,
-    "frontend_keys_not_in_db_check": 70,
+    "frontend_status_keys": 216,
+    "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3642,6 +3642,29 @@
     },
     {
       "module": "unified-core",
+      "file": "svc/unified-core/src/modules/flow/workflow_task_status.rs",
+      "name": "WorkflowTaskStatus",
+      "values": [
+        "Approved",
+        "Claimed",
+        "Completed",
+        "Delegated",
+        "Error",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "claimed",
+        "completed",
+        "delegated",
+        "error",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "unified-core",
       "file": "svc/unified-core/src/modules/subscription/mod.rs",
       "name": "SubscriptionStatus",
       "values": [
@@ -4147,6 +4170,7 @@
       "danger",
       "degraded",
       "delayed",
+      "delegated",
       "deleted",
       "delivered",
       "deployed",
@@ -4395,7 +4419,6 @@
       "breaching",
       "canary",
       "canceled",
-      "claimed",
       "compensated",
       "compensating",
       "compliant",

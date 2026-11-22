@@ -18,6 +18,7 @@ use topems_shared_core::response::ApiResponse;
 
 use super::models::{TaskActionRequest, Workflow, WorkflowInstance, WorkflowTask};
 use super::workflow_instance_status::WorkflowInstanceStatus;
+use super::workflow_task_status::WorkflowTaskStatus;
 
 #[derive(Debug, FromRow)]
 pub struct ApprovalTaskRow {
@@ -145,7 +146,17 @@ pub async fn list_approval_tasks(
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
-    let status = query.status.clone().filter(|s| !s.is_empty());
+    let status = match query.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match WorkflowTaskStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的工作流任务状态".to_string(),
+                ))
+            }
+        },
+    };
     let assignee_id = query.assignee_id.clone().filter(|s| !s.is_empty());
 
     let total: i64 = match sqlx::query_scalar(
@@ -155,7 +166,7 @@ pub async fn list_approval_tasks(
            WHERE ($1::text IS NULL OR t.status = $1)
              AND ($2::text IS NULL OR t.assignee_id = $2::UUID)"#,
     )
-    .bind(status.clone())
+    .bind(status)
     .bind(assignee_id.clone())
     .fetch_one(&mut scope)
     .await
@@ -179,7 +190,7 @@ pub async fn list_approval_tasks(
            ORDER BY t.created_at DESC
            LIMIT $3 OFFSET $4"#,
     )
-    .bind(status.clone())
+    .bind(status)
     .bind(assignee_id.clone())
     .bind(page_size)
     .bind(offset)
@@ -435,7 +446,7 @@ pub async fn approve_task(
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
         r#"UPDATE public.core_workflow_tasks
-           SET status = 'approved',
+           SET status = $3,
                comment = COALESCE($1, comment),
                completed_at = NOW(),
                updated_at = NOW()
@@ -444,6 +455,7 @@ pub async fn approve_task(
     )
     .bind(payload.comment)
     .bind(task_id)
+    .bind(WorkflowTaskStatus::Approved.as_db_str())
     .fetch_optional(&mut scope)
     .await
     {
@@ -552,7 +564,7 @@ pub async fn reject_task(
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
         r#"UPDATE public.core_workflow_tasks
-           SET status = 'rejected',
+           SET status = $3,
                comment = COALESCE($1, comment),
                completed_at = NOW(),
                updated_at = NOW()
@@ -561,6 +573,7 @@ pub async fn reject_task(
     )
     .bind(payload.comment)
     .bind(task_id)
+    .bind(WorkflowTaskStatus::Rejected.as_db_str())
     .fetch_optional(&mut scope)
     .await
     {
@@ -667,12 +680,13 @@ pub async fn claim_task(
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
         r#"UPDATE public.core_workflow_tasks
-           SET status = 'claimed',
+           SET status = $2,
                updated_at = NOW()
            WHERE id = $1 AND status = 'pending'
            RETURNING id as task_id, instance_id as task_instance_id, node_id as task_node_id, assignee_id as task_assignee_id, status as task_status, comment as task_comment, created_at as task_created_at, completed_at as task_completed_at"#,
     )
     .bind(task_id)
+    .bind(WorkflowTaskStatus::Claimed.as_db_str())
     .fetch_optional(&mut scope)
     .await
     {
@@ -779,12 +793,13 @@ pub async fn unclaim_task(
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
         r#"UPDATE public.core_workflow_tasks
-           SET status = 'pending',
+           SET status = $2,
                updated_at = NOW()
            WHERE id = $1 AND status = 'claimed'
            RETURNING id as task_id, instance_id as task_instance_id, node_id as task_node_id, assignee_id as task_assignee_id, status as task_status, comment as task_comment, created_at as task_created_at, completed_at as task_completed_at"#,
     )
     .bind(task_id)
+    .bind(WorkflowTaskStatus::Pending.as_db_str())
     .fetch_optional(&mut scope)
     .await
     {
@@ -1324,11 +1339,12 @@ pub async fn create_approval(
 
     let task = match sqlx::query_as::<_, WorkflowTask>(
         r#"INSERT INTO public.core_workflow_tasks (instance_id, node_id, assignee_id, status, tenant_id)
-           VALUES ($1, 'start', $2, 'pending', $3)
+           VALUES ($1, 'start', $2, $4, $5)
            RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, claimed_at, created_at, completed_at, tenant_id"#,
     )
     .bind(instance.id)
     .bind(assignee_id)
+    .bind(WorkflowTaskStatus::DEFAULT.as_db_str())
     .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await

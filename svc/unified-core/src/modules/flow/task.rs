@@ -16,6 +16,7 @@ use topems_shared_core::response::PaginatedResponse;
 use super::models::{
     TaskActionRequest, TaskBatchRequest, TaskBatchResult, TaskFailure, TaskStats, WorkflowTask,
 };
+use super::workflow_task_status::WorkflowTaskStatus;
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[schema(as = TaskQueryParams)]
@@ -69,7 +70,17 @@ pub async fn list_tasks(
     let offset = (page - 1) * page_size;
 
     let search = params.search.clone().unwrap_or_default();
-    let status = params.status.clone();
+    let status = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match WorkflowTaskStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的工作流任务状态".to_string(),
+                ))
+            }
+        },
+    };
     let assignee_id = params.assignee_id.clone();
     let instance_id = params.instance_id.clone();
 
@@ -93,7 +104,7 @@ pub async fn list_tasks(
                  AND (instance_id = $4 OR $4 IS NULL)"#,
         )
         .bind(format!("%{}%", search.clone()))
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .bind(assignee_uuid)
         .bind(instance_uuid)
         .fetch_one(&mut scope)
@@ -174,7 +185,7 @@ pub async fn list_tasks(
                ORDER BY t.created_at DESC LIMIT $5 OFFSET $6"#
         )
         .bind(format!("%{}%", search))
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .bind(assignee_uuid)
         .bind(instance_uuid)
         .bind(page_size)
@@ -295,9 +306,10 @@ pub async fn claim_task(
         }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'claimed', claimed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = $2, claimed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowTaskStatus::Claimed.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -345,9 +357,10 @@ pub async fn unclaim_task(
         }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'pending', claimed_at = NULL WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = $2, claimed_at = NULL WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
+    .bind(WorkflowTaskStatus::Pending.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -397,10 +410,11 @@ pub async fn approve_task(
         }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(WorkflowTaskStatus::Approved.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -450,10 +464,11 @@ pub async fn reject_task(
         }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'rejected', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(WorkflowTaskStatus::Rejected.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -503,10 +518,11 @@ pub async fn complete_task(
         }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(WorkflowTaskStatus::Completed.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -556,10 +572,11 @@ pub async fn delegate_task(
         }
     };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE public.core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
+        "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment) WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(WorkflowTaskStatus::Delegated.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -615,10 +632,11 @@ pub async fn batch_approve(
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE public.core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
+                "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
             )
             .bind(task_id)
             .bind(&payload.comment)
+            .bind(WorkflowTaskStatus::Approved.as_db_str())
             .execute(&mut scope)
             .await;
 
@@ -706,10 +724,11 @@ pub async fn batch_complete(
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE public.core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
+                "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
             )
             .bind(task_id)
             .bind(&payload.comment)
+            .bind(WorkflowTaskStatus::Completed.as_db_str())
             .execute(&mut scope)
             .await;
 
@@ -797,10 +816,11 @@ pub async fn batch_delegate(
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE public.core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1",
+                "UPDATE public.core_workflow_tasks SET status = $3, comment = COALESCE($2, comment) WHERE id = $1",
             )
             .bind(task_id)
             .bind(&payload.comment)
+            .bind(WorkflowTaskStatus::Delegated.as_db_str())
             .execute(&mut scope)
             .await;
 
@@ -985,7 +1005,7 @@ pub async fn get_task_count(
                WHERE (status = $1 OR $1 = '')
                  AND (assignee_id = $2 OR $2 IS NULL)"#,
         )
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .bind(assignee_uuid)
         .fetch_one(&mut scope)
         .await

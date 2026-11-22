@@ -1359,6 +1359,13 @@
       "table": "public.core_workflow_instances",
       "column": "status",
       "candidate": "docs/database/core-workflow-instance-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/workflow_task_status.rs",
+      "enum": "WorkflowTaskStatus",
+      "table": "public.core_workflow_tasks",
+      "column": "status",
+      "candidate": "docs/database/core-workflow-task-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
