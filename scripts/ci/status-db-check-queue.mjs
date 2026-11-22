@@ -57,19 +57,30 @@ function main() {
     }
   }
 
-  // 值级归因：每个值只落一个桶，优先级 候选 > 投影 > 持久化 > 内部
+  const resolvedMap = new Map();
+  if (fs.existsSync(MAPPINGS)) {
+    const { mappings = [] } = JSON.parse(fs.readFileSync(MAPPINGS, "utf8"));
+    for (const m of mappings) resolvedMap.set(`${m.file}#${m.enum}`, m);
+  }
+
+  // 值级归因：每个值只落一个桶，优先级 候选 > 显式非持久化 > 投影 > 持久化 > 内部
   const enumSignals = inv.enums.map((e) => {
     const fileSrc = fs.readFileSync(path.join(ROOT, e.file), "utf8");
     return {
       e,
       isGql: /Gql$/.test(e.name) || /graphql/i.test(e.file),
       persisted: /sqlx|query!|query_as/i.test(fileSrc),
+      nonPersisted: resolvedMap.get(`${e.file}#${e.name}`)?.persisted === false,
     };
   });
   const valueBucket = new Map();
-  for (const { e, isGql, persisted } of enumSignals) {
+  for (const { e, isGql, persisted, nonPersisted } of enumSignals) {
     for (const v of e.normalized) {
       if (!gaps.has(v)) continue;
+      if (nonPersisted) {
+        valueBucket.set(v, "internal_state");
+        continue;
+      }
       const current = valueBucket.get(v);
       if (current === "finance_candidate_ready") continue;
       const next = candidateValues.has(v)
@@ -81,12 +92,6 @@ function main() {
             : "internal_state";
       if (!current || next !== "internal_state") valueBucket.set(v, next);
     }
-  }
-
-  const resolvedMap = new Map();
-  if (fs.existsSync(MAPPINGS)) {
-    const { mappings = [] } = JSON.parse(fs.readFileSync(MAPPINGS, "utf8"));
-    for (const m of mappings) resolvedMap.set(`${m.file}#${m.enum}`, m);
   }
 
   const rows = [];

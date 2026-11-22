@@ -7,12 +7,8 @@
     "uncovered_values": 71,
     "finance_candidate_constraints": 25,
     "resolved_enums": 53,
-    "internal_state_enums": 36,
-    "persisted_unmapped_enums": 13,
-    "api_projection_enums": 10,
-    "internal_state_values": 54,
-    "persisted_unmapped_values": 10,
-    "api_projection_values": 7
+    "internal_state_enums": 53,
+    "internal_state_values": 71
   },
   "rows": [
     {
@@ -73,7 +69,7 @@
       "file": "lib/shared-core/src/health.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "healthy",
           "unhealthy"
         ]
@@ -83,7 +79,7 @@
         "file": "lib/shared-core/src/health.rs",
         "enum": "HealthStatus",
         "persisted": false,
-        "reason": "健康度计算值，不落库"
+        "reason": "服务健康探针内存态"
       }
     },
     {
@@ -108,7 +104,7 @@
       "file": "lib/shared-db/src/data_governance.rs",
       "enum": "DsrRequestStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "verifying"
         ]
       },
@@ -117,7 +113,7 @@
         "file": "lib/shared-db/src/data_governance.rs",
         "enum": "DsrRequestStatus",
         "persisted": false,
-        "reason": "DSR 请求在内存统计，无 SQL"
+        "reason": "DSR 请求存于 RwLock<HashMap>，无 DB 写入"
       }
     },
     {
@@ -163,9 +159,7 @@
       "values_by_bucket": {
         "internal_state": [
           "compensated",
-          "compensating"
-        ],
-        "api_projection": [
+          "compensating",
           "skipped"
         ]
       },
@@ -182,7 +176,7 @@
       "file": "lib/shared-observability/src/monitoring.rs",
       "enum": "ServiceStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "healthy",
           "unhealthy"
         ]
@@ -192,7 +186,7 @@
         "file": "lib/shared-observability/src/monitoring.rs",
         "enum": "ServiceStatus",
         "persisted": false,
-        "reason": "服务监控计算态"
+        "reason": "服务监控内存态"
       }
     },
     {
@@ -202,10 +196,8 @@
       "values_by_bucket": {
         "internal_state": [
           "breaching",
+          "healthy",
           "insufficient_data"
-        ],
-        "persisted_unmapped": [
-          "healthy"
         ]
       },
       "candidate_targets": [],
@@ -213,7 +205,7 @@
         "file": "lib/shared-observability/src/observability/slo.rs",
         "enum": "SLOStatus",
         "persisted": false,
-        "reason": "SLO 计算态，不落库"
+        "reason": "SLO 计算内存态"
       }
     },
     {
@@ -258,10 +250,8 @@
       "file": "svc/ai/src/dsh/workflow/mod.rs",
       "enum": "NodeExecutionStatus",
       "values_by_bucket": {
-        "api_projection": [
-          "skipped"
-        ],
         "internal_state": [
+          "skipped",
           "timeout"
         ]
       },
@@ -332,7 +322,7 @@
       "file": "svc/communication/src/mail.rs",
       "enum": "EmailQueueStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "sending"
         ]
       },
@@ -341,7 +331,7 @@
         "file": "svc/communication/src/mail.rs",
         "enum": "EmailQueueStatus",
         "persisted": false,
-        "reason": "邮件发送 DashMap 队列内存态，core_emails 只存发送结果"
+        "reason": "邮件 DashMap 队列内存态"
       }
     },
     {
@@ -592,9 +582,7 @@
       "enum": "SagaStepStatus",
       "values_by_bucket": {
         "internal_state": [
-          "compensated"
-        ],
-        "api_projection": [
+          "compensated",
           "skipped"
         ]
       },
@@ -630,7 +618,7 @@
       "file": "svc/master-data/src/modules/governance_v58.rs",
       "enum": "WorkflowStepStatus",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "skipped"
         ]
       },
@@ -649,7 +637,7 @@
       "file": "svc/plugin-registry/src/modules/plugin/models.rs",
       "enum": "UpgradeStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "downloaded",
           "downloading",
           "installed",
@@ -663,7 +651,7 @@
         "file": "svc/plugin-registry/src/modules/plugin/models.rs",
         "enum": "UpgradeStatus",
         "persisted": false,
-        "reason": "插件升级编排内存态，无对应状态列"
+        "reason": "插件升级编排内存态"
       }
     },
     {
@@ -671,7 +659,7 @@
       "file": "svc/portal/src/models/mod.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "healthy",
           "unhealthy"
         ]
@@ -681,7 +669,7 @@
         "file": "svc/portal/src/models/mod.rs",
         "enum": "HealthStatus",
         "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+        "reason": "Portal 健康探针内存态"
       }
     },
     {
@@ -725,7 +713,7 @@
       "file": "svc/portal/src/modules/gateway_monitoring.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "healthy",
           "unhealthy"
         ]
@@ -735,7 +723,7 @@
         "file": "svc/portal/src/modules/gateway_monitoring.rs",
         "enum": "HealthStatus",
         "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+        "reason": "网关监控内存态"
       }
     },
     {
@@ -743,7 +731,7 @@
       "file": "svc/portal/src/modules/graphql_edge_v2.rs",
       "enum": "DeploymentStatusGql",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "canary"
         ]
       },
@@ -760,7 +748,7 @@
       "file": "svc/portal/src/modules/graphql_edge_v2.rs",
       "enum": "EdgeExecutionStatusGql",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "skipped"
         ]
       },
@@ -777,7 +765,7 @@
       "file": "svc/portal/src/modules/graphql_governance.rs",
       "enum": "SchemaVersionStatusGql",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "staging"
         ]
       },
@@ -794,7 +782,7 @@
       "file": "svc/portal/src/modules/graphql_security.rs",
       "enum": "DiscoveryStatus",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "new"
         ]
       },
@@ -811,7 +799,7 @@
       "file": "svc/portal/src/modules/graphql_semantic_cache.rs",
       "enum": "MutationStatusGql",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "conflict",
           "synced",
           "syncing"
@@ -866,7 +854,7 @@
       "file": "svc/portal/src/modules/orchestration.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "healthy",
           "unhealthy"
         ]
@@ -876,7 +864,7 @@
         "file": "svc/portal/src/modules/orchestration.rs",
         "enum": "HealthStatus",
         "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+        "reason": "编排健康状态内存态"
       }
     },
     {
@@ -884,7 +872,7 @@
       "file": "svc/portal/src/modules/persisted_query.rs",
       "enum": "SyncStatus",
       "values_by_bucket": {
-        "api_projection": [
+        "internal_state": [
           "synced"
         ]
       },
@@ -901,10 +889,8 @@
       "file": "svc/portal/src/modules/schema_versioning/types.rs",
       "enum": "VersionStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
-          "sunset"
-        ],
         "internal_state": [
+          "sunset",
           "unsupported"
         ]
       },
@@ -913,7 +899,7 @@
         "file": "svc/portal/src/modules/schema_versioning/types.rs",
         "enum": "VersionStatus",
         "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+        "reason": "Schema 版本 API 投影"
       }
     },
     {
@@ -922,9 +908,7 @@
       "enum": "APIVersionStatus",
       "values_by_bucket": {
         "internal_state": [
-          "preview"
-        ],
-        "persisted_unmapped": [
+          "preview",
           "sunset"
         ]
       },
@@ -933,7 +917,7 @@
         "file": "svc/portal/src/modules/version_control.rs",
         "enum": "APIVersionStatus",
         "persisted": false,
-        "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+        "reason": "API 版本投影"
       }
     },
     {
@@ -941,7 +925,7 @@
       "file": "svc/unified-core/src/middleware/versioning.rs",
       "enum": "VersionStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "sunset"
         ]
       },
@@ -950,7 +934,7 @@
         "file": "svc/unified-core/src/middleware/versioning.rs",
         "enum": "VersionStatus",
         "persisted": false,
-        "reason": "API 版本生命周期，仅中间件内存表，无同名共享源"
+        "reason": "中间件版本兼容判断内存态"
       }
     },
     {
@@ -975,7 +959,7 @@
       "file": "svc/unified-core/src/shared/util.rs",
       "enum": "HealthStatus",
       "values_by_bucket": {
-        "persisted_unmapped": [
+        "internal_state": [
           "healthy",
           "unhealthy"
         ]
@@ -985,7 +969,7 @@
         "file": "svc/unified-core/src/shared/util.rs",
         "enum": "HealthStatus",
         "persisted": false,
-        "reason": "健康度聚合计算值，不落库；与 shared-core 同名同值但 serde 输出 PascalCase vs lowercase，直接替换会改 API 契约"
+        "reason": "健康探针内存态"
       }
     }
   ]
