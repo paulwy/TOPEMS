@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 354,
+    "db_check_constraints": 355,
     "db_enum_types": 5,
     "db_check_values": 156,
-    "rust_enums": 237,
+    "rust_enums": 238,
     "rust_enum_values": 210,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 220,
@@ -3395,6 +3395,25 @@
         "active",
         "deleted",
         "inactive"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/mrp_suggestion_status.rs",
+      "name": "MrpSuggestionStatus",
+      "values": [
+        "Completed",
+        "Confirmed",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "completed",
+        "confirmed",
+        "draft",
+        "pending",
+        "rejected"
       ]
     },
     {

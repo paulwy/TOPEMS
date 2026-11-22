@@ -17,6 +17,7 @@ pub mod incoming_inspection_status;
 pub mod inventory_turnover;
 pub mod master_data_ref_status;
 pub mod mrp;
+pub mod mrp_suggestion_status;
 pub mod openapi;
 pub mod price_comparison;
 pub mod purchase_contract;

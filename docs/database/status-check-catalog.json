@@ -4342,6 +4342,22 @@
     },
     {
       "schema": "scm",
+      "table": "mrp_suggestions",
+      "constraint": "ck_scm_mrp_suggestions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "confirmed",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'confirmed'::text, 'rejected'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "purchase_contracts",
       "constraint": "ck_scm_purchase_contracts_status_standard",
       "columns": [
@@ -8313,15 +8329,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "scm",
-      "table": "mrp_suggestions",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "scm",

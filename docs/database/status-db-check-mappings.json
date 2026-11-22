@@ -1401,6 +1401,13 @@
       "table": "scm.supplier_evaluations",
       "column": "status",
       "candidate": "docs/database/supplier-evaluation-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/mrp_suggestion_status.rs",
+      "enum": "MrpSuggestionStatus",
+      "table": "scm.mrp_suggestions",
+      "column": "status",
+      "candidate": "docs/database/mrp-suggestion-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -12,6 +12,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
+use super::mrp_suggestion_status::MrpSuggestionStatus;
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
@@ -283,7 +284,17 @@ pub async fn list_suggestions(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match MrpSuggestionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的 MRP 建议状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -302,7 +313,7 @@ pub async fn list_suggestions(
         "#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -320,7 +331,7 @@ pub async fn list_suggestions(
                 "#),
             )
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -427,6 +438,17 @@ pub async fn update_suggestion(
     };
     let now = Utc::now();
 
+    let status = match req.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match MrpSuggestionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的 MRP 建议状态".to_string(),
+                ))
+            }
+        },
+    };
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -449,7 +471,7 @@ pub async fn update_suggestion(
     .bind(req.lead_time_days)
     .bind(req.suggested_order_date)
     .bind(req.suggested_delivery_date)
-    .bind(&req.status)
+    .bind(status)
     .bind(&req.remarks)
     .bind(now)
     .execute(&mut **txn)
@@ -589,7 +611,7 @@ pub async fn compute_mrp(
                 ELSE CURRENT_DATE + INTERVAL '7 days'
             END as suggested_delivery_date,
             CURRENT_DATE as suggested_order_date,
-            'draft' as status,
+            $9 as status,
             CASE 
                 WHEN COALESCE(sales_orders.total, 0) > 0 AND COALESCE(forecast.total, 0) > 0 THEN 'both'
                 WHEN COALESCE(sales_orders.total, 0) > 0 THEN 'sales_order'
@@ -653,6 +675,7 @@ pub async fn compute_mrp(
     .bind(include_forecast)
     .bind(tenant_bind)
     .bind(locale)
+    .bind(MrpSuggestionStatus::DEFAULT.as_db_str())
     .fetch_all(&mut **txn)
     .await;
 
@@ -773,7 +796,7 @@ pub async fn confirm_suggestion(
             return ApiResponse::from(TopemsError::internal("解析MRP建议状态失败", e));
         }
     };
-    if status != "draft" {
+    if status != MrpSuggestionStatus::Draft.as_db_str() {
         return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "MRP建议当前状态为{}，无法确认",
             status
@@ -788,7 +811,7 @@ pub async fn confirm_suggestion(
         "scm",
         r#"
         UPDATE scm.mrp_suggestions SET
-            status = 'confirmed',
+            status = $7,
             suggested_quantity = $2::numeric,
             supplier_id = COALESCE($3, supplier_id),
             remarks = CASE 
@@ -809,6 +832,7 @@ pub async fn confirm_suggestion(
     .bind(req.remarks.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
     .bind(tenant_bind)
+    .bind(MrpSuggestionStatus::Confirmed.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 

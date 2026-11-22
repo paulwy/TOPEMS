@@ -116,6 +116,7 @@ const statusColorConfig: Record<
   string,
   { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' }
 > = {
+  draft: { label: i18n.t('scm.mrp_suggestion.k50'), color: 'default' },
   pending: { label: i18n.t('scm.mrp_suggestion.k16'), color: 'warning' },
   confirmed: { label: i18n.t('scm.mrp_suggestion.k17'), color: 'success' },
   rejected: { label: i18n.t('scm.mrp_suggestion.k18'), color: 'error' },
@@ -239,6 +240,7 @@ export const mrpSuggestionSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
+          { value: 'draft', label: i18n.t('scm.mrp_suggestion.k50') },
           { value: 'pending', label: i18n.t('scm.mrp_suggestion.k33') },
           { value: 'confirmed', label: i18n.t('scm.mrp_suggestion.k34') },
           { value: 'rejected', label: i18n.t('scm.mrp_suggestion.k35') },
@@ -279,12 +281,14 @@ export const mrpSuggestionSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
+        draft: 'default',
         pending: 'warning',
         confirmed: 'success',
         rejected: 'error',
         completed: 'info',
       },
       labelMap: {
+        draft: i18n.t('scm.mrp_suggestion.k50'),
         pending: i18n.t('scm.mrp_suggestion.k37'),
         confirmed: i18n.t('scm.mrp_suggestion.k38'),
         rejected: i18n.t('scm.mrp_suggestion.k39'),
@@ -309,6 +313,7 @@ export const mrpSuggestionSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('scm.mrp_suggestion.k47'), value: 'all' },
+          { label: i18n.t('scm.mrp_suggestion.k50'), value: 'draft' },
           { label: i18n.t('scm.mrp_suggestion.k48'), value: 'pending' },
           { label: i18n.t('scm.mrp_suggestion.k49'), value: 'confirmed' },
           { label: i18n.t('scm.mrp_suggestion.k50'), value: 'rejected' },
