@@ -8,6 +8,7 @@
 //! - `CustomerCreated` → 触发欢迎邮件（记录日志，邮件发送由通知服务异步处理）
 
 use crate::modules::customer_order_status::CustomerOrderStatus;
+use crate::modules::interaction_status::InteractionStatus;
 use crate::modules::master_data_ref_status::MasterDataRefStatus;
 use crate::modules::sales_order_status::SalesOrderStatus;
 use sqlx::PgPool;
@@ -219,7 +220,7 @@ impl CrmEventHandlers {
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, 'aftersales_ticket', $4, $5, 'in_progress', $6, $7, $7, $8)
+               VALUES ($1, $2, $3, 'aftersales_ticket', $4, $5, $6, $7, $8, $8, $9)
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
@@ -227,6 +228,7 @@ impl CrmEventHandlers {
         .bind(payload.customer_id)
         .bind(&subject)
         .bind(&content)
+        .bind(InteractionStatus::InProgress.as_db_str())
         .bind(now)
         .bind(now)
         .bind(tenant_id)
@@ -318,7 +320,7 @@ impl CrmEventHandlers {
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, $4, 'follow_up', $5, $6, 'scheduled', $7, TRUE, $8, $9, $9, $10)
+               VALUES ($1, $2, $3, $4, 'follow_up', $5, $6, $7, $8, TRUE, $9, $10, $10, $11)
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
@@ -327,6 +329,7 @@ impl CrmEventHandlers {
         .bind(payload.opportunity_id)
         .bind(&subject)
         .bind(&content)
+        .bind(InteractionStatus::Scheduled.as_db_str())
         .bind(now)
         .bind(follow_up_date)
         .bind(now)
