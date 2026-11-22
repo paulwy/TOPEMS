@@ -912,6 +912,13 @@
       "table": "wms.stock_take_items",
       "column": "quality_status",
       "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/sales_forecast_status.rs",
+      "enum": "SalesForecastStatus",
+      "table": "crm.sales_forecasts",
+      "column": "status",
+      "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

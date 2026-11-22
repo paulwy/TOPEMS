@@ -57,5 +57,5 @@
 - `check-scope-api`：未标记 176 / `Db::new` 144，未增长
 - `check-txn-write-non2xx`：通过
 - 盘点：204 枚举 / 191 值 / 152 不在 DB CHECK / 206 前端键，色板缺口 0
-- 队列：140 枚举 / 152 值，resolved 107，分桶一致
+- 队列：140 枚举 / 152 值，resolved 108，分桶一致
 - glossary 与 i18n quality：通过

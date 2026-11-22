@@ -6,7 +6,7 @@
     "uncovered_enums": 140,
     "uncovered_values": 152,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 107,
+    "resolved_enums": 108,
     "internal_state_enums": 69,
     "persisted_unmapped_enums": 65,
     "api_projection_enums": 25,
@@ -527,7 +527,14 @@
           "generated"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/crm/src/modules/sales_forecast_status.rs",
+        "enum": "SalesForecastStatus",
+        "table": "crm.sales_forecasts",
+        "column": "status",
+        "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "ehs",
