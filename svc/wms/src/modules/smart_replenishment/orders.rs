@@ -8,11 +8,14 @@ use sqlx::Row;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
-use crate::modules::smart_replenishment::status::ReplenishmentOrderStatus;
+use crate::modules::smart_replenishment::status::{
+    ReplenishmentOrderItemStatus, ReplenishmentOrderStatus,
+};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
 
@@ -210,7 +213,7 @@ pub async fn create_order(
                             id, order_id, line_number, sku, material_name, specification,
                             unit, quantity, unit_price, total_amount, status,
                             created_at, updated_at, tenant_id
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11, $12, $13)
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                         "#,
                     )
                     .bind(item_id)
@@ -227,6 +230,7 @@ pub async fn create_order(
                     .bind(item.get("quantity").and_then(|v| v.as_i64()).unwrap_or(0))
                     .bind(item.get("unit_price").and_then(|v| v.as_f64()))
                     .bind(item.get("total_amount").and_then(|v| v.as_f64()))
+                    .bind(ReplenishmentOrderItemStatus::DEFAULT.as_db_str())
                     .bind(now)
                     .bind(now)
                     .bind(tenant)
@@ -521,8 +525,13 @@ pub async fn list_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -538,11 +547,14 @@ pub async fn list_order_items(
         SELECT id, order_id, line_number, sku, material_name, specification,
                unit, quantity, unit_price::float8, total_amount::float8, status,
                created_at, updated_at
-        FROM wms.replenishment_order_items WHERE order_id = $1 AND deleted_at IS NULL
+        FROM wms.replenishment_order_items
+        WHERE order_id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND status = ANY(ARRAY['pending','confirmed','completed'])
         ORDER BY line_number
         "#,
     )
     .bind(id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -612,21 +624,36 @@ pub async fn confirm_order(
 
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
-        UPDATE wms.replenishment_orders SET
-            status = $3,
-            updated_at = $2
-        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
-          AND status = ANY($4)
-        RETURNING id, order_number, status, updated_at
-        "#,
-    )
+        WITH updated_order AS (
+            UPDATE wms.replenishment_orders SET
+                status = $3,
+                updated_at = $2
+            WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+              AND status = ANY($4)
+            RETURNING id, order_number, status, updated_at
+        ),
+        updated_items AS (
+            UPDATE wms.replenishment_order_items i SET
+                status = $6,
+                updated_at = $2
+            FROM updated_order o
+            WHERE i.order_id = o.id
+              AND i.tenant_id = $5 AND i.deleted_at IS NULL
+              AND i.status = ANY($7)
+        )
+        SELECT id, order_number, status, updated_at FROM updated_order
+        "#
+    ))
     .bind(id)
     .bind(now)
     .bind(ReplenishmentOrderStatus::Confirmed.as_db_str())
     .bind(ReplenishmentOrderStatus::confirm_from())
     .bind(tenant)
+    .bind(ReplenishmentOrderItemStatus::Confirmed.as_db_str())
+    .bind(ReplenishmentOrderItemStatus::confirm_from())
     .fetch_one(&mut **txn)
     .await;
 
@@ -692,21 +719,36 @@ pub async fn complete_order(
 
     let now = Utc::now().naive_utc();
 
-    let result = sqlx::query(
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
         r#"
-        UPDATE wms.replenishment_orders SET
-            status = $3,
-            updated_at = $2
-        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
-          AND status = ANY($4)
-        RETURNING id, order_number, status, updated_at
-        "#,
-    )
+        WITH updated_order AS (
+            UPDATE wms.replenishment_orders SET
+                status = $3,
+                updated_at = $2
+            WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+              AND status = ANY($4)
+            RETURNING id, order_number, status, updated_at
+        ),
+        updated_items AS (
+            UPDATE wms.replenishment_order_items i SET
+                status = $6,
+                updated_at = $2
+            FROM updated_order o
+            WHERE i.order_id = o.id
+              AND i.tenant_id = $5 AND i.deleted_at IS NULL
+              AND i.status = ANY($7)
+        )
+        SELECT id, order_number, status, updated_at FROM updated_order
+        "#
+    ))
     .bind(id)
     .bind(now)
     .bind(ReplenishmentOrderStatus::Completed.as_db_str())
     .bind(ReplenishmentOrderStatus::complete_from())
     .bind(tenant)
+    .bind(ReplenishmentOrderItemStatus::Completed.as_db_str())
+    .bind(ReplenishmentOrderItemStatus::complete_from())
     .fetch_one(&mut **txn)
     .await;
 

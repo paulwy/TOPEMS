@@ -588,7 +588,7 @@ export interface ReplenishmentOrderItem {
   unit_price?: number;
   total_amount?: number;
   received_quantity?: number;
-  status: string;
+  status: 'pending' | 'confirmed' | 'completed';
   created_at: string;
   updated_at: string;
 }

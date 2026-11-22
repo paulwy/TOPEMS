@@ -537,6 +537,13 @@
     },
     {
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "enum": "ReplenishmentOrderItemStatus",
+      "table": "wms.replenishment_order_items",
+      "column": "status",
+      "candidate": "docs/database/wms-replenishment-order-item-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
       "enum": "ReplenishmentOrderStatus",
       "table": "wms.replenishment_orders",
       "column": "status",

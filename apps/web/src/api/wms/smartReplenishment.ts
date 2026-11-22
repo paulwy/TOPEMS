@@ -108,6 +108,7 @@ export interface ReplenishmentOrderItem {
   total_price?: number;
   suggested_supplier?: string;
   remarks?: string;
+  status?: 'pending' | 'confirmed' | 'completed';
 }
 
 interface SafetyStock {

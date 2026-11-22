@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 196,
+    "rust_enums": 197,
     "rust_enum_values": 190,
     "rust_values_not_in_db_check": 151,
     "frontend_status_keys": 205,
@@ -3313,6 +3313,21 @@
         "out_stock",
         "reserved",
         "scrapped"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "name": "ReplenishmentOrderItemStatus",
+      "values": [
+        "Completed",
+        "Confirmed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "confirmed",
+        "pending"
       ]
     },
     {
