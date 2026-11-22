@@ -4,7 +4,7 @@ import { commonAuditSchema } from './_shared';
 import { approvalStatus } from './customer';
 import i18n from '@/i18n';
 
-const contactStatus = z.enum(['active', 'inactive']);
+const contactStatus = z.enum(['active', 'inactive', 'archived']);
 
 const contactZodSchema = z
   .object({
@@ -107,6 +107,7 @@ export const contactSchema: EntitySchema<Contact> = {
         options: [
           { value: 'active', label: i18n.t('shared.contact.k9') },
           { value: 'inactive', label: i18n.t('shared.contact.k10') },
+          { value: 'archived', label: i18n.t('shared.contact.k29') },
         ],
       },
       listWidth: 100,
@@ -153,10 +154,12 @@ export const contactSchema: EntitySchema<Contact> = {
       colorMap: {
         active: 'success',
         inactive: 'default',
+        archived: 'default',
       },
       labelMap: {
         active: i18n.t('shared.contact.k18'),
         inactive: i18n.t('shared.contact.k19'),
+        archived: i18n.t('shared.contact.k29'),
       },
     },
     filters: [
@@ -168,6 +171,7 @@ export const contactSchema: EntitySchema<Contact> = {
           { label: i18n.t('shared.contact.k21'), value: 'all' },
           { label: i18n.t('shared.contact.k22'), value: 'active' },
           { label: i18n.t('shared.contact.k23'), value: 'inactive' },
+          { label: i18n.t('shared.contact.k29'), value: 'archived' },
         ],
       },
     ],

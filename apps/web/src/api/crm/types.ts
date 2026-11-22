@@ -137,6 +137,7 @@ export interface UpdateContactRequest {
 
 export interface ContactQueryParams extends PaginationParams {
   customer_id?: string;
+  status?: string;
 }
 
 export interface Opportunity {

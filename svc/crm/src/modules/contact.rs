@@ -91,12 +91,15 @@ pub async fn list_contacts(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = match params.status.as_deref() {
+    let status_filter: Vec<String> = match params.status.as_deref() {
         Some(raw) => match ContactStatus::from_db_str(raw) {
-            Some(v) => Some(v.as_db_str().to_string()),
+            Some(v) => vec![v.as_db_str().to_string()],
             None => return ApiResponse::bad_request("无效的联系人状态"),
         },
-        None => None,
+        None => ContactStatus::DB_VALUES
+            .iter()
+            .map(|value| (*value).to_string())
+            .collect(),
     };
     let customer_filter = params.customer_id;
     let canonical_approval_statuses: Vec<String> = ContactApprovalStatus::DB_VALUES
@@ -110,7 +113,7 @@ pub async fn list_contacts(
         FROM crm.contacts
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+          AND status = ANY($2::text[])
           AND ($3::uuid IS NULL OR customer_id = $3)
           AND approval_status = ANY($6::text[])
         ORDER BY created_at DESC
@@ -133,7 +136,7 @@ pub async fn list_contacts(
                 SELECT COUNT(*) FROM crm.contacts
                 WHERE deleted_at IS NULL
                   AND ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($2::text[])
                   AND ($3::uuid IS NULL OR customer_id = $3)
                   AND approval_status = ANY($4::text[])
                 "#,
@@ -382,25 +385,24 @@ async fn update_contact(
     let phone = req.phone.or(existing.phone);
     let position = req.position.or(existing.position);
     let customer_id = req.customer_id.or(existing.customer_id);
+    let current_status = match ContactStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::error(409, "联系人当前状态非法，无法变更"),
+    };
     let status = match req.status.as_deref() {
         Some(raw) => match ContactStatus::from_db_str(raw) {
+            Some(next) if current_status.can_transition_to(next) => next.as_db_str().to_string(),
             Some(next) => {
-                let Some(current) = ContactStatus::from_db_str(&existing.status) else {
-                    return ApiResponse::error(409, "联系人当前状态非法，无法变更");
-                };
-                if !current.can_transition_to(next) {
-                    let msg = format!(
-                        "联系人状态不允许从 {} 变更为 {}",
-                        current.as_db_str(),
-                        next.as_db_str()
-                    );
-                    return ApiResponse::error(409, &msg);
-                }
-                next.as_db_str().to_string()
+                let msg = format!(
+                    "联系人状态不允许从 {} 变更为 {}",
+                    current_status.as_db_str(),
+                    next.as_db_str()
+                );
+                return ApiResponse::error(409, &msg);
             }
             None => return ApiResponse::bad_request("无效的联系人状态"),
         },
-        None => existing.status,
+        None => current_status.as_db_str().to_string(),
     };
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
@@ -411,6 +413,7 @@ async fn update_contact(
             first_name = $2, last_name = $3, email = $4, phone = $5, position = $6,
             customer_id = $7, status = $8, notes = $9, updated_at = $10
         WHERE id = $1 AND tenant_id = $11 AND deleted_at IS NULL
+          AND COALESCE(status, $12) = $12
         RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         "#,
     )
@@ -425,6 +428,7 @@ async fn update_contact(
     .bind(&notes)
     .bind(now)
     .bind(tenant_id)
+    .bind(current_status.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -442,6 +446,11 @@ async fn update_contact(
                 None,
             )
         }
+        Err(sqlx::Error::RowNotFound) => (
+            ApiResponse::error(409, "联系人不存在、已删除或状态已被并发修改"),
+            "error".to_string(),
+            Some("联系人状态已被并发修改".to_string()),
+        ),
         Err(e) => {
             tracing::error!("更新联系人失败: {}", e);
             (
