@@ -354,6 +354,7 @@ export interface StockTakeItem {
   unit_price?: number;
   discrepancy_value?: number;
   quality_status?: string;
+  status: 'pending' | 'completed';
   counter?: string;
   counting_time?: string;
   recount_required?: boolean;

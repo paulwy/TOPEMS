@@ -884,6 +884,13 @@
       "table": "wms.discrepancy_records",
       "column": "adjustment_status",
       "candidate": "docs/database/wms-discrepancy-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/stock_take_item_status.rs",
+      "enum": "StockTakeItemStatus",
+      "table": "wms.stock_take_items",
+      "column": "status",
+      "candidate": "docs/database/wms-stock-take-item-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 199,
+    "rust_enums": 200,
     "rust_enum_values": 190,
     "rust_values_not_in_db_check": 151,
     "frontend_status_keys": 205,
@@ -3390,6 +3390,19 @@
         "active",
         "confirmed",
         "draft"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/stock_take_item_status.rs",
+      "name": "StockTakeItemStatus",
+      "values": [
+        "Completed",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "pending"
       ]
     },
     {

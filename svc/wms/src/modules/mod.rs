@@ -40,6 +40,7 @@ pub mod serial_number;
 pub mod serial_number_status;
 pub mod smart_replenishment;
 pub mod stock_take;
+pub mod stock_take_item_status;
 pub mod stock_take_status;
 pub mod sync_records;
 pub mod sync_status;
