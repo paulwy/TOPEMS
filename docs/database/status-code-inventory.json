@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 202,
+    "rust_enums": 203,
     "rust_enum_values": 190,
     "rust_values_not_in_db_check": 151,
     "frontend_status_keys": 205,
@@ -3418,6 +3418,21 @@
       "normalized": [
         "completed",
         "pending"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/stock_take_item_quality_status.rs",
+      "name": "StockTakeItemQualityStatus",
+      "values": [
+        "Pending",
+        "Qualified",
+        "Unqualified"
+      ],
+      "normalized": [
+        "pending",
+        "qualified",
+        "unqualified"
       ]
     },
     {

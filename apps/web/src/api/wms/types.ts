@@ -120,6 +120,8 @@ export type InboundItemQualityStatus = 'pending' | 'qualified' | 'rejected';
 
 export type StockTakeApprovalStatus = 'pending' | 'approved' | 'rejected';
 
+export type StockTakeItemQualityStatus = 'qualified' | 'unqualified' | 'pending';
+
 export interface InboundOrderItem {
   id: string;
   order_id: string;
@@ -355,7 +357,7 @@ export interface StockTakeItem {
   unit: string;
   unit_price?: number;
   discrepancy_value?: number;
-  quality_status?: string;
+  quality_status: StockTakeItemQualityStatus;
   status: 'pending' | 'completed';
   counter?: string;
   counting_time?: string;
@@ -382,6 +384,7 @@ export interface CreateStockTakeItemRequest {
   inventoryitem_id: string;
   expected_quantity: number;
   actual_quantity?: number;
+  quality_status?: StockTakeItemQualityStatus;
   remarks?: string;
 }
 

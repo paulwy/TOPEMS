@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::models::stock_take::*;
 use crate::modules::audit::log_audit_event;
 use crate::modules::stock_take_adjustment_status::StockTakeAdjustmentStatus;
+use crate::modules::stock_take_item_quality_status::StockTakeItemQualityStatus;
 use crate::modules::stock_take_item_status::StockTakeItemStatus;
 use crate::modules::stock_take_status::{StockTakeApprovalStatus, StockTakeStatus};
 use crate::modules::ApiState;
@@ -831,7 +832,12 @@ pub async fn start_stock_take(
             SELECT uuid_generate_v4(), $3, $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
                    i.material_code, i.material_name, i.specification,
                    i.batch_number, i.location_id, i.quantity, i.unit,
-                   i.quality_status, $6, $5, NOW(), NOW(), $3, $4
+                   CASE
+                       WHEN i.quality_status IN ('qualified', 'unqualified', 'pending')
+                       THEN i.quality_status
+                       ELSE $7
+                   END,
+                   $6, $5, NOW(), NOW(), $3, $4
             FROM wms.inventory i
             WHERE i.warehouse_id = $2 AND i.tenant_id = $3 AND i.deleted_at IS NULL
             "#
@@ -842,6 +848,7 @@ pub async fn start_stock_take(
         .bind(org_id)
         .bind(StockTakeItemStatus::DEFAULT.as_db_str())
         .bind(StockTakeAdjustmentStatus::DEFAULT.as_db_str())
+        .bind(StockTakeItemQualityStatus::DEFAULT.as_db_str())
         .execute(&mut scope)
         .await;
         if let Err(e) = seeded {
@@ -1059,6 +1066,10 @@ pub async fn list_stock_take_items(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_quality_statuses: Vec<String> = StockTakeItemQualityStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -1073,6 +1084,7 @@ pub async fn list_stock_take_items(
         WHERE stock_take_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
           AND status = ANY($3::text[])
           AND adjustment_status = ANY($4::text[])
+          AND quality_status = ANY($5::text[])
         ORDER BY line_number ASC
         "#
     ))
@@ -1080,6 +1092,7 @@ pub async fn list_stock_take_items(
     .bind(tenant)
     .bind(&canonical_statuses)
     .bind(&canonical_adjustment_statuses)
+    .bind(&canonical_quality_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1208,6 +1221,18 @@ pub async fn create_stock_take_item(
     } else {
         StockTakeItemStatus::DEFAULT
     };
+    let quality_status = match req.quality_status.as_deref() {
+        Some(raw) => match StockTakeItemQualityStatus::from_db_str(raw) {
+            Some(value) => value,
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "无效的盘点明细质量状态: {raw}，允许值 {}",
+                    StockTakeItemQualityStatus::DB_VALUES.join("/")
+                ))
+            }
+        },
+        None => StockTakeItemQualityStatus::DEFAULT,
+    };
 
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
@@ -1215,9 +1240,9 @@ pub async fn create_stock_take_item(
                                           material_name, specification, batch_number, location_id,
                                           system_quantity, counted_quantity, discrepancy_quantity,
                                           discrepancy_type, status, adjustment_status,
-                                          unit, unit_price, discrepancy_value,
+                                          quality_status, unit, unit_price, discrepancy_value,
                                           notes, created_at, updated_at, tenant_id, org_id)
-        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $20, $21, $12, $13, $14, $15, $16, $17, $18, $19)
+        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $20, $21, $22, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                   status, quality_status, adjustment_status,
@@ -1245,6 +1270,7 @@ pub async fn create_stock_take_item(
     .bind(org_id)
     .bind(initial_status.as_db_str())
     .bind(StockTakeAdjustmentStatus::DEFAULT.as_db_str())
+    .bind(quality_status.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1489,6 +1515,10 @@ pub async fn get_stock_take_item(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_quality_statuses: Vec<String> = StockTakeItemQualityStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -1503,6 +1533,7 @@ pub async fn get_stock_take_item(
         WHERE stock_take_id = $1 AND id = $2 AND tenant_id = $3::uuid AND deleted_at IS NULL
           AND status = ANY($4::text[])
           AND adjustment_status = ANY($5::text[])
+          AND quality_status = ANY($6::text[])
         "#
     ))
     .bind(id)
@@ -1510,6 +1541,7 @@ pub async fn get_stock_take_item(
     .bind(tenant)
     .bind(&canonical_statuses)
     .bind(&canonical_adjustment_statuses)
+    .bind(&canonical_quality_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1560,6 +1592,10 @@ pub async fn update_stock_take_item(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_quality_statuses: Vec<String> = StockTakeItemQualityStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let existing = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1568,12 +1604,14 @@ pub async fn update_stock_take_item(
                discrepancy_type, status, notes FROM wms.stock_take_items 
         WHERE stock_take_id = $1 AND id = $2 AND tenant_id = $3::uuid AND deleted_at IS NULL
           AND status = ANY($4::text[])
+          AND quality_status = ANY($5::text[])
         "#
     ))
     .bind(id)
     .bind(item_id)
     .bind(tenant)
     .bind(&canonical_statuses)
+    .bind(&canonical_quality_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1633,6 +1671,18 @@ pub async fn update_stock_take_item(
     if let Err(msg) = current_status.can_transition_to(target_status) {
         return ApiResponse::bad_request(&msg);
     }
+    let target_quality = match req.quality_status.as_deref() {
+        Some(raw) => match StockTakeItemQualityStatus::from_db_str(raw) {
+            Some(value) => Some(value),
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "无效的盘点明细质量状态: {raw}，允许值 {}",
+                    StockTakeItemQualityStatus::DB_VALUES.join("/")
+                ))
+            }
+        },
+        None => None,
+    };
     let remarks = req.remarks.or_else(|| {
         existing
             .try_get::<Option<String>, _>("notes")
@@ -1646,7 +1696,8 @@ pub async fn update_stock_take_item(
         r#"
         UPDATE wms.stock_take_items SET
             counted_quantity = $1, discrepancy_quantity = $2, discrepancy_type = $3, 
-            status = $4, notes = $5, updated_at = $6
+            status = $4, notes = $5, updated_at = $6,
+            quality_status = COALESCE($11, quality_status)
         WHERE stock_take_id = $7 AND id = $8 AND tenant_id = $9::uuid
           AND status = $10 AND deleted_at IS NULL
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
@@ -1665,6 +1716,7 @@ pub async fn update_stock_take_item(
     .bind(item_id)
     .bind(tenant)
     .bind(current_status.as_db_str())
+    .bind(target_quality.map(|value| value.as_db_str()))
     .fetch_one(&mut **txn)
     .await;
 

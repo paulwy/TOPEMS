@@ -56,6 +56,7 @@ pub struct CreateStockTakeItemRequest {
     pub inventory_item_id: Uuid,
     pub expected_quantity: f64,
     pub actual_quantity: Option<f64>,
+    pub quality_status: Option<String>,
     pub remarks: Option<String>,
 }
 
@@ -63,6 +64,7 @@ pub struct CreateStockTakeItemRequest {
 pub struct UpdateStockTakeItemRequest {
     pub actual_quantity: Option<f64>,
     pub status: Option<String>,
+    pub quality_status: Option<String>,
     pub remarks: Option<String>,
 }
 
@@ -196,6 +198,7 @@ mod tests {
             inventory_item_id: Uuid::new_v4(),
             expected_quantity: 50.0,
             actual_quantity: Some(50.0),
+            quality_status: Some("qualified".into()),
             remarks: None,
         };
         let v = serde_json::to_value(&req).unwrap();
@@ -209,6 +212,7 @@ mod tests {
         let req = UpdateStockTakeItemRequest {
             actual_quantity: None,
             status: None,
+            quality_status: None,
             remarks: None,
         };
         let v = serde_json::to_value(&req).unwrap();
