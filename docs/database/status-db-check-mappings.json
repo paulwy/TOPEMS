@@ -926,6 +926,13 @@
       "table": "crm.interactions",
       "column": "status",
       "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/customer_order_status.rs",
+      "enum": "CustomerOrderStatus",
+      "table": "crm.customer_orders",
+      "column": "status",
+      "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

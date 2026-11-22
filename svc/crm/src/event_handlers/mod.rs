@@ -7,6 +7,7 @@
 //! - `OpportunityWon` → 自动创建跟进任务记录
 //! - `CustomerCreated` → 触发欢迎邮件（记录日志，邮件发送由通知服务异步处理）
 
+use crate::modules::customer_order_status::CustomerOrderStatus;
 use sqlx::PgPool;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
@@ -941,7 +942,7 @@ impl CrmEventHandlers {
     ///
     /// 数据源：erp 创建销售订单发布（svc/erp/src/modules/sales_order.rs），
     /// 幂等按 order_no+tenant_id 去重；order_amount 取应付金额（payable_amount，含税口径），
-    /// status 透传 erp 侧真实状态（draft/confirmed/...），tenant_id 优先事件载荷、回退连接上下文。
+    /// status 严格解析为 CustomerOrderStatus（历史 confirmed 归一为 approved），未知值跳过并告警。
     async fn handle_sales_order_created(&self, event: Event) -> HandlerResult {
         // v1.85 闭环：payload 解析失败属不可恢复消息（重试无法修复），记录日志后跳过 ACK，
         // 避免 UUID 解析失败等坏事件触发无限重试/ERROR 风暴（与 mobile/finance 消费端同构修复）。
@@ -955,6 +956,22 @@ impl CrmEventHandlers {
                 );
                 return Ok(());
             }
+        };
+
+        // 状态先校验，非法值在打开事务前拒绝，避免写脏台账。
+        let status = match payload.status.as_deref() {
+            Some(raw) => match CustomerOrderStatus::from_db_str(raw) {
+                Some(status) => status.as_db_str().to_string(),
+                None => {
+                    tracing::error!(
+                        "[crm] SalesOrderCreated 未知订单状态（不可恢复，跳过台账） - order_no={}, status={}",
+                        payload.order_no,
+                        raw
+                    );
+                    return Ok(());
+                }
+            },
+            None => CustomerOrderStatus::Approved.as_db_str().to_string(),
         };
 
         // 事件必须携带租户；缺租户显式失败，禁止跳过 ACK 导致台账静默丢失。
@@ -996,11 +1013,6 @@ impl CrmEventHandlers {
             return Ok(());
         }
 
-        // 状态透传：erp 侧真实订单状态；缺失时按 CRM 台账语义记 confirmed（进入台账视为已确认）
-        let status = payload
-            .status
-            .clone()
-            .unwrap_or_else(|| "confirmed".to_string());
         let order_amount = payload
             .payable_amount
             .unwrap_or_else(|| payload.total_amount.unwrap_or(rust_decimal::Decimal::ZERO));
