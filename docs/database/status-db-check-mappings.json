@@ -1366,6 +1366,13 @@
       "table": "public.core_workflow_tasks",
       "column": "status",
       "candidate": "docs/database/core-workflow-task-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/purchase_requisition_status.rs",
+      "enum": "PurchaseRequisitionStatus",
+      "table": "scm.purchase_requisitions",
+      "column": "status",
+      "candidate": "docs/database/purchase-requisition-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

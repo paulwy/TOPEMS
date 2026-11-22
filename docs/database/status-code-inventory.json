@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 349,
+    "db_check_constraints": 350,
     "db_enum_types": 5,
-    "db_check_values": 152,
-    "rust_enums": 232,
-    "rust_enum_values": 206,
+    "db_check_values": 153,
+    "rust_enums": 233,
+    "rust_enum_values": 207,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 216,
+    "frontend_status_keys": 217,
     "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
@@ -3388,6 +3388,27 @@
     },
     {
       "module": "scm",
+      "file": "svc/scm/src/modules/purchase_requisition_status.rs",
+      "name": "PurchaseRequisitionStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Converted",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "converted",
+        "draft",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "scm",
       "file": "svc/scm/src/modules/supplier_status.rs",
       "name": "SupplierStatus",
       "values": [
@@ -4165,6 +4186,7 @@
       "conflict",
       "consumed",
       "controlled",
+      "converted",
       "created",
       "critical",
       "danger",

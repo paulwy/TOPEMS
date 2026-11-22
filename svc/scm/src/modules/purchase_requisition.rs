@@ -8,6 +8,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::purchase_requisition_status::PurchaseRequisitionStatus;
 use super::ApiState;
 use crate::models::purchase_requisition::{
     CreatePurchaseRequisitionRequest, PurchaseRequisition, PurchaseRequisitionQueryParams,
@@ -85,10 +86,22 @@ pub async fn list_requisitions(
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match PurchaseRequisitionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的采购申请状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let requisitions = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, applicant_id, applicant_name, department_id, department_name, request_date, required_date, total_amount, currency, status, priority, supplier_id, supplier_name, approval_status, approver, approved_at, remarks, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL AND tenant_id = $3::uuid ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, applicant_id, applicant_name, department_id, department_name, request_date, required_date, total_amount, currency, status, priority, supplier_id, supplier_name, approval_status, approver, approved_at, remarks, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND tenant_id = $4::uuid ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
     )
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -97,8 +110,9 @@ pub async fn list_requisitions(
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL AND tenant_id = $1::uuid"
+        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND tenant_id = $2::uuid"
     ))
+    .bind(status_filter)
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
@@ -176,7 +190,7 @@ pub async fn create_requisition(
         INSERT INTO scm.purchase_requisitions (
             requisition_no, title, applicant_id, department_id,
             request_date, required_date, priority, supplier_id, remarks, status, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
         "#
     ))
@@ -189,6 +203,7 @@ pub async fn create_requisition(
     .bind(&data.priority)
     .bind(supplier_id)
     .bind(&data.remarks)
+    .bind(PurchaseRequisitionStatus::DEFAULT.as_db_str())
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
@@ -312,6 +327,17 @@ pub async fn update_requisition(
         .supplier_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
+    let status = match data.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match PurchaseRequisitionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的采购申请状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
         "scm",
@@ -331,7 +357,7 @@ pub async fn update_requisition(
     .bind(required_date)
     .bind(&data.priority)
     .bind(supplier_id)
-    .bind(&data.status)
+    .bind(status)
     .bind(&data.remarks)
     .bind(requisition_id)
     .bind(tenant_bind)
@@ -462,8 +488,9 @@ pub async fn submit_requisition(
         Err(e) => return e.0,
     };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND tenant_id = $3::uuid RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = $1, remarks = COALESCE($2, remarks) WHERE id = $3 AND deleted_at IS NULL AND status = 'draft' AND tenant_id = $4::uuid RETURNING *"),
     )
+    .bind(PurchaseRequisitionStatus::Pending.as_db_str())
     .bind(remarks)
     .bind(requisition_id)
     .bind(tenant_bind)
@@ -542,7 +569,7 @@ pub async fn approve_requisition(
         "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
-            status = 'approved', approval_status = 'approved', 
+            status = $5, approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND tenant_id = $4::uuid
         RETURNING *
@@ -552,6 +579,7 @@ pub async fn approve_requisition(
     .bind(remarks)
     .bind(requisition_id)
     .bind(tenant_bind)
+    .bind(PurchaseRequisitionStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -627,7 +655,7 @@ pub async fn reject_requisition(
         "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
-            status = 'rejected', approval_status = 'rejected', 
+            status = $5, approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND tenant_id = $4::uuid
         RETURNING *
@@ -637,6 +665,7 @@ pub async fn reject_requisition(
     .bind(remarks)
     .bind(requisition_id)
     .bind(tenant_bind)
+    .bind(PurchaseRequisitionStatus::Rejected.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -709,8 +738,9 @@ pub async fn cancel_requisition(
         Err(e) => return e.0,
     };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') AND tenant_id = $3::uuid RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = $1, remarks = COALESCE($2, remarks) WHERE id = $3 AND deleted_at IS NULL AND status IN ('draft', 'pending') AND tenant_id = $4::uuid RETURNING *"),
     )
+    .bind(PurchaseRequisitionStatus::Cancelled.as_db_str())
     .bind(remarks)
     .bind(requisition_id)
     .bind(tenant_bind)
@@ -780,8 +810,9 @@ pub async fn convert_to_order(
         Err(e) => return e.0,
     };
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND tenant_id = $2::uuid RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = $1 WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' AND tenant_id = $3::uuid RETURNING *"),
     )
+    .bind(PurchaseRequisitionStatus::Converted.as_db_str())
     .bind(requisition_id)
     .bind(tenant_bind)
     .fetch_one(&mut **txn)

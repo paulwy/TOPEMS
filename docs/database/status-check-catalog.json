@@ -4347,6 +4347,23 @@
     },
     {
       "schema": "scm",
+      "table": "purchase_requisitions",
+      "constraint": "ck_scm_purchase_requisitions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "converted",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'cancelled'::text, 'converted'::text]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "scm_master_data_refs",
       "constraint": "ck_scm_master_data_refs_status_standard",
       "columns": [
@@ -8293,15 +8310,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "scm",
-      "table": "purchase_requisitions",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "scm",
