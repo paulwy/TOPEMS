@@ -8,13 +8,14 @@
 //! - `CustomerCreated` → 触发欢迎邮件（记录日志，邮件发送由通知服务异步处理）
 
 use crate::modules::customer_order_status::CustomerOrderStatus;
+use crate::modules::master_data_ref_status::MasterDataRefStatus;
 use sqlx::PgPool;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     require_event_tenant, AfterSalesTicketCreatedPayload, CustomerCreatedPayload, Event,
-    EventResult, EventSubscriber, EventType, MasterDataAction, MasterDataDomain, MasterDataEvent,
+    EventResult, EventSubscriber, EventType, MasterDataDomain, MasterDataEvent,
     OpportunityWonPayload, PaymentReceivedPayload, SalesOrderCreatedPayload,
     ShippingOrderRequestedPayload,
 };
@@ -702,11 +703,7 @@ impl CrmEventHandlers {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let status = match event.action {
-            MasterDataAction::Deleted => "deleted",
-            MasterDataAction::Deactivated => "inactive",
-            _ => "active",
-        };
+        let status = MasterDataRefStatus::from_action(event.action);
 
         self.upsert_local_master_data_ref(&event, "employee", employee_name, status)
             .await?;
@@ -732,11 +729,7 @@ impl CrmEventHandlers {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let status = match event.action {
-            MasterDataAction::Deleted => "deleted",
-            MasterDataAction::Deactivated => "inactive",
-            _ => "active",
-        };
+        let status = MasterDataRefStatus::from_action(event.action);
 
         self.upsert_local_master_data_ref(&event, "supplier", supplier_name, status)
             .await?;
@@ -765,11 +758,7 @@ impl CrmEventHandlers {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let status = match event.action {
-            MasterDataAction::Deleted => "deleted",
-            MasterDataAction::Deactivated => "inactive",
-            _ => "active",
-        };
+        let status = MasterDataRefStatus::from_action(event.action);
 
         self.upsert_local_master_data_ref(&event, "organization", org_name, status)
             .await?;
@@ -898,7 +887,7 @@ impl CrmEventHandlers {
         event: &MasterDataEvent,
         local_entity_type: &str,
         name: &str,
-        status: &str,
+        status: MasterDataRefStatus,
     ) -> HandlerResult {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
@@ -913,7 +902,7 @@ impl CrmEventHandlers {
             domain: domain_str.clone(),
             code: event.code.clone(),
             name: name.to_string(),
-            status: status.to_string(),
+            status: status.as_db_str().to_string(),
             source_service: event.source_service.clone(),
             local_entity_type: local_entity_type.to_string(),
             payload_snapshot: event.payload.clone(),

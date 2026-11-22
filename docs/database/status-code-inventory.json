@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 206,
+    "rust_enums": 207,
     "rust_enum_values": 191,
     "rust_values_not_in_db_check": 152,
     "frontend_status_keys": 206,
@@ -634,6 +634,21 @@
         "completed",
         "in_progress",
         "scheduled"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/master_data_ref_status.rs",
+      "name": "MasterDataRefStatus",
+      "values": [
+        "Active",
+        "Deleted",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "deleted",
+        "inactive"
       ]
     },
     {

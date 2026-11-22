@@ -933,6 +933,13 @@
       "table": "crm.customer_orders",
       "column": "status",
       "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/master_data_ref_status.rs",
+      "enum": "MasterDataRefStatus",
+      "table": "crm.crm_master_data_refs",
+      "column": "status",
+      "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

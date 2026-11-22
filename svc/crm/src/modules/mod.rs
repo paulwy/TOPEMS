@@ -31,6 +31,7 @@ pub mod finance_risk;
 pub mod forecast;
 pub mod interaction;
 pub mod interaction_status;
+pub mod master_data_ref_status;
 pub mod openapi;
 pub mod opportunity;
 pub mod opportunity_status;
