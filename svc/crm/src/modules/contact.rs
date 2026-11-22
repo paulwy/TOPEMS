@@ -99,6 +99,10 @@ pub async fn list_contacts(
         None => None,
     };
     let customer_filter = params.customer_id;
+    let canonical_approval_statuses: Vec<String> = ContactApprovalStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
@@ -108,6 +112,7 @@ pub async fn list_contacts(
           AND ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR customer_id = $3)
+          AND approval_status = ANY($6::text[])
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#,
@@ -117,6 +122,7 @@ pub async fn list_contacts(
     .bind(customer_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(&canonical_approval_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -129,11 +135,13 @@ pub async fn list_contacts(
                   AND ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR customer_id = $3)
+                  AND approval_status = ANY($4::text[])
                 "#,
             )
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(customer_filter)
+            .bind(&canonical_approval_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -308,7 +316,7 @@ pub async fn get_contact(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1
+        FROM crm.contacts WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -402,7 +410,7 @@ async fn update_contact(
         UPDATE crm.contacts SET
             first_name = $2, last_name = $3, email = $4, phone = $5, position = $6,
             customer_id = $7, status = $8, notes = $9, updated_at = $10
-        WHERE id = $1 AND tenant_id = $11
+        WHERE id = $1 AND tenant_id = $11 AND deleted_at IS NULL
         RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
         "#,
     )
@@ -702,7 +710,7 @@ pub async fn start_contact_approval(
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1
+        FROM crm.contacts WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -756,7 +764,7 @@ pub async fn start_contact_approval(
     });
 
     let update = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[])",
+        "UPDATE crm.contacts SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[]) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(new_status.as_db_str())
@@ -860,7 +868,7 @@ pub async fn approve_contact(
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1
+        FROM crm.contacts WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -888,7 +896,7 @@ pub async fn approve_contact(
         .collect();
 
     let update = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[])",
+        "UPDATE crm.contacts SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[]) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(new_status.as_db_str())
@@ -989,7 +997,7 @@ pub async fn reject_contact(
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1
+        FROM crm.contacts WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -1017,7 +1025,7 @@ pub async fn reject_contact(
         .collect();
 
     let update = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[])",
+        "UPDATE crm.contacts SET approval_status = $2, updated_at = NOW() WHERE id = $1 AND approval_status = ANY($3::text[]) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(new_status.as_db_str())
