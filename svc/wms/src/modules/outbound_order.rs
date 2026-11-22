@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::models::outbound_order::*;
 use crate::modules::audit::log_audit_event;
+use crate::modules::outbound_status::OutboundStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{
@@ -125,7 +126,19 @@ pub async fn list_outbound_orders(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match OutboundStatus::from_read_str(raw) {
+                Ok(status) => Some(status.as_db_str()),
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = OutboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -141,15 +154,17 @@ pub async fn list_outbound_orders(
         FROM wms.outbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND status = ANY($5::text[])
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(&canonical_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -161,11 +176,13 @@ pub async fn list_outbound_orders(
                 SELECT COUNT(*) FROM wms.outbound_orders
                 WHERE ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($3::text[])
                   AND deleted_at IS NULL
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -276,7 +293,7 @@ pub async fn create_outbound_order(
                          AT TIME ZONE 'Asia/Shanghai'
                END,
                $7,
-               'created', $8, $9, $10, $11, $12)
+               $13, $8, $9, $10, $11, $12)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -299,6 +316,7 @@ pub async fn create_outbound_order(
     .bind(now)
     .bind(tenant_id)
     .bind(org_id)
+    .bind(OutboundStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -379,6 +397,10 @@ pub async fn get_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let canonical_statuses: Vec<String> = OutboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -390,10 +412,11 @@ pub async fn get_outbound_order(
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
                created_at, updated_at
-        FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.outbound_orders WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -438,6 +461,10 @@ pub async fn update_outbound_order(
         Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
+    let canonical_statuses: Vec<String> = OutboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let existing = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -450,10 +477,11 @@ pub async fn update_outbound_order(
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
                created_at, updated_at 
-        FROM wms.outbound_orders WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.outbound_orders WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -470,7 +498,22 @@ pub async fn update_outbound_order(
     let expected_delivery = req.expected_delivery.or(existing.expected_delivery);
     let actual_delivery = req.actual_delivery.or(existing.actual_delivery);
     let total_amount = req.total_amount.or(existing.total_amount);
-    let status = req.status.unwrap_or(existing.status);
+    let current_status = match OutboundStatus::from_db_str(&existing.status) {
+        Ok(status) => status,
+        Err(msg) => return ApiResponse::bad_request(&msg),
+    };
+    let requested_status = match req.status.as_deref() {
+        Some(raw) => match OutboundStatus::from_db_str(raw) {
+            Ok(status) if status == current_status => status,
+            Ok(_) => {
+                return ApiResponse::bad_request("通用更新不允许改变出库单状态，请使用对应流转接口")
+            }
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+        None => current_status,
+    };
+    let status = requested_status.as_db_str().to_string();
+    let previous_status = current_status.as_db_str().to_string();
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
@@ -488,7 +531,7 @@ pub async fn update_outbound_order(
                          AT TIME ZONE 'Asia/Shanghai'
                 END,
             total_value = $6, status = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND status = $10 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -508,6 +551,7 @@ pub async fn update_outbound_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
+    .bind(&previous_status)
     .fetch_one(&mut **txn)
     .await;
 
@@ -515,6 +559,11 @@ pub async fn update_outbound_order(
         Ok(order) => (
             ApiResponse::success(order.clone(), "出库订单更新成功"),
             "success",
+            None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            ApiResponse::conflict("出库订单状态已变化，请刷新后重试"),
+            "conflict",
             None,
         ),
         Err(e) => {
@@ -589,11 +638,22 @@ pub async fn delete_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let deletable_statuses: Vec<String> = OutboundStatus::DB_VALUES
+        .iter()
+        .filter(|value| {
+            OutboundStatus::from_db_str(value)
+                .map(OutboundStatus::is_deletable)
+                .unwrap_or(false)
+        })
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+        r#"UPDATE wms.outbound_orders SET deleted_at = NOW()
+           WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL"#
     ))
     .bind(id)
+    .bind(&deletable_statuses)
     .execute(&mut **txn)
     .await;
 
@@ -612,9 +672,11 @@ pub async fn delete_outbound_order(
             )
         }
         Ok(_) => (
-            ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在".to_string())),
+            ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在或处于不可删除状态".to_string(),
+            )),
             "error",
-            Some("出库订单不存在".to_string()),
+            Some("出库订单不存在或处于不可删除状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除出库订单失败: {}", e);
@@ -1127,8 +1189,8 @@ pub async fn confirm_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = 'confirmed', updated_at = $2
-        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
+            status = $3, updated_at = $2
+        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1141,6 +1203,8 @@ pub async fn confirm_outbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(OutboundStatus::Confirmed.as_db_str())
+    .bind(OutboundStatus::Created.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1151,10 +1215,8 @@ pub async fn confirm_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound(
-                "出库订单不存在或当前状态不允许确认".to_string(),
-            )),
-            "not_found",
+            ApiResponse::conflict("出库订单状态已变化，确认未生效"),
+            "conflict",
             None,
         ),
         Err(e) => {
@@ -1226,11 +1288,12 @@ pub async fn pick_outbound_order(
     }
     let now = Utc::now();
 
-    let result = sqlx::query_as::<_, OutboundOrder>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
+        "wms",
+        r#"
         UPDATE wms.outbound_orders SET
-            status = 'picking', picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL
+            status = $3, picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
+        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1239,10 +1302,12 @@ pub async fn pick_outbound_order(
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
                   created_at, updated_at
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(now)
+    .bind(OutboundStatus::Picking.as_db_str())
+    .bind(OutboundStatus::Confirmed.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1253,10 +1318,8 @@ pub async fn pick_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound(
-                "出库订单不存在或当前状态不允许拣货".to_string(),
-            )),
-            "not_found",
+            ApiResponse::conflict("出库订单状态已变化，拣货未生效"),
+            "conflict",
             None,
         ),
         Err(e) => {
@@ -1332,9 +1395,9 @@ pub async fn pack_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = 'packing', picking_status = 'completed', picking_end_time = $2, 
+            status = $3, picking_status = 'completed', picking_end_time = $2, 
             packing_status = 'in_progress', packing_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = 'picking' AND deleted_at IS NULL
+        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1347,6 +1410,8 @@ pub async fn pack_outbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(OutboundStatus::Packing.as_db_str())
+    .bind(OutboundStatus::Picking.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1357,10 +1422,8 @@ pub async fn pack_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound(
-                "出库订单不存在或当前状态不允许打包".to_string(),
-            )),
-            "not_found",
+            ApiResponse::conflict("出库订单状态已变化，打包未生效"),
+            "conflict",
             None,
         ),
         Err(e) => {
@@ -1727,18 +1790,20 @@ pub async fn ship_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = 'shipping', packing_status = 'completed', packing_end_time = $1::timestamptz,
+            status = $4, packing_status = 'completed', packing_end_time = $1::timestamptz,
             shipping_status = 'in_progress',
             actual_ship_date = date_trunc('day', $1::timestamptz AT TIME ZONE 'Asia/Shanghai')
                                AT TIME ZONE 'Asia/Shanghai',
             updated_at = $1::timestamptz
         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
-          AND status IN ('created', 'confirmed', 'picking', 'packing')
+          AND status = $5
         "#
     ))
     .bind(now)
     .bind(id)
     .bind(tenant)
+    .bind(OutboundStatus::Shipping.as_db_str())
+    .bind(OutboundStatus::Packing.as_db_str())
     .execute(&mut scope)
     .await;
     match status_updated {
@@ -1973,8 +2038,8 @@ pub async fn complete_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = 'completed', shipping_status = 'completed', delivery_date = $2::date, updated_at = $2::timestamptz
-        WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL
+            status = $3, shipping_status = 'completed', delivery_date = $2::date, updated_at = $2::timestamptz
+        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1987,6 +2052,8 @@ pub async fn complete_outbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(OutboundStatus::Completed.as_db_str())
+    .bind(OutboundStatus::Shipping.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1997,10 +2064,8 @@ pub async fn complete_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            ApiResponse::from(TopemsError::ResourceNotFound(
-                "出库订单不存在或当前状态不允许完成".to_string(),
-            )),
-            "not_found",
+            ApiResponse::conflict("出库订单状态已变化，完成未生效"),
+            "conflict",
             None,
         ),
         Err(e) => {
@@ -2172,14 +2237,14 @@ pub async fn approve_outbound(
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
             let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'shipping', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
+                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'shipping', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = 'packing' AND deleted_at IS NULL RETURNING *"),
             )
             .bind(id)
             .bind(tenant_id)
-            .fetch_one(&mut **txn)
+            .fetch_optional(&mut **txn)
             .await;
             match result {
-                Ok(_) => {
+                Ok(Some(_r)) => {
                     if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
@@ -2206,6 +2271,7 @@ pub async fn approve_outbound(
                         "审批通过",
                     )
                 }
+                Ok(_) => ApiResponse::conflict("出库订单状态已变化，审批通过未生效"),
                 Err(e) => {
                     tracing::error!("审批出库单失败: {}", e);
                     ApiResponse::server_error("审批失败")
@@ -2266,14 +2332,14 @@ pub async fn reject_outbound(
                 return ApiResponse::bad_request("当前状态不允许驳回回流");
             }
             let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'picking', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
+                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'picking', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = 'packing' AND deleted_at IS NULL RETURNING *"),
             )
             .bind(id)
             .bind(tenant_id)
-            .fetch_one(&mut **txn)
+            .fetch_optional(&mut **txn)
             .await;
             match result {
-                Ok(_) => {
+                Ok(Some(_r)) => {
                     if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut **txn,
                         &tenant_id.to_string(),
@@ -2300,6 +2366,7 @@ pub async fn reject_outbound(
                         "审批驳回，回流至 picking",
                     )
                 }
+                Ok(_) => ApiResponse::conflict("出库订单状态已变化，驳回未生效"),
                 Err(e) => {
                     tracing::error!("驳回收料单失败: {}", e);
                     ApiResponse::server_error("驳回失败")

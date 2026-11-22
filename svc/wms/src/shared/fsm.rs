@@ -15,6 +15,11 @@
 use crate::modules::inbound_status::{
     InboundStatus, APPROVAL_TRANSITIONS, DB_VALUES, TERMINAL, TRANSITIONS,
 };
+use crate::modules::outbound_status::{
+    OutboundStatus, APPROVAL_TRANSITIONS as OUTBOUND_APPROVAL_TRANSITIONS,
+    DB_VALUES as OUTBOUND_DB_VALUES, TERMINAL as OUTBOUND_TERMINAL,
+    TRANSITIONS as OUTBOUND_TRANSITIONS,
+};
 pub use topems_shared_core::fsm::{FsmDef, FsmError};
 
 // ==================== FSM-1: InboundOrder ====================
@@ -46,42 +51,31 @@ pub fn is_valid_inbound_order_status(s: &str) -> bool {
 }
 
 // ==================== FSM-2: OutboundOrder ====================
+// 单一事实源在 `modules::outbound_status`；这里仅保留共享 FSM 投影，供存量调用方使用。
 pub const OUTBOUND_ORDER: FsmDef = FsmDef {
-    states: &[
-        "created",
-        "confirmed",
-        "picking",
-        "packing",
-        "shipping",
-        "completed",
-        "cancelled",
-    ],
-    terminal: &["completed", "cancelled"],
-    transitions: &[
-        ("created", "confirmed"),
-        ("confirmed", "picking"),
-        ("picking", "packing"),
-        ("packing", "picking"),
-        ("packing", "shipping"),
-        ("shipping", "completed"),
-        ("created", "cancelled"),
-        ("confirmed", "cancelled"),
-        ("picking", "cancelled"),
-        ("packing", "cancelled"),
-    ],
-    approval_transitions: &[("packing", "shipping")],
+    states: OUTBOUND_DB_VALUES,
+    terminal: OUTBOUND_TERMINAL,
+    transitions: OUTBOUND_TRANSITIONS,
+    approval_transitions: OUTBOUND_APPROVAL_TRANSITIONS,
 };
 
+fn parse_outbound_status(raw: &str) -> Result<OutboundStatus, FsmError> {
+    OutboundStatus::from_db_str(raw).map_err(|_| FsmError::UnknownStatus(raw.to_string()))
+}
+
 pub fn outbound_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
-    OUTBOUND_ORDER.can_transition(from, to)
+    parse_outbound_status(from)?.can_transition_to(parse_outbound_status(to)?)
 }
 
 pub fn outbound_order_requires_approval(from: &str, to: &str) -> bool {
-    OUTBOUND_ORDER.requires_approval(from, to)
+    matches!(
+        (parse_outbound_status(from), parse_outbound_status(to)),
+        (Ok(from), Ok(to)) if OUTBOUND_APPROVAL_TRANSITIONS.contains(&(from.as_db_str(), to.as_db_str()))
+    )
 }
 
 pub fn is_valid_outbound_order_status(s: &str) -> bool {
-    OUTBOUND_ORDER.is_valid_status(s)
+    OutboundStatus::from_db_str(s).is_ok()
 }
 
 // ==================== FSM-3: StockTake ====================

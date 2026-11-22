@@ -30,6 +30,7 @@ pub mod labor;
 pub mod location;
 pub mod openapi;
 pub mod outbound_order;
+pub mod outbound_status;
 pub mod picking;
 pub mod serial_number;
 pub mod smart_replenishment;
