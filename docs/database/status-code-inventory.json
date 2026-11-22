@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 345,
+    "db_check_constraints": 346,
     "db_enum_types": 5,
     "db_check_values": 149,
-    "rust_enums": 228,
+    "rust_enums": 229,
     "rust_enum_values": 203,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 214,
@@ -797,6 +797,25 @@
         "cancelled",
         "completed",
         "in_progress"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/emergency_plan_status.rs",
+      "name": "EmergencyPlanStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Ongoing",
+        "Planned"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "draft",
+        "ongoing",
+        "planned"
       ]
     },
     {

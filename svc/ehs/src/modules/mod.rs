@@ -6,6 +6,7 @@ pub mod drill_status;
 pub mod ehs_plugin;
 pub mod emergency_drill;
 pub mod emergency_plan;
+pub mod emergency_plan_status;
 pub mod environment;
 pub mod environmental_compliance;
 pub mod hazard;

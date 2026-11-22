@@ -15,6 +15,7 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::modules::emergency_plan_status::EmergencyPlanStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
@@ -239,10 +240,18 @@ pub async fn list_plans(
         ),
         None => (String::from(" WHERE deleted_at IS NULL"), 1),
     };
-    if let Some(status) = &q.status {
-        if !status.is_empty() {
+    if let Some(raw) = q.status.as_deref() {
+        if !raw.is_empty() {
+            let status = match EmergencyPlanStatus::from_db_str(raw) {
+                Some(status) => status,
+                None => {
+                    return ApiResponse::from(TopemsError::ValidationFailed(
+                        "无效的应急预案状态".to_string(),
+                    ))
+                }
+            };
             where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
-            params.push(status.clone());
+            params.push(status.as_db_str().to_string());
         }
     }
     if let Some(category) = &q.category {
@@ -314,7 +323,17 @@ pub async fn create_plan(
             uuid::Uuid::new_v4().simple().to_string()[..6].to_uppercase()
         )
     });
-    let status = req.status.clone().unwrap_or_else(|| "planned".to_string());
+    let status = match req.status.as_deref() {
+        None | Some("") => EmergencyPlanStatus::DEFAULT,
+        Some(raw) => match EmergencyPlanStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的应急预案状态".to_string(),
+                ))
+            }
+        },
+    };
     let version = req.version.clone().unwrap_or_else(|| "v1".to_string());
     let sql = "INSERT INTO ehs.qa_ehs_emergency_plans (plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, effective_date, expiry_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::date, $15::date, $16::uuid) RETURNING id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at, effective_date::text, expiry_date::text, created_at, updated_at, tenant_id::text";
     match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -323,7 +342,7 @@ pub async fn create_plan(
         .bind(&req.description)
         .bind(&req.category)
         .bind(&version)
-        .bind(&status)
+        .bind(status.as_db_str())
         .bind(&req.scope)
         .bind(&req.emergency_level)
         .bind(&req.responsible_dept)
@@ -524,8 +543,16 @@ pub async fn update_plan(
     if let Some(v) = req.content {
         push(v, "content");
     }
-    if let Some(v) = req.status {
-        push(v, "status");
+    if let Some(raw) = req.status {
+        let status = match EmergencyPlanStatus::from_db_str(&raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的应急预案状态".to_string(),
+                ))
+            }
+        };
+        push(status.as_db_str().to_string(), "status");
     }
     if let Some(v) = req.effective_date {
         push(v, "effective_date");

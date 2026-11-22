@@ -547,6 +547,22 @@
     },
     {
       "schema": "ehs",
+      "table": "qa_ehs_emergency_plans",
+      "constraint": "ck_qa_ehs_emergency_plans_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "draft",
+        "ongoing",
+        "planned"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'planned'::text, 'ongoing'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "qa_ehs_employees",
       "constraint": "ck_qa_ehs_employees_status_standard",
       "columns": [
@@ -5407,15 +5423,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_emergency_plans",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "ehs",

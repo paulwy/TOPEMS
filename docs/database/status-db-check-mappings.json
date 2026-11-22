@@ -1338,6 +1338,13 @@
       "table": "scm.sync_logs",
       "column": "status",
       "candidate": "docs/database/scm-sync-log-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/emergency_plan_status.rs",
+      "enum": "EmergencyPlanStatus",
+      "table": "ehs.qa_ehs_emergency_plans",
+      "column": "status",
+      "candidate": "docs/database/ehs-emergency-plan-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
