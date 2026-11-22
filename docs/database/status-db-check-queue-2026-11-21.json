@@ -6,7 +6,7 @@
     "uncovered_enums": 144,
     "uncovered_values": 152,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 122,
+    "resolved_enums": 127,
     "internal_state_enums": 72,
     "persisted_unmapped_enums": 66,
     "api_projection_enums": 25,
@@ -971,7 +971,13 @@
           "compensating"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/finance/src/domain/saga.rs",
+        "enum": "SagaStatus",
+        "persisted": false,
+        "reason": "saga 编排内存态，无对应表列"
+      }
     },
     {
       "module": "finance",
@@ -985,7 +991,13 @@
           "skipped"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/finance/src/domain/saga.rs",
+        "enum": "SagaStepStatus",
+        "persisted": false,
+        "reason": "saga 步骤内存态，无对应表列"
+      }
     },
     {
       "module": "finance",
@@ -1003,7 +1015,13 @@
       },
       "candidate_targets": [
         "finance.erp_collection_records.erp_collection_records_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/domain/value_objects.rs",
+        "enum": "SettlementStatus",
+        "persisted": false,
+        "reason": "财务应收/应付聚合的核销进度 DTO，无对应表列；不与 erp_collection_records.status 混用"
+      }
     },
     {
       "module": "finance",
@@ -1017,7 +1035,14 @@
       },
       "candidate_targets": [
         "finance.finance_v55_invoices.v55_invoices_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/models/mod.rs",
+        "enum": "InvoiceStatus",
+        "table": "finance.finance_v55_invoices",
+        "column": "status",
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1041,7 +1066,14 @@
       },
       "candidate_targets": [
         "finance.erp_collection_records.erp_collection_records_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/collection_status.rs",
+        "enum": "CollectionStatus",
+        "table": "finance.erp_collection_records",
+        "column": "status",
+        "candidate": "docs/database/finance-collection-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",

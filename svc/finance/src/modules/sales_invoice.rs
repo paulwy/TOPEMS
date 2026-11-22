@@ -42,6 +42,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
+use crate::modules::collection_status::CollectionStatus;
 use crate::shared::AppState;
 
 // ========== 请求/响应类型（对齐前端 crmFinance 契约）==========
@@ -1079,7 +1080,7 @@ pub async fn create_collection(
         "INSERT INTO finance.erp_collection_records
             (tenant_id, collection_no, customer_id, customer_name, invoice_no, collection_date,
              amount, payment_method, remark, status, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9, 'pending', NULL)
+         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9, $10, NULL)
          RETURNING id",
     )
     .bind(tenant_id)
@@ -1091,6 +1092,7 @@ pub async fn create_collection(
     .bind(payload.amount)
     .bind(&payload.payment_method)
     .bind(&payload.remark)
+    .bind(CollectionStatus::Pending.as_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -1157,12 +1159,16 @@ pub async fn confirm_collection(
         Err(e) => return crate::shared::err_resp(e),
     };
     let amount: Decimal = rec.get("amount");
-    let status: String = rec.get("status");
+    let raw_status: String = rec.get("status");
     let invoice_id: Option<Uuid> = rec.get("invoice_id");
-    if status == "confirmed" {
+    let status = match CollectionStatus::from_db_str(&raw_status) {
+        Some(status) => status,
+        None => return ApiResponse::<CollectionOut>::conflict("回款记录状态不在规范集合内"),
+    };
+    if status == CollectionStatus::Confirmed {
         return ApiResponse::<CollectionOut>::conflict("回款记录已确认，请勿重复确认");
     }
-    if status == "written_off" {
+    if status == CollectionStatus::WrittenOff {
         return ApiResponse::<CollectionOut>::conflict("回款记录已核销，不能再次确认");
     }
 
@@ -1293,8 +1299,15 @@ pub async fn batch_confirm_collections(
                 continue;
             }
         };
-        let status: String = row.get("status");
-        if status == "confirmed" {
+        let raw_status: String = row.get("status");
+        let status = match CollectionStatus::from_db_str(&raw_status) {
+            Some(status) => status,
+            None => {
+                failed += 1;
+                continue;
+            }
+        };
+        if status == CollectionStatus::Confirmed || status == CollectionStatus::WrittenOff {
             failed += 1;
             continue;
         }

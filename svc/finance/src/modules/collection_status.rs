@@ -16,6 +16,18 @@ pub enum CollectionStatus {
 
 impl CollectionStatus {
     pub const ALL: [Self; 3] = [Self::Pending, Self::Confirmed, Self::WrittenOff];
+    pub const DB_VALUES: [&'static str; 3] = ["pending", "confirmed", "written_off"];
+    pub const DEFAULT: Self = Self::Pending;
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "pending" => Some(Self::Pending),
+            "confirmed" => Some(Self::Confirmed),
+            "written_off" => Some(Self::WrittenOff),
+            _ => None,
+        }
+    }
 
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -46,10 +58,7 @@ impl fmt::Display for CollectionStatus {
 pub fn normalize_collection_status(raw: Option<&str>) -> Option<CollectionStatus> {
     match raw.map(str::trim).filter(|s| !s.is_empty()) {
         None => Some(CollectionStatus::Pending),
-        Some("pending") => Some(CollectionStatus::Pending),
-        Some("confirmed") => Some(CollectionStatus::Confirmed),
-        Some("written_off") => Some(CollectionStatus::WrittenOff),
-        _ => None,
+        Some(value) => CollectionStatus::from_db_str(value),
     }
 }
 
