@@ -2943,6 +2943,20 @@
     },
     {
       "schema": "mobile",
+      "table": "mobile_push_notifications",
+      "constraint": "ck_mobile_push_notifications_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "pending",
+        "sent"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text])))) NOT VALID"
+    },
+    {
+      "schema": "mobile",
       "table": "mobile_tasks",
       "constraint": "ck_mobile_tasks_status_standard",
       "columns": [
@@ -2971,6 +2985,20 @@
         "pending"
       ],
       "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mobile",
+      "table": "push_notifications",
+      "constraint": "ck_push_notifications_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "pending",
+        "sent"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text])))) NOT VALID"
     },
     {
       "schema": "mobile",
@@ -3465,6 +3493,19 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "public",
+      "table": "core_login_logs",
+      "constraint": "ck_core_login_logs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "failed",
+        "success"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['success'::text, 'failed'::text])))) NOT VALID"
     },
     {
       "schema": "public",
@@ -6703,15 +6744,6 @@
     },
     {
       "schema": "mobile",
-      "table": "mobile_push_notifications",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mobile",
       "table": "oa_meetings",
       "column": "status",
       "type": "text",
@@ -7456,15 +7488,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "core_login_logs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": null
     },
     {
       "schema": "public",

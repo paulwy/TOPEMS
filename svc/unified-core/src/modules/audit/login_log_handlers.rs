@@ -16,6 +16,7 @@ use topems_shared_core::response::ApiResponse;
 use super::login_log_models::{
     DeleteLoginLogRequest, LoginLog, LoginLogListResponse, LoginLogQuery, RecordLoginRequest,
 };
+use super::login_status::LoginStatus;
 
 pub async fn record_login(
     State(state): State<AppState>,
@@ -37,6 +38,12 @@ pub async fn record_login(
     };
 
     let user_id = req.user_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let status = match LoginStatus::from_db_str(&req.status) {
+        Some(status) => status,
+        None => {
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的登录状态".to_string()))
+        }
+    };
 
     let login_time = Utc::now();
 
@@ -60,7 +67,7 @@ pub async fn record_login(
     .bind(req.username)
     .bind(req.ip_address)
     .bind(req.user_agent)
-    .bind(req.status)
+    .bind(status.as_db_str())
     .bind(req.error_message)
     .bind(login_time)
     .fetch_one(&mut scope)
@@ -104,6 +111,17 @@ pub async fn list_login_logs(
     let username_like = query.username.as_ref().map(|s| format!("%{}%", s));
     let ip_address_like = query.ip_address.as_ref().map(|s| format!("%{}%", s));
     let user_id = query.user_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let status_filter = match query.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match LoginStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的登录状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let start_time = query
         .start_time
@@ -129,7 +147,7 @@ pub async fn list_login_logs(
     )
     .bind(tenant_id)
     .bind(username_like)
-    .bind(query.status.clone())
+    .bind(status_filter)
     .bind(user_id)
     .bind(ip_address_like)
     .bind(start_time)
@@ -175,7 +193,7 @@ pub async fn list_login_logs(
     )
     .bind(tenant_id)
     .bind(username_like2)
-    .bind(query.status.clone())
+    .bind(status_filter)
     .bind(user_id2)
     .bind(ip_address_like2)
     .bind(start_time2)
@@ -354,6 +372,8 @@ where
     // 的 nullable inet 不一致）。缺省 IP（直连无 X-Forwarded-For）必须落空串而不是 NULL，
     // 否则审计 INSERT 会因非空约束失败；超长 header 截断到 128，避免写入失败。
     let ip_address: String = ip_address.unwrap_or("").chars().take(128).collect();
+    let status = LoginStatus::from_db_str(status)
+        .ok_or_else(|| sqlx::Error::Protocol("无效的登录状态".to_string()))?;
 
     sqlx::query(
         r#"
@@ -367,7 +387,7 @@ where
     .bind(username)
     .bind(ip_address)
     .bind(user_agent)
-    .bind(status)
+    .bind(status.as_db_str())
     .bind(error_message)
     .execute(executor)
     .await

@@ -1310,6 +1310,20 @@
       "table": "scm.suppliers",
       "column": "status",
       "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/unified-core/src/modules/audit/login_status.rs",
+      "enum": "LoginStatus",
+      "table": "public.core_login_logs",
+      "column": "status",
+      "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mobile/src/modules/push_status.rs",
+      "enum": "PushNotificationStatus",
+      "table": "mobile.mobile_push_notifications",
+      "column": "status",
+      "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -1,3 +1,4 @@
+use crate::modules::push_status::PushNotificationStatus;
 use chrono::Utc;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
@@ -77,7 +78,7 @@ impl MobileEventHandlers {
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_push_notifications (id, notification_type, title, content, priority, source_type, source_id, target_user, status, push_time, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
              ON CONFLICT (source_type, source_id) DO NOTHING
              RETURNING id"),
         )
@@ -89,6 +90,7 @@ impl MobileEventHandlers {
         .bind(source_type)
         .bind(source_id)
         .bind(target_user.unwrap_or("all"))
+        .bind(PushNotificationStatus::DEFAULT.as_db_str())
         .bind(now)
         .bind(tenant.get())
         .fetch_optional(&mut scope)

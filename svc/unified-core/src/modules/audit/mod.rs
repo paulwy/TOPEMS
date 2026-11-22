@@ -11,6 +11,7 @@ pub mod audit_query;
 pub mod handlers;
 pub mod login_log_handlers;
 pub mod login_log_models;
+pub mod login_status;
 pub mod middleware;
 pub mod models;
 pub mod service;
