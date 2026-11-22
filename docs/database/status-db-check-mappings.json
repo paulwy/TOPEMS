@@ -1056,6 +1056,20 @@
       "enum": "SettlementStatus",
       "persisted": false,
       "reason": "财务应收/应付聚合的核销进度 DTO，无对应表列；不与 erp_collection_records.status 混用"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "enum": "FindingStatus",
+      "table": "finance.finance_audit_findings_v52",
+      "column": "status",
+      "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/forecasting.rs",
+      "enum": "AlertStatus",
+      "table": "finance.finance_v60_alerts",
+      "column": "status",
+      "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

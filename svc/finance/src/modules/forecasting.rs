@@ -689,6 +689,32 @@ pub enum AlertStatus {
     Suppressed,
 }
 
+impl AlertStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["active", "acknowledged", "resolved", "suppressed"];
+    pub const DEFAULT: Self = Self::Active;
+
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Acknowledged => "acknowledged",
+            Self::Resolved => "resolved",
+            Self::Suppressed => "suppressed",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "active" => Some(Self::Active),
+            "acknowledged" => Some(Self::Acknowledged),
+            "resolved" => Some(Self::Resolved),
+            "suppressed" => Some(Self::Suppressed),
+            _ => None,
+        }
+    }
+}
+
 /// 告警规则
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRule {

@@ -6,7 +6,7 @@
     "uncovered_enums": 144,
     "uncovered_values": 152,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 127,
+    "resolved_enums": 129,
     "internal_state_enums": 72,
     "persisted_unmapped_enums": 66,
     "api_projection_enums": 25,
@@ -1053,7 +1053,14 @@
           "ignored"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/finance/src/modules/audit_v52.rs",
+        "enum": "FindingStatus",
+        "table": "finance.finance_audit_findings_v52",
+        "column": "status",
+        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1165,7 +1172,14 @@
           "suppressed"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/finance/src/modules/forecasting.rs",
+        "enum": "AlertStatus",
+        "table": "finance.finance_v60_alerts",
+        "column": "status",
+        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",

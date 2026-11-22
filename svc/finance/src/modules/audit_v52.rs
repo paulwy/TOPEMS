@@ -71,11 +71,24 @@ pub enum FindingStatus {
 }
 
 impl FindingStatus {
-    fn as_str(&self) -> &'static str {
+    pub const DB_VALUES: [&'static str; 3] = ["open", "resolved", "ignored"];
+    pub const DEFAULT: Self = Self::Open;
+
+    pub fn as_str(&self) -> &'static str {
         match self {
             FindingStatus::Open => "open",
             FindingStatus::Resolved => "resolved",
             FindingStatus::Ignored => "ignored",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "open" => Some(Self::Open),
+            "resolved" => Some(Self::Resolved),
+            "ignored" => Some(Self::Ignored),
+            _ => None,
         }
     }
 }
@@ -1996,11 +2009,18 @@ pub async fn get_audit_findings_handler(
     };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
+    let status_filter = match params.status {
+        None => None,
+        Some(ref raw) => match FindingStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_str().to_string()),
+            None => return ApiResponse::bad_request("status 仅支持 open/resolved/ignored"),
+        },
+    };
     match AutoAuditEngine::get_findings(
         &state.db,
         txn,
         tenant_id,
-        params.status,
+        status_filter,
         params.severity,
         params.entity_type,
         page,
