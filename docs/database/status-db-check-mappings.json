@@ -786,6 +786,20 @@
       "table": "wms.warehouses",
       "column": "status",
       "candidate": "docs/database/wms-warehouse-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/transfer_status.rs",
+      "enum": "TransferOrderStatus",
+      "table": "wms.transfer_orders",
+      "column": "status",
+      "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/transfer_status.rs",
+      "enum": "TransferItemStatus",
+      "table": "wms.transfer_order_items",
+      "column": "status",
+      "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

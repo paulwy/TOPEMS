@@ -5,13 +5,13 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::Row;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::transfer_order::*;
+use crate::modules::transfer_status::{TransferItemStatus, TransferOrderStatus};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{
@@ -75,6 +75,20 @@ pub async fn list_transfers(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let status_filter: Option<String> = match params.status.as_deref() {
+        Some(raw) if raw != "all" && !raw.trim().is_empty() => {
+            match TransferOrderStatus::from_db_str(raw) {
+                Ok(status) => Some(status.as_db_str().to_string()),
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            }
+        }
+        _ => None,
+    };
+    let canonical_statuses: Vec<String> = TransferOrderStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
+
     let result = sqlx::query_as::<_, TransferOrder>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, order_number, transfer_type, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders
@@ -82,6 +96,7 @@ pub async fn list_transfers(
           AND ($2::uuid IS NULL OR from_warehouse_id = $2)
           AND ($3::uuid IS NULL OR to_warehouse_id = $3)
           AND ($4::text IS NULL OR status = $4)
+          AND status = ANY($7::text[])
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#),
@@ -89,9 +104,10 @@ pub async fn list_transfers(
     .bind(&params.transfer_type)
     .bind(params.from_warehouse_id)
     .bind(params.to_warehouse_id)
-    .bind(&params.status)
+    .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(&canonical_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -105,12 +121,14 @@ pub async fn list_transfers(
                   AND ($2::uuid IS NULL OR from_warehouse_id = $2)
                   AND ($3::uuid IS NULL OR to_warehouse_id = $3)
                   AND ($4::text IS NULL OR status = $4)
+                  AND status = ANY($5::text[])
                 "#
             ))
             .bind(&params.transfer_type)
             .bind(params.from_warehouse_id)
             .bind(params.to_warehouse_id)
-            .bind(&params.status)
+            .bind(&status_filter)
+            .bind(&canonical_statuses)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -182,7 +200,7 @@ pub async fn create_transfer(
     .bind(req.from_location_id)
     .bind(req.to_warehouse_id)
     .bind(req.to_location_id)
-    .bind("pending")
+    .bind(TransferOrderStatus::DEFAULT.as_db_str())
     .bind(&req.planned_date)
     .bind(&req.transporter)
     .bind(&req.priority)
@@ -228,7 +246,7 @@ pub async fn create_transfer(
                 .bind(item.from_location_id)
                 .bind(item.to_location_id)
                 .bind(&item.remarks)
-                .bind("pending")
+                .bind(TransferItemStatus::DEFAULT.as_db_str())
                 .bind(now)
                 .bind(now)
                 .bind(tenant_id)
@@ -311,10 +329,15 @@ pub async fn get_transfer(
         }
     };
 
+    let canonical_statuses: Vec<String> = TransferOrderStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query_as::<_, TransferOrder>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, order_number, transfer_type, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, order_number, transfer_type, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND status = ANY($2::text[]) AND id = $1"),
     )
     .bind(transfer_id)
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -411,6 +434,14 @@ pub async fn update_transfer(
         }
     };
 
+    if req.get("status").is_some() {
+        return ApiResponse::bad_request("调拨单状态请使用确认/发货/收货/完成接口");
+    }
+    let editable_statuses: Vec<String> = vec![
+        TransferOrderStatus::Pending.as_db_str().to_string(),
+        TransferOrderStatus::Confirmed.as_db_str().to_string(),
+    ];
+
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
@@ -428,7 +459,7 @@ pub async fn update_transfer(
             priority = COALESCE($9, priority),
             remarks = COALESCE($10, remarks),
             updated_at = $11
-        WHERE id = $12
+        WHERE id = $12 AND status = ANY($13::text[]) AND deleted_at IS NULL
         RETURNING *
         "#
     ))
@@ -460,6 +491,7 @@ pub async fn update_transfer(
     .bind(req.get("remarks").and_then(|v| v.as_str()))
     .bind(now)
     .bind(transfer_id)
+    .bind(&editable_statuses)
     .fetch_one(&mut **txn)
     .await;
 
@@ -473,9 +505,7 @@ pub async fn update_transfer(
             }
             ApiResponse::success(transfer, "更新调拨单成功")
         }
-        Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()))
-        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("调拨单状态已变化，请刷新后重试"),
         Err(e) => {
             tracing::error!("更新调拨单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("更新调拨单失败".to_string()))
@@ -513,29 +543,34 @@ pub async fn delete_transfer(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!(
-        "wms",
-        "DELETE FROM wms.transfer_order_items WHERE transfer_id = $1"
-    ))
-    .bind(transfer_id)
-    .execute(&mut **txn)
-    .await;
-
-    if let Err(e) = result {
-        tracing::error!("删除调拨单明细失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("删除调拨单失败".to_string()));
-    }
+    let deletable_statuses: Vec<String> = vec![
+        TransferOrderStatus::Pending.as_db_str().to_string(),
+        TransferOrderStatus::Cancelled.as_db_str().to_string(),
+    ];
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL"
     ))
     .bind(transfer_id)
+    .bind(&deletable_statuses)
     .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            let result = sqlx::query(only_own_schema_query!(
+                "wms",
+                "DELETE FROM wms.transfer_order_items WHERE transfer_id = $1"
+            ))
+            .bind(transfer_id)
+            .execute(&mut **txn)
+            .await;
+
+            if let Err(e) = result {
+                tracing::error!("删除调拨单明细失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal("删除调拨单失败".to_string()));
+            }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -544,7 +579,7 @@ pub async fn delete_transfer(
             }
             ApiResponse::success("".to_string(), "删除调拨单成功")
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string())),
+        Ok(_) => ApiResponse::conflict("调拨单不存在或当前状态不允许删除"),
         Err(e) => {
             tracing::error!("删除调拨单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除调拨单失败".to_string()))
@@ -588,21 +623,21 @@ pub async fn confirm_transfer(
         "wms",
         r#"
         UPDATE wms.transfer_orders SET
-            status = 'confirmed',
-            approved_at = $1,
+            status = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'pending'
+        WHERE id = $3 AND status = $4 AND deleted_at IS NULL
         RETURNING *
         "#
     ))
-    .bind(now)
+    .bind(TransferOrderStatus::Confirmed.as_db_str())
     .bind(now)
     .bind(transfer_id)
-    .fetch_one(&mut **txn)
+    .bind(TransferOrderStatus::Pending.as_db_str())
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(transfer) => {
+        Ok(Some(transfer)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -611,9 +646,7 @@ pub async fn confirm_transfer(
             }
             ApiResponse::success(transfer, "确认调拨单成功")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在或状态不正确".to_string(),
-        )),
+        Ok(None) => ApiResponse::conflict("调拨单不存在或当前状态不允许确认"),
         Err(e) => {
             tracing::error!("确认调拨单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("确认调拨单失败".to_string()))
@@ -700,7 +733,14 @@ pub async fn ship_transfer(
             return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()));
         }
     };
-    if status != "confirmed" {
+    let current_status = match TransferOrderStatus::from_db_str(&status) {
+        Ok(status) => status,
+        Err(msg) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict(&msg);
+        }
+    };
+    if current_status != TransferOrderStatus::Confirmed {
         let _ = scope.rollback().await;
         return ApiResponse::conflict(&format!("调拨单当前状态不允许发货: {}", status));
     }
@@ -733,12 +773,13 @@ pub async fn ship_transfer(
             r#"
             SELECT id, sku, material_name, batch_number, planned_quantity, from_location_id
             FROM wms.transfer_order_items
-            WHERE transfer_id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status = 'pending'
+            WHERE transfer_id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status = $3
             ORDER BY line_number
             "#
         ))
         .bind(transfer_id)
         .bind(tenant)
+        .bind(TransferItemStatus::Pending.as_db_str())
         .fetch_all(&mut scope)
         .await
         {
@@ -838,15 +879,17 @@ pub async fn ship_transfer(
             r#"
             UPDATE wms.transfer_order_items SET
                 shipped_quantity = planned_quantity,
-                status = 'shipped',
+                status = $1,
                 updated_at = $2
-            WHERE id = $1 AND transfer_id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND status = 'pending'
+            WHERE id = $3 AND transfer_id = $4 AND tenant_id = $5 AND deleted_at IS NULL AND status = $6
             "#
         ))
-        .bind(item_id)
+        .bind(TransferItemStatus::Shipped.as_db_str())
         .bind(now)
+        .bind(item_id)
         .bind(transfer_id)
         .bind(tenant)
+        .bind(TransferOrderStatus::Pending.as_db_str())
         .execute(&mut scope)
         .await;
         match item_updated {
@@ -902,16 +945,18 @@ pub async fn ship_transfer(
         "wms",
         r#"
         UPDATE wms.transfer_orders SET
-            status = 'shipped',
-            shipped_at = $1,
-            updated_at = $2
-        WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND status = 'confirmed'
+            status = $1,
+            shipped_at = $2,
+            updated_at = $3
+        WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL AND status = $6
         "#
     ))
+    .bind(TransferOrderStatus::Shipped.as_db_str())
     .bind(now)
     .bind(now)
     .bind(transfer_id)
     .bind(tenant)
+    .bind(TransferOrderStatus::Confirmed.as_db_str())
     .execute(&mut scope)
     .await;
     match order_updated {
@@ -1042,7 +1087,14 @@ pub async fn receive_transfer(
             return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()));
         }
     };
-    if status != "shipped" {
+    let current_status = match TransferOrderStatus::from_db_str(&status) {
+        Ok(status) => status,
+        Err(msg) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict(&msg);
+        }
+    };
+    if current_status != TransferOrderStatus::Shipped {
         let _ = scope.rollback().await;
         return ApiResponse::conflict(&format!("调拨单当前状态不允许收货: {}", status));
     }
@@ -1192,9 +1244,10 @@ pub async fn receive_transfer(
             r#"
             UPDATE wms.transfer_order_items SET
                 received_quantity = received_quantity + $1,
-                status = CASE WHEN received_quantity + $1 >= planned_quantity THEN 'completed' ELSE 'partial' END,
+                status = CASE WHEN received_quantity + $1 >= planned_quantity THEN $7 ELSE $8 END,
                 updated_at = $2
             WHERE id = $3 AND transfer_id = $4 AND tenant_id = $5 AND deleted_at IS NULL
+              AND status = ANY($6::text[])
             "#
         ))
         .bind(received_qty)
@@ -1202,6 +1255,12 @@ pub async fn receive_transfer(
         .bind(item_id)
         .bind(transfer_id)
         .bind(tenant)
+        .bind(vec![
+            TransferOrderStatus::Shipped.as_db_str().to_string(),
+            TransferItemStatus::Partial.as_db_str().to_string(),
+        ])
+        .bind(TransferItemStatus::Completed.as_db_str())
+        .bind(TransferItemStatus::Partial.as_db_str())
         .execute(&mut scope)
         .await;
         match item_updated {
@@ -1257,16 +1316,18 @@ pub async fn receive_transfer(
         "wms",
         r#"
         UPDATE wms.transfer_orders SET
-            status = 'received',
-            received_at = $1,
-            updated_at = $2
-        WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL AND status = 'shipped'
+            status = $1,
+            received_at = $2,
+            updated_at = $3
+        WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL AND status = $6
         "#
     ))
+    .bind(TransferOrderStatus::Received.as_db_str())
     .bind(now)
     .bind(now)
     .bind(transfer_id)
     .bind(tenant)
+    .bind(TransferOrderStatus::Shipped.as_db_str())
     .execute(&mut scope)
     .await;
     match order_updated {
@@ -1359,16 +1420,26 @@ pub async fn complete_transfer(
         "wms",
         r#"
         UPDATE wms.transfer_orders SET
-            status = 'completed',
+            status = $1,
             actual_date = CURRENT_DATE,
-            updated_at = $1
-        WHERE id = $2 AND status = 'received' AND tenant_id = $3 AND deleted_at IS NULL
+            updated_at = $2
+        WHERE id = $3 AND status = $4 AND tenant_id = $5 AND deleted_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1 FROM wms.transfer_order_items i
+              WHERE i.transfer_id = $3 AND i.tenant_id = $5 AND i.deleted_at IS NULL
+                AND COALESCE(i.status, 'pending') <> $6
+                AND COALESCE(i.status, 'pending') <> $7
+          )
         RETURNING *
         "#
     ))
+    .bind(TransferOrderStatus::Completed.as_db_str())
     .bind(now)
     .bind(transfer_id)
+    .bind(TransferOrderStatus::Received.as_db_str())
     .bind(tenant)
+    .bind(TransferItemStatus::Completed.as_db_str())
+    .bind(TransferItemStatus::Cancelled.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1507,46 +1578,50 @@ pub async fn start_transfer_approval(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
-    let current = sqlx::query(only_own_schema_query!(
+    let current = sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "wms",
-        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2"
+        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
     ))
     .bind(transfer_id)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
-    match current {
-        Ok(row) => {
-            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if !crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped") {
-                return ApiResponse::bad_request("当前状态无需审批");
-            }
-            if let Err(e) = crate::models::audit_log::log_approval_event(
-                &mut **txn,
-                &tenant_id.to_string(),
-                "transfer_order",
-                &transfer_id.to_string(),
-                "start_approval",
-                &req.operator,
-                &current_status,
-                &current_status,
-                req.comment.as_deref(),
-            )
-            .await
-            {
-                tracing::warn!("审计日志写入失败: {}", e);
-            }
-            ApiResponse::success(
-                serde_json::json!({"status": current_status, "approval_started": true}),
-                "审批启动成功",
-            )
+    let current_status = match current {
+        Ok(Some(raw)) => match TransferOrderStatus::from_db_str(&raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::conflict(&msg),
+        },
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()))
         }
         Err(e) => {
-            tracing::error!("找不到调拨单: {}", e);
-            ApiResponse::not_found("调拨单不存在")
+            tracing::error!("查询调拨单状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询调拨单失败".to_string()));
         }
+    };
+    if !current_status.requires_approval(TransferOrderStatus::Shipped) {
+        return ApiResponse::conflict("当前状态无需审批");
     }
+    if let Err(e) = crate::models::audit_log::log_approval_event(
+        &mut **txn,
+        &tenant_id.to_string(),
+        "transfer_order",
+        &transfer_id.to_string(),
+        "start_approval",
+        &req.operator,
+        current_status.as_db_str(),
+        current_status.as_db_str(),
+        req.comment.as_deref(),
+    )
+    .await
+    {
+        tracing::warn!("审计日志写入失败: {}", e);
+    }
+    ApiResponse::success(
+        serde_json::json!({"status": current_status.as_db_str(), "approval_started": true}),
+        "审批启动成功",
+    )
 }
 
 #[utoipa::path(
@@ -1583,68 +1658,88 @@ pub async fn approve_transfer(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
-    let current = sqlx::query(only_own_schema_query!(
+    let current = sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "wms",
-        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2"
+        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
     ))
     .bind(transfer_id)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
-    match current {
-        Ok(row) => {
-            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped")
-                && crate::shared::fsm::transfer_order_can_transition(&current_status, "shipped")
-                    .is_err()
-            {
-                return ApiResponse::bad_request("当前状态不允许审批通过");
-            }
-            let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.transfer_orders SET status = 'shipped', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
-            )
-            .bind(transfer_id)
-            .bind(tenant_id)
-            .fetch_one(&mut **txn)
-            .await;
-            match result {
-                Ok(_) => {
-                    if let Err(e) = crate::models::audit_log::log_approval_event(
-                        &mut **txn,
-                        &tenant_id.to_string(),
-                        "transfer_order",
-                        &transfer_id.to_string(),
-                        "approve",
-                        &req.operator,
-                        &current_status,
-                        "shipped",
-                        req.comment.as_deref(),
-                    )
-                    .await
-                    {
-                        tracing::warn!("审计日志写入失败: {}", e);
-                    }
-                    if let Some(t) = guard.take() {
-                        if let Err(e) = t.commit().await {
-                            tracing::error!("事务提交失败: {}", e);
-                            return ApiResponse::server_error("事务提交失败");
-                        }
-                    }
-                    ApiResponse::success(
-                        serde_json::json!({"id": transfer_id, "status": "shipped"}),
-                        "审批通过",
-                    )
-                }
-                Err(e) => {
-                    tracing::error!("审批调拨单失败: {}", e);
-                    ApiResponse::server_error("审批失败")
-                }
-            }
+    let current_status = match current {
+        Ok(Some(raw)) => match TransferOrderStatus::from_db_str(&raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::conflict(&msg),
+        },
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()))
         }
         Err(e) => {
-            tracing::error!("找不到调拨单: {}", e);
-            ApiResponse::not_found("调拨单不存在")
+            tracing::error!("查询调拨单状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("审批失败".to_string()));
+        }
+    };
+    if current_status != TransferOrderStatus::Confirmed {
+        return ApiResponse::conflict("当前状态不允许审批通过");
+    }
+
+    // 审批只记录批准痕迹，不直接改 shipped：库存扣减只能发生在 ship，
+    // 否则会出现“状态已发货、库存未动”的幽灵流转。
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+        UPDATE wms.transfer_orders SET
+            approved_by = $1,
+            approved_at = NOW(),
+            updated_at = NOW()
+        WHERE id = $2 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL
+        RETURNING id, status
+        "#
+    ))
+    .bind(&req.operator)
+    .bind(transfer_id)
+    .bind(tenant_id)
+    .bind(TransferOrderStatus::Confirmed.as_db_str())
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(_)) => {
+            if let Err(e) = crate::models::audit_log::log_approval_event(
+                &mut **txn,
+                &tenant_id.to_string(),
+                "transfer_order",
+                &transfer_id.to_string(),
+                "approve",
+                &req.operator,
+                current_status.as_db_str(),
+                current_status.as_db_str(),
+                req.comment.as_deref(),
+            )
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return ApiResponse::server_error("事务提交失败");
+                }
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": transfer_id,
+                    "status": current_status.as_db_str(),
+                    "approved": true
+                }),
+                "审批通过，待发货",
+            )
+        }
+        Ok(None) => ApiResponse::conflict("调拨单状态已变化，审批未生效"),
+        Err(e) => {
+            tracing::error!("审批调拨单失败: {}", e);
+            ApiResponse::server_error("审批失败")
         }
     }
 }
@@ -1683,67 +1778,84 @@ pub async fn reject_transfer(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
-    let current = sqlx::query(only_own_schema_query!(
+    let current = sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "wms",
-        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2"
+        "SELECT status FROM wms.transfer_orders WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
     ))
     .bind(transfer_id)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
-    match current {
-        Ok(row) => {
-            let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
-            if crate::shared::fsm::transfer_order_can_transition(&current_status, "pending")
-                .is_err()
-            {
-                return ApiResponse::bad_request("当前状态不允许驳回回流");
-            }
-            let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.transfer_orders SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
-            )
-            .bind(transfer_id)
-            .bind(tenant_id)
-            .fetch_one(&mut **txn)
-            .await;
-            match result {
-                Ok(_) => {
-                    if let Err(e) = crate::models::audit_log::log_approval_event(
-                        &mut **txn,
-                        &tenant_id.to_string(),
-                        "transfer_order",
-                        &transfer_id.to_string(),
-                        "reject",
-                        &req.operator,
-                        &current_status,
-                        "pending",
-                        req.comment.as_deref(),
-                    )
-                    .await
-                    {
-                        tracing::warn!("审计日志写入失败: {}", e);
-                    }
-                    if let Some(t) = guard.take() {
-                        if let Err(e) = t.commit().await {
-                            tracing::error!("事务提交失败: {}", e);
-                            return ApiResponse::server_error("事务提交失败");
-                        }
-                    }
-                    ApiResponse::success(
-                        serde_json::json!({"id": transfer_id, "status": "pending"}),
-                        "审批驳回，回流至 pending",
-                    )
-                }
-                Err(e) => {
-                    tracing::error!("驳回调拨单失败: {}", e);
-                    ApiResponse::server_error("驳回失败")
-                }
-            }
+    let current_status = match current {
+        Ok(Some(raw)) => match TransferOrderStatus::from_db_str(&raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::conflict(&msg),
+        },
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()))
         }
         Err(e) => {
-            tracing::error!("找不到调拨单: {}", e);
-            ApiResponse::not_found("调拨单不存在")
+            tracing::error!("查询调拨单状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("驳回失败".to_string()));
+        }
+    };
+    if current_status != TransferOrderStatus::Confirmed {
+        return ApiResponse::conflict("当前状态不允许驳回回流");
+    }
+
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+        UPDATE wms.transfer_orders SET
+            status = $1,
+            updated_at = NOW()
+        WHERE id = $2 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL
+        RETURNING id, status
+        "#
+    ))
+    .bind(TransferOrderStatus::Pending.as_db_str())
+    .bind(transfer_id)
+    .bind(tenant_id)
+    .bind(TransferOrderStatus::Confirmed.as_db_str())
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(_)) => {
+            if let Err(e) = crate::models::audit_log::log_approval_event(
+                &mut **txn,
+                &tenant_id.to_string(),
+                "transfer_order",
+                &transfer_id.to_string(),
+                "reject",
+                &req.operator,
+                current_status.as_db_str(),
+                TransferOrderStatus::Pending.as_db_str(),
+                req.comment.as_deref(),
+            )
+            .await
+            {
+                tracing::warn!("审计日志写入失败: {}", e);
+            }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return ApiResponse::server_error("事务提交失败");
+                }
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "id": transfer_id,
+                    "status": TransferOrderStatus::Pending.as_db_str()
+                }),
+                "审批驳回，回流至 pending",
+            )
+        }
+        Ok(None) => ApiResponse::conflict("调拨单状态已变化，驳回未生效"),
+        Err(e) => {
+            tracing::error!("驳回调拨单失败: {}", e);
+            ApiResponse::server_error("驳回失败")
         }
     }
 }

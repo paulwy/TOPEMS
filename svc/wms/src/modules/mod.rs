@@ -39,6 +39,7 @@ pub mod stock_take;
 pub mod sync_records;
 pub mod sync_status;
 pub mod transfer_order;
+pub mod transfer_status;
 pub mod warehouse;
 pub mod warehouse_status;
 pub mod wave_pick;

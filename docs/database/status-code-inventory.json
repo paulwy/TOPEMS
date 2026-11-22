@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 186,
+    "rust_enums": 188,
     "rust_enum_values": 185,
     "rust_values_not_in_db_check": 146,
     "frontend_status_keys": 200,
@@ -3290,6 +3290,46 @@
         "pending",
         "running",
         "success"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/transfer_status.rs",
+      "name": "TransferItemStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Partial",
+        "Pending",
+        "Shipped"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "partial",
+        "pending",
+        "shipped"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/transfer_status.rs",
+      "name": "TransferOrderStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Confirmed",
+        "Pending",
+        "Received",
+        "Shipped"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "pending",
+        "received",
+        "shipped"
       ]
     },
     {

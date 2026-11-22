@@ -20,6 +20,11 @@ use crate::modules::outbound_status::{
     DB_VALUES as OUTBOUND_DB_VALUES, TERMINAL as OUTBOUND_TERMINAL,
     TRANSITIONS as OUTBOUND_TRANSITIONS,
 };
+use crate::modules::transfer_status::{
+    TransferOrderStatus, APPROVAL_TRANSITIONS as TRANSFER_APPROVAL_TRANSITIONS,
+    DB_VALUES as TRANSFER_DB_VALUES, TERMINAL as TRANSFER_TERMINAL,
+    TRANSITIONS as TRANSFER_TRANSITIONS,
+};
 pub use topems_shared_core::fsm::{FsmDef, FsmError};
 
 // ==================== FSM-1: InboundOrder ====================
@@ -104,40 +109,33 @@ pub fn is_valid_stock_take_status(s: &str) -> bool {
 }
 
 // ==================== FSM-4: TransferOrder ====================
+// 单一事实源在 `modules::transfer_status`；这里仅保留共享 FSM 投影。
 pub const TRANSFER_ORDER: FsmDef = FsmDef {
-    states: &[
-        "pending",
-        "confirmed",
-        "shipped",
-        "received",
-        "completed",
-        "cancelled",
-    ],
-    terminal: &["completed", "cancelled"],
-    transitions: &[
-        ("pending", "confirmed"),
-        ("confirmed", "pending"),
-        ("confirmed", "shipped"),
-        ("shipped", "received"),
-        ("received", "completed"),
-        ("pending", "cancelled"),
-        ("confirmed", "cancelled"),
-        ("shipped", "cancelled"),
-        ("received", "cancelled"),
-    ],
-    approval_transitions: &[("confirmed", "shipped")],
+    states: TRANSFER_DB_VALUES,
+    terminal: TRANSFER_TERMINAL,
+    transitions: TRANSFER_TRANSITIONS,
+    approval_transitions: TRANSFER_APPROVAL_TRANSITIONS,
 };
 
+fn parse_transfer_status(raw: &str) -> Result<TransferOrderStatus, FsmError> {
+    TransferOrderStatus::from_db_str(raw).map_err(|_| FsmError::UnknownStatus(raw.to_string()))
+}
+
 pub fn transfer_order_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    parse_transfer_status(from)?;
+    parse_transfer_status(to)?;
     TRANSFER_ORDER.can_transition(from, to)
 }
 
 pub fn transfer_order_requires_approval(from: &str, to: &str) -> bool {
-    TRANSFER_ORDER.requires_approval(from, to)
+    match (parse_transfer_status(from), parse_transfer_status(to)) {
+        (Ok(from), Ok(to)) => from.requires_approval(to),
+        _ => false,
+    }
 }
 
 pub fn is_valid_transfer_order_status(s: &str) -> bool {
-    TRANSFER_ORDER.is_valid_status(s)
+    TransferOrderStatus::from_db_str(s).is_ok()
 }
 
 // ==================== FSM-5: WavePick ====================
