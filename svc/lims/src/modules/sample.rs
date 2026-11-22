@@ -9,6 +9,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
+use crate::modules::sample_status::LabSampleStatus;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
@@ -131,6 +132,13 @@ pub async fn list_samples(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let status_filter: Option<String> = match query.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match LabSampleStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的样品状态"),
+        },
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -160,7 +168,7 @@ pub async fn list_samples(
         }
     };
 
-    let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
+    let sql = match (status_filter.as_deref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
         (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND status = $1 AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
         (Some(_), Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND status = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
         (Some(_), None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND status = $1 AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
@@ -173,7 +181,7 @@ pub async fn list_samples(
 
     let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (
-        query.status.as_ref(),
+        status_filter.as_deref(),
         query.sample_no.as_ref(),
         query.sample_name.as_ref(),
     ) {
@@ -301,7 +309,7 @@ pub async fn register_sample(
     };
 
     let row = sqlx::query(
-        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at"
+        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at"
     )
     .bind(tenant_id)
     .bind(sample_no)
@@ -310,6 +318,7 @@ pub async fn register_sample(
     .bind(&req.source)
     .bind(req.quantity)
     .bind(&req.unit)
+    .bind(LabSampleStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -474,6 +483,14 @@ pub async fn update_sample(
         Some(ctx.tenant_id)
     };
 
+    let status = match req.status.as_deref() {
+        Some(raw) => match LabSampleStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的样品状态"),
+        },
+        None => None,
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -497,7 +514,7 @@ pub async fn update_sample(
     .bind(&req.source)
     .bind(req.quantity)
     .bind(&req.unit)
-    .bind(&req.status)
+    .bind(status)
     .bind(&req.expired_at)
     .fetch_one(&mut scope)
     .await;
@@ -675,6 +692,7 @@ const LIFECYCLE_STAGES: &[(&str, &str)] = &[
 
 /// 样品生命周期合法转移边（P2 制造域 B 审计补 FSM 边校验）：
 /// 严格按 LIFECYCLE_STAGES 顺序逐阶前进——不允许跨阶跳转、回退或同阶空转。
+#[cfg(test)]
 const SAMPLE_STAGE_EDGES: &[(&str, &str)] = &[
     ("received", "registered"),
     ("registered", "testing"),
@@ -819,13 +837,10 @@ pub async fn record_lifecycle_event(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询样品失败", e)),
     };
 
-    let valid_stage = LIFECYCLE_STAGES
-        .iter()
-        .any(|(stage, _)| *stage == req.lifecycle_stage);
-
-    if !valid_stage {
-        return ApiResponse::bad_request("无效的生命周期阶段");
-    }
+    let lifecycle_stage = match LabSampleStatus::from_db_str(&req.lifecycle_stage) {
+        Some(stage) => stage,
+        None => return ApiResponse::bad_request("无效的生命周期阶段"),
+    };
 
     let record_id = Uuid::new_v4();
 
@@ -843,7 +858,7 @@ pub async fn record_lifecycle_event(
     .bind(ctx.tenant_id)
     .bind(sample_id)
     .bind(&sample_no)
-    .bind(&req.lifecycle_stage)
+    .bind(lifecycle_stage.as_db_str())
     .bind(&req.stage_description)
     .bind(&req.operator)
     .bind(&req.notes)
@@ -857,7 +872,7 @@ pub async fn record_lifecycle_event(
                 "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_id)
-            .bind(&req.lifecycle_stage)
+            .bind(lifecycle_stage.as_db_str())
             .execute(&mut scope)
             .await;
 
@@ -921,11 +936,10 @@ pub async fn transition_sample_stage(
         Some(ctx.tenant_id)
     };
 
-    let valid_stage = LIFECYCLE_STAGES.iter().any(|(stage, _)| *stage == to_stage);
-
-    if !valid_stage {
-        return ApiResponse::bad_request("无效的目标阶段");
-    }
+    let target_stage = match LabSampleStatus::from_db_str(&to_stage) {
+        Some(stage) => stage,
+        None => return ApiResponse::bad_request("无效的目标阶段"),
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -958,27 +972,24 @@ pub async fn transition_sample_stage(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询样品失败", e)),
     };
 
-    // FSM 边校验（P2 制造域 B 审计）：当前阶段属于生命周期枚举时，目标阶段必须落在
-    // SAMPLE_STAGE_EDGES 合法边上（409 Conflict 明确报出从/到阶段）。
-    // 当前阶段为历史/外部未知状态（不在枚举内）时不阻断并告警，避免存量数据行为倒退。
-    if LIFECYCLE_STAGES
-        .iter()
-        .any(|(stage, _)| *stage == current_stage)
-    {
-        if !SAMPLE_STAGE_EDGES.contains(&(&current_stage.as_str(), to_stage.as_str())) {
-            return ApiResponse::conflict(&format!(
-                "样品阶段非法转移：不能从[{}]转到[{}]",
-                get_stage_name(&current_stage),
-                get_stage_name(&to_stage)
-            ));
+    let current_stage_enum = match LabSampleStatus::from_db_str(&current_stage) {
+        Some(stage) => stage,
+        None => {
+            tracing::warn!(
+                "样品 {} 当前阶段 [{}] 不在生命周期枚举内，拒绝流转",
+                sample_no,
+                current_stage
+            );
+            return ApiResponse::conflict("样品当前状态异常，请刷新后重试");
         }
-    } else {
-        tracing::warn!(
-            "样品 {} 当前阶段 [{}] 不在生命周期枚举内，跳过 FSM 边校验（历史/外部状态），目标阶段 [{}]",
-            sample_no,
-            current_stage,
-            to_stage
-        );
+    };
+
+    if !current_stage_enum.can_transition_to(target_stage) {
+        return ApiResponse::conflict(&format!(
+            "样品阶段非法转移：不能从[{}]转到[{}]",
+            get_stage_name(&current_stage),
+            get_stage_name(target_stage.as_db_str())
+        ));
     }
 
     let operator = req.get("operator").and_then(|v| v.as_str());
@@ -1006,7 +1017,7 @@ pub async fn transition_sample_stage(
     .bind(ctx.tenant_id)
     .bind(sample_uuid)
     .bind(&sample_no)
-    .bind(&to_stage)
+    .bind(target_stage.as_db_str())
     .bind(&description)
     .bind(operator)
     .bind(notes)
@@ -1020,7 +1031,7 @@ pub async fn transition_sample_stage(
                 "UPDATE public.qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_uuid)
-            .bind(&to_stage)
+            .bind(target_stage.as_db_str())
             .execute(&mut scope)
             .await;
 

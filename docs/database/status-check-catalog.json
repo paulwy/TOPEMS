@@ -2072,6 +2072,21 @@
     },
     {
       "schema": "lims",
+      "table": "lims_safety_tasks",
+      "constraint": "ck_lims_safety_tasks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "lims",
       "table": "qa_lab_processes",
       "constraint": "ck_qa_lab_processes_status_standard",
       "columns": [
@@ -3438,6 +3453,25 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "public",
+      "table": "qa_lab_samples",
+      "constraint": "ck_qa_lab_samples_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "destroyed",
+        "disposed",
+        "received",
+        "registered",
+        "retrieved",
+        "stored",
+        "testing"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['received'::text, 'registered'::text, 'testing'::text, 'completed'::text, 'stored'::text, 'retrieved'::text, 'disposed'::text, 'destroyed'::text]))) NOT VALID"
     },
     {
       "schema": "public",
@@ -5838,15 +5872,6 @@
     },
     {
       "schema": "lims",
-      "table": "lims_safety_tasks",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "lims",
       "table": "qa_lab_inspection_reports",
       "column": "status",
       "type": "character varying(32)",
@@ -7428,15 +7453,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "qa_lab_samples",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'received'::character varying"
     },
     {
       "schema": "public",

@@ -1177,6 +1177,20 @@
       "table": "tms.tms_shipments",
       "column": "status",
       "candidate": "docs/database/tms-shipment-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/lims/src/modules/sample_status.rs",
+      "enum": "LabSampleStatus",
+      "table": "public.qa_lab_samples",
+      "column": "status",
+      "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/lims/src/modules/safety_task_status.rs",
+      "enum": "SafetyTaskStatus",
+      "table": "lims.lims_safety_tasks",
+      "column": "status",
+      "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

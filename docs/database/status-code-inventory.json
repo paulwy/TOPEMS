@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 314,
+    "db_check_constraints": 316,
     "db_enum_types": 5,
-    "db_check_values": 140,
-    "rust_enums": 209,
-    "rust_enum_values": 192,
+    "db_check_values": 145,
+    "rust_enums": 211,
+    "rust_enum_values": 197,
     "rust_values_not_in_db_check": 60,
-    "frontend_status_keys": 206,
-    "frontend_keys_not_in_db_check": 73,
+    "frontend_status_keys": 210,
+    "frontend_keys_not_in_db_check": 72,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -1884,6 +1884,48 @@
       ]
     },
     {
+      "module": "lims",
+      "file": "svc/lims/src/modules/safety_task_status.rs",
+      "name": "SafetyTaskStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
+      ]
+    },
+    {
+      "module": "lims",
+      "file": "svc/lims/src/modules/sample_status.rs",
+      "name": "LabSampleStatus",
+      "values": [
+        "Completed",
+        "Destroyed",
+        "Disposed",
+        "Received",
+        "Registered",
+        "Retrieved",
+        "Stored",
+        "Testing"
+      ],
+      "normalized": [
+        "completed",
+        "destroyed",
+        "disposed",
+        "received",
+        "registered",
+        "retrieved",
+        "stored",
+        "testing"
+      ]
+    },
+    {
       "module": "master-data",
       "file": "svc/master-data/src/modules/ai_governance_v59.rs",
       "name": "ClassificationStatus",
@@ -3749,6 +3791,7 @@
       "discovering",
       "discrepancy",
       "dismissed",
+      "disposed",
       "disputed",
       "done",
       "downloaded",
@@ -3844,6 +3887,7 @@
       "receiving",
       "recognized",
       "rectifying",
+      "registered",
       "reimbursed",
       "rejected",
       "released",
@@ -3853,6 +3897,7 @@
       "resolved",
       "restored",
       "retired",
+      "retrieved",
       "reversed",
       "revoked",
       "rollback",
@@ -3875,6 +3920,7 @@
       "stakeholder_notified",
       "standby",
       "stopped",
+      "stored",
       "submitted",
       "success",
       "sunset",
@@ -4035,7 +4081,6 @@
       "sunset",
       "synced",
       "syncing",
-      "testing",
       "timeout",
       "todo",
       "under_assessment",

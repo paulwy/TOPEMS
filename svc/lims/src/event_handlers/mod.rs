@@ -1,3 +1,4 @@
+use crate::modules::safety_task_status::SafetyTaskStatus;
 use chrono::Utc;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
@@ -142,7 +143,7 @@ impl LimsEventHandlers {
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             "INSERT INTO lims.lims_safety_tasks (task_no, title, category, level, description, location, status, source_type, source_hazard_id, assigned_to, tenant_id, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'ehs_hazard', $7, 'system', $9, $8, $8)
+             VALUES ($1, $2, $3, $4, $5, $6, $10, 'ehs_hazard', $7, 'system', $9, $8, $8)
              ON CONFLICT (tenant_id, source_type, source_hazard_id) DO NOTHING
              RETURNING id",
         )
@@ -155,6 +156,7 @@ impl LimsEventHandlers {
         .bind(payload.hazard_id)
         .bind(now)
         .bind(tenant.get())
+        .bind(SafetyTaskStatus::DEFAULT.as_db_str())
         .fetch_optional(&mut scope)
         .await;
 
