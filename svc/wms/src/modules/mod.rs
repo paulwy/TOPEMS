@@ -16,6 +16,7 @@ pub mod replenishment_logic;
 pub mod cycle_count;
 // V514-2: 新增 slotting 模块（LocationRulePage 前端真实消费 /slotting/rules，此前后端无实现）
 pub mod slotting;
+pub mod slotting_status;
 // V514-3: 恢复 discrepancy 模块（修复存量 E0308×3 + SQL 列名错误后启用）
 pub mod analytics;
 pub mod data_sync;

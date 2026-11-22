@@ -25,13 +25,15 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::types::JsonValue;
+use sqlx::{types::JsonValue, Row};
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
+use crate::modules::slotting_status::SlottingSuggestionStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -142,6 +144,44 @@ pub struct ImpactAnalysis {
     pub implementation_cost_estimate: f64,
 }
 
+fn suggestion_from_row(row: &sqlx::postgres::PgRow) -> SlottingSuggestion {
+    SlottingSuggestion {
+        id: row.try_get::<Uuid, _>("id").unwrap_or_default(),
+        tenant_id: row
+            .try_get::<Option<Uuid>, _>("tenant_id")
+            .unwrap_or_default(),
+        warehouse_id: row.try_get::<Uuid, _>("warehouse_id").unwrap_or_default(),
+        material_id: row
+            .try_get::<Option<Uuid>, _>("material_id")
+            .unwrap_or_default(),
+        material_code: row
+            .try_get::<String, _>("material_code")
+            .unwrap_or_default(),
+        material_name: row
+            .try_get::<String, _>("material_name")
+            .unwrap_or_default(),
+        current_location_id: row
+            .try_get::<Option<Uuid>, _>("current_location_id")
+            .unwrap_or_default(),
+        suggested_location_id: row
+            .try_get::<Option<Uuid>, _>("suggested_location_id")
+            .unwrap_or_default(),
+        suggested_location_name: row
+            .try_get::<Option<String>, _>("suggested_location_name")
+            .unwrap_or_default(),
+        reason: row.try_get::<String, _>("reason").unwrap_or_default(),
+        score: row.try_get::<f64, _>("score").unwrap_or(0.0),
+        expected_improvement: row.try_get::<f64, _>("expected_improvement").unwrap_or(0.0),
+        status: row.try_get::<String, _>("status").unwrap_or_default(),
+        created_at: row
+            .try_get::<DateTime<Utc>, _>("created_at")
+            .unwrap_or_else(|_| Utc::now()),
+        applied_at: row
+            .try_get::<Option<DateTime<Utc>>, _>("applied_at")
+            .unwrap_or_default(),
+    }
+}
+
 // ============================================
 // 路由
 // ============================================
@@ -178,9 +218,14 @@ where
 pub async fn run_optimization(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(params): Json<OptimizeParams>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -197,17 +242,20 @@ pub async fn run_optimization(
         .unwrap_or_else(|| "frequency".into());
     let _ = strategy;
 
-    // 读取启用中的规则（无规则时按默认 frequency 策略生成一条占位建议）
-    let rules = sqlx::query!(
+    // 读取启用中的规则（无规则时诚实返回空结果，不生成占位建议）
+    let rules = sqlx::query_as::<_, (Uuid, String)>(
         r#"
         SELECT id, rule_type
         FROM wms.slotting_rules
         WHERE is_active = TRUE
+          AND deleted_at IS NULL
+          AND tenant_id = $2
           AND ($1::uuid IS NULL OR warehouse_id = $1)
         ORDER BY priority, created_at
         "#,
-        params.warehouse_id,
     )
+    .bind(params.warehouse_id)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -229,7 +277,7 @@ pub async fn run_optimization(
         degraded = false;
         degraded_message = None;
         // 有规则：按规则数 × 启用分区生成候选（每条规则对应一个分区）
-        let inserted = sqlx::query!(
+        let inserted = sqlx::query(
             r#"
             INSERT INTO wms.slotting_suggestions
                 (tenant_id, warehouse_id, material_id, material_code, material_name,
@@ -244,22 +292,30 @@ pub async fn run_optimization(
                    r.rule_type,
                    0.6,
                    0.0,
-                   'pending'
+                   $3
             FROM wms.slotting_zones z
             JOIN wms.slotting_rules r
               ON r.is_active = TRUE
+             AND r.deleted_at IS NULL
+             AND r.tenant_id = $4
              AND ($1::uuid IS NULL OR r.warehouse_id = $1)
             WHERE z.is_active = TRUE
+              AND z.deleted_at IS NULL
+              AND z.tenant_id = $4
               AND ($2::uuid IS NULL OR z.warehouse_id = $2)
               AND NOT EXISTS (
                   SELECT 1 FROM wms.slotting_suggestions s
                   WHERE s.warehouse_id = z.warehouse_id
-                    AND s.status = 'pending'
+                    AND s.tenant_id = $4
+                    AND s.deleted_at IS NULL
+                    AND s.status = $3
               )
             "#,
-            params.warehouse_id,
-            params.warehouse_id,
         )
+        .bind(params.warehouse_id)
+        .bind(params.warehouse_id)
+        .bind(SlottingSuggestionStatus::DEFAULT.as_db_str())
+        .bind(tenant)
         .execute(&mut **txn)
         .await
         .map(|r| r.rows_affected() as i64)
@@ -299,9 +355,14 @@ pub async fn run_optimization(
 pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(params): Query<SuggestionQueryParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -315,26 +376,36 @@ pub async fn list_suggestions(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    let status = params.status.clone();
+    let status = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match SlottingSuggestionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的库位优化建议状态"),
+        },
+    };
     let warehouse_id = params.warehouse_id;
 
-    let items = match sqlx::query!(
+    let items = match sqlx::query(
         r#"
         SELECT id, tenant_id, warehouse_id, material_id, material_code, material_name,
                current_location_id, suggested_location_id, suggested_location_name,
                reason, score::float8 as score, expected_improvement::float8 as expected_improvement,
                status, created_at, applied_at
         FROM wms.slotting_suggestions
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL
+          AND tenant_id = $5
+          AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR status = $2)
+          AND status = ANY(ARRAY['pending','applied','rejected'])
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
-        warehouse_id,
-        status,
-        page_size,
-        offset,
     )
+    .bind(warehouse_id)
+    .bind(&status)
+    .bind(page_size)
+    .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await
     {
@@ -342,16 +413,20 @@ pub async fn list_suggestions(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询建议失败", e)),
     };
 
-    let total_row = match sqlx::query!(
+    let total_row = match sqlx::query(
         r#"
-        SELECT COUNT(*)::int8 as total
+        SELECT COUNT(*)::bigint as total
         FROM wms.slotting_suggestions
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL
+          AND tenant_id = $3
+          AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR status = $2)
+          AND status = ANY(ARRAY['pending','applied','rejected'])
         "#,
-        warehouse_id,
-        status,
     )
+    .bind(warehouse_id)
+    .bind(&status)
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await
     {
@@ -359,31 +434,13 @@ pub async fn list_suggestions(
         Err(e) => return ApiResponse::from(TopemsError::internal("统计建议失败", e)),
     };
 
-    let suggestions: Vec<SlottingSuggestion> = items
-        .into_iter()
-        .map(|r| SlottingSuggestion {
-            id: r.id,
-            tenant_id: r.tenant_id,
-            warehouse_id: r.warehouse_id,
-            material_id: r.material_id,
-            material_code: r.material_code,
-            material_name: r.material_name,
-            current_location_id: r.current_location_id,
-            suggested_location_id: r.suggested_location_id,
-            suggested_location_name: r.suggested_location_name,
-            reason: r.reason,
-            score: r.score.unwrap_or(0.0),
-            expected_improvement: r.expected_improvement.unwrap_or(0.0),
-            status: r.status,
-            created_at: r.created_at,
-            applied_at: r.applied_at,
-        })
-        .collect();
+    let suggestions: Vec<SlottingSuggestion> = items.iter().map(suggestion_from_row).collect();
+    let total = total_row.try_get::<i64, _>("total").unwrap_or(0);
 
     ApiResponse::success(
         serde_json::json!({
             "items": suggestions,
-            "total": total_row.total,
+            "total": total,
         }),
         "success",
     )
@@ -401,8 +458,13 @@ pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -413,17 +475,19 @@ pub async fn get_suggestion(
         Err(e) => return e.0,
     }
 
-    let row = match sqlx::query!(
+    let row = match sqlx::query(
         r#"
         SELECT id, tenant_id, warehouse_id, material_id, material_code, material_name,
                current_location_id, suggested_location_id, suggested_location_name,
                reason, score::float8 as score, expected_improvement::float8 as expected_improvement,
                status, created_at, applied_at
         FROM wms.slotting_suggestions
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND status = ANY(ARRAY['pending','applied','rejected'])
         "#,
-        id,
     )
+    .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -433,24 +497,7 @@ pub async fn get_suggestion(
 
     match row {
         Some(r) => ApiResponse::success(
-            serde_json::to_value(SlottingSuggestion {
-                id: r.id,
-                tenant_id: r.tenant_id,
-                warehouse_id: r.warehouse_id,
-                material_id: r.material_id,
-                material_code: r.material_code,
-                material_name: r.material_name,
-                current_location_id: r.current_location_id,
-                suggested_location_id: r.suggested_location_id,
-                suggested_location_name: r.suggested_location_name,
-                reason: r.reason,
-                score: r.score.unwrap_or(0.0),
-                expected_improvement: r.expected_improvement.unwrap_or(0.0),
-                status: r.status,
-                created_at: r.created_at,
-                applied_at: r.applied_at,
-            })
-            .unwrap_or(serde_json::Value::Null),
+            serde_json::to_value(suggestion_from_row(&r)).unwrap_or(serde_json::Value::Null),
             "success",
         ),
         None => ApiResponse::from(TopemsError::ResourceNotFound("建议不存在".to_string())),
@@ -469,8 +516,13 @@ pub async fn apply_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -481,15 +533,20 @@ pub async fn apply_suggestion(
         Err(e) => return e.0,
     }
 
-    let row = match sqlx::query!(
+    let row = match sqlx::query(
         r#"
         UPDATE wms.slotting_suggestions
-        SET status = 'applied', applied_at = NOW()
-        WHERE id = $1 AND status = 'pending'
+        SET status = $2, applied_at = NOW()
+        WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL
+          AND status = ANY($4)
+          AND status = ANY(ARRAY['pending','applied','rejected'])
         RETURNING id, status
         "#,
-        id,
     )
+    .bind(id)
+    .bind(SlottingSuggestionStatus::Applied.as_db_str())
+    .bind(tenant)
+    .bind(SlottingSuggestionStatus::decide_from())
     .fetch_optional(&mut **txn)
     .await
     {
@@ -508,14 +565,15 @@ pub async fn apply_suggestion(
             }
 
             ApiResponse::success(
-                serde_json::json!({ "id": r.id, "status": r.status }),
+                serde_json::json!({
+                    "id": r.try_get::<Uuid, _>("id").ok(),
+                    "status": r.try_get::<String, _>("status").ok(),
+                }),
                 "success",
             )
         }
 
-        None => ApiResponse::from(TopemsError::ResourceNotFound(
-            "建议不存在或已处理".to_string(),
-        )),
+        None => ApiResponse::conflict("建议不存在、已删除或当前状态不允许应用"),
     }
 }
 
@@ -531,8 +589,13 @@ pub async fn reject_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -543,15 +606,20 @@ pub async fn reject_suggestion(
         Err(e) => return e.0,
     }
 
-    let row = match sqlx::query!(
+    let row = match sqlx::query(
         r#"
         UPDATE wms.slotting_suggestions
-        SET status = 'rejected'
-        WHERE id = $1 AND status = 'pending'
+        SET status = $2
+        WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL
+          AND status = ANY($4)
+          AND status = ANY(ARRAY['pending','applied','rejected'])
         RETURNING id, status
         "#,
-        id,
     )
+    .bind(id)
+    .bind(SlottingSuggestionStatus::Rejected.as_db_str())
+    .bind(tenant)
+    .bind(SlottingSuggestionStatus::decide_from())
     .fetch_optional(&mut **txn)
     .await
     {
@@ -570,14 +638,15 @@ pub async fn reject_suggestion(
             }
 
             ApiResponse::success(
-                serde_json::json!({ "id": r.id, "status": r.status }),
+                serde_json::json!({
+                    "id": r.try_get::<Uuid, _>("id").ok(),
+                    "status": r.try_get::<String, _>("status").ok(),
+                }),
                 "success",
             )
         }
 
-        None => ApiResponse::from(TopemsError::ResourceNotFound(
-            "建议不存在或已处理".to_string(),
-        )),
+        None => ApiResponse::conflict("建议不存在、已删除或当前状态不允许拒绝"),
     }
 }
 
@@ -938,8 +1007,13 @@ pub async fn get_impact_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ImpactParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -950,17 +1024,21 @@ pub async fn get_impact_analysis(
         Err(e) => return e.0,
     }
 
-    let agg = match sqlx::query!(
+    let agg = match sqlx::query(
         r#"
         SELECT
-            COUNT(*)::int8 as total_suggestions,
-            COUNT(DISTINCT material_id)::int8 as affected_materials,
+            COUNT(*)::bigint as total_suggestions,
+            COUNT(DISTINCT material_id)::bigint as affected_materials,
             COALESCE(SUM(expected_improvement), 0)::float8 as total_improvement
         FROM wms.slotting_suggestions
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL
+          AND tenant_id = $2
+          AND ($1::uuid IS NULL OR warehouse_id = $1)
+          AND status = ANY(ARRAY['pending','applied','rejected'])
         "#,
-        params.warehouse_id,
     )
+    .bind(params.warehouse_id)
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await
     {
@@ -968,7 +1046,11 @@ pub async fn get_impact_analysis(
         Err(e) => return ApiResponse::from(TopemsError::internal("分析失败", e)),
     };
 
-    let total_improvement = agg.total_improvement.unwrap_or(0.0_f64);
+    let total_suggestions = agg.try_get::<i64, _>("total_suggestions").unwrap_or(0);
+    let affected_materials = agg.try_get::<i64, _>("affected_materials").unwrap_or(0);
+    let total_improvement = agg
+        .try_get::<f64, _>("total_improvement")
+        .unwrap_or(0.0_f64);
     let result = ImpactAnalysis {
         current_pick_distance: 1000.0,
         optimized_pick_distance: (1000.0 - total_improvement).max(0.0),
@@ -979,9 +1061,9 @@ pub async fn get_impact_analysis(
         },
         current_slotting_score: 60.0,
         optimized_slotting_score: (60.0 + total_improvement / 10.0).min(100.0),
-        affected_orders: agg.total_suggestions.unwrap_or(0),
-        affected_materials: agg.affected_materials.unwrap_or(0),
-        implementation_cost_estimate: (agg.total_suggestions.unwrap_or(0) as f64 * 50.0),
+        affected_orders: total_suggestions,
+        affected_materials,
+        implementation_cost_estimate: (total_suggestions as f64 * 50.0),
     };
 
     ApiResponse::success(

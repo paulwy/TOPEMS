@@ -3,12 +3,12 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 137,
+    "uncovered_enums": 138,
     "uncovered_values": 151,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 105,
+    "resolved_enums": 106,
     "internal_state_enums": 67,
-    "persisted_unmapped_enums": 64,
+    "persisted_unmapped_enums": 65,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 33,
     "internal_state_values": 92,
@@ -2449,6 +2449,24 @@
         "table": "wms.serial_numbers",
         "column": "status",
         "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/slotting_status.rs",
+      "enum": "SlottingSuggestionStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "applied"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/slotting_status.rs",
+        "enum": "SlottingSuggestionStatus",
+        "table": "wms.slotting_suggestions",
+        "column": "status",
+        "candidate": "docs/database/wms-slotting-suggestion-status-check-candidates-2026-11-22.sql"
       }
     },
     {
