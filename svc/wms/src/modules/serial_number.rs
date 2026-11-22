@@ -13,8 +13,10 @@ use crate::models::{
     CreateSerialNumberRequest, SerialNumber, SerialNumberQueryParams, SerialNumberStatistics,
     UpdateSerialNumberRequest,
 };
+use crate::modules::serial_number_status::{SerialNumberQualityStatus, SerialNumberStatus};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::scope::tenant_of;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::{BindTenantScope, TenantScope};
 use topems_shared_core::response::ApiResponse;
@@ -63,9 +65,14 @@ where
 pub async fn list_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<SerialNumberQueryParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -79,6 +86,21 @@ pub async fn list_serial_numbers(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let quality_filter = match params.quality_status.as_deref() {
+        None => None,
+        Some(raw) => match SerialNumberQualityStatus::from_db_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match SerialNumberStatus::from_db_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+
     let result = sqlx::query_as::<_, SerialNumber>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers
@@ -89,6 +111,9 @@ pub async fn list_serial_numbers(
           AND ($5::text IS NULL OR batch_no ILIKE $5)
           AND ($6::text IS NULL OR quality_status = $6)
           AND ($7::text IS NULL OR status = $7)
+          AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
+          AND tenant_id = $10::uuid
         ORDER BY created_at DESC
         LIMIT $8 OFFSET $9
         "#),
@@ -98,10 +123,11 @@ pub async fn list_serial_numbers(
     .bind(params.serial_no.as_ref().map(|s| format!("%{}%", s)))
     .bind(params.supplier_id)
     .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
-    .bind(&params.quality_status)
-    .bind(&params.status)
+    .bind(quality_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -118,6 +144,9 @@ pub async fn list_serial_numbers(
                   AND ($5::text IS NULL OR batch_no ILIKE $5)
                   AND ($6::text IS NULL OR quality_status = $6)
                   AND ($7::text IS NULL OR status = $7)
+                  AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+                  AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
+                  AND tenant_id = $8::uuid
                 "#
             ))
             .bind(params.warehouse_id)
@@ -125,8 +154,9 @@ pub async fn list_serial_numbers(
             .bind(params.serial_no.as_ref().map(|s| format!("%{}%", s)))
             .bind(params.supplier_id)
             .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
-            .bind(&params.quality_status)
-            .bind(&params.status)
+            .bind(quality_filter)
+            .bind(status_filter)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -187,6 +217,14 @@ pub async fn create_serial_number(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    let quality_status = match req.quality_status.as_deref() {
+        None => SerialNumberQualityStatus::DEFAULT,
+        Some(raw) => match SerialNumberQualityStatus::from_db_str(raw) {
+            Ok(status) => status,
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+
     let result = sqlx::query_as::<_, SerialNumber>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.serial_numbers (
@@ -211,8 +249,8 @@ pub async fn create_serial_number(
     .bind(&req.batch_no)
     .bind(&req.production_date)
     .bind(&req.expiry_date)
-    .bind(req.quality_status.as_deref().unwrap_or("pending"))
-    .bind("in_stock")
+    .bind(quality_status.as_db_str())
+    .bind(SerialNumberStatus::DEFAULT.as_db_str())
     .bind(&req.warranty_start_date)
     .bind(&req.warranty_end_date)
     .bind(&req.inbound_order_no)
@@ -281,8 +319,24 @@ pub async fn bulk_create_serial_numbers(
         _ => return ApiResponse::error(400, "缺少租户上下文：拒绝批量创建序列号"),
     };
 
+    // 先全量校验质量状态，避免第一条写入成功后因后续非法值留下部分结果。
+    for item in &req {
+        if let Some(raw) = item.quality_status.as_deref() {
+            if let Err(msg) = SerialNumberQualityStatus::from_db_str(raw) {
+                return ApiResponse::bad_request(&msg);
+            }
+        }
+    }
+
     for item in req {
         let id = Uuid::new_v4();
+        let quality_status = match item.quality_status.as_deref() {
+            None => SerialNumberQualityStatus::DEFAULT,
+            Some(raw) => match SerialNumberQualityStatus::from_db_str(raw) {
+                Ok(status) => status,
+                Err(msg) => return ApiResponse::bad_request(&msg),
+            },
+        };
         let result = sqlx::query_as::<_, SerialNumber>(
             only_own_schema_query!("wms", r#"
             INSERT INTO wms.serial_numbers (
@@ -307,8 +361,8 @@ pub async fn bulk_create_serial_numbers(
         .bind(&item.batch_no)
         .bind(&item.production_date)
         .bind(&item.expiry_date)
-        .bind(item.quality_status.as_deref().unwrap_or("pending"))
-        .bind("in_stock")
+        .bind(quality_status.as_db_str())
+        .bind(SerialNumberStatus::DEFAULT.as_db_str())
         .bind(&item.warranty_start_date)
         .bind(&item.warranty_end_date)
         .bind(&item.inbound_order_no)
@@ -320,8 +374,15 @@ pub async fn bulk_create_serial_numbers(
         .fetch_one(&mut **txn)
         .await;
 
-        if let Ok(serial) = result {
-            created_serials.push(serial);
+        match result {
+            Ok(serial) => created_serials.push(serial),
+            Err(e) => {
+                tracing::error!("批量创建序列号失败: {}", e);
+                // 不提交请求事务，前面已写入的行随事务回滚，避免部分成功。
+                return ApiResponse::from(TopemsError::Internal(
+                    "批量创建序列号失败，已回滚".to_string(),
+                ));
+            }
         }
     }
 
@@ -365,7 +426,7 @@ pub async fn get_serial_number(
     };
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1 AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped']) AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])"),
     )
     .bind(serial_id)
     .fetch_optional(&mut **txn)
@@ -408,7 +469,7 @@ pub async fn get_by_serial_no(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1 AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped']) AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])"),
     )
     .bind(serial_no)
     .fetch_optional(&mut **txn)
@@ -451,7 +512,7 @@ pub async fn get_by_batch(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped']) AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified']) ORDER BY created_at DESC"),
     )
     .bind(batch_no)
     .fetch_all(&mut **txn)
@@ -515,6 +576,21 @@ pub async fn update_serial_number(
         }
     };
 
+    let requested_quality = match req.quality_status.as_deref() {
+        None => None,
+        Some(raw) => match SerialNumberQualityStatus::from_db_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match SerialNumberStatus::from_db_str(raw) {
+            Ok(status) => Some(status.as_db_str()),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
+
     let result = sqlx::query_as::<_, SerialNumber>(only_own_schema_query!(
         "wms",
         r#"
@@ -538,7 +614,29 @@ pub async fn update_serial_number(
             unit_price = COALESCE($17, unit_price),
             remark = COALESCE($18, remark),
             updated_at = $19
-        WHERE id = $20 AND tenant_id = $21::uuid
+        WHERE id = $20 AND tenant_id = $21::uuid AND deleted_at IS NULL
+          AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
+          AND (
+              $11::text IS NULL OR $11 = quality_status
+              OR CASE quality_status
+                  WHEN 'pending' THEN $11 IN ('inspecting','qualified','unqualified')
+                  WHEN 'inspecting' THEN $11 IN ('qualified','unqualified')
+                  WHEN 'qualified' THEN $11 IN ('inspecting','unqualified')
+                  WHEN 'unqualified' THEN $11 IN ('inspecting','qualified')
+                  ELSE FALSE
+              END
+          )
+          AND (
+              $12::text IS NULL OR $12 = status
+              OR CASE status
+                  WHEN 'in_stock' THEN $12 IN ('reserved','out_stock','frozen','scrapped')
+                  WHEN 'reserved' THEN $12 IN ('in_stock','out_stock','frozen','scrapped')
+                  WHEN 'out_stock' THEN $12 IN ('in_stock','scrapped')
+                  WHEN 'frozen' THEN $12 IN ('in_stock','scrapped')
+                  ELSE FALSE
+              END
+          )
         RETURNING *
         "#
     ))
@@ -552,8 +650,8 @@ pub async fn update_serial_number(
     .bind(&req.batch_no)
     .bind(&req.production_date)
     .bind(&req.expiry_date)
-    .bind(&req.quality_status)
-    .bind(&req.status)
+    .bind(requested_quality)
+    .bind(requested_status)
     .bind(&req.warranty_start_date)
     .bind(&req.warranty_end_date)
     .bind(&req.outbound_order_no)
@@ -569,7 +667,7 @@ pub async fn update_serial_number(
     match result {
         Ok(serial) => ApiResponse::success(serial, "更新序列号成功"),
         Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string()))
+            ApiResponse::conflict("序列号不存在、当前状态非法或不允许该状态流转")
         }
         Err(e) => {
             tracing::error!("更新序列号失败: {}", e);
@@ -613,11 +711,19 @@ pub async fn delete_serial_number(
         }
     };
 
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL AND status = 'in_stock'"
     ))
     .bind(serial_id)
+    .bind_tenant_scope(&tenant_scope)
     .execute(&mut **txn)
     .await;
 
@@ -631,7 +737,7 @@ pub async fn delete_serial_number(
             }
             ApiResponse::success("".to_string(), "删除序列号成功")
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string())),
+        Ok(_) => ApiResponse::conflict("序列号不存在、已删除或不允许删除当前状态"),
         Err(e) => {
             tracing::error!("删除序列号失败: {}", e);
             ApiResponse::from(TopemsError::Internal("删除序列号失败".to_string()))
@@ -649,9 +755,14 @@ pub async fn delete_serial_number(
 pub async fn get_serial_number_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Query(params): Query<serde_json::Value>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<SerialNumberStatistics> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -670,16 +781,21 @@ pub async fn get_serial_number_statistics(
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
         SELECT
-            COUNT(*) as total_serials,
-            SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) as in_stock_count,
-            SUM(CASE WHEN status = 'out_stock' THEN 1 ELSE 0 END) as out_stock_count,
-            SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END) as quality_pending_count,
-            SUM(CASE WHEN warranty_end_date IS NOT NULL AND warranty_end_date <= NOW() + INTERVAL '30 days' THEN 1 ELSE 0 END) as warranty_expiring_soon_count
+            COUNT(*)::bigint as total_serials,
+            COALESCE(SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END), 0)::bigint as in_stock_count,
+            COALESCE(SUM(CASE WHEN status = 'out_stock' THEN 1 ELSE 0 END), 0)::bigint as out_stock_count,
+            COALESCE(SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END), 0)::bigint as quality_pending_count,
+            COALESCE(SUM(CASE WHEN warranty_end_date IS NOT NULL AND warranty_end_date > NOW() AND warranty_end_date <= NOW() + INTERVAL '30 days' THEN 1 ELSE 0 END), 0)::bigint as warranty_expiring_soon_count
         FROM wms.serial_numbers
-        WHERE warehouse_id = $1 OR $1 IS NULL
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
+          AND tenant_id = $2::uuid
+          AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+          AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])
         "#),
     )
     .bind(warehouse_id)
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -737,10 +853,23 @@ pub async fn transfer_location(
         }
     };
 
-    let to_location_id = data
+    let tenant_scope = match TenantScope::require_tenant(&claims) {
+        Ok(scope) => scope,
+        Err((_, message)) => {
+            return ApiResponse::from(TopemsError::ValidationFailed(message));
+        }
+    };
+
+    let to_location_id = match data
         .get("to_location_id")
         .and_then(|v| v.as_str())
-        .and_then(|s| Uuid::parse_str(s).ok());
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(id) => id,
+        None => {
+            return ApiResponse::bad_request("缺少合法的目标库位 to_location_id");
+        }
+    };
 
     let result = sqlx::query_as::<_, SerialNumber>(only_own_schema_query!(
         "wms",
@@ -748,12 +877,14 @@ pub async fn transfer_location(
         UPDATE wms.serial_numbers SET
             location_id = $1,
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2 AND tenant_id = $3::uuid AND deleted_at IS NULL
+          AND status IN ('in_stock', 'reserved')
         RETURNING *
         "#
     ))
     .bind(to_location_id)
     .bind(serial_id)
+    .bind_tenant_scope(&tenant_scope)
     .fetch_one(&mut **txn)
     .await;
 
@@ -768,7 +899,7 @@ pub async fn transfer_location(
             ApiResponse::success(serial, "转移库位成功")
         }
         Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string()))
+            ApiResponse::conflict("序列号不存在或当前状态不允许转移库位")
         }
         Err(e) => {
             tracing::error!("转移库位失败: {}", e);
@@ -823,7 +954,9 @@ pub async fn get_trace(
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"SELECT id, serial_no, batch_no, status, location_code, created_at, updated_at
-           FROM wms.serial_numbers WHERE id = $1 AND tenant_id = $2::uuid"#,
+           FROM wms.serial_numbers WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
+             AND status = ANY(ARRAY['in_stock','reserved','out_stock','frozen','scrapped'])
+             AND quality_status = ANY(ARRAY['pending','inspecting','qualified','unqualified'])"#,
         "core"
     ))
     .bind(serial_id)

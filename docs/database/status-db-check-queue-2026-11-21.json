@@ -3,11 +3,11 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 135,
+    "uncovered_enums": 137,
     "uncovered_values": 151,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 103,
-    "internal_state_enums": 65,
+    "resolved_enums": 105,
+    "internal_state_enums": 67,
     "persisted_unmapped_enums": 64,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 33,
@@ -2407,6 +2407,48 @@
         "table": "wms.outbound_orders",
         "column": "status",
         "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/serial_number_status.rs",
+      "enum": "SerialNumberQualityStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "inspecting",
+          "qualified",
+          "unqualified"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/serial_number_status.rs",
+        "enum": "SerialNumberQualityStatus",
+        "table": "wms.serial_numbers",
+        "column": "quality_status",
+        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/serial_number_status.rs",
+      "enum": "SerialNumberStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "frozen",
+          "in_stock",
+          "out_stock",
+          "reserved",
+          "scrapped"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/wms/src/modules/serial_number_status.rs",
+        "enum": "SerialNumberStatus",
+        "table": "wms.serial_numbers",
+        "column": "status",
+        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
       }
     },
     {

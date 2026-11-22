@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 194,
+    "rust_enums": 196,
     "rust_enum_values": 190,
     "rust_values_not_in_db_check": 151,
     "frontend_status_keys": 205,
@@ -3277,6 +3277,42 @@
         "packing",
         "picking",
         "shipping"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/serial_number_status.rs",
+      "name": "SerialNumberQualityStatus",
+      "values": [
+        "Inspecting",
+        "Pending",
+        "Qualified",
+        "Unqualified"
+      ],
+      "normalized": [
+        "inspecting",
+        "pending",
+        "qualified",
+        "unqualified"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/serial_number_status.rs",
+      "name": "SerialNumberStatus",
+      "values": [
+        "Frozen",
+        "InStock",
+        "OutStock",
+        "Reserved",
+        "Scrapped"
+      ],
+      "normalized": [
+        "frozen",
+        "in_stock",
+        "out_stock",
+        "reserved",
+        "scrapped"
       ]
     },
     {

@@ -201,12 +201,21 @@ pub fn is_valid_inventory_movement_status(s: &str) -> bool {
 
 // ==================== FSM-7: SerialNumber ====================
 pub const SERIAL_NUMBER: FsmDef = FsmDef {
-    states: &["pending", "assigned", "used", "archived"],
-    terminal: &["archived"],
+    states: &["in_stock", "reserved", "out_stock", "frozen", "scrapped"],
+    terminal: &["scrapped"],
     transitions: &[
-        ("pending", "assigned"),
-        ("assigned", "used"),
-        ("used", "archived"),
+        ("in_stock", "reserved"),
+        ("in_stock", "out_stock"),
+        ("in_stock", "frozen"),
+        ("in_stock", "scrapped"),
+        ("reserved", "in_stock"),
+        ("reserved", "out_stock"),
+        ("reserved", "frozen"),
+        ("reserved", "scrapped"),
+        ("out_stock", "in_stock"),
+        ("out_stock", "scrapped"),
+        ("frozen", "in_stock"),
+        ("frozen", "scrapped"),
     ],
     approval_transitions: &[],
 };
@@ -595,53 +604,57 @@ mod tests {
 
         #[test]
         fn valid_linear_path() {
-            assert_ok(serial_number_can_transition("pending", "assigned"));
-            assert_ok(serial_number_can_transition("assigned", "used"));
-            assert_ok(serial_number_can_transition("used", "archived"));
+            assert_ok(serial_number_can_transition("in_stock", "reserved"));
+            assert_ok(serial_number_can_transition("reserved", "out_stock"));
+            assert_ok(serial_number_can_transition("out_stock", "scrapped"));
+            assert_ok(serial_number_can_transition("frozen", "in_stock"));
+            assert_ok(serial_number_can_transition("in_stock", "scrapped"));
         }
 
         #[test]
         fn invalid_backflows_and_skips() {
             assert_invalid_transition(
-                serial_number_can_transition("assigned", "pending"),
-                "assigned",
-                "pending",
+                serial_number_can_transition("out_stock", "reserved"),
+                "out_stock",
+                "reserved",
+            );
+            assert_terminal(
+                serial_number_can_transition("scrapped", "in_stock"),
+                "scrapped",
             );
             assert_invalid_transition(
-                serial_number_can_transition("pending", "used"),
-                "pending",
-                "used",
-            );
-            assert_invalid_transition(
-                serial_number_can_transition("pending", "archived"),
-                "pending",
-                "archived",
+                serial_number_can_transition("frozen", "out_stock"),
+                "frozen",
+                "out_stock",
             );
         }
 
         #[test]
-        fn unique_terminal_only_archived() {
-            // SerialNumber has NO cancelled; only "archived" is terminal
-            assert_terminal(serial_number_can_transition("archived", "used"), "archived");
-            // pending/assigned/used are non-terminal transitions themselves but can be left;
-            // "used" can't go back to "assigned" but can go to "archived" (ok)
-            // Unknown states → UnknownStatus
+        fn unique_terminal_only_scrapped() {
+            assert_terminal(
+                serial_number_can_transition("scrapped", "in_stock"),
+                "scrapped",
+            );
+            assert_terminal(
+                serial_number_can_transition("scrapped", "reserved"),
+                "scrapped",
+            );
             assert_unknown(
-                serial_number_can_transition("assigned", "cancelled"),
-                "cancelled",
+                serial_number_can_transition("assigned", "scrapped"),
+                "assigned",
             );
         }
 
         #[test]
         fn no_approval_ever_and_status() {
-            // Empty approval array
-            assert!(!serial_number_requires_approval("used", "archived"));
-            assert!(!serial_number_requires_approval("pending", "assigned"));
+            assert!(!serial_number_requires_approval("in_stock", "reserved"));
+            assert!(!serial_number_requires_approval("reserved", "out_stock"));
 
-            assert!(is_valid_serial_number_status("assigned"));
-            assert!(is_valid_serial_number_status("archived"));
-            assert!(!is_valid_serial_number_status("completed"));
-            assert!(!is_valid_serial_number_status("cancelled"));
+            assert!(is_valid_serial_number_status("in_stock"));
+            assert!(is_valid_serial_number_status("out_stock"));
+            assert!(is_valid_serial_number_status("scrapped"));
+            assert!(!is_valid_serial_number_status("pending"));
+            assert!(!is_valid_serial_number_status("archived"));
         }
     }
 
@@ -815,9 +828,9 @@ mod tests {
 
         // ---- FSM-7 SerialNumber 终态唯一 ----
         #[test]
-        fn serial_number_archived_blocks_every_target() {
-            for target in &["pending", "assigned", "used", "archived"] {
-                assert_terminal(serial_number_can_transition("archived", target), "archived");
+        fn serial_number_scrapped_blocks_every_target() {
+            for target in &["in_stock", "reserved", "out_stock", "frozen", "scrapped"] {
+                assert_terminal(serial_number_can_transition("scrapped", target), "scrapped");
             }
         }
 
@@ -830,7 +843,7 @@ mod tests {
             assert_unknown(transfer_order_can_transition("", "pending"), "");
             assert_unknown(wave_pick_can_transition("", "created"), "");
             assert_unknown(inventory_movement_can_transition("", "draft"), "");
-            assert_unknown(serial_number_can_transition("", "pending"), "");
+            assert_unknown(serial_number_can_transition("", "in_stock"), "");
         }
 
         #[test]

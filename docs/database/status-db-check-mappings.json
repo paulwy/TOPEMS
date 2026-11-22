@@ -842,6 +842,20 @@
       "table": "wms.batches",
       "column": "quality_status",
       "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/serial_number_status.rs",
+      "enum": "SerialNumberStatus",
+      "table": "wms.serial_numbers",
+      "column": "status",
+      "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/serial_number_status.rs",
+      "enum": "SerialNumberQualityStatus",
+      "table": "wms.serial_numbers",
+      "column": "quality_status",
+      "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

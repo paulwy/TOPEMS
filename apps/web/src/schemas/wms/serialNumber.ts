@@ -103,7 +103,7 @@ export const serialNumberSchema: EntitySchema = {
       name: 'quality_status',
       label: i18n.t('wms.serial_number.k13'),
       type: 'select',
-      defaultValue: 'qualified',
+      defaultValue: 'pending',
       options: {
         type: 'static',
         options: [

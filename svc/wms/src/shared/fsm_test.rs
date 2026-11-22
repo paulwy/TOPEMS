@@ -445,23 +445,25 @@ fn test_inventory_movement_self_transition_rejected() {
 
 #[test]
 fn test_serial_number_valid_transitions() {
-    assert!(serial_number_can_transition("pending", "assigned").is_ok());
-    assert!(serial_number_can_transition("assigned", "used").is_ok());
-    assert!(serial_number_can_transition("used", "archived").is_ok());
+    assert!(serial_number_can_transition("in_stock", "reserved").is_ok());
+    assert!(serial_number_can_transition("reserved", "out_stock").is_ok());
+    assert!(serial_number_can_transition("out_stock", "scrapped").is_ok());
+    assert!(serial_number_can_transition("frozen", "in_stock").is_ok());
+    assert!(serial_number_can_transition("in_stock", "scrapped").is_ok());
 }
 
 #[test]
 fn test_serial_number_invalid_transitions() {
     assert!(matches!(
-        serial_number_can_transition("pending", "used"),
+        serial_number_can_transition("out_stock", "reserved"),
         Err(FsmError::InvalidTransition { .. })
     ));
     assert!(matches!(
-        serial_number_can_transition("pending", "archived"),
-        Err(FsmError::InvalidTransition { .. })
+        serial_number_can_transition("scrapped", "in_stock"),
+        Err(FsmError::TerminalState(_))
     ));
     assert!(matches!(
-        serial_number_can_transition("assigned", "archived"),
+        serial_number_can_transition("frozen", "out_stock"),
         Err(FsmError::InvalidTransition { .. })
     ));
 }
@@ -469,11 +471,11 @@ fn test_serial_number_invalid_transitions() {
 #[test]
 fn test_serial_number_terminal_state() {
     assert!(matches!(
-        serial_number_can_transition("archived", "used"),
+        serial_number_can_transition("scrapped", "in_stock"),
         Err(FsmError::TerminalState(_))
     ));
     assert!(matches!(
-        serial_number_can_transition("archived", "pending"),
+        serial_number_can_transition("scrapped", "reserved"),
         Err(FsmError::TerminalState(_))
     ));
 }
@@ -481,7 +483,7 @@ fn test_serial_number_terminal_state() {
 #[test]
 fn test_serial_number_unknown_status() {
     assert!(matches!(
-        serial_number_can_transition("unknown", "pending"),
+        serial_number_can_transition("unknown", "in_stock"),
         Err(FsmError::UnknownStatus(_))
     ));
     assert!(matches!(
@@ -492,19 +494,19 @@ fn test_serial_number_unknown_status() {
 
 #[test]
 fn test_serial_number_requires_approval() {
-    assert!(!serial_number_requires_approval("pending", "assigned"));
-    assert!(!serial_number_requires_approval("assigned", "used"));
-    assert!(!serial_number_requires_approval("used", "archived"));
+    assert!(!serial_number_requires_approval("in_stock", "reserved"));
+    assert!(!serial_number_requires_approval("reserved", "out_stock"));
+    assert!(!serial_number_requires_approval("out_stock", "scrapped"));
 }
 
 #[test]
 fn test_serial_number_self_transition_rejected() {
     assert!(matches!(
-        serial_number_can_transition("pending", "pending"),
+        serial_number_can_transition("in_stock", "in_stock"),
         Err(FsmError::InvalidTransition { .. })
     ));
     assert!(matches!(
-        serial_number_can_transition("assigned", "assigned"),
+        serial_number_can_transition("reserved", "reserved"),
         Err(FsmError::InvalidTransition { .. })
     ));
 }
