@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::models::stock_take::*;
 use crate::modules::audit::log_audit_event;
+use crate::modules::stock_take_adjustment_status::StockTakeAdjustmentStatus;
 use crate::modules::stock_take_item_status::StockTakeItemStatus;
 use crate::modules::stock_take_status::{StockTakeApprovalStatus, StockTakeStatus};
 use crate::modules::ApiState;
@@ -31,6 +32,9 @@ fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "warehouse_id": row.try_get::<Uuid, _>("warehouse_id").ok(),
         "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
         "status": row.try_get::<String, _>("status").ok(),
+        "approval_status": row.try_get::<Option<String>, _>("approval_status").ok().flatten(),
+        "adjustment_status": row.try_get::<Option<String>, _>("adjustment_status").ok().flatten(),
+        "remarks": row.try_get::<Option<String>, _>("remarks").ok().flatten(),
         "description": row.try_get::<Option<String>, _>("description").ok(),
         "created_by": row.try_get::<Option<String>, _>("created_by").ok(),
         "created_at": row.try_get::<DateTime<Utc>, _>("created_at").ok(),
@@ -54,6 +58,8 @@ fn stock_take_item_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value
         "discrepancy_type": row.try_get::<Option<String>, _>("discrepancy_type").ok(),
         "discrepancy_reason": row.try_get::<Option<String>, _>("discrepancy_reason").ok(),
         "unit": row.try_get::<String, _>("unit").ok(),
+        "quality_status": row.try_get::<Option<String>, _>("quality_status").ok().flatten(),
+        "adjustment_status": row.try_get::<Option<String>, _>("adjustment_status").ok().flatten(),
         "status": row.try_get::<Option<String>, _>("status").ok(),
     })
 }
@@ -157,6 +163,10 @@ pub async fn list_stock_takes(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_adjustment_statuses: Vec<String> = StockTakeAdjustmentStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let warehouse_id = params.warehouse_id;
 
     let result = sqlx::query(only_own_schema_query!(
@@ -172,6 +182,7 @@ pub async fn list_stock_takes(
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND status = ANY($6::text[])
+          AND adjustment_status = ANY($7::text[])
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
@@ -183,6 +194,7 @@ pub async fn list_stock_takes(
     .bind(page_size)
     .bind(offset)
     .bind(&canonical_statuses)
+    .bind(&canonical_adjustment_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -196,6 +208,7 @@ pub async fn list_stock_takes(
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR warehouse_id = $3)
                   AND status = ANY($4::text[])
+                  AND adjustment_status = ANY($5::text[])
                   AND deleted_at IS NULL
                 "#
             ))
@@ -203,6 +216,7 @@ pub async fn list_stock_takes(
             .bind(&status_filter)
             .bind(warehouse_id)
             .bind(&canonical_statuses)
+            .bind(&canonical_adjustment_statuses)
             .fetch_one(&mut **txn)
             .await;
 
@@ -306,9 +320,9 @@ pub async fn create_stock_take(
     let result = sqlx::query_as::<_, StockTake>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type,
-                                     warehouse_id, location_id, status, planned_date,
-                                     remarks, created_at, updated_at, tenant_id, org_id)
-        VALUES ($1, $9, $2, 'full', $3, $4, $11, $5, $6, $7, $8, $9, $10)
+                                     warehouse_id, location_id, status, adjustment_status,
+                                     planned_date, remarks, created_at, updated_at, tenant_id, org_id)
+        VALUES ($1, $9, $2, 'full', $3, $4, $11, $12, $5, $6, $7, $8, $9, $10)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_id, stock_take_number, status,
                   start_time, end_time, remarks, created_at, updated_at
         "#),
@@ -324,6 +338,7 @@ pub async fn create_stock_take(
     .bind(tenant_id)
     .bind(org_id)
     .bind(StockTakeStatus::DEFAULT.as_db_str())
+    .bind(StockTakeAdjustmentStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -402,6 +417,10 @@ pub async fn get_stock_take(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_adjustment_statuses: Vec<String> = StockTakeAdjustmentStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -410,11 +429,15 @@ pub async fn get_stock_take(
                total_items, counted_items, discrepancy_items, total_quantity, counted_quantity,
                discrepancy_quantity, discrepancy_value, accuracy_rate,
                approval_status, adjustment_status, remarks, created_at, updated_at
-        FROM wms.stock_takes WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
+        FROM wms.stock_takes
+        WHERE id = $1 AND status = ANY($2::text[])
+          AND adjustment_status = ANY($3::text[])
+          AND deleted_at IS NULL
         "#
     ))
     .bind(id)
     .bind(&canonical_statuses)
+    .bind(&canonical_adjustment_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -787,12 +810,12 @@ pub async fn start_stock_take(
             INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, line_number,
                                               material_code, material_name, specification,
                                               batch_number, location_id, system_quantity, unit,
-                                              quality_status, status, created_at, updated_at, tenant_id,
-                                              org_id)
+                                              quality_status, adjustment_status, status,
+                                              created_at, updated_at, tenant_id, org_id)
             SELECT uuid_generate_v4(), $3, $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
                    i.material_code, i.material_name, i.specification,
                    i.batch_number, i.location_id, i.quantity, i.unit,
-                   i.quality_status, $5, NOW(), NOW(), $3, $4
+                   i.quality_status, $6, $5, NOW(), NOW(), $3, $4
             FROM wms.inventory i
             WHERE i.warehouse_id = $2 AND i.tenant_id = $3 AND i.deleted_at IS NULL
             "#
@@ -802,6 +825,7 @@ pub async fn start_stock_take(
         .bind(tenant)
         .bind(org_id)
         .bind(StockTakeItemStatus::DEFAULT.as_db_str())
+        .bind(StockTakeAdjustmentStatus::DEFAULT.as_db_str())
         .execute(&mut scope)
         .await;
         if let Err(e) = seeded {
@@ -831,7 +855,8 @@ pub async fn start_stock_take(
         r#"
         SELECT id, warehouse_id, warehouse_name, location_id, location_code, location_name,
                stock_take_number, stock_take_type, status, planned_date, actual_date,
-               total_items, counted_items, discrepancy_items, remarks, created_at, updated_at
+               total_items, counted_items, discrepancy_items,
+               approval_status, adjustment_status, remarks, created_at, updated_at
         FROM wms.stock_takes WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#
     ))
@@ -1014,6 +1039,10 @@ pub async fn list_stock_take_items(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_adjustment_statuses: Vec<String> = StockTakeAdjustmentStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -1027,12 +1056,14 @@ pub async fn list_stock_take_items(
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid
           AND status = ANY($3::text[])
+          AND adjustment_status = ANY($4::text[])
         ORDER BY line_number ASC
         "#
     ))
     .bind(id)
     .bind(tenant)
     .bind(&canonical_statuses)
+    .bind(&canonical_adjustment_statuses)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1167,12 +1198,14 @@ pub async fn create_stock_take_item(
         INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, material_code,
                                           material_name, specification, batch_number, location_id,
                                           system_quantity, counted_quantity, discrepancy_quantity,
-                                          discrepancy_type, status, unit, unit_price, discrepancy_value,
+                                          discrepancy_type, status, adjustment_status,
+                                          unit, unit_price, discrepancy_value,
                                           notes, created_at, updated_at, tenant_id, org_id)
-        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $20, $12, $13, $14, $15, $16, $17, $18, $19)
+        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $20, $21, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
-                  status, unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
+                  status, quality_status, adjustment_status,
+                  unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
         "#),
     )
     .bind(item_id)
@@ -1195,6 +1228,7 @@ pub async fn create_stock_take_item(
     .bind(item_tenant)
     .bind(org_id)
     .bind(initial_status.as_db_str())
+    .bind(StockTakeAdjustmentStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1435,6 +1469,10 @@ pub async fn get_stock_take_item(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let canonical_adjustment_statuses: Vec<String> = StockTakeAdjustmentStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -1448,12 +1486,14 @@ pub async fn get_stock_take_item(
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND id = $2 AND tenant_id = $3::uuid AND deleted_at IS NULL
           AND status = ANY($4::text[])
+          AND adjustment_status = ANY($5::text[])
         "#
     ))
     .bind(id)
     .bind(item_id)
     .bind(tenant)
     .bind(&canonical_statuses)
+    .bind(&canonical_adjustment_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1595,7 +1635,8 @@ pub async fn update_stock_take_item(
           AND status = $10 AND deleted_at IS NULL
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
-                  status, unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
+                  status, quality_status, adjustment_status,
+                  unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
         "#
     ))
     .bind(actual_quantity)
@@ -2106,7 +2147,17 @@ pub async fn adjust_stock_take(
         let _ = scope.rollback().await;
         return ApiResponse::conflict("盘点单完成前不允许调整库存");
     }
-    if adjustment_status.as_deref() == Some("completed") {
+    let current_adjustment = match adjustment_status.as_deref() {
+        Some(raw) => match StockTakeAdjustmentStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                let _ = scope.rollback().await;
+                return ApiResponse::conflict(&format!("盘点单调整状态非法: {}", raw));
+            }
+        },
+        None => StockTakeAdjustmentStatus::DEFAULT,
+    };
+    if current_adjustment.is_terminal() {
         let _ = scope.rollback().await;
         return ApiResponse::conflict("盘点单已调整库存，不能重复调整");
     }
@@ -2216,19 +2267,21 @@ pub async fn adjust_stock_take(
         "wms",
         r#"
         UPDATE wms.stock_takes SET
-            adjustment_status = 'completed',
+            adjustment_status = $5,
             adjusted_by = 'system',
             adjustment_date = $1::date,
             updated_at = $1::timestamptz
         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
           AND status = $4
-          AND COALESCE(adjustment_status, '') <> 'completed'
+          AND COALESCE(adjustment_status, 'pending') = $6
         "#
     ))
     .bind(now.date_naive())
     .bind(id)
     .bind(tenant)
     .bind(StockTakeStatus::Completed.as_db_str())
+    .bind(StockTakeAdjustmentStatus::Completed.as_db_str())
+    .bind(StockTakeAdjustmentStatus::Pending.as_db_str())
     .execute(&mut scope)
     .await;
     match updated {
@@ -2242,6 +2295,28 @@ pub async fn adjust_stock_take(
             let _ = scope.rollback().await;
             return ApiResponse::server_error("库存调整失败");
         }
+    }
+
+    let items_updated = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+        UPDATE wms.stock_take_items SET
+            adjustment_status = $1,
+            updated_at = $2
+        WHERE stock_take_id = $3 AND tenant_id = $4 AND deleted_at IS NULL
+          AND COALESCE(adjustment_status, 'pending') <> $1
+        "#
+    ))
+    .bind(StockTakeAdjustmentStatus::Completed.as_db_str())
+    .bind(now)
+    .bind(id)
+    .bind(tenant)
+    .execute(&mut scope)
+    .await;
+    if let Err(e) = items_updated {
+        tracing::error!("更新盘点明细调整状态失败: {}", e);
+        let _ = scope.rollback().await;
+        return ApiResponse::server_error("库存调整失败");
     }
 
     if let Err(e) = scope.commit().await {

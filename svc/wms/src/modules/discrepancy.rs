@@ -15,6 +15,7 @@ use crate::models::inventory_alert::{
 };
 use crate::modules::audit::log_audit_event;
 use crate::modules::discrepancy_status::DiscrepancyStatus;
+use crate::modules::stock_take_adjustment_status::StockTakeAdjustmentStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::shared::scope::{tenant_of, wms_db};
@@ -878,7 +879,7 @@ pub async fn process_stock_take_discrepancies(
         WHERE sti.stock_take_id = $1
           AND sti.tenant_id = $2
           AND sti.deleted_at IS NULL
-          AND sti.adjustment_status = 'completed'
+          AND sti.adjustment_status = $3
           AND sti.discrepancy_quantity != 0
           AND NOT EXISTS (
               SELECT 1 FROM wms.discrepancy_records d
@@ -888,6 +889,7 @@ pub async fn process_stock_take_discrepancies(
     )
     .bind(stock_take_id)
     .bind(tenant_id)
+    .bind(StockTakeAdjustmentStatus::Completed.as_db_str())
     .fetch_all(&mut **txn)
     .await;
 

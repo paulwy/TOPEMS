@@ -328,7 +328,7 @@ export interface StockTake {
   discrepancy_value?: number;
   accuracy_rate?: number;
   approval_status?: string;
-  adjustment_status?: string;
+  adjustment_status?: 'pending' | 'completed';
   remarks?: string;
   created_at: string;
   updated_at: string;
@@ -363,7 +363,7 @@ export interface StockTakeItem {
   discrepancy_notes?: string;
   adjustment_required?: boolean;
   adjustment_quantity?: number;
-  adjustment_status?: string;
+  adjustment_status: 'pending' | 'completed';
   remarks?: string;
   created_at: string;
   updated_at: string;

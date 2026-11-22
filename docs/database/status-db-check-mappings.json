@@ -898,6 +898,13 @@
       "table": "wms.outbound_orders",
       "column": "picking_status / packing_status / shipping_status",
       "candidate": "docs/database/wms-outbound-execution-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/stock_take_adjustment_status.rs",
+      "enum": "StockTakeAdjustmentStatus",
+      "table": "wms.stock_takes / wms.stock_take_items",
+      "column": "adjustment_status",
+      "candidate": "docs/database/wms-stock-take-adjustment-status-check-candidates-2026-11-22.sql"
     }
   ]
 }
