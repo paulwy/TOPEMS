@@ -30,6 +30,7 @@ pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supplier_status;
 pub mod supply_chain_dashboard;
+pub mod sync_log_status;
 pub mod sync_records;
 pub mod sync_status;
 

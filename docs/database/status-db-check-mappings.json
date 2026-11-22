@@ -1331,6 +1331,13 @@
       "table": "scm.purchase_orders",
       "column": "status",
       "candidate": "docs/database/purchase-order-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/sync_log_status.rs",
+      "enum": "SyncLogStatus",
+      "table": "scm.sync_logs",
+      "column": "status",
+      "candidate": "docs/database/scm-sync-log-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

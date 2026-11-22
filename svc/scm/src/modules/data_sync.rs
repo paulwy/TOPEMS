@@ -43,6 +43,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::sync_log_status::SyncLogStatus;
 use super::ApiState;
 use crate::models::purchase_order::PurchaseOrder;
 use topems_shared_auth::auth::Claims;
@@ -680,9 +681,11 @@ async fn record_sync_log_txn(
     retry_count: i32,
     tenant_bind: Uuid,
 ) -> Result<(), sqlx::Error> {
+    let status = SyncLogStatus::from_db_str(status)
+        .ok_or_else(|| sqlx::Error::Protocol("无效的同步日志状态".to_string()))?;
     let now = Utc::now();
 
-    let next_retry_at = if status == "pending" && retry_count < MAX_SYNC_RETRIES {
+    let next_retry_at = if status == SyncLogStatus::Pending && retry_count < MAX_SYNC_RETRIES {
         Some(now + Duration::seconds((retry_count * 60).into()))
     } else {
         None
@@ -707,12 +710,12 @@ async fn record_sync_log_txn(
     .bind(target_id)
     .bind(target_code)
     .bind(operation)
-    .bind(status)
+    .bind(status.as_db_str())
     .bind(error_message)
     .bind(retry_count)
     .bind(MAX_SYNC_RETRIES)
     .bind(next_retry_at)
-    .bind(if status == "success" { Some(now) } else { None })
+    .bind(if status == SyncLogStatus::Success { Some(now) } else { None })
     .bind(now)
     .bind(tenant_bind)
     .execute(&mut **txn)
@@ -1388,6 +1391,17 @@ pub async fn get_sync_logs(
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let status_filter = match req.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SyncLogStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的同步日志状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let rows = sqlx::query(only_own_schema_query!(
         "scm",
@@ -1405,7 +1419,7 @@ pub async fn get_sync_logs(
         "#
     ))
     .bind(&req.sync_type)
-    .bind(&req.status)
+    .bind(status_filter)
     .bind(&req.source_module)
     .bind(page_size)
     .bind(offset)
@@ -1514,12 +1528,13 @@ pub async fn retry_failed_syncs(
                     "scm",
                     r#"
                     UPDATE scm.sync_logs 
-                    SET status = 'pending', retry_count = $2, 
-                        next_retry_at = $3, updated_at = $4
-                    WHERE id = $1 AND tenant_id = $5::uuid
+                    SET status = $2, retry_count = $3, 
+                        next_retry_at = $4, updated_at = $5
+                    WHERE id = $1 AND tenant_id = $6::uuid
                     "#
                 ))
                 .bind(sync_id)
+                .bind(SyncLogStatus::Pending.as_db_str())
                 .bind(new_retry_count)
                 .bind(now + Duration::seconds((new_retry_count * 60).into()))
                 .bind(now)
