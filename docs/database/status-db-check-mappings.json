@@ -940,6 +940,13 @@
       "table": "crm.crm_master_data_refs",
       "column": "status",
       "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/sales_order_status.rs",
+      "enum": "SalesOrderStatus",
+      "table": "crm.sales_orders",
+      "column": "status",
+      "candidate": "docs/database/crm-sales-order-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

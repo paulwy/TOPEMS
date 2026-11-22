@@ -9,6 +9,7 @@
 
 use crate::modules::customer_order_status::CustomerOrderStatus;
 use crate::modules::master_data_ref_status::MasterDataRefStatus;
+use crate::modules::sales_order_status::SalesOrderStatus;
 use sqlx::PgPool;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
@@ -837,7 +838,7 @@ impl CrmEventHandlers {
             r#"INSERT INTO crm.sales_orders 
                (id, order_number, customer_id, order_date, 
                 total_amount, status, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, $4, $5, 'completed', $6, $7, $8)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                ON CONFLICT (order_number) DO NOTHING"#,
         )
         .bind(payload.shipping_id)
@@ -845,6 +846,7 @@ impl CrmEventHandlers {
         .bind(payload.customer_id)
         .bind(payload.order_date)
         .bind(payload.total_amount)
+        .bind(SalesOrderStatus::Completed.as_db_str())
         .bind(now)
         .bind(now)
         .bind(tenant_id)

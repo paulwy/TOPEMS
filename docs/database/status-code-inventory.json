@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 207,
+    "rust_enums": 208,
     "rust_enum_values": 191,
     "rust_values_not_in_db_check": 152,
     "frontend_status_keys": 206,
@@ -704,6 +704,27 @@
         "archived",
         "draft",
         "generated"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/sales_order_status.rs",
+      "name": "SalesOrderStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Pending",
+        "Shipped"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "pending",
+        "shipped"
       ]
     },
     {

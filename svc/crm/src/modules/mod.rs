@@ -41,6 +41,7 @@ pub mod sales_forecast;
 pub mod sales_forecast_status;
 pub mod sales_funnel;
 pub mod sales_funnel_logic;
+pub mod sales_order_status;
 pub mod scoring_logic;
 pub mod tag;
 
