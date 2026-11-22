@@ -596,21 +596,21 @@
       "enum": "HazardStatus",
       "table": "ehs.qa_ehs_hazards",
       "column": "status",
-      "candidate": "docs/database/ehs-hazard-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/risk_status.rs",
       "enum": "RiskStatus",
       "table": "ehs.qa_ehs_risks",
       "column": "status",
-      "candidate": "docs/database/ehs-risk-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/accident_status.rs",
       "enum": "AccidentStatus",
       "table": "ehs.qa_ehs_accidents",
       "column": "status",
-      "candidate": "docs/database/ehs-accident-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/mobile/src/modules/push_status.rs",
@@ -638,56 +638,56 @@
       "enum": "InvestigationStatus",
       "table": "ehs.qa_ehs_investigations",
       "column": "status",
-      "candidate": "docs/database/ehs-investigation-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/treatment_status.rs",
       "enum": "TreatmentStatus",
       "table": "ehs.qa_ehs_treatments",
       "column": "status",
-      "candidate": "docs/database/ehs-treatment-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/treatment_status.rs",
       "enum": "TreatmentActionStatus",
       "table": "ehs.qa_ehs_treatment_actions",
       "column": "status",
-      "candidate": "docs/database/ehs-treatment-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/incident_action_status.rs",
       "enum": "IncidentActionStatus",
       "table": "ehs.qa_ehs_incident_actions",
       "column": "status",
-      "candidate": "docs/database/ehs-incident-action-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/drill_status.rs",
       "enum": "DrillPlanStatus",
       "table": "ehs.qa_ehs_drill_plans",
       "column": "status",
-      "candidate": "docs/database/ehs-drill-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/drill_status.rs",
       "enum": "DrillRecordStatus",
       "table": "ehs.qa_ehs_drill_records",
       "column": "status",
-      "candidate": "docs/database/ehs-drill-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/rectification_status.rs",
       "enum": "RectificationStatus",
       "table": "ehs.qa_ehs_hazard_rectifications",
       "column": "status",
-      "candidate": "docs/database/ehs-hazard-rectification-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/ehs/src/modules/risk_control_status.rs",
       "enum": "RiskControlStatus",
       "table": "ehs.qa_ehs_risk_controls",
       "column": "status",
-      "candidate": "docs/database/ehs-risk-control-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
     },
     {
       "file": "svc/crm/src/modules/customer_approval_status.rs",
@@ -1254,6 +1254,13 @@
       "table": "ehs.qa_ehs_training_certificates",
       "column": "status",
       "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/master_data_ref_status.rs",
+      "enum": "MasterDataRefStatus",
+      "table": "scm.scm_master_data_refs",
+      "column": "status",
+      "candidate": "docs/database/scm-master-data-ref-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

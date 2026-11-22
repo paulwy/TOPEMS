@@ -464,7 +464,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_accidents",
-      "constraint": "qa_ehs_accidents_status_check",
+      "constraint": "ck_qa_ehs_accidents_status_standard",
       "columns": [
         "status"
       ],
@@ -472,7 +472,7 @@
         "closed",
         "reported"
       ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['reported'::text, 'closed'::text]))) NOT VALID"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['reported'::text, 'closed'::text])))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -520,7 +520,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_drill_plans",
-      "constraint": "qa_ehs_drill_plans_status_check",
+      "constraint": "ck_qa_ehs_drill_plans_status_standard",
       "columns": [
         "status"
       ],
@@ -529,12 +529,12 @@
         "completed",
         "planned"
       ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['planned'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['planned'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
     },
     {
       "schema": "ehs",
       "table": "qa_ehs_drill_records",
-      "constraint": "qa_ehs_drill_records_status_check",
+      "constraint": "ck_qa_ehs_drill_records_status_standard",
       "columns": [
         "status"
       ],
@@ -543,7 +543,7 @@
         "completed",
         "in_progress"
       ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['in_progress'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -605,7 +605,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_hazard_rectifications",
-      "constraint": "qa_ehs_hazard_rectifications_status_check",
+      "constraint": "ck_qa_ehs_hazard_rectifications_status_standard",
       "columns": [
         "status"
       ],
@@ -614,7 +614,7 @@
         "pending",
         "submitted"
       ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'submitted'::text]))) NOT VALID"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'submitted'::text])))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -633,7 +633,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_hazards",
-      "constraint": "qa_ehs_hazards_status_check",
+      "constraint": "ck_qa_ehs_hazards_status_standard",
       "columns": [
         "status"
       ],
@@ -647,12 +647,12 @@
         "resolved",
         "verified"
       ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['reported'::text, 'pending_approval'::text, 'rectifying'::text, 'pending_verification'::text, 'verified'::text, 'closed'::text, 'rejected'::text, 'resolved'::text]))) NOT VALID"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['reported'::text, 'pending_approval'::text, 'rectifying'::text, 'pending_verification'::text, 'verified'::text, 'closed'::text, 'rejected'::text, 'resolved'::text])))) NOT VALID"
     },
     {
       "schema": "ehs",
       "table": "qa_ehs_incident_actions",
-      "constraint": "qa_ehs_incident_actions_status_check",
+      "constraint": "ck_qa_ehs_incident_actions_status_standard",
       "columns": [
         "status"
       ],
@@ -681,7 +681,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_investigations",
-      "constraint": "qa_ehs_investigations_status_check",
+      "constraint": "ck_qa_ehs_investigations_status_standard",
       "columns": [
         "status"
       ],
@@ -708,7 +708,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_risk_controls",
-      "constraint": "qa_ehs_risk_controls_status_check",
+      "constraint": "ck_qa_ehs_risk_controls_status_standard",
       "columns": [
         "status"
       ],
@@ -721,7 +721,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_risks",
-      "constraint": "qa_ehs_risks_status_check",
+      "constraint": "ck_qa_ehs_risks_status_standard",
       "columns": [
         "status"
       ],
@@ -730,7 +730,7 @@
         "controlled",
         "identified"
       ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['identified'::text, 'assessed'::text, 'controlled'::text]))) NOT VALID"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['identified'::text, 'assessed'::text, 'controlled'::text])))) NOT VALID"
     },
     {
       "schema": "ehs",
@@ -764,7 +764,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_treatment_actions",
-      "constraint": "qa_ehs_treatment_actions_status_check",
+      "constraint": "ck_qa_ehs_treatment_actions_status_standard",
       "columns": [
         "status"
       ],
@@ -777,7 +777,7 @@
     {
       "schema": "ehs",
       "table": "qa_ehs_treatments",
-      "constraint": "qa_ehs_treatments_status_check",
+      "constraint": "ck_qa_ehs_treatments_status_standard",
       "columns": [
         "status"
       ],
@@ -4132,6 +4132,20 @@
         "unknown"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'success'::text, 'failure'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))) NOT VALID"
+    },
+    {
+      "schema": "scm",
+      "table": "scm_master_data_refs",
+      "constraint": "ck_scm_master_data_refs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "deleted",
+        "inactive"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'deleted'::text])))) NOT VALID"
     },
     {
       "schema": "scm",
@@ -8164,15 +8178,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "scm",
-      "table": "scm_master_data_refs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'active'::character varying"
     },
     {
       "schema": "scm",

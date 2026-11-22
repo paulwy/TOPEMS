@@ -1,3 +1,4 @@
+use crate::modules::master_data_ref_status::MasterDataRefStatus;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -10,10 +11,10 @@ use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMaster
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     require_event_tenant, CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
-    InventoryUpdatedPayload, MasterDataAction, MasterDataDomain, MasterDataEvent,
-    PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, SrmSupplierCreatedPayload,
-    SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload, StockInboundPayload,
-    StockOutboundPayload, SupplierDataSyncRequestedPayload, WmsInventoryItemReceivedPayload,
+    InventoryUpdatedPayload, MasterDataDomain, MasterDataEvent, PurchaseOrderApprovedPayload,
+    PurchaseOrderCreatedPayload, SrmSupplierCreatedPayload, SrmSupplierStatusChangedPayload,
+    SrmSupplierUpdatedPayload, StockInboundPayload, StockOutboundPayload,
+    SupplierDataSyncRequestedPayload, WmsInventoryItemReceivedPayload,
     WmsInventoryItemShippedPayload,
 };
 
@@ -503,11 +504,7 @@ impl ScmEventHandlers {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let status = match event.action {
-            MasterDataAction::Deleted => "deleted",
-            MasterDataAction::Deactivated => "inactive",
-            _ => "active",
-        };
+        let status = MasterDataRefStatus::from_action(event.action);
 
         self.upsert_local_master_data_ref(&event, "supplier", supplier_name, status)
             .await?;
@@ -533,11 +530,7 @@ impl ScmEventHandlers {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let status = match event.action {
-            MasterDataAction::Deleted => "deleted",
-            MasterDataAction::Deactivated => "inactive",
-            _ => "active",
-        };
+        let status = MasterDataRefStatus::from_action(event.action);
 
         self.upsert_local_master_data_ref(&event, "material", material_name, status)
             .await?;
@@ -729,7 +722,7 @@ impl ScmEventHandlers {
         event: &MasterDataEvent,
         local_entity_type: &str,
         name: &str,
-        status: &str,
+        status: MasterDataRefStatus,
     ) -> HandlerResult {
         let domain_str = format!("{:?}", event.domain).to_lowercase();
 
@@ -744,7 +737,7 @@ impl ScmEventHandlers {
             domain: domain_str.clone(),
             code: event.code.clone(),
             name: name.to_string(),
-            status: status.to_string(),
+            status: status.as_db_str().to_string(),
             source_service: event.source_service.clone(),
             local_entity_type: local_entity_type.to_string(),
             payload_snapshot: event.payload.clone(),
