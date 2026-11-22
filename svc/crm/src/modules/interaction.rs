@@ -11,6 +11,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::interaction::CreateInteractionRequest;
 use crate::models::{Interaction, UpdateInteractionRequest};
+use crate::modules::interaction_status::InteractionStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, ListResponse};
@@ -82,7 +83,16 @@ pub async fn list_interactions(
         .as_ref()
         .map(|s| s.trim()[..s.len().min(100)].to_string());
     let search_pattern = search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Vec<String> = match params.status.as_deref() {
+        Some(raw) => match InteractionStatus::from_db_str(raw) {
+            Some(status) => vec![status.as_db_str().to_string()],
+            None => return ApiResponse::bad_request("无效的交互记录状态"),
+        },
+        None => InteractionStatus::DB_VALUES
+            .iter()
+            .map(|value| (*value).to_string())
+            .collect(),
+    };
     let customer_filter = params.customer_id;
     let contact_filter = params.contact_id;
 
@@ -92,7 +102,7 @@ pub async fn list_interactions(
         FROM crm.interactions
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR subject ILIKE $1 OR content ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+          AND status = ANY($2::text[])
           AND ($3::uuid IS NULL OR customer_id = $3)
           AND ($4::uuid IS NULL OR contact_id = $4)
         ORDER BY created_at DESC
@@ -115,7 +125,7 @@ pub async fn list_interactions(
                 SELECT COUNT(*) FROM crm.interactions
                 WHERE deleted_at IS NULL
                   AND ($1::text IS NULL OR subject ILIKE $1 OR content ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($2::text[])
                   AND ($3::uuid IS NULL OR customer_id = $3)
                   AND ($4::uuid IS NULL OR contact_id = $4)
                 "#,
@@ -225,7 +235,7 @@ async fn create_interaction(
         r#"
         INSERT INTO crm.interactions
         (tenant_id, org_id, customer_id, contact_id, interaction_type, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, 'scheduled', $9, $10, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, $12, $9, $10, $10, $11)
         RETURNING id, tenant_id, customer_id, contact_id, interaction_type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
         "#,
     )
@@ -240,6 +250,7 @@ async fn create_interaction(
     .bind(req.notes.as_deref())
     .bind(now)
     .bind(claims.user_id().ok())
+    .bind(InteractionStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -284,6 +295,17 @@ async fn update_interaction(
         Err(resp) => return resp,
     };
     let now = chrono::Utc::now();
+    let status = match req.status.as_deref() {
+        Some(raw) => match InteractionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的交互记录状态"),
+        },
+        None => None,
+    };
+    let canonical_statuses: Vec<String> = InteractionStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
@@ -300,6 +322,12 @@ async fn update_interaction(
             updated_at = $12,
             updated_by = $13
         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND status = ANY($14::text[])
+          AND (
+            COALESCE($10, status) = status
+            OR (status = 'scheduled' AND COALESCE($10, status) = ANY(ARRAY['in_progress','completed','cancelled']::text[]))
+            OR (status = 'in_progress' AND COALESCE($10, status) = ANY(ARRAY['completed','cancelled']::text[]))
+          )
         RETURNING id, tenant_id, customer_id, contact_id, interaction_type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
         "#,
     )
@@ -312,10 +340,11 @@ async fn update_interaction(
     .bind(req.content.as_deref())
     .bind(req.scheduled_at)
     .bind(req.completed_at)
-    .bind(req.status.as_deref())
+    .bind(&status)
     .bind(req.notes.as_deref())
     .bind(now)
     .bind(claims.user_id().ok())
+    .bind(&canonical_statuses)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -330,7 +359,7 @@ async fn update_interaction(
             }
             ApiResponse::success(record, "更新交互记录成功")
         }
-        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("交互记录不存在".to_string())),
+        Ok(None) => ApiResponse::error(409, "交互记录不存在、已删除或状态已被并发修改"),
         Err(e) => {
             tracing::error!("更新交互记录失败: {}", e);
             ApiResponse::from(TopemsError::Internal("更新交互记录失败".to_string()))

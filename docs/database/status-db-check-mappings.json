@@ -919,6 +919,13 @@
       "table": "crm.sales_forecasts",
       "column": "status",
       "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/crm/src/modules/interaction_status.rs",
+      "enum": "InteractionStatus",
+      "table": "crm.interactions",
+      "column": "status",
+      "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

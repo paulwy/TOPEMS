@@ -79,6 +79,7 @@ export const interactionSchema: EntitySchema = {
         type: 'static',
         options: [
           { value: 'scheduled', label: i18n.t('shared.interaction.k15') },
+          { value: 'in_progress', label: i18n.t('shared.interaction.k40') },
           { value: 'completed', label: i18n.t('shared.interaction.k16') },
           { value: 'cancelled', label: i18n.t('shared.interaction.k17') },
         ],
@@ -104,11 +105,13 @@ export const interactionSchema: EntitySchema = {
       field: 'status',
       colorMap: {
         scheduled: 'info',
+        in_progress: 'primary',
         completed: 'success',
         cancelled: 'error',
       },
       labelMap: {
         scheduled: i18n.t('shared.interaction.k19'),
+        in_progress: i18n.t('shared.interaction.k40'),
         completed: i18n.t('shared.interaction.k20'),
         cancelled: i18n.t('shared.interaction.k21'),
       },
@@ -134,6 +137,7 @@ export const interactionSchema: EntitySchema = {
         options: [
           { label: i18n.t('shared.interaction.k30'), value: 'all' },
           { label: i18n.t('shared.interaction.k31'), value: 'scheduled' },
+          { label: i18n.t('shared.interaction.k40'), value: 'in_progress' },
           { label: i18n.t('shared.interaction.k32'), value: 'completed' },
           { label: i18n.t('shared.interaction.k33'), value: 'cancelled' },
         ],

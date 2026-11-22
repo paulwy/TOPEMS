@@ -212,7 +212,7 @@ export interface Interaction {
   content?: string;
   scheduled_at?: string;
   completed_at?: string;
-  status: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   created_at: string;
   updated_at: string;
 }
@@ -220,6 +220,7 @@ export interface Interaction {
 export interface InteractionQueryParams extends PaginationParams {
   customer_id?: string;
   contact_id?: string;
+  status?: Interaction['status'];
 }
 
 export interface CustomerScore {
