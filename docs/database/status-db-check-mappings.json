@@ -800,6 +800,20 @@
       "table": "wms.transfer_order_items",
       "column": "status",
       "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/stock_take_status.rs",
+      "enum": "StockTakeStatus",
+      "table": "wms.stock_takes",
+      "column": "status",
+      "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/stock_take_status.rs",
+      "enum": "StockTakeApprovalStatus",
+      "table": "wms.stock_takes",
+      "column": "approval_status",
+      "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

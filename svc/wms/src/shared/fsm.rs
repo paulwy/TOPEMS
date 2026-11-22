@@ -20,6 +20,11 @@ use crate::modules::outbound_status::{
     DB_VALUES as OUTBOUND_DB_VALUES, TERMINAL as OUTBOUND_TERMINAL,
     TRANSITIONS as OUTBOUND_TRANSITIONS,
 };
+use crate::modules::stock_take_status::{
+    StockTakeStatus, APPROVAL_TRANSITIONS as STOCK_TAKE_APPROVAL_TRANSITIONS,
+    DB_VALUES as STOCK_TAKE_DB_VALUES, TERMINAL as STOCK_TAKE_TERMINAL,
+    TRANSITIONS as STOCK_TAKE_TRANSITIONS,
+};
 use crate::modules::transfer_status::{
     TransferOrderStatus, APPROVAL_TRANSITIONS as TRANSFER_APPROVAL_TRANSITIONS,
     DB_VALUES as TRANSFER_DB_VALUES, TERMINAL as TRANSFER_TERMINAL,
@@ -84,28 +89,34 @@ pub fn is_valid_outbound_order_status(s: &str) -> bool {
 }
 
 // ==================== FSM-3: StockTake ====================
+// ==================== FSM-3: StockTake ====================
+// 单一事实源在 `modules::stock_take_status`；这里只做共享 FSM 投影。
 pub const STOCK_TAKE: FsmDef = FsmDef {
-    states: &["planned", "in_progress", "completed", "cancelled"],
-    terminal: &["completed", "cancelled"],
-    transitions: &[
-        ("planned", "in_progress"),
-        ("in_progress", "completed"),
-        ("planned", "cancelled"),
-        ("in_progress", "cancelled"),
-    ],
-    approval_transitions: &[("in_progress", "completed")],
+    states: STOCK_TAKE_DB_VALUES,
+    terminal: STOCK_TAKE_TERMINAL,
+    transitions: STOCK_TAKE_TRANSITIONS,
+    approval_transitions: STOCK_TAKE_APPROVAL_TRANSITIONS,
 };
 
+fn parse_stock_take_status(raw: &str) -> Result<StockTakeStatus, FsmError> {
+    StockTakeStatus::from_db_str(raw).map_err(|_| FsmError::UnknownStatus(raw.to_string()))
+}
+
 pub fn stock_take_can_transition(from: &str, to: &str) -> Result<(), FsmError> {
+    parse_stock_take_status(from)?;
+    parse_stock_take_status(to)?;
     STOCK_TAKE.can_transition(from, to)
 }
 
 pub fn stock_take_requires_approval(from: &str, to: &str) -> bool {
-    STOCK_TAKE.requires_approval(from, to)
+    match (parse_stock_take_status(from), parse_stock_take_status(to)) {
+        (Ok(from), Ok(to)) => from.requires_approval(to),
+        _ => false,
+    }
 }
 
 pub fn is_valid_stock_take_status(s: &str) -> bool {
-    STOCK_TAKE.is_valid_status(s)
+    StockTakeStatus::from_db_str(s).is_ok()
 }
 
 // ==================== FSM-4: TransferOrder ====================

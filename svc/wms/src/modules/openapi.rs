@@ -152,6 +152,7 @@ pub struct OutboundOrder {
         crate::modules::stock_take::update_stock_take_item,
         crate::modules::stock_take::delete_stock_take_item,
         crate::modules::stock_take::start_stock_take,
+        crate::modules::stock_take::cancel_stock_take,
         crate::modules::stock_take::count_stock_take,
         crate::modules::stock_take::complete_stock_take,
         crate::modules::stock_take::adjust_stock_take,

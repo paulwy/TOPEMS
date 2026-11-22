@@ -704,6 +704,7 @@
   "wms.stock_take.k22": "基本信息",
   "wms.stock_take.k23": "创建盘点单",
   "wms.stock_take.k24": "盘点单详情",
+  "wms.stock_take.k25": "已取消",
   "wms.suggestion.k0": "补货建议",
   "wms.suggestion.k1": "智能补货建议列表，基于库存和销量自动生成",
   "wms.suggestion.k2": "建议编号",

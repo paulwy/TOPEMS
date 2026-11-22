@@ -36,6 +36,7 @@ pub mod picking;
 pub mod serial_number;
 pub mod smart_replenishment;
 pub mod stock_take;
+pub mod stock_take_status;
 pub mod sync_records;
 pub mod sync_status;
 pub mod transfer_order;

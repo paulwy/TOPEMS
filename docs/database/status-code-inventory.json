@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 188,
+    "rust_enums": 190,
     "rust_enum_values": 185,
     "rust_values_not_in_db_check": 146,
     "frontend_status_keys": 200,
@@ -3271,6 +3271,38 @@
         "active",
         "confirmed",
         "draft"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/stock_take_status.rs",
+      "name": "StockTakeApprovalStatus",
+      "values": [
+        "Approved",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/stock_take_status.rs",
+      "name": "StockTakeStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Planned"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "planned"
       ]
     },
     {

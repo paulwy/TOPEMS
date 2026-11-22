@@ -704,6 +704,7 @@
   "wms.stock_take.k22": "Basic Information",
   "wms.stock_take.k23": "Create Stocktake Order",
   "wms.stock_take.k24": "Stocktake Order Details",
+  "wms.stock_take.k25": "Cancelled",
   "wms.suggestion.k0": "Replenishment Suggestions",
   "wms.suggestion.k1": "Smart replenishment suggestion list, auto-generated based on inventory and sales",
   "wms.suggestion.k2": "Suggestion No.",
@@ -1463,7 +1464,8 @@
       "k20": "In Progress",
       "k21": "Completed",
       "k22": "Basic Information",
-      "k24": "Stocktake Order Details"
+      "k24": "Stocktake Order Details",
+      "k25": "Cancelled"
     },
     "suggestion": {
       "k0": "Replenishment Suggestions",
