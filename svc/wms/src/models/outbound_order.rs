@@ -84,12 +84,9 @@ pub struct OutboundOrder {
     #[sqlx(default)]
     pub priority: Option<String>,
     pub status: String,
-    #[sqlx(default)]
-    pub picking_status: Option<String>,
-    #[sqlx(default)]
-    pub packing_status: Option<String>,
-    #[sqlx(default)]
-    pub shipping_status: Option<String>,
+    pub picking_status: String,
+    pub packing_status: String,
+    pub shipping_status: String,
     #[sqlx(default)]
     pub picked_quantity: Option<i32>,
     #[sqlx(default)]
@@ -208,9 +205,9 @@ mod tests {
             shipping_cost: None,
             priority: Some("normal".into()),
             status: "created".into(),
-            picking_status: None,
-            packing_status: None,
-            shipping_status: None,
+            picking_status: "pending".into(),
+            packing_status: "pending".into(),
+            shipping_status: "pending".into(),
             picked_quantity: None,
             packed_quantity: None,
             shipped_quantity: None,

@@ -33,6 +33,7 @@ pub mod labor;
 pub mod location;
 pub mod location_status;
 pub mod openapi;
+pub mod outbound_execution_status;
 pub mod outbound_order;
 pub mod outbound_status;
 pub mod picking;

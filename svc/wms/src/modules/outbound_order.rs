@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::models::outbound_order::*;
 use crate::modules::audit::log_audit_event;
+use crate::modules::outbound_execution_status::OutboundExecutionStatus;
 use crate::modules::outbound_status::OutboundStatus;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -109,6 +110,7 @@ where
 pub async fn list_outbound_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
@@ -121,6 +123,10 @@ pub async fn list_outbound_orders(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -139,6 +145,10 @@ pub async fn list_outbound_orders(
         .iter()
         .map(|value| (*value).to_string())
         .collect();
+    let execution_statuses: Vec<String> = OutboundExecutionStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -146,7 +156,7 @@ pub async fn list_outbound_orders(
         SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                customer_id, customer_name, created_at as order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks,
+               total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                sales_order_id, sales_order_number, carrier, tracking_number,
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
@@ -155,7 +165,10 @@ pub async fn list_outbound_orders(
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND status = ANY($5::text[])
-          AND deleted_at IS NULL
+          AND picking_status = ANY($6::text[])
+          AND packing_status = ANY($6::text[])
+          AND shipping_status = ANY($6::text[])
+          AND tenant_id = $7 AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -165,6 +178,8 @@ pub async fn list_outbound_orders(
     .bind(page_size)
     .bind(offset)
     .bind(&canonical_statuses)
+    .bind(&execution_statuses)
+    .bind(tenant_id)
     .fetch_all(&mut **txn)
     .await;
 
@@ -177,12 +192,17 @@ pub async fn list_outbound_orders(
                 WHERE ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND status = ANY($3::text[])
-                  AND deleted_at IS NULL
+                  AND picking_status = ANY($4::text[])
+                  AND packing_status = ANY($4::text[])
+                  AND shipping_status = ANY($4::text[])
+                  AND tenant_id = $5 AND deleted_at IS NULL
                 "#
             ))
             .bind(&search_pattern)
             .bind(status_filter)
             .bind(&canonical_statuses)
+            .bind(&execution_statuses)
+            .bind(tenant_id)
             .fetch_one(&mut **txn)
             .await;
 
@@ -286,18 +306,19 @@ pub async fn create_outbound_order(
         r#"
         INSERT INTO wms.outbound_orders (id, organization_id, order_number, order_type, warehouse_id,
                                         customer_id, order_date, expected_ship_date, total_value,
-                                        status, notes, created_at, updated_at, tenant_id, org_id)
+                                        status, picking_status, packing_status, shipping_status,
+                                        notes, created_at, updated_at, tenant_id, org_id)
         VALUES ($1, $11, $2, 'sales', $3, $4, $5,
                CASE WHEN $6::timestamptz IS NULL THEN NULL
                     ELSE date_trunc('day', $6::timestamptz AT TIME ZONE 'Asia/Shanghai')
                          AT TIME ZONE 'Asia/Shanghai'
                END,
                $7,
-               $13, $8, $9, $10, $11, $12)
+               $13, $14, $14, $14, $8, $9, $10, $11, $12)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks,
+                  total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                   sales_order_id, sales_order_number, carrier, tracking_number,
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
@@ -317,6 +338,7 @@ pub async fn create_outbound_order(
     .bind(tenant_id)
     .bind(org_id)
     .bind(OutboundStatus::DEFAULT.as_db_str())
+    .bind(crate::modules::outbound_execution_status::OutboundExecutionStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -386,6 +408,7 @@ pub async fn get_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<OutboundOrder> {
     let mut guard = txn_arc.lock().await;
@@ -397,7 +420,15 @@ pub async fn get_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let canonical_statuses: Vec<String> = OutboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
+    let execution_statuses: Vec<String> = OutboundExecutionStatus::DB_VALUES
         .iter()
         .map(|value| (*value).to_string())
         .collect();
@@ -407,16 +438,23 @@ pub async fn get_outbound_order(
         SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                customer_id, customer_name, created_at as order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks,
+               total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                sales_order_id, sales_order_number, carrier, tracking_number,
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
                created_at, updated_at
-        FROM wms.outbound_orders WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
+        FROM wms.outbound_orders
+        WHERE id = $1 AND status = ANY($2::text[])
+          AND picking_status = ANY($3::text[])
+          AND packing_status = ANY($3::text[])
+          AND shipping_status = ANY($3::text[])
+          AND tenant_id = $4 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
     .bind(&canonical_statuses)
+    .bind(&execution_statuses)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -461,7 +499,15 @@ pub async fn update_outbound_order(
         Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let canonical_statuses: Vec<String> = OutboundStatus::DB_VALUES
+        .iter()
+        .map(|value| (*value).to_string())
+        .collect();
+    let execution_statuses: Vec<String> = OutboundExecutionStatus::DB_VALUES
         .iter()
         .map(|value| (*value).to_string())
         .collect();
@@ -472,16 +518,23 @@ pub async fn update_outbound_order(
         SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                customer_id, customer_name, created_at as order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks,
+               total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                sales_order_id, sales_order_number, carrier, tracking_number,
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
                created_at, updated_at 
-        FROM wms.outbound_orders WHERE id = $1 AND status = ANY($2::text[]) AND deleted_at IS NULL
+        FROM wms.outbound_orders
+        WHERE id = $1 AND status = ANY($2::text[])
+          AND picking_status = ANY($3::text[])
+          AND packing_status = ANY($3::text[])
+          AND shipping_status = ANY($3::text[])
+          AND tenant_id = $4 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
     .bind(&canonical_statuses)
+    .bind(&execution_statuses)
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -531,11 +584,11 @@ pub async fn update_outbound_order(
                          AT TIME ZONE 'Asia/Shanghai'
                 END,
             total_value = $6, status = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND status = $10 AND deleted_at IS NULL
+        WHERE id = $1 AND status = $10 AND tenant_id = $11 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks,
+                  total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                   sales_order_id, sales_order_number, carrier, tracking_number,
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
@@ -552,6 +605,7 @@ pub async fn update_outbound_order(
     .bind(&remarks)
     .bind(now)
     .bind(&previous_status)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1183,6 +1237,10 @@ pub async fn confirm_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1190,11 +1248,13 @@ pub async fn confirm_outbound_order(
         r#"
         UPDATE wms.outbound_orders SET
             status = $3, updated_at = $2
-        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
+        WHERE id = $1 AND status = $4
+          AND picking_status = $5 AND packing_status = $5 AND shipping_status = $5
+          AND tenant_id = $6 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks,
+                  total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                   sales_order_id, sales_order_number, carrier, tracking_number,
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
@@ -1205,6 +1265,8 @@ pub async fn confirm_outbound_order(
     .bind(now)
     .bind(OutboundStatus::Confirmed.as_db_str())
     .bind(OutboundStatus::Created.as_db_str())
+    .bind(OutboundExecutionStatus::Pending.as_db_str())
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1286,18 +1348,23 @@ pub async fn pick_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = $3, picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
+            status = $3, picking_status = $5, picking_start_time = $2, updated_at = $2
+        WHERE id = $1 AND status = $4 AND picking_status = $6
+          AND tenant_id = $7 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks,
+                  total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                   sales_order_id, sales_order_number, carrier, tracking_number,
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
@@ -1308,6 +1375,9 @@ pub async fn pick_outbound_order(
     .bind(now)
     .bind(OutboundStatus::Picking.as_db_str())
     .bind(OutboundStatus::Confirmed.as_db_str())
+    .bind(OutboundExecutionStatus::InProgress.as_db_str())
+    .bind(OutboundExecutionStatus::Pending.as_db_str())
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1389,19 +1459,26 @@ pub async fn pack_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = $3, picking_status = 'completed', picking_end_time = $2, 
-            packing_status = 'in_progress', packing_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
+            status = $3, picking_status = $5, picking_end_time = $2,
+            packing_status = $6, packing_start_time = $2,
+            shipping_status = $7, updated_at = $2
+        WHERE id = $1 AND status = $4
+          AND picking_status = $8 AND packing_status = $9 AND shipping_status = $7
+          AND tenant_id = $10 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks,
+                  total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                   sales_order_id, sales_order_number, carrier, tracking_number,
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
@@ -1412,6 +1489,12 @@ pub async fn pack_outbound_order(
     .bind(now)
     .bind(OutboundStatus::Packing.as_db_str())
     .bind(OutboundStatus::Picking.as_db_str())
+    .bind(OutboundExecutionStatus::Completed.as_db_str())
+    .bind(OutboundExecutionStatus::InProgress.as_db_str())
+    .bind(OutboundExecutionStatus::Pending.as_db_str())
+    .bind(OutboundExecutionStatus::InProgress.as_db_str())
+    .bind(OutboundExecutionStatus::Pending.as_db_str())
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1554,12 +1637,12 @@ pub async fn ship_outbound_order(
             return ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在".to_string()));
         }
     };
-    if !matches!(
-        order_status.as_str(),
-        "created" | "confirmed" | "picking" | "packing"
-    ) {
+    if order_status != OutboundStatus::Shipping.as_db_str() {
         let _ = scope.rollback().await;
-        return ApiResponse::conflict(&format!("出库订单当前状态不允许发货: {}", order_status));
+        return ApiResponse::conflict(&format!(
+            "出库订单当前状态不允许发货（需先审批通过）: {}",
+            order_status
+        ));
     }
 
     for item in &items {
@@ -1790,20 +1873,23 @@ pub async fn ship_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = $4, packing_status = 'completed', packing_end_time = $1::timestamptz,
-            shipping_status = 'in_progress',
+            status = $4, picking_status = $5, packing_status = $6,
+            packing_end_time = $1::timestamptz, shipping_status = $7,
             actual_ship_date = date_trunc('day', $1::timestamptz AT TIME ZONE 'Asia/Shanghai')
                                AT TIME ZONE 'Asia/Shanghai',
             updated_at = $1::timestamptz
         WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
-          AND status = $5
+          AND status = $4
+          AND picking_status = $5 AND packing_status = $6 AND shipping_status = $7
         "#
     ))
     .bind(now)
     .bind(id)
     .bind(tenant)
     .bind(OutboundStatus::Shipping.as_db_str())
-    .bind(OutboundStatus::Packing.as_db_str())
+    .bind(OutboundExecutionStatus::Completed.as_db_str())
+    .bind(OutboundExecutionStatus::Completed.as_db_str())
+    .bind(OutboundExecutionStatus::InProgress.as_db_str())
     .execute(&mut scope)
     .await;
     match status_updated {
@@ -1841,7 +1927,7 @@ pub async fn ship_outbound_order(
         SELECT id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                customer_id, customer_name, created_at as order_date, 
                expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-               total_value as total_amount, status, notes as remarks,
+               total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                sales_order_id, sales_order_number, carrier, tracking_number,
                picked_quantity, packed_quantity, shipped_quantity,
                created_by, approved_by, approved_at,
@@ -2032,18 +2118,23 @@ pub async fn complete_outbound_order(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(tenant) => tenant,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = $3, shipping_status = 'completed', delivery_date = $2::date, updated_at = $2::timestamptz
-        WHERE id = $1 AND status = $4 AND deleted_at IS NULL
+            status = $3, shipping_status = $5, delivery_date = $2::date, updated_at = $2::timestamptz
+        WHERE id = $1 AND status = $4 AND shipping_status = $6
+          AND tenant_id = $7 AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
-                  total_value as total_amount, status, notes as remarks,
+                  total_value as total_amount, picking_status, packing_status, shipping_status, status, notes as remarks,
                   sales_order_id, sales_order_number, carrier, tracking_number,
                   picked_quantity, packed_quantity, shipped_quantity,
                   created_by, approved_by, approved_at,
@@ -2054,6 +2145,9 @@ pub async fn complete_outbound_order(
     .bind(now)
     .bind(OutboundStatus::Completed.as_db_str())
     .bind(OutboundStatus::Shipping.as_db_str())
+    .bind(OutboundExecutionStatus::Completed.as_db_str())
+    .bind(OutboundExecutionStatus::InProgress.as_db_str())
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -2236,11 +2330,24 @@ pub async fn approve_outbound(
             {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'shipping', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = 'packing' AND deleted_at IS NULL RETURNING *"),
-            )
+            let result = sqlx::query(only_own_schema_query!(
+                "wms",
+                r#"UPDATE wms.outbound_orders SET
+                           status = $3, packing_status = $4, packing_end_time = NOW(),
+                           shipping_status = $5, updated_at = NOW()
+                       WHERE id = $1 AND tenant_id = $2 AND status = $6
+                         AND picking_status = $8 AND packing_status = $7
+                         AND deleted_at IS NULL
+                       RETURNING *"#
+            ))
             .bind(id)
             .bind(tenant_id)
+            .bind(OutboundStatus::Shipping.as_db_str())
+            .bind(OutboundExecutionStatus::Completed.as_db_str())
+            .bind(OutboundExecutionStatus::InProgress.as_db_str())
+            .bind(OutboundStatus::Packing.as_db_str())
+            .bind(OutboundExecutionStatus::InProgress.as_db_str())
+            .bind(OutboundExecutionStatus::Completed.as_db_str())
             .fetch_optional(&mut **txn)
             .await;
             match result {
@@ -2331,11 +2438,25 @@ pub async fn reject_outbound(
             {
                 return ApiResponse::bad_request("当前状态不允许驳回回流");
             }
-            let result = sqlx::query(
-                only_own_schema_query!("wms", "UPDATE wms.outbound_orders SET status = 'picking', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = 'packing' AND deleted_at IS NULL RETURNING *"),
-            )
+            let result = sqlx::query(only_own_schema_query!(
+                "wms",
+                r#"UPDATE wms.outbound_orders SET
+                           status = $3, picking_status = $4, packing_status = $5,
+                           packing_end_time = NULL, shipping_status = $6, updated_at = NOW()
+                       WHERE id = $1 AND tenant_id = $2 AND status = $7
+                         AND picking_status = $8 AND packing_status = $9
+                         AND deleted_at IS NULL
+                       RETURNING *"#
+            ))
             .bind(id)
             .bind(tenant_id)
+            .bind(OutboundStatus::Picking.as_db_str())
+            .bind(OutboundExecutionStatus::InProgress.as_db_str())
+            .bind(OutboundExecutionStatus::Pending.as_db_str())
+            .bind(OutboundExecutionStatus::Pending.as_db_str())
+            .bind(OutboundStatus::Packing.as_db_str())
+            .bind(OutboundExecutionStatus::Completed.as_db_str())
+            .bind(OutboundExecutionStatus::InProgress.as_db_str())
             .fetch_optional(&mut **txn)
             .await;
             match result {

@@ -5,7 +5,7 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 200,
+    "rust_enums": 201,
     "rust_enum_values": 190,
     "rust_values_not_in_db_check": 151,
     "frontend_status_keys": 205,
@@ -3271,6 +3271,21 @@
         "full",
         "inactive",
         "partial"
+      ]
+    },
+    {
+      "module": "wms",
+      "file": "svc/wms/src/modules/outbound_execution_status.rs",
+      "name": "OutboundExecutionStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "pending"
       ]
     },
     {

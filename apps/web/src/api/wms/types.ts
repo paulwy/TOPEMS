@@ -217,9 +217,9 @@ export interface OutboundOrder {
   shipping_cost?: number;
   priority?: string;
   status: string;
-  picking_status?: string;
-  packing_status?: string;
-  shipping_status?: string;
+  picking_status: 'pending' | 'in_progress' | 'completed';
+  packing_status: 'pending' | 'in_progress' | 'completed';
+  shipping_status: 'pending' | 'in_progress' | 'completed';
   picked_quantity?: number;
   packed_quantity?: number;
   shipped_quantity?: number;
