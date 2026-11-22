@@ -734,6 +734,35 @@
     },
     {
       "schema": "ehs",
+      "table": "qa_ehs_training_certificates",
+      "constraint": "ck_qa_ehs_training_certificates_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "expired",
+        "revoked",
+        "valid"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['valid'::text, 'expired'::text, 'revoked'::text])))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_trainings",
+      "constraint": "ck_qa_ehs_trainings_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "scheduled"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['scheduled'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "qa_ehs_treatment_actions",
       "constraint": "qa_ehs_treatment_actions_status_check",
       "columns": [
@@ -760,8 +789,23 @@
     },
     {
       "schema": "ehs",
+      "table": "training_programs",
+      "constraint": "ck_training_programs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "cancelled",
+        "completed",
+        "draft"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'active'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "training_records",
-      "constraint": "ck_training_records_status",
+      "constraint": "ck_training_records_status_standard",
       "columns": [
         "status"
       ],
@@ -770,7 +814,7 @@
         "failed",
         "ongoing"
       ],
-      "definition": "CHECK (((status)::text = ANY ((ARRAY['ongoing'::character varying, 'completed'::character varying, 'failed'::character varying])::text[])))"
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['ongoing'::text, 'completed'::text, 'failed'::text])))) NOT VALID"
     },
     {
       "schema": "erp",
@@ -5270,24 +5314,6 @@
     },
     {
       "schema": "ehs",
-      "table": "qa_ehs_training_certificates",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'valid'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "qa_ehs_trainings",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'scheduled'::character varying"
-    },
-    {
-      "schema": "ehs",
       "table": "risk_assessments",
       "column": "status",
       "type": "character varying(20)",
@@ -5330,15 +5356,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "training_programs",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "ehs",

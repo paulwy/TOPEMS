@@ -24,6 +24,7 @@ pub mod risk_control_status;
 pub mod risk_status;
 pub mod safety;
 pub mod training;
+pub mod training_status;
 pub mod treatment_status;
 
 pub use openapi::ApiDoc;

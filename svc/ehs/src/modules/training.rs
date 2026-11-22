@@ -14,6 +14,9 @@ use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
 
+use crate::modules::training_status::{
+    TrainingCertificateStatus, TrainingProgramStatus, TrainingRecordStatus, TrainingSessionStatus,
+};
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 
@@ -279,11 +282,13 @@ pub async fn create_training(
         .get("duration_hours")
         .and_then(|v| v.as_i64())
         .map(|v| v as i32);
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("scheduled")
-        .to_string();
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => TrainingSessionStatus::DEFAULT,
+        Some(raw) => match TrainingSessionStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训场次状态"),
+        },
+    };
 
     let sql = r#"
         INSERT INTO ehs.qa_ehs_trainings
@@ -301,7 +306,7 @@ pub async fn create_training(
         .bind(trainer)
         .bind(training_type)
         .bind(duration_hours)
-        .bind(&status)
+        .bind(status.as_db_str())
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
@@ -461,10 +466,13 @@ pub async fn update_training(
         .get("duration_hours")
         .and_then(|v| v.as_i64())
         .map(|v| v as i32);
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => None,
+        Some(raw) => match TrainingSessionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的培训场次状态"),
+        },
+    };
 
     let tenant_filter = if tenant_scope.tenant_id().is_some() {
         " AND tenant_id = $8::uuid"
@@ -703,8 +711,12 @@ pub async fn update_training_plan(
         params.push(v.to_string());
     }
     if let Some(v) = req.get("status").and_then(|v| v.as_str()) {
+        let status = match TrainingProgramStatus::from_db_str(v) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训计划状态"),
+        };
         sets.push(format!("status = ${}", params.len() + 1));
-        params.push(v.to_string());
+        params.push(status.as_db_str().to_string());
     }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
@@ -969,8 +981,12 @@ pub async fn update_training_record(
         params.push(v.to_string());
     }
     if let Some(v) = req.get("status").and_then(|v| v.as_str()) {
+        let status = match TrainingRecordStatus::from_db_str(v) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训记录状态"),
+        };
         sets.push(format!("status = ${}", params.len() + 1));
-        params.push(v.to_string());
+        params.push(status.as_db_str().to_string());
     }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
@@ -1205,8 +1221,12 @@ pub async fn update_certificate(
         params.push(v.to_string());
     }
     if let Some(v) = req.get("status").and_then(|v| v.as_str()) {
+        let status = match TrainingCertificateStatus::from_db_str(v) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训证书状态"),
+        };
         sets.push(format!("status = ${}", params.len() + 1));
-        params.push(v.to_string());
+        params.push(status.as_db_str().to_string());
     }
     if let Some(v) = req.get("attachments") {
         sets.push(format!("attachments = ${}", params.len() + 1));
@@ -1441,9 +1461,13 @@ pub async fn list_training_plans(
         ),
         None => (String::from(" WHERE deleted_at IS NULL"), 1),
     };
-    if let Some(status) = &q.status {
+    if let Some(raw) = &q.status {
+        let status = match TrainingProgramStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训计划状态"),
+        };
         where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
-        params.push(status.clone());
+        params.push(status.as_db_str().to_string());
     }
     if let Some(training_type) = &q.training_type {
         where_clause.push_str(&format!(
@@ -1539,11 +1563,13 @@ pub async fn create_training_plan(
         .get("planned_date")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("draft")
-        .to_string();
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => TrainingProgramStatus::DEFAULT,
+        Some(raw) => match TrainingProgramStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训计划状态"),
+        },
+    };
 
     let sql = r#"
         INSERT INTO ehs.training_programs
@@ -1560,7 +1586,7 @@ pub async fn create_training_plan(
         .bind(training_type)
         .bind(instructor)
         .bind(start_date)
-        .bind(&status)
+        .bind(status.as_db_str())
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
@@ -1630,9 +1656,13 @@ pub async fn list_training_records(
         ),
         None => (String::from(" WHERE deleted_at IS NULL"), 1),
     };
-    if let Some(status) = &q.status {
+    if let Some(raw) = &q.status {
+        let status = match TrainingRecordStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训记录状态"),
+        };
         where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
-        params.push(status.clone());
+        params.push(status.as_db_str().to_string());
     }
     if let Some(training_type) = &q.training_type {
         where_clause.push_str(&format!(
@@ -1769,11 +1799,13 @@ pub async fn create_training_record(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
     let pass_rate = req.get("pass_rate").map(|v| v.to_string());
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("ongoing")
-        .to_string();
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => TrainingRecordStatus::DEFAULT,
+        Some(raw) => match TrainingRecordStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训记录状态"),
+        },
+    };
 
     let sql = r#"
         INSERT INTO ehs.training_records
@@ -1802,7 +1834,7 @@ pub async fn create_training_record(
         .bind(materials)
         .bind(result)
         .bind(pass_rate)
-        .bind(&status)
+        .bind(status.as_db_str())
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
@@ -1872,9 +1904,13 @@ pub async fn list_certificates(
         ),
         None => (String::from(" WHERE deleted_at IS NULL"), 1),
     };
-    if let Some(status) = &q.status {
+    if let Some(raw) = &q.status {
+        let status = match TrainingCertificateStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训证书状态"),
+        };
         where_clause.push_str(&format!(" AND status = ${}", params.len() + filter_base));
-        params.push(status.clone());
+        params.push(status.as_db_str().to_string());
     }
     if let Some(training_type) = &q.training_type {
         where_clause.push_str(&format!(
@@ -2000,11 +2036,13 @@ pub async fn create_certificate(
         .get("record_id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("valid")
-        .to_string();
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None | Some("") => TrainingCertificateStatus::DEFAULT,
+        Some(raw) => match TrainingCertificateStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的培训证书状态"),
+        },
+    };
     let attachments: serde_json::Value = req
         .get("attachments")
         .cloned()
@@ -2030,7 +2068,7 @@ pub async fn create_certificate(
         .bind(issue_date)
         .bind(expiry_date)
         .bind(issuing_authority)
-        .bind(&status)
+        .bind(status.as_db_str())
         .bind(record_id)
         .bind(attachments)
         .bind(tenant_id)

@@ -1226,6 +1226,34 @@
       "table": "public.audit_logs",
       "column": "status",
       "candidate": "docs/database/audit-logs-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "enum": "TrainingProgramStatus",
+      "table": "ehs.training_programs",
+      "column": "status",
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "enum": "TrainingSessionStatus",
+      "table": "ehs.qa_ehs_trainings",
+      "column": "status",
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "enum": "TrainingRecordStatus",
+      "table": "ehs.training_records",
+      "column": "status",
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "enum": "TrainingCertificateStatus",
+      "table": "ehs.qa_ehs_training_certificates",
+      "column": "status",
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

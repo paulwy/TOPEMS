@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 329,
+    "db_check_constraints": 332,
     "db_enum_types": 5,
-    "db_check_values": 147,
-    "rust_enums": 216,
-    "rust_enum_values": 201,
-    "rust_values_not_in_db_check": 60,
-    "frontend_status_keys": 213,
-    "frontend_keys_not_in_db_check": 72,
+    "db_check_values": 149,
+    "rust_enums": 220,
+    "rust_enum_values": 203,
+    "rust_values_not_in_db_check": 59,
+    "frontend_status_keys": 214,
+    "frontend_keys_not_in_db_check": 70,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -895,6 +895,70 @@
         "assessed",
         "controlled",
         "identified"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "name": "TrainingCertificateStatus",
+      "values": [
+        "Expired",
+        "Revoked",
+        "Valid"
+      ],
+      "normalized": [
+        "expired",
+        "revoked",
+        "valid"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "name": "TrainingProgramStatus",
+      "values": [
+        "Active",
+        "Cancelled",
+        "Completed",
+        "Draft"
+      ],
+      "normalized": [
+        "active",
+        "cancelled",
+        "completed",
+        "draft"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "name": "TrainingRecordStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "Ongoing"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "ongoing"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/training_status.rs",
+      "name": "TrainingSessionStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Scheduled"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "scheduled"
       ]
     },
     {
@@ -3962,6 +4026,7 @@
       "not_found",
       "not_started",
       "offline",
+      "ongoing",
       "online",
       "open",
       "opened",
@@ -4109,7 +4174,6 @@
       "planning",
       "preview",
       "restored",
-      "revoked",
       "rollback",
       "rolling_back",
       "sending",
@@ -4181,7 +4245,6 @@
       "progressing",
       "receiving",
       "restored",
-      "revoked",
       "rollback",
       "rolling_back",
       "sending",
@@ -4200,7 +4263,6 @@
       "unpaid",
       "unsettled",
       "unsupported",
-      "valid",
       "validating",
       "verifying",
       "waiting"
