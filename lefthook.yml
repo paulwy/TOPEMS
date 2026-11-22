@@ -505,6 +505,13 @@ pre-commit:
       glob: "{docs/database/status-check-catalog.json,scripts/ci/gen-finance-status.mjs,apps/web/src/components/finance/generated/financeStatus.ts}"
       run: node scripts/ci/gen-finance-status.mjs --check
 
+    # [Gate STATUS-CATALOG] W5-B：DB CHECK 状态目录必须与本地库一致。
+    # 新增/修改状态约束后未重生成 docs/database/status-check-catalog.json 即阻断。
+    status-catalog:
+      tags: database status
+      glob: "{docs/database/status-check-catalog.json,database/migrations/**,svc/*/migrations/**}"
+      run: node scripts/ci/dump-status-checks.mjs --check
+
     # [Gate STATUS-PALETTE] W5-B B20：Rust 状态值必须有前端色板，防止展示退化为灰色。
     # 改色板或盘点产物任一未同步重生成即阻断；新增 Rust 状态未登记色板也会阻断。
     status-palette:

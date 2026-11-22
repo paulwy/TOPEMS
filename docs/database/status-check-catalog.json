@@ -56,10 +56,11 @@
       ],
       "values": [
         "active",
-        "archived",
-        "inactive"
+        "completed",
+        "failed",
+        "paused"
       ],
-      "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))"
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'paused'::text, 'completed'::text, 'failed'::text]))) NOT VALID"
     },
     {
       "schema": "analytics",
@@ -98,10 +99,11 @@
       ],
       "values": [
         "active",
-        "archived",
-        "inactive"
+        "completed",
+        "failed",
+        "paused"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status)::text = ANY (ARRAY['active'::text, 'paused'::text, 'completed'::text, 'failed'::text]))) NOT VALID"
     },
     {
       "schema": "communication",
@@ -173,13 +175,12 @@
         "status"
       ],
       "values": [
-        "active",
-        "archived",
-        "inactive",
+        "cancelled",
+        "overdue",
         "paid",
         "pending"
       ],
-      "definition": "CHECK (((status IS NULL) OR (status = ANY ('{active,inactive,archived,pending,paid}'::text[]))))"
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'paid'::text, 'overdue'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "crm",
@@ -197,6 +198,52 @@
     },
     {
       "schema": "crm",
+      "table": "contacts",
+      "constraint": "contacts_approval_status_check",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "none",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status)::text = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text, 'rejected'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
+      "table": "contracts",
+      "constraint": "ck_crm_contracts_status_canonical",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "completed",
+        "draft",
+        "expired",
+        "pending",
+        "terminated"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'pending'::text, 'active'::text, 'completed'::text, 'expired'::text, 'terminated'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
+      "table": "crm_master_data_refs",
+      "constraint": "ck_crm_master_data_refs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "deleted",
+        "inactive"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'deleted'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
       "table": "customer_finance",
       "constraint": "ck_customer_finance_status_standard",
       "columns": [
@@ -211,6 +258,23 @@
     },
     {
       "schema": "crm",
+      "table": "customer_orders",
+      "constraint": "ck_customer_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "pending",
+        "shipped"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'shipped'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
       "table": "customers",
       "constraint": "ck_customers_status_standard",
       "columns": [
@@ -222,6 +286,51 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "crm",
+      "table": "customers",
+      "constraint": "customers_approval_status_check",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "none",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status)::text = ANY (ARRAY['none'::text, 'pending'::text, 'approved'::text, 'rejected'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
+      "table": "interactions",
+      "constraint": "ck_interactions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "scheduled"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['scheduled'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
+      "table": "opportunities",
+      "constraint": "ck_crm_opportunities_status_canonical",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "archived",
+        "lost",
+        "open",
+        "won"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['open'::text, 'won'::text, 'lost'::text, 'archived'::text]))) NOT VALID"
     },
     {
       "schema": "crm",
@@ -240,6 +349,37 @@
         "rejected"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['pending'::text, 'accepted'::text, 'approved'::text, 'rejected'::text, 'processing'::text, 'completed'::text, 'cancelled'::text]))))"
+    },
+    {
+      "schema": "crm",
+      "table": "sales_forecasts",
+      "constraint": "ck_sales_forecasts_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "archived",
+        "draft",
+        "generated"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'generated'::text, 'archived'::text]))) NOT VALID"
+    },
+    {
+      "schema": "crm",
+      "table": "sales_orders",
+      "constraint": "ck_sales_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "pending",
+        "shipped"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'shipped'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "doc_service",
@@ -683,6 +823,23 @@
     },
     {
       "schema": "erp",
+      "table": "sales_orders",
+      "constraint": "sales_orders_status_check",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "pending",
+        "shipped"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'shipped'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "suppliers",
       "constraint": "ck_suppliers_status_standard",
       "columns": [
@@ -739,6 +896,20 @@
     },
     {
       "schema": "finance",
+      "table": "erp_collection_records",
+      "constraint": "ck_erp_collection_records_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "confirmed",
+        "pending",
+        "written_off"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'written_off'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "erp_payables",
       "constraint": "ck_erp_payables_status_standard",
       "columns": [
@@ -781,17 +952,33 @@
     },
     {
       "schema": "finance",
+      "table": "expense_approvals",
+      "constraint": "ck_expense_approvals_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "pending",
+        "reimbursed",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'reimbursed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "finance_audit_findings_v52",
       "constraint": "ck_finance_audit_findings_v52_status_standard",
       "columns": [
         "status"
       ],
       "values": [
-        "active",
-        "archived",
-        "inactive"
+        "ignored",
+        "open",
+        "resolved"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status)::text = ANY (ARRAY['open'::text, 'resolved'::text, 'ignored'::text]))) NOT VALID"
     },
     {
       "schema": "finance",
@@ -806,6 +993,84 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v55_invoices",
+      "constraint": "ck_finance_v55_invoices_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "pending",
+        "posted",
+        "recognized",
+        "verified"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'recognized'::text, 'verified'::text, 'posted'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v55_reconciliation_results",
+      "constraint": "ck_finance_v55_recon_results_match_status_standard",
+      "columns": [
+        "match_status"
+      ],
+      "values": [
+        "discrepancy",
+        "matched",
+        "partial",
+        "unmatched"
+      ],
+      "definition": "CHECK (((match_status)::text = ANY (ARRAY['matched'::text, 'partial'::text, 'unmatched'::text, 'discrepancy'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v56_tax_forms",
+      "constraint": "ck_finance_v56_tax_forms_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "accepted",
+        "calculated",
+        "draft",
+        "rejected",
+        "submitted"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'calculated'::text, 'submitted'::text, 'accepted'::text, 'rejected'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v56_tax_plans",
+      "constraint": "ck_finance_v56_tax_plans_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "executed",
+        "proposed",
+        "rejected",
+        "under_review"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'proposed'::text, 'under_review'::text, 'approved'::text, 'rejected'::text, 'executed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v57_generated_reports",
+      "constraint": "ck_finance_v57_generated_reports_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "generating",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'generating'::text, 'completed'::text, 'failed'::text]))) NOT VALID"
     },
     {
       "schema": "finance",
@@ -831,13 +1096,41 @@
       "values": [
         "acknowledged",
         "active",
+        "resolved",
+        "suppressed"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['active'::text, 'acknowledged'::text, 'resolved'::text, 'suppressed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v60_decision_scenarios",
+      "constraint": "ck_finance_v60_decision_scenarios_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
         "archived",
         "draft",
-        "inactive",
-        "pending",
-        "resolved"
+        "evaluated"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ('{active,inactive,archived,draft,pending,acknowledged,resolved}'::text[]))))"
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'active'::text, 'evaluated'::text, 'archived'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v60_schedule_tasks",
+      "constraint": "ck_finance_v60_schedule_tasks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "paused",
+        "pending",
+        "running"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'running'::text, 'paused'::text, 'completed'::text, 'failed'::text]))) NOT VALID"
     },
     {
       "schema": "finance",
@@ -869,6 +1162,38 @@
     },
     {
       "schema": "finance",
+      "table": "financial_reports",
+      "constraint": "ck_financial_reports_approval_status_standard",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "locked",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'locked'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "financial_reports",
+      "constraint": "ck_financial_reports_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "locked",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'locked'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "mv_receivable_aging",
       "constraint": "ck_mv_receivable_aging_status_standard",
       "columns": [
@@ -894,6 +1219,19 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY[('active'::character varying)::text, ('inactive'::character varying)::text, ('archived'::character varying)::text]))))"
+    },
+    {
+      "schema": "finance",
+      "table": "reconciliation_settlement_links",
+      "constraint": "ck_reconciliation_settlement_links_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "linked"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['linked'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "finance",
@@ -1412,6 +1750,23 @@
     },
     {
       "schema": "integration",
+      "table": "async_tasks",
+      "constraint": "ck_async_tasks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "failed",
+        "in_progress",
+        "max_retries_exceeded",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'failed'::text, 'max_retries_exceeded'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "integration",
       "table": "integration_sync_logs",
       "constraint": "ck_integration_sync_logs_status_standard",
       "columns": [
@@ -1630,6 +1985,22 @@
     },
     {
       "schema": "mes",
+      "table": "capacities",
+      "constraint": "ck_capacities_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "allocated",
+        "available",
+        "consumed",
+        "maintenance",
+        "released"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['available'::text, 'allocated'::text, 'consumed'::text, 'maintenance'::text, 'released'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "core_dict_items",
       "constraint": "ck_core_dict_items_status_standard",
       "columns": [
@@ -1700,6 +2071,40 @@
     },
     {
       "schema": "mes",
+      "table": "demand_forecasts",
+      "constraint": "ck_demand_forecasts_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "adopted",
+        "calculated",
+        "cancelled",
+        "draft",
+        "superseded",
+        "validated"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'calculated'::text, 'validated'::text, 'adopted'::text, 'superseded'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
+      "table": "material_plans",
+      "constraint": "ck_material_plans_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "pending",
+        "requisitioned",
+        "satisfied",
+        "shortage",
+        "sourced"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'requisitioned'::text, 'sourced'::text, 'satisfied'::text, 'shortage'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "process_flows",
       "constraint": "ck_process_flows_status_standard",
       "columns": [
@@ -1753,6 +2158,23 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "mes",
+      "table": "production_plans",
+      "constraint": "ck_production_plans_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "in_progress",
+        "pending_approval"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending_approval'::text, 'approved'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "mes",
@@ -2035,6 +2457,24 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "pm",
+      "table": "projects",
+      "constraint": "ck_projects_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "cancelled",
+        "completed",
+        "draft",
+        "paused",
+        "pending_approval",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending_approval'::text, 'active'::text, 'paused'::text, 'completed'::text, 'cancelled'::text, 'rejected'::text]))) NOT VALID"
     },
     {
       "schema": "portal",
@@ -2783,6 +3223,52 @@
     },
     {
       "schema": "rs",
+      "table": "project_milestones",
+      "constraint": "ck_project_milestones_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "achieved",
+        "delayed",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'achieved'::text, 'delayed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "rs",
+      "table": "project_phases",
+      "constraint": "ck_project_phases_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "delayed",
+        "in_progress",
+        "not_started"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['not_started'::text, 'in_progress'::text, 'completed'::text, 'delayed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "rs",
+      "table": "projects",
+      "constraint": "ck_rs_projects_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "cancelled",
+        "completed",
+        "draft",
+        "paused",
+        "pending_approval"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending_approval'::text, 'active'::text, 'paused'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "rs",
       "table": "rs_experiments",
       "constraint": "ck_rs_experiments_status_standard",
       "columns": [
@@ -2878,6 +3364,21 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "srm",
+      "table": "supplier_contracts",
+      "constraint": "ck_supplier_contracts_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "draft",
+        "inactive"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'active'::text, 'inactive'::text, 'archived'::text]))) NOT VALID"
     },
     {
       "schema": "srm",
@@ -3000,16 +3501,139 @@
     {
       "schema": "wms",
       "table": "batches",
+      "constraint": "ck_batches_quality_status_standard",
+      "columns": [
+        "quality_status"
+      ],
+      "values": [
+        "inspecting",
+        "pending",
+        "qualified",
+        "unqualified"
+      ],
+      "definition": "CHECK (((quality_status)::text = ANY (ARRAY['pending'::text, 'inspecting'::text, 'qualified'::text, 'unqualified'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "batches",
       "constraint": "ck_batches_status_standard",
       "columns": [
         "status"
       ],
       "values": [
-        "active",
-        "archived",
-        "inactive"
+        "frozen",
+        "in_stock",
+        "out_stock",
+        "reserved",
+        "scrapped"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status)::text = ANY (ARRAY['in_stock'::text, 'reserved'::text, 'out_stock'::text, 'frozen'::text, 'scrapped'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "discrepancy_records",
+      "constraint": "ck_discrepancy_records_adjustment_status_standard",
+      "columns": [
+        "adjustment_status"
+      ],
+      "values": [
+        "approved",
+        "completed",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((adjustment_status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "inbound_orders",
+      "constraint": "ck_inbound_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "created",
+        "received"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['created'::text, 'confirmed'::text, 'received'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "locations",
+      "constraint": "ck_wms_locations_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "available",
+        "full",
+        "inactive",
+        "partial"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['available'::text, 'partial'::text, 'full'::text, 'inactive'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "outbound_orders",
+      "constraint": "ck_outbound_orders_packing_status_standard",
+      "columns": [
+        "packing_status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((packing_status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "outbound_orders",
+      "constraint": "ck_outbound_orders_picking_status_standard",
+      "columns": [
+        "picking_status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((picking_status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "outbound_orders",
+      "constraint": "ck_outbound_orders_shipping_status_standard",
+      "columns": [
+        "shipping_status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((shipping_status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "outbound_orders",
+      "constraint": "ck_outbound_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "created",
+        "packing",
+        "picking",
+        "shipping"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['created'::text, 'confirmed'::text, 'picking'::text, 'packing'::text, 'shipping'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "wms",
@@ -3029,17 +3653,205 @@
     },
     {
       "schema": "wms",
+      "table": "replenishment_order_items",
+      "constraint": "ck_replenishment_order_items_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "confirmed",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'confirmed'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "replenishment_orders",
+      "constraint": "ck_replenishment_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "confirmed",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'confirmed'::text, 'completed'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "replenishment_suggestions",
+      "constraint": "ck_replenishment_suggestions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "confirmed",
+        "draft"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'confirmed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "serial_numbers",
+      "constraint": "ck_serial_numbers_quality_status_standard",
+      "columns": [
+        "quality_status"
+      ],
+      "values": [
+        "inspecting",
+        "pending",
+        "qualified",
+        "unqualified"
+      ],
+      "definition": "CHECK (((quality_status)::text = ANY (ARRAY['pending'::text, 'inspecting'::text, 'qualified'::text, 'unqualified'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "serial_numbers",
+      "constraint": "ck_serial_numbers_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "frozen",
+        "in_stock",
+        "out_stock",
+        "reserved",
+        "scrapped"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['in_stock'::text, 'reserved'::text, 'out_stock'::text, 'frozen'::text, 'scrapped'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "slotting_suggestions",
+      "constraint": "ck_slotting_suggestions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "applied",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'applied'::character varying, 'rejected'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "stock_take_items",
+      "constraint": "ck_stock_take_items_adjustment_status_standard",
+      "columns": [
+        "adjustment_status"
+      ],
+      "values": [
+        "completed",
+        "pending"
+      ],
+      "definition": "CHECK (((adjustment_status)::text = ANY ((ARRAY['pending'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "stock_take_items",
+      "constraint": "ck_stock_take_items_quality_status_standard",
+      "columns": [
+        "quality_status"
+      ],
+      "values": [
+        "pending",
+        "qualified",
+        "unqualified"
+      ],
+      "definition": "CHECK (((quality_status)::text = ANY ((ARRAY['qualified'::character varying, 'unqualified'::character varying, 'pending'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
       "table": "stock_take_items",
       "constraint": "ck_stock_take_items_status_standard",
       "columns": [
         "status"
       ],
       "values": [
-        "active",
-        "archived",
-        "inactive"
+        "completed",
+        "pending"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "stock_takes",
+      "constraint": "ck_stock_takes_adjustment_status_standard",
+      "columns": [
+        "adjustment_status"
+      ],
+      "values": [
+        "completed",
+        "pending"
+      ],
+      "definition": "CHECK (((adjustment_status)::text = ANY ((ARRAY['pending'::character varying, 'completed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "stock_takes",
+      "constraint": "ck_stock_takes_approval_status_standard",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "stock_takes",
+      "constraint": "ck_stock_takes_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "planned"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['planned'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "transfer_order_items",
+      "constraint": "ck_transfer_order_items_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "partial",
+        "pending",
+        "shipped"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'shipped'::text, 'partial'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "transfer_orders",
+      "constraint": "ck_transfer_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "pending",
+        "received",
+        "shipped"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'confirmed'::text, 'shipped'::text, 'received'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "wms",
@@ -3054,6 +3866,36 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "wms",
+      "table": "wave_pick_items",
+      "constraint": "ck_wave_pick_items_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "pending",
+        "picked",
+        "short_picked"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'picked'::text, 'short_picked'::text]))) NOT VALID"
+    },
+    {
+      "schema": "wms",
+      "table": "wave_picks",
+      "constraint": "ck_wave_picks_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "assigned",
+        "cancelled",
+        "completed",
+        "created",
+        "picking"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['created'::text, 'assigned'::text, 'picking'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "wms",
@@ -3250,87 +4092,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "crm",
-      "table": "contacts",
-      "column": "approval_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'none'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "contracts",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": "'draft'::text"
-    },
-    {
-      "schema": "crm",
-      "table": "crm_master_data_refs",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "customer_orders",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'completed'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "customers",
-      "column": "approval_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'none'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "interactions",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'scheduled'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "opportunities",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'open'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "sales_forecasts",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "crm",
-      "table": "sales_orders",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "doc",
@@ -3892,15 +4653,6 @@
     },
     {
       "schema": "erp",
-      "table": "sales_orders",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "erp",
       "table": "vehicle_requests",
       "column": "status",
       "type": "character varying(50)",
@@ -3964,24 +4716,6 @@
     },
     {
       "schema": "finance",
-      "table": "erp_collection_records",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "finance",
-      "table": "expense_approvals",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
       "table": "expenses",
       "column": "status",
       "type": "text",
@@ -4000,54 +4734,9 @@
     },
     {
       "schema": "finance",
-      "table": "finance_v55_invoices",
-      "column": "status",
-      "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
       "table": "finance_v55_payment_results",
       "column": "status",
       "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v55_reconciliation_results",
-      "column": "match_status",
-      "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'unmatched'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v56_tax_forms",
-      "column": "status",
-      "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v56_tax_plans",
-      "column": "status",
-      "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v57_generated_reports",
-      "column": "status",
-      "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
@@ -4063,48 +4752,12 @@
     },
     {
       "schema": "finance",
-      "table": "finance_v60_decision_scenarios",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "finance",
       "table": "finance_v60_schedule_executions",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v60_schedule_tasks",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "financial_reports",
-      "column": "approval_status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "financial_reports",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "finance",
@@ -4150,15 +4803,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "finance",
-      "table": "reconciliation_settlement_links",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'linked'::character varying"
     },
     {
       "schema": "finance",
@@ -4519,15 +5163,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "integration",
-      "table": "async_tasks",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "integration",
@@ -5053,15 +5688,6 @@
     },
     {
       "schema": "mes",
-      "table": "capacities",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'available'::character varying"
-    },
-    {
-      "schema": "mes",
       "table": "core_billing_invoices",
       "column": "status",
       "type": "character varying(32)",
@@ -5104,15 +5730,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'trial'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "demand_forecasts",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "mes",
@@ -5197,15 +5814,6 @@
     },
     {
       "schema": "mes",
-      "table": "material_plans",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "mes",
       "table": "material_requirements",
       "column": "status",
       "type": "character varying(32)",
@@ -5230,15 +5838,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'created'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "production_plans",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "mes",
@@ -5761,15 +6360,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'identified'::character varying"
-    },
-    {
-      "schema": "pm",
-      "table": "projects",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "pm",
@@ -6916,33 +7506,6 @@
     },
     {
       "schema": "rs",
-      "table": "project_milestones",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'PENDING'::character varying"
-    },
-    {
-      "schema": "rs",
-      "table": "project_phases",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'NOT_STARTED'::character varying"
-    },
-    {
-      "schema": "rs",
-      "table": "projects",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "rs",
       "table": "research_costs",
       "column": "status",
       "type": "text",
@@ -7231,15 +7794,6 @@
     },
     {
       "schema": "srm",
-      "table": "supplier_contracts",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "srm",
       "table": "supplier_evaluations",
       "column": "status",
       "type": "character varying(20)",
@@ -7339,24 +7893,6 @@
     },
     {
       "schema": "wms",
-      "table": "batches",
-      "column": "quality_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "discrepancy_records",
-      "column": "adjustment_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
       "table": "inbound_order_items",
       "column": "inspection_status",
       "type": "character varying(20)",
@@ -7381,15 +7917,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "inbound_orders",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'created'::character varying"
     },
     {
       "schema": "wms",
@@ -7429,15 +7956,6 @@
     },
     {
       "schema": "wms",
-      "table": "locations",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'available'::character varying"
-    },
-    {
-      "schema": "wms",
       "table": "outbound_order_items",
       "column": "packing_status",
       "type": "character varying(20)",
@@ -7453,141 +7971,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "outbound_orders",
-      "column": "packing_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "outbound_orders",
-      "column": "picking_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "outbound_orders",
-      "column": "shipping_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "outbound_orders",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'created'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "replenishment_order_items",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "replenishment_orders",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "replenishment_suggestions",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "serial_numbers",
-      "column": "quality_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "serial_numbers",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'in_stock'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "slotting_suggestions",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "stock_take_items",
-      "column": "adjustment_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "stock_take_items",
-      "column": "quality_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "stock_takes",
-      "column": "adjustment_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "stock_takes",
-      "column": "approval_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "wms",
-      "table": "stock_takes",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'planned'::character varying"
     },
     {
       "schema": "wms",
@@ -7636,24 +8019,6 @@
     },
     {
       "schema": "wms",
-      "table": "transfer_order_items",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "transfer_orders",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
       "table": "transfers",
       "column": "approval_status",
       "type": "character varying(20)",
@@ -7669,24 +8034,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'created'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "wave_pick_items",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "wms",
-      "table": "wave_picks",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     }
   ]
 }
