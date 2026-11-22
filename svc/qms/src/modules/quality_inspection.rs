@@ -2,6 +2,7 @@
 use utoipa::ToSchema;
 
 use crate::models::quality_inspection::*;
+use crate::modules::qms_status::QmsInspectionStatus;
 use crate::shared::fsm::inspection_can_transition;
 use axum::{
     extract::State,
@@ -65,6 +66,13 @@ pub async fn list_inspections(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let status_filter: Option<String> = match query.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match QmsInspectionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的质检状态"),
+        },
+    };
 
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
@@ -77,7 +85,7 @@ pub async fn list_inspections(
           AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3 OR inspector ILIKE $3 OR assignee ILIKE $3)
         "#),
     )
-    .bind(query.status.as_deref())
+    .bind(status_filter.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
     .fetch_one(&mut scope)
@@ -106,7 +114,7 @@ pub async fn list_inspections(
         LIMIT $4 OFFSET $5
         "#),
     )
-    .bind(query.status.as_deref())
+    .bind(status_filter.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
     .bind(page_size)
@@ -202,7 +210,7 @@ pub async fn create_inspection(
         }
     }
 
-    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_inspections (tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, status, created_by, product_name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $10 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(tenant_id).bind(inspection_no).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(req.created_by).bind(req.product_name_en.clone()).bind(Locale::from_headers(&headers).as_sql())
+    let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_inspections (tenant_id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, status, created_by, product_name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $11 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(tenant_id).bind(inspection_no).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(QmsInspectionStatus::DEFAULT.as_db_str()).bind(req.created_by).bind(req.product_name_en.clone()).bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut scope)
     .await;
 

@@ -3646,6 +3646,41 @@
     },
     {
       "schema": "qms",
+      "table": "qa_quality_inspections",
+      "constraint": "ck_qa_quality_inspections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending",
+        "pending_audit",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'pending_audit'::text, 'completed'::text, 'rejected'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_quality_issues",
+      "constraint": "ck_qa_quality_issues_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "closed",
+        "in_progress",
+        "open",
+        "rejected",
+        "resolved"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['open'::text, 'in_progress'::text, 'resolved'::text, 'closed'::text, 'approved'::text, 'rejected'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "qms",
       "table": "qa_sampling_plans",
       "constraint": "ck_qa_sampling_plans_status_standard",
       "columns": [
@@ -3699,6 +3734,23 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "qms",
+      "table": "quality_inspections",
+      "constraint": "ck_quality_inspections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending",
+        "pending_audit",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'pending_audit'::text, 'completed'::text, 'rejected'::text, 'cancelled'::text]))) NOT VALID"
     },
     {
       "schema": "qms",
@@ -7741,33 +7793,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_quality_inspections",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "qa_quality_issues",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'open'::character varying"
-    },
-    {
-      "schema": "qms",
-      "table": "quality_inspections",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'planned'::character varying"
     },
     {
       "schema": "qms",

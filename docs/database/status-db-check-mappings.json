@@ -1191,6 +1191,20 @@
       "table": "lims.lims_safety_tasks",
       "column": "status",
       "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/qms/src/modules/qms_status.rs",
+      "enum": "QmsInspectionStatus",
+      "table": "qms.qa_quality_inspections",
+      "column": "status",
+      "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/qms/src/modules/qms_status.rs",
+      "enum": "QmsIssueStatus",
+      "table": "qms.qa_quality_issues",
+      "column": "status",
+      "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

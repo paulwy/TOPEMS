@@ -7,6 +7,7 @@ pub mod eight_d;
 pub mod fmea;
 pub mod inspection_standard;
 pub mod qms_plugin;
+pub mod qms_status;
 pub mod quality_cost;
 pub mod quality_dashboard;
 pub mod quality_inspection;

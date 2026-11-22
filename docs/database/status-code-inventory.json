@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 316,
+    "db_check_constraints": 319,
     "db_enum_types": 5,
-    "db_check_values": 145,
-    "rust_enums": 211,
-    "rust_enum_values": 197,
+    "db_check_values": 146,
+    "rust_enums": 213,
+    "rust_enum_values": 198,
     "rust_values_not_in_db_check": 60,
-    "frontend_status_keys": 210,
+    "frontend_status_keys": 211,
     "frontend_keys_not_in_db_check": 72,
     "rust_values_not_in_palette": 0
   },
@@ -3044,6 +3044,50 @@
       ]
     },
     {
+      "module": "qms",
+      "file": "svc/qms/src/modules/qms_status.rs",
+      "name": "QmsInspectionStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending",
+        "PendingAudit",
+        "Rejected"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending",
+        "pending_audit",
+        "rejected"
+      ]
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/qms_status.rs",
+      "name": "QmsIssueStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Closed",
+        "InProgress",
+        "Open",
+        "Rejected",
+        "Resolved"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "closed",
+        "in_progress",
+        "open",
+        "rejected",
+        "resolved"
+      ]
+    },
+    {
       "module": "rd",
       "file": "svc/rd/src/models/project_member.rs",
       "name": "MemberStatus",
@@ -3867,6 +3911,7 @@
       "paused",
       "pending",
       "pending_approval",
+      "pending_audit",
       "pending_destruction",
       "pending_review",
       "pending_verification",

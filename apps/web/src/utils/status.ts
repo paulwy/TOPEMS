@@ -157,6 +157,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   blacklisted: 'error',
   restored: 'success',
   pending_review: 'warning',
+  pending_audit: 'warning',
   verifying: 'info',
   offline: 'default',
   online: 'success',

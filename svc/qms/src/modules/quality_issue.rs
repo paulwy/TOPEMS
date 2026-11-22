@@ -1,6 +1,7 @@
 //! Quality Issue handlers
 
 use crate::models::quality_issue::*;
+use crate::modules::qms_status::QmsIssueStatus;
 use crate::shared::fsm::{issue_can_transition, issue_requires_approval};
 use axum::{
     extract::State,
@@ -65,9 +66,16 @@ pub async fn list_issues(
     let offset = (page - 1) * page_size;
     let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
+    let status_filter: Option<String> = match query.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match QmsIssueStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的质量问题状态"),
+        },
+    };
 
     // 多语言：title 按 locale 切换；各分支 locale 绑定在参数末尾，序号随分支不同。
-    let issues = match (query.status.as_ref(), query.severity.as_ref()) {
+    let issues = match (status_filter.as_deref(), query.severity.as_ref()) {
         (Some(st), Some(sv)) => {
             let cols = issue_select_cols("$5");
             let sql = format!(
@@ -201,11 +209,11 @@ pub async fn create_issue(
     }
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let returning_cols = issue_select_cols("$10");
+    let returning_cols = issue_select_cols("$11");
     let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
-        "INSERT INTO qms.qa_quality_issues (tenant_id, issue_no, title, title_en, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $9, $4, $5, $6, $7, 'open', $8) RETURNING {}",
+        "INSERT INTO qms.qa_quality_issues (tenant_id, issue_no, title, title_en, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $10, $4, $5, $6, $7, $8, $9) RETURNING {}",
         returning_cols
-    ))).bind(tenant_id).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by).bind(req.title_en.clone()).bind(locale)
+    ))).bind(tenant_id).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(QmsIssueStatus::DEFAULT.as_db_str()).bind(req.created_by).bind(req.title_en.clone()).bind(locale)
     .fetch_one(&mut scope)
     .await;
 
@@ -355,6 +363,14 @@ pub async fn update_issue(
         Ok(t) => t,
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
+    let status = match req.status.as_deref() {
+        Some(raw) => match QmsIssueStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的质量问题状态"),
+        },
+        None => None,
+    };
+
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -371,7 +387,7 @@ pub async fn update_issue(
         "qms",
         "UPDATE qms.qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $6 AND deleted_at IS NULL"
     ))
-    .bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status).bind(tenant_id)
+    .bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(status).bind(tenant_id)
     .execute(&mut scope)
     .await;
 
