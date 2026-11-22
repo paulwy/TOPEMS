@@ -111,10 +111,9 @@ export const suggestionSchema: EntitySchema = {
       options: {
         type: 'static',
         options: [
-          { value: 'pending', label: i18n.t('wms.suggestion.k16') },
-          { value: 'approved', label: i18n.t('wms.suggestion.k17') },
-          { value: 'rejected', label: i18n.t('wms.suggestion.k18') },
-          { value: 'converted', label: i18n.t('wms.suggestion.k19') },
+          { value: 'draft', label: i18n.t('wms.suggestion.k18') },
+          { value: 'active', label: i18n.t('wms.suggestion.k16') },
+          { value: 'confirmed', label: i18n.t('wms.suggestion.k17') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
@@ -176,16 +175,14 @@ export const suggestionSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        pending: 'warning',
-        approved: 'info',
-        rejected: 'error',
-        converted: 'success',
+        draft: 'warning',
+        active: 'info',
+        confirmed: 'success',
       },
       labelMap: {
-        pending: i18n.t('wms.suggestion.k24'),
-        approved: i18n.t('wms.suggestion.k25'),
-        rejected: i18n.t('wms.suggestion.k26'),
-        converted: i18n.t('wms.suggestion.k27'),
+        draft: i18n.t('wms.suggestion.k26'),
+        active: i18n.t('wms.suggestion.k24'),
+        confirmed: i18n.t('wms.suggestion.k25'),
       },
     },
     filters: [
@@ -195,10 +192,9 @@ export const suggestionSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('wms.suggestion.k29'), value: 'all' },
-          { label: i18n.t('wms.suggestion.k30'), value: 'pending' },
-          { label: i18n.t('wms.suggestion.k31'), value: 'approved' },
-          { label: i18n.t('wms.suggestion.k32'), value: 'rejected' },
-          { label: i18n.t('wms.suggestion.k33'), value: 'converted' },
+          { label: i18n.t('wms.suggestion.k32'), value: 'draft' },
+          { label: i18n.t('wms.suggestion.k30'), value: 'active' },
+          { label: i18n.t('wms.suggestion.k31'), value: 'confirmed' },
         ],
       },
       {

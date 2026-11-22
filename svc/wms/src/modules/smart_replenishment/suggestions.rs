@@ -62,9 +62,14 @@ pub(crate) fn suggestion_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json:
 pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -79,7 +84,13 @@ pub async fn list_suggestions(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match ReplenishmentSuggestionStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的补货建议状态"),
+        },
+    };
 
     let result = sqlx::query(
         r#"
@@ -89,10 +100,13 @@ pub async fn list_suggestions(
                suggested_quantity::float8, supplier_id, supplier_name, status, priority,
                trigger_type, remarks, created_at, updated_at
         FROM wms.replenishment_suggestions
-        WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND tenant_id = $5
+          AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-        ORDER BY 
-            CASE priority 
+          AND status = ANY(ARRAY['draft','active','confirmed'])
+        ORDER BY
+            CASE priority
                 WHEN 'urgent' THEN 1
                 WHEN 'high' THEN 2
                 WHEN 'medium' THEN 3
@@ -103,9 +117,10 @@ pub async fn list_suggestions(
         "#,
     )
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
     .fetch_all(&mut **txn)
     .await;
 
@@ -114,12 +129,16 @@ pub async fn list_suggestions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.replenishment_suggestions
-                WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+                WHERE deleted_at IS NULL
+                  AND tenant_id = $3
+                  AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY(ARRAY['draft','active','confirmed'])
                 "#,
             )
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
+            .bind(tenant)
             .fetch_one(&mut **txn)
             .await;
 
@@ -158,8 +177,13 @@ pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -176,10 +200,13 @@ pub async fn get_suggestion(
                safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
                suggested_quantity::float8, supplier_id, supplier_name, status, priority,
                trigger_type, remarks, created_at, updated_at
-        FROM wms.replenishment_suggestions WHERE id = $1
+        FROM wms.replenishment_suggestions
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND status = ANY(ARRAY['draft','active','confirmed'])
         "#,
     )
     .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -328,7 +355,7 @@ pub async fn compute_replenishment(
         ) consumption ON i.material_code = consumption.material_code AND i.warehouse_id = consumption.warehouse_id
         WHERE i.deleted_at IS NULL
           AND i.tenant_id = $6
-          AND ($4::uuid IS NULL OR i.warehouse_id = $4
+          AND ($4::uuid IS NULL OR i.warehouse_id = $4)
           AND (
               i.available_quantity < COALESCE(r.reorder_point, i.reorder_point, 0)
               OR (r.id IS NOT NULL AND $5 = true)
@@ -344,7 +371,6 @@ pub async fn compute_replenishment(
                   )
               END
           ) > 0
-        )
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
                   safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
@@ -460,13 +486,19 @@ pub async fn confirm_suggestion(
         Ok(_) => {}
         Err(e) => return e.0,
     }
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(
-        "SELECT id, status, suggested_quantity::float8 FROM wms.replenishment_suggestions WHERE id = $1",
+        "SELECT id, status, suggested_quantity::float8 FROM wms.replenishment_suggestions
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -511,6 +543,7 @@ pub async fn confirm_suggestion(
             END,
             updated_at = $5
         WHERE id = $1 AND status = ANY($7)
+          AND tenant_id = $8 AND deleted_at IS NULL
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
                   safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
@@ -525,15 +558,22 @@ pub async fn confirm_suggestion(
     .bind(now)
     .bind(ReplenishmentSuggestionStatus::Confirmed.as_db_str())
     .bind(ReplenishmentSuggestionStatus::confirm_from())
-    .fetch_one(&mut **txn)
+    .bind(tenant)
+    .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
-        Ok(row) => (
+        Ok(Some(row)) => (
             ApiResponse::success(suggestion_row_to_json(row), "补货建议确认成功"),
             "success",
             None,
             Some(suggestion_row_to_json(row)),
+        ),
+        Ok(None) => (
+            ApiResponse::conflict("补货建议状态已变化，请刷新后重试"),
+            "error",
+            Some("concurrent_status_change".to_string()),
+            None,
         ),
         Err(e) => {
             tracing::error!("确认补货建议失败: {}", e);
@@ -562,7 +602,7 @@ pub async fn confirm_suggestion(
     )
     .await;
 
-    if result.is_ok() {
+    if matches!(result, Ok(Some(_))) {
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
@@ -588,8 +628,13 @@ pub async fn get_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -603,33 +648,47 @@ pub async fn get_statistics(
     let warehouse_id_str = params.get("warehouse_id").and_then(|v| v.as_str());
     let warehouse_id: Option<Uuid> = warehouse_id_str.and_then(|s| Uuid::parse_str(s).ok());
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
-        SELECT 
-            COUNT(*) as total_suggestions,
-            SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_count,
-            SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_count,
-            SUM(CASE WHEN priority = 'urgent' THEN 1 ELSE 0 END) as urgent_count,
-            SUM(CASE WHEN priority = 'high' THEN 1 ELSE 0 END) as high_count,
-            SUM(suggested_quantity) as total_suggested_quantity
+        SELECT
+            COUNT(*)::bigint AS total_suggestions,
+            COALESCE(SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END), 0)::bigint AS draft_count,
+            COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0)::bigint AS active_count,
+            COALESCE(SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END), 0)::bigint AS confirmed_count,
+            COALESCE(SUM(CASE WHEN priority = 'urgent' THEN 1 ELSE 0 END), 0)::bigint AS urgent_count,
+            COALESCE(SUM(CASE WHEN priority = 'high' THEN 1 ELSE 0 END), 0)::bigint AS high_count,
+            COALESCE(SUM(suggested_quantity), 0)::float8 AS total_suggested_quantity
         FROM wms.replenishment_suggestions
-        WHERE warehouse_id = $1 OR $1 IS NULL
+        WHERE deleted_at IS NULL
+          AND tenant_id = $2
+          AND ($1::uuid IS NULL OR warehouse_id = $1)
+          AND status = ANY(ARRAY['draft','active','confirmed'])
         "#,
-        warehouse_id
     )
+    .bind(warehouse_id)
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(row) => {
-            let total_suggested_quantity = row.total_suggested_quantity.unwrap_or_default();
+            let total_suggestions = row.try_get::<i64, _>("total_suggestions").unwrap_or(0);
+            let draft_count = row.try_get::<i64, _>("draft_count").unwrap_or(0);
+            let active_count = row.try_get::<i64, _>("active_count").unwrap_or(0);
+            let confirmed_count = row.try_get::<i64, _>("confirmed_count").unwrap_or(0);
+            let urgent_count = row.try_get::<i64, _>("urgent_count").unwrap_or(0);
+            let high_count = row.try_get::<i64, _>("high_count").unwrap_or(0);
+            let total_suggested_quantity = row
+                .try_get::<f64, _>("total_suggested_quantity")
+                .unwrap_or(0.0);
             ApiResponse::success(
                 serde_json::json!({
-                    "total_suggestions": row.total_suggestions.unwrap_or(0),
-                    "draft_count": row.draft_count.unwrap_or(0),
-                    "confirmed_count": row.confirmed_count.unwrap_or(0),
-                    "urgent_count": row.urgent_count.unwrap_or(0),
-                    "high_count": row.high_count.unwrap_or(0),
+                    "total_suggestions": total_suggestions,
+                    "draft_count": draft_count,
+                    "active_count": active_count,
+                    "confirmed_count": confirmed_count,
+                    "urgent_count": urgent_count,
+                    "high_count": high_count,
                     "total_suggested_quantity": total_suggested_quantity,
                 }),
                 "获取补货统计成功",

@@ -533,7 +533,7 @@
       "enum": "ReplenishmentSuggestionStatus",
       "table": "wms.replenishment_suggestions",
       "column": "status",
-      "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/wms-replenishment-suggestion-status-check-candidates-2026-11-22.sql"
     },
     {
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",

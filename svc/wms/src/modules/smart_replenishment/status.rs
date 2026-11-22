@@ -46,6 +46,26 @@ impl ReplenishmentSuggestionStatus {
             Self::Confirmed => "confirmed",
         }
     }
+
+    /// 建议状态迁移矩阵：`draft / active` 可确认，`confirmed` 为终态。
+    pub fn can_transition_to(&self, target: Self) -> Result<(), String> {
+        if *self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Draft | Self::Active => target == Self::Confirmed,
+            Self::Confirmed => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "补货建议状态不允许从 {} 流转到 {}",
+                self.as_db_str(),
+                target.as_db_str()
+            ))
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -138,6 +158,22 @@ mod tests {
         }
         assert_eq!(ReplenishmentSuggestionStatus::from_db_str("pending"), None);
         assert_eq!(ReplenishmentSuggestionStatus::DEFAULT.as_db_str(), "active");
+    }
+
+    #[test]
+    fn suggestion_status_transition_matrix() {
+        assert!(ReplenishmentSuggestionStatus::Active
+            .can_transition_to(ReplenishmentSuggestionStatus::Confirmed)
+            .is_ok());
+        assert!(ReplenishmentSuggestionStatus::Draft
+            .can_transition_to(ReplenishmentSuggestionStatus::Confirmed)
+            .is_ok());
+        assert!(ReplenishmentSuggestionStatus::Confirmed
+            .can_transition_to(ReplenishmentSuggestionStatus::Active)
+            .is_err());
+        assert!(ReplenishmentSuggestionStatus::Active
+            .can_transition_to(ReplenishmentSuggestionStatus::Active)
+            .is_ok());
     }
 
     #[test]
