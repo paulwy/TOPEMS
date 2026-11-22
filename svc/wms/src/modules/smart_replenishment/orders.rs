@@ -29,9 +29,14 @@ use topems_shared_core::TopemsError;
 pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(params): Query<PaginationParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -45,25 +50,55 @@ pub async fn list_orders(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match ReplenishmentOrderStatus::from_read_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的补货订单状态"),
+        },
+    };
+    let search_filter = params.search.as_deref().map(|s| format!("%{}%", s));
+
     let result = sqlx::query(
         r#"
-        SELECT id, order_number, warehouse_id, warehouse_name, status,
+        SELECT id, order_number, warehouse_id, warehouse_name,
+               CASE WHEN status = 'active' THEN 'pending' ELSE status END AS status,
                total_quantity, total_amount::float8, created_at, updated_at
         FROM wms.replenishment_orders
+        WHERE deleted_at IS NULL
+          AND tenant_id = $3
+          AND ($4::text IS NULL
+               OR (CASE WHEN status = 'active' THEN 'pending' ELSE status END) = $4)
+          AND (status = ANY(ARRAY['pending','confirmed','completed']) OR status = 'active')
+          AND ($5::text IS NULL OR order_number ILIKE $5)
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
         "#,
     )
     .bind(page_size)
     .bind(offset)
+    .bind(tenant)
+    .bind(status_filter)
+    .bind(&search_filter)
     .fetch_all(&mut **txn)
     .await;
 
     match result {
         Ok(items) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM wms.replenishment_orders WHERE deleted_at IS NULL",
+                r#"
+                SELECT COUNT(*) FROM wms.replenishment_orders
+                WHERE deleted_at IS NULL
+                  AND tenant_id = $1
+                  AND ($2::text IS NULL
+                       OR (CASE WHEN status = 'active' THEN 'pending' ELSE status END) = $2)
+                  AND (status = ANY(ARRAY['pending','confirmed','completed']) OR status = 'active')
+                  AND ($3::text IS NULL OR order_number ILIKE $3)
+                "#,
             )
+            .bind(tenant)
+            .bind(status_filter)
+            .bind(&search_filter)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -219,7 +254,7 @@ pub async fn create_order(
                     "order_number": order_number,
                     "warehouse_id": req.get("warehouse_id").and_then(|v| v.as_str()),
                     "warehouse_name": req.get("warehouse_name").and_then(|v| v.as_str()),
-                    "status": "active",
+                    "status": ReplenishmentOrderStatus::Pending.as_db_str(),
                     "created_at": now.to_string(),
                     "updated_at": now.to_string(),
                 }),
@@ -247,8 +282,13 @@ pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -261,12 +301,16 @@ pub async fn get_order(
 
     let result = sqlx::query(
         r#"
-        SELECT id, order_number, warehouse_id, warehouse_name, status,
+        SELECT id, order_number, warehouse_id, warehouse_name,
+               CASE WHEN status = 'active' THEN 'pending' ELSE status END AS status,
                total_quantity, total_amount::float8, created_at, updated_at
-        FROM wms.replenishment_orders WHERE id = $1
+        FROM wms.replenishment_orders
+        WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+          AND (status = ANY(ARRAY['pending','confirmed','completed']) OR status = 'active')
         "#,
     )
     .bind(id)
+    .bind(tenant)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -307,9 +351,14 @@ pub async fn update_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -322,22 +371,23 @@ pub async fn update_order(
 
     let now = Utc::now().naive_utc();
 
-    let status_value = match req.get("status").and_then(|v| v.as_str()) {
-        Some(raw) => match ReplenishmentOrderStatus::from_db_str(raw) {
-            Some(v) => Some(v.as_db_str()),
-            None => return ApiResponse::bad_request("无效的补货订单状态"),
-        },
-        None => None,
-    };
+    // 通用编辑只允许改待确认订单的资料；状态只能走 confirm / complete 动作端点。
+    if let Some(raw) = req.get("status").and_then(|v| v.as_str()) {
+        match ReplenishmentOrderStatus::from_read_str(raw) {
+            Some(ReplenishmentOrderStatus::Pending) => {}
+            _ => return ApiResponse::bad_request("补货订单状态只能通过确认/完成接口流转"),
+        }
+    }
 
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
             warehouse_id = COALESCE($2::uuid, warehouse_id),
             warehouse_name = COALESCE($3, warehouse_name),
-            status = COALESCE($4, status),
-            updated_at = $5
-        WHERE id = $1
+            status = CASE WHEN status = 'active' THEN 'pending' ELSE status END,
+            updated_at = $4
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status IN ('pending', 'active')
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
                   total_quantity, total_amount::float8, created_at, updated_at
         "#,
@@ -345,8 +395,8 @@ pub async fn update_order(
     .bind(id)
     .bind(req.get("warehouse_id").and_then(|v| v.as_str()))
     .bind(req.get("warehouse_name").and_then(|v| v.as_str()))
-    .bind(status_value)
     .bind(now)
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -375,7 +425,7 @@ pub async fn update_order(
         }
 
         Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::from(TopemsError::ResourceNotFound("补货订单不存在".to_string()))
+            ApiResponse::conflict("补货订单不存在、已删除或当前状态不允许编辑")
         }
         Err(e) => {
             tracing::error!("更新补货订单失败: {}", e);
@@ -415,10 +465,11 @@ pub async fn delete_order(
         Err((_, msg)) => return ApiResponse::bad_request(&msg),
     };
 
-    // 先软删主表并校验命中行：0 行 → 404，且不再删除明细（避免孤儿行）。
+    // 先软删主表并校验命中行：只允许待确认订单，0 行 → 409，且不再处理明细。
     let deleted = sqlx::query(
         "UPDATE wms.replenishment_orders SET deleted_at = NOW()
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+           AND status IN ('pending', 'active')",
     )
     .bind(id)
     .bind(tenant)
@@ -427,9 +478,7 @@ pub async fn delete_order(
 
     match deleted {
         Ok(r) if r.rows_affected() > 0 => {}
-        Ok(_) => {
-            return ApiResponse::from(TopemsError::ResourceNotFound("补货订单不存在".to_string()))
-        }
+        Ok(_) => return ApiResponse::conflict("补货订单不存在、已删除或当前状态不允许删除"),
         Err(e) => {
             tracing::error!("删除补货订单失败: {}", e);
             return ApiResponse::from(TopemsError::Internal("删除补货订单失败".to_string()));
@@ -437,7 +486,8 @@ pub async fn delete_order(
     }
 
     let items_deleted = sqlx::query(
-        "DELETE FROM wms.replenishment_order_items WHERE order_id = $1 AND tenant_id = $2",
+        "UPDATE wms.replenishment_order_items SET deleted_at = NOW()
+         WHERE order_id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant)
@@ -488,7 +538,7 @@ pub async fn list_order_items(
         SELECT id, order_id, line_number, sku, material_name, specification,
                unit, quantity, unit_price::float8, total_amount::float8, status,
                created_at, updated_at
-        FROM wms.replenishment_order_items WHERE order_id = $1
+        FROM wms.replenishment_order_items WHERE order_id = $1 AND deleted_at IS NULL
         ORDER BY line_number
         "#,
     )
@@ -543,8 +593,13 @@ pub async fn confirm_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -562,7 +617,8 @@ pub async fn confirm_order(
         UPDATE wms.replenishment_orders SET
             status = $3,
             updated_at = $2
-        WHERE id = $1 AND status = ANY($4)
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = ANY($4)
         RETURNING id, order_number, status, updated_at
         "#,
     )
@@ -570,6 +626,7 @@ pub async fn confirm_order(
     .bind(now)
     .bind(ReplenishmentOrderStatus::Confirmed.as_db_str())
     .bind(ReplenishmentOrderStatus::confirm_from())
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -592,9 +649,9 @@ pub async fn confirm_order(
             )
         }
 
-        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "补货订单不存在或状态不正确".to_string(),
-        )),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::conflict("补货订单不存在、已删除或当前状态不允许该操作")
+        }
         Err(e) => {
             tracing::error!("确认补货订单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("确认补货订单失败".to_string()))
@@ -616,8 +673,13 @@ pub async fn complete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = match tenant_of(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -635,7 +697,8 @@ pub async fn complete_order(
         UPDATE wms.replenishment_orders SET
             status = $3,
             updated_at = $2
-        WHERE id = $1 AND status = ANY($4)
+        WHERE id = $1 AND tenant_id = $5 AND deleted_at IS NULL
+          AND status = ANY($4)
         RETURNING id, order_number, status, updated_at
         "#,
     )
@@ -643,6 +706,7 @@ pub async fn complete_order(
     .bind(now)
     .bind(ReplenishmentOrderStatus::Completed.as_db_str())
     .bind(ReplenishmentOrderStatus::complete_from())
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -665,9 +729,9 @@ pub async fn complete_order(
             )
         }
 
-        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
-            "补货订单不存在或状态不正确".to_string(),
-        )),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::conflict("补货订单不存在、已删除或当前状态不允许该操作")
+        }
         Err(e) => {
             tracing::error!("完成补货订单失败: {}", e);
             ApiResponse::from(TopemsError::Internal("完成补货订单失败".to_string()))

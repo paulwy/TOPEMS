@@ -66,9 +66,9 @@ impl ReplenishmentOrderStatus {
     /// 创建订单的初始态（与确认谓词一致）
     pub const DEFAULT: Self = Self::Pending;
 
-    /// 确认允许的起始状态
+    /// 确认允许的起始状态：`pending`，以及 B117 之前创建时误写的历史 `active`
     pub fn confirm_from() -> &'static [&'static str] {
-        &["pending"]
+        &["pending", "active"]
     }
 
     /// 完成允许的起始状态
@@ -82,6 +82,35 @@ impl ReplenishmentOrderStatus {
             "confirmed" => Some(Self::Confirmed),
             "completed" => Some(Self::Completed),
             _ => None,
+        }
+    }
+
+    /// 只读兼容：B37 之前创建订单写 `active`，语义等于待确认 `pending`。
+    pub fn from_read_str(s: &str) -> Option<Self> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Pending),
+            other => Self::from_db_str(other),
+        }
+    }
+
+    /// 主状态迁移矩阵；同态回写视为幂等更新，`completed` 为终态。
+    pub fn can_transition_to(&self, target: Self) -> Result<(), String> {
+        if *self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Pending => target == Self::Confirmed,
+            Self::Confirmed => target == Self::Completed,
+            Self::Completed => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "补货订单状态不允许从 {} 流转到 {}",
+                self.as_db_str(),
+                target.as_db_str()
+            ))
         }
     }
 
@@ -120,6 +149,29 @@ mod tests {
             );
         }
         assert_eq!(ReplenishmentOrderStatus::from_db_str("active"), None);
+        assert_eq!(
+            ReplenishmentOrderStatus::from_read_str("active").map(|v| v.as_db_str()),
+            Some("pending")
+        );
         assert_eq!(ReplenishmentOrderStatus::DEFAULT.as_db_str(), "pending");
+    }
+
+    #[test]
+    fn order_status_transition_matrix() {
+        assert!(ReplenishmentOrderStatus::Pending
+            .can_transition_to(ReplenishmentOrderStatus::Confirmed)
+            .is_ok());
+        assert!(ReplenishmentOrderStatus::Confirmed
+            .can_transition_to(ReplenishmentOrderStatus::Completed)
+            .is_ok());
+        assert!(ReplenishmentOrderStatus::Pending
+            .can_transition_to(ReplenishmentOrderStatus::Completed)
+            .is_err());
+        assert!(ReplenishmentOrderStatus::Completed
+            .can_transition_to(ReplenishmentOrderStatus::Pending)
+            .is_err());
+        assert!(ReplenishmentOrderStatus::Pending
+            .can_transition_to(ReplenishmentOrderStatus::Pending)
+            .is_ok());
     }
 }

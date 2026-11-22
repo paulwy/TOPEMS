@@ -856,6 +856,13 @@
       "table": "wms.serial_numbers",
       "column": "quality_status",
       "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/wms/src/modules/smart_replenishment/status.rs",
+      "enum": "ReplenishmentOrderStatus",
+      "table": "wms.replenishment_orders",
+      "column": "status",
+      "candidate": "docs/database/wms-replenishment-order-status-check-candidates-2026-11-22.sql"
     }
   ]
 }

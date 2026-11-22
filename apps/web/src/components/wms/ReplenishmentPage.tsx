@@ -113,7 +113,7 @@ const ReplenishmentPage: React.FC = () => {
       {
         label: t('wms.replenishment_page.completed_1'),
         icon: <CheckCircle size={14} />,
-        show: (row) => row.status === 'confirmed' || row.status === 'in_progress',
+        show: (row) => row.status === 'confirmed',
         onClick: (row) => {
           completeOrderMutation.mutateAsync(row.id as string);
         },

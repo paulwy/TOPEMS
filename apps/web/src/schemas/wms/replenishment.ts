@@ -88,18 +88,15 @@ export const replenishmentSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('wms.replenishment.k13'),
       type: 'select',
-      defaultValue: 'draft',
+      defaultValue: 'pending',
       listWidth: 100,
       hideInForm: true,
       options: {
         type: 'static',
         options: [
-          { value: 'draft', label: i18n.t('wms.replenishment.k14') },
           { value: 'pending', label: i18n.t('wms.replenishment.k15') },
           { value: 'confirmed', label: i18n.t('wms.replenishment.k16') },
-          { value: 'in_progress', label: i18n.t('wms.replenishment.k17') },
           { value: 'completed', label: i18n.t('wms.replenishment.k18') },
-          { value: 'cancelled', label: i18n.t('wms.replenishment.k19') },
         ],
       },
       validation: [{ type: 'maxLength', value: 50 }],
@@ -152,20 +149,14 @@ export const replenishmentSchema: EntitySchema = {
     statusBadge: {
       field: 'status',
       colorMap: {
-        draft: 'default',
         pending: 'warning',
         confirmed: 'info',
-        in_progress: 'info',
         completed: 'success',
-        cancelled: 'error',
       },
       labelMap: {
-        draft: i18n.t('wms.replenishment.k24'),
         pending: i18n.t('wms.replenishment.k25'),
         confirmed: i18n.t('wms.replenishment.k26'),
-        in_progress: i18n.t('wms.replenishment.k27'),
         completed: i18n.t('wms.replenishment.k28'),
-        cancelled: i18n.t('wms.replenishment.k29'),
       },
     },
     filters: [
@@ -175,12 +166,9 @@ export const replenishmentSchema: EntitySchema = {
         type: 'select',
         options: [
           { label: i18n.t('wms.replenishment.k31'), value: 'all' },
-          { label: i18n.t('wms.replenishment.k32'), value: 'draft' },
           { label: i18n.t('wms.replenishment.k33'), value: 'pending' },
           { label: i18n.t('wms.replenishment.k34'), value: 'confirmed' },
-          { label: i18n.t('wms.replenishment.k35'), value: 'in_progress' },
           { label: i18n.t('wms.replenishment.k36'), value: 'completed' },
-          { label: i18n.t('wms.replenishment.k37'), value: 'cancelled' },
         ],
       },
       {
