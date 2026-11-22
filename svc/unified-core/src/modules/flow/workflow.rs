@@ -14,6 +14,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow, WorkflowVersion};
+use super::workflow_status::WorkflowStatus;
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[schema(as = WorkflowQueryParams)]
@@ -63,7 +64,17 @@ pub async fn list_workflows(
     let offset = (page - 1) * page_size;
 
     let search = params.search.clone().unwrap_or_default();
-    let status = params.status.clone();
+    let status = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match WorkflowStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的工作流状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let has_filters = !search.is_empty() || status.is_some();
 
@@ -87,7 +98,7 @@ pub async fn list_workflows(
                  AND (status = $2 OR $2 = '')"#,
         )
         .bind(format!("%{}%", search.clone()))
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .fetch_one(&mut scope)
         .await
         {
@@ -123,7 +134,7 @@ pub async fn list_workflows(
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
         )
         .bind(format!("%{}%", search.clone()))
-        .bind(status.clone().unwrap_or_default())
+        .bind(status.unwrap_or_default())
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut scope)
@@ -234,6 +245,17 @@ pub async fn create_workflow(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
+    let create_status = match payload.status.as_deref() {
+        None | Some("") => WorkflowStatus::DEFAULT,
+        Some(raw) => match WorkflowStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的工作流状态".to_string(),
+                ))
+            }
+        },
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "INSERT INTO public.core_workflows (name, code, description, definition, status, version, created_by, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
@@ -243,7 +265,7 @@ pub async fn create_workflow(
     .bind(None::<String>)
     .bind(payload.description)
     .bind(payload.definition.unwrap_or(serde_json::json!({})))
-    .bind(payload.status.unwrap_or("draft".to_string()))
+    .bind(create_status.as_db_str())
     .bind(1)
     .bind(payload.created_by.or_else(|| Uuid::parse_str(&claims.sub).ok()))
     .bind(tenant_opt)
@@ -292,6 +314,17 @@ pub async fn update_workflow(
             return ApiResponse::from(TopemsError::Internal("更新工作流失败".to_string()));
         }
     };
+    let update_status = match payload.status.as_deref() {
+        None | Some("") => None,
+        Some(raw) => match WorkflowStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的工作流状态".to_string(),
+                ))
+            }
+        },
+    };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE public.core_workflows SET 
          name = COALESCE($1, name), 
@@ -305,7 +338,7 @@ pub async fn update_workflow(
     .bind(payload.name)
     .bind(payload.description)
     .bind(payload.definition)
-    .bind(payload.status)
+    .bind(update_status)
     .bind(id)
     .fetch_one(&mut scope)
     .await
@@ -404,11 +437,12 @@ pub async fn publish_workflow(
         }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "UPDATE public.core_workflows SET status = 'published', published_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflows SET status = $2, published_at = NOW(), updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(WorkflowStatus::Published.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -456,11 +490,12 @@ pub async fn unpublish_workflow(
         }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "UPDATE public.core_workflows SET status = 'draft', published_at = NULL, updated_at = NOW() 
+        "UPDATE public.core_workflows SET status = $2, published_at = NULL, updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(WorkflowStatus::Draft.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -508,11 +543,12 @@ pub async fn activate_workflow(
         }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "UPDATE public.core_workflows SET status = 'active', updated_at = NOW() 
+        "UPDATE public.core_workflows SET status = $2, updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(WorkflowStatus::Active.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -560,11 +596,12 @@ pub async fn deactivate_workflow(
         }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "UPDATE public.core_workflows SET status = 'inactive', updated_at = NOW() 
+        "UPDATE public.core_workflows SET status = $2, updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(WorkflowStatus::Inactive.as_db_str())
     .fetch_one(&mut scope)
     .await
     {
@@ -612,11 +649,12 @@ pub async fn deploy_workflow(
         }
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "UPDATE public.core_workflows SET status = 'deployed', updated_at = NOW() 
+        "UPDATE public.core_workflows SET status = $2, updated_at = NOW() 
          WHERE id = $1 
          RETURNING id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at",
     )
     .bind(id)
+    .bind(WorkflowStatus::Deployed.as_db_str())
     .fetch_one(&mut scope)
     .await
     {

@@ -3610,6 +3610,22 @@
     },
     {
       "schema": "public",
+      "table": "core_workflows",
+      "constraint": "ck_core_workflows_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "deployed",
+        "draft",
+        "inactive",
+        "published"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'published'::text, 'active'::text, 'inactive'::text, 'deployed'::text])))) NOT VALID"
+    },
+    {
+      "schema": "public",
       "table": "crm_master_data_refs",
       "constraint": "ck_crm_master_data_refs_status_standard",
       "columns": [
@@ -7565,15 +7581,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "public",
-      "table": "core_workflows",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "public",

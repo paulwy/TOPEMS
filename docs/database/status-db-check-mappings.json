@@ -1345,6 +1345,13 @@
       "table": "ehs.qa_ehs_emergency_plans",
       "column": "status",
       "candidate": "docs/database/ehs-emergency-plan-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/workflow_status.rs",
+      "enum": "WorkflowStatus",
+      "table": "public.core_workflows",
+      "column": "status",
+      "candidate": "docs/database/core-workflow-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

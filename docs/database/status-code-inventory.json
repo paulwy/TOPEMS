@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 346,
+    "db_check_constraints": 347,
     "db_enum_types": 5,
-    "db_check_values": 149,
-    "rust_enums": 229,
-    "rust_enum_values": 203,
+    "db_check_values": 150,
+    "rust_enums": 230,
+    "rust_enum_values": 204,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 214,
+    "frontend_status_keys": 215,
     "frontend_keys_not_in_db_check": 70,
     "rust_values_not_in_palette": 0
   },
@@ -3598,6 +3598,25 @@
     },
     {
       "module": "unified-core",
+      "file": "svc/unified-core/src/modules/flow/workflow_status.rs",
+      "name": "WorkflowStatus",
+      "values": [
+        "Active",
+        "Deployed",
+        "Draft",
+        "Inactive",
+        "Published"
+      ],
+      "normalized": [
+        "active",
+        "deployed",
+        "draft",
+        "inactive",
+        "published"
+      ]
+    },
+    {
+      "module": "unified-core",
       "file": "svc/unified-core/src/modules/subscription/mod.rs",
       "name": "SubscriptionStatus",
       "values": [
@@ -4105,6 +4124,7 @@
       "delayed",
       "deleted",
       "delivered",
+      "deployed",
       "deploying",
       "deprecated",
       "destroyed",
