@@ -18,6 +18,8 @@ pub enum FinancialReportStatus {
 }
 
 impl FinancialReportStatus {
+    pub const DB_VALUES: [&'static str; 5] = ["draft", "pending", "approved", "rejected", "locked"];
+    pub const DEFAULT: Self = Self::Draft;
     pub const ALL: [Self; 5] = [
         Self::Draft,
         Self::Pending,
@@ -33,6 +35,18 @@ impl FinancialReportStatus {
             Self::Approved => "approved",
             Self::Rejected => "rejected",
             Self::Locked => "locked",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "draft" => Some(Self::Draft),
+            "pending" => Some(Self::Pending),
+            "approved" => Some(Self::Approved),
+            "rejected" => Some(Self::Rejected),
+            "locked" => Some(Self::Locked),
+            _ => None,
         }
     }
 
@@ -64,14 +78,7 @@ impl fmt::Display for FinancialReportStatus {
 }
 
 pub fn normalize_financial_report(raw: &str) -> Option<FinancialReportStatus> {
-    match raw.trim() {
-        "draft" => Some(FinancialReportStatus::Draft),
-        "pending" => Some(FinancialReportStatus::Pending),
-        "approved" => Some(FinancialReportStatus::Approved),
-        "rejected" => Some(FinancialReportStatus::Rejected),
-        "locked" => Some(FinancialReportStatus::Locked),
-        _ => None,
-    }
+    FinancialReportStatus::from_db_str(raw)
 }
 
 /// 生成报表时是否允许覆盖既有数据：只有草稿/被驳回可重算，其他状态必须保持原数据。

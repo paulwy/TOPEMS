@@ -448,6 +448,8 @@ impl MatchStatus {
         MatchStatus::Unmatched,
         MatchStatus::Discrepancy,
     ];
+    pub const DB_VALUES: [&'static str; 4] = ["matched", "partial", "unmatched", "discrepancy"];
+    pub const DEFAULT: Self = MatchStatus::Unmatched;
 
     fn as_str(&self) -> &'static str {
         match self {
@@ -459,7 +461,7 @@ impl MatchStatus {
     }
 
     /// 严格解析：未知值返回 None，不再静默回退 matched。
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "matched" => Some(MatchStatus::Matched),
             "partial" => Some(MatchStatus::Partial),
@@ -467,6 +469,10 @@ impl MatchStatus {
             "discrepancy" => Some(MatchStatus::Discrepancy),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 
@@ -513,6 +519,8 @@ impl InvoiceStatus {
         InvoiceStatus::Verified,
         InvoiceStatus::Posted,
     ];
+    pub const DB_VALUES: [&'static str; 4] = ["pending", "recognized", "verified", "posted"];
+    pub const DEFAULT: Self = InvoiceStatus::Pending;
 
     fn as_str(&self) -> &'static str {
         match self {
@@ -524,7 +532,7 @@ impl InvoiceStatus {
     }
 
     /// 严格解析：未知值返回 None，不再静默回退 pending。
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "pending" => Some(InvoiceStatus::Pending),
             "recognized" => Some(InvoiceStatus::Recognized),
@@ -532,6 +540,10 @@ impl InvoiceStatus {
             "posted" => Some(InvoiceStatus::Posted),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 
