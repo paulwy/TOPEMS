@@ -11,6 +11,7 @@ use topems_shared_boundary::only_own_schema_query;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::purchase_order_status::PurchaseOrderStatus;
 use super::ApiState;
 use crate::models::purchase_order::{
     CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest,
@@ -69,7 +70,17 @@ pub async fn list_orders(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match PurchaseOrderStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的采购订单状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
@@ -83,7 +94,7 @@ pub async fn list_orders(
         "#),
     )
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -102,7 +113,7 @@ pub async fn list_orders(
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -163,7 +174,7 @@ pub async fn create_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         INSERT INTO scm.purchase_orders (id, po_no, supplier_id, order_date, expected_date, total_amount, status, remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
@@ -173,6 +184,7 @@ pub async fn create_order(
     .bind(req.order_date)
     .bind(req.delivery_date)
     .bind(req.total_amount)
+    .bind(PurchaseOrderStatus::DEFAULT.as_db_str())
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
@@ -338,7 +350,24 @@ pub async fn update_order(
     let supplier_id = req.supplier_id.or(existing.supplier_id);
     let delivery_date = req.delivery_date.or(existing.delivery_date);
     let total_amount = req.total_amount.or(existing.total_amount);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        None | Some("") => match PurchaseOrderStatus::from_db_str(&existing.status) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "采购订单存量状态非法".to_string(),
+                ))
+            }
+        },
+        Some(raw) => match PurchaseOrderStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的采购订单状态".to_string(),
+                ))
+            }
+        },
+    };
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
@@ -354,7 +383,7 @@ pub async fn update_order(
     .bind(supplier_id)
     .bind(delivery_date)
     .bind(total_amount)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(&remarks)
     .bind(now)
     .bind(tenant_bind)
@@ -565,7 +594,15 @@ pub async fn approve_order(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
-    if existing.status != "pending" {
+    let current_status = match PurchaseOrderStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "采购订单存量状态非法".to_string(),
+            ))
+        }
+    };
+    if current_status != PurchaseOrderStatus::Pending {
         return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "采购订单当前状态为{}，无法审批",
             existing.status
@@ -598,15 +635,17 @@ pub async fn approve_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
-            status = 'approved', remarks = $2, updated_at = $3
-        WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
-          AND tenant_id = $4::uuid
+            status = $2, remarks = $3, updated_at = $4
+        WHERE id = $1 AND status = $5 AND deleted_at IS NULL
+          AND tenant_id = $6::uuid
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
+    .bind(PurchaseOrderStatus::Approved.as_db_str())
     .bind(&new_remarks)
     .bind(now)
+    .bind(PurchaseOrderStatus::Pending.as_db_str())
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
@@ -763,7 +802,15 @@ pub async fn reject_order(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
-    if existing.status != "pending" {
+    let current_status = match PurchaseOrderStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "采购订单存量状态非法".to_string(),
+            ))
+        }
+    };
+    if current_status != PurchaseOrderStatus::Pending {
         return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "采购订单当前状态为{}，无法驳回",
             existing.status
@@ -791,15 +838,17 @@ pub async fn reject_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
-            status = 'rejected', remarks = $2, updated_at = $3
-        WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
-          AND tenant_id = $4::uuid
+            status = $2, remarks = $3, updated_at = $4
+        WHERE id = $1 AND status = $5 AND deleted_at IS NULL
+          AND tenant_id = $6::uuid
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
+    .bind(PurchaseOrderStatus::Rejected.as_db_str())
     .bind(&new_remarks)
     .bind(now)
+    .bind(PurchaseOrderStatus::Pending.as_db_str())
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
@@ -867,8 +916,8 @@ async fn transition_order(
     headers: HeaderMap,
     txn_arc: RlsTxnCell,
     req: Json<ApprovalRequest>,
-    allowed_states: &[&str],
-    target_status: &'static str,
+    allowed_states: &[PurchaseOrderStatus],
+    target_status: PurchaseOrderStatus,
     success_msg: &'static str,
     audit_action: &'static str,
 ) -> ApiResponse<PurchaseOrder> {
@@ -902,7 +951,15 @@ async fn transition_order(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
-    if !allowed_states.contains(&existing.status.as_str()) {
+    let current_status = match PurchaseOrderStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "采购订单存量状态非法".to_string(),
+            ))
+        }
+    };
+    if !allowed_states.contains(&current_status) {
         return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "采购订单当前状态为{}，无法{}",
             existing.status, success_msg
@@ -938,7 +995,7 @@ async fn transition_order(
         "#),
     )
     .bind(id)
-    .bind(target_status)
+    .bind(target_status.as_db_str())
     .bind(&new_remarks)
     .bind(now)
     .bind(tenant_bind)
@@ -1014,8 +1071,8 @@ pub async fn confirm_order(
         headers,
         txn_arc.0,
         Json(req),
-        &["pending", "approved"],
-        "confirmed",
+        &[PurchaseOrderStatus::Pending, PurchaseOrderStatus::Approved],
+        PurchaseOrderStatus::Confirmed,
         "确认",
         "confirm",
     )
@@ -1046,8 +1103,8 @@ pub async fn cancel_order(
         headers,
         txn_arc.0,
         Json(req),
-        &["pending", "approved"],
-        "cancelled",
+        &[PurchaseOrderStatus::Pending, PurchaseOrderStatus::Approved],
+        PurchaseOrderStatus::Cancelled,
         "取消",
         "cancel",
     )
@@ -1078,8 +1135,11 @@ pub async fn close_order(
         headers,
         txn_arc.0,
         Json(req),
-        &["confirmed", "approved"],
-        "closed",
+        &[
+            PurchaseOrderStatus::Confirmed,
+            PurchaseOrderStatus::Approved,
+        ],
+        PurchaseOrderStatus::Closed,
         "关闭",
         "close",
     )

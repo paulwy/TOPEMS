@@ -1324,6 +1324,13 @@
       "table": "mobile.mobile_push_notifications",
       "column": "status",
       "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/purchase_order_status.rs",
+      "enum": "PurchaseOrderStatus",
+      "table": "scm.purchase_orders",
+      "column": "status",
+      "candidate": "docs/database/purchase-order-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

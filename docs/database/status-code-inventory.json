@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 343,
+    "db_check_constraints": 344,
     "db_enum_types": 5,
     "db_check_values": 149,
-    "rust_enums": 226,
+    "rust_enums": 227,
     "rust_enum_values": 203,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 214,
@@ -3340,6 +3340,31 @@
         "active",
         "deleted",
         "inactive"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/purchase_order_status.rs",
+      "name": "PurchaseOrderStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Closed",
+        "Completed",
+        "Confirmed",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "closed",
+        "completed",
+        "confirmed",
+        "draft",
+        "pending",
+        "rejected"
       ]
     },
     {
