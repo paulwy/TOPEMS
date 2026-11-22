@@ -92,6 +92,9 @@ pub enum TaxFormStatus {
 }
 
 impl TaxFormStatus {
+    pub const DB_VALUES: [&'static str; 5] =
+        ["draft", "calculated", "submitted", "accepted", "rejected"];
+    pub const DEFAULT: Self = Self::Draft;
     pub const ALL: [Self; 5] = [
         TaxFormStatus::Draft,
         TaxFormStatus::Calculated,
@@ -111,7 +114,7 @@ impl TaxFormStatus {
     }
 
     /// 严格解析：未知值返回 None，不再静默回退 draft。
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "draft" => Some(TaxFormStatus::Draft),
             "calculated" => Some(TaxFormStatus::Calculated),
@@ -120,6 +123,10 @@ impl TaxFormStatus {
             "rejected" => Some(TaxFormStatus::Rejected),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 
@@ -222,6 +229,15 @@ pub enum TaxPlanStatus {
 }
 
 impl TaxPlanStatus {
+    pub const DB_VALUES: [&'static str; 6] = [
+        "draft",
+        "proposed",
+        "under_review",
+        "approved",
+        "rejected",
+        "executed",
+    ];
+    pub const DEFAULT: Self = Self::Draft;
     pub const ALL: [Self; 6] = [
         TaxPlanStatus::Draft,
         TaxPlanStatus::Proposed,
@@ -243,7 +259,7 @@ impl TaxPlanStatus {
     }
 
     /// 严格解析：未知值返回 None，不再静默回退 draft。
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "draft" => Some(TaxPlanStatus::Draft),
             "proposed" => Some(TaxPlanStatus::Proposed),
@@ -253,6 +269,10 @@ impl TaxPlanStatus {
             "executed" => Some(TaxPlanStatus::Executed),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 

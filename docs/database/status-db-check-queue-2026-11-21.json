@@ -6,7 +6,7 @@
     "uncovered_enums": 144,
     "uncovered_values": 152,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 112,
+    "resolved_enums": 122,
     "internal_state_enums": 72,
     "persisted_unmapped_enums": 66,
     "api_projection_enums": 25,
@@ -1054,7 +1054,14 @@
       },
       "candidate_targets": [
         "finance.finance_v60_decision_scenarios.v60_decision_scenarios_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/decision_v60.rs",
+        "enum": "DecisionStatus",
+        "table": "finance.finance_v60_decision_scenarios",
+        "column": "status",
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1067,7 +1074,14 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/decision_v60.rs",
+        "enum": "ScheduleTaskStatus",
+        "table": "finance.finance_v60_schedule_tasks",
+        "column": "status",
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1080,7 +1094,14 @@
       },
       "candidate_targets": [
         "finance.expense_approvals.expense_approvals_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/expense_status.rs",
+        "enum": "ExpenseApprovalStatus",
+        "table": "finance.expense_approvals",
+        "column": "status",
+        "candidate": "docs/database/finance-expense-approval-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1094,7 +1115,14 @@
       "candidate_targets": [
         "finance.financial_reports.financial_reports_status_check",
         "finance.financial_reports.financial_reports_approval_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/financial_report_status.rs",
+        "enum": "FinancialReportStatus",
+        "table": "finance.financial_reports",
+        "column": "approval_status",
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1118,7 +1146,14 @@
       },
       "candidate_targets": [
         "finance.finance_v57_generated_reports.v57_generated_reports_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/reports_v57.rs",
+        "enum": "ReportStatus",
+        "table": "finance.finance_v57_generated_reports",
+        "column": "status",
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1131,7 +1166,14 @@
       },
       "candidate_targets": [
         "finance.reconciliation_settlement_links.settlement_links_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/settlement_center_status.rs",
+        "enum": "SettlementLinkStatus",
+        "table": "finance.reconciliation_settlement_links",
+        "column": "status",
+        "candidate": "docs/database/finance-settlement-link-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1145,7 +1187,14 @@
       },
       "candidate_targets": [
         "finance.finance_v55_invoices.v55_invoices_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/settlement_v55.rs",
+        "enum": "InvoiceStatus",
+        "table": "finance.finance_v55_invoices",
+        "column": "status",
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1159,7 +1208,14 @@
       },
       "candidate_targets": [
         "finance.finance_v55_reconciliation_results.v55_recon_results_match_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/settlement_v55.rs",
+        "enum": "MatchStatus",
+        "table": "finance.finance_v55_reconciliation_results",
+        "column": "match_status",
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1172,7 +1228,14 @@
       },
       "candidate_targets": [
         "finance.finance_v56_tax_forms.v56_tax_forms_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/tax_v56.rs",
+        "enum": "TaxFormStatus",
+        "table": "finance.finance_v56_tax_forms",
+        "column": "status",
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "finance",
@@ -1187,7 +1250,14 @@
       },
       "candidate_targets": [
         "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/finance/src/modules/tax_v56.rs",
+        "enum": "TaxPlanStatus",
+        "table": "finance.finance_v56_tax_plans",
+        "column": "status",
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "integration",

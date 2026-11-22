@@ -138,6 +138,8 @@ pub enum ReportStatus {
 }
 
 impl ReportStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["pending", "generating", "completed", "failed"];
+    pub const DEFAULT: Self = Self::Pending;
     pub const ALL: [Self; 4] = [
         ReportStatus::Pending,
         ReportStatus::Generating,
@@ -155,7 +157,7 @@ impl ReportStatus {
     }
 
     /// 严格解析：未知值返回 None，不再静默回退 pending。
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "pending" => Some(ReportStatus::Pending),
             "generating" => Some(ReportStatus::Generating),
@@ -163,6 +165,10 @@ impl ReportStatus {
             "failed" => Some(ReportStatus::Failed),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 

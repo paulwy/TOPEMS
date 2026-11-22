@@ -85,6 +85,9 @@ pub enum DecisionStatus {
 }
 
 impl DecisionStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["draft", "active", "evaluated", "archived"];
+    pub const DEFAULT: Self = Self::Draft;
+
     fn as_str(&self) -> &'static str {
         match self {
             DecisionStatus::Draft => "draft",
@@ -94,7 +97,7 @@ impl DecisionStatus {
         }
     }
 
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "draft" => Some(Self::Draft),
             "active" => Some(Self::Active),
@@ -102,6 +105,10 @@ impl DecisionStatus {
             "archived" => Some(Self::Archived),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 
@@ -261,6 +268,9 @@ pub enum ScheduleTaskStatus {
 }
 
 impl ScheduleTaskStatus {
+    pub const DB_VALUES: [&'static str; 5] =
+        ["pending", "running", "paused", "completed", "failed"];
+    pub const DEFAULT: Self = Self::Pending;
     const ALL: [Self; 5] = [
         Self::Pending,
         Self::Running,
@@ -279,7 +289,7 @@ impl ScheduleTaskStatus {
         }
     }
 
-    fn from_str(s: &str) -> Option<Self> {
+    fn from_db_str(s: &str) -> Option<Self> {
         match s.trim() {
             "pending" => Some(Self::Pending),
             "running" => Some(Self::Running),
@@ -288,6 +298,10 @@ impl ScheduleTaskStatus {
             "failed" => Some(Self::Failed),
             _ => None,
         }
+    }
+
+    fn from_str(s: &str) -> Option<Self> {
+        Self::from_db_str(s)
     }
 }
 
