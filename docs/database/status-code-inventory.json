@@ -5,11 +5,11 @@
     "db_check_constraints": 215,
     "db_enum_types": 5,
     "db_check_values": 47,
-    "rust_enums": 203,
-    "rust_enum_values": 190,
-    "rust_values_not_in_db_check": 151,
-    "frontend_status_keys": 205,
-    "frontend_keys_not_in_db_check": 165,
+    "rust_enums": 204,
+    "rust_enum_values": 191,
+    "rust_values_not_in_db_check": 152,
+    "frontend_status_keys": 206,
+    "frontend_keys_not_in_db_check": 166,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -636,6 +636,21 @@
         "pending",
         "processing",
         "rejected"
+      ]
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/sales_forecast_status.rs",
+      "name": "SalesForecastStatus",
+      "values": [
+        "Archived",
+        "Draft",
+        "Generated"
+      ],
+      "normalized": [
+        "archived",
+        "draft",
+        "generated"
       ]
     },
     {
@@ -3656,6 +3671,7 @@
       "false_positive",
       "frozen",
       "full",
+      "generated",
       "generating",
       "good",
       "healthy",
@@ -3844,6 +3860,7 @@
       "false_positive",
       "frozen",
       "full",
+      "generated",
       "generating",
       "good",
       "healthy",
@@ -4001,6 +4018,7 @@
       "false_positive",
       "frozen",
       "full",
+      "generated",
       "generating",
       "good",
       "healthy",

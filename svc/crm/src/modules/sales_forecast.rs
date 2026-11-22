@@ -15,6 +15,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::sales_forecast_status::SalesForecastStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -70,14 +71,24 @@ pub async fn list_sales_forecasts(
     let offset = (page - 1) * page_size;
 
     let period_type_filter = params.period_type.clone();
-    let status_filter = params.status.clone();
+    let status_filter: Vec<String> = match params.status.as_deref() {
+        Some(raw) => match SalesForecastStatus::from_db_str(raw) {
+            Some(status) => vec![status.as_db_str().to_string()],
+            None => return ApiResponse::bad_request("无效的销售预测状态"),
+        },
+        None => SalesForecastStatus::DB_VALUES
+            .iter()
+            .map(|value| (*value).to_string())
+            .collect(),
+    };
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         FROM crm.sales_forecasts
-        WHERE ($1::text IS NULL OR period_type = $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR period_type = $1)
+          AND status = ANY($2::text[])
         ORDER BY period DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -96,7 +107,7 @@ pub async fn list_sales_forecasts(
                 SELECT COUNT(*) FROM crm.sales_forecasts
                 WHERE deleted_at IS NULL
                   AND ($1::text IS NULL OR period_type = $1)
-                  AND ($2::text IS NULL OR status = $2)
+                  AND status = ANY($2::text[])
                 "#,
             )
             .bind(&period_type_filter)
@@ -201,7 +212,7 @@ async fn create_sales_forecast(
         r#"
         INSERT INTO crm.sales_forecasts (
             id, tenant_id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 0, 'stable', 0.7, $5, 'draft', $6, $7)
+        ) VALUES ($1, $2, $3, $4, 0, 'stable', 0.7, $5, $8, $6, $7)
         RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
@@ -210,6 +221,7 @@ async fn create_sales_forecast(
     .bind(&req.period_type)
     .bind(&req.period)
     .bind(&factors)
+    .bind(SalesForecastStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -327,7 +339,7 @@ pub async fn generate_forecast(
         r#"
         INSERT INTO crm.sales_forecasts (
             id, tenant_id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'generated', $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $11, $9, $10)
         RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
@@ -339,6 +351,7 @@ pub async fn generate_forecast(
     .bind(trend)
     .bind(confidence_level)
     .bind(&factors)
+    .bind(SalesForecastStatus::Generated.as_db_str())
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -422,18 +435,33 @@ async fn update_sales_forecast(
         .get("confidence_level")
         .and_then(|v| v.as_f64())
         .unwrap_or(existing.confidence_level);
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or(&existing.status)
-        .to_string();
+    let current_status = match SalesForecastStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => return ApiResponse::error(409, "销售预测当前状态非法，无法变更"),
+    };
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        Some(raw) => match SalesForecastStatus::from_db_str(raw) {
+            Some(next) if current_status.can_transition_to(next) => next.as_db_str().to_string(),
+            Some(next) => {
+                let msg = format!(
+                    "销售预测状态不允许从 {} 变更为 {}",
+                    current_status.as_db_str(),
+                    next.as_db_str()
+                );
+                return ApiResponse::error(409, &msg);
+            }
+            None => return ApiResponse::bad_request("无效的销售预测状态"),
+        },
+        None => current_status.as_db_str().to_string(),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         UPDATE crm.sales_forecasts SET
             predicted_amount = $2, actual_amount = $3, accuracy = $4, trend = $5, confidence_level = $6, status = $7, updated_at = $8
-        WHERE id = $1 AND tenant_id = $9
+        WHERE id = $1 AND tenant_id = $9 AND deleted_at IS NULL
+          AND COALESCE(status, $10) = $10
         RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
@@ -446,6 +474,7 @@ async fn update_sales_forecast(
     .bind(&status)
     .bind(now)
     .bind(tenant_id)
+    .bind(current_status.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -454,6 +483,11 @@ async fn update_sales_forecast(
             ApiResponse::success(forecast.clone(), "销售预测更新成功"),
             "success".to_string(),
             None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            ApiResponse::error(409, "销售预测不存在、已删除或状态已被并发修改"),
+            "error".to_string(),
+            Some("销售预测状态已被并发修改".to_string()),
         ),
         Err(e) => {
             tracing::error!("更新销售预测失败: {}", e);

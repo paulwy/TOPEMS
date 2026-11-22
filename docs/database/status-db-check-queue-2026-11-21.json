@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 139,
-    "uncovered_values": 151,
+    "uncovered_enums": 140,
+    "uncovered_values": 152,
     "finance_candidate_constraints": 25,
     "resolved_enums": 107,
-    "internal_state_enums": 68,
+    "internal_state_enums": 69,
     "persisted_unmapped_enums": 65,
     "api_projection_enums": 25,
     "finance_candidate_ready_enums": 33,
-    "internal_state_values": 92,
+    "internal_state_values": 93,
     "persisted_unmapped_values": 33,
     "api_projection_values": 11,
     "finance_candidate_ready_values": 15
@@ -517,6 +517,17 @@
         "column": "status",
         "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql"
       }
+    },
+    {
+      "module": "crm",
+      "file": "svc/crm/src/modules/sales_forecast_status.rs",
+      "enum": "SalesForecastStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "generated"
+        ]
+      },
+      "candidate_targets": []
     },
     {
       "module": "ehs",

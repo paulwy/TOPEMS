@@ -35,6 +35,7 @@ pub mod opportunity_status;
 pub mod return_status;
 pub mod rfm;
 pub mod sales_forecast;
+pub mod sales_forecast_status;
 pub mod sales_funnel;
 pub mod sales_funnel_logic;
 pub mod scoring_logic;

@@ -264,7 +264,7 @@ export interface SalesForecast {
   trend: 'up' | 'down' | 'stable';
   confidence_level: number;
   factors: ForecastFactor[];
-  status: string;
+  status: 'draft' | 'generated' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -282,7 +282,7 @@ export interface CreateSalesForecastRequest {
 
 export interface SalesForecastQueryParams extends PaginationParams {
   period_type?: string;
-  status?: string;
+  status?: 'draft' | 'generated' | 'archived';
 }
 
 export interface BillingRecord {
