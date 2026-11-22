@@ -6,7 +6,7 @@
     "uncovered_enums": 144,
     "uncovered_values": 152,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 129,
+    "resolved_enums": 140,
     "internal_state_enums": 72,
     "persisted_unmapped_enums": 66,
     "api_projection_enums": 25,
@@ -428,7 +428,14 @@
       },
       "candidate_targets": [
         "finance.finance_v60_schedule_tasks.v60_schedule_tasks_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/analytics/src/modules/report/schedule.rs",
+        "enum": "ScheduleStatus",
+        "table": "bi.report_schedules",
+        "column": "status",
+        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "communication",
@@ -440,7 +447,13 @@
           "sent"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/communication/src/mail.rs",
+        "enum": "EmailQueueStatus",
+        "persisted": false,
+        "reason": "邮件发送 DashMap 队列内存态，core_emails 只存发送结果"
+      }
     },
     {
       "module": "crm",
@@ -1314,7 +1327,14 @@
           "max_retries_exceeded"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/integration/src/async_task_queue.rs",
+        "enum": "AsyncTaskStatus",
+        "table": "integration.async_tasks",
+        "column": "status",
+        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "integration",
@@ -1325,7 +1345,13 @@
           "max_retries_exceeded"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/integration/src/sync_retry.rs",
+        "enum": "SyncStatus",
+        "persisted": false,
+        "reason": "同步重试执行器内存态，无对应表列"
+      }
     },
     {
       "module": "master-data",
@@ -1598,7 +1624,13 @@
           "warning"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/mes/src/modules/aps_scheduling.rs",
+        "enum": "ConstraintStatus",
+        "persisted": false,
+        "reason": "APS 求解过程约束结果，不落库"
+      }
     },
     {
       "module": "mes",
@@ -1612,7 +1644,14 @@
           "released"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/mes/src/modules/capacity_status.rs",
+        "enum": "CapacityStatus",
+        "table": "mes.capacities",
+        "column": "status",
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "mes",
@@ -1630,7 +1669,14 @@
       },
       "candidate_targets": [
         "finance.finance_v56_tax_forms.v56_tax_forms_status_check"
-      ]
+      ],
+      "resolved": {
+        "file": "svc/mes/src/modules/demand_forecast_status.rs",
+        "enum": "DemandForecastStatus",
+        "table": "mes.demand_forecasts",
+        "column": "status",
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "mes",
@@ -1644,7 +1690,14 @@
           "sourced"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/mes/src/modules/material_plan_status.rs",
+        "enum": "MaterialPlanStatus",
+        "table": "mes.material_plans",
+        "column": "status",
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "mes",
@@ -1678,7 +1731,14 @@
           "pending_approval"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/mes/src/modules/production_plan_status.rs",
+        "enum": "ProductionPlanStatus",
+        "table": "mes.production_plans",
+        "column": "status",
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      }
     },
     {
       "module": "mes",
@@ -1766,7 +1826,13 @@
           "scheduled"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+        "enum": "UpgradeQueueStatus",
+        "persisted": false,
+        "reason": "插件升级队列内存态，无对应状态列"
+      }
     },
     {
       "module": "plugin-registry",
@@ -1785,7 +1851,13 @@
           "rolled_back"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+        "enum": "UpgradeStatus",
+        "persisted": false,
+        "reason": "插件升级编排内存态，无对应状态列"
+      }
     },
     {
       "module": "pm",

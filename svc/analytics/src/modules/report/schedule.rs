@@ -72,14 +72,35 @@ pub enum ScheduleStatus {
     Failed,
 }
 
+impl ScheduleStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["active", "paused", "completed", "failed"];
+    pub const DEFAULT: Self = Self::Active;
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Paused => "paused",
+            Self::Completed => "completed",
+            Self::Failed => "failed",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "active" => Some(Self::Active),
+            "paused" => Some(Self::Paused),
+            "completed" => Some(Self::Completed),
+            "failed" => Some(Self::Failed),
+            _ => None,
+        }
+    }
+}
+
 impl fmt::Display for ScheduleStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ScheduleStatus::Active => write!(f, "active"),
-            ScheduleStatus::Paused => write!(f, "paused"),
-            ScheduleStatus::Completed => write!(f, "completed"),
-            ScheduleStatus::Failed => write!(f, "failed"),
-        }
+        f.write_str(self.as_db_str())
     }
 }
 

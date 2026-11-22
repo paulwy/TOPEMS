@@ -1070,6 +1070,78 @@
       "table": "finance.finance_v60_alerts",
       "column": "status",
       "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/capacity_status.rs",
+      "enum": "CapacityStatus",
+      "table": "mes.capacities",
+      "column": "status",
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/demand_forecast_status.rs",
+      "enum": "DemandForecastStatus",
+      "table": "mes.demand_forecasts",
+      "column": "status",
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/material_plan_status.rs",
+      "enum": "MaterialPlanStatus",
+      "table": "mes.material_plans",
+      "column": "status",
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/production_plan_status.rs",
+      "enum": "ProductionPlanStatus",
+      "table": "mes.production_plans",
+      "column": "status",
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/aps_scheduling.rs",
+      "enum": "ConstraintStatus",
+      "persisted": false,
+      "reason": "APS 求解过程约束结果，不落库"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/schedule.rs",
+      "enum": "ScheduleStatus",
+      "table": "bi.report_schedules",
+      "column": "status",
+      "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/async_task_queue.rs",
+      "enum": "AsyncTaskStatus",
+      "table": "integration.async_tasks",
+      "column": "status",
+      "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+    },
+    {
+      "file": "svc/integration/src/sync_retry.rs",
+      "enum": "SyncStatus",
+      "persisted": false,
+      "reason": "同步重试执行器内存态，无对应表列"
+    },
+    {
+      "file": "svc/communication/src/mail.rs",
+      "enum": "EmailQueueStatus",
+      "persisted": false,
+      "reason": "邮件发送 DashMap 队列内存态，core_emails 只存发送结果"
+    },
+    {
+      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+      "enum": "UpgradeStatus",
+      "persisted": false,
+      "reason": "插件升级编排内存态，无对应状态列"
+    },
+    {
+      "file": "svc/plugin-registry/src/modules/plugin/models.rs",
+      "enum": "UpgradeQueueStatus",
+      "persisted": false,
+      "reason": "插件升级队列内存态，无对应状态列"
     }
   ]
 }

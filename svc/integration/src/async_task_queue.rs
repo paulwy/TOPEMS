@@ -37,6 +37,29 @@ pub enum AsyncTaskStatus {
 }
 
 impl AsyncTaskStatus {
+    pub const DB_VALUES: [&'static str; 6] = [
+        "pending",
+        "in_progress",
+        "completed",
+        "failed",
+        "max_retries_exceeded",
+        "cancelled",
+    ];
+    pub const DEFAULT: Self = Self::Pending;
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "pending" => Some(Self::Pending),
+            "in_progress" => Some(Self::InProgress),
+            "completed" => Some(Self::Completed),
+            "failed" => Some(Self::Failed),
+            "max_retries_exceeded" => Some(Self::MaxRetriesExceeded),
+            "cancelled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             AsyncTaskStatus::Pending => "pending",
@@ -49,14 +72,7 @@ impl AsyncTaskStatus {
     }
 
     pub fn from_str(s: &str) -> Self {
-        match s {
-            "in_progress" => AsyncTaskStatus::InProgress,
-            "completed" => AsyncTaskStatus::Completed,
-            "failed" => AsyncTaskStatus::Failed,
-            "max_retries_exceeded" => AsyncTaskStatus::MaxRetriesExceeded,
-            "cancelled" => AsyncTaskStatus::Cancelled,
-            _ => AsyncTaskStatus::Pending,
-        }
+        Self::from_db_str(s).unwrap_or(Self::Pending)
     }
 }
 
