@@ -3,11 +3,11 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 183,
+    "uncovered_enums": 184,
     "uncovered_values": 192,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 176,
-    "internal_state_enums": 148,
+    "resolved_enums": 177,
+    "internal_state_enums": 149,
     "persisted_unmapped_enums": 19,
     "finance_candidate_ready_enums": 36,
     "internal_state_values": 164,
@@ -2855,6 +2855,24 @@
         "table": "qms.qa_audit_findings",
         "column": "status",
         "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
+      }
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/audit_plan_status.rs",
+      "enum": "AuditPlanStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "scheduled"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/qms/src/modules/audit_plan_status.rs",
+        "enum": "AuditPlanStatus",
+        "table": "qms.qa_audit_plans",
+        "column": "status",
+        "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql"
       }
     },
     {

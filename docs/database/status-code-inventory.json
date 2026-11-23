@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 306,
+    "rust_enums": 307,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -4283,6 +4283,25 @@
         "in_progress",
         "open",
         "verified"
+      ]
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/audit_plan_status.rs",
+      "name": "AuditPlanStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "InProgress",
+        "Scheduled"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "draft",
+        "in_progress",
+        "scheduled"
       ]
     },
     {

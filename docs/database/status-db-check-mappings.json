@@ -1982,6 +1982,13 @@
       "table": "pm.acceptance_records",
       "column": "status",
       "candidate": "docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/qms/src/modules/audit_plan_status.rs",
+      "enum": "AuditPlanStatus",
+      "table": "qms.qa_audit_plans",
+      "column": "status",
+      "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

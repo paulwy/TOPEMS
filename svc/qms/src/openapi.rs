@@ -106,6 +106,7 @@ fn _detailed_health() {}
         crate::modules::audit::list_audit_plans,
         crate::modules::audit::create_audit_plan,
         crate::modules::audit::get_audit_plan,
+        crate::modules::audit::schedule_audit_plan,
         crate::modules::audit::start_audit_plan,
         crate::modules::audit::complete_audit_plan,
         crate::modules::audit::list_audit_tasks,

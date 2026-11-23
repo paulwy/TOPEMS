@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 408,
+  "total": 409,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -32,7 +32,7 @@
     "pm": 19,
     "portal": 7,
     "public": 42,
-    "qms": 12,
+    "qms": 13,
     "rd": 3,
     "rs": 7,
     "scm": 20,
@@ -120,7 +120,8 @@
     "B237": 1,
     "B238": 1,
     "B239": 1,
-    "B240": 1
+    "B240": 1,
+    "B241": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8616,6 +8617,28 @@
       "source_commit": "49b336f42",
       "source_subject": "B240: pm.acceptance_records.status 收敛到 AcceptanceRecordStatus 枚举（替换生产旧值集）",
       "note": "B240 用新名替换生产历史约束 ck_acceptance_records_status_standard（active/inactive/archived）；旧条目保留供回迁对照，部署时先 DROP 旧约束。"
+    },
+    {
+      "schema": "qms",
+      "table": "qa_audit_plans",
+      "constraint": "ck_qa_audit_plans_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "draft",
+        "in_progress",
+        "scheduled"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'scheduled'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text])))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B241",
+      "source_commit": "PENDING",
+      "source_subject": "B241: qms.qa_audit_plans.status 收敛到 AuditPlanStatus 枚举（补 schedule 入口 + start/complete 状态守卫）",
+      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
   ]
 }

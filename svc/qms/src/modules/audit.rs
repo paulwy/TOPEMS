@@ -2,6 +2,7 @@
 
 use crate::models::audit::*;
 use crate::modules::audit_finding_status::QmsAuditFindingStatus;
+use crate::modules::audit_plan_status::AuditPlanStatus;
 use axum::{
     extract::State,
     routing::{get, post, put},
@@ -47,8 +48,16 @@ pub async fn list_audit_plans(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let status_filter = match query.status.as_deref() {
+        None => None,
+        Some(raw) => match AuditPlanStatus::parse_filter(raw) {
+            Some(status) => Some(status.to_string()),
+            None => return ApiResponse::bad_request("无效的审核计划状态"),
+        },
+    };
+    let audit_type = query.audit_type;
 
-    let plans = match (query.status.as_ref(), query.audit_type.as_ref()) {
+    let plans = match (status_filter.as_deref(), audit_type.as_deref()) {
         (Some(st), Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE status = $1 AND audit_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(st).bind(at).bind(page_size).bind(offset)
         .fetch_all(&mut scope)
         .await,
@@ -134,7 +143,7 @@ pub async fn create_audit_plan(
         }
     }
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_plans (tenant_id, plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7::timestamptz, $8::timestamptz, $9) RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(tenant_id).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_plans (tenant_id, plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9::timestamptz, $10) RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(tenant_id).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(AuditPlanStatus::DEFAULT.as_db_str()).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
     .fetch_one(&mut scope)
     .await;
 
@@ -208,6 +217,91 @@ pub async fn get_audit_plan(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-plans/{id}/schedule",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
+pub async fn schedule_audit_plan(
+    State(state): State<crate::AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> ApiResponse<AuditPlan> {
+    let tenant_id = match require_tenant(&claims, &headers) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::bad_request(&msg),
+    };
+    let id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::bad_request("无效的计划ID"),
+    };
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        return ApiResponse::server_error("数据库事务上下文缺失");
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("开启审核计划排期事务失败: {}", e);
+            return ApiResponse::server_error("审核计划排期失败");
+        }
+    };
+
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "qms",
+        "SELECT status FROM qms.qa_audit_plans WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::conflict("计划不存在或状态已变更"),
+        Err(e) => {
+            tracing::error!("Failed to read audit plan status: {}", e);
+            return ApiResponse::server_error("审核计划排期失败");
+        }
+    };
+    let current_status = match AuditPlanStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("计划状态非法，请先修正数据"),
+    };
+    if current_status != AuditPlanStatus::Draft {
+        return ApiResponse::conflict("只有草稿状态的审核计划可以排期");
+    }
+
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id).bind(AuditPlanStatus::Scheduled.as_db_str()).bind(AuditPlanStatus::Draft.as_db_str())
+    .fetch_one(&mut scope)
+    .await;
+
+    match plan {
+        Ok(data) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交审核计划排期事务失败: {}", e);
+                return ApiResponse::server_error("审核计划排期失败");
+            }
+            ApiResponse::success(data, "审核计划已排期")
+        }
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("计划不存在或状态已变更"),
+        Err(e) => {
+            tracing::error!("Failed to schedule audit plan: {}", e);
+            ApiResponse::server_error("审核计划排期失败")
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
     path = "/audit-plans/{id}/start",
     params(
 ("id" = String, Path, description = "id")
@@ -246,7 +340,31 @@ pub async fn start_audit_plan(
         }
     };
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "qms",
+        "SELECT status FROM qms.qa_audit_plans WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::conflict("计划不存在或状态已变更"),
+        Err(e) => {
+            tracing::error!("Failed to read audit plan status: {}", e);
+            return ApiResponse::server_error("审核计划启动失败");
+        }
+    };
+    let current_status = match AuditPlanStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("计划状态非法，请先修正数据"),
+    };
+    if current_status != AuditPlanStatus::Scheduled {
+        return ApiResponse::conflict("只有已排期的审核计划可以启动");
+    }
+
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = $3, actual_start = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id).bind(AuditPlanStatus::InProgress.as_db_str()).bind(AuditPlanStatus::Scheduled.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -307,7 +425,31 @@ pub async fn complete_audit_plan(
         }
     };
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "qms",
+        "SELECT status FROM qms.qa_audit_plans WHERE id = $1 AND tenant_id = $2"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::conflict("计划不存在或状态已变更"),
+        Err(e) => {
+            tracing::error!("Failed to read audit plan status: {}", e);
+            return ApiResponse::server_error("审核计划完成失败");
+        }
+    };
+    let current_status = match AuditPlanStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::conflict("计划状态非法，请先修正数据"),
+    };
+    if current_status != AuditPlanStatus::InProgress {
+        return ApiResponse::conflict("只有进行中的审核计划可以完成");
+    }
+
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = $3, actual_end = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $4 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id).bind(AuditPlanStatus::Completed.as_db_str()).bind(AuditPlanStatus::InProgress.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -773,6 +915,7 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/audit-plans", get(list_audit_plans))
         .route("/audit-plans", post(create_audit_plan))
         .route("/audit-plans/{id}", get(get_audit_plan))
+        .route("/audit-plans/{id}/schedule", post(schedule_audit_plan))
         .route("/audit-plans/{id}/start", post(start_audit_plan))
         .route("/audit-plans/{id}/complete", post(complete_audit_plan))
         .route("/audit-tasks", get(list_audit_tasks))
