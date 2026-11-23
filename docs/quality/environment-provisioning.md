@@ -431,7 +431,7 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 ```bash
 # 1) 以本机具备 CREATE DATABASE / CREATE EXTENSION / GRANT 权限的角色执行（通常即当前 OS 用户）
 bash scripts/migration/build-drift-gate-db.sh
-#    → 重建 topems_gate：基线 schema + 账本 + 参考数据 + 幂等列对齐 + 最小只读授权
+#    → 重建 topems_gate：基线 schema + 账本 + 参考数据 + 幂等列对齐 + 只读授权（按实际 schema 推导）
 #    → 对齐断言：tables / ledger_rows / max(version) 与 baseline_<anchor>.json 一致
 
 # 2) 在本机 .env 写一行（口令按实际情况补，勿提交）
@@ -442,6 +442,11 @@ MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh
 #    → [Gate DRIFT] PASS 断言 12 项，记账校验 9 项
 ```
 
+授权口径：建库脚本末段**不写死 schema 清单**，而是按目标库 `pg_namespace` 中实际存在的
+schema 批量授予 `USAGE` + `SELECT`（排除 `pg_catalog` / `information_schema` / `pg_toast`
+与 `pg_*` 信息模式）。这样迁移后续新增 schema 时，只需重跑建库脚本即可完成授权，
+不会因为漏配清单让 `ledger-ddl-drift` 报 `permission denied for schema`。
+
 目标库解析顺序：进程环境 `MIGRATION_DRIFT_DB_URL` → `.env` 的 `MIGRATION_DRIFT_DB_URL`
 → 进程环境 `DATABASE_URL` → `.env` 的 `MIGRATE_URL`。专用变量优先于通用 `DATABASE_URL`，
 避免被某个 shell 里遗留的通用连接带偏。演练门禁 `migration-drill-anchor` 采用同一口径
@@ -451,6 +456,7 @@ MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh
 
 - 脚本固定顺序 `DROP → CREATE(template0) → schema → 账本 → 数据 → 断言 → 列对齐 → GRANT`，
   每次重跑终态一致，可放心重复执行。
+- 末段授权按库内实际 schema 推导（见 §11.2），新增 schema 后重跑即可，不需要改脚本。
 - 需要重跑：基线锚点前移后、`migration_drift_assertions.json` 新增条目后、
   看到 `账本为空` 或授权类报错后。
 - 重跑不会写 `topems_prod`，也不会改角色属性。
@@ -460,7 +466,7 @@ MIGRATION_DRIFT_FORCE=1 bash scripts/ci/check-ledger-ddl-drift.sh
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | `账本为空` | 目标库是 pg_dump 结构副本（没跑过迁移） | 重跑建库脚本并指向 `topems_gate`，不要放宽判定 |
-| `permission denied for schema <x>` | 角色缺该 schema 的 USAGE | 脚本只授 `public/finance/mes/mobile`；断言新增 schema 时同步补 |
+| `permission denied for schema <x>` | 角色缺该 schema 的 USAGE | 重跑建库脚本（授权按实际 schema 推导，无需改脚本补清单） |
 | `permission denied for table _sqlx_migrations` | 缺账本 SELECT | 重跑建库脚本（末段授权） |
 | `拒绝：以超级用户连接` | DSN 落到了 owner/superuser | 检查解析顺序，确认命中 `.env` 的 `MIGRATION_DRIFT_DB_URL` |
 | `FAILED N 项漂移` | 账本声称的结构与实际不符 | 见输出中的「源 <version>」；先确认是迁移链冲突还是库陈旧，再决定重放幂等迁移或修迁移 |

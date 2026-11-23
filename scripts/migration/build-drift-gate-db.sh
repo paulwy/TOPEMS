@@ -14,8 +14,9 @@
 #   4) 断言：表数 / 账本条数 / max(version) 与 baseline_<anchor>.json 一致
 #   5) 重放幂等修复迁移（列漂移：mes.production_orders.quantity/completed_quantity、
 #      mobile.documents.file_size）；已对齐时为零 ALTER
-#   6) 最小只读授权给门禁角色：USAGE(public,finance,mes,mobile) +
-#      SELECT(_sqlx_migrations, core_permissions, core_role_permissions, core_roles)
+#   6) 只读授权给门禁角色：按库内实际存在的 schema 批量授予 USAGE + SELECT
+#      （排除 pg_catalog / information_schema / pg_toast 与 pg_* 信息模式），
+#      不再写死 schema 清单；后续新增 schema 无需改脚本
 #
 # 幂等：每次运行都先 DROP 再按固定步骤重建，终态一致；重复执行结果相同。
 # 重跑：bash scripts/migration/build-drift-gate-db.sh
@@ -37,7 +38,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --db) DB="${2:-}"; shift 2 ;;
     --anchor) ANCHOR="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,31p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -129,9 +130,21 @@ REPAIR_SQL="$(find "$ROOT/database/migrations" -maxdepth 1 -name "${REPAIR_PREFI
 psql -X -d "$DB" -q -v ON_ERROR_STOP=1 -f "$REPAIR_SQL" >/dev/null
 echo "== [5] 幂等列对齐迁移已重放"
 
-psql -X -d "$DB" -q -v ON_ERROR_STOP=1 \
-  -c "GRANT USAGE ON SCHEMA public, finance, mes, mobile TO $GATE_ROLE" \
-  -c "GRANT SELECT ON TABLE public._sqlx_migrations, public.core_permissions, public.core_role_permissions, public.core_roles TO $GATE_ROLE"
-echo "== [6] 最小只读授权完成"
+# 授权按库内实际 schema 推导（不写死清单）：后续迁移新增 schema 时，重跑本脚本即可，
+# 不会因为漏配 schema 导致 `permission denied for schema`。只授只读权限，
+# 排除系统 schema 与 pg_* 信息模式（pg_catalog / information_schema / pg_toast 等）。
+psql -X -d "$DB" -q -v ON_ERROR_STOP=1 -c "
+  DO \$\$ DECLARE s record; BEGIN
+    FOR s IN
+      SELECT nspname FROM pg_namespace
+      WHERE nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+        AND nspname NOT LIKE 'pg\_%'
+      ORDER BY nspname
+    LOOP
+      EXECUTE format('GRANT USAGE ON SCHEMA %I TO $GATE_ROLE', s.nspname);
+      EXECUTE format('GRANT SELECT ON ALL TABLES IN SCHEMA %I TO $GATE_ROLE', s.nspname);
+    END LOOP;
+  END \$\$;"
+echo "== [6] 只读授权完成（按实际 schema 推导，未写死清单）"
 
 echo "== 完成：默认 MIGRATION_DRIFT_DB_URL 指向 postgres://$GATE_ROLE@127.0.0.1:5432/$DB 即可，无需临时 export"
