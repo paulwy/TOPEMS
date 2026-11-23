@@ -4,6 +4,7 @@ pub mod budget;
 pub mod budget_status;
 pub mod contract;
 pub mod contract_status;
+pub mod defect_status;
 pub mod document;
 pub mod milestone_status;
 pub mod notification;

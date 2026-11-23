@@ -1933,6 +1933,13 @@
       "table": "pm.project_reports",
       "column": "status",
       "candidate": "docs/database/pm-project-report-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/defect_status.rs",
+      "enum": "DefectStatus",
+      "table": "pm.defects",
+      "column": "status",
+      "candidate": "docs/database/pm-defect-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

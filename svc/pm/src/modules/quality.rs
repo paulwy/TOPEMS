@@ -15,9 +15,46 @@ use crate::models::quality::{
     CreateDefectRequest, CreateQualityCheckRequest, Defect, QualityCheck, UpdateDefectRequest,
     UpdateQualityCheckRequest,
 };
+use crate::modules::defect_status::DefectStatus;
 use crate::modules::effective_tenant_id;
 
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+
+/// 校验缺陷状态流转：不存在 404、存量未知值 400、非法流转 400。
+async fn ensure_defect_transition(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    id: Uuid,
+    to: DefectStatus,
+) -> Result<(), ApiResponse<Defect>> {
+    let current_raw: Result<Option<String>, sqlx::Error> =
+        sqlx::query_scalar("SELECT status FROM pm.defects WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut *scope)
+            .await;
+    let raw = match current_raw {
+        Ok(Some(raw)) => raw,
+        Ok(None) => return Err(ApiResponse::not_found("缺陷不存在")),
+        Err(e) => {
+            tracing::error!("查询缺陷状态失败: {}", e);
+            return Err(ApiResponse::server_error("查询缺陷状态失败"));
+        }
+    };
+    let current = match DefectStatus::from_db_str(&raw) {
+        Some(status) => status,
+        None => {
+            return Err(ApiResponse::bad_request(&format!(
+                "缺陷当前状态非法: {raw}"
+            )))
+        }
+    };
+    if !current.can_transition_to(to) {
+        return Err(ApiResponse::bad_request(&format!(
+            "非法缺陷状态流转: {} -> {}",
+            current, to
+        )));
+    }
+    Ok(())
+}
 
 // ==================== Pure functions ====================
 
@@ -388,7 +425,7 @@ async fn create_defect(
 
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "INSERT INTO pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13, $14) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -398,6 +435,7 @@ async fn create_defect(
     .bind(req.defect_description)
     .bind(&req.severity)
     .bind(&req.priority)
+    .bind(DefectStatus::DEFAULT.as_db_str())
     .bind(req.assignee)
     .bind(parse_date_opt(&req.due_date))
     .bind(req.created_by)
@@ -434,8 +472,23 @@ async fn update_defect(
             return ApiResponse::server_error("初始化数据库作用域失败");
         }
     };
-    let defect = sqlx::query_as::<_, Defect>(
-        only_own_schema_query!("pm", "UPDATE pm.defects SET
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match DefectStatus::normalize(raw) {
+            Ok(status) => Some(status),
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
+    if let Some(to) = requested_status {
+        if let Err(resp) = ensure_defect_transition(&mut scope, id, to).await {
+            return resp;
+        }
+    }
+    let requested_status = requested_status.map(DefectStatus::as_db_str);
+    let is_resolving = requested_status == Some(DefectStatus::Resolved.as_db_str());
+    let defect = sqlx::query_as::<_, Defect>(only_own_schema_query!(
+        "pm",
+        "UPDATE pm.defects SET
             defect_name = COALESCE($1, defect_name),
             defect_description = COALESCE($2, defect_description),
             severity = COALESCE($3, severity),
@@ -444,18 +497,19 @@ async fn update_defect(
             assignee = COALESCE($6, assignee),
             due_date = COALESCE($7, due_date),
             resolution = COALESCE($8, resolution),
-            resolved_at = CASE WHEN COALESCE($5, status) = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END,
-            updated_at = $9
-        WHERE id = $10  RETURNING *")
-    )
+            resolved_at = CASE WHEN $9 THEN CURRENT_TIMESTAMP ELSE resolved_at END,
+            updated_at = $10
+        WHERE id = $11  RETURNING *"
+    ))
     .bind(req.defect_name)
     .bind(req.defect_description)
     .bind(req.severity)
     .bind(req.priority)
-    .bind(req.status)
+    .bind(requested_status)
     .bind(req.assignee)
     .bind(parse_date_opt(&req.due_date))
     .bind(req.resolution)
+    .bind(is_resolving)
     .bind(Utc::now())
     .bind(id)
     .fetch_one(&mut scope)
