@@ -888,7 +888,10 @@ pub async fn list_receivables(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match ReceivablePayableStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的应收状态筛选值"),
+    };
 
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
@@ -911,7 +914,8 @@ pub async fn list_receivables(
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
            FROM finance.receivables
-           WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
+           WHERE deleted_at IS NULL
+             AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
@@ -1274,7 +1278,10 @@ pub async fn list_payables(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match ReceivablePayableStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的应付状态筛选值"),
+    };
 
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
@@ -1297,7 +1304,8 @@ pub async fn list_payables(
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
            FROM finance.payables
-           WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
+           WHERE deleted_at IS NULL
+             AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
@@ -1704,7 +1712,10 @@ fn row_to_receivable_json(row: &sqlx::postgres::PgRow) -> Value {
         "amount": row.try_get::<Decimal, _>("amount").ok(),
         "invoice_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("invoice_date").ok().flatten(),
         "due_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("due_date").ok().flatten(),
-        "status": row.try_get::<String, _>("status").ok(),
+        "status": row
+            .try_get::<String, _>("status")
+            .ok()
+            .map(|raw| ReceivablePayableStatus::normalize(&raw)),
         "received_amount": row.try_get::<Decimal, _>("received_amount").ok(),
         "payment_schedule": row.try_get::<Option<Value>, _>("payment_schedule").ok().flatten(),
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
@@ -1723,7 +1734,10 @@ fn row_to_payable_json(row: &sqlx::postgres::PgRow) -> Value {
         "amount": row.try_get::<Decimal, _>("amount").ok(),
         "invoice_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("invoice_date").ok().flatten(),
         "due_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("due_date").ok().flatten(),
-        "status": row.try_get::<String, _>("status").ok(),
+        "status": row
+            .try_get::<String, _>("status")
+            .ok()
+            .map(|raw| ReceivablePayableStatus::normalize(&raw)),
         "paid_amount": row.try_get::<Decimal, _>("paid_amount").ok(),
         "payment_schedule": row.try_get::<Option<Value>, _>("payment_schedule").ok().flatten(),
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),

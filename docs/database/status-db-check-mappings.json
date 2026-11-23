@@ -1702,6 +1702,20 @@
       "table": "hrm.payroll_items",
       "column": "status",
       "candidate": "ck_hrm_payroll_items_status_standard"
+    },
+    {
+      "file": "svc/finance/src/modules/operational.rs",
+      "enum": "ReceivablePayableStatus",
+      "table": "finance.receivables",
+      "column": "status",
+      "candidate": "ck_finance_receivables_status_standard"
+    },
+    {
+      "file": "svc/finance/src/modules/operational.rs",
+      "enum": "ReceivablePayableStatus",
+      "table": "finance.payables",
+      "column": "status",
+      "candidate": "ck_finance_payables_status_standard"
     }
   ]
 }
