@@ -12,12 +12,23 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
+use super::attendance_status::AttendanceStatus;
 use super::ApiState;
+
 use crate::models::{AttendanceRecord, CreateAttendanceRequest, UpdateAttendanceRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+/// 响应兜底：未知历史值回落枚举默认态
+fn normalize_record(mut v: AttendanceRecord) -> AttendanceRecord {
+    v.status = v
+        .status
+        .as_deref()
+        .map(|raw| AttendanceStatus::normalize(raw).to_string());
+    v
+}
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -151,6 +162,7 @@ pub struct AttendancePaginationParams {
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
     pub date: Option<String>,
+    pub status: Option<String>,
 }
 
 #[utoipa::path(
@@ -189,6 +201,10 @@ pub async fn list_attendance(
 
     let emp_filter = params.employee_id;
     let date_filter = params.date;
+    let status_filter = match AttendanceStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的考勤状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
@@ -200,6 +216,7 @@ pub async fn list_attendance(
         WHERE deleted_at IS NULL
           AND ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR date::text = $2)
+          AND ($5::text IS NULL OR status = $5)
         ORDER BY date DESC
         LIMIT $3 OFFSET $4
         "#
@@ -208,6 +225,7 @@ pub async fn list_attendance(
     .bind(&date_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(&status_filter)
     .fetch_all(&mut **txn)
     .await;
 
@@ -220,10 +238,12 @@ pub async fn list_attendance(
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR date::text = $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#
             ))
             .bind(emp_filter)
             .bind(&date_filter)
+            .bind(&status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -231,7 +251,7 @@ pub async fn list_attendance(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "records": records,
+                    "records": records.into_iter().map(normalize_record).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -285,6 +305,14 @@ pub async fn create_attendance(
         None => return ApiResponse::error(400, "缺少租户上下文：拒绝考勤写操作"),
     };
 
+    let status = match req.status.as_deref().map(str::trim) {
+        None => AttendanceStatus::DEFAULT.as_db_str(),
+        Some("") => AttendanceStatus::DEFAULT.as_db_str(),
+        Some(v) => match AttendanceStatus::from_db_str(v) {
+            Some(s) => s.as_db_str(),
+            None => return ApiResponse::bad_request("非法的考勤状态"),
+        },
+    };
     let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
         r#"
@@ -303,7 +331,7 @@ pub async fn create_attendance(
     .bind(req.date)
     .bind(req.check_in.clone())
     .bind(req.check_out.clone())
-    .bind(&req.status)
+    .bind(status)
     .bind(req.work_hours)
     .bind(&req.notes)
     .bind(now)
@@ -313,7 +341,7 @@ pub async fn create_attendance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(record) => (
-            ApiResponse::success(record.clone(), "考勤记录创建成功"),
+            ApiResponse::success(normalize_record(record.clone()), "考勤记录创建成功"),
             "success",
             None,
         ),
@@ -397,7 +425,7 @@ pub async fn get_attendance(
     .await;
 
     match result {
-        Ok(Some(record)) => ApiResponse::success(record, "获取考勤记录成功"),
+        Ok(Some(record)) => ApiResponse::success(normalize_record(record), "获取考勤记录成功"),
         Ok(None) => ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在"),
         Err(e) => {
             tracing::error!("获取考勤记录失败: {}", e);
@@ -451,7 +479,24 @@ pub async fn update_attendance(
 
     let check_in = req.check_in.or(existing.check_in);
     let check_out = req.check_out.or(existing.check_out);
-    let status = req.status.or(existing.status);
+    let status = match req.status.as_deref().map(str::trim) {
+        None => existing
+            .status
+            .as_deref()
+            .map(AttendanceStatus::normalize)
+            .unwrap_or(AttendanceStatus::DEFAULT.as_db_str())
+            .to_string(),
+        Some("") => existing
+            .status
+            .as_deref()
+            .map(AttendanceStatus::normalize)
+            .unwrap_or(AttendanceStatus::DEFAULT.as_db_str())
+            .to_string(),
+        Some(v) => match AttendanceStatus::from_db_str(v) {
+            Some(s) => s.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("非法的考勤状态"),
+        },
+    };
     let work_hours = req.work_hours.or(existing.work_hours);
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
@@ -486,7 +531,7 @@ pub async fn update_attendance(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(record, "考勤记录更新成功")
+            ApiResponse::success(normalize_record(record), "考勤记录更新成功")
         }
         Err(e) => {
             tracing::error!("更新考勤记录失败: {}", e);
@@ -664,6 +709,7 @@ pub struct AttendanceRecordsParams {
     #[serde(alias = "pagesize", alias = "page_size")]
     pub page_size: Option<i64>,
     pub month: Option<String>,
+    pub status: Option<String>,
 }
 
 /// GET /attendance/records —— 移动端考勤记录分页（MobileAttendancePage 契约）
@@ -704,6 +750,10 @@ pub async fn list_attendance_records(
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let month_prefix = params.month.map(|m| format!("{}%", m));
+    let status_filter = match AttendanceStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的考勤状态筛选值"),
+    };
 
     let items_result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
@@ -714,6 +764,7 @@ pub async fn list_attendance_records(
            WHERE deleted_at IS NULL
              AND ($1::uuid IS NULL OR employee_id = $1)
              AND ($2::text IS NULL OR date::text LIKE $2)
+             AND ($5::text IS NULL OR status = $5)
            ORDER BY date DESC
            LIMIT $3 OFFSET $4"#
     ))
@@ -721,6 +772,7 @@ pub async fn list_attendance_records(
     .bind(&month_prefix)
     .bind(page_size)
     .bind(offset)
+    .bind(&status_filter)
     .fetch_all(&mut **txn)
     .await;
 
@@ -731,16 +783,18 @@ pub async fn list_attendance_records(
                 r#"SELECT COUNT(*) FROM hrm.attendance_records
                    WHERE deleted_at IS NULL
                      AND ($1::uuid IS NULL OR employee_id = $1)
-                     AND ($2::text IS NULL OR date::text LIKE $2)"#
+                     AND ($2::text IS NULL OR date::text LIKE $2)
+                     AND ($3::text IS NULL OR status = $3)"#
             ))
             .bind(employee_id)
             .bind(&month_prefix)
+            .bind(&status_filter)
             .fetch_one(&mut **txn)
             .await;
             let total = total_result.unwrap_or(0);
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_record).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -815,7 +869,7 @@ pub async fn check_in(
             let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
                 "hrm",
                 r#"UPDATE hrm.attendance_records
-                   SET check_in_time = $2::TIME, status = COALESCE(status, 'active'), updated_at = now()
+                   SET check_in_time = $2::TIME, status = COALESCE(status, $3), updated_at = now()
                    WHERE id = $1
                    RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                              check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
@@ -823,10 +877,11 @@ pub async fn check_in(
             ))
             .bind(record.id)
             .bind(now)
+            .bind(AttendanceStatus::Active.as_db_str())
             .fetch_one(&mut **txn)
             .await;
             match result {
-                Ok(rec) => ApiResponse::success(rec, "上班打卡成功"),
+                Ok(rec) => ApiResponse::success(normalize_record(rec), "上班打卡成功"),
                 Err(e) => {
                     tracing::error!("上班打卡更新失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("上班打卡失败".to_string()))
@@ -854,7 +909,7 @@ pub async fn check_in(
             .fetch_one(&mut **txn)
             .await;
             match result {
-                Ok(rec) => ApiResponse::success(rec, "上班打卡成功"),
+                Ok(rec) => ApiResponse::success(normalize_record(rec), "上班打卡成功"),
                 Err(e) => {
                     tracing::error!("上班打卡创建失败: {}", e);
                     ApiResponse::from(TopemsError::Internal("上班打卡失败".to_string()))
@@ -944,7 +999,7 @@ pub async fn check_out(
     .await;
 
     match result {
-        Ok(rec) => ApiResponse::success(rec, "下班打卡成功"),
+        Ok(rec) => ApiResponse::success(normalize_record(rec), "下班打卡成功"),
         Err(e) => {
             tracing::error!("下班打卡更新失败: {}", e);
             ApiResponse::from(TopemsError::Internal("下班打卡失败".to_string()))

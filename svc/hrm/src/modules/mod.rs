@@ -11,6 +11,7 @@ use topems_shared_event::event::publisher::EventPublisher;
 use topems_shared_event::redis::CacheService;
 
 pub mod attendance;
+pub mod attendance_status;
 pub mod audit;
 pub mod company;
 pub mod contract;

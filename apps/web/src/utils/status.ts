@@ -62,6 +62,8 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   running: 'info',
   stopped: 'default',
   active: 'success',
+  late: 'warning',
+  early_leave: 'warning',
   inactive: 'default',
   manual: 'default',
   scheduled: 'primary',

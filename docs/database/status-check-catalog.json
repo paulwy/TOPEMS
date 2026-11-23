@@ -1978,6 +1978,21 @@
     },
     {
       "schema": "hrm",
+      "table": "attendance_records",
+      "constraint": "ck_hrm_attendance_records_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "early_leave",
+        "late",
+        "normal"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['normal'::character varying, 'active'::character varying, 'late'::character varying, 'early_leave'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
       "table": "audit_logs",
       "constraint": "ck_audit_logs_status_standard",
       "columns": [
@@ -6589,15 +6604,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "attendance_records",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'normal'::character varying"
     },
     {
       "schema": "hrm",

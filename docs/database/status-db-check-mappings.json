@@ -1681,6 +1681,13 @@
       "table": "hrm.salary_adjustments",
       "column": "status",
       "candidate": "ck_hrm_salary_adjustments_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/attendance.rs",
+      "enum": "AttendanceStatus",
+      "table": "hrm.attendance_records",
+      "column": "status",
+      "candidate": "ck_hrm_attendance_records_status_standard"
     }
   ]
 }
