@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveDbTarget } from "./db-target.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, "../../..");
@@ -18,14 +19,6 @@ export const TAG = "[Gate RLS-SNAP]";
 
 export function sqlStr(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
-}
-
-export function parseUrl(value) {
-  try {
-    return new URL(value);
-  } catch {
-    return null;
-  }
 }
 
 export function sanitizeUrl(value) {
@@ -43,68 +36,18 @@ export function dbLabel(value) {
   }
 }
 
-function readEnvMigrateUrl() {
-  const envFile = path.join(REPO_ROOT, ".env");
-  if (!fs.existsSync(envFile)) return null;
-  for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
-    const m = /^\s*MIGRATE_URL=(.*)$/.exec(line);
-    if (m) return m[1].trim().replace(/^["']|["']$/g, "");
-  }
-  return null;
-}
-
-function hasPasswordSource(url) {
-  const u = parseUrl(url);
-  if (u && (u.password || u.searchParams.get("password") || u.searchParams.get("passfile"))) {
-    return true;
-  }
-  return Boolean(process.env.PGPASSWORD || process.env.PGPASSFILE);
-}
-
-function isSocketUrl(url) {
-  const u = parseUrl(url);
-  return Boolean(u) && !u.hostname && !u.port;
-}
-
-function socketFallbackUrl(url) {
-  const u = parseUrl(url);
-  const db = u && u.pathname && u.pathname !== "/" ? u.pathname.slice(1) : "";
-  const search = u && u.search ? u.search : "";
-  return `postgresql:///${db}${search}`;
-}
-
 /**
- * 解析目标库：显式 --dsn > RLS_POLICY_DB_URL > MIGRATION_DRIFT_DB_URL > DATABASE_URL > .env MIGRATE_URL。
+ * 解析目标库：委托统一解析器（scripts/ci/lib/db-target.mjs，profile=rls-policy-snapshot）。
+ * 顺序：--dsn > RLS_POLICY_DB_URL（env→.env）> MIGRATION_DRIFT_DB_URL → DATABASE_URL
+ *       → .env MIGRATE_URL → TEST_DATABASE_URL（env→.env）。
  * 无口令时回落 socket（与 ledger 门禁一致），但门禁随后仍会拒绝特权身份。
+ * 完整口径见 docs/quality/environment-provisioning.md §12.1。
  */
 export function resolveDbUrl(explicitDsn) {
-  let url = null;
-  let source = null;
-  if (explicitDsn) {
-    url = explicitDsn;
-    source = "--dsn 参数";
-  } else if (process.env.RLS_POLICY_DB_URL) {
-    url = process.env.RLS_POLICY_DB_URL;
-    source = "RLS_POLICY_DB_URL（环境变量）";
-  } else if (process.env.MIGRATION_DRIFT_DB_URL) {
-    url = process.env.MIGRATION_DRIFT_DB_URL;
-    source = "MIGRATION_DRIFT_DB_URL（环境变量）";
-  } else if (process.env.DATABASE_URL) {
-    url = process.env.DATABASE_URL;
-    source = "DATABASE_URL（环境变量）";
-  } else {
-    const fromEnvFile = readEnvMigrateUrl();
-    if (fromEnvFile) {
-      url = fromEnvFile;
-      source = ".env 的 MIGRATE_URL";
-    }
-  }
-  if (!url) return { url: null, source: null };
-  if (isSocketUrl(url) || hasPasswordSource(url)) return { url, source };
-  return {
-    url: socketFallbackUrl(url),
-    source: `${source} → 无口令，回落 socket（peer 认证）`,
-  };
+  const target = resolveDbTarget({ hook: "rls-policy-snapshot", explicitDsn });
+  if (!target.ok) return { url: null, source: null };
+  if (target.password && !process.env.PGPASSWORD) process.env.PGPASSWORD = target.password;
+  return { url: target.urlWithPassword, source: target.source };
 }
 
 function psql(url, sql) {

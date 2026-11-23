@@ -14,9 +14,11 @@
  *   node scripts/ci/dump-status-checks.mjs --check
  *   node scripts/ci/dump-status-checks.mjs --check --changed-only
  *
- * 连接解析顺序：--dsn > STATUS_CATALOG_DB_URL > RLS_POLICY_DB_URL > MIGRATION_DRIFT_DB_URL > DATABASE_URL > .env MIGRATE_URL。
+ * 连接解析：统一委托 scripts/ci/lib/db-target.mjs（profile=status-catalog）。
+ * 顺序：--dsn > STATUS_CATALOG_DB_URL（env→.env）> RLS_POLICY_DB_URL > MIGRATION_DRIFT_DB_URL
+ *       > DATABASE_URL > .env MIGRATE_URL > TEST_DATABASE_URL（env→.env）。
  * STATUS_CATALOG_DB_URL 用于把状态目录校验库与 ledger-ddl-drift 的 MIGRATION_DRIFT_DB_URL 解耦，
- * 避免两个门禁被迫共用同一个库。
+ * 避免两个门禁被迫共用同一个库。完整口径见 docs/quality/environment-provisioning.md §12.1。
  *
  * --changed-only：只比对本次改动迁移涉及表的约束与无约束列；取暂存区的
  * database/migrations/*.sql，无暂存时取 HEAD 与工作区差异。解析不到任何表时按全量处理。
@@ -25,7 +27,8 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveDbUrl, dbLabel } from "./lib/rls-policy-snapshot.mjs";
+import { dbLabel } from "./lib/rls-policy-snapshot.mjs";
+import { resolveDbTarget } from "./lib/db-target.mjs";
 
 const TAG = "[status-catalog]";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -50,7 +53,8 @@ function parseArgs(argv) {
           "  --changed-only    只校验本次改动迁移涉及的表；解析不到表时回退全量",
           "",
           "定期全量（建议每周或发布前）：node scripts/ci/dump-status-checks.mjs --check",
-          "校验库解析：--dsn > STATUS_CATALOG_DB_URL > RLS_POLICY_DB_URL > MIGRATION_DRIFT_DB_URL > DATABASE_URL > .env MIGRATE_URL",
+          "校验库解析：--dsn > STATUS_CATALOG_DB_URL > RLS_POLICY_DB_URL > MIGRATION_DRIFT_DB_URL > DATABASE_URL > .env MIGRATE_URL > TEST_DATABASE_URL",
+          "统一解析器与诊断：node scripts/ci/lib/db-target.mjs --hook status-catalog --explain",
         ].join("\n"),
       );
       process.exit(0);
@@ -302,10 +306,10 @@ function describeDiff(expected, actual, kind) {
 }
 
 function resolveCatalogDbUrl(explicitDsn) {
-  if (explicitDsn) return resolveDbUrl(explicitDsn);
-  const fromEnv = process.env.STATUS_CATALOG_DB_URL;
-  if (fromEnv) return { url: fromEnv, source: "STATUS_CATALOG_DB_URL（环境变量）" };
-  return resolveDbUrl(null);
+  const target = resolveDbTarget({ hook: "status-catalog", explicitDsn });
+  if (!target.ok) return { url: null, source: null };
+  if (target.password && !process.env.PGPASSWORD) process.env.PGPASSWORD = target.password;
+  return { url: target.urlWithPassword, source: target.source };
 }
 
 function main() {
@@ -313,7 +317,10 @@ function main() {
   const { url, source } = resolveCatalogDbUrl(args.dsn);
   if (!url) {
     console.error(
-      `${TAG} FAIL: 未找到数据库连接（--dsn / STATUS_CATALOG_DB_URL / RLS_POLICY_DB_URL / DATABASE_URL / .env MIGRATE_URL）`,
+      `${TAG} FAIL: 未找到数据库连接（--dsn / STATUS_CATALOG_DB_URL / RLS_POLICY_DB_URL / MIGRATION_DRIFT_DB_URL / DATABASE_URL / .env MIGRATE_URL / TEST_DATABASE_URL）`,
+    );
+    console.error(
+      `${TAG} 诊断：node scripts/ci/lib/db-target.mjs --hook status-catalog --explain；缺库即失败，不跳过。`,
     );
     process.exit(1);
   }

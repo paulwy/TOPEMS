@@ -458,10 +458,9 @@ schema 批量授予 `USAGE` + `SELECT`（排除 `pg_catalog` / `information_sche
 schema 时，只需重跑建库脚本即可，不会因为漏配清单让 `ledger-ddl-drift` 报
 `permission denied for schema`。
 
-目标库解析顺序：进程环境 `MIGRATION_DRIFT_DB_URL` → `.env` 的 `MIGRATION_DRIFT_DB_URL`
-→ 进程环境 `DATABASE_URL` → `.env` 的 `MIGRATE_URL`。专用变量优先于通用 `DATABASE_URL`，
-避免被某个 shell 里遗留的通用连接带偏。演练门禁 `migration-drill-anchor` 采用同一口径
-（专用 > `.env` 专用 > 通用 > 内置默认），见 §11.6。
+目标库解析统一走 `scripts/ci/lib/db-target.mjs`（profile=`ledger-ddl-drift`）：顺序、口令借用、
+socket 回落与诊断模式见 §12.1。默认指向 `.env` 的 `MIGRATION_DRIFT_DB_URL`（只读夹具库
+`topems_gate`），专用变量优先于通用 `DATABASE_URL`，避免被某个 shell 里遗留的通用连接带偏。
 
 ### 11.3 何时重跑 / 幂等性
 
@@ -512,18 +511,15 @@ pre-push 的 `migration-drill-anchor` 从生产基线快照恢复隔离库，只
 
 **默认值与解析顺序**
 
-默认配置即可跑通，不需要临时 `export`：
+解析顺序统一由 `scripts/ci/lib/db-target.mjs`（profile=`migration-drill`）提供：
 
-| 档位 | 来源 |
-|---|---|
-| 1 | 进程环境 `MIGRATION_DRILL_DB_URL` |
-| 2 | `.env` 的 `MIGRATION_DRILL_DB_URL` |
-| 3 | 进程环境 `TEST_DATABASE_URL` |
-| 4 | `.env` 的 `TEST_DATABASE_URL`（默认：`topems_test_runner`，具备 `CREATEDB`） |
-| 5 | 内置默认 `postgresql://topems_test_runner@127.0.0.1:5432/postgres` |
+1. `MIGRATION_DRILL_DB_URL`（进程环境 → `.env`）
+2. `TEST_DATABASE_URL`（进程环境 → `.env`，默认角色 `topems_test_runner` 具备 `CREATEDB`）
+3. 内置默认 `postgresql://topems_test_runner@127.0.0.1:5432/postgres`
 
-与 §11.2 同一口径：专用变量 > `.env` 专用 > 通用连接 > 内置默认。连接串无内嵌口令时，
-只借 `.env` 中**同角色**的口令；仍无则 fail-closed，不回落 socket。
+**不接** `MIGRATE_URL` / `DATABASE_URL`：演练库需要 `CREATEDB`，不能用开发库身份代替。
+连接串无内嵌口令时，只借 `.env` 中**同角色**的口令；仍无则 fail-closed，不回落 socket。
+完整口径、`--explain` 用法与「缺库即失败」约定见 §12.1。
 任何一档都只借角色与口令：维护库固定为 `postgres`，演练库名强制
 `topems_migration_drill_<pid>`，跑完（含失败）立即 drop；不写生产，也不写
 `TEST_DATABASE_URL` 指向的库本身。模板库名可用 `MIGRATION_DRILL_TEMPLATE_DB` 覆盖。
@@ -553,29 +549,65 @@ bash scripts/dev/run-migration-drill.sh anchor
 > 已知限制：anchor 快照含扩展创建语句，非特权角色无法在空库直接恢复；
 > 模板库机制是当前不改动授权的唯一解法。
 
-## 12. 状态目录门禁（status-catalog）的校验库与 `--changed-only`
+## 12. 连库钩子统一解析与状态目录门禁（status-catalog）
 
-`status-catalog` 校验 `docs/database/status-check-catalog.json` 与目标库中
-status/state 列上的 CHECK 约束、枚举类型、无约束列是否一致。
+### 12.1 统一数据库连接解析（所有连库钩子共用）
 
-### 12.1 校验库：`STATUS_CATALOG_DB_URL`
+所有需要数据库连接的 pre-commit / pre-push 检查项都通过
+`scripts/ci/lib/db-target.mjs` 解析连接，只有这一处事实源。解析顺序固定为：
 
-解析顺序（向下兼容）：
+1. **该钩子的独立变量**（同名键：进程环境优先，其次 `.env`）
+2. **通用迁移变量**：`MIGRATE_URL` / `DATABASE_URL`（各钩子按既有顺序）
+3. **测试库变量**：`TEST_DATABASE_URL`（进程环境 → `.env`）
+4. **内置本地夹具**（仅 `migration-drill`）
 
-| 优先级 | 来源 |
-|---|---|
-| 1 | `--dsn <url>` |
-| 2 | 进程环境 `STATUS_CATALOG_DB_URL` |
-| 3 | 进程环境 `RLS_POLICY_DB_URL` |
-| 4 | 进程环境 `MIGRATION_DRIFT_DB_URL` |
-| 5 | 进程环境 `DATABASE_URL` |
-| 6 | `.env` 的 `MIGRATE_URL` |
+| 钩子 / 检查项 | 独立变量（tier 1） | tier 2 通用迁移 | tier 3 测试库 | 备注 |
+|---|---|---|---|---|
+| pre-commit `rls-permissions` | `RLS_PERMISSIONS_DB_URL`（可选） | `MIGRATE_URL` → `DATABASE_URL` | 不回落 | 校验实际运行角色，测试身份不能替代 |
+| pre-commit `status-catalog` | `STATUS_CATALOG_DB_URL` | `RLS_POLICY_DB_URL` → `MIGRATION_DRIFT_DB_URL` → `DATABASE_URL` → `.env MIGRATE_URL` | `TEST_DATABASE_URL` | 不读 `.env` 的 `MIGRATION_DRIFT_DB_URL` |
+| pre-push `ledger-ddl-drift` | `MIGRATION_DRIFT_DB_URL` | `DATABASE_URL`（env）→ `.env MIGRATE_URL` | `TEST_DATABASE_URL` | TCP 无口令回落 socket |
+| pre-push `migration-drill-anchor` | `MIGRATION_DRILL_DB_URL` | 不接 | `TEST_DATABASE_URL` | 内置默认；不回落 socket |
+| RLS 快照 / 菜单权限 / dump 共用 | `--dsn` → `RLS_POLICY_DB_URL` | `MIGRATION_DRIFT_DB_URL` → `DATABASE_URL` → `.env MIGRATE_URL` | `TEST_DATABASE_URL` | TCP 无口令回落 socket |
 
-**不能与 `ledger-ddl-drift` 共用 `MIGRATION_DRIFT_DB_URL`**：漂移门禁按设计跑在
-`topems_gate`（基线 + 前向重放夹具），而状态目录是开发库的真实快照；
-共用同一变量会让「目录该对哪个库负责」随 shell 环境漂移，导致门禁红/绿不可解释。
-本机在 `.env` 中单独写 `STATUS_CATALOG_DB_URL`（指向生成目录的开发库），
-`MIGRATION_DRIFT_DB_URL` 保持指向 `topems_gate`，两者互不影响。
+**不纳入统一回落的检查项**（各有特殊语义，保持原样）：`migration-validate` 仅在显式设置
+`DATABASE_URL` 时才做账本漂移检查；`cargo-test-workspace` 只认 `TEST_DATABASE_URL`
+（防止测试写进开发库）；`decode-contract` 的账本连接是可选放大镜，缺失不构成失败；
+`mobile/web-contract-smoke` 由脚本自建隔离库。它们不属于「缺库即失败」的连库门禁，
+或不能用统一回落替代，因此不接入本解析器。
+
+**口令**（不打印、不入库、不要求手填）：进程 `PGPASSWORD` → 目标连接串内嵌 →
+`PGPASSFILE` → `.env` 中**同角色**的口令（`TEST_DATABASE_URL` 优先）。角色不一致的候选
+不会被借用。调用方只需设置变量或在 `.env` 配置夹具库；无法从既有环境/.env 获得口令时，
+失败提示会说明应由哪个变量、哪个角色提供。
+
+**socket 回落**：仅 `ledger-ddl-drift`、`status-catalog`、`rls-policy-snapshot` 在
+「TCP 且无任何口令来源」时回落 `postgresql:///<库名>`（peer 认证）。`migration-drill`
+与 `rls-permissions` 不回落：前者会以 OS 用户（通常 superuser）连入，后者会掩盖运行角色。
+
+**缺库即失败、不跳过**：解析不到任何库时，打印「设置哪个变量 / 本机需要哪个夹具库」并以
+非 0 退出；不存在「拿不到连接就跳过或放行」的分支。钩子本身的判定逻辑不变。
+
+**诊断模式（只查看不连接，不打印连接串和口令）**：
+
+```bash
+# 逐档打印候选、命中来源、角色、库名、口令来源
+node scripts/ci/lib/db-target.mjs --hook status-catalog --explain
+
+# 模拟「没有 .env」，排查变量优先级
+node scripts/ci/lib/db-target.mjs --hook ledger-ddl-drift --env-file /dev/null --explain
+
+# 列出所有钩子的独立变量
+node scripts/ci/lib/db-target.mjs --list
+```
+
+无解时 exit 2 并给出可操作提示。`--shell` 仅供脚本内部 `eval`（不做终端回显），
+`--json` 输出脱敏结果。
+
+**status-catalog 与 ledger-ddl-drift 的解耦**（原有口径保留）：漂移门禁按设计跑在
+`topems_gate`（基线 + 前向重放夹具），而状态目录是开发库的真实快照；`status-catalog`
+不读 `.env` 的 `MIGRATION_DRIFT_DB_URL`，避免「目录该对哪个库负责」随 shell 环境漂移，
+导致门禁红/绿不可解释。本机在 `.env` 中单独写 `STATUS_CATALOG_DB_URL`（指向生成目录的
+开发库），`MIGRATION_DRIFT_DB_URL` 保持指向 `topems_gate`，两者互不影响。
 
 ### 12.2 `--changed-only` 的适用范围
 

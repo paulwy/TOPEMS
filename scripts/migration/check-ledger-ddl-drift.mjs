@@ -22,21 +22,24 @@
  *   MIGRATION_DRIFT_ALLOW_EMPTY_LEDGER=1 node scripts/migration/check-ledger-ddl-drift.mjs  # 仅演练用
  *   MIGRATION_DRIFT_ALLOW_SUPERUSER=1 node scripts/migration/check-ledger-ddl-drift.mjs    # 仅演练用
  *
- * 目标库解析顺序：进程环境 MIGRATION_DRIFT_DB_URL → .env 的 MIGRATION_DRIFT_DB_URL
- *   （默认指向只读夹具库 topems_gate）→ 进程环境 DATABASE_URL → .env 的 MIGRATE_URL。
- *   - 连接串不含口令且未设置 PGPASSWORD/PGPASSFILE → 回落 socket
+ * 目标库解析：统一委托 scripts/ci/lib/db-target.mjs（profile=ledger-ddl-drift）。
+ *   顺序：MIGRATION_DRIFT_DB_URL（env → .env）→ DATABASE_URL（env）
+ *   → .env MIGRATE_URL → TEST_DATABASE_URL（env → .env）。
+ *   - 连接串不含口令且未设置 PGPASSWORD/PGPASSFILE，且 .env 无同角色口令 → 回落 socket
  *     （postgresql:///<库名>，本机 peer 认证），并打印实际用的是哪个来源。
  *   - 本机 pg_hba 把 127.0.0.1/32 改成 scram-sha-256 后，无口令 TCP 连接必然认证失败；
  *     回落 socket 是本地默认路径，不再先撞认证再 fail-closed。
  *   - 超级用户拒绝：连接成功后校验 current_user 的 rolsuper/rolbypassrls，命中即 FAILED。
  *     这类连接会 BYPASSRLS，权限/RLS 类断言恒真（2026-11-19 假绿事故）；
  *     仅本地演练可用 MIGRATION_DRIFT_ALLOW_SUPERUSER=1 显式豁免（CI 不得设置）。
+ *   - 完整解析顺序与诊断（--explain）见 docs/quality/environment-provisioning.md §12.1。
  * 均缺失或不可连接 → fail-closed（exit 1），并打印启动/改指向 test 库的指引。
  */
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveDbTarget } from "../ci/lib/db-target.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -99,83 +102,17 @@ function emptyLedgerFailure(summary, detailLines, label, assertionCount, source)
   process.exit(0);
 }
 
-function readEnvValue(key) {
-  const envFile = path.join(REPO_ROOT, ".env");
-  if (!fs.existsSync(envFile)) return null;
-  const pattern = new RegExp(`^\\s*${key}=(.*)$`);
-  for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
-    const m = pattern.exec(line);
-    if (m) return m[1].trim().replace(/^["']|["']$/g, "");
-  }
-  return null;
-}
-
-function readEnvMigrateUrl() {
-  return readEnvValue("MIGRATE_URL");
-}
-
-function readEnvDriftUrl() {
-  return readEnvValue("MIGRATION_DRIFT_DB_URL");
-}
-
-function parseUrl(url) {
-  try {
-    return new URL(url);
-  } catch {
-    return null;
-  }
-}
-
-// 口令来源：URL 内嵌口令、URL 的 password/passfile 参数，或 libpq 环境变量。
-function hasPasswordSource(url) {
-  const u = parseUrl(url);
-  if (u && (u.password || u.searchParams.get("password") || u.searchParams.get("passfile"))) {
-    return true;
-  }
-  return Boolean(process.env.PGPASSWORD || process.env.PGPASSFILE);
-}
-
-// authority 为空即 socket 形式：postgresql:///db
-function isSocketUrl(url) {
-  const u = parseUrl(url);
-  return Boolean(u) && !u.hostname && !u.port;
-}
-
-function socketFallbackUrl(url) {
-  const u = parseUrl(url);
-  const db = u && u.pathname && u.pathname !== "/" ? u.pathname.slice(1) : "";
-  const search = u && u.search ? u.search : "";
-  return `postgresql:///${db}${search}`;
-}
-
+/**
+ * 目标库解析：委托统一解析器（profile=ledger-ddl-drift）。
+ * 顺序：MIGRATION_DRIFT_DB_URL（env→.env）→ DATABASE_URL（env）→ .env MIGRATE_URL
+ *       → TEST_DATABASE_URL（env→.env）；TCP 无口令时回落 socket（peer 认证）。
+ * 完整口径见 docs/quality/environment-provisioning.md §12.1。
+ */
 function resolveDbUrl() {
-  let url = null;
-  let source = null;
-  const fromEnvFileDrift = readEnvDriftUrl();
-  if (process.env.MIGRATION_DRIFT_DB_URL) {
-    url = process.env.MIGRATION_DRIFT_DB_URL;
-    source = "MIGRATION_DRIFT_DB_URL（环境变量）";
-  } else if (fromEnvFileDrift) {
-    // 专用变量优先于通用 DATABASE_URL：DATABASE_URL 常是某个 shell 里遗留的通用连接，
-    // 不该覆盖本仓库显式配置的门禁目标库（见 .env.example 解析顺序说明）。
-    url = fromEnvFileDrift;
-    source = ".env 的 MIGRATION_DRIFT_DB_URL";
-  } else if (process.env.DATABASE_URL) {
-    url = process.env.DATABASE_URL;
-    source = "DATABASE_URL（环境变量/外层 shell 导出）";
-  } else {
-    const fromEnvFileMigrate = readEnvMigrateUrl();
-    if (fromEnvFileMigrate) {
-      url = fromEnvFileMigrate;
-      source = ".env 的 MIGRATE_URL";
-    }
-  }
-  if (!url) return { url: null, source: null };
-  if (isSocketUrl(url) || hasPasswordSource(url)) return { url, source };
-  return {
-    url: socketFallbackUrl(url),
-    source: `${source} → 无口令，回落 socket（peer 认证）`,
-  };
+  const target = resolveDbTarget({ hook: "ledger-ddl-drift" });
+  if (!target.ok) return { url: null, source: null };
+  if (target.password && !process.env.PGPASSWORD) process.env.PGPASSWORD = target.password;
+  return { url: target.urlWithPassword, source: target.source };
 }
 
 function sanitizeUrl(url) {
