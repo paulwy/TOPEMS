@@ -742,7 +742,7 @@ pub async fn create_renewal(
         INSERT INTO hrm.contract_renewals (
             id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
             new_start_date, new_end_date, new_salary, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
+        ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $11, $9, $10)
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -758,6 +758,7 @@ pub async fn create_renewal(
     .bind(req.new_salary)
     .bind(now)
     .bind(now)
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -799,8 +800,20 @@ pub async fn list_renewals(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    if let Err(message) =
+        crate::modules::contract_renewal_status::ContractRenewalStatus::parse_filter(
+            params.status.as_deref(),
+        )
+    {
+        return ApiResponse::<serde_json::Value>::bad_request(&message);
+    }
     let contract_id = params.contract_id;
-    let status_filter = params.status.clone();
+    let status_filter = params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty() && *s != "all")
+        .map(|raw| raw.to_string());
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
@@ -929,7 +942,7 @@ pub async fn update_renewal(
             new_end_date = COALESCE($5, new_end_date),
             new_salary = COALESCE($6, new_salary),
             updated_at = $7
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = $8
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -942,6 +955,7 @@ pub async fn update_renewal(
     .bind(req.new_end_date)
     .bind(req.new_salary)
     .bind(now)
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -973,9 +987,10 @@ pub async fn delete_renewal(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
+        "UPDATE hrm.contract_renewals SET deleted_at = NOW() WHERE id = $1 AND status = $2"
     ))
     .bind(id)
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -1024,10 +1039,10 @@ pub async fn approve_renewal(
         "hrm",
         r#"
         UPDATE hrm.contract_renewals SET
-            status = 'approved',
+            status = $3,
             approved_at = $2,
             updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = $4
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -1035,6 +1050,8 @@ pub async fn approve_renewal(
     ))
     .bind(id)
     .bind(now)
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Approved.as_db_str())
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1084,10 +1101,10 @@ pub async fn reject_renewal(
         "hrm",
         r#"
         UPDATE hrm.contract_renewals SET
-            status = 'rejected',
+            status = $4,
             rejection_reason = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = $5
         RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
@@ -1096,6 +1113,8 @@ pub async fn reject_renewal(
     .bind(id)
     .bind(&req.reason)
     .bind(now)
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Rejected.as_db_str())
+    .bind(crate::modules::contract_renewal_status::ContractRenewalStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1175,7 +1194,9 @@ pub async fn execute_renewal(
         }
     };
 
-    if renewal.status != "approved" {
+    if crate::modules::contract_renewal_status::ContractRenewalStatus::from_db_str(&renewal.status)
+        != Some(crate::modules::contract_renewal_status::ContractRenewalStatus::Approved)
+    {
         return ApiResponse::<serde_json::Value>::bad_request("续签申请未批准，无法执行");
     }
 
@@ -1203,11 +1224,16 @@ pub async fn execute_renewal(
 
     match update_result {
         Ok(_) => {
-            let _ = sqlx::query(
-                only_own_schema_query!("hrm", "UPDATE hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1")
-            )
+            let _ = sqlx::query(only_own_schema_query!(
+                "hrm",
+                "UPDATE hrm.contract_renewals SET status = $3, updated_at = $2 WHERE id = $1"
+            ))
             .bind(id)
             .bind(now)
+            .bind(
+                crate::modules::contract_renewal_status::ContractRenewalStatus::Executed
+                    .as_db_str(),
+            )
             .execute(&mut **txn)
             .await;
 

@@ -15,6 +15,7 @@ pub mod attendance_status;
 pub mod audit;
 pub mod company;
 pub mod contract;
+pub mod contract_renewal_status;
 pub mod dashboard;
 pub mod department;
 pub mod employee;

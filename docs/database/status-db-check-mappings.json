@@ -1758,6 +1758,13 @@
       "table": "finance.settlement_snapshots",
       "column": "status",
       "candidate": "ck_finance_settlement_snapshots_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/contract_renewal_status.rs",
+      "enum": "ContractRenewalStatus",
+      "table": "hrm.contract_renewals",
+      "column": "status",
+      "candidate": "ck_hrm_contract_renewals_status_standard"
     }
   ]
 }

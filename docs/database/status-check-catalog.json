@@ -2164,6 +2164,21 @@
     },
     {
       "schema": "hrm",
+      "table": "contract_renewals",
+      "constraint": "ck_hrm_contract_renewals_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "executed",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'executed'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
       "table": "contracts",
       "constraint": "ck_contracts_status_standard",
       "columns": [
@@ -6704,15 +6719,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "contract_renewals",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "hrm",
