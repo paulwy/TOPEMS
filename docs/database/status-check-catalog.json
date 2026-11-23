@@ -1528,6 +1528,22 @@
     },
     {
       "schema": "finance",
+      "table": "expenses",
+      "constraint": "ck_expenses_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "paid",
+        "rejected",
+        "submitted"
+      ],
+      "definition": "CHECK (((status IS NULL) OR (status = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text, 'rejected'::text, 'paid'::text])))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "finance_audit_findings_v52",
       "constraint": "ck_finance_audit_findings_v52_status_standard",
       "columns": [
@@ -6683,15 +6699,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'draft'::text"
-    },
-    {
-      "schema": "finance",
-      "table": "expenses",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "finance",

@@ -81,6 +81,30 @@ pub enum ExpenseStatus {
 }
 
 impl ExpenseStatus {
+    pub const DB_VALUES: [&'static str; 5] = ["draft", "submitted", "approved", "rejected", "paid"];
+
+    /// 创建接口的默认状态（DB 列默认值仍是历史 `pending`，见 B221 证据文档）。
+    pub const DEFAULT: Self = Self::Draft;
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        normalize_expense(raw)
+    }
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        self.as_str()
+    }
+
+    /// 历史别名：`pending` 与 `submitted` 在库内并存，过滤时需同时匹配。
+    #[must_use]
+    pub const fn legacy_aliases(self) -> &'static [&'static str] {
+        match self {
+            Self::Submitted => &["pending"],
+            _ => &[],
+        }
+    }
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {

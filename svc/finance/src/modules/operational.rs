@@ -67,7 +67,24 @@ pub async fn list_expenses(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        None => None,
+        Some(raw) => match normalize_expense(raw) {
+            Some(status) => Some(status),
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft/submitted/approved/rejected/paid",
+                )
+            }
+        },
+    };
+    let status_value = status_filter.map(|s| s.as_str());
+    let status_aliases = status_filter.map(|s| s.legacy_aliases()).unwrap_or(&[]);
 
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
@@ -91,14 +108,16 @@ pub async fn list_expenses(
                   reimbursed_at, currency, sub_category, project_id, employee_id, payment_method, voucher_id,
                   created_at, updated_at
            FROM finance.expenses
-           WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
-             AND ($2::text IS NULL OR status = $2)
+           WHERE deleted_at IS NULL
+             AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
+             AND ($2::text IS NULL OR status = $2 OR status = ANY($5::text[]))
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_value)
     .bind(page_size)
     .bind(offset)
+    .bind(status_aliases.to_vec())
     .fetch_all(&mut scope)
     .await;
 
@@ -108,10 +127,11 @@ pub async fn list_expenses(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM finance.expenses
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#),
+                     AND ($2::text IS NULL OR status = $2 OR status = ANY($3::text[]))"#),
             )
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_value)
+            .bind(status_aliases.to_vec())
             .fetch_one(&mut scope)
             .await
             .unwrap_or(0);

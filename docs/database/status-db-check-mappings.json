@@ -1842,6 +1842,13 @@
       "table": "finance.reconciliation_item_snapshots",
       "column": "match_status",
       "candidate": "docs/database/finance-item-snapshot-match-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/expense_status.rs",
+      "enum": "ExpenseStatus",
+      "table": "finance.expenses",
+      "column": "status",
+      "candidate": "docs/database/finance-expenses-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
