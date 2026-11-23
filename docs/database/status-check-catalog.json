@@ -1237,6 +1237,19 @@
     },
     {
       "schema": "erp",
+      "table": "payables",
+      "constraint": "ck_erp_payables_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "paid",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'paid'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "purchase_orders",
       "constraint": "purchase_orders_status_check",
       "columns": [
@@ -1248,6 +1261,19 @@
         "pending"
       ],
       "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'approved'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
+      "table": "receivables",
+      "constraint": "ck_erp_receivables_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "paid",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'paid'::character varying])::text[]))) NOT VALID"
     },
     {
       "schema": "erp",
@@ -6450,15 +6476,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "payables",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "erp",

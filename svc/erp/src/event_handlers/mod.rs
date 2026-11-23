@@ -18,6 +18,7 @@
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
 use crate::modules::fin_reconciliation_status::FinReconciliationStatus;
+use crate::modules::payable_status::PayableStatus;
 use crate::modules::receivable_status::ReceivableStatus;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
@@ -386,7 +387,7 @@ impl ErpEventHandlers {
             let receivable_result = sqlx::query(
                 r#"INSERT INTO erp.receivables
                    (invoice_number, customer_id, customer_name, source_order_id, amount, status, invoice_date, created_at, updated_at, tenant_id)
-                   VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7, $8)
+                   VALUES ($1, $2, $3, $4, $5, $9, $6, $7, $7, $8)
                    ON CONFLICT (invoice_number) DO NOTHING"#,
             )
             .bind(&receivable_no)
@@ -397,6 +398,7 @@ impl ErpEventHandlers {
             .bind(order_date)
             .bind(now)
             .bind(tenant_id)
+            .bind(ReceivableStatus::DEFAULT.as_db_str())
             .execute(&mut scope)
             .await;
 
@@ -487,7 +489,7 @@ impl ErpEventHandlers {
             let payable_result = sqlx::query(
                 r#"INSERT INTO erp.payables
                    (invoice_number, supplier_id, supplier_name, source_order_id, amount, status, invoice_date, created_at, updated_at, tenant_id)
-                   VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $7, $8)
+                   VALUES ($1, $2, $3, $4, $5, $9, $6, $7, $7, $8)
                    ON CONFLICT (invoice_number) DO NOTHING"#,
             )
             .bind(&payable_no)
@@ -498,6 +500,7 @@ impl ErpEventHandlers {
             .bind(order_date)
             .bind(now)
             .bind(tenant_id)
+            .bind(PayableStatus::DEFAULT.as_db_str())
             .execute(&mut scope)
             .await;
 
@@ -680,7 +683,7 @@ impl ErpEventHandlers {
         let payable_result = sqlx::query(
             r#"INSERT INTO erp.payables
                (invoice_number, supplier_name, category, amount, status, invoice_date, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, 'onboarding', $3, 'pending', $4, $5, $5, $6)
+               VALUES ($1, $2, 'onboarding', $3, $7, $4, $5, $5, $6)
                ON CONFLICT (invoice_number) DO NOTHING"#,
         )
         .bind(&payable_no)
@@ -689,6 +692,7 @@ impl ErpEventHandlers {
         .bind(onboard_date)
         .bind(now)
         .bind(tenant_id)
+        .bind(PayableStatus::DEFAULT.as_db_str())
         .execute(&mut scope)
         .await;
 
@@ -801,7 +805,7 @@ impl ErpEventHandlers {
         let receivable_result = sqlx::query(
             r#"INSERT INTO erp.receivables
                (invoice_number, customer_name, project_name, amount, status, invoice_date, created_at, updated_at, tenant_id)
-               VALUES ($1, $2, $3, $4, 'pending', $5, $6, $6, $7)
+               VALUES ($1, $2, $3, $4, $8, $5, $6, $6, $7)
                ON CONFLICT (invoice_number) DO NOTHING"#,
         )
         .bind(&receivable_no)
@@ -812,6 +816,7 @@ impl ErpEventHandlers {
         .bind(settled_at)
         .bind(now)
         .bind(tenant_id)
+        .bind(ReceivableStatus::DEFAULT.as_db_str())
         .execute(&mut scope)
         .await;
 
@@ -1233,12 +1238,12 @@ impl ErpEventHandlers {
         let result = if let Some(supplier_id) = payload.supplier_id {
             sqlx::query(
                 r#"UPDATE erp.payables
-                   SET status = 'paid',
+                   SET status = $5,
                        paid_amount = paid_amount + $1,
                        updated_at = $2
                    WHERE supplier_id = $3
                      AND tenant_id = $4
-                     AND status = 'pending'
+                     AND status = $6
                      AND amount = $1
                    RETURNING invoice_number"#,
             )
@@ -1246,17 +1251,19 @@ impl ErpEventHandlers {
             .bind(now)
             .bind(supplier_id)
             .bind(tenant_id)
+            .bind(PayableStatus::Paid.as_db_str())
+            .bind(PayableStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await
         } else {
             sqlx::query(
                 r#"UPDATE erp.payables
-                   SET status = 'paid',
+                   SET status = $4,
                        paid_amount = paid_amount + $1,
                        updated_at = $2
                    WHERE id = (
                        SELECT id FROM erp.payables
-                       WHERE status = 'pending'
+                       WHERE status = $5
                          AND tenant_id = $3
                          AND amount = $1
                        ORDER BY invoice_date ASC
@@ -1267,6 +1274,8 @@ impl ErpEventHandlers {
             .bind(payload.amount)
             .bind(now)
             .bind(tenant_id)
+            .bind(PayableStatus::Paid.as_db_str())
+            .bind(PayableStatus::Pending.as_db_str())
             .fetch_optional(&mut scope)
             .await
         };

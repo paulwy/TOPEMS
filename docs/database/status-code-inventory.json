@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 402,
+    "db_check_constraints": 404,
     "db_enum_types": 5,
     "db_check_values": 184,
-    "rust_enums": 281,
+    "rust_enums": 282,
     "rust_enum_values": 236,
     "rust_values_not_in_db_check": 57,
     "frontend_status_keys": 245,
@@ -1367,6 +1367,19 @@
         "in_progress",
         "not_started",
         "other"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/payable_status.rs",
+      "name": "PayableStatus",
+      "values": [
+        "Paid",
+        "Pending"
+      ],
+      "normalized": [
+        "paid",
+        "pending"
       ]
     },
     {

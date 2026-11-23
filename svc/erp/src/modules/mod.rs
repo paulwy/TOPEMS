@@ -78,6 +78,7 @@ pub mod office_supplies;
 pub mod office_supply_status;
 pub mod openapi;
 pub mod order_calc;
+pub mod payable_status;
 pub mod procurement_e2e;
 pub mod production_order;
 pub mod production_order_status;

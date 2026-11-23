@@ -1730,6 +1730,20 @@
       "table": "finance.core_finance_payments",
       "column": "status",
       "candidate": "ck_finance_core_finance_payments_status_standard"
+    },
+    {
+      "file": "svc/erp/src/event_handlers/mod.rs",
+      "enum": "ReceivableStatus",
+      "table": "erp.receivables",
+      "column": "status",
+      "candidate": "ck_erp_receivables_status_standard"
+    },
+    {
+      "file": "svc/erp/src/event_handlers/mod.rs",
+      "enum": "PayableStatus",
+      "table": "erp.payables",
+      "column": "status",
+      "candidate": "ck_erp_payables_status_standard"
     }
   ]
 }
