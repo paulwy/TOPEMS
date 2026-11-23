@@ -1884,6 +1884,13 @@
       "table": "pm.pm_tasks",
       "column": "status",
       "candidate": "docs/database/pm-task-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/project_approval_status.rs",
+      "enum": "ProjectApprovalStatus",
+      "table": "pm.project_approvals",
+      "column": "status",
+      "candidate": "docs/database/pm-project-approval-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

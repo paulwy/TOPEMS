@@ -8,6 +8,7 @@ pub mod openapi;
 pub mod pm_plugin;
 pub mod project;
 pub mod project_approval;
+pub mod project_approval_status;
 pub mod project_benefit;
 pub mod project_expense;
 pub mod project_member;

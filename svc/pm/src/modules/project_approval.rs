@@ -19,8 +19,10 @@ use topems_shared_service_client::service_client::api::workflow_api::{
 use topems_shared_service_client::TypedServiceClient;
 use uuid::Uuid;
 
+use crate::models::project::ProjectStatus;
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 use crate::modules::effective_tenant_id;
+use crate::modules::project_approval_status::ProjectApprovalStatus;
 
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
@@ -210,7 +212,7 @@ async fn submit_approval(
     ))
     .bind(id)
     .bind(project_id)
-    .bind("pending")
+    .bind(ProjectApprovalStatus::DEFAULT.as_db_str())
     .bind(1)
     .bind(3)
     .bind(approval_steps)
@@ -228,15 +230,20 @@ async fn submit_approval(
     match result {
         Ok(approval) => {
             // 业务逻辑：更新项目状态为待审批
-            let _ = update_project_status(&mut scope, project_id, "pending_approval").await;
+            let _ = update_project_status(
+                &mut scope,
+                project_id,
+                ProjectStatus::PendingApproval.as_db_str(),
+            )
+            .await;
             // 审计日志：记录审批发起（V282 集成 shared-db approval）
             let approver_uuid = Uuid::parse_str(&req.approver_id).unwrap_or_else(|_| Uuid::nil());
             let _ = create_approval_and_log(
                 &state.approval_pool,
                 "project",
                 project_id,
-                "pending",
-                "approved",
+                ProjectApprovalStatus::Pending.as_db_str(),
+                ProjectApprovalStatus::Approved.as_db_str(),
                 approver_uuid,
             )
             .await;
@@ -292,9 +299,10 @@ async fn handle_approval_action(
     };
 
     let result = sqlx::query_as::<_, ProjectApproval>(
-        only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
+        only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
     )
     .bind(project_id)
+    .bind(ProjectApprovalStatus::Pending.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
@@ -387,9 +395,9 @@ async fn handle_approval_action(
             "#
         ))
         .bind(if action == "reject" {
-            "rejected"
+            ProjectApprovalStatus::Rejected.as_db_str()
         } else {
-            "cancelled"
+            ProjectApprovalStatus::Cancelled.as_db_str()
         })
         .bind(&approvals)
         .bind(req.comment.as_deref())
@@ -402,9 +410,9 @@ async fn handle_approval_action(
             Ok(updated) => {
                 // 业务逻辑：更新项目状态
                 let status = if action == "reject" {
-                    "rejected"
+                    ProjectStatus::Rejected.as_db_str()
                 } else {
-                    "draft"
+                    ProjectStatus::Draft.as_db_str()
                 };
                 let _ = update_project_status(&mut scope, project_id, status).await;
                 // 审计日志：记录审批驳回/取消（V282 集成 shared-db approval）
@@ -467,7 +475,11 @@ async fn handle_approval_action(
         }
 
         let is_final_step = approval.current_step >= approval.total_steps;
-        let new_status = if is_final_step { "approved" } else { "pending" };
+        let new_status = if is_final_step {
+            ProjectApprovalStatus::Approved
+        } else {
+            ProjectApprovalStatus::Pending
+        };
         let new_step = if is_final_step {
             approval.current_step
         } else {
@@ -483,7 +495,7 @@ async fn handle_approval_action(
             RETURNING *
             "#
         ))
-        .bind(new_status)
+        .bind(new_status.as_db_str())
         .bind(new_step)
         .bind(&approvals)
         .bind(req.comment)
@@ -496,7 +508,12 @@ async fn handle_approval_action(
             Ok(updated) => {
                 if is_final_step {
                     // 业务逻辑：审批通过，更新项目状态
-                    let _ = update_project_status(&mut scope, project_id, "approved").await;
+                    let _ = update_project_status(
+                        &mut scope,
+                        project_id,
+                        ProjectStatus::Active.as_db_str(),
+                    )
+                    .await;
                     // 审计日志：记录审批通过（V282 集成 shared-db approval）
                     let _ = execute_transition_and_log(
                         &state.approval_pool,
@@ -505,8 +522,8 @@ async fn handle_approval_action(
                         "project",
                         project_id,
                         approval.id,
-                        "pending_approval",
-                        "approved",
+                        ProjectStatus::PendingApproval.as_db_str(),
+                        ProjectStatus::Active.as_db_str(),
                     )
                     .await;
                     ApiResponse::success(updated, "审批已通过")
