@@ -17,7 +17,8 @@ export const periodApi = {
         month: number;
         start_date: string;
         end_date: string;
-        status: 'open' | 'closed' | 'locked';
+        status: 'open' | 'closing' | 'closed';
+        closed_at?: string | null;
       }[];
     }>
   > => {

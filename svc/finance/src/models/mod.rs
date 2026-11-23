@@ -495,6 +495,24 @@ pub enum PeriodStatus {
 }
 
 impl PeriodStatus {
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            PeriodStatus::Open => "open",
+            PeriodStatus::Closing => "closing",
+            PeriodStatus::Closed => "closed",
+        }
+    }
+
+    /// 严格解析外部传入的期间状态；未知值返回 None，避免把非法值透传到数据库枚举列。
+    pub fn from_db_str(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "open" => Some(PeriodStatus::Open),
+            "closing" => Some(PeriodStatus::Closing),
+            "closed" => Some(PeriodStatus::Closed),
+            _ => None,
+        }
+    }
+
     pub fn can_post(&self) -> bool {
         matches!(self, PeriodStatus::Open)
     }
@@ -1908,6 +1926,26 @@ mod tests {
             let deserialized: PeriodStatus = serde_json::from_str(&json).unwrap();
             assert_eq!(v, &deserialized);
         }
+    }
+
+    #[test]
+    fn test_period_status_db_codec_rejects_unknown() {
+        assert_eq!(PeriodStatus::Open.as_db_str(), "open");
+        assert_eq!(PeriodStatus::Closing.as_db_str(), "closing");
+        assert_eq!(PeriodStatus::Closed.as_db_str(), "closed");
+
+        assert_eq!(
+            PeriodStatus::from_db_str(" OPEN "),
+            Some(PeriodStatus::Open)
+        );
+        assert_eq!(
+            PeriodStatus::from_db_str("closed"),
+            Some(PeriodStatus::Closed)
+        );
+        // 旧 list_periods 伪造的 locked 以及任意未知值都必须被拒绝。
+        assert_eq!(PeriodStatus::from_db_str("locked"), None);
+        assert_eq!(PeriodStatus::from_db_str("bogus"), None);
+        assert_eq!(PeriodStatus::from_db_str(""), None);
     }
 
     #[test]

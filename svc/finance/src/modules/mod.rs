@@ -5116,32 +5116,86 @@ pub async fn get_current_period(
 }
 
 pub async fn list_periods(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<PeriodListQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let now = Utc::now();
     let year = params.year.unwrap_or(now.year());
-    let mut items: Vec<serde_json::Value> = Vec::new();
-    for month in 1..=12u32 {
-        let period_str = format!("{:04}-{:02}", year, month);
-        let status = if month < now.month() {
-            "closed"
-        } else if month == now.month() {
-            "open"
-        } else {
-            "locked"
-        };
-        items.push(serde_json::json!({
-            "period": period_str,
-            "year": year,
-            "month": month,
-            "start_date": format!("{:04}-{:02}-01", year, month),
-            "end_date": format!("{:04}-{:02}-30", year, month),
-            "status": status,
-        }));
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match PeriodStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("status 仅支持 open / closing / closed"),
+        },
+    };
+
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => {
+            return crate::shared::err_resp(TopemsError::DatabaseTransaction(
+                "请求事务缺失".to_string(),
+            ))
+        }
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    // 以前这里完全不查库，按“当前月份”推导 open/closed/locked，
+    // 既会伪造未开账期间的 closed 状态，又返回了枚举中不存在的 locked。
+    // 现在直接读取真实期间表，状态和起止日期都以库内记录为准。
+    let rows = sqlx::query_as::<
+        _,
+        (
+            String,
+            i32,
+            i32,
+            PeriodStatus,
+            DateTime<Utc>,
+            DateTime<Utc>,
+            Option<DateTime<Utc>>,
+        ),
+    >(only_own_schema_query!(
+        "finance",
+        "SELECT period_name, year, month, status, start_date, end_date, closed_at \
+             FROM finance.core_finance_periods \
+             WHERE tenant_id = $1 AND year = $2 AND deleted_at IS NULL \
+               AND ($3::text IS NULL OR status::text = $3) \
+             ORDER BY month"
+    ))
+    .bind(tenant_id)
+    .bind(year)
+    .bind(status_filter.map(|s| s.as_db_str()))
+    .fetch_all(&mut scope)
+    .await;
+
+    match rows {
+        Ok(rows) => {
+            let items: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(
+                    |(period_name, year, month, status, start_date, end_date, closed_at)| {
+                        serde_json::json!({
+                            "period": period_name,
+                            "year": year,
+                            "month": month,
+                            "start_date": start_date,
+                            "end_date": end_date,
+                            "status": status.as_db_str(),
+                            "closed_at": closed_at,
+                        })
+                    },
+                )
+                .collect();
+            ApiResponse::success(serde_json::json!({"items": items}), "查询成功")
+        }
+        Err(e) => crate::shared::err_resp(e),
     }
-    ApiResponse::success(serde_json::json!({"items": items}), "查询成功")
 }
 
 #[utoipa::path(
@@ -5152,6 +5206,8 @@ pub async fn list_periods(
     request_body = PeriodActionRequest,
     responses(
         (status = 200, description = "开启会计期间成功", body = ApiResponse<serde_json::Value>),
+        (status = 400, description = "period 或状态非法"),
+        (status = 409, description = "期间正在结账，不能直接重开"),
         (status = 500, description = "服务器内部错误"),
     ),
 )]
@@ -5182,23 +5238,98 @@ pub async fn open_period_v2(
         return ApiResponse::bad_request("period 格式应为 YYYYMM（兼容 YYYY-MM）");
     };
     let period_name = format!("{:04}{:02}", year, month);
-    let start_date = format!("{:04}-{:02}-01", year, month);
-    let end_date = format!("{:04}-{:02}-28", year, month);
-    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, created_at, updated_at) VALUES ($1, $2, $3, $4, 'open', $5::timestamp, $6::timestamp, NOW(), NOW()) ON CONFLICT (tenant_id, year, month) DO UPDATE SET status = 'open', updated_at = NOW()"))
-        .bind(tenant_id)
-        .bind(year)
-        .bind(month)
-        .bind(&period_name)
-        .bind(&start_date)
-        .bind(&end_date)
-        .execute(&mut scope)
-        .await;
-    match res {
-        Ok(_) => ApiResponse::success(
+    let month_u32 = match u32::try_from(month) {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("period 年月非法"),
+    };
+    let start = match chrono::NaiveDate::from_ymd_opt(year, month_u32, 1) {
+        Some(d) => d,
+        None => return ApiResponse::bad_request("period 年月非法"),
+    };
+    let next_month = if month_u32 == 12 {
+        chrono::NaiveDate::from_ymd_opt(year + 1, 1, 1)
+    } else {
+        chrono::NaiveDate::from_ymd_opt(year, month_u32 + 1, 1)
+    };
+    let Some(next_month) = next_month else {
+        return ApiResponse::bad_request("period 年月非法");
+    };
+    let end = next_month - chrono::Duration::days(1);
+    let start_date = start.format("%Y-%m-%d").to_string();
+    let end_date = end.format("%Y-%m-%d").to_string();
+
+    // 开启前先读真实状态：open 幂等；closed 允许重开并清空关闭痕迹；
+    // closing 正在结账，禁止直接改回 open。旧实现无条件 UPDATE status='open'，
+    // 会把任何已关闭期间静默重开。
+    let current = sqlx::query_scalar::<_, PeriodStatus>(only_own_schema_query!(
+        "finance",
+        "SELECT status FROM finance.core_finance_periods \
+             WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"
+    ))
+    .bind(tenant_id)
+    .bind(year)
+    .bind(month)
+    .fetch_optional(&mut scope)
+    .await;
+
+    let current = match current {
+        Ok(v) => v,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+
+    match current {
+        None => {
+            let res = sqlx::query(only_own_schema_query!(
+                "finance",
+                "INSERT INTO finance.core_finance_periods \
+                 (tenant_id, year, month, period_name, status, start_date, end_date, created_at, updated_at) \
+                 VALUES ($1, $2, $3, $4, $5, $6::timestamp, $7::timestamp, NOW(), NOW())"
+            ))
+            .bind(tenant_id)
+            .bind(year)
+            .bind(month)
+            .bind(&period_name)
+            .bind(PeriodStatus::Open)
+            .bind(&start_date)
+            .bind(&end_date)
+            .execute(&mut scope)
+            .await;
+            match res {
+                Ok(_) => ApiResponse::success(
+                    serde_json::json!({"period": period_name, "status": "open"}),
+                    "开启成功",
+                ),
+                Err(e) => crate::shared::err_resp(e),
+            }
+        }
+        Some(PeriodStatus::Open) => ApiResponse::success(
             serde_json::json!({"period": period_name, "status": "open"}),
-            "开启成功",
+            "期间已处于开启状态",
         ),
-        Err(e) => crate::shared::err_resp(e),
+        Some(PeriodStatus::Closing) => {
+            ApiResponse::conflict("期间正在结账（closing），不能直接重开；请先完成或撤销结账流程")
+        }
+        Some(PeriodStatus::Closed) => {
+            let res = sqlx::query(only_own_schema_query!(
+                "finance",
+                "UPDATE finance.core_finance_periods \
+                 SET status = $4, closed_at = NULL, closed_by = NULL, updated_at = NOW() \
+                 WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"
+            ))
+            .bind(tenant_id)
+            .bind(year)
+            .bind(month)
+            .bind(PeriodStatus::Open)
+            .execute(&mut scope)
+            .await;
+            match res {
+                Ok(_) => ApiResponse::success(
+                    serde_json::json!({"period": period_name, "status": "open"}),
+                    "期间已重开",
+                ),
+                Err(e) => crate::shared::err_resp(e),
+            }
+        }
     }
 }
 
@@ -5229,12 +5360,46 @@ pub async fn close_period_v2(
         return ApiResponse::bad_request("period 格式应为 YYYYMM（兼容 YYYY-MM）");
     };
     let period_name = format!("{:04}{:02}", year, month);
-    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND year = $2 AND month = $3"))
-        .bind(tenant_id)
-        .bind(year)
-        .bind(month)
-        .execute(&mut scope)
-        .await;
+
+    let current = sqlx::query_scalar::<_, PeriodStatus>(only_own_schema_query!(
+        "finance",
+        "SELECT status FROM finance.core_finance_periods \
+             WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"
+    ))
+    .bind(tenant_id)
+    .bind(year)
+    .bind(month)
+    .fetch_optional(&mut scope)
+    .await;
+    let current = match current {
+        Ok(v) => v,
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    match current {
+        None => return ApiResponse::not_found("会计期间不存在"),
+        // 已关闭期间重复关闭按幂等成功处理，避免前端重试产生虚假失败。
+        Some(PeriodStatus::Closed) => {
+            return ApiResponse::success(
+                serde_json::json!({"period": period_name, "status": "closed"}),
+                "期间已处于关闭状态",
+            )
+        }
+        Some(PeriodStatus::Open | PeriodStatus::Closing) => {}
+    }
+
+    let res = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.core_finance_periods \
+         SET status = $4, closed_at = COALESCE(closed_at, NOW()), closed_by = COALESCE(closed_by, $5), updated_at = NOW() \
+         WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"
+    ))
+    .bind(tenant_id)
+    .bind(year)
+    .bind(month)
+    .bind(PeriodStatus::Closed)
+    .bind(&claims.username)
+    .execute(&mut scope)
+    .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
