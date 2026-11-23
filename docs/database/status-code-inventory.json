@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 378,
+    "db_check_constraints": 379,
     "db_enum_types": 5,
     "db_check_values": 168,
-    "rust_enums": 261,
+    "rust_enums": 262,
     "rust_enum_values": 221,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 230,
@@ -914,6 +914,31 @@
         "assessed",
         "controlled",
         "identified"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/safety_hazard_status.rs",
+      "name": "SafetyHazardStatus",
+      "values": [
+        "Closed",
+        "PendingApproval",
+        "PendingVerification",
+        "Rectifying",
+        "Rejected",
+        "Reported",
+        "Resolved",
+        "Verified"
+      ],
+      "normalized": [
+        "closed",
+        "pending_approval",
+        "pending_verification",
+        "rectifying",
+        "rejected",
+        "reported",
+        "resolved",
+        "verified"
       ]
     },
     {

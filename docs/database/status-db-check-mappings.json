@@ -1569,6 +1569,13 @@
       "table": "scm.incoming_notices",
       "column": "status",
       "candidate": "docs/database/incoming-notice-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/safety_hazard_status.rs",
+      "enum": "SafetyHazardStatus",
+      "table": "ehs.safety_hazards",
+      "column": "status",
+      "candidate": "docs/database/safety-hazard-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -805,6 +805,25 @@
     },
     {
       "schema": "ehs",
+      "table": "safety_hazards",
+      "constraint": "ck_ehs_safety_hazards_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "pending_approval",
+        "pending_verification",
+        "rectifying",
+        "rejected",
+        "reported",
+        "resolved",
+        "verified"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['reported'::character varying, 'pending_approval'::character varying, 'rectifying'::character varying, 'pending_verification'::character varying, 'verified'::character varying, 'closed'::character varying, 'rejected'::character varying, 'resolved'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "ehs",
       "table": "training_programs",
       "constraint": "ck_training_programs_status_standard",
       "columns": [
@@ -6013,15 +6032,6 @@
     {
       "schema": "ehs",
       "table": "safety_checks",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "ehs",
-      "table": "safety_hazards",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",

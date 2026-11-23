@@ -24,6 +24,7 @@ pub mod risk;
 pub mod risk_control_status;
 pub mod risk_status;
 pub mod safety;
+pub mod safety_hazard_status;
 pub mod training;
 pub mod training_status;
 pub mod treatment_status;

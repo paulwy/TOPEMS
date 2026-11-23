@@ -19,6 +19,7 @@ use uuid::Uuid;
 
 use crate::modules::hazard_status::HazardStatus;
 use crate::modules::rectification_status::RectificationStatus;
+use crate::modules::safety_hazard_status::SafetyHazardStatus;
 use crate::shared::permission::{dual_scope, open_read_scope, open_write_scope};
 use crate::shared::AppState;
 use topems_shared_service_client::service_client::CreateInstanceRequest;
@@ -1687,13 +1688,21 @@ pub async fn list_safety_hazards(
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let status_filter = match q.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SafetyHazardStatus::from_db_str(raw) {
+            Some(value) => Some(value.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的隐患状态"),
+        },
+    };
+
     // 租户通道显式绑定 tenant_id；系统通道（超管跨租户）SQL 里显式不含任何 tenant_id 谓词。
     let query = match tenant_scope.tenant_id() {
         Some(tenant) => {
             let mut params: Vec<String> = Vec::new();
             let mut where_clause =
                 String::from(" WHERE tenant_id = $1::uuid AND deleted_at IS NULL");
-            if let Some(s) = &q.status {
+            if let Some(s) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 2));
                 params.push(s.clone());
             }
@@ -1734,7 +1743,7 @@ pub async fn list_safety_hazards(
         None => {
             let mut params: Vec<String> = Vec::new();
             let mut where_clause = String::from(" WHERE deleted_at IS NULL");
-            if let Some(s) = &q.status {
+            if let Some(s) = &status_filter {
                 where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
                 params.push(s.clone());
             }
@@ -1820,7 +1829,13 @@ pub async fn create_safety_hazard(
         .control_measures
         .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
         .unwrap_or_else(|| serde_json::json!([]));
-    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
+    let status = match req.status.as_deref() {
+        None | Some("") | Some("all") => SafetyHazardStatus::DEFAULT.as_db_str().to_string(),
+        Some(raw) => match SafetyHazardStatus::from_db_str(raw) {
+            Some(value) => value.as_db_str().to_string(),
+            None => return ApiResponse::bad_request("无效的隐患状态"),
+        },
+    };
 
     let sql = r#"
         INSERT INTO ehs.safety_hazards
@@ -2009,6 +2024,13 @@ pub async fn update_safety_hazard(
     };
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
+    let status_bind = match req.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SafetyHazardStatus::from_db_str(raw) {
+            Some(value) => Some(value.as_db_str().to_string()),
+            None => return ApiResponse::bad_request("无效的隐患状态"),
+        },
+    };
     if let Some(v) = req.name {
         sets.push(format!("name = ${}", params.len() + 1));
         params.push(v);
@@ -2037,7 +2059,7 @@ pub async fn update_safety_hazard(
         sets.push(format!("control_measures = ${}", params.len() + 1));
         params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
     }
-    if let Some(v) = req.status {
+    if let Some(v) = status_bind {
         sets.push(format!("status = ${}", params.len() + 1));
         params.push(v);
     }
@@ -2210,7 +2232,10 @@ fn safety_hazard_from_row(r: &sqlx::postgres::PgRow) -> SafetyHazard {
         location: r.try_get("location").ok().flatten(),
         risk_assessment: r.try_get("risk_assessment").ok().flatten(),
         control_measures,
-        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+        status: SafetyHazardStatus::normalize(
+            &r.try_get::<String, _>("status").unwrap_or_default(),
+        )
+        .to_string(),
         severity: r.try_get("severity").ok().flatten(),
         exposure: r.try_get("exposure").ok().flatten(),
         likelihood: r.try_get("likelihood").ok().flatten(),
