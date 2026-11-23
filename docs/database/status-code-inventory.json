@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 408,
+    "db_check_constraints": 410,
     "db_enum_types": 5,
     "db_check_values": 184,
-    "rust_enums": 286,
+    "rust_enums": 287,
     "rust_enum_values": 236,
     "rust_values_not_in_db_check": 57,
     "frontend_status_keys": 245,
@@ -1874,6 +1874,31 @@
       "normalized": [
         "completed",
         "pending"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/payment_workflow_status.rs",
+      "name": "PaymentWorkflowStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "Error",
+        "Pending",
+        "Rejected",
+        "Running",
+        "Suspended"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "completed",
+        "error",
+        "pending",
+        "rejected",
+        "running",
+        "suspended"
       ]
     },
     {

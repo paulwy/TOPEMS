@@ -18,6 +18,7 @@ pub mod forecast_v53;
 pub mod forecasting;
 pub mod operational;
 pub mod payment_item_write_off_status;
+pub mod payment_workflow_status;
 pub mod receivable_payable_status;
 pub mod reconcile_orders;
 pub mod reconcile_status;

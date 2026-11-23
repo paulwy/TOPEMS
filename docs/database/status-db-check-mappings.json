@@ -1779,6 +1779,20 @@
       "table": "finance.difference_adjustments",
       "column": "status",
       "candidate": "docs/database/finance-difference-adjustment-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/payment_workflow_status.rs",
+      "enum": "PaymentWorkflowStatus",
+      "table": "finance.core_finance_payment_workflow",
+      "column": "status",
+      "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/payment_item_write_off_status.rs",
+      "enum": "PaymentItemWriteOffStatus",
+      "table": "finance.core_finance_payment_items",
+      "column": "write_off_status",
+      "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

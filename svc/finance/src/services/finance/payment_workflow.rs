@@ -121,7 +121,10 @@ impl FinanceService {
                     .bind(instance.id)
                     .bind(submitted_by)
                     .bind(1)
-                    .bind("pending")
+                    .bind(
+                        crate::modules::payment_workflow_status::PaymentWorkflowStatus::DEFAULT
+                            .as_str(),
+                    )
                     .execute(&mut scope)
                     .await?;
                     scope.commit().await?;
@@ -320,7 +323,20 @@ impl FinanceService {
                         instance.current_node_id.as_deref().unwrap_or("None")
                     );
 
-                    if instance.status == "approved" {
+                    let workflow_status =
+                        crate::modules::payment_workflow_status::PaymentWorkflowStatus::from_db_str(
+                            &instance.status,
+                        )
+                        .ok_or_else(|| {
+                            TopemsError::ValidationFailed(format!(
+                                "工作流实例状态非法: {}",
+                                instance.status
+                            ))
+                        })?;
+
+                    if workflow_status
+                        == crate::modules::payment_workflow_status::PaymentWorkflowStatus::Approved
+                    {
                         tracing::info!(
                             "工作流审批完全通过, instance_id={}, payment_id={}",
                             instance.id,
@@ -336,13 +352,13 @@ impl FinanceService {
                         );
                     }
 
-                    let instance_status = instance.status;
+                    let instance_status = workflow_status.as_str();
                     let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
                         only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
                     .bind(approved_by)
-                    .bind(instance_status.clone())
+                    .bind(instance_status)
                     .bind(tenant_id)
                     .bind(payment_id)
                     .execute(&mut scope)
@@ -532,13 +548,24 @@ impl FinanceService {
                         instance.status
                     );
 
-                    let instance_status = instance.status;
+                    let workflow_status =
+                        crate::modules::payment_workflow_status::PaymentWorkflowStatus::from_db_str(
+                            &instance.status,
+                        )
+                        .ok_or_else(|| {
+                            TopemsError::ValidationFailed(format!(
+                                "工作流实例状态非法: {}",
+                                instance.status
+                            ))
+                        })?;
+
+                    let instance_status = workflow_status.as_str();
                     let mut scope = self.write_scope(txn).await?;
                     sqlx::query(
                         only_own_schema_query!("finance", "UPDATE finance.core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4"),
                     )
                     .bind(rejected_by)
-                    .bind(instance_status.clone())
+                    .bind(instance_status)
                     .bind(tenant_id)
                     .bind(payment_id)
                     .execute(&mut scope)
