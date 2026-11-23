@@ -1625,6 +1625,13 @@
       "table": "erp.meeting_bookings",
       "column": "status",
       "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/office_supply_status.rs",
+      "enum": "OfficeSupplyStatus",
+      "table": "erp.office_supplies",
+      "column": "status",
+      "candidate": "docs/database/office-supply-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

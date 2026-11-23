@@ -1190,6 +1190,21 @@
     },
     {
       "schema": "erp",
+      "table": "office_supplies",
+      "constraint": "ck_erp_office_supplies_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "discontinued",
+        "in_stock",
+        "low_stock",
+        "out_of_stock"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['in_stock'::character varying, 'low_stock'::character varying, 'out_of_stock'::character varying, 'discontinued'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "purchase_orders",
       "constraint": "purchase_orders_status_check",
       "columns": [
@@ -6221,15 +6236,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "office_supplies",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'in_stock'::character varying"
     },
     {
       "schema": "erp",

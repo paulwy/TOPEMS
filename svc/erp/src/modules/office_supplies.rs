@@ -10,6 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::office_supply_status::OfficeSupplyStatus;
 use super::ApiState;
 use crate::models::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -25,6 +26,12 @@ pub struct SupplyQueryParams {
     pub search: Option<String>,
     pub status: Option<String>,
     pub category: Option<String>,
+}
+
+/// 办公用品响应归一：未知历史值回落默认态
+fn normalize_supply(mut supply: OfficeSupply) -> OfficeSupply {
+    supply.status = OfficeSupplyStatus::normalize(&supply.status).to_string();
+    supply
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -60,7 +67,17 @@ pub async fn list_supplies(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> =
+        match OfficeSupplyStatus::parse_filter(params.status.as_deref()) {
+            Ok(Some(status)) => Some(status.as_db_str().to_string()),
+            Ok(None) => None,
+            Err(_) => {
+                return ApiResponse::error(
+                    400,
+                    "status 取值非法，允许 in_stock/low_stock/out_of_stock/discontinued",
+                )
+            }
+        };
     let category_filter = params.category.clone();
 
     let result = sqlx::query_as::<_, OfficeSupply>(only_own_schema_query!(
@@ -103,7 +120,15 @@ pub async fn list_supplies(
             let total = count_result.unwrap_or(0);
 
             ApiResponse::success(
-                PaginatedResponse::new(supplies, total, page, page_size),
+                PaginatedResponse::new(
+                    supplies
+                        .into_iter()
+                        .map(normalize_supply)
+                        .collect::<Vec<_>>(),
+                    total,
+                    page,
+                    page_size,
+                ),
                 "获取办公用品列表成功",
             )
         }
@@ -146,7 +171,7 @@ pub async fn create_supply(
     let result = sqlx::query_as::<_, OfficeSupply>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.office_supplies (id, name, category, quantity, unit, price, location, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'in_stock', $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, name, category, quantity, unit, price, location, status, created_at, updated_at
         "#),
     )
@@ -157,6 +182,7 @@ pub async fn create_supply(
     .bind(&req.unit)
     .bind(req.price)
     .bind(&req.location)
+    .bind(OfficeSupplyStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -171,7 +197,7 @@ pub async fn create_supply(
                 }
             }
             (
-                ApiResponse::success(supply.clone(), "办公用品创建成功"),
+                ApiResponse::success(normalize_supply(supply.clone()), "办公用品创建成功"),
                 "success".to_string(),
                 None,
             )
@@ -249,7 +275,7 @@ pub async fn get_supply(
     .await;
 
     match result {
-        Ok(Some(supply)) => ApiResponse::success(supply, "获取办公用品成功"),
+        Ok(Some(supply)) => ApiResponse::success(normalize_supply(supply), "获取办公用品成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("办公用品不存在".to_string())),
         Err(e) => {
             tracing::error!("获取办公用品失败: {}", e);
@@ -307,7 +333,18 @@ pub async fn update_supply(
     let unit = req.unit.or(existing.unit);
     let price = req.price.or(existing.price);
     let location = req.location.or(existing.location);
-    let status = req.status.unwrap_or(existing.status);
+    let status: String = match req.status.as_deref() {
+        None => existing.status,
+        Some(raw) => match OfficeSupplyStatus::from_db_str(raw) {
+            Some(status) => status.as_db_str().to_string(),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "status 取值非法，允许 in_stock/low_stock/out_of_stock/discontinued"
+                        .to_string(),
+                ))
+            }
+        },
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, OfficeSupply>(
@@ -339,7 +376,7 @@ pub async fn update_supply(
                 }
             }
             (
-                ApiResponse::success(supply.clone(), "办公用品更新成功"),
+                ApiResponse::success(normalize_supply(supply.clone()), "办公用品更新成功"),
                 "success".to_string(),
                 None,
             )

@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 386,
+    "db_check_constraints": 387,
     "db_enum_types": 5,
-    "db_check_values": 170,
-    "rust_enums": 269,
-    "rust_enum_values": 223,
+    "db_check_values": 173,
+    "rust_enums": 270,
+    "rust_enum_values": 226,
     "rust_values_not_in_db_check": 58,
-    "frontend_status_keys": 232,
+    "frontend_status_keys": 235,
     "frontend_keys_not_in_db_check": 67,
     "rust_values_not_in_palette": 0
   },
@@ -1314,6 +1314,23 @@
         "maintenance",
         "occupied",
         "unavailable"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/office_supply_status.rs",
+      "name": "OfficeSupplyStatus",
+      "values": [
+        "Discontinued",
+        "InStock",
+        "LowStock",
+        "OutOfStock"
+      ],
+      "normalized": [
+        "discontinued",
+        "in_stock",
+        "low_stock",
+        "out_of_stock"
       ]
     },
     {
@@ -4814,6 +4831,7 @@
       "destroyed",
       "diff",
       "disabled",
+      "discontinued",
       "discovering",
       "discrepancy",
       "dismissed",
@@ -4868,6 +4886,7 @@
       "linked",
       "locked",
       "lost",
+      "low_stock",
       "maintenance",
       "manual",
       "matched",
@@ -4889,6 +4908,7 @@
       "open",
       "opened",
       "other",
+      "out_of_stock",
       "out_stock",
       "overdue",
       "packing",
