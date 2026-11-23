@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 366,
+    "db_check_constraints": 367,
     "db_enum_types": 5,
-    "db_check_values": 161,
-    "rust_enums": 249,
-    "rust_enum_values": 215,
+    "db_check_values": 163,
+    "rust_enums": 250,
+    "rust_enum_values": 217,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 225,
+    "frontend_status_keys": 227,
     "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
@@ -2618,6 +2618,21 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/quality_management/patrol_item_status.rs",
+      "name": "QualityPatrolItemStatus",
+      "values": [
+        "Fail",
+        "Pass",
+        "Pending"
+      ],
+      "normalized": [
+        "fail",
+        "pass",
+        "pending"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/quality_management/patrol_status.rs",
       "name": "QualityPatrolStatus",
       "values": [
@@ -4516,6 +4531,7 @@
       "executed",
       "executing",
       "expired",
+      "fail",
       "failed",
       "failure",
       "false_positive",
@@ -4578,6 +4594,7 @@
       "partially_compliant",
       "partially_failed",
       "partially_settled",
+      "pass",
       "passed",
       "paused",
       "pending",

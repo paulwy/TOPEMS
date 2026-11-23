@@ -6,6 +6,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::quality_management::patrol_item_status::QualityPatrolItemStatus;
 use crate::modules::quality_management::patrol_status::QualityPatrolStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -221,7 +222,7 @@ pub async fn list_patrols(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "pending".to_string()),
+                .unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             findings: r.try_get::<Option<String>, _>("findings").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
@@ -759,9 +760,9 @@ pub async fn list_patrol_items(
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value,
-                    status: r
-                        .status
-                        .unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
+                    status: r.status.unwrap_or_else(|| {
+                        QualityPatrolItemStatus::DEFAULT.as_db_str().to_string()
+                    }),
                     remark: r.remark,
                 })
                 .collect();
@@ -822,7 +823,13 @@ pub async fn add_patrol_item(
         body.item_name,
         body.standard,
         body.actual_value.as_deref(),
-        body.status.clone().unwrap_or_else(|| "pending".to_string()),
+        match body.status.as_deref() {
+            None => QualityPatrolItemStatus::DEFAULT.as_db_str(),
+            Some(raw) => match QualityPatrolItemStatus::from_db_str(raw) {
+                Some(status) => status.as_db_str(),
+                None => return ApiResponse::bad_request("无效的巡检项目状态"),
+            },
+        },
         body.remark,
         tenant_id,
     )
@@ -837,7 +844,9 @@ pub async fn add_patrol_item(
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value,
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| QualityPatrolItemStatus::DEFAULT.as_db_str().to_string()),
                 remark: r.remark,
             },
             "添加巡检项目成功",
@@ -914,6 +923,14 @@ pub async fn update_patrol_item(
     };
 
     let tenant_id = get_tenant_id(&claims);
+    let status = match body.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match QualityPatrolItemStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的巡检项目状态"),
+        },
+    };
     let result = sqlx::query_as::<_, PatrolItemUpdateRow>(
         r#"
         UPDATE mes.quality_patrol_items
@@ -930,7 +947,7 @@ pub async fn update_patrol_item(
     .bind(body.item_name)
     .bind(body.standard)
     .bind(body.actual_value.as_deref())
-    .bind(body.status)
+    .bind(status.map(QualityPatrolItemStatus::as_db_str))
     .bind(body.remark)
     .bind(uuid)
     .bind(tenant_id)
@@ -945,7 +962,9 @@ pub async fn update_patrol_item(
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value,
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| QualityPatrolItemStatus::DEFAULT.as_db_str().to_string()),
                 remark: r.remark,
             },
             "更新巡检项目成功",

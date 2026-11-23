@@ -33,6 +33,8 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   rejected: 'error',
   unqualified: 'error',
   qualified: 'success',
+  pass: 'success',
+  fail: 'error',
   pending: 'warning',
   completed: 'success',
   cancelled: 'error',

@@ -2951,6 +2951,20 @@
     },
     {
       "schema": "mes",
+      "table": "quality_patrol_items",
+      "constraint": "ck_mes_quality_patrol_items_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "fail",
+        "pass",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'pass'::text, 'fail'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "quality_patrols",
       "constraint": "ck_mes_quality_patrols_status_standard",
       "columns": [
@@ -6957,15 +6971,6 @@
       "table": "financial_records",
       "column": "status",
       "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "quality_patrol_items",
-      "column": "status",
-      "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"

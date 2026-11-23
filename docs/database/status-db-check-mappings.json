@@ -1485,6 +1485,13 @@
       "table": "mes.quality_patrols",
       "column": "status",
       "candidate": "docs/database/quality-patrol-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/patrol_item_status.rs",
+      "enum": "QualityPatrolItemStatus",
+      "table": "mes.quality_patrol_items",
+      "column": "status",
+      "candidate": "docs/database/quality-patrol-item-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
