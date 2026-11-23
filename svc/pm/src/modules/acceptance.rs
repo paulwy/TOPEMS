@@ -17,6 +17,7 @@ use crate::models::acceptance::{
     CreateAcceptancePlanRequest, CreateAcceptanceRecordRequest, UpdateAcceptanceItemRequest,
     UpdateAcceptancePlanRequest, UpdateAcceptanceRecordRequest,
 };
+use crate::modules::acceptance_plan_status::AcceptancePlanStatus;
 use crate::modules::acceptance_record_status::AcceptanceRecordStatus;
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
@@ -174,7 +175,7 @@ async fn create_plan(
 
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "INSERT INTO pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14, $15) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -185,6 +186,7 @@ async fn create_plan(
     .bind(req.phase_id)
     .bind(req.acceptance_criteria)
     .bind(parse_date_opt(&req.expected_date))
+    .bind(AcceptancePlanStatus::DEFAULT.as_db_str())
     .bind(req.participants)
     .bind(req.documents_required)
     .bind(req.created_by)
@@ -253,6 +255,36 @@ async fn update_plan(
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "pm",
+        "SELECT status FROM pm.acceptance_plans WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("验收计划不存在"),
+        Err(e) => {
+            tracing::error!("查询验收计划状态失败: {}", e);
+            return ApiResponse::server_error("更新验收计划失败");
+        }
+    };
+    let current_status = match AcceptancePlanStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("存量的验收计划状态非法，请先修正数据"),
+    };
+    if current_status.is_terminal() {
+        return ApiResponse::conflict("已结束的验收计划不允许修改");
+    }
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match AcceptancePlanStatus::from_db_str(raw) {
+            Some(next) if next.can_transition_from(&current) => Some(next.as_db_str().to_string()),
+            Some(_) => return ApiResponse::bad_request("当前验收计划状态不允许该流转"),
+            None => return ApiResponse::bad_request("无效的验收计划状态"),
+        },
+    };
     let plan = sqlx::query_as::<_, AcceptancePlan>(only_own_schema_query!(
         "pm",
         "UPDATE pm.acceptance_plans SET
@@ -270,7 +302,7 @@ async fn update_plan(
     .bind(req.acceptance_type)
     .bind(req.acceptance_criteria)
     .bind(parse_date_opt(&req.expected_date))
-    .bind(req.status)
+    .bind(status)
     .bind(req.participants)
     .bind(req.documents_required)
     .bind(Utc::now())

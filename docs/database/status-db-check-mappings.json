@@ -1989,6 +1989,13 @@
       "table": "qms.qa_audit_plans",
       "column": "status",
       "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/acceptance_plan_status.rs",
+      "enum": "AcceptancePlanStatus",
+      "table": "pm.acceptance_plans",
+      "column": "status",
+      "candidate": "docs/database/pm-acceptance-plan-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

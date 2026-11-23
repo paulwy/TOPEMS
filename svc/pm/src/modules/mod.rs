@@ -1,4 +1,5 @@
 pub mod acceptance;
+pub mod acceptance_plan_status;
 pub mod acceptance_record_status;
 pub mod analytics;
 pub mod budget;

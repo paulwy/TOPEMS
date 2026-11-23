@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 307,
+    "rust_enums": 308,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -3479,6 +3479,23 @@
         "paused",
         "pending_approval",
         "rejected"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/acceptance_plan_status.rs",
+      "name": "AcceptancePlanStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
       ]
     },
     {
