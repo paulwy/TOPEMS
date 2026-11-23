@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 412,
+  "total": 413,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -19,7 +19,7 @@
     "finance": 40,
     "flow": 7,
     "gis": 10,
-    "hrm": 23,
+    "hrm": 24,
     "iam": 6,
     "integration": 5,
     "lims": 9,
@@ -124,7 +124,8 @@
     "B241": 1,
     "B242": 1,
     "B243": 1,
-    "B244": 1
+    "B244": 1,
+    "B245": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8702,6 +8703,27 @@
       "source_commit": "afc9469b2",
       "source_subject": "B244: hrm.training_records.attendance_status 收敛到 TrainingAttendanceStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
+    },
+    {
+      "schema": "hrm",
+      "table": "training_plans",
+      "constraint": "ck_training_plans_status_lifecycle_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "completed",
+        "inactive"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'completed'::text, 'archived'::text])))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B245",
+      "source_commit": "PENDING",
+      "source_subject": "B245: hrm.training_plans.status 收敛到 TrainingPlanStatus 生命周期枚举",
+      "note": "替换既有 ck_training_plans_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；当前参考库仅存旧约束"
     }
   ]
 }

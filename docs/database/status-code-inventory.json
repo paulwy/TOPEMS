@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 310,
+    "rust_enums": 311,
     "rust_enum_values": 240,
     "rust_values_not_in_db_check": 193,
     "frontend_status_keys": 249,
@@ -2426,6 +2426,23 @@
         "completed",
         "failed",
         "in_progress"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/training_plan_status.rs",
+      "name": "TrainingPlanStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Completed",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "completed",
+        "inactive"
       ]
     },
     {

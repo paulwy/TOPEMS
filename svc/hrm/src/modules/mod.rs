@@ -45,6 +45,7 @@ pub mod training;
 pub mod training_attendance_status;
 
 pub mod training_completion_status;
+pub mod training_plan_status;
 
 #[derive(Clone)]
 pub struct ApiState {

@@ -17,6 +17,7 @@ use crate::models::{
 };
 use crate::modules::training_attendance_status::TrainingAttendanceStatus;
 use crate::modules::training_completion_status::TrainingCompletionStatus;
+use crate::modules::training_plan_status::TrainingPlanStatus;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -78,7 +79,13 @@ pub async fn list_plans(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match TrainingPlanStatus::parse_filter(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的培训计划状态"),
+        },
+    };
 
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
@@ -90,7 +97,7 @@ pub async fn list_plans(
         LIMIT $2 OFFSET $3
         "#),
     )
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -105,7 +112,7 @@ pub async fn list_plans(
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1)
                 "#
             ))
-            .bind(&status_filter)
+            .bind(status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -154,7 +161,7 @@ pub async fn create_plan(
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.training_plans (id, name, code, description, start_date, end_date, budget, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         "#),
     )
@@ -165,6 +172,7 @@ pub async fn create_plan(
     .bind(req.start_date)
     .bind(req.end_date)
     .bind(req.budget)
+    .bind(TrainingPlanStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(claims_tenant)
@@ -252,7 +260,7 @@ pub async fn get_plan(
 }
 
 pub async fn update_plan(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateTrainingPlanRequest>,
@@ -260,6 +268,44 @@ pub async fn update_plan(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match TrainingPlanStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的培训计划状态"),
+        },
+    };
+    if let Some(target) = requested_status {
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("打开培训计划读作用域失败: {}", e);
+                return ApiResponse::server_error("培训计划更新失败");
+            }
+        };
+        let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT status FROM hrm.training_plans WHERE deleted_at IS NULL AND id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("读取培训计划状态失败: {}", e);
+                return ApiResponse::server_error("培训计划更新失败");
+            }
+        };
+        let Some(current) = current else {
+            return ApiResponse::not_found("培训计划不存在");
+        };
+        if !target.can_transition_from(&current) {
+            return ApiResponse::bad_request("培训计划状态不允许从当前状态流转");
+        }
+        drop(scope);
+    }
 
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
@@ -282,7 +328,7 @@ pub async fn update_plan(
     .bind(&req.description)
     .bind(req.start_date)
     .bind(req.end_date)
-    .bind(&req.status)
+    .bind(requested_status.map(|s| s.as_db_str()))
     .bind(req.budget)
     .bind(now)
     .fetch_optional(&mut **txn)
@@ -1206,15 +1252,44 @@ pub struct RecordPaginationParams {
 // ============================================================================
 
 async fn set_plan_status(
-    _state: &ApiState,
+    state: &ApiState,
     txn_arc: &RlsTxnCell,
     id: Uuid,
-    status: &str,
+    status: TrainingPlanStatus,
     message: &str,
 ) -> ApiResponse<TrainingPlan> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开培训计划读作用域失败: {}", e);
+            return ApiResponse::server_error("更新培训计划状态失败");
+        }
+    };
+    let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
+        "hrm",
+        "SELECT status FROM hrm.training_plans WHERE deleted_at IS NULL AND id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("读取培训计划状态失败: {}", e);
+            return ApiResponse::server_error("更新培训计划状态失败");
+        }
+    };
+    let Some(current) = current else {
+        return ApiResponse::not_found("培训计划不存在");
+    };
+    if !status.can_transition_from(&current) {
+        return ApiResponse::bad_request("培训计划状态不允许从当前状态流转");
+    }
+    drop(scope);
 
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
@@ -1226,7 +1301,7 @@ async fn set_plan_status(
         "#),
     )
     .bind(id)
-    .bind(status)
+    .bind(status.as_db_str())
     .bind(now)
     .fetch_optional(&mut **txn)
     .await;
@@ -1247,7 +1322,14 @@ pub async fn activate_plan(
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingPlan> {
-    set_plan_status(&state, &txn_arc, id, "active", "培训计划已启用").await
+    set_plan_status(
+        &state,
+        &txn_arc,
+        id,
+        TrainingPlanStatus::Active,
+        "培训计划已启用",
+    )
+    .await
 }
 
 /// PUT /training-plans/{id}/deactivate —— 停用培训计划
@@ -1256,7 +1338,14 @@ pub async fn deactivate_plan(
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingPlan> {
-    set_plan_status(&state, &txn_arc, id, "inactive", "培训计划已停用").await
+    set_plan_status(
+        &state,
+        &txn_arc,
+        id,
+        TrainingPlanStatus::Inactive,
+        "培训计划已停用",
+    )
+    .await
 }
 
 /// PUT /training-records/{id}/complete —— 标记培训记录完成
