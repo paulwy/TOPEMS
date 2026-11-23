@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 418,
+  "total": 416,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -15,7 +15,7 @@
     "crm": 12,
     "doc_service": 1,
     "ehs": 28,
-    "erp": 33,
+    "erp": 31,
     "finance": 41,
     "flow": 7,
     "gis": 10,
@@ -42,10 +42,10 @@
     "wms": 32
   },
   "by_batch": {
-    "B150": 55,
+    "B150": 54,
     "B152": 18,
     "B154": 1,
-    "B155": 15,
+    "B155": 14,
     "B156": 2,
     "B157": 3,
     "B158": 2,
@@ -1688,26 +1688,6 @@
     },
     {
       "schema": "erp",
-      "table": "purchase_orders",
-      "constraint": "purchase_orders_status_check",
-      "columns": [
-        "status"
-      ],
-      "values": [
-        "approved",
-        "cancelled",
-        "pending"
-      ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'approved'::text, 'cancelled'::text]))) NOT VALID",
-      "convalidated_at_catalog": false,
-      "present_in_baseline_db": false,
-      "source_batch": "B155",
-      "source_commit": "aa974e0af",
-      "source_subject": "B155: 已映射状态候选批量落本地 CHECK",
-      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
-    },
-    {
-      "schema": "erp",
       "table": "receivables",
       "constraint": "ck_erp_receivables_status_standard",
       "columns": [
@@ -1742,29 +1722,6 @@
       "source_batch": "B155",
       "source_commit": "aa974e0af",
       "source_subject": "B155: 已映射状态候选批量落本地 CHECK",
-      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
-    },
-    {
-      "schema": "erp",
-      "table": "sales_orders",
-      "constraint": "sales_orders_status_check",
-      "columns": [
-        "status"
-      ],
-      "values": [
-        "approved",
-        "cancelled",
-        "completed",
-        "draft",
-        "pending",
-        "shipped"
-      ],
-      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'shipped'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID",
-      "convalidated_at_catalog": false,
-      "present_in_baseline_db": false,
-      "source_batch": "B150",
-      "source_commit": "bca1f2aea",
-      "source_subject": "B150 刷新 DB 状态 CHECK 目录并接入 status-catalog 门禁",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     },
     {
@@ -8833,6 +8790,24 @@
       "source_commit": "b0100b92d",
       "source_subject": "B253: RD 关联项目状态收敛",
       "note": "RD 关联项目表由 PM 事件维护，17 行 pending；本约束锁定 pending/in_progress/completed/cancelled"
+    }
+  ],
+  "withdrawn": [
+    {
+      "schema": "erp",
+      "table": "sales_orders",
+      "constraint": "sales_orders_status_check",
+      "disposition": "生产遗留、不回迁",
+      "basis": "与 20261103000002 删除 *_status_standard 的既定口径一致（业务状态机由代码枚举保证）",
+      "evidence_conflict": "本清单原登记为生产 NOT VALID；11-22 canonical 文档称生产快照 0 行且无此 CHECK；需开窗前生产只读复核"
+    },
+    {
+      "schema": "erp",
+      "table": "purchase_orders",
+      "constraint": "purchase_orders_status_check",
+      "disposition": "生产遗留、不回迁",
+      "basis": "与 20261103000002 删除 *_status_standard 的既定口径一致（业务状态机由代码枚举保证）",
+      "evidence_conflict": "本清单原登记为生产 NOT VALID；11-22 canonical 文档称生产快照 0 行且无此 CHECK；需开窗前生产只读复核"
     }
   ]
 }

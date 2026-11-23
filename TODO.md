@@ -798,6 +798,7 @@
 | 判定依据 | 12 个 `--merged origin/main`；9 个 `git cherry` 未合入 = 0；6 个重写前备份（落后 7235 个提交）经业务确认后删除                       | 删前均已打包                                                                         |
 | 仓库体积 | `git gc --prune=now` 后 `.git` 339M → 232M；整仓 5.4G（`node_modules` 1.7G / `releases` 1.6G / `target` 1.4G） | —                                                                              |
 | 密钥扫描 | `gitleaks-full`（CI 口径 `--remotes`）8893 commits / 773MB / 51s，`no leaks found`                            | —                                                                              |
+| 本地归档分支 | `w2d2-local-archive`、`scope-local-archive`：**保留不推**（不入远端、不参与合并，仅作本地追溯）                              | 保留原分支；不打包、不删除                                                              |
 
 ### 7.5 CI 红的唯一原因与发布判据
 

@@ -548,3 +548,50 @@ Rust 分阶段实测（同一工作树，串行；含其它会话构建锁争用
 - 生产零写入；未 push。
 - `ai_faqs` 仓库/现网策略漂移：结论与修法见 §8.5，**不进本窗口**，窗口后独立提交。
 
+## 9. CI skipped job 恢复后验证清单（2026-11-24）
+
+### 9.1 先分清 skip 原因
+
+最近一次 run（`45213586400`）中 `Detect Changes` 成功，Rust / CI / migration / desktop 类 job 被 skip，
+原因是本次推送只含 `docs/**` 与 `apps/web/**`，对应 outputs 为 `false`，**不是运行器未启动**。
+若确认是运行器/额度导致的整批未启动，运行器恢复后按 9.2 强制全量触发。
+
+### 9.2 触发方式
+
+```bash
+# workflow_dispatch 会让 changes 输出全部为 true，跳过路径过滤
+gh workflow run ci.yml --ref main -f skip_rust=false
+gh run list --workflow=ci.yml -L 1
+gh run watch <run-id>
+```
+
+只想复跑失败项时可 `gh run rerun <run-id> --failed`，但它不会重跑被 skip 的 job；被 skip 的必须走
+`workflow_dispatch` 或推一个命中对应路径的提交（`svc/**`/`lib/**` → rust；`.github/**` → ci；
+`database/migrations/**` → migration；`desktop/**` → desktop）。
+
+### 9.3 逐项判据
+
+| job | 本地等价命令 | 通过判据 |
+|---|---|---|
+| 连接治理门禁 | 依次 `node scripts/ci/check-{schema-prefix,search-path,search-path-env,pool-acquire,request-txn,scope-api,runtime-ddl,module-write-parity,real-module-tenant-middleware}.mjs` + `python3 scripts/ci/check-pool-direct-system-scope.py` | 10 条全 exit 0；`check-request-txn` 全局 1651 / ERP 350 不增长；`check-scope-api` 未标记 176 / `Db::new` 144 不增长 |
+| Gate L cargo check | `RUSTFLAGS="-D warnings" SQLX_OFFLINE=true cargo check --workspace --all-targets` | exit 0，零 warning（`-D warnings`） |
+| Rust Lint | `bash scripts/ci/check-swagger-ui-vendor.sh`；`node scripts/ci/check-test-ignore-reason.mjs`；`cargo fmt --check --all`；`cargo clippy --workspace --all-targets -- -D warnings` | 四条全 exit 0，clippy 零告警 |
+| Rust Smoke | `cargo test -p topems-monitor -p topems-ticket -p topems-portal -p topems-integration -p topems-mobile`（按 workflow 展开） | 5 个独立服务测试全 PASS，0 failed |
+| Gate M 配置三向 | `python3 scripts/check-workspace-registry.py --check`；`node scripts/ci/check-config-sources.cjs --check` | 两条 exit 0，registry/config 三向一致 |
+| Cargo Test | `cargo test --workspace --doc` | 全部 doc test PASS，汇总行 `0 failed` |
+| Rust Tests | `./scripts/dev/sqlx-prepare.sh --check`；`cargo nextest run --workspace --test-threads=4` | sqlx 离线缓存无差异；nextest 0 failed；覆盖率报告生成（无硬阈值） |
+| DB integration tests | 对 `topems-shared-auth/crm/scm/wms/mes/erp/finance/unified-core` 逐个 `cargo test -p <crate> --features db-tests` | 8 个 crate 全 exit 0 |
+| Migration Up-Down-Up | `node scripts/check-migration-names.mjs --strict`、`check-migrations.mjs`、`check-directed-migrations.mjs`、`check-destructive-sql.mjs`、`check-baseline-integrity.mjs`、`bash scripts/ci/check-rls-policy-shape.sh`、`bash scripts/migration/validate.sh`、`python3 scripts/audit_permission_codes.py --gate --dsn …`、`node scripts/ci/check-menu-permission-codes.mjs --dsn …` | 静态五项 + validate + 权限/菜单两门全 exit 0；up-down-up 回到同账本、同策略数 |
+| mes online compile | 按 workflow 载入 `fixtures/mes_compile_schema.sql` 后 `bash scripts/mes_guard.sh --db-url "…?options=-csearch_path=mes,public"` | exit 0，mes 编译期 SQL 全部绑定成功 |
+| runtime SQL contract | `python3 scripts/dev/check-runtime-sql-contract.py --all` | 29 个 crate 全 exit 0，无缺表/缺列 |
+| date-type-audit | `python3 scripts/date-type-audit.py` | exit 0，无 date/timestamptz 违约 |
+| schema-defense-drift | `python3 scripts/check-schema-defense-drift.py` | exit 0，TABLE_DEFS 与 inline CREATE 无漂移 |
+| Schema Boundary | `python3 scripts/check_schema_boundary.py`；`node scripts/ci/check-schema-boundary.cjs` | 两条 exit 0，跨 schema 违规 0 |
+| Axum Layer Order | `node scripts/ci/check-axum-layer-order.cjs --fail-fast --thresholds=R1:0,R2:0,R3:999999`；`node scripts/ci/check-group2-services.cjs --strict` | R1=0、R2=0；R3 仅告警不阻断；group2 strict 通过 |
+| environment consistency | workflow 内嵌 python 三向比对（`config/services.yaml` ↔ `config/ports.env` ↔ `.env.example`） | exit 0，端口/服务名零差异 |
+| ShellCheck | `bash scripts/ci/check-shellcheck.sh`；`node scripts/ci/check-prod-migration-entry.mjs`；`node scripts/ci/check-hardcoded-passwords.mjs` | 158 个脚本 0 告警；后两条 exit 0 |
+| Desktop Build | `pnpm install && pnpm --filter @topems/api-client build && pnpm run build`（按 matrix 三平台） | 三平台构建全成功 |
+| Gate · CHANGELOG | 仅 tag 触发 | 非 tag 推送 skip 属预期，不补跑 |
+
+> 本节只定义恢复后的触发与判据，不启动运行器、不改 workflow。
+

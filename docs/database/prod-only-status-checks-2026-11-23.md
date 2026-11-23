@@ -15,7 +15,30 @@
 
 ## 总量
 
-共 **418** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **416** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
+
+## 2026-11-24 订单两表撤登记（方案 B）
+
+- 从 JSON `entries` 删除 `erp.sales_orders.sales_orders_status_check`（原 B150）与
+  `erp.purchase_orders.purchase_orders_status_check`（原 B155），两条移入顶层 `withdrawn` 留证。
+- 处置：**生产遗留、不回迁**。依据：与 `20261103000002_global_remove_misapplied_status_standard_checks.sql`
+  删除 `*_status_standard` 的既定口径一致——业务状态机由代码枚举保证，不再把手工历史 CHECK 收回仓库。
+- `docs/database/status-check-catalog.json` 维持现状（两列仍为 `uncovered`），未重生成；未新增迁移、未改 `database/migrations`、未动基线库。
+- 计数同步：erp 33 → 31，B150 55 → 54，B155 15 → 14，总量 418 → 416。
+
+### 独立待办（不阻塞撤登记）
+
+开窗前用生产只读确认这两条 CHECK 是否真实存在，并记录 `convalidated`：
+
+```sql
+select conname, convalidated, pg_get_constraintdef(oid)
+from pg_constraint
+where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass)
+  and conname in ('sales_orders_status_check','purchase_orders_status_check');
+```
+
+证据冲突：本清单原登记两条为生产 `NOT VALID`；`docs/quality/erp-sales-order-status-canonical-2026-11-22.md`
+的「数据现状」称生产快照 0 行且无此 CHECK。两者只能以生产只读复核为准，复核前不改变本处置。
 
 ### 按 schema
 
@@ -30,7 +53,7 @@
 | `crm` | 12 |
 | `doc_service` | 1 |
 | `ehs` | 28 |
-| `erp` | 33 |
+| `erp` | 31 |
 | `finance` | 41 |
 | `flow` | 7 |
 | `gis` | 10 |
@@ -61,10 +84,10 @@
 | 来源批次 | 条数 |
 |---|---:|
 
-| B150 | 55 |
+| B150 | 54 |
 | B152 | 18 |
 | B154 | 1 |
-| B155 | 15 |
+| B155 | 14 |
 | B156 | 2 |
 | B157 | 3 |
 | B158 | 2 |
@@ -257,3 +280,49 @@
   `ck_budgets_exhausted_requires_depleted_budget`（`exhausted` ⇒ `remaining_amount <= 0`，validated）；
   参考库已复现、目录已收录（33 → 35 条），故按「回迁一条删一条」从本清单移除，移除后读数 418 条。
   B253 的「419」为 B251 移除前口径，不另行改写历史读数。证据 `docs/quality/finance-budget-status-guard-2026-11-24.md`。
+
+## 与 P7 线下策略回迁合并排期（2026-11-24，仅方案，未执行）
+
+### 口径校正
+
+当前 JSON 实际 **416** 条；「391 条」是 11-23 第二轮推送前的读数，之后 B224–B253 继续追加、B251 回迁 1 条，
+2026-11-24 再按方案 B 撤登记订单两表 2 条，故为 416（第二轮口径即 391 → 389）。
+本方案按 416 排；若只按 391 口径执行，差额全部落在 S2/S3/S5 的后增条目，分批骨架不变。
+
+### 分批（按域合并，一次窗口同时做「状态 CHECK 回迁 + 同域宽松策略收紧」）
+
+| 批 | 域 | schema / 条数 | 与 P7 同窗合并 | 特殊动作 |
+|---|---|---|---:|---|
+| S1 | 平台与公共域 | public 42、gis 10、flow 7、portal 7、iam 6、rs 8、analytics 3、core 2、bi 2、communication 2、ai 1、mail 1、shared 1、doc_service 1（**93**） | W7-B 批 6（public 52）、批 2（平台语料） | `flow` 7 条以影子表 DROP 决策为前置；未决则先跳过 flow |
+| S2 | 制造与供应链 | mes 41、wms 32、scm 20、master_data 16、srm 9、tms 4、plugin_mes 1（**123**） | W7-B 批 7（主数据）+ 制造/供应链同域批次 | 无替换型；mes/scm 的「模块统一枚举」12 条优先 |
+| S3 | 财务 / ERP / 集成 / PDM | finance 41、erp 31、integration 5、pdm 9（**86**） | W7-B 批 8（ERP）、批 3（身份/客户同域） | 订单两表已按方案 B 撤登记，不纳入本批；B251 已单独回迁 1 条 |
+| S4 | 项目 / 质量 / 研发 | pm 20、qms 13、lims 9、rd 3（**45**） | W7-B 批 4（质量）、批 2（研发） | `pm.acceptance_records` 为替换型：先 DROP 旧 `ck_acceptance_records_status_standard` 再 ADD |
+| S5 | 人力 / EHS / 移动 / CRM | ehs 28、hrm 24、crm 12、mobile 5（**69**） | W7-B 批 5（人力）、批 3（CRM） | 3 条替换型（`hrm.training_plans`、`ehs` 两张），必须 DROP 旧 + ADD 新同事务 |
+
+执行顺序：**S1 → S2 → S3 → S4 → S5**（无替换/低风险在前，替换型最后）。
+
+### 每批动作（固定四步）
+
+1. **回迁**：新增迁移 `<ts>_backfill_status_checks_batchN.sql`，逐条 `ALTER TABLE ... ADD CONSTRAINT ... CHECK (...) NOT VALID`；替换型在同一事务内先 `DROP CONSTRAINT IF EXISTS <旧名>` 再 ADD。不 `VALIDATE`，不碰存量行。
+2. **基线验证**：在 `topems_status_baseline_verify` 重建/前向应用本批迁移，重生成 `status-check-catalog.json`，跑全量 `--check`；本批条目应从 `uncovered` 转入 `constraints`。
+3. **生产同窗**：与 P7 同域策略脚本在同一窗口 apply；只读核对 `pg_constraint.convalidated=false` 与 `pg_policies` 快照，不写业务明细。
+4. **删除登记**：按「回迁一条删一条」从本 JSON 删除对应条目、同步本文总数与 schema/批次表，再刷新目录。
+
+### 每批前置条件（缺一不批）
+
+- DBA 只读已通、账本 `success=t`、`pg_dump` 备份可读；
+- 目标表存在、状态列类型为 varchar/text（enum 列不套 CHECK）；
+- 生产越界值计数为 0，或业务书面接受「NOT VALID 不校验存量」；
+- 替换型旧约束名已在生产 `pg_constraint` 确认，DROP/ADD 同事务；
+- P7 同域策略脚本已在快照库跑过六档（T0–T5）对抗查询；
+- S1 需 `flow` 影子表 DROP 决策；S5 需 HR/EHS 生命周期值业务确认。
+
+### 每批验收判据
+
+- 基线重建库可复现：全量 `--check` PASS，约束数 = 35 + 本批条数，`uncovered` 同量减少；
+- 生产 `pg_constraint` 存在本批全部约束且 `convalidated=false`；
+- 越界值写入被 `23514` 拒，正常枚举值写入成功（每批抽 3 张表）；
+- P7 侧策略快照 PASS、A/B 对抗查询与六档读数符合预期；
+- 本 JSON 条目数按批复精确递减，目录与清单无重复、无遗漏。
+
+> 本方案只定义批次与判据；未生成任何迁移、未改目录、未动生产。
