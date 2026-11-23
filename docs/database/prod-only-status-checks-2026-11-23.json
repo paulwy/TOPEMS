@@ -8787,7 +8787,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B249",
-      "source_commit": "PENDING",
+      "source_commit": "8f02baa90",
       "source_subject": "B249: wms.warehouses.status 收敛到 WarehouseStatus 四态",
       "note": "替换既有 ck_warehouses_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；参考库仅存旧约束"
     }

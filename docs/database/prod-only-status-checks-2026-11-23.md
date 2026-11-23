@@ -239,3 +239,4 @@
 - B247 追加后读数：415 条；`ehs.qa_ehs_environment_monitors.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
 - B247 来源提交已回填：`ce3e680bc`。
 - B249 追加后读数：416 条；`wms.warehouses.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
+- B249 来源提交已回填：`8f02baa90`。
