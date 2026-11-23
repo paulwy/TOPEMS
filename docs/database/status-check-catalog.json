@@ -4797,6 +4797,19 @@
     },
     {
       "schema": "scm",
+      "table": "supplier_quotes",
+      "constraint": "ck_scm_supplier_quotes_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "draft",
+        "submitted"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'submitted'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "suppliers",
       "constraint": "ck_suppliers_status_standard",
       "columns": [
@@ -8503,15 +8516,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "scm",
-      "table": "supplier_quotes",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'submitted'::character varying"
     },
     {
       "schema": "scm",

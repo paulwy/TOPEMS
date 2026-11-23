@@ -12,6 +12,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::supplier_quote_status::SupplierQuoteStatus;
 use super::ApiState;
 
 use crate::models::price_comparison::{
@@ -381,7 +382,17 @@ pub async fn list_quotes(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SupplierQuoteStatus::from_db_str(raw) {
+            Some(value) => Some(value.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的报价单状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
@@ -401,7 +412,7 @@ pub async fn list_quotes(
         "#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -410,7 +421,10 @@ pub async fn list_quotes(
     .await;
 
     match result {
-        Ok(quotes) => {
+        Ok(mut quotes) => {
+            for quote in &mut quotes {
+                quote.status = SupplierQuoteStatus::normalize(&quote.status).to_string();
+            }
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "scm",
                 r#"
@@ -423,7 +437,7 @@ pub async fn list_quotes(
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -470,7 +484,7 @@ pub async fn create_quote(
     let result = sqlx::query(
         only_own_schema_query!("scm", r#"
         INSERT INTO scm.supplier_quotes (id, supplier_id, quote_no, quote_date, currency, delivery_days, valid_until, payment_terms, status, remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $13, $9, $10, $11, $12)
         "#),
     )
     .bind(id)
@@ -485,6 +499,7 @@ pub async fn create_quote(
     .bind(now)
     .bind(now)
     .bind(tenant_bind)
+    .bind(SupplierQuoteStatus::Draft.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -557,7 +572,8 @@ pub async fn get_quote(
     .await;
 
     match result {
-        Ok(Some(quote)) => {
+        Ok(Some(mut quote)) => {
+            quote.status = SupplierQuoteStatus::normalize(&quote.status).to_string();
             let items = sqlx::query_as::<_, QuoteItem>(only_own_schema_query!(
                 "scm",
                 r#"
@@ -612,7 +628,7 @@ pub async fn update_quote(
         r#"
         UPDATE scm.supplier_quotes
         SET delivery_days = $1, valid_until = $2, payment_terms = $3, remarks = $4, updated_at = $5
-        WHERE id = $6 AND status = 'draft' AND tenant_id = $7::uuid
+        WHERE id = $6 AND status = $8 AND tenant_id = $7::uuid
         "#
     ))
     .bind(req.delivery_days)
@@ -622,6 +638,7 @@ pub async fn update_quote(
     .bind(Utc::now())
     .bind(id)
     .bind(tenant_bind)
+    .bind(SupplierQuoteStatus::Draft.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -679,13 +696,15 @@ pub async fn submit_quote(
         "scm",
         r#"
         UPDATE scm.supplier_quotes
-        SET status = 'submitted', updated_at = $1
-        WHERE id = $2 AND status = 'draft' AND tenant_id = $3::uuid
+        SET status = $4, updated_at = $1
+        WHERE id = $2 AND status = $5 AND tenant_id = $3::uuid
         "#
     ))
     .bind(Utc::now())
     .bind(id)
     .bind(tenant_bind)
+    .bind(SupplierQuoteStatus::Submitted.as_db_str())
+    .bind(SupplierQuoteStatus::Draft.as_db_str())
     .execute(&mut **txn)
     .await;
 

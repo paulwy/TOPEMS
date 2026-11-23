@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 376,
+    "db_check_constraints": 377,
     "db_enum_types": 5,
     "db_check_values": 168,
-    "rust_enums": 259,
+    "rust_enums": 260,
     "rust_enum_values": 221,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 230,
@@ -3847,6 +3847,19 @@
       "normalized": [
         "approved",
         "completed",
+        "draft",
+        "submitted"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/supplier_quote_status.rs",
+      "name": "SupplierQuoteStatus",
+      "values": [
+        "Draft",
+        "Submitted"
+      ],
+      "normalized": [
         "draft",
         "submitted"
       ]

@@ -1555,6 +1555,13 @@
       "table": "scm.supplier_admissions",
       "column": "approval_status",
       "candidate": "docs/database/supplier-admission-approval-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/supplier_quote_status.rs",
+      "enum": "SupplierQuoteStatus",
+      "table": "scm.supplier_quotes",
+      "column": "status",
+      "candidate": "docs/database/supplier-quote-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

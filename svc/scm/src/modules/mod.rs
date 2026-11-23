@@ -38,6 +38,7 @@ pub mod supplier_admission_status;
 pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supplier_evaluation_status;
+pub mod supplier_quote_status;
 pub mod supplier_status;
 pub mod supply_chain_dashboard;
 pub mod sync_log_status;
