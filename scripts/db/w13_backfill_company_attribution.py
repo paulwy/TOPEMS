@@ -53,10 +53,24 @@
 是集团内其他公司 → 客户 / 供应商所属公司；无客户 / 供应商或对方无公司归属 → 母公司兜底。
 业务对优先级有异议时，通过修改 CSV 行的 `company_id` 表达，不回改规则定义。
 
+客户 / 供应商“所属公司”的取数口径
+----------------------------------
+`erp.customers` / `erp.suppliers` **没有 `company_id` 列**，只有：
+
+    is_group_company  boolean  是否为集团内公司
+    group_company_id  uuid     对应的集团内公司
+
+因此“客户 / 供应商所属公司”的取值规则是：仅当 `is_group_company = true` 且
+`group_company_id` 非空时取 `group_company_id`；否则视为无公司归属，走母公司兜底。
+`group_company_id` 与订单自身的 `company_id` **不是同一口径**：前者描述“这家客户 /
+供应商本身属于集团内哪家公司”，后者描述“这笔订单归哪家公司”，不能互相替代。
+客户源表不写 `company_id`，回填只写 `search_entity_projections_v2`。
+
 母公司解析（租户根公司）
 ------------------------
 规则：取该租户的根公司。恰好一个根即作为母公司；多个根或零根则**中止**并输出待指定清单，
-不走任何默认。`hrm.companies` 当前没有 `parent_id` 列，根公司由 `erp.company_relations`
+不走任何默认。租户全集取 `public.core_tenants`；没有任何公司的租户同样按 0 个根
+进入待指定清单（PENDING-零根），不静默跳过。`hrm.companies` 当前没有 `parent_id` 列，根公司由 `erp.company_relations`
 （status=active、未删除、未过期）反推：从未作为 `child_company_id` 出现的公司即根公司。
 若未来 `hrm.companies` 增加 `parent_id`，脚本优先使用该列。
 
@@ -227,6 +241,9 @@ def load_tenant_roots(
 
     `hrm.companies.parent_id` 存在时优先使用；否则用 `erp.company_relations`
     反推根公司（active 关系中从未作为子公司的公司）。
+
+    结果以 `public.core_tenants` 的租户全集为起点：没有任何公司的租户返回空列表，
+    由调用方判为 PENDING-零根，不得静默跳过。
     调用方必须自行检查每个租户是否恰好一个根，否则 fail-closed。
     """
     if not relation_exists(dsn, "hrm.companies"):
@@ -270,6 +287,18 @@ def load_tenant_roots(
         """
 
     result: dict[str, list[str]] = {}
+    if relation_exists(dsn, "public.core_tenants"):
+        tenant_sql = (
+            "SELECT id::text FROM public.core_tenants "
+            "WHERE deleted_at IS NULL ORDER BY 1;"
+        )
+        for line in run_psql(dsn, tenant_sql).splitlines():
+            tenant = line.strip()
+            if not tenant:
+                continue
+            if tenants and tenant not in tenants:
+                continue
+            result[tenant] = []
     for line in run_psql(dsn, sql).splitlines():
         if not line.strip():
             continue
@@ -348,6 +377,8 @@ def fetch_draft_rows(dsn: str, pending_path: str | None = None) -> list[DraftRow
         WHERE o.deleted_at IS NULL AND o.company_id IS NULL
         """
         )
+    # 客户 / 供应商没有 company_id：所属公司取 is_group_company=true 时的
+    # group_company_id；它与订单自身 company_id 不是同一口径。
     parts.append(
         """
         SELECT 'customer' AS entity_type, c.id::text AS entity_id,
@@ -561,7 +592,7 @@ def read_mapping(path: str) -> list[MappingRow]:
                     continue
                 rows.append(
                     MappingRow(
-                        lineno=lineno,
+                        line=lineno,
                         entity_type=entity_type,
                         entity_id=entity_id,
                         company_id=company_id,
@@ -939,6 +970,10 @@ def main() -> int:
     if args.draft:
         if not args.output:
             die("--draft 必须提供 --output 候选清单路径")
+        print(
+            "[w13-backfill] 客户/供应商归属口径：源表无 company_id，"
+            "is_group_company=true 时取 group_company_id（与订单 company_id 不同口径）"
+        )
         rows = fetch_draft_rows(args.dsn, args.pending_output)
         write_draft(args.output, rows)
         fallback = sum(1 for r in rows if r.is_fallback)
