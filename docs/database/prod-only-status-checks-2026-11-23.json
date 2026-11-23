@@ -8260,7 +8260,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B224",
-      "source_commit": "b95ea6c2b",
+      "source_commit": "4b59c6401",
       "source_subject": "feat(integration): MES↔ERP 同步记录状态收敛到唯一枚举（W5-B224）",
       "note": "生产/历史手工候选约束；重建参考库不存在（表在、约束不在），所属列在目录 uncovered 中；待回迁清单维护"
     }
