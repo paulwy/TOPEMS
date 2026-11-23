@@ -42,6 +42,8 @@ pub mod settings;
 pub mod setup;
 pub mod social_insurance_calc;
 pub mod training;
+pub mod training_attendance_status;
+
 pub mod training_completion_status;
 
 #[derive(Clone)]

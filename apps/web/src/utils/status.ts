@@ -201,6 +201,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   arrived: 'info',
   received: 'info',
   registered: 'info',
+  attended: 'success',
   stored: 'success',
   retrieved: 'primary',
   disposed: 'default',

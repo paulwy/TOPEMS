@@ -2003,6 +2003,13 @@
       "table": "hrm.training_records",
       "column": "completion_status",
       "candidate": "docs/database/hrm-training-record-completion-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/hrm/src/modules/training_attendance_status.rs",
+      "enum": "TrainingAttendanceStatus",
+      "table": "hrm.training_records",
+      "column": "attendance_status",
+      "candidate": "docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

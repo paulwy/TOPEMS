@@ -5,11 +5,11 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 309,
-    "rust_enum_values": 239,
-    "rust_values_not_in_db_check": 192,
-    "frontend_status_keys": 248,
-    "frontend_keys_not_in_db_check": 201,
+    "rust_enums": 310,
+    "rust_enum_values": 240,
+    "rust_values_not_in_db_check": 193,
+    "frontend_status_keys": 249,
+    "frontend_keys_not_in_db_check": 202,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2398,6 +2398,19 @@
         "approved",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/training_attendance_status.rs",
+      "name": "TrainingAttendanceStatus",
+      "values": [
+        "Attended",
+        "Registered"
+      ],
+      "normalized": [
+        "attended",
+        "registered"
       ]
     },
     {
@@ -5474,6 +5487,7 @@
       "arrived",
       "assessed",
       "assigned",
+      "attended",
       "available",
       "awarded",
       "blacklisted",
@@ -5721,6 +5735,7 @@
       "arrived",
       "assessed",
       "assigned",
+      "attended",
       "available",
       "blocked",
       "breaching",
@@ -5915,6 +5930,7 @@
       "arrived",
       "assessed",
       "assigned",
+      "attended",
       "available",
       "blocked",
       "breaching",

@@ -3,14 +3,14 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 184,
-    "uncovered_values": 192,
+    "uncovered_enums": 185,
+    "uncovered_values": 193,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 177,
-    "internal_state_enums": 149,
+    "resolved_enums": 178,
+    "internal_state_enums": 150,
     "persisted_unmapped_enums": 19,
     "finance_candidate_ready_enums": 36,
-    "internal_state_values": 164,
+    "internal_state_values": 165,
     "persisted_unmapped_values": 14,
     "finance_candidate_ready_values": 14
   },
@@ -1483,6 +1483,25 @@
         ]
       },
       "candidate_targets": []
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/training_attendance_status.rs",
+      "enum": "TrainingAttendanceStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "attended",
+          "registered"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/hrm/src/modules/training_attendance_status.rs",
+        "enum": "TrainingAttendanceStatus",
+        "table": "hrm.training_records",
+        "column": "attendance_status",
+        "candidate": "docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql"
+      }
     },
     {
       "module": "integration",

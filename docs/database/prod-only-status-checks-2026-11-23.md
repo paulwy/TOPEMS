@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **411** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **412** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -34,7 +34,7 @@
 | `finance` | 40 |
 | `flow` | 7 |
 | `gis` | 10 |
-| `hrm` | 22 |
+| `hrm` | 23 |
 | `iam` | 6 |
 | `integration` | 5 |
 | `lims` | 9 |
@@ -139,6 +139,7 @@
 | B241 | 1 |
 | B242 | 1 |
 | B243 | 1 |
+| B244 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -188,6 +189,8 @@
 
 - W5-B243（B243）新增 `hrm.training_records.ck_training_records_completion_status_standard` 只有候选 SQL（`docs/database/hrm-training-record-completion-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`completion_status` 登记在目录 `uncovered`，已计入本清单待回迁。
 
+- W5-B244（B244）新增 `hrm.training_records.ck_training_records_attendance_status_standard` 只有候选 SQL（`docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`attendance_status` 登记在目录 `uncovered`，已计入本清单待回迁。
+
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
 ## 复核记录（2026-11-23，第二轮推送前）
@@ -217,3 +220,4 @@
 - B241 追加后读数：409 条；`qms.qa_audit_plans.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B242 追加后读数：410 条；`pm.acceptance_plans.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B243 追加后读数：411 条；`hrm.training_records.completion_status` 仍为 uncovered，目录读数不变（33/5/683）。
+- B244 追加后读数：412 条；`hrm.training_records.attendance_status` 仍为 uncovered，目录读数不变（33/5/683）。

@@ -15,6 +15,7 @@ use crate::models::{
     TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
+use crate::modules::training_attendance_status::TrainingAttendanceStatus;
 use crate::modules::training_completion_status::TrainingCompletionStatus;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -758,7 +759,7 @@ pub async fn create_record(
         INSERT INTO hrm.training_records (
             id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'registered', $6, $7, $8)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
@@ -769,6 +770,7 @@ pub async fn create_record(
     .bind(req.course_id)
     .bind(req.employee_id)
     .bind(req.enrollment_date)
+    .bind(TrainingAttendanceStatus::DEFAULT.as_db_str())
     .bind(TrainingCompletionStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
@@ -828,7 +830,7 @@ pub async fn enroll_course(
         INSERT INTO hrm.training_records (
             id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'registered', $6, $7, $8)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
@@ -839,6 +841,7 @@ pub async fn enroll_course(
     .bind(id)
     .bind(req.employee_id)
     .bind(now)
+    .bind(TrainingAttendanceStatus::DEFAULT.as_db_str())
     .bind(TrainingCompletionStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
@@ -920,6 +923,13 @@ pub async fn update_record(
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
+    let requested_attendance = match req.attendance_status.as_deref() {
+        None => None,
+        Some(raw) => match TrainingAttendanceStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的培训出勤状态"),
+        },
+    };
     let requested_status = match req.completion_status.as_deref() {
         None => None,
         Some(raw) => match TrainingCompletionStatus::from_db_str(raw) {
@@ -927,7 +937,7 @@ pub async fn update_record(
             None => return ApiResponse::bad_request("无效的培训完成状态"),
         },
     };
-    if let Some(target) = requested_status {
+    if requested_attendance.is_some() || requested_status.is_some() {
         let mut scope = match state.db.scope_with(txn).await {
             Ok(s) => s,
             Err(e) => {
@@ -935,9 +945,9 @@ pub async fn update_record(
                 return ApiResponse::server_error("培训记录更新失败");
             }
         };
-        let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
+        let row: Option<(String, String)> = match sqlx::query_as(only_own_schema_query!(
             "hrm",
-            "SELECT COALESCE(completion_status, 'in_progress') FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
+            "SELECT COALESCE(attendance_status, 'registered'), COALESCE(completion_status, 'in_progress') FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
         ))
         .bind(id)
         .fetch_optional(&mut scope)
@@ -949,11 +959,18 @@ pub async fn update_record(
                 return ApiResponse::server_error("培训记录更新失败");
             }
         };
-        let Some(current) = current else {
+        let Some((current_attendance, current_status)) = row else {
             return ApiResponse::not_found("培训记录不存在");
         };
-        if !target.can_transition_from(&current) {
-            return ApiResponse::bad_request("培训完成状态不允许从当前状态流转");
+        if let Some(target) = requested_attendance {
+            if !target.can_transition_from(&current_attendance) {
+                return ApiResponse::bad_request("培训出勤状态不允许从当前状态流转");
+            }
+        }
+        if let Some(target) = requested_status {
+            if !target.can_transition_from(&current_status) {
+                return ApiResponse::bad_request("培训完成状态不允许从当前状态流转");
+            }
         }
         drop(scope);
     }
@@ -976,7 +993,7 @@ pub async fn update_record(
         "#
     ))
     .bind(id)
-    .bind(&req.attendance_status)
+    .bind(requested_attendance.map(|s| s.as_db_str()))
     .bind(requested_status.map(|s| s.as_db_str()))
     .bind(req.score)
     .bind(&req.certificate_no)
@@ -1285,6 +1302,7 @@ pub async fn complete_record(
         "hrm",
         r#"
         UPDATE hrm.training_records SET
+            attendance_status = $3,
             completion_status = 'completed',
             completed_at = $2,
             updated_at = $2
@@ -1296,6 +1314,7 @@ pub async fn complete_record(
     ))
     .bind(id)
     .bind(now)
+    .bind(TrainingAttendanceStatus::Attended.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
