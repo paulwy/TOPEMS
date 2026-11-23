@@ -68,6 +68,14 @@ pub async fn list_reconciliations(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
+    // 状态过滤已由 handler 校验（非法值 400）；这里只把空串/all 归一为不过滤。
+    let recon_status =
+        crate::modules::finance_snapshot_status::ReconciliationSnapshotStatus::parse_filter(
+            query.status.as_deref(),
+        )
+        .ok()
+        .flatten()
+        .map(|s| s.as_db_str());
 
     let mut scope = db.scope_with(txn).await?;
 
@@ -85,7 +93,7 @@ pub async fn list_reconciliations(
            ORDER BY created_at DESC
            LIMIT $5 OFFSET $6"#
     ))
-    .bind(&query.status)
+    .bind(recon_status)
     .bind(&query.recon_type)
     .bind(&query.period)
     .bind(&search_like)
@@ -162,7 +170,7 @@ pub async fn create_reconciliation(
         r#"INSERT INTO finance.reconciliation_snapshots
              (id, tenant_id, recon_code, recon_name, recon_type, status, period,
               entity_id, entity_type, description, created_by, synced_at, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $11, $11)
+           VALUES ($1, $2, $3, $4, $5, $12, $6, $7, $8, $9, $10, $11, $11, $11)
            ON CONFLICT (id) DO NOTHING"#
     ))
     .bind(id)
@@ -176,6 +184,7 @@ pub async fn create_reconciliation(
     .bind(&req.description)
     .bind(&creator)
     .bind(now)
+    .bind(crate::modules::finance_snapshot_status::ReconciliationSnapshotStatus::Draft.as_db_str())
     .execute(&mut scope)
     .await?;
 
@@ -387,6 +396,13 @@ pub async fn list_settlements(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_like = query.search.as_ref().map(|s| format!("%{}%", s));
+    let settlement_status =
+        crate::modules::finance_snapshot_status::SettlementSnapshotStatus::parse_filter(
+            query.status.as_deref(),
+        )
+        .ok()
+        .flatten()
+        .map(|s| s.as_db_str());
 
     let mut scope = db.scope_with(txn).await?;
 
@@ -414,7 +430,7 @@ pub async fn list_settlements(
            ORDER BY settlement_date DESC NULLS LAST, created_at DESC
            LIMIT $5 OFFSET $6"#
     ))
-    .bind(&query.status)
+    .bind(settlement_status)
     .bind(&query.settlement_type)
     .bind(query.project_id)
     .bind(&search_like)
@@ -507,7 +523,7 @@ pub async fn create_settlement(
         r#"INSERT INTO finance.settlement_snapshots
              (id, tenant_id, project_id, settlement_no, settlement_type, status,
               amount, settlement_date, remarks, created_by, synced_at, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, 'draft', NULL, $6, $7, $8, $9, $9, $9)
+           VALUES ($1, $2, $3, $4, $5, $10, NULL, $6, $7, $8, $9, $9, $9)
            ON CONFLICT (id) DO NOTHING"#
     ))
     .bind(id)
@@ -519,6 +535,7 @@ pub async fn create_settlement(
     .bind(&req.description)
     .bind(&creator)
     .bind(now)
+    .bind(crate::modules::finance_snapshot_status::SettlementSnapshotStatus::Draft.as_db_str())
     .execute(&mut scope)
     .await?;
 

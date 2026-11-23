@@ -44,6 +44,13 @@ pub async fn list_reconciliations(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<ReconciliationListQuery>,
 ) -> ApiResponse<Vec<UnifiedReconciliation>> {
+    if let Err(message) =
+        crate::modules::finance_snapshot_status::ReconciliationSnapshotStatus::parse_filter(
+            query.status.as_deref(),
+        )
+    {
+        return ApiResponse::from(TopemsError::ValidationFailed(message));
+    }
     let tenant_id = current_tenant_id(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -219,6 +226,13 @@ pub async fn list_settlements(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<SettlementListQuery>,
 ) -> ApiResponse<Vec<UnifiedSettlement>> {
+    if let Err(message) =
+        crate::modules::finance_snapshot_status::SettlementSnapshotStatus::parse_filter(
+            query.status.as_deref(),
+        )
+    {
+        return ApiResponse::from(TopemsError::ValidationFailed(message));
+    }
     let tenant_id = current_tenant_id(&claims);
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

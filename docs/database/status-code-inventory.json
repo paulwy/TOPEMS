@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 404,
+    "db_check_constraints": 406,
     "db_enum_types": 5,
     "db_check_values": 184,
-    "rust_enums": 282,
+    "rust_enums": 284,
     "rust_enum_values": 236,
     "rust_values_not_in_db_check": 57,
     "frontend_status_keys": 245,
@@ -1791,6 +1791,40 @@
         "paid",
         "rejected",
         "submitted"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/finance_snapshot_status.rs",
+      "name": "ReconciliationSnapshotStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Matched",
+        "Pending"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "matched",
+        "pending"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/finance_snapshot_status.rs",
+      "name": "SettlementSnapshotStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "pending",
+        "rejected"
       ]
     },
     {

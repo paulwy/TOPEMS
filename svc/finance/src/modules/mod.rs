@@ -11,6 +11,7 @@ pub mod currencies;
 pub mod decision_v60;
 pub mod event_routes;
 pub mod expense_status;
+pub mod finance_snapshot_status;
 pub mod financial_report_status;
 pub mod financial_reports;
 pub mod forecast_v53;

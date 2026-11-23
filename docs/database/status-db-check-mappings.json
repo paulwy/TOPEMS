@@ -1744,6 +1744,20 @@
       "table": "erp.payables",
       "column": "status",
       "candidate": "ck_erp_payables_status_standard"
+    },
+    {
+      "file": "svc/finance/src/modules/finance_snapshot_status.rs",
+      "enum": "ReconciliationSnapshotStatus",
+      "table": "finance.reconciliation_snapshots",
+      "column": "status",
+      "candidate": "ck_finance_reconciliation_snapshots_status_standard"
+    },
+    {
+      "file": "svc/finance/src/modules/finance_snapshot_status.rs",
+      "enum": "SettlementSnapshotStatus",
+      "table": "finance.settlement_snapshots",
+      "column": "status",
+      "candidate": "ck_finance_settlement_snapshots_status_standard"
     }
   ]
 }

@@ -1780,6 +1780,21 @@
     {
       "schema": "finance",
       "table": "reconciliation_snapshots",
+      "constraint": "ck_finance_reconciliation_snapshots_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "matched",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'draft'::text, 'matched'::text, 'approved'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "reconciliation_snapshots",
       "constraint": "ck_reconciliation_snapshots_status_standard",
       "columns": [
         "status"
@@ -1808,6 +1823,21 @@
         "paid"
       ],
       "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'issued'::character varying, 'paid'::character varying, 'overdue'::character varying, 'cancelled'::character varying])::text[])))"
+    },
+    {
+      "schema": "finance",
+      "table": "settlement_snapshots",
+      "constraint": "ck_finance_settlement_snapshots_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'draft'::text, 'approved'::text, 'rejected'::text]))) NOT VALID"
     },
     {
       "schema": "finance",

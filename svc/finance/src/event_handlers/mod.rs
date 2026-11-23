@@ -1095,6 +1095,10 @@ impl FinanceEventHandlers {
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         let now = Utc::now();
+        let status = crate::modules::finance_snapshot_status::validate_reconciliation_status(
+            &payload.status,
+        )
+        .map_err(TopemsError::ValidationFailed)?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.reconciliation_snapshots
@@ -1118,7 +1122,7 @@ impl FinanceEventHandlers {
         .bind(&payload.recon_code)
         .bind(&payload.recon_name)
         .bind(&payload.recon_type)
-        .bind(&payload.status)
+        .bind(status.as_db_str())
         .bind(&payload.period)
         .bind(payload.entity_id)
         .bind(&payload.entity_type)
@@ -1145,6 +1149,10 @@ impl FinanceEventHandlers {
             .scope_for_tenant(payload.tenant_id)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
+        let status = crate::modules::finance_snapshot_status::validate_reconciliation_status(
+            &payload.status,
+        )
+        .map_err(TopemsError::ValidationFailed)?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_snapshots
@@ -1158,7 +1166,7 @@ impl FinanceEventHandlers {
                    synced_at = NOW()
                WHERE id = $7"#
         ))
-        .bind(&payload.status)
+        .bind(status.as_db_str())
         .bind(payload.total_debit)
         .bind(payload.total_credit)
         .bind(payload.difference)
@@ -1188,7 +1196,7 @@ impl FinanceEventHandlers {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_snapshots
-               SET status = 'approved',
+               SET status = $5,
                    approved_by = $1,
                    approved_at = $2,
                    updated_at = NOW(),
@@ -1199,6 +1207,10 @@ impl FinanceEventHandlers {
         .bind(payload.approved_at)
         .bind(payload.id)
         .bind(payload.tenant_id)
+        .bind(
+            crate::modules::finance_snapshot_status::ReconciliationSnapshotStatus::Approved
+                .as_db_str(),
+        )
         .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("审批对账快照失败: {}", e)))?;
@@ -1220,6 +1232,9 @@ impl FinanceEventHandlers {
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("开启租户作用域失败: {e}")))?;
         let now = Utc::now();
+        let status =
+            crate::modules::finance_snapshot_status::validate_settlement_status(&payload.status)
+                .map_err(TopemsError::ValidationFailed)?;
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"INSERT INTO finance.settlement_snapshots
@@ -1242,7 +1257,7 @@ impl FinanceEventHandlers {
         .bind(payload.project_id)
         .bind(&payload.settlement_no)
         .bind(&payload.settlement_type)
-        .bind(&payload.status)
+        .bind(status.as_db_str())
         .bind(payload.amount)
         .bind(payload.settlement_date)
         .bind(&payload.remarks)
@@ -1271,7 +1286,7 @@ impl FinanceEventHandlers {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.settlement_snapshots
-               SET status = 'approved',
+               SET status = $5,
                    approved_by = $1,
                    approved_at = $2,
                    updated_at = NOW(),
@@ -1282,6 +1297,9 @@ impl FinanceEventHandlers {
         .bind(payload.approved_at)
         .bind(payload.id)
         .bind(payload.tenant_id)
+        .bind(
+            crate::modules::finance_snapshot_status::SettlementSnapshotStatus::Approved.as_db_str(),
+        )
         .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("审批结算快照失败: {}", e)))?;
@@ -1305,13 +1323,16 @@ impl FinanceEventHandlers {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.settlement_snapshots
-               SET status = 'rejected',
+               SET status = $3,
                    updated_at = NOW(),
                    synced_at = NOW()
                WHERE id = $1 AND tenant_id = $2"#
         ))
         .bind(payload.id)
         .bind(payload.tenant_id)
+        .bind(
+            crate::modules::finance_snapshot_status::SettlementSnapshotStatus::Rejected.as_db_str(),
+        )
         .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("拒绝结算快照失败: {}", e)))?;
