@@ -2929,3 +2929,11 @@ pending_forward_patches:
     effect: "建 public.search_entity_projections_v2（列与 v1 对齐 + company_id uuid 可空）与公司维度索引 (tenant_id, company_id, entity_type)；GRANT 读写给 topems_app；ENABLE+FORCE RLS，两条策略：system 系统通道全量读写、company_read 业务读按租户+公司可读（母公司可见子公司，company_id IS NULL 历史行业务不可见）。本轮只双写，不重命名切换、不改查询路径"
     destructive_scan: "仅 CREATE TABLE/INDEX IF NOT EXISTS、策略 DROP IF EXISTS 后重建、GRANT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不触碰 v1 数据"
     note: "幂等：CREATE 走 IF NOT EXISTS、策略先 DROP IF EXISTS 再建、GRANT 幂等。后置断言：表/列/主键/索引/策略数=2/RLS ENABLE+FORCE。回滚 database/rollback/20261123142000_search_projection_v2_company_scope.rollback.sql 先删表（双写产物），切流前执行安全"
+
+  # ===== 2026-11-23：W14 订单两表公司级 RLS 策略 =====
+  - version: "20261123150000"
+    file: "database/migrations/20261123150000_erp_orders_company_scope_rls.sql"
+    status: to_apply
+    effect: "替换 erp.sales_orders / erp.purchase_orders 的租户级 rls_tenant_isolation，各建 3 条公司级策略：company_read（SELECT，tenant_id=erp.group_tenant_of(app.tenant_id) 且 company_id=erp.current_company_id() 或 erp.company_readable(company_id)）、company_write（ALL，USING/WITH CHECK 只写本司）、system（ALL，app.rls_system='on' 平台通道）；company_id IS NULL 视为集团/平台行，仅平台与母公司通道可读。不改表结构、不改写入路径、不动数据"
+    destructive_scan: "仅 DROP/CREATE POLICY、ENABLE/FORCE RLS、COMMENT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据；前置断言拒绝非预期策略名，避免误删"
+    note: "执行顺序必须在 W13 第二段（回填 → 零 NULL → 影子读）之后。前置：两表 company_id 为 uuid 可空无默认、公司维度函数存在、策略仅旧租户级或本迁移 3 条；后置：每表 3 条策略、无 rls_tenant_isolation、RLS ENABLE+FORCE、行数与 NULL 归属不变。回滚 database/rollback/20261123150000_erp_orders_company_scope_rls.rollback.sql 只撤新策略并恢复 rls_tenant_isolation、自删账本，不动 company_id"

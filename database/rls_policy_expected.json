@@ -2771,14 +2771,34 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "rls_tenant_isolation",
+          "name": "purchase_orders_company_read",
+          "cmd": "SELECT",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (((company_id IS NOT NULL) AND ((company_id = erp.current_company_id()) OR erp.company_readable(company_id))) OR ((company_id IS NULL) AND (COALESCE(current_setting('app.actor_is_parent'::text, true), 'off'::text) = 'on'::text))))",
+          "with_check": ""
+        },
+        {
+          "name": "purchase_orders_company_write",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
-          "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (company_id IS NOT NULL) AND (company_id = erp.current_company_id()))",
+          "with_check": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (company_id IS NOT NULL) AND (company_id = erp.current_company_id()))"
+        },
+        {
+          "name": "purchase_orders_system",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
+          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
         }
       ]
     },
@@ -2825,14 +2845,34 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "rls_tenant_isolation",
+          "name": "sales_orders_company_read",
+          "cmd": "SELECT",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (((company_id IS NOT NULL) AND ((company_id = erp.current_company_id()) OR erp.company_readable(company_id))) OR ((company_id IS NULL) AND (COALESCE(current_setting('app.actor_is_parent'::text, true), 'off'::text) = 'on'::text))))",
+          "with_check": ""
+        },
+        {
+          "name": "sales_orders_company_write",
           "cmd": "ALL",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
-          "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (company_id IS NOT NULL) AND (company_id = erp.current_company_id()))",
+          "with_check": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (company_id IS NOT NULL) AND (company_id = erp.current_company_id()))"
+        },
+        {
+          "name": "sales_orders_system",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
+          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
         }
       ]
     },

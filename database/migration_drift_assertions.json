@@ -521,6 +521,54 @@
       "source_tokens": ["FORCE ROW LEVEL SECURITY"],
       "sql": "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'search_entity_projections_v2' AND c.relrowsecurity AND c.relforcerowsecurity",
       "expected": 1
+    },
+    {
+      "id": "erp_orders.sales_orders.policies",
+      "kind": "data_rows",
+      "source": "20261123150000",
+      "source_tokens": ["sales_orders_company_read", "sales_orders_company_write", "sales_orders_system"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'erp' AND tablename = 'sales_orders' AND policyname IN ('sales_orders_company_read','sales_orders_company_write','sales_orders_system')",
+      "expected": 3
+    },
+    {
+      "id": "erp_orders.sales_orders.legacy_policy_removed",
+      "kind": "data_rows",
+      "source": "20261123150000",
+      "source_tokens": ["DROP POLICY IF EXISTS rls_tenant_isolation ON erp.sales_orders"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'erp' AND tablename = 'sales_orders' AND policyname = 'rls_tenant_isolation'",
+      "expected": 0
+    },
+    {
+      "id": "erp_orders.sales_orders.rls_force",
+      "kind": "data_rows",
+      "source": "20261123150000",
+      "source_tokens": ["ALTER TABLE erp.sales_orders FORCE ROW LEVEL SECURITY"],
+      "sql": "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'erp' AND c.relname = 'sales_orders' AND c.relrowsecurity AND c.relforcerowsecurity",
+      "expected": 1
+    },
+    {
+      "id": "erp_orders.purchase_orders.policies",
+      "kind": "data_rows",
+      "source": "20261123150000",
+      "source_tokens": ["purchase_orders_company_read", "purchase_orders_company_write", "purchase_orders_system"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'erp' AND tablename = 'purchase_orders' AND policyname IN ('purchase_orders_company_read','purchase_orders_company_write','purchase_orders_system')",
+      "expected": 3
+    },
+    {
+      "id": "erp_orders.purchase_orders.legacy_policy_removed",
+      "kind": "data_rows",
+      "source": "20261123150000",
+      "source_tokens": ["DROP POLICY IF EXISTS rls_tenant_isolation ON erp.purchase_orders"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'erp' AND tablename = 'purchase_orders' AND policyname = 'rls_tenant_isolation'",
+      "expected": 0
+    },
+    {
+      "id": "erp_orders.purchase_orders.rls_force",
+      "kind": "data_rows",
+      "source": "20261123150000",
+      "source_tokens": ["ALTER TABLE erp.purchase_orders FORCE ROW LEVEL SECURITY"],
+      "sql": "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'erp' AND c.relname = 'purchase_orders' AND c.relrowsecurity AND c.relforcerowsecurity",
+      "expected": 1
     }
   ]
 }
