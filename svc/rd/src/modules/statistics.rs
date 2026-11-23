@@ -8,6 +8,8 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
 use topems_shared_core::response::ApiResponse;
 
+use crate::modules::rd_project_status::RdProjectStatus;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RsStatistics {
     pub total_projects: i64,
@@ -57,25 +59,29 @@ pub async fn get_statistics(
         .unwrap_or((0,));
 
     let pending_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'pending'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = $1")
+            .bind(RdProjectStatus::Pending.as_db_str())
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let in_progress_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'in_progress'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = $1")
+            .bind(RdProjectStatus::InProgress.as_db_str())
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let completed_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'completed'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = $1")
+            .bind(RdProjectStatus::Completed.as_db_str())
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));
 
     let cancelled_projects: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = 'cancelled'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs.rs_projects WHERE status = $1")
+            .bind(RdProjectStatus::Cancelled.as_db_str())
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));

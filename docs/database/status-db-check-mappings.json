@@ -2038,6 +2038,13 @@
       "table": "finance.budgets",
       "column": "status",
       "candidate": "docs/database/finance-budget-status-check-candidates-2026-11-24.sql"
+    },
+    {
+      "file": "svc/rd/src/modules/rd_project_status.rs",
+      "enum": "RdProjectStatus",
+      "table": "rs.rs_projects",
+      "column": "status",
+      "candidate": "docs/database/rd-rs-project-status-check-candidates-2026-11-24.sql"
     }
   ]
 }

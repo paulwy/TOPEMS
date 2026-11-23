@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **418** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **419** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -49,7 +49,7 @@
 | `public` | 42 |
 | `qms` | 13 |
 | `rd` | 3 |
-| `rs` | 7 |
+| `rs` | 8 |
 | `scm` | 20 |
 | `shared` | 1 |
 | `srm` | 9 |
@@ -146,6 +146,7 @@
 | B249 | 1 |
 | B251 | 1 |
 | B252 | 1 |
+| B253 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -209,6 +210,9 @@
 
 - W5-B252（B252）新增 `finance.core_finance_periods.ck_core_finance_periods_status_standard` 只有候选 SQL（`docs/database/finance-period-status-check-candidates-2026-11-24.sql`）、无迁移；该列本身是原生枚举 `period_status`（open/closing/closed），DB 已拒绝枚举外值，本约束用于锁定枚举扩展并让状态盘点器识别显式约束；重建库不存在该 CHECK，已计入本清单待回迁。
 
+
+- W5-B253（B253）新增 `rs.rs_projects.ck_rs_projects_status_lifecycle_standard` 只有候选 SQL（`docs/database/rd-rs-project-status-check-candidates-2026-11-24.sql`）、无迁移；该表由 PM 项目事件维护，既有 17 行 pending，约束统一 pending/in_progress/completed/cancelled；重建库不存在该 CHECK，已计入本清单待回迁。
+
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
 ## 复核记录（2026-11-23，第二轮推送前）
@@ -250,3 +254,4 @@
 - B251 来源提交已回填：`d2e1a07d9`。
 - B252 追加后读数：418 条；`finance.core_finance_periods.status` 在参考库仍由原生枚举覆盖，显式 CHECK 未回迁。
 - B252 来源提交已回填：`7800deeb5`。
+- B253 追加后读数：419 条；`rs.rs_projects.status` 在参考库仍无约束，新四态约束未回迁。

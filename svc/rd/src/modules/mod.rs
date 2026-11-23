@@ -25,6 +25,7 @@ pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
 pub mod rd_ci_cd;
+pub mod rd_project_status;
 pub mod research_cost;
 pub mod rs_plugin;
 pub mod settings;

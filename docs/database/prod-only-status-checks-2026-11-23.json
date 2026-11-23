@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 418,
+  "total": 419,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -34,7 +34,7 @@
     "public": 42,
     "qms": 13,
     "rd": 3,
-    "rs": 7,
+    "rs": 8,
     "scm": 20,
     "shared": 1,
     "srm": 9,
@@ -130,7 +130,8 @@
     "B247": 1,
     "B249": 1,
     "B251": 1,
-    "B252": 1
+    "B252": 1,
+    "B253": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8834,6 +8835,27 @@
       "source_commit": "7800deeb5",
       "source_subject": "B252: finance.core_finance_periods.status 收敛到 PeriodStatus 三态",
       "note": "列本身是原生枚举 period_status（open/closing/closed），DB 已拒绝枚举外值；本约束锁定枚举扩展，并让状态盘点器识别显式约束"
+    },
+    {
+      "schema": "rs",
+      "table": "rs_projects",
+      "constraint": "ck_rs_projects_status_lifecycle_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B253",
+      "source_commit": "PENDING",
+      "source_subject": "B253: rs.rs_projects.status 收敛到 RdProjectStatus 四态",
+      "note": "RD 关联项目表由 PM 事件维护，17 行 pending；本约束锁定 pending/in_progress/completed/cancelled"
     }
   ]
 }

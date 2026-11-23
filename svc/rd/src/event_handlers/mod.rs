@@ -9,6 +9,8 @@ use topems_shared_event::event::{
     PdmMaterialUpdatedPayload, PmProjectCompletedPayload, PmProjectCreatedPayload,
 };
 
+use crate::modules::rd_project_status::RdProjectStatus;
+
 type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
@@ -91,7 +93,7 @@ impl RdEventHandlers {
                 })?;
                 let result = sqlx::query_scalar::<_, uuid::Uuid>(
                     "INSERT INTO rs.rs_projects (name, code, project_type, status, leader, progress, start_date, created_by, created_at, updated_at, source_type, source_id, tenant_id)
-                     VALUES ($1, $2, 'r_d', 'pending', $3, 0, $4, 'system', $4, $4, 'pm_project', $5, $6)
+                     VALUES ($1, $2, 'r_d', $7, $3, 0, $4, 'system', $4, $4, 'pm_project', $5, $6)
                      ON CONFLICT (source_type, source_id) DO NOTHING
                      RETURNING id",
                 )
@@ -101,6 +103,7 @@ impl RdEventHandlers {
                 .bind(Utc::now())
                 .bind(payload.project_id)
                 .bind(tenant_id)
+                .bind(RdProjectStatus::Pending.as_db_str())
                 .fetch_optional(&mut scope)
                 .await
                 .map_err(|e| {
@@ -151,11 +154,14 @@ impl RdEventHandlers {
                     TopemsError::DatabaseTransaction(format!("打开研发项目完成作用域失败: {e}"))
                 })?;
                 let result = sqlx::query(
-                    "UPDATE rs.rs_projects SET status = 'completed', progress = 100, updated_at = $1 WHERE name = $2 AND tenant_id = $3",
+                    "UPDATE rs.rs_projects SET status = $1, progress = 100, updated_at = $2 \
+                     WHERE source_type = 'pm_project' AND source_id = $3 AND tenant_id = $4 AND status <> $5",
                 )
+                .bind(RdProjectStatus::Completed.as_db_str())
                 .bind(Utc::now())
-                .bind(&payload.project_name)
+                .bind(payload.project_id)
                 .bind(tenant_id)
+                .bind(RdProjectStatus::Cancelled.as_db_str())
                 .execute(&mut scope)
                 .await
                 .map_err(|e| {
