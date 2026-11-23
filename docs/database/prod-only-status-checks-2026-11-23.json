@@ -8636,7 +8636,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B241",
-      "source_commit": "PENDING",
+      "source_commit": "067127872",
       "source_subject": "B241: qms.qa_audit_plans.status 收敛到 AuditPlanStatus 枚举（补 schedule 入口 + start/complete 状态守卫）",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
