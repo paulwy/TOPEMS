@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 369,
+    "db_check_constraints": 370,
     "db_enum_types": 5,
     "db_check_values": 167,
-    "rust_enums": 252,
+    "rust_enums": 253,
     "rust_enum_values": 220,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 229,
@@ -2676,6 +2676,21 @@
         "completed",
         "in_progress",
         "pending"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/quality_traceability_status.rs",
+      "name": "QualityRecordStatus",
+      "values": [
+        "Pending",
+        "Qualified",
+        "Rejected"
+      ],
+      "normalized": [
+        "pending",
+        "qualified",
+        "rejected"
       ]
     },
     {

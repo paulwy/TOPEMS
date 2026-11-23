@@ -39,6 +39,7 @@ pub mod production_schedule_status;
 pub mod production_scheduling;
 pub mod quality_management;
 pub mod quality_traceability;
+pub mod quality_traceability_status;
 pub mod settings;
 pub mod team;
 pub mod team_status;

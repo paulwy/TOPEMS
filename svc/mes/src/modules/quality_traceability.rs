@@ -11,6 +11,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
+use crate::modules::quality_traceability_status::QualityRecordStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -627,9 +628,18 @@ pub async fn list_quality_records(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = &query.status {
+    if let Some(status) = query
+        .status
+        .as_deref()
+        .filter(|s| !s.is_empty() && *s != "all")
+    {
+        let Some(status) = QualityRecordStatus::from_db_str(status) else {
+            return ApiResponse::bad_request(
+                "质量记录状态非法，允许值: pending/qualified/rejected",
+            );
+        };
         where_clause.push_str(" WHERE quality_status = $1");
-        params.push(serde_json::Value::String(status.clone()));
+        params.push(serde_json::Value::String(status.as_db_str().to_string()));
     }
 
     if let Some(record_type) = &query.record_type {
@@ -768,7 +778,11 @@ pub async fn list_quality_records(
                 .try_get::<Option<String>, _>("quality_status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "pending".to_string()),
+                .as_deref()
+                .and_then(QualityRecordStatus::from_db_str)
+                .unwrap_or(QualityRecordStatus::DEFAULT)
+                .as_db_str()
+                .to_string(),
             inspector: r.try_get::<Option<String>, _>("inspector").ok().flatten(),
             inspection_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")

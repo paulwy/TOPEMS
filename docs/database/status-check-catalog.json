@@ -3008,6 +3008,20 @@
     },
     {
       "schema": "mes",
+      "table": "quality_records",
+      "constraint": "ck_mes_quality_records_quality_status_standard",
+      "columns": [
+        "quality_status"
+      ],
+      "values": [
+        "pending",
+        "qualified",
+        "rejected"
+      ],
+      "definition": "CHECK (((quality_status)::text = ANY ((ARRAY['pending'::character varying, 'qualified'::character varying, 'rejected'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "quality_standards",
       "constraint": "ck_quality_standards_status_standard",
       "columns": [
@@ -6982,15 +6996,6 @@
       "table": "financial_records",
       "column": "status",
       "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "quality_records",
-      "column": "quality_status",
-      "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
