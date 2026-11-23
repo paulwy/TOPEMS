@@ -8570,7 +8570,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B238",
-      "source_commit": "PENDING",
+      "source_commit": "2897b69f4",
       "source_subject": "B238: qms.qa_audit_findings.status 收敛到 QmsAuditFindingStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
