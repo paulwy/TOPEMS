@@ -39,6 +39,7 @@ pub mod quality_management;
 pub mod quality_traceability;
 pub mod settings;
 pub mod team;
+pub mod team_status;
 pub mod wip;
 pub mod work_order;
 pub mod work_order_status;

@@ -2993,6 +2993,19 @@
     },
     {
       "schema": "mes",
+      "table": "teams",
+      "constraint": "ck_mes_teams_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "inactive"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['active'::text, 'inactive'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "work_orders",
       "constraint": "work_orders_status_check",
       "columns": [
@@ -6954,15 +6967,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "teams",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'active'::character varying"
     },
     {
       "schema": "mes",

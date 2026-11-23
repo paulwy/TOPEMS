@@ -1464,6 +1464,13 @@
       "table": "mes.equipment_maintenance_records",
       "column": "status",
       "candidate": "docs/database/equipment-maintenance-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/team_status.rs",
+      "enum": "TeamStatus",
+      "table": "mes.teams",
+      "column": "status",
+      "candidate": "docs/database/team-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

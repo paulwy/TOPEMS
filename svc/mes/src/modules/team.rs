@@ -15,6 +15,7 @@ use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::require_tenant;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::team_status::TeamStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -213,9 +214,15 @@ pub async fn list_teams(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE t.deleted_at IS NULL");
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" AND t.status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = TeamStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的班组状态");
+            };
+            where_clause.push_str(" AND t.status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -331,7 +338,7 @@ pub async fn list_teams(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "active".to_string()),
+                .unwrap_or_else(|| TeamStatus::DEFAULT.as_db_str().to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
@@ -491,7 +498,7 @@ pub async fn create_team(
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, $9, $9, $10)
         RETURNING
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -504,6 +511,7 @@ pub async fn create_team(
     .bind(work_station_id)
     .bind(leader_id)
     .bind(req.leader_name)
+    .bind(TeamStatus::DEFAULT.as_db_str())
     .bind(req.description)
     .bind(Utc::now())
     .bind(tenant_id)
@@ -579,7 +587,9 @@ pub async fn create_team(
         leader_id: result.leader_id.map(|u| u.to_string()),
         leader_name: result.leader_name,
         member_count: result.member_count.unwrap_or(0),
-        status: result.status.unwrap_or_else(|| "active".to_string()),
+        status: result
+            .status
+            .unwrap_or_else(|| TeamStatus::DEFAULT.as_db_str().to_string()),
         description: result.description,
         created_at: result.created_at.unwrap_or_else(Utc::now),
         updated_at: result.updated_at.unwrap_or_else(Utc::now),
@@ -623,6 +633,14 @@ pub async fn update_team(
     // leader_id 列为 uuid（见迁移 20261103230000_db10_5433_varchar_text_to_uuid_19cols），
     // 必须按 Uuid 绑定，否则 COALESCE($5::text, leader_id::uuid) 类型冲突。
     let tenant_id = get_tenant_id(&claims);
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match TeamStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的班组状态"),
+        },
+    };
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
@@ -649,7 +667,7 @@ pub async fn update_team(
     .bind(work_station_id)
     .bind(leader_id)
     .bind(req.leader_name)
-    .bind(req.status)
+    .bind(status.map(TeamStatus::as_db_str))
     .bind(req.description)
     .bind(Utc::now())
     .bind(tenant_id)
@@ -683,7 +701,9 @@ pub async fn update_team(
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
-                status: r.status.unwrap_or_else(|| "active".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| TeamStatus::DEFAULT.as_db_str().to_string()),
                 description: Some(r.description).unwrap_or_default(),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
@@ -833,7 +853,9 @@ pub async fn get_team_members(
             employee_code: r.employee_code,
             position: r.position,
             join_date: r.join_date.map(|d| d.to_rfc3339()),
-            status: r.status.unwrap_or_else(|| "active".to_string()),
+            status: r
+                .status
+                .unwrap_or_else(|| TeamStatus::DEFAULT.as_db_str().to_string()),
         })
         .collect();
 
@@ -960,7 +982,9 @@ pub async fn add_team_member(
         employee_code: result.employee_code,
         position: result.position,
         join_date: result.join_date.map(|d| d.to_rfc3339()),
-        status: result.status.unwrap_or_else(|| "active".to_string()),
+        status: result
+            .status
+            .unwrap_or_else(|| TeamStatus::DEFAULT.as_db_str().to_string()),
     };
 
     ApiResponse::success(member, "班组成员添加成功")

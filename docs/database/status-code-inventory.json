@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 363,
+    "db_check_constraints": 364,
     "db_enum_types": 5,
     "db_check_values": 161,
-    "rust_enums": 246,
+    "rust_enums": 247,
     "rust_enum_values": 215,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 225,
@@ -2614,6 +2614,19 @@
         "pending",
         "rework",
         "scrapped"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/team_status.rs",
+      "name": "TeamStatus",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "inactive"
       ]
     },
     {
