@@ -552,3 +552,51 @@ bash scripts/dev/run-migration-drill.sh anchor
 
 > 已知限制：anchor 快照含扩展创建语句，非特权角色无法在空库直接恢复；
 > 模板库机制是当前不改动授权的唯一解法。
+
+## 12. 状态目录门禁（status-catalog）的校验库与 `--changed-only`
+
+`status-catalog` 校验 `docs/database/status-check-catalog.json` 与目标库中
+status/state 列上的 CHECK 约束、枚举类型、无约束列是否一致。
+
+### 12.1 校验库：`STATUS_CATALOG_DB_URL`
+
+解析顺序（向下兼容）：
+
+| 优先级 | 来源 |
+|---|---|
+| 1 | `--dsn <url>` |
+| 2 | 进程环境 `STATUS_CATALOG_DB_URL` |
+| 3 | 进程环境 `RLS_POLICY_DB_URL` |
+| 4 | 进程环境 `MIGRATION_DRIFT_DB_URL` |
+| 5 | 进程环境 `DATABASE_URL` |
+| 6 | `.env` 的 `MIGRATE_URL` |
+
+**不能与 `ledger-ddl-drift` 共用 `MIGRATION_DRIFT_DB_URL`**：漂移门禁按设计跑在
+`topems_gate`（基线 + 前向重放夹具），而状态目录是开发库的真实快照；
+共用同一变量会让「目录该对哪个库负责」随 shell 环境漂移，导致门禁红/绿不可解释。
+本机在 `.env` 中单独写 `STATUS_CATALOG_DB_URL`（指向生成目录的开发库），
+`MIGRATION_DRIFT_DB_URL` 保持指向 `topems_gate`，两者互不影响。
+
+### 12.2 `--changed-only` 的适用范围
+
+- 默认仍是**全量**：`node scripts/ci/dump-status-checks.mjs --check`，逐字节比对整份目录。
+- pre-commit 用 `--check --changed-only`：只比对**本次改动迁移涉及的表**。
+  改动来源为暂存区 `database/migrations/*.sql`，无暂存时取 `HEAD` 与工作区差异；
+  从 `ALTER TABLE`、`CREATE/DROP TABLE`、`CREATE INDEX ... ON`、`CREATE/DROP POLICY ... ON`、
+  `COMMENT ON TABLE|COLUMN` 中解析表名。
+- 解析不到任何表（例如本次只改了目录文件、或迁移里只有 `DROP INDEX` 之类无表名语句）时，
+  自动回退全量，不静默跳过。
+- 只比对 `constraints` 与 `uncovered` 中涉及表的行；枚举类型与未涉及表由全量兜底。
+
+### 12.3 定期全量
+
+`--changed-only` 只能防「改了某表却没同步目录」，防不住「目录整体陈旧」。
+建议**每周一次、每个发布窗口前一次**手动跑全量：
+
+```bash
+set -a; . ./.env; set +a
+node scripts/ci/dump-status-checks.mjs --check
+```
+
+全量要求校验库确实处于生成目录时的状态；若库已被重建，应先修复校验库或在确认差异后
+重生成目录，不能用 `--changed-only` 长期替代全量。
