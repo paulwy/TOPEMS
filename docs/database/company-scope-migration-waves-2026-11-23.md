@@ -31,10 +31,10 @@
 | 3 | W12-B1 | `public.monitor_settings` | `20261123110000` | 依赖 A 已完成公司上下文改造 |
 | 4 | W12-B2 | `public.system_settings` + 公司作用域 API | `20261123120000` | 复用 B1 的平台行策略与 API 形态 |
 | 5 | W13-1a | 订单公司归属补列（`sales_orders`/`purchase_orders`）+ `search_entity_projections_v2` 建表 + 双写 | `20261123140000` / `20261123141000` / `20261123142000` | 依赖 A/B 的写入端公司上下文；已合入 main |
-| 6 | W13-2 | 按业务清单回填 → 零 NULL → 影子读比对 → 搜索切换 | 待创建（不得复用 `140000`–`142000`） | 依赖全量比对零差异 + 业务归属清单与四条规则 |
+| 6 | W13-2 | 按业务清单回填 → 零 NULL → 影子读比对 → 搜索切换 | 待创建（不得复用 `140000`–`142000`） | 依赖全量比对零差异 + 业务归属清单与四条待确认规则 |
 | 7 | W13-3 | 下线旧搜索表 | 待创建（不得复用 `140000`–`142000`） | 依赖切换后观察通过 |
 
-> 版本重编号：原方案 `20261123130000`（v2 建表）已由 W5-B215 `hrm.contracts` 占用，W13 第一段实际为 `140000`（`sales_orders.company_id`）、`141000`（`purchase_orders.company_id`）、`142000`（v2 建表 + 双写）。第二段尚未创建迁移，版本号按当前链尾顺延。执行口径以 `docs/database/window-execution-checklist-2026-11-21.md` §5C 为准。
+> 版本号口径：`20261123130000` 已被 W5-B215 占用；订单补列为 `140000`/`141000`，v2 建表为 `142000`；切换与下线待建时另行取号，不得复用 `140000`–`142000`。
 
 ### 1.2 与 W1–W11 的衔接
 
@@ -48,6 +48,7 @@
 - **A2 后紧跟 B**：`core_inter_module_sync` 请求路径可达，策略生效后无公司上下文的请求会被拒绝，必须在同一发布列车完成 handler 改造；B 组复用同一套公司上下文注入。
 - **B1 先于 B2**：两者结构相同（平台母版行 + 公司差异行），监控阈值影响面更小，先跑通平台行只读与公司覆盖，再复制到系统参数并新增公司作用域 API。
 - **W13 最后且分三步**：搜索是派生副本，必须等源表公司过滤与写入端公司字段稳定；双写零降级要求老表持续服务，切换前必须完成全量比对，不能提前切读。
+- **业务前置的阻断边界**：11 张表剩余待回执 8 项不阻断 W12 与 W13 第一段；W13 第二段的可见性验收取决于 Q-G4 的母公司可见口径与 Q-G5 的期间快照，与这 11 张表无关。
 
 ## 2. 版本号与文件名
 
@@ -73,7 +74,7 @@
 | `core_inter_module_sync` | `company_id` | `uuid` | 是（NULL = 集团级任务） | 无 | `(tenant_id, company_id, created_at DESC) WHERE company_id IS NOT NULL`；`(tenant_id) WHERE company_id IS NULL` | 同上 |
 | `monitor_settings` | `company_id`；`override_policy` | `uuid`；`varchar(32) NOT NULL DEFAULT 'platform_only'` | 是（NULL = 集团母版行；`tenant_id` 也为 NULL 时 = 平台默认行） | 无 | 母版/平台行唯一 `(COALESCE(tenant_id, 零UUID), key) WHERE company_id IS NULL AND deleted_at IS NULL`；公司行唯一 `(tenant_id, company_id, key) WHERE company_id IS NOT NULL AND deleted_at IS NULL` | 同上（平台行 NULL 不校验） |
 | `system_settings` | `company_id`；`override_policy` | `uuid`；`varchar(32) NOT NULL DEFAULT 'platform_only'` | 是（NULL = 集团母版行；`tenant_id` 也为 NULL 时 = 平台参数行） | 无 | 同 `monitor_settings` | 同上 |
-| `search_entity_projections_v2` | `company_id` | `uuid` | 否 | 无 | 主键 `(tenant_id, entity_type, entity_id)`；`(tenant_id, company_id, entity_type)` | `(tenant_id, company_id) → hrm.companies(tenant_id, id)` |
+| `search_entity_projections_v2` | `company_id` | `uuid` | 是（本段可空，第二段切换时收紧为 NOT NULL） | 无 | 主键 `(tenant_id, entity_type, entity_id)`；`(tenant_id, company_id, entity_type)` | `(tenant_id, company_id) → hrm.companies(tenant_id, id)` |
 
 **唯一约束替换（`core_tenant_modules`）**
 
@@ -112,7 +113,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_core_tenant_modules_company
 - `monitor_settings.company_id`：`NULL = 集团母版行（tenant_id 非空）或平台默认行（tenant_id 也为 NULL）；业务写只落公司行`。
 - `system_settings.company_id`：`NULL = 集团母版行（tenant_id 非空）或平台参数行（tenant_id 也为 NULL）；公司行可覆盖`。
 - `override_policy`：`platform_only=平台锁定公司不可覆盖；company_overridable=公司可覆盖；company_only=只对公司有意义`。
-- `search_entity_projections_v2.company_id`：`投影归属公司，NOT NULL；母公司可按公司过滤，子公司固定本司`。
+- `search_entity_projections_v2.company_id`：`投影归属公司；本段可空（NULL 行对业务不可见，等待回填），第二段切换时收紧为 NOT NULL；母公司可按公司过滤，子公司固定本司`。
 
 ## 4. 回填与判空
 
@@ -322,7 +323,7 @@ FOR INSERT WITH CHECK (
 
 - A/B 四张表各至少 4 条：列可空性、FK、策略数量与名称、唯一索引；monitor/system 另加 CHECK 已校验与平台行计数为 0 的异常行。
 - `core_tenant_modules` 额外断言旧唯一约束不存在、两条部分唯一索引存在、存量行 `company_id IS NULL`。
-- W13：v2 列 NOT NULL、PK/索引/FK/策略存在；切换后 canonical 的 `company_id NOT NULL`；legacy 不存在。
+- W13 第一段：v2 列可空（切换后收紧为 NOT NULL）、PK/索引/FK/策略存在；切换后 canonical 的 `company_id NOT NULL`；legacy 不存在。
 - `source` 填对应版本号，`source_tokens` 用稳定 token。
 
 ### 9.3 `checksums.txt`
