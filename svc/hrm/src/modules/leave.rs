@@ -13,6 +13,7 @@ use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use super::leave_status::{LeaveApprovalStatus, LeaveRecordStatus};
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
@@ -33,6 +34,12 @@ pub struct LeaveRequest {
     pub rejection_reason: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// 响应归一：`status` 列落库值必须属于枚举集合，未知历史值回落到默认态
+fn normalize_leave(mut leave: LeaveRequest) -> LeaveRequest {
+    leave.status = LeaveRecordStatus::normalize(&leave.status).to_string();
+    leave
 }
 
 /// 兼容前端日期字符串（"2026-10-05"）与 RFC3339 时间戳
@@ -161,7 +168,17 @@ pub async fn list_leaves(
                 return ApiResponse::<serde_json::Value>::server_error("解析员工信息失败");
             }
         };
-    let status_filter = params.status;
+    let status_filter: Option<String> =
+        match LeaveRecordStatus::parse_filter(params.status.as_deref()) {
+            Ok(Some(status)) => Some(status.as_db_str().to_string()),
+            Ok(None) => None,
+            Err(_) => {
+                return ApiResponse::<serde_json::Value>::error(
+                    400,
+                    "status 取值非法，允许 pending/approved/rejected/cancelled",
+                )
+            }
+        };
 
     let result = sqlx::query_as::<_, LeaveRequest>(
         only_own_schema_query!("hrm", r#"
@@ -197,6 +214,7 @@ pub async fn list_leaves(
             .await;
 
             let total = count_result.unwrap_or(0);
+            let items: Vec<LeaveRequest> = items.into_iter().map(normalize_leave).collect();
 
             ApiResponse::success(
                 serde_json::json!({
@@ -272,7 +290,7 @@ pub async fn create_leave(
     let result = sqlx::query_as::<_, LeaveRequest>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.leave_records (id, employee_id, leave_type, start_date, end_date, days, reason, status, tenant_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
     )
@@ -283,6 +301,7 @@ pub async fn create_leave(
     .bind(req.end_date)
     .bind(&req.days)
     .bind(&req.reason)
+    .bind(LeaveRecordStatus::DEFAULT.as_db_str())
     .bind(org_id)
     .bind(now)
     .bind(now)
@@ -291,7 +310,7 @@ pub async fn create_leave(
 
     let (response, status_str, error_msg) = match &result {
         Ok(leave) => (
-            ApiResponse::success(leave.clone(), "请假申请提交成功"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请提交成功"),
             "success",
             None,
         ),
@@ -369,7 +388,7 @@ pub async fn get_leave(
     .await;
 
     match result {
-        Ok(Some(leave)) => ApiResponse::success(leave, "查询成功"),
+        Ok(Some(leave)) => ApiResponse::success(normalize_leave(leave), "查询成功"),
         Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在"),
         Err(e) => {
             tracing::error!("查询请假申请失败: {}", e);
@@ -414,7 +433,7 @@ pub async fn update_leave(
             days = COALESCE($4, days),
             reason = COALESCE($5, reason),
             updated_at = $6
-        WHERE id = $7 AND status = 'pending'
+        WHERE id = $7 AND status = $8
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
     )
@@ -425,6 +444,7 @@ pub async fn update_leave(
     .bind(&req.reason)
     .bind(now)
     .bind(id)
+    .bind(LeaveRecordStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -436,7 +456,7 @@ pub async fn update_leave(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(leave, "请假申请更新成功")
+            ApiResponse::success(normalize_leave(leave), "请假申请更新成功")
         }
         Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在或已处理"),
         Err(e) => {
@@ -470,9 +490,10 @@ pub async fn delete_leave(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.leave_records SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'"
+        "UPDATE hrm.leave_records SET deleted_at = NOW() WHERE id = $1 AND status = $2"
     ))
     .bind(id)
+    .bind(LeaveRecordStatus::Pending.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -560,17 +581,21 @@ pub async fn approve_leave(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.leave_records
         SET
-            status = 'approved',
-            approver_id = $2,
-            approval_date = $3::date,
-            updated_at = $3::timestamptz
-        WHERE id = $1 AND status = 'pending'
+            status = $2,
+            approval_status = $6,
+            approver_id = $3,
+            approval_date = $4::date,
+            updated_at = $4::timestamptz
+        WHERE id = $1 AND status = $5
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
     )
     .bind(id)
+    .bind(LeaveRecordStatus::Approved.as_db_str())
     .bind(req.approver_id)
     .bind(now)
+    .bind(LeaveRecordStatus::Pending.as_db_str())
+    .bind(LeaveApprovalStatus::Approved.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -582,7 +607,7 @@ pub async fn approve_leave(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(leave, "请假已批准")
+            ApiResponse::success(normalize_leave(leave), "请假已批准")
         }
         Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在或已处理"),
         Err(e) => {
@@ -619,19 +644,23 @@ pub async fn reject_leave(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.leave_records
         SET
-            status = 'rejected',
-            approver_id = $2,
-            approval_date = $3::date,
-            rejection_reason = $4,
-            updated_at = $3::timestamptz
-        WHERE id = $1 AND status = 'pending'
+            status = $2,
+            approval_status = $7,
+            approver_id = $3,
+            approval_date = $4::date,
+            rejection_reason = $5,
+            updated_at = $4::timestamptz
+        WHERE id = $1 AND status = $6
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
     )
     .bind(id)
+    .bind(LeaveRecordStatus::Rejected.as_db_str())
     .bind(req.approver_id)
     .bind(now)
     .bind(&req.reason)
+    .bind(LeaveRecordStatus::Pending.as_db_str())
+    .bind(LeaveApprovalStatus::Rejected.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -643,7 +672,7 @@ pub async fn reject_leave(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(leave, "请假已拒绝")
+            ApiResponse::success(normalize_leave(leave), "请假已拒绝")
         }
         Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在或已处理"),
         Err(e) => {

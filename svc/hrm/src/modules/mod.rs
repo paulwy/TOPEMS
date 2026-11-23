@@ -21,6 +21,7 @@ pub mod health;
 pub mod hrm_plugin;
 pub mod individual_tax_calc;
 pub mod leave;
+pub mod leave_status;
 pub mod openapi;
 pub mod payroll;
 pub mod payroll_calc;

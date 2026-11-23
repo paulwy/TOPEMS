@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 380,
+    "db_check_constraints": 382,
     "db_enum_types": 5,
     "db_check_values": 168,
-    "rust_enums": 263,
+    "rust_enums": 265,
     "rust_enum_values": 221,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 230,
@@ -1946,6 +1946,38 @@
         "completed",
         "failed",
         "pending"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/leave_status.rs",
+      "name": "LeaveApprovalStatus",
+      "values": [
+        "Approved",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/leave_status.rs",
+      "name": "LeaveRecordStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "pending",
+        "rejected"
       ]
     },
     {

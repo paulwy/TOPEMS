@@ -1583,6 +1583,20 @@
       "table": "erp.leave_requests",
       "column": "status",
       "candidate": "docs/database/leave-request-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/hrm/src/modules/leave_status.rs",
+      "enum": "LeaveRecordStatus",
+      "table": "hrm.leave_records",
+      "column": "status",
+      "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/hrm/src/modules/leave_status.rs",
+      "enum": "LeaveApprovalStatus",
+      "table": "hrm.leave_records",
+      "column": "approval_status",
+      "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
