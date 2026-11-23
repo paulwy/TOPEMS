@@ -85,6 +85,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   pending_verification: 'info',
   awarded: 'success',
   archived: 'default',
+  restricted: 'warning',
   reworking: 'warning',
   submitted: 'info',
   created: 'warning',

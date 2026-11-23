@@ -2017,6 +2017,13 @@
       "table": "hrm.training_plans",
       "column": "status",
       "candidate": "docs/database/hrm-training-plan-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/hazardous_material_status.rs",
+      "enum": "HazardousMaterialStatus",
+      "table": "ehs.qa_ehs_hazardous_materials",
+      "column": "status",
+      "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

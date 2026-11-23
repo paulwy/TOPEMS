@@ -1,4 +1,5 @@
 //! Hazardous material management - Materials, inventory, MSDS, and warehouse records
+use crate::modules::hazardous_material_status::HazardousMaterialStatus;
 
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use chrono::{DateTime, Utc};
@@ -362,7 +363,13 @@ pub async fn create_material(
     };
     let tenant_id = tenant;
     let material_no = format!("HM-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
-    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
+    let status = match req.status.as_deref() {
+        None => HazardousMaterialStatus::DEFAULT.as_db_str(),
+        Some(raw) => match HazardousMaterialStatus::from_db_str(raw) {
+            Some(status) => status.as_db_str(),
+            None => return ApiResponse::bad_request("无效的危险品状态"),
+        },
+    };
     let hazards: serde_json::Value = req
         .hazards
         .clone()
@@ -402,7 +409,7 @@ pub async fn create_material(
         .bind(&req.handling_requirements)
         .bind(&req.emergency_measures)
         .bind(&req.msds_url)
-        .bind(&status)
+        .bind(status)
         .bind(tenant_id)
         .fetch_one(&mut scope)
         .await
@@ -586,9 +593,16 @@ pub async fn update_material(
         sets.push(format!("safety_data_sheet = ${}", params.len() + 1));
         params.push(v.clone());
     }
-    if let Some(v) = &req.status {
+    let normalized_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match HazardousMaterialStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => return ApiResponse::bad_request("无效的危险品状态"),
+        },
+    };
+    if let Some(v) = normalized_status {
         sets.push(format!("status = ${}", params.len() + 1));
-        params.push(v.clone());
+        params.push(v.to_string());
     }
     sets.push("updated_at = now()".to_string());
     let set_clause = sets.join(", ");
@@ -1002,16 +1016,9 @@ pub async fn get_material_statistics(
     )
     .await;
 
-    // expired: materials with status = 'expired' (status column)
-    let expired_count = material_count(
-        &mut scope,
-        format!(
-            "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND status = 'expired'",
-            tc
-        ),
-        tenant,
-    )
-    .await;
+    // expired_count: 危险品主表没有有效期字段，`expired` 也不是合法 status；
+    // 该指标在有效期模型落地前固定为 0，不再用非法状态查询伪装统计。
+    let expired_count = 0;
 
     // by_category GROUP BY
     let mut category_query = sqlx::query(sqlx::AssertSqlSafe(format!(

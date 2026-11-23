@@ -3,14 +3,14 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 185,
-    "uncovered_values": 193,
+    "uncovered_enums": 186,
+    "uncovered_values": 194,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 178,
-    "internal_state_enums": 150,
+    "resolved_enums": 179,
+    "internal_state_enums": 151,
     "persisted_unmapped_enums": 19,
     "finance_candidate_ready_enums": 36,
-    "internal_state_values": 165,
+    "internal_state_values": 166,
     "persisted_unmapped_values": 14,
     "finance_candidate_ready_values": 14
   },
@@ -626,6 +626,24 @@
         "table": "ehs.qa_ehs_hazards",
         "column": "status",
         "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/hazardous_material_status.rs",
+      "enum": "HazardousMaterialStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "restricted"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/ehs/src/modules/hazardous_material_status.rs",
+        "enum": "HazardousMaterialStatus",
+        "table": "ehs.qa_ehs_hazardous_materials",
+        "column": "status",
+        "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql"
       }
     },
     {

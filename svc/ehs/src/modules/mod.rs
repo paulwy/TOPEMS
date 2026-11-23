@@ -12,6 +12,7 @@ pub mod environmental_compliance;
 pub mod hazard;
 pub mod hazard_status;
 pub mod hazardous_material;
+pub mod hazardous_material_status;
 pub mod health;
 pub mod incident_action_status;
 pub mod integration;

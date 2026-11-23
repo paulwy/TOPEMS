@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **413** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **414** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -29,7 +29,7 @@
 | `core` | 2 |
 | `crm` | 12 |
 | `doc_service` | 1 |
-| `ehs` | 26 |
+| `ehs` | 27 |
 | `erp` | 33 |
 | `finance` | 40 |
 | `flow` | 7 |
@@ -141,6 +141,7 @@
 | B243 | 1 |
 | B244 | 1 |
 | B245 | 1 |
+| B246 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -194,6 +195,8 @@
 
 - W5-B245（B245）新增 `hrm.training_plans.ck_training_plans_status_lifecycle_standard` 只有候选 SQL（`docs/database/hrm-training-plan-status-check-candidates-2026-11-23.sql`）、无迁移；该约束替换既有 `ck_training_plans_status_standard`（active/inactive/archived），部署时必须先 DROP 旧约束；重建库仍保留旧约束，新约束不存在，已计入本清单待回迁。
 
+- W5-B246（B246）新增 `ehs.qa_ehs_hazardous_materials.ck_qa_ehs_hazardous_materials_status_lifecycle_standard` 只有候选 SQL（`docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql`）、无迁移；该约束替换既有 `ck_qa_ehs_hazardous_materials_status_standard`（active/inactive/archived），部署时必须先 DROP 旧约束；重建库仍保留旧约束，新约束不存在，已计入本清单待回迁。
+
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
 ## 复核记录（2026-11-23，第二轮推送前）
@@ -225,3 +228,4 @@
 - B243 追加后读数：411 条；`hrm.training_records.completion_status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B244 追加后读数：412 条；`hrm.training_records.attendance_status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B245 追加后读数：413 条；`hrm.training_plans.status` 在参考库仍由旧约束覆盖，新生命周期约束未回迁。
+- B246 追加后读数：414 条；`ehs.qa_ehs_hazardous_materials.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。

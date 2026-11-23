@@ -5,11 +5,11 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 311,
-    "rust_enum_values": 240,
-    "rust_values_not_in_db_check": 193,
-    "frontend_status_keys": 249,
-    "frontend_keys_not_in_db_check": 202,
+    "rust_enums": 312,
+    "rust_enum_values": 241,
+    "rust_values_not_in_db_check": 194,
+    "frontend_status_keys": 250,
+    "frontend_keys_not_in_db_check": 203,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -841,6 +841,23 @@
         "reported",
         "resolved",
         "verified"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/hazardous_material_status.rs",
+      "name": "HazardousMaterialStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive",
+        "Restricted"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive",
+        "restricted"
       ]
     },
     {
@@ -5671,6 +5688,7 @@
       "reserved",
       "resolved",
       "restored",
+      "restricted",
       "retired",
       "retrieved",
       "returned",
@@ -5878,6 +5896,7 @@
       "requisitioned",
       "reserved",
       "restored",
+      "restricted",
       "retired",
       "retrieved",
       "returned",
@@ -6081,6 +6100,7 @@
       "requisitioned",
       "reserved",
       "restored",
+      "restricted",
       "retired",
       "retrieved",
       "returned",

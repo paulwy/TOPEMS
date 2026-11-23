@@ -17,7 +17,7 @@ export interface HazardousMaterial {
   handling_requirements: string | null;
   emergency_measures: string | null;
   msds_url: string | null;
-  status: 'active' | 'inactive' | 'restricted';
+  status: 'active' | 'inactive' | 'restricted' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -117,7 +117,7 @@ export interface CreateHazardousMaterialRequest {
   handling_requirements?: string | null;
   emergency_measures?: string | null;
   msds_url?: string | null;
-  status?: 'active' | 'inactive' | 'restricted';
+  status?: 'active' | 'inactive' | 'restricted' | 'archived';
 }
 
 export interface UpdateHazardousMaterialRequest {
@@ -134,7 +134,7 @@ export interface UpdateHazardousMaterialRequest {
   handling_requirements?: string | null;
   emergency_measures?: string | null;
   msds_url?: string | null;
-  status?: 'active' | 'inactive' | 'restricted';
+  status?: 'active' | 'inactive' | 'restricted' | 'archived';
 }
 
 export interface CreateHazardousMaterialCategoryRequest {
