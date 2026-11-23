@@ -1,6 +1,7 @@
 //! Audit handlers
 
 use crate::models::audit::*;
+use crate::modules::audit_finding_status::QmsAuditFindingStatus;
 use axum::{
     extract::State,
     routing::{get, post, put},
@@ -545,8 +546,14 @@ pub async fn list_audit_findings(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
-    axum::extract::Query(query): axum::extract::Query<AuditFindingQuery>,
+    axum::extract::Query(mut query): axum::extract::Query<AuditFindingQuery>,
 ) -> ApiResponse<Vec<AuditFinding>> {
+    if let Some(raw) = query.status.as_deref() {
+        match QmsAuditFindingStatus::parse_filter(raw) {
+            Some(v) => query.status = Some(v.to_string()),
+            None => return ApiResponse::bad_request("无效的审核发现状态"),
+        }
+    }
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -669,7 +676,7 @@ pub async fn create_audit_finding(
     };
 
     // target_date 输入为文本，显式 cast 到 timestamptz（B6a 同类修复）。
-    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_findings (tenant_id, finding_no, task_id, plan_id, title, description, severity, category, status, recommendation, responsible, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11::timestamptz, $12) RETURNING id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(tenant_id).bind(finding_no).bind(task_id).bind(plan_id).bind(req.title).bind(req.description).bind(severity).bind(req.category).bind(req.recommendation).bind(req.responsible).bind(req.target_date).bind(req.created_by)
+    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_findings (tenant_id, finding_no, task_id, plan_id, title, description, severity, category, status, recommendation, responsible, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::timestamptz, $13) RETURNING id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(tenant_id).bind(finding_no).bind(task_id).bind(plan_id).bind(req.title).bind(req.description).bind(severity).bind(req.category).bind(QmsAuditFindingStatus::DEFAULT.as_db_str()).bind(req.recommendation).bind(req.responsible).bind(req.target_date).bind(req.created_by)
     .fetch_one(&mut scope)
     .await;
 
@@ -741,7 +748,7 @@ pub async fn verify_audit_finding(
         }
     };
 
-    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_findings SET status = 'verified', verified_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
+    let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_findings SET status = $3, verified_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = ANY($4::text[]) RETURNING id::TEXT, tenant_id::TEXT, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id).bind(QmsAuditFindingStatus::Verified.as_db_str()).bind(QmsAuditFindingStatus::VERIFY_FROM.as_slice())
     .fetch_one(&mut scope)
     .await;
 

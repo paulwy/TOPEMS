@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 303,
+    "rust_enums": 304,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -4234,6 +4234,23 @@
         "paused",
         "rolled_back",
         "running"
+      ]
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/audit_finding_status.rs",
+      "name": "QmsAuditFindingStatus",
+      "values": [
+        "Closed",
+        "InProgress",
+        "Open",
+        "Verified"
+      ],
+      "normalized": [
+        "closed",
+        "in_progress",
+        "open",
+        "verified"
       ]
     },
     {

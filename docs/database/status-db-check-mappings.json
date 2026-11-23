@@ -1961,6 +1961,13 @@
       "table": "pm.project_resources",
       "column": "status",
       "candidate": "docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/qms/src/modules/audit_finding_status.rs",
+      "enum": "QmsAuditFindingStatus",
+      "table": "qms.qa_audit_findings",
+      "column": "status",
+      "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

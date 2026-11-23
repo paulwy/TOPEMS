@@ -3,13 +3,13 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 181,
+    "uncovered_enums": 182,
     "uncovered_values": 192,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 174,
+    "resolved_enums": 175,
     "internal_state_enums": 147,
     "persisted_unmapped_enums": 19,
-    "finance_candidate_ready_enums": 35,
+    "finance_candidate_ready_enums": 36,
     "internal_state_values": 164,
     "persisted_unmapped_values": 14,
     "finance_candidate_ready_values": 14
@@ -2817,6 +2817,26 @@
         "enum": "CanaryStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
+      }
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/audit_finding_status.rs",
+      "enum": "QmsAuditFindingStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "verified"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v55_invoices.v55_invoices_status_check"
+      ],
+      "resolved": {
+        "file": "svc/qms/src/modules/audit_finding_status.rs",
+        "enum": "QmsAuditFindingStatus",
+        "table": "qms.qa_audit_findings",
+        "column": "status",
+        "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
       }
     },
     {

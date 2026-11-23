@@ -1,5 +1,6 @@
 pub mod apqp;
 pub mod audit;
+pub mod audit_finding_status;
 pub mod corrective_action;
 pub mod dashboard;
 pub mod data_sync;
