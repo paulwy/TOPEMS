@@ -2890,3 +2890,11 @@ pending_forward_patches:
     destructive_scan: "无 DELETE/TRUNCATE/DROP TABLE/COLUMN；回填为 1 条只作用于单公司租户 company_id IS NULL 行的 UPDATE；1 个 DO 块内枚举 DROP POLICY（随后重建 5 条）；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束存在性守卫，可重复执行"
     note: "前置断言：表、hrm.companies、erp 公司维度函数存在；平台行 (key) 重复为 0；多公司租户租户级行在回填后仍存在即 RAISE EXCEPTION 并打印示例。后置断言：company_id 为 uuid 可空无默认、旧唯一索引不存在、两条部分唯一索引谓词精确、CHECK 与公司 FK 已 VALIDATE、策略数=5 且名称精确、RLS ENABLE+FORCE、总行数不变、无租户级悬空行。回滚 database/rollback/20261123110000_monitor_settings_company_scope.rollback.sql 在公司级行非 0 时 RAISE EXCEPTION 并打印计数，不提供 override、不删除任何数据。组织：业务请求路径仅 svc/monitor settings handlers，写入只落公司行；平台默认值只走只读读取，缺公司上下文返回 400"
 
+  # ===== 2026-11-23：W12-B2 system_settings 公司级隔离（平台参数行只读） =====
+  - version: "20261123120000"
+    file: "database/migrations/20261123120000_system_settings_company_scope.sql"
+    status: to_apply
+    effect: "public.system_settings 新增 company_id uuid（可空、无默认）：tenant_id 与 company_id 同时为 NULL = 平台参数行，所有公司只读；公司行按租户 + 公司归属，子公司仅本司可见可写，母公司经 erp.company_readable 只读子公司。回填：单公司租户的租户级行 → 该公司；多公司租户的租户级行无法归属到唯一公司 → RAISE EXCEPTION 阻断迁移（不猜公司、不改为 NULL）；平台行保持 NULL。唯一性：删除旧 UNIQUE (tenant_id, key)，替换为 uq_system_settings_platform (key) WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL 与 uq_system_settings_company (tenant_id, company_id, key) WHERE deleted_at IS NULL AND company_id IS NOT NULL；新增 CHECK ((company_id IS NULL) = (tenant_id IS NULL)) 与同租户公司外键。显式 ENABLE+FORCE RLS；策略重建为 5 条：company_select（平台行只读放开 + 公司行按公司隔离）、company_insert/update/delete（仅本公司行）、platform_maintain（FOR ALL，仅平台通道）——平台行零业务写权限"
+    destructive_scan: "无 DELETE/TRUNCATE/DROP TABLE/COLUMN；回填为 1 条只作用于单公司租户 company_id IS NULL 行的 UPDATE；1 个 DO 块内枚举 DROP POLICY（随后重建 5 条）；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束存在性守卫，可重复执行"
+    note: "前置断言：表、hrm.companies、erp 公司维度函数存在；平台行 (key) 重复为 0；多公司租户租户级行在回填后仍存在即 RAISE EXCEPTION 并打印示例。后置断言：company_id 为 uuid 可空无默认、旧唯一索引不存在、两条部分唯一索引谓词精确、CHECK 与公司 FK 已 VALIDATE、策略数=5 且名称精确、RLS ENABLE+FORCE、总行数不变、无租户级悬空行。回滚 database/rollback/20261123120000_system_settings_company_scope.rollback.sql 在公司级行非 0 时 RAISE EXCEPTION 并打印计数，不提供 override、不删除任何数据。组织：平台入口 svc/erp settings handlers（系统连接）SQL 全部限定 tenant_id/company_id 同时为 NULL，不会读写公司行；新增公司作用域 API /system/company-settings 走请求事务 + 公司上下文，缺公司 400，写/删平台行显式 403"
+

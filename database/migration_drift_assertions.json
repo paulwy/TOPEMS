@@ -276,6 +276,63 @@
       "source_tokens": ["monitor_settings_company_select", "monitor_settings_platform_maintain"],
       "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'monitor_settings' AND policyname IN ('monitor_settings_company_select','monitor_settings_company_insert','monitor_settings_company_update','monitor_settings_company_delete','monitor_settings_platform_maintain')",
       "expected": 5
+    },
+    {
+      "id": "system_settings.company_id",
+      "kind": "column_type",
+      "table": "public.system_settings",
+      "column": "company_id",
+      "expected": "uuid",
+      "source": "20261123120000",
+      "source_tokens": ["public.system_settings", "ADD COLUMN IF NOT EXISTS company_id uuid", "COMMENT ON COLUMN public.system_settings.company_id"]
+    },
+    {
+      "id": "system_settings.company_tenant_check",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["chk_system_settings_company_tenant", "VALIDATE CONSTRAINT chk_system_settings_company_tenant"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.system_settings'::regclass AND conname = 'chk_system_settings_company_tenant' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "system_settings.fk_company",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["fk_system_settings_company", "VALIDATE CONSTRAINT fk_system_settings_company"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.system_settings'::regclass AND conname = 'fk_system_settings_company' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "system_settings.platform_unique_index",
+      "kind": "index_exists",
+      "schema": "public",
+      "index": "uq_system_settings_platform",
+      "source": "20261123120000",
+      "source_tokens": ["uq_system_settings_platform", "WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL"]
+    },
+    {
+      "id": "system_settings.company_unique_index",
+      "kind": "index_exists",
+      "schema": "public",
+      "index": "uq_system_settings_company",
+      "source": "20261123120000",
+      "source_tokens": ["uq_system_settings_company", "WHERE deleted_at IS NULL AND company_id IS NOT NULL"]
+    },
+    {
+      "id": "system_settings.legacy_index_absent",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["DROP INDEX IF EXISTS public.uq_system_settings_tenant_key"],
+      "sql": "SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'uq_system_settings_tenant_key'",
+      "expected": 0
+    },
+    {
+      "id": "system_settings.policies",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["system_settings_company_select", "system_settings_platform_maintain"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'system_settings' AND policyname IN ('system_settings_company_select','system_settings_company_insert','system_settings_company_update','system_settings_company_delete','system_settings_platform_maintain')",
+      "expected": 5
     }
   ]
 }
