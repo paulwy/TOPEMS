@@ -17,6 +17,18 @@ use crate::models::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
+/// W12-A2：同步任务必须落到「当前公司」。
+///
+/// 缺少公司上下文时显式失败（400），不回退写 `company_id IS NULL` 的集团级行——
+/// 集团级行只允许系统/平台通道写入，请求侧误写会被 RLS 拒绝或静默 0 行。
+fn require_company_context(action: &str) -> Result<Uuid, TopemsError> {
+    topems_shared_auth::company_context::current_company_id().ok_or_else(|| {
+        TopemsError::ValidationFailed(format!(
+            "{action}需要公司上下文：请显式声明 x-company-id，或为用户配置默认公司"
+        ))
+    })
+}
+
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct UpdateStatusRequest {
     pub status: String,
@@ -160,13 +172,18 @@ pub async fn create_task(
         ));
     };
 
+    let company_id = match require_company_context("创建同步任务") {
+        Ok(v) => v,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     match sqlx::query_as::<_, SyncTaskRow>(only_own_schema_query!(
         "integration",
         r#"
         INSERT INTO integration.core_inter_module_sync
             (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
-             status, started_at, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
+             status, started_at, created_at, updated_at, company_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11)
         RETURNING *
         "#
     ))
@@ -180,6 +197,7 @@ pub async fn create_task(
     .bind(now)
     .bind(now)
     .bind(now)
+    .bind(company_id)
     .fetch_one(&mut scope)
     .await
     {
@@ -562,6 +580,11 @@ pub async fn trigger_scm_wms(
         ));
     };
 
+    let company_id = match require_company_context("触发SCM→WMS同步") {
+        Ok(v) => v,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -570,9 +593,9 @@ pub async fn trigger_scm_wms(
                 only_own_schema_query!("integration", r#"
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
-                     status, started_at, created_at, updated_at)
+                     status, started_at, created_at, updated_at, company_id)
                 VALUES ($1, $2,
-                        'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', $4, $5, $6)
+                        'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', $4, $5, $6, $7)
                 RETURNING *
                 "#),
             )
@@ -582,6 +605,7 @@ pub async fn trigger_scm_wms(
             .bind(now)
             .bind(now)
             .bind(now)
+            .bind(company_id)
             .fetch_one(&mut scope)
             .await
             {
@@ -633,6 +657,11 @@ pub async fn trigger_wms_crm(
         ));
     };
 
+    let company_id = match require_company_context("触发WMS→CRM同步") {
+        Ok(v) => v,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -641,9 +670,9 @@ pub async fn trigger_wms_crm(
                 only_own_schema_query!("integration", r#"
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
-                     status, started_at, created_at, updated_at)
+                     status, started_at, created_at, updated_at, company_id)
                 VALUES ($1, $2,
-                        'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', $4, $5, $6)
+                        'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', $4, $5, $6, $7)
                 RETURNING *
                 "#),
             )
@@ -653,6 +682,7 @@ pub async fn trigger_wms_crm(
             .bind(now)
             .bind(now)
             .bind(now)
+            .bind(company_id)
             .fetch_one(&mut scope)
             .await
             {
@@ -704,6 +734,11 @@ pub async fn trigger_srm_scm(
         ));
     };
 
+    let company_id = match require_company_context("触发SRM→SCM同步") {
+        Ok(v) => v,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -713,9 +748,9 @@ pub async fn trigger_srm_scm(
                 r#"
                 INSERT INTO integration.core_inter_module_sync
                     (id, tenant_id, sync_type, source_module, target_module, source_entity,
-                     source_id, status, retry_count, max_retries, created_at, updated_at)
+                     source_id, status, retry_count, max_retries, created_at, updated_at, company_id)
                 VALUES ($1, $2,
-                        'supplier_sync', 'srm', 'scm', 'supplier', $3, 'pending', 0, 3, $4, $5)
+                        'supplier_sync', 'srm', 'scm', 'supplier', $3, 'pending', 0, 3, $4, $5, $6)
                 RETURNING *
                 "#
             ))
@@ -724,6 +759,7 @@ pub async fn trigger_srm_scm(
             .bind(id)
             .bind(now)
             .bind(now)
+            .bind(company_id)
             .fetch_one(&mut scope)
             .await
             {

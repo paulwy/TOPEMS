@@ -8,6 +8,7 @@ description = "TOPEMS System Integration Service"
 
 [features]
 http_endpoint_tests = []
+db-tests = []
 
 [dependencies]
 topems-shared-db = { workspace = true }

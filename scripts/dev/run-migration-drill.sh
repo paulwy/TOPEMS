@@ -592,6 +592,11 @@ SQL
             --apply-deferred "$W9_VERSION" --ticket "$W9_TICKET" --drill-gate-guc-auto \
             || { echo "FAIL: 第 ${cycle} 轮 W9-A 重放失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
         for dep in $(printf '%s\n' ${W9_DEPENDENT_VERSIONS[@]+"${W9_DEPENDENT_VERSIONS[@]}"} | sort); do
+            dep_applied="$(psql "$DSN" -tA -c "SELECT count(*) FROM public._sqlx_migrations WHERE version = ${dep} AND success")"
+            if [[ "${dep_applied:-0}" -gt 0 ]]; then
+                echo "  [4b] 依赖方 ${dep} 已随 W9-A 重放一并应用，跳过补投"
+                continue
+            fi
             dep_max="$(psql "$DSN" -tA -c 'SELECT COALESCE(max(version),0) FROM public._sqlx_migrations WHERE success')"
             dep_max="${dep_max:-0}"
             if [[ "$dep" -gt "$dep_max" ]]; then
