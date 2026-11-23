@@ -1520,6 +1520,20 @@
       "table": "mes.batch_records",
       "column": "status",
       "candidate": "docs/database/batch-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_inspection_overall_status.rs",
+      "enum": "EquipmentInspectionOverallStatus",
+      "table": "mes.equipment_inspection_records",
+      "column": "overall_status",
+      "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_inspection_record_status.rs",
+      "enum": "EquipmentInspectionRecordStatus",
+      "table": "mes.equipment_inspection_records",
+      "column": "status",
+      "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
