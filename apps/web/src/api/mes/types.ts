@@ -897,6 +897,9 @@ export interface WorkOrder {
   work_station_name?: string;
   team_id?: string;
   team_name?: string;
+  operator?: string;
+  product_code?: string;
+  product_name?: string;
   quantity: number;
   completed_quantity?: number;
   good_quantity?: number;

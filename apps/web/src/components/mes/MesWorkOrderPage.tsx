@@ -112,6 +112,29 @@ const priorityConfig = {
   low: { labelKey: 'mes.work_order_page.priority_low', variant: 'default' as const },
 };
 
+type PriorityKey = keyof typeof priorityConfig;
+type StatusKey = keyof typeof statusConfig;
+
+// 后端 priority 列为整数（0=常规/未设置，1=高，2=低），也可能是 high/medium/low 字符串；
+// 统一归一，避免 priorityConfig[未知值] 取到 undefined 后读 .variant 抛异常导致整页渲染失败。
+const normalizePriority = (raw: unknown): PriorityKey => {
+  if (typeof raw === 'number') raw = String(raw);
+  if (typeof raw === 'string') {
+    const key = raw.trim().toLowerCase();
+    if (key === 'high' || key === 'medium' || key === 'low') return key;
+    if (key === '1') return 'high';
+    if (key === '2') return 'low';
+    if (key === '0' || key === '' || key === 'normal') return 'medium';
+  }
+  return 'medium';
+};
+
+// 状态值同样可能超出前端枚举（如后端新增状态），未知值降级为待开始，而不是崩溃。
+const normalizeStatus = (raw: unknown): StatusKey =>
+  typeof raw === 'string' && Object.prototype.hasOwnProperty.call(statusConfig, raw)
+    ? (raw as StatusKey)
+    : 'pending';
+
 const MesWorkOrderPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -158,15 +181,15 @@ const MesWorkOrderPage: React.FC = () => {
       return apiOrders.map((o): WorkOrder => ({
         id: o.id,
         order_no: o.work_order_no,
-        product_name: o.process_name || o.order_number || '—',
-        product_code: o.order_number || '—',
-        quantity: o.quantity,
+        product_name: o.product_name || o.process_name || '—',
+        product_code: o.product_code || '—',
+        quantity: o.quantity ?? 0,
         completed_quantity: o.completed_quantity || 0,
-        status: o.status as WorkOrder['status'],
-        priority: (o.priority as WorkOrder['priority']) || 'medium',
+        status: normalizeStatus(o.status) as WorkOrder['status'],
+        priority: normalizePriority(o.priority),
         workshop: o.work_station_name || '—',
         production_line: o.process_name || '—',
-        operator: o.team_name || '—',
+        operator: o.operator || o.team_name || '—',
         planned_start: o.planned_start_time || '',
         planned_end: o.planned_end_time || '',
         actual_start: o.actual_start_time,
@@ -248,9 +271,15 @@ const MesWorkOrderPage: React.FC = () => {
     { id: 'completed', label: t('mes.work_order.k28') },
   ];
 
-  const formatDateTime = (value: string) => {
+  // 后端时间为 RFC3339（如 2026-11-27T09:00:00+00:00），统一格式化为本地“YYYY-MM-DD HH:mm”
+  const formatDateTime = (value?: string | null) => {
     if (!value) return '-';
-    return value;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+      date.getHours()
+    )}:${pad(date.getMinutes())}`;
   };
 
   const getProgress = (order: WorkOrder) => {
@@ -329,7 +358,7 @@ const MesWorkOrderPage: React.FC = () => {
       key: 'status',
       header: t('mes.work_order.k24'),
       render: (row) => {
-        const config = statusConfig[row.status];
+        const config = statusConfig[normalizeStatus(row.status)];
         const StatusIcon = config.icon;
         return (
           <div className={css.il9}>
@@ -346,7 +375,7 @@ const MesWorkOrderPage: React.FC = () => {
       key: 'priority',
       header: t('mes.work_order.k15'),
       render: (row) => {
-        const config = priorityConfig[row.priority];
+        const config = priorityConfig[normalizePriority(row.priority)];
         return <Tag variant={config.variant}>{t(config.labelKey)}</Tag>;
       },
     },
@@ -365,7 +394,7 @@ const MesWorkOrderPage: React.FC = () => {
       header: t('mes.work_order_page.operator'),
       render: (row) => (
         <div style={styles.inlineRow}>
-          <div className={css.il12}>{row.operator.charAt(0)}</div>
+          <div className={css.il12}>{(row.operator || '—').charAt(0)}</div>
           <span className={css.il13}>{row.operator}</span>
         </div>
       ),
@@ -578,11 +607,11 @@ const MesWorkOrderPage: React.FC = () => {
                   </div>
                 </div>
                 <div className={css.il26}>
-                  <Badge variant={statusConfig[selectedOrder.status].variant}>
-                    {t(statusConfig[selectedOrder.status].labelKey)}
+                  <Badge variant={statusConfig[normalizeStatus(selectedOrder.status)].variant}>
+                    {t(statusConfig[normalizeStatus(selectedOrder.status)].labelKey)}
                   </Badge>
-                  <Tag variant={priorityConfig[selectedOrder.priority].variant}>
-                    {t(priorityConfig[selectedOrder.priority].labelKey)}
+                  <Tag variant={priorityConfig[normalizePriority(selectedOrder.priority)].variant}>
+                    {t(priorityConfig[normalizePriority(selectedOrder.priority)].labelKey)}
                   </Tag>
                 </div>
               </div>
@@ -648,7 +677,7 @@ const MesWorkOrderPage: React.FC = () => {
                 />
                 <InfoItem
                   label={t('mes.work_order.k15')}
-                  value={t(priorityConfig[selectedOrder.priority].labelKey)}
+                  value={t(priorityConfig[normalizePriority(selectedOrder.priority)].labelKey)}
                 />
               </div>
             </Card>
