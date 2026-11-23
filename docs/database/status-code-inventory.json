@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 393,
+    "db_check_constraints": 395,
     "db_enum_types": 5,
     "db_check_values": 182,
-    "rust_enums": 276,
+    "rust_enums": 277,
     "rust_enum_values": 234,
     "rust_values_not_in_db_check": 57,
     "frontend_status_keys": 243,
@@ -2181,6 +2181,21 @@
         "filled",
         "in_progress",
         "published"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/salary_adjustment_status.rs",
+      "name": "SalaryAdjustmentStatus",
+      "values": [
+        "Approved",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "pending",
+        "rejected"
       ]
     },
     {

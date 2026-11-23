@@ -1674,6 +1674,13 @@
       "table": "hrm.performance_goals",
       "column": "status",
       "candidate": "ck_hrm_performance_goals_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/salary_adjustment.rs",
+      "enum": "SalaryAdjustmentStatus",
+      "table": "hrm.salary_adjustments",
+      "column": "status",
+      "candidate": "ck_hrm_salary_adjustments_status_standard"
     }
   ]
 }

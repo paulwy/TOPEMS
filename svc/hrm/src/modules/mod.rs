@@ -33,6 +33,7 @@ pub mod recruitment_status;
 pub mod reports;
 pub mod roles;
 pub mod salary_adjustment;
+pub mod salary_adjustment_status;
 pub mod settings;
 pub mod setup;
 pub mod social_insurance_calc;

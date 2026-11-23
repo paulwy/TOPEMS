@@ -9,7 +9,14 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use super::salary_adjustment_status::SalaryAdjustmentStatus;
 use super::ApiState;
+
+/// 响应兜底：未知历史值回落枚举默认态
+fn normalize_sa(mut v: SalaryAdjustment) -> SalaryAdjustment {
+    v.status = SalaryAdjustmentStatus::normalize(&v.status).to_string();
+    v
+}
 use crate::models::{
     ApproveSalaryAdjustmentRequest, CreateSalaryAdjustmentRequest, RejectSalaryAdjustmentRequest,
     SalaryAdjustment, UpdateSalaryAdjustmentRequest,
@@ -68,6 +75,10 @@ pub async fn list_salary_adjustments(
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let status_filter = match SalaryAdjustmentStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的薪资调整状态筛选值"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -104,7 +115,7 @@ pub async fn list_salary_adjustments(
         "#
     ))
     .bind(params.employee_id)
-    .bind(&params.status)
+    .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -122,7 +133,7 @@ pub async fn list_salary_adjustments(
                 "#
             ))
             .bind(params.employee_id)
-            .bind(&params.status)
+            .bind(&status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -130,7 +141,7 @@ pub async fn list_salary_adjustments(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_sa).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -198,7 +209,7 @@ pub async fn get_salary_adjustment(
     .await;
 
     match result {
-        Ok(sa) => ApiResponse::success(sa, "获取薪资调整成功"),
+        Ok(sa) => ApiResponse::success(sa.map(normalize_sa), "获取薪资调整成功"),
         Err(e) => {
             tracing::error!("获取薪资调整失败: {}", e);
             ApiResponse::from(TopemsError::Internal("获取薪资调整失败".to_string()))
@@ -241,7 +252,7 @@ pub async fn create_salary_adjustment(
         ) VALUES (
             $1,
             (SELECT tenant_id FROM hrm.employees WHERE id = $2),
-            $2, $3, $4, $5, $6, $7, $8, 'pending'
+            $2, $3, $4, $5, $6, $7, $8, $9
         )
         RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
                   adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
@@ -258,6 +269,7 @@ pub async fn create_salary_adjustment(
     .bind(adjustment_amount)
     .bind(req.reason)
     .bind(req.effective_date)
+    .bind(SalaryAdjustmentStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -269,7 +281,7 @@ pub async fn create_salary_adjustment(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(sa, "创建薪资调整成功")
+            ApiResponse::success(normalize_sa(sa), "创建薪资调整成功")
         }
         Err(e) => {
             tracing::error!("创建薪资调整失败: {}", e);
@@ -300,6 +312,14 @@ pub async fn update_salary_adjustment(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateSalaryAdjustmentRequest>,
 ) -> ApiResponse<Option<SalaryAdjustment>> {
+    let status = match req.status.as_deref().map(str::trim) {
+        None => None,
+        Some("") => None,
+        Some(v) => match SalaryAdjustmentStatus::from_db_str(v) {
+            Some(s) => Some(s.as_db_str()),
+            None => return ApiResponse::bad_request("非法的薪资调整状态"),
+        },
+    };
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
@@ -373,7 +393,7 @@ pub async fn update_salary_adjustment(
     .bind(adjustment_amount)
     .bind(req.reason)
     .bind(req.effective_date)
-    .bind(req.status)
+    .bind(status)
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -386,7 +406,7 @@ pub async fn update_salary_adjustment(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(sa, "更新薪资调整成功")
+            ApiResponse::success(sa.map(normalize_sa), "更新薪资调整成功")
         }
         Err(e) => {
             tracing::error!("更新薪资调整失败: {}", e);
@@ -421,7 +441,7 @@ pub async fn approve_salary_adjustment(
         r#"
         UPDATE hrm.salary_adjustments
         SET
-            status = 'approved',
+            status = $3,
             approver_id = $1,
             approval_date = NOW(),
             updated_at = NOW()
@@ -435,6 +455,7 @@ pub async fn approve_salary_adjustment(
     ))
     .bind(req.approver_id)
     .bind(id)
+    .bind(SalaryAdjustmentStatus::Approved.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -446,7 +467,7 @@ pub async fn approve_salary_adjustment(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(sa, "批准薪资调整成功")
+            ApiResponse::success(sa.map(normalize_sa), "批准薪资调整成功")
         }
         Err(e) => {
             tracing::error!("批准薪资调整失败: {}", e);
@@ -481,7 +502,7 @@ pub async fn reject_salary_adjustment(
         r#"
         UPDATE hrm.salary_adjustments
         SET
-            status = 'rejected',
+            status = $4,
             approver_id = $1,
             rejection_reason = $2,
             updated_at = NOW()
@@ -496,6 +517,7 @@ pub async fn reject_salary_adjustment(
     .bind(req.approver_id)
     .bind(req.reason)
     .bind(id)
+    .bind(SalaryAdjustmentStatus::Rejected.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -507,7 +529,7 @@ pub async fn reject_salary_adjustment(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(sa, "拒绝薪资调整成功")
+            ApiResponse::success(sa.map(normalize_sa), "拒绝薪资调整成功")
         }
         Err(e) => {
             tracing::error!("拒绝薪资调整失败: {}", e);

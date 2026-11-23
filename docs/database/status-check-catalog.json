@@ -2195,6 +2195,34 @@
     },
     {
       "schema": "hrm",
+      "table": "salary_adjustments",
+      "constraint": "ck_hrm_salary_adjustments_approval_status_standard",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
+      "table": "salary_adjustments",
+      "constraint": "ck_hrm_salary_adjustments_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
       "table": "training_courses",
       "constraint": "ck_training_courses_status_standard",
       "columns": [
@@ -6660,24 +6688,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "salary_adjustments",
-      "column": "approval_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "salary_adjustments",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "hrm",
