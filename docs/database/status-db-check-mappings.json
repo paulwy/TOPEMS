@@ -1436,6 +1436,13 @@
       "table": "mes.material_returns",
       "column": "status",
       "candidate": "docs/database/mes-material-return-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/production_record_status.rs",
+      "enum": "ProductionRecordStatus",
+      "table": "mes.production_records",
+      "column": "status",
+      "candidate": "docs/database/mes-production-record-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

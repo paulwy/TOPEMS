@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 359,
+    "db_check_constraints": 360,
     "db_enum_types": 5,
     "db_check_values": 160,
-    "rust_enums": 242,
+    "rust_enums": 243,
     "rust_enum_values": 214,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 224,
@@ -2517,6 +2517,23 @@
         "draft",
         "in_progress",
         "pending_approval"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/production_record_status.rs",
+      "name": "ProductionRecordStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
       ]
     },
     {

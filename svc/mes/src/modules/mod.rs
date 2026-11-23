@@ -30,6 +30,7 @@ pub mod production_plan;
 pub mod production_plan_status;
 pub mod production_process;
 pub mod production_record;
+pub mod production_record_status;
 pub mod production_schedule_status;
 pub mod production_scheduling;
 pub mod quality_management;

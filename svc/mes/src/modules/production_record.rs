@@ -18,6 +18,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::production_record_status::ProductionRecordStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::big_decimal_to_f64;
 
@@ -174,9 +175,15 @@ pub async fn list_records(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE deleted_at IS NULL");
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" AND status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = ProductionRecordStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的生产记录状态");
+            };
+            where_clause.push_str(" AND status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -358,31 +365,32 @@ pub async fn create_record(
         }
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, ProductionRecordRow>(
         r#"
         INSERT INTO mes.production_records (
             order_id, process_id, work_station_id,
             operator_id, operator, start_time, end_time,
             completed_quantity, status, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, 'in_progress', $8, $9, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8, $9, $10, $10, $11)
         RETURNING
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
             completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
-        req.order_id,
-        req.process_id,
-        req.work_station_id,
-        req.operator_id,
-        operator_name,
-        req.start_time,
-        f64_to_big_decimal(req.quantity_produced),
-        req.notes,
-        now,
-        tenant_id,
     )
+    .bind(req.order_id)
+    .bind(req.process_id)
+    .bind(req.work_station_id)
+    .bind(req.operator_id)
+    .bind(operator_name)
+    .bind(req.start_time)
+    .bind(f64_to_big_decimal(req.quantity_produced))
+    .bind(ProductionRecordStatus::DEFAULT.as_db_str())
+    .bind(req.notes)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -525,9 +533,9 @@ pub async fn update_record(
 
     let now = Utc::now();
     let status = if req.end_time.is_some() {
-        "completed"
+        ProductionRecordStatus::Completed
     } else {
-        "in_progress"
+        ProductionRecordStatus::InProgress
     };
 
     let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
@@ -574,7 +582,7 @@ pub async fn update_record(
     .bind(req.operator_id)
     .bind(req.end_time)
     .bind(f64_to_big_decimal(req.quantity_produced))
-    .bind(status)
+    .bind(status.as_db_str())
     .bind(req.notes)
     .bind(now)
     .bind(tenant_id)
@@ -728,9 +736,9 @@ pub async fn complete_record(
         r#"
         UPDATE mes.production_records SET
             end_time = $2,
-            status = 'completed',
+            status = $4,
             updated_at = $2
-        WHERE id = $1 AND status = 'in_progress' AND tenant_id = $3::uuid
+        WHERE id = $1 AND status = $5 AND tenant_id = $3::uuid
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
@@ -741,6 +749,8 @@ pub async fn complete_record(
     .bind(id)
     .bind(now)
     .bind(tenant_id)
+    .bind(ProductionRecordStatus::Completed.as_db_str())
+    .bind(ProductionRecordStatus::InProgress.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
