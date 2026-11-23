@@ -1632,6 +1632,13 @@
       "table": "erp.office_supplies",
       "column": "status",
       "candidate": "docs/database/office-supply-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/production_order.rs",
+      "enum": "ProductionOrderStatus",
+      "table": "erp.erp_production_orders",
+      "column": "status",
+      "candidate": "ck_erp_erp_production_orders_status_standard"
     }
   ]
 }

@@ -9,7 +9,25 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::production_order_status::ProductionOrderStatus;
 use super::ApiState;
+
+/// 可选的请求状态归一：空/缺省 => 不改变状态；未知值 => Err（由调用方转 400）
+/// 响应兜底：把库里可能的未知历史值收敛到枚举词表
+fn normalize_order(mut order: ProductionOrder) -> ProductionOrder {
+    order.status = ProductionOrderStatus::normalize(&order.status).to_string();
+    order
+}
+
+fn parse_optional_status(raw: Option<&str>) -> Result<Option<&'static str>, &'static str> {
+    match raw.map(str::trim) {
+        None => Ok(None),
+        Some("") => Ok(None),
+        Some(v) => ProductionOrderStatus::from_db_str(v)
+            .map(|s| Some(s.as_db_str()))
+            .ok_or("unknown_status"),
+    }
+}
 use crate::models::production_order::{
     CreateProductionOrderRequest, ListProductionOrdersResponse, ProductionOrder,
     UpdateProductionOrderRequest, UpdateProductionProgressRequest,
@@ -104,7 +122,10 @@ pub async fn list_production_orders(
     let offset = params.offset();
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match ProductionOrderStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|s| s.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的生产订单状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
@@ -149,7 +170,10 @@ pub async fn list_production_orders(
             let total = count_result.unwrap_or(0);
 
             ApiResponse::success(
-                ListProductionOrdersResponse { orders, total },
+                ListProductionOrdersResponse {
+                    orders: orders.into_iter().map(normalize_order).collect(),
+                    total,
+                },
                 "获取生产订单列表成功",
             )
         }
@@ -209,7 +233,7 @@ pub async fn create_production_order(
             workshop_id, workshop_name, priority, notes,
             created_at, updated_at
         , tenant_id) VALUES (
-            $1, $2, $3, $4, $5, 0, 'pending', $6,
+            $1, $2, $3, $4, $5, 0, $17, $6,
             $7, $8, $9, $10, $11, $12, $13, $14,
             $15, $15
         , $16)
@@ -238,6 +262,7 @@ pub async fn create_production_order(
     .bind(&req.notes)
     .bind(now.naive_utc())
     .bind(tenant_id)
+    .bind(ProductionOrderStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -250,7 +275,7 @@ pub async fn create_production_order(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(order, "生产订单创建成功")
+            ApiResponse::success(normalize_order(order), "生产订单创建成功")
         }
         Err(e) => {
             tracing::error!("创建生产订单失败: {}", e);
@@ -298,7 +323,7 @@ pub async fn get_production_order(
     .await;
 
     match result {
-        Ok(Some(order)) => ApiResponse::success(order, "获取生产订单成功"),
+        Ok(Some(order)) => ApiResponse::success(normalize_order(order), "获取生产订单成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {
             tracing::error!("获取生产订单失败: {}", e);
@@ -342,7 +367,7 @@ pub async fn update_production_order(
             priority = COALESCE($9, priority),
             notes = COALESCE($10, notes),
             updated_at = $11
-        WHERE id = $1 AND status IN ('pending', 'released')
+        WHERE id = $1 AND status = ANY($12)
         RETURNING id, order_no, product_id, product_name, product_code,
                   quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,
@@ -363,6 +388,10 @@ pub async fn update_production_order(
     .bind(req.priority)
     .bind(&req.notes)
     .bind(Utc::now().naive_utc())
+    .bind(vec![
+        ProductionOrderStatus::Pending.as_db_str(),
+        ProductionOrderStatus::Released.as_db_str(),
+    ])
     .fetch_optional(&mut **txn)
     .await;
 
@@ -374,7 +403,7 @@ pub async fn update_production_order(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(order, "生产订单更新成功")
+            ApiResponse::success(normalize_order(order), "生产订单更新成功")
         }
 
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
@@ -412,10 +441,14 @@ pub async fn delete_production_order(
         "erp",
         r#"
         UPDATE erp.erp_production_orders SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled')
+        WHERE id = $1 AND status = ANY($2)
         "#
     ))
     .bind(id)
+    .bind(vec![
+        ProductionOrderStatus::Pending.as_db_str(),
+        ProductionOrderStatus::Cancelled.as_db_str(),
+    ])
     .execute(&mut **txn)
     .await;
 
@@ -459,6 +492,10 @@ pub async fn update_production_progress(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateProductionProgressRequest>,
 ) -> ApiResponse<ProductionOrder> {
+    let progress_status = match parse_optional_status(req.status.as_deref()) {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("非法的生产订单状态"),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -484,7 +521,7 @@ pub async fn update_production_progress(
     )
     .bind(id)
     .bind(req.completed_quantity)
-    .bind(&req.status)
+    .bind(progress_status)
     .bind(req.actual_start_date.map(|d| d.naive_utc()))
     .bind(req.actual_end_date.map(|d| d.naive_utc()))
     .bind(Utc::now().naive_utc())
@@ -499,7 +536,7 @@ pub async fn update_production_progress(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(order, "生产进度更新成功")
+            ApiResponse::success(normalize_order(order), "生产进度更新成功")
         }
 
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
@@ -532,6 +569,9 @@ pub async fn update_production_status(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> ApiResponse<ProductionOrder> {
+    let Some(next) = ProductionOrderStatus::from_db_str(&req.status) else {
+        return ApiResponse::bad_request("非法的生产订单状态");
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -555,7 +595,7 @@ pub async fn update_production_status(
         "#),
     )
     .bind(id)
-    .bind(&req.status)
+    .bind(next.as_db_str())
     .bind(now.naive_utc())
     .fetch_optional(&mut **txn)
     .await;
@@ -565,7 +605,7 @@ pub async fn update_production_status(
             // D2 U2 环2（决策 A）：erp→mes 工单下达由同步 HTTP（mes_client.create_from_erp）
             // 改为发布 `ErpProductionOrderDispatched` 事件，mes 订阅创建生产工单（保留 source_order_id 映射）。
             // 幂等键 = erp_order_id；失败由 mes 侧 DLQ 兜底，不阻塞主流程。
-            if req.status == "approved" {
+            if next == ProductionOrderStatus::Approved {
                 if let Some(publisher) = &state.event_publisher {
                     let publisher = publisher.clone();
                     let order_clone = order.clone();
@@ -627,7 +667,7 @@ pub async fn update_production_status(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(order, "生产订单状态更新成功")
+            ApiResponse::success(normalize_order(order), "生产订单状态更新成功")
         }
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {
@@ -663,6 +703,10 @@ pub async fn receive_mes_progress(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<MesProgressUpdate>,
 ) -> ApiResponse<ProductionOrder> {
+    let mes_status = match parse_optional_status(req.status.as_deref()) {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("非法的生产订单状态"),
+    };
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(_txn) => _txn,
@@ -735,7 +779,7 @@ pub async fn receive_mes_progress(
     )
     .bind(order_id)
     .bind(req.completed_quantity)
-    .bind(&req.status)
+    .bind(mes_status)
     .bind(req.actual_start_date.map(|d| d.naive_utc()))
     .bind(req.actual_end_date.map(|d| d.naive_utc()))
     .bind(now.naive_utc())
@@ -753,7 +797,7 @@ pub async fn receive_mes_progress(
                 "[ERP] Received MES progress update for order: {}",
                 order.order_no
             );
-            ApiResponse::success(order, "MES生产进度同步成功")
+            ApiResponse::success(normalize_order(order), "MES生产进度同步成功")
         }
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {

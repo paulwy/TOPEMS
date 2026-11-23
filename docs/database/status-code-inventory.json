@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 387,
+    "db_check_constraints": 388,
     "db_enum_types": 5,
     "db_check_values": 173,
-    "rust_enums": 270,
+    "rust_enums": 271,
     "rust_enum_values": 226,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 235,
@@ -1350,6 +1350,27 @@
         "in_progress",
         "not_started",
         "other"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/production_order_status.rs",
+      "name": "ProductionOrderStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending",
+        "Released"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending",
+        "released"
       ]
     },
     {

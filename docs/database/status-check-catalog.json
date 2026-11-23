@@ -1089,6 +1089,23 @@
     },
     {
       "schema": "erp",
+      "table": "erp_production_orders",
+      "constraint": "ck_erp_erp_production_orders_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending",
+        "released"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'released'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "fixed_assets",
       "constraint": "ck_fixed_assets_status_standard",
       "columns": [
@@ -6203,15 +6220,6 @@
     },
     {
       "schema": "erp",
-      "table": "erp_production_orders",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "erp",
       "table": "expenses",
       "column": "status",
       "type": "character varying(50)",
@@ -6736,10 +6744,10 @@
       "schema": "integration",
       "table": "core_inter_module_sync",
       "column": "status",
-      "type": "character varying(20)",
+      "type": "character varying(32)",
       "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": null
+      "not_null": false,
+      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "integration",

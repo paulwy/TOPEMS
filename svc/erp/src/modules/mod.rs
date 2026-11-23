@@ -79,6 +79,7 @@ pub mod openapi;
 pub mod order_calc;
 pub mod procurement_e2e;
 pub mod production_order;
+pub mod production_order_status;
 pub mod purchase_order;
 pub mod purchase_order_status;
 pub mod receivable_status;
