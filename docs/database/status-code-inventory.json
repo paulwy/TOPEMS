@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 301,
+    "rust_enums": 302,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -4327,6 +4327,23 @@
         "draft",
         "paused",
         "pending_approval"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/modules/bug_status.rs",
+      "name": "BugStatus",
+      "values": [
+        "Closed",
+        "InProgress",
+        "Open",
+        "Resolved"
+      ],
+      "normalized": [
+        "closed",
+        "in_progress",
+        "open",
+        "resolved"
       ]
     },
     {

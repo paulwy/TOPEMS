@@ -11,6 +11,7 @@ use topems_shared_event::event::EventPublisher;
 
 pub mod ai_integration;
 pub mod audit;
+pub mod bug_status;
 pub mod change_management;
 pub mod doc_integration;
 pub mod experiment;

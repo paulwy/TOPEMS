@@ -1947,6 +1947,13 @@
       "table": "pm.project_risks",
       "column": "status",
       "candidate": "docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/rd/src/modules/bug_status.rs",
+      "enum": "BugStatus",
+      "table": "rd.bugs",
+      "column": "status",
+      "candidate": "docs/database/rd-bug-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

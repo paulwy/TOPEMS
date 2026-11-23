@@ -16,6 +16,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
+use super::bug_status::BugStatus;
 use super::ApiState;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -47,6 +48,11 @@ fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
 /// 前端 apiClient 按 body.code 判定；避免裸 HTTP 404 被冒烟判为路由缺失）。
 fn not_found(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (StatusCode::OK, ApiResponse::not_found(msg))
+}
+
+/// 参数/状态非法：HTTP 400，前端按 body.code 展示原因。
+fn bad_request(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
+    (StatusCode::BAD_REQUEST, ApiResponse::bad_request(msg))
 }
 
 // ==================== 缺陷 Bug ====================
@@ -149,9 +155,15 @@ async fn list_typed(
 )]
 pub async fn list_bugs(
     State(_state): State<ApiState>,
-    Query(params): Query<ListBugsQuery>,
+    Query(mut params): Query<ListBugsQuery>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    if let Some(raw) = params.status.as_deref() {
+        match BugStatus::parse_filter(raw) {
+            Some(v) => params.status = Some(v.to_string()),
+            None => return Err(bad_request("无效的缺陷状态")),
+        }
+    }
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -168,7 +180,13 @@ pub async fn list_bugs(
     };
     let items: Vec<serde_json::Value> = rows.iter().map(bug_to_json).collect();
     Ok(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
+        serde_json::json!({
+            "bugs": items,
+            "items": items,
+            "total": total,
+            "page": page,
+            "page_size": page_size
+        }),
         "获取缺陷列表成功",
     ))
 }
@@ -224,14 +242,15 @@ pub async fn create_bug(
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let bug_no = format!("BUG-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
     let row = sqlx::query(
-        "INSERT INTO rd.bugs (bug_no, bug_title, severity, priority, description) \
-         VALUES ($1, $2, $3, $4, $5) \
+        "INSERT INTO rd.bugs (bug_no, bug_title, severity, priority, status, description) \
+         VALUES ($1, $2, $3, $4, $5, $6) \
          RETURNING *",
     )
     .bind(&bug_no)
     .bind(&req.bug_title)
     .bind(&severity)
     .bind(&priority)
+    .bind(BugStatus::DEFAULT.as_db_str())
     .bind(&req.description)
     .fetch_one(&mut **txn)
     .await;
@@ -254,7 +273,7 @@ pub async fn create_bug(
 }
 
 pub async fn update_bug(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateBugRequest>,
@@ -264,6 +283,35 @@ pub async fn update_bug(
         Some(txn) => txn,
         None => return Err(internal_error("rls transaction unavailable")),
     };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立缺陷事务作用域失败: {}", e);
+            return Err(internal_error("更新缺陷失败"));
+        }
+    };
+
+    let current = match sqlx::query_scalar::<_, String>("SELECT status FROM rd.bugs WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+    {
+        Ok(Some(s)) => s,
+        Ok(None) => return Err(not_found("缺陷不存在")),
+        Err(e) => {
+            tracing::error!("查询缺陷状态失败: {}", e);
+            return Err(internal_error("更新缺陷失败"));
+        }
+    };
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match BugStatus::from_db_str(raw) {
+            Some(next) if next.can_transition_from(&current) => Some(next.as_db_str().to_string()),
+            Some(_) => return Err(bad_request("不允许的缺陷状态流转")),
+            None => return Err(bad_request("无效的缺陷状态")),
+        },
+    };
+
     let row = sqlx::query(
         "UPDATE rd.bugs SET \
          bug_title = COALESCE($2, bug_title), \
@@ -279,11 +327,12 @@ pub async fn update_bug(
     .bind(&req.bug_title)
     .bind(&req.severity)
     .bind(&req.priority)
-    .bind(&req.status)
+    .bind(&status)
     .bind(&req.assignee)
     .bind(&req.description)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
+    drop(scope);
     match row {
         Ok(Some(r)) => {
             if let Some(t) = guard.take() {

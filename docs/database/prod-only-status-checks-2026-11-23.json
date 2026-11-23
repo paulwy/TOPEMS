@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 403,
+  "total": 404,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -34,7 +34,7 @@
     "public": 42,
     "qms": 11,
     "rd": 3,
-    "rs": 6,
+    "rs": 7,
     "scm": 20,
     "shared": 1,
     "srm": 9,
@@ -115,7 +115,8 @@
     "B232": 1,
     "B233": 1,
     "B234": 1,
-    "B235": 1
+    "B235": 1,
+    "B236": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8506,6 +8507,27 @@
       "source_batch": "B235",
       "source_commit": "681640d48",
       "source_subject": "B235: pm.project_risks.status 收敛到 ProjectRiskStatus 枚举",
+      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
+    },
+    {
+      "schema": "rd",
+      "table": "bugs",
+      "constraint": "ck_rd_bugs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "in_progress",
+        "open",
+        "resolved"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['open'::text, 'in_progress'::text, 'resolved'::text, 'closed'::text]))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B236",
+      "source_commit": "PENDING",
+      "source_subject": "B236: rd.bugs.status 收敛到 BugStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
   ]
