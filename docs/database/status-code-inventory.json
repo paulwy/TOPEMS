@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 312,
+    "rust_enums": 313,
     "rust_enum_values": 241,
     "rust_values_not_in_db_check": 194,
     "frontend_status_keys": 250,
@@ -816,6 +816,23 @@
         "draft",
         "ongoing",
         "planned"
+      ]
+    },
+    {
+      "module": "ehs",
+      "file": "svc/ehs/src/modules/environment_monitor_status.rs",
+      "name": "EnvironmentMonitorStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive",
+        "Maintenance"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive",
+        "maintenance"
       ]
     },
     {

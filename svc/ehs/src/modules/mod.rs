@@ -8,6 +8,7 @@ pub mod emergency_drill;
 pub mod emergency_plan;
 pub mod emergency_plan_status;
 pub mod environment;
+pub mod environment_monitor_status;
 pub mod environmental_compliance;
 pub mod hazard;
 pub mod hazard_status;

@@ -2024,6 +2024,13 @@
       "table": "ehs.qa_ehs_hazardous_materials",
       "column": "status",
       "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/ehs/src/modules/environment_monitor_status.rs",
+      "enum": "EnvironmentMonitorStatus",
+      "table": "ehs.qa_ehs_environment_monitors",
+      "column": "status",
+      "candidate": "docs/database/ehs-environment-monitor-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

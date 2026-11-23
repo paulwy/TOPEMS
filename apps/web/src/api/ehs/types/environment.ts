@@ -7,7 +7,7 @@ export interface EnvironmentMonitor {
   name: string;
   monitor_type: string;
   location: string | null;
-  status: 'active' | 'inactive' | 'maintenance';
+  status: 'active' | 'inactive' | 'maintenance' | 'archived';
   description: string | null;
   monitor_frequency: string | null;
   standard_value: string | null;
@@ -65,7 +65,7 @@ export interface CreateEnvironmentMonitorRequest {
   warning_threshold?: number | null;
   alarm_threshold?: number | null;
   unit?: string | null;
-  status?: 'active' | 'inactive' | 'maintenance';
+  status?: 'active' | 'inactive' | 'maintenance' | 'archived';
 }
 
 export interface UpdateEnvironmentMonitorRequest {
@@ -78,7 +78,7 @@ export interface UpdateEnvironmentMonitorRequest {
   warning_threshold?: number | null;
   alarm_threshold?: number | null;
   unit?: string | null;
-  status?: 'active' | 'inactive' | 'maintenance';
+  status?: 'active' | 'inactive' | 'maintenance' | 'archived';
 }
 
 export interface CreateEnvironmentMonitorRecordRequest {

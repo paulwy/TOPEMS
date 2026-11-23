@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 414,
+  "total": 415,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -14,7 +14,7 @@
     "core": 2,
     "crm": 12,
     "doc_service": 1,
-    "ehs": 27,
+    "ehs": 28,
     "erp": 33,
     "finance": 40,
     "flow": 7,
@@ -126,7 +126,8 @@
     "B243": 1,
     "B244": 1,
     "B245": 1,
-    "B246": 1
+    "B246": 1,
+    "B247": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8746,6 +8747,27 @@
       "source_commit": "813efa943",
       "source_subject": "B246: ehs.qa_ehs_hazardous_materials.status 收敛到 HazardousMaterialStatus 四态",
       "note": "替换既有 ck_qa_ehs_hazardous_materials_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；当前参考库仅存旧约束"
+    },
+    {
+      "schema": "ehs",
+      "table": "qa_ehs_environment_monitors",
+      "constraint": "ck_qa_ehs_environment_monitors_status_lifecycle_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "inactive",
+        "maintenance"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'maintenance'::text, 'archived'::text])))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B247",
+      "source_commit": "PENDING",
+      "source_subject": "B247: ehs.qa_ehs_environment_monitors.status 收敛到 EnvironmentMonitorStatus 四态",
+      "note": "替换既有 ck_qa_ehs_environment_monitors_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；当前参考库仅存旧约束"
     }
   ]
 }

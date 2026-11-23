@@ -4,6 +4,8 @@
 //! 契约），后端曾把 monitors/records 都映射到一个 EnvironmentRecord 内存桩。现统一按监测点表接真，
 //! runtime sqlx + 应用层 tenant 过滤，对齐 accident.rs/hazard.rs 范式。
 
+use crate::modules::environment_monitor_status::EnvironmentMonitorStatus;
+
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -229,11 +231,14 @@ pub async fn create_record(
         .get("location")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("active")
-        .to_string();
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => EnvironmentMonitorStatus::DEFAULT.as_db_str(),
+        Some(raw) => match EnvironmentMonitorStatus::normalize(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的环境监测点状态"),
+        },
+    }
+    .to_string();
     let description = req
         .get("description")
         .and_then(|v| v.as_str())
@@ -447,11 +452,21 @@ pub async fn update_record(
             return ApiResponse::server_error("更新环境监测点失败");
         }
     };
+    let current_status = _existing
+        .try_get::<String, _>("status")
+        .ok()
+        .and_then(|s| EnvironmentMonitorStatus::normalize(&s));
 
     let name = req.get("name").and_then(|v| v.as_str());
     let monitor_type = req.get("monitor_type").and_then(|v| v.as_str());
     let location = req.get("location").and_then(|v| v.as_str());
-    let status = req.get("status").and_then(|v| v.as_str());
+    let normalized_status = match req.get("status").and_then(|v| v.as_str()) {
+        None => None,
+        Some(raw) => match EnvironmentMonitorStatus::normalize(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的环境监测点状态"),
+        },
+    };
     let description = req.get("description").and_then(|v| v.as_str());
     let monitor_frequency = req.get("monitor_frequency").and_then(|v| v.as_str());
     let standard_value = req.get("standard_value").and_then(|v| v.as_str());
@@ -492,7 +507,7 @@ pub async fn update_record(
         .bind(name)
         .bind(monitor_type)
         .bind(location)
-        .bind(status)
+        .bind(normalized_status)
         .bind(description)
         .bind(monitor_frequency)
         .bind(standard_value)
@@ -519,7 +534,10 @@ pub async fn update_record(
             name: name.unwrap_or("").to_string(),
             monitor_type: monitor_type.unwrap_or("").to_string(),
             location: location.map(|s| s.to_string()),
-            status: status.unwrap_or("active").to_string(),
+            status: normalized_status
+                .or(current_status)
+                .unwrap_or(EnvironmentMonitorStatus::DEFAULT.as_db_str())
+                .to_string(),
             description: description.map(|s| s.to_string()),
             monitor_frequency: monitor_frequency.map(|s| s.to_string()),
             standard_value: standard_value.map(|s| s.to_string()),
