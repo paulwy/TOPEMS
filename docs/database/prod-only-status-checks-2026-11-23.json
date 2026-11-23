@@ -8592,7 +8592,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B239",
-      "source_commit": "PENDING",
+      "source_commit": "69ca615de",
       "source_subject": "B239: pm.settlements.status 收敛到 SettlementStatus 枚举（默认 draft + 审批来源约束）",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
