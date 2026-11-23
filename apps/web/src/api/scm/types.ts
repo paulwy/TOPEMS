@@ -27,6 +27,7 @@ export interface CreateSupplierRequest {
   address?: string;
   bank_account?: string;
   tax_number?: string;
+  status?: string;
 }
 
 export interface UpdateSupplierRequest {

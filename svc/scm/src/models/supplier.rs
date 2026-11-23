@@ -35,6 +35,7 @@ pub struct CreateSupplierRequest {
     pub address: Option<String>,
     pub bank_account: Option<String>,
     pub tax_number: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -158,6 +159,7 @@ mod tests {
             address: Some("北京市海淀区".to_string()),
             bank_account: Some("6222020200112345699".to_string()),
             tax_number: Some("91310000710929XXX9".to_string()),
+            status: None,
         };
         let json = serde_json::to_string(&req).unwrap();
         let back: CreateSupplierRequest = serde_json::from_str(&json).unwrap();
@@ -179,6 +181,7 @@ mod tests {
             address: None,
             bank_account: None,
             tax_number: None,
+            status: None,
         };
         let json = serde_json::to_string(&req).unwrap();
         let back: CreateSupplierRequest = serde_json::from_str(&json).unwrap();

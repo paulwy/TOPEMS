@@ -510,6 +510,13 @@ pub async fn create_supplier(
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let create_status = match req.status.as_deref() {
+        None => SupplierStatus::DEFAULT.as_db_str().to_string(),
+        Some(raw) => match SupplierStatus::normalize(raw) {
+            Some(status) => status.to_string(),
+            None => return ApiResponse::bad_request("无效的供应商状态"),
+        },
+    };
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
@@ -528,7 +535,7 @@ pub async fn create_supplier(
     .bind(&req.address)
     .bind(&req.bank_account)
     .bind(&req.tax_number)
-    .bind(SupplierStatus::DEFAULT.as_db_str())
+    .bind(&create_status)
     .bind(now)
     .bind(now)
     .bind(&req.name_en)
