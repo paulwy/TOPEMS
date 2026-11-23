@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 377,
+    "db_check_constraints": 378,
     "db_enum_types": 5,
     "db_check_values": 168,
-    "rust_enums": 260,
+    "rust_enums": 261,
     "rust_enum_values": 221,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 230,
@@ -3660,6 +3660,19 @@
       "normalized": [
         "failed",
         "passed",
+        "pending"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/incoming_notice_status.rs",
+      "name": "IncomingNoticeStatus",
+      "values": [
+        "Arrived",
+        "Pending"
+      ],
+      "normalized": [
+        "arrived",
         "pending"
       ]
     },

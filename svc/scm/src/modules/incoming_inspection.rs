@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::incoming_inspection_status::IncomingInspectionStatus;
+use super::incoming_notice_status::IncomingNoticeStatus;
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, require_tenant_bind, ModulePermission};
@@ -210,7 +211,7 @@ fn notice_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
         "expected_arrival_date": row.try_get::<Option<chrono::NaiveDate>, _>("expected_arrival_date").ok(),
         "actual_arrival_date": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("actual_arrival_date").ok(),
-        "status": row.try_get::<String, _>("status").ok(),
+        "status": row.try_get::<String, _>("status").ok().map(|raw| IncomingNoticeStatus::normalize(&raw)),
         "total_quantity": row.try_get::<f64, _>("total_quantity").ok(),
         "inspection_required": row.try_get::<bool, _>("inspection_required").ok(),
         "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
@@ -282,7 +283,17 @@ pub async fn list_notices(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter = match params.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match IncomingNoticeStatus::from_db_str(raw) {
+            Some(value) => Some(value.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的到货通知单状态".to_string(),
+                ))
+            }
+        },
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -300,7 +311,7 @@ pub async fn list_notices(
         "#
     ))
     .bind(&search_pattern)
-    .bind(&status_filter)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
@@ -319,7 +330,7 @@ pub async fn list_notices(
                 "#
             ))
             .bind(&search_pattern)
-            .bind(&status_filter)
+            .bind(status_filter)
             .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
@@ -392,7 +403,7 @@ pub async fn create_notice(
          supplier_id, supplier_name, warehouse_id, warehouse_name,
          expected_arrival_date, status, total_quantity, inspection_required,
          remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $16, $10, $11, $12, $13, $14, $15)
         RETURNING id, notice_number, purchase_order_id, purchase_order_number,
                   supplier_id, supplier_name, warehouse_id, warehouse_name,
                   expected_arrival_date, actual_arrival_date, status,
@@ -414,6 +425,7 @@ pub async fn create_notice(
     .bind(now.naive_utc())
     .bind(now.naive_utc())
     .bind(tenant_bind)
+    .bind(IncomingNoticeStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -549,6 +561,17 @@ pub async fn update_notice(
         Err(e) => return e.0,
     };
     let request_data = serde_json::to_value(&req).ok();
+    let status_bind = match req.status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match IncomingNoticeStatus::from_db_str(raw) {
+            Some(value) => Some(value.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的到货通知单状态".to_string(),
+                ))
+            }
+        },
+    };
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(only_own_schema_query!(
@@ -594,7 +617,7 @@ pub async fn update_notice(
         "#
     ))
     .bind(id)
-    .bind(&req.status)
+    .bind(status_bind)
     .bind(req.actual_arrival_date)
     .bind(&req.remarks)
     .bind(now)

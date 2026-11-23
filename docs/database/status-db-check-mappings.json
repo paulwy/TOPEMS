@@ -1562,6 +1562,13 @@
       "table": "scm.supplier_quotes",
       "column": "status",
       "candidate": "docs/database/supplier-quote-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/incoming_notice_status.rs",
+      "enum": "IncomingNoticeStatus",
+      "table": "scm.incoming_notices",
+      "column": "status",
+      "candidate": "docs/database/incoming-notice-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

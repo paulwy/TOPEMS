@@ -4593,6 +4593,19 @@
     },
     {
       "schema": "scm",
+      "table": "incoming_notices",
+      "constraint": "ck_scm_incoming_notices_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "arrived",
+        "pending"
+      ],
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'arrived'::text]))) NOT VALID"
+    },
+    {
+      "schema": "scm",
       "table": "mrp_suggestions",
       "constraint": "ck_scm_mrp_suggestions_status_standard",
       "columns": [
@@ -8484,15 +8497,6 @@
     {
       "schema": "rs",
       "table": "rs_projects",
-      "column": "status",
-      "type": "text",
-      "enum_type": "text",
-      "not_null": true,
-      "default_expr": "'pending'::text"
-    },
-    {
-      "schema": "scm",
-      "table": "incoming_notices",
       "column": "status",
       "type": "text",
       "enum_type": "text",
