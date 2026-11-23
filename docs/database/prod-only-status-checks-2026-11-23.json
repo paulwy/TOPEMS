@@ -8613,7 +8613,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B240",
-      "source_commit": "PENDING",
+      "source_commit": "49b336f42",
       "source_subject": "B240: pm.acceptance_records.status 收敛到 AcceptanceRecordStatus 枚举（替换生产旧值集）",
       "note": "B240 用新名替换生产历史约束 ck_acceptance_records_status_standard（active/inactive/archived）；旧条目保留供回迁对照，部署时先 DROP 旧约束。"
     }
