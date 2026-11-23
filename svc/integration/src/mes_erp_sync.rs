@@ -15,6 +15,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::{Db, ScopedTxn};
 
+use crate::mes_erp_sync_status::MesErpSyncStatus;
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 
 // ==================== 数据结构 ====================
@@ -675,7 +676,7 @@ impl MesErpSyncService {
                 id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
                 sync_type, payload, sync_status, retry_count, max_retries,
                 created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, 5, $9, $9)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, 5, $10, $10)
             "#
         ))
         .bind(id)
@@ -686,6 +687,7 @@ impl MesErpSyncService {
         .bind(order_number)
         .bind(sync_type)
         .bind(payload)
+        .bind(MesErpSyncStatus::DEFAULT.as_db_str())
         .bind(now.naive_utc())
         .execute(&mut *scope)
         .await
@@ -708,15 +710,16 @@ impl MesErpSyncService {
                 r#"
                 UPDATE integration.mes_erp_sync SET
                     mes_order_id = COALESCE($2, mes_order_id),
-                    sync_status = 'success',
+                    sync_status = $3,
                     sync_error = NULL,
-                    last_synced_at = $3,
-                    updated_at = $3
+                    last_synced_at = $4,
+                    updated_at = $4
                 WHERE id = $1
                 "#
             ))
             .bind(sync_id)
             .bind(mes_id)
+            .bind(MesErpSyncStatus::Synced.as_db_str())
             .bind(now.naive_utc())
             .execute(&mut *scope)
             .await
@@ -726,14 +729,15 @@ impl MesErpSyncService {
                 "integration",
                 r#"
                 UPDATE integration.mes_erp_sync SET
-                    sync_status = 'success',
+                    sync_status = $2,
                     sync_error = NULL,
-                    last_synced_at = $2,
-                    updated_at = $2
+                    last_synced_at = $3,
+                    updated_at = $3
                 WHERE id = $1
                 "#
             ))
             .bind(sync_id)
+            .bind(MesErpSyncStatus::Synced.as_db_str())
             .bind(now.naive_utc())
             .execute(&mut *scope)
             .await
@@ -756,14 +760,15 @@ impl MesErpSyncService {
             "integration",
             r#"
             UPDATE integration.mes_erp_sync SET
-                sync_status = 'failed',
-                sync_error = $2,
-                retry_count = $3,
-                updated_at = $4
+                sync_status = $2,
+                sync_error = $3,
+                retry_count = $4,
+                updated_at = $5
             WHERE id = $1
             "#
         ))
         .bind(sync_id)
+        .bind(MesErpSyncStatus::Failed.as_db_str())
         .bind(error)
         .bind(retry_count)
         .bind(now.naive_utc())
@@ -851,7 +856,14 @@ impl MesErpSyncService {
             None => return Err(TopemsError::ResourceNotFound("同步记录不存在".to_string())),
         };
 
-        if sync_record.sync_status != "failed" {
+        let record_status =
+            MesErpSyncStatus::from_db_str(&sync_record.sync_status).ok_or_else(|| {
+                TopemsError::ValidationFailed(format!(
+                    "同步记录状态非法: {}，无法重试",
+                    sync_record.sync_status
+                ))
+            })?;
+        if !record_status.can_retry() {
             return Err(TopemsError::ValidationFailed(
                 "只有失败的同步记录才能重试".to_string(),
             ));

@@ -11,6 +11,7 @@ use uuid::Uuid;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::mes_erp_sync;
+use crate::mes_erp_sync_status::MesErpSyncStatus;
 use crate::models::{AppState, CreateMesErpSyncRequest, MesErpSync};
 use topems_shared_auth::get_tenant_id_from_claims;
 
@@ -128,7 +129,7 @@ pub async fn create_mes_erp_sync(
     .bind(req.product_name)
     .bind(req.quantity)
     .bind(false)
-    .bind("pending")
+    .bind(MesErpSyncStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(tenant_ctx.tenant)
@@ -237,7 +238,7 @@ pub async fn sync_mes_erp(
     .bind(id)
     .bind(Some(erp_order_id))
     .bind(true)
-    .bind("synced")
+    .bind(MesErpSyncStatus::Synced.as_db_str())
     .bind(Some(now))
     .bind(now)
     .fetch_optional(&mut scope)
@@ -407,7 +408,10 @@ pub async fn list_mes_erp_sync_records(
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<Vec<mes_erp_sync::MesErpSyncRecord>> {
     let direction = query.get("direction").map(|s| s.as_str());
-    let status = query.get("status").map(|s| s.as_str());
+    let status = match MesErpSyncStatus::parse_filter(query.get("status").map(|s| s.as_str())) {
+        Ok(status) => status.map(MesErpSyncStatus::as_db_str),
+        Err(message) => return ApiResponse::bad_request(&message),
+    };
     let limit = query
         .get("limit")
         .and_then(|s| s.parse::<i64>().ok())

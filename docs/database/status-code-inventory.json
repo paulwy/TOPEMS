@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 289,
+    "rust_enums": 290,
     "rust_enum_values": 236,
     "rust_values_not_in_db_check": 189,
     "frontend_status_keys": 245,
@@ -2479,6 +2479,21 @@
         "failed",
         "pending",
         "processing"
+      ]
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/mes_erp_sync_status.rs",
+      "name": "MesErpSyncStatus",
+      "values": [
+        "Failed",
+        "Pending",
+        "Synced"
+      ],
+      "normalized": [
+        "failed",
+        "pending",
+        "synced"
       ]
     },
     {

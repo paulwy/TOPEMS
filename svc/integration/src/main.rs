@@ -5,6 +5,7 @@ mod event_handlers;
 mod external_erp;
 mod handlers;
 mod mes_erp_sync;
+mod mes_erp_sync_status;
 mod mes_qms_integration;
 mod models;
 mod openapi;

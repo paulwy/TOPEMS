@@ -3,11 +3,11 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 175,
+    "uncovered_enums": 176,
     "uncovered_values": 189,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 168,
-    "internal_state_enums": 141,
+    "resolved_enums": 169,
+    "internal_state_enums": 142,
     "persisted_unmapped_enums": 19,
     "finance_candidate_ready_enums": 35,
     "internal_state_values": 161,
@@ -1500,6 +1500,24 @@
         "table": "integration.async_tasks",
         "column": "status",
         "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+      }
+    },
+    {
+      "module": "integration",
+      "file": "svc/integration/src/mes_erp_sync_status.rs",
+      "enum": "MesErpSyncStatus",
+      "values_by_bucket": {
+        "internal_state": [
+          "synced"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/integration/src/mes_erp_sync_status.rs",
+        "enum": "MesErpSyncStatus",
+        "table": "integration.mes_erp_sync",
+        "column": "sync_status",
+        "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql"
       }
     },
     {

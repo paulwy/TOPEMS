@@ -13,6 +13,7 @@ pub mod external_erp;
 pub mod handlers;
 pub mod hrm_finance_sync;
 pub mod mes_erp_sync;
+pub mod mes_erp_sync_status;
 pub mod mes_qms_integration;
 pub mod models;
 pub mod openapi;

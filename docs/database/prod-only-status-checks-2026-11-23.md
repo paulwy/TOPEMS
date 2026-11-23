@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **391** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **392** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -36,7 +36,7 @@
 | `gis` | 10 |
 | `hrm` | 21 |
 | `iam` | 6 |
-| `integration` | 4 |
+| `integration` | 5 |
 | `lims` | 9 |
 | `mail` | 1 |
 | `master_data` | 16 |
@@ -119,6 +119,7 @@
 | B221 | 1 |
 | B222 | 1 |
 | B223 | 1 |
+| B224 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -141,6 +142,8 @@
 - W5-B220（`600cc70c6`）新增 `finance.reconciliation_item_snapshots.ck_reconciliation_item_snapshots_match_status_standard` 同样只有候选 SQL（`docs/database/finance-item-snapshot-match-status-check-candidates-2026-11-23.sql`）、无迁移，已计入本清单。
 - W5-B221（`6725c1f2d`）新增 `finance.expenses.ck_expenses_status_standard` 同样只有候选 SQL（`docs/database/finance-expenses-status-check-candidates-2026-11-23.sql`）、无迁移，已计入本清单。
 - W5-B222（`e7c4dba35`）新增 `erp.consolidation_scopes.ck_consolidation_scopes_status_standard`、W5-B223（`d140dd522`）新增 `erp.consolidation_reports.ck_consolidation_reports_approval_status_standard`，均只有候选 SQL（`docs/database/erp-consolidation-*-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，两列登记在目录 `uncovered`，已计入本清单待回迁。
+- W5-B224（B224）新增 `integration.mes_erp_sync.ck_mes_erp_sync_sync_status_standard` 只有候选 SQL（`docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`sync_status` 登记在目录 `uncovered`，已计入本清单待回迁。
+
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
 ## 复核记录（2026-11-23，第二轮推送前）
@@ -150,3 +153,4 @@
 - 全量 391 条逐条比对重建库 `pg_constraint`：均无对应约束（表存在但约束不存在，或缺表），无一条属仓库可复现，故无移出。
 - 相对上一轮 389 条，本次新增 B222 `erp.consolidation_scopes` 1 条、B223 `erp.consolidation_reports` 1 条，均只有候选 SQL。
 - 目录最终读数：33 条状态 CHECK / 5 个枚举 / 683 个无约束列，全量 `--check` PASS；订单两表 constraints 0/0、uncovered 2/2。
+- B224 追加后读数：392 条；`integration.mes_erp_sync.sync_status` 仍为 uncovered，目录读数不变（33/5/683）。

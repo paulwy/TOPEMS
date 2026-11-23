@@ -1863,6 +1863,13 @@
       "table": "erp.consolidation_reports",
       "column": "approval_status",
       "candidate": "docs/database/erp-consolidation-report-approval-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/integration/src/mes_erp_sync_status.rs",
+      "enum": "MesErpSyncStatus",
+      "table": "integration.mes_erp_sync",
+      "column": "sync_status",
+      "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
