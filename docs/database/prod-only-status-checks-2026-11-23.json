@@ -8399,7 +8399,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B230",
-      "source_commit": "PENDING",
+      "source_commit": "53ad5695f",
       "source_subject": "B230: pm.project_milestones.status 收敛到 MilestoneStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
