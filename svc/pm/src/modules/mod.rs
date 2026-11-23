@@ -22,6 +22,7 @@ pub mod service_integration;
 pub mod settlement;
 pub mod statistics;
 pub mod task;
+pub mod task_status;
 
 use axum::{extract::Extension, Router};
 use std::sync::Arc;

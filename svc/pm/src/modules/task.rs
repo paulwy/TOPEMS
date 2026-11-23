@@ -23,6 +23,7 @@ use crate::models::task::{
     CreateTaskRequest, Task, TaskListResponse, TaskQuery, UpdateTaskRequest,
 };
 use crate::modules::effective_tenant_id;
+use crate::modules::task_status::TaskStatus;
 
 // ==================== Pure functions ====================
 
@@ -35,28 +36,18 @@ use crate::modules::effective_tenant_id;
 /// - done -> in_progress（重开）
 /// - blocked -> in_progress
 pub fn task_status_transition_valid(from: &str, to: &str) -> bool {
-    matches!(
-        (from, to),
-        ("todo", "in_progress")
-            | ("todo", "review")
-            | ("todo", "blocked")
-            | ("in_progress", "review")
-            | ("in_progress", "done")
-            | ("in_progress", "blocked")
-            | ("review", "done")
-            | ("review", "in_progress")
-            | ("done", "in_progress")
-            | ("blocked", "in_progress")
-    )
+    match (TaskStatus::from_db_str(from), TaskStatus::from_db_str(to)) {
+        (Some(from), Some(to)) => from.can_transition_to(to),
+        _ => false,
+    }
 }
 
 /// 状态派生进度：done 恒为 100，todo 恒为 0，其余状态取给定进度并 clamp 到 0..=100。
 pub fn task_progress_for_status(status: &str, progress: i32) -> i32 {
-    match status {
-        "done" => 100,
-        "todo" => 0,
-        _ => progress.clamp(0, 100),
-    }
+    TaskStatus::from_db_str(status).map_or_else(
+        || progress.clamp(0, 100),
+        |status| status.progress(progress),
+    )
 }
 
 // ==================== Handlers ====================
@@ -108,6 +99,10 @@ pub async fn list_tasks(
         }
     };
 
+    let status_filter = match TaskStatus::parse_filter(query.status.as_deref()) {
+        Ok(status) => status.map(TaskStatus::as_db_str),
+        Err(message) => return ApiResponse::bad_request(&message),
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
 
@@ -125,7 +120,7 @@ pub async fn list_tasks(
          ORDER BY created_at DESC LIMIT $5 OFFSET $6"
     )))
     .bind(query.project_id)
-    .bind(&query.status)
+    .bind(status_filter)
     .bind(&query.priority)
     .bind(&query.assignee)
     .bind(page_size)
@@ -134,10 +129,20 @@ pub async fn list_tasks(
     .fetch_all(&mut scope)
     .await;
 
-    let total: Result<i64, sqlx::Error> =
-        sqlx::query_scalar("SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL ")
-            .fetch_one(&mut scope)
-            .await;
+    let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM pm.pm_tasks
+         WHERE deleted_at IS NULL
+           AND ($1::uuid IS NULL OR project_id = $1)
+           AND ($2::text IS NULL OR status = $2)
+           AND ($3::text IS NULL OR priority = $3)
+           AND ($4::text IS NULL OR assignee = $4)",
+    )
+    .bind(query.project_id)
+    .bind(status_filter)
+    .bind(&query.priority)
+    .bind(&query.assignee)
+    .fetch_one(&mut scope)
+    .await;
 
     match (result, total) {
         (Ok(items), Ok(total)) => ApiResponse::success(
@@ -188,6 +193,10 @@ pub async fn list_tasks_by_project(
             return ApiResponse::server_error("初始化数据库作用域失败");
         }
     };
+    let status_filter = match TaskStatus::parse_filter(query.status.as_deref()) {
+        Ok(status) => status.map(TaskStatus::as_db_str),
+        Err(message) => return ApiResponse::bad_request(&message),
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
 
@@ -202,7 +211,7 @@ pub async fn list_tasks_by_project(
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
     )))
     .bind(project_id)
-    .bind(&query.status)
+    .bind(status_filter)
     .bind(page_size)
     .bind((page - 1) * page_size)
     .bind(locale)
@@ -210,9 +219,12 @@ pub async fn list_tasks_by_project(
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL ",
+        "SELECT COUNT(*) FROM pm.pm_tasks
+         WHERE project_id = $1 AND deleted_at IS NULL
+           AND ($2::text IS NULL OR status = $2)",
     )
     .bind(project_id)
+    .bind(status_filter)
     .fetch_one(&mut scope)
     .await;
 
@@ -255,9 +267,15 @@ pub async fn create_task(
     let id = Uuid::new_v4();
     let tenant_id = effective_tenant_id(&ctx, &claims);
     let now = Utc::now();
-    let status = req.status.unwrap_or_else(|| "todo".to_string());
+    let status = match req.status.as_deref() {
+        None => TaskStatus::DEFAULT,
+        Some(raw) => match TaskStatus::normalize(raw) {
+            Ok(status) => status,
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
-    let progress = task_progress_for_status(&status, req.progress.unwrap_or(0));
+    let progress = status.progress(req.progress.unwrap_or(0));
     let task_number = req.task_number.or_else(|| {
         Some(format!(
             "TK{}{:06}",
@@ -282,7 +300,7 @@ pub async fn create_task(
     .bind(&task_number)
     .bind(&req.title)
     .bind(&req.description)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(&priority)
     .bind(&req.assignee)
     .bind(req.start_date)
@@ -372,17 +390,34 @@ pub async fn update_task(
         }
     };
     let now = Utc::now();
-    // 若仅更新状态，校验状态机（todo/in_progress/review/done/blocked）
-    if let Some(to) = &req.status {
-        let from: Result<Option<String>, sqlx::Error> =
-            sqlx::query_scalar("SELECT status FROM pm.pm_tasks WHERE id = $1 ")
-                .bind(id)
-                .fetch_optional(&mut scope)
-                .await;
-        if let Ok(Some(from)) = from {
-            if !task_status_transition_valid(&from, to) {
-                return ApiResponse::bad_request(&format!("非法任务状态流转: {} -> {}", from, to));
-            }
+    // 状态只能走状态机：未知值 / 非法流转一律 400，查询失败不再静默跳过校验。
+    let target_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match TaskStatus::normalize(raw) {
+            Ok(status) => Some(status),
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
+    if let Some(target) = target_status {
+        let current_raw: Result<Option<String>, sqlx::Error> = sqlx::query_scalar(
+            "SELECT status FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL",
+        )
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await;
+        let current = match current_raw {
+            Ok(Some(raw)) => match TaskStatus::from_db_str(&raw) {
+                Some(status) => status,
+                None => return ApiResponse::bad_request(&format!("任务当前状态非法: {raw}")),
+            },
+            Ok(None) => return ApiResponse::not_found("任务不存在"),
+            Err(e) => return ApiResponse::from(TopemsError::internal("查询任务状态失败", e)),
+        };
+        if target != current && !current.can_transition_to(target) {
+            return ApiResponse::bad_request(&format!(
+                "非法任务状态流转: {} -> {}",
+                current, target
+            ));
         }
     }
 
@@ -400,7 +435,7 @@ pub async fn update_task(
            start_date = COALESCE($7, start_date),
            end_date = COALESCE($8, end_date),
            progress = CASE WHEN $4 IS NOT NULL
-                           THEN CASE $4 WHEN 'done' THEN 100 WHEN 'todo' THEN 0
+                           THEN CASE $4 WHEN $13 THEN 100 WHEN $14 THEN 0
                                         ELSE COALESCE($9, progress) END
                            ELSE COALESCE($9, progress) END,
            updated_at = $10,
@@ -411,7 +446,7 @@ pub async fn update_task(
     .bind(id)
     .bind(&req.title)
     .bind(&req.description)
-    .bind(&req.status)
+    .bind(target_status.map(TaskStatus::as_db_str))
     .bind(&req.priority)
     .bind(&req.assignee)
     .bind(req.start_date)
@@ -420,6 +455,8 @@ pub async fn update_task(
     .bind(now)
     .bind(&req.title_en)
     .bind(locale)
+    .bind(TaskStatus::Done.as_db_str())
+    .bind(TaskStatus::Todo.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 

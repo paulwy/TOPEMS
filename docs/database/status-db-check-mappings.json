@@ -1877,6 +1877,13 @@
       "table": "pdm.pdm_change_notices",
       "column": "status",
       "candidate": "docs/database/pdm-change-notice-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/task_status.rs",
+      "enum": "TaskStatus",
+      "table": "pm.pm_tasks",
+      "column": "status",
+      "candidate": "docs/database/pm-task-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

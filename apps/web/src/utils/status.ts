@@ -229,6 +229,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   done: 'success',
   in_review: 'warning',
   todo: 'default',
+  review: 'warning',
   not_started: 'default',
   other: 'default',
   invoiced: 'success',

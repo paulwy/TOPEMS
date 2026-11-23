@@ -5,11 +5,11 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 291,
-    "rust_enum_values": 237,
-    "rust_values_not_in_db_check": 190,
-    "frontend_status_keys": 246,
-    "frontend_keys_not_in_db_check": 199,
+    "rust_enums": 292,
+    "rust_enum_values": 238,
+    "rust_values_not_in_db_check": 191,
+    "frontend_status_keys": 247,
+    "frontend_keys_not_in_db_check": 200,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3482,6 +3482,25 @@
       ]
     },
     {
+      "module": "pm",
+      "file": "svc/pm/src/modules/task_status.rs",
+      "name": "TaskStatus",
+      "values": [
+        "Blocked",
+        "Done",
+        "InProgress",
+        "Review",
+        "Todo"
+      ],
+      "normalized": [
+        "blocked",
+        "done",
+        "in_progress",
+        "review",
+        "todo"
+      ]
+    },
+    {
       "module": "portal",
       "file": "svc/portal/src/models/mod.rs",
       "name": "HealthStatus",
@@ -5343,6 +5362,7 @@
       "retrieved",
       "returned",
       "reversed",
+      "review",
       "reviewing",
       "revoked",
       "rework",
@@ -5546,6 +5566,7 @@
       "retired",
       "retrieved",
       "returned",
+      "review",
       "reviewing",
       "revoked",
       "rework",
@@ -5746,6 +5767,7 @@
       "retired",
       "retrieved",
       "returned",
+      "review",
       "reviewing",
       "revoked",
       "rework",
