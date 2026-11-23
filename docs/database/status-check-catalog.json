@@ -2180,16 +2180,17 @@
     {
       "schema": "hrm",
       "table": "contracts",
-      "constraint": "ck_contracts_status_standard",
+      "constraint": "ck_hrm_contracts_status_standard",
       "columns": [
         "status"
       ],
       "values": [
         "active",
-        "archived",
-        "inactive"
+        "expired",
+        "pending",
+        "terminated"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'expired'::character varying, 'terminated'::character varying, 'pending'::character varying])::text[]))) NOT VALID"
     },
     {
       "schema": "hrm",

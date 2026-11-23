@@ -2898,3 +2898,10 @@ pending_forward_patches:
     destructive_scan: "无 DELETE/TRUNCATE/DROP TABLE/COLUMN；回填为 2 条 UPDATE（母版行统一 company_overridable、既有公司行按母版策略归一）与 platform_only 冲突显式 RAISE；1 个 DO 块内枚举 DROP POLICY（随后重建 5 条）；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束与触发器存在性守卫，可重复执行"
     note: "前置断言：表、hrm.companies、erp 公司维度函数存在；平台行 (key) 与母版行 (tenant_id, key) 重复为 0，不因多公司租户中止。后置断言：company_id 为 uuid 可空无默认、override_policy NOT NULL 且取值合法、平台行全 platform_only、母版行全 company_overridable、公司行 platform_only 冲突=0、旧唯一索引不存在、两条部分唯一索引谓词精确（default 含零 UUID）、三个 CHECK 与公司 FK 已 VALIDATE、触发器/函数存在、策略数=5 且名称精确、RLS ENABLE+FORCE。回滚 database/rollback/20261123120000_system_settings_company_scope.rollback.sql 先删触发器/函数再删列与索引，公司级行非 0 时 RAISE EXCEPTION 并打印计数，不删除任何数据。治理：平台参数写权限收到平台运维角色（admin:iam:write + is_superuser），写入需 x-platform-confirm 二次确认并写审计（谁/何时/旧值/新值），审批流后续挂现有审批模块（本轮不新造）；公司参数写只落本司行，只审计不审批。平台入口 svc/erp settings handlers（系统连接）SQL 全部限定 tenant_id/company_id 同时为 NULL，不会读写公司行；公司作用域 API /system/company-settings 走请求事务 + 公司上下文，缺公司 400，platform_only 键写公司行 403"
 
+  # ===== 2026-11-23：W5-B215 hrm.contracts 状态约束收敛 =====
+  - version: "20261123130000"
+    file: "database/migrations/20261123130000_hrm_contracts_status_canonical.sql"
+    status: to_apply
+    effect: "hrm.contracts.status 值域收敛到 ContractStatus（active/expired/terminated/pending）：删除历史约束 ck_contracts_status_standard（仅 active/inactive/archived，与前端值集冲突、导致 expired/terminated/pending 写入必失败），建立 ck_hrm_contracts_status_standard（NOT VALID，只约束新写入）"
+    destructive_scan: "删除 1 个旧 CHECK 约束（pg_constraint 存在性守卫 + DROP CONSTRAINT），不删除数据、不改列类型；新约束 NOT VALID 不做存量校验"
+    note: "幂等：DO 块内先按 conname+relid 判断再 DROP/ADD。回滚：重新加回旧约束需先评估存量行值集，本轮不提供回滚件。生产按窗口执行后可视存量值集情况 VALIDATE。"

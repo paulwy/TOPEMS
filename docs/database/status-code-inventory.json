@@ -5,7 +5,7 @@
     "db_check_constraints": 407,
     "db_enum_types": 5,
     "db_check_values": 184,
-    "rust_enums": 285,
+    "rust_enums": 286,
     "rust_enum_values": 236,
     "rust_values_not_in_db_check": 57,
     "frontend_status_keys": 245,
@@ -2146,6 +2146,23 @@
         "executed",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/contract_status.rs",
+      "name": "ContractStatus",
+      "values": [
+        "Active",
+        "Expired",
+        "Pending",
+        "Terminated"
+      ],
+      "normalized": [
+        "active",
+        "expired",
+        "pending",
+        "terminated"
       ]
     },
     {

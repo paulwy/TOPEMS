@@ -96,8 +96,18 @@ pub async fn list_contracts(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    if let Err(message) =
+        crate::modules::contract_status::ContractStatus::parse_filter(params.status.as_deref())
+    {
+        return ApiResponse::<serde_json::Value>::bad_request(&message);
+    }
     let emp_filter = params.employee_id;
-    let status_filter = params.status.clone();
+    let status_filter = params
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty() && *s != "all")
+        .map(|raw| raw.to_string());
     let type_filter = params.contract_type.clone();
 
     let result = sqlx::query_as::<_, Contract>(
@@ -196,7 +206,7 @@ pub async fn list_expiring_contracts(
         WHERE deleted_at IS NULL
           AND end_date IS NOT NULL
           AND end_date <= $1
-          AND status = 'active'
+          AND status = $4
         ORDER BY end_date ASC
         LIMIT $2 OFFSET $3
         "#),
@@ -204,6 +214,7 @@ pub async fn list_expiring_contracts(
     .bind(end_date_threshold)
     .bind(page_size)
     .bind(offset)
+    .bind(crate::modules::contract_status::ContractStatus::Active.as_db_str())
     .fetch_all(&mut **txn)
     .await;
 
@@ -215,10 +226,11 @@ pub async fn list_expiring_contracts(
                 SELECT COUNT(*) FROM hrm.contracts
                 WHERE deleted_at IS NULL AND end_date IS NOT NULL
                   AND end_date <= $1
-                  AND status = 'active'
+                  AND status = $2
                 "#
             ))
             .bind(end_date_threshold)
+            .bind(crate::modules::contract_status::ContractStatus::Active.as_db_str())
             .fetch_one(&mut **txn)
             .await;
 
@@ -307,7 +319,7 @@ pub async fn create_contract(
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
             contract_file_path, reminder_days, status, notes, created_at, updated_at,
             contract_name, probation_end_date, currency, salary_type, work_location, department, position
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $26, $16, $17, $18,
                   $19, $20, $21, $22, $23, $24, $25)
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
@@ -341,6 +353,7 @@ pub async fn create_contract(
     .bind(&req.work_location)
     .bind(&req.department)
     .bind(&req.position)
+    .bind(crate::modules::contract_status::ContractStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -512,6 +525,16 @@ pub async fn update_contract(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
+    let status_write = match crate::modules::contract_status::ContractStatus::parse_optional_write(
+        req.status.as_deref(),
+    ) {
+        Ok(value) => value,
+        Err(message) => {
+            return ApiResponse::<Contract>::bad_request(&message);
+        }
+    }
+    .map(|s| s.as_db_str());
+
     let result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.contracts SET
@@ -558,7 +581,7 @@ pub async fn update_contract(
     .bind(req.probation_period_days)
     .bind(&req.contract_file_path)
     .bind(req.reminder_days)
-    .bind(&req.status)
+    .bind(status_write)
     .bind(&req.notes)
     .bind(now)
     .bind(&req.contract_name)
@@ -1209,7 +1232,7 @@ pub async fn execute_renewal(
             start_date = $2,
             end_date = $3,
             salary = COALESCE($4, salary),
-            status = 'active',
+            status = $6,
             updated_at = $5
         WHERE id = $1
         "#
@@ -1219,6 +1242,7 @@ pub async fn execute_renewal(
     .bind(renewal.new_end_date)
     .bind(renewal.new_salary)
     .bind(now)
+    .bind(crate::modules::contract_status::ContractStatus::Active.as_db_str())
     .execute(&mut **txn)
     .await;
 
