@@ -121,6 +121,63 @@
       "source_tokens": ["ck_mes_erp_sync_success_requires_mes_order", "VALIDATE CONSTRAINT"],
       "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'integration.mes_erp_sync'::regclass AND conname = 'ck_mes_erp_sync_success_requires_mes_order' AND convalidated",
       "expected": 1
+    },
+    {
+      "id": "core_tenant_modules.company_id",
+      "kind": "column_type",
+      "table": "public.core_tenant_modules",
+      "column": "company_id",
+      "expected": "uuid",
+      "source": "20261123090000",
+      "source_tokens": ["core_tenant_modules", "ADD COLUMN IF NOT EXISTS company_id uuid", "COMMENT ON COLUMN public.core_tenant_modules.company_id"]
+    },
+    {
+      "id": "core_tenant_modules.old_unique_constraint_absent",
+      "kind": "constraint_absent",
+      "table": "public.core_tenant_modules",
+      "constraint": "core_tenant_modules_tenant_id_module_code_key",
+      "source": "20261123090000",
+      "source_tokens": ["DROP CONSTRAINT IF EXISTS core_tenant_modules_tenant_id_module_code_key"]
+    },
+    {
+      "id": "core_tenant_modules.uq_master",
+      "kind": "index_exists",
+      "schema": "public",
+      "index": "uq_core_tenant_modules_master",
+      "source": "20261123090000",
+      "source_tokens": ["uq_core_tenant_modules_master", "WHERE company_id IS NULL"]
+    },
+    {
+      "id": "core_tenant_modules.uq_company",
+      "kind": "index_exists",
+      "schema": "public",
+      "index": "uq_core_tenant_modules_company",
+      "source": "20261123090000",
+      "source_tokens": ["uq_core_tenant_modules_company", "WHERE company_id IS NOT NULL"]
+    },
+    {
+      "id": "core_tenant_modules.tenant_company_index",
+      "kind": "index_exists",
+      "schema": "public",
+      "index": "idx_core_tenant_modules_tenant_company",
+      "source": "20261123090000",
+      "source_tokens": ["idx_core_tenant_modules_tenant_company"]
+    },
+    {
+      "id": "core_tenant_modules.fk_company",
+      "kind": "data_rows",
+      "source": "20261123090000",
+      "source_tokens": ["fk_core_tenant_modules_company"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.core_tenant_modules'::regclass AND conname = 'fk_core_tenant_modules_company'",
+      "expected": 1
+    },
+    {
+      "id": "core_tenant_modules.master_rows_unique",
+      "kind": "data_rows",
+      "source": "20261123090000",
+      "source_tokens": ["uq_core_tenant_modules_master", "GROUP BY tenant_id, module_code"],
+      "sql": "SELECT count(*) FROM (SELECT tenant_id, module_code FROM public.core_tenant_modules WHERE company_id IS NULL GROUP BY tenant_id, module_code HAVING count(*) > 1) d",
+      "expected": 0
     }
   ]
 }
