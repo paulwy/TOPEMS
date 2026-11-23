@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 406,
+  "total": 407,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -29,7 +29,7 @@
     "mobile": 5,
     "pdm": 9,
     "plugin_mes": 1,
-    "pm": 17,
+    "pm": 18,
     "portal": 7,
     "public": 42,
     "qms": 12,
@@ -118,7 +118,8 @@
     "B235": 1,
     "B236": 1,
     "B237": 1,
-    "B238": 1
+    "B238": 1,
+    "B239": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8572,6 +8573,27 @@
       "source_batch": "B238",
       "source_commit": "2897b69f4",
       "source_subject": "B238: qms.qa_audit_findings.status 收敛到 QmsAuditFindingStatus 枚举",
+      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
+    },
+    {
+      "schema": "pm",
+      "table": "settlements",
+      "constraint": "ck_settlements_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text])))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B239",
+      "source_commit": "PENDING",
+      "source_subject": "B239: pm.settlements.status 收敛到 SettlementStatus 枚举（默认 draft + 审批来源约束）",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
   ]

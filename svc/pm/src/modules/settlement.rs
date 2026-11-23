@@ -22,6 +22,7 @@ use crate::models::settlement::{
     UpdateSettlementRequest,
 };
 use crate::modules::effective_tenant_id;
+use crate::modules::settlement_status::SettlementStatus;
 
 #[derive(Clone)]
 struct SettlementState {
@@ -195,13 +196,14 @@ async fn create_settlement(
 
     let settlement = sqlx::query_as::<_, Settlement>(
         only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
     .bind(&req.settlement_code)
     .bind(&req.settlement_name)
     .bind(&req.settlement_type)
+    .bind(SettlementStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(rust_decimal::Decimal::ZERO)
     .bind("CNY")
@@ -274,6 +276,37 @@ async fn update_settlement(
         }
     };
 
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "pm",
+        "SELECT status FROM pm.settlements WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("决算不存在"),
+        Err(e) => {
+            tracing::error!("查询决算状态失败: {}", e);
+            return ApiResponse::server_error("更新决算失败");
+        }
+    };
+    let current_status = match SettlementStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("存量的决算状态非法，请先修正数据"),
+    };
+    if current_status.is_approved() {
+        return ApiResponse::conflict("已审批决算不允许修改");
+    }
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match SettlementStatus::from_db_str(raw) {
+            Some(next) if next.can_transition_from(&current) => Some(next.as_db_str().to_string()),
+            Some(_) => return ApiResponse::bad_request("当前决算状态不允许该流转"),
+            None => return ApiResponse::bad_request("无效的决算状态"),
+        },
+    };
+
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
@@ -285,7 +318,7 @@ async fn update_settlement(
         WHERE id = $6  RETURNING *"
     ))
     .bind(req.settlement_name)
-    .bind(req.status)
+    .bind(status)
     .bind(req.actual_amount)
     .bind(req.description)
     .bind(Utc::now())
@@ -350,15 +383,40 @@ async fn approve_settlement(
         }
     };
 
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "pm",
+        "SELECT status FROM pm.settlements WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("决算不存在"),
+        Err(e) => {
+            tracing::error!("查询决算状态失败: {}", e);
+            return ApiResponse::server_error("审批决算失败");
+        }
+    };
+    let current_status = match SettlementStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("存量的决算状态非法，请先修正数据"),
+    };
+    if !SettlementStatus::Approved.can_approve_from(current_status.as_db_str()) {
+        return ApiResponse::conflict("当前决算状态不允许审批");
+    }
+
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
-            status = 'approved',
+            status = $2,
             approved_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1  RETURNING *"
+        WHERE id = $1 AND status = ANY($3::text[])  RETURNING *"
     ))
     .bind(id)
+    .bind(SettlementStatus::Approved.as_db_str())
+    .bind(SettlementStatus::APPROVE_FROM.to_vec())
     .fetch_one(&mut scope)
     .await;
 

@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 304,
+    "rust_enums": 305,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -3643,6 +3643,23 @@
         "closed",
         "identified",
         "mitigated"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/settlement_status.rs",
+      "name": "SettlementStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "pending",
+        "rejected"
       ]
     },
     {

@@ -1968,6 +1968,13 @@
       "table": "qms.qa_audit_findings",
       "column": "status",
       "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/settlement_status.rs",
+      "enum": "SettlementStatus",
+      "table": "pm.settlements",
+      "column": "status",
+      "candidate": "docs/database/pm-settlement-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

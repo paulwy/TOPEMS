@@ -12,6 +12,8 @@ use topems_shared_event::event::{
 };
 use uuid::Uuid;
 
+use crate::modules::settlement_status::SettlementStatus;
+
 type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
@@ -360,6 +362,13 @@ impl PmEventHandlers {
 
         let now = Utc::now();
         let date = payload.settlement_date.unwrap_or(now);
+        let status = SettlementStatus::from_db_str(&payload.status).ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "非法结算状态: {}，可选值: {}",
+                payload.status,
+                SettlementStatus::DB_VALUES.join("/")
+            ))
+        })?;
 
         // 缺租户/nil 显式失败；写入在租户作用域内，禁止落 NULL 租户结算行。
         let tenant = require_event_tenant(&event)?;
@@ -384,7 +393,7 @@ impl PmEventHandlers {
         .bind(&payload.settlement_type)
         .bind(date)
         .bind(payload.amount)
-        .bind(&payload.status)
+        .bind(status.as_db_str())
         .bind(payload.remarks)
         .bind(payload.created_by)
         .bind(tenant_id)
@@ -435,12 +444,14 @@ impl PmEventHandlers {
         let result = sqlx::query(only_own_schema_query!(
             "pm",
             r#"UPDATE pm.settlements
-               SET status = 'approved',
+               SET status = $3,
                    updated_at = NOW()
-               WHERE id = $1 AND tenant_id = $2 AND status IN ('pending', 'draft')"#
+               WHERE id = $1 AND tenant_id = $2 AND status = ANY($4::text[])"#
         ))
         .bind(payload.id)
         .bind(tenant_id)
+        .bind(SettlementStatus::Approved.as_db_str())
+        .bind(SettlementStatus::APPROVE_FROM.to_vec())
         .execute(&mut scope)
         .await
         .map_err(|e| {

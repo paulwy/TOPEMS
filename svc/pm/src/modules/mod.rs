@@ -30,6 +30,7 @@ pub mod report;
 pub mod risk;
 pub mod service_integration;
 pub mod settlement;
+pub mod settlement_status;
 pub mod statistics;
 pub mod task;
 pub mod task_status;
