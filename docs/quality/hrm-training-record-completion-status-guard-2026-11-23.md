@@ -25,6 +25,7 @@ in_progress → completed（终态）
 - `completed` 为终态，禁止回到 `in_progress` / `failed`。
 - 更新接口允许：同值、`in_progress→completed`、`in_progress→failed`、`failed→in_progress`。
 - 完成接口只接受 `in_progress`；`failed` 须先通过更新回到 `in_progress`。
+- 列可空：历史 `NULL` 在读路径按默认 `in_progress` 处理，不会被误判为“记录不存在”；完成接口也允许 `NULL → completed`。
 
 ## 数据库
 

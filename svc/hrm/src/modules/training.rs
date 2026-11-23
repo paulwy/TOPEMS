@@ -937,7 +937,7 @@ pub async fn update_record(
         };
         let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
             "hrm",
-            "SELECT completion_status FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
+            "SELECT COALESCE(completion_status, 'in_progress') FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
         ))
         .bind(id)
         .fetch_optional(&mut scope)
@@ -1261,7 +1261,7 @@ pub async fn complete_record(
     };
     let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
         "hrm",
-        "SELECT completion_status FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
+        "SELECT COALESCE(completion_status, 'in_progress') FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
     .fetch_optional(&mut scope)
@@ -1288,7 +1288,7 @@ pub async fn complete_record(
             completion_status = 'completed',
             completed_at = $2,
             updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1 AND completion_status = 'in_progress'
+        WHERE deleted_at IS NULL AND id = $1 AND (completion_status IS NULL OR completion_status = 'in_progress')
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date,
                   attendance_status, completion_status, score, certificate_no,
                   completed_at, feedback, created_at, updated_at
