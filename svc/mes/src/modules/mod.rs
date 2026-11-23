@@ -41,6 +41,7 @@ pub mod wip;
 pub mod work_order;
 pub mod work_order_status;
 pub mod work_report;
+pub mod work_report_status;
 pub mod work_station;
 pub mod work_station_status;
 

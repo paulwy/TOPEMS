@@ -117,7 +117,8 @@ export interface WorkReport {
   updated_at: string;
 }
 
-export type WorkReportStatus = 'draft' | 'submitted' | 'archived' | 'rejected' | 'reworking';
+export type WorkReportStatus =
+  'draft' | 'submitted' | 'approved' | 'rejected' | 'reworking' | 'archived' | 'cancelled';
 
 export interface CreateWorkReportRequest {
   work_order_id: string;

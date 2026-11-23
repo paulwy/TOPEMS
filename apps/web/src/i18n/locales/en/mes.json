@@ -2987,5 +2987,7 @@
   "mes.masterData.empty": "No master data yet",
   "mes.work_order_page.toast_delete_failed": "Failed to delete work order, please retry",
   "mes.work_order_page.error_load": "Failed to load work orders, please retry",
-  "mes.quality.k56": "Concession Accepted"
+  "mes.quality.k56": "Concession Accepted",
+  "mes.work_report.k45": "Reworking",
+  "mes.work_report.k46": "Archived"
 }

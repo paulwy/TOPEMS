@@ -117,7 +117,7 @@ export const workReportSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('mes.work_report.k15'),
       type: 'select',
-      defaultValue: 'draft',
+      defaultValue: 'submitted',
       options: {
         type: 'static',
         options: [
@@ -125,6 +125,8 @@ export const workReportSchema: EntitySchema = {
           { value: 'submitted', label: i18n.t('mes.work_report.k17') },
           { value: 'approved', label: i18n.t('mes.work_report.k18') },
           { value: 'rejected', label: i18n.t('mes.work_report.k19') },
+          { value: 'reworking', label: i18n.t('mes.work_report.k45') },
+          { value: 'archived', label: i18n.t('mes.work_report.k46') },
           { value: 'cancelled', label: i18n.t('mes.work_report.k20') },
         ],
       },
@@ -146,6 +148,16 @@ export const workReportSchema: EntitySchema = {
             label: i18n.t('mes.work_report.k24'),
             bg: 'error.lighter',
             color: 'error.dark',
+          },
+          reworking: {
+            label: i18n.t('mes.work_report.k45'),
+            bg: 'warning.lighter',
+            color: 'warning.dark',
+          },
+          archived: {
+            label: i18n.t('mes.work_report.k46'),
+            bg: 'grey.100',
+            color: 'text.secondary',
           },
           cancelled: {
             label: i18n.t('mes.work_report.k25'),
@@ -222,6 +234,8 @@ export const workReportSchema: EntitySchema = {
           { label: i18n.t('mes.work_report.k33'), value: 'submitted' },
           { label: i18n.t('mes.work_report.k34'), value: 'approved' },
           { label: i18n.t('mes.work_report.k35'), value: 'rejected' },
+          { label: i18n.t('mes.work_report.k45'), value: 'reworking' },
+          { label: i18n.t('mes.work_report.k46'), value: 'archived' },
           { label: i18n.t('mes.work_report.k36'), value: 'cancelled' },
         ],
       },

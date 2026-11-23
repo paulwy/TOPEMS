@@ -19,6 +19,7 @@ use crate::modules::approval_common::{
     build_approve_response, build_reject_response, build_start_response,
     create_approval_and_log_db, execute_transition_and_log_db, reject_and_log_db,
 };
+use crate::modules::work_report_status::WorkReportStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::big_decimal_to_f64;
 use topems_shared_event::event::{commit_retry, EventType, MesWorkReportSubmittedPayload};
@@ -300,9 +301,15 @@ pub async fn list_work_reports(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" WHERE wr.status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = WorkReportStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的报工状态");
+            };
+            where_clause.push_str(" WHERE wr.status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -444,7 +451,7 @@ pub async fn list_work_reports(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "pending".to_string()),
+                .unwrap_or_else(|| WorkReportStatus::DEFAULT.as_db_str().to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
             approved_at: opt_datetime_to_string(
                 r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
@@ -656,7 +663,7 @@ pub async fn create_work_report(
         }
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         INSERT INTO mes.work_reports (
             report_no, work_order_id, work_order_no, order_id, order_no,
@@ -665,7 +672,7 @@ pub async fn create_work_report(
             output_quantity, defect_quantity, labor_hours, remark,
             status, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending', $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -674,22 +681,23 @@ pub async fn create_work_report(
             status, approved_by, approved_at, approval_remark,
             created_at, updated_at
         "#,
-        report_no,
-        work_order_id,
-        body.work_order_no,
-        order_id,
-        body.order_no,
-        work_station_id,
-        body.work_station_name,
-        body.reporter_name,
-        report_date,
-        body.shift,
-        output_quantity,
-        defect_quantity,
-        labor_hours,
-        body.remark,
-        tenant_id,
     )
+    .bind(report_no)
+    .bind(work_order_id)
+    .bind(body.work_order_no)
+    .bind(order_id)
+    .bind(body.order_no)
+    .bind(work_station_id)
+    .bind(body.work_station_name)
+    .bind(body.reporter_name)
+    .bind(report_date)
+    .bind(body.shift)
+    .bind(output_quantity)
+    .bind(defect_quantity)
+    .bind(labor_hours)
+    .bind(body.remark)
+    .bind(WorkReportStatus::DEFAULT.as_db_str())
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -872,6 +880,14 @@ pub async fn update_work_report(
         }
     };
 
+    let status = match body.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match WorkReportStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的报工状态"),
+        },
+    };
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE mes.work_reports
@@ -915,7 +931,7 @@ pub async fn update_work_report(
     .bind(defect_quantity)
     .bind(labor_hours)
     .bind(body.remark)
-    .bind(body.status)
+    .bind(status.map(WorkReportStatus::as_db_str))
     .bind(uuid)
     .bind(tenant_id)
     .fetch_one(&mut scope)
@@ -1086,7 +1102,7 @@ pub async fn approve_work_report(
         r#"
         UPDATE mes.work_reports
         SET
-            status = 'approved',
+            status = $4,
             approved_by = $1::uuid,
             approved_at = NOW(),
             updated_at = NOW()
@@ -1104,6 +1120,7 @@ pub async fn approve_work_report(
     .bind(approver)
     .bind(uuid)
     .bind(get_tenant_id(&claims))
+    .bind(WorkReportStatus::Approved.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -1203,7 +1220,7 @@ pub async fn reject_work_report(
         r#"
         UPDATE mes.work_reports
         SET
-            status = 'rejected',
+            status = $5,
             approved_by = $1::uuid,
             approval_remark = $2,
             updated_at = NOW()
@@ -1222,6 +1239,7 @@ pub async fn reject_work_report(
     .bind(remark)
     .bind(uuid)
     .bind(get_tenant_id(&claims))
+    .bind(WorkReportStatus::Rejected.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -1319,8 +1337,8 @@ pub async fn start_rework_approval(
         &state.db,
         "work_report",
         record_id,
-        "rejected",
-        "reworking",
+        WorkReportStatus::Rejected.as_db_str(),
+        WorkReportStatus::Reworking.as_db_str(),
         approver_id,
     )
     .await
@@ -1368,8 +1386,8 @@ pub async fn approve_rework(
         "work_report",
         record_id,
         req.approval_id,
-        "rejected",
-        "reworking",
+        WorkReportStatus::Rejected.as_db_str(),
+        WorkReportStatus::Reworking.as_db_str(),
     )
     .await
     {

@@ -2978,6 +2978,24 @@
     },
     {
       "schema": "mes",
+      "table": "work_reports",
+      "constraint": "ck_mes_work_reports_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "archived",
+        "cancelled",
+        "draft",
+        "rejected",
+        "reworking",
+        "submitted"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text, 'rejected'::text, 'reworking'::text, 'archived'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "work_stations",
       "constraint": "work_stations_status_check",
       "columns": [
@@ -6941,15 +6959,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'in_progress'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "work_reports",
-      "column": "status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "mobile",

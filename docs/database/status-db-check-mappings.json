@@ -1443,6 +1443,13 @@
       "table": "mes.production_records",
       "column": "status",
       "candidate": "docs/database/mes-production-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/work_report_status.rs",
+      "enum": "WorkReportStatus",
+      "table": "mes.work_reports",
+      "column": "status",
+      "candidate": "docs/database/mes-work-report-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
