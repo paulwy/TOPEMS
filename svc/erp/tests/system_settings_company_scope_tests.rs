@@ -419,6 +419,40 @@ async fn parent_reads_child_row_but_cannot_write(pool: PgPool) {
     tx.rollback().await.unwrap();
 }
 
+/// 平台通道：只维护平台参数行，且只落 `company_id IS NULL`。
+#[sqlx::test(migrations = false)]
+async fn platform_channel_maintains_platform_rows_only(pool: PgPool) {
+    setup_tables(&pool).await;
+    run_sql(&pool, MIGRATION_SQL).await.unwrap();
+
+    let mut tx = system_tx(&pool, None).await;
+    sqlx::query(
+        "INSERT INTO public.system_settings (tenant_id, company_id, key, value)
+         VALUES (NULL, NULL, 'platform.new', 'v1')",
+    )
+    .execute(&mut *tx)
+    .await
+    .expect("平台通道应可写平台参数行");
+    let affected = sqlx::query(
+        "UPDATE public.system_settings SET value = 'v2'
+          WHERE tenant_id IS NULL AND company_id IS NULL AND key = 'platform.new'",
+    )
+    .execute(&mut *tx)
+    .await
+    .unwrap()
+    .rows_affected();
+    assert_eq!(affected, 1);
+    tx.commit().await.unwrap();
+
+    let company_rows: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*)::bigint FROM public.system_settings WHERE company_id IS NOT NULL",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(company_rows, 0, "平台通道不应产生公司行");
+}
+
 /// 多公司租户的租户级行必须阻断迁移（不得静默归 NULL/猜公司）。
 #[sqlx::test(migrations = false)]
 async fn multi_company_tenant_blocks_migration(pool: PgPool) {

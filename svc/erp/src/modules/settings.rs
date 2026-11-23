@@ -129,6 +129,22 @@ fn txn_missing_error() -> TopemsError {
     )
 }
 
+/// 平台通道事务：显式打开 `app.rls_system`，只由 pod 内平台参数入口使用。
+///
+/// `system_settings` 是 FORCE RLS 表，平台行策略（platform_maintain）要求
+/// `app.rls_system='on'`。普通连接池不会设置该 GUC，若直接查询会读写 0 行；
+/// 这里在事务内 `SET LOCAL`，事务结束即复位，不污染连接池中的复用连接。
+async fn platform_tx(pool: &PgPool) -> Result<sqlx::Transaction<'_, sqlx::Postgres>, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    sqlx::query(
+        "SELECT set_config('app.tenant_id', '', true), \
+                set_config('app.rls_system', 'on', true)",
+    )
+    .execute(&mut *tx)
+    .await?;
+    Ok(tx)
+}
+
 // ─── 平台参数 handlers（系统通道；仅 tenant_id/company_id 均为 NULL 的行） ─────
 
 #[utoipa::path(
@@ -147,6 +163,11 @@ pub async fn list_settings(
     let category = params.category.clone();
     let search = params.search.clone().unwrap_or_default();
 
+    let mut tx = match platform_tx(&pool).await {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询设置失败", e)),
+    };
+
     let items: Vec<SystemSetting> = sqlx::query_as(
         r#"SELECT id, tenant_id, company_id, key, value, description, category, created_at, updated_at
            FROM public.system_settings
@@ -157,9 +178,11 @@ pub async fn list_settings(
     )
     .bind(&category)
     .bind(&search)
-    .fetch_all(&pool)
+    .fetch_all(&mut *tx)
     .await
     .unwrap_or_default();
+
+    let _ = tx.commit().await;
 
     ApiResponse::success(items, "查询成功")
 }
@@ -180,17 +203,24 @@ pub async fn get_setting(
     State(pool): State<PgPool>,
     Path(key): Path<String>,
 ) -> ApiResponse<SystemSetting> {
+    let mut tx = match platform_tx(&pool).await {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询设置项失败", e)),
+    };
     let setting: Result<SystemSetting, _> = sqlx::query_as(
         r#"SELECT id, tenant_id, company_id, key, value, description, category, created_at, updated_at
            FROM public.system_settings
            WHERE key = $1 AND tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL"#,
     )
     .bind(&key)
-    .fetch_one(&pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match setting {
-        Ok(v) => ApiResponse::success(v, "查询成功"),
+        Ok(v) => {
+            let _ = tx.commit().await;
+            ApiResponse::success(v, "查询成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 ApiResponse::from(TopemsError::ResourceNotFound("设置项不存在".to_string()))
@@ -206,6 +236,10 @@ pub async fn create_setting(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateSettingRequest>,
 ) -> ApiResponse<SystemSetting> {
+    let mut tx = match platform_tx(&pool).await {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(TopemsError::internal("创建设置项失败", e)),
+    };
     let setting: Result<SystemSetting, _> = sqlx::query_as(
         r#"INSERT INTO public.system_settings
                (tenant_id, company_id, key, value, description, category)
@@ -216,11 +250,14 @@ pub async fn create_setting(
     .bind(&payload.value)
     .bind(&payload.description)
     .bind(&payload.category)
-    .fetch_one(&pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match setting {
-        Ok(v) => ApiResponse::success(v, "创建成功"),
+        Ok(v) => {
+            let _ = tx.commit().await;
+            ApiResponse::success(v, "创建成功")
+        }
         Err(e) => {
             tracing::error!("创建设置项失败: {}", e);
             ApiResponse::from(TopemsError::Internal("创建设置项失败".to_string()))
@@ -233,6 +270,10 @@ pub async fn update_setting(
     Path(key): Path<String>,
     Json(payload): Json<UpdateSettingRequest>,
 ) -> ApiResponse<SystemSetting> {
+    let mut tx = match platform_tx(&pool).await {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新设置项失败", e)),
+    };
     let setting: Result<SystemSetting, _> = sqlx::query_as(
         r#"UPDATE public.system_settings SET
               value = COALESCE($2, value),
@@ -246,11 +287,14 @@ pub async fn update_setting(
     .bind(&payload.value)
     .bind(&payload.description)
     .bind(&payload.category)
-    .fetch_one(&pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match setting {
-        Ok(v) => ApiResponse::success(v, "更新成功"),
+        Ok(v) => {
+            let _ = tx.commit().await;
+            ApiResponse::success(v, "更新成功")
+        }
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
                 ApiResponse::from(TopemsError::ResourceNotFound("设置项不存在".to_string()))
@@ -266,16 +310,23 @@ pub async fn delete_setting(
     State(pool): State<PgPool>,
     Path(key): Path<String>,
 ) -> ApiResponse<String> {
+    let mut tx = match platform_tx(&pool).await {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(TopemsError::internal("删除设置项失败", e)),
+    };
     let result = sqlx::query(
         r#"DELETE FROM public.system_settings
            WHERE key = $1 AND tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL"#,
     )
     .bind(&key)
-    .execute(&pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("删除成功".to_string(), "删除成功"),
+        Ok(r) if r.rows_affected() > 0 => {
+            let _ = tx.commit().await;
+            ApiResponse::success("删除成功".to_string(), "删除成功")
+        }
         Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("设置项不存在".to_string())),
         Err(e) => {
             tracing::error!("删除设置项失败: {}", e);
@@ -308,6 +359,11 @@ pub async fn batch_update_settings(
 
     let mut updated = Vec::new();
 
+    let mut tx = match platform_tx(&pool).await {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量更新设置失败", e)),
+    };
+
     for (key, value) in settings_map {
         let value_str = match value {
             Value::String(s) => s.clone(),
@@ -323,13 +379,15 @@ pub async fn batch_update_settings(
         )
         .bind(key)
         .bind(&value_str)
-        .fetch_one(&pool)
+        .fetch_one(&mut *tx)
         .await;
 
         if let Ok(s) = result {
             updated.push(s);
         }
     }
+
+    let _ = tx.commit().await;
 
     ApiResponse::success(updated, "批量更新成功")
 }
