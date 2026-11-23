@@ -1905,6 +1905,13 @@
       "table": "pm.budgets",
       "column": "status",
       "candidate": "docs/database/pm-budget-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/milestone_status.rs",
+      "enum": "MilestoneStatus",
+      "table": "pm.project_milestones",
+      "column": "status",
+      "candidate": "docs/database/pm-milestone-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
