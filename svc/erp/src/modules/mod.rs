@@ -72,6 +72,7 @@ pub mod material;
 pub mod material_calc;
 pub mod mdm_v49;
 pub mod meeting_room;
+pub mod meeting_status;
 pub mod office_supplies;
 pub mod openapi;
 pub mod order_calc;

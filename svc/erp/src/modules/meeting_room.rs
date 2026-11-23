@@ -10,6 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::meeting_status::{MeetingBookingStatus, MeetingRoomStatus};
 use super::ApiState;
 use crate::models::{
     CreateMeetingBookingRequest, CreateMeetingRoomRequest, MeetingBooking, MeetingRoom,
@@ -28,6 +29,18 @@ pub struct RoomQueryParams {
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
+}
+
+/// 会议室响应归一：未知历史值回落默认态
+fn normalize_room(mut room: MeetingRoom) -> MeetingRoom {
+    room.status = MeetingRoomStatus::normalize(&room.status).to_string();
+    room
+}
+
+/// 会议预约响应归一：未知历史值回落默认态
+fn normalize_booking(mut booking: MeetingBooking) -> MeetingBooking {
+    booking.status = MeetingBookingStatus::normalize(&booking.status).to_string();
+    booking
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -69,7 +82,17 @@ pub async fn list_rooms(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> =
+        match MeetingRoomStatus::parse_filter(params.status.as_deref()) {
+            Ok(Some(status)) => Some(status.as_db_str().to_string()),
+            Ok(None) => None,
+            Err(_) => {
+                return ApiResponse::error(
+                    400,
+                    "status 取值非法，允许 available/occupied/maintenance/unavailable",
+                )
+            }
+        };
 
     let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
         "erp",
@@ -107,7 +130,12 @@ pub async fn list_rooms(
             let total = count_result.unwrap_or(0);
 
             ApiResponse::success(
-                PaginatedResponse::new(rooms, total, page, page_size),
+                PaginatedResponse::new(
+                    rooms.into_iter().map(normalize_room).collect::<Vec<_>>(),
+                    total,
+                    page,
+                    page_size,
+                ),
                 "获取会议室列表成功",
             )
         }
@@ -157,7 +185,7 @@ pub async fn create_room(
     let result = sqlx::query_as::<_, MeetingRoom>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.meeting_rooms (id, name, capacity, location, facilities, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, name, capacity, location, facilities, status, created_at, updated_at
         "#),
     )
@@ -166,6 +194,7 @@ pub async fn create_room(
     .bind(req.capacity)
     .bind(&req.location)
     .bind(&req.facilities)
+    .bind(MeetingRoomStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(tenant_id)
@@ -174,7 +203,7 @@ pub async fn create_room(
 
     let (response, status, error_msg) = match &result {
         Ok(room) => (
-            ApiResponse::success(room.clone(), "会议室创建成功"),
+            ApiResponse::success(normalize_room(room.clone()), "会议室创建成功"),
             "success".to_string(),
             None,
         ),
@@ -260,7 +289,7 @@ pub async fn get_room(
     .await;
 
     match result {
-        Ok(Some(room)) => ApiResponse::success(room, "获取会议室成功"),
+        Ok(Some(room)) => ApiResponse::success(normalize_room(room), "获取会议室成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("会议室不存在".to_string())),
         Err(e) => {
             tracing::error!("获取会议室失败: {}", e);
@@ -317,7 +346,17 @@ pub async fn update_room(
     let capacity = req.capacity.or(Some(existing.capacity));
     let location = req.location.or(existing.location);
     let facilities = req.facilities.or(existing.facilities);
-    let status = req.status.unwrap_or(existing.status);
+    let status: Option<String> = match req.status.as_deref() {
+        None => Some(existing.status.clone()),
+        Some(raw) => match MeetingRoomStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "status 取值非法，允许 available/occupied/maintenance/unavailable".to_string(),
+                ))
+            }
+        },
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
@@ -341,7 +380,7 @@ pub async fn update_room(
 
     let (response, status_str, error_msg) = match &result {
         Ok(room) => (
-            ApiResponse::success(room.clone(), "会议室更新成功"),
+            ApiResponse::success(normalize_room(room.clone()), "会议室更新成功"),
             "success".to_string(),
             None,
         ),
@@ -505,7 +544,12 @@ pub async fn list_bookings(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> =
+        match MeetingBookingStatus::parse_filter(params.status.as_deref()) {
+            Ok(Some(status)) => Some(status.as_db_str().to_string()),
+            Ok(None) => None,
+            Err(_) => return ApiResponse::error(400, "status 取值非法，允许 confirmed/cancelled"),
+        };
 
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
@@ -541,7 +585,15 @@ pub async fn list_bookings(
             let total = count_result.unwrap_or(0);
 
             ApiResponse::success(
-                PaginatedResponse::new(bookings, total, page, page_size),
+                PaginatedResponse::new(
+                    bookings
+                        .into_iter()
+                        .map(normalize_booking)
+                        .collect::<Vec<_>>(),
+                    total,
+                    page,
+                    page_size,
+                ),
                 "获取会议预约列表成功",
             )
         }
@@ -586,7 +638,7 @@ pub async fn create_booking(
     // 显式列出 MeetingRoom 全部字段：query_as 按列名映射，投影缺列会直接报
     // `no column found for name: ...` 并把创建预约打成 500（K2）。
     let room_result = sqlx::query_as::<_, MeetingRoom>(
-        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM erp.meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
+        only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM erp.meeting_rooms WHERE deleted_at IS NULL AND id = $1 AND status = $2"),
     )
     .bind(req.room_id)
     .fetch_optional(&mut **txn)
@@ -606,13 +658,14 @@ pub async fn create_booking(
         "erp",
         r#"
         SELECT COUNT(*) FROM erp.meeting_bookings
-        WHERE deleted_at IS NULL AND room_id = $1 AND status = 'confirmed'
+        WHERE deleted_at IS NULL AND room_id = $1 AND status = $4
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#
     ))
     .bind(req.room_id)
     .bind(req.end_time)
     .bind(req.start_time)
+    .bind(MeetingBookingStatus::Confirmed.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -630,7 +683,7 @@ pub async fn create_booking(
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.meeting_bookings (id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
         "#),
     )
@@ -641,6 +694,7 @@ pub async fn create_booking(
     .bind(&req.organizer)
     .bind(req.start_time)
     .bind(req.end_time)
+    .bind(MeetingBookingStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(tenant_id)
@@ -649,7 +703,7 @@ pub async fn create_booking(
 
     let (response, status, error_msg) = match &result {
         Ok(booking) => (
-            ApiResponse::success(booking.clone(), "会议预约创建成功"),
+            ApiResponse::success(normalize_booking(booking.clone()), "会议预约创建成功"),
             "success".to_string(),
             None,
         ),
@@ -733,7 +787,7 @@ pub async fn get_booking(
     .await;
 
     match result {
-        Ok(Some(booking)) => ApiResponse::success(booking, "获取会议预约成功"),
+        Ok(Some(booking)) => ApiResponse::success(normalize_booking(booking), "获取会议预约成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("会议预约不存在".to_string())),
         Err(e) => {
             tracing::error!("获取会议预约失败: {}", e);
@@ -789,7 +843,17 @@ pub async fn update_booking(
     let organizer = req.organizer.or(Some(existing.organizer));
     let start_time = req.start_time.or(Some(existing.start_time));
     let end_time = req.end_time.or(Some(existing.end_time));
-    let status = req.status.unwrap_or(existing.status);
+    let status: Option<String> = match req.status.as_deref() {
+        None => Some(existing.status.clone()),
+        Some(raw) => match MeetingBookingStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "status 取值非法，允许 confirmed/cancelled".to_string(),
+                ))
+            }
+        },
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, MeetingBooking>(
@@ -812,7 +876,7 @@ pub async fn update_booking(
 
     let (response, status_str, error_msg) = match &result {
         Ok(booking) => (
-            ApiResponse::success(booking.clone(), "会议预约更新成功"),
+            ApiResponse::success(normalize_booking(booking.clone()), "会议预约更新成功"),
             "success".to_string(),
             None,
         ),
@@ -984,7 +1048,13 @@ pub async fn get_room_bookings(
     .await;
 
     match result {
-        Ok(bookings) => ApiResponse::success(bookings, "获取会议室预约列表成功"),
+        Ok(bookings) => ApiResponse::success(
+            bookings
+                .into_iter()
+                .map(normalize_booking)
+                .collect::<Vec<_>>(),
+            "获取会议室预约列表成功",
+        ),
         Err(e) => {
             tracing::error!("获取会议室预约列表失败: {}", e);
             ApiResponse::from(TopemsError::Internal("获取会议室预约列表失败".to_string()))

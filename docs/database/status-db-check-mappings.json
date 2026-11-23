@@ -1611,6 +1611,20 @@
       "table": "erp.vehicle_requests",
       "column": "status",
       "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/meeting_status.rs",
+      "enum": "MeetingRoomStatus",
+      "table": "erp.meeting_rooms",
+      "column": "status",
+      "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/meeting_status.rs",
+      "enum": "MeetingBookingStatus",
+      "table": "erp.meeting_bookings",
+      "column": "status",
+      "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

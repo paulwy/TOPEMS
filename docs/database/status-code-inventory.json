@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 384,
+    "db_check_constraints": 386,
     "db_enum_types": 5,
-    "db_check_values": 169,
-    "rust_enums": 267,
-    "rust_enum_values": 222,
+    "db_check_values": 170,
+    "rust_enums": 269,
+    "rust_enum_values": 223,
     "rust_values_not_in_db_check": 58,
-    "frontend_status_keys": 231,
+    "frontend_status_keys": 232,
     "frontend_keys_not_in_db_check": 67,
     "rust_values_not_in_palette": 0
   },
@@ -1284,6 +1284,36 @@
         "in_progress",
         "in_review",
         "todo"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/meeting_status.rs",
+      "name": "MeetingBookingStatus",
+      "values": [
+        "Cancelled",
+        "Confirmed"
+      ],
+      "normalized": [
+        "cancelled",
+        "confirmed"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/meeting_status.rs",
+      "name": "MeetingRoomStatus",
+      "values": [
+        "Available",
+        "Maintenance",
+        "Occupied",
+        "Unavailable"
+      ],
+      "normalized": [
+        "available",
+        "maintenance",
+        "occupied",
+        "unavailable"
       ]
     },
     {
@@ -4852,6 +4882,7 @@
       "not_found",
       "not_started",
       "obsolete",
+      "occupied",
       "offline",
       "ongoing",
       "online",

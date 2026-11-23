@@ -46,6 +46,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   ongoing: 'primary',
   in_transit: 'info',
   unavailable: 'error',
+  occupied: 'warning',
   success: 'success',
   failed: 'error',
   failure: 'error',
