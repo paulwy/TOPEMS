@@ -178,6 +178,47 @@
       "source_tokens": ["uq_core_tenant_modules_master", "GROUP BY tenant_id, module_code"],
       "sql": "SELECT count(*) FROM (SELECT tenant_id, module_code FROM public.core_tenant_modules WHERE company_id IS NULL GROUP BY tenant_id, module_code HAVING count(*) > 1) d",
       "expected": 0
+    },
+    {
+      "id": "core_inter_module_sync.company_id",
+      "kind": "column_type",
+      "table": "integration.core_inter_module_sync",
+      "column": "company_id",
+      "expected": "uuid",
+      "source": "20261123100000",
+      "source_tokens": ["integration.core_inter_module_sync", "ADD COLUMN IF NOT EXISTS company_id uuid", "COMMENT ON COLUMN integration.core_inter_module_sync.company_id"]
+    },
+    {
+      "id": "core_inter_module_sync.tenant_company_created_index",
+      "kind": "index_exists",
+      "schema": "integration",
+      "index": "idx_core_inter_module_sync_tenant_company_created",
+      "source": "20261123100000",
+      "source_tokens": ["idx_core_inter_module_sync_tenant_company_created", "WHERE company_id IS NOT NULL"]
+    },
+    {
+      "id": "core_inter_module_sync.tenant_group_index",
+      "kind": "index_exists",
+      "schema": "integration",
+      "index": "idx_core_inter_module_sync_tenant_group",
+      "source": "20261123100000",
+      "source_tokens": ["idx_core_inter_module_sync_tenant_group", "WHERE company_id IS NULL"]
+    },
+    {
+      "id": "core_inter_module_sync.fk_company",
+      "kind": "data_rows",
+      "source": "20261123100000",
+      "source_tokens": ["fk_core_inter_module_sync_company", "VALIDATE CONSTRAINT fk_core_inter_module_sync_company"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'integration.core_inter_module_sync'::regclass AND conname = 'fk_core_inter_module_sync_company' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "core_inter_module_sync.policies",
+      "kind": "data_rows",
+      "source": "20261123100000",
+      "source_tokens": ["core_inter_module_sync_company_select", "core_inter_module_sync_company_delete"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'integration' AND tablename = 'core_inter_module_sync' AND policyname IN ('core_inter_module_sync_company_select','core_inter_module_sync_company_insert','core_inter_module_sync_company_update','core_inter_module_sync_company_delete')",
+      "expected": 4
     }
   ]
 }

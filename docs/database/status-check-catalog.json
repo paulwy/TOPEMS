@@ -6736,10 +6736,10 @@
       "schema": "integration",
       "table": "core_inter_module_sync",
       "column": "status",
-      "type": "character varying(32)",
+      "type": "character varying(20)",
       "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
+      "not_null": true,
+      "default_expr": null
     },
     {
       "schema": "integration",

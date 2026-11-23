@@ -2873,3 +2873,11 @@ pending_forward_patches:
     effect: "public.core_tenant_modules 新增 company_id uuid（可空、无默认）：NULL = 集团母版目录，定义可开通范围，租户内只读；公司行表达实际开通、可写。存量行由 ADD COLUMN 自动为 NULL，全部视为集团母版，不推断、不拆分。删除旧 UNIQUE (tenant_id, module_code)，替换为两条部分唯一索引 uq_core_tenant_modules_master (tenant_id, module_code) WHERE company_id IS NULL 与 uq_core_tenant_modules_company (tenant_id, company_id, module_code) WHERE company_id IS NOT NULL；另建 (tenant_id, company_id) 部分索引与同租户公司外键。策略重建为 select/insert/update/delete 4 条：读为租户内母版行 + 本司/母公司可见公司行；写为母版行仅母公司或平台通道、公司行仅本公司"
     destructive_scan: "无 UPDATE/DELETE/TRUNCATE；1 条 ALTER TABLE DROP CONSTRAINT IF EXISTS（旧唯一约束，随后建两条部分唯一索引）、1 条 DROP INDEX IF EXISTS、1 个 DO 块内枚举 DROP POLICY（随后重建 4 条）；无 DROP TABLE/COLUMN；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束存在性守卫，可重复执行"
     note: "前置断言：重复 (tenant_id, module_code) 为 0；后置断言：company_id 为 uuid 可空无默认、旧约束不存在、两条部分唯一索引谓词与列序正确、公司索引与 FK 存在、策略数=4 且名称精确、RLS FORCE、总行数不变且公司级行数不因迁移改变。回滚 database/rollback/20261123090000_core_tenant_modules_company_scope.rollback.sql 在公司级行非 0 时 RAISE EXCEPTION 并打印计数、不改数据；显式 app.allow_scope_rollback='on' 仍需先通过重复键检查"
+
+  # ===== 2026-11-23：W12-A2 core_inter_module_sync 公司级隔离（集团级任务合法） =====
+  - version: "20261123100000"
+    file: "database/migrations/20261123100000_core_inter_module_sync_company_scope.sql"
+    status: to_apply
+    effect: "integration.core_inter_module_sync 新增 company_id uuid（可空、无默认）：NULL = 集团级同步任务，仅母公司/平台可见可发起（NULL 合法）；公司行按公司归属，子公司仅本司可见可写，母公司经 company_readable 只读子公司。回填：data->>'company_id' 命中且属同租户公司 → 该司；单公司租户 → 该公司；其余保持 NULL（集团级，不阻断）。新增 (tenant_id, company_id, created_at DESC) WHERE company_id IS NOT NULL 与 (tenant_id) WHERE company_id IS NULL 两条索引、同租户公司外键；策略重建为 select/insert/update/delete 4 条"
+    destructive_scan: "无 DELETE/TRUNCATE/DROP TABLE/COLUMN；回填为 2 条只作用于 company_id IS NULL 的 UPDATE；1 个 DO 块内枚举 DROP POLICY（随后重建 4 条）；ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束存在性守卫，可重复执行"
+    note: "前置断言：表、hrm.companies、erp 公司维度函数存在；后置断言：company_id 为 uuid 可空无默认、两条索引谓词与列序正确、公司 FK 已 VALIDATE、策略数=4 且名称精确、RLS ENABLE+FORCE、行数不变、无跨租户公司归属。回滚 database/rollback/20261123100000_core_inter_module_sync_company_scope.rollback.sql 在公司级行非 0 时 RAISE EXCEPTION 并打印计数，不提供 override、不删除任何数据。组织：本仓库无该表后台调度写入路径，请求侧 handler 全部改为写当前公司行"
