@@ -2031,6 +2031,13 @@
       "table": "ehs.qa_ehs_environment_monitors",
       "column": "status",
       "candidate": "docs/database/ehs-environment-monitor-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/budget_status.rs",
+      "enum": "BudgetStatus",
+      "table": "finance.budgets",
+      "column": "status",
+      "candidate": "docs/database/finance-budget-status-check-candidates-2026-11-24.sql"
     }
   ]
 }

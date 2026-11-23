@@ -30,6 +30,7 @@ fn amount_decimal(req: &Value, key: &str) -> Decimal {
         .unwrap_or(Decimal::ZERO)
 }
 
+use crate::modules::budget_status::BudgetStatus;
 use crate::modules::expense_status::{normalize_expense, ExpenseStatus};
 use crate::modules::receivable_payable_status::{
     normalize_receivable_payable, ReceivablePayableStatus,
@@ -642,13 +643,20 @@ pub async fn create_budget(
     } else {
         (used_amount / total_budget) * rust_decimal::Decimal::from(100)
     };
+    let create_status = match req.get("status").and_then(|v| v.as_str()) {
+        None => BudgetStatus::DEFAULT.as_db_str().to_string(),
+        Some(raw) => match BudgetStatus::normalize(raw) {
+            Some(status) => status.to_string(),
+            None => return ApiResponse::bad_request("无效的预算状态"),
+        },
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO finance.budgets (id, tenant_id, department_id, budget_type, fiscal_year,
                                 total_budget, used_amount, remaining_amount, usage_rate, status,
                                 created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $12, $10, $11)
            RETURNING id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#
@@ -673,6 +681,7 @@ pub async fn create_budget(
     .bind(usage_rate)
     .bind(now)
     .bind(now)
+    .bind(&create_status)
     .fetch_one(&mut scope)
     .await;
 
@@ -782,6 +791,32 @@ pub async fn update_budget(
         }
     };
 
+    let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "finance",
+        "SELECT status FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => match BudgetStatus::from_db_str(&status) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("数据库中存在未知预算状态"),
+        },
+        Ok(None) => return ApiResponse::not_found("预算不存在"),
+        Err(e) => {
+            tracing::error!("查询预算状态失败: {}", e);
+            return ApiResponse::server_error("更新预算失败");
+        }
+    };
+    let status = match req.get("status").and_then(|v| v.as_str()) {
+        None => current_status.as_db_str().to_string(),
+        Some(raw) => match BudgetStatus::normalize(raw) {
+            Some(status) => status.to_string(),
+            None => return ApiResponse::bad_request("无效的预算状态"),
+        },
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.budgets SET
@@ -809,11 +844,7 @@ pub async fn update_budget(
     .bind(used_amount)
     .bind(remaining_amount)
     .bind(usage_rate)
-    .bind(
-        req.get("status")
-            .and_then(|v| v.as_str())
-            .unwrap_or("active"),
-    )
+    .bind(&status)
     .bind(now)
     .fetch_one(&mut scope)
     .await;

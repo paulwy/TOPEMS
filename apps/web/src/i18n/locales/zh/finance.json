@@ -1,4 +1,6 @@
 {
+  "finance.budget.status_inactive": "禁用",
+  "finance.budget.status_archived": "已归档",
   "vouchers": {
     "title": "凭证管理",
     "description": "会计凭证录入、审核、过账与查询",

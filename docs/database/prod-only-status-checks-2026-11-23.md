@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **416** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **417** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -31,7 +31,7 @@
 | `doc_service` | 1 |
 | `ehs` | 28 |
 | `erp` | 33 |
-| `finance` | 40 |
+| `finance` | 41 |
 | `flow` | 7 |
 | `gis` | 10 |
 | `hrm` | 24 |
@@ -144,6 +144,7 @@
 | B246 | 1 |
 | B247 | 1 |
 | B249 | 1 |
+| B251 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -203,6 +204,8 @@
 
 - W5-B249（B249）新增 `wms.warehouses.ck_warehouses_status_lifecycle_standard` 只有候选 SQL（`docs/database/wms-warehouse-status-lifecycle-check-candidates-2026-11-24.sql`）、无迁移；该约束替换既有 `ck_warehouses_status_standard`（active/inactive/archived），部署时必须先 DROP 旧约束；重建库仍保留旧约束，新约束不存在，已计入本清单待回迁。
 
+- W5-B251（B251）新增 `finance.budgets.ck_budgets_status_lifecycle_standard` 只有候选 SQL（`docs/database/finance-budget-status-check-candidates-2026-11-24.sql`）、无迁移；该约束替换既有 `ck_budgets_status_standard`（active/inactive/archived），部署时必须先 DROP 旧约束；重建库仍保留旧约束，新约束不存在，已计入本清单待回迁。
+
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
 ## 复核记录（2026-11-23，第二轮推送前）
@@ -240,3 +243,4 @@
 - B247 来源提交已回填：`ce3e680bc`。
 - B249 追加后读数：416 条；`wms.warehouses.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
 - B249 来源提交已回填：`8f02baa90`。
+- B251 追加后读数：417 条；`finance.budgets.status` 在参考库仍由旧约束覆盖，新五态约束未回迁。

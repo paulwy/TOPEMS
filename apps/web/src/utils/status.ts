@@ -217,6 +217,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   timeout: 'error',
   danger: 'error',
   frozen: 'error',
+  exhausted: 'error',
   not_applicable: 'default',
   false_positive: 'default',
   destroyed: 'default',

@@ -5,11 +5,11 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 313,
-    "rust_enum_values": 241,
-    "rust_values_not_in_db_check": 194,
-    "frontend_status_keys": 250,
-    "frontend_keys_not_in_db_check": 203,
+    "rust_enums": 314,
+    "rust_enum_values": 242,
+    "rust_values_not_in_db_check": 195,
+    "frontend_status_keys": 251,
+    "frontend_keys_not_in_db_check": 204,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -1736,6 +1736,25 @@
         "ignored",
         "open",
         "resolved"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/budget_status.rs",
+      "name": "BudgetStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Exhausted",
+        "Frozen",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "exhausted",
+        "frozen",
+        "inactive"
       ]
     },
     {
@@ -5595,6 +5614,7 @@
       "evaluated",
       "executed",
       "executing",
+      "exhausted",
       "expired",
       "fail",
       "failed",
@@ -5829,6 +5849,7 @@
       "evaluated",
       "executed",
       "executing",
+      "exhausted",
       "fail",
       "false_positive",
       "fault",
@@ -6028,6 +6049,7 @@
       "evaluated",
       "executed",
       "executing",
+      "exhausted",
       "fail",
       "false_positive",
       "fault",

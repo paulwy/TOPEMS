@@ -1,4 +1,6 @@
 {
+  "finance.budget.status_inactive": "Disable",
+  "finance.budget.status_archived": "Archived",
   "vouchers": {
     "title": "Voucher Management",
     "description": "Accounting voucher entry, review, posting, and inquiry",

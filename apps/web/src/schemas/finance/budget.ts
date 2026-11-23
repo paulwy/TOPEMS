@@ -32,14 +32,18 @@ const getBudgetTypeLabels = (): Record<string, string> => ({
 
 const getStatusLabels = (): Record<string, string> => ({
   active: i18n.t('finance.budget.k6'),
+  inactive: i18n.t('finance.budget.status_inactive'),
   frozen: i18n.t('finance.budget.k7'),
   exhausted: i18n.t('finance.budget.k8'),
+  archived: i18n.t('finance.budget.status_archived'),
 });
 
 const STATUS_COLORS: Record<string, 'primary' | 'warning' | 'error' | 'default'> = {
   active: 'primary',
+  inactive: 'default',
   frozen: 'warning',
   exhausted: 'error',
+  archived: 'default',
 };
 
 const formatMoney = (amount: number | undefined, color?: string) => {
@@ -268,8 +272,10 @@ export const getBudgetSchema = (): EntitySchema => ({
         type: 'static',
         options: [
           { value: 'active', label: i18n.t('finance.budget.k24') },
+          { value: 'inactive', label: i18n.t('finance.budget.status_inactive') },
           { value: 'frozen', label: i18n.t('finance.budget.k25') },
           { value: 'exhausted', label: i18n.t('finance.budget.k26') },
+          { value: 'archived', label: i18n.t('finance.budget.status_archived') },
         ],
       },
       listWidth: 100,
