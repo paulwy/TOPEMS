@@ -947,6 +947,20 @@
     },
     {
       "schema": "erp",
+      "table": "consolidation_scopes",
+      "constraint": "ck_consolidation_scopes_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "draft",
+        "inactive"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'inactive'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "core_erp_materials",
       "constraint": "ck_core_erp_materials_status_standard",
       "columns": [
@@ -6658,15 +6672,6 @@
     {
       "schema": "erp",
       "table": "consolidation_reports",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "consolidation_scopes",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",

@@ -63,7 +63,10 @@ pub(crate) async fn load_eligible_companies(
     let Some(status) = status else {
         return Err(ScopeLoadError::NotFound);
     };
-    if status != "active" {
+    if !crate::modules::consolidation_scope_status::ConsolidationScopeStatus::from_db_str(&status)
+        .map(crate::modules::consolidation_scope_status::ConsolidationScopeStatus::is_runnable)
+        .unwrap_or(false)
+    {
         return Err(ScopeLoadError::Inactive);
     }
 

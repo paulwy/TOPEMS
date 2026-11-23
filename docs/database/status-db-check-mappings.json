@@ -1849,6 +1849,13 @@
       "table": "finance.expenses",
       "column": "status",
       "candidate": "docs/database/finance-expenses-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation_scope_status.rs",
+      "enum": "ConsolidationScopeStatus",
+      "table": "erp.consolidation_scopes",
+      "column": "status",
+      "candidate": "docs/database/erp-consolidation-scope-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

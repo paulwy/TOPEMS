@@ -14,6 +14,7 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
+use crate::modules::consolidation_scope_status::ConsolidationScopeStatus;
 
 #[utoipa::path(
     get,
@@ -41,6 +42,11 @@ pub async fn list_scopes(
     let page_size = params.page_size_or_default();
     let offset = params.offset();
 
+    let status_filter = match ConsolidationScopeStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|s| s.as_str()),
+        Err(message) => return ApiResponse::bad_request(&message),
+    };
+
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
         SELECT * FROM erp.consolidation_scopes
@@ -51,7 +57,7 @@ pub async fn list_scopes(
         "#,
     )
     .bind(params.keyword.as_ref().map(|s| format!("%{}%", s)))
-    .bind(&params.status)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -139,8 +145,8 @@ pub async fn create_scope(
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        INSERT INTO erp.consolidation_scopes (id, code, name, description, consolidation_method, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID))
+        INSERT INTO erp.consolidation_scopes (id, code, name, description, consolidation_method, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::UUID))
         RETURNING *
         "#,
     )
@@ -149,6 +155,7 @@ pub async fn create_scope(
     .bind(&req.name)
     .bind(&req.description)
     .bind(req.consolidation_method.as_deref().unwrap_or("full"))
+    .bind(ConsolidationScopeStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -197,6 +204,24 @@ pub async fn update_scope(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let status = match req
+        .status
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        None => None,
+        Some(raw) => match ConsolidationScopeStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "status 仅支持 {}",
+                    ConsolidationScopeStatus::DB_VALUES.join("/")
+                ))
+            }
+        },
+    };
+
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
         UPDATE erp.consolidation_scopes
@@ -213,7 +238,7 @@ pub async fn update_scope(
     .bind(&req.name)
     .bind(&req.description)
     .bind(&req.consolidation_method)
-    .bind(&req.status)
+    .bind(status)
     .fetch_optional(&mut **txn)
     .await;
 
