@@ -229,3 +229,4 @@
 - B244 追加后读数：412 条；`hrm.training_records.attendance_status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B245 追加后读数：413 条；`hrm.training_plans.status` 在参考库仍由旧约束覆盖，新生命周期约束未回迁。
 - B246 追加后读数：414 条；`ehs.qa_ehs_hazardous_materials.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
+- B246 来源提交已回填：`813efa943`。
