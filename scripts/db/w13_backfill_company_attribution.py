@@ -320,7 +320,7 @@ def main() -> int:
     if not args.dry_run and not v2_table_exists(args.dsn):
         die(
             "public.search_entity_projections_v2 不存在：请先应用迁移 "
-            "20261123132000_search_projection_v2_company_scope.sql，或在 --dry-run 下预演"
+            "20261123142000_search_projection_v2_company_scope.sql，或在 --dry-run 下预演"
         )
 
     src_count = sum(1 for r, _ in verified if r.entity_type != "customer")

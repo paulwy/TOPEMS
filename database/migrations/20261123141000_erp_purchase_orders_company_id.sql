@@ -1,9 +1,9 @@
 -- ============================================================
--- 20261123131000_erp_purchase_orders_company_id.sql
+-- 20261123141000_erp_purchase_orders_company_id.sql
 --
 -- W13 第一阶段：erp.purchase_orders 补公司归属列（company_id）
 --
--- 口径与 20261123130000（sales_orders）一致：
+-- 口径与 20261123140000（sales_orders）一致：
 --   * 本轮只补列，允许 NULL；历史行等业务清单回填后再单独收紧 NOT NULL。
 --   * 新建路径写入请求公司上下文，缺上下文 fail-closed，不静默置空。
 --   * 本轮不新增索引、外键或 RLS 策略。
@@ -16,7 +16,7 @@
 --
 -- 影响：回滚会直接 DROP COLUMN，列内公司归属随列丢失。
 -- 幂等性：ADD COLUMN IF NOT EXISTS；文件内不含 BEGIN/COMMIT。
--- 回滚：database/rollback/20261123131000_erp_purchase_orders_company_id.rollback.sql
+-- 回滚：database/rollback/20261123141000_erp_purchase_orders_company_id.rollback.sql
 -- ============================================================
 
 SET lock_timeout = '5s';

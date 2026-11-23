@@ -1,5 +1,5 @@
 -- ============================================================
--- 20261123132000_search_projection_v2_company_scope.sql
+-- 20261123142000_search_projection_v2_company_scope.sql
 --
 -- W13 第一阶段：搜索投影 v2 建表（公司维度），先双写不切流
 --
@@ -22,7 +22,7 @@
 --
 -- 幂等性：CREATE TABLE/INDEX IF NOT EXISTS；策略先 DROP IF EXISTS 再建；
 --   GRANT 幂等。文件内不含 BEGIN/COMMIT。
--- 回滚：database/rollback/20261123132000_search_projection_v2_company_scope.rollback.sql
+-- 回滚：database/rollback/20261123142000_search_projection_v2_company_scope.rollback.sql
 -- ============================================================
 
 SET lock_timeout = '5s';

@@ -30,7 +30,7 @@
 | 2 | W12-A2 | `integration.core_inter_module_sync` | `20261123100000` | 依赖 A1 的母版/公司模型 |
 | 3 | W12-B1 | `public.monitor_settings` | `20261123110000` | 依赖 A 已完成公司上下文改造 |
 | 4 | W12-B2 | `public.system_settings` + 公司作用域 API | `20261123120000` | 复用 B1 的平台行策略与 API 形态 |
-| 5 | W13-1 | `search_entity_projections_v2` 建表 + 双写 | `20261123130000` | 依赖 A/B 的写入端公司上下文 |
+| 5 | W13-1 | `search_entity_projections_v2` 建表 + 双写 | `20261123140000` | 依赖 A/B 的写入端公司上下文 |
 | 6 | W13-2 | 搜索切换（重命名/读切新表） | `20261123140000` | 依赖全量比对零差异 |
 | 7 | W13-3 | 下线旧搜索表 | `20261123150000` | 依赖切换后观察通过 |
 
@@ -55,7 +55,7 @@
 | `20261123100000` | `database/migrations/20261123100000_core_inter_module_sync_company_scope.sql` | `database/rollback/20261123100000_core_inter_module_sync_company_scope.rollback.sql` |
 | `20261123110000` | `database/migrations/20261123110000_monitor_settings_company_scope.sql` | `database/rollback/20261123110000_monitor_settings_company_scope.rollback.sql` |
 | `20261123120000` | `database/migrations/20261123120000_system_settings_company_scope.sql` | `database/rollback/20261123120000_system_settings_company_scope.rollback.sql` |
-| `20261123130000` | `database/migrations/20261123130000_search_entity_projections_v2_create.sql` | `database/rollback/20261123130000_search_entity_projections_v2_create.rollback.sql` |
+| `20261123140000` | `database/migrations/20261123140000_search_entity_projections_v2_create.sql` | `database/rollback/20261123140000_search_entity_projections_v2_create.rollback.sql` |
 | `20261123140000` | `database/migrations/20261123140000_search_entity_projections_cutover.sql` | `database/rollback/20261123140000_search_entity_projections_cutover.rollback.sql` |
 | `20261123150000` | `database/migrations/20261123150000_search_entity_projections_legacy_drop.sql` | `database/rollback/20261123150000_search_entity_projections_legacy_drop.rollback.sql` |
 
@@ -252,7 +252,7 @@ FOR INSERT WITH CHECK (
 
 | 步骤 | 动作 | 完成判据 |
 |---|---|---|
-| 1 | `20261123130000` 建 v2（`company_id NOT NULL`、PK、索引、FK、RLS 策略） | 表/约束/策略存在；v2 为空 |
+| 1 | `20261123140000` 建 v2（`company_id NOT NULL`、PK、索引、FK、RLS 策略） | 表/约束/策略存在；v2 为空 |
 | 2 | 发布双写版本：投影写入路径同时写老表与 v2；读仍走老表 | 双写成功率 100%，无新增错误日志 |
 | 3 | 回填 v2：按源表与老表补齐历史行，推导 `company_id` | v2 行数 ≥ 老表；`company_id IS NULL` 为 0 |
 | 4 | 全量比对：按 `tenant_id/company_id/entity_type` 行数、主键集合、字段校验和 | 差异为 0；差异报告留档 |

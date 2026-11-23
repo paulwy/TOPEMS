@@ -1,5 +1,5 @@
 -- ============================================================
--- 20261123132000_search_projection_v2_company_scope.rollback.sql
+-- 20261123142000_search_projection_v2_company_scope.rollback.sql
 --
 -- 回滚：删除 public.search_entity_projections_v2。
 --

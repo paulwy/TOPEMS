@@ -117,7 +117,7 @@ pub async fn init_projection_table(db: &Db) -> Result<(), sqlx::Error> {
     if v2_exists.is_none() {
         tracing::warn!(
             "[search] 投影表 public.search_entity_projections_v2 缺失：v2 双写将失败并入重试队列；\
-             请确认迁移 database/migrations/20261123132000_search_projection_v2_company_scope.sql 已应用"
+             请确认迁移 database/migrations/20261123142000_search_projection_v2_company_scope.sql 已应用"
         );
     }
     Ok(())

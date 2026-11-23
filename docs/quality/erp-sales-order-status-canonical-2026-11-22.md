@@ -41,3 +41,15 @@
 - `check-txn-write-non2xx`：通过
 - 盘点：208 枚举 / 191 值 / 152 不在 DB CHECK / 206 前端键，色板缺口 0
 - 队列：144 枚举 / 152 值，resolved 112，分桶一致
+
+## 状态目录撤除（2026-11-23）
+
+`erp.sales_orders.sales_orders_status_check` 与 `erp.purchase_orders.purchase_orders_status_check`
+从未进入 `database/migrations`，只存在于 `docs/database/*candidates*.sql` 候选脚本，
+且生产快照无此 CHECK（见上文「数据现状」）。按「生产独有约束，不入目录」口径从
+`docs/database/status-check-catalog.json` 撤除这两条 `constraints`，改在 `uncovered`
+登记两列（类型/可空/默认与库一致）。原因：仓库不可复现——从基线重建的库不会出现
+这两个约束，目录不再把它们当作漂移基线。
+
+两条已登记进 `docs/database/prod-only-status-checks-2026-11-23.json`（生产独有/待回迁清单），
+与 P7 线下策略回迁一起排期；生产回迁成功后再按「回迁一条删一条」处理。

@@ -1,5 +1,5 @@
 -- ============================================================
--- 20261123131000_erp_purchase_orders_company_id.rollback.sql
+-- 20261123141000_erp_purchase_orders_company_id.rollback.sql
 --
 -- 回滚：删除 erp.purchase_orders.company_id。
 --

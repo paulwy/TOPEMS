@@ -1,5 +1,5 @@
 -- ============================================================
--- 20261123130000_erp_sales_orders_company_id.sql
+-- 20261123140000_erp_sales_orders_company_id.sql
 --
 -- W13 第一阶段：erp.sales_orders 补公司归属列（company_id）
 --
@@ -19,7 +19,7 @@
 -- 影响：回滚会直接 DROP COLUMN（见 rollback 文件），列内已写入的公司归属
 --   会随列一起丢失；回滚前需确认下游（v2 投影/对账脚本）已停止依赖该列。
 -- 幂等性：ADD COLUMN IF NOT EXISTS；文件内不含 BEGIN/COMMIT。
--- 回滚：database/rollback/20261123130000_erp_sales_orders_company_id.rollback.sql
+-- 回滚：database/rollback/20261123140000_erp_sales_orders_company_id.rollback.sql
 -- ============================================================
 
 SET lock_timeout = '5s';
