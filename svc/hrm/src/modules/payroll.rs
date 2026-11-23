@@ -18,6 +18,7 @@ use std::str::FromStr;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::payroll_status::{PayrollItemStatus, PayrollRunStatus};
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::modules::payroll_calc::{
@@ -108,6 +109,18 @@ pub struct QueryParams {
     pub payroll_item_id: Option<Uuid>,
 }
 
+/// 响应兜底：run 状态未知历史值回落 `draft`
+fn normalize_run(mut v: PayrollRun) -> PayrollRun {
+    v.status = PayrollRunStatus::normalize(&v.status).to_string();
+    v
+}
+
+/// 响应兜底：item 状态未知历史值回落 `pending`
+fn normalize_item(mut v: PayrollItem) -> PayrollItem {
+    v.status = PayrollItemStatus::normalize(&v.status).to_string();
+    v
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
@@ -164,14 +177,18 @@ pub async fn list_payroll_runs(
     let offset = (page - 1) * page_size;
 
     let pay_period = params.pay_period.clone();
-    let status_filter = params.status;
+    let status_filter = match PayrollRunStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的薪资周期状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, PayrollRun>(only_own_schema_query!(
         "hrm",
         r#"
         SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         FROM hrm.payroll_runs
-        WHERE ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR $1 = '' OR pay_period ILIKE '%' || $1 || '%')
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
@@ -202,7 +219,7 @@ pub async fn list_payroll_runs(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_run).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -237,7 +254,7 @@ pub async fn create_payroll_run(
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, 'draft', 0, 0, $3, $4,
+        VALUES ($1, $2, $5, 0, 0, $3, $4,
                 NULLIF(current_setting('app.tenant_id', true), '')::UUID)
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
@@ -246,12 +263,13 @@ pub async fn create_payroll_run(
     .bind(&req.pay_period)
     .bind(now)
     .bind(now)
+    .bind(PayrollRunStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(run) => (
-            ApiResponse::success(run.clone(), "薪资周期创建成功"),
+            ApiResponse::success(normalize_run(run.clone()), "薪资周期创建成功"),
             "success",
             None,
         ),
@@ -267,7 +285,7 @@ pub async fn create_payroll_run(
 
     let request_data = serde_json::to_value(&req).ok();
     let response_data = if let Ok(run) = &result {
-        serde_json::to_value(run).ok()
+        serde_json::to_value(normalize_run(run.clone())).ok()
     } else {
         None
     };
@@ -363,9 +381,10 @@ pub async fn delete_payroll_run(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'"
+        "UPDATE hrm.payroll_runs SET deleted_at = NOW() WHERE id = $1 AND status = $2"
     ))
     .bind(id)
+    .bind(PayrollRunStatus::Draft.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -464,10 +483,11 @@ pub async fn calculate_payroll_run(
         r#"
         SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         FROM hrm.payroll_runs
-        WHERE id = $1 AND status = 'draft' AND deleted_at IS NULL
+        WHERE id = $1 AND status = $2 AND deleted_at IS NULL
         "#
     ))
     .bind(id)
+    .bind(PayrollRunStatus::Draft.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -531,7 +551,7 @@ pub async fn calculate_payroll_run(
                 id, payroll_run_id, employee_id, gross_amount, net_amount,
                 deductions, taxes, status, bank_account, created_at, updated_at, tenant_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW(), NOW(), $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $10, $8, NOW(), NOW(), $9)
             "#
         ))
         .bind(item_id)
@@ -541,6 +561,7 @@ pub async fn calculate_payroll_run(
         .bind(&amounts.net)
         .bind(&amounts.deductions)
         .bind(&amounts.taxes)
+        .bind(PayrollItemStatus::Pending.as_db_str())
         .bind(&emp.bank_account)
         .bind(emp.tenant_id)
         .execute(&mut **txn)
@@ -558,8 +579,8 @@ pub async fn calculate_payroll_run(
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
-        SET status = 'calculated', total_amount = $2, employee_count = $3, updated_at = $4
-        WHERE id = $1 AND status = 'draft'
+        SET status = $5, total_amount = $2, employee_count = $3, updated_at = $4
+        WHERE id = $1 AND status = $6
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
@@ -567,6 +588,8 @@ pub async fn calculate_payroll_run(
     .bind(&total_gross)
     .bind(item_count as i32)
     .bind(now)
+    .bind(PayrollRunStatus::Calculated.as_db_str())
+    .bind(PayrollRunStatus::Draft.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -578,7 +601,7 @@ pub async fn calculate_payroll_run(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(run, "薪资计算完成")
+            ApiResponse::success(normalize_run(run), "薪资计算完成")
         }
         Ok(None) => ApiResponse::<PayrollRun>::not_found("薪资周期不存在或状态不正确"),
         Err(e) => {
@@ -616,10 +639,11 @@ pub async fn pay_payroll_run(
         "hrm",
         r#"
         SELECT COUNT(*) FROM hrm.payroll_items
-        WHERE payroll_run_id = $1 AND status = 'pending'
+        WHERE payroll_run_id = $1 AND status = $2
         "#
     ))
     .bind(id)
+    .bind(PayrollItemStatus::Pending.as_db_str())
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -632,12 +656,14 @@ pub async fn pay_payroll_run(
         "hrm",
         r#"
         UPDATE hrm.payroll_items
-        SET status = 'paid', paid_at = $2
-        WHERE payroll_run_id = $1 AND status = 'pending'
+        SET status = $3, paid_at = $2
+        WHERE payroll_run_id = $1 AND status = $4
         "#
     ))
     .bind(id)
     .bind(now)
+    .bind(PayrollItemStatus::Paid.as_db_str())
+    .bind(PayrollItemStatus::Pending.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -649,13 +675,15 @@ pub async fn pay_payroll_run(
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
-        SET status = 'paid', paid_at = $2, updated_at = $2
-        WHERE id = $1 AND status = 'calculated'
+        SET status = $3, paid_at = $2, updated_at = $2
+        WHERE id = $1 AND status = $4
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
     .bind(id)
     .bind(now)
+    .bind(PayrollRunStatus::Paid.as_db_str())
+    .bind(PayrollRunStatus::Calculated.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -667,7 +695,7 @@ pub async fn pay_payroll_run(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(run, "薪资发放完成")
+            ApiResponse::success(normalize_run(run), "薪资发放完成")
         }
         Ok(None) => ApiResponse::<PayrollRun>::not_found("薪资周期不存在或状态不正确"),
         Err(e) => {
@@ -700,7 +728,10 @@ pub async fn list_payroll_items(
 
     let payroll_run_id = params.payroll_run_id;
     let emp_id = params.employee_id;
-    let status_filter = params.status;
+    let status_filter = match PayrollItemStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的薪资明细状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, PayrollItem>(
         only_own_schema_query!("hrm", r#"
@@ -742,7 +773,7 @@ pub async fn list_payroll_items(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_item).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -796,7 +827,7 @@ pub async fn get_payroll_item(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "item": item,
+                    "item": normalize_item(item),
                     "details": details
                 }),
                 "查询成功",
@@ -959,7 +990,7 @@ pub async fn generate_payroll_voucher(
     };
 
     // 检查薪资是否已发放
-    if payroll_run.status != "paid" {
+    if PayrollRunStatus::from_db_str(&payroll_run.status) != Some(PayrollRunStatus::Paid) {
         return ApiResponse::<PayrollVoucherResponse>::bad_request("薪资未发放，无法生成凭证");
     }
 
@@ -1155,7 +1186,10 @@ pub async fn list_payroll_slips(
 
     let payroll_run_id = params.payroll_run_id;
     let emp_id = params.employee_id;
-    let status_filter = params.status;
+    let status_filter = match PayrollItemStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的工资单状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, PayrollSlip>(only_own_schema_query!(
         "hrm",
@@ -1218,7 +1252,14 @@ pub async fn list_payroll_slips(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items
+                        .into_iter()
+                        .map(|mut sl| {
+                            sl.run_status = PayrollRunStatus::normalize(&sl.run_status).to_string();
+                            sl.slip_status = PayrollItemStatus::normalize(&sl.slip_status).to_string();
+                            sl
+                        })
+                        .collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size

@@ -1688,6 +1688,20 @@
       "table": "hrm.attendance_records",
       "column": "status",
       "candidate": "ck_hrm_attendance_records_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/payroll.rs",
+      "enum": "PayrollRunStatus",
+      "table": "hrm.payroll_runs",
+      "column": "status",
+      "candidate": "ck_hrm_payroll_runs_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/payroll.rs",
+      "enum": "PayrollItemStatus",
+      "table": "hrm.payroll_items",
+      "column": "status",
+      "candidate": "ck_hrm_payroll_items_status_standard"
     }
   ]
 }

@@ -2162,6 +2162,33 @@
     },
     {
       "schema": "hrm",
+      "table": "payroll_items",
+      "constraint": "ck_hrm_payroll_items_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "paid",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'paid'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
+      "table": "payroll_runs",
+      "constraint": "ck_hrm_payroll_runs_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "calculated",
+        "draft",
+        "paid"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'calculated'::character varying, 'paid'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
       "table": "performance_goals",
       "constraint": "ck_hrm_performance_goals_status_standard",
       "columns": [
@@ -6634,30 +6661,12 @@
     },
     {
       "schema": "hrm",
-      "table": "payroll_items",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "hrm",
       "table": "payroll_records",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "payroll_runs",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "hrm",
