@@ -11,6 +11,8 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::modules::change_notice_status::ChangeNoticeStatus;
+use crate::modules::state_machine::validate_ecn_transition;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -129,6 +131,10 @@ pub async fn list_change_notices(
         );
         return ApiResponse::bad_request("缺少租户上下文");
     };
+    let status_filter = match ChangeNoticeStatus::parse_filter(query.status.as_deref()) {
+        Ok(status) => status.map(ChangeNoticeStatus::as_db_str),
+        Err(message) => return ApiResponse::bad_request(&message),
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -140,7 +146,7 @@ pub async fn list_change_notices(
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
         FROM pdm.pdm_change_notices
-        WHERE tenant_id = $1
+        WHERE deleted_at IS NULL AND tenant_id = $1
           AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR change_type = $4)
@@ -151,7 +157,7 @@ pub async fn list_change_notices(
     )
     .bind(tenant_id)
     .bind(&search_pattern)
-    .bind(&query.status)
+    .bind(status_filter)
     .bind(&query.change_type)
     .bind(&query.priority)
     .bind(page_size)
@@ -173,7 +179,7 @@ pub async fn list_change_notices(
             )
             .bind(tenant_id)
             .bind(&search_pattern)
-            .bind(&query.status)
+            .bind(status_filter)
             .bind(&query.change_type)
             .bind(&query.priority)
             .fetch_one(&mut scope)
@@ -282,7 +288,7 @@ pub async fn create_change_notice(
     .bind(affected_items_value)
     .bind(&req.reason)
     .bind(&req.priority)
-    .bind("draft")
+    .bind(ChangeNoticeStatus::DEFAULT.as_db_str())
     .bind(&req.initiator)
     .bind(req.effective_date)
     .bind(now)
@@ -447,7 +453,30 @@ pub async fn update_change_notice(
         .unwrap_or(existing.affected_items);
     let reason = req.reason.or(existing.reason);
     let priority = req.priority.unwrap_or(existing.priority);
-    let status = req.status.unwrap_or(existing.status);
+    let current_status = match ChangeNoticeStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => {
+            return ApiResponse::bad_request(&format!("变更通知当前状态非法: {}", existing.status))
+        }
+    };
+    let status = match req.status.as_deref() {
+        None => current_status.as_db_str().to_string(),
+        Some(raw) => {
+            let target = match ChangeNoticeStatus::normalize(raw) {
+                Ok(status) => status,
+                Err(message) => return ApiResponse::bad_request(&message),
+            };
+            if target != current_status {
+                if let Err(e) = validate_ecn_transition(current_status.as_str(), target.as_str()) {
+                    return ApiResponse::bad_request(&format!(
+                        "非法的变更通知状态流转: {} → {}（{}）",
+                        current_status, target, e
+                    ));
+                }
+            }
+            target.as_db_str().to_string()
+        }
+    };
     let approver = req.approver.or(existing.approver);
     let approved_at = req
         .approved_at
@@ -610,16 +639,17 @@ pub async fn submit_change_notice(
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
         UPDATE pdm.pdm_change_notices SET status = $2, updated_at = $3
-        WHERE id = $1 AND tenant_id = $4 AND status = 'draft'
+        WHERE id = $1 AND tenant_id = $4 AND status = $5
         RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
     )
     .bind(id)
-    .bind("pending")
+    .bind(ChangeNoticeStatus::Pending.as_db_str())
     .bind(now)
     .bind(tenant_id)
+    .bind(ChangeNoticeStatus::Draft.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
@@ -690,18 +720,19 @@ pub async fn approve_change_notice(
         r#"
         UPDATE pdm.pdm_change_notices SET
             status = $2, approver = $3, approved_at = $4, updated_at = $5
-        WHERE id = $1 AND tenant_id = $6 AND status = 'pending'
+        WHERE id = $1 AND tenant_id = $6 AND status = $7
         RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
     )
     .bind(id)
-    .bind("approved")
+    .bind(ChangeNoticeStatus::Approved.as_db_str())
     .bind(approver)
     .bind(now)
     .bind(now)
     .bind(tenant_id)
+    .bind(ChangeNoticeStatus::Pending.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
@@ -776,19 +807,20 @@ pub async fn reject_change_notice(
         r#"
         UPDATE pdm.pdm_change_notices SET
             status = $2, approver = $3, approved_at = $4, reason = $5, updated_at = $6
-        WHERE id = $1 AND tenant_id = $7 AND status = 'pending'
+        WHERE id = $1 AND tenant_id = $7 AND status = $8
         RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
     )
     .bind(id)
-    .bind("rejected")
+    .bind(ChangeNoticeStatus::Rejected.as_db_str())
     .bind(approver)
     .bind(now)
     .bind(reason)
     .bind(now)
     .bind(tenant_id)
+    .bind(ChangeNoticeStatus::Pending.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 

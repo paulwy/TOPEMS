@@ -1870,6 +1870,13 @@
       "table": "integration.mes_erp_sync",
       "column": "sync_status",
       "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pdm/src/modules/change_notice_status.rs",
+      "enum": "ChangeNoticeStatus",
+      "table": "pdm.pdm_change_notices",
+      "column": "status",
+      "candidate": "docs/database/pdm-change-notice-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

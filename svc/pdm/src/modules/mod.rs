@@ -1,5 +1,6 @@
 pub mod bom;
 pub mod change_notice;
+pub mod change_notice_status;
 pub mod configuration;
 pub mod dashboard;
 pub mod document;

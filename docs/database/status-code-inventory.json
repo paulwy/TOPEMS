@@ -5,11 +5,11 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 290,
-    "rust_enum_values": 236,
-    "rust_values_not_in_db_check": 189,
-    "frontend_status_keys": 245,
-    "frontend_keys_not_in_db_check": 198,
+    "rust_enums": 291,
+    "rust_enum_values": 237,
+    "rust_values_not_in_db_check": 190,
+    "frontend_status_keys": 246,
+    "frontend_keys_not_in_db_check": 199,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3384,6 +3384,31 @@
       ]
     },
     {
+      "module": "pdm",
+      "file": "svc/pdm/src/modules/change_notice_status.rs",
+      "name": "ChangeNoticeStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Closed",
+        "Draft",
+        "Implemented",
+        "Pending",
+        "Rejected",
+        "Withdrawn"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "closed",
+        "draft",
+        "implemented",
+        "pending",
+        "rejected",
+        "withdrawn"
+      ]
+    },
+    {
       "module": "plugin-registry",
       "file": "svc/plugin-registry/src/modules/plugin/models.rs",
       "name": "UpgradeQueueStatus",
@@ -5221,6 +5246,7 @@
       "idle",
       "ignored",
       "impact_assessed",
+      "implemented",
       "in-progress",
       "in_progress",
       "in_review",
@@ -5447,6 +5473,7 @@
       "idle",
       "ignored",
       "impact_assessed",
+      "implemented",
       "in_review",
       "in_stock",
       "in_transit",
@@ -5641,6 +5668,7 @@
       "idle",
       "ignored",
       "impact_assessed",
+      "implemented",
       "in-progress",
       "in_review",
       "in_stock",
