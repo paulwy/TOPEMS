@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 419,
+    "db_check_constraints": 420,
     "db_enum_types": 5,
     "db_check_values": 184,
-    "rust_enums": 288,
+    "rust_enums": 289,
     "rust_enum_values": 236,
     "rust_values_not_in_db_check": 57,
     "frontend_status_keys": 245,
@@ -1029,6 +1029,25 @@
       "normalized": [
         "completed",
         "in_progress"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/consolidation_report_approval_status.rs",
+      "name": "ConsolidationReportApprovalStatus",
+      "values": [
+        "Approved",
+        "Cancelled",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "cancelled",
+        "draft",
+        "pending",
+        "rejected"
       ]
     },
     {

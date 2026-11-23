@@ -7,6 +7,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
+use crate::modules::consolidation_report_approval_status::ConsolidationReportApprovalStatus;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -271,6 +272,20 @@ pub async fn submit_report(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询失败: {}", e)),
     };
 
+    let approval_status =
+        match ConsolidationReportApprovalStatus::from_db_str(&report.approval_status) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "合并报表审批状态非法: {}",
+                    report.approval_status
+                ))
+            }
+        };
+    if !approval_status.can_submit_from() {
+        return ApiResponse::bad_request("当前审批状态不允许提交");
+    }
+
     if let Err(e) = call_finance_core_approval(
         &state.finance_client,
         &state.system_pool,
@@ -290,12 +305,13 @@ pub async fn submit_report(
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         UPDATE erp.consolidation_reports
-        SET approval_status = 'pending'
+        SET approval_status = $2
         WHERE id = $1
         RETURNING *
         "#,
     )
     .bind(report_id)
+    .bind(ConsolidationReportApprovalStatus::Pending.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -365,6 +381,20 @@ pub async fn approve_report(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询失败: {}", e)),
     };
 
+    let approval_status =
+        match ConsolidationReportApprovalStatus::from_db_str(&report.approval_status) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(&format!(
+                    "合并报表审批状态非法: {}",
+                    report.approval_status
+                ))
+            }
+        };
+    if !approval_status.can_approve_from() {
+        return ApiResponse::bad_request("仅待审批状态的合并报表可审批");
+    }
+
     if let Err(e) = call_finance_core_approval(
         &state.finance_client,
         &state.system_pool,
@@ -384,12 +414,13 @@ pub async fn approve_report(
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         UPDATE erp.consolidation_reports
-        SET approval_status = 'approved', approved_at = NOW()
+        SET approval_status = $2, approved_at = NOW()
         WHERE id = $1
         RETURNING *
         "#,
     )
     .bind(report_id)
+    .bind(ConsolidationReportApprovalStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 

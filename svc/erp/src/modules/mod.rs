@@ -23,6 +23,7 @@ pub mod audit;
 pub mod bank_account;
 pub mod consolidation;
 pub mod consolidation_calc;
+pub mod consolidation_report_approval_status;
 pub mod consolidation_scope_status;
 pub mod content_status;
 pub mod customer;

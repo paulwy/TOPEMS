@@ -947,6 +947,22 @@
     },
     {
       "schema": "erp",
+      "table": "consolidation_reports",
+      "constraint": "ck_consolidation_reports_approval_status_standard",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status IS NULL) OR ((approval_status)::text = ANY ((ARRAY['draft'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'cancelled'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "consolidation_scopes",
       "constraint": "ck_consolidation_scopes_status_standard",
       "columns": [
@@ -6659,15 +6675,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "consolidation_reports",
-      "column": "approval_status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
     },
     {
       "schema": "erp",

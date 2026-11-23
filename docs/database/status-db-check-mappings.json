@@ -1856,6 +1856,13 @@
       "table": "erp.consolidation_scopes",
       "column": "status",
       "candidate": "docs/database/erp-consolidation-scope-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/consolidation_report_approval_status.rs",
+      "enum": "ConsolidationReportApprovalStatus",
+      "table": "erp.consolidation_reports",
+      "column": "approval_status",
+      "candidate": "docs/database/erp-consolidation-report-approval-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
