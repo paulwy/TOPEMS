@@ -1,6 +1,7 @@
 pub mod acceptance;
 pub mod analytics;
 pub mod budget;
+pub mod budget_status;
 pub mod contract;
 pub mod contract_status;
 pub mod document;

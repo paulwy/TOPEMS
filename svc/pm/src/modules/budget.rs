@@ -16,6 +16,7 @@ use crate::models::budget::{
     Budget, BudgetItem, CreateBudgetItemRequest, CreateBudgetRequest, UpdateBudgetItemRequest,
     UpdateBudgetRequest,
 };
+use crate::modules::budget_status::BudgetStatus;
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 use rust_decimal::Decimal;
@@ -119,6 +120,41 @@ pub fn calculate_spi(ev: f64, pv: f64) -> f64 {
         return 0.0;
     }
     ev / pv
+}
+
+async fn ensure_budget_transition(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    id: Uuid,
+    to: BudgetStatus,
+) -> Result<(), ApiResponse<Budget>> {
+    let current_raw: Result<Option<String>, sqlx::Error> =
+        sqlx::query_scalar("SELECT status FROM pm.budgets WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut *scope)
+            .await;
+    let raw = match current_raw {
+        Ok(Some(raw)) => raw,
+        Ok(None) => return Err(ApiResponse::not_found("预算不存在")),
+        Err(e) => {
+            tracing::error!("查询预算状态失败: {}", e);
+            return Err(ApiResponse::server_error("查询预算状态失败"));
+        }
+    };
+    let current = match BudgetStatus::from_db_str(&raw) {
+        Some(status) => status,
+        None => {
+            return Err(ApiResponse::bad_request(&format!(
+                "预算当前状态非法: {raw}"
+            )))
+        }
+    };
+    if !current.can_transition_to(to) {
+        return Err(ApiResponse::bad_request(&format!(
+            "非法预算状态流转: {} -> {}",
+            current, to
+        )));
+    }
+    Ok(())
 }
 
 pub fn create_routes(db: Db) -> Router {
@@ -262,7 +298,7 @@ async fn create_budget(
 
     let budget = sqlx::query_as::<_, Budget>(
         only_own_schema_query!("pm", "INSERT INTO pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'draft', 1, $7, $8, $9, $10) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, $11) RETURNING *")
     )
     .bind(id)
     .bind(req.project_id)
@@ -270,6 +306,7 @@ async fn create_budget(
     .bind(&req.budget_name)
     .bind(req.budget_type.clone().unwrap_or_else(|| "operating".to_string()))
     .bind(req.total_amount)
+    .bind(BudgetStatus::DEFAULT.as_db_str())
     .bind(req.created_by)
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
@@ -335,7 +372,21 @@ async fn update_budget(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"status": req.status, "total_amount": req.total_amount}));
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match BudgetStatus::normalize(raw) {
+            Ok(status) => Some(status),
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
+    if let Some(to) = requested_status {
+        if let Err(resp) = ensure_budget_transition(&mut scope, id, to).await {
+            return resp;
+        }
+    }
+    let requested_status = requested_status.map(BudgetStatus::as_db_str);
+    let details =
+        Some(serde_json::json!({"status": requested_status, "total_amount": req.total_amount}));
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
         "UPDATE pm.budgets SET
@@ -349,7 +400,7 @@ async fn update_budget(
     .bind(req.budget_name)
     .bind(req.budget_type)
     .bind(req.total_amount)
-    .bind(req.status)
+    .bind(requested_status)
     .bind(Utc::now())
     .bind(id)
     .fetch_one(&mut scope)
@@ -441,11 +492,15 @@ async fn submit_budget(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    if let Err(resp) = ensure_budget_transition(&mut scope, id, BudgetStatus::Pending).await {
+        return resp;
+    }
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.budgets SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.budgets SET status = $2, updated_at = $1 WHERE id = $3 RETURNING *"
     ))
     .bind(Utc::now())
+    .bind(BudgetStatus::Pending.as_db_str())
     .bind(id)
     .fetch_one(&mut scope)
     .await;
@@ -529,11 +584,15 @@ async fn approve_budget(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    if let Err(resp) = ensure_budget_transition(&mut scope, id, BudgetStatus::Approved).await {
+        return resp;
+    }
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.budgets SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.budgets SET status = $2, updated_at = $1 WHERE id = $3 RETURNING *"
     ))
     .bind(Utc::now())
+    .bind(BudgetStatus::Approved.as_db_str())
     .bind(id)
     .fetch_one(&mut scope)
     .await;

@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 294,
+    "rust_enums": 295,
     "rust_enum_values": 238,
     "rust_values_not_in_db_check": 191,
     "frontend_status_keys": 247,
@@ -3479,6 +3479,21 @@
         "paused",
         "pending_approval",
         "rejected"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/budget_status.rs",
+      "name": "BudgetStatus",
+      "values": [
+        "Approved",
+        "Draft",
+        "Pending"
+      ],
+      "normalized": [
+        "approved",
+        "draft",
+        "pending"
       ]
     },
     {

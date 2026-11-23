@@ -1898,6 +1898,13 @@
       "table": "pm.contracts",
       "column": "status",
       "candidate": "docs/database/pm-contract-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/budget_status.rs",
+      "enum": "BudgetStatus",
+      "table": "pm.budgets",
+      "column": "status",
+      "candidate": "docs/database/pm-budget-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
