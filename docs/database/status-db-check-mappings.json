@@ -1597,6 +1597,20 @@
       "table": "hrm.leave_records",
       "column": "approval_status",
       "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/vehicle_status.rs",
+      "enum": "VehicleStatus",
+      "table": "erp.vehicles",
+      "column": "status",
+      "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/vehicle_status.rs",
+      "enum": "VehicleRequestStatus",
+      "table": "erp.vehicle_requests",
+      "column": "status",
+      "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -86,6 +86,7 @@ pub mod search;
 pub mod searchable_projection;
 pub mod settings;
 pub mod supplier;
+pub mod vehicle_status;
 pub mod vehicles;
 
 #[derive(Clone)]

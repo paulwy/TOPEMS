@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 382,
+    "db_check_constraints": 384,
     "db_enum_types": 5,
-    "db_check_values": 168,
-    "rust_enums": 265,
-    "rust_enum_values": 221,
+    "db_check_values": 169,
+    "rust_enums": 267,
+    "rust_enum_values": 222,
     "rust_values_not_in_db_check": 58,
-    "frontend_status_keys": 230,
+    "frontend_status_keys": 231,
     "frontend_keys_not_in_db_check": 67,
     "rust_values_not_in_palette": 0
   },
@@ -1352,6 +1352,40 @@
         "draft",
         "pending",
         "shipped"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/vehicle_status.rs",
+      "name": "VehicleRequestStatus",
+      "values": [
+        "Approved",
+        "Completed",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
+        "completed",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "erp",
+      "file": "svc/erp/src/modules/vehicle_status.rs",
+      "name": "VehicleStatus",
+      "values": [
+        "Available",
+        "InUse",
+        "Maintenance",
+        "Unavailable"
+      ],
+      "normalized": [
+        "available",
+        "in_use",
+        "maintenance",
+        "unavailable"
       ]
     },
     {
@@ -4912,6 +4946,7 @@
       "todo",
       "transferred",
       "trial",
+      "unavailable",
       "under_assessment",
       "under_review",
       "unhealthy",

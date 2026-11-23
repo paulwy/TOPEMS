@@ -10,6 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::vehicle_status::{VehicleRequestStatus, VehicleStatus};
 use super::ApiState;
 use crate::models::{
     CreateVehicleRequest, CreateVehicleRequestRequest, UpdateVehicleRequest,
@@ -29,6 +30,18 @@ pub struct VehicleQueryParams {
     pub search: Option<String>,
     pub status: Option<String>,
     pub vehicle_type: Option<String>,
+}
+
+/// 车辆响应归一：未知历史值回落默认态
+fn normalize_vehicle(mut vehicle: Vehicle) -> Vehicle {
+    vehicle.status = VehicleStatus::normalize(&vehicle.status).to_string();
+    vehicle
+}
+
+/// 用车申请响应归一：未知历史值回落默认态
+fn normalize_vehicle_request(mut request: VehicleApplication) -> VehicleApplication {
+    request.status = VehicleRequestStatus::normalize(&request.status).to_string();
+    request
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -75,7 +88,17 @@ pub async fn list_vehicles(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> = match VehicleStatus::parse_filter(params.status.as_deref())
+    {
+        Ok(Some(status)) => Some(status.as_db_str().to_string()),
+        Ok(None) => None,
+        Err(_) => {
+            return ApiResponse::error(
+                400,
+                "status 取值非法，允许 available/in_use/maintenance/unavailable",
+            )
+        }
+    };
     let type_filter = params.vehicle_type.clone();
 
     let result = sqlx::query_as::<_, Vehicle>(
@@ -116,7 +139,15 @@ pub async fn list_vehicles(
             let total = count_result.unwrap_or(0);
 
             ApiResponse::success(
-                PaginatedResponse::new(vehicles, total, page, page_size),
+                PaginatedResponse::new(
+                    vehicles
+                        .into_iter()
+                        .map(normalize_vehicle)
+                        .collect::<Vec<_>>(),
+                    total,
+                    page,
+                    page_size,
+                ),
                 "获取车辆列表成功",
             )
         }
@@ -166,7 +197,7 @@ pub async fn create_vehicle(
     let result = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.vehicles (id, plate_number, brand, model, vehicle_type, status, driver, mileage, fuel_type, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
         "#),
     )
@@ -175,6 +206,7 @@ pub async fn create_vehicle(
     .bind(&req.brand)
     .bind(&req.model)
     .bind(&req.vehicle_type)
+    .bind(VehicleStatus::DEFAULT.as_db_str())
     .bind(&req.driver)
     .bind(req.mileage)
     .bind(&req.fuel_type)
@@ -186,7 +218,7 @@ pub async fn create_vehicle(
 
     let (response, status, error_msg) = match &result {
         Ok(vehicle) => (
-            ApiResponse::success(vehicle.clone(), "车辆创建成功"),
+            ApiResponse::success(normalize_vehicle(vehicle.clone()), "车辆创建成功"),
             "success".to_string(),
             None,
         ),
@@ -270,7 +302,7 @@ pub async fn get_vehicle(
     .await;
 
     match result {
-        Ok(Some(vehicle)) => ApiResponse::success(vehicle, "获取车辆成功"),
+        Ok(Some(vehicle)) => ApiResponse::success(normalize_vehicle(vehicle), "获取车辆成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("获取车辆失败: {}", e);
@@ -326,7 +358,17 @@ pub async fn update_vehicle(
     let brand = req.brand.or(existing.brand);
     let model = req.model.or(existing.model);
     let vehicle_type = req.vehicle_type.or(existing.vehicle_type);
-    let status = req.status.unwrap_or(existing.status);
+    let status: Option<String> = match req.status.as_deref() {
+        None => Some(existing.status.clone()),
+        Some(raw) => match VehicleStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "status 取值非法，允许 available/in_use/maintenance/unavailable".to_string(),
+                ))
+            }
+        },
+    };
     let driver = req.driver.or(existing.driver);
     let last_service = req.last_service.or(existing.last_service);
     let mileage = req.mileage.or(existing.mileage);
@@ -357,7 +399,7 @@ pub async fn update_vehicle(
 
     let (response, status_str, error_msg) = match &result {
         Ok(vehicle) => (
-            ApiResponse::success(vehicle.clone(), "车辆更新成功"),
+            ApiResponse::success(normalize_vehicle(vehicle.clone()), "车辆更新成功"),
             "success".to_string(),
             None,
         ),
@@ -546,7 +588,17 @@ pub async fn list_vehicle_requests(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> =
+        match VehicleRequestStatus::parse_filter(params.status.as_deref()) {
+            Ok(Some(status)) => Some(status.as_db_str().to_string()),
+            Ok(None) => None,
+            Err(_) => {
+                return ApiResponse::error(
+                    400,
+                    "status 取值非法，允许 pending/approved/rejected/completed",
+                )
+            }
+        };
 
     let result = sqlx::query_as::<_, VehicleApplication>(LIST_VEHICLE_REQUESTS_SQL)
         .bind(&search_pattern)
@@ -567,7 +619,15 @@ pub async fn list_vehicle_requests(
             let total = count_result.unwrap_or(0);
 
             ApiResponse::success(
-                PaginatedResponse::new(requests, total, page, page_size),
+                PaginatedResponse::new(
+                    requests
+                        .into_iter()
+                        .map(normalize_vehicle_request)
+                        .collect::<Vec<_>>(),
+                    total,
+                    page,
+                    page_size,
+                ),
                 "获取车辆申请列表成功",
             )
         }
@@ -612,9 +672,10 @@ pub async fn create_vehicle_request(
     // 显式列出 Vehicle 全部字段：query_as 按列名映射，投影缺列会直接报
     // `no column found for name: ...` 并把创建用车申请打成 500（K2）。
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
-        only_own_schema_query!("erp", "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM erp.vehicles WHERE deleted_at IS NULL AND id = $1 AND status = 'available'"),
+        only_own_schema_query!("erp", "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM erp.vehicles WHERE deleted_at IS NULL AND id = $1 AND status = $2"),
     )
     .bind(req.vehicle_id)
+    .bind(VehicleStatus::Available.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -632,13 +693,14 @@ pub async fn create_vehicle_request(
         "erp",
         r#"
         SELECT COUNT(*) FROM erp.vehicle_requests
-        WHERE vehicle_id = $1 AND status = 'approved'
+        WHERE vehicle_id = $1 AND status = $4
           AND ((start_time < $2 AND end_time > $2) OR (start_time < $3 AND end_time > $3))
         "#
     ))
     .bind(req.vehicle_id)
     .bind(req.end_time)
     .bind(req.start_time)
+    .bind(VehicleRequestStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -656,7 +718,7 @@ pub async fn create_vehicle_request(
     let result = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", r#"
         INSERT INTO erp.vehicle_requests (id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
         "#),
     )
@@ -668,6 +730,7 @@ pub async fn create_vehicle_request(
     .bind(req.start_time)
     .bind(req.end_time)
     .bind(req.driver_required)
+    .bind(VehicleRequestStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .bind(tenant_id)
@@ -676,7 +739,10 @@ pub async fn create_vehicle_request(
 
     let (response, status, error_msg) = match &result {
         Ok(request) => (
-            ApiResponse::success(request.clone(), "车辆申请创建成功"),
+            ApiResponse::success(
+                normalize_vehicle_request(request.clone()),
+                "车辆申请创建成功",
+            ),
             "success".to_string(),
             None,
         ),
@@ -760,7 +826,9 @@ pub async fn get_vehicle_request(
     .await;
 
     match result {
-        Ok(Some(request)) => ApiResponse::success(request, "获取车辆申请成功"),
+        Ok(Some(request)) => {
+            ApiResponse::success(normalize_vehicle_request(request), "获取车辆申请成功")
+        }
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆申请不存在".to_string())),
         Err(e) => {
             tracing::error!("获取车辆申请失败: {}", e);
@@ -812,7 +880,17 @@ pub async fn update_vehicle_request(
 
     let request_data = serde_json::to_value(&req).ok();
 
-    let status = req.status.unwrap_or(existing.status);
+    let status: Option<String> = match req.status.as_deref() {
+        None => Some(existing.status.clone()),
+        Some(raw) => match VehicleRequestStatus::from_db_str(raw) {
+            Some(status) => Some(status.as_db_str().to_string()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "status 取值非法，允许 pending/approved/rejected/completed".to_string(),
+                ))
+            }
+        },
+    };
     let approved_by = req.approved_by.or(existing.approved_by);
     let approved_at = req.approved_at.or(existing.approved_at);
     let rejected_reason = req.rejected_reason.or(existing.rejected_reason);
@@ -837,7 +915,10 @@ pub async fn update_vehicle_request(
 
     let (response, status_str, error_msg) = match &result {
         Ok(request) => (
-            ApiResponse::success(request.clone(), "车辆申请更新成功"),
+            ApiResponse::success(
+                normalize_vehicle_request(request.clone()),
+                "车辆申请更新成功",
+            ),
             "success".to_string(),
             None,
         ),
@@ -1009,7 +1090,13 @@ pub async fn get_vehicle_requests(
     .await;
 
     match result {
-        Ok(requests) => ApiResponse::success(requests, "获取车辆申请列表成功"),
+        Ok(requests) => ApiResponse::success(
+            requests
+                .into_iter()
+                .map(normalize_vehicle_request)
+                .collect::<Vec<_>>(),
+            "获取车辆申请列表成功",
+        ),
         Err(e) => {
             tracing::error!("获取车辆申请列表失败: {}", e);
             ApiResponse::from(TopemsError::Internal("获取车辆申请列表失败".to_string()))
