@@ -549,7 +549,109 @@ python3 scripts/db/w13_backfill_company_attribution.py \
 3. **切换后回滚**：仅在 legacy 未 drop 前有效——canonical 改回 v2 名、legacy 改回 canonical 名，并回滚代码到只读 v1/双写；下线后再回滚属事故处置，只能从备份恢复。
 4. 所有回滚件不得删除业务行；回滚后重新核对订单两表 `constraints 0/0`、v2 策略/表状态。
 
-## 5D. 业务前置汇总与被阻断波次
+## 5D. W14：订单两表公司级策略（计划已排、迁移件待建）
+
+**波次归属**：W14，排在 **W13 第二段（回填 → 零 NULL → 影子读比对 → 切换）之后**、W1 之前。本波只把 `erp.sales_orders`、`erp.purchase_orders` 的租户级策略替换为公司级策略，不改表结构、不改写入路径、不新增业务列。**当前状态：计划已排、迁移件待建；未实现、未合入、未执行。**
+
+**版本号与状态**
+
+| 步骤 | 版本号 | 对象 | 状态 |
+|---|---|---|---|
+| W14-1 | `20261123150000` | `erp.sales_orders` / `erp.purchase_orders` 公司级 RLS 策略（两表一笔迁移、同一事务） | 计划已排、迁移件待建 |
+| W14-R | `20261123150000`（回滚件） | 恢复两表 `rls_tenant_isolation`，移除公司级策略 | 计划已排、迁移件待建 |
+
+> **取号依据**：当前链尾为 `20261123142000`（W13 第一段 v2 建表）；`20261123130000` 已被 W5-B215 占用，`140000`–`142000` 已被 W13 第一段占用，均不得复用。`20261123143000`–`20261123149000` **预留给 W13 第二段的切换/下线迁移件**（待建）：因其必须先于 W14 执行，取号须落在 W14 之前，才能保证版本序与执行序一致。`20261123150000` 是链尾之后第一个未被占用的整档空号，全仓检索无同名迁移文件、回滚文件、账本登记或其他波次引用，故 W14 取 `20261123150000`。
+
+**顺序约束**
+
+- **W14 必须排在 W13 第二段之后。** 理由：公司级策略谓词依赖 `company_id` 的稳定归属；只有先完成回填并断言零 NULL，`company_id = erp.current_company_id() OR erp.company_readable(company_id)` 才有确定语义，否则残留 NULL 或错归属会把可见性判定变成不可解释的 0 行或越权行。
+- 依赖 W13 第二段的具体项：
+  1. 归属清单经业务签字（CSV 复核 + 例外行签字）；
+  2. 母公司待指定清单清零（0 个 / 多个根的租户已指定主办公司）；
+  3. `--apply` 回填完成，且两表 `company_id IS NULL` 行数均为 0；
+  4. 影子读比对零差异；若搜索切换已完成，以切换后的读路径结论为准。
+- W14 内部两表同笔迁移、同一事务；SQL 中先 sales 后 purchase 仅体现书写顺序，回滚按整笔逆序。
+- 不得与 W13 第二段同窗口抢跑：W13 第二段任一步未 PASS，W14 不执行。
+
+**前置条件**
+
+1. 账本：`20261123142000` 为 `success=t`；`20261123150000` 未登记（现场只读查 `_sqlx_migrations`，不得凭版本号假定）。
+2. W13 第二段完成：两表 `company_id` 零 NULL；CSV 已签字；母公司待指定清单已清零；影子读 / 切换结论已记录。
+3. 公司维度函数存在且 `SECURITY INVOKER`（`prosecdef=false`）：`erp.group_tenant_of(uuid)`、`erp.current_company_id()`、`erp.company_readable(uuid)`、`erp.parent_visible_company_ids()`。
+4. `hrm.companies` 具备 `(tenant_id, id)` 唯一键；两表 `company_id` 均指向同租户公司，无跨租户归属。
+5. 两表当前各恰好 1 条 `rls_tenant_isolation`，RLS 已 `ENABLE` + `FORCE`；若存在其他业务策略，先停下核对，不得直接覆盖。
+6. **备份对象**：`erp.sales_orders`、`erp.purchase_orders` 的结构 + 数据 + 策略（`pg_dump -Fc` 各一份）、账本 `public._sqlx_migrations`、执行前 `pg_policies` 中两表策略原样导出。
+7. **生产 preflight 认证未解决**：只读预检角色 `topems_drift` 目前 peer 认证失败（`FATAL: Peer authentication failed for user "topems_drift"`），**需 DBA 提供认证方式**；本项未解决前不得开窗，也不得改用其他凭据顶替。
+8. 同窗口二进制：本波不改服务代码，但策略生效后缺公司上下文的请求会读 0 行 / 写被拒；发布列车须已包含注入 `app.tenant_id`、`app.company_id`（母公司另需 `app.actor_is_parent`、`app.visible_company_ids`）的 erp 二进制，与 W9 / W12 / W13 同一套上下文。
+
+**执行命令（待迁移件建成后）**
+
+```bash
+PROD_CHANGE_TICKET=<现场工单号> \
+PGOPTIONS="-c app.rls_system=on" \
+bash scripts/migration/apply-forward.sh --db topems_prod --prod \
+  --apply-deferred 20261123150000 --ticket <现场工单号>
+```
+
+**策略形状（迁移件按此实现）**
+
+两表各 3 条 permissive 策略（取并集）；先 `DROP POLICY IF EXISTS rls_tenant_isolation`，**不得保留租户级策略兜底**——保留即等于子公司仍可互看。
+
+| 策略 | 命令 | 谓词 |
+|---|---|---|
+| `<table>_company_read` | SELECT | `tenant_id = erp.group_tenant_of(app.tenant_id)` AND (`company_id = erp.current_company_id()` OR `erp.company_readable(company_id)`) |
+| `<table>_company_write` | ALL | USING 与 WITH CHECK 同式：`tenant_id = erp.group_tenant_of(app.tenant_id)` AND `company_id IS NOT NULL` AND `company_id = erp.current_company_id()` |
+| `<table>_system` | ALL | `current_setting('app.rls_system', true) = 'on'`（USING 与 WITH CHECK 同式）；平台通道 |
+
+- `company_id IS NULL` 的可见归属（明确，不留模糊）：视为**集团 / 平台行**，仅**平台通道**（`app.rls_system='on'`）与**母公司通道**（`app.actor_is_parent='on'`）可读，子公司一律不可见；写只允许平台通道。本波执行前提是两表零 NULL，因此该分支只是 fail-closed 兜底，不得用来承载未回填订单。
+- 谓词落地时 `app.tenant_id` 按既有范式写作 `erp.group_tenant_of((NULLIF(current_setting('app.tenant_id', true), ''))::uuid)`；不得用裸 `current_setting` 直接比较。
+- 写侧不给母公司跨公司写（Q-G4 选 A：仅审批与下达）：`WITH CHECK` 只放本司与平台通道，父通道仅扩读、不扩写。
+
+**前置/后置断言**
+
+| 步骤 | 前置断言 | 后置断言 |
+|---|---|---|
+| W14-1 | 账本 `142000` 为 `success=t`、`150000` 为 0 行；两表各 1 条 `rls_tenant_isolation` 且 RLS `t/t`；两表 `company_id` 为 uuid、可空、无默认；两表 `company_id IS NULL` 均为 0；跨租户归属 0 行；4 个公司维度函数存在且 `prosecdef=false`；备份三件套可读 | 账本 `150000` 为 `success=t`；两表各 3 条策略且名称精确（`_company_read` / `_company_write` / `_system`），`rls_tenant_isolation` 为 0 条；RLS 保持 `ENABLE` + `FORCE`；两表行数与 `company_id` 校验和不变；`company_id IS NULL` 仍为 0；`pg_policies` 文本含 `group_tenant_of` / `current_company_id` / `company_readable` 三个函数引用；无新增 GRANT |
+
+**可见性验证（演练库先做，生产窗口只做只读核对）**
+
+演练库 `topems_w13_rehearsal`（W13 基线克隆 + seed）建临时非特权角色：
+
+```sql
+CREATE ROLE w13_rls_probe LOGIN PASSWORD '<临时口令>'
+  NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+GRANT CONNECT ON DATABASE topems_w13_rehearsal TO w13_rls_probe;
+GRANT USAGE ON SCHEMA public, erp, hrm TO w13_rls_probe;
+GRANT SELECT ON erp.sales_orders, erp.purchase_orders TO w13_rls_probe;
+```
+
+| # | 会话设置（`w13_rls_probe`，TCP + 口令） | 两表期望 |
+|---|---|---|
+| 1 | `app.tenant_id=T1`、`app.company_id=A`、父通道 off | 仅 A 公司行；同租户 B 公司行 0 行 |
+| 2 | `app.tenant_id=T1`、`app.company_id=P`、`app.actor_is_parent='on'`、`app.visible_company_ids=A,B` | 可见 P、A、B 的行（母公司开通道可见子公司） |
+| 3 | 同 2 但父通道 off | 仅 P 的行（通道关闭只看本司） |
+| 4 | `app.tenant_id=T2`、`app.company_id=B` | 0 行（跨租户） |
+| 5 | 任意业务会话（无 `app.rls_system`） | `company_id IS NULL` 行 0 行 |
+| 6 | `app.rls_system='on'` | 可见全部行（含 NULL 兜底行） |
+
+```sql
+-- 收尾，避免残留角色
+DROP OWNED BY w13_rls_probe;
+DROP ROLE w13_rls_probe;
+```
+
+> 口径：1–6 只在演练库执行；**生产窗口不做角色创建与越权探测，只做只读核对**——`pg_policies` 策略名称与谓词文本、两表 NULL 行数、行数与校验和、账本 `success=t`。生产越权结论以演练库结果 + 只读策略文本比对为准，不在生产以业务数据做可见性实验。
+
+**失败回滚动作**
+
+```bash
+psql "$PROD_DSN" -v ON_ERROR_STOP=1 --single-transaction \
+  -f database/rollback/20261123150000_erp_orders_company_scope_rls.rollback.sql
+```
+
+回滚件删除两表 3 条公司级策略、按原谓词重建 `rls_tenant_isolation`、恢复 RLS `ENABLE` + `FORCE`，并自删账本 1 行；不动数据、不动 `company_id`。回滚后断言：两表各 1 条 `rls_tenant_isolation`、公司级策略 0 条、行数与校验和不变。若 W13 第二段也需回退，按 **W14 → W13 第二段** 顺序执行，不得先退 W13 再退 W14。
+
+## 5E. 业务前置汇总与被阻断波次
 
 > 回执状态：业务已于 2026-11-23 完成回执（业务已确认，明细见 `rls-business-confirmation-2026-11-23.md` §8）；仍未闭合：CSV 业务复核签字、母公司待指定清单清零、例外行签字（规则优先级已既定）。
 
@@ -559,10 +661,11 @@ python3 scripts/db/w13_backfill_company_attribution.py \
 | W13 归属清单 | 我方 `--draft` 起草，业务只复核兜底与例外行并签字；**尚未签字**（见 §5C.1） | W13-2 回填 |
 | W13 四条归属规则 | 已回执 1A / 2B / 3B / 4A（见 §5C.2）；优先级既定（母公司级 > 客户 / 供应商所属公司 > 母公司兜底），异议改 CSV 行 | W13-2 回填与 W13-3 切换 |
 | 母公司解析 | 租户根公司自动解析（优先 `hrm.companies.parent_id`；当前无该列，按 `erp.company_relations` 反推）；0 个或多个根的租户出待指定清单，须清零 | W13-2 零空值校验 |
+| W14 前置（W13 第二段） | 回填 `--apply` 完成、两表 `company_id` 零 NULL、CSV 签字、母公司待指定清单清零、影子读零差异；生产 preflight 的 `topems_drift` 认证需 DBA 提供 | W14（计划已排、迁移件待建） |
 | Q-G3 八条 | 已回执，八条全部同意（见业务确认材料 §8） | 已解除；按八条落地 |
 | Q-G4 / Q-G5 | 已回执：Q-G4 选 A；Q-G5 选 A / A（见业务确认材料 §8） | 已解除；动作白名单与追加式策略可排期 |
 
-结论：W12 四步无业务阻断，可按窗口执行；W13 仅第一段（三笔迁移 + 双写 + 脚本）可执行，第二段在 CSV 签字、母公司待指定清单清零、例外行签字前保持只双写。
+结论：W12 四步无业务阻断，可按窗口执行；W13 仅第一段（三笔迁移 + 双写 + 脚本）可执行，第二段在 CSV 签字、母公司待指定清单清零、例外行签字前保持只双写；W14（订单两表公司级策略）计划已排、迁移件待建，必须在 W13 第二段完成回填与零 NULL 之后才可开跑。
 
 ## 6. 整组验收（三波都成功后）
 
@@ -576,7 +679,8 @@ node scripts/ci/check-ledger-ddl-drift.mjs   # 或 bash scripts/ci/check-ledger-
 - 数据：演练库目标表均为 0 行，W9-B 回填 0 行；生产按 §4.12 现场记录回填行数（以实际记录为准）。
 - 应用冒烟：不带 `app.company_id` 的请求读 8 张合并表应为 0 行；带本公司头可读本公司；母公司按可见集合可读子公司；兄弟公司互不可见。
 - W12（开窗前）：四版本 `20261123090000`–`20261123120000` 均 `success=t`；四表策略数 4/4/5/5、RLS FORCE；公司列/FK/索引/触发器/函数与 §5B 断言一致；平台行 `platform_only`、母版行 `company_overridable`、公司行冲突为 0。
-- W13（开窗前，仅第一段）：`20261123140000`/`141000`/`142000` 均 `success=t`；订单两表 `company_id` 为 uuid、可空、无默认；v2 表/2 条策略（system/company_read）/RLS FORCE 就绪；v1 数据与读路径未动；回填/切换/下线**未执行**（第二段卡清单签字与母公司待指定清单，见 §5D）。
+- W13（开窗前，仅第一段）：`20261123140000`/`141000`/`142000` 均 `success=t`；订单两表 `company_id` 为 uuid、可空、无默认；v2 表/2 条策略（system/company_read）/RLS FORCE 就绪；v1 数据与读路径未动；回填/切换/下线**未执行**（第二段卡清单签字与母公司待指定清单，见 §5E）。
+- W14（开窗前，计划已排）：`20261123150000` 未建、未执行；仅在 W13 第二段完成回填与零 NULL 后，按 §5D 执行；订单两表届时为公司级 3 策略/表、租户级策略 0 条。
 
 ## 7. 回滚总表
 
@@ -594,8 +698,9 @@ node scripts/ci/check-ledger-ddl-drift.mjs   # 或 bash scripts/ci/check-ledger-
 | W13-141000 | §5C 141000 断言失败 | `20261123141000_...rollback.sql` | `purchase_orders.company_id` 不存在 | 自删 1 行 |
 | W13-140000 | §5C 140000 断言失败 | `20261123140000_...rollback.sql` | `sales_orders.company_id` 不存在 | 自删 1 行 |
 | W13 回填 | 清单错误/归属错误 | **不可回滚** | 只退结构不退数据；用更正清单重新 `--apply` 覆盖 | 不回滚、不删数据 |
+| W14 | §5D W14 断言失败 | `20261123150000_...rollback.sql` | 两表各恢复 1 条 `rls_tenant_isolation`、3 条公司级策略移除、行数与校验和不变 | 自删 1 行 |
 
-W9 两波必须 **B → A**；W12 必须 **B2 → B1 → A2 → A1**；W13 第一段必须 **142000 → 141000 → 140000**，且回填不可逆。W10 独立，可与 W9 分别回滚。回滚后若仍不满足断言，停止并考虑从第 1 节备份恢复对应对象。
+W9 两波必须 **B → A**；W12 必须 **B2 → B1 → A2 → A1**；W13 第一段必须 **142000 → 141000 → 140000**，且回填不可逆；W14 排在 W13 第二段之后，回滚先 **W14** 再退 W13 第二段。W10 独立，可与 W9 分别回滚。回滚后若仍不满足断言，停止并考虑从第 1 节备份恢复对应对象。
 
 ## 8. 本次演练证据（2026-11-21）
 
@@ -610,6 +715,8 @@ W9 两波必须 **B → A**；W12 必须 **B2 → B1 → A2 → A1**；W13 第�
 
 - 未连接生产库，未执行任何生产 DDL 或授权变更；C16 生产结论仍须由 DBA 按第 2 节两次复跑给出。
 - 未改动代码、迁移、回滚件与既有断言；本清单为新增文档。
+- 生产 preflight 仍卡在 `topems_drift` 的 peer 认证（`FATAL: Peer authentication failed for user "topems_drift"`），**需 DBA 提供认证方式**；未尝试其他凭据，也未改 `.env`。
+- 主工作区 `apps/web/src/api/mes/types.ts`、`apps/web/src/components/mes/MesWorkOrderPage.tsx` 两处未提交改动属 11-23 当天手动调试遗留，与本次任务无关；未修改、未提交。
 
 ### 附：本会话本地只读预跑（非生产，仅证明脚本可执行）
 

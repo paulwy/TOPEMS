@@ -580,7 +580,7 @@ psql -X -v ON_ERROR_STOP=1 -d topems_w13_rehearsal -c "SET app.rls_system='on'; 
 | 材料 | 作用 |
 |---|---|
 | `docs/quality/environment-provisioning.md` | 锚点供给与参考数据边界 |
-| `docs/database/window-execution-checklist-2026-11-21.md` §5C/§5D | W13 第二段命令与签字前置 |
+| `docs/database/window-execution-checklist-2026-11-21.md` §5C/§5E | W13 第二段命令与签字前置 |
 | `docs/database/rls-business-confirmation-2026-11-23.md` §5/§8 | CSV 责任、规则优先级、例外签字 |
 | `docs/database/rls-company-scope-remediation-plan-2026-11-23.md` | 公司级改造清单与分档 |
 | `database/baseline/anchors.json` | 锚点版本 |

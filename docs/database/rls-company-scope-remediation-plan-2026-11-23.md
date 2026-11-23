@@ -1,6 +1,6 @@
 # 公司级隔离统一改造清单（2026-11-23）
 
-> 范围：`docs/database/rls-business-confirmation-2026-11-23.md` 所列 10 张表 + `finance.cqrs_events`（合计 11 张）。
+> 范围：`docs/database/rls-business-confirmation-2026-11-23.md` 所列 10 张表 + `finance.cqrs_events`（合计 11 张）。另：W14 订单两表（`erp.sales_orders`、`erp.purchase_orders`）的公司级策略已排期（`20261123150000`，计划已排、迁移件待建），见 §1 第 12–13 行。
 > 目标模型：沿用 `erp` 已落地的公司级范式，并采用「集团母版 + 公司差异」：`company_id IS NULL` = 集团/平台母版行，租户内只读；公司行表达差异、可写。
 > 本文件只是计划：不新增迁移文件、不改代码、不碰生产；迁移件待窗口排期后再写。
 
@@ -40,6 +40,8 @@ AND (
 | 9 | `public.monitor_settings` | 是 | `uuid` / NULL / 无默认；NULL = 集团母版行（`tenant_id` 非空）或平台默认行（`tenant_id` 也为 NULL）；另增 `override_policy` 三档 | 平台行（`tenant_id IS NULL`）保持 NULL 且默认 `platform_only`（fail-closed）；存量租户级行一律保留为集团母版行，不推断、不阻断；母版行默认 `company_overridable` | 平台行所有公司只读；母版行本集团可读、可被公司覆盖；公司行按本司 + 母公司可见；业务写只落公司行；`platform_only` 由 CHECK + 触发器双兜底 | 监控设置接口、告警评估器 | 窗口前（W12-B1） | 迁移 |
 | 10 | `public.search_entity_projections` | 是（新表 v2） | `uuid` / 本段可空、第二段切换时收紧为 NOT NULL / 无默认 | 我方 `--draft` 按四条规则与既定优先级起草，业务只复核兜底/例外行并签字；脚本只校验，不推断、不回落；兜底行必须等于租户根公司；比对零差异才切换 | 子公司仅本司；母公司可跨子公司（限本租户），支持公司过滤 | 搜索同步任务、搜索查询接口 | 窗口前（W13，三步） | 迁移 x3 + 双写 |
 | 11 | `public.system_settings` | 是 | `uuid` / NULL / 无默认；NULL = 集团母版参数（`tenant_id` 非空）或平台参数行（`tenant_id` 也为 NULL）；另增 `override_policy` 三档 | 平台行保持 NULL 且默认 `platform_only`；存量租户级行一律保留为集团母版行，不推断、不阻断；母版行默认 `company_overridable` | 平台行只读；母版行可被公司覆盖；公司行按本司；**新增公司作用域 API**；平台写限平台运维 + 二次确认 + 审计（审批后续挂现有审批模块） | 系统设置接口 + 新增公司作用域 API | 窗口前（W12-B2） | 迁移 + 代码 |
+| 12 | `erp.sales_orders` | 已加（W13-1a `20261123140000`；本波不改结构） | `uuid` / 可空 / 无默认；W13 第二段回填后零 NULL，本波不收紧 NOT NULL | W13 第二段按业务清单回填；W14 前置为 `company_id IS NULL` 行数 = 0 | 公司级：`tenant_id = erp.group_tenant_of(app.tenant_id)` AND（`company_id = erp.current_company_id()` OR `erp.company_readable(company_id)`）；`company_id IS NULL` 仅平台通道/母公司通道可读，子公司不可见；写只放本司 + 平台通道；替换 `rls_tenant_isolation` | erp 订单写入/查询 | 窗口前（W14，排在 W13 第二段之后；计划已排、迁移件待建） | 迁移（策略） |
+| 13 | `erp.purchase_orders` | 已加（W13-1a `20261123141000`；本波不改结构） | 同 `erp.sales_orders` | 同 `erp.sales_orders` | 同 `erp.sales_orders`（替换 `rls_tenant_isolation`） | erp 采购写入/查询 | 窗口前（W14，排在 W13 第二段之后；计划已排、迁移件待建） | 迁移（策略） |
 
 ### 1.1 `finance.cqrs_events` 四步走（顺序不可颠倒）
 
@@ -89,6 +91,8 @@ AND (
 
 W12-A1 → A2 → B1 → B2 → W13 严格串行，全部排在主窗口之前，不拆窗口后、不留降级路径。
 
+另：W14 订单两表公司级策略（`20261123150000`）排在 W13 第二段之后，状态为「计划已排、迁移件待建」，不计入上述 10 项。
+
 ### 3.2 窗口后可补齐（迁移）
 
 - `iam.tenant_permissions`：若不启用数据库存储，加列/主键/策略全部后置（启用前必须完成）。
@@ -112,6 +116,8 @@ W12-A1 → A2 → B1 → B2 → W13 严格串行，全部排在主窗口之前�
 | `monitor_settings` | 平台母版只读 + 公司覆盖，写只落公司行 | 加 `company_id` + `override_policy`；存量租户行统一为集团母版（不推断、不阻断）；平台行只读、`platform_only` 拒绝公司行 | ✅ |
 | `search_entity_projections` | 子公司仅本司；母公司可跨子公司并可过滤 | 新表 v2 `company_id` 本段可空、第二段切换收紧为 NOT NULL；双写零降级三步切换 | ✅ |
 | `system_settings` | 平台母版只读 + 公司覆盖 + 公司作用域 API | 加 `company_id` + `override_policy`；存量租户行统一为集团母版（不推断、不阻断）；平台写限平台运维 + 二次确认 + 审计；新增公司作用域 API | ✅ |
+| `erp.sales_orders` | 归属按 W13 四条规则（1A / 2B / 3B / 4A），子公司仅本司 | W14 换公司级策略；前置零 NULL；`company_id IS NULL` 仅平台/母公司通道可见 | ✅ |
+| `erp.purchase_orders` | 同上 | 同上 | ✅ |
 
 **措辞残留检查**
 
