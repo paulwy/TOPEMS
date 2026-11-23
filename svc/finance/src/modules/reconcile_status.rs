@@ -25,6 +25,39 @@ impl ReconcileOrderStatus {
         Self::Cancelled,
     ];
 
+    pub const DB_VALUES: [&'static str; 5] =
+        ["draft", "pending", "confirmed", "disputed", "cancelled"];
+
+    /// DB 默认值（`finance.reconcile_orders.status DEFAULT 'pending'`）。
+    pub const DEFAULT: Self = Self::Pending;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        self.as_str()
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "draft" => Some(Self::Draft),
+            "pending" => Some(Self::Pending),
+            "confirmed" => Some(Self::Confirmed),
+            "disputed" => Some(Self::Disputed),
+            "cancelled" | "canceled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
+    /// 允许确认 / 争议的起始状态集合（SQL 白名单的唯一来源）。
+    pub const fn actionable_values() -> [&'static str; 3] {
+        ["draft", "pending", "disputed"]
+    }
+
+    /// 终态集合（取消动作的排除集合）。
+    pub const fn terminal_values() -> [&'static str; 2] {
+        ["confirmed", "cancelled"]
+    }
+
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Draft => "draft",
@@ -61,6 +94,26 @@ pub enum ReconcileItemStatus {
 }
 
 impl ReconcileItemStatus {
+    pub const DB_VALUES: [&'static str; 3] = ["unmatched", "matched", "disputed"];
+
+    /// DB 默认值（`finance.reconcile_items.status DEFAULT 'unmatched'`）。
+    pub const DEFAULT: Self = Self::Unmatched;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        self.as_str()
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "unmatched" => Some(Self::Unmatched),
+            "matched" => Some(Self::Matched),
+            "disputed" => Some(Self::Disputed),
+            _ => None,
+        }
+    }
+
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Unmatched => "unmatched",

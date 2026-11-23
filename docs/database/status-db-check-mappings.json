@@ -1821,6 +1821,20 @@
       "table": "finance.finance_v60_schedule_executions",
       "column": "status",
       "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/reconcile_status.rs",
+      "enum": "ReconcileOrderStatus",
+      "table": "finance.reconcile_orders",
+      "column": "status",
+      "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/reconcile_status.rs",
+      "enum": "ReconcileItemStatus",
+      "table": "finance.reconcile_items",
+      "column": "status",
+      "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -629,15 +629,17 @@ pub async fn confirm_reconcile_order(
     })?;
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE finance.reconcile_orders SET status = 'confirmed', updated_at = NOW() \
+        "UPDATE finance.reconcile_orders SET status = $3, updated_at = NOW() \
          WHERE id = $1 \
-           AND status IN ('draft', 'pending', 'disputed') \
+           AND status = ANY($4::text[]) \
            AND (tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
     ))
     .bind(order_id)
     .bind(tenant_id)
+    .bind(ReconcileOrderStatus::Confirmed.as_db_str())
+    .bind(ReconcileOrderStatus::actionable_values().to_vec())
     .fetch_optional(&mut scope)
     .await
     {
@@ -708,15 +710,17 @@ pub async fn dispute_reconcile_order(
     })?;
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE finance.reconcile_orders SET status = 'disputed', updated_at = NOW() \
+        "UPDATE finance.reconcile_orders SET status = $3, updated_at = NOW() \
          WHERE id = $1 \
-           AND status IN ('draft', 'pending', 'disputed') \
+           AND status = ANY($4::text[]) \
            AND (tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
     ))
     .bind(order_id)
     .bind(tenant_id)
+    .bind(ReconcileOrderStatus::Disputed.as_db_str())
+    .bind(ReconcileOrderStatus::actionable_values().to_vec())
     .fetch_optional(&mut scope)
     .await
     {
@@ -785,12 +789,14 @@ pub async fn cancel_reconcile_order(
     })?;
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE finance.reconcile_orders SET status = 'cancelled', updated_at = NOW() \
-         WHERE id = $1 AND status NOT IN ('confirmed', 'cancelled') \
+        "UPDATE finance.reconcile_orders SET status = $3, updated_at = NOW() \
+         WHERE id = $1 AND status <> ALL($4::text[]) \
            AND (tenant_id = $2::uuid)"
     ))
     .bind(order_id)
     .bind(tenant_id)
+    .bind(ReconcileOrderStatus::Cancelled.as_db_str())
+    .bind(ReconcileOrderStatus::terminal_values().to_vec())
     .execute(&mut scope)
     .await;
     scope.commit().await.map_err(|e| {
@@ -886,7 +892,7 @@ pub async fn update_reconcile_item(
          updated_at = NOW() \
          WHERE id = $2 AND order_id = $1 \
            AND EXISTS (SELECT 1 FROM finance.reconcile_orders o WHERE o.id = $1 \
-             AND o.status IN ('draft', 'pending', 'disputed') \
+             AND o.status = ANY($13::text[]) \
              AND (o.tenant_id = $12::uuid)) \
          RETURNING id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                    matched, match_id, match_amount, difference, status, remark, created_at, updated_at"))
@@ -902,6 +908,7 @@ pub async fn update_reconcile_item(
         .bind(item_status.map(|s| s.as_str()))
         .bind(&req.remark)
         .bind(tenant_id)
+        .bind(ReconcileOrderStatus::actionable_values().to_vec())
         .fetch_optional(&mut scope)
         .await
     {
