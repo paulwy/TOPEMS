@@ -1534,6 +1534,20 @@
       "table": "mes.equipment_inspection_records",
       "column": "status",
       "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/purchase_requisition_approval_status.rs",
+      "enum": "PurchaseRequisitionApprovalStatus",
+      "table": "scm.purchase_requisitions",
+      "column": "approval_status",
+      "candidate": "docs/database/purchase-approval-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/scm/src/modules/purchase_contract_approval_status.rs",
+      "enum": "PurchaseContractApprovalStatus",
+      "table": "scm.purchase_contracts",
+      "column": "approval_status",
+      "candidate": "docs/database/purchase-approval-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

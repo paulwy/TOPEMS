@@ -7,6 +7,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::purchase_contract_approval_status::PurchaseContractApprovalStatus;
 use super::purchase_contract_status::PurchaseContractStatus;
 use super::ApiState;
 use crate::models::purchase_contract::{
@@ -106,15 +107,23 @@ pub async fn list_contracts(
     .unwrap_or(0);
 
     match contracts {
-        Ok(items) => ApiResponse::success(
-            serde_json::json!({
-                "items": items,
-                "total": total,
-                "page": page,
-                "page_size": page_size,
-            }),
-            "获取采购合同列表成功",
-        ),
+        Ok(mut items) => {
+            for item in &mut items {
+                item.approval_status = PurchaseContractApprovalStatus::normalize_option(
+                    item.approval_status.as_deref(),
+                )
+                .map(str::to_string);
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                }),
+                "获取采购合同列表成功",
+            )
+        }
         Err(e) => {
             tracing::error!("获取采购合同列表失败: {}", e);
             ApiResponse::from(TopemsError::Internal("获取采购合同列表失败".to_string()))
@@ -294,7 +303,11 @@ pub async fn get_contract(
     .await;
 
     match contract {
-        Ok(contract) => {
+        Ok(mut contract) => {
+            contract.approval_status = PurchaseContractApprovalStatus::normalize_option(
+                contract.approval_status.as_deref(),
+            )
+            .map(str::to_string);
             // 明细查询失败不得再静默转空列表：错误必须显式报出。
             let items = match sqlx::query_as::<_, PurchaseContractItem>(
                 only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, line_number, product_code, product_name, specification, unit, quantity::float8, unit_price, amount, delivery_date, remarks, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND deleted_at IS NULL AND tenant_id = $2::uuid ORDER BY line_number"),
@@ -712,7 +725,7 @@ pub async fn approve_contract(
         "scm",
         r#"
         UPDATE scm.purchase_contracts SET 
-            status = $5, approval_status = 'approved', 
+            status = $5, approval_status = $6, 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND tenant_id = $4::uuid
         RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at
@@ -723,6 +736,7 @@ pub async fn approve_contract(
     .bind(contract_id)
     .bind(tenant_bind)
     .bind(PurchaseContractStatus::Approved.as_db_str())
+    .bind(PurchaseContractApprovalStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -798,7 +812,7 @@ pub async fn reject_contract(
         "scm",
         r#"
         UPDATE scm.purchase_contracts SET 
-            status = $5, approval_status = 'rejected', 
+            status = $5, approval_status = $6, 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND tenant_id = $4::uuid
         RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at
@@ -809,6 +823,7 @@ pub async fn reject_contract(
     .bind(contract_id)
     .bind(tenant_bind)
     .bind(PurchaseContractStatus::Rejected.as_db_str())
+    .bind(PurchaseContractApprovalStatus::Rejected.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 

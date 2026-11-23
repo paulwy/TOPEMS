@@ -4610,6 +4610,20 @@
     {
       "schema": "scm",
       "table": "purchase_contracts",
+      "constraint": "ck_scm_purchase_contracts_approval_status_standard",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status IS NULL) OR ((approval_status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "scm",
+      "table": "purchase_contracts",
       "constraint": "ck_scm_purchase_contracts_status_standard",
       "columns": [
         "status"
@@ -4645,6 +4659,20 @@
         "rejected"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'pending'::text, 'approved'::text, 'rejected'::text, 'confirmed'::text, 'cancelled'::text, 'closed'::text, 'completed'::text])))) NOT VALID"
+    },
+    {
+      "schema": "scm",
+      "table": "purchase_requisitions",
+      "constraint": "ck_scm_purchase_requisitions_approval_status_standard",
+      "columns": [
+        "approval_status"
+      ],
+      "values": [
+        "approved",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((approval_status IS NULL) OR ((approval_status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying])::text[])))) NOT VALID"
     },
     {
       "schema": "scm",
@@ -8446,15 +8474,6 @@
     },
     {
       "schema": "scm",
-      "table": "purchase_contracts",
-      "column": "approval_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
-    },
-    {
-      "schema": "scm",
       "table": "purchase_inquiries",
       "column": "status",
       "type": "character varying(20)",
@@ -8470,15 +8489,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "scm",
-      "table": "purchase_requisitions",
-      "column": "approval_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
     },
     {
       "schema": "scm",

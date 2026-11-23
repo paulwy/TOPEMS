@@ -8,6 +8,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::purchase_requisition_approval_status::PurchaseRequisitionApprovalStatus;
 use super::purchase_requisition_status::PurchaseRequisitionStatus;
 use super::ApiState;
 use crate::models::purchase_requisition::{
@@ -119,15 +120,23 @@ pub async fn list_requisitions(
     .unwrap_or(0);
 
     match requisitions {
-        Ok(items) => ApiResponse::success(
-            serde_json::json!({
-                "items": items,
-                "total": total,
-                "page": page,
-                "page_size": page_size,
-            }),
-            "获取采购申请列表成功",
-        ),
+        Ok(mut items) => {
+            for item in &mut items {
+                item.approval_status = PurchaseRequisitionApprovalStatus::normalize_option(
+                    item.approval_status.as_deref(),
+                )
+                .map(str::to_string);
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                }),
+                "获取采购申请列表成功",
+            )
+        }
         Err(e) => {
             tracing::error!("获取采购申请列表失败: {}", e);
             ApiResponse::from(TopemsError::Internal("获取采购申请列表失败".to_string()))
@@ -276,7 +285,13 @@ pub async fn get_requisition(
     .await;
 
     match requisition {
-        Ok(item) => ApiResponse::success(item, "获取采购申请成功"),
+        Ok(mut item) => {
+            item.approval_status = PurchaseRequisitionApprovalStatus::normalize_option(
+                item.approval_status.as_deref(),
+            )
+            .map(str::to_string);
+            ApiResponse::success(item, "获取采购申请成功")
+        }
         Err(sqlx::Error::RowNotFound) => {
             ApiResponse::from(TopemsError::ResourceNotFound("采购申请不存在".to_string()))
         }
@@ -569,7 +584,7 @@ pub async fn approve_requisition(
         "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
-            status = $5, approval_status = 'approved', 
+            status = $5, approval_status = $6, 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND tenant_id = $4::uuid
         RETURNING *
@@ -580,6 +595,7 @@ pub async fn approve_requisition(
     .bind(requisition_id)
     .bind(tenant_bind)
     .bind(PurchaseRequisitionStatus::Approved.as_db_str())
+    .bind(PurchaseRequisitionApprovalStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -655,7 +671,7 @@ pub async fn reject_requisition(
         "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
-            status = $5, approval_status = 'rejected', 
+            status = $5, approval_status = $6, 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND tenant_id = $4::uuid
         RETURNING *
@@ -666,6 +682,7 @@ pub async fn reject_requisition(
     .bind(requisition_id)
     .bind(tenant_bind)
     .bind(PurchaseRequisitionStatus::Rejected.as_db_str())
+    .bind(PurchaseRequisitionApprovalStatus::Rejected.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
