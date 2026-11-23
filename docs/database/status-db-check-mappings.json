@@ -1422,6 +1422,13 @@
       "table": "mes.quality_inspections",
       "column": "status",
       "candidate": "docs/database/mes-inspection-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/bom_status.rs",
+      "enum": "BomStatus",
+      "table": "mes.material_boms",
+      "column": "status",
+      "candidate": "docs/database/mes-bom-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

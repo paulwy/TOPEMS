@@ -1,4 +1,5 @@
 mod bom_handlers;
+mod bom_status;
 mod issue_handlers;
 mod issue_status;
 mod models;

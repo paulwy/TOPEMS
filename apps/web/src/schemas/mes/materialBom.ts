@@ -45,7 +45,7 @@ export const materialBomSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('mes.material_bom.k5'),
       type: 'select',
-      defaultValue: 'active',
+      defaultValue: 'draft',
       options: {
         type: 'static',
         options: [

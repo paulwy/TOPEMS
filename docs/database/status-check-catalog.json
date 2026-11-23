@@ -2704,6 +2704,21 @@
     },
     {
       "schema": "mes",
+      "table": "material_boms",
+      "constraint": "ck_mes_material_boms_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "draft",
+        "inactive",
+        "obsolete"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'active'::text, 'inactive'::text, 'obsolete'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "material_issues",
       "constraint": "material_issues_status_check",
       "columns": [
@@ -6833,15 +6848,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "material_boms",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "mes",

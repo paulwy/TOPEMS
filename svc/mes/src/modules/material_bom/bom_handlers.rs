@@ -15,7 +15,22 @@ use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared_core::response::ApiResponse;
 
+use super::bom_status::BomStatus;
 use super::models::*;
+
+#[derive(Debug, sqlx::FromRow)]
+struct MaterialBomRow {
+    id: Uuid,
+    bom_no: String,
+    product_id: Option<Uuid>,
+    product_name: String,
+    product_code: String,
+    version: Option<String>,
+    status: Option<String>,
+    description: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
 
 #[utoipa::path(
     get,
@@ -60,9 +75,15 @@ pub async fn list_material_boms(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = BomStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的物料BOM状态");
+            };
+            where_clause.push_str(" WHERE status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -224,25 +245,26 @@ pub async fn create_material_bom(
         }
     };
 
-    let bom_result = sqlx::query!(
+    let bom_result = sqlx::query_as::<_, MaterialBomRow>(
         r#"
         INSERT INTO mes.material_boms (
             bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $7, $8)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9)
         RETURNING 
             id, bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at
         "#,
-        bom_no,
-        req.product_id,
-        req.product_name,
-        req.product_code,
-        req.version.unwrap_or_else(|| "1.0".to_string()),
-        req.description,
-        now,
-        tenant_id,
     )
+    .bind(bom_no)
+    .bind(req.product_id)
+    .bind(req.product_name)
+    .bind(req.product_code)
+    .bind(req.version.unwrap_or_else(|| "1.0".to_string()))
+    .bind(BomStatus::DEFAULT.as_db_str())
+    .bind(req.description)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -504,7 +526,15 @@ pub async fn update_material_bom(
         }
     };
 
-    let bom_result = sqlx::query!(
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match BomStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的物料BOM状态"),
+        },
+    };
+    let bom_result = sqlx::query_as::<_, MaterialBomRow>(
         r#"
         UPDATE mes.material_boms SET
             version = COALESCE($2, version),
@@ -516,12 +546,12 @@ pub async fn update_material_bom(
             id, bom_no, product_id, product_name, product_code,
             version, status, description, created_at, updated_at
         "#,
-        id,
-        req.version,
-        req.status,
-        req.description,
-        now,
     )
+    .bind(id)
+    .bind(req.version)
+    .bind(status.map(BomStatus::as_db_str))
+    .bind(req.description)
+    .bind(now)
     .fetch_optional(&mut scope)
     .await;
 

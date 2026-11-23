@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 357,
+    "db_check_constraints": 358,
     "db_enum_types": 5,
-    "db_check_values": 158,
-    "rust_enums": 240,
-    "rust_enum_values": 212,
+    "db_check_values": 159,
+    "rust_enums": 241,
+    "rust_enum_values": 213,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 222,
+    "frontend_status_keys": 223,
     "frontend_keys_not_in_db_check": 69,
     "rust_values_not_in_palette": 0
   },
@@ -2407,6 +2407,23 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/material_bom/bom_status.rs",
+      "name": "BomStatus",
+      "values": [
+        "Active",
+        "Draft",
+        "Inactive",
+        "Obsolete"
+      ],
+      "normalized": [
+        "active",
+        "draft",
+        "inactive",
+        "obsolete"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/material_bom/issue_status.rs",
       "name": "MaterialIssueStatus",
       "values": [
@@ -4408,6 +4425,7 @@
       "not_applicable",
       "not_found",
       "not_started",
+      "obsolete",
       "offline",
       "ongoing",
       "online",

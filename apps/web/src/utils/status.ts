@@ -114,6 +114,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   in_use: 'info',
   maintenance: 'warning',
   scrapped: 'error',
+  obsolete: 'default',
   rework: 'warning',
   concession_received: 'warning',
   transferred: 'default',
