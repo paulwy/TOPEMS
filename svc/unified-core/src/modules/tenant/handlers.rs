@@ -15,6 +15,16 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 
+/// W12-A1：模块开通/停用必须落在「当前公司」上。
+///
+/// 缺少公司上下文时显式失败，不退回租户级写入——退回会把公司行写成母版行或他司行，
+/// 要么被 RLS 拒绝、要么静默 0 行，两种都不该在业务层当成成功。
+fn require_company_context(action: &str) -> Result<Uuid, String> {
+    topems_shared_auth::company_context::current_company_id().ok_or_else(|| {
+        format!("{action}需要公司上下文：请显式声明 x-company-id，或为用户配置默认公司")
+    })
+}
+
 /// List all tenants with pagination and filtering (super admin only)
 pub async fn list_tenants(
     Extension(txn_arc): Extension<RlsTxnCell>,
@@ -508,6 +518,11 @@ const BASIC_MODULE_CODES: &[(&str, &str)] = &[
 /// Runs inside the caller's transaction so onboarding stays atomic. Rows
 /// that already exist (e.g. from a re-onboard attempt) are skipped via
 /// `ON CONFLICT DO NOTHING`.
+///
+/// W12-A1：这里写的是**集团母版目录**（`company_id IS NULL`），只定义该租户
+/// 可开通的范围；公司级实际开通由 `activate_module` 写 `company_id = 本司` 的行。
+/// 该函数运行在 onboarding 的显式系统通道（`scope_savepoint_system`）上，
+/// 因此允许写母版行。
 async fn activate_basic_modules(
     tx: &mut topems_shared_db::scope::ScopedTxn<'_>,
     tenant_id: Uuid,
@@ -518,9 +533,9 @@ async fn activate_basic_modules(
     for domain in crate::modules::tenant::tier::basic_domains() {
         sqlx::query(
             r#"
-            INSERT INTO public.core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
-            VALUES ($1, $2, $3, 'basic', TRUE)
-            ON CONFLICT (tenant_id, module_code) DO NOTHING
+            INSERT INTO public.core_tenant_modules (tenant_id, company_id, module_code, module_name, tier, is_active)
+            VALUES ($1, NULL, $2, $3, 'basic', TRUE)
+            ON CONFLICT DO NOTHING
             "#,
         )
         .bind(tenant_id)
@@ -536,9 +551,9 @@ async fn activate_basic_modules(
     for (module_code, module_name) in BASIC_MODULE_CODES.iter() {
         sqlx::query(
             r#"
-            INSERT INTO public.core_tenant_modules (tenant_id, module_code, module_name, tier, is_active)
-            VALUES ($1, $2, $3, 'basic', TRUE)
-            ON CONFLICT (tenant_id, module_code) DO NOTHING
+            INSERT INTO public.core_tenant_modules (tenant_id, company_id, module_code, module_name, tier, is_active)
+            VALUES ($1, NULL, $2, $3, 'basic', TRUE)
+            ON CONFLICT DO NOTHING
             "#,
         )
         .bind(tenant_id)
@@ -955,8 +970,11 @@ pub async fn list_tenant_modules(
             return Json(CoreResponse::success(Vec::new(), "Modules retrieved"));
         }
     };
+    // W12-A1：可见性由 RLS 策略裁决——母版行（company_id IS NULL）租户内所有公司可见；
+    // 公司行仅本司可见；母公司经 erp.company_readable 可读子公司。handler 只做租户边界过滤，
+    // 不在此重复公司谓词，避免与策略口径漂移。返回 company_id 供调用方区分母版/公司行。
     let modules: Vec<TenantModule> = sqlx::query_as(
-        "SELECT id, tenant_id, module_code, module_name, tier, is_active, activated_at, expires_at  FROM public.core_tenant_modules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY activated_at DESC",
+        "SELECT id, tenant_id, company_id, module_code, module_name, tier, is_active, activated_at, expires_at  FROM public.core_tenant_modules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY activated_at DESC",
     )
     .bind(tenant_id)
     .fetch_all(&mut scope)
@@ -980,6 +998,13 @@ pub async fn activate_module(
         tenant_id
     );
 
+    // W12-A1：开通写公司行（company_id = 当前公司），由 RLS 保证只能写本司；
+    // 缺少公司上下文直接失败，不再退回「租户级」写入（那会落到母版行或他司行上）。
+    let company_id = match require_company_context("开通模块") {
+        Ok(id) => id,
+        Err(message) => return Json(CoreResponse::error(&message)),
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -998,14 +1023,15 @@ pub async fn activate_module(
 
     match sqlx::query_as::<_, TenantModule>(
         r#"
-        INSERT INTO public.core_tenant_modules (tenant_id, module_code, is_active)
-        VALUES ($1, $2, true)
-        ON CONFLICT (tenant_id, module_code) 
+        INSERT INTO public.core_tenant_modules (tenant_id, company_id, module_code, is_active)
+        VALUES ($1, $2, $3, true)
+        ON CONFLICT (tenant_id, company_id, module_code) WHERE company_id IS NOT NULL
         DO UPDATE SET is_active = true, activated_at = NOW()
         RETURNING *
         "#,
     )
     .bind(tenant_id)
+    .bind(company_id)
     .bind(&module_code)
     .fetch_one(&mut scope)
     .await
@@ -1036,6 +1062,13 @@ pub async fn deactivate_module(
         tenant_id
     );
 
+    // W12-A1：停用只改公司行（company_id = 当前公司）；母版行不可写，也不会被
+    // 这条 UPDATE 命中。缺少公司上下文或找不到公司行都显式失败，不静默返回成功。
+    let company_id = match require_company_context("停用模块") {
+        Ok(id) => id,
+        Err(message) => return Json(CoreResponse::error(&message)),
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -1048,25 +1081,34 @@ pub async fn deactivate_module(
             return Json(CoreResponse::error("Module not found"));
         }
     };
-    let module: Option<TenantModule> = sqlx::query_as(
+    let updated: Result<Option<TenantModule>, sqlx::Error> = sqlx::query_as(
         r#"
         UPDATE public.core_tenant_modules
         SET is_active = false
-        WHERE tenant_id = $1 AND module_code = $2
+        WHERE tenant_id = $1 AND company_id = $2 AND module_code = $3
         RETURNING *
         "#,
     )
     .bind(tenant_id)
+    .bind(company_id)
     .bind(&module_code)
     .fetch_optional(&mut scope)
-    .await
-    .unwrap_or(None);
+    .await;
 
     let _ = scope.commit().await;
 
-    match module {
-        Some(m) => Json(CoreResponse::success(m, "Module deactivated")),
-        None => Json(CoreResponse::error("Module not found")),
+    match updated {
+        Ok(Some(m)) => Json(CoreResponse::success(m, "Module deactivated")),
+        Ok(None) => Json(CoreResponse::error(
+            "模块开通记录不存在或不属于当前公司（母版行不可停用）",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to deactivate module: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to deactivate module: {}",
+                e
+            )))
+        }
     }
 }
 
@@ -3553,8 +3595,10 @@ pub async fn get_tenant_analytics_overview(
     .await
     .map(|r| r.get::<i64, _>("count"))
     .unwrap_or(0);
+    // W12-A1：母版行与公司行可能同时存在同一 module_code，按 module_code 去重，
+    // 避免「母版目录 + 公司开通」被重复计数。
     let modules: i64 = sqlx::query(
-        "SELECT COUNT(*) FROM public.core_tenant_modules WHERE tenant_id = $1 AND is_active = TRUE",
+        "SELECT COUNT(DISTINCT module_code) FROM public.core_tenant_modules WHERE tenant_id = $1 AND is_active = TRUE",
     )
     .bind(tenant_id)
     .fetch_one(&mut scope)

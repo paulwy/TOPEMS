@@ -149,6 +149,10 @@ pub struct TenantModule {
     pub id: uuid::Uuid,
     #[serde(rename = "tenant_id")]
     pub tenant_id: uuid::Uuid,
+    /// W12-A1：NULL = 集团母版目录项（租户内只读）；非 NULL = 公司级实际开通。
+    #[serde(rename = "company_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub company_id: Option<uuid::Uuid>,
     #[serde(rename = "module_code")]
     pub module_code: String,
     #[serde(rename = "module_name")]
@@ -554,6 +558,7 @@ mod tests {
         let tm = TenantModule {
             id: Uuid::new_v4(),
             tenant_id: Uuid::new_v4(),
+            company_id: None,
             module_code: "workflow".to_string(),
             module_name: Some("工作流".to_string()),
             tier: "advanced".to_string(),
