@@ -1793,6 +1793,34 @@
       "table": "finance.core_finance_payment_items",
       "column": "write_off_status",
       "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/risk_v54.rs",
+      "enum": "ReviewWorkflowStatus",
+      "table": "finance.finance_v54_review_workflows",
+      "column": "status",
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "enum": "PaymentStatus",
+      "table": "finance.finance_v55_payment_results",
+      "column": "status",
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/treasury_v58.rs",
+      "enum": "TransferStatus",
+      "table": "finance.finance_v58_pool_transfers",
+      "column": "status",
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "enum": "ScheduleExecutionStatus",
+      "table": "finance.finance_v60_schedule_executions",
+      "column": "status",
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

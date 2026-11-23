@@ -1556,6 +1556,21 @@
     },
     {
       "schema": "finance",
+      "table": "finance_v54_review_workflows",
+      "constraint": "ck_finance_v54_review_workflows_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'rejected'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "finance_v55_invoices",
       "constraint": "ck_finance_v55_invoices_status_standard",
       "columns": [
@@ -1568,6 +1583,22 @@
         "verified"
       ],
       "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'recognized'::text, 'verified'::text, 'posted'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v55_payment_results",
+      "constraint": "ck_finance_v55_payment_results_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "pending",
+        "processing",
+        "reversed"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying, 'reversed'::character varying])::text[])))) NOT VALID"
     },
     {
       "schema": "finance",
@@ -1634,6 +1665,20 @@
     },
     {
       "schema": "finance",
+      "table": "finance_v58_pool_transfers",
+      "constraint": "ck_finance_v58_pool_transfers_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "pending"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['pending'::character varying, 'completed'::character varying, 'failed'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "finance_v59_scoring_models",
       "constraint": "ck_finance_v59_scoring_models_status_standard",
       "columns": [
@@ -1675,6 +1720,22 @@
         "evaluated"
       ],
       "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'active'::text, 'evaluated'::text, 'archived'::text]))) NOT VALID"
+    },
+    {
+      "schema": "finance",
+      "table": "finance_v60_schedule_executions",
+      "constraint": "ck_finance_v60_schedule_executions_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "failed",
+        "pending",
+        "running"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['pending'::character varying, 'running'::character varying, 'completed'::character varying, 'failed'::character varying, 'cancelled'::character varying])::text[])))) NOT VALID"
     },
     {
       "schema": "finance",
@@ -6585,42 +6646,6 @@
       "type": "text",
       "enum_type": "text",
       "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v54_review_workflows",
-      "column": "status",
-      "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v55_payment_results",
-      "column": "status",
-      "type": "character varying(30)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v58_pool_transfers",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "finance_v60_schedule_executions",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
       "default_expr": "'pending'::character varying"
     },
     {
