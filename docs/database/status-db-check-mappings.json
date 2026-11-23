@@ -1772,6 +1772,13 @@
       "table": "hrm.contracts",
       "column": "status",
       "candidate": "ck_hrm_contracts_status_standard"
+    },
+    {
+      "file": "svc/finance/src/modules/settlement_center_status.rs",
+      "enum": "DifferenceAdjustmentStatus",
+      "table": "finance.difference_adjustments",
+      "column": "status",
+      "candidate": "docs/database/finance-difference-adjustment-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

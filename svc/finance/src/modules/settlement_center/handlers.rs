@@ -478,20 +478,12 @@ pub async fn list_links(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<LinkListQuery>,
 ) -> ApiResponse<Vec<ReconciliationSettlementLink>> {
-    if let Some(raw) = query
-        .status
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
+    if let Err(message) =
+        crate::modules::settlement_center_status::SettlementLinkStatus::parse_filter(
+            query.status.as_deref(),
+        )
     {
-        if raw
-            .parse::<crate::modules::settlement_center_status::SettlementLinkStatus>()
-            .is_err()
-        {
-            return ApiResponse::from(TopemsError::ValidationFailed(format!(
-                "非法结算关联状态: {raw}，可选值: linked/cancelled"
-            )));
-        }
+        return ApiResponse::from(TopemsError::ValidationFailed(message));
     }
     let tenant_id = current_tenant_id(&claims);
     let mut guard = txn_arc.lock().await;
@@ -523,21 +515,12 @@ pub async fn list_differences(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<DifferenceListQuery>,
 ) -> ApiResponse<Vec<DifferenceAdjustment>> {
-    if let Some(raw) = query.status.as_deref().filter(|s| !s.trim().is_empty()) {
-        if raw
-            .parse::<crate::modules::settlement_center_status::DifferenceAdjustmentStatus>()
-            .is_err()
-        {
-            let allowed = crate::modules::settlement_center_status::DifferenceAdjustmentStatus::ALL
-                .iter()
-                .map(|s| s.as_str())
-                .collect::<Vec<_>>()
-                .join("/");
-            return ApiResponse::from(TopemsError::ValidationFailed(format!(
-                "非法差异调整状态: {}，可选值: {}",
-                raw, allowed
-            )));
-        }
+    if let Err(message) =
+        crate::modules::settlement_center_status::DifferenceAdjustmentStatus::parse_filter(
+            query.status.as_deref(),
+        )
+    {
+        return ApiResponse::from(TopemsError::ValidationFailed(message));
     }
 
     let tenant_id = current_tenant_id(&claims);

@@ -38,6 +38,24 @@ impl SettlementLinkStatus {
             Self::Cancelled => "cancelled",
         }
     }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        Self::from_db_str(raw)
+    }
+
+    /// 列表过滤：None / 空串 / all 表示不过滤；非法值返回 Err。
+    pub fn parse_filter(raw: Option<&str>) -> Result<Option<Self>, String> {
+        match raw.map(str::trim).filter(|s| !s.is_empty()) {
+            None | Some("all") => Ok(None),
+            Some(value) => Self::from_db_str(value).map(Some).ok_or_else(|| {
+                format!(
+                    "非法结算关联状态: {value}，可选值: {}",
+                    Self::DB_VALUES.join("/")
+                )
+            }),
+        }
+    }
 }
 
 impl fmt::Display for SettlementLinkStatus {
@@ -109,12 +127,41 @@ pub enum DifferenceAdjustmentStatus {
 
 impl DifferenceAdjustmentStatus {
     pub const ALL: [Self; 3] = [Self::Pending, Self::Approved, Self::Rejected];
+    pub const DB_VALUES: [&'static str; 3] = ["pending", "approved", "rejected"];
+    pub const DEFAULT: Self = Self::Pending;
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "pending" => Some(Self::Pending),
+            "approved" => Some(Self::Approved),
+            "rejected" => Some(Self::Rejected),
+            _ => None,
+        }
+    }
 
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Pending => "pending",
             Self::Approved => "approved",
             Self::Rejected => "rejected",
+        }
+    }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        Self::from_db_str(raw)
+    }
+
+    pub fn parse_filter(raw: Option<&str>) -> Result<Option<Self>, String> {
+        match raw.map(str::trim).filter(|s| !s.is_empty()) {
+            None | Some("all") => Ok(None),
+            Some(value) => Self::from_db_str(value).map(Some).ok_or_else(|| {
+                format!(
+                    "非法差异调整状态: {value}，可选值: {}",
+                    Self::DB_VALUES.join("/")
+                )
+            }),
         }
     }
 }
@@ -129,12 +176,7 @@ impl FromStr for DifferenceAdjustmentStatus {
     type Err = ();
 
     fn from_str(raw: &str) -> Result<Self, Self::Err> {
-        match raw.trim() {
-            "pending" => Ok(Self::Pending),
-            "approved" => Ok(Self::Approved),
-            "rejected" => Ok(Self::Rejected),
-            _ => Err(()),
-        }
+        Self::from_db_str(raw).ok_or(())
     }
 }
 
@@ -190,6 +232,18 @@ mod tests {
         }
         assert_eq!(DifferenceAdjustmentStatus::from_str("unknown"), Err(()));
         assert_eq!(DifferenceAdjustmentStatus::from_str("APPROVED"), Err(()));
+        assert_eq!(
+            SettlementLinkStatus::parse_filter(Some("all")),
+            Ok(None),
+            "all 必须归一为不过滤"
+        );
+        assert!(SettlementLinkStatus::parse_filter(Some("bogus")).is_err());
+        assert_eq!(DifferenceAdjustmentStatus::parse_filter(None), Ok(None));
+        assert_eq!(
+            DifferenceAdjustmentStatus::parse_filter(Some(" approved ")),
+            Ok(Some(DifferenceAdjustmentStatus::Approved))
+        );
+        assert!(DifferenceAdjustmentStatus::parse_filter(Some("bogus")).is_err());
     }
 
     #[test]

@@ -140,9 +140,10 @@ pub async fn get_reconciliation_detail(
            FROM finance.reconciliation_settlement_links l
            JOIN finance.settlement_snapshots s ON s.id = l.settlement_id
            WHERE l.reconciliation_id = $1
-             AND l.status != 'cancelled'"#
+             AND l.status != $2"#
     ))
     .bind(recon_id)
+    .bind(crate::modules::settlement_center_status::SettlementLinkStatus::Cancelled.as_str())
     .fetch_all(&mut scope)
     .await?;
 
@@ -484,9 +485,10 @@ pub async fn get_settlement_detail(
            FROM finance.reconciliation_settlement_links l
            JOIN finance.reconciliation_snapshots r ON r.id = l.reconciliation_id
            WHERE l.settlement_id = $1
-             AND l.status != 'cancelled'"#),
+             AND l.status != $2"#),
     )
     .bind(settlement_id)
+    .bind(crate::modules::settlement_center_status::SettlementLinkStatus::Cancelled.as_str())
     .fetch_all(&mut scope)
     .await?;
 
@@ -598,7 +600,7 @@ pub async fn approve_reconciliation(
     sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.reconciliation_snapshots
-           SET status = 'approved', approved_by = $1, approved_at = $2,
+           SET status = $5, approved_by = $1, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
            WHERE id = $3 AND tenant_id = $4 AND status IN ('draft', 'pending')"#
     ))
@@ -606,6 +608,9 @@ pub async fn approve_reconciliation(
     .bind(now)
     .bind(recon_id)
     .bind(tenant_id)
+    .bind(
+        crate::modules::finance_snapshot_status::ReconciliationSnapshotStatus::Approved.as_db_str(),
+    )
     .execute(&mut scope)
     .await?;
 
@@ -672,14 +677,16 @@ pub async fn approve_settlement(
     sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.settlement_snapshots
-           SET status = 'approved', approved_by = $1::uuid, approved_at = $2,
+           SET status = $5, approved_by = $1::uuid, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
-           WHERE id = $3 AND tenant_id = $4 AND status = 'pending'"#
+           WHERE id = $3 AND tenant_id = $4 AND status = $6"#
     ))
     .bind(&approver)
     .bind(now)
     .bind(settlement_id)
     .bind(tenant_id)
+    .bind(crate::modules::finance_snapshot_status::SettlementSnapshotStatus::Approved.as_db_str())
+    .bind(crate::modules::finance_snapshot_status::SettlementSnapshotStatus::Pending.as_db_str())
     .execute(&mut scope)
     .await?;
 
@@ -798,6 +805,12 @@ pub async fn list_links(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
+    let link_status = crate::modules::settlement_center_status::SettlementLinkStatus::parse_filter(
+        query.status.as_deref(),
+    )
+    .ok()
+    .flatten()
+    .map(|s| s.as_str());
     let mut scope = db.scope_with(txn).await?;
 
     let items: Vec<ReconciliationSettlementLink> = sqlx::query_as(only_own_schema_query!(
@@ -815,7 +828,7 @@ pub async fn list_links(
     .bind(query.reconciliation_id)
     .bind(query.settlement_id)
     .bind(&query.link_type)
-    .bind(&query.status)
+    .bind(link_status)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut scope)
@@ -942,6 +955,13 @@ pub async fn list_differences(
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
+    let diff_status =
+        crate::modules::settlement_center_status::DifferenceAdjustmentStatus::parse_filter(
+            query.status.as_deref(),
+        )
+        .ok()
+        .flatten()
+        .map(|s| s.as_str());
     let mut scope = db.scope_with(txn).await?;
 
     let items: Vec<DifferenceAdjustment> = sqlx::query_as(only_own_schema_query!(
@@ -961,7 +981,7 @@ pub async fn list_differences(
     .bind(&query.source_type)
     .bind(query.source_id)
     .bind(&query.difference_type)
-    .bind(&query.status)
+    .bind(diff_status)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut scope)
