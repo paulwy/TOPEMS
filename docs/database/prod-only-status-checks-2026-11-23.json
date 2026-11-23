@@ -8831,7 +8831,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B252",
-      "source_commit": "PENDING",
+      "source_commit": "7800deeb5",
       "source_subject": "B252: finance.core_finance_periods.status 收敛到 PeriodStatus 三态",
       "note": "列本身是原生枚举 period_status（open/closing/closed），DB 已拒绝枚举外值；本约束锁定枚举扩展，并让状态盘点器识别显式约束"
     }

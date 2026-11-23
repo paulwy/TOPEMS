@@ -249,3 +249,4 @@
 - B251 追加后读数：417 条；`finance.budgets.status` 在参考库仍由旧约束覆盖，新五态约束未回迁。
 - B251 来源提交已回填：`d2e1a07d9`。
 - B252 追加后读数：418 条；`finance.core_finance_periods.status` 在参考库仍由原生枚举覆盖，显式 CHECK 未回迁。
+- B252 来源提交已回填：`7800deeb5`。
