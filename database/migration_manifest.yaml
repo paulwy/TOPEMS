@@ -2905,3 +2905,27 @@ pending_forward_patches:
     effect: "hrm.contracts.status 值域收敛到 ContractStatus（active/expired/terminated/pending）：删除历史约束 ck_contracts_status_standard（仅 active/inactive/archived，与前端值集冲突、导致 expired/terminated/pending 写入必失败），建立 ck_hrm_contracts_status_standard（NOT VALID，只约束新写入）"
     destructive_scan: "删除 1 个旧 CHECK 约束（pg_constraint 存在性守卫 + DROP CONSTRAINT），不删除数据、不改列类型；新约束 NOT VALID 不做存量校验"
     note: "幂等：DO 块内先按 conname+relid 判断再 DROP/ADD。回滚：重新加回旧约束需先评估存量行值集，本轮不提供回滚件。生产按窗口执行后可视存量值集情况 VALIDATE。"
+
+  # ===== 2026-11-23：W13-A erp.sales_orders 公司归属补列 =====
+  - version: "20261123140000"
+    file: "database/migrations/20261123140000_erp_sales_orders_company_id.sql"
+    status: to_apply
+    effect: "erp.sales_orders 新增 company_id uuid（可空、无默认，幂等）：历史行暂时为 NULL，等业务归属清单回填后另起迁移收紧 NOT NULL；新建路径由服务层写请求公司上下文，缺上下文 fail-closed。本轮不新增索引、外键或 RLS 策略"
+    destructive_scan: "仅 ADD COLUMN IF NOT EXISTS 与 COMMENT；无 UPDATE/DELETE/TRUNCATE/DROP，不删除数据、不改既有列类型"
+    note: "前置断言：erp.sales_orders 存在；后置断言：company_id 为 uuid、可空、无默认。回滚 database/rollback/20261123140000_erp_sales_orders_company_id.rollback.sql 直接 DROP COLUMN，列内公司归属随列丢失，回滚前需确认 v2 投影/对账脚本已停止依赖该列"
+
+  # ===== 2026-11-23：W13-A erp.purchase_orders 公司归属补列 =====
+  - version: "20261123141000"
+    file: "database/migrations/20261123141000_erp_purchase_orders_company_id.sql"
+    status: to_apply
+    effect: "erp.purchase_orders 新增 company_id uuid（可空、无默认，幂等）：口径与 sales_orders 一致，历史行等业务清单回填后再收紧 NOT NULL；新建路径写请求公司上下文，缺上下文 fail-closed。本轮不新增索引、外键或 RLS 策略"
+    destructive_scan: "仅 ADD COLUMN IF NOT EXISTS 与 COMMENT；无 UPDATE/DELETE/TRUNCATE/DROP，不删除数据、不改既有列类型"
+    note: "前置断言：erp.purchase_orders 存在；后置断言：company_id 为 uuid、可空、无默认。回滚 database/rollback/20261123141000_erp_purchase_orders_company_id.rollback.sql 直接 DROP COLUMN，列内公司归属随列丢失"
+
+  # ===== 2026-11-23：W13-A 搜索投影 v2 建表（公司维度，先双写不切流） =====
+  - version: "20261123142000"
+    file: "database/migrations/20261123142000_search_projection_v2_company_scope.sql"
+    status: to_apply
+    effect: "建 public.search_entity_projections_v2（列与 v1 对齐 + company_id uuid 可空）与公司维度索引 (tenant_id, company_id, entity_type)；GRANT 读写给 topems_app；ENABLE+FORCE RLS，两条策略：system 系统通道全量读写、company_read 业务读按租户+公司可读（母公司可见子公司，company_id IS NULL 历史行业务不可见）。本轮只双写，不重命名切换、不改查询路径"
+    destructive_scan: "仅 CREATE TABLE/INDEX IF NOT EXISTS、策略 DROP IF EXISTS 后重建、GRANT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不触碰 v1 数据"
+    note: "幂等：CREATE 走 IF NOT EXISTS、策略先 DROP IF EXISTS 再建、GRANT 幂等。后置断言：表/列/主键/索引/策略数=2/RLS ENABLE+FORCE。回滚 database/rollback/20261123142000_search_projection_v2_company_scope.rollback.sql 先删表（双写产物），切流前执行安全"
