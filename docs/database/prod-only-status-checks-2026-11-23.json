@@ -8286,7 +8286,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B225",
-      "source_commit": "PENDING",
+      "source_commit": "7d489d715",
       "source_subject": "feat(pdm): 工程变更通知状态收敛到唯一枚举（W5-B225）",
       "note": "生产/历史手工候选约束；重建参考库不存在（表在、约束不在），所属列在目录 uncovered 中；待回迁清单维护"
     }
