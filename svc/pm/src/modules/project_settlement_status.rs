@@ -8,14 +8,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum SettlementStatus {
+pub enum ProjectSettlementStatus {
     Draft,
     Pending,
     Approved,
     Rejected,
 }
 
-impl SettlementStatus {
+impl ProjectSettlementStatus {
     /// `pm.settlements.status` 允许的唯一集合
     pub const DB_VALUES: [&'static str; 4] = ["draft", "pending", "approved", "rejected"];
 
@@ -91,13 +91,13 @@ impl SettlementStatus {
     }
 }
 
-impl std::fmt::Display for SettlementStatus {
+impl std::fmt::Display for ProjectSettlementStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.as_db_str())
     }
 }
 
-impl std::str::FromStr for SettlementStatus {
+impl std::str::FromStr for ProjectSettlementStatus {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -112,38 +112,44 @@ mod tests {
 
     #[test]
     fn roundtrip_all_values() {
-        for raw in SettlementStatus::DB_VALUES {
+        for raw in ProjectSettlementStatus::DB_VALUES {
             assert_eq!(
-                SettlementStatus::from_db_str(raw).map(|v| v.as_db_str()),
+                ProjectSettlementStatus::from_db_str(raw).map(|v| v.as_db_str()),
                 Some(raw)
             );
         }
-        assert_eq!(SettlementStatus::from_db_str("bogus"), None);
-        assert_eq!(SettlementStatus::DEFAULT.as_db_str(), "draft");
-        assert_eq!(SettlementStatus::normalize("SUBMITTED"), Some("pending"));
-        assert_eq!(SettlementStatus::parse_filter("passed"), Some("approved"));
-        assert_eq!(SettlementStatus::parse_filter("bogus"), None);
+        assert_eq!(ProjectSettlementStatus::from_db_str("bogus"), None);
+        assert_eq!(ProjectSettlementStatus::DEFAULT.as_db_str(), "draft");
+        assert_eq!(
+            ProjectSettlementStatus::normalize("SUBMITTED"),
+            Some("pending")
+        );
+        assert_eq!(
+            ProjectSettlementStatus::parse_filter("passed"),
+            Some("approved")
+        );
+        assert_eq!(ProjectSettlementStatus::parse_filter("bogus"), None);
     }
 
     #[test]
     fn transitions_block_post_approval_changes() {
-        assert!(SettlementStatus::Pending.can_transition_from("draft"));
-        assert!(SettlementStatus::Draft.can_transition_from("pending"));
-        assert!(SettlementStatus::Draft.can_transition_from("rejected"));
-        assert!(SettlementStatus::Approved.can_transition_from("approved"));
-        assert!(!SettlementStatus::Approved.can_transition_from("pending"));
-        assert!(!SettlementStatus::Pending.can_transition_from("approved"));
-        assert!(!SettlementStatus::Draft.can_transition_from("bogus"));
-        assert!(SettlementStatus::Approved.is_terminal());
-        assert!(!SettlementStatus::Pending.is_terminal());
+        assert!(ProjectSettlementStatus::Pending.can_transition_from("draft"));
+        assert!(ProjectSettlementStatus::Draft.can_transition_from("pending"));
+        assert!(ProjectSettlementStatus::Draft.can_transition_from("rejected"));
+        assert!(ProjectSettlementStatus::Approved.can_transition_from("approved"));
+        assert!(!ProjectSettlementStatus::Approved.can_transition_from("pending"));
+        assert!(!ProjectSettlementStatus::Pending.can_transition_from("approved"));
+        assert!(!ProjectSettlementStatus::Draft.can_transition_from("bogus"));
+        assert!(ProjectSettlementStatus::Approved.is_terminal());
+        assert!(!ProjectSettlementStatus::Pending.is_terminal());
     }
 
     #[test]
     fn approval_only_from_draft_or_pending() {
-        assert!(SettlementStatus::Approved.can_approve_from("draft"));
-        assert!(SettlementStatus::Approved.can_approve_from("pending"));
-        assert!(!SettlementStatus::Approved.can_approve_from("approved"));
-        assert!(!SettlementStatus::Approved.can_approve_from("rejected"));
-        assert!(!SettlementStatus::Approved.can_approve_from("bogus"));
+        assert!(ProjectSettlementStatus::Approved.can_approve_from("draft"));
+        assert!(ProjectSettlementStatus::Approved.can_approve_from("pending"));
+        assert!(!ProjectSettlementStatus::Approved.can_approve_from("approved"));
+        assert!(!ProjectSettlementStatus::Approved.can_approve_from("rejected"));
+        assert!(!ProjectSettlementStatus::Approved.can_approve_from("bogus"));
     }
 }

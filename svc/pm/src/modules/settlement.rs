@@ -22,7 +22,7 @@ use crate::models::settlement::{
     UpdateSettlementRequest,
 };
 use crate::modules::effective_tenant_id;
-use crate::modules::settlement_status::SettlementStatus;
+use crate::modules::project_settlement_status::ProjectSettlementStatus;
 
 #[derive(Clone)]
 struct SettlementState {
@@ -203,7 +203,7 @@ async fn create_settlement(
     .bind(&req.settlement_code)
     .bind(&req.settlement_name)
     .bind(&req.settlement_type)
-    .bind(SettlementStatus::DEFAULT.as_db_str())
+    .bind(ProjectSettlementStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(rust_decimal::Decimal::ZERO)
     .bind("CNY")
@@ -291,7 +291,7 @@ async fn update_settlement(
             return ApiResponse::server_error("更新决算失败");
         }
     };
-    let current_status = match SettlementStatus::from_db_str(&current) {
+    let current_status = match ProjectSettlementStatus::from_db_str(&current) {
         Some(status) => status,
         None => return ApiResponse::bad_request("存量的决算状态非法，请先修正数据"),
     };
@@ -300,7 +300,7 @@ async fn update_settlement(
     }
     let status = match req.status.as_deref() {
         None => None,
-        Some(raw) => match SettlementStatus::from_db_str(raw) {
+        Some(raw) => match ProjectSettlementStatus::from_db_str(raw) {
             Some(next) if next.can_transition_from(&current) => Some(next.as_db_str().to_string()),
             Some(_) => return ApiResponse::bad_request("当前决算状态不允许该流转"),
             None => return ApiResponse::bad_request("无效的决算状态"),
@@ -398,11 +398,11 @@ async fn approve_settlement(
             return ApiResponse::server_error("审批决算失败");
         }
     };
-    let current_status = match SettlementStatus::from_db_str(&current) {
+    let current_status = match ProjectSettlementStatus::from_db_str(&current) {
         Some(status) => status,
         None => return ApiResponse::bad_request("存量的决算状态非法，请先修正数据"),
     };
-    if !SettlementStatus::Approved.can_approve_from(current_status.as_db_str()) {
+    if !ProjectSettlementStatus::Approved.can_approve_from(current_status.as_db_str()) {
         return ApiResponse::conflict("当前决算状态不允许审批");
     }
 
@@ -415,8 +415,8 @@ async fn approve_settlement(
         WHERE id = $1 AND status = ANY($3::text[])  RETURNING *"
     ))
     .bind(id)
-    .bind(SettlementStatus::Approved.as_db_str())
-    .bind(SettlementStatus::APPROVE_FROM.to_vec())
+    .bind(ProjectSettlementStatus::Approved.as_db_str())
+    .bind(ProjectSettlementStatus::APPROVE_FROM.to_vec())
     .fetch_one(&mut scope)
     .await;
 

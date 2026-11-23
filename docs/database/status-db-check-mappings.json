@@ -1970,11 +1970,18 @@
       "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
     },
     {
-      "file": "svc/pm/src/modules/settlement_status.rs",
-      "enum": "SettlementStatus",
+      "file": "svc/pm/src/modules/project_settlement_status.rs",
+      "enum": "ProjectSettlementStatus",
       "table": "pm.settlements",
       "column": "status",
       "candidate": "docs/database/pm-settlement-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/acceptance_record_status.rs",
+      "enum": "AcceptanceRecordStatus",
+      "table": "pm.acceptance_records",
+      "column": "status",
+      "candidate": "docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

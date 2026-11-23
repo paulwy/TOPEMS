@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **407** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **408** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -44,7 +44,7 @@
 | `mobile` | 5 |
 | `pdm` | 9 |
 | `plugin_mes` | 1 |
-| `pm` | 18 |
+| `pm` | 19 |
 | `portal` | 7 |
 | `public` | 42 |
 | `qms` | 12 |
@@ -135,6 +135,7 @@
 | B237 | 1 |
 | B238 | 1 |
 | B239 | 1 |
+| B240 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -176,6 +177,8 @@
 
 - W5-B239（B239）新增 `pm.settlements.ck_settlements_status_standard` 只有候选 SQL（`docs/database/pm-settlement-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 
+- W5-B240（B240）新增 `pm.acceptance_records.ck_acceptance_records_result_status_standard` 只有候选 SQL（`docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql`）、无迁移；该约束替换生产历史 `ck_acceptance_records_status_standard`（active/inactive/archived），旧条目保留、部署时先 DROP 旧约束。
+
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
 ## 复核记录（2026-11-23，第二轮推送前）
@@ -201,3 +204,4 @@
 - B237 追加后读数：405 条；`pm.project_resources.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B238 追加后读数：406 条；`qms.qa_audit_findings.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B239 追加后读数：407 条；`pm.settlements.status` 仍为 uncovered，目录读数不变（33/5/683）。
+- B240 追加后读数：408 条；`pm.acceptance_records.status` 仍为 uncovered，目录读数不变（33/5/683）。

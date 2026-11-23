@@ -17,6 +17,7 @@ use crate::models::acceptance::{
     CreateAcceptancePlanRequest, CreateAcceptanceRecordRequest, UpdateAcceptanceItemRequest,
     UpdateAcceptancePlanRequest, UpdateAcceptanceRecordRequest,
 };
+use crate::modules::acceptance_record_status::AcceptanceRecordStatus;
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
@@ -664,6 +665,10 @@ async fn create_record(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let acceptance_date = parse_date_opt(&Some(req.acceptance_date.clone())).unwrap_or(now);
+    let status = match AcceptanceRecordStatus::from_db_str(&req.status) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("无效的验收记录状态"),
+    };
 
     let record = sqlx::query_as::<_, AcceptanceRecord>(
         only_own_schema_query!("pm", "INSERT INTO pm.acceptance_records (id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at, tenant_id)
@@ -673,7 +678,7 @@ async fn create_record(
     .bind(plan.project_id)
     .bind(plan_id)
     .bind(acceptance_date)
-    .bind(&req.status)
+    .bind(status.as_db_str())
     .bind(req.conclusion)
     .bind(req.score)
     .bind(req.accepted_by)
@@ -714,6 +719,37 @@ async fn update_record(
             return ApiResponse::server_error("初始化数据库作用域失败");
         }
     };
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "pm",
+        "SELECT status FROM pm.acceptance_records WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("验收记录不存在"),
+        Err(e) => {
+            tracing::error!("查询验收记录状态失败: {}", e);
+            return ApiResponse::server_error("更新验收记录失败");
+        }
+    };
+    let current_status = match AcceptanceRecordStatus::from_db_str(&current) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("存量的验收记录状态非法，请先修正数据"),
+    };
+    if current_status.is_terminal() {
+        return ApiResponse::conflict("已通过的验收记录不允许修改");
+    }
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match AcceptanceRecordStatus::from_db_str(raw) {
+            Some(next) if next.can_transition_from(&current) => Some(next.as_db_str().to_string()),
+            Some(_) => return ApiResponse::bad_request("当前验收记录状态不允许该流转"),
+            None => return ApiResponse::bad_request("无效的验收记录状态"),
+        },
+    };
+
     let record = sqlx::query_as::<_, AcceptanceRecord>(only_own_schema_query!(
         "pm",
         "UPDATE pm.acceptance_records SET
@@ -726,7 +762,7 @@ async fn update_record(
             updated_at = $7
         WHERE id = $8  RETURNING *"
     ))
-    .bind(req.status)
+    .bind(status)
     .bind(req.conclusion)
     .bind(req.score)
     .bind(req.attendees)

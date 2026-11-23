@@ -2,14 +2,14 @@
 
 ## 结论
 
-`pm.settlements.status` 已收敛到唯一 Rust 枚举 `SettlementStatus`
+`pm.settlements.status` 已收敛到唯一 Rust 枚举 `ProjectSettlementStatus`
 （`draft` / `pending` / `approved` / `rejected`，默认 `draft`）；
 创建、更新、审批、事件写入与数据库 CHECK 共用同一值集，非法值、非法流转和审批后修改返回 400/409。
 
 ## 修复的真实缺陷
 
 1. **创建态与真库默认值分裂**：创建 INSERT 硬编码 `'draft'`，但 `pm.settlements.status` 的列默认是 `'pending'`；
-   依赖默认值的写入路径会得到不同初始态。现创建显式绑定 `SettlementStatus::DEFAULT`，并把列默认同步改为 `draft`。
+   依赖默认值的写入路径会得到不同初始态。现创建显式绑定 `ProjectSettlementStatus::DEFAULT`，并把列默认同步改为 `draft`。
 2. **更新接口可写任意状态**：原 `status = COALESCE($2, status)` 直接落库，可写入任意字符串，也可绕过审批接口把 `draft/pending` 直接改成 `approved`。
    现先解析枚举，再按流转表校验；非法值/非法流转返回 400。
 3. **审批后金额仍可改**：原更新没有终态保护，`approved` 决算仍可修改名称、金额、备注，导致 `PmProjectSettled` 下游应收/凭证金额与决算行不一致。

@@ -12,7 +12,7 @@ use topems_shared_event::event::{
 };
 use uuid::Uuid;
 
-use crate::modules::settlement_status::SettlementStatus;
+use crate::modules::project_settlement_status::ProjectSettlementStatus;
 
 type HandlerResult = std::result::Result<(), TopemsError>;
 
@@ -362,11 +362,11 @@ impl PmEventHandlers {
 
         let now = Utc::now();
         let date = payload.settlement_date.unwrap_or(now);
-        let status = SettlementStatus::from_db_str(&payload.status).ok_or_else(|| {
+        let status = ProjectSettlementStatus::from_db_str(&payload.status).ok_or_else(|| {
             TopemsError::ValidationFailed(format!(
                 "非法结算状态: {}，可选值: {}",
                 payload.status,
-                SettlementStatus::DB_VALUES.join("/")
+                ProjectSettlementStatus::DB_VALUES.join("/")
             ))
         })?;
 
@@ -450,8 +450,8 @@ impl PmEventHandlers {
         ))
         .bind(payload.id)
         .bind(tenant_id)
-        .bind(SettlementStatus::Approved.as_db_str())
-        .bind(SettlementStatus::APPROVE_FROM.to_vec())
+        .bind(ProjectSettlementStatus::Approved.as_db_str())
+        .bind(ProjectSettlementStatus::APPROVE_FROM.to_vec())
         .execute(&mut scope)
         .await
         .map_err(|e| {
