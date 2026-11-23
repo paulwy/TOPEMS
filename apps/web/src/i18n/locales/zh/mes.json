@@ -1492,6 +1492,8 @@
   "mes.equipment_detail_page.status_available": "可用",
   "mes.equipment_detail_page.status_idle": "空闲",
   "mes.equipment_detail_page.status_in_use": "使用中",
+  "mes.equipment_detail_page.status_running": "运行中",
+  "mes.equipment_detail_page.status_fault": "故障",
   "mes.equipment_detail_page.status_maintenance": "维护中",
   "mes.equipment_detail_page.status_scrapped": "已报废",
   "mes.equipment_detail_page.tab_basic": "基本信息",

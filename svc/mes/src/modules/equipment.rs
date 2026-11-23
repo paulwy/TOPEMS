@@ -22,6 +22,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 use crate::modules::equipment_maintenance_status::EquipmentMaintenanceStatus;
+use crate::modules::equipment_status::EquipmentStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -72,6 +73,7 @@ pub struct CreateEquipmentRequest {
     pub purchase_date: Option<chrono::NaiveDate>,
     pub warranty_expiry_date: Option<chrono::NaiveDate>,
     pub maintenance_frequency_days: Option<i32>,
+    pub status: Option<String>,
     pub description: Option<String>,
 }
 
@@ -149,7 +151,7 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
             .try_get::<Option<String>, _>("status")
             .ok()
             .flatten()
-            .unwrap_or_else(|| "normal".to_string()),
+            .unwrap_or_else(|| EquipmentStatus::DEFAULT.as_db_str().to_string()),
         location: r.try_get::<Option<String>, _>("location").ok().flatten(),
         purchase_date: naive_date_to_string(
             r.try_get::<Option<chrono::NaiveDate>, _>("purchase_date")
@@ -240,9 +242,18 @@ pub async fn list_equipment(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
+    if let Some(status) = query
+        .status
+        .as_deref()
+        .filter(|s| !s.is_empty() && *s != "all")
+    {
+        let Some(status) = EquipmentStatus::from_db_str(status) else {
+            return ApiResponse::bad_request(
+                "设备状态非法，允许值: idle/running/maintenance/fault/scrapped",
+            );
+        };
         where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(serde_json::Value::String(status.as_db_str().to_string()));
     }
 
     if let Some(search) = query.search {
@@ -401,6 +412,18 @@ pub async fn create_equipment(
         )
     });
 
+    let status = match req.status.as_deref() {
+        None => EquipmentStatus::DEFAULT,
+        Some(value) => match EquipmentStatus::from_db_str(value) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(
+                    "设备状态非法，允许值: idle/running/maintenance/fault/scrapped",
+                )
+            }
+        },
+    };
+
     let maintenance_frequency_days = req.maintenance_frequency_days.unwrap_or(30);
     let next_maintenance_date = req.purchase_date.map(|d| {
         let days = chrono::Duration::days(maintenance_frequency_days as i64);
@@ -414,7 +437,7 @@ pub async fn create_equipment(
             location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL, $10, $11, $12, $12, $13)
         RETURNING
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -426,6 +449,7 @@ pub async fn create_equipment(
     .bind(&req.name)
     .bind(&req.model)
     .bind(&req.manufacturer)
+    .bind(status.as_db_str())
     .bind(&req.location)
     .bind(req.purchase_date)
     .bind(req.warranty_expiry_date)
@@ -564,6 +588,18 @@ pub async fn update_equipment(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(value) => match EquipmentStatus::from_db_str(value) {
+            Some(status) => Some(status),
+            None => {
+                return ApiResponse::bad_request(
+                    "设备状态非法，允许值: idle/running/maintenance/fault/scrapped",
+                )
+            }
+        },
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE mes.equipment SET
@@ -591,7 +627,7 @@ pub async fn update_equipment(
     .bind(&req.name)
     .bind(&req.model)
     .bind(&req.manufacturer)
-    .bind(&req.status)
+    .bind(status.map(EquipmentStatus::as_db_str))
     .bind(&req.location)
     .bind(req.purchase_date)
     .bind(req.warranty_expiry_date)
@@ -744,11 +780,11 @@ pub async fn maintenance_equipment(
     let result = sqlx::query(
         r#"
         UPDATE mes.equipment SET
-            status = 'maintenance',
+            status = $5,
             last_maintenance_date = $2,
             next_maintenance_date = $3,
             updated_at = $4
-        WHERE id = $1 AND tenant_id = $5::uuid
+        WHERE id = $1 AND tenant_id = $6::uuid
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -760,6 +796,7 @@ pub async fn maintenance_equipment(
     .bind(today)
     .bind(next_maintenance_date)
     .bind(now)
+    .bind(EquipmentStatus::Maintenance.as_db_str())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -817,17 +854,24 @@ pub async fn get_equipment_statistics(
         }
     };
 
-    let stats = sqlx::query!(
+    let stats = sqlx::query(
         r#"
         SELECT
             COUNT(*) as total_count,
-            SUM(CASE WHEN status = 'normal' THEN 1 ELSE 0 END) as normal_count,
-            SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
-            SUM(CASE WHEN status = 'fault' THEN 1 ELSE 0 END) as fault_count,
-            SUM(CASE WHEN next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
+            COUNT(*) FILTER (WHERE status = $1) as idle_count,
+            COUNT(*) FILTER (WHERE status = $2) as running_count,
+            COUNT(*) FILTER (WHERE status = $3) as maintenance_count,
+            COUNT(*) FILTER (WHERE status = $4) as fault_count,
+            COUNT(*) FILTER (WHERE status = $5) as scrapped_count,
+            COUNT(*) FILTER (WHERE next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE) as pending_maintenance_count
         FROM mes.equipment
         "#,
     )
+    .bind(EquipmentStatus::Idle.as_db_str())
+    .bind(EquipmentStatus::Running.as_db_str())
+    .bind(EquipmentStatus::Maintenance.as_db_str())
+    .bind(EquipmentStatus::Fault.as_db_str())
+    .bind(EquipmentStatus::Scrapped.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -841,15 +885,16 @@ pub async fn get_equipment_statistics(
 
     ApiResponse::success(
         serde_json::json!({
-            "total": stats.total_count.unwrap_or(0),
-            "in_use": stats.normal_count.unwrap_or(0),
-            "idle": stats.fault_count.unwrap_or(0),
-            "maintenance": stats.maintenance_count.unwrap_or(0),
-            "scrapped": 0,
+            "total": stats.try_get::<i64, _>("total_count").unwrap_or(0),
+            "in_use": stats.try_get::<i64, _>("running_count").unwrap_or(0),
+            "idle": stats.try_get::<i64, _>("idle_count").unwrap_or(0),
+            "maintenance": stats.try_get::<i64, _>("maintenance_count").unwrap_or(0),
+            "fault": stats.try_get::<i64, _>("fault_count").unwrap_or(0),
+            "scrapped": stats.try_get::<i64, _>("scrapped_count").unwrap_or(0),
             "total_value": 0,
             "monthly_inspections": 0,
             "monthly_maintenances": 0,
-            "pending_repairs": stats.pending_maintenance_count.unwrap_or(0),
+            "pending_repairs": stats.try_get::<i64, _>("pending_maintenance_count").unwrap_or(0),
         }),
         "获取设备统计成功",
     )

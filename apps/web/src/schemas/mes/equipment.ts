@@ -89,6 +89,7 @@ export const equipmentSchema: EntitySchema = {
           { value: 'running', label: i18n.t('mes.equipment.k17') },
           { value: 'maintenance', label: i18n.t('mes.equipment.k18') },
           { value: 'fault', label: i18n.t('mes.equipment.k19') },
+          { value: 'scrapped', label: i18n.t('mes.equipment_detail_page.status_scrapped') },
         ],
       },
       listWidth: 100,
@@ -119,12 +120,14 @@ export const equipmentSchema: EntitySchema = {
         idle: 'default',
         maintenance: 'warning',
         fault: 'error',
+        scrapped: 'error',
       },
       labelMap: {
         running: i18n.t('mes.equipment.k22'),
         idle: i18n.t('mes.equipment.k23'),
         maintenance: i18n.t('mes.equipment.k24'),
         fault: i18n.t('mes.equipment.k25'),
+        scrapped: i18n.t('mes.equipment_detail_page.status_scrapped'),
       },
     },
     filters: [
@@ -138,6 +141,7 @@ export const equipmentSchema: EntitySchema = {
           { label: i18n.t('mes.equipment.k29'), value: 'idle' },
           { label: i18n.t('mes.equipment.k30'), value: 'maintenance' },
           { label: i18n.t('mes.equipment.k31'), value: 'fault' },
+          { label: i18n.t('mes.equipment_detail_page.status_scrapped'), value: 'scrapped' },
         ],
       },
       {

@@ -1492,6 +1492,13 @@
       "table": "mes.quality_patrol_items",
       "column": "status",
       "candidate": "docs/database/quality-patrol-item-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_status.rs",
+      "enum": "EquipmentStatus",
+      "table": "mes.equipment",
+      "column": "status",
+      "candidate": "docs/database/equipment-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

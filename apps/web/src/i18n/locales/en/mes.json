@@ -2747,6 +2747,8 @@
   "mes.equipment_detail_page.status_available": "Available",
   "mes.equipment_detail_page.status_idle": "Idle",
   "mes.equipment_detail_page.status_in_use": "In Use",
+  "mes.equipment_detail_page.status_running": "Running",
+  "mes.equipment_detail_page.status_fault": "Fault",
   "mes.equipment_detail_page.status_maintenance": "Under Maintenance",
   "mes.equipment_detail_page.status_scrapped": "Scrapped",
   "mes.equipment_detail_page.tab_basic": "Basic Info",

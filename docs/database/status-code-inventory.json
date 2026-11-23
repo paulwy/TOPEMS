@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 367,
+    "db_check_constraints": 368,
     "db_enum_types": 5,
-    "db_check_values": 163,
-    "rust_enums": 250,
-    "rust_enum_values": 217,
+    "db_check_values": 165,
+    "rust_enums": 251,
+    "rust_enum_values": 219,
     "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 227,
-    "frontend_keys_not_in_db_check": 69,
+    "frontend_status_keys": 228,
+    "frontend_keys_not_in_db_check": 68,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2424,6 +2424,25 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/equipment_status.rs",
+      "name": "EquipmentStatus",
+      "values": [
+        "Fault",
+        "Idle",
+        "Maintenance",
+        "Running",
+        "Scrapped"
+      ],
+      "normalized": [
+        "fault",
+        "idle",
+        "maintenance",
+        "running",
+        "scrapped"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/material_bom/bom_status.rs",
       "name": "BomStatus",
       "values": [
@@ -4535,6 +4554,7 @@
       "failed",
       "failure",
       "false_positive",
+      "fault",
       "frozen",
       "full",
       "generated",
@@ -4780,7 +4800,6 @@
       "false_positive",
       "good",
       "healthy",
-      "idle",
       "impact_assessed",
       "in-progress",
       "in_review",

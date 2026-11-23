@@ -2719,6 +2719,22 @@
     },
     {
       "schema": "mes",
+      "table": "equipment",
+      "constraint": "ck_mes_equipment_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "fault",
+        "idle",
+        "maintenance",
+        "running",
+        "scrapped"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['idle'::character varying, 'running'::character varying, 'maintenance'::character varying, 'fault'::character varying, 'scrapped'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "material_boms",
       "constraint": "ck_mes_material_boms_status_standard",
       "columns": [
@@ -6929,15 +6945,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": null
-    },
-    {
-      "schema": "mes",
-      "table": "equipment",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'available'::character varying"
     },
     {
       "schema": "mes",

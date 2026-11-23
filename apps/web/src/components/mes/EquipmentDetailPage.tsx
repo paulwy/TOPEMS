@@ -79,11 +79,15 @@ const EquipmentDetailPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'available':
-        return i18n.t('mes.equipment_detail_page.status_available');
+        return i18n.t('mes.equipment_detail_page.status_idle');
       case 'idle':
         return i18n.t('mes.equipment_detail_page.status_idle');
+      case 'running':
+        return i18n.t('mes.equipment_detail_page.status_running');
+      case 'fault':
+        return i18n.t('mes.equipment_detail_page.status_fault');
       case 'in_use':
-        return i18n.t('mes.equipment_detail_page.status_in_use');
+        return i18n.t('mes.equipment_detail_page.status_running');
       case 'maintenance':
         return i18n.t('mes.equipment_detail_page.status_maintenance');
       case 'scrapped':

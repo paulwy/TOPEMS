@@ -14,6 +14,7 @@ pub mod energy_management;
 pub mod equipment;
 pub mod equipment_maintenance_status;
 pub mod equipment_oee;
+pub mod equipment_status;
 pub mod material_bom;
 pub mod material_plan;
 pub mod material_plan_status;
