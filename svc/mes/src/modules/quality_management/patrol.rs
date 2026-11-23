@@ -6,6 +6,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::quality_management::patrol_status::QualityPatrolStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -109,15 +110,21 @@ pub async fn list_patrols(
         where_clause.push_str(" WHERE qp.tenant_id = $1::uuid");
     }
 
-    if let Some(status) = query.status {
-        let idx = params.len() + 1;
-        let prefix = if where_clause.is_empty() {
-            " WHERE"
-        } else {
-            " AND"
-        };
-        where_clause.push_str(&format!("{} qp.status = ${}", prefix, idx));
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = QualityPatrolStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的巡检状态");
+            };
+            let idx = params.len() + 1;
+            let prefix = if where_clause.is_empty() {
+                " WHERE"
+            } else {
+                " AND"
+            };
+            where_clause.push_str(&format!("{} qp.status = ${}", prefix, idx));
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -335,7 +342,9 @@ pub async fn get_patrol(
                 workstation_name: r.workstation_name,
                 inspector: r.inspector,
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
@@ -419,7 +428,13 @@ pub async fn create_patrol(
                         .and_then(|d| d.and_hms_opt(0, 0, 0))
                 })
         }),
-        body.status.unwrap_or_else(|| "pending".to_string()),
+        match body.status.as_deref() {
+            None => QualityPatrolStatus::DEFAULT.as_db_str(),
+            Some(raw) => match QualityPatrolStatus::from_db_str(raw) {
+                Some(status) => status.as_db_str(),
+                None => return ApiResponse::bad_request("无效的巡检状态"),
+            },
+        },
         body.result,
         body.findings,
         body.memo,
@@ -438,7 +453,9 @@ pub async fn create_patrol(
                 workstation_name: r.workstation_name,
                 inspector: r.inspector,
                 patrol_time: r.patrol_time.unwrap_or_default(),
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
@@ -507,6 +524,14 @@ pub async fn update_patrol(
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
     let tenant_id = get_tenant_id(&claims);
+    let status = match body.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match QualityPatrolStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的巡检状态"),
+        },
+    };
     let result = sqlx::query_as::<_, PatrolUpdateRow>(
         r#"
         UPDATE mes.quality_patrols
@@ -534,7 +559,7 @@ pub async fn update_patrol(
     .bind(body.workstation_name)
     .bind(body.inspector)
     .bind(body.patrol_time)
-    .bind(body.status)
+    .bind(status.map(QualityPatrolStatus::as_db_str))
     .bind(body.result)
     .bind(body.findings)
     .bind(body.memo)
@@ -553,7 +578,9 @@ pub async fn update_patrol(
                 workstation_name: r.workstation_name,
                 inspector: r.inspector,
                 patrol_time: r.patrol_time.unwrap_or_default(),
-                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
@@ -732,7 +759,9 @@ pub async fn list_patrol_items(
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value,
-                    status: r.status.unwrap_or_else(|| "pending".to_string()),
+                    status: r
+                        .status
+                        .unwrap_or_else(|| QualityPatrolStatus::DEFAULT.as_db_str().to_string()),
                     remark: r.remark,
                 })
                 .collect();

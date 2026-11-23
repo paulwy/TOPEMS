@@ -14,6 +14,7 @@ use topems_shared_db::decimal::big_decimal_to_f64;
 pub mod inspection;
 pub mod inspection_status;
 mod patrol;
+pub mod patrol_status;
 mod standard;
 
 pub use inspection::*;

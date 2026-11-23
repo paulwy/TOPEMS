@@ -1478,6 +1478,13 @@
       "table": "mes.wips",
       "column": "status",
       "candidate": "docs/database/wip-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/patrol_status.rs",
+      "enum": "QualityPatrolStatus",
+      "table": "mes.quality_patrols",
+      "column": "status",
+      "candidate": "docs/database/quality-patrol-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
