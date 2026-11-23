@@ -31,6 +31,7 @@ pub mod db_structure;
 pub mod dict;
 pub mod documents;
 pub mod erp_plugin;
+pub mod fin_reconciliation_status;
 pub mod fixed_asset;
 pub mod health;
 pub mod holidays;

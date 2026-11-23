@@ -1716,6 +1716,20 @@
       "table": "finance.payables",
       "column": "status",
       "candidate": "ck_finance_payables_status_standard"
+    },
+    {
+      "file": "svc/erp/src/event_handlers/mod.rs",
+      "enum": "FinReconciliationStatus",
+      "table": "erp.fin_reconciliations",
+      "column": "status",
+      "candidate": "ck_erp_fin_reconciliations_status_standard"
+    },
+    {
+      "file": "svc/finance/src/modules/ap_payment_status.rs",
+      "enum": "PaymentStatus",
+      "table": "finance.core_finance_payments",
+      "column": "status",
+      "candidate": "ck_finance_core_finance_payments_status_standard"
     }
   ]
 }

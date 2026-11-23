@@ -17,6 +17,7 @@
 //! - `PaymentReceived` → 自动核销应收账款（V20.1 新增）
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
+use crate::modules::fin_reconciliation_status::FinReconciliationStatus;
 use crate::modules::receivable_status::ReceivableStatus;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
@@ -1550,6 +1551,14 @@ impl ErpEventHandlers {
             ))
         })?;
 
+        // 事件载荷里的 status 是自由串：消费者侧严格校验，未知值显式失败。
+        let status = FinReconciliationStatus::from_db_str(&payload.status).ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "[erp] ReconciliationCreated 非法状态 - id={}, status={}",
+                payload.id, payload.status
+            ))
+        })?;
+
         sqlx::query(
             r#"INSERT INTO erp.fin_reconciliations
                (id, reconciliation_no, reconciliation_type, status, period,
@@ -1561,7 +1570,7 @@ impl ErpEventHandlers {
         .bind(payload.id)
         .bind(&recon_code)
         .bind(&payload.recon_type)
-        .bind(&payload.status)
+        .bind(status.as_db_str())
         .bind(&payload.period)
         .bind(payload.entity_id)
         .bind(payload.tenant_id)
@@ -1616,12 +1625,14 @@ impl ErpEventHandlers {
 
         sqlx::query(
             r#"UPDATE erp.fin_reconciliations
-               SET status = 'approved',
+               SET status = $3,
                    updated_at = NOW()
-               WHERE id = $1 AND status IN ('pending', 'draft') AND tenant_id = $2"#,
+               WHERE id = $1 AND status = ANY($4::text[]) AND tenant_id = $2"#,
         )
         .bind(payload.id)
         .bind(payload.tenant_id)
+        .bind(FinReconciliationStatus::Approved.as_db_str())
+        .bind(FinReconciliationStatus::APPROVABLE)
         .execute(&mut scope)
         .await
         .map_err(|e| {
@@ -1666,13 +1677,21 @@ impl ErpEventHandlers {
             ))
         })?;
 
+        // 事件载荷里的 status 是自由串：消费者侧严格校验，未知值显式失败。
+        let status = FinReconciliationStatus::from_db_str(&payload.status).ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "[erp] ReconciliationUpdated 非法状态 - id={}, status={}",
+                payload.id, payload.status
+            ))
+        })?;
+
         sqlx::query(
             r#"UPDATE erp.fin_reconciliations
                SET status = $1,
                    updated_at = NOW()
                WHERE id = $2 AND tenant_id = $3"#,
         )
-        .bind(&payload.status)
+        .bind(status.as_db_str())
         .bind(payload.id)
         .bind(payload.tenant_id)
         .execute(&mut scope)
