@@ -17,6 +17,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_tenant;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
+use crate::modules::material_requirement_status::MaterialRequirementStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -160,9 +161,15 @@ pub async fn list_material_requirements(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = MaterialRequirementStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的物料需求状态");
+            };
+            where_clause.push_str(" WHERE status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -271,7 +278,7 @@ pub async fn list_material_requirements(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "pending".to_string()),
+                .unwrap_or_else(|| MaterialRequirementStatus::DEFAULT.as_db_str().to_string()),
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: (r
@@ -380,7 +387,7 @@ pub async fn get_material_requirement(
                     .status
                     .clone()
                     .filter(|s| !s.is_empty())
-                    .unwrap_or_else(|| "pending".to_string()),
+                    .unwrap_or_else(|| MaterialRequirementStatus::DEFAULT.as_db_str().to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
                 created_at: r.created_at.unwrap_or_else(Utc::now),
@@ -459,9 +466,9 @@ pub async fn create_material_requirement(
         INSERT INTO mes.material_requirements (
             mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
-            required_date, priority, source_type, remark, tenant_id
+            required_date, priority, source_type, remark, status, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *
         "#,
         mrp_no,
@@ -478,6 +485,7 @@ pub async fn create_material_requirement(
         body.priority,
         body.source_type,
         body.remark,
+        MaterialRequirementStatus::DEFAULT.as_db_str(),
         tenant_id,
     )
     .fetch_one(&mut scope)
@@ -514,7 +522,7 @@ pub async fn create_material_requirement(
                     .status
                     .clone()
                     .filter(|s| !s.is_empty())
-                    .unwrap_or_else(|| "pending".to_string()),
+                    .unwrap_or_else(|| MaterialRequirementStatus::DEFAULT.as_db_str().to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
                 created_at: r.created_at.unwrap_or_else(Utc::now),
@@ -570,6 +578,14 @@ pub async fn update_material_requirement(
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
+    let status = match body.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match MaterialRequirementStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的物料需求状态"),
+        },
+    };
     let result = sqlx::query_unchecked!(
         r#"
         UPDATE mes.material_requirements
@@ -589,7 +605,7 @@ pub async fn update_material_requirement(
         available_quantity,
         body.required_date,
         body.priority,
-        body.status,
+        status.map(MaterialRequirementStatus::as_db_str),
         body.remark,
         uuid,
     )
@@ -627,7 +643,7 @@ pub async fn update_material_requirement(
                     .status
                     .clone()
                     .filter(|s| !s.is_empty())
-                    .unwrap_or_else(|| "pending".to_string()),
+                    .unwrap_or_else(|| MaterialRequirementStatus::DEFAULT.as_db_str().to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
                 created_at: r.created_at.unwrap_or_else(Utc::now),
@@ -829,7 +845,7 @@ pub async fn calculate_requirements(
                     NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").ok(),
                     Some("normal"),
                     Some("calculated"),
-                    Some("calculated"),
+                    Some(MaterialRequirementStatus::DEFAULT.as_db_str()),
                     tenant_id,
                 )
                 .fetch_one(&mut scope)
@@ -852,7 +868,9 @@ pub async fn calculate_requirements(
                         shortfall_quantity: Some(big_decimal_to_f64(r.shortfall_quantity)),
                         required_date: r.required_date,
                         priority: r.priority,
-                        status: r.status.unwrap_or_else(|| "pending".to_string()),
+                        status: r.status.unwrap_or_else(|| {
+                            MaterialRequirementStatus::DEFAULT.as_db_str().to_string()
+                        }),
                         source_type: r.source_type,
                         remark: r.remark,
                         created_at: r.created_at.unwrap_or_else(Utc::now),
@@ -920,14 +938,15 @@ pub async fn confirm_requirement(
         }
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query_unchecked!(
         r#"
         UPDATE mes.material_requirements
-        SET status = 'confirmed', updated_at = NOW()
+        SET status = $2, updated_at = NOW()
         WHERE id = $1
         RETURNING *
         "#,
         uuid,
+        MaterialRequirementStatus::Confirmed.as_db_str(),
     )
     .fetch_one(&mut scope)
     .await;
@@ -963,7 +982,7 @@ pub async fn confirm_requirement(
                     .status
                     .clone()
                     .filter(|s| !s.is_empty())
-                    .unwrap_or_else(|| "pending".to_string()),
+                    .unwrap_or_else(|| MaterialRequirementStatus::DEFAULT.as_db_str().to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
                 created_at: r.created_at.unwrap_or_else(Utc::now),
@@ -1025,14 +1044,15 @@ pub async fn release_requirement(
         }
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query_unchecked!(
         r#"
         UPDATE mes.material_requirements
-        SET status = 'released', updated_at = NOW()
+        SET status = $2, updated_at = NOW()
         WHERE id = $1
         RETURNING *
         "#,
         uuid,
+        MaterialRequirementStatus::Released.as_db_str(),
     )
     .fetch_one(&mut scope)
     .await;
@@ -1068,7 +1088,7 @@ pub async fn release_requirement(
                     .status
                     .clone()
                     .filter(|s| !s.is_empty())
-                    .unwrap_or_else(|| "pending".to_string()),
+                    .unwrap_or_else(|| MaterialRequirementStatus::DEFAULT.as_db_str().to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
                 created_at: r.created_at.unwrap_or_else(Utc::now),

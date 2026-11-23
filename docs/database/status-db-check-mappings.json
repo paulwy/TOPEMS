@@ -1450,6 +1450,13 @@
       "table": "mes.work_reports",
       "column": "status",
       "candidate": "docs/database/mes-work-report-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/material_requirement_status.rs",
+      "enum": "MaterialRequirementStatus",
+      "table": "mes.material_requirements",
+      "column": "status",
+      "candidate": "docs/database/material-requirement-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

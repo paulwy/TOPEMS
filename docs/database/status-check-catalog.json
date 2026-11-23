@@ -2749,6 +2749,22 @@
     },
     {
       "schema": "mes",
+      "table": "material_requirements",
+      "constraint": "ck_mes_material_requirements_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "draft",
+        "released"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['draft'::text, 'confirmed'::text, 'released'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "material_returns",
       "constraint": "ck_mes_material_returns_status_standard",
       "columns": [
@@ -6893,15 +6909,6 @@
       "table": "financial_records",
       "column": "status",
       "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "material_requirements",
-      "column": "status",
-      "type": "character varying(32)",
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"

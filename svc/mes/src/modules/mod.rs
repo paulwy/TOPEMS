@@ -17,6 +17,7 @@ pub mod material_bom;
 pub mod material_plan;
 pub mod material_plan_status;
 pub mod material_requirement;
+pub mod material_requirement_status;
 pub mod mes_plugin;
 pub mod oee_logic;
 pub mod openapi;

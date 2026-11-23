@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 361,
+    "db_check_constraints": 362,
     "db_enum_types": 5,
     "db_check_values": 161,
-    "rust_enums": 244,
+    "rust_enums": 245,
     "rust_enum_values": 215,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 225,
@@ -2471,6 +2471,25 @@
         "satisfied",
         "shortage",
         "sourced"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/material_requirement_status.rs",
+      "name": "MaterialRequirementStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "Confirmed",
+        "Draft",
+        "Released"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "confirmed",
+        "draft",
+        "released"
       ]
     },
     {
