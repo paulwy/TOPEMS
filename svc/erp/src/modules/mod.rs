@@ -38,6 +38,7 @@ pub mod hr_proxy;
 pub mod inventory;
 pub mod inventory_calc;
 pub mod leave_request;
+pub mod leave_request_status;
 pub mod master_data_assets;
 pub mod master_data_audit;
 pub mod master_data_catalog;

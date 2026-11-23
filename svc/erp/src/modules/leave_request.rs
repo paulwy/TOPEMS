@@ -10,6 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::leave_request_status::LeaveRequestStatus;
 use super::ApiState;
 use crate::models::{
     ApproveLeaveRequestRequest, CreateLeaveRequestRequest, LeaveRequest, RejectLeaveRequestRequest,
@@ -128,6 +129,12 @@ pub struct LeaveRequestQueryParams {
     pub employee_id: Option<Uuid>,
 }
 
+/// 响应归一：`status` 列落库值必须属于枚举集合，未知历史值回落到默认态
+fn normalize_leave(mut leave: LeaveRequest) -> LeaveRequest {
+    leave.status = LeaveRequestStatus::normalize(&leave.status).to_string();
+    leave
+}
+
 /// 从 Claims 提取 tenant_id
 fn tenant_id_from_claims(claims: &Claims) -> &str {
     claims
@@ -175,7 +182,16 @@ pub async fn list_leave_requests(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
-    let status_filter = params.status.clone();
+    let status_filter: Option<String> =
+        match LeaveRequestStatus::parse_filter(params.status.as_deref()) {
+            Ok(Some(status)) => Some(status.as_db_str().to_string()),
+            Ok(None) => None,
+            Err(_) => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "status 取值非法，允许 draft/pending/approved/rejected/cancelled".to_string(),
+                ))
+            }
+        };
     let type_filter = params.leave_type.clone();
     let employee_filter = params.employee_id;
 
@@ -222,6 +238,7 @@ pub async fn list_leave_requests(
             .await;
 
             let total = count_result.unwrap_or(0);
+            let requests: Vec<LeaveRequest> = requests.into_iter().map(normalize_leave).collect();
 
             ApiResponse::success(
                 PaginatedResponse::new(requests, total, page, page_size),
@@ -287,7 +304,7 @@ pub async fn create_leave_request(
             (id, employee_id, employee_name, leave_type, start_date, end_date,
              start_half_day, end_half_day, days, reason, status, tenant_id, created_at, updated_at)
         VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', $11, $12, $13)
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
@@ -303,6 +320,7 @@ pub async fn create_leave_request(
     .bind(req.end_half_day)
     .bind(days)
     .bind(&req.reason)
+    .bind(LeaveRequestStatus::DEFAULT.as_db_str())
     .bind(&tenant)
     .bind(now)
     .bind(now)
@@ -311,7 +329,7 @@ pub async fn create_leave_request(
 
     let (response, status, error_msg) = match &result {
         Ok(leave) => (
-            ApiResponse::success(leave.clone(), "请假申请创建成功"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请创建成功"),
             "success".to_string(),
             None,
         ),
@@ -397,7 +415,7 @@ pub async fn get_leave_request(
     .await;
 
     match result {
-        Ok(Some(leave)) => ApiResponse::success(leave, "获取请假申请成功"),
+        Ok(Some(leave)) => ApiResponse::success(normalize_leave(leave.clone()), "获取请假申请成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("请假申请不存在".to_string())),
         Err(e) => {
             tracing::error!("获取请假申请失败: {}", e);
@@ -507,7 +525,7 @@ pub async fn update_leave_request(
 
     let (response, status_str, error_msg) = match &result {
         Ok(leave) => (
-            ApiResponse::success(leave.clone(), "请假申请更新成功"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请更新成功"),
             "success".to_string(),
             None,
         ),
@@ -674,22 +692,24 @@ pub async fn submit_leave_request(
     let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
         "erp",
         r#"
-        UPDATE erp.leave_requests SET status = 'pending', updated_at = $2
-        WHERE id::TEXT = $1::TEXT AND tenant_id = $3::uuid AND status = 'draft'
+        UPDATE erp.leave_requests SET status = $2, updated_at = $3
+        WHERE id::TEXT = $1::TEXT AND tenant_id = $4::uuid AND status = $5
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         "#
     ))
     .bind(id)
+    .bind(LeaveRequestStatus::Pending.as_db_str())
     .bind(now)
     .bind(tenant)
+    .bind(LeaveRequestStatus::Draft.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(Some(leave)) => (
-            ApiResponse::success(leave.clone(), "请假申请已提交"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请已提交"),
             "success".to_string(),
             None,
         ),
@@ -780,25 +800,27 @@ pub async fn approve_leave_request(
         "erp",
         r#"
         UPDATE erp.leave_requests SET
-            status = 'approved', approved_by = $2, approved_at = $3,
-            rejected_reason = NULL, updated_at = $4
-        WHERE id::TEXT = $1::TEXT AND tenant_id = $5::uuid AND status = 'pending'
+            status = $2, approved_by = $3, approved_at = $4,
+            rejected_reason = NULL, updated_at = $5
+        WHERE id::TEXT = $1::TEXT AND tenant_id = $6::uuid AND status = $7
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         "#
     ))
     .bind(id)
+    .bind(LeaveRequestStatus::Approved.as_db_str())
     .bind(&req.approved_by)
     .bind(now)
     .bind(now)
     .bind(tenant)
+    .bind(LeaveRequestStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(Some(leave)) => (
-            ApiResponse::success(leave.clone(), "请假申请已批准"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请已批准"),
             "success".to_string(),
             None,
         ),
@@ -892,26 +914,28 @@ pub async fn reject_leave_request(
         "erp",
         r#"
         UPDATE erp.leave_requests SET
-            status = 'rejected', approved_by = $2, approved_at = $3,
-            rejected_reason = $4, updated_at = $5
-        WHERE id::TEXT = $1::TEXT AND tenant_id = $6::uuid AND status = 'pending'
+            status = $2, approved_by = $3, approved_at = $4,
+            rejected_reason = $5, updated_at = $6
+        WHERE id::TEXT = $1::TEXT AND tenant_id = $7::uuid AND status = $8
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         "#
     ))
     .bind(id)
+    .bind(LeaveRequestStatus::Rejected.as_db_str())
     .bind(&req.approved_by)
     .bind(now)
     .bind(&req.rejected_reason)
     .bind(now)
     .bind(tenant)
+    .bind(LeaveRequestStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(Some(leave)) => (
-            ApiResponse::success(leave.clone(), "请假申请已驳回"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请已驳回"),
             "success".to_string(),
             None,
         ),
@@ -996,22 +1020,25 @@ pub async fn cancel_leave_request(
     let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
         "erp",
         r#"
-        UPDATE erp.leave_requests SET status = 'cancelled', updated_at = $2
-        WHERE id::TEXT = $1::TEXT AND tenant_id = $3::uuid AND status IN ('draft', 'pending')
+        UPDATE erp.leave_requests SET status = $2, updated_at = $3
+        WHERE id::TEXT = $1::TEXT AND tenant_id = $4::uuid AND status IN ($5, $6)
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         "#
     ))
     .bind(id)
+    .bind(LeaveRequestStatus::Cancelled.as_db_str())
     .bind(now)
     .bind(tenant)
+    .bind(LeaveRequestStatus::Draft.as_db_str())
+    .bind(LeaveRequestStatus::Pending.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(Some(leave)) => (
-            ApiResponse::success(leave.clone(), "请假申请已撤销"),
+            ApiResponse::success(normalize_leave(leave.clone()), "请假申请已撤销"),
             "success".to_string(),
             None,
         ),

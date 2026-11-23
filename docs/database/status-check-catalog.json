@@ -1132,6 +1132,22 @@
     },
     {
       "schema": "erp",
+      "table": "leave_requests",
+      "constraint": "ck_erp_leave_requests_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "draft",
+        "pending",
+        "rejected"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'cancelled'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "erp",
       "table": "materials",
       "constraint": "ck_materials_status_standard",
       "columns": [
@@ -6115,15 +6131,6 @@
       "table": "financial_vouchers",
       "column": "status",
       "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
-    },
-    {
-      "schema": "erp",
-      "table": "leave_requests",
-      "column": "status",
-      "type": "character varying(16)",
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'draft'::character varying"

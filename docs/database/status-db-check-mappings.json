@@ -1576,6 +1576,13 @@
       "table": "ehs.safety_hazards",
       "column": "status",
       "candidate": "docs/database/safety-hazard-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/erp/src/modules/leave_request_status.rs",
+      "enum": "LeaveRequestStatus",
+      "table": "erp.leave_requests",
+      "column": "status",
+      "candidate": "docs/database/leave-request-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
