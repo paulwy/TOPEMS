@@ -2749,6 +2749,21 @@
     },
     {
       "schema": "mes",
+      "table": "material_returns",
+      "constraint": "ck_mes_material_returns_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "approved",
+        "cancelled",
+        "pending",
+        "returned"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'approved'::text, 'returned'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "process_flows",
       "constraint": "ck_process_flows_status_standard",
       "columns": [
@@ -6852,15 +6867,6 @@
     {
       "schema": "mes",
       "table": "material_requirements",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "material_returns",
       "column": "status",
       "type": "character varying(32)",
       "enum_type": "varchar",

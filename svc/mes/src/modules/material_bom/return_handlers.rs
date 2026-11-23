@@ -15,6 +15,22 @@ use topems_shared_db::decimal::big_decimal_to_f64;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::*;
+use super::return_status::MaterialReturnStatus;
+
+#[derive(Debug, sqlx::FromRow)]
+struct MaterialReturnRow {
+    id: Uuid,
+    return_no: String,
+    order_id: Option<Uuid>,
+    order_no: Option<String>,
+    status: Option<String>,
+    warehouse_id: Option<Uuid>,
+    operator_id: Option<Uuid>,
+    return_time: Option<DateTime<Utc>>,
+    notes: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
 
 pub async fn create_material_return(
     State(state): State<AppState>,
@@ -72,26 +88,27 @@ pub async fn create_material_return(
 
     let order_no_flat = order_no;
     let order_no_arg = order_no_flat;
-    let return_result = sqlx::query!(
+    let return_result = sqlx::query_as::<_, MaterialReturnRow>(
         r#"
         INSERT INTO mes.material_returns (
             return_no, order_id, order_no, status,
             warehouse_id, operator_id, notes, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $7, $8)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9)
         RETURNING 
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
             created_at, updated_at
         "#,
-        return_no,
-        req.order_id,
-        order_no_arg.unwrap_or_default(),
-        req.warehouse_id,
-        req.operator_id,
-        req.notes,
-        now,
-        tenant_id,
     )
+    .bind(return_no)
+    .bind(req.order_id)
+    .bind(order_no_arg.unwrap_or_default())
+    .bind(MaterialReturnStatus::DEFAULT.as_db_str())
+    .bind(req.warehouse_id)
+    .bind(req.operator_id)
+    .bind(req.notes)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -198,9 +215,15 @@ pub async fn list_material_returns(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = MaterialReturnStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的物料退库状态");
+            };
+            where_clause.push_str(" WHERE status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -463,27 +486,36 @@ pub async fn update_material_return(
         }
     };
 
-    let result = sqlx::query!(
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match MaterialReturnStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的物料退库状态"),
+        },
+    };
+    let result = sqlx::query_as::<_, MaterialReturnRow>(
         r#"
         UPDATE mes.material_returns SET
             status = COALESCE($2, status),
             warehouse_id = COALESCE($3, warehouse_id),
             operator_id = COALESCE($4, operator_id),
             notes = COALESCE($5, notes),
-            return_time = CASE WHEN $2 = 'completed' AND return_time IS NULL THEN $6 ELSE return_time END,
+            return_time = CASE WHEN $2 = $7 AND return_time IS NULL THEN $6 ELSE return_time END,
             updated_at = $6
         WHERE id = $1
         RETURNING id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
             created_at, updated_at
         "#,
-        id,
-        req.status,
-        req.warehouse_id,
-        req.operator_id,
-        req.notes,
-now,
     )
+    .bind(id)
+    .bind(status.map(MaterialReturnStatus::as_db_str))
+    .bind(req.warehouse_id)
+    .bind(req.operator_id)
+    .bind(req.notes)
+    .bind(now)
+    .bind(MaterialReturnStatus::Returned.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 

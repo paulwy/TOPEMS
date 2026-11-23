@@ -1429,6 +1429,13 @@
       "table": "mes.material_boms",
       "column": "status",
       "candidate": "docs/database/mes-bom-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/return_status.rs",
+      "enum": "MaterialReturnStatus",
+      "table": "mes.material_returns",
+      "column": "status",
+      "candidate": "docs/database/mes-material-return-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
