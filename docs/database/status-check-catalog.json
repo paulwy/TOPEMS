@@ -193,6 +193,34 @@
     },
     {
       "schema": "finance",
+      "table": "budgets",
+      "constraint": "ck_budgets_exhausted_requires_depleted_budget",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "exhausted"
+      ],
+      "definition": "CHECK ((((status)::text IS DISTINCT FROM 'exhausted'::text) OR (remaining_amount <= (0)::numeric)))"
+    },
+    {
+      "schema": "finance",
+      "table": "budgets",
+      "constraint": "ck_budgets_status_lifecycle_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "archived",
+        "exhausted",
+        "frozen",
+        "inactive"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'frozen'::text, 'exhausted'::text, 'archived'::text])))"
+    },
+    {
+      "schema": "finance",
       "table": "finance_u8_import_records",
       "constraint": "ck_finance_u8_import_records_status_standard",
       "columns": [
@@ -2713,15 +2741,6 @@
     {
       "schema": "finance",
       "table": "accounting_subjects",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "budgets",
       "column": "status",
       "type": "character varying(20)",
       "enum_type": "varchar",

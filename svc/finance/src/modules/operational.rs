@@ -644,12 +644,17 @@ pub async fn create_budget(
         (used_amount / total_budget) * rust_decimal::Decimal::from(100)
     };
     let create_status = match req.get("status").and_then(|v| v.as_str()) {
-        None => BudgetStatus::DEFAULT.as_db_str().to_string(),
-        Some(raw) => match BudgetStatus::normalize(raw) {
-            Some(status) => status.to_string(),
+        None => BudgetStatus::DEFAULT,
+        Some(raw) => match BudgetStatus::from_db_str(raw) {
+            Some(status) => status,
             None => return ApiResponse::bad_request("无效的预算状态"),
         },
     };
+    // 新建预算 used_amount 恒为 0、remaining_amount = total_budget，额度尚未耗尽；
+    // exhausted 与 ck_budgets_exhausted_requires_depleted_budget 联动冲突，入口直接拒绝。
+    if create_status == BudgetStatus::Exhausted {
+        return ApiResponse::bad_request("新建预算不能直接置为 exhausted（额度尚未耗尽）");
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -681,7 +686,7 @@ pub async fn create_budget(
     .bind(usage_rate)
     .bind(now)
     .bind(now)
-    .bind(&create_status)
+    .bind(create_status.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -791,31 +796,43 @@ pub async fn update_budget(
         }
     };
 
-    let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
-        "finance",
-        "SELECT status FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
-    ))
-    .bind(id)
-    .fetch_optional(&mut scope)
-    .await
-    {
-        Ok(Some(status)) => match BudgetStatus::from_db_str(&status) {
-            Some(status) => status,
-            None => return ApiResponse::bad_request("数据库中存在未知预算状态"),
-        },
-        Ok(None) => return ApiResponse::not_found("预算不存在"),
-        Err(e) => {
-            tracing::error!("查询预算状态失败: {}", e);
-            return ApiResponse::server_error("更新预算失败");
-        }
+    let (current_status_raw, current_used_amount) =
+        match sqlx::query_as::<_, (String, Decimal)>(only_own_schema_query!(
+            "finance",
+            "SELECT status, used_amount FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
+        ))
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(Some(row)) => row,
+            Ok(None) => return ApiResponse::not_found("预算不存在"),
+            Err(e) => {
+                tracing::error!("查询预算状态失败: {}", e);
+                return ApiResponse::server_error("更新预算失败");
+            }
+        };
+    let current_status = match BudgetStatus::from_db_str(&current_status_raw) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("数据库中存在未知预算状态"),
     };
     let status = match req.get("status").and_then(|v| v.as_str()) {
-        None => current_status.as_db_str().to_string(),
-        Some(raw) => match BudgetStatus::normalize(raw) {
-            Some(status) => status.to_string(),
+        None => current_status,
+        Some(raw) => match BudgetStatus::from_db_str(raw) {
+            Some(status) => status,
             None => return ApiResponse::bad_request("无效的预算状态"),
         },
     };
+
+    // 统一状态守卫：占用增量仅 active 允许；archived 只能恢复 active；exhausted 需 remaining <= 0。
+    if let Err(violation) = BudgetStatus::check_update(
+        current_status,
+        status,
+        used_amount > current_used_amount,
+        remaining_amount,
+    ) {
+        return ApiResponse::error(violation.http_status(), &violation.message(current_status));
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -844,7 +861,7 @@ pub async fn update_budget(
     .bind(used_amount)
     .bind(remaining_amount)
     .bind(usage_rate)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(now)
     .fetch_one(&mut scope)
     .await;

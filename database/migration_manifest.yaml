@@ -2937,3 +2937,11 @@ pending_forward_patches:
     effect: "替换 erp.sales_orders / erp.purchase_orders 的租户级 rls_tenant_isolation，各建 3 条公司级策略：company_read（SELECT，tenant_id=erp.group_tenant_of(app.tenant_id) 且 company_id=erp.current_company_id() 或 erp.company_readable(company_id)）、company_write（ALL，USING/WITH CHECK 只写本司）、system（ALL，app.rls_system='on' 平台通道）；company_id IS NULL 视为集团/平台行，仅平台与母公司通道可读。不改表结构、不改写入路径、不动数据"
     destructive_scan: "仅 DROP/CREATE POLICY、ENABLE/FORCE RLS、COMMENT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据；前置断言拒绝非预期策略名，避免误删"
     note: "执行顺序必须在 W13 第二段（回填 → 零 NULL → 影子读）之后。前置：两表 company_id 为 uuid 可空无默认、公司维度函数存在、策略仅旧租户级或本迁移 3 条；后置：每表 3 条策略、无 rls_tenant_isolation、RLS ENABLE+FORCE、行数与 NULL 归属不变。回滚 database/rollback/20261123150000_erp_orders_company_scope_rls.rollback.sql 只撤新策略并恢复 rls_tenant_isolation、自删账本，不动 company_id"
+
+  # ===== 2026-11-24：W5-B251 finance.budgets 五态约束回迁 =====
+  - version: "20261124100000"
+    file: "database/migrations/20261124100000_finance_budgets_status_lifecycle.sql"
+    status: to_apply
+    effect: "finance.budgets.status 收敛到 BudgetStatus 五态（active/inactive/frozen/exhausted/archived）：DROP 历史模板约束 ck_budgets_status_standard（仅 active/inactive/archived，frozen/exhausted 写入必失败），改建 ck_budgets_status_lifecycle_standard（NOT VALID 后立即 VALIDATE）；新增 ck_budgets_exhausted_requires_depleted_budget（exhausted 态要求 remaining_amount <= 0，防止状态与金额漂移）"
+    destructive_scan: "仅 DROP 1 条旧 CHECK、ADD/VALIDATE 2 条 CHECK；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据、不改列可空性；DO 块内 to_regclass + pg_constraint 存在性守卫，可重复执行"
+    note: "幂等：旧约束 DROP IF EXISTS；新约束按 conname+relid 判断后 ADD NOT VALID，未验证则 VALIDATE（本表百量级，扩容方向为旧值集超集，存量必然合法）。NULL 口径：status 在基线/参考库均 NOT NULL DEFAULT 'active'；历史 NULL 行因 CHECK 对 NULL 求值为 unknown 而通过，不匿改数据、不收紧可空性。回滚 database/rollback/20261124100000_finance_budgets_status_lifecycle.rollback.sql 以 NOT VALID 加回旧三态约束（存量 frozen/exhausted 不阻断回滚，但回滚后这两类值的新写入会被拒绝，业务侧须同步回退枚举）。来源：B251 候选 SQL 先落本地库，本迁移回迁入目录；docs/database/prod-only-status-checks-2026-11-23.json 对应条目同步删除"

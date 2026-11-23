@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 419,
+  "total": 418,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -16,7 +16,7 @@
     "doc_service": 1,
     "ehs": 28,
     "erp": 33,
-    "finance": 42,
+    "finance": 41,
     "flow": 7,
     "gis": 10,
     "hrm": 24,
@@ -129,7 +129,6 @@
     "B246": 1,
     "B247": 1,
     "B249": 1,
-    "B251": 1,
     "B252": 1,
     "B253": 1
   },
@@ -8793,28 +8792,6 @@
       "source_commit": "8f02baa90",
       "source_subject": "B249: wms.warehouses.status 收敛到 WarehouseStatus 四态",
       "note": "替换既有 ck_warehouses_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；参考库仅存旧约束"
-    },
-    {
-      "schema": "finance",
-      "table": "budgets",
-      "constraint": "ck_budgets_status_lifecycle_standard",
-      "columns": [
-        "status"
-      ],
-      "values": [
-        "active",
-        "archived",
-        "exhausted",
-        "frozen",
-        "inactive"
-      ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'frozen'::text, 'exhausted'::text, 'archived'::text])))) NOT VALID",
-      "convalidated_at_catalog": false,
-      "present_in_baseline_db": false,
-      "source_batch": "B251",
-      "source_commit": "d2e1a07d9",
-      "source_subject": "B251: finance.budgets.status 收敛到 BudgetStatus 五态",
-      "note": "替换既有 ck_budgets_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；参考库仅存旧约束"
     },
     {
       "schema": "finance",

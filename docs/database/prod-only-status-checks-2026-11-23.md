@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **419** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **418** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -31,7 +31,7 @@
 | `doc_service` | 1 |
 | `ehs` | 28 |
 | `erp` | 33 |
-| `finance` | 42 |
+| `finance` | 41 |
 | `flow` | 7 |
 | `gis` | 10 |
 | `hrm` | 24 |
@@ -144,7 +144,6 @@
 | B246 | 1 |
 | B247 | 1 |
 | B249 | 1 |
-| B251 | 1 |
 | B252 | 1 |
 | B253 | 1 |
 | W5-B B1（初始快照） | 184 |
@@ -206,7 +205,6 @@
 
 - W5-B249（B249）新增 `wms.warehouses.ck_warehouses_status_lifecycle_standard` 只有候选 SQL（`docs/database/wms-warehouse-status-lifecycle-check-candidates-2026-11-24.sql`）、无迁移；该约束替换既有 `ck_warehouses_status_standard`（active/inactive/archived），部署时必须先 DROP 旧约束；重建库仍保留旧约束，新约束不存在，已计入本清单待回迁。
 
-- W5-B251（B251）新增 `finance.budgets.ck_budgets_status_lifecycle_standard` 只有候选 SQL（`docs/database/finance-budget-status-check-candidates-2026-11-24.sql`）、无迁移；该约束替换既有 `ck_budgets_status_standard`（active/inactive/archived），部署时必须先 DROP 旧约束；重建库仍保留旧约束，新约束不存在，已计入本清单待回迁。
 
 - W5-B252（B252）新增 `finance.core_finance_periods.ck_core_finance_periods_status_standard` 只有候选 SQL（`docs/database/finance-period-status-check-candidates-2026-11-24.sql`）、无迁移；该列本身是原生枚举 `period_status`（open/closing/closed），DB 已拒绝枚举外值，本约束用于锁定枚举扩展并让状态盘点器识别显式约束；重建库不存在该 CHECK，已计入本清单待回迁。
 
@@ -250,8 +248,12 @@
 - B247 来源提交已回填：`ce3e680bc`。
 - B249 追加后读数：416 条；`wms.warehouses.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
 - B249 来源提交已回填：`8f02baa90`。
-- B251 追加后读数：417 条；`finance.budgets.status` 在参考库仍由旧约束覆盖，新五态约束未回迁。
-- B251 来源提交已回填：`d2e1a07d9`。
 - B252 追加后读数：418 条；`finance.core_finance_periods.status` 在参考库仍由原生枚举覆盖，显式 CHECK 未回迁。
 - B252 来源提交已回填：`7800deeb5`。
 - B253 追加后读数：419 条；`rs.rs_projects.status` 在参考库仍无约束，新四态约束未回迁。
+- **B251 已回迁**：`finance.budgets` 旧模板约束 `ck_budgets_status_standard`（active/inactive/archived）由迁移
+  `database/migrations/20261124100000_finance_budgets_status_lifecycle.sql` 替换为
+  `ck_budgets_status_lifecycle_standard`（五态，validated）+
+  `ck_budgets_exhausted_requires_depleted_budget`（`exhausted` ⇒ `remaining_amount <= 0`，validated）；
+  参考库已复现、目录已收录（33 → 35 条），故按「回迁一条删一条」从本清单移除，移除后读数 418 条。
+  B253 的「419」为 B251 移除前口径，不另行改写历史读数。证据 `docs/quality/finance-budget-status-guard-2026-11-24.md`。
