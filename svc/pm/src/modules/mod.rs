@@ -14,6 +14,7 @@ pub mod project_approval;
 pub mod project_approval_status;
 pub mod project_benefit;
 pub mod project_expense;
+pub mod project_expense_status;
 pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;

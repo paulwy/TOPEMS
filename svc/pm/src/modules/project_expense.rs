@@ -13,6 +13,7 @@ use uuid::Uuid;
 
 use crate::models::project_expense::{CreateExpenseRequest, ProjectExpense, UpdateExpenseRequest};
 use crate::modules::effective_tenant_id;
+use crate::modules::project_expense_status::ProjectExpenseStatus;
 
 // ==================== Pure functions ====================
 
@@ -27,6 +28,45 @@ pub fn should_approve_expense(amount: f64, threshold: f64, budget_remaining: f64
 }
 
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+
+/// 校验项目费用状态流转：不存在 404、存量未知值 400、非法流转 400。
+async fn ensure_expense_transition(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    project_id: Uuid,
+    id: Uuid,
+    to: ProjectExpenseStatus,
+) -> Result<(), ApiResponse<ProjectExpense>> {
+    let current_raw: Result<Option<String>, sqlx::Error> = sqlx::query_scalar(
+        "SELECT status FROM pm.project_expenses WHERE project_id = $1 AND id = $2",
+    )
+    .bind(project_id)
+    .bind(id)
+    .fetch_optional(&mut *scope)
+    .await;
+    let raw = match current_raw {
+        Ok(Some(raw)) => raw,
+        Ok(None) => return Err(ApiResponse::not_found("项目费用不存在")),
+        Err(e) => {
+            tracing::error!("查询项目费用状态失败: {}", e);
+            return Err(ApiResponse::server_error("查询项目费用状态失败"));
+        }
+    };
+    let current = match ProjectExpenseStatus::from_db_str(&raw) {
+        Some(status) => status,
+        None => {
+            return Err(ApiResponse::bad_request(&format!(
+                "项目费用当前状态非法: {raw}"
+            )))
+        }
+    };
+    if !current.can_transition_to(to) {
+        return Err(ApiResponse::bad_request(&format!(
+            "非法项目费用状态流转: {} -> {}",
+            current, to
+        )));
+    }
+    Ok(())
+}
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -157,7 +197,7 @@ async fn add_expense(
     .bind(req.budget_item_id)
     .bind(req.resource_id)
     .bind(&req.expense_ref_id)
-    .bind("pending")
+    .bind(ProjectExpenseStatus::DEFAULT.as_db_str())
     .bind(req.approval_workflow_id)
     .bind(&req.attachment_ids)
     .bind(&req.created_by)
@@ -262,6 +302,19 @@ async fn update_expense(
             return ApiResponse::server_error("初始化数据库作用域失败");
         }
     };
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match ProjectExpenseStatus::normalize(raw) {
+            Ok(status) => Some(status),
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
+    if let Some(to) = requested_status {
+        if let Err(resp) = ensure_expense_transition(&mut scope, project_id, id, to).await {
+            return resp;
+        }
+    }
+    let requested_status = requested_status.map(ProjectExpenseStatus::as_db_str);
     let now = Utc::now();
 
     // paid_date->approved_date, approved_by->approver; category/subcategory 表无列已删。
@@ -284,7 +337,7 @@ async fn update_expense(
     .bind(&req.description)
     .bind(req.amount)
     .bind(req.approved_date)
-    .bind(&req.status)
+    .bind(requested_status)
     .bind(&req.approver)
     .bind(now)
     .bind(project_id)
