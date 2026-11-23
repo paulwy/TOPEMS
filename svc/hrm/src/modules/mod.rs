@@ -26,6 +26,7 @@ pub mod openapi;
 pub mod payroll;
 pub mod payroll_calc;
 pub mod performance;
+pub mod performance_status;
 pub mod position;
 pub mod recruitment;
 pub mod recruitment_status;

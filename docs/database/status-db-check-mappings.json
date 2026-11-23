@@ -1660,6 +1660,20 @@
       "table": "hrm.interviews",
       "column": "status",
       "candidate": "ck_hrm_interviews_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/performance.rs",
+      "enum": "PerformanceReviewStatus",
+      "table": "hrm.performance_reviews",
+      "column": "status",
+      "candidate": "ck_hrm_performance_reviews_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/performance.rs",
+      "enum": "PerformanceGoalStatus",
+      "table": "hrm.performance_goals",
+      "column": "status",
+      "candidate": "ck_hrm_performance_goals_status_standard"
     }
   ]
 }

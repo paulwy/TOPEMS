@@ -12,7 +12,18 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use super::performance_status::{PerformanceGoalStatus, PerformanceReviewStatus};
 use super::ApiState;
+
+/// 响应兜底：未知历史值回落枚举默认态
+fn normalize_review(mut v: PerformanceReview) -> PerformanceReview {
+    v.status = PerformanceReviewStatus::normalize(&v.status).to_string();
+    v
+}
+fn normalize_goal(mut v: PerformanceGoal) -> PerformanceGoal {
+    v.status = PerformanceGoalStatus::normalize(&v.status).to_string();
+    v
+}
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -151,7 +162,10 @@ pub async fn list_reviews(
 
     let emp_id = params.employee_id;
     let review_period = params.review_period.clone();
-    let status_filter = params.status;
+    let status_filter = match PerformanceReviewStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的绩效评核状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", r#"
@@ -193,7 +207,7 @@ pub async fn list_reviews(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_review).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -238,7 +252,7 @@ pub async fn create_review(
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.performance_reviews (id, tenant_id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $8, $6, $7)
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
@@ -249,12 +263,13 @@ pub async fn create_review(
     .bind(req.reviewer_id)
     .bind(now)
     .bind(now)
+    .bind(PerformanceReviewStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(review) => (
-            ApiResponse::success(review.clone(), "绩效评核创建成功"),
+            ApiResponse::success(normalize_review(review.clone()), "绩效评核创建成功"),
             "success",
             None,
         ),
@@ -331,7 +346,7 @@ pub async fn get_review(
     .await;
 
     match result {
-        Ok(Some(review)) => ApiResponse::success(review, "查询成功"),
+        Ok(Some(review)) => ApiResponse::success(normalize_review(review), "查询成功"),
         Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在"),
         Err(e) => {
             tracing::error!("查询绩效评核失败: {}", e);
@@ -346,6 +361,14 @@ pub async fn update_review(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdatePerformanceReviewRequest>,
 ) -> ApiResponse<PerformanceReview> {
+    let status = match req.status.as_deref().map(str::trim) {
+        None => None,
+        Some("") => None,
+        Some(v) => match PerformanceReviewStatus::from_db_str(v) {
+            Some(s) => Some(s.as_db_str()),
+            None => return ApiResponse::bad_request("非法的绩效评核状态"),
+        },
+    };
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -367,7 +390,7 @@ pub async fn update_review(
         "#)
     )
     .bind(req.reviewer_id)
-    .bind(&req.status)
+    .bind(status)
     .bind(&req.overall_rating)
     .bind(&req.self_rating)
     .bind(&req.manager_rating)
@@ -386,7 +409,7 @@ pub async fn update_review(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(review, "绩效评核更新成功")
+            ApiResponse::success(normalize_review(review), "绩效评核更新成功")
         }
         Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在"),
         Err(e) => {
@@ -406,9 +429,10 @@ pub async fn delete_review(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = 'draft'"
+        "UPDATE hrm.performance_reviews SET deleted_at = NOW() WHERE id = $1 AND status = $2"
     ))
     .bind(id)
+    .bind(PerformanceReviewStatus::Draft.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -494,13 +518,15 @@ pub async fn submit_review(
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
-        SET status = 'submitted', updated_at = $2
-        WHERE id = $1 AND status = 'draft'
+        SET status = $3, updated_at = $2
+        WHERE id = $1 AND status = $4
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
     .bind(id)
     .bind(now)
+    .bind(PerformanceReviewStatus::Submitted.as_db_str())
+    .bind(PerformanceReviewStatus::Draft.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -512,7 +538,7 @@ pub async fn submit_review(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(review, "绩效评核已提交")
+            ApiResponse::success(normalize_review(review), "绩效评核已提交")
         }
         Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在或状态不正确"),
         Err(e) => {
@@ -547,13 +573,15 @@ pub async fn approve_review(
     let result = sqlx::query_as::<_, PerformanceReview>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
-        SET status = 'approved', updated_at = $2
-        WHERE id = $1 AND status = 'submitted'
+        SET status = $3, updated_at = $2
+        WHERE id = $1 AND status = $4
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
     .bind(id)
     .bind(now)
+    .bind(PerformanceReviewStatus::Approved.as_db_str())
+    .bind(PerformanceReviewStatus::Submitted.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -565,7 +593,7 @@ pub async fn approve_review(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(review, "绩效评核已批准")
+            ApiResponse::success(normalize_review(review), "绩效评核已批准")
         }
         Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在或状态不正确"),
         Err(e) => {
@@ -597,7 +625,10 @@ pub async fn list_goals(
     let offset = (page - 1) * page_size;
 
     let emp_id = params.employee_id;
-    let status_filter = params.status;
+    let status_filter = match PerformanceGoalStatus::parse_filter(params.status.as_deref()) {
+        Ok(v) => v.map(|x| x.as_db_str().to_string()),
+        Err(_) => return ApiResponse::bad_request("非法的绩效目标状态筛选值"),
+    };
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
         only_own_schema_query!("hrm", r#"
@@ -635,7 +666,7 @@ pub async fn list_goals(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_goal).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -680,7 +711,7 @@ pub async fn create_goal(
     let result = sqlx::query_as::<_, PerformanceGoal>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.performance_goals (id, tenant_id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $11, $8, $9, $10)
         RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
         "#)
     )
@@ -694,12 +725,13 @@ pub async fn create_goal(
     .bind(req.due_date)
     .bind(now)
     .bind(now)
+    .bind(PerformanceGoalStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(goal) => (
-            ApiResponse::success(goal.clone(), "绩效目标创建成功"),
+            ApiResponse::success(normalize_goal(goal.clone()), "绩效目标创建成功"),
             "success",
             None,
         ),
@@ -776,7 +808,7 @@ pub async fn get_goal(
     .await;
 
     match result {
-        Ok(Some(goal)) => ApiResponse::success(goal, "查询成功"),
+        Ok(Some(goal)) => ApiResponse::success(normalize_goal(goal), "查询成功"),
         Ok(None) => ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在"),
         Err(e) => {
             tracing::error!("查询绩效目标失败: {}", e);
@@ -791,6 +823,14 @@ pub async fn update_goal(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdatePerformanceGoalRequest>,
 ) -> ApiResponse<PerformanceGoal> {
+    let status = match req.status.as_deref().map(str::trim) {
+        None => None,
+        Some("") => None,
+        Some(v) => match PerformanceGoalStatus::from_db_str(v) {
+            Some(s) => Some(s.as_db_str()),
+            None => return ApiResponse::bad_request("非法的绩效目标状态"),
+        },
+    };
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -816,7 +856,7 @@ pub async fn update_goal(
     .bind(&req.target)
     .bind(&req.weight)
     .bind(&req.achieved)
-    .bind(&req.status)
+    .bind(status)
     .bind(req.due_date)
     .bind(now)
     .bind(id)
@@ -831,7 +871,7 @@ pub async fn update_goal(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(goal, "绩效目标更新成功")
+            ApiResponse::success(normalize_goal(goal), "绩效目标更新成功")
         }
         Ok(None) => ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在"),
         Err(e) => {
@@ -941,13 +981,16 @@ pub async fn get_employee_reviews(
     .await;
 
     match result {
-        Ok(items) => ApiResponse::success(
-            serde_json::json!({
-                "items": items,
-                "total": items.len() as i64
-            }),
-            "查询成功",
-        ),
+        Ok(items) => {
+            let total = items.len() as i64;
+            ApiResponse::success(
+                serde_json::json!({
+                    "items": items.into_iter().map(normalize_review).collect::<Vec<_>>(),
+                    "total": total
+                }),
+                "查询成功",
+            )
+        }
         Err(e) => {
             tracing::error!("查询员工绩效评核失败: {}", e);
             ApiResponse::<serde_json::Value>::server_error("查询员工绩效评核失败")
@@ -984,13 +1027,16 @@ pub async fn get_employee_goals(
     .await;
 
     match result {
-        Ok(items) => ApiResponse::success(
-            serde_json::json!({
-                "items": items,
-                "total": items.len() as i64
-            }),
-            "查询成功",
-        ),
+        Ok(items) => {
+            let total = items.len() as i64;
+            ApiResponse::success(
+                serde_json::json!({
+                    "items": items.into_iter().map(normalize_goal).collect::<Vec<_>>(),
+                    "total": total
+                }),
+                "查询成功",
+            )
+        }
         Err(e) => {
             tracing::error!("查询员工绩效目标失败: {}", e);
             ApiResponse::<serde_json::Value>::server_error("查询员工绩效目标失败")

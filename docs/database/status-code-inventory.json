@@ -2,13 +2,13 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 391,
+    "db_check_constraints": 393,
     "db_enum_types": 5,
-    "db_check_values": 180,
-    "rust_enums": 274,
-    "rust_enum_values": 232,
+    "db_check_values": 182,
+    "rust_enums": 276,
+    "rust_enum_values": 234,
     "rust_values_not_in_db_check": 57,
-    "frontend_status_keys": 241,
+    "frontend_status_keys": 243,
     "frontend_keys_not_in_db_check": 66,
     "rust_values_not_in_palette": 0
   },
@@ -2080,6 +2080,48 @@
         "cancelled",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/performance_status.rs",
+      "name": "PerformanceGoalStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/performance_status.rs",
+      "name": "PerformanceReviewStatus",
+      "values": [
+        "Approved",
+        "Archived",
+        "Completed",
+        "Draft",
+        "ManagerReviewed",
+        "Pending",
+        "SelfReviewed",
+        "Submitted"
+      ],
+      "normalized": [
+        "approved",
+        "archived",
+        "completed",
+        "draft",
+        "manager_reviewed",
+        "pending",
+        "self_reviewed",
+        "submitted"
       ]
     },
     {
@@ -4971,6 +5013,7 @@
       "lost",
       "low_stock",
       "maintenance",
+      "manager_reviewed",
       "manual",
       "matched",
       "max_retries_exceeded",
@@ -5052,6 +5095,7 @@
       "scheduled",
       "scrapped",
       "screening",
+      "self_reviewed",
       "sending",
       "sent",
       "settled",

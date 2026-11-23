@@ -32,6 +32,8 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   empty: 'default',
   rejected: 'error',
   screening: 'info',
+  self_reviewed: 'info',
+  manager_reviewed: 'warning',
   interviewing: 'primary',
   offered: 'success',
   hired: 'success',
