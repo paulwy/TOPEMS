@@ -1471,6 +1471,13 @@
       "table": "mes.teams",
       "column": "status",
       "candidate": "docs/database/team-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/wip_status.rs",
+      "enum": "WipStatus",
+      "table": "mes.wips",
+      "column": "status",
+      "candidate": "docs/database/wip-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

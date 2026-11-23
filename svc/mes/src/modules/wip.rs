@@ -27,6 +27,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
+use crate::modules::wip_status::WipStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 
@@ -113,6 +114,28 @@ pub struct ListWipsQuery {
     page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct WipCreateRow {
+    id: Uuid,
+    wip_no: String,
+    order_id: Option<Uuid>,
+    order_no: Option<String>,
+    product_id: Option<Uuid>,
+    product_name: String,
+    product_code: String,
+    quantity: BigDecimal,
+    current_process_id: Option<Uuid>,
+    current_work_station_id: Option<Uuid>,
+    status: Option<String>,
+    batch_no: Option<String>,
+    start_time: Option<DateTime<Utc>>,
+    last_transfer_time: Option<DateTime<Utc>>,
+    operator: Option<String>,
+    notes: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -283,9 +306,15 @@ pub async fn list_wips(
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
-    if let Some(status) = query.status {
-        where_clause.push_str(" WHERE w.status = $1");
-        params.push(serde_json::Value::String(status));
+    if let Some(raw_status) = query.status.as_deref() {
+        let raw_status = raw_status.trim();
+        if !raw_status.is_empty() && !raw_status.eq_ignore_ascii_case("all") {
+            let Some(status) = WipStatus::from_db_str(raw_status) else {
+                return ApiResponse::bad_request("无效的在制品状态");
+            };
+            where_clause.push_str(" WHERE w.status = $1");
+            params.push(serde_json::Value::String(status.as_db_str().to_string()));
+        }
     }
 
     if let Some(search) = query.search {
@@ -393,7 +422,7 @@ pub async fn list_wips(
                 .try_get::<Option<String>, _>("status")
                 .ok()
                 .flatten()
-                .unwrap_or_else(|| "in_progress".to_string()),
+                .unwrap_or_else(|| WipStatus::DEFAULT.as_db_str().to_string()),
             batch_no: r.try_get::<Option<String>, _>("batch_no").ok().flatten(),
             start_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("start_time")
@@ -504,35 +533,37 @@ pub async fn create_wip(
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, WipCreateRow>(
         r#"
         INSERT INTO mes.wips (
             wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
             status, batch_no, start_time, last_transfer_time, operator, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'in_progress', $10, $11, $11, $12, $13, $14, $14, $15)
-        RETURNING 
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, $13, $14, $15, $15, $16)
+        RETURNING
             id, wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
             status, batch_no, start_time, last_transfer_time, operator, notes,
             created_at, updated_at
         "#,
-        wip_no,
-        req.order_id,
-        order_no_arg.unwrap_or_default(),        req.product_id,
-        req.product_name,
-        req.product_code,
-        BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-        req.process_id,
-        req.work_station_id,
-        req.batch_no,
-Utc::now(),
-        req.operator,
-        req.notes,
-Utc::now(),
-        tenant_id,
     )
+    .bind(wip_no)
+    .bind(req.order_id)
+    .bind(order_no_arg.unwrap_or_default())
+    .bind(req.product_id)
+    .bind(req.product_name)
+    .bind(req.product_code)
+    .bind(BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default())
+    .bind(req.process_id)
+    .bind(req.work_station_id)
+    .bind(WipStatus::DEFAULT.as_db_str())
+    .bind(req.batch_no)
+    .bind(Utc::now())
+    .bind(req.operator)
+    .bind(req.notes)
+    .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -566,7 +597,9 @@ Utc::now(),
         current_process_name: None,
         current_work_station_id: result.current_work_station_id,
         current_work_station_name: None,
-        status: result.status.unwrap_or_else(|| "in_progress".to_string()),
+        status: result
+            .status
+            .unwrap_or_else(|| WipStatus::DEFAULT.as_db_str().to_string()),
         batch_no: result.batch_no,
         start_time: result.start_time,
         last_transfer_time: result.last_transfer_time,
@@ -659,7 +692,9 @@ pub async fn get_wip(
                 current_process_name: r.process_name,
                 current_work_station_id: r.current_work_station_id,
                 current_work_station_name: r.work_station_name,
-                status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| WipStatus::DEFAULT.as_db_str().to_string()),
                 batch_no: r.batch_no,
                 start_time: r.start_time,
                 last_transfer_time: r.last_transfer_time,
@@ -713,6 +748,14 @@ pub async fn update_wip(
         }
     };
 
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) if raw.trim().is_empty() => None,
+        Some(raw) => match WipStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的在制品状态"),
+        },
+    };
     let result = sqlx::query!(
         r#"
         UPDATE mes.wips SET
@@ -731,7 +774,7 @@ pub async fn update_wip(
         id,
         req.quantity
             .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.status,
+        status.map(WipStatus::as_db_str),
         req.batch_no,
         req.notes,
         Utc::now(),
@@ -771,7 +814,9 @@ pub async fn update_wip(
                 current_process_name: None,
                 current_work_station_id: r.current_work_station_id,
                 current_work_station_name: None,
-                status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+                status: r
+                    .status
+                    .unwrap_or_else(|| WipStatus::DEFAULT.as_db_str().to_string()),
                 batch_no: r.batch_no,
                 start_time: r.start_time,
                 last_transfer_time: r.last_transfer_time,
@@ -823,13 +868,14 @@ pub async fn delete_wip(
         }
     };
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE mes.wips SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('completed', 'cancelled')
+        WHERE id = $1 AND status = $2
         "#,
-        id,
     )
+    .bind(id)
+    .bind(WipStatus::Completed.as_db_str())
     .execute(&mut scope)
     .await;
 
@@ -1218,9 +1264,10 @@ pub async fn get_wip_statistics(
             COUNT(*) as total_wip,
             COALESCE(SUM(quantity), 0) as total_quantity
         FROM mes.wips
-        WHERE status = 'in_progress'
+        WHERE status = $1
         "#,
     )
+    .bind(WipStatus::InProgress.as_db_str())
     .fetch_one(&mut scope)
     .await;
 

@@ -98,7 +98,7 @@ export const wipSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('mes.wip.k13'),
       type: 'select',
-      defaultValue: 'pending',
+      defaultValue: 'in_progress',
       options: {
         type: 'static',
         options: [

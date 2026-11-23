@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 364,
+    "db_check_constraints": 365,
     "db_enum_types": 5,
     "db_check_values": 161,
-    "rust_enums": 247,
+    "rust_enums": 248,
     "rust_enum_values": 215,
     "rust_values_not_in_db_check": 59,
     "frontend_status_keys": 225,
@@ -2627,6 +2627,23 @@
       "normalized": [
         "active",
         "inactive"
+      ]
+    },
+    {
+      "module": "mes",
+      "file": "svc/mes/src/modules/wip_status.rs",
+      "name": "WipStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Pending",
+        "Transferred"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "pending",
+        "transferred"
       ]
     },
     {

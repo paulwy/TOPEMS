@@ -41,6 +41,7 @@ pub mod settings;
 pub mod team;
 pub mod team_status;
 pub mod wip;
+pub mod wip_status;
 pub mod work_order;
 pub mod work_order_status;
 pub mod work_report;

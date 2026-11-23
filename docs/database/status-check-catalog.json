@@ -3006,6 +3006,21 @@
     },
     {
       "schema": "mes",
+      "table": "wips",
+      "constraint": "ck_mes_wips_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "completed",
+        "in_progress",
+        "pending",
+        "transferred"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'transferred'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "work_orders",
       "constraint": "work_orders_status_check",
       "columns": [
@@ -6967,15 +6982,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "wips",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'in_progress'::character varying"
     },
     {
       "schema": "mobile",
