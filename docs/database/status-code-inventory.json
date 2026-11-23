@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 298,
+    "rust_enums": 299,
     "rust_enum_values": 238,
     "rust_values_not_in_db_check": 191,
     "frontend_status_keys": 247,
@@ -3580,6 +3580,19 @@
       "normalized": [
         "active",
         "completed",
+        "pending"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/project_report_status.rs",
+      "name": "ProjectReportStatus",
+      "values": [
+        "Generated",
+        "Pending"
+      ],
+      "normalized": [
+        "generated",
         "pending"
       ]
     },

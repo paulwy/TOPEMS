@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **400** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **401** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -44,7 +44,7 @@
 | `mobile` | 5 |
 | `pdm` | 9 |
 | `plugin_mes` | 1 |
-| `pm` | 13 |
+| `pm` | 14 |
 | `portal` | 7 |
 | `public` | 42 |
 | `qms` | 11 |
@@ -128,6 +128,7 @@
 | B230 | 1 |
 | B231 | 1 |
 | B232 | 1 |
+| B233 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -160,6 +161,7 @@
 - W5-B230（B230）新增 `pm.project_milestones.ck_project_milestones_status_standard` 只有候选 SQL（`docs/database/pm-milestone-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B231（B231）新增 `pm.project_expenses.ck_project_expenses_status_standard` 只有候选 SQL（`docs/database/pm-project-expense-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B232（B232）新增 `pm.project_phases.ck_project_phases_status_standard` 只有候选 SQL（`docs/database/pm-project-phase-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
+- W5-B233（B233）新增 `pm.project_reports.ck_project_reports_status_standard` 只有候选 SQL（`docs/database/pm-project-report-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 
 - 2026-11-23 复核：以「基线 + 前向迁移」从零重建参考库（水位 `20261123142000`，当前链尾；上游 B216–B223 只加候选 SQL、未加迁移）后逐条比对，391 条均不存在于重建库，且 `database/migrations` 无对应 `ADD CONSTRAINT`，故全部保留。
 
@@ -179,3 +181,4 @@
 - B230 追加后读数：398 条；`pm.project_milestones.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B231 追加后读数：399 条；`pm.project_expenses.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B232 追加后读数：400 条；`pm.project_phases.status` 仍为 uncovered，目录读数不变（33/5/683）。
+- B233 追加后读数：401 条；`pm.project_reports.status` 仍为 uncovered，目录读数不变（33/5/683）。

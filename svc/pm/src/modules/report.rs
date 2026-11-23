@@ -19,6 +19,7 @@ use crate::models::report::{
     CreateReportRequest, CreateReportTemplateRequest, ProjectReport, ReportTemplate,
 };
 use crate::modules::effective_tenant_id;
+use crate::modules::project_report_status::ProjectReportStatus;
 
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 
@@ -163,7 +164,7 @@ async fn create_report(
 
     let report = sqlx::query_as::<_, ProjectReport>(
         only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -171,6 +172,7 @@ async fn create_report(
     .bind(&req.report_name)
     .bind(&req.report_type)
     .bind(req.report_period)
+    .bind(ProjectReportStatus::DEFAULT.as_db_str())
     .bind(req.generated_by)
     .bind(now)
     .bind(now)
@@ -327,7 +329,7 @@ async fn generate_report(
 
     let report = sqlx::query_as::<_, ProjectReport>(
         only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12, $13) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -335,6 +337,7 @@ async fn generate_report(
     .bind(&req.report_name)
     .bind(&req.report_type)
     .bind(req.report_period)
+    .bind(ProjectReportStatus::Generated.as_db_str())
     .bind(now)
     .bind(report_data)
     .bind(summary)

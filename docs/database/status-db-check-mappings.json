@@ -1926,6 +1926,13 @@
       "table": "pm.project_phases",
       "column": "status",
       "candidate": "docs/database/pm-project-phase-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/project_report_status.rs",
+      "enum": "ProjectReportStatus",
+      "table": "pm.project_reports",
+      "column": "status",
+      "candidate": "docs/database/pm-project-report-status-check-candidates-2026-11-23.sql"
     }
   ]
 }
