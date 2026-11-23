@@ -1891,6 +1891,13 @@
       "table": "pm.project_approvals",
       "column": "status",
       "candidate": "docs/database/pm-project-approval-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/contract_status.rs",
+      "enum": "ContractStatus",
+      "table": "pm.contracts",
+      "column": "status",
+      "candidate": "docs/database/pm-contract-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

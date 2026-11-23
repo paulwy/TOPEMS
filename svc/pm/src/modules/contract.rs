@@ -17,10 +17,46 @@ use crate::models::contract::{
     CreateContractMilestoneRequest, CreateContractRequest, CreateContractTemplateRequest,
     CreatePaymentScheduleRequest, UpdateContractRequest,
 };
+use crate::modules::contract_status::ContractStatus;
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+
+async fn ensure_contract_transition(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    id: Uuid,
+    to: ContractStatus,
+) -> Result<(), ApiResponse<Contract>> {
+    let current_raw: Result<Option<String>, sqlx::Error> =
+        sqlx::query_scalar("SELECT status FROM pm.contracts WHERE id = $1 AND deleted_at IS NULL")
+            .bind(id)
+            .fetch_optional(&mut *scope)
+            .await;
+    let raw = match current_raw {
+        Ok(Some(raw)) => raw,
+        Ok(None) => return Err(ApiResponse::not_found("合同不存在")),
+        Err(e) => {
+            tracing::error!("查询合同状态失败: {}", e);
+            return Err(ApiResponse::server_error("查询合同状态失败"));
+        }
+    };
+    let current = match ContractStatus::from_db_str(&raw) {
+        Some(status) => status,
+        None => {
+            return Err(ApiResponse::bad_request(&format!(
+                "合同当前状态非法: {raw}"
+            )))
+        }
+    };
+    if !current.can_transition_to(to) {
+        return Err(ApiResponse::bad_request(&format!(
+            "非法合同状态流转: {} -> {}",
+            current, to
+        )));
+    }
+    Ok(())
+}
 
 pub fn create_routes(db: Db) -> Router {
     Router::new()
@@ -266,7 +302,20 @@ async fn update_contract(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"status": req.status, "amount": req.amount}));
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match ContractStatus::normalize(raw) {
+            Ok(status) => Some(status),
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
+    if let Some(to) = requested_status {
+        if let Err(resp) = ensure_contract_transition(&mut scope, id, to).await {
+            return resp;
+        }
+    }
+    let requested_status = requested_status.map(ContractStatus::as_db_str);
+    let details = Some(serde_json::json!({"status": requested_status, "amount": req.amount}));
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
         r#"UPDATE pm.contracts SET
@@ -292,7 +341,7 @@ async fn update_contract(
     .bind(parse_date_opt(&req.sign_date))
     .bind(parse_date_opt(&req.start_date))
     .bind(parse_date_opt(&req.end_date))
-    .bind(req.status)
+    .bind(requested_status)
     .bind(Utc::now())
     .bind(id)
     .fetch_one(&mut scope)
@@ -458,11 +507,15 @@ async fn submit_contract(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    if let Err(resp) = ensure_contract_transition(&mut scope, id, ContractStatus::Pending).await {
+        return resp;
+    }
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2  RETURNING *"
+        "UPDATE pm.contracts SET status = $2, updated_at = $1 WHERE id = $3 RETURNING *"
     ))
     .bind(Utc::now())
+    .bind(ContractStatus::Pending.as_db_str())
     .bind(id)
     .fetch_one(&mut scope)
     .await;
@@ -553,11 +606,15 @@ async fn approve_contract(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    if let Err(resp) = ensure_contract_transition(&mut scope, id, ContractStatus::Approved).await {
+        return resp;
+    }
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2  RETURNING *"
+        "UPDATE pm.contracts SET status = $2, updated_at = $1 WHERE id = $3 RETURNING *"
     ))
     .bind(Utc::now())
+    .bind(ContractStatus::Approved.as_db_str())
     .bind(id)
     .fetch_one(&mut scope)
     .await;
@@ -648,11 +705,15 @@ async fn reject_contract(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    if let Err(resp) = ensure_contract_transition(&mut scope, id, ContractStatus::Rejected).await {
+        return resp;
+    }
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2  RETURNING *"
+        "UPDATE pm.contracts SET status = $2, updated_at = $1 WHERE id = $3 RETURNING *"
     ))
     .bind(Utc::now())
+    .bind(ContractStatus::Rejected.as_db_str())
     .bind(id)
     .fetch_one(&mut scope)
     .await;

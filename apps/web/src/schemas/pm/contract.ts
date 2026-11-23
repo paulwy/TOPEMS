@@ -30,6 +30,7 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'draft', label: i18n.t('shared.contract.k10') },
   { value: 'pending', label: i18n.t('shared.contract.k11') },
   { value: 'approved', label: i18n.t('shared.contract.k12') },
+  { value: 'rejected', label: i18n.t('shared.contract.k41') },
   { value: 'active', label: i18n.t('shared.contract.k13') },
   { value: 'completed', label: i18n.t('shared.contract.k14') },
   { value: 'cancelled', label: i18n.t('shared.contract.k15') },
@@ -43,7 +44,7 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat('zh-CN', {
 
 export const contractSchema: EntitySchema = {
   entity: 'pm_contract',
-  title: i18n.t('shared.contract.k16'),
+  title: i18n.t('shared.contract.k41'),
   description: i18n.t('shared.contract.k17'),
 
   api: {

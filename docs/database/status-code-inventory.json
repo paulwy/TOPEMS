@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 293,
+    "rust_enums": 294,
     "rust_enum_values": 238,
     "rust_values_not_in_db_check": 191,
     "frontend_status_keys": 247,
@@ -3478,6 +3478,29 @@
         "draft",
         "paused",
         "pending_approval",
+        "rejected"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/contract_status.rs",
+      "name": "ContractStatus",
+      "values": [
+        "Active",
+        "Approved",
+        "Cancelled",
+        "Completed",
+        "Draft",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "active",
+        "approved",
+        "cancelled",
+        "completed",
+        "draft",
+        "pending",
         "rejected"
       ]
     },

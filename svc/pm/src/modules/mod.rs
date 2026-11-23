@@ -2,6 +2,7 @@ pub mod acceptance;
 pub mod analytics;
 pub mod budget;
 pub mod contract;
+pub mod contract_status;
 pub mod document;
 pub mod notification;
 pub mod openapi;
