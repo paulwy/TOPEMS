@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **404** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
+共 **405** 条（其中订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 各 1 条）。
 
 ### 按 schema
 
@@ -44,7 +44,7 @@
 | `mobile` | 5 |
 | `pdm` | 9 |
 | `plugin_mes` | 1 |
-| `pm` | 16 |
+| `pm` | 17 |
 | `portal` | 7 |
 | `public` | 42 |
 | `qms` | 11 |
@@ -132,6 +132,7 @@
 | B234 | 1 |
 | B235 | 1 |
 | B236 | 1 |
+| B237 | 1 |
 | W5-B B1（初始快照） | 184 |
 | 模块统一枚举：mes | 5 |
 | 模块统一枚举：scm | 7 |
@@ -166,6 +167,7 @@
 - W5-B232（B232）新增 `pm.project_phases.ck_project_phases_status_standard` 只有候选 SQL（`docs/database/pm-project-phase-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B233（B233）新增 `pm.project_reports.ck_project_reports_status_standard` 只有候选 SQL（`docs/database/pm-project-report-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B234（B234）新增 `pm.defects.ck_defects_status_standard` 只有候选 SQL（`docs/database/pm-defect-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
+- W5-B237（B237）新增 `pm.project_resources.ck_project_resources_status_standard` 只有候选 SQL（`docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B236（B236）新增 `rd.bugs.ck_rd_bugs_status_standard` 只有候选 SQL（`docs/database/rd-bug-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B235（B235）新增 `pm.project_risks.ck_project_risks_status_standard` 只有候选 SQL（`docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 
@@ -191,3 +193,4 @@
 - B234 追加后读数：402 条；`pm.defects.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B235 追加后读数：403 条；`pm.project_risks.status` 仍为 uncovered，目录读数不变（33/5/683）。
 - B236 追加后读数：404 条；`rd.bugs.status` 仍为 uncovered，目录读数不变（33/5/683）。
+- B237 追加后读数：405 条；`pm.project_resources.status` 仍为 uncovered，目录读数不变（33/5/683）。

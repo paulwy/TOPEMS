@@ -15,6 +15,7 @@ use crate::models::project_resource::{
     CreateResourceRequest, ProjectResource, UpdateResourceRequest,
 };
 use crate::modules::effective_tenant_id;
+use crate::modules::project_resource_status::ProjectResourceStatus;
 
 // ==================== Pure functions ====================
 
@@ -157,7 +158,7 @@ async fn add_resource(
     .bind(&req.resource_service)
     .bind(rust_decimal::Decimal::ZERO)
     .bind(rust_decimal::Decimal::ZERO)
-    .bind("active")
+    .bind(ProjectResourceStatus::DEFAULT.as_db_str())
     .bind(&req.created_by)
     .bind(req.start_date)
     .bind(req.end_date)
@@ -269,6 +270,31 @@ async fn update_resource(
     };
     let now = Utc::now();
 
+    let current = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "pm",
+        "SELECT status FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"
+    ))
+    .bind(project_id)
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(s)) => s,
+        Ok(None) => return ApiResponse::not_found("项目资源不存在"),
+        Err(e) => {
+            tracing::error!("查询项目资源状态失败: {}", e);
+            return ApiResponse::server_error("更新项目资源失败");
+        }
+    };
+    let status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match ProjectResourceStatus::from_db_str(raw) {
+            Some(next) if next.can_transition_from(&current) => Some(next.as_db_str().to_string()),
+            Some(_) => return ApiResponse::bad_request("当前状态不允许该流转"),
+            None => return ApiResponse::bad_request("无效的项目资源状态"),
+        },
+    };
+
     // role->resource_type, actual_hours->quantity, actual_cost->cost。
     let result = sqlx::query_as::<_, ProjectResource>(only_own_schema_query!(
         "pm",
@@ -296,7 +322,7 @@ async fn update_resource(
     .bind(req.allocation_percent)
     .bind(req.quantity)
     .bind(req.cost)
-    .bind(&req.status)
+    .bind(&status)
     .bind(&req.resource_id)
     .bind(&req.role)
     .bind(req.actual_hours)

@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 404,
+  "total": 405,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -29,7 +29,7 @@
     "mobile": 5,
     "pdm": 9,
     "plugin_mes": 1,
-    "pm": 16,
+    "pm": 17,
     "portal": 7,
     "public": 42,
     "qms": 11,
@@ -116,7 +116,8 @@
     "B233": 1,
     "B234": 1,
     "B235": 1,
-    "B236": 1
+    "B236": 1,
+    "B237": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8528,6 +8529,27 @@
       "source_batch": "B236",
       "source_commit": "ec2648317",
       "source_subject": "B236: rd.bugs.status 收敛到 BugStatus 枚举",
+      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
+    },
+    {
+      "schema": "pm",
+      "table": "project_resources",
+      "constraint": "ck_project_resources_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "available",
+        "in_use",
+        "maintenance",
+        "retired"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['available'::text, 'in_use'::text, 'maintenance'::text, 'retired'::text]))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B237",
+      "source_commit": "PENDING",
+      "source_subject": "B237: pm.project_resources.status 收敛到 ProjectResourceStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
   ]

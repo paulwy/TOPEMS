@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 302,
+    "rust_enums": 303,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -3611,6 +3611,23 @@
       "normalized": [
         "generated",
         "pending"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/project_resource_status.rs",
+      "name": "ProjectResourceStatus",
+      "values": [
+        "Available",
+        "InUse",
+        "Maintenance",
+        "Retired"
+      ],
+      "normalized": [
+        "available",
+        "in_use",
+        "maintenance",
+        "retired"
       ]
     },
     {
