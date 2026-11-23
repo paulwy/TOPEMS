@@ -41,8 +41,9 @@
 
 取值约束：
 
-    entity_type  sales_order | purchase_order | customer
-    entity_id    UUID，对应 erp.sales_orders / erp.purchase_orders / erp.customers 主键
+    entity_type  sales_order | purchase_order | customer | supplier
+    entity_id    UUID，对应 erp.sales_orders / erp.purchase_orders /
+                 erp.customers / erp.suppliers 主键
     company_id   UUID，必须属于该实体所在租户的 hrm.companies
 
 归属规则与优先级（既定技术口径，不再待确认）
@@ -50,7 +51,13 @@
     ① 母公司级（显式指定） > ② 客户 / 供应商所属公司 > ③ 母公司兜底
 
 脚本起草时按此顺序判定：客户 / 供应商是集团内公司且其公司为租户根公司 → 母公司级；
-是集团内其他公司 → 客户 / 供应商所属公司；无客户 / 供应商或对方无公司归属 → 母公司兜底。
+是集团内其他公司 → 客户 / 供应商所属公司；其余走母公司兜底。兜底再分两类：
+
+    - 母公司兜底-无自然归属：订单根本没有客户 / 供应商（外键为空）；
+      或客户 / 供应商实体自身没有公司归属。
+    - 母公司兜底-数据缺失：订单有客户 / 供应商引用，但对方本身缺公司归属，
+      或引用记录不存在 / 已删除 / 跨租户。
+
 业务对优先级有异议时，通过修改 CSV 行的 `company_id` 表达，不回改规则定义。
 
 客户 / 供应商“所属公司”的取数口径
@@ -87,13 +94,15 @@
 --------
 * sales_order / purchase_order：更新源表 `erp.<表>.company_id`，并更新
   `public.search_entity_projections_v2.company_id`（只更新已存在的 v2 行）。
-* customer：源表仅有 `group_company_id`（集团归属语义，与本轮公司维度不同），
+* customer / supplier：源表仅有 `group_company_id`（集团归属语义，与本轮公司维度不同），
   **不写源表**，只更新 v2 投影行；该限制会在报告中标明。
 
 行为
 ----
 * 默认 dry-run（只读校验并输出全量报告）；必须显式 `--apply` 才写库。
 * `--apply` 全程单事务（SQL 自带 BEGIN/COMMIT），任一步失败整体回滚。
+* `--apply` 只更新 `company_id IS NULL` 的行，不覆盖已归属行、不刷新 `projected_at`；
+  重复执行时本次更新为 0，已归属行计入「已归属跳过」。
 * 未提供 `--mapping`（非 draft / resolve-parents 模式）或文件缺失/表头不符：退出码 2。
 * 未匹配（源表不存在该实体、公司不属于该租户、UUID 非法、兜底行不等根公司）：逐行输出，
   退出码 1；`--output` 指定时同时写 CSV。
@@ -127,6 +136,11 @@ SOURCE_TABLES = {
     "purchase_order": "erp.purchase_orders",
     "customer": "erp.customers",
 }
+
+# 可起草/校验的实体表；供应商只有 v2 投影，没有 company_id 源列。
+ENTITY_TABLES = {**SOURCE_TABLES, "supplier": "erp.suppliers"}
+# 源表无 company_id、只写 v2 的实体类型。
+V2_ONLY_TYPES = {"customer", "supplier"}
 
 COUNTERPARTY = {
     "sales_order": ("customer_id", "erp.customers", "客户"),
@@ -379,19 +393,20 @@ def fetch_draft_rows(dsn: str, pending_path: str | None = None) -> list[DraftRow
         )
     # 客户 / 供应商没有 company_id：所属公司取 is_group_company=true 时的
     # group_company_id；它与订单自身 company_id 不是同一口径。
-    parts.append(
-        """
-        SELECT 'customer' AS entity_type, c.id::text AS entity_id,
+    for et, table in (("customer", "erp.customers"), ("supplier", "erp.suppliers")):
+        parts.append(
+            f"""
+        SELECT '{et}' AS entity_type, c.id::text AS entity_id,
                coalesce(c.tenant_id::text,'') AS tenant_id,
                '' AS counterparty_id,
                true AS counterparty_found,
                coalesce(c.is_group_company,false) AS group_company,
                coalesce(c.group_company_id::text,'') AS group_company_id,
                coalesce(c.tenant_id::text,'') AS counterparty_tenant
-        FROM erp.customers c
+        FROM {table} c
         WHERE c.deleted_at IS NULL
         """
-    )
+        )
     sql = " UNION ALL ".join(parts) + " ORDER BY 1, 2;"
 
     raw: list[dict[str, str]] = []
@@ -431,25 +446,40 @@ def fetch_draft_rows(dsn: str, pending_path: str | None = None) -> list[DraftRow
     for r in raw:
         tenant = r["tenant_id"]
         root = roots[tenant]
-        is_order = r["entity_type"] != "customer"
+        is_order = r["entity_type"] in ("sales_order", "purchase_order")
         found = r["counterparty_found"] == "t"
         group_company = r["group_company"] == "t"
         group_id = r["group_company_id"].lower()
         cp_tenant = r["counterparty_tenant"]
 
         if is_order and not found:
-            drafts.append(
-                DraftRow(
-                    r["entity_type"],
-                    r["entity_id"],
-                    tenant,
-                    root,
-                    RULE_FALLBACK_MISSING,
-                    True,
-                    True,
-                    "订单引用的客户/供应商记录不存在或已删除",
+            if not r["counterparty_id"]:
+                # 订单根本没有客户/供应商：无自然归属，不属于数据缺失
+                drafts.append(
+                    DraftRow(
+                        r["entity_type"],
+                        r["entity_id"],
+                        tenant,
+                        root,
+                        RULE_FALLBACK_NO_NATURAL,
+                        True,
+                        False,
+                        "订单未填写客户/供应商，无自然归属",
+                    )
                 )
-            )
+            else:
+                drafts.append(
+                    DraftRow(
+                        r["entity_type"],
+                        r["entity_id"],
+                        tenant,
+                        root,
+                        RULE_FALLBACK_MISSING,
+                        True,
+                        True,
+                        "订单引用的客户/供应商记录不存在或已删除",
+                    )
+                )
             continue
         if is_order and cp_tenant and cp_tenant != tenant:
             drafts.append(
@@ -494,20 +524,23 @@ def fetch_draft_rows(dsn: str, pending_path: str | None = None) -> list[DraftRow
                 )
             continue
 
-        reason = (
-            "客户本身无公司归属且非集团内公司"
-            if r["entity_type"] == "customer"
-            else "无客户/供应商或对方无公司归属"
-        )
+        # 有客户/供应商，但对方本身缺公司归属：对订单而言属于「数据缺失」；
+        # 对客户/供应商实体自身而言是「无自然归属」。
+        if is_order:
+            rule = RULE_FALLBACK_MISSING
+            reason = "客户/供应商本身缺公司归属"
+        else:
+            rule = RULE_FALLBACK_NO_NATURAL
+            reason = "客户/供应商本身无公司归属"
         drafts.append(
             DraftRow(
                 r["entity_type"],
                 r["entity_id"],
                 tenant,
                 root,
-                RULE_FALLBACK_NO_NATURAL,
+                rule,
                 True,
-                r["entity_type"] == "customer",
+                True,
                 reason,
             )
         )
@@ -619,7 +652,7 @@ def validate_rows(
     valid: list[MappingRow] = []
     unmatched: list[tuple[MappingRow, str]] = []
     for r in rows:
-        if r.entity_type not in SOURCE_TABLES:
+        if r.entity_type not in ENTITY_TABLES:
             unmatched.append((r, f"entity_type 不支持：{r.entity_type or '(空)'}"))
             continue
         if not UUID_RE.match(r.entity_id):
@@ -647,8 +680,8 @@ def fetch_source_with(
         by_type.setdefault(r.entity_type, []).append(r.entity_id)
     parts = []
     for et, ids in by_type.items():
-        table = SOURCE_TABLES[et]
-        column = "NULL::uuid" if et == "customer" else "company_id"
+        table = ENTITY_TABLES[et]
+        column = "NULL::uuid" if et in V2_ONLY_TYPES else "company_id"
         id_list = ",".join(f"'{i}'" for i in ids)
         parts.append(
             f"SELECT '{et}' AS et, id::text, tenant_id::text, "
@@ -698,7 +731,9 @@ class VerifiedRow:
 
 
 def build_report(
-    rows: list[VerifiedRow], other_reasons: list[tuple[MappingRow, str]]
+    rows: list[VerifiedRow],
+    other_reasons: list[tuple[MappingRow, str]],
+    stats: ApplyStats | None = None,
 ) -> str:
     lines = [
         "# W13 公司归属 dry-run 全量报告",
@@ -707,9 +742,23 @@ def build_report(
         f"- 兜底行：{sum(1 for r in rows if r.is_fallback)}",
         f"- 例外行：{sum(1 for r in rows if r.is_exception)}",
         f"- 未匹配行：{len(other_reasons)}",
-        "",
-        "entity_type,entity_id,company_id,tenant_id,matched_rule,is_fallback,is_exception,note",
     ]
+    if stats is not None:
+        lines.extend(
+            [
+                f"- 源表本次更新行数：{stats.source_pending}",
+                f"- 源表已归属跳过：{stats.source_skipped}",
+                f"- v2 本次更新行数：{stats.v2_pending}",
+                f"- v2 已归属跳过：{stats.v2_skipped}",
+                f"- v2 缺少投影行：{stats.v2_missing}",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "entity_type,entity_id,company_id,tenant_id,matched_rule,is_fallback,is_exception,note",
+        ]
+    )
     for r in rows:
         lines.append(
             ",".join(
@@ -784,26 +833,44 @@ def write_verified_subset(path: str | None, rows: list[VerifiedRow], kind: str) 
 def build_apply_sql(matched: list[tuple[MappingRow, str]], update_source: bool) -> str:
     stmts = ["BEGIN;"]
     for r, tenant in matched:
-        if update_source and r.entity_type != "customer":
+        if update_source and r.entity_type not in V2_ONLY_TYPES:
             table = SOURCE_TABLES[r.entity_type]
             stmts.append(
                 f"UPDATE {table} SET company_id = '{r.company_id}' "
-                f"WHERE id = '{r.entity_id}' AND tenant_id = '{tenant}';"
+                f"WHERE id = '{r.entity_id}' AND tenant_id = '{tenant}' "
+                "AND company_id IS NULL;"
             )
+        # 只补空值：已归属行不覆盖、不刷新 projected_at，重复执行即为 0 命中。
         stmts.append(
             "UPDATE public.search_entity_projections_v2 SET company_id = "
-            f"'{r.company_id}', projected_at = NOW() "
+            f"'{r.company_id}' "
             f"WHERE entity_type = '{r.entity_type}' AND entity_id = '{r.entity_id}' "
-            f"AND tenant_id = '{tenant}';"
+            f"AND tenant_id = '{tenant}' AND company_id IS NULL;"
         )
     stmts.append("COMMIT;")
     return "\n".join(stmts) + "\n"
 
 
-def verify_applied(dsn: str, matched: list[tuple[MappingRow, str]]) -> tuple[int, int]:
-    """回填后核对：源表命中行数、v2 命中行数。返回 (source_ok, v2_ok)。"""
+@dataclass
+class ApplyStats:
+    source_pending: int = 0
+    source_skipped: int = 0
+    v2_pending: int = 0
+    v2_skipped: int = 0
+    v2_missing: int = 0
+
+
+def compute_apply_stats(
+    dsn: str, matched: list[tuple[MappingRow, str]]
+) -> ApplyStats:
+    """统计本次可分派的待更新行与已归属跳过行（写入前调用）。
+
+    - pending：company_id IS NULL，本次 UPDATE 会命中；
+    - skipped：company_id 已等于目标值，本次跳过；
+    - v2_missing：v2 中没有该实体的投影行（需先重建投影）。
+    """
     if not matched:
-        return (0, 0)
+        return ApplyStats()
     values = ",".join(
         f"('{r.entity_type}','{r.entity_id}'::uuid,'{tenant}'::uuid,'{r.company_id}'::uuid)"
         for r, tenant in matched
@@ -814,17 +881,40 @@ def verify_applied(dsn: str, matched: list[tuple[MappingRow, str]]) -> tuple[int
       (SELECT count(*) FROM m
         WHERE (m.entity_type = 'sales_order' AND EXISTS (
                  SELECT 1 FROM erp.sales_orders o
-                  WHERE o.id = m.entity_id AND o.company_id = m.company_id))
+                  WHERE o.id = m.entity_id AND o.tenant_id = m.tenant_id
+                    AND o.company_id IS NULL))
            OR (m.entity_type = 'purchase_order' AND EXISTS (
                  SELECT 1 FROM erp.purchase_orders o
-                  WHERE o.id = m.entity_id AND o.company_id = m.company_id))),
-      (SELECT count(*) FROM public.search_entity_projections_v2 v
-         JOIN m ON v.entity_type = m.entity_type AND v.entity_id = m.entity_id
-                AND v.tenant_id = m.tenant_id AND v.company_id = m.company_id);
+                  WHERE o.id = m.entity_id AND o.tenant_id = m.tenant_id
+                    AND o.company_id IS NULL))),
+      (SELECT count(*) FROM m
+        WHERE (m.entity_type = 'sales_order' AND EXISTS (
+                 SELECT 1 FROM erp.sales_orders o
+                  WHERE o.id = m.entity_id AND o.tenant_id = m.tenant_id
+                    AND o.company_id = m.company_id))
+           OR (m.entity_type = 'purchase_order' AND EXISTS (
+                 SELECT 1 FROM erp.purchase_orders o
+                  WHERE o.id = m.entity_id AND o.tenant_id = m.tenant_id
+                    AND o.company_id = m.company_id))),
+      (SELECT count(*) FROM m
+         JOIN public.search_entity_projections_v2 v
+           ON v.entity_type = m.entity_type AND v.entity_id = m.entity_id
+              AND v.tenant_id = m.tenant_id
+         WHERE v.company_id IS NULL),
+      (SELECT count(*) FROM m
+         JOIN public.search_entity_projections_v2 v
+           ON v.entity_type = m.entity_type AND v.entity_id = m.entity_id
+              AND v.tenant_id = m.tenant_id
+         WHERE v.company_id = m.company_id),
+      (SELECT count(*) FROM m
+         WHERE NOT EXISTS (
+           SELECT 1 FROM public.search_entity_projections_v2 v
+            WHERE v.entity_type = m.entity_type AND v.entity_id = m.entity_id
+              AND v.tenant_id = m.tenant_id));
     """
     out = run_psql(dsn, sql).strip()
-    source_ok, v2_ok = (out.split("\t") + ["0", "0"])[:2]
-    return int(source_ok or 0), int(v2_ok or 0)
+    parts = (out.split("\t") + ["0"] * 5)[:5]
+    return ApplyStats(*(int(x or 0) for x in parts))
 
 
 def write_unmatched(path: str | None, items: list[tuple[MappingRow, str]]) -> None:
@@ -1038,9 +1128,12 @@ def main() -> int:
                 repo_root, "docs", "database", f"w13-attribution-exceptions-{stamp}.csv"
             )
 
+    matched = [(v.row, v.tenant) for v in verified]
+    stats = compute_apply_stats(args.dsn, matched) if args.apply and matched else None
+
     write_report(
         args.report,
-        build_report(verified, unmatched),
+        build_report(verified, unmatched, stats),
     )
     write_verified_subset(
         args.fallback_output,
@@ -1053,29 +1146,32 @@ def main() -> int:
         "例外",
     )
 
-    matched = [(v.row, v.tenant) for v in verified]
-    src_count = sum(1 for r, _ in matched if r.entity_type != "customer")
+    src_count = sum(1 for r, _ in matched if r.entity_type not in V2_ONLY_TYPES)
     v2_count = len(matched)
-    customer_count = v2_count - src_count
+    customer_count = sum(1 for r, _ in matched if r.entity_type == "customer")
+    supplier_count = sum(1 for r, _ in matched if r.entity_type == "supplier")
 
     if args.apply and matched:
         sql = build_apply_sql(matched, update_source=True)
         run_psql(args.dsn, sql, single_txn=False)  # SQL 自带 BEGIN/COMMIT
-        source_ok, v2_ok = verify_applied(args.dsn, matched)
+        after = compute_apply_stats(args.dsn, matched)
         print(
-            f"[w13-backfill] 已提交：源表实际命中 {source_ok} 行（计划 {src_count}），"
-            f"v2 实际命中 {v2_ok} 行（计划 {v2_count}；v2 未命中行需先跑投影重建/回填）"
+            f"[w13-backfill] 已提交：源表本次更新 {stats.source_pending} 行"
+            f"（已归属跳过 {stats.source_skipped}），"
+            f"v2 本次更新 {stats.v2_pending} 行（已归属跳过 {stats.v2_skipped}；"
+            f"v2 缺少投影 {stats.v2_missing} 行需先跑投影重建/回填）"
         )
-        if source_ok != src_count:
+        if after.source_pending or after.v2_pending:
             print(
-                f"[w13-backfill] 警告：源表命中数与计划不一致（{source_ok}/{src_count}）",
+                "[w13-backfill] 警告：提交后仍有待更新行"
+                f"（源表 {after.source_pending}、v2 {after.v2_pending}）",
                 file=sys.stderr,
             )
     else:
         print(
             f"[w13-backfill] {'DRY-RUN' if args.dry_run or not args.apply else '计划'}："
             f"源表待更新 {src_count} 行，v2 待更新 {v2_count} 行"
-            f"（customer 仅 v2 {customer_count} 行）"
+            f"（customer 仅 v2 {customer_count} 行，supplier 仅 v2 {supplier_count} 行）"
         )
 
     write_unmatched(args.output, unmatched)
