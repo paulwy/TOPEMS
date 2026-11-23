@@ -447,6 +447,80 @@
       "source_tokens": ["system_settings_company_select", "system_settings_platform_maintain"],
       "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'system_settings' AND policyname IN ('system_settings_company_select','system_settings_company_insert','system_settings_company_update','system_settings_company_delete','system_settings_platform_maintain')",
       "expected": 5
+    },
+    {
+      "id": "sales_orders.company_id",
+      "kind": "column_type",
+      "table": "erp.sales_orders",
+      "column": "company_id",
+      "expected": "uuid",
+      "source": "20261123130000",
+      "source_tokens": ["ALTER TABLE erp.sales_orders", "ADD COLUMN IF NOT EXISTS company_id uuid"]
+    },
+    {
+      "id": "sales_orders.company_id_nullable",
+      "kind": "data_rows",
+      "source": "20261123130000",
+      "source_tokens": ["erp.sales_orders.company_id 已就绪", "is_nullable = 'YES'"],
+      "sql": "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'erp' AND table_name = 'sales_orders' AND column_name = 'company_id' AND data_type = 'uuid' AND is_nullable = 'YES' AND column_default IS NULL",
+      "expected": 1
+    },
+    {
+      "id": "purchase_orders.company_id",
+      "kind": "column_type",
+      "table": "erp.purchase_orders",
+      "column": "company_id",
+      "expected": "uuid",
+      "source": "20261123131000",
+      "source_tokens": ["ALTER TABLE erp.purchase_orders", "ADD COLUMN IF NOT EXISTS company_id uuid"]
+    },
+    {
+      "id": "purchase_orders.company_id_nullable",
+      "kind": "data_rows",
+      "source": "20261123131000",
+      "source_tokens": ["erp.purchase_orders.company_id 已就绪", "is_nullable = 'YES'"],
+      "sql": "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'erp' AND table_name = 'purchase_orders' AND column_name = 'company_id' AND data_type = 'uuid' AND is_nullable = 'YES' AND column_default IS NULL",
+      "expected": 1
+    },
+    {
+      "id": "search_projection_v2.table",
+      "kind": "data_rows",
+      "source": "20261123132000",
+      "source_tokens": ["CREATE TABLE IF NOT EXISTS public.search_entity_projections_v2"],
+      "sql": "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'search_entity_projections_v2' AND c.relkind = 'r'",
+      "expected": 1
+    },
+    {
+      "id": "search_projection_v2.company_id_nullable",
+      "kind": "data_rows",
+      "source": "20261123132000",
+      "source_tokens": ["company_id UUID,", "company_id 可空"],
+      "sql": "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'search_entity_projections_v2' AND column_name = 'company_id' AND data_type = 'uuid' AND is_nullable = 'YES' AND column_default IS NULL",
+      "expected": 1
+    },
+    {
+      "id": "search_projection_v2.company_index",
+      "kind": "index_exists",
+      "schema": "public",
+      "index": "idx_sep_v2_tenant_company_type",
+      "source": "20261123132000",
+      "source_tokens": ["idx_sep_v2_tenant_company_type", "(tenant_id, company_id, entity_type)"]
+    },
+    {
+      "id": "search_projection_v2.policies",
+      "kind": "data_rows",
+      "source": "20261123132000",
+      "source_tokens": ["search_entity_projections_v2_system", "search_entity_projections_v2_company_read"],
+      "sql": "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename = 'search_entity_projections_v2' AND policyname IN ('search_entity_projections_v2_system','search_entity_projections_v2_company_read')",
+      "expected": 2
+    },
+    {
+      "id": "search_projection_v2.rls_force",
+      "kind": "data_rows",
+      "source": "20261123132000",
+      "source_tokens": ["FORCE ROW LEVEL SECURITY"],
+      "sql": "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'search_entity_projections_v2' AND c.relrowsecurity AND c.relforcerowsecurity",
+      "expected": 1
     }
   ]
 }

@@ -8523,6 +8523,15 @@
     },
     {
       "schema": "public",
+      "table": "search_entity_projections_v2",
+      "column": "status",
+      "type": "text",
+      "enum_type": "text",
+      "not_null": false,
+      "default_expr": null
+    },
+    {
+      "schema": "public",
       "table": "subscriptions",
       "column": "status",
       "type": "text",

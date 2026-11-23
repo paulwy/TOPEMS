@@ -12082,6 +12082,34 @@
     },
     {
       "schema": "public",
+      "table": "search_entity_projections_v2",
+      "rls_enabled": true,
+      "force_rls": true,
+      "policies": [
+        {
+          "name": "search_entity_projections_v2_company_read",
+          "cmd": "SELECT",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (company_id IS NOT NULL) AND erp.company_readable(company_id))",
+          "with_check": ""
+        },
+        {
+          "name": "search_entity_projections_v2_system",
+          "cmd": "ALL",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)",
+          "with_check": "(COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text)"
+        }
+      ]
+    },
+    {
+      "schema": "public",
       "table": "search_logs",
       "rls_enabled": true,
       "force_rls": true,
