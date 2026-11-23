@@ -1996,6 +1996,13 @@
       "table": "pm.acceptance_plans",
       "column": "status",
       "candidate": "docs/database/pm-acceptance-plan-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/hrm/src/modules/training_completion_status.rs",
+      "enum": "TrainingCompletionStatus",
+      "table": "hrm.training_records",
+      "column": "completion_status",
+      "candidate": "docs/database/hrm-training-record-completion-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

@@ -15,6 +15,7 @@ use crate::models::{
     TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
+use crate::modules::training_completion_status::TrainingCompletionStatus;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -667,6 +668,13 @@ pub async fn list_records(
 
     let course_id = params.course_id;
     let employee_id = params.employee_id;
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match TrainingCompletionStatus::parse_filter(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的培训完成状态"),
+        },
+    };
 
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
@@ -678,6 +686,7 @@ pub async fn list_records(
         WHERE deleted_at IS NULL
           AND ($1::uuid IS NULL OR course_id = $1)
           AND ($2::uuid IS NULL OR employee_id = $2)
+          AND ($5::text IS NULL OR completion_status = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -686,6 +695,7 @@ pub async fn list_records(
     .bind(employee_id)
     .bind(page_size)
     .bind(offset)
+    .bind(status_filter)
     .fetch_all(&mut **txn)
     .await;
 
@@ -698,10 +708,12 @@ pub async fn list_records(
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR course_id = $1)
                   AND ($2::uuid IS NULL OR employee_id = $2)
+                  AND ($3::text IS NULL OR completion_status = $3)
                 "#
             ))
             .bind(course_id)
             .bind(employee_id)
+            .bind(status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -746,7 +758,7 @@ pub async fn create_record(
         INSERT INTO hrm.training_records (
             id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'registered', 'in_progress', $6, $7)
+        ) VALUES ($1, $2, $3, $4, $5, 'registered', $6, $7, $8)
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
@@ -757,6 +769,7 @@ pub async fn create_record(
     .bind(req.course_id)
     .bind(req.employee_id)
     .bind(req.enrollment_date)
+    .bind(TrainingCompletionStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -815,7 +828,7 @@ pub async fn enroll_course(
         INSERT INTO hrm.training_records (
             id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, 'registered', 'in_progress', $6, $7)
+        ) VALUES ($1, $2, $3, $4, $5, 'registered', $6, $7, $8)
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
@@ -826,6 +839,7 @@ pub async fn enroll_course(
     .bind(id)
     .bind(req.employee_id)
     .bind(now)
+    .bind(TrainingCompletionStatus::DEFAULT.as_db_str())
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -897,7 +911,7 @@ pub async fn get_record(
 }
 
 pub async fn update_record(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateTrainingRecordRequest>,
@@ -905,6 +919,44 @@ pub async fn update_record(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+
+    let requested_status = match req.completion_status.as_deref() {
+        None => None,
+        Some(raw) => match TrainingCompletionStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => return ApiResponse::bad_request("无效的培训完成状态"),
+        },
+    };
+    if let Some(target) = requested_status {
+        let mut scope = match state.db.scope_with(txn).await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("打开培训记录读作用域失败: {}", e);
+                return ApiResponse::server_error("培训记录更新失败");
+            }
+        };
+        let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT completion_status FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("读取培训记录状态失败: {}", e);
+                return ApiResponse::server_error("培训记录更新失败");
+            }
+        };
+        let Some(current) = current else {
+            return ApiResponse::not_found("培训记录不存在");
+        };
+        if !target.can_transition_from(&current) {
+            return ApiResponse::bad_request("培训完成状态不允许从当前状态流转");
+        }
+        drop(scope);
+    }
 
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
@@ -925,7 +977,7 @@ pub async fn update_record(
     ))
     .bind(id)
     .bind(&req.attendance_status)
-    .bind(&req.completion_status)
+    .bind(requested_status.map(|s| s.as_db_str()))
     .bind(req.score)
     .bind(&req.certificate_no)
     .bind(req.completed_at)
@@ -1192,13 +1244,42 @@ pub async fn deactivate_plan(
 
 /// PUT /training-records/{id}/complete —— 标记培训记录完成
 pub async fn complete_record(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("打开培训记录读作用域失败: {}", e);
+            return ApiResponse::server_error("更新培训记录状态失败");
+        }
+    };
+    let current: Option<String> = match sqlx::query_scalar(only_own_schema_query!(
+        "hrm",
+        "SELECT completion_status FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("读取培训记录状态失败: {}", e);
+            return ApiResponse::server_error("更新培训记录状态失败");
+        }
+    };
+    let Some(current) = current else {
+        return ApiResponse::not_found("培训记录不存在");
+    };
+    if current != TrainingCompletionStatus::InProgress.as_db_str() {
+        return ApiResponse::conflict("仅进行中的培训记录可标记完成");
+    }
+    drop(scope);
 
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
@@ -1207,7 +1288,7 @@ pub async fn complete_record(
             completion_status = 'completed',
             completed_at = $2,
             updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1
+        WHERE deleted_at IS NULL AND id = $1 AND completion_status = 'in_progress'
         RETURNING id, tenant_id, course_id, employee_id, enrollment_date,
                   attendance_status, completion_status, score, certificate_no,
                   completed_at, feedback, created_at, updated_at

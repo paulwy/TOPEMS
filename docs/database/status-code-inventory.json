@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 308,
+    "rust_enums": 309,
     "rust_enum_values": 239,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 248,
@@ -2398,6 +2398,21 @@
         "approved",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/training_completion_status.rs",
+      "name": "TrainingCompletionStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "InProgress"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "in_progress"
       ]
     },
     {

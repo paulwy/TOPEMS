@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 410,
+  "total": 411,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -19,7 +19,7 @@
     "finance": 40,
     "flow": 7,
     "gis": 10,
-    "hrm": 21,
+    "hrm": 22,
     "iam": 6,
     "integration": 5,
     "lims": 9,
@@ -122,7 +122,8 @@
     "B239": 1,
     "B240": 1,
     "B241": 1,
-    "B242": 1
+    "B242": 1,
+    "B243": 1
   },
   "maintenance": "回迁一条删一条：生产回迁成功并验证后，从本清单移除该条，并同步刷新 status-check-catalog.json",
   "scheduling": "与 P7 线下策略回迁一起排期",
@@ -8660,6 +8661,26 @@
       "source_batch": "B242",
       "source_commit": "f4018553c",
       "source_subject": "B242: pm.acceptance_plans.status 收敛到 AcceptancePlanStatus 枚举",
+      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
+    },
+    {
+      "schema": "hrm",
+      "table": "training_records",
+      "constraint": "ck_training_records_completion_status_standard",
+      "columns": [
+        "completion_status"
+      ],
+      "values": [
+        "completed",
+        "failed",
+        "in_progress"
+      ],
+      "definition": "CHECK (((completion_status IS NULL) OR ((completion_status)::text = ANY (ARRAY['in_progress'::text, 'completed'::text, 'failed'::text]))) NOT VALID",
+      "convalidated_at_catalog": false,
+      "present_in_baseline_db": false,
+      "source_batch": "B243",
+      "source_commit": "PENDING",
+      "source_subject": "B243: hrm.training_records.completion_status 收敛到 TrainingCompletionStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
   ]
