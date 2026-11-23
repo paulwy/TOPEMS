@@ -1457,6 +1457,13 @@
       "table": "mes.material_requirements",
       "column": "status",
       "candidate": "docs/database/material-requirement-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_maintenance_status.rs",
+      "enum": "EquipmentMaintenanceStatus",
+      "table": "mes.equipment_maintenance_records",
+      "column": "status",
+      "candidate": "docs/database/equipment-maintenance-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

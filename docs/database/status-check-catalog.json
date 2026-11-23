@@ -2704,6 +2704,21 @@
     },
     {
       "schema": "mes",
+      "table": "equipment_maintenance_records",
+      "constraint": "ck_mes_equipment_maintenance_records_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "pending"
+      ],
+      "definition": "CHECK (((status)::text = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "material_boms",
       "constraint": "ck_mes_material_boms_status_standard",
       "columns": [
@@ -6894,15 +6909,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'normal'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "equipment_maintenance_records",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'in_progress'::character varying"
     },
     {
       "schema": "mes",

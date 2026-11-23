@@ -21,6 +21,7 @@ use topems_shared_auth::middleware::require_tenant;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
+use crate::modules::equipment_maintenance_status::EquipmentMaintenanceStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -1065,6 +1066,13 @@ pub async fn create_maintenance(
             .ok()
             .map(|dt| dt.with_timezone(&Utc))
     });
+    let status = match req.status.as_deref() {
+        None => EquipmentMaintenanceStatus::DEFAULT,
+        Some(raw) => match EquipmentMaintenanceStatus::from_db_str(raw) {
+            Some(status) => status,
+            None => return ApiResponse::bad_request("无效的维护记录状态"),
+        },
+    };
 
     let result = sqlx::query!(
         r#"
@@ -1084,7 +1092,7 @@ pub async fn create_maintenance(
         end_time,
         f64_to_big_decimal(req.cost),
         req.result,
-        req.status.clone().unwrap_or_else(|| "pending".to_string()),
+        status.as_db_str(),
         req.remarks,
         now,
         tenant_id,
@@ -1219,6 +1227,10 @@ pub async fn update_maintenance_status(
 
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
+    let status = match EquipmentMaintenanceStatus::from_db_str(&req.status) {
+        Some(status) => status,
+        None => return ApiResponse::bad_request("无效的维护记录状态"),
+    };
 
     let result = sqlx::query_as::<_, MaintenanceStatusRow>(
         r#"
@@ -1233,7 +1245,7 @@ pub async fn update_maintenance_status(
         "#,
     )
     .bind(id)
-    .bind(req.status)
+    .bind(status.as_db_str())
     .bind(req.result)
     .bind(now)
     .bind(tenant_id)
