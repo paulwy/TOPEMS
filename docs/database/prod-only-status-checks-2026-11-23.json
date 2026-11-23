@@ -8548,7 +8548,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B237",
-      "source_commit": "PENDING",
+      "source_commit": "10f21c158",
       "source_subject": "B237: pm.project_resources.status 收敛到 ProjectResourceStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
