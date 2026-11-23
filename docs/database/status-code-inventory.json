@@ -2,10 +2,10 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 375,
+    "db_check_constraints": 376,
     "db_enum_types": 5,
     "db_check_values": 168,
-    "rust_enums": 258,
+    "rust_enums": 259,
     "rust_enum_values": 221,
     "rust_values_not_in_db_check": 58,
     "frontend_status_keys": 230,
@@ -3796,6 +3796,21 @@
         "cancelled",
         "converted",
         "draft",
+        "pending",
+        "rejected"
+      ]
+    },
+    {
+      "module": "scm",
+      "file": "svc/scm/src/modules/supplier_admission_approval_status.rs",
+      "name": "SupplierAdmissionApprovalStatus",
+      "values": [
+        "Approved",
+        "Pending",
+        "Rejected"
+      ],
+      "normalized": [
+        "approved",
         "pending",
         "rejected"
       ]

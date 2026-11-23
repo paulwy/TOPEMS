@@ -7,6 +7,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
+use super::supplier_admission_approval_status::SupplierAdmissionApprovalStatus;
 use super::supplier_admission_status::SupplierAdmissionStatus;
 use super::ApiState;
 use crate::models::supplier_admission::{
@@ -85,36 +86,58 @@ pub async fn list_admissions(
         },
     };
 
+    let approval_status_filter = match params.approval_status.as_deref() {
+        None | Some("") | Some("all") => None,
+        Some(raw) => match SupplierAdmissionApprovalStatus::from_db_str(raw) {
+            Some(value) => Some(value.as_db_str()),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "无效的供应商准入审批状态".to_string(),
+                ))
+            }
+        },
+    };
+
     let admissions = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND tenant_id = $4::uuid ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND ($5::text IS NULL OR approval_status = $5) AND tenant_id = $4::uuid ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
     )
     .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
+    .bind(approval_status_filter)
     .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND tenant_id = $2::uuid"
+        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1::text IS NULL OR status = $1) AND ($3::text IS NULL OR approval_status = $3) AND tenant_id = $2::uuid"
     ))
     .bind(status_filter)
     .bind(tenant_bind)
+    .bind(approval_status_filter)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     match admissions {
-        Ok(items) => ApiResponse::success(
-            serde_json::json!({
-                "items": items,
-                "total": total,
-                "page": page,
-                "page_size": page_size,
-            }),
-            "获取供应商准入列表成功",
-        ),
+        Ok(mut items) => {
+            for item in &mut items {
+                item.approval_status = SupplierAdmissionApprovalStatus::normalize_option(
+                    item.approval_status.as_deref(),
+                )
+                .map(str::to_string);
+            }
+            ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                }),
+                "获取供应商准入列表成功",
+            )
+        }
         Err(e) => {
             tracing::error!("获取供应商准入列表失败: {}", e);
             ApiResponse::from(TopemsError::Internal("获取供应商准入列表失败".to_string()))
@@ -244,7 +267,12 @@ pub async fn get_admission(
     .await;
 
     match admission {
-        Ok(item) => ApiResponse::success(item, "获取供应商准入成功"),
+        Ok(mut item) => {
+            item.approval_status =
+                SupplierAdmissionApprovalStatus::normalize_option(item.approval_status.as_deref())
+                    .map(str::to_string);
+            ApiResponse::success(item, "获取供应商准入成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商准入不存在".to_string(),
         )),
@@ -551,7 +579,7 @@ pub async fn approve_admission(
         "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
-            status = $5, approval_status = 'approved', 
+            status = $5, approval_status = $6, 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
           AND tenant_id = $4::uuid
@@ -563,6 +591,7 @@ pub async fn approve_admission(
     .bind(admission_id)
     .bind(tenant_bind)
     .bind(SupplierAdmissionStatus::Approved.as_db_str())
+    .bind(SupplierAdmissionApprovalStatus::Approved.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -638,7 +667,7 @@ pub async fn reject_admission(
         "scm",
         r#"
         UPDATE scm.supplier_admissions SET 
-            status = $5, approval_status = 'rejected', 
+            status = $5, approval_status = $6, 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
           AND tenant_id = $4::uuid
@@ -650,6 +679,7 @@ pub async fn reject_admission(
     .bind(admission_id)
     .bind(tenant_bind)
     .bind(SupplierAdmissionStatus::Rejected.as_db_str())
+    .bind(SupplierAdmissionApprovalStatus::Rejected.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -758,7 +788,11 @@ pub async fn audit_admission(
     } else {
         SupplierAdmissionStatus::Rejected.as_db_str()
     };
-    let approval_status = status;
+    let approval_status = if all_passed {
+        SupplierAdmissionApprovalStatus::Approved.as_db_str()
+    } else {
+        SupplierAdmissionApprovalStatus::Rejected.as_db_str()
+    };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
         "scm",

@@ -20,8 +20,8 @@ import {
   Zap,
 } from 'lucide-react';
 
-import '../theme/redesign-tokens.css';
-import '../theme/redesign-global.css';
+import '@/theme/redesign-tokens.css';
+import '@/theme/redesign-global.css';
 
 import {
   Alert,
