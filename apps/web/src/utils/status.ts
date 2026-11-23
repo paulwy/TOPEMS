@@ -77,6 +77,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   draft: 'warning',
   generated: 'info',
   identified: 'error',
+  mitigated: 'success',
   reported: 'error',
   assessed: 'warning',
   controlled: 'success',

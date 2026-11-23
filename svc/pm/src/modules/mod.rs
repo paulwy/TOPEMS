@@ -22,6 +22,7 @@ pub mod project_phase;
 pub mod project_phase_status;
 pub mod project_report_status;
 pub mod project_resource;
+pub mod project_risk_status;
 pub mod project_type_config;
 pub mod quality;
 pub mod report;

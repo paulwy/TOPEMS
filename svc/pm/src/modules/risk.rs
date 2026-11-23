@@ -16,9 +16,46 @@ use crate::models::risk::{
     CreateRiskEventRequest, CreateRiskRequest, ProjectRisk, RiskEvent, UpdateRiskRequest,
 };
 use crate::modules::effective_tenant_id;
+use crate::modules::project_risk_status::ProjectRiskStatus;
 use crate::services::audit::PmAuditService;
 
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
+
+/// 校验项目风险状态流转：不存在 404、存量未知值 400、非法流转 400。
+async fn ensure_risk_transition(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    id: Uuid,
+    to: ProjectRiskStatus,
+) -> Result<(), ApiResponse<ProjectRisk>> {
+    let current_raw: Result<Option<String>, sqlx::Error> =
+        sqlx::query_scalar("SELECT status FROM pm.project_risks WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut *scope)
+            .await;
+    let raw = match current_raw {
+        Ok(Some(raw)) => raw,
+        Ok(None) => return Err(ApiResponse::not_found("项目风险不存在")),
+        Err(e) => {
+            tracing::error!("查询项目风险状态失败: {}", e);
+            return Err(ApiResponse::server_error("查询项目风险状态失败"));
+        }
+    };
+    let current = match ProjectRiskStatus::from_db_str(&raw) {
+        Some(status) => status,
+        None => {
+            return Err(ApiResponse::bad_request(&format!(
+                "项目风险当前状态非法: {raw}"
+            )))
+        }
+    };
+    if !current.can_transition_to(to) {
+        return Err(ApiResponse::bad_request(&format!(
+            "非法项目风险状态流转: {} -> {}",
+            current, to
+        )));
+    }
+    Ok(())
+}
 
 // ==================== Pure functions ====================
 
@@ -185,7 +222,7 @@ async fn create_risk(
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
         only_own_schema_query!("pm", "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -197,6 +234,7 @@ async fn create_risk(
     .bind(&req.likelihood)
     .bind(&req.impact)
     .bind(req.risk_score)
+    .bind(ProjectRiskStatus::DEFAULT.as_db_str())
     .bind(req.mitigation_strategy)
     .bind(req.contingency_plan)
     .bind(req.trigger_condition)
@@ -267,7 +305,21 @@ async fn update_risk(
         }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(serde_json::json!({"status": req.status, "risk_score": req.risk_score}));
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match ProjectRiskStatus::normalize(raw) {
+            Ok(status) => Some(status),
+            Err(message) => return ApiResponse::bad_request(&message),
+        },
+    };
+    if let Some(to) = requested_status {
+        if let Err(resp) = ensure_risk_transition(&mut scope, id, to).await {
+            return resp;
+        }
+    }
+    let requested_status = requested_status.map(ProjectRiskStatus::as_db_str);
+    let details =
+        Some(serde_json::json!({"status": requested_status, "risk_score": req.risk_score}));
     let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!(
         "pm",
         "UPDATE pm.project_risks SET
@@ -295,7 +347,7 @@ async fn update_risk(
     .bind(req.likelihood)
     .bind(req.impact)
     .bind(req.risk_score)
-    .bind(req.status)
+    .bind(requested_status)
     .bind(req.mitigation_strategy)
     .bind(req.contingency_plan)
     .bind(req.trigger_condition)

@@ -5,11 +5,11 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 300,
-    "rust_enum_values": 238,
-    "rust_values_not_in_db_check": 191,
-    "frontend_status_keys": 247,
-    "frontend_keys_not_in_db_check": 200,
+    "rust_enums": 301,
+    "rust_enum_values": 239,
+    "rust_values_not_in_db_check": 192,
+    "frontend_status_keys": 248,
+    "frontend_keys_not_in_db_check": 201,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -3615,6 +3615,21 @@
     },
     {
       "module": "pm",
+      "file": "svc/pm/src/modules/project_risk_status.rs",
+      "name": "ProjectRiskStatus",
+      "values": [
+        "Closed",
+        "Identified",
+        "Mitigated"
+      ],
+      "normalized": [
+        "closed",
+        "identified",
+        "mitigated"
+      ]
+    },
+    {
+      "module": "pm",
       "file": "svc/pm/src/modules/task_status.rs",
       "name": "TaskStatus",
       "values": [
@@ -5428,6 +5443,7 @@
       "manual",
       "matched",
       "max_retries_exceeded",
+      "mitigated",
       "needs_repair",
       "neutral",
       "new",
@@ -5648,6 +5664,7 @@
       "low_stock",
       "manager_reviewed",
       "max_retries_exceeded",
+      "mitigated",
       "needs_repair",
       "neutral",
       "new",
@@ -5847,6 +5864,7 @@
       "low_stock",
       "manager_reviewed",
       "max_retries_exceeded",
+      "mitigated",
       "needs_repair",
       "neutral",
       "new",
