@@ -5,6 +5,7 @@ pub mod aps_compat;
 pub mod aps_scheduling;
 pub mod audit;
 pub mod basics;
+pub mod batch_record_status;
 pub mod capacity;
 pub mod capacity_status;
 pub mod dashboard_ws;

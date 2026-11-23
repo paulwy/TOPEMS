@@ -2601,6 +2601,20 @@
     },
     {
       "schema": "mes",
+      "table": "batch_records",
+      "constraint": "ck_mes_batch_records_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "active",
+        "cancelled",
+        "completed"
+      ],
+      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "capacities",
       "constraint": "ck_capacities_status_standard",
       "columns": [
@@ -6909,15 +6923,6 @@
       "enum_type": "text",
       "not_null": true,
       "default_expr": "'active'::text"
-    },
-    {
-      "schema": "mes",
-      "table": "batch_records",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'active'::character varying"
     },
     {
       "schema": "mes",

@@ -11,6 +11,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
+use crate::modules::batch_record_status::BatchRecordStatus;
 use crate::modules::quality_traceability_status::QualityRecordStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -400,7 +401,14 @@ pub async fn backward_traceability(
         quantity: Some(big_decimal_to_f64(Some(batch.quantity))),
         unit: batch.unit.clone(),
         batch_no: Some(batch.batch_no.clone()),
-        status: Some(batch.status.clone().unwrap_or_default()),
+        status: batch
+            .status
+            .as_deref()
+            .and_then(BatchRecordStatus::from_db_str)
+            .unwrap_or(BatchRecordStatus::DEFAULT)
+            .as_db_str()
+            .to_string()
+            .into(),
         timestamp: batch.production_date.and_then(|d| {
             d.and_hms_opt(0, 0, 0)
                 .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
