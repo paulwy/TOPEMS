@@ -5,6 +5,12 @@
 # 目的：给 pre-push `ledger-ddl-drift` 提供“迁移链完整 + 只读最小授权”的稳定目标库，
 #       避免每次临时 export MIGRATION_DRIFT_DB_URL / PGPASSFILE。
 #
+# 夹具锚点：
+#   - 基线快照锚点：仓库 database/baseline/ 最新快照（当前 20261117235500）
+#   - 夹具有效锚点：前向重放迁移链至 20261122160000（账本 max(version)，断言执行范围）
+#   预期读数（2026-11-23 实测 topems_gate）：tables=1373 ledger=787 max(version)=20261122160000；
+#   ledger-ddl-drift：PASS 断言 14 项 / 记账校验 11 项 / NOTE 3 项（legacy 训练计划行，按设计移除）
+#
 # 流程（固定顺序，可重复执行）：
 #   1) DROP/CREATE 夹具库（TEMPLATE template0，保证空库）
 #   2) 恢复 schema 快照 database/baseline/prod_schema_<anchor>.sql.gz
@@ -14,7 +20,10 @@
 #   4) 断言：表数 / 账本条数 / max(version) 与 baseline_<anchor>.json 一致
 #   5) 重放幂等修复迁移（列漂移：mes.production_orders.quantity/completed_quantity、
 #      mobile.documents.file_size）；已对齐时为零 ALTER
-#   6) 只读授权给门禁角色：按库内实际存在的 schema 批量授予 USAGE + SELECT
+#   6) 前向重放锚点之后的迁移链至 20261122160000
+#      （scripts/migration/apply-forward.sh --drill-gate-guc-auto，逐版本事务并写账本），
+#      让新迁移的漂移断言真正参与门禁，而不是被 NOTE 跳过
+#   7) 只读授权给门禁角色：按库内实际存在的 schema 批量授予 USAGE + SELECT
 #      （排除 pg_catalog / information_schema / pg_toast 与 pg_* 信息模式），
 #      不再写死 schema 清单；后续新增 schema 无需改脚本
 #
@@ -23,8 +32,8 @@
 #       指定库/锚点：--db topems_gate --anchor 20261117235500
 #
 # 要求：以本机具备 CREATE DATABASE / CREATE EXTENSION / GRANT 权限的角色运行
-#       （默认 libpq 连接参数，通常即当前 OS 用户）。不读写 topems_prod。
-# 退出码：0 成功；1 基线断言失败（账本与 schema 快照不一致）；2 参数/环境错误
+#       （默认 libpq 连接参数，通常即当前 OS 用户）。仅动本地夹具库，不读写 topems_prod。
+# 退出码：0 成功；1 基线/前向断言失败（账本与 schema 不一致）；2 参数/环境错误
 # =============================================================================
 set -euo pipefail
 
@@ -38,7 +47,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --db) DB="${2:-}"; shift 2 ;;
     --anchor) ANCHOR="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,31p' "$0"; exit 0 ;;
+    -h|--help) awk 'NR==1{next} /^# =+$/{c++; if(c>=2) exit} {print}' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -130,9 +139,31 @@ REPAIR_SQL="$(find "$ROOT/database/migrations" -maxdepth 1 -name "${REPAIR_PREFI
 psql -X -d "$DB" -q -v ON_ERROR_STOP=1 -f "$REPAIR_SQL" >/dev/null
 echo "== [5] 幂等列对齐迁移已重放"
 
-# 授权按库内实际 schema 推导（不写死清单）：后续迁移新增 schema 时，重跑本脚本即可，
-# 不会因为漏配 schema 导致 `permission denied for schema`。只授只读权限，
-# 排除系统 schema 与 pg_* 信息模式（pg_catalog / information_schema / pg_toast 等）。
+# 前向重放：把基线快照锚点之后的迁移链应用到夹具，让新迁移的漂移断言真正参与门禁。
+# apply-forward 逐版本单事务执行并写 _sqlx_migrations；--drill-gate-guc-auto 仅用于隔离夹具库。
+FORWARD_TO=20261122160000
+echo "== [6] 前向重放迁移链至 $FORWARD_TO"
+if ! bash "$ROOT/scripts/migration/apply-forward.sh" \
+      --dsn "postgresql:///$DB" --anchor "$ANCHOR" --drill-gate-guc-auto \
+      > "$TMP_DIR/forward.log" 2>&1; then
+  echo "FAIL: 前向重放失败（anchor=${ANCHOR}，目标 ${FORWARD_TO}）" >&2
+  tail -n 40 "$TMP_DIR/forward.log" >&2
+  exit 1
+fi
+
+FWD_TABLES="$(psql -X -d "$DB" -Atq -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')")"
+FWD_LEDGER="$(psql -X -d "$DB" -Atq -c "SELECT count(*) FROM _sqlx_migrations WHERE success")"
+FWD_MAX="$(psql -X -d "$DB" -Atq -c "SELECT max(version) FROM _sqlx_migrations WHERE success")"
+if (( FWD_MAX < FORWARD_TO )); then
+  echo "FAIL: 前向重放后账本 max(version)=${FWD_MAX}，低于目标 ${FORWARD_TO}" >&2
+  echo "  tables=${FWD_TABLES} ledger=${FWD_LEDGER}" >&2
+  exit 1
+fi
+echo "   OK: tables=$FWD_TABLES ledger=$FWD_LEDGER max(version)=$FWD_MAX"
+
+# 授权按库内实际 schema 推导（不写死清单），且放在前向重放之后，保证新迁移新建的表也有 SELECT。
+# 后续迁移新增 schema 时重跑本脚本即可，不会因为漏配 schema 导致 `permission denied for schema`。
+# 只授只读权限，排除系统 schema 与 pg_* 信息模式（pg_catalog / information_schema / pg_toast 等）。
 psql -X -d "$DB" -q -v ON_ERROR_STOP=1 -c "
   DO \$\$ DECLARE s record; BEGIN
     FOR s IN
@@ -145,6 +176,6 @@ psql -X -d "$DB" -q -v ON_ERROR_STOP=1 -c "
       EXECUTE format('GRANT SELECT ON ALL TABLES IN SCHEMA %I TO $GATE_ROLE', s.nspname);
     END LOOP;
   END \$\$;"
-echo "== [6] 只读授权完成（按实际 schema 推导，未写死清单）"
+echo "== [7] 只读授权完成（按实际 schema 推导，未写死清单）"
 
 echo "== 完成：默认 MIGRATION_DRIFT_DB_URL 指向 postgres://$GATE_ROLE@127.0.0.1:5432/$DB 即可，无需临时 export"
