@@ -23,6 +23,72 @@ use uuid::Uuid;
 /// 零租户占位 UUID（erp 未设置 app.tenant_id 时投影行归属）
 const ZERO_TENANT: &str = "00000000-0000-0000-0000-000000000000";
 
+/// v2 双写最大重试次数（超出后放弃，交由回填/对账脚本补偿）。
+const V2_MAX_ATTEMPTS: u32 = 5;
+/// v2 重试退避基数：第 n 次重试等待 n * 5s（5/10/15/20s）。
+const V2_RETRY_BACKOFF_SECS: u64 = 5;
+
+/// v2 投影写入失败的重试任务（进程内队列；search 无 EventPublisher，不入 ZSET）。
+#[derive(Debug, Clone)]
+struct V2RetryJob {
+    payload: SearchableEntityChangedPayload,
+    attempt: u32,
+}
+
+/// 进程内 v2 重试队列（进程重启丢失，由回填/对账脚本兜底）。
+static V2_RETRY_TX: std::sync::OnceLock<tokio::sync::mpsc::UnboundedSender<V2RetryJob>> =
+    std::sync::OnceLock::new();
+
+/// 启动 v2 重试 worker（幂等：重复调用只生效一次）。
+fn init_v2_retry_worker(db: Db) {
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<V2RetryJob>();
+    if V2_RETRY_TX.set(tx).is_err() {
+        return;
+    }
+    tokio::spawn(async move {
+        while let Some(job) = rx.recv().await {
+            let attempt = job.attempt + 1;
+            let db = db.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(Duration::from_secs(
+                    V2_RETRY_BACKOFF_SECS * u64::from(attempt),
+                ))
+                .await;
+                match apply_v2(&db, &job.payload).await {
+                    Ok(()) => {
+                        tracing::info!("[search] v2 投影重试成功 attempt={}", attempt);
+                    }
+                    Err(e) if attempt >= V2_MAX_ATTEMPTS => {
+                        tracing::error!(
+                            "[search] v2 投影重试 {} 次仍失败，放弃（待回填/对账补偿）: {}",
+                            attempt,
+                            e
+                        );
+                    }
+                    Err(e) => {
+                        tracing::warn!("[search] v2 投影重试第 {} 次失败: {}", attempt, e);
+                        enqueue_v2_retry(job.payload, attempt);
+                    }
+                }
+            });
+        }
+    });
+}
+
+/// 入队 v2 重试；队列未初始化（单测/未启动订阅）时只告警，不阻断主链路。
+fn enqueue_v2_retry(payload: SearchableEntityChangedPayload, attempt: u32) {
+    match V2_RETRY_TX.get() {
+        Some(tx) => {
+            if let Err(e) = tx.send(V2RetryJob { payload, attempt }) {
+                tracing::warn!("[search] v2 重试入队失败（队列已关闭）: {}", e);
+            }
+        }
+        None => {
+            tracing::warn!("[search] v2 投影写失败且重试队列未初始化，跳过重试（由回填/对账补偿）");
+        }
+    }
+}
+
 /// 启动时探测投影表（migration 版本化后不再自举建表）。表缺失返回 Err，由
 /// 调用方告警（migration 未应用）；投影未就绪时搜索为空结果，待事件/backfill 追平。
 pub async fn init_projection_table(db: &Db) -> Result<(), sqlx::Error> {
@@ -33,17 +99,51 @@ pub async fn init_projection_table(db: &Db) -> Result<(), sqlx::Error> {
             .fetch_optional(&mut scope)
             .await?;
     match exists {
-        Some(_) => Ok(()),
-        None => Err(sqlx::Error::Protocol(
-            "投影表 public.search_entity_projections 缺失：请确认迁移 \
-             database/migrations/20261015000071_k1_b1_search_projection_table.sql 已应用"
-                .to_string(),
-        )),
+        Some(_) => {}
+        None => {
+            return Err(sqlx::Error::Protocol(
+                "投影表 public.search_entity_projections 缺失：请确认迁移 \
+                 database/migrations/20261015000071_k1_b1_search_projection_table.sql 已应用"
+                    .to_string(),
+            ))
+        }
     }
+
+    // v2 双写目标表：缺失不阻塞启动（v1 仍可用），只告警；事件双写会失败并入重试队列。
+    let v2_exists: Option<String> =
+        sqlx::query_scalar("SELECT to_regclass('public.search_entity_projections_v2')::text")
+            .fetch_optional(&mut scope)
+            .await?;
+    if v2_exists.is_none() {
+        tracing::warn!(
+            "[search] 投影表 public.search_entity_projections_v2 缺失：v2 双写将失败并入重试队列；\
+             请确认迁移 database/migrations/20261123132000_search_projection_v2_company_scope.sql 已应用"
+        );
+    }
+    Ok(())
 }
 
-/// 把事件快照 UPSERT / DELETE 到投影表（幂等）。
-async fn apply_event(db: &Db, payload: SearchableEntityChangedPayload) -> Result<(), TopemsError> {
+/// 把事件快照双写：v1 必须成功（失败走事件重试/DLQ）；v2 失败只告警并入
+/// 进程内重试队列，绝不影响 v1 结果或主链路（W13 双写，不切查询/不切流）。
+pub async fn apply_event(
+    db: &Db,
+    payload: SearchableEntityChangedPayload,
+) -> Result<(), TopemsError> {
+    apply_v1(db, &payload).await?;
+    if let Err(e) = apply_v2(db, &payload).await {
+        tracing::warn!(
+            "[search] v2 投影写入失败（v1 已成功，不影响主链路）{} id={}: {}，入重试队列",
+            payload.entity_type,
+            payload.entity_id,
+            e
+        );
+        enqueue_v2_retry(payload, 0);
+    }
+    Ok(())
+}
+
+/// v1 投影（`public.search_entity_projections`）UPSERT / DELETE（幂等）。
+async fn apply_v1(db: &Db, payload: &SearchableEntityChangedPayload) -> Result<(), TopemsError> {
     let tenant = payload
         .tenant_id
         .unwrap_or_else(|| Uuid::parse_str(ZERO_TENANT).unwrap_or_default());
@@ -112,8 +212,85 @@ async fn apply_event(db: &Db, payload: SearchableEntityChangedPayload) -> Result
     Ok(())
 }
 
+/// v2 投影（`public.search_entity_projections_v2`，含 company_id）。
+///
+/// 事件消费无请求公司上下文，且 company_read 策略对公司行 fail-closed，
+/// 因此走系统写通道（`app.rls_system='on'`）写入任意公司行。
+async fn apply_v2(db: &Db, payload: &SearchableEntityChangedPayload) -> Result<(), TopemsError> {
+    let tenant = payload
+        .tenant_id
+        .unwrap_or_else(|| Uuid::parse_str(ZERO_TENANT).unwrap_or_default());
+
+    let mut scope = db
+        .scope_system()
+        .await
+        .map_err(|e| TopemsError::Internal(format!("search v2 投影 scope begin 失败: {}", e)))?;
+
+    if payload.op == "delete" {
+        sqlx::query(
+            "DELETE FROM public.search_entity_projections_v2
+             WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3",
+        )
+        .bind(tenant)
+        .bind(&payload.entity_type)
+        .bind(payload.entity_id)
+        .execute(&mut scope)
+        .await
+        .map_err(|e| TopemsError::Internal(format!("search v2 投影 delete 失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("search v2 投影 commit 失败: {}", e)))?;
+        return Ok(());
+    }
+
+    sqlx::query(
+        r#"
+        INSERT INTO public.search_entity_projections_v2
+            (tenant_id, company_id, entity_type, entity_id, name, contact_person, contact_phone,
+             email, address, status, remark, source_updated_at, projected_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+        ON CONFLICT (tenant_id, entity_type, entity_id) DO UPDATE SET
+            company_id = EXCLUDED.company_id,
+            name = EXCLUDED.name,
+            contact_person = EXCLUDED.contact_person,
+            contact_phone = EXCLUDED.contact_phone,
+            email = EXCLUDED.email,
+            address = EXCLUDED.address,
+            status = EXCLUDED.status,
+            remark = EXCLUDED.remark,
+            source_updated_at = EXCLUDED.source_updated_at,
+            projected_at = NOW()
+        "#,
+    )
+    .bind(tenant)
+    .bind(payload.company_id)
+    .bind(&payload.entity_type)
+    .bind(payload.entity_id)
+    .bind(&payload.name)
+    .bind(&payload.contact_person)
+    .bind(&payload.contact_phone)
+    .bind(&payload.email)
+    .bind(&payload.address)
+    .bind(&payload.status)
+    .bind(&payload.remark)
+    .bind(payload.source_updated_at)
+    .execute(&mut scope)
+    .await
+    .map_err(|e| TopemsError::Internal(format!("search v2 投影 upsert 失败: {}", e)))?;
+
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::Internal(format!("search v2 投影 commit 失败: {}", e)))?;
+    Ok(())
+}
+
 /// 启动实体事件订阅者（失败不阻塞 search 启动；对齐 erp start_event_subscribers）。
 pub async fn start_projection_subscriber(db: Db) -> Result<(), TopemsError> {
+    // v2 双写失败重试 worker（幂等；未初始化时 apply_event 仅告警跳过）。
+    init_v2_retry_worker(db.clone());
+
     let subscriber = EventSubscriber::new("search")
         .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 

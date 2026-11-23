@@ -299,6 +299,16 @@ pub async fn create_sales_order(
         return e.0;
     }
 
+    // W13：创建主单必须写请求公司上下文；缺失即拒绝（fail-closed），不静默置空。
+    let company_id = match super::order_company::require_order_company(
+        "销售订单",
+        claims.tenant_id.as_deref(),
+        &claims.sub,
+    ) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     let customer_result = sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "erp",
         "SELECT name FROM erp.customers WHERE id = $1"
@@ -339,7 +349,7 @@ pub async fn create_sales_order(
     };
 
     let result = sqlx::query_as::<_, SalesOrder>(
-        only_own_schema_query!("erp", "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id, company_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID, $12) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"),
     )
     .bind(body.order_no)
     .bind(body.customer_id)
@@ -352,6 +362,7 @@ pub async fn create_sales_order(
     .bind(dec_owned(payable_amount))
     .bind(initial_status.as_db_str())
     .bind(body.remark)
+    .bind(company_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -920,6 +931,15 @@ async fn batch_create_sales_orders(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e.0;
     }
+    // W13：批量创建同样要求公司上下文；缺失整批拒绝（fail-closed）。
+    let company_id = match super::order_company::require_order_company(
+        "销售订单",
+        claims.tenant_id.as_deref(),
+        &claims.sub,
+    ) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(e),
+    };
     let mut created = Vec::new();
     for req in &body.orders {
         let customer_name: String = sqlx::query_scalar(only_own_schema_query!(
@@ -953,12 +973,12 @@ async fn batch_create_sales_orders(
         };
         let result = sqlx::query_as::<_, SalesOrder>(only_own_schema_query!(
             "erp",
-            "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"
+            "INSERT INTO erp.sales_orders (order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id, company_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID, $12) RETURNING id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"
         ))
         .bind(&req.order_no).bind(req.customer_id).bind(&customer_name).bind(order_date)
         .bind(req.delivery_date).bind(dec_owned(amounts.total_amount)).bind(dec_owned(amounts.tax_amount))
         .bind(dec_owned(amounts.discount_amount)).bind(dec_owned(amounts.payable_amount))
-        .bind(initial_status.as_db_str()).bind(&req.remark)
+        .bind(initial_status.as_db_str()).bind(&req.remark).bind(company_id)
         .fetch_optional(&mut **txn).await;
         match result {
             Ok(Some(o)) => {

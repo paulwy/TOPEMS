@@ -274,6 +274,9 @@ pub struct SearchableEntityChangedPayload {
     pub entity_id: Uuid,
     /// 所属租户（幂等键组成 + 投影行级隔离）
     pub tenant_id: Option<Uuid>,
+    /// 归属公司（W13 v2 投影公司维度）；旧消息缺省为 None，消费端按兼容处理
+    #[serde(default)]
+    pub company_id: Option<Uuid>,
     /// 操作："upsert"（含快照）| "delete"（快照字段为空）
     pub op: String,
     /// 展示标题：客户 name 或订单 order_no
@@ -2053,5 +2056,58 @@ mod tests {
         let num_wire: Decimal = serde_json::from_value(serde_json::json!(0.3)).unwrap();
         assert_eq!(num_wire.to_string(), "0.3");
         assert_eq!(old_wire, num_wire);
+    }
+
+    /// W13：v2 投影公司维度上线后，旧消息（无 company_id 字段）必须兼容为 None。
+    #[test]
+    fn searchable_payload_without_company_id_defaults_to_none() {
+        let entity_id = Uuid::new_v4();
+        let tenant_id = Uuid::new_v4();
+        let old_wire = serde_json::json!({
+            "entity_type": "sales_order",
+            "entity_id": entity_id,
+            "tenant_id": tenant_id,
+            "op": "upsert",
+            "name": "SO-1",
+            "contact_person": null,
+            "contact_phone": null,
+            "email": null,
+            "address": null,
+            "status": "draft",
+            "remark": null,
+            "source_updated_at": null
+        });
+        let p: SearchableEntityChangedPayload = serde_json::from_value(old_wire).unwrap();
+        assert!(
+            p.company_id.is_none(),
+            "旧格式缺 company_id 必须反解为 None"
+        );
+    }
+
+    /// W13：新消息携带 company_id 时必须完整保留。
+    #[test]
+    fn searchable_payload_with_company_id_roundtrip() {
+        let entity_id = Uuid::new_v4();
+        let tenant_id = Uuid::new_v4();
+        let company_id = Uuid::new_v4();
+        let p = SearchableEntityChangedPayload {
+            entity_type: "purchase_order".into(),
+            entity_id,
+            tenant_id: Some(tenant_id),
+            company_id: Some(company_id),
+            op: "upsert".into(),
+            name: Some("PO-1".into()),
+            contact_person: None,
+            contact_phone: None,
+            email: None,
+            address: None,
+            status: Some("draft".into()),
+            remark: None,
+            source_updated_at: None,
+        };
+        let back: SearchableEntityChangedPayload =
+            serde_json::from_str(&serde_json::to_string(&p).unwrap()).unwrap();
+        assert_eq!(back.company_id, Some(company_id));
+        assert_eq!(back.entity_id, entity_id);
     }
 }

@@ -6,6 +6,10 @@ authors.workspace = true
 license.workspace = true
 description = "TOPEMS Search Service - 全局搜索服务"
 
+[features]
+# 需要真实 PostgreSQL 的测试（v1/v2 投影双写）；默认关闭，CI 起 postgres service 后开启
+db-tests = []
+
 [dependencies]
 axum.workspace = true
 sqlx.workspace = true

@@ -212,6 +212,16 @@ pub async fn create_purchase_order(
         return e.0;
     }
 
+    // W13：创建主单必须写请求公司上下文；缺失即拒绝（fail-closed），不静默置空。
+    let company_id = match super::order_company::require_order_company(
+        "采购订单",
+        claims.tenant_id.as_deref(),
+        &claims.sub,
+    ) {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(e),
+    };
+
     let supplier_name = match sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
         "erp",
         "SELECT name FROM erp.suppliers WHERE id = $1"
@@ -238,8 +248,8 @@ pub async fn create_purchase_order(
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("erp", r#"INSERT INTO erp.purchase_orders (order_no, supplier_id, supplier_name, order_date, delivery_date, 
-            total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID)
+            total_amount, tax_amount, discount_amount, payable_amount, status, remark, tenant_id, company_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NULLIF(current_setting('app.tenant_id', true), '')::UUID, $12)
             RETURNING id, order_no, supplier_id, supplier_name, order_date, delivery_date, 
                       total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at"#)
     )
@@ -254,6 +264,7 @@ pub async fn create_purchase_order(
     .bind(payable_amount)
     .bind(PurchaseOrderStatus::DEFAULT.as_db_str())
     .bind(req.remark)
+    .bind(company_id)
     .fetch_one(&mut **txn)
     .await;
 

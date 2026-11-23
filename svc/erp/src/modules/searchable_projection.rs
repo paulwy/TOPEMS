@@ -23,6 +23,9 @@ const SERVICE_NAME: &str = "erp";
 
 /// 实体可搜索快照（仅保留投影所需列）
 struct Snapshot {
+    /// 归属公司（W13 v2 投影公司维度）：订单取源表 company_id；
+    /// 客户暂取 group_company_id（无该列时保持 None，等业务清单回填）。
+    company_id: Option<Uuid>,
     name: Option<String>,
     contact_person: Option<String>,
     contact_phone: Option<String>,
@@ -42,7 +45,7 @@ async fn fetch_snapshot_with_tenant(
     match entity_type {
         "customer" => {
             let row = sqlx::query(
-                "SELECT id, tenant_id, name, contact_person, contact_phone, email, address, status, updated_at
+                "SELECT id, tenant_id, group_company_id, name, contact_person, contact_phone, email, address, status, updated_at
                  FROM erp.customers WHERE id = $1 AND deleted_at IS NULL",
             )
             .bind(entity_id)
@@ -53,6 +56,7 @@ async fn fetch_snapshot_with_tenant(
             match row {
                 Some(r) => {
                     let snap = Snapshot {
+                        company_id: r.try_get::<Uuid, _>("group_company_id").ok(),
                         name: r.try_get::<String, _>("name").ok(),
                         contact_person: r.try_get::<String, _>("contact_person").ok(),
                         contact_phone: r.try_get::<String, _>("contact_phone").ok(),
@@ -74,7 +78,7 @@ async fn fetch_snapshot_with_tenant(
                 "erp.purchase_orders"
             };
             let sql = format!(
-                "SELECT id, tenant_id, order_no, status, remark, updated_at FROM {} WHERE id = $1 AND deleted_at IS NULL",
+                "SELECT id, tenant_id, company_id, order_no, status, remark, updated_at FROM {} WHERE id = $1 AND deleted_at IS NULL",
                 table
             );
             let row = sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -86,6 +90,7 @@ async fn fetch_snapshot_with_tenant(
             match row {
                 Some(r) => {
                     let snap = Snapshot {
+                        company_id: r.try_get::<Uuid, _>("company_id").ok(),
                         name: r.try_get::<String, _>("order_no").ok(),
                         contact_person: None,
                         contact_phone: None,
@@ -122,6 +127,7 @@ async fn build_payload_from_pool(
             entity_type: entity_type.to_string(),
             entity_id,
             tenant_id,
+            company_id: s.company_id,
             op: "upsert".to_string(),
             name: s.name,
             contact_person: s.contact_person,
@@ -136,6 +142,7 @@ async fn build_payload_from_pool(
             entity_type: entity_type.to_string(),
             entity_id,
             tenant_id,
+            company_id: None,
             op: "delete".to_string(),
             name: None,
             contact_person: None,
@@ -225,7 +232,7 @@ pub async fn searchable_snapshot(
 
     // customers
     if let Ok(rows) = sqlx::query(
-        "SELECT id, tenant_id, name, contact_person, contact_phone, email, address, status, updated_at
+        "SELECT id, tenant_id, group_company_id, name, contact_person, contact_phone, email, address, status, updated_at
          FROM erp.customers WHERE deleted_at IS NULL",
     )
     .fetch_all(&mut scope)
@@ -236,6 +243,7 @@ pub async fn searchable_snapshot(
                 entity_type: "customer".to_string(),
                 entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
                 tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                company_id: r.try_get::<Uuid, _>("group_company_id").ok(),
                 op: "upsert".to_string(),
                 name: r.try_get::<String, _>("name").ok(),
                 contact_person: r.try_get::<String, _>("contact_person").ok(),
@@ -251,7 +259,7 @@ pub async fn searchable_snapshot(
 
     // sales_orders
     if let Ok(rows) = sqlx::query(
-        "SELECT id, tenant_id, order_no, status, remark, updated_at
+        "SELECT id, tenant_id, company_id, order_no, status, remark, updated_at
          FROM erp.sales_orders WHERE deleted_at IS NULL",
     )
     .fetch_all(&mut scope)
@@ -262,6 +270,7 @@ pub async fn searchable_snapshot(
                 entity_type: "sales_order".to_string(),
                 entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
                 tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                company_id: r.try_get::<Uuid, _>("company_id").ok(),
                 op: "upsert".to_string(),
                 name: r.try_get::<String, _>("order_no").ok(),
                 contact_person: None,
@@ -277,7 +286,7 @@ pub async fn searchable_snapshot(
 
     // purchase_orders
     if let Ok(rows) = sqlx::query(
-        "SELECT id, tenant_id, order_no, status, remark, updated_at
+        "SELECT id, tenant_id, company_id, order_no, status, remark, updated_at
          FROM erp.purchase_orders WHERE deleted_at IS NULL",
     )
     .fetch_all(&mut scope)
@@ -288,6 +297,7 @@ pub async fn searchable_snapshot(
                 entity_type: "purchase_order".to_string(),
                 entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
                 tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                company_id: r.try_get::<Uuid, _>("company_id").ok(),
                 op: "upsert".to_string(),
                 name: r.try_get::<String, _>("order_no").ok(),
                 contact_person: None,

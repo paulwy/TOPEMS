@@ -80,6 +80,7 @@ pub mod office_supplies;
 pub mod office_supply_status;
 pub mod openapi;
 pub mod order_calc;
+pub mod order_company;
 pub mod payable_status;
 pub mod procurement_e2e;
 pub mod production_order;
