@@ -1,35 +1,46 @@
 -- ============================================================
 -- 20261123110000_monitor_settings_company_scope.sql
 --
--- W12-B1：public.monitor_settings 公司级隔离（平台默认行只读 + 公司覆盖）
+-- W12-B1：public.monitor_settings 参数分级与公司级隔离（平台/母版/公司三层）
 --
--- 业务定性（2026-11-23 裁决 5 / 方案 §3 §4 §5.3）：
---   * company_id IS NULL 且 tenant_id IS NULL = 平台默认行，所有公司只读；
---   * 公司行（company_id NOT NULL）表达公司覆盖，本司可读写；母公司经
---     erp.company_readable 只读子公司，不可代写；
+-- 业务定性（2026-11-23 回改裁决）：
+--   * 三层取值：本司行 > 集团母版行（tenant_id 非空、company_id NULL）>
+--     平台默认行（tenant_id/company_id 均 NULL）；
+--   * override_policy 三档：platform_only（平台锁定，公司不可覆盖）、
+--     company_overridable（公司可覆盖）、company_only（只对公司有意义）；
+--   * 存量默认：平台行 platform_only（fail-closed，运维逐个放开）；
+--     集团母版行 company_overridable；
+--   * 迁移不推断、不阻断：所有存量租户级行保留为集团母版行（company_id 仍 NULL），
+--     多公司租户同样保留，不再按公司拆分或中止；
+--   * platform_only 的键不允许存在公司行：CHECK（行级）+ 触发器（跨行）双重兜底；
 --   * 平台行没有任何业务写权限，只能由平台通道（app.rls_system='on'）维护；
---   * 回填：tenant_id IS NULL → 平台行；单公司租户 → 该公司；
---     多公司租户的租户级行无法判定归属 → RAISE EXCEPTION，事务回滚，
---     不得改成 NULL（否则会扩大为全公司可见）。
+--     公司行本司可读写，母公司经 erp.company_readable 只读子公司、不可代写。
 --
 -- 变更内容：
---   1. 前置断言：表/公司表/erp 函数存在；平台行 (key) 无重复；统计存量行。
---   2. 新增 company_id uuid（可空、无默认）。
---   3. 回填单公司租户；多公司租户的租户级行保持不可判定并明确阻断。
+--   1. 前置断言：表/公司表/erp 函数存在；平台行与母版行 (tenant,key) 无重复。
+--   2. 新增 company_id uuid（可空、无默认）与 override_policy varchar(32)
+--      NOT NULL DEFAULT 'platform_only'。
+--   3. 统一回填：平台行保持 platform_only；存量租户级行保留为母版并置
+--      company_overridable；既有公司行按母版策略归一，platform_only 冲突显式阻断。
 --   4. 删除旧唯一索引 uq_monitor_settings_tenant_key (tenant_id, key)。
---   5. 建公司行/平台行两条部分唯一索引 + CHECK ((company_id IS NULL) = (tenant_id IS NULL))。
---   6. 同租户公司外键（平台行 company_id/tenant_id 均为 NULL，MATCH SIMPLE 下不校验）。
---   7. 写 NULL 语义 COMMENT。
---   8. 枚举并删除既有策略，重建 5 条（方案 §5.3 形状）：
+--   5. 建「母版/平台行」与「公司行」两条部分唯一索引：
+--        default: (COALESCE(tenant_id, 零UUID), key) WHERE company_id IS NULL
+--        company: (tenant_id, company_id, key) WHERE company_id IS NOT NULL
+--      COALESCE 是为了让平台行（tenant_id NULL）也受唯一约束；纯 (tenant_id,key)
+--      在 PostgreSQL 下 NULL 互不相等，会让平台重复键漏过。
+--   6. CHECK：company_id/tenant_id 空值配对、override_policy 取值、
+--      platform_only 不得出现在公司行、company_only 不得出现在母版/平台行。
+--   7. 触发器：公司行写入前校验同 key 的母版/平台策略，platform_only 拒绝（42501）。
+--   8. 同租户公司外键；company_id / override_policy 语义 COMMENT。
+--   9. 显式 ENABLE + FORCE RLS；枚举并删除既有策略，重建 5 条（形状不变）：
 --        company_select（平台行所有公司只读 + 公司行按本司/母公司可见）
 --        company_insert/update/delete（仅本公司行）
 --        platform_maintain（FOR ALL，仅系统/平台通道）
---   9. 后置断言：列类型/可空/无默认、索引谓词、CHECK 与外键已 VALIDATE、
---      策略数=5 且名称精确、RLS ENABLE+FORCE、行数不变、无租户级悬空行。
+--  10. 后置断言：列类型/可空/默认、索引谓词、CHECK 与外键已 VALIDATE、
+--      策略数=5、触发器存在、母版/平台策略归一、RLS ENABLE+FORCE。
 --
--- 幂等性：ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束存在性守卫 /
---   DROP POLICY IF EXISTS；回填只作用于 company_id IS NULL 且可判定的行，
---   无法判定的行每次重入都会再次阻断。
+-- 幂等性：ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS / 约束与触发器守卫；
+--   回填只把母版统一为 company_overridable，不改变 company_id 归属。
 -- 文件内不含 BEGIN/COMMIT：入口统一用 psql --single-transaction / sqlx 事务包裹。
 -- 回滚：database/rollback/20261123110000_monitor_settings_company_scope.rollback.sql
 -- ============================================================
@@ -41,7 +52,7 @@ SET statement_timeout = '120s';
 SELECT set_config('app.rls_system', 'on', false);
 
 -- ------------------------------------------------------------
--- 1. 前置断言 + 加列 + 回填 + 阻断 + 计数留痕
+-- 1. 前置断言 + 加列 + 统一回填（保留集团母版）+ 计数留痕
 -- ------------------------------------------------------------
 DO $w12b1$
 DECLARE
@@ -49,10 +60,12 @@ DECLARE
     v_pre_rows       bigint;
     v_pre_company    bigint;
     v_platform       bigint;
-    v_backfilled     bigint;
+    v_master         bigint;
     v_company_rows   bigint;
-    v_orphan         bigint;
+    v_company_fixed  bigint;
+    v_conflict       bigint;
     v_platform_dups  bigint;
+    v_master_dups    bigint;
     v_sample         text;
 BEGIN
     IF to_regclass('public.monitor_settings') IS NULL THEN
@@ -67,7 +80,16 @@ BEGIN
         RAISE EXCEPTION '前置断言失败：erp 公司维度函数缺失（group_tenant_of/current_company_id/company_readable）';
     END IF;
 
-    -- 平台行按 key 唯一；重复会让平台部分唯一索引无法建立。
+    SELECT NOT EXISTS (
+        SELECT 1
+          FROM pg_attribute
+         WHERE attrelid = 'public.monitor_settings'::regclass
+           AND attname = 'company_id'
+           AND attnum > 0
+           AND NOT attisdropped
+    ) INTO v_fresh;
+
+    -- 平台行按 key 唯一；重复会让「母版/平台行」部分唯一索引无法建立。
     SELECT count(*) INTO v_platform_dups
       FROM (
             SELECT key
@@ -77,17 +99,31 @@ BEGIN
             HAVING count(*) > 1
            ) d;
     IF v_platform_dups > 0 THEN
-        RAISE EXCEPTION '前置断言失败：存在 % 组重复平台设置 key，无法建立平台部分唯一索引；请先合并平台行', v_platform_dups;
+        RAISE EXCEPTION '前置断言失败：存在 % 组重复平台设置 key，无法建立默认行部分唯一索引；请先合并平台行', v_platform_dups;
     END IF;
 
-    SELECT NOT EXISTS (
-        SELECT 1
-          FROM pg_attribute
-         WHERE attrelid = 'public.monitor_settings'::regclass
-           AND attname = 'company_id'
-           AND attnum > 0
-           AND NOT attisdropped
-    ) INTO v_fresh;
+    -- 母版行 (tenant_id, key) 唯一；重入时只看 company_id IS NULL 的行。
+    IF v_fresh THEN
+        SELECT count(*) INTO v_master_dups
+          FROM (
+                SELECT tenant_id, key
+                  FROM public.monitor_settings
+                 WHERE tenant_id IS NOT NULL AND deleted_at IS NULL
+                 GROUP BY tenant_id, key
+                HAVING count(*) > 1
+               ) d;
+    ELSE
+        EXECUTE 'SELECT count(*) FROM (
+                   SELECT tenant_id, key
+                     FROM public.monitor_settings
+                    WHERE tenant_id IS NOT NULL AND company_id IS NULL AND deleted_at IS NULL
+                    GROUP BY tenant_id, key
+                   HAVING count(*) > 1
+                 ) d' INTO v_master_dups;
+    END IF;
+    IF v_master_dups > 0 THEN
+        RAISE EXCEPTION '前置断言失败：存在 % 组重复集团母版设置 (tenant_id, key)，无法建立默认行部分唯一索引；请先合并母版行', v_master_dups;
+    END IF;
 
     SELECT count(*) INTO v_pre_rows FROM public.monitor_settings;
 
@@ -100,43 +136,65 @@ BEGIN
             v_pre_rows, v_pre_company;
     END IF;
 
-    -- 2. 加列：存量行自动为 NULL，随后按规则回填。
+    -- 2. 加列：company_id 存量行为 NULL（= 母版/平台），override_policy 默认 platform_only。
     EXECUTE 'ALTER TABLE public.monitor_settings ADD COLUMN IF NOT EXISTS company_id uuid';
+    EXECUTE 'ALTER TABLE public.monitor_settings '
+         || 'ADD COLUMN IF NOT EXISTS override_policy varchar(32) '
+         || 'NOT NULL DEFAULT ''platform_only''';
 
-    -- 3a. 平台行：tenant_id IS NULL 时保持 company_id NULL（已是初态，显式声明意图）。
-    -- 3b. 单公司租户：租户级设置归属唯一公司。
-    WITH single_company AS (
-        SELECT tenant_id, (array_agg(id))[1] AS company_id
-          FROM hrm.companies
-         WHERE tenant_id IS NOT NULL
-         GROUP BY tenant_id
-        HAVING count(*) = 1
-    ), upd AS (
-        UPDATE public.monitor_settings s
-           SET company_id = sc.company_id
-          FROM single_company sc
-         WHERE s.company_id IS NULL
-           AND s.tenant_id = sc.tenant_id
-        RETURNING 1
-    )
-    SELECT count(*) INTO v_backfilled FROM upd;
+    -- 3a. 平台行：tenant_id IS NULL 保持 company_id NULL 与 platform_only（默认值）。
+    -- 3b. 集团母版行：tenant_id 非空、company_id NULL 一律保留，不推断、不拆分。
+    UPDATE public.monitor_settings
+       SET override_policy = 'company_overridable'
+     WHERE company_id IS NULL
+       AND tenant_id IS NOT NULL
+       AND override_policy <> 'company_overridable';
+    GET DIAGNOSTICS v_master = ROW_COUNT;
 
-    -- 3c. 多公司租户的租户级行无法判定归属：明确阻断，不落 NULL。
-    SELECT count(*) INTO v_orphan
-      FROM public.monitor_settings
-     WHERE company_id IS NULL AND tenant_id IS NOT NULL;
+    -- 3c. 既有公司行（正常应为 0）：按同 key 的母版/平台策略归一。
+    UPDATE public.monitor_settings c
+       SET override_policy = CASE
+             WHEN EXISTS (
+                 SELECT 1
+                   FROM public.monitor_settings d
+                  WHERE d.deleted_at IS NULL
+                    AND d.company_id IS NULL
+                    AND d.key = c.key
+                    AND (d.tenant_id = c.tenant_id OR d.tenant_id IS NULL)
+             ) THEN 'company_overridable'
+             ELSE 'company_only'
+           END
+     WHERE c.company_id IS NOT NULL;
+    GET DIAGNOSTICS v_company_fixed = ROW_COUNT;
 
-    IF v_orphan > 0 THEN
+    -- 3d. platform_only 的键不允许存在公司行：存量冲突明确阻断，不静默改策略。
+    SELECT count(*) INTO v_conflict
+      FROM public.monitor_settings c
+      JOIN public.monitor_settings d
+        ON d.deleted_at IS NULL
+       AND d.company_id IS NULL
+       AND d.key = c.key
+       AND (d.tenant_id = c.tenant_id OR d.tenant_id IS NULL)
+     WHERE c.company_id IS NOT NULL
+       AND d.override_policy = 'platform_only';
+
+    IF v_conflict > 0 THEN
         SELECT string_agg(tenant_id::text || ':' || key, '; ' ORDER BY tenant_id, key)
           INTO v_sample
           FROM (
-                SELECT tenant_id, key
-                  FROM public.monitor_settings
-                 WHERE company_id IS NULL AND tenant_id IS NOT NULL
-                 ORDER BY tenant_id, key
+                SELECT c.tenant_id, c.key
+                  FROM public.monitor_settings c
+                  JOIN public.monitor_settings d
+                    ON d.deleted_at IS NULL
+                   AND d.company_id IS NULL
+                   AND d.key = c.key
+                   AND (d.tenant_id = c.tenant_id OR d.tenant_id IS NULL)
+                 WHERE c.company_id IS NOT NULL
+                   AND d.override_policy = 'platform_only'
+                 ORDER BY c.tenant_id, c.key
                  LIMIT 10
                ) s;
-        RAISE EXCEPTION '回填阻断：% 行租户级设置无法归属到唯一公司（多公司租户），不能改成 NULL（会扩大为全公司可见）。示例：%。请先按公司拆分这些设置后重跑', v_orphan, v_sample;
+        RAISE EXCEPTION '平台锁定冲突：% 行公司设置对应的母版/平台策略为 platform_only，不允许公司覆盖。示例：%。请先由平台运维放开策略或归档公司行后重跑', v_conflict, v_sample;
     END IF;
 
     EXECUTE 'SELECT count(*) FROM public.monitor_settings WHERE company_id IS NOT NULL'
@@ -148,26 +206,32 @@ BEGIN
     PERFORM set_config('app.w12b1_pre_company', v_pre_company::text, true);
     PERFORM set_config('app.w12b1_company_rows', v_company_rows::text, true);
 
-    RAISE NOTICE '存量回填：总行数 %；平台默认行 %；本次回填单公司租户 % 行；公司行合计 % 行；无租户级悬空行',
-        v_pre_rows, v_platform, v_backfilled, v_company_rows;
+    RAISE NOTICE '统一回填：总行数 %；平台默认行 %；集团母版归一 % 行；既有公司行归一 % 行；公司行合计 % 行',
+        v_pre_rows, v_platform, v_master, v_company_fixed, v_company_rows;
 END
 $w12b1$;
 
 -- ------------------------------------------------------------
--- 4. 唯一约束替换：旧 (tenant_id, key) → 平台行 + 公司行两条部分唯一索引
+-- 4. 唯一约束替换：旧 (tenant_id, key) → 「母版/平台行」+「公司行」两条部分唯一索引
 -- ------------------------------------------------------------
 DROP INDEX IF EXISTS public.uq_monitor_settings_tenant_key;
+DROP INDEX IF EXISTS public.uq_monitor_settings_platform;
+DROP INDEX IF EXISTS public.uq_monitor_settings_company;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_monitor_settings_platform
-    ON public.monitor_settings (key)
-    WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL;
+-- 母版/平台行：tenant_id 非空 = 集团母版行，NULL = 平台默认行。
+-- COALESCE 零 UUID 让平台行（tenant_id NULL）同样受唯一约束；纯 (tenant_id, key)
+-- 在 PostgreSQL 下 NULL 互不相等，平台重复键会漏过。
+CREATE UNIQUE INDEX IF NOT EXISTS uq_monitor_settings_default
+    ON public.monitor_settings (COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid), key)
+    WHERE company_id IS NULL AND deleted_at IS NULL;
 
+-- 公司行：本司覆盖行。
 CREATE UNIQUE INDEX IF NOT EXISTS uq_monitor_settings_company
     ON public.monitor_settings (tenant_id, company_id, key)
-    WHERE deleted_at IS NULL AND company_id IS NOT NULL;
+    WHERE company_id IS NOT NULL AND deleted_at IS NULL;
 
 -- ------------------------------------------------------------
--- 5. CHECK：公司行必须有租户，平台行不得有租户
+-- 5. CHECK：作用域配对、override_policy 取值、策略与作用域一致
 -- ------------------------------------------------------------
 DO $check$
 BEGIN
@@ -178,13 +242,46 @@ BEGIN
     ) THEN
         EXECUTE 'ALTER TABLE public.monitor_settings '
              || 'ADD CONSTRAINT chk_monitor_settings_company_tenant '
-             || 'CHECK ((company_id IS NULL) = (tenant_id IS NULL)) NOT VALID';
+             || 'CHECK (company_id IS NULL OR tenant_id IS NOT NULL) NOT VALID';
     END IF;
 END
 $check$;
 
 ALTER TABLE public.monitor_settings
     VALIDATE CONSTRAINT chk_monitor_settings_company_tenant;
+
+DO $check_policy$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conrelid = 'public.monitor_settings'::regclass
+           AND conname = 'chk_monitor_settings_override_policy_values'
+    ) THEN
+        EXECUTE 'ALTER TABLE public.monitor_settings '
+             || 'ADD CONSTRAINT chk_monitor_settings_override_policy_values '
+             || 'CHECK (override_policy IN (''platform_only'', ''company_overridable'', ''company_only'')) NOT VALID';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conrelid = 'public.monitor_settings'::regclass
+           AND conname = 'chk_monitor_settings_override_policy_scope'
+    ) THEN
+        EXECUTE 'ALTER TABLE public.monitor_settings '
+             || 'ADD CONSTRAINT chk_monitor_settings_override_policy_scope '
+             || 'CHECK ('
+             || '(override_policy <> ''platform_only'' OR company_id IS NULL) AND '
+             || '(override_policy <> ''company_only'' OR company_id IS NOT NULL)'
+             || ') NOT VALID';
+    END IF;
+END
+$check_policy$;
+
+ALTER TABLE public.monitor_settings
+    VALIDATE CONSTRAINT chk_monitor_settings_override_policy_values;
+
+ALTER TABLE public.monitor_settings
+    VALIDATE CONSTRAINT chk_monitor_settings_override_policy_scope;
 
 -- ------------------------------------------------------------
 -- 6. 同租户公司外键（平台行 tenant_id/company_id 均为 NULL，MATCH SIMPLE 下不校验）
@@ -207,13 +304,57 @@ ALTER TABLE public.monitor_settings
     VALIDATE CONSTRAINT fk_monitor_settings_company;
 
 -- ------------------------------------------------------------
--- 7. NULL 语义注释
+-- 7. override_policy 跨行约束：母版/平台行 platform_only 时禁止公司行
+--    （行级 CHECK 只能保证单行自洽，跨行关系由 BEFORE 触发器兜底）
 -- ------------------------------------------------------------
-COMMENT ON COLUMN public.monitor_settings.company_id IS
-    'NULL = 平台默认阈值/设置（tenant_id 也为 NULL），所有公司只读；公司行表达覆盖，可写';
+CREATE OR REPLACE FUNCTION public.monitor_settings_enforce_override_policy()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $policy_fn$
+DECLARE
+    v_policy text;
+BEGIN
+    IF NEW.company_id IS NOT NULL THEN
+        -- 同 key 的母版行优先于平台默认行。
+        SELECT d.override_policy
+          INTO v_policy
+          FROM public.monitor_settings d
+         WHERE d.deleted_at IS NULL
+           AND d.company_id IS NULL
+           AND d.key = NEW.key
+           AND (d.tenant_id = NEW.tenant_id OR d.tenant_id IS NULL)
+         ORDER BY (d.tenant_id IS NULL)
+         LIMIT 1;
+
+        IF v_policy = 'platform_only' THEN
+            RAISE EXCEPTION '参数 % 的母版/平台策略为 platform_only，公司行不可覆盖', NEW.key
+                USING ERRCODE = 'insufficient_privilege',
+                      HINT = '请由平台运维放开 override_policy 后再写公司行';
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END
+$policy_fn$;
+
+DROP TRIGGER IF EXISTS trg_monitor_settings_override_policy ON public.monitor_settings;
+CREATE TRIGGER trg_monitor_settings_override_policy
+    BEFORE INSERT OR UPDATE OF key, tenant_id, company_id, override_policy
+    ON public.monitor_settings
+    FOR EACH ROW
+    EXECUTE FUNCTION public.monitor_settings_enforce_override_policy();
 
 -- ------------------------------------------------------------
--- 7. 策略重建：先枚举删除既有策略（迁移前为单条 rls_tenant_isolation）
+-- 8. NULL 语义注释
+-- ------------------------------------------------------------
+COMMENT ON COLUMN public.monitor_settings.company_id IS
+    'NULL = 集团母版行（tenant_id 非空）或平台默认行（tenant_id 也为 NULL）；非空 = 公司覆盖行';
+
+COMMENT ON COLUMN public.monitor_settings.override_policy IS
+    'platform_only=平台锁定公司不可覆盖；company_overridable=公司可覆盖；company_only=只对公司有意义';
+
+-- ------------------------------------------------------------
+-- 9. 策略重建：先枚举删除既有策略（迁移前为单条 rls_tenant_isolation）
 -- ------------------------------------------------------------
 DO $drop_policies$
 DECLARE
@@ -231,19 +372,18 @@ BEGIN
 END
 $drop_policies$;
 
--- 读取：平台默认行所有公司只读；公司行按本司 + 母公司可见子公司（系统通道全可见）。
--- 平台行分支不要求租户上下文——平台目录本身不含租户数据；写权限不在本策略内。
+-- 读取：平台参数行所有公司只读；集团母版行对本集团所有公司只读；
+-- 公司行按本司 + 母公司可见子公司（系统通道全可见）。
+-- 平台行分支不要求租户上下文——平台参数本身不含租户数据；写权限不在本策略内。
 CREATE POLICY monitor_settings_company_select
     ON public.monitor_settings
     FOR SELECT
     USING (
-        (tenant_id IS NULL AND company_id IS NULL)
+        COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
+        OR (tenant_id IS NULL AND company_id IS NULL)
         OR (
             tenant_id = erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::uuid)
-            AND (
-                COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
-                OR erp.company_readable(company_id)
-            )
+            AND (company_id IS NULL OR erp.company_readable(company_id))
         )
     );
 
@@ -296,7 +436,7 @@ CREATE POLICY monitor_settings_platform_maintain
     );
 
 -- ------------------------------------------------------------
--- 9. 后置断言
+-- 10. 后置断言
 -- ------------------------------------------------------------
 DO $assert$
 DECLARE
@@ -310,6 +450,11 @@ DECLARE
     v_index_def     text;
     v_check_valid   boolean;
     v_fk_valid      boolean;
+    v_policy_notnull boolean;
+    v_bad_policy    bigint;
+    v_bad_platform  bigint;
+    v_bad_master    bigint;
+    v_conflict      bigint;
 BEGIN
     SELECT format_type(atttypid, atttypmod), attnotnull, atthasdef
       INTO v_type, v_notnull, v_hasdef
@@ -323,10 +468,57 @@ BEGIN
         RAISE EXCEPTION '后置断言失败：company_id 类型为 %，期望 uuid', v_type;
     END IF;
     IF v_notnull THEN
-        RAISE EXCEPTION '后置断言失败：company_id 必须可空（NULL = 平台默认行）';
+        RAISE EXCEPTION '后置断言失败：company_id 必须可空（NULL = 母版/平台行）';
     END IF;
     IF v_hasdef THEN
         RAISE EXCEPTION '后置断言失败：company_id 不应有默认值';
+    END IF;
+
+    SELECT attnotnull INTO v_policy_notnull
+      FROM pg_attribute
+     WHERE attrelid = 'public.monitor_settings'::regclass
+       AND attname = 'override_policy'
+       AND attnum > 0
+       AND NOT attisdropped;
+    IF v_policy_notnull IS NULL THEN
+        RAISE EXCEPTION '后置断言失败：override_policy 列不存在';
+    END IF;
+    IF NOT v_policy_notnull THEN
+        RAISE EXCEPTION '后置断言失败：override_policy 必须 NOT NULL';
+    END IF;
+
+    SELECT count(*) INTO v_bad_policy
+      FROM public.monitor_settings
+     WHERE override_policy NOT IN ('platform_only', 'company_overridable', 'company_only');
+    IF v_bad_policy > 0 THEN
+        RAISE EXCEPTION '后置断言失败：存在 % 行 override_policy 取值非法', v_bad_policy;
+    END IF;
+
+    SELECT count(*) INTO v_bad_platform
+      FROM public.monitor_settings
+     WHERE tenant_id IS NULL AND company_id IS NULL AND override_policy <> 'platform_only';
+    IF v_bad_platform > 0 THEN
+        RAISE EXCEPTION '后置断言失败：% 行平台默认行不是 platform_only', v_bad_platform;
+    END IF;
+
+    SELECT count(*) INTO v_bad_master
+      FROM public.monitor_settings
+     WHERE tenant_id IS NOT NULL AND company_id IS NULL AND override_policy <> 'company_overridable';
+    IF v_bad_master > 0 THEN
+        RAISE EXCEPTION '后置断言失败：% 行集团母版行不是 company_overridable', v_bad_master;
+    END IF;
+
+    SELECT count(*) INTO v_conflict
+      FROM public.monitor_settings c
+      JOIN public.monitor_settings d
+        ON d.deleted_at IS NULL
+       AND d.company_id IS NULL
+       AND d.key = c.key
+       AND (d.tenant_id = c.tenant_id OR d.tenant_id IS NULL)
+     WHERE c.company_id IS NOT NULL
+       AND d.override_policy = 'platform_only';
+    IF v_conflict > 0 THEN
+        RAISE EXCEPTION '后置断言失败：% 行公司设置对应 platform_only 的母版/平台行', v_conflict;
     END IF;
 
     IF EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'uq_monitor_settings_tenant_key') THEN
@@ -337,11 +529,11 @@ BEGIN
       FROM pg_indexes
      WHERE schemaname = 'public'
        AND tablename = 'monitor_settings'
-       AND indexname = 'uq_monitor_settings_platform';
+       AND indexname = 'uq_monitor_settings_default';
     IF v_index_def IS NULL
-       OR position('(key)' IN v_index_def) = 0
-       OR position('WHERE ((tenant_id IS NULL) AND (company_id IS NULL) AND (deleted_at IS NULL))' IN v_index_def) = 0 THEN
-        RAISE EXCEPTION '后置断言失败：平台唯一索引缺失或定义不符（%）', coalesce(v_index_def, 'missing');
+       OR position('''00000000-0000-0000-0000-000000000000''::uuid' IN v_index_def) = 0
+       OR position('WHERE ((company_id IS NULL) AND (deleted_at IS NULL))' IN v_index_def) = 0 THEN
+        RAISE EXCEPTION '后置断言失败：母版/平台唯一索引缺失或定义不符（%）', coalesce(v_index_def, 'missing');
     END IF;
 
     SELECT indexdef INTO v_index_def
@@ -351,7 +543,7 @@ BEGIN
        AND indexname = 'uq_monitor_settings_company';
     IF v_index_def IS NULL
        OR position('(tenant_id, company_id, key)' IN v_index_def) = 0
-       OR position('WHERE ((deleted_at IS NULL) AND (company_id IS NOT NULL))' IN v_index_def) = 0 THEN
+       OR position('WHERE ((company_id IS NOT NULL) AND (deleted_at IS NULL))' IN v_index_def) = 0 THEN
         RAISE EXCEPTION '后置断言失败：公司唯一索引缺失或定义不符（%）', coalesce(v_index_def, 'missing');
     END IF;
 
@@ -363,7 +555,48 @@ BEGIN
         RAISE EXCEPTION '后置断言失败：CHECK chk_monitor_settings_company_tenant 不存在';
     END IF;
     IF NOT v_check_valid THEN
-        RAISE EXCEPTION '后置断言失败：CHECK 未通过 VALIDATE';
+        RAISE EXCEPTION '后置断言失败：CHECK chk_monitor_settings_company_tenant 未通过 VALIDATE';
+    END IF;
+
+    SELECT convalidated INTO v_check_valid
+      FROM pg_constraint
+     WHERE conrelid = 'public.monitor_settings'::regclass
+       AND conname = 'chk_monitor_settings_override_policy_values';
+    IF v_check_valid IS NULL THEN
+        RAISE EXCEPTION '后置断言失败：CHECK chk_monitor_settings_override_policy_values 不存在';
+    END IF;
+    IF NOT v_check_valid THEN
+        RAISE EXCEPTION '后置断言失败：CHECK chk_monitor_settings_override_policy_values 未通过 VALIDATE';
+    END IF;
+
+    SELECT convalidated INTO v_check_valid
+      FROM pg_constraint
+     WHERE conrelid = 'public.monitor_settings'::regclass
+       AND conname = 'chk_monitor_settings_override_policy_scope';
+    IF v_check_valid IS NULL THEN
+        RAISE EXCEPTION '后置断言失败：CHECK chk_monitor_settings_override_policy_scope 不存在';
+    END IF;
+    IF NOT v_check_valid THEN
+        RAISE EXCEPTION '后置断言失败：CHECK chk_monitor_settings_override_policy_scope 未通过 VALIDATE';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_trigger
+         WHERE tgrelid = 'public.monitor_settings'::regclass
+           AND tgname = 'trg_monitor_settings_override_policy'
+           AND NOT tgisinternal
+    ) THEN
+        RAISE EXCEPTION '后置断言失败：触发器 trg_monitor_settings_override_policy 不存在';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_proc
+         WHERE proname = 'monitor_settings_enforce_override_policy'
+           AND pronamespace = 'public'::regnamespace
+    ) THEN
+        RAISE EXCEPTION '后置断言失败：函数 monitor_settings_enforce_override_policy 不存在';
     END IF;
 
     SELECT convalidated INTO v_fk_valid
@@ -412,7 +645,7 @@ BEGIN
     v_pre_rows := current_setting('app.w12b1_pre_rows', true)::bigint;
     v_company_rows := current_setting('app.w12b1_company_rows', true)::bigint;
 
-    RAISE NOTICE '后置断言通过：总行数 %，公司行 %，平台行 %',
+    RAISE NOTICE '后置断言通过：总行数 %，公司行 %，母版/平台行 %',
         v_pre_rows, v_company_rows, v_pre_rows - v_company_rows;
 END
 $assert$;

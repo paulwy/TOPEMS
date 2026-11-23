@@ -11857,7 +11857,7 @@
           "roles": [
             "public"
           ],
-          "using": "(((tenant_id IS NULL) AND (company_id IS NULL)) OR ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND ((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR erp.company_readable(company_id))))",
+          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR ((tenant_id IS NULL) AND (company_id IS NULL)) OR ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND ((company_id IS NULL) OR erp.company_readable(company_id))))",
           "with_check": ""
         },
         {
@@ -12149,7 +12149,7 @@
           "roles": [
             "public"
           ],
-          "using": "(((tenant_id IS NULL) AND (company_id IS NULL)) OR ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND ((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR erp.company_readable(company_id))))",
+          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR ((tenant_id IS NULL) AND (company_id IS NULL)) OR ((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND ((company_id IS NULL) OR erp.company_readable(company_id))))",
           "with_check": ""
         },
         {

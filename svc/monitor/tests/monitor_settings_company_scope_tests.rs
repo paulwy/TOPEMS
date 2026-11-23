@@ -1,16 +1,18 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #![cfg(feature = "db-tests")]
-//! W12-B1 `public.monitor_settings` 公司级隔离验证（2026-11-23）。
+//! W12-B1 `public.monitor_settings` 参数分级与公司级隔离验证（2026-11-23 回改）。
 //!
 //! 直接执行 `database/migrations/20261123110000_monitor_settings_company_scope.sql`
 //! 的真实 SQL，覆盖：
-//!   1. 单公司租户的租户级行回填到唯一公司；平台行保持 `company_id IS NULL`；
-//!   2. 普通公司：可读平台行、可写本司行；
-//!   3. 普通公司：写平台行被拒（INSERT 42501 / UPDATE 0 行）；
-//!   4. 普通公司：写同租户兄弟公司行被拒（42501）；
-//!   5. 母公司：可读子公司行，代写子公司 0 行 / INSERT 42501；
-//!   6. 多公司租户的租户级行阻断迁移；
-//!   7. 有公司行时回滚明确中止，清理后回滚成功，可再次前向。
+//!   1. 存量租户级行统一保留为集团母版行（不推断、不阻断），平台行默认 platform_only；
+//!   2. 三层取值顺序：本司行 > 集团母版行 > 平台默认行；
+//!   3. 普通公司可覆盖母版键、可写本司行；
+//!   4. platform_only 的键写公司行被触发器拒绝（42501），且 CHECK 禁止公司行平台锁；
+//!   5. 普通公司写平台行被拒（UPDATE 0 行 / INSERT 42501）；
+//!   6. 普通公司写同租户兄弟公司行被拒（42501）；
+//!   7. 母公司可读子公司行，代写子公司 0 行 / INSERT 42501；
+//!   8. 多公司租户的存量行不再阻断迁移，保留为母版；
+//!   9. 有公司行时回滚明确中止，清理后回滚成功，可再次前向。
 //!
 //! 运行：
 //! ```bash
@@ -193,8 +195,15 @@ async fn actor_tx<'a>(
     tx
 }
 
+fn sqlstate(error: &sqlx::Error) -> Option<String> {
+    match error {
+        sqlx::Error::Database(db) => db.code().map(|c| c.to_string()),
+        _ => None,
+    }
+}
+
 fn rls_violation(error: &sqlx::Error) -> bool {
-    matches!(error, sqlx::Error::Database(db) if db.code().as_deref() == Some("42501"))
+    sqlstate(error).as_deref() == Some("42501")
 }
 
 /// 迁移前种子：平台默认行 / 租户级行（RLS 已开启，走系统通道）。
@@ -213,28 +222,28 @@ async fn seed_setting(pool: &PgPool, tenant: Option<Uuid>, key: &str, value: ser
     tx.commit().await.unwrap();
 }
 
-/// 回填单公司租户 + 平台行保持 NULL。
+/// 存量租户级行保留为母版；平台行默认 platform_only（fail-closed）。
 #[sqlx::test(migrations = false)]
-async fn backfill_single_company_tenant_row_and_keep_platform_rows(pool: PgPool) {
+async fn migration_keeps_tenant_rows_as_master_and_locks_platform(pool: PgPool) {
     setup_tables(&pool).await;
     let tenant = Uuid::new_v4();
-    let company = insert_company(&pool, tenant, "单公司").await;
+    let _company = insert_company(&pool, tenant, "单公司").await;
     seed_setting(&pool, None, "cpu_threshold", serde_json::json!(80)).await;
     seed_setting(&pool, Some(tenant), "cpu_threshold", serde_json::json!(70)).await;
 
     run_sql(&pool, MIGRATION_SQL).await.unwrap();
 
     let mut tx = system_tx(&pool, Some(tenant)).await;
-    let tenant_company: Option<Uuid> = sqlx::query_scalar(
-        "SELECT company_id FROM public.monitor_settings
+    let master: (Option<Uuid>, String) = sqlx::query_as(
+        "SELECT company_id, override_policy FROM public.monitor_settings
           WHERE tenant_id = $1 AND key = 'cpu_threshold'",
     )
     .bind(tenant)
     .fetch_one(&mut *tx)
     .await
     .unwrap();
-    let platform_company: Option<Uuid> = sqlx::query_scalar(
-        "SELECT company_id FROM public.monitor_settings
+    let platform: (Option<Uuid>, String) = sqlx::query_as(
+        "SELECT company_id, override_policy FROM public.monitor_settings
           WHERE tenant_id IS NULL AND key = 'cpu_threshold'",
     )
     .fetch_one(&mut *tx)
@@ -242,53 +251,114 @@ async fn backfill_single_company_tenant_row_and_keep_platform_rows(pool: PgPool)
     .unwrap();
     tx.rollback().await.unwrap();
 
-    assert_eq!(tenant_company, Some(company), "单公司租户行应回填唯一公司");
-    assert_eq!(platform_company, None, "平台行必须保持 company_id NULL");
+    assert_eq!(
+        master.0, None,
+        "存量租户级行必须保留为集团母版行，不推断公司"
+    );
+    assert_eq!(master.1, "company_overridable", "母版行默认公司可覆盖");
+    assert_eq!(platform.0, None, "平台行必须保持 company_id NULL");
+    assert_eq!(platform.1, "platform_only", "平台行默认平台锁定");
 }
 
-/// 普通公司：可读平台默认值，可写本司行。
+/// 三层取值顺序：本司行 > 集团母版行 > 平台默认行。
 #[sqlx::test(migrations = false)]
-async fn company_actor_reads_platform_and_writes_own_rows(pool: PgPool) {
+async fn resolution_order_is_company_then_master_then_platform(pool: PgPool) {
     setup_tables(&pool).await;
     let tenant = Uuid::new_v4();
     let company = insert_company(&pool, tenant, "本公司").await;
     seed_setting(&pool, None, "cpu_threshold", serde_json::json!(80)).await;
-
+    seed_setting(&pool, Some(tenant), "cpu_threshold", serde_json::json!(60)).await;
     run_sql(&pool, MIGRATION_SQL).await.unwrap();
 
     let mut tx = actor_tx(&pool, tenant, company, false, &[]).await;
-    let platform: Option<serde_json::Value> = sqlx::query_scalar(
+    let effective: serde_json::Value = sqlx::query_scalar(
         "SELECT value FROM public.monitor_settings
-          WHERE tenant_id IS NULL AND company_id IS NULL AND key = 'cpu_threshold'",
-    )
-    .fetch_optional(&mut *tx)
-    .await
-    .unwrap();
-    assert_eq!(
-        platform,
-        Some(serde_json::json!(80)),
-        "公司应只读平台默认值"
-    );
-
-    sqlx::query(
-        "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value, category)
-         VALUES ($1, $2, 'cpu_threshold', $3, 'alert')",
+          WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = 'cpu_threshold'
+          ORDER BY CASE
+                       WHEN company_id = erp.current_company_id() THEN 0
+                       WHEN company_id IS NULL AND tenant_id IS NOT NULL THEN 1
+                       ELSE 2
+                   END
+          LIMIT 1",
     )
     .bind(tenant)
-    .bind(company)
-    .bind(serde_json::json!(70))
-    .execute(&mut *tx)
-    .await
-    .expect("本公司写本公司行必须成功");
-
-    let own: Option<serde_json::Value> = sqlx::query_scalar(
-        "SELECT value FROM public.monitor_settings WHERE company_id = $1 AND key = 'cpu_threshold'",
-    )
-    .bind(company)
     .fetch_one(&mut *tx)
     .await
     .unwrap();
-    assert_eq!(own, Some(serde_json::json!(70)));
+    assert_eq!(effective, serde_json::json!(60), "母版行优先于平台默认行");
+
+    sqlx::query(
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, category, override_policy)
+         VALUES ($1, $2, 'cpu_threshold', $3, 'alert', 'company_overridable')",
+    )
+    .bind(tenant)
+    .bind(company)
+    .bind(serde_json::json!(50))
+    .execute(&mut *tx)
+    .await
+    .expect("母版行允许本司覆盖");
+
+    let effective: serde_json::Value = sqlx::query_scalar(
+        "SELECT value FROM public.monitor_settings
+          WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = 'cpu_threshold'
+          ORDER BY CASE
+                       WHEN company_id = erp.current_company_id() THEN 0
+                       WHEN company_id IS NULL AND tenant_id IS NOT NULL THEN 1
+                       ELSE 2
+                   END
+          LIMIT 1",
+    )
+    .bind(tenant)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
+    assert_eq!(effective, serde_json::json!(50), "本司行优先于母版行");
+    tx.rollback().await.unwrap();
+}
+
+/// platform_only 的键不允许公司行：触发器 42501；CHECK 禁止公司行写 platform_only。
+#[sqlx::test(migrations = false)]
+async fn platform_only_key_rejects_company_override(pool: PgPool) {
+    setup_tables(&pool).await;
+    let tenant = Uuid::new_v4();
+    let company = insert_company(&pool, tenant, "本公司").await;
+    seed_setting(&pool, None, "locked_key", serde_json::json!(1)).await;
+    run_sql(&pool, MIGRATION_SQL).await.unwrap();
+
+    let mut tx = actor_tx(&pool, tenant, company, false, &[]).await;
+    let err = sqlx::query(
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, category, override_policy)
+         VALUES ($1, $2, 'locked_key', '2'::jsonb, 'alert', 'company_overridable')",
+    )
+    .bind(tenant)
+    .bind(company)
+    .execute(&mut *tx)
+    .await
+    .expect_err("platform_only 的键不得写公司行");
+    assert!(
+        rls_violation(&err),
+        "平台锁定应由触发器 42501 拒绝，实际: {err}"
+    );
+    tx.rollback().await.unwrap();
+
+    let mut tx = actor_tx(&pool, tenant, company, false, &[]).await;
+    let err = sqlx::query(
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, category, override_policy)
+         VALUES ($1, $2, 'free_key', '2'::jsonb, 'alert', 'platform_only')",
+    )
+    .bind(tenant)
+    .bind(company)
+    .execute(&mut *tx)
+    .await
+    .expect_err("公司行不得声明 platform_only");
+    assert_eq!(
+        sqlstate(&err).as_deref(),
+        Some("23514"),
+        "应触发 CHECK 违反，实际: {err}"
+    );
     tx.rollback().await.unwrap();
 }
 
@@ -350,8 +420,9 @@ async fn company_actor_cannot_write_other_company_row(pool: PgPool) {
     assert_eq!(affected, 0);
 
     let err = sqlx::query(
-        "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value)
-         VALUES ($1, $2, 'sibling_key', '1'::jsonb)",
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, override_policy)
+         VALUES ($1, $2, 'sibling_key', '1'::jsonb, 'company_only')",
     )
     .bind(tenant)
     .bind(sibling)
@@ -371,11 +442,11 @@ async fn parent_reads_child_row_but_cannot_write(pool: PgPool) {
     let child = insert_company(&pool, tenant, "子公司").await;
 
     run_sql(&pool, MIGRATION_SQL).await.unwrap();
-    // 迁移后由子公司自己写一行（多公司租户的租户级行会在迁移时阻断）。
     let mut tx = actor_tx(&pool, tenant, child, false, &[]).await;
     sqlx::query(
-        "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value)
-         VALUES ($1, $2, 'child_key', '5'::jsonb)",
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, override_policy)
+         VALUES ($1, $2, 'child_key', '5'::jsonb, 'company_only')",
     )
     .bind(tenant)
     .bind(child)
@@ -404,8 +475,9 @@ async fn parent_reads_child_row_but_cannot_write(pool: PgPool) {
     assert_eq!(affected, 0, "母公司不得代写子公司行");
 
     let insert_err = sqlx::query(
-        "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value)
-         VALUES ($1, $2, 'child_rogue', '1'::jsonb)",
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, override_policy)
+         VALUES ($1, $2, 'child_rogue', '1'::jsonb, 'company_only')",
     )
     .bind(tenant)
     .bind(child)
@@ -419,22 +491,31 @@ async fn parent_reads_child_row_but_cannot_write(pool: PgPool) {
     tx.rollback().await.unwrap();
 }
 
-/// 多公司租户的租户级行必须阻断迁移（不得静默归 NULL/猜公司）。
+/// 多公司租户的租户级行不再阻断迁移，统一保留为母版。
 #[sqlx::test(migrations = false)]
-async fn multi_company_tenant_blocks_migration(pool: PgPool) {
+async fn multi_company_tenant_rows_kept_as_master_not_blocked(pool: PgPool) {
     setup_tables(&pool).await;
     let tenant = Uuid::new_v4();
     insert_company(&pool, tenant, "母公司").await;
     insert_company(&pool, tenant, "子公司").await;
     seed_setting(&pool, Some(tenant), "ambiguous_key", serde_json::json!(1)).await;
 
-    let err = run_sql(&pool, MIGRATION_SQL)
+    run_sql(&pool, MIGRATION_SQL)
         .await
-        .expect_err("多公司租户的租户级行必须阻断迁移");
-    assert!(
-        format!("{err}").contains("回填阻断"),
-        "阻断信息应说明回填无法归属，实际: {err}"
-    );
+        .expect("多公司租户的存量行不得阻断迁移");
+
+    let mut tx = system_tx(&pool, Some(tenant)).await;
+    let row: (Option<Uuid>, String) = sqlx::query_as(
+        "SELECT company_id, override_policy FROM public.monitor_settings
+          WHERE tenant_id = $1 AND key = 'ambiguous_key'",
+    )
+    .bind(tenant)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap();
+    tx.rollback().await.unwrap();
+    assert_eq!(row.0, None, "多公司租户存量行保留为母版，不推断公司");
+    assert_eq!(row.1, "company_overridable");
 }
 
 /// 有公司行时回滚明确中止；清理公司行后回滚成功，并可再次前向。
@@ -449,8 +530,9 @@ async fn rollback_blocks_on_company_rows_and_succeeds_after_cleanup(pool: PgPool
 
     let mut tx = actor_tx(&pool, tenant, company, false, &[]).await;
     sqlx::query(
-        "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value)
-         VALUES ($1, $2, 'company_key', '1'::jsonb)",
+        "INSERT INTO public.monitor_settings
+             (tenant_id, company_id, key, value, override_policy)
+         VALUES ($1, $2, 'company_key', '1'::jsonb, 'company_overridable')",
     )
     .bind(tenant)
     .bind(company)
@@ -479,17 +561,28 @@ async fn rollback_blocks_on_company_rows_and_succeeds_after_cleanup(pool: PgPool
 
     run_sql(&pool, ROLLBACK_SQL).await.unwrap();
 
-    let has_column: bool = sqlx::query_scalar(
+    let columns: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*)::bigint FROM pg_attribute
+          WHERE attrelid = 'public.monitor_settings'::regclass
+            AND attname IN ('company_id', 'override_policy')
+            AND attnum > 0 AND NOT attisdropped",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(columns, 0, "回滚后 company_id/override_policy 必须不存在");
+
+    let trigger: bool = sqlx::query_scalar(
         "SELECT EXISTS (
-            SELECT 1 FROM pg_attribute
-             WHERE attrelid = 'public.monitor_settings'::regclass
-               AND attname = 'company_id' AND attnum > 0 AND NOT attisdropped
+            SELECT 1 FROM pg_trigger
+             WHERE tgrelid = 'public.monitor_settings'::regclass
+               AND tgname = 'trg_monitor_settings_override_policy'
          )",
     )
     .fetch_one(&pool)
     .await
     .unwrap();
-    assert!(!has_column, "回滚后 company_id 必须不存在");
+    assert!(!trigger, "回滚后触发器必须不存在");
 
     let policies: i64 = sqlx::query_scalar(
         "SELECT COUNT(*)::bigint FROM pg_policies
@@ -502,11 +595,13 @@ async fn rollback_blocks_on_company_rows_and_succeeds_after_cleanup(pool: PgPool
 
     // 再次前向必须成功（此时只有平台行）。
     run_sql(&pool, MIGRATION_SQL).await.unwrap();
+    let mut tx = system_tx(&pool, Some(tenant)).await;
     let companies: i64 = sqlx::query_scalar(
         "SELECT COUNT(*)::bigint FROM public.monitor_settings WHERE company_id IS NOT NULL",
     )
-    .fetch_one(&pool)
+    .fetch_one(&mut *tx)
     .await
     .unwrap();
+    tx.rollback().await.unwrap();
     assert_eq!(companies, 0, "再前向后不应凭空产生公司行");
 }

@@ -246,12 +246,69 @@
       "expected": 1
     },
     {
-      "id": "monitor_settings.platform_unique_index",
+      "id": "monitor_settings.override_policy",
+      "kind": "column_type",
+      "table": "public.monitor_settings",
+      "column": "override_policy",
+      "expected": "character varying(32)",
+      "source": "20261123110000",
+      "source_tokens": ["ADD COLUMN IF NOT EXISTS override_policy varchar(32)", "COMMENT ON COLUMN public.monitor_settings.override_policy"]
+    },
+    {
+      "id": "monitor_settings.override_policy_values_check",
+      "kind": "data_rows",
+      "source": "20261123110000",
+      "source_tokens": ["chk_monitor_settings_override_policy_values", "VALIDATE CONSTRAINT chk_monitor_settings_override_policy_values"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.monitor_settings'::regclass AND conname = 'chk_monitor_settings_override_policy_values' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "monitor_settings.override_policy_scope_check",
+      "kind": "data_rows",
+      "source": "20261123110000",
+      "source_tokens": ["chk_monitor_settings_override_policy_scope", "VALIDATE CONSTRAINT chk_monitor_settings_override_policy_scope"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.monitor_settings'::regclass AND conname = 'chk_monitor_settings_override_policy_scope' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "monitor_settings.override_policy_trigger",
+      "kind": "data_rows",
+      "source": "20261123110000",
+      "source_tokens": ["trg_monitor_settings_override_policy", "monitor_settings_enforce_override_policy"],
+      "sql": "SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.monitor_settings'::regclass AND tgname = 'trg_monitor_settings_override_policy' AND NOT tgisinternal",
+      "expected": 1
+    },
+    {
+      "id": "monitor_settings.platform_rows_platform_only",
+      "kind": "data_rows",
+      "source": "20261123110000",
+      "source_tokens": ["平台默认行不是 platform_only"],
+      "sql": "SELECT count(*) FROM public.monitor_settings WHERE tenant_id IS NULL AND company_id IS NULL AND override_policy <> 'platform_only'",
+      "expected": 0
+    },
+    {
+      "id": "monitor_settings.master_rows_company_overridable",
+      "kind": "data_rows",
+      "source": "20261123110000",
+      "source_tokens": ["集团母版行不是 company_overridable"],
+      "sql": "SELECT count(*) FROM public.monitor_settings WHERE tenant_id IS NOT NULL AND company_id IS NULL AND override_policy <> 'company_overridable'",
+      "expected": 0
+    },
+    {
+      "id": "monitor_settings.company_rows_not_platform_only",
+      "kind": "data_rows",
+      "source": "20261123110000",
+      "source_tokens": ["公司设置对应 platform_only 的母版/平台行"],
+      "sql": "SELECT count(*) FROM public.monitor_settings c JOIN public.monitor_settings d ON d.deleted_at IS NULL AND d.company_id IS NULL AND d.key = c.key AND (d.tenant_id = c.tenant_id OR d.tenant_id IS NULL) WHERE c.company_id IS NOT NULL AND d.override_policy = 'platform_only'",
+      "expected": 0
+    },
+    {
+      "id": "monitor_settings.default_unique_index",
       "kind": "index_exists",
       "schema": "public",
-      "index": "uq_monitor_settings_platform",
+      "index": "uq_monitor_settings_default",
       "source": "20261123110000",
-      "source_tokens": ["uq_monitor_settings_platform", "WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL"]
+      "source_tokens": ["uq_monitor_settings_default", "WHERE company_id IS NULL AND deleted_at IS NULL"]
     },
     {
       "id": "monitor_settings.company_unique_index",
@@ -259,7 +316,7 @@
       "schema": "public",
       "index": "uq_monitor_settings_company",
       "source": "20261123110000",
-      "source_tokens": ["uq_monitor_settings_company", "WHERE deleted_at IS NULL AND company_id IS NOT NULL"]
+      "source_tokens": ["uq_monitor_settings_company", "WHERE company_id IS NOT NULL AND deleted_at IS NULL"]
     },
     {
       "id": "monitor_settings.legacy_index_absent",
@@ -303,12 +360,69 @@
       "expected": 1
     },
     {
-      "id": "system_settings.platform_unique_index",
+      "id": "system_settings.override_policy",
+      "kind": "column_type",
+      "table": "public.system_settings",
+      "column": "override_policy",
+      "expected": "character varying(32)",
+      "source": "20261123120000",
+      "source_tokens": ["ADD COLUMN IF NOT EXISTS override_policy varchar(32)", "COMMENT ON COLUMN public.system_settings.override_policy"]
+    },
+    {
+      "id": "system_settings.override_policy_values_check",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["chk_system_settings_override_policy_values", "VALIDATE CONSTRAINT chk_system_settings_override_policy_values"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.system_settings'::regclass AND conname = 'chk_system_settings_override_policy_values' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "system_settings.override_policy_scope_check",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["chk_system_settings_override_policy_scope", "VALIDATE CONSTRAINT chk_system_settings_override_policy_scope"],
+      "sql": "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.system_settings'::regclass AND conname = 'chk_system_settings_override_policy_scope' AND convalidated",
+      "expected": 1
+    },
+    {
+      "id": "system_settings.override_policy_trigger",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["trg_system_settings_override_policy", "system_settings_enforce_override_policy"],
+      "sql": "SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.system_settings'::regclass AND tgname = 'trg_system_settings_override_policy' AND NOT tgisinternal",
+      "expected": 1
+    },
+    {
+      "id": "system_settings.platform_rows_platform_only",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["平台默认行不是 platform_only"],
+      "sql": "SELECT count(*) FROM public.system_settings WHERE tenant_id IS NULL AND company_id IS NULL AND override_policy <> 'platform_only'",
+      "expected": 0
+    },
+    {
+      "id": "system_settings.master_rows_company_overridable",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["集团母版行不是 company_overridable"],
+      "sql": "SELECT count(*) FROM public.system_settings WHERE tenant_id IS NOT NULL AND company_id IS NULL AND override_policy <> 'company_overridable'",
+      "expected": 0
+    },
+    {
+      "id": "system_settings.company_rows_not_platform_only",
+      "kind": "data_rows",
+      "source": "20261123120000",
+      "source_tokens": ["公司参数对应 platform_only 的母版/平台行"],
+      "sql": "SELECT count(*) FROM public.system_settings c JOIN public.system_settings d ON d.deleted_at IS NULL AND d.company_id IS NULL AND d.key = c.key AND (d.tenant_id = c.tenant_id OR d.tenant_id IS NULL) WHERE c.company_id IS NOT NULL AND d.override_policy = 'platform_only'",
+      "expected": 0
+    },
+    {
+      "id": "system_settings.default_unique_index",
       "kind": "index_exists",
       "schema": "public",
-      "index": "uq_system_settings_platform",
+      "index": "uq_system_settings_default",
       "source": "20261123120000",
-      "source_tokens": ["uq_system_settings_platform", "WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL"]
+      "source_tokens": ["uq_system_settings_default", "WHERE company_id IS NULL AND deleted_at IS NULL"]
     },
     {
       "id": "system_settings.company_unique_index",
@@ -316,7 +430,7 @@
       "schema": "public",
       "index": "uq_system_settings_company",
       "source": "20261123120000",
-      "source_tokens": ["uq_system_settings_company", "WHERE deleted_at IS NULL AND company_id IS NOT NULL"]
+      "source_tokens": ["uq_system_settings_company", "WHERE company_id IS NOT NULL AND deleted_at IS NULL"]
     },
     {
       "id": "system_settings.legacy_index_absent",

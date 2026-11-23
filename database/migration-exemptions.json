@@ -174,6 +174,20 @@
       ],
       "evidence": "应用前只读核验（2026-11-19）：dev/prod 账本均无 20261119233000；dev core_permissions=348、prod=1157；44 条遗留码=0、其 core_role_permissions 授权=0、iam:dictionaries_read/update=0。标记后 check-destructive-sql --strict --approve-ticket=IAM-PERM-20261119 生成 2 条 DELETE 计划（maxRows=0）。dev 按 §7.1 落地（pg_dump -t core_permissions -t core_role_permissions 备份；--apply-deferred 20261119233000 --ticket IAM-PERM-20261119）：账本 696→697、success=t、checksum=13d61313…534b7 与文件 SHA-384 一致；core_permissions 348→350（仅 2 条字典码）、44 条遗留码与授权仍为 0、表/RLS/策略读数不变（1396/469/523）。validate.sh Checksum errors 0。",
       "approved": true
+    },
+    {
+      "id": "B20261123-w12-b1b2-override-policy-rework",
+      "date": "2026-11-23",
+      "committer": "topmap163",
+      "reason": "20261123110000/20261123120000 为尚未在任何环境应用的前向迁移（不在 _sqlx_migrations；本轮按三步方案回改）。属『未应用迁移』的受控内容修正：改内容不改版本号、不改已推送历史。变更：① 两表新增 override_policy 三档（platform_only/company_overridable/company_only）+ 取值/作用域 CHECK；② 取消单公司租户推断回填与多公司租户回填阻断，存量租户级行统一保留为集团母版行（company_id 置 NULL），平台行默认 platform_only（fail-closed），母版行默认 company_overridable；③ 部分唯一索引改为 default(COALESCE(tenant_id,零UUID),key) WHERE company_id IS NULL 与 company(tenant_id,company_id,key) WHERE company_id IS NOT NULL；④ company_select 改为系统通道最外层全可见，并把母版行纳入本集团读；⑤ 新增 BEFORE 触发器跨行强制 platform_only 不得有公司行；⑥ 回滚脚本同步先删触发器/函数再删列与索引。checksums.txt 仅更新这两行。",
+      "files": [
+        "20261123110000_monitor_settings_company_scope.sql",
+        "20261123120000_system_settings_company_scope.sql",
+        "20261123110000_monitor_settings_company_scope.rollback.sql",
+        "20261123120000_system_settings_company_scope.rollback.sql"
+      ],
+      "evidence": "两套隔离库演练（topems_drill_b1/topems_drill_b2，从 topems_test_runner 克隆，非特权角色）：前向 → 断言（平台行对普通公司只读、platform_only 键写公司行 42501 拒绝、母版行可被本司覆盖、跨公司 42501 拒绝、母公司读子公司但代写 0 行/42501、多公司租户存量行保留为母版不再阻断）→ 回滚 → 断言（列/索引/触发器/CHECK 全部移除）→ 再前向，两库均 exit 0。DB 测试：monitor 8 passed / erp 9 passed（--features db-tests，非 superuser 连接）。migration-drill-anchor：前向 4 条无失败、W9 回滚循环通过、RLS 快照 800 表/849 策略一致。validate.sh Errors 0 / Checksum errors 0；cargo fmt/check/clippy（workspace all-targets -D warnings）0 错。",
+      "approved": true
     }
   ]
 }

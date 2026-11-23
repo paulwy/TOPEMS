@@ -37,9 +37,9 @@ AND (
 | 6 | `public.core_users` | 是（启用时） | `uuid` / NULL / 无默认；启用前收紧为 NOT NULL | 0 行，不回填 | 模板 | 无（已无服务读写） | 窗口后（若业务要求重新启用） | 迁移 |
 | 7 | `public._archive_core_workflow_instances` | 是 | `uuid` / NULL / 无默认；NULL 行仅平台可见 | 从对应在办流程实例回填；源无公司归属或关联不上的置 NULL | 模板；NULL 行仅母公司/平台可见 | 无服务读写；仅归档/迁移脚本 | 窗口后（开放母公司查询前） | 迁移 |
 | 8 | `public._archive_core_workflow_versions` | 是 | `uuid` / NULL / 无默认；NULL 行仅平台可见 | 从对应流程版本/实例回填；判不出置 NULL | 模板；NULL 行仅母公司/平台可见 | 无服务读写；仅归档/迁移脚本 | 窗口后（开放母公司查询前） | 迁移 |
-| 9 | `public.monitor_settings` | 是 | `uuid` / NULL / 无默认；NULL = 平台母版值 | 平台行（`tenant_id IS NULL`）保持 NULL；单公司租户回填该公司；多公司租户的租户级行**阻断**，不改 NULL | 平台行所有公司只读；公司行按本司 + 母公司可见；业务写只落公司行 | 监控设置接口、告警评估器 | 窗口前（W12-B1） | 迁移 |
+| 9 | `public.monitor_settings` | 是 | `uuid` / NULL / 无默认；NULL = 集团母版行（`tenant_id` 非空）或平台默认行（`tenant_id` 也为 NULL）；另增 `override_policy` 三档 | 平台行（`tenant_id IS NULL`）保持 NULL 且默认 `platform_only`（fail-closed）；存量租户级行一律保留为集团母版行，不推断、不阻断；母版行默认 `company_overridable` | 平台行所有公司只读；母版行本集团可读、可被公司覆盖；公司行按本司 + 母公司可见；业务写只落公司行；`platform_only` 由 CHECK + 触发器双兜底 | 监控设置接口、告警评估器 | 窗口前（W12-B1） | 迁移 |
 | 10 | `public.search_entity_projections` | 是（新表 v2） | `uuid` / NOT NULL / 无默认 | 新表 v2 从源表与老表回填；判不出归属的副本不保留；比对零差异才切换 | 子公司仅本司；母公司默认跨子公司（限本租户），支持公司过滤 | 搜索同步任务、搜索查询接口 | 窗口前（W13，三步） | 迁移 x3 + 双写 |
-| 11 | `public.system_settings` | 是 | `uuid` / NULL / 无默认；NULL = 平台母版参数 | 平台行保持 NULL；单公司回填；多公司租户级行**阻断** | 平台行只读；公司行可覆盖；**新增公司作用域 API** | 系统设置接口 + 新增公司作用域 API | 窗口前（W12-B2） | 迁移 + 代码 |
+| 11 | `public.system_settings` | 是 | `uuid` / NULL / 无默认；NULL = 集团母版参数（`tenant_id` 非空）或平台参数行（`tenant_id` 也为 NULL）；另增 `override_policy` 三档 | 平台行保持 NULL 且默认 `platform_only`；存量租户级行一律保留为集团母版行，不推断、不阻断；母版行默认 `company_overridable` | 平台行只读；母版行可被公司覆盖；公司行按本司；**新增公司作用域 API**；平台写限平台运维 + 二次确认 + 审计（审批后续挂现有审批模块） | 系统设置接口 + 新增公司作用域 API | 窗口前（W12-B2） | 迁移 + 代码 |
 
 ### 1.1 `finance.cqrs_events` 两步走（单独展开）
 
@@ -103,9 +103,9 @@ W12-A1 → A2 → B1 → B2 → W13 严格串行，全部排在主窗口之前�
 | `core_users` | 归档不启用；启用前补公司归属 | 加列列为启用前置；窗口后 | ✅ |
 | `_archive_core_workflow_instances` | 补公司归属；默认不开放 | 加 `company_id`；窗口后开放前 | ✅ |
 | `_archive_core_workflow_versions` | 同上 | 同上 | ✅ |
-| `monitor_settings` | 平台母版只读 + 公司覆盖，写只落公司行 | 加 `company_id`；平台行只读、公司行可覆盖；多公司租户级行阻断 | ✅ |
+| `monitor_settings` | 平台母版只读 + 公司覆盖，写只落公司行 | 加 `company_id` + `override_policy`；存量租户行统一为集团母版（不推断、不阻断）；平台行只读、`platform_only` 拒绝公司行 | ✅ |
 | `search_entity_projections` | 子公司仅本司；母公司默认跨子公司并可过滤 | 新表 v2 `company_id NOT NULL`；双写零降级三步切换 | ✅ |
-| `system_settings` | 平台母版只读 + 公司覆盖 + 公司作用域 API | 加 `company_id`；平台行只读、公司行可覆盖；新增 API | ✅ |
+| `system_settings` | 平台母版只读 + 公司覆盖 + 公司作用域 API | 加 `company_id` + `override_policy`；存量租户行统一为集团母版（不推断、不阻断）；平台写限平台运维 + 二次确认 + 审计；新增公司作用域 API | ✅ |
 
 **措辞残留检查**
 

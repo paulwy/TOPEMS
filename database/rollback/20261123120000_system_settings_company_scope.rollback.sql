@@ -6,8 +6,8 @@
 --      并打印计数——删列会把公司覆盖合并回租户级参数，丢失公司归属，
 --      本脚本不删除、不改写任何数据，也不提供 override；请先归档公司行。
 --   2. 删策略（枚举本表全部策略）。
---   3. 删两条部分唯一索引、CHECK 与同租户公司外键。
---   4. 删列 company_id。
+--   3. 删触发器与函数、两条部分唯一索引、override_policy CHECK、作用域 CHECK 与同租户公司外键。
+--   4. 删列 company_id 与 override_policy。
 --   5. 恢复旧唯一索引 uq_system_settings_tenant_key (tenant_id, key)。
 --   6. 恢复迁移前的租户级策略 rls_tenant_isolation。
 --   7. 清理账本行 20261123120000 并做后置断言。
@@ -92,13 +92,22 @@ END
 $drop_policies$;
 
 -- ------------------------------------------------------------
--- 3. 删索引与 CHECK
+-- 3. 删触发器/函数、索引与 CHECK
 -- ------------------------------------------------------------
-DROP INDEX IF EXISTS public.uq_system_settings_platform;
+DROP TRIGGER IF EXISTS trg_system_settings_override_policy ON public.system_settings;
+DROP FUNCTION IF EXISTS public.system_settings_enforce_override_policy();
+
+DROP INDEX IF EXISTS public.uq_system_settings_default;
 DROP INDEX IF EXISTS public.uq_system_settings_company;
 
 ALTER TABLE public.system_settings
     DROP CONSTRAINT IF EXISTS chk_system_settings_company_tenant;
+
+ALTER TABLE public.system_settings
+    DROP CONSTRAINT IF EXISTS chk_system_settings_override_policy_values;
+
+ALTER TABLE public.system_settings
+    DROP CONSTRAINT IF EXISTS chk_system_settings_override_policy_scope;
 
 ALTER TABLE public.system_settings
     DROP CONSTRAINT IF EXISTS fk_system_settings_company;
@@ -123,6 +132,19 @@ BEGIN
         RAISE NOTICE '已删除列 public.system_settings.company_id';
     ELSE
         RAISE NOTICE '列 company_id 已不存在，跳过删除';
+    END IF;
+    IF EXISTS (
+        SELECT 1
+          FROM pg_attribute
+         WHERE attrelid = 'public.system_settings'::regclass
+           AND attname = 'override_policy'
+           AND attnum > 0
+           AND NOT attisdropped
+    ) THEN
+        EXECUTE 'ALTER TABLE public.system_settings DROP COLUMN override_policy';
+        RAISE NOTICE '已删除列 public.system_settings.override_policy';
+    ELSE
+        RAISE NOTICE '列 override_policy 已不存在，跳过删除';
     END IF;
 END
 $drop_column$;
@@ -197,9 +219,36 @@ BEGIN
         RAISE EXCEPTION '后置断言失败：company_id 列仍存在';
     END IF;
 
-    IF EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'uq_system_settings_platform')
+    IF EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'uq_system_settings_default')
        OR EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'uq_system_settings_company') THEN
         RAISE EXCEPTION '后置断言失败：本迁移新增索引仍存在';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM pg_attribute
+         WHERE attrelid = 'public.system_settings'::regclass
+           AND attname = 'override_policy'
+           AND attnum > 0
+           AND NOT attisdropped
+    ) THEN
+        RAISE EXCEPTION '后置断言失败：override_policy 列仍存在';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM pg_trigger
+         WHERE tgrelid = 'public.system_settings'::regclass
+           AND tgname = 'trg_system_settings_override_policy'
+    ) THEN
+        RAISE EXCEPTION '后置断言失败：触发器 trg_system_settings_override_policy 仍存在';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM pg_proc
+         WHERE proname = 'system_settings_enforce_override_policy'
+           AND pronamespace = 'public'::regnamespace
+    ) THEN
+        RAISE EXCEPTION '后置断言失败：函数 system_settings_enforce_override_policy 仍存在';
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = 'uq_system_settings_tenant_key') THEN
@@ -209,9 +258,13 @@ BEGIN
     IF EXISTS (
         SELECT 1 FROM pg_constraint
          WHERE conrelid = 'public.system_settings'::regclass
-           AND conname = 'chk_system_settings_company_tenant'
+           AND conname IN (
+               'chk_system_settings_company_tenant',
+               'chk_system_settings_override_policy_values',
+               'chk_system_settings_override_policy_scope'
+           )
     ) THEN
-        RAISE EXCEPTION '后置断言失败：CHECK chk_system_settings_company_tenant 仍存在';
+        RAISE EXCEPTION '后置断言失败：本迁移新增 CHECK 仍存在';
     END IF;
 
     IF EXISTS (
