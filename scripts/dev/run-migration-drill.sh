@@ -472,6 +472,23 @@ if [[ ! -f "$W9_ROLLBACK" ]]; then
 elif [[ "$ANCHOR" -ge "$W9_VERSION" ]]; then
     echo "SKIP: anchor=${ANCHOR} 已不早于 W9-A=${W9_VERSION}，无需回滚演练"
 else
+    # W9-A 回滚会 DROP erp.company_readable / current_company_id / parent_visible_company_ids。
+    # 若更新的迁移引用了这些函数（例如 W12 公司级策略），单独回滚 W9-A 会因依赖对象而失败；
+    # 正确做法：先按版本降序回滚依赖方，再回滚 W9-A；回放时按升序补回。
+    W9_DEPENDENT_VERSIONS=()
+    while IFS= read -r rb; do
+        [[ -n "$rb" ]] || continue
+        v="$(basename "$rb" | cut -d_ -f1)"
+        [[ "$v" -gt "$W9_VERSION" ]] || continue
+        fwd="$(ls "$ROOT/database/migrations/${v}"_*.sql 2>/dev/null | head -1 || true)"
+        [[ -n "$fwd" ]] || continue
+        if grep -qE 'erp\.(company_readable|parent_visible_company_ids|current_company_id)' "$fwd"; then
+            W9_DEPENDENT_VERSIONS+=("$v")
+        fi
+    done < <(ls "$ROOT"/database/rollback/*.rollback.sql 2>/dev/null | sort -r)
+    if (( ${#W9_DEPENDENT_VERSIONS[@]} > 0 )); then
+        echo "  [4b] W9-A 依赖方（先回滚、后回放）：${W9_DEPENDENT_VERSIONS[*]}"
+    fi
     W9_ASSERT_SQL="$(mktemp "${TMPDIR:-/tmp}/topems-drill-w9-assert.XXXXXX")"
     cat > "$W9_ASSERT_SQL" <<'SQL'
 -- 期望：迁移前（20261119210000 改名 + canonical 重建后）8 张表各 1 条
@@ -545,7 +562,14 @@ SELECT tablename || '|policies=' || n || '|non_company=' || non_company
 SQL
     for cycle in 1 2 3; do
         echo "  [4b] 第 ${cycle}/3 轮：回滚 → 断言"
-        psql "$DSN" -v ON_ERROR_STOP=1 --single-transaction -q -f "$W9_ROLLBACK" \
+        W9_RB_ARGS=(-v ON_ERROR_STOP=1 --single-transaction -q)
+        for dep in ${W9_DEPENDENT_VERSIONS[@]+"${W9_DEPENDENT_VERSIONS[@]}"}; do
+            dep_rb="$(ls "$ROOT/database/rollback/${dep}"_*.rollback.sql 2>/dev/null | head -1 || true)"
+            [[ -n "$dep_rb" ]] || { echo "FAIL: 第 ${cycle} 轮缺少依赖方回滚件 ${dep}" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+            W9_RB_ARGS+=(-f "$dep_rb")
+        done
+        W9_RB_ARGS+=(-f "$W9_ROLLBACK")
+        psql "$DSN" "${W9_RB_ARGS[@]}" \
             || { echo "FAIL: 第 ${cycle} 轮 W9-A 回滚失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
         W9_VIOLATIONS="$(psql "$DSN" -v ON_ERROR_STOP=1 -tA -f "$W9_ASSERT_SQL")" \
             || { echo "FAIL: 第 ${cycle} 轮策略断言查询失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
@@ -557,12 +581,28 @@ SQL
         fi
         echo "  OK: 第 ${cycle} 轮回滚后 8 表逐表 = rls_tenant_isolation/ALL/PERMISSIVE/{public} + 严格 B 表达式"
 
+        W9_DELETE_VERSIONS="$W9_VERSION"
+        for dep in ${W9_DEPENDENT_VERSIONS[@]+"${W9_DEPENDENT_VERSIONS[@]}"}; do
+            W9_DELETE_VERSIONS+=",$dep"
+        done
         psql "$DSN" -v ON_ERROR_STOP=1 -q -c \
-            "DELETE FROM public._sqlx_migrations WHERE version = ${W9_VERSION}" \
+            "DELETE FROM public._sqlx_migrations WHERE version IN (${W9_DELETE_VERSIONS})" \
             || { echo "FAIL: 第 ${cycle} 轮删除 W9-A 账本行失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
         bash scripts/migration/apply-forward.sh --dsn "$DSN" \
             --apply-deferred "$W9_VERSION" --ticket "$W9_TICKET" --drill-gate-guc-auto \
             || { echo "FAIL: 第 ${cycle} 轮 W9-A 重放失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+        for dep in $(printf '%s\n' ${W9_DEPENDENT_VERSIONS[@]+"${W9_DEPENDENT_VERSIONS[@]}"} | sort); do
+            dep_max="$(psql "$DSN" -tA -c 'SELECT COALESCE(max(version),0) FROM public._sqlx_migrations WHERE success')"
+            dep_max="${dep_max:-0}"
+            if [[ "$dep" -gt "$dep_max" ]]; then
+                bash scripts/migration/apply-forward.sh --dsn "$DSN" --drill-gate-guc-auto \
+                    || { echo "FAIL: 第 ${cycle} 轮依赖方 ${dep} 重放失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+            else
+                bash scripts/migration/apply-forward.sh --dsn "$DSN" \
+                    --apply-deferred "$dep" --ticket "$W9_TICKET" --drill-gate-guc-auto \
+                    || { echo "FAIL: 第 ${cycle} 轮依赖方 ${dep} 重放失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
+            fi
+        done
         W9_VIOLATIONS="$(psql "$DSN" -v ON_ERROR_STOP=1 -tA -f "$W9_FWD_SQL")" \
             || { echo "FAIL: 第 ${cycle} 轮重放后断言查询失败" >&2; rm -f "$W9_ASSERT_SQL" "$W9_FWD_SQL"; exit 1; }
         if [[ -n "$W9_VIOLATIONS" ]]; then

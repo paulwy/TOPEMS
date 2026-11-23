@@ -475,10 +475,18 @@ function main() {
     );
   }
 
+  // 只为「源迁移已记账 success=true 且未被后续迁移取代」的断言构建结构 SQL。
+  // 否则 data_rows 的原文 SQL 可能引用尚未存在的列（断言属新迁移、目标库尚未应用），
+  // 会让整条 UNION 查询报错，而不是按规则 3/4 正常跳过该条。
+  const activeAssertions = assertions.filter((a) => {
+    if (ledger.get(a.source) !== true) return false;
+    if ((a.skip_if_applied ?? []).some((v) => ledger.get(v) === true)) return false;
+    return true;
+  });
   let structRows = new Map();
-  if (ledger.size > 0) {
+  if (activeAssertions.length > 0) {
     try {
-      const out = psql(url, buildStructSql(assertions));
+      const out = psql(url, buildStructSql(activeAssertions));
       for (const line of out.split(/\r?\n/)) {
         if (!line) continue;
         const idx = line.indexOf("|");

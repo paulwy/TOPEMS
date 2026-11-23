@@ -11555,14 +11555,44 @@
       "force_rls": true,
       "policies": [
         {
-          "name": "rls_tenant_isolation",
-          "cmd": "ALL",
+          "name": "core_tenant_modules_company_delete",
+          "cmd": "DELETE",
           "permissive": true,
           "roles": [
             "public"
           ],
-          "using": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))",
-          "with_check": "((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))"
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (((company_id IS NULL) AND ((COALESCE(current_setting('app.actor_is_parent'::text, true), 'off'::text) = 'on'::text) OR (COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text))) OR ((company_id IS NOT NULL) AND (company_id = erp.current_company_id()))))",
+          "with_check": ""
+        },
+        {
+          "name": "core_tenant_modules_company_insert",
+          "cmd": "INSERT",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "",
+          "with_check": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (((company_id IS NULL) AND ((COALESCE(current_setting('app.actor_is_parent'::text, true), 'off'::text) = 'on'::text) OR (COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text))) OR ((company_id IS NOT NULL) AND (company_id = erp.current_company_id()))))"
+        },
+        {
+          "name": "core_tenant_modules_company_select",
+          "cmd": "SELECT",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND ((COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text) OR (company_id IS NULL) OR erp.company_readable(company_id)))",
+          "with_check": ""
+        },
+        {
+          "name": "core_tenant_modules_company_update",
+          "cmd": "UPDATE",
+          "permissive": true,
+          "roles": [
+            "public"
+          ],
+          "using": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (((company_id IS NULL) AND ((COALESCE(current_setting('app.actor_is_parent'::text, true), 'off'::text) = 'on'::text) OR (COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text))) OR ((company_id IS NOT NULL) AND (company_id = erp.current_company_id()))))",
+          "with_check": "((tenant_id = erp.group_tenant_of((NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)) AND (((company_id IS NULL) AND ((COALESCE(current_setting('app.actor_is_parent'::text, true), 'off'::text) = 'on'::text) OR (COALESCE(current_setting('app.rls_system'::text, true), 'off'::text) = 'on'::text))) OR ((company_id IS NOT NULL) AND (company_id = erp.current_company_id()))))"
         }
       ]
     },
