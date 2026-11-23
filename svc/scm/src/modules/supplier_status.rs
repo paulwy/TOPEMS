@@ -29,6 +29,12 @@ impl SupplierStatus {
             _ => None,
         }
     }
+
+    /// 写入 `scm.suppliers.status` 的唯一字符串形式
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<&'static str> {
+        Self::from_db_str(raw).map(Self::as_db_str)
+    }
 }
 
 #[cfg(test)]
@@ -43,5 +49,6 @@ mod tests {
         }
         assert!(SupplierStatus::from_db_str("PENDING").is_some());
         assert!(SupplierStatus::from_db_str("bogus").is_none());
+        assert_eq!(SupplierStatus::normalize(" Active "), Some("active"));
     }
 }

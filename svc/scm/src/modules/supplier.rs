@@ -827,7 +827,13 @@ pub async fn update_supplier(
     let address = req.address.or(existing.address);
     let bank_account = req.bank_account.or(existing.bank_account);
     let tax_number = req.tax_number.or(existing.tax_number);
-    let status = req.status.unwrap_or(existing.status);
+    let status = match req.status.as_deref() {
+        None => existing.status.clone(),
+        Some(raw) => match SupplierStatus::normalize(raw) {
+            Some(status) => status.to_string(),
+            None => return ApiResponse::bad_request("无效的供应商状态"),
+        },
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Supplier>(
