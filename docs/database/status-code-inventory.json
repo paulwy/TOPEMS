@@ -5477,11 +5477,13 @@
       "name": "WarehouseStatus",
       "values": [
         "Active",
+        "Archived",
         "Inactive",
         "Maintenance"
       ],
       "normalized": [
         "active",
+        "archived",
         "inactive",
         "maintenance"
       ]

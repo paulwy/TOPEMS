@@ -799,7 +799,7 @@
       "enum": "WarehouseStatus",
       "table": "wms.warehouses",
       "column": "status",
-      "candidate": "docs/database/wms-warehouse-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-warehouse-status-lifecycle-check-candidates-2026-11-24.sql"
     },
     {
       "file": "svc/wms/src/modules/transfer_status.rs",

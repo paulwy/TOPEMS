@@ -420,6 +420,7 @@ export interface CreateWarehouseRequest {
   contact?: string;
   phone?: string;
   manager?: string;
+  status?: string;
 }
 
 export interface UpdateWarehouseRequest {

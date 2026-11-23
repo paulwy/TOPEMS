@@ -1,18 +1,19 @@
 //! 仓库状态规范集合。
 //!
 //! 状态集合与 `wms.warehouses.status` 的候选 CHECK 保持一致：
-//! `active / inactive / maintenance`。
+//! `active / inactive / maintenance / archived`。
 //!
-//! 这是属性型状态，不设审批 FSM；允许在三个值之间改判。
+//! 这是属性型状态，不设审批 FSM；允许在四个值之间改判。
 
 /// 仓库允许持久化的全部状态，顺序即前端展示顺序。
-pub const DB_VALUES: &[&str] = &["active", "inactive", "maintenance"];
+pub const DB_VALUES: &[&str] = &["active", "inactive", "maintenance", "archived"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum WarehouseStatus {
     Active,
     Inactive,
     Maintenance,
+    Archived,
 }
 
 impl WarehouseStatus {
@@ -25,6 +26,7 @@ impl WarehouseStatus {
             Self::Active => "active",
             Self::Inactive => "inactive",
             Self::Maintenance => "maintenance",
+            Self::Archived => "archived",
         }
     }
 
@@ -34,6 +36,7 @@ impl WarehouseStatus {
             "active" => Ok(Self::Active),
             "inactive" => Ok(Self::Inactive),
             "maintenance" => Ok(Self::Maintenance),
+            "archived" => Ok(Self::Archived),
             other => Err(format!("未知仓库状态: {other}")),
         }
     }

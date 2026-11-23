@@ -69,6 +69,7 @@ export const warehouseSchema: EntitySchema = {
           { value: 'active', label: i18n.t('wms.warehouse.k8') },
           { value: 'inactive', label: i18n.t('wms.warehouse.k9') },
           { value: 'maintenance', label: i18n.t('wms.warehouse.k10') },
+          { value: 'archived', label: i18n.t('wms.warehouse.status_archived') },
         ],
       },
       listWidth: 100,

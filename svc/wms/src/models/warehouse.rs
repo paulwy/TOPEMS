@@ -26,6 +26,7 @@ pub struct CreateWarehouseRequest {
     pub address: Option<String>,
     pub manager: Option<String>,
     pub phone: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -102,6 +103,7 @@ mod tests {
             address: Some("456 Ave".into()),
             manager: Some("Bob".into()),
             phone: Some("555-0200".into()),
+            status: None,
         };
         let v = serde_json::to_value(&req).unwrap();
         let back: CreateWarehouseRequest = serde_json::from_value(v.clone()).unwrap();
@@ -118,6 +120,7 @@ mod tests {
             address: None,
             manager: None,
             phone: None,
+            status: None,
         };
         let v = serde_json::to_value(&req).unwrap();
         let back: CreateWarehouseRequest = serde_json::from_value(v).unwrap();

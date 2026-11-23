@@ -249,6 +249,13 @@ pub async fn create_warehouse(
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
+    let create_status = match req.status.as_deref() {
+        None => WarehouseStatus::DEFAULT.as_db_str().to_string(),
+        Some(raw) => match WarehouseStatus::from_db_str(raw) {
+            Ok(status) => status.as_db_str().to_string(),
+            Err(msg) => return ApiResponse::bad_request(&msg),
+        },
+    };
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.warehouses (id, tenant_id, org_id, organization_id, warehouse_name, name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at, warehouse_name_en)
@@ -266,7 +273,7 @@ pub async fn create_warehouse(
     .bind(now)
     .bind(now)
     .bind(&req.warehouse_name_en)
-    .bind(WarehouseStatus::DEFAULT.as_db_str())
+    .bind(&create_status)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;

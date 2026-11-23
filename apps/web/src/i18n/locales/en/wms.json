@@ -1,4 +1,5 @@
 {
+  "wms.warehouse.status_archived": "Archived",
   "warehouse_management": {
     "title": "Warehouse Management",
     "description": "Manage warehouse info, zone division, and location configuration",
