@@ -123,7 +123,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_core_tenant_modules_company
 | `core_inter_module_sync` | 能解析公司（`data->>'company_id'`、源单关联、单公司租户）→ 回填；无公司痕迹 → 保持 `NULL`，作为合法集团级任务 | 不阻断；输出计数 |
 | `monitor_settings` | 平台行（`tenant_id IS NULL`）保持 `company_id NULL` 且默认 `platform_only`（fail-closed，运维逐个放开）；存量租户级行**一律保留为集团母版行**（`company_id` 置 NULL），不推断、不拆分；既有公司行按母版策略归一 | 不阻断；平台/母版重复键仍前置断言 |
 | `system_settings` | 同 `monitor_settings` | 不阻断；同上 |
-| `search_entity_projections_v2` | 从源表按 `entity_type` 取公司；老表所有行都要进入回填范围 | **阻断**：新表出现 `company_id IS NULL` 或行数/校验和不一致即失败，切换不得进行 |
+| `search_entity_projections_v2`（**第二段**） | 从源表按 `entity_type` 取公司；老表所有行都要进入回填范围 | **第二段阻断**（不是第一段门禁）：新表出现 `company_id IS NULL` 或行数/校验和不一致即失败，切换不得进行 |
 
 - 所有回填在迁移事务内执行；阻断性断言失败即整体回滚，账本不落行。
 - 非阻断的 NULL 计数要 `RAISE NOTICE` 输出（租户数、行数），进入验收记录。
@@ -347,7 +347,7 @@ FOR INSERT WITH CHECK (
 ### 10.2 结构
 
 - 4 张表有 `company_id`；`core_tenant_modules` 两条部分唯一索引生效、旧约束不存在；monitor/system 平台行唯一索引与 CHECK 生效；v2 本段为 `company_id uuid 可空`，第二段切换时收紧为 NOT NULL。
-- 所有表 `ENABLE + FORCE RLS`，策略数量符合 §5；legacy 已下线。
+- 所有表 `ENABLE + FORCE RLS`，策略数量符合 §5；`legacy` 下线属 **W13 整段终态（第二段完成后）**，不是第一段验收项。
 
 ### 10.3 RLS 隔离实证（`gis_ro_smoke` 只读角色口径）
 
