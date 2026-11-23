@@ -28,6 +28,7 @@ pub mod payroll_calc;
 pub mod performance;
 pub mod position;
 pub mod recruitment;
+pub mod recruitment_status;
 pub mod reports;
 pub mod roles;
 pub mod salary_adjustment;

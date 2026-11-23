@@ -1999,6 +1999,24 @@
     },
     {
       "schema": "hrm",
+      "table": "candidates",
+      "constraint": "ck_hrm_candidates_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "hired",
+        "interviewing",
+        "new",
+        "offered",
+        "rejected",
+        "screening",
+        "withdrawn"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['new'::character varying, 'screening'::character varying, 'interviewing'::character varying, 'offered'::character varying, 'hired'::character varying, 'rejected'::character varying, 'withdrawn'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
       "table": "companies",
       "constraint": "ck_companies_status_standard",
       "columns": [
@@ -2066,6 +2084,37 @@
         "inactive"
       ],
       "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))"
+    },
+    {
+      "schema": "hrm",
+      "table": "interviews",
+      "constraint": "ck_hrm_interviews_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "scheduled"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['scheduled'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "hrm",
+      "table": "job_openings",
+      "constraint": "ck_hrm_job_openings_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "closed",
+        "draft",
+        "filled",
+        "in_progress",
+        "published"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'in_progress'::character varying, 'closed'::character varying, 'filled'::character varying])::text[]))) NOT VALID"
     },
     {
       "schema": "hrm",
@@ -6490,15 +6539,6 @@
     },
     {
       "schema": "hrm",
-      "table": "candidates",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'new'::character varying"
-    },
-    {
-      "schema": "hrm",
       "table": "contract_renewals",
       "column": "status",
       "type": "character varying(20)",
@@ -6523,24 +6563,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "interviews",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'scheduled'::character varying"
-    },
-    {
-      "schema": "hrm",
-      "table": "job_openings",
-      "column": "status",
-      "type": "character varying(20)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "hrm",

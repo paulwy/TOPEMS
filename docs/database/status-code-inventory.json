@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 388,
+    "db_check_constraints": 391,
     "db_enum_types": 5,
-    "db_check_values": 173,
-    "rust_enums": 271,
-    "rust_enum_values": 226,
-    "rust_values_not_in_db_check": 58,
-    "frontend_status_keys": 235,
-    "frontend_keys_not_in_db_check": 67,
+    "db_check_values": 180,
+    "rust_enums": 274,
+    "rust_enum_values": 232,
+    "rust_values_not_in_db_check": 57,
+    "frontend_status_keys": 241,
+    "frontend_keys_not_in_db_check": 66,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2080,6 +2080,65 @@
         "cancelled",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/recruitment_status.rs",
+      "name": "CandidateStatus",
+      "values": [
+        "Hired",
+        "Interviewing",
+        "New",
+        "Offered",
+        "Rejected",
+        "Screening",
+        "Withdrawn"
+      ],
+      "normalized": [
+        "hired",
+        "interviewing",
+        "new",
+        "offered",
+        "rejected",
+        "screening",
+        "withdrawn"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/recruitment_status.rs",
+      "name": "InterviewStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Scheduled"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "scheduled"
+      ]
+    },
+    {
+      "module": "hrm",
+      "file": "svc/hrm/src/modules/recruitment_status.rs",
+      "name": "JobOpeningStatus",
+      "values": [
+        "Closed",
+        "Draft",
+        "Filled",
+        "InProgress",
+        "Published"
+      ],
+      "normalized": [
+        "closed",
+        "draft",
+        "filled",
+        "in_progress",
+        "published"
       ]
     },
     {
@@ -4875,12 +4934,14 @@
       "failure",
       "false_positive",
       "fault",
+      "filled",
       "frozen",
       "full",
       "generated",
       "generating",
       "good",
       "healthy",
+      "hired",
       "identified",
       "idle",
       "ignored",
@@ -4899,6 +4960,7 @@
       "installing",
       "insufficient_data",
       "interval",
+      "interviewing",
       "invalid",
       "investigating",
       "invited",
@@ -4923,6 +4985,7 @@
       "not_started",
       "obsolete",
       "occupied",
+      "offered",
       "offline",
       "ongoing",
       "online",
@@ -4988,6 +5051,7 @@
       "satisfied",
       "scheduled",
       "scrapped",
+      "screening",
       "sending",
       "sent",
       "settled",
@@ -5035,6 +5099,7 @@
       "verifying",
       "waiting",
       "warning",
+      "withdrawn",
       "won",
       "written_off"
     ]
@@ -5069,7 +5134,6 @@
       "invalid",
       "invited",
       "neutral",
-      "new",
       "non_compliant",
       "not_applicable",
       "other",
@@ -5135,7 +5199,6 @@
       "invalid",
       "invited",
       "neutral",
-      "new",
       "non_compliant",
       "not_applicable",
       "other",

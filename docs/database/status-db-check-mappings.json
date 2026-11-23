@@ -1639,6 +1639,27 @@
       "table": "erp.erp_production_orders",
       "column": "status",
       "candidate": "ck_erp_erp_production_orders_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/recruitment.rs",
+      "enum": "JobOpeningStatus",
+      "table": "hrm.job_openings",
+      "column": "status",
+      "candidate": "ck_hrm_job_openings_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/recruitment.rs",
+      "enum": "CandidateStatus",
+      "table": "hrm.candidates",
+      "column": "status",
+      "candidate": "ck_hrm_candidates_status_standard"
+    },
+    {
+      "file": "svc/hrm/src/modules/recruitment.rs",
+      "enum": "InterviewStatus",
+      "table": "hrm.interviews",
+      "column": "status",
+      "candidate": "ck_hrm_interviews_status_standard"
     }
   ]
 }

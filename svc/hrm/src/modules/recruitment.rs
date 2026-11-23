@@ -13,7 +13,24 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use super::recruitment_status::{
+    parse_optional, CandidateStatus, InterviewStatus, JobOpeningStatus,
+};
 use super::ApiState;
+
+/// 响应兜底：把库里可能的未知历史值收敛到枚举词表
+fn normalize_opening(mut v: JobOpening) -> JobOpening {
+    v.status = JobOpeningStatus::normalize(&v.status).to_string();
+    v
+}
+fn normalize_candidate(mut v: Candidate) -> Candidate {
+    v.status = CandidateStatus::normalize(&v.status).to_string();
+    v
+}
+fn normalize_interview(mut v: Interview) -> Interview {
+    v.status = InterviewStatus::normalize(&v.status).to_string();
+    v
+}
 use crate::modules::audit::log_audit_event;
 use topems_shared_core::response::ApiResponse;
 
@@ -207,6 +224,11 @@ pub async fn list_job_openings(
     Query(params): Query<JobOpeningQueryParams>,
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
+    let parsed_status_filter: Option<String> =
+        match JobOpeningStatus::parse_filter(params.status.as_deref()) {
+            Ok(v) => v.map(|x| x.as_db_str().to_string()),
+            Err(_) => return ApiResponse::bad_request("非法的招聘职位状态筛选值"),
+        };
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -215,7 +237,7 @@ pub async fn list_job_openings(
 
     let search = params.search.unwrap_or_default();
     let dept_id = params.department_id;
-    let status_filter = params.status;
+    let status_filter = parsed_status_filter;
     let employment_type_filter = params.employment_type;
 
     let result = sqlx::query_as::<_, JobOpening>(
@@ -263,7 +285,7 @@ pub async fn list_job_openings(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_opening).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -304,7 +326,7 @@ pub async fn create_job_opening(
     let result = sqlx::query_as::<_, JobOpening>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13, $14)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $15, $12, $13, $14)
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#)
     )
@@ -322,12 +344,13 @@ pub async fn create_job_opening(
     .bind(now)
     .bind(now)
     .bind(claims_tenant)
+    .bind(JobOpeningStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(opening) => (
-            ApiResponse::success(opening.clone(), "职位创建成功"),
+            ApiResponse::success(normalize_opening(opening.clone()), "职位创建成功"),
             "success",
             None,
         ),
@@ -404,7 +427,7 @@ pub async fn get_job_opening(
     .await;
 
     match result {
-        Ok(Some(opening)) => ApiResponse::success(opening, "查询成功"),
+        Ok(Some(opening)) => ApiResponse::success(normalize_opening(opening), "查询成功"),
         Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在"),
         Err(e) => {
             tracing::error!("查询职位失败: {}", e);
@@ -465,7 +488,7 @@ pub async fn update_job_opening(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(opening, "职位更新成功")
+            ApiResponse::success(normalize_opening(opening), "职位更新成功")
         }
         Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在"),
         Err(e) => {
@@ -484,9 +507,10 @@ pub async fn delete_job_opening(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(
-        only_own_schema_query!("hrm", "UPDATE hrm.job_openings SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'"),
+        only_own_schema_query!("hrm", "UPDATE hrm.job_openings SET deleted_at = NOW() WHERE deleted_at IS NULL AND id = $1 AND status = $2"),
     )
     .bind(id)
+    .bind(JobOpeningStatus::Draft.as_db_str())
     .execute(&mut **txn)
     .await;
 
@@ -572,13 +596,15 @@ pub async fn publish_job_opening(
     let result = sqlx::query_as::<_, JobOpening>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
-        SET status = 'published', publish_date = $2, updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1 AND status = 'draft'
+        SET status = $3, publish_date = $2, updated_at = $2
+        WHERE deleted_at IS NULL AND id = $1 AND status = $4
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#)
     )
     .bind(id)
     .bind(now)
+    .bind(JobOpeningStatus::Published.as_db_str())
+    .bind(JobOpeningStatus::Draft.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -590,7 +616,7 @@ pub async fn publish_job_opening(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(opening, "职位已发布")
+            ApiResponse::success(normalize_opening(opening), "职位已发布")
         }
         Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在或状态不正确"),
         Err(e) => {
@@ -625,13 +651,15 @@ pub async fn close_job_opening(
     let result = sqlx::query_as::<_, JobOpening>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
-        SET status = 'closed', close_date = $2, updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1 AND status = 'published'
+        SET status = $3, close_date = $2, updated_at = $2
+        WHERE deleted_at IS NULL AND id = $1 AND status = $4
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#)
     )
     .bind(id)
     .bind(now)
+    .bind(JobOpeningStatus::Closed.as_db_str())
+    .bind(JobOpeningStatus::Published.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -643,7 +671,7 @@ pub async fn close_job_opening(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(opening, "职位已关闭")
+            ApiResponse::success(normalize_opening(opening), "职位已关闭")
         }
         Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在或状态不正确"),
         Err(e) => {
@@ -674,9 +702,14 @@ pub async fn list_candidates(
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
+    let parsed_status_filter: Option<String> =
+        match CandidateStatus::parse_filter(params.status.as_deref()) {
+            Ok(v) => v.map(|x| x.as_db_str().to_string()),
+            Err(_) => return ApiResponse::bad_request("非法的候选人状态筛选值"),
+        };
     let search = params.search.unwrap_or_default();
     let job_opening_id = params.department_id;
-    let status_filter = params.status;
+    let status_filter = parsed_status_filter;
 
     let result = sqlx::query_as::<_, Candidate>(
         only_own_schema_query!("hrm", r#"
@@ -719,7 +752,7 @@ pub async fn list_candidates(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_candidate).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -760,7 +793,7 @@ pub async fn create_candidate(
     let result = sqlx::query_as::<_, Candidate>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'new', $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $12, $9, $10, $11)
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#)
     )
@@ -775,12 +808,13 @@ pub async fn create_candidate(
     .bind(now)
     .bind(now)
     .bind(claims_tenant)
+    .bind(CandidateStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(candidate) => (
-            ApiResponse::success(candidate.clone(), "候选人添加成功"),
+            ApiResponse::success(normalize_candidate(candidate.clone()), "候选人添加成功"),
             "success",
             None,
         ),
@@ -857,7 +891,7 @@ pub async fn get_candidate(
     .await;
 
     match result {
-        Ok(Some(candidate)) => ApiResponse::success(candidate, "查询成功"),
+        Ok(Some(candidate)) => ApiResponse::success(normalize_candidate(candidate), "查询成功"),
         Ok(None) => ApiResponse::<Candidate>::not_found("候选人不存在"),
         Err(e) => {
             tracing::error!("查询候选人失败: {}", e);
@@ -872,6 +906,14 @@ pub async fn update_candidate(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateCandidateRequest>,
 ) -> ApiResponse<Candidate> {
+    let status = match parse_optional(
+        CandidateStatus::from_db_str,
+        CandidateStatus::as_db_str,
+        req.status.as_deref(),
+    ) {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("非法的候选人状态"),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -900,7 +942,7 @@ pub async fn update_candidate(
     .bind(req.job_opening_id)
     .bind(&req.resume_path)
     .bind(&req.source)
-    .bind(&req.status)
+    .bind(status)
     .bind(now)
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -914,7 +956,7 @@ pub async fn update_candidate(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(candidate, "候选人信息更新成功")
+            ApiResponse::success(normalize_candidate(candidate), "候选人信息更新成功")
         }
         Ok(None) => ApiResponse::<Candidate>::not_found("候选人不存在"),
         Err(e) => {
@@ -1016,8 +1058,13 @@ pub async fn list_interviews(
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
+    let parsed_status_filter: Option<String> =
+        match InterviewStatus::parse_filter(params.status.as_deref()) {
+            Ok(v) => v.map(|x| x.as_db_str().to_string()),
+            Err(_) => return ApiResponse::bad_request("非法的面试状态筛选值"),
+        };
     let candidate_id = params.department_id;
-    let status_filter = params.status;
+    let status_filter = parsed_status_filter;
 
     let result = sqlx::query_as::<_, Interview>(
         only_own_schema_query!("hrm", r#"
@@ -1056,7 +1103,7 @@ pub async fn list_interviews(
 
             ApiResponse::success(
                 serde_json::json!({
-                    "items": items,
+                    "items": items.into_iter().map(normalize_interview).collect::<Vec<_>>(),
                     "total": total,
                     "page": page,
                     "page_size": page_size
@@ -1092,7 +1139,7 @@ pub async fn create_interview(
     let result = sqlx::query_as::<_, Interview>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $10, $7, $8, $9)
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#)
     )
@@ -1105,6 +1152,7 @@ pub async fn create_interview(
     .bind(now)
     .bind(now)
     .bind(claims_tenant)
+    .bind(InterviewStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -1116,7 +1164,7 @@ pub async fn create_interview(
                     return ApiResponse::server_error("提交事务失败");
                 }
             }
-            ApiResponse::success(interview, "面试安排成功")
+            ApiResponse::success(normalize_interview(interview), "面试安排成功")
         }
         Err(e) => {
             tracing::error!("安排面试失败: {}", e);
@@ -1153,7 +1201,7 @@ pub async fn get_interview(
     .await;
 
     match result {
-        Ok(Some(interview)) => ApiResponse::success(interview, "查询成功"),
+        Ok(Some(interview)) => ApiResponse::success(normalize_interview(interview), "查询成功"),
         Ok(None) => ApiResponse::<Interview>::not_found("面试不存在"),
         Err(e) => {
             tracing::error!("查询面试失败: {}", e);
@@ -1168,6 +1216,14 @@ pub async fn update_interview(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(req): Json<UpdateInterviewRequest>,
 ) -> ApiResponse<Interview> {
+    let status = match parse_optional(
+        InterviewStatus::from_db_str,
+        InterviewStatus::as_db_str,
+        req.status.as_deref(),
+    ) {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("非法的面试状态"),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1195,7 +1251,7 @@ pub async fn update_interview(
     .bind(req.scheduled_at)
     .bind(req.actual_at)
     .bind(req.duration_minutes)
-    .bind(&req.status)
+    .bind(status)
     .bind(&req.result)
     .bind(&req.notes)
     .bind(&req.score)
@@ -1212,7 +1268,7 @@ pub async fn update_interview(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(interview, "面试信息更新成功")
+            ApiResponse::success(normalize_interview(interview), "面试信息更新成功")
         }
         Ok(None) => ApiResponse::<Interview>::not_found("面试不存在"),
         Err(e) => {
@@ -1282,12 +1338,12 @@ pub async fn complete_interview(
         UPDATE hrm.interviews
         SET
             actual_at = COALESCE($1, NOW()),
-            status = 'completed',
+            status = $7,
             result = COALESCE($2, result),
             notes = COALESCE($3, notes),
             score = COALESCE($4, score),
             updated_at = $5
-        WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled'
+        WHERE deleted_at IS NULL AND id = $6 AND status = $8
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#)
     )
@@ -1297,6 +1353,8 @@ pub async fn complete_interview(
     .bind(&req.score)
     .bind(now)
     .bind(id)
+    .bind(InterviewStatus::Completed.as_db_str())
+    .bind(InterviewStatus::Scheduled.as_db_str())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1308,7 +1366,7 @@ pub async fn complete_interview(
                     return ApiResponse::server_error("事务提交失败");
                 }
             }
-            ApiResponse::success(interview, "面试已完成")
+            ApiResponse::success(normalize_interview(interview), "面试已完成")
         }
         Ok(None) => ApiResponse::<Interview>::not_found("面试不存在或状态不正确"),
         Err(e) => {

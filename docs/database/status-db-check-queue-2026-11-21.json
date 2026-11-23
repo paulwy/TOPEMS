@@ -3,12 +3,12 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 45,
-    "uncovered_values": 58,
+    "uncovered_enums": 44,
+    "uncovered_values": 57,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 45,
-    "internal_state_enums": 45,
-    "internal_state_values": 58
+    "resolved_enums": 44,
+    "internal_state_enums": 44,
+    "internal_state_values": 57
   },
   "rows": [
     {
@@ -640,23 +640,6 @@
       "resolved": {
         "file": "svc/portal/src/modules/graphql_governance.rs",
         "enum": "SchemaVersionStatusGql",
-        "persisted": false,
-        "reason": "GraphQL/API 投影，无表列"
-      }
-    },
-    {
-      "module": "portal",
-      "file": "svc/portal/src/modules/graphql_security.rs",
-      "enum": "DiscoveryStatus",
-      "values_by_bucket": {
-        "internal_state": [
-          "new"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "svc/portal/src/modules/graphql_security.rs",
-        "enum": "DiscoveryStatus",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
       }
