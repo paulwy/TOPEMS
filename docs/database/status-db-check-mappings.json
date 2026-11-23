@@ -1919,6 +1919,13 @@
       "table": "pm.project_expenses",
       "column": "status",
       "candidate": "docs/database/pm-project-expense-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/pm/src/modules/project_phase_status.rs",
+      "enum": "ProjectPhaseStatus",
+      "table": "pm.project_phases",
+      "column": "status",
+      "candidate": "docs/database/pm-project-phase-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

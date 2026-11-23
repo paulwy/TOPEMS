@@ -5,7 +5,7 @@
     "db_check_constraints": 33,
     "db_enum_types": 5,
     "db_check_values": 52,
-    "rust_enums": 297,
+    "rust_enums": 298,
     "rust_enum_values": 238,
     "rust_values_not_in_db_check": 191,
     "frontend_status_keys": 247,
@@ -3566,6 +3566,21 @@
         "approved",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "pm",
+      "file": "svc/pm/src/modules/project_phase_status.rs",
+      "name": "ProjectPhaseStatus",
+      "values": [
+        "Active",
+        "Completed",
+        "Pending"
+      ],
+      "normalized": [
+        "active",
+        "completed",
+        "pending"
       ]
     },
     {

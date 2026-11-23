@@ -18,6 +18,7 @@ pub mod project_expense_status;
 pub mod project_member;
 pub mod project_milestone;
 pub mod project_phase;
+pub mod project_phase_status;
 pub mod project_resource;
 pub mod project_type_config;
 pub mod quality;
