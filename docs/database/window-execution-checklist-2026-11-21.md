@@ -456,26 +456,31 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 
 **前置条件（第二段）**
 
-1. 业务归属清单与四条归属规则：业务已于 2026-11-23 回执（见 `rls-business-confirmation-2026-11-23.md` §5.2、§8）；字段与校验见 §5C.1，未闭合项见 §5D。CSV 明细与母公司 UUID 映射未补齐前不得开跑。
+1. 业务归属清单与四条归属规则：四条规则已于 2026-11-23 回执（见 `rls-business-confirmation-2026-11-23.md` §5.2、§8），优先级已既定；清单由我方 `--draft` 起草，业务只复核兜底与例外行并签字。母公司由根公司自动解析，0 个或多个根的租户须先清零待指定清单。未签字或待指定清单未清零前不得开跑。
 2. 老表与 v2 的行数/主键集合/关键字段校验和比对方案已确认；观察窗时长与责任人已确定。
 3. 上述任一未确认：**第二段不得开跑**，只保留双写与脚本。
 
-### 5C.1 业务归属清单字段要求（可直接转业务）
+### 5C.1 归属清单：我方起草 + 脚本校验
 
-字段与逐行要求的唯一定义见 `rls-business-confirmation-2026-11-23.md` §5.1：CSV 表头 `entity_type,entity_id,company_id`，一行一实体；`entity_type` 仅限 `sales_order` / `purchase_order` / `customer`；`company_id` 必须属于同租户公司。
+字段、生成命令与业务复核范围的唯一定义见 `rls-business-confirmation-2026-11-23.md` §5.1：CSV 权威输入仍是 `entity_type,entity_id,company_id`，由脚本 `--draft` 从源表生成初稿（附 `tenant_id` / `matched_rule` / `is_fallback` / `is_exception` / `reason`），业务只复核兜底与例外行并签字。
 
-执行侧只做三项校验：是否属于同租户、是否为空值、同一实体是否重复且公司冲突；任一不通过即拒绝执行。脚本**不推断、不猜默认公司**，也不做规则回落。
+执行侧只做校验，不推断、不猜默认公司、不按规则回落：
+
+- `company_id` 属于该实体同租户的 `hrm.companies`；
+- 不得为空值；
+- 同一实体重复且公司冲突拒绝执行；
+- 兜底行必须等于该租户根公司；业务确需指定非根公司时填 `exception_note`，转入例外清单并签字。
 
 ### 5C.2 四条归属规则（业务已回执，2026-11-23）
 
-选项与优先级以 `rls-business-confirmation-2026-11-23.md` §5.2 为唯一定义。业务回执：规则 1 A、规则 2 B、规则 3 B、规则 4 A。
+选项与优先级以 `rls-business-confirmation-2026-11-23.md` §5.2 为唯一定义。业务回执：规则 1 A、规则 2 B、规则 3 B、规则 4 A。判定样例见业务材料 §5.5。
 
 - 规则 1：按客户 / 供应商所属公司。
 - 规则 2：无客户或跨公司、且能判定「没有自然归属」的单据，统一归母公司。
 - 规则 3：业务也无法判定的历史行，归母公司；保留原行，切换前不得有空值。与规则 2 的区分：规则 2 = 能判定「没有自然归属」；规则 3 = 连归属类别都判定不了（详见业务材料 §5.2）。
-- 规则 4：「平台级 / 集团级」按技术口径改称「母公司级」，归母公司，落到具体公司行。
+- 规则 4：「平台级 / 集团级」按既定技术口径改称「母公司级」，归母公司，落到具体公司行。
 
-**优先级（技术默认，待业务确认）**：母公司级 > 客户 / 供应商所属公司 > 母公司兜底。执行侧按 CSV 逐行执行，不按规则自动回落。
+**优先级（既定技术口径，不再待确认）**：母公司级 > 客户 / 供应商所属公司 > 母公司兜底。业务有异议时修改 CSV 行，不改规则定义；执行侧按 CSV 逐行执行，不按规则自动回落。
 
 **执行命令（第一段）**
 
@@ -499,14 +504,30 @@ bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 ```
 
 ```bash
-# 第二段：回填先 dry-run，逐行核对未匹配清单后再 --apply（须业务清单就绪）
+# 第二段准备：1) 解析母公司（0 个或多个根的租户出待指定清单）
 python3 scripts/db/w13_backfill_company_attribution.py \
-  --dsn "$PROD_DSN" --mapping company_attribution.csv --dry-run \
-  --output unmatched.csv
+  --resolve-parents --dsn "$PROD_DSN" \
+  --output w13-attribution-parents.csv \
+  --pending-output w13-attribution-pending.csv
 
+# 2) 我方起草候选清单（只读，不写库）
 python3 scripts/db/w13_backfill_company_attribution.py \
-  --dsn "$PROD_DSN" --mapping company_attribution.csv --apply \
-  --output unmatched.csv
+  --draft --dsn "$PROD_DSN" \
+  --output w13-attribution-draft-YYYYMMDD.csv \
+  --pending-output w13-attribution-pending-YYYYMMDD.csv
+
+# 3) 业务复核兜底/例外行并签字后，dry-run 出全量报告并校验
+python3 scripts/db/w13_backfill_company_attribution.py \
+  --dsn "$PROD_DSN" --mapping w13-attribution-draft-YYYYMMDD.csv --dry-run \
+  --report w13-attribution-report-YYYYMMDD.txt \
+  --fallback-output docs/database/w13-attribution-fallback-YYYYMMDD.csv \
+  --exception-output docs/database/w13-attribution-exceptions-YYYYMMDD.csv \
+  --output w13-attribution-unmatched.csv
+
+# 4) 报告签字后 --apply（兜底/例外清单默认落 docs/database/，按执行日命名）
+python3 scripts/db/w13_backfill_company_attribution.py \
+  --dsn "$PROD_DSN" --mapping w13-attribution-draft-YYYYMMDD.csv --apply \
+  --output w13-attribution-unmatched.csv
 ```
 
 **前置/后置断言**
@@ -530,18 +551,18 @@ python3 scripts/db/w13_backfill_company_attribution.py \
 
 ## 5D. 业务前置汇总与被阻断波次
 
-> 回执状态：业务已于 2026-11-23 完成回执（业务已确认，明细见 `rls-business-confirmation-2026-11-23.md` §8）；仍未闭合：CSV 明细、每租户母公司 UUID 映射、W13 规则优先级（技术默认，待业务确认）。
+> 回执状态：业务已于 2026-11-23 完成回执（业务已确认，明细见 `rls-business-confirmation-2026-11-23.md` §8）；仍未闭合：CSV 业务复核签字、母公司待指定清单清零、例外行签字（规则优先级已既定）。
 
 | 前置项 | 内容 | 卡住的波次 |
 |---|---|---|
 | 11 张表 8 项（已回执） | 5 项表事项选 A / B / A / A / A；Q-G3 八条全部同意；Q-G4 选 A；Q-G5 选 A / A（见业务确认材料 §8） | 公司级 RLS 策略批次（W9 之后）；不阻断 W12 与 W13 第一段；Q-G4 / Q-G5 已回执，W13 第二段不再取决于这 8 项 |
-| W13 归属清单 | 字段与逐行要求见 §5C.1；**明细尚未提供** | W13-2 回填 |
-| W13 四条归属规则 | 已回执 1A / 2B / 3B / 4A（见 §5C.2）；优先级与「只校验不回落」为技术默认，待业务确认 | W13-2 回填与 W13-3 切换 |
-| 每租户母公司 UUID 映射 | 母公司须落到具体公司 UUID；无母子关系租户指定主办公司；**尚未提供**（见业务确认材料 §5.3） | W13-2 零空值校验 |
+| W13 归属清单 | 我方 `--draft` 起草，业务只复核兜底与例外行并签字；**尚未签字**（见 §5C.1） | W13-2 回填 |
+| W13 四条归属规则 | 已回执 1A / 2B / 3B / 4A（见 §5C.2）；优先级既定（母公司级 > 客户 / 供应商所属公司 > 母公司兜底），异议改 CSV 行 | W13-2 回填与 W13-3 切换 |
+| 母公司解析 | 租户根公司自动解析（优先 `hrm.companies.parent_id`；当前无该列，按 `erp.company_relations` 反推）；0 个或多个根的租户出待指定清单，须清零 | W13-2 零空值校验 |
 | Q-G3 八条 | 已回执，八条全部同意（见业务确认材料 §8） | 已解除；按八条落地 |
 | Q-G4 / Q-G5 | 已回执：Q-G4 选 A；Q-G5 选 A / A（见业务确认材料 §8） | 已解除；动作白名单与追加式策略可排期 |
 
-结论：W12 四步无业务阻断，可按窗口执行；W13 仅第一段（三笔迁移 + 双写 + 脚本）可执行，第二段在 CSV 明细、母公司 UUID 映射与规则优先级确认前保持只双写。
+结论：W12 四步无业务阻断，可按窗口执行；W13 仅第一段（三笔迁移 + 双写 + 脚本）可执行，第二段在 CSV 签字、母公司待指定清单清零、例外行签字前保持只双写。
 
 ## 6. 整组验收（三波都成功后）
 
@@ -555,7 +576,7 @@ node scripts/ci/check-ledger-ddl-drift.mjs   # 或 bash scripts/ci/check-ledger-
 - 数据：演练库目标表均为 0 行，W9-B 回填 0 行；生产按 §4.12 现场记录回填行数（以实际记录为准）。
 - 应用冒烟：不带 `app.company_id` 的请求读 8 张合并表应为 0 行；带本公司头可读本公司；母公司按可见集合可读子公司；兄弟公司互不可见。
 - W12（开窗前）：四版本 `20261123090000`–`20261123120000` 均 `success=t`；四表策略数 4/4/5/5、RLS FORCE；公司列/FK/索引/触发器/函数与 §5B 断言一致；平台行 `platform_only`、母版行 `company_overridable`、公司行冲突为 0。
-- W13（开窗前，仅第一段）：`20261123140000`/`141000`/`142000` 均 `success=t`；订单两表 `company_id` 为 uuid、可空、无默认；v2 表/2 条策略（system/company_read）/RLS FORCE 就绪；v1 数据与读路径未动；回填/切换/下线**未执行**（第二段卡业务前置，见 §5D）。
+- W13（开窗前，仅第一段）：`20261123140000`/`141000`/`142000` 均 `success=t`；订单两表 `company_id` 为 uuid、可空、无默认；v2 表/2 条策略（system/company_read）/RLS FORCE 就绪；v1 数据与读路径未动；回填/切换/下线**未执行**（第二段卡清单签字与母公司待指定清单，见 §5D）。
 
 ## 7. 回滚总表
 
