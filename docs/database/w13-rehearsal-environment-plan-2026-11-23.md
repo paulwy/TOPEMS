@@ -368,6 +368,167 @@
 
 ---
 
+## 10. 演练实录与结论（2026-11-23 实际执行）
+
+> 本节记录实际读数，不是预期值。执行范围仅限 `topems_w13_rehearsal`；对 `topems_prod` 与其他库零写入；未改 `.env`、未新增迁移、未改服务代码、未部署、未推送。
+
+### 10.1 演练库与结构基线
+
+| 项 | 实际值 |
+|---|---|
+| 库名 | `topems_w13_rehearsal` |
+| 创建命令 | `createdb -T topems_status_baseline_verify topems_w13_rehearsal` |
+| 账本 max / 条数 | `20261123142000` / 795 |
+| W13 三条迁移 | `20261123140000`、`20261123141000`、`20261123142000` 各 1 条 |
+| seed 文件 | `database/seeds/seed_w13_company_scope_rehearsal.sql` |
+| seed 执行 | `psql -X -v ON_ERROR_STOP=1 -d topems_w13_rehearsal -f database/seeds/seed_w13_company_scope_rehearsal.sql` |
+
+**结构基线关系（必须注明）**：`topems_w13_rehearsal` 克隆自 `topems_status_baseline_verify`，后者是**锚点重建**，不是 dev 前向延续。仓库迁移文件 854 个唯一版本，基线账本 795 条；59 个仓库版本不在基线账本，28 个基线账本版本不在 dev `topems` 账本。因此「仓库账本 / 基线库 / dev 库」**不是严格包含关系**。本轮只能证明「在含 W13 三条迁移的库上，数据链路正确」，不能替代「dev/生产从当前水位前向到 W13」的验证。
+
+### 10.2 seed 覆盖矩阵与实际行数
+
+**租户（4）**
+
+| 租户 | 形态 | 用途 |
+|---|---|---|
+| T1 `…0001` | 单根（P 唯一根） | 正常母公司/子公司/跨公司、`--apply` 正常路径 |
+| T2 `…0002` | 单根（Q 唯一根） | 跨租户负样本（T1 订单不得引用 T2 客户） |
+| T3 `…0003` | 0 家公司 | 验证 `PENDING-零根` |
+| T4 `…0004` | 2 个无关系根（R1、R2） | 验证 `PENDING-多根` 与 fail-closed |
+
+**公司（9，含 1 家已删除）**：T1 的 P→C1→C1a、P→C3、P→C2（C2 已删除）；T2 的 Q→Q1；T4 的 R1、R2。关系 5 条（含 P→C2 这条 active 关系，用于验证根判定同时过滤 `deleted_at` 与关系）。
+
+**客户（6 类）**：CU1 子公司 C1、CU2 无归属、CU3 母公司 P、CU4 兄弟公司 C3、CU5 已删除、CU6 跨租户 T2 的 Q1。
+**供应商（6 类）**：SU1–SU6 与客户同构。
+
+**订单（8 分支，销售/采购同构）**：SO1 无客户、SO2 母公司、SO3 子公司、SO4 无归属、SO5 兄弟公司、SO6 已删除客户、SO7 跨租户客户、SO8 已预填 C1a（不参与回填）；PO1–PO8 对应。
+
+**实际行数（seed 后）**：`tenants=4`、`companies=9`（已删除 1）、`relations=5`、`customers=6`（已删除 1）、`suppliers=6`、`sales_orders=8`、`purchase_orders=8`、`v2=28`。
+
+**幂等**：seed 连续执行两次，计数完全不变（第二次输出 `INSERT 0 0 / 3 / 9 / … / 28`），无重复数据；执行后回到可复现的「回填前」状态（`so_null=7`、`po_null=7`、`v2.company_id` 仅 SO8/PO8 预填 2 行）。
+
+### 10.3 演练步骤的实际结果
+
+| # | 步骤 | 命令要点 | 退出码 | 实际读数 | 判定 |
+|---|---|---|---|---:|---|
+| 1 | 解析母公司 | `--resolve-parents --output parents.csv --pending-output pending.csv` | 1 | `parents.csv` 2 行（T1→P、T2→Q）；`pending.csv` 2 行（T3 `root_count=0`、T4 `root_count=2`） | 通过：零根/多根均进入待指定，未静默跳过 |
+| 2 | 起草 | `--draft --output draft.csv --pending-output pending.csv` | 0 | 19 行（sales_order 7、purchase_order 7、customer 5） | 通过 |
+| 3 | dry-run 全量报告 + 兜底/例外清单 | `--mapping draft.csv`（默认 dry-run）`--report --fallback-output --exception-output` | 0 | 待写 19、兜底 9、例外 7、未匹配 0；源表待更新 14、v2 待更新 19（customer 仅 v2 5） | 通过 |
+| 4 | apply（单根正常路径） | `--mapping draft.csv --apply` | 0 | 源表命中 14（计划 14）、v2 命中 19（计划 19）；残留 null：sales_order 0、purchase_order 0 | 通过 |
+| 5 | 零 NULL 断言 | 只读聚合 SQL | 0 | 订单源表 null 0/0；SO8/PO8 预填保留各 1；`v2.company_id` 已设 21；v2 按类型 customer 5 / purchase_order 8 / sales_order 8 / supplier 0 | 通过（supplier 0 见 10.6） |
+| 6 | 多根拦截 | 插入 T4 负样本订单后 `--draft` 与 `--mapping t4-mapping.csv`（dry-run） | 2 / 2 | 两次均输出 T4 两个根并拒绝执行 | 通过：fail-closed 生效 |
+
+说明：
+- 第 1 步退出码 1 是**设计使然**：样例同时含 T3（零根）与 T4（多根），全租户解析必然不唯一。生产上每个真实租户应恰好一个根。
+- 第 2 步退出码 0 的原因：`--draft` 只取「有源行」的租户（`tenants = {源行.tenant_id}`），T3/T4 没有客户/订单，故不在起草范围内；第 6 步插入一条 T4 订单把 T4 带入范围，才触发拦截。
+- 第 4 步之后复跑 seed 已把库复位到回填前状态，便于复现。
+
+### 10.4 分支命中明细（draft 19 行）
+
+按实体：`sales_order 7`、`purchase_order 7`、`customer 5`。
+按规则：`母公司级 3`、`客户/供应商所属公司 7`、`母公司兜底-无自然归属 3`、`母公司兜底-数据缺失 6`。兜底 9、例外 7（例外是兜底的子集，需业务签字）。
+
+| 规则 | 命中行 |
+|---|---|
+| 母公司级（3） | SO2（客户 CU3→P）、PO2（供应商 SU3→P）、CU3（自身 group=P） |
+| 客户/供应商所属公司（7） | SO3→C1、SO5→C3、PO3→C1、PO5→C3、CU1→C1、CU4→C3、CU6→Q1(T2) |
+| 母公司兜底-无自然归属（3） | SO4（CU2 无归属）、PO4（SU2 无归属）、CU2（自身无归属） |
+| 母公司兜底-数据缺失（6） | SO1（无客户）、SO6（客户已删除）、SO7（跨租户客户）、PO1（无供应商）、PO6（供应商已删除）、PO7（跨租户供应商） |
+
+### 10.5 dry-run 与 apply 的清单一致性
+
+- 兜底清单：dry-run 9 行与 apply 9 行**逐字相同**；
+- 例外清单：dry-run 7 行与 apply 7 行**逐字相同**；
+- 全量报告：dry-run 与 apply **逐字相同**（待写 19 / 兜底 9 / 例外 7 / 未匹配 0）。
+
+说明 apply 未改变计划，写入结果与报告一致。
+
+### 10.6 实测发现的口径差异与限制
+
+1. **无客户 / 无供应商订单被归为「数据缺失」**：SO1/PO1 的 reason 是「订单引用的客户/供应商记录不存在或已删除」，规则为 `母公司兜底-数据缺失`。原因是草稿 SQL 把 `{外键} IS NULL` 与「记录不存在/已删除」共用 `counterparty_found=false` 分支。业务语义上 SO1/PO1 更接近「无自然归属」。本轮按授权只修两处缺口，**未改此逻辑**，需业务确认是否拆分。
+2. **供应商不单独起草**：脚本只为 `customer` 生成 v2 归属行，`supplier` 仅作为采购订单对手方参与。实测 `v2` 中 supplier 行 `company_id` 全部为空（`supplier=0`）。若 v2 需要供应商公司维度，需另行起草。
+3. **客户源表不写 `company_id`**：源表无该列，只写 v2。因此「零 NULL」断言仅覆盖订单源表，不覆盖客户源表。
+4. **apply 不是「无变更」幂等**：SQL 是无条件 `UPDATE`，重复执行仍报命中 14/19；v2 的 `projected_at` 每次刷新。业务值不变，但报告按「命中行数」而非「变更行数」计，不能据此判断是否有实际变更。
+5. **C2 已删除公司**：保留 `P→C2` 的 active 关系，实测 C2 未被算作根，说明根判定同时过滤了 `deleted_at` 与关系。
+
+### 10.7 验收项判定
+
+**可判定通过（本地 / 演练库）**
+
+| 验收项 | 依据 |
+|---|---|
+| 迁移结构与账本 | W13 三条各 1 条，账本 max `20261123142000` |
+| seed 幂等与覆盖 | 二次执行计数不变；4/9/5/6/6/8/8/28 |
+| 母公司解析与 PENDING | parents 2 行、pending 2 行（零根/多根） |
+| 起草四规则与优先级 | 19 行，四规则均有命中，兜底 9、例外 7 |
+| 回填覆盖与 fail-closed | dry-run 未匹配 0；apply 14/19；多根两次 exit 2 |
+| 零 NULL | 订单源表 0/0；预填行保留 |
+| 影子读比对（计数口径） | v2 `company_id` 已设 21 = 19 更新 + 2 预填；按类型 5/8/8/0 |
+| 兜底/例外签字清单 | 可稳定输出，dry-run 与 apply 一致 |
+
+**仍被卡住 / 必须部署后验证**
+
+| 项 | 原因 |
+|---|---|
+| 非特权角色下的 RLS 可见性（跨租户/跨公司 0 行、母公司可见） | 本轮以 superuser 运行，绕过 RLS，读数不具代表性；需 `topems_drift` 或等价非特权角色复跑 |
+| 真实写入路径是否带公司上下文 | 依赖服务代码与请求上下文，非数据脚本可证 |
+| 搜索双写延迟/失败/追平 | 依赖运行态 |
+| 大表回填锁/时长/索引膨胀（性能档） | 本轮明确不做性能档 |
+| UI 过滤与展示 | 依赖部署 |
+| dev/生产从当前水位前向到 W13 | 基线库是锚点重建，非严格包含 |
+| 生产只读 preflight（`topems_drift`） | 角色存在但本地 peer 认证失败，见 10.8 |
+
+### 10.8 生产只读 preflight 结果
+
+- `topems_drift` **角色存在**：`rolcanlogin=t, rolsuper=f, rolbypassrls=f, rolcreatedb=f`（非 superuser、无 BYPASSRLS，符合只读定位）。
+- 以该角色连接 `topems_prod` 的尝试**失败**：`FATAL: Peer authentication failed for user "topems_drift"`。本机 unix socket 走 peer 认证，OS 用户 `xingzhai` 与角色名不匹配；未提供该角色口令。
+- **未自建角色、未改用其他凭据、未读取生产业务表**。结论：在不改 `pg_hba` 且不提供口令的前提下，本机无法用 `topems_drift` 完成生产只读 preflight；需 DBA 提供可用认证方式后再执行。
+
+### 10.9 复现命令
+
+```bash
+# 0) 重建演练库（模板库需无活动连接；否则用 pg_dump/restore 或锚点+前向）
+createdb -T topems_status_baseline_verify topems_w13_rehearsal
+
+# 1) 灌 seed（幂等，可重复执行；库名含 prod 会 RAISE EXCEPTION 拒绝）
+psql -X -v ON_ERROR_STOP=1 -d topems_w13_rehearsal \
+  -f database/seeds/seed_w13_company_scope_rehearsal.sql
+
+# 2) 解析母公司（样例含 T3/T4 → 退出码 1，写待指定清单）
+python3 scripts/db/w13_backfill_company_attribution.py --resolve-parents \
+  --dsn "postgresql:///topems_w13_rehearsal" \
+  --output /tmp/parents.csv --pending-output /tmp/pending.csv
+
+# 3) 起草（只取有源行的租户，T3/T4 不在范围内 → 退出码 0）
+python3 scripts/db/w13_backfill_company_attribution.py --draft \
+  --dsn "postgresql:///topems_w13_rehearsal" \
+  --output /tmp/draft.csv --pending-output /tmp/pending2.csv
+
+# 4) dry-run 全量报告 + 兜底/例外清单
+python3 scripts/db/w13_backfill_company_attribution.py \
+  --dsn "postgresql:///topems_w13_rehearsal" --mapping /tmp/draft.csv \
+  --report /tmp/report.txt \
+  --fallback-output /tmp/fallback.csv --exception-output /tmp/exceptions.csv
+
+# 5) apply（单根正常路径）
+python3 scripts/db/w13_backfill_company_attribution.py \
+  --dsn "postgresql:///topems_w13_rehearsal" --mapping /tmp/draft.csv --apply \
+  --report /tmp/apply-report.txt \
+  --fallback-output /tmp/fallback2.csv --exception-output /tmp/exceptions2.csv
+
+# 6) 多根拦截负样本：插入后 draft/dry-run 应退出码 2；验证完删除
+psql -X -v ON_ERROR_STOP=1 -d topems_w13_rehearsal -c "SET app.rls_system='on'; \
+  INSERT INTO erp.sales_orders (id, tenant_id, order_no, order_date) VALUES \
+  ('50000000-0000-4000-8000-000000000009','00000000-0000-4000-8000-000000000004', \
+   'W13-SO-T4-NEG','2026-11-01 00:00:00+08');"
+psql -X -v ON_ERROR_STOP=1 -d topems_w13_rehearsal -c "SET app.rls_system='on'; \
+  DELETE FROM erp.sales_orders WHERE id='50000000-0000-4000-8000-000000000009';"
+```
+
+> 演练库本身不入仓库。执行产物（各步 stdout/stderr、CSV、报告）留在本地临时目录，未提交；本节的读数为归档口径。
+
+---
+
 ## 附录 A：只读盘点口径
 
 - 连接：unix socket / OS 用户 `xingzhai`；不拼接、不回显 DSN 与口令。
