@@ -26,6 +26,10 @@ prometheus.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
+
+[features]
+db-tests = []
+
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"

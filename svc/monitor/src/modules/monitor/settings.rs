@@ -15,6 +15,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use sqlx::Row;
+use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
@@ -22,6 +23,18 @@ use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+
+/// W12-B1：设置写入只落公司行（平台默认行只读）。
+///
+/// 缺少公司上下文时显式失败（400），不回退写 `company_id IS NULL` 的平台行——
+/// 平台行只允许平台通道维护，业务侧误写会被 RLS 拒绝或静默 0 行。
+fn require_company_context(action: &str) -> Result<Uuid, TopemsError> {
+    topems_shared_auth::company_context::current_company_id().ok_or_else(|| {
+        TopemsError::ValidationFailed(format!(
+            "{action}需要公司上下文：请显式声明 x-company-id，或为用户配置默认公司"
+        ))
+    })
+}
 
 #[derive(Debug, Serialize)]
 pub struct SettingItem {
@@ -95,7 +108,12 @@ pub async fn list_settings(
         sqlx::query(
             "SELECT key, value FROM public.monitor_settings
              WHERE (tenant_id IS NULL OR tenant_id = $1) AND category = $2
-             ORDER BY key",
+             ORDER BY key,
+                      CASE
+                          WHEN company_id = NULLIF(current_setting('app.company_id', true), '')::uuid THEN 0
+                          WHEN company_id IS NULL THEN 1
+                          ELSE 2
+                      END DESC",
         )
         .bind(tenant_id)
         .bind(cat)
@@ -105,7 +123,12 @@ pub async fn list_settings(
         sqlx::query(
             "SELECT key, value FROM public.monitor_settings
              WHERE (tenant_id IS NULL OR tenant_id = $1)
-             ORDER BY key",
+             ORDER BY key,
+                      CASE
+                          WHEN company_id = NULLIF(current_setting('app.company_id', true), '')::uuid THEN 0
+                          WHEN company_id IS NULL THEN 1
+                          ELSE 2
+                      END DESC",
         )
         .bind(tenant_id)
         .fetch_all(&mut scope)
@@ -155,6 +178,11 @@ pub async fn batch_update_settings(
     Json(payload): Json<BatchUpdateRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    // W12-B1：批量写入只落公司行；缺公司上下文直接 400，不写平台行。
+    let company_id = match require_company_context("保存设置") {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(e),
+    };
     let mut updated = 0;
 
     for (key, value) in &payload.settings {
@@ -175,12 +203,15 @@ pub async fn batch_update_settings(
             }
         };
         let result = sqlx::query(
-            "INSERT INTO public.monitor_settings (tenant_id, key, value, category)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (tenant_id, key) DO UPDATE
+            "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value, category)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (tenant_id, company_id, key)
+                 WHERE deleted_at IS NULL AND company_id IS NOT NULL
+             DO UPDATE
              SET value = EXCLUDED.value, category = EXCLUDED.category, updated_at = CURRENT_TIMESTAMP",
         )
         .bind(tenant_id)
+        .bind(company_id)
         .bind(key)
         .bind(value)
         .bind(category)
@@ -234,7 +265,13 @@ pub async fn get_setting(
 
     let fetched = sqlx::query(
         "SELECT key, value, category FROM public.monitor_settings
-         WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = $2",
+         WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = $2
+         ORDER BY CASE
+                      WHEN company_id = NULLIF(current_setting('app.company_id', true), '')::uuid THEN 0
+                      WHEN company_id IS NULL THEN 1
+                      ELSE 2
+                  END
+         LIMIT 1",
     )
     .bind(tenant_id)
     .bind(&key)
@@ -286,6 +323,11 @@ pub async fn update_setting(
     Json(payload): Json<SingleUpdateRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    // W12-B1：单条写入只落公司行；缺公司上下文直接 400。
+    let company_id = match require_company_context("更新设置") {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(e),
+    };
     let category = payload
         .category
         .or_else(|| key.split('_').next().map(|s| s.to_string()));
@@ -305,12 +347,15 @@ pub async fn update_setting(
     };
 
     let result = sqlx::query(
-        "INSERT INTO public.monitor_settings (tenant_id, key, value, category)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (tenant_id, key) DO UPDATE
+        "INSERT INTO public.monitor_settings (tenant_id, company_id, key, value, category)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (tenant_id, company_id, key)
+             WHERE deleted_at IS NULL AND company_id IS NOT NULL
+         DO UPDATE
          SET value = EXCLUDED.value, category = EXCLUDED.category, updated_at = CURRENT_TIMESTAMP",
     )
     .bind(tenant_id)
+    .bind(company_id)
     .bind(&key)
     .bind(&payload.value)
     .bind(category)
@@ -350,6 +395,11 @@ pub async fn delete_setting(
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    // W12-B1：删除只允许删本司行；平台默认行只读，缺公司上下文直接 400。
+    let company_id = match require_company_context("删除设置") {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(e),
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -365,22 +415,46 @@ pub async fn delete_setting(
         }
     };
 
-    let result = sqlx::query(
-        "DELETE FROM public.monitor_settings WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = $2",
+    let deleted = sqlx::query_scalar::<_, Uuid>(
+        "DELETE FROM public.monitor_settings
+         WHERE tenant_id = $1 AND company_id = $2 AND key = $3
+         RETURNING id",
     )
     .bind(tenant_id)
+    .bind(company_id)
     .bind(&key)
-    .execute(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => match scope.commit().await {
+    match deleted {
+        Ok(Some(_)) => match scope.commit().await {
             Ok(()) => ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功"),
             Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
         },
-        Ok(_) => {
+        Ok(None) => {
+            // 本司没有可删行：若平台默认行存在，明确告知只读，不静默成功。
+            let platform_exists = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS (
+                    SELECT 1 FROM public.monitor_settings
+                     WHERE tenant_id IS NULL AND company_id IS NULL AND key = $1
+                 )",
+            )
+            .bind(&key)
+            .fetch_one(&mut scope)
+            .await;
             let _ = scope.rollback().await;
-            ApiResponse::<serde_json::Value>::not_found("设置不存在")
+
+            match platform_exists {
+                Ok(true) => {
+                    ApiResponse::<serde_json::Value>::from(TopemsError::OperationNotAllowed(
+                        "平台默认设置只读，业务侧不可删除；如需停用请在公司行覆盖".to_string(),
+                    ))
+                }
+                Ok(false) => ApiResponse::<serde_json::Value>::not_found("设置不存在"),
+                Err(e) => {
+                    ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))
+                }
+            }
         }
         Err(e) => {
             let _ = scope.rollback().await;
