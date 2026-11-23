@@ -86,6 +86,27 @@ pub enum SnapshotMatchStatus {
 impl SnapshotMatchStatus {
     pub const ALL: [Self; 4] = [Self::Unmatched, Self::Matched, Self::Diff, Self::Manual];
 
+    pub const DB_VALUES: [&'static str; 4] = ["unmatched", "matched", "diff", "manual"];
+
+    /// 列可空且无默认值；NULL 在 SQL 里按 `unmatched` 处理。
+    pub const DEFAULT: Self = Self::Unmatched;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        self.as_str()
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim() {
+            "unmatched" => Some(Self::Unmatched),
+            "matched" => Some(Self::Matched),
+            "diff" => Some(Self::Diff),
+            "manual" => Some(Self::Manual),
+            _ => None,
+        }
+    }
+
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Unmatched => "unmatched",

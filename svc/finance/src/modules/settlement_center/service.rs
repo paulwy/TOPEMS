@@ -244,11 +244,12 @@ pub async fn manual_reconcile(
             r#"UPDATE finance.reconciliation_item_snapshots
                SET match_status = $3, updated_at = NOW()
                WHERE recon_id = $1 AND id = ANY($2)
-                 AND COALESCE(match_status, 'unmatched') <> $3"#
+                 AND COALESCE(match_status, $4) <> $3"#
         ))
         .bind(recon_id)
         .bind(&req.record_ids)
         .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Matched.as_str())
+        .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Unmatched.as_str())
         .execute(&mut scope)
         .await?;
         result.rows_affected() as i64
@@ -258,14 +259,15 @@ pub async fn manual_reconcile(
         sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT
-             COUNT(*) FILTER (WHERE match_status = 'matched')::int AS matched_count,
-             COUNT(*) FILTER (WHERE match_status <> 'matched')::int AS unmatched_count,
+             COUNT(*) FILTER (WHERE match_status = $2)::int AS matched_count,
+             COUNT(*) FILTER (WHERE match_status <> $2)::int AS unmatched_count,
              COALESCE(SUM(debit_amount), 0)::float8 AS total_debit,
              COALESCE(SUM(credit_amount), 0)::float8 AS total_credit
            FROM finance.reconciliation_item_snapshots
            WHERE recon_id = $1"#
         ))
         .bind(recon_id)
+        .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Matched.as_str())
         .fetch_one(&mut scope)
         .await?;
 
@@ -332,11 +334,11 @@ pub async fn auto_reconcile(
              AND r.period = $1
              AND ($2::text IS NULL OR r.recon_type = $2)
              AND ($3::uuid IS NULL OR r.entity_id = $3)
-             AND COALESCE(ri.match_status, 'unmatched') <> $4
+             AND COALESCE(ri.match_status, $5) <> $4
              AND EXISTS (
                SELECT 1 FROM finance.reconciliation_item_snapshots ri2
                WHERE ri2.recon_id = ri.recon_id
-                 AND ri2.match_status <> 'matched'
+                 AND ri2.match_status <> $4
                  AND COALESCE(ri2.debit_amount, 0) = COALESCE(ri.credit_amount, 0)
              )"#
     ))
@@ -344,6 +346,7 @@ pub async fn auto_reconcile(
     .bind(&req.recon_type)
     .bind(req.entity_id)
     .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Matched.as_str())
+    .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Unmatched.as_str())
     .execute(&mut scope)
     .await?;
 
@@ -361,8 +364,8 @@ pub async fn auto_reconcile(
                updated_at = NOW(), synced_at = NOW()
            FROM (
                SELECT recon_id,
-                      COUNT(*) FILTER (WHERE match_status = 'matched')::int AS matched_count,
-                      COUNT(*) FILTER (WHERE match_status <> 'matched')::int AS unmatched_count,
+                      COUNT(*) FILTER (WHERE match_status = $4)::int AS matched_count,
+                      COUNT(*) FILTER (WHERE match_status <> $4)::int AS unmatched_count,
                       SUM(debit_amount) AS total_debit,
                       SUM(credit_amount) AS total_credit,
                       SUM(debit_amount) - SUM(credit_amount) AS difference
@@ -380,6 +383,7 @@ pub async fn auto_reconcile(
     .bind(&req.period)
     .bind(&req.recon_type)
     .bind(req.entity_id)
+    .bind(crate::modules::settlement_center_status::SnapshotMatchStatus::Matched.as_str())
     .execute(&mut scope)
     .await?;
 

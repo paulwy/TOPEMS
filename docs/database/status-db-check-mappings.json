@@ -1835,6 +1835,13 @@
       "table": "finance.reconcile_items",
       "column": "status",
       "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/finance/src/modules/settlement_center_status.rs",
+      "enum": "SnapshotMatchStatus",
+      "table": "finance.reconciliation_item_snapshots",
+      "column": "match_status",
+      "candidate": "docs/database/finance-item-snapshot-match-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

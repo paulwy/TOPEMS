@@ -1903,6 +1903,21 @@
     },
     {
       "schema": "finance",
+      "table": "reconciliation_item_snapshots",
+      "constraint": "ck_reconciliation_item_snapshots_match_status_standard",
+      "columns": [
+        "match_status"
+      ],
+      "values": [
+        "diff",
+        "manual",
+        "matched",
+        "unmatched"
+      ],
+      "definition": "CHECK (((match_status IS NULL) OR ((match_status)::text = ANY ((ARRAY['unmatched'::character varying, 'matched'::character varying, 'diff'::character varying, 'manual'::character varying])::text[])))) NOT VALID"
+    },
+    {
+      "schema": "finance",
       "table": "reconciliation_settlement_links",
       "constraint": "ck_reconciliation_settlement_links_status_standard",
       "columns": [
@@ -6677,15 +6692,6 @@
       "enum_type": "text",
       "not_null": false,
       "default_expr": "'pending'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "reconciliation_item_snapshots",
-      "column": "match_status",
-      "type": "character varying(50)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": null
     },
     {
       "schema": "finance",
