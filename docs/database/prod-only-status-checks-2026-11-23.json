@@ -8853,8 +8853,8 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B253",
-      "source_commit": "PENDING",
-      "source_subject": "B253: rs.rs_projects.status 收敛到 RdProjectStatus 四态",
+      "source_commit": "b0100b92d",
+      "source_subject": "B253: RD 关联项目状态收敛",
       "note": "RD 关联项目表由 PM 事件维护，17 行 pending；本约束锁定 pending/in_progress/completed/cancelled"
     }
   ]
