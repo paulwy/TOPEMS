@@ -30,9 +30,11 @@
 | 2 | W12-A2 | `integration.core_inter_module_sync` | `20261123100000` | 依赖 A1 的母版/公司模型 |
 | 3 | W12-B1 | `public.monitor_settings` | `20261123110000` | 依赖 A 已完成公司上下文改造 |
 | 4 | W12-B2 | `public.system_settings` + 公司作用域 API | `20261123120000` | 复用 B1 的平台行策略与 API 形态 |
-| 5 | W13-1 | `search_entity_projections_v2` 建表 + 双写 | `20261123140000` | 依赖 A/B 的写入端公司上下文 |
-| 6 | W13-2 | 搜索切换（重命名/读切新表） | `20261123140000` | 依赖全量比对零差异 |
-| 7 | W13-3 | 下线旧搜索表 | `20261123150000` | 依赖切换后观察通过 |
+| 5 | W13-1a | 订单公司归属补列（`sales_orders`/`purchase_orders`）+ `search_entity_projections_v2` 建表 + 双写 | `20261123140000` / `20261123141000` / `20261123142000` | 依赖 A/B 的写入端公司上下文；已合入 main |
+| 6 | W13-2 | 按业务清单回填 → 零 NULL → 影子读比对 → 搜索切换 | 待创建（不得复用 `140000`–`142000`） | 依赖全量比对零差异 + 业务归属清单与四条规则 |
+| 7 | W13-3 | 下线旧搜索表 | 待创建（不得复用 `140000`–`142000`） | 依赖切换后观察通过 |
+
+> 版本重编号：原方案 `20261123130000`（v2 建表）已由 W5-B215 `hrm.contracts` 占用，W13 第一段实际为 `140000`（`sales_orders.company_id`）、`141000`（`purchase_orders.company_id`）、`142000`（v2 建表 + 双写）。第二段尚未创建迁移，版本号按当前链尾顺延。执行口径以 `docs/database/window-execution-checklist-2026-11-21.md` §5C 为准。
 
 ### 1.2 与 W1–W11 的衔接
 
@@ -55,11 +57,13 @@
 | `20261123100000` | `database/migrations/20261123100000_core_inter_module_sync_company_scope.sql` | `database/rollback/20261123100000_core_inter_module_sync_company_scope.rollback.sql` |
 | `20261123110000` | `database/migrations/20261123110000_monitor_settings_company_scope.sql` | `database/rollback/20261123110000_monitor_settings_company_scope.rollback.sql` |
 | `20261123120000` | `database/migrations/20261123120000_system_settings_company_scope.sql` | `database/rollback/20261123120000_system_settings_company_scope.rollback.sql` |
-| `20261123140000` | `database/migrations/20261123140000_search_entity_projections_v2_create.sql` | `database/rollback/20261123140000_search_entity_projections_v2_create.rollback.sql` |
-| `20261123140000` | `database/migrations/20261123140000_search_entity_projections_cutover.sql` | `database/rollback/20261123140000_search_entity_projections_cutover.rollback.sql` |
-| `20261123150000` | `database/migrations/20261123150000_search_entity_projections_legacy_drop.sql` | `database/rollback/20261123150000_search_entity_projections_legacy_drop.rollback.sql` |
+| `20261123140000` | `database/migrations/20261123140000_erp_sales_orders_company_id.sql` | `database/rollback/20261123140000_erp_sales_orders_company_id.rollback.sql` |
+| `20261123141000` | `database/migrations/20261123141000_erp_purchase_orders_company_id.sql` | `database/rollback/20261123141000_erp_purchase_orders_company_id.rollback.sql` |
+| `20261123142000` | `database/migrations/20261123142000_search_projection_v2_company_scope.sql` | `database/rollback/20261123142000_search_projection_v2_company_scope.rollback.sql` |
+| 待定 | 搜索切换（重命名/读切新表） | 待创建 |
+| 待定 | 下线旧搜索表（legacy drop） | 待创建 |
 
-按 `YYYYMMDDHHMMSS_slug.sql` 字典序执行；已占用到 `20261122160000`，`20261123*` 无冲突。每档留 1 小时插槽，热修可用 `093000` 之类插入而不打乱顺序。
+按 `YYYYMMDDHHMMSS_slug.sql` 字典序执行；`20261123130000` 已被 W5-B215 占用，W13 第一段顺延到 `140000`–`142000`；第二段版本号须在当前链尾之后新建，不得复用 `140000`–`142000`。每档留 1 小时插槽，热修可插入中间档而不打乱顺序。
 
 ## 3. 列定义
 
@@ -252,13 +256,13 @@ FOR INSERT WITH CHECK (
 
 | 步骤 | 动作 | 完成判据 |
 |---|---|---|
-| 1 | `20261123140000` 建 v2（`company_id NOT NULL`、PK、索引、FK、RLS 策略） | 表/约束/策略存在；v2 为空 |
+| 1 | `20261123142000` 建 v2（`company_id uuid 可空`、PK、公司维度索引、RLS 策略；NOT NULL 留待第二段收紧） | 表/约束/策略存在；v2 为空 |
 | 2 | 发布双写版本：投影写入路径同时写老表与 v2；读仍走老表 | 双写成功率 100%，无新增错误日志 |
 | 3 | 回填 v2：按源表与老表补齐历史行，推导 `company_id` | v2 行数 ≥ 老表；`company_id IS NULL` 为 0 |
 | 4 | 全量比对：按 `tenant_id/company_id/entity_type` 行数、主键集合、字段校验和 | 差异为 0；差异报告留档 |
-| 5 | `20261123140000` 切换：老表改名 `search_entity_projections_legacy`，v2 改名 `search_entity_projections`；代码停止双写、只写 canonical、读 canonical | 重命名成功；搜索延迟与错误率不高于切换前 |
+| 5 | 切换（版本待建，不得复用 `140000`–`142000`）：老表改名 `search_entity_projections_legacy`，v2 改名 `search_entity_projections`；同时收紧 `company_id NOT NULL`；代码停止双写、只写 canonical、读 canonical | 重命名成功；搜索延迟与错误率不高于切换前 |
 | 6 | 观察期（同一预窗口批次内）：读 canonical，legacy 只读保留 | 无差异、无错误；确认不再回读 legacy |
-| 7 | `20261123150000` 下线：drop `search_entity_projections_legacy` | 旧表不存在；无对象依赖 |
+| 7 | 下线（版本待建，不得复用 `140000`–`142000`）：drop `search_entity_projections_legacy` | 旧表不存在；无对象依赖 |
 
 ### 7.3 比对与失败处置
 
@@ -292,7 +296,7 @@ FOR INSERT WITH CHECK (
 - 搜索：
   - 切换前回滚：drop v2、停止双写，老表继续服务。
   - 切换后回滚：将 canonical 改回 `search_entity_projections_v2`、legacy 改回 canonical，并回滚代码；仅在 legacy 未 drop 前有效。
-  - `20261123150000` 之后再回滚需从备份恢复旧表，属事故处置，不在常规路径。
+  - 下线迁移执行后再回滚需从备份恢复旧表，属事故处置，不在常规路径。
 - 所有回滚件不得删除业务行。
 
 ### 8.3 隔离库演练
@@ -309,7 +313,7 @@ FOR INSERT WITH CHECK (
 
 ### 9.1 `migration_manifest.yaml`
 
-- 7 条条目，`status: to_apply`，按 09/10/11/12/13/14/15 顺序。
+- 已登记 7 条条目，`status: to_apply`：W12 四条（09/10/11/12）+ W13 第一段三条（14/14.1/14.2，即 `20261123140000`/`141000`/`142000`）；W13 第二段待建后补登记。
 - `effect` 写明：加列/回填/唯一索引替换/策略改造/新表/重命名/下线。
 - `destructive_scan`：A1 删除旧唯一约束；W13-3 `DROP TABLE` 仅限 legacy；其余无 DELETE/TRUNCATE。
 - `note` 写明串行依赖：A1→A2→B1→B2→W13-1→W13-2→W13-3；W13-2 以比对零差异为前提。
@@ -323,11 +327,11 @@ FOR INSERT WITH CHECK (
 
 ### 9.3 `checksums.txt`
 
-- 追加 7 个迁移 + 7 个回滚文件的 sha256，按路径排序；用仓库现有生成方式重算。
+- 已追加 W12 四条 + W13 第一段三条（共 7 个迁移、7 个回滚文件）的 sha256，按路径排序；W13 第二段建好后按同样方式追加。
 
 ### 9.4 夹具库锚点
 
-- `build-drift-gate-db.sh` 锚点从 `20261122160000` 前移到 `20261123150000`；基线仍为 `20261117235500` + 前向重放。
+- `build-drift-gate-db.sh` 锚点从 `20261122160000` 前移到 `20261123142000`（当前链尾；第二段建好后再前移）；基线仍为 `20261117235500` + 前向重放。
 - 预期读数以重建现场实测为准，写入脚本头部与 `environment-provisioning.md` §11，不照抄旧数。
 - 默认路径（不改任何环境变量）跑 `ledger-ddl-drift`，要求 PASS 且 7 条新断言真正执行、无 NOTE 跳过。
 
@@ -335,13 +339,13 @@ FOR INSERT WITH CHECK (
 
 ### 10.1 迁移与门禁
 
-- 7 条迁移账本 `success=t`，顺序正确；回滚件可独立执行。
-- manifest / drift / checksums 各含 7 条并通过。
-- 夹具库重建到 `20261123150000`，默认门禁 PASS，新断言非跳过。
+- 7 条迁移（W12 四条 + W13 第一段三条）账本 `success=t`，顺序正确；回滚件可独立执行。W13 第二段迁移建好后另行验收。
+- manifest / drift / checksums 各含已登记的 7 条并通过。
+- 夹具库重建到 `20261123142000`，默认门禁 PASS，新断言非跳过。
 
 ### 10.2 结构
 
-- 4 张表有 `company_id`；`core_tenant_modules` 两条部分唯一索引生效、旧约束不存在；monitor/system 平台行唯一索引与 CHECK 生效；v2 为 `company_id NOT NULL`。
+- 4 张表有 `company_id`；`core_tenant_modules` 两条部分唯一索引生效、旧约束不存在；monitor/system 平台行唯一索引与 CHECK 生效；v2 本段为 `company_id uuid 可空`，第二段切换时收紧为 NOT NULL。
 - 所有表 `ENABLE + FORCE RLS`，策略数量符合 §5；legacy 已下线。
 
 ### 10.3 RLS 隔离实证（`gis_ro_smoke` 只读角色口径）
