@@ -604,10 +604,16 @@ node scripts/ci/lib/db-target.mjs --list
 `--json` 输出脱敏结果。
 
 **status-catalog 与 ledger-ddl-drift 的解耦**（原有口径保留）：漂移门禁按设计跑在
-`topems_gate`（基线 + 前向重放夹具），而状态目录是开发库的真实快照；`status-catalog`
-不读 `.env` 的 `MIGRATION_DRIFT_DB_URL`，避免「目录该对哪个库负责」随 shell 环境漂移，
-导致门禁红/绿不可解释。本机在 `.env` 中单独写 `STATUS_CATALOG_DB_URL`（指向生成目录的
-开发库），`MIGRATION_DRIFT_DB_URL` 保持指向 `topems_gate`，两者互不影响。
+`topems_gate`（基线 + 前向重放夹具），而状态目录的唯一事实源是**基线重建库**：
+`docs/database/status-check-catalog.json` 由「基线锚点 + 前向迁移」从零重建的
+`topems_status_baseline_verify` 生成（目录口径见
+`docs/database/prod-only-status-checks-2026-11-23.md`）。因此 `STATUS_CATALOG_DB_URL`
+应指向这个基线重建库（`postgresql:///topems_status_baseline_verify`），**不要指向 dev 库
+`topems`**：dev 库是长期演进的开发库，既有已归档/已删表的残留（如
+`archive.drop_20261119_*`）、约束定义格式差异，也缺部分迁移，全量比对会长期 FAIL
+（实测：少 2 条状态 CHECK、3 条定义不一致、无约束列 706 vs 目录 683），只能靠
+`--changed-only` 掩盖，红/绿不可解释。`status-catalog` 不读 `.env` 的
+`MIGRATION_DRIFT_DB_URL`，后者保持指向 `topems_gate`，两者互不影响。
 
 ### 12.2 `--changed-only` 的适用范围
 
@@ -619,16 +625,33 @@ node scripts/ci/lib/db-target.mjs --list
 - 解析不到任何表（例如本次只改了目录文件、或迁移里只有 `DROP INDEX` 之类无表名语句）时，
   自动回退全量，不静默跳过。
 - 只比对 `constraints` 与 `uncovered` 中涉及表的行；枚举类型与未涉及表由全量兜底。
+- `STATUS_CATALOG_DB_URL` 指向的基线库必须与当前链尾对齐。若刚拉取新迁移但未重建基线库，
+  `--changed-only` 会拿旧库校验新迁移涉及的表，报「目录有库中无」的假差异；此时按 §12.3
+  先重建基线库，不要改目录绕过。
 
-### 12.3 定期全量
+### 12.3 基线库重建与定期全量
 
 `--changed-only` 只能防「改了某表却没同步目录」，防不住「目录整体陈旧」。
-建议**每周一次、每个发布窗口前一次**手动跑全量：
+**每次拉取新迁移后**都要重建基线库，否则 `--changed-only` 可能报假差异：
+
+```bash
+# 1) 从基线锚点 + 前向迁移重建参考库（隔离库，非生产）
+bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint
+bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto
+
+# 2) 验证：确认 tier 1 命中，再跑全量（不要用 --changed-only）
+node scripts/ci/lib/db-target.mjs --hook status-catalog --explain
+node scripts/ci/dump-status-checks.mjs --check
+```
+
+全量 PASS 表示目录与「基线 + 前向」终态一致（当前读数：33 条状态 CHECK、5 个枚举类型、
+683 个无约束列）。若 FAIL，按差异如实判断：是迁移新增/修改了状态集却未重生成目录
+（重生成后与迁移同批 review），还是基线库未重建到链尾。此外建议**每周一次、每个发布窗口
+前一次**手动跑全量：
 
 ```bash
 set -a; . ./.env; set +a
 node scripts/ci/dump-status-checks.mjs --check
 ```
 
-全量要求校验库确实处于生成目录时的状态；若库已被重建，应先修复校验库或在确认差异后
-重生成目录，不能用 `--changed-only` 长期替代全量。
+若库已被重建，应先修复校验库或在确认差异后重生成目录，不能用 `--changed-only` 长期替代全量。
