@@ -8765,7 +8765,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B247",
-      "source_commit": "PENDING",
+      "source_commit": "ce3e680bc",
       "source_subject": "B247: ehs.qa_ehs_environment_monitors.status 收敛到 EnvironmentMonitorStatus 四态",
       "note": "替换既有 ck_qa_ehs_environment_monitors_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；当前参考库仅存旧约束"
     }

@@ -234,3 +234,4 @@
 - B246 追加后读数：414 条；`ehs.qa_ehs_hazardous_materials.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
 - B246 来源提交已回填：`813efa943`。
 - B247 追加后读数：415 条；`ehs.qa_ehs_environment_monitors.status` 在参考库仍由旧约束覆盖，新四态约束未回迁。
+- B247 来源提交已回填：`ce3e680bc`。
