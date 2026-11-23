@@ -1,41 +1,51 @@
 # 公司级隔离迁移波次方案（5 张表，2026-11-23）
 
 > 范围：`public.core_tenant_modules`、`integration.core_inter_module_sync`、`public.search_entity_projections`、`public.monitor_settings`、`public.system_settings`。
-> 性质：方案文档。本轮不写迁移 SQL、不改代码、不碰生产；迁移件待业务确认与窗口排期后再写。
-> 模板：沿用 `database/migrations/20261121235940_erp_consolidation_company_rls.sql` 的公司级范式，不另立新范式。
+> 性质：方案文档。本轮不写迁移 SQL、不改代码、不碰生产。
+> 模板：沿用 `database/migrations/20261121235940_erp_consolidation_company_rls.sql` 的公司级范式。
+> 统一模型：「集团母版 + 公司差异」——`company_id IS NULL` = 集团/平台母版行，租户内所有公司只读；公司行只表达差异、可写。
 
-## 0. 与既有材料的关系
+## 0. 本轮裁决与影响
 
-- 默认处置与 `docs/database/rls-company-scope-remediation-plan-2026-11-23.md` 一致；本文件只细化执行波次、版本号、列/回填/策略/断言。
-- 一处语义收紧：`core_tenant_modules` 的集团目录行（`company_id IS NULL`）**租户内所有公司只读可见**（否则子公司无法看到集团开通的模块），写仍限母公司/平台；此前清单里「NULL 仅母公司可见」仅适用于同步任务，不适用于目录。
-- 统一模型不变：读 = 本司 + 母公司可见清单；写 = 本公司；平台通道只用于平台行与运维，不用于业务请求。
+| # | 裁决 | 对方案的影响 |
+|---|---|---|
+| 1 | W12-A1 → A2 → B1 → B2 → W13 全部排在主窗口之前，**串行**，不拆窗口后、不留降级路径 | 波次表改为严格串行；删除「A/B 可并行」与所有窗口后补做项；回滚只用于故障处置，不作为排期降级 |
+| 2 | `core_tenant_modules` 存量行全部视为集团目录（`company_id = NULL`），租户内公司只读；唯一约束拆两条部分唯一索引 | 不再二选一、不再拆分存量行；删除旧 `(tenant_id, module_code)` 唯一约束，改为「母版」+「公司」两条部分唯一索引 |
+| 3 | `search_entity_projections` 双写零降级：老表服务、新表双写、全量比对、通过后下线 | W13 扩为三步（建新表 → 切换 → 下线旧表），新增双写、回填、比对、切换、监控等工作项 |
+| 4 | 模块开通 = 集团母版 + 公司差异：母版定义可开通范围，公司行表达实际开通 | `core_tenant_modules` 的策略与种子逻辑按「母版目录 + 公司开通行」重写 |
+| 5 | `monitor_settings`：平台行只读，公司可覆盖，业务写只落公司行 | 删除业务对平台行的写路径；平台行仅平台通道维护，不计入业务写 |
+| 6 | `system_settings`：平台行只读 + 公司覆盖，新增公司作用域 API，工作量计入 W12-B2 | B2 增加 API 新增项，不另立波次、不推迟 |
+| 7 | `core_inter_module_sync`：保留集团级任务，`company_id IS NULL` 合法（仅母公司可见可发起） | 回填不再把无公司任务视为异常；策略保留 NULL 分支 |
+| 8 | 母公司搜索默认跨子公司（限本租户），支持按公司过滤；子公司固定只见本司 | 搜索策略与查询接口增加母公司范围分支与可选公司过滤 |
+
+其余边界不变：只改文档；迁移件待窗口排期后再写；生产 DDL 未执行。
 
 ## 1. 波次划分与顺序
 
-### 1.1 波次总表
+### 1.1 波次总表（严格串行，全部在 W1 之前）
 
-| 波次 | 表 | 版本号 | 批次内顺序 | 与其他波关系 | 窗口位置 |
-|---|---|---|---|---|---|
-| W12-A1 | `public.core_tenant_modules` | `20261123090000` | 第 1 | 必须先于 A2 | 主窗口 W1 之前 |
-| W12-A2 | `integration.core_inter_module_sync` | `20261123100000` | 第 2 | 依赖 A1 的公司上下文 | 主窗口 W1 之前 |
-| W12-B1 | `public.monitor_settings` | `20261123110000` | 第 3 | 可与 A 并行，建议 A 后 | 主窗口 W1 之前 |
-| W12-B2 | `public.system_settings` | `20261123120000` | 第 4 | 依赖 B1 的同一套平台行策略 | 主窗口 W1 之前 |
-| W13 | `public.search_entity_projections` | `20261123130000` | 第 5 | 必须在 A/B 之后 | 主窗口 W1 之前，独立批次 |
+| 顺序 | 波次 | 表 | 版本号 | 与上一步关系 |
+|---|---|---|---|---|
+| 1 | W12-A1 | `public.core_tenant_modules` | `20261123090000` | 起点 |
+| 2 | W12-A2 | `integration.core_inter_module_sync` | `20261123100000` | 依赖 A1 的母版/公司模型 |
+| 3 | W12-B1 | `public.monitor_settings` | `20261123110000` | 依赖 A 已完成公司上下文改造 |
+| 4 | W12-B2 | `public.system_settings` + 公司作用域 API | `20261123120000` | 复用 B1 的平台行策略与 API 形态 |
+| 5 | W13-1 | `search_entity_projections_v2` 建表 + 双写 | `20261123130000` | 依赖 A/B 的写入端公司上下文 |
+| 6 | W13-2 | 搜索切换（重命名/读切新表） | `20261123140000` | 依赖全量比对零差异 |
+| 7 | W13-3 | 下线旧搜索表 | `20261123150000` | 依赖切换后观察通过 |
 
 ### 1.2 与 W1–W11 的衔接
 
-- **新开支线波次 W12 / W13，不插入 W1–W11 的既有编号，但执行时间排在主窗口 W1 之前。**
-- 理由：这 5 张表都是请求路径或在用配置表，若先做主窗口其它 DDL 再补公司作用域，窗口内的业务验证会带着「子公司可互看」的已知缺陷跑，验收结论不可用。
-- W11 已是独立小波且可任意同窗口执行；W12/W13 不复用其编号，避免与已归档的演练证据混淆。
-- W12-A 与 W12-B 技术上互不依赖，可在同一窗口分两批执行；W13 必须单独批次，理由是重建搜索副本耗时且要观察同步结果。
+- 新开支线 W12/W13，不插入 W1–W11 编号，执行时间全部排在主窗口 W1 之前。
+- 理由：5 张表都是请求路径或在用配置表；若先跑主窗口再补公司作用域，窗口内的验证会带着「子公司可互看」的已知缺陷，结论不可用。
+- 串行执行，不设并行批次；每一步验收通过才进入下一步。
 
-### 1.3 为什么这样排序
+### 1.3 排序理由
 
-- **`core_tenant_modules` 先于 `core_inter_module_sync`**：同步任务在写入前会校验模块是否开通；先把模块开通落到公司维度，任务的公司归属才有稳定来源。反过来会出现「任务已带公司、模块仍是租户级」的半状态。
-- **`core_inter_module_sync` 紧跟其后且请求路径可达**：创建/重试/历史查询都是在线 handler，加列与代码必须在同一发布列车；策略一旦生效，没有公司上下文的请求会被拒绝，必须先完成 handler 改造再开流量。
-- **`monitor_settings` 先于 `system_settings`**：两者结构相同（平台默认行 + 公司覆盖行），但监控阈值被告警评估器直接读取，影响面更小，先跑通策略与平台行只读，再复制到系统参数。
-- **`search_entity_projections` 放最后**：它是派生副本，重建要以「源表已能按公司过滤 + 写入端已带 company_id」为前提；提前做会生成一批无归属副本，之后还要二次重建。且重建是全表重写，单独批次便于观察行数与延迟。
-- **版本号也无法倒序**：`apply-forward` 按版本号顺序执行，09/10/11/12/13 的间隔让「前一版失败即停」的语义自然成立。
+- **A1 先于 A2**：同步任务写入前校验模块是否开通；母版/公司差异先落地，任务的公司归属才有稳定来源。
+- **A2 后紧跟 B**：`core_inter_module_sync` 请求路径可达，策略生效后无公司上下文的请求会被拒绝，必须在同一发布列车完成 handler 改造；B 组复用同一套公司上下文注入。
+- **B1 先于 B2**：两者结构相同（平台母版行 + 公司差异行），监控阈值影响面更小，先跑通平台行只读与公司覆盖，再复制到系统参数并新增公司作用域 API。
+- **W13 最后且分三步**：搜索是派生副本，必须等源表公司过滤与写入端公司字段稳定；双写零降级要求老表持续服务，切换前必须完成全量比对，不能提前切读。
 
 ## 2. 版本号与文件名
 
@@ -45,284 +55,316 @@
 | `20261123100000` | `database/migrations/20261123100000_core_inter_module_sync_company_scope.sql` | `database/rollback/20261123100000_core_inter_module_sync_company_scope.rollback.sql` |
 | `20261123110000` | `database/migrations/20261123110000_monitor_settings_company_scope.sql` | `database/rollback/20261123110000_monitor_settings_company_scope.rollback.sql` |
 | `20261123120000` | `database/migrations/20261123120000_system_settings_company_scope.sql` | `database/rollback/20261123120000_system_settings_company_scope.rollback.sql` |
-| `20261123130000` | `database/migrations/20261123130000_search_entity_projections_company_scope.sql` | `database/rollback/20261123130000_search_entity_projections_company_scope.rollback.sql` |
+| `20261123130000` | `database/migrations/20261123130000_search_entity_projections_v2_create.sql` | `database/rollback/20261123130000_search_entity_projections_v2_create.rollback.sql` |
+| `20261123140000` | `database/migrations/20261123140000_search_entity_projections_cutover.sql` | `database/rollback/20261123140000_search_entity_projections_cutover.rollback.sql` |
+| `20261123150000` | `database/migrations/20261123150000_search_entity_projections_legacy_drop.sql` | `database/rollback/20261123150000_search_entity_projections_legacy_drop.rollback.sql` |
 
-说明：仓库规则是 `YYYYMMDDHHMMSS_slug.sql`，按字典序执行；已占用到 `20261122160000`，`20261123*` 目前无文件。09/10/11/12/13 每档留 1 小时，便于插入热修（如 `20261123093000`）而不打乱顺序。
+按 `YYYYMMDDHHMMSS_slug.sql` 字典序执行；已占用到 `20261122160000`，`20261123*` 无冲突。每档留 1 小时插槽，热修可用 `093000` 之类插入而不打乱顺序。
 
 ## 3. 列定义
 
 | 表 | 列 | 类型 | 可空 | 默认 | 索引 | 外键/引用 |
 |---|---|---|---|---|---|---|
-| `core_tenant_modules` | `company_id` | `uuid` | 是 | 无 | `(tenant_id, company_id) WHERE company_id IS NOT NULL`；另建 `(tenant_id, module_code) WHERE company_id IS NULL` 与 `(tenant_id, company_id, module_code) WHERE company_id IS NOT NULL` 两个部分唯一索引 | `(tenant_id, company_id) → hrm.companies(tenant_id, id)` |
-| `core_inter_module_sync` | `company_id` | `uuid` | 是 | 无 | `(tenant_id, company_id, created_at DESC) WHERE company_id IS NOT NULL`；`(tenant_id) WHERE company_id IS NULL` | 同上 |
-| `monitor_settings` | `company_id` | `uuid` | 是 | 无 | `(tenant_id, company_id, key) WHERE deleted_at IS NULL AND company_id IS NOT NULL`；平台行唯一 `(key) WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL` | 同上（平台行 NULL 不校验） |
-| `system_settings` | `company_id` | `uuid` | 是 | 无 | 同 `monitor_settings` | 同上 |
-| `search_entity_projections` | `company_id` | `uuid` | 先可空、回填后 `SET NOT NULL` | 无 | `(tenant_id, company_id, entity_type)` | `(tenant_id, company_id) → hrm.companies(tenant_id, id)`；最终 NOT NULL |
+| `core_tenant_modules` | `company_id` | `uuid` | 是（NULL = 集团母版目录） | 无 | 部分唯一索引两条（见下）+ `(tenant_id, company_id) WHERE company_id IS NOT NULL` | `(tenant_id, company_id) → hrm.companies(tenant_id, id)` |
+| `core_inter_module_sync` | `company_id` | `uuid` | 是（NULL = 集团级任务） | 无 | `(tenant_id, company_id, created_at DESC) WHERE company_id IS NOT NULL`；`(tenant_id) WHERE company_id IS NULL` | 同上 |
+| `monitor_settings` | `company_id` | `uuid` | 是（NULL = 平台默认行） | 无 | `(tenant_id, company_id, key) WHERE deleted_at IS NULL AND company_id IS NOT NULL`；平台行唯一 `(key) WHERE tenant_id IS NULL AND company_id IS NULL AND deleted_at IS NULL` | 同上（平台行 NULL 不校验） |
+| `system_settings` | `company_id` | `uuid` | 是（NULL = 平台级参数） | 无 | 同 `monitor_settings` | 同上 |
+| `search_entity_projections_v2` | `company_id` | `uuid` | 否 | 无 | 主键 `(tenant_id, entity_type, entity_id)`；`(tenant_id, company_id, entity_type)` | `(tenant_id, company_id) → hrm.companies(tenant_id, id)` |
 
-**必须同步处理的既有约束**
+**唯一约束替换（`core_tenant_modules`）**
 
-- `core_tenant_modules` 现有 `UNIQUE (tenant_id, module_code)` 会挡住「同一模块、不同公司各一行」。迁移必须先删除该约束，改为上面两个部分唯一索引；否则按公司开通直接报 `23505`。
-- `monitor_settings` / `system_settings` 没有 key 唯一约束，先补上述部分唯一索引，否则同一公司同一 key 可重复，读取结果不确定。
-- `search_entity_projections` 主键 `(tenant_id, entity_type, entity_id)` 不动。
+```sql
+-- 删除旧约束
+ALTER TABLE public.core_tenant_modules
+  DROP CONSTRAINT IF EXISTS core_tenant_modules_tenant_id_module_code_key;
 
-**NULL 语义与注释（写进 `COMMENT ON COLUMN`）**
+-- 集团母版：同一租户内同一 module_code 只能有一条 NULL 行
+CREATE UNIQUE INDEX IF NOT EXISTS uq_core_tenant_modules_master
+  ON public.core_tenant_modules (tenant_id, module_code)
+  WHERE company_id IS NULL;
 
-- `core_tenant_modules.company_id`：`NULL = 集团级目录项，租户内所有公司只读继承；写仅母公司或平台通道`。
-- `core_inter_module_sync.company_id`：`NULL = 集团级同步任务，仅母公司/平台可见；业务请求创建的任务必须带公司`。
-- `monitor_settings.company_id`：`NULL = 平台默认阈值（tenant_id 也为 NULL），所有公司只读；公司行可覆盖`。
+-- 公司差异：同一租户、同一公司、同一 module_code 只能有一条
+CREATE UNIQUE INDEX IF NOT EXISTS uq_core_tenant_modules_company
+  ON public.core_tenant_modules (tenant_id, company_id, module_code)
+  WHERE company_id IS NOT NULL;
+```
+
+**MONITOR / SYSTEM 的唯一与约束**
+
+- 补部分唯一索引（见上表），避免同一公司同一 `key` 重复。
+- 增加 `CHECK ((company_id IS NULL) = (tenant_id IS NULL))`（`NOT VALID` 后 `VALIDATE`），禁止「有租户、无公司」的行。
+
+**NULL 语义（写进 `COMMENT ON COLUMN`）**
+
+- `core_tenant_modules.company_id`：`NULL = 集团母版目录项，定义可开通范围；租户内公司只读；公司行表达实际开通`。
+- `core_inter_module_sync.company_id`：`NULL = 集团级同步任务，仅母公司/平台可见可发起；公司行按公司归属`。
+- `monitor_settings.company_id`：`NULL = 平台默认阈值（tenant_id 也为 NULL），所有公司只读；业务写只落公司行`。
 - `system_settings.company_id`：`NULL = 平台级参数（tenant_id 也为 NULL），所有公司只读；公司行可覆盖`。
-- `search_entity_projections.company_id`：`投影归属公司，NOT NULL；搜索按本司或母公司可见清单过滤`。
-
-**约束表达**
-
-- `monitor_settings` / `system_settings` 增加 `CHECK ((company_id IS NULL) = (tenant_id IS NULL))`（`NOT VALID` 后 `VALIDATE`），禁止「有租户、无公司」这种会意外变成全公司可见的行。
-- `core_tenant_modules` 的 NULL 行允许 `tenant_id` 非空（集团目录属于租户），不加上面那条 CHECK。
+- `search_entity_projections_v2.company_id`：`投影归属公司，NOT NULL；母公司可按公司过滤，子公司固定本司`。
 
 ## 4. 回填与判空
 
-| 表 | 自动推断规则 | 不能推断时 | 是否阻断 |
-|---|---|---|---|
-| `core_tenant_modules` | 租户下只有 1 家公司 → 该公司；有明确开通公司痕迹 → 该公司 | 多公司且无痕迹 → 保留 `NULL`（集团目录，租户内只读），并输出待业务拆分清单 | 不阻断；但若业务选「按公司」，这些行需在验收前拆分 |
-| `core_inter_module_sync` | `data->>'company_id'` 有效 → 该公司；`source_entity`/`source_id` 能关联到带公司的源单 → 源单公司；单公司租户 → 该公司 | 多公司且无痕迹 → 保留 `NULL`（集团级任务，仅母公司可见） | 不阻断；输出清单供业务认领 |
-| `monitor_settings` | `tenant_id IS NULL` → 平台行（`company_id` 保持 NULL）；租户下只有 1 家公司 → 该公司 | 多公司租户的租户级行无法判定 | **阻断**：`RAISE EXCEPTION`，打印租户与 key 清单，事务回滚；不得把这些行改成 NULL（会从「某租户覆盖」扩大为「全公司可见」） |
-| `system_settings` | 同上 | 同上 | **阻断**，理由同上 |
-| `search_entity_projections` | 按 `entity_type` 回到源表取 `company_id`（源表已有公司列的部分） | 判不出的副本不保留 | **阻断**：回填后 `company_id IS NULL` 的行数必须为 0，否则 `RAISE EXCEPTION`；先重跑投影重建再重试迁移 |
+| 表 | 处理规则 | 是否阻断 |
+|---|---|---|
+| `core_tenant_modules` | **存量行全部置 `company_id = NULL`**（视为集团母版）；不推断、不拆分；后续公司开通由业务在母版范围内新增公司行 | 不阻断 |
+| `core_inter_module_sync` | 能解析公司（`data->>'company_id'`、源单关联、单公司租户）→ 回填；无公司痕迹 → 保持 `NULL`，作为合法集团级任务 | 不阻断；输出计数 |
+| `monitor_settings` | `tenant_id IS NULL` → 平台行（`company_id` 保持 NULL）；租户下只有 1 家公司 → 该公司；多公司租户的租户级行无法判定 | **阻断**：`RAISE EXCEPTION` 打印租户与 key，事务回滚；不得改成 NULL（会扩大为全公司可见） |
+| `system_settings` | 同 `monitor_settings` | **阻断**，理由同上 |
+| `search_entity_projections_v2` | 从源表按 `entity_type` 取公司；老表所有行都要进入回填范围 | **阻断**：新表出现 `company_id IS NULL` 或行数/校验和不一致即失败，切换不得进行 |
 
-- 回填全部在迁移事务内执行；任何阻断性断言失败即整体回滚，账本不落行。
-- 非阻断的 NULL 行要在迁移输出里 `RAISE NOTICE` 计数（租户数、行数），供验收记录；不要静默。
-- 回填完成后统一 `ANALYZE` 上述表，避免新索引上线后统计信息失真。
+- 所有回填在迁移事务内执行；阻断性断言失败即整体回滚，账本不落行。
+- 非阻断的 NULL 计数要 `RAISE NOTICE` 输出（租户数、行数），进入验收记录。
+- 回填后 `ANALYZE` 相关表。
 
 ## 5. 策略模板
 
-不需要新增辅助函数，直接复用 `erp.group_tenant_of`、`erp.current_company_id`、`erp.company_readable`、`erp.parent_visible_company_ids`（均为 schema 限定、`STABLE`）。跨 schema 调用是显式依赖，迁移头注释写明。
-
-公共片段：
+复用 `erp.group_tenant_of`、`erp.current_company_id`、`erp.company_readable`、`erp.parent_visible_company_ids`，不新增辅助函数。公共片段：
 
 ```sql
--- T: 租户边界
+-- T 租户边界
 tenant_id = erp.group_tenant_of(NULLIF(current_setting('app.tenant_id', true), '')::uuid)
--- S: 平台通道
+-- S 平台通道
 COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
--- P: 母公司视角
+-- P 母公司视角
 COALESCE(current_setting('app.actor_is_parent', true), 'off') = 'on'
 ```
 
-### 5.1 `core_tenant_modules`
+### 5.1 `core_tenant_modules`（母版 + 公司差异）
 
 ```sql
--- 读：集团目录（NULL，租户内只读） + 本司 + 母公司可见子公司
+-- 读：母版目录租户内所有公司可见；公司行按本司 + 母公司可见
 CREATE POLICY core_tenant_modules_company_select ON public.core_tenant_modules
 FOR SELECT USING (
-  T AND (
-    S
-    OR company_id IS NULL
-    OR erp.company_readable(company_id)
-  )
+  T AND (S OR company_id IS NULL OR erp.company_readable(company_id))
 );
 
--- 写：本公司；集团目录仅母公司或平台
+-- 写：母版由母公司/平台维护；公司行仅本公司
 CREATE POLICY core_tenant_modules_company_insert ON public.core_tenant_modules
 FOR INSERT WITH CHECK (
   T AND (
-    (company_id IS NOT NULL AND company_id = erp.current_company_id())
-    OR (company_id IS NULL AND (P OR S))
+    (company_id IS NULL AND (P OR S))
+    OR (company_id IS NOT NULL AND company_id = erp.current_company_id())
   )
 );
--- UPDATE 同 INSERT 的 USING + WITH CHECK；DELETE 用同一 USING
+-- UPDATE 同 INSERT；DELETE 用同一谓词
 ```
 
-### 5.2 `core_inter_module_sync`
+### 5.2 `core_inter_module_sync`（集团级任务合法）
 
 ```sql
--- 读：本司 + 母公司可见；集团级任务仅母公司/平台
 CREATE POLICY core_inter_module_sync_company_select ON integration.core_inter_module_sync
 FOR SELECT USING (
-  T AND (
-    S
-    OR erp.company_readable(company_id)
-    OR (company_id IS NULL AND P)
-  )
+  T AND (S OR erp.company_readable(company_id) OR (company_id IS NULL AND P))
 );
 
--- 写：必须带公司；系统通道不豁免（后台任务也要带 app.company_id）
 CREATE POLICY core_inter_module_sync_company_insert ON integration.core_inter_module_sync
 FOR INSERT WITH CHECK (
-  T AND company_id IS NOT NULL AND company_id = erp.current_company_id()
+  T AND (
+    (company_id IS NULL AND P)
+    OR (company_id IS NOT NULL AND company_id = erp.current_company_id())
+  )
 );
--- UPDATE/DELETE 同谓词；集团级任务由平台通道另行放行
+-- UPDATE/DELETE 同谓词；系统通道按平台运维单独放行
 ```
 
-### 5.3 `monitor_settings` / `system_settings`
+### 5.3 `monitor_settings` / `system_settings`（平台行只读 + 公司覆盖）
 
 ```sql
--- 读：平台默认行所有公司只读 + 本司 + 母公司可见子公司
+-- 读：平台母版行所有公司只读；公司行按本司 + 母公司可见
 CREATE POLICY monitor_settings_company_select ON public.monitor_settings
 FOR SELECT USING (
   (tenant_id IS NULL AND company_id IS NULL)
-  OR (
-    T AND (
-      S
-      OR erp.company_readable(company_id)
-    )
-  )
+  OR (T AND (S OR erp.company_readable(company_id)))
 );
 
--- 写公司行：仅本公司
+-- 业务写：只落公司行
 CREATE POLICY monitor_settings_company_insert ON public.monitor_settings
 FOR INSERT WITH CHECK (
   T AND company_id IS NOT NULL AND company_id = erp.current_company_id()
 );
+-- UPDATE/DELETE 同谓词
 
--- 平台行写：仅平台通道（单独策略，避免和公司行混用）
-CREATE POLICY monitor_settings_platform_write ON public.monitor_settings
+-- 平台母版行：只允许平台通道维护（不属于业务写路径）
+CREATE POLICY monitor_settings_platform_maintain ON public.monitor_settings
 FOR ALL USING (tenant_id IS NULL AND company_id IS NULL AND S)
 WITH CHECK (tenant_id IS NULL AND company_id IS NULL AND S);
 ```
 
 `system_settings` 同结构，替换表名与策略前缀。
 
-### 5.4 `search_entity_projections`
+### 5.4 `search_entity_projections_v2`（母公司跨公司 + 公司过滤）
 
 ```sql
-CREATE POLICY search_entity_projections_company_select ON public.search_entity_projections
+CREATE POLICY search_entity_projections_v2_company_select ON public.search_entity_projections_v2
 FOR SELECT USING (
   T AND (S OR erp.company_readable(company_id))
 );
 
-CREATE POLICY search_entity_projections_company_insert ON public.search_entity_projections
+CREATE POLICY search_entity_projections_v2_company_insert ON public.search_entity_projections_v2
 FOR INSERT WITH CHECK (
   T AND company_id IS NOT NULL AND company_id = erp.current_company_id()
 );
 -- UPDATE/DELETE 同谓词
 ```
 
-所有表：`ENABLE ROW LEVEL SECURITY` + `FORCE ROW LEVEL SECURITY`；删除旧策略前先枚举 `pg_policies`，不要只删已知策略名。
+母公司跨子公司由 `company_readable` 提供；按公司过滤是查询参数，不改变策略边界。子公司只能命中自己（`visible_company_ids` 为空）。
 
-## 6. 服务侧影响（只列清单，不改代码）
+所有表：`ENABLE + FORCE ROW LEVEL SECURITY`；删旧策略前先枚举 `pg_policies`。
+
+## 6. 服务侧影响（只列清单）
 
 | 表 | 服务 / handler | 必须改的点 | 失败策略 |
 |---|---|---|---|
-| `core_tenant_modules` | `svc/unified-core/src/modules/tenant/handlers.rs`：`seed_tenant_defaults`（约 515/521/539）、`list_tenant_modules`（959）、`activate_module`（1001）、`deactivate_module`（1053）、`get_tenant_stats`（3557） | 路由解析公司上下文并注入请求事务；INSERT/UPDATE 写 `company_id`；列表增加公司过滤；开通种子按「每公司一行」或「集团目录一行」二选一 | 无公司上下文的开通/停用直接 400；列表只返回集团目录 + 本司（+ 母公司可见） |
-| `integration.core_inter_module_sync` | `svc/integration/src/handlers/sync.rs`：`create_task`（136）、`get_task`（207）、`update_status`（259）、`get_pending`（318）、`get_statistics`（364）、`retry_failed`（446）、三个 trigger（541/612/683）、`get_integration_sync_stats`（796）、`get_sync_history`（921） | 所有 INSERT/SELECT/UPDATE 增加 `company_id`；创建与重试要求公司上下文；trigger 从源单推导公司；统计按公司聚合 | 创建缺公司 → 422；后台任务缺公司 → 重试/死信，不按租户兜底；查询缺公司 → 400 |
-| `public.monitor_settings` | `svc/monitor/src/modules/monitor/settings.rs`：`list_settings`（69）、`batch_update_settings`（151）、`get_setting`（215）、`update_setting`（281）、`delete_setting`（346）；`alert_evaluator.rs`（176 处读取） | 读写带 `company_id`；平台默认行只读；`DELETE` 的 `(tenant_id IS NULL OR tenant_id=$1)` 改为「平台行走平台通道、公司行仅本司」；告警评估按公司取阈值 | 无公司上下文 → 400；尝试改平台行 → 拒绝（策略 + handler 双重） |
-| `public.system_settings` | `svc/erp/src/modules/settings.rs`：`get`（92）、按 key 读（123）、`create`（146）、`update`（172）、`delete`（203）、seed（249） | 现有 handler 走平台连接（平台行保持）；若业务选「公司可覆盖」，需新增租户/公司作用域的读写入口，否则只保留平台统一 | 平台入口不得受理业务租户请求；新增入口缺公司 → 400 |
-| `public.search_entity_projections` | `svc/search/src/projection.rs`：重建/删除（58）、写入（77）、计数（225）；`svc/search/src/handlers.rs`：`search_handler`（303）、`suggestions_handler`（534） | 投影写入带 `company_id`；重建任务按源表公司过滤；查询按本司 + 母公司可见清单；计数按公司 | 无公司上下文 → 400；重建中任一行判不出公司 → 整批失败并告警，不写入 NULL |
+| `core_tenant_modules` | `svc/unified-core/src/modules/tenant/handlers.rs`：`seed_tenant_defaults`（约 515/521/539）、`list_tenant_modules`（939）、`activate_module`（972）、`deactivate_module`（1028）、`get_tenant_stats`（1426/3557 附近） | 种子写母版行（`company_id=NULL`）；开通/停用写公司行；列表返回母版 + 本公司（+ 母公司可见） | 缺公司上下文时开通/停用 400；列表只返回母版 |
+| `integration.core_inter_module_sync` | `svc/integration/src/handlers/sync.rs`：`create_task`（136）、`get_task`（207）、`update_status`（259）、`get_pending`（318）、`get_statistics`（364）、`retry_failed`（446）、三个 trigger（541/612/683）、`get_integration_sync_stats`（796）、`get_sync_history`（921） | 公司级任务写 `company_id`；集团级任务由母公司/平台发起；查询与统计加公司过滤 | 缺公司且非母公司 → 422；后台任务缺公司 → 重试/死信 |
+| `public.monitor_settings` | `svc/monitor/src/modules/monitor/settings.rs`：`list_settings`（69）、`batch_update_settings`（151）、`get_setting`（215）、`update_setting`（281）、`delete_setting`（346）；`alert_evaluator.rs`（176） | 业务读写只落公司行；平台行仅只读；告警按公司取阈值（无公司行时回落平台行） | 缺公司 → 400；改平台行 → 拒绝 |
+| `public.system_settings` | `svc/erp/src/modules/settings.rs`：平台 CRUD（92/123/146/172/203/249）；**新增**公司作用域读写 API | 平台入口保持平台通道；新增公司作用域 handler、路由与权限；公司行可覆盖、平台行只读 | 平台入口拒绝业务租户；新 API 缺公司 → 400 |
+| `public.search_entity_projections` | `svc/search/src/projection.rs`（删除/写入/计数）、`svc/search/src/handlers.rs`：`search_handler`（303）、`suggestions_handler`（534） | 双写期同时写老表与 v2；切换后只写 canonical；查询默认本公司、母公司可跨子公司并可带公司过滤；子公司固定本司 | 缺公司 → 400；双写任一失败 → 整条投影失败并告警，不静默 |
 
-统一要求：请求事务必须同时带 `app.tenant_id`、`app.company_id`；母公司跨公司读必须显式 `app.actor_is_parent=on` + `app.visible_company_ids`，不能靠 handler 拼 SQL 绕过策略。
+统一要求：请求事务必须带 `app.tenant_id` + `app.company_id`；母公司跨公司必须显式 `app.actor_is_parent=on` + `app.visible_company_ids`；handler 不得自行拼租户级 SQL 绕过策略。
 
-## 7. 断言与回滚
+## 7. W13 双写零降级步骤
 
-### 7.1 每步断言
+### 7.1 目标
 
-| 阶段 | 前置断言 | 后置断言 |
+老表 `public.search_entity_projections` 持续服务；新表 `public.search_entity_projections_v2` 双写并回填；全量比对通过后一次性切换；切换后下线旧表。全程搜索可用，不接受降级或停写。
+
+### 7.2 步骤
+
+| 步骤 | 动作 | 完成判据 |
 |---|---|---|
-| W12-A1 | 无 `company_id` 列；`core_tenant_modules` 仅 1 条租户级策略；旧唯一约束存在；多公司租户行数已统计 | 列/索引/外键存在；旧唯一约束已删除；两个部分唯一索引存在；策略 4 条（select/insert/update/delete）；RLS `ENABLE+FORCE`；NULL 行计数已输出 |
-| W12-A2 | 同上前置；`data`/`source_*` 可解析率已统计 | 列/索引/外键存在；策略 4 条；无「有公司但不在本公司」的写入；NULL 任务计数已输出 |
-| W12-B1 | 无列；多公司租户的租户级行数为 0（否则预检就失败） | 列/FK/CHECK 已校验；平台行唯一索引与公司行唯一索引存在；策略 5 条（含平台写）；平台行 `tenant_id/company_id` 均为 NULL |
-| W12-B2 | 同 B1 | 同 B1（表名替换） |
-| W13 | 投影表无 `company_id`；源表公司列可用；重建任务已就绪 | 列 NOT NULL；FK/索引存在；`company_id IS NULL` 行数为 0；投影行数与源表可检索行数一致；策略 3 条 |
+| 1 | `20261123130000` 建 v2（`company_id NOT NULL`、PK、索引、FK、RLS 策略） | 表/约束/策略存在；v2 为空 |
+| 2 | 发布双写版本：投影写入路径同时写老表与 v2；读仍走老表 | 双写成功率 100%，无新增错误日志 |
+| 3 | 回填 v2：按源表与老表补齐历史行，推导 `company_id` | v2 行数 ≥ 老表；`company_id IS NULL` 为 0 |
+| 4 | 全量比对：按 `tenant_id/company_id/entity_type` 行数、主键集合、字段校验和 | 差异为 0；差异报告留档 |
+| 5 | `20261123140000` 切换：老表改名 `search_entity_projections_legacy`，v2 改名 `search_entity_projections`；代码停止双写、只写 canonical、读 canonical | 重命名成功；搜索延迟与错误率不高于切换前 |
+| 6 | 观察期（同一预窗口批次内）：读 canonical，legacy 只读保留 | 无差异、无错误；确认不再回读 legacy |
+| 7 | `20261123150000` 下线：drop `search_entity_projections_legacy` | 旧表不存在；无对象依赖 |
 
-阻断规则：前置/postcheck 任一不满足 → `RAISE EXCEPTION`，不写账本；B1/B2 遇到多公司租户的租户级行直接失败，不做「改成平台行」的自动处置。
+### 7.3 比对与失败处置
 
-### 7.2 回滚行为
+- 比对维度：总行数、按租户/公司/实体类型分组行数、主键差集、关键字段（`name/contact/status/remark/source_updated_at`）校验和。
+- 任一差异非 0：停止切换，保留双写，修复后重跑回填与比对；不得带着差异切读。
+- 双写失败：记录失败投影并告警；该条投影视为未完成，下一轮重试；不允许只写一侧后继续。
+- 切换失败：重命名在同一事务内，失败自动回退；代码仍指向 canonical。
+- 下线前必须确认无视图/查询依赖 legacy。
 
-- 顺序：先回滚服务（停止写 `company_id`），再跑回滚 SQL；否则新写入的行会丢公司归属。
-- 回滚 SQL：删策略 → 删索引/约束 → `DROP COLUMN company_id`（search 表先 `DROP NOT NULL` 再删列）。
-- 有数据保护：回滚脚本开头统计 `company_id IS NOT NULL` 的行数；非 0 时要求显式 `SET app.allow_scope_rollback='on'`，否则 `RAISE EXCEPTION` 并打印计数，不静默删归属。
-- 平台行（monitor/system）：回滚前断言不存在 `tenant_id IS NULL AND company_id IS NOT NULL` 的异常行；存在即失败。
-- 回滚后恢复原有租户级策略（按迁移前 `pg_policies` 快照重建），并重新 `VALIDATE` 旧唯一约束（`core_tenant_modules`）。
+## 8. 断言与回滚
 
-### 7.3 隔离库演练
+### 8.1 每步断言
 
-5 张表都要演练，统一用独立库 `topems_drill_company_scope_20261123`（从 `topems_test` 模板创建，演练后 `DROP`）：
+| 阶段 | 前置 | 后置 |
+|---|---|---|
+| A1 | 无 `company_id`；旧唯一约束存在；存量行数已统计 | 列/FK/索引存在；旧约束已删；两条部分唯一索引存在；存量行 `company_id IS NULL` 计数 = 原行数；策略 4 条；RLS FORCE |
+| A2 | 无 `company_id`；任务行数、可解析公司计数已统计 | 列/FK/索引存在；策略 4 条；公司级任务全部有公司，集团级任务计数已输出 |
+| B1 | 多公司租户的租户级 `monitor_settings` 行数为 0（否则预检失败） | 列/FK/CHECK 已校验；唯一索引存在；策略 5 条；平台行 `tenant_id/company_id` 均 NULL |
+| B2 | 同 B1；公司作用域 API 已就绪 | 同 B1（表名替换）+ 新 API 契约测试通过 |
+| W13-1 | 老表可服务；源表公司列可用 | v2 结构/策略正确；v2 为空或已开始双写 |
+| W13-2 | 回填完成；全量比对差异 0 | 重命名成功；canonical 结构正确；legacy 只读 |
+| W13-3 | 切换后观察通过；无依赖对象 | legacy 已 drop |
 
-1. 造 3 家公司：母公司 P、子公司 A、子公司 B，同租户。
-2. 按波次顺序执行正向迁移，记录每步账本与断言结果。
-3. 用非超户、无 `BYPASSRLS` 的 `topems_app` 角色跑可见性矩阵（见 §9.3）。
-4. 制造一条「多公司租户级 monitor 行」，验证 B1 预检会阻断。
-5. 逐波执行回滚，验证有 `company_id` 行时回滚明确失败，清理后成功。
-6. 演练库 `DROP`，不保留。
+阻断规则：前置/后置任一不满足 → `RAISE EXCEPTION`，不写账本；B1/B2 的多公司租户级行直接失败，不自动改成平台行。
 
-## 8. 门禁登记
+### 8.2 回滚行为
 
-### 8.1 `database/migration_manifest.yaml`
+- 顺序：先回滚服务（停止写 `company_id` / 停止双写），再跑回滚 SQL。
+- A/B 组回滚：删策略 → 删索引/约束 → `DROP COLUMN company_id`；恢复原租户级策略；`core_tenant_modules` 重建旧唯一约束（若存量已全为 NULL，可重建）。
+- 有数据保护：回滚脚本统计 `company_id IS NOT NULL` 行数；非 0 时要求显式 `SET app.allow_scope_rollback='on'`，否则 `RAISE EXCEPTION` 并打印计数，不静默丢归属。
+- 搜索：
+  - 切换前回滚：drop v2、停止双写，老表继续服务。
+  - 切换后回滚：将 canonical 改回 `search_entity_projections_v2`、legacy 改回 canonical，并回滚代码；仅在 legacy 未 drop 前有效。
+  - `20261123150000` 之后再回滚需从备份恢复旧表，属事故处置，不在常规路径。
+- 所有回滚件不得删除业务行。
 
-每条按既有字段登记：`version`、`file`、`status: to_apply`、`effect`、`destructive_scan`、`note`。
+### 8.3 隔离库演练
 
-- `effect` 写清：加列/回填/替换唯一约束/策略改造，以及「窗口前支线 W12/W13」。
-- `destructive_scan` 写清：删除旧唯一约束、建部分唯一索引、`DROP COLUMN` 仅在回滚件；迁移内无 DELETE/TRUNCATE。
-- `note` 写清顺序依赖：A1 → A2；B1 → B2；W13 必须在 A/B 之后且需先完成投影重建。
-- 5 条版本按 09/10/11/12/13 顺序排，`status` 均为 `to_apply`，不得提前写 `applied`。
+统一用 `topems_drill_company_scope_20261123`（从 `topems_test` 模板创建，演练后 `DROP`）：
 
-### 8.2 `database/migration_drift_assertions.json`
+1. 造母公司 P、子公司 A/B（同租户）。
+2. 按 A1→A2→B1→B2→W13 顺序执行，逐步断言。
+3. 搜索双写：造增量写入、回填、比对、切换、下线全流程；人为制造 1 条差异验证阻断。
+4. 可见性矩阵（§9.3）。
+5. 逐波回滚验证；有公司行时回滚明确失败，清理后成功。
 
-每张表至少 4 条：
+## 9. 门禁登记
 
-1. `columns`：`company_id` 存在，`is_nullable` 符合预期（search 最终 `NO`，其余 `YES`）。
-2. `constraints`：外键 `fk_<table>_company` 存在；monitor/system 的 CHECK 已 `convalidated`。
-3. `policies`：`pg_policies` 中该表公司级策略数量与名称（select/insert/update/delete，monitor/system 另加 platform_write）。
-4. `data_rows`：search 的 `company_id IS NULL` 行数为 0；monitor/system 的 `tenant_id IS NULL AND company_id IS NOT NULL` 行数为 0；tenant_modules/inter_module_sync 的 NULL 行数只做记录、不设 0。
-5. `indexes`（可选）：部分唯一索引存在（`pg_indexes` 按名匹配）。
+### 9.1 `migration_manifest.yaml`
 
-`source` 填对应版本号，`source_tokens` 用迁移文件里的稳定 token（列名、约束名），保持现有断言风格。
+- 7 条条目，`status: to_apply`，按 09/10/11/12/13/14/15 顺序。
+- `effect` 写明：加列/回填/唯一索引替换/策略改造/新表/重命名/下线。
+- `destructive_scan`：A1 删除旧唯一约束；W13-3 `DROP TABLE` 仅限 legacy；其余无 DELETE/TRUNCATE。
+- `note` 写明串行依赖：A1→A2→B1→B2→W13-1→W13-2→W13-3；W13-2 以比对零差异为前提。
 
-### 8.3 `database/checksums.txt`
+### 9.2 `migration_drift_assertions.json`
 
-- 追加 5 个迁移文件 + 5 个回滚文件的 `sha256`，按文件路径排序；不要手工改已有行。
-- 用仓库现有生成方式重算（若脚本存在），避免格式漂移。
+- A/B 四张表各至少 4 条：列可空性、FK、策略数量与名称、唯一索引；monitor/system 另加 CHECK 已校验与平台行计数为 0 的异常行。
+- `core_tenant_modules` 额外断言旧唯一约束不存在、两条部分唯一索引存在、存量行 `company_id IS NULL`。
+- W13：v2 列 NOT NULL、PK/索引/FK/策略存在；切换后 canonical 的 `company_id NOT NULL`；legacy 不存在。
+- `source` 填对应版本号，`source_tokens` 用稳定 token。
 
-### 8.4 夹具库锚点
+### 9.3 `checksums.txt`
 
-- `scripts/migration/build-drift-gate-db.sh` 当前把夹具重放到 `20261122160000`；本方案落地后需前移到 `20261123130000`。
-- 重建方式不变：基线快照 `20261117235500` + `apply-forward` 前向重放（新增 5 条），授权在重放后执行。
-- 预期读数（表数、账本行数）以重建现场实测为准，写入脚本头部与 `docs/quality/environment-provisioning.md` §11；**不得照抄旧读数或估数**。
-- 门禁验证：不设任何覆盖变量，走 `.env` 默认 `topems_gate`，要求 `PASS` 且 5 条新断言真正执行（无 NOTE 跳过）。
+- 追加 7 个迁移 + 7 个回滚文件的 sha256，按路径排序；用仓库现有生成方式重算。
 
-## 9. 验收标准
+### 9.4 夹具库锚点
 
-### 9.1 迁移与门禁
+- `build-drift-gate-db.sh` 锚点从 `20261122160000` 前移到 `20261123150000`；基线仍为 `20261117235500` + 前向重放。
+- 预期读数以重建现场实测为准，写入脚本头部与 `environment-provisioning.md` §11，不照抄旧数。
+- 默认路径（不改任何环境变量）跑 `ledger-ddl-drift`，要求 PASS 且 7 条新断言真正执行、无 NOTE 跳过。
 
-- 5 条迁移账本 `success=t`，顺序与版本号一致；回滚件可独立执行。
-- `migration_manifest.yaml`、`migration_drift_assertions.json`、`checksums.txt` 均含 5 条且校验通过。
-- 夹具库重建到 `20261123130000`，`ledger-ddl-drift` 默认路径 PASS，5 条新断言非跳过。
+## 10. 验收标准
 
-### 9.2 结构
+### 10.1 迁移与门禁
 
-- 5 张表均有 `company_id`；search 为 NOT NULL，其余可空语义符合 §3。
-- 外键、部分唯一索引、CHECK 均已校验；`core_tenant_modules` 旧 `(tenant_id, module_code)` 唯一约束已不存在。
-- 5 张表均 `ENABLE + FORCE ROW LEVEL SECURITY`，策略数量符合 §5。
+- 7 条迁移账本 `success=t`，顺序正确；回滚件可独立执行。
+- manifest / drift / checksums 各含 7 条并通过。
+- 夹具库重建到 `20261123150000`，默认门禁 PASS，新断言非跳过。
 
-### 9.3 RLS 隔离实证（参照 `gis_ro_smoke` 只读角色口径）
+### 10.2 结构
 
-用非超户、无 `BYPASSRLS` 的 `topems_app` 角色（禁止用 superuser / BYPASSRLS，否则判定恒真），造 P/A/B 三家公司，逐表断言：
+- 4 张表有 `company_id`；`core_tenant_modules` 两条部分唯一索引生效、旧约束不存在；monitor/system 平台行唯一索引与 CHECK 生效；v2 为 `company_id NOT NULL`。
+- 所有表 `ENABLE + FORCE RLS`，策略数量符合 §5；legacy 已下线。
+
+### 10.3 RLS 隔离实证（`gis_ro_smoke` 只读角色口径）
+
+用非超户、无 `BYPASSRLS` 的 `topems_app`，P/A/B 三家公司逐表断言：
 
 | 场景 | 期望 |
 |---|---|
-| `tenant=P租户, company=A` | 只看到 A 的行 + 允许的集团目录/平台默认行；B 的行数为 0 |
-| `tenant=P租户, company=B` | 只看到 B 的行；A 的行数为 0 |
-| `tenant=P租户, company=P, actor_is_parent=on, visible=[A,B]` | 能看到 A+B；未声明母公司视角时只看到 P |
-| 未设置 `app.company_id` | 公司行数为 0（fail-closed）；写入被拒绝 |
-| 以 A 的身份写 B 的行 | 0 行受影响 / 被策略拒绝 |
-| 以 A 的身份改平台默认行（monitor/system） | 被拒绝；只读查询可见 |
-| 集团目录行（tenant_modules，company_id NULL） | A/B 可读，A/B 不可写；P 可写 |
-| 集团级同步任务（NULL） | A/B 不可见；P 可见 |
-| 搜索 | 只返回本司；P 开母公司视角后可跨 A/B；无公司上下文返回 0 行 |
+| `company=A` | 只看到 A 的行 + 母版/平台行；B 行数 0 |
+| `company=B` | 只看到 B 的行；A 行数 0 |
+| `company=P`，无母公司视角 | 只看到 P；A/B 不可见 |
+| `company=P` + `actor_is_parent=on` + `visible=[A,B]` | 看到 P+A+B；可按公司过滤 |
+| 未设 `app.company_id` | 公司行 0；写入被拒 |
+| A 写 B 的行 | 0 行/被拒 |
+| A 改平台母版行 | 被拒（读可见） |
+| `core_tenant_modules` 母版行 | A/B 只读；P 可写；A/B 开通行可写 |
+| `core_inter_module_sync` 集团任务 | A/B 不可见；P 可见可发起 |
+| 搜索 | A 只搜本司；P 默认跨 A/B，可带公司过滤 |
 
-同时记录每张表的 `EXPLAIN`，确认走 `(tenant_id, company_id)` 索引，不做全表扫。
+记录 `EXPLAIN`，确认走 `(tenant_id, company_id)` 索引。
 
-### 9.4 业务验收
+### 10.4 搜索双写验收
 
-- 5 张表的请求路径在缺公司上下文时均 fail-closed（400/403），无静默全租户返回。
-- 监控告警按公司阈值生效；系统参数平台值与公司覆盖值读取正确。
-- 搜索副本重建后条数与源数据一致，跨公司不可见。
+- 双写期：老表与 v2 差异 0；投影写入成功率 100%。
+- 切换后：搜索结果与切换前逐条一致；延迟/错误率不高于基线；无降级。
+- legacy 下线后：无对象依赖，回滚路径已归档说明（备份恢复）。
 
-## 10. 需要拍板的点
+### 10.5 业务验收
 
-1. **`core_tenant_modules` 的默认粒度**：按公司（本方案默认）还是集团统一目录。若按公司，现有 `(tenant_id, module_code)` 唯一约束必须替换；若集团统一，可不加列，但需确认子公司是否只读继承。
-2. **`system_settings` 是否要有公司覆盖入口**：现有 handler 全部是平台级；业务若选「公司可覆盖」，需要新增租户/公司作用域 API，属于代码新增，不只是加列。
-3. **`monitor_settings` 平台默认值是否允许公司覆盖**：影响 B1 的策略分支与告警评估器的取值顺序。
-4. **`core_inter_module_sync` 集团级任务是否保留**：保留则 NULL 语义与「仅母公司可见」成立；不保留则回填时所有任务必须有公司，无法判定的行要阻断而非置 NULL。
-5. **搜索母公司默认范围**：默认跨子公司（本方案），若业务要求逐公司切换，需要额外的收紧策略。
-6. **W12/W13 是否整体排在主窗口之前**：本方案按「窗口前支线」排；若排期不允许，至少 W12-A/A2 不能后置，否则请求路径会带着租户级可见性进入窗口验证。
-7. **搜索重建的停机/双写窗口**：全表重建期间是否接受搜索短暂降级，或需要双写切换。
-8. **`core_tenant_modules` 多公司租户的存量行**：保留为集团目录（租户内只读）是否可接受，还是必须先由业务拆分到各公司。
+- 5 张表缺公司上下文均 fail-closed（400/403）。
+- 模块母版定义可开通范围、公司行表达实际开通；监控/系统参数平台值只读、公司覆盖生效。
+- 搜索母公司可跨子公司并支持公司过滤，子公司只见本司。
+
+## 11. 原「待拍板」项的裁决结果
+
+| # | 原问题 | 裁决 | 依据 |
+|---|---|---|---|
+| 1 | `core_tenant_modules` 按公司还是集团 | 集团母版 + 公司差异；存量全部视为母版 | 裁决 2、4 |
+| 2 | `system_settings` 是否新增公司覆盖 API | 是，计入 W12-B2 | 裁决 6 |
+| 3 | `monitor_settings` 是否允许公司覆盖 | 是；平台行只读，写只落公司行 | 裁决 5 |
+| 4 | `core_inter_module_sync` 是否保留集团级任务 | 保留；NULL 合法，仅母公司可见可发起 | 裁决 7 |
+| 5 | 母公司搜索范围 | 默认跨子公司（限本租户），支持公司过滤 | 裁决 8 |
+| 6 | W12/W13 是否整体前置 | 是，全部串行排在主窗口前 | 裁决 1 |
+| 7 | 搜索重建是否接受降级 | 不接受；双写零降级 | 裁决 3 |
+| 8 | `core_tenant_modules` 多公司存量行如何处理 | 全部视为集团母版，不推断、不阻断 | 裁决 2 |

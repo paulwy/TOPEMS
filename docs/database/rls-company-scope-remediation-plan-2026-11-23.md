@@ -1,8 +1,8 @@
 # 公司级隔离统一改造清单（2026-11-23）
 
-> 范围：`docs/database/rls-business-confirmation-2026-11-23.md` 所列 11 张表 + `finance.cqrs_events`。
-> 目标模型：沿用 `erp` 已落地的公司级范式，不另立新范式。
-> 本文件只是计划：不新增迁移文件、不改代码、不碰生产；迁移件待业务确认后再写。
+> 范围：`docs/database/rls-business-confirmation-2026-11-23.md` 所列 10 张表 + `finance.cqrs_events`（合计 11 张）。
+> 目标模型：沿用 `erp` 已落地的公司级范式，并采用「集团母版 + 公司差异」：`company_id IS NULL` = 集团/平台母版行，租户内只读；公司行表达差异、可写。
+> 本文件只是计划：不新增迁移文件、不改代码、不碰生产；迁移件待窗口排期后再写。
 
 ## 0. 唯一模板
 
@@ -23,7 +23,7 @@ AND (
 - 写策略：`WITH CHECK` 复用同一谓词，并追加「`company_id IS NULL` 的行只允许平台通道写」。
 - 辅助函数：**复用** `erp.group_tenant_of` / `erp.current_company_id` / `erp.company_readable` / `erp.parent_visible_company_ids`（均为 schema 限定、`STABLE`），不新增同名函数。
 - 母公司识别：`app.actor_is_parent=on` + `app.visible_company_ids`（由 `erp.parent_visible_company_ids()` 读取）。
-- 空归属语义：`company_id IS NULL` = 集团级/平台级，只对母公司或平台通道可见；不作为普通公司的默认可见行。
+- 空归属语义：`company_id IS NULL` = 集团/平台母版行；目录/默认值类对租户内公司只读，集团任务类仅母公司/平台可见；业务写只落公司行。
 
 ## 1. 逐表改造清单
 
@@ -31,15 +31,15 @@ AND (
 |---|---|---|---|---|---|---|---|---|
 | 1 | `iam.tenant_permissions` | 是 | `uuid` / NULL / 无默认；NULL = 全集团通用授权 | 现网运行期不写该表，先不回填；若已有行，按租户唯一公司回填，多公司无法判定则置 NULL 并列入认领 | 模板 + 写策略：NULL 行仅平台通道可写 | 权限服务（仅切换数据库存储后） | 窗口后（启用数据库存储前） | 迁移 |
 | 2 | `finance.cqrs_events` | 第一步否，第二步是 | 第一步不动结构；第二步 `tenant_id uuid NULL` + `company_id uuid NULL` | 第二步从 `metadata`/`payload` 提取租户与公司；判不出置 NULL（仅平台可见） | 第一步只做授权收口；第二步套模板，NULL 行仅平台可见 | 事件服务、后台任务（整表读写） | 第一步窗口前；第二步窗口后 | 第一步纯授权；第二步迁移 |
-| 3 | `public.core_tenant_modules` | 是 | `uuid` / NULL / 无默认；NULL = 集团统一目录项 | 单公司租户回填该公司；多公司且无开通公司线索的置 NULL（集团级）并列入认领 | 模板；NULL 行仅母公司/平台可见、仅母公司可写 | 公司开通接口、模块列表接口 | 窗口前 | 迁移 |
-| 4 | `integration.core_inter_module_sync` | 是 | `uuid` / NULL / 无默认；NULL = 集团级任务 | 按任务创建时的公司上下文回填；无留痕的置 NULL（集团级）并列入认领 | 模板；NULL 行仅母公司/平台可见 | 同步接口、后台同步任务 | 窗口前 | 迁移 |
+| 3 | `public.core_tenant_modules` | 是 | `uuid` / NULL / 无默认；NULL = 集团母版目录 | **存量行全部置 NULL**（视为母版），不推断、不拆分；公司开通由业务在母版范围内新增公司行 | 母版行租户内只读、仅母公司/平台可写；公司行按本司，母公司可见 | 公司开通接口、模块列表接口 | 窗口前（W12-A1） | 迁移 |
+| 4 | `integration.core_inter_module_sync` | 是 | `uuid` / NULL / 无默认；NULL = 集团级任务（合法） | 能解析公司则回填；无痕迹保持 NULL，作为集团级任务，不阻断 | 公司行按本司 + 母公司可见；NULL 行仅母公司/平台可见可发起 | 同步接口、后台同步任务 | 窗口前（W12-A2） | 迁移 |
 | 5 | `public.core_migration_history` | 否（集团级例外） | — | — | 仅 `tenant_id` 匹配 + 平台通道（`app.rls_system=on`）可读；业务角色不可读 | 升级接口（平台方式访问） | 窗口后（补齐平台通道约束） | 迁移（策略） |
 | 6 | `public.core_users` | 是（启用时） | `uuid` / NULL / 无默认；启用前收紧为 NOT NULL | 0 行，不回填 | 模板 | 无（已无服务读写） | 窗口后（若业务要求重新启用） | 迁移 |
 | 7 | `public._archive_core_workflow_instances` | 是 | `uuid` / NULL / 无默认；NULL 行仅平台可见 | 从对应在办流程实例回填；源无公司归属或关联不上的置 NULL | 模板；NULL 行仅母公司/平台可见 | 无服务读写；仅归档/迁移脚本 | 窗口后（开放母公司查询前） | 迁移 |
 | 8 | `public._archive_core_workflow_versions` | 是 | `uuid` / NULL / 无默认；NULL 行仅平台可见 | 从对应流程版本/实例回填；判不出置 NULL | 模板；NULL 行仅母公司/平台可见 | 无服务读写；仅归档/迁移脚本 | 窗口后（开放母公司查询前） | 迁移 |
-| 9 | `public.monitor_settings` | 是 | `uuid` / NULL / 无默认；NULL = 平台默认值 | 现有租户行按唯一公司回填；多公司置 NULL 并复核（会成为平台默认）；原 NULL 保持 NULL | 读：平台行（NULL）对所有公司只读 + 公司行套模板；写：NULL 行仅平台通道，公司行本司 | 监控设置接口 | 窗口前 | 迁移 |
-| 10 | `public.search_entity_projections` | 是 | `uuid` / 回填期 NULL，验收前收紧 NOT NULL | 从实体源表回填；判不出归属的副本**删除并重建**，不留 NULL | 模板（不含 NULL 分支） | 搜索同步任务、搜索查询接口 | 窗口前 | 迁移 |
-| 11 | `public.system_settings` | 是 | `uuid` / NULL / 无默认；NULL = 平台级参数 | 同 `monitor_settings`：唯一公司回填，多公司置 NULL 复核 | 读：平台行只读 + 公司行套模板；写：NULL 行平台通道，公司行本司 | 系统设置接口 | 窗口前 | 迁移 |
+| 9 | `public.monitor_settings` | 是 | `uuid` / NULL / 无默认；NULL = 平台母版值 | 平台行（`tenant_id IS NULL`）保持 NULL；单公司租户回填该公司；多公司租户的租户级行**阻断**，不改 NULL | 平台行所有公司只读；公司行按本司 + 母公司可见；业务写只落公司行 | 监控设置接口、告警评估器 | 窗口前（W12-B1） | 迁移 |
+| 10 | `public.search_entity_projections` | 是（新表 v2） | `uuid` / NOT NULL / 无默认 | 新表 v2 从源表与老表回填；判不出归属的副本不保留；比对零差异才切换 | 子公司仅本司；母公司默认跨子公司（限本租户），支持公司过滤 | 搜索同步任务、搜索查询接口 | 窗口前（W13，三步） | 迁移 x3 + 双写 |
+| 11 | `public.system_settings` | 是 | `uuid` / NULL / 无默认；NULL = 平台母版参数 | 平台行保持 NULL；单公司回填；多公司租户级行**阻断** | 平台行只读；公司行可覆盖；**新增公司作用域 API** | 系统设置接口 + 新增公司作用域 API | 窗口前（W12-B2） | 迁移 + 代码 |
 
 ### 1.1 `finance.cqrs_events` 两步走（单独展开）
 
@@ -65,19 +65,23 @@ AND (
 
 ## 3. 分档汇总
 
-### 3.1 窗口前必须先做（8 项 + 1 项条件）
+### 3.1 窗口前必须先做（10 项 + 1 项条件）
 
 | # | 项 | 类型 |
 |---|---|---|
 | 1 | `finance.cqrs_events` 授权收口（撤业务角色，保留事件服务/平台角色） | 纯授权 |
-| 2 | `public.core_tenant_modules` 加列 + 公司级策略 | 迁移 |
+| 2 | `public.core_tenant_modules` 加列 + 母版/公司策略 + 唯一索引替换 | 迁移 |
 | 3 | `integration.core_inter_module_sync` 加列 + 公司级策略 | 迁移 |
 | 4 | `public.monitor_settings` 加列 + 平台行只读策略 | 迁移 |
-| 5 | `public.system_settings` 加列 + 平台行只读策略 | 迁移 |
-| 6 | `public.search_entity_projections` 加列 + 重建副本 + 公司级策略 | 迁移 |
-| 7 | Q-G4 父写白名单 + 审计 `actor_company_id` | 迁移 |
-| 8 | Q-G5 组织关系追加式 + 合并范围固化 | 迁移 |
-| 条件 9 | `iam.tenant_permissions` 加列 + 主键修复 + 策略（仅当本窗口启用数据库存储） | 迁移 |
+| 5 | `public.system_settings` 加列 + 平台行只读策略 + 新增公司作用域 API | 迁移 + 代码 |
+| 6 | 搜索 v2 建表 + 双写 + 回填 + 全量比对 | 迁移 + 代码 |
+| 7 | 搜索切换（老表服务 → 新表服务） | 迁移 |
+| 8 | 搜索旧表下线 | 迁移 |
+| 9 | Q-G4 父写白名单 + 审计 `actor_company_id`（待回执后执行） | 迁移 |
+| 10 | Q-G5 组织关系追加式 + 合并范围固化（待回执后执行） | 迁移 |
+| 条件 11 | `iam.tenant_permissions` 加列 + 主键修复 + 策略（仅当本窗口启用数据库存储） | 迁移 |
+
+W12-A1 → A2 → B1 → B2 → W13 严格串行，全部排在主窗口之前，不拆窗口后、不留降级路径。
 
 ### 3.2 窗口后可补齐（迁移）
 
@@ -93,15 +97,15 @@ AND (
 |---|---|---|---|
 | `iam.tenant_permissions` | 加公司归属；保留集团级行 | 加 `company_id`（NULL=集团级）+ 策略；窗口后/启用前 | ✅ |
 | `finance.cqrs_events` | 先授权收口；后续加租户/公司归属 | 两步走：窗口前授权、窗口后迁移 | ✅ |
-| `core_tenant_modules` | 按公司开通；集团统一仅母公司 | 加 `company_id` + 模板 + NULL 仅母公司 | ✅ |
-| `core_inter_module_sync` | 公司级任务；集团级仅母公司 | 加 `company_id` + 模板 + NULL 仅母公司 | ✅ |
+| `core_tenant_modules` | 集团母版 + 公司差异；存量全部视为母版 | 加 `company_id`；母版租户内只读、公司行可写；唯一索引替换 | ✅ |
+| `core_inter_module_sync` | 公司任务按公司；集团任务仅母公司 | 加 `company_id`；NULL 合法、仅母公司可见可发起 | ✅ |
 | `core_migration_history` | 集团级例外，仅平台运维 | 不加列，策略限平台通道 | ✅ |
 | `core_users` | 归档不启用；启用前补公司归属 | 加列列为启用前置；窗口后 | ✅ |
 | `_archive_core_workflow_instances` | 补公司归属；默认不开放 | 加 `company_id`；窗口后开放前 | ✅ |
 | `_archive_core_workflow_versions` | 同上 | 同上 | ✅ |
-| `monitor_settings` | 平台默认 + 公司覆盖 | 加 `company_id`；NULL 平台行只读、公司行可覆盖 | ✅ |
-| `search_entity_projections` | 补公司归属并重建副本；母公司默认可跨子公司搜索 | 加 `company_id` 并收紧 NOT NULL；模板 | ✅ |
-| `system_settings` | 平台参数 + 公司覆盖 | 加 `company_id`；NULL 平台行只读、公司行可覆盖 | ✅ |
+| `monitor_settings` | 平台母版只读 + 公司覆盖，写只落公司行 | 加 `company_id`；平台行只读、公司行可覆盖；多公司租户级行阻断 | ✅ |
+| `search_entity_projections` | 子公司仅本司；母公司默认跨子公司并可过滤 | 新表 v2 `company_id NOT NULL`；双写零降级三步切换 | ✅ |
+| `system_settings` | 平台母版只读 + 公司覆盖 + 公司作用域 API | 加 `company_id`；平台行只读、公司行可覆盖；新增 API | ✅ |
 
 **措辞残留检查**
 
@@ -111,16 +115,15 @@ AND (
 
 ## 5. 仍需业务拍板的问题（汇总）
 
+已裁决、不再作为问题的：公司开通模块粒度、模块同步任务粒度、监控阈值覆盖、系统参数覆盖与 API、母公司搜索范围、W12/W13 排期、搜索是否降级、`core_tenant_modules` 存量行处置（见波次方案 §11）。
+
+仍待回执：
+
 1. 人员权限是否保留「全集团通用」授权行（默认保留）。
 2. 内部事件流水是否需要按公司追溯并开放查询（默认不开放）。
-3. 公司开通模块按公司还是集团统一（默认按公司）。
-4. 模块同步任务是公司级还是集团级（默认公司级）。
-5. 升级执行记录是否只给平台运维（默认是）。
-6. 旧用户副本是否需要保留（默认归档）。
-7. 两张归档表是否开放母公司查询（默认不开放）。
-8. 监控阈值是否允许公司覆盖平台默认（默认允许）。
-9. 母公司搜索默认是否跨子公司（默认跨子公司；选「按公司切换」需额外收紧策略）。
-10. 系统参数是否允许公司覆盖平台值（默认允许）。
-11. Q-G3 八条回执（默认视为同意；与「内部事件流水」无联动）。
-12. Q-G4 父写动作范围（默认仅审批与下达）。
-13. Q-G5 关系是否只追加不更正、历史是否追溯重述（默认只追加、不追溯）。
+3. 升级执行记录是否只给平台运维（默认是）。
+4. 旧用户副本是否需要保留（默认归档）。
+5. 两张归档表是否开放母公司查询（默认不开放）。
+6. Q-G3 八条回执（默认视为同意；与「内部事件流水」无联动）。
+7. Q-G4 父写动作范围（默认仅审批与下达）。
+8. Q-G5 关系是否只追加不更正、历史是否追溯重述（默认只追加、不追溯）。
