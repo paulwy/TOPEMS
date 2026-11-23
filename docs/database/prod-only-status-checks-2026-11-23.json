@@ -8423,7 +8423,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B231",
-      "source_commit": "PENDING",
+      "source_commit": "8195d4b4a",
       "source_subject": "B231: pm.project_expenses.status 收敛到 ProjectExpenseStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     },
@@ -8443,7 +8443,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B232",
-      "source_commit": "PENDING",
+      "source_commit": "0cb8143d8",
       "source_subject": "B232: pm.project_phases.status 收敛到 ProjectPhaseStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     },
@@ -8462,7 +8462,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B233",
-      "source_commit": "PENDING",
+      "source_commit": "16fe0a281",
       "source_subject": "B233: pm.project_reports.status 收敛到 ProjectReportStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     },
@@ -8483,7 +8483,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B234",
-      "source_commit": "PENDING",
+      "source_commit": "3fac7dcba",
       "source_subject": "B234: pm.defects.status 收敛到 DefectStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     }
