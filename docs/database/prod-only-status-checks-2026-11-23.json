@@ -8721,7 +8721,7 @@
       "convalidated_at_catalog": false,
       "present_in_baseline_db": false,
       "source_batch": "B245",
-      "source_commit": "PENDING",
+      "source_commit": "91d904902",
       "source_subject": "B245: hrm.training_plans.status 收敛到 TrainingPlanStatus 生命周期枚举",
       "note": "替换既有 ck_training_plans_status_standard（active/inactive/archived）；部署时先 DROP 旧约束再 ADD 新约束；当前参考库仅存旧约束"
     }
