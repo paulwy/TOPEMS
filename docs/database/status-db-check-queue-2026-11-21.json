@@ -4,11 +4,11 @@
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
     "uncovered_enums": 45,
-    "uncovered_values": 59,
+    "uncovered_values": 58,
     "finance_candidate_constraints": 25,
     "resolved_enums": 45,
     "internal_state_enums": 45,
-    "internal_state_values": 59
+    "internal_state_values": 58
   },
   "rows": [
     {
@@ -284,8 +284,7 @@
       "enum": "CreditStatus",
       "values_by_bucket": {
         "internal_state": [
-          "danger",
-          "normal"
+          "danger"
         ]
       },
       "candidate_targets": [],

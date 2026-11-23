@@ -2,14 +2,14 @@
   "inventory_version": 1,
   "source": "Rust pub enum *Status* + apps/web STATUS_COLOR_MAP; coverage vs status-check-catalog",
   "stats": {
-    "db_check_constraints": 368,
+    "db_check_constraints": 369,
     "db_enum_types": 5,
-    "db_check_values": 165,
-    "rust_enums": 251,
-    "rust_enum_values": 219,
-    "rust_values_not_in_db_check": 59,
-    "frontend_status_keys": 228,
-    "frontend_keys_not_in_db_check": 68,
+    "db_check_values": 167,
+    "rust_enums": 252,
+    "rust_enum_values": 220,
+    "rust_values_not_in_db_check": 58,
+    "frontend_status_keys": 229,
+    "frontend_keys_not_in_db_check": 67,
     "rust_values_not_in_palette": 0
   },
   "enums": [
@@ -2407,6 +2407,19 @@
     },
     {
       "module": "mes",
+      "file": "svc/mes/src/modules/equipment_inspection_status.rs",
+      "name": "EquipmentInspectionStatus",
+      "values": [
+        "Abnormal",
+        "Normal"
+      ],
+      "normalized": [
+        "abnormal",
+        "normal"
+      ]
+    },
+    {
+      "module": "mes",
       "file": "svc/mes/src/modules/equipment_maintenance_status.rs",
       "name": "EquipmentMaintenanceStatus",
       "values": [
@@ -4484,6 +4497,7 @@
   "frontend": {
     "file": "apps/web/src/utils/status.ts",
     "keys": [
+      "abnormal",
       "aborted",
       "accepted",
       "achieved",
@@ -4746,7 +4760,6 @@
       "neutral",
       "new",
       "non_compliant",
-      "normal",
       "not_applicable",
       "other",
       "partially_compliant",
@@ -4813,7 +4826,6 @@
       "neutral",
       "new",
       "non_compliant",
-      "normal",
       "not_applicable",
       "other",
       "partially_compliant",

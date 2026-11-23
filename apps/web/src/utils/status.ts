@@ -125,6 +125,7 @@ export const STATUS_COLOR_MAP: Record<string, StatusColor> = {
   transferred: 'default',
   error: 'error',
   normal: 'success',
+  abnormal: 'error',
   'in-progress': 'info',
   // finance 状态单一源（W5-B B4～B16）补充键，避免业务单据状态落到灰色 fallback
   posted: 'success',

@@ -21,6 +21,7 @@ use topems_shared_auth::middleware::require_tenant;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
+use crate::modules::equipment_inspection_status::EquipmentInspectionStatus;
 use crate::modules::equipment_maintenance_status::EquipmentMaintenanceStatus;
 use crate::modules::equipment_status::EquipmentStatus;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -1525,11 +1526,13 @@ pub async fn list_inspections(
                     noiselevel: r
                         .noiselevel
                         .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
-                    status: if r.status.as_deref().unwrap_or("").is_empty() {
-                        "normal".to_string()
-                    } else {
-                        r.status.unwrap_or_default()
-                    },
+                    status: r
+                        .status
+                        .as_deref()
+                        .and_then(EquipmentInspectionStatus::from_db_str)
+                        .unwrap_or(EquipmentInspectionStatus::DEFAULT)
+                        .as_db_str()
+                        .to_string(),
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
@@ -1629,6 +1632,16 @@ pub async fn create_inspection(
     let inspection_date = DateTime::parse_from_rfc3339(&body.inspection_date)
         .map(|dt| dt.with_timezone(&Utc))
         .unwrap_or_else(|_| Utc::now());
+    let status = match body.status.as_deref() {
+        None => EquipmentInspectionStatus::DEFAULT,
+        Some(value) => match EquipmentInspectionStatus::from_db_str(value) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request("点检状态非法，允许值: normal/abnormal");
+            }
+        },
+    };
+
     let items_value = body.items.as_ref().map(|v| v.to_string());
 
     let result = sqlx::query_unchecked!(
@@ -1651,7 +1664,7 @@ pub async fn create_inspection(
         temperature,
         vibration,
         noiselevel,
-        body.status,
+        status.as_db_str(),
         items_value,
         body.abnormalities,
         body.remarks,
@@ -1688,11 +1701,13 @@ pub async fn create_inspection(
                 noiselevel: r
                     .noiselevel
                     .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
-                status: if r.status.as_deref().unwrap_or("").is_empty() {
-                    "normal".to_string()
-                } else {
-                    r.status.unwrap_or_default()
-                },
+                status: r
+                    .status
+                    .as_deref()
+                    .and_then(EquipmentInspectionStatus::from_db_str)
+                    .unwrap_or(EquipmentInspectionStatus::DEFAULT)
+                    .as_db_str()
+                    .to_string(),
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,

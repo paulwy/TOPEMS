@@ -1499,6 +1499,13 @@
       "table": "mes.equipment",
       "column": "status",
       "candidate": "docs/database/equipment-status-check-candidates-2026-11-23.sql"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_inspection_status.rs",
+      "enum": "EquipmentInspectionStatus",
+      "table": "mes.equipment_inspections",
+      "column": "status",
+      "candidate": "docs/database/equipment-inspection-status-check-candidates-2026-11-23.sql"
     }
   ]
 }

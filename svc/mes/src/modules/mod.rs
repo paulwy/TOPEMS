@@ -12,6 +12,7 @@ pub mod demand_forecast;
 pub mod demand_forecast_status;
 pub mod energy_management;
 pub mod equipment;
+pub mod equipment_inspection_status;
 pub mod equipment_maintenance_status;
 pub mod equipment_oee;
 pub mod equipment_status;

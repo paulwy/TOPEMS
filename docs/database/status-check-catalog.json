@@ -2704,6 +2704,19 @@
     },
     {
       "schema": "mes",
+      "table": "equipment_inspections",
+      "constraint": "ck_mes_equipment_inspections_status_standard",
+      "columns": [
+        "status"
+      ],
+      "values": [
+        "abnormal",
+        "normal"
+      ],
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['normal'::character varying, 'abnormal'::character varying])::text[]))) NOT VALID"
+    },
+    {
+      "schema": "mes",
       "table": "equipment_maintenance_records",
       "constraint": "ck_mes_equipment_maintenance_records_status_standard",
       "columns": [
@@ -6963,15 +6976,6 @@
       "enum_type": "varchar",
       "not_null": true,
       "default_expr": "'completed'::character varying"
-    },
-    {
-      "schema": "mes",
-      "table": "equipment_inspections",
-      "column": "status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": false,
-      "default_expr": "'normal'::character varying"
     },
     {
       "schema": "mes",
