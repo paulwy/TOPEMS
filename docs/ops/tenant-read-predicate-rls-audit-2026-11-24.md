@@ -156,3 +156,33 @@
 - RLS 快照：测试库 `pg_class.relrowsecurity` + `pg_policies.qual` 关联，采集于 2026-11-24；A 桶已抽样核验策略 qual 为隔离口径，`core_operation_logs` 为 allow-all 已单列 E 桶。
 - 表名关联为 SQL 上下文回溯启发式（最近 15 行内 FROM/JOIN/UPDATE/INTO），个别跨表 JOIN 行的归属可能需人工复核。
 - 本地空库全链未跑通（pgvector 扩展需超户，见第 7 节）；B 桶与目标环境实际策略口径仍须在超户/CI 链或预发只读库复核。
+
+## 9. 本地/生产/远端配置一致性核查待办（2026-11-24）
+
+### 9.1 本轮已在本地安全落地并推送
+- 本地 main 与 `origin/main` 对齐（fetch 后 0/0，无分叉）。
+- `.gitignore` 新增 `rustc-ice-*.txt` 规则，清空本机 7 个编译器崩溃转储；提交 `bad82f934`。
+- analytics E0599 由上游 `90199b417` 双态 trait 闭环，离线/连库双口径 `cargo check` 绿。
+- 生产运行时连接角色核实：`pg_stat_activity` 中 `topems_prod` 9 会话、`xingzhai` 1 管理会话，**无超户应用连接**；非超户角色口径正常。
+
+### 9.2 经核实为有意设计、非缺陷
+- `public.navigation_menu`、`public.pinned_apps`、`public.todos`：迁移 `20261118090000` 刻意 DROP 原 allow_all、保持 ENABLE+FORCE 且不留策略 = 全拒绝；全仓无 SQL 读写（portal 端点返回内存静态数据）。属有意 deny-all，不是漏挂策略。
+
+### 9.3 生产侧待决策 / 待窗口（本地不动生产库）
+- **36 条 `qual='true'` 全放行策略**（RLS 名义开启、不做租户隔离，边界仅靠应用谓词）。2026-11-24 生产快照清单：
+  - 文档域：`doc.documents` `doc.folders` `doc.templates` `doc.document_versions` `doc_service.archives` `doc_service.files` `doc_service.folders` `doc_service.templates`
+  - 质量域：`qms.quality_issues` `qms.corrective_actions` `qms.inspection_items` `qms.dashboard_metrics`
+  - 流程/通知：`flow.workflows` `flow.notifications` `flow.audit_logs`
+  - 地理：`gis.track_positions` `gis.geofence_alerts` `gis.audit_log` `gis.audit_logs`
+  - 身份/权限：`iam.roles` `iam.permissions` `iam.audit_logs`
+  - 邮件/消息：`mail.emails` `mail.templates` `notification.notifications` `mobile.oa_announcement_reads`
+  - 存储/主数据：`storage.files` `erp.core_erp_materials` `pdm.pdm_master_data_refs`
+  - 其他：`bi.audit_logs` `core.core_tenant_plugins` `pm.service_integrations` `portal.user_preferences` `public.alert_rules` `public.user_settings` `report.reports`
+  - **处置口径待拍板**：哪些是有意全局读通道（角色/权限/审计日志/模板字典类可豁免），哪些是应补租户隔离的业务表（文档/质量/流程/轨迹/邮件/存储类优先）；确认后再在迁移链补严格策略，经预发验证后上生产窗口。
+- **385 张 RLS OFF 表**：需先甄别租户业务表（应补 RLS）与系统/字典/日志表（可豁免），尚未逐表分类。
+- **生产账本滞后**：生产水位 `20261119000002`（721 行），代码头版本 `20261124200000`；待 schema 窗口追平迁移后再复核策略覆盖。
+- **策略差集**：生产 1050 条 > 头版本校验库 855 条；校验库本身为部分快照，需全链 head 库才能做差集对账，当前不据此判遗留。
+
+### 9.4 本地环境待重建（非本轮自动修复）
+- 本地开发库 `topems` RLS 覆盖 492/1398、账本 741，不能作隔离基准；`topems_test_runner` 账本 0 行、schema 来源不可追溯。空库全链受 pgvector 扩展需超户阻塞（见第 7 节），重建需超户/CI 环境。
+- 本机约 30 个历史 drill/scratch/snapshot/rehearsal 库属破坏性清理，删除前需逐项确认库名。
