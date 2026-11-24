@@ -35,18 +35,40 @@ pub enum OppStage {
 }
 
 impl OppStage {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "draft" => Some(Self::Draft),
-            "lead" => Some(Self::Lead),
+    pub const DB_VALUES: [&'static str; 8] = [
+        "draft",
+        "lead",
+        "qualified",
+        "proposal",
+        "negotiation",
+        "won",
+        "lost",
+        "closed",
+    ];
+    pub const DEFAULT: Self = Self::Draft;
+
+    #[must_use]
+    pub fn normalize(s: &str) -> Option<Self> {
+        match s
+            .trim()
+            .to_ascii_lowercase()
+            .replace([' ', '-'], "_")
+            .as_str()
+        {
+            "draft" | "prospecting" | "new" => Some(Self::Draft),
+            "lead" | "leads" => Some(Self::Lead),
             "qualified" => Some(Self::Qualified),
             "proposal" => Some(Self::Proposal),
             "negotiation" => Some(Self::Negotiation),
-            "won" => Some(Self::Won),
-            "lost" => Some(Self::Lost),
+            "won" | "closed_won" | "closedwon" => Some(Self::Won),
+            "lost" | "closed_lost" | "closedlost" => Some(Self::Lost),
             "closed" => Some(Self::Closed),
             _ => None,
         }
+    }
+
+    pub fn from_str(s: &str) -> Option<Self> {
+        Self::normalize(s)
     }
 
     pub fn as_str(&self) -> &'static str {
@@ -395,7 +417,7 @@ pub async fn create_opportunity(
     } else {
         req.opp_no.clone()
     };
-    let stage = "draft".to_string();
+    let stage = OppStage::DEFAULT.as_str();
     let priority = req.priority.clone().unwrap_or_else(|| "medium".into());
     let status = OpportunityStatus::DEFAULT.as_db_str().to_string();
 
@@ -415,7 +437,7 @@ pub async fn create_opportunity(
     .bind(&req.name)
     .bind(req.customer_id)
     .bind(&req.customer_name)
-    .bind(&stage)
+    .bind(stage)
     .bind(&priority)
     .bind(req.value)
     .bind(req.win_rate)
@@ -935,12 +957,12 @@ async fn get_sales_funnel(
     }
 
     let stages = vec![
-        ("prospecting", "线索"),
+        ("lead", "线索"),
         ("qualified", "合格"),
         ("proposal", "提案"),
         ("negotiation", "谈判"),
-        ("closed_won", "赢单"),
-        ("closed_lost", "输单"),
+        ("won", "赢单"),
+        ("lost", "输单"),
     ];
 
     let mut funnel_stages = Vec::new();
@@ -1029,28 +1051,28 @@ pub async fn get_opportunity_stats(
     .unwrap_or(Some(0.0));
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'closed_won'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'won'",
     )
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let won_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'closed_won' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'won' AND value IS NOT NULL"
     )
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
     let lost_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'closed_lost'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'lost'",
     )
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let lost_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'closed_lost' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND stage = 'lost' AND value IS NOT NULL"
     )
     .fetch_optional(&mut **txn)
     .await
@@ -1122,7 +1144,7 @@ pub async fn get_opportunity_forecast(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
             FROM crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('won', 'lost', 'closed')
             "#,
         )
         .bind(month_start)
@@ -1136,7 +1158,7 @@ pub async fn get_opportunity_forecast(
             r#"
             SELECT COUNT(*) 
             FROM crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('won', 'lost', 'closed')
             "#,
         )
         .bind(month_start)
@@ -1150,7 +1172,7 @@ pub async fn get_opportunity_forecast(
             r#"
             SELECT COALESCE(AVG(probability), 0) 
             FROM crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost') AND probability IS NOT NULL
+            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('won', 'lost', 'closed') AND probability IS NOT NULL
             "#,
         )
         .bind(month_start)

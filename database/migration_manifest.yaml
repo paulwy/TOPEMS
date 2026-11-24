@@ -2993,6 +2993,13 @@ pending_forward_patches:
     effect: "rs.project_members.status 从默认 'ACTIVE' + Rust 大写写入，收口为 active/inactive 小写；权限查询 lower(status)='active' 与写入一致；ADD CHECK ck_project_members_status_standard + VALIDATE"
     destructive_scan: "UPDATE status 大小写归一（ACTIVE→active），ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有 active/inactive 之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124160000_rd_project_members_status_standard.rollback.sql 恢复默认 ACTIVE、存量大写并 DROP 约束"
+  # ===== 2026-11-24：B266 CRM 商机阶段词表收口 =====
+  - version: "20261124233000"
+    file: "database/migrations/20261124233000_crm_opportunity_stage_standard.sql"
+    status: to_apply
+    effect: "crm.opportunities.stage 旧别名 prospecting/new/closed_won/closed_lost 归一为 draft/lead/qualified/proposal/negotiation/won/lost/closed；默认值固定 'draft'；stage NOT NULL；ADD CHECK ck_opportunities_stage_standard + VALIDATE"
+    destructive_scan: "UPDATE stage 归一，ALTER COLUMN SET DEFAULT/SET NOT NULL，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有八态之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124233000_crm_opportunity_stage_standard.rollback.sql 恢复默认 prospecting 并 DROP 约束"
   # ===== 2026-11-24：B265 RD 试验阶段词表收口 =====
   - version: "20261124230000"
     file: "database/migrations/20261124230000_rd_experiment_phase_standard.sql"

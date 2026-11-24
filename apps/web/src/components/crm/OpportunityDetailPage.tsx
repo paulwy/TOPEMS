@@ -78,12 +78,17 @@ const OpportunityDetailPage: React.FC = () => {
   const getStageLabel = useCallback(
     (stage: string) => {
       const stages: Record<string, string> = {
-        prospecting: t('crm.opportunityDetail.stage_prospecting'),
+        draft: t('crm.opportunityDetail.stage_draft'),
+        lead: t('crm.opportunityDetail.stage_lead'),
         qualified: t('crm.opportunityDetail.stage_qualified'),
         proposal: t('crm.opportunityDetail.stage_proposal'),
         negotiation: t('crm.opportunityDetail.stage_negotiation'),
-        closed_won: t('crm.opportunityDetail.stage_closed_won'),
-        closed_lost: t('crm.opportunityDetail.stage_closed_lost'),
+        won: t('crm.opportunityDetail.stage_won'),
+        lost: t('crm.opportunityDetail.stage_lost'),
+        closed: t('crm.opportunityDetail.stage_closed'),
+        prospecting: t('crm.opportunityDetail.stage_draft'),
+        closed_won: t('crm.opportunityDetail.stage_won'),
+        closed_lost: t('crm.opportunityDetail.stage_lost'),
       };
       return stages[stage] || stage;
     },
@@ -95,10 +100,15 @@ const OpportunityDetailPage: React.FC = () => {
       string,
       'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
     > = {
-      prospecting: 'default',
+      draft: 'default',
+      lead: 'info',
       qualified: 'info',
       proposal: 'primary',
       negotiation: 'warning',
+      won: 'success',
+      lost: 'error',
+      closed: 'secondary',
+      prospecting: 'default',
       closed_won: 'success',
       closed_lost: 'error',
     };
