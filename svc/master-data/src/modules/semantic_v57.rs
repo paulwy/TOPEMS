@@ -515,7 +515,7 @@ impl EnhancedKnowledgeGraph {
             .bind(serde_json::to_value(&community.node_ids).unwrap_or_default())
             .bind(&community.algorithm)
             .bind(community.modularity)
-            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+            .bind(tenant)
             .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入社区失败: {e}")))?;
@@ -874,7 +874,7 @@ impl SmartTagger {
             .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
             .bind(0.9)
             .bind(&now)
-            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+            .bind(tenant)
             .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
@@ -1508,9 +1508,17 @@ pub async fn detect_communities_handler(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
-    let communities =
-        db_exec!(EnhancedKnowledgeGraph::detect_communities(&mut db_scope, tenant).await);
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
+    let communities = db_exec!(
+        EnhancedKnowledgeGraph::detect_communities(
+            &mut db_scope,
+            Some(write_scope.create_tenant_id())
+        )
+        .await
+    );
     ApiResponse::success(communities, "社区检测完成")
 }
 
@@ -1913,11 +1921,14 @@ pub async fn auto_tag(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let applied = db_exec!(
         SmartTagger::auto_tag(
             &mut db_scope,
-            tenant,
+            Some(write_scope.create_tenant_id()),
             &req.entity_type,
             &req.entity_id,
             &req.data

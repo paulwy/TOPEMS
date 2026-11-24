@@ -669,7 +669,7 @@ async fn refresh_graph(
     .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(tenant)
     .execute(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新血缘图谱失败: {e}")))?;
@@ -712,7 +712,7 @@ async fn refresh_graph_scoped(
     .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(tenant)
     .execute(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新血缘图谱失败: {e}")))?;
@@ -848,7 +848,7 @@ impl ImpactAnalyzer {
         .bind(&result.id)
         .bind(&data)
         .bind(result.analyzed_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入影响分析失败: {e}")))?;
@@ -947,7 +947,7 @@ impl ImpactAnalyzer {
         .bind(&simulation.id)
         .bind(&data)
         .bind(&simulation.simulation_timestamp)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更模拟失败: {e}")))?;
@@ -1075,7 +1075,7 @@ impl ChangePropagator {
         .bind(&event.old_value)
         .bind(&event.new_value)
         .bind(event.triggered_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更事件失败: {e}")))?;
@@ -1094,7 +1094,7 @@ impl ChangePropagator {
             .bind(propagation_action_to_str(&log.action))
             .bind(&log.status)
             .bind(log.propagated_at.to_rfc3339())
-            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+            .bind(tenant)
             .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入传播日志失败: {e}")))?;
@@ -1589,7 +1589,11 @@ pub async fn refresh_lineage(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1603,7 +1607,7 @@ pub async fn refresh_lineage(
             return ApiResponse::server_error("数据库事务不可用");
         }
     };
-    if let Err(e) = refresh_graph_scoped(&mut scope, tenant).await {
+    if let Err(e) = refresh_graph_scoped(&mut scope, Some(write_scope.create_tenant_id())).await {
         return ApiResponse::server_error(&e.classify().1);
     }
     ApiResponse::success(
@@ -1620,7 +1624,11 @@ pub async fn refresh_lineage_by_id(
     Path(id): Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1645,7 +1653,7 @@ pub async fn refresh_lineage_by_id(
         return ApiResponse::not_found("未找到血缘节点");
     }
 
-    if let Err(e) = refresh_graph_scoped(&mut scope, tenant).await {
+    if let Err(e) = refresh_graph_scoped(&mut scope, Some(write_scope.create_tenant_id())).await {
         return ApiResponse::server_error(&e.classify().1);
     }
     ApiResponse::success(
@@ -1723,7 +1731,11 @@ pub async fn analyze_impact(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let change_type = change_type_from_str(&req.change_type);
     let analysis_req = ImpactAnalysisRequest {
         target_entity_id: req.target_entity_id,
@@ -1732,7 +1744,13 @@ pub async fn analyze_impact(
         include_chain_reactions: req.include_chain_reactions,
     };
 
-    match ImpactAnalyzer::analyze(&mut db_scope, tenant, &analysis_req).await {
+    match ImpactAnalyzer::analyze(
+        &mut db_scope,
+        Some(write_scope.create_tenant_id()),
+        &analysis_req,
+    )
+    .await
+    {
         Ok(result) => ApiResponse::success(result, "影响分析完成"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1800,11 +1818,15 @@ pub async fn simulate_change(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(
         &mut db_scope,
-        tenant,
+        Some(write_scope.create_tenant_id()),
         req.entity_type,
         req.entity_id,
         change_type,
@@ -1879,11 +1901,15 @@ pub async fn propagate_change(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let change_type = change_type_from_str(&req.change_type);
     match ChangePropagator::propagate(
         &mut db_scope,
-        tenant,
+        Some(write_scope.create_tenant_id()),
         req.entity_type,
         req.entity_id,
         change_type,

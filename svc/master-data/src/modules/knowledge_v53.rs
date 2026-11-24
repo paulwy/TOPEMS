@@ -410,7 +410,7 @@ async fn refresh_kg_graph(
     .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(tenant)
     .execute(&mut *scope)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新知识图谱失败: {e}")))?;
@@ -844,7 +844,7 @@ impl RecommendationEngine {
             .bind(rec.score)
             .bind(&rec.reason)
             .bind(recommendation_source_to_str(&rec.source))
-            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+            .bind(tenant)
             .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入推荐记录失败: {e}")))?;
@@ -1722,10 +1722,13 @@ pub async fn get_recommendations(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     match RecommendationEngine::get_recommendations(
         &mut db_scope,
-        tenant,
+        Some(write_scope.create_tenant_id()),
         &user_id,
         params.target_id,
         params.limit,

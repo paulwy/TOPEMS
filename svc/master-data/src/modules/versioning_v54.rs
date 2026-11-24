@@ -1506,12 +1506,11 @@ pub async fn export_audit_log(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<ExportAuditLogRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    // 请求租户：缺失/非法 → nil，与 v59 语义一致（对齐 RLS current_setting 空值兜底）
-    let tenant_uuid = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or_else(uuid::Uuid::nil);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let write_scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
 
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let mut guard = txn_arc.lock().await;
@@ -1552,7 +1551,7 @@ pub async fn export_audit_log(
     .bind(record_count)
     .bind(now.to_rfc3339())
     .bind("127.0.0.1")
-    .bind(tenant_uuid)
+    .bind(write_scope.create_tenant_id())
     .execute(&mut scope)
     .await
     {
