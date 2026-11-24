@@ -75,7 +75,7 @@
 |---|---|---|
 | 5 | 档 3 其余 allow-all 逐张定性 | 复核闭环：17 条（日志 5 + 模板权限 4 + 配置 3 + 通知副本 3 + 聚合 1）中 **16 张为零路径遗留表/副本，随既有归档批次删除**；`bi.audit_logs` 例外保留（schema-defense 重建，已登记 exemption）；通知/邮件本体 `public.core_notifications`/`public.core_emails` 隔离口径随 P1 #2；业务实体 13 张并入 P1 #2 评审 | 台账 §4.4 `allow-all-policy-review-2026-11-24.md` |
 | 6 | 超户/CI 全链 head 库复跑 RLS 对照 | **复跑闭环**：两个 head 校验库（`runtime_fixture_verify`、`runtime_gate_verify`）非超户连库实测 801 表 / 855 策略，与基准快照逐项一致 **PASS**，基准无 fixture 偏差；`drift_check`（800/835，35 项）、`smoke`（751 项）偏差系历史旧库未追平迁移链，非基准缺陷。连库 snapshot 门禁未挂 CI，当前由静态 shape 门禁覆盖 fail-open 回潮；生产追平账本后须在生产/`topems_drift` 复跑同一门禁 | 备忘 `rls-head-snapshot-recheck-2026-11-25.md`（口径、命令、快照更新红线、阻塞项） |
-| 7 | C 桶 `analytics_data` 10 处读旁路 | 待该表 RLS 覆盖具备条件后，按 B 桶同口径评估剥除 |
+| 7 | C 桶 `analytics_data` 10 处读旁路 | 2026-11-25 重扫复核：代码仍 **10 处**（predictive_analysis 4 + multidimensional_analysis 5 + self_service_report 1）；`bi.analytics_data` 未入基准快照、迁移链 RLS 清单未含，head 校验库实测无此表，RLS 覆盖前置条件未具备。维持 C 桶保留口径，待表 RLS 覆盖落地后再按 B 桶同口径评估剥除 | 审计台账 §5 `tenant-read-predicate-rls-audit-2026-11-24.md` |
 
 ## 8. 方法局限与复核前提
 
