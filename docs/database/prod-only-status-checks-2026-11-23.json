@@ -5,7 +5,7 @@
   "baseline_anchor": "20261117235500",
   "catalog_scope": "status-check-catalog.json 只反映「基线 + 前向迁移」可复现的状态；生产独有约束单独维护",
   "regenerate_command": "PGHOST=/tmp PGUSER=xingzhai bash scripts/db/provision-env.sh --env test --db topems_status_baseline_verify --force-nonempty --skip-prod-fingerprint; PGHOST=/tmp PGUSER=xingzhai bash scripts/migration/apply-forward.sh --db topems_status_baseline_verify --drill-gate-guc-auto; node scripts/ci/dump-status-checks.mjs --dsn postgresql:///topems_status_baseline_verify --out docs/database/status-check-catalog.json",
-  "total": 415,
+  "total": 414,
   "by_schema": {
     "ai": 1,
     "analytics": 3,
@@ -29,7 +29,7 @@
     "mobile": 5,
     "pdm": 9,
     "plugin_mes": 1,
-    "pm": 20,
+    "pm": 19,
     "portal": 7,
     "public": 42,
     "qms": 13,
@@ -87,7 +87,6 @@
     "B246": 1,
     "B226": 1,
     "B199": 1,
-    "B235": 1,
     "B191": 1,
     "B205": 3,
     "B194": 2,
@@ -8388,26 +8387,6 @@
       "source_batch": "B234",
       "source_commit": "3fac7dcba",
       "source_subject": "B234: pm.defects.status 收敛到 DefectStatus 枚举",
-      "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
-    },
-    {
-      "schema": "pm",
-      "table": "project_risks",
-      "constraint": "ck_project_risks_status_standard",
-      "columns": [
-        "status"
-      ],
-      "values": [
-        "closed",
-        "identified",
-        "mitigated"
-      ],
-      "definition": "CHECK (((status)::text = ANY ((ARRAY['identified'::character varying, 'mitigated'::character varying, 'closed'::character varying])::text[]))) NOT VALID",
-      "convalidated_at_catalog": false,
-      "present_in_baseline_db": false,
-      "source_batch": "B235",
-      "source_commit": "681640d48",
-      "source_subject": "B235: pm.project_risks.status 收敛到 ProjectRiskStatus 枚举",
       "note": "生产/历史手工候选约束；当前「基线+前向迁移」参考库不存在，转待回迁清单维护"
     },
     {

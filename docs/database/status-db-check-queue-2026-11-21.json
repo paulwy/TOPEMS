@@ -3050,10 +3050,10 @@
         "enum": "ProjectRiskStatus",
         "table": "pm.project_risks",
         "column": "status",
-        "candidate": "docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql",
+        "candidate": "database/migrations/20261124235500_pm_project_risk_status_standard.sql",
         "db_constraint": "ck_project_risks_status_standard",
         "db_verified_at": "2026-11-24",
-        "db_verified_via": "local pg_constraint (convalidated)"
+        "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default identified)"
       },
       "db_covered": true,
       "db_constraints": [
