@@ -4,6 +4,73 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// 配方业务状态（DB 契约固定小写英文）。
+///
+/// 历史后端创建路径写入中文 `草稿`，评审通过写入 `released`，与前端
+/// `draft/testing/approved` 词表不一致；本枚举统一为 DB 可约束的四态。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FormulaStatus {
+    Draft,
+    Testing,
+    Approved,
+    Archived,
+}
+
+impl FormulaStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["draft", "testing", "approved", "archived"];
+    pub const DEFAULT: Self = Self::Draft;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::Testing => "testing",
+            Self::Approved => "approved",
+            Self::Archived => "archived",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw {
+            "draft" => Some(Self::Draft),
+            "testing" => Some(Self::Testing),
+            "approved" => Some(Self::Approved),
+            "archived" => Some(Self::Archived),
+            _ => None,
+        }
+    }
+
+    /// 兼容历史中文值与旧 `released` 值；未知值返回 None，由调用方 fail-closed。
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        match raw.trim().to_lowercase().as_str() {
+            "draft" | "草稿" => Some(Self::Draft),
+            "testing" | "测试中" | "待测试" => Some(Self::Testing),
+            "approved" | "released" | "已批准" | "已发布" => Some(Self::Approved),
+            "archived" | "已归档" => Some(Self::Archived),
+            _ => None,
+        }
+    }
+
+    /// 业务流转：草稿可测试/批准/归档，测试中可回草稿或批准/归档，
+    /// 已批准仅可归档，归档为终态；同值幂等。
+    #[must_use]
+    pub const fn can_transition_to(self, target: Self) -> bool {
+        matches!(
+            (self, target),
+            (
+                Self::Draft,
+                Self::Draft | Self::Testing | Self::Approved | Self::Archived
+            ) | (
+                Self::Testing,
+                Self::Draft | Self::Testing | Self::Approved | Self::Archived
+            ) | (Self::Approved, Self::Approved | Self::Archived)
+                | (Self::Archived, Self::Archived)
+        )
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Formula {
     pub id: Uuid,
@@ -286,5 +353,43 @@ mod tests {
         let back: CreateFormulaVersionRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(back.version, "2.1.0");
         assert!(back.ingredients.is_none());
+    }
+
+    #[test]
+    fn formula_status_db_contract_and_legacy_values() {
+        assert_eq!(
+            FormulaStatus::DB_VALUES,
+            ["draft", "testing", "approved", "archived"]
+        );
+        assert_eq!(FormulaStatus::DEFAULT.as_db_str(), "draft");
+        for value in FormulaStatus::DB_VALUES {
+            let parsed = FormulaStatus::from_db_str(value).expect("db value must parse");
+            assert_eq!(parsed.as_db_str(), value);
+        }
+        assert_eq!(FormulaStatus::normalize("草稿"), Some(FormulaStatus::Draft));
+        assert_eq!(
+            FormulaStatus::normalize("测试中"),
+            Some(FormulaStatus::Testing)
+        );
+        assert_eq!(
+            FormulaStatus::normalize("released"),
+            Some(FormulaStatus::Approved)
+        );
+        assert_eq!(
+            FormulaStatus::normalize("已批准"),
+            Some(FormulaStatus::Approved)
+        );
+        assert_eq!(FormulaStatus::normalize("unknown"), None);
+    }
+
+    #[test]
+    fn formula_status_transitions_guard_rollback() {
+        assert!(FormulaStatus::Draft.can_transition_to(FormulaStatus::Testing));
+        assert!(FormulaStatus::Draft.can_transition_to(FormulaStatus::Approved));
+        assert!(FormulaStatus::Testing.can_transition_to(FormulaStatus::Draft));
+        assert!(FormulaStatus::Approved.can_transition_to(FormulaStatus::Archived));
+        assert!(!FormulaStatus::Approved.can_transition_to(FormulaStatus::Draft));
+        assert!(!FormulaStatus::Archived.can_transition_to(FormulaStatus::Approved));
+        assert!(FormulaStatus::Draft.can_transition_to(FormulaStatus::Draft));
     }
 }

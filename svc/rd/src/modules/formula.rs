@@ -10,7 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::{
-    CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaVersion,
+    CreateFormulaRequest, CreateFormulaVersionRequest, Formula, FormulaStatus, FormulaVersion,
     UpdateFormulaRequest,
 };
 use crate::modules::audit::log_audit_event;
@@ -108,6 +108,17 @@ pub async fn list_formulas(
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
+    let status_filter = match params.status.as_deref() {
+        None => None,
+        Some(raw) => match FormulaStatus::normalize(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft / testing / approved / archived",
+                )
+            }
+        },
+    };
 
     let result = sqlx::query_as::<_, Formula>(
         r#"
@@ -131,7 +142,7 @@ pub async fn list_formulas(
         "#,
     )
     .bind(&params.search)
-    .bind(&params.status)
+    .bind(status_filter)
     .bind(params.project_id)
     .bind(page_size)
     .bind(offset)
@@ -156,7 +167,7 @@ pub async fn list_formulas(
                 "#,
             )
             .bind(&params.search)
-            .bind(&params.status)
+            .bind(status_filter)
             .bind(params.project_id)
             .bind(&params.approval_status)
             .fetch_one(&mut **txn)
@@ -213,6 +224,17 @@ pub async fn create_formula(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let status = match req.status.as_deref() {
+        None => FormulaStatus::DEFAULT,
+        Some(raw) => match FormulaStatus::normalize(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft / testing / approved / archived",
+                )
+            }
+        },
+    };
 
     // Clone necessary fields before moving req into the query
     let req_name = req.name.clone();
@@ -244,7 +266,7 @@ pub async fn create_formula(
     .bind(&req_category)
     .bind(&req_description)
     .bind(req.project_id)
-    .bind(req.status.unwrap_or_else(|| "草稿".to_string()))
+    .bind(status.as_db_str())
     .bind::<Option<String>>(None)
     .bind(req.effective_date)
     .bind(req.expiration_date)
@@ -401,7 +423,30 @@ pub async fn update_formula(
     let name = req.name.unwrap_or(existing.name);
     let category = req.category.or(existing.category);
     let description = req.description.or(existing.description);
-    let status = req.status.unwrap_or(existing.status);
+    let current = match FormulaStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => match FormulaStatus::normalize(&existing.status) {
+            Some(status) => status,
+            None => return ApiResponse::server_error("配方状态未标准化，拒绝写入"),
+        },
+    };
+    let status = match req.status.as_deref() {
+        None => current,
+        Some(raw) => match FormulaStatus::normalize(raw) {
+            Some(target) if current.can_transition_to(target) => target,
+            Some(_) => {
+                return ApiResponse::bad_request(&format!(
+                    "非法配方状态流转: {} -> {raw}",
+                    current.as_db_str()
+                ))
+            }
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 draft / testing / approved / archived",
+                )
+            }
+        },
+    };
     let ingredients = req
         .ingredients
         .unwrap_or_else(|| serde_json::from_value(existing.ingredients.clone()).unwrap_or(vec![]));
@@ -416,6 +461,11 @@ pub async fn update_formula(
             effective_date = $6, expiration_date = $7,
             ingredients = $8, process_steps = $9, properties = $10, updated_at = $11
         WHERE id = $1
+          AND status <> 'archived'
+          AND (
+              ($7::text = 'approve')
+              OR ($7::text IN ('submit', 'reject') AND status IN ('draft', 'testing'))
+          )
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -426,7 +476,7 @@ pub async fn update_formula(
     .bind(&name)
     .bind(&category)
     .bind(&description)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(req.effective_date)
     .bind(req.expiration_date)
     .bind(serde_json::to_value(ingredients).unwrap_or(serde_json::Value::Array(vec![])))
@@ -759,7 +809,7 @@ pub async fn review_formula(
     // 三种动作映射到 (approval_status, status)；评审人仅 approve/reject 落库
     let (approval_status, target_status) = match req.action.as_str() {
         "submit" => ("pending", "draft"),
-        "approve" => ("approved", "released"),
+        "approve" => ("approved", "approved"),
         "reject" => ("rejected", "draft"),
         other => {
             return ApiResponse::error(
@@ -803,6 +853,7 @@ pub async fn review_formula(
     .bind(reviewer.as_deref())
     .bind(if write_reviewer { Some(now) } else { None })
     .bind(now)
+    .bind(req.action.as_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -821,8 +872,10 @@ pub async fn review_formula(
             };
             ApiResponse::success(formula, msg)
         }
-        // RowNotFound：被评审配方不存在，转为业务内层 404（HTTP 仍为 200）
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("配方不存在"),
+        // 条件更新未命中：不存在或当前状态不允许该评审动作
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::bad_request("配方不存在或当前状态不允许该评审动作")
+        }
         Err(e) => {
             tracing::error!("配方评审失败: {}", e);
             ApiResponse::server_error("配方评审失败")
