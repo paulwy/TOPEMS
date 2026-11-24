@@ -2169,6 +2169,9 @@ jobs:
           PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d postgres -v ON_ERROR_STOP=1 \
             -c "DROP DATABASE IF EXISTS topems_test WITH (FORCE);"
           PGPASSWORD=topems_test_secret createdb -h localhost -U topems_test topems_test
+          # 生产服务运行角色在 CI 测试库不存在；部分迁移直接 GRANT 给它，先建 NOLOGIN 角色。
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "SELECT 1 FROM pg_roles WHERE rolname='topems_app'" | grep -q 1 \
+            || psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "CREATE ROLE topems_app NOLOGIN;"
 
           # pg_dump 末尾 COMMENT ON EXTENSION 需要扩展属主；扩展由镜像预装，仅过滤该元数据。
           # 基线由 pg_dump 18 生成，PG16 服务端不识别 transaction_timeout；过滤该会话设置。
