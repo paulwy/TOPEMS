@@ -2993,6 +2993,13 @@ pending_forward_patches:
     effect: "rs.project_members.status 从默认 'ACTIVE' + Rust 大写写入，收口为 active/inactive 小写；权限查询 lower(status)='active' 与写入一致；ADD CHECK ck_project_members_status_standard + VALIDATE"
     destructive_scan: "UPDATE status 大小写归一（ACTIVE→active），ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有 active/inactive 之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124160000_rd_project_members_status_standard.rollback.sql 恢复默认 ACTIVE、存量大写并 DROP 约束"
+  # ===== 2026-11-24：B263 RD 变更请求状态落库约束 =====
+  - version: "20261124180000"
+    file: "database/migrations/20261124180000_rd_change_request_status_standard.sql"
+    status: to_apply
+    effect: "rs.change_requests.status 已知别名归一为 submitted/under_review/approved/rejected/closed 五态；默认值固定 'submitted'；ADD CHECK ck_change_requests_status_standard + VALIDATE"
+    destructive_scan: "UPDATE status 别名归一，ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有五态之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124180000_rd_change_request_status_standard.rollback.sql 恢复默认并 DROP 约束"
   # ===== 2026-11-24：B262 RD 配方状态词表收口 =====
   - version: "20261124170000"
     file: "database/migrations/20261124170000_rd_formula_status_standard.sql"
