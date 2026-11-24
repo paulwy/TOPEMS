@@ -224,3 +224,15 @@ psql -h /tmp -U air -d topems -v ON_ERROR_STOP=1 \
 1. 全部改动**未提交**；仓库另有 B253 并发未提交文件（`svc/rd/*`、`demo/`、`docs/database/rd-rs-project-status-*`），需按文件挑拣后再提。
 2. `audit_logs` 在参考库只有 `crm` 一个 schema 有该约束（基线快照如此），本地 13 schema 的差异属历史演进；本轮迁移按“只收窄已有约束”处理，未新建。
 3. 生产端 `audit_logs` 若存在 `active/archived` 历史行，B254 会在部署时 `RAISE EXCEPTION` 阻断——这是有意的 fail-closed，需先按 `UPDATE ... SET status='unknown'` 口径清洗（本轮未授权改 prod）。
+
+
+### 运行期探针（2026-11-24，事务内回滚，不落库）
+
+只验证“约束已生效”不够，还要验证“行为符合预期”：
+
+| 探针 | 结果 |
+|---|---|
+| 13 个 schema 各插一行 `status='active'` | **13/13 被 `ck_audit_logs_status_standard` 拒绝**（bi/crm/erp/hrm/iam/mes/plugin_mes/public/rs/scm/shared/srm/wms 逐一验证） |
+| `public.audit_logs` 插 `status='success'` | 接受（合法值未被误伤） |
+| `finance.financial_reports` 只写 `status` 插一行 | 接受；`\d` 确认列清单已无 `approval_status`，仅 `status` 与 `approval_comment` |
+| 本地 `audit_logs` 全量扫描（55,008 行） | `outside_narrow_set = 0`，13 个 schema 无历史生命周期值 |
