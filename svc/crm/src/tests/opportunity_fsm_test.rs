@@ -76,3 +76,31 @@ fn opp_fsm_invalid_transitions_detailed() {
         TopemsError::ValidationFailed(_)
     ));
 }
+
+#[test]
+fn opp_stage_db_contract_and_legacy_aliases() {
+    assert_eq!(OppStage::DB_VALUES.len(), 8);
+    assert_eq!(OppStage::DEFAULT, OppStage::Draft);
+
+    let aliases = [
+        ("prospecting", OppStage::Draft),
+        ("NEW", OppStage::Draft),
+        ("Lead", OppStage::Lead),
+        ("closed_won", OppStage::Won),
+        ("closed won", OppStage::Won),
+        ("closed_lost", OppStage::Lost),
+        (" Closed-Lost ", OppStage::Lost),
+        ("closed", OppStage::Closed),
+    ];
+    for (raw, expected) in aliases {
+        assert_eq!(OppStage::normalize(raw), Some(expected), "alias {raw}");
+    }
+    assert_eq!(OppStage::normalize("archived"), None);
+    for value in OppStage::DB_VALUES {
+        assert_eq!(
+            OppStage::from_str(value).map(|s| s.as_str()),
+            Some(value),
+            "db value {value}"
+        );
+    }
+}

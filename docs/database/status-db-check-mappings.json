@@ -2975,6 +2975,16 @@
       "db_constraint": "ck_experiments_phase_standard",
       "db_verified_at": "2026-11-24",
       "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default lab)"
+    },
+    {
+      "file": "svc/crm/src/modules/opportunity.rs",
+      "enum": "OppStage",
+      "table": "crm.opportunities",
+      "column": "stage",
+      "candidate": "database/migrations/20261124233000_crm_opportunity_stage_standard.sql",
+      "db_constraint": "ck_opportunities_stage_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default draft)"
     }
   ],
   "non_enum_checks": [
