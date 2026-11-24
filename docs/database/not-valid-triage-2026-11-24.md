@@ -224,6 +224,27 @@ psql -h /tmp -U air -d topems -v ON_ERROR_STOP=1 \
 1. **陈旧映射**：`FinancialReportStatus → financial_reports.approval_status` 这行在 B255 删列后已失效，属于“台账说有、DB 里没有”。已删除该行，并在 `status` 那行补 B255 合并说明。
 2. **真实缺口**：`crm.customer_finance.risklevel` 此前只有候选 SQL、没有约束。补迁移 `20261124140000`（`risklevel IN (low, medium, high, critical)`，前置断言值集外即中止，ADD NOT VALID + VALIDATE），本地与参考库均 `convalidated=true`；台账 `candidate` 由 SQL 文档改为真实约束名，契约文件同步增至 12 条（`check-status-enum-contract` 12/12 通过）。
 
+
+### 无约束队列校准：185 条不是 185 个缺口
+
+`status-db-check-queue` 报的是「185 个枚举 / 192 个值不在 DB CHECK」，看着像一大片待办。逐条拿本地 `pg_constraint` 复核后，结论不同：
+
+| 口径 | 数字 |
+|---|---|
+| 队列里的枚举 | 185（**全部已在映射台账**） |
+| 其中至少一个持久化列在本地已有真实 CHECK | **129** |
+| 余下 56 | 进程内/无独立列（`APIVersionStatus`、`AuthStatus`、`BackupStatus`、`DsrRequestStatus` 等） |
+| 本地真实缺口 | **0**（唯一例外是 `WorkflowStepStatus`，状态嵌在 `mdm_workflows.steps` jsonb 里，列级 CHECK 不可表达） |
+
+**根因**：`status-check-catalog.json` 只收录 35 条状态 CHECK（来自参考库基线快照），而队列是拿它当全集比对。于是「基线快照没收录」被算成了「没有约束」——例如 `ck_projects_status_standard`、`ck_project_milestones_status_standard` 在本地明明存在，仍被计入 uncovered。
+
+**结论**：这 185 条不能当 backlog 直接用，否则会去给已有约束的列重复加 CHECK（正是“批量盖章”）。要让这个指标重新有意义，二选一：
+
+1. 把 catalog 从「基线 + 前向迁移」扩到本地全量（会改变单一源语义，需单独评估）；
+2. 队列生成时叠加台账/本地复核列，输出「真实缺口」而不是「不在基线」。
+
+本轮不做口径改造（改动面比收口本身大），先把校准结果留档，避免下次照着 185 盲干。
+
 ### 本轮门禁汇总
 
 | 项目 | 结果 |
