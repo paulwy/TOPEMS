@@ -1,6 +1,7 @@
 //! APQP (Advanced Product Quality Planning) handlers
 
 use crate::models::apqp::*;
+use crate::modules::apqp_item_status::ApqpItemStatus;
 use crate::shared::fsm::{apqp_can_transition, apqp_requires_approval};
 use axum::{
     extract::State,
@@ -777,6 +778,12 @@ pub async fn update_apqp_phase(
     let end_dt = req.end_date.map(date_to_utc);
     let actual_start_dt = req.actual_start_date.map(date_to_utc);
     let actual_end_dt = req.actual_end_date.map(date_to_utc);
+    let requested_status = req.status.as_deref().map(|s| s.trim().to_ascii_lowercase());
+    if let Some(target) = requested_status.as_deref() {
+        if ApqpItemStatus::from_db_str(target).is_none() {
+            return ApiResponse::bad_request("APQP阶段状态不在规范集合内");
+        }
+    }
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -790,8 +797,38 @@ pub async fn update_apqp_phase(
         }
     };
 
+    let current = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_apqp_phases WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current {
+        Ok(Some(raw)) => match raw.as_deref().and_then(ApqpItemStatus::from_db_str) {
+            Some(parsed) => parsed,
+            None => return ApiResponse::conflict("APQP阶段状态不在规范集合内"),
+        },
+        Ok(None) => return ApiResponse::not_found("记录不存在"),
+        Err(e) => {
+            tracing::error!("读取APQP阶段状态失败: {}", e);
+            return ApiResponse::server_error("APQP阶段更新失败");
+        }
+    };
+    if let Some(target) = requested_status.as_deref() {
+        let target_status = match ApqpItemStatus::from_db_str(target) {
+            Some(parsed) => parsed,
+            None => return ApiResponse::bad_request("APQP阶段状态不在规范集合内"),
+        };
+        if target_status != current_status {
+            if let Err(msg) = current_status.can_transition_to(target_status) {
+                return ApiResponse::bad_request(&msg);
+            }
+        }
+    }
+
     let phase = sqlx::query_as::<_, ApqpPhase>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_phases SET phase_name = COALESCE($2, phase_name), description = COALESCE($3, description), status = COALESCE($4, status), start_date = COALESCE($5, start_date), end_date = COALESCE($6, end_date), actual_start_date = COALESCE($7, actual_start_date), actual_end_date = COALESCE($8, actual_end_date), progress = COALESCE($9, progress), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 AND tenant_id = $11 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_phases SET phase_name = COALESCE($2, phase_name), description = COALESCE($3, description), status = COALESCE($4, status), start_date = COALESCE($5, start_date), end_date = COALESCE($6, end_date), actual_start_date = COALESCE($7, actual_start_date), actual_end_date = COALESCE($8, actual_end_date), progress = COALESCE($9, progress), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 AND tenant_id = $11 AND status = $12 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_code, phase_name, description, status, start_date, end_date, actual_start_date, actual_end_date, progress, sort_order, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.phase_name)
@@ -804,6 +841,7 @@ pub async fn update_apqp_phase(
     .bind(req.progress)
     .bind(req.sort_order)
     .bind(tenant_id)
+    .bind(current_status.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -1164,6 +1202,12 @@ pub async fn update_apqp_task(
 
     let due_dt = req.due_date.map(date_to_utc);
     let completed_dt = req.completed_at.map(date_to_utc);
+    let requested_status = req.status.as_deref().map(|s| s.trim().to_ascii_lowercase());
+    if let Some(target) = requested_status.as_deref() {
+        if ApqpItemStatus::from_db_str(target).is_none() {
+            return ApiResponse::bad_request("APQP任务状态不在规范集合内");
+        }
+    }
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -1177,8 +1221,38 @@ pub async fn update_apqp_task(
         }
     };
 
+    let current = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_apqp_tasks WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current {
+        Ok(Some(raw)) => match raw.as_deref().and_then(ApqpItemStatus::from_db_str) {
+            Some(parsed) => parsed,
+            None => return ApiResponse::conflict("APQP任务状态不在规范集合内"),
+        },
+        Ok(None) => return ApiResponse::not_found("记录不存在"),
+        Err(e) => {
+            tracing::error!("读取APQP任务状态失败: {}", e);
+            return ApiResponse::server_error("APQP任务更新失败");
+        }
+    };
+    if let Some(target) = requested_status.as_deref() {
+        let target_status = match ApqpItemStatus::from_db_str(target) {
+            Some(parsed) => parsed,
+            None => return ApiResponse::bad_request("APQP任务状态不在规范集合内"),
+        };
+        if target_status != current_status {
+            if let Err(msg) = current_status.can_transition_to(target_status) {
+                return ApiResponse::bad_request(&msg);
+            }
+        }
+    }
+
     let task = sqlx::query_as::<_, ApqpTask>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_tasks SET task_name = COALESCE($2, task_name), description = COALESCE($3, description), task_type = COALESCE($4, task_type), deliverable = COALESCE($5, deliverable), status = COALESCE($6, status), assignee = COALESCE($7, assignee), due_date = COALESCE($8, due_date), completed_at = COALESCE($9, completed_at), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 AND tenant_id = $11 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date, completed_at, sort_order, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_tasks SET task_name = COALESCE($2, task_name), description = COALESCE($3, description), task_type = COALESCE($4, task_type), deliverable = COALESCE($5, deliverable), status = COALESCE($6, status), assignee = COALESCE($7, assignee), due_date = COALESCE($8, due_date), completed_at = COALESCE($9, completed_at), sort_order = COALESCE($10, sort_order), updated_at = NOW() WHERE id = $1 AND tenant_id = $11 AND status = $12 RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, phase_id::TEXT, task_name, description, task_type, deliverable, status, assignee, due_date, completed_at, sort_order, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.task_name)
@@ -1191,6 +1265,7 @@ pub async fn update_apqp_task(
     .bind(completed_dt)
     .bind(req.sort_order)
     .bind(tenant_id)
+    .bind(current_status.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
