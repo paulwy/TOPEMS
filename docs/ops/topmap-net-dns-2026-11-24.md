@@ -42,7 +42,7 @@ curl -sI https://topmap.net/login   → 301  location: https://www.topmap.net/lo
 curl -sI "https://topmap.net/a?x=1&y=2" → 301  location: https://www.topmap.net/a?x=1&y=2（查询串保留）
 curl -sIL http://topmap.net/a?x=1   → 301 → 200（整条链路一跳）
 curl -sI https://www.topmap.net     → 200
-dig +short @1.1.1.1 www/app/topmap.net/topmap.net → 全部 Cloudflare 边缘 IP，无 pages.dev
+dig +short @1.1.1.1 topmap.net / www.topmap.net / app.topmap.net → 全部 Cloudflare 边缘 IP，无 pages.dev
 ```
 
 注意：本机（air）的 mDNSResponder 仍缓存着 `@` 改为代理之前的旧答案（`topmap.net → 39.97.42.144`），所以在本机直接 `curl http://topmap.net` 会超时——这是本机缓存假象，不是线上问题。清缓存需 `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`（需密码，本轮未执行），或等 TTL 过期。
