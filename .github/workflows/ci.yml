@@ -2662,6 +2662,10 @@ jobs:
           done
 
       - name: Prebuild 26 binaries（避免 defense-check-all 内逐个编译超时）
+        env:
+          # 预编译仅消费仓库内 .sqlx 缓存；实时 sqlx 校验留给后续 prepare check，
+          # 避免空 topems_defense 库因 ai.ai_settings 等表缺失直接编译失败。
+          SQLX_OFFLINE: "true"
         run: |
           cargo build \
             -p topems-gis \
