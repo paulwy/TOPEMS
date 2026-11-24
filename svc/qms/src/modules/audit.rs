@@ -3,6 +3,7 @@
 use crate::models::audit::*;
 use crate::modules::audit_finding_status::QmsAuditFindingStatus;
 use crate::modules::audit_plan_status::AuditPlanStatus;
+use crate::modules::audit_task_status::AuditTaskStatus;
 use axum::{
     extract::State,
     routing::{get, post, put},
@@ -593,7 +594,7 @@ pub async fn create_audit_task(
         }
     }
 
-    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_tasks (tenant_id, task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(tenant_id).bind(task_no).bind(plan_id).bind(req.title).bind(req.description).bind(req.auditor)
+    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_audit_tasks (tenant_id, task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(tenant_id).bind(task_no).bind(plan_id).bind(req.title).bind(req.description).bind(req.auditor).bind(AuditTaskStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -653,19 +654,47 @@ pub async fn complete_audit_task(
         }
     };
 
-    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(id).bind(tenant_id)
-    .fetch_one(&mut scope)
+    let current = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_audit_tasks WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current {
+        Ok(Some(raw)) => {
+            let parsed = raw.as_deref().and_then(AuditTaskStatus::from_db_str);
+            let Some(parsed) = parsed else {
+                return ApiResponse::conflict("审核任务状态不在规范集合内");
+            };
+            parsed
+        }
+        Ok(None) => return ApiResponse::not_found("任务不存在"),
+        Err(e) => {
+            tracing::error!("读取审核任务状态失败: {}", e);
+            return ApiResponse::server_error("审核任务完成失败");
+        }
+    };
+    if current_status == AuditTaskStatus::Completed {
+        return ApiResponse::conflict("审核任务已完成");
+    }
+    if let Err(msg) = current_status.can_transition_to(AuditTaskStatus::Completed) {
+        return ApiResponse::bad_request(&msg);
+    }
+
+    let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $3 RETURNING id::TEXT, tenant_id::TEXT, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(id).bind(tenant_id).bind(current_status.as_db_str())
+    .fetch_optional(&mut scope)
     .await;
 
     match task {
-        Ok(data) => {
+        Ok(Some(data)) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交审核任务完成事务失败: {}", e);
                 return ApiResponse::server_error("审核任务完成失败");
             }
             ApiResponse::success(data, "审核任务已完成")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("任务不存在或状态已变更"),
+        Ok(None) => ApiResponse::conflict("审核任务状态已变化，请刷新后重试"),
         Err(e) => {
             tracing::error!("Failed to complete audit task: {}", e);
             ApiResponse::server_error("审核任务完成失败")
