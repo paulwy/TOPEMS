@@ -33,6 +33,27 @@ impl EquipmentMaintenanceStatus {
             _ => None,
         }
     }
+
+    /// 维护状态迁移矩阵：同态幂等；completed / cancelled 为终态。
+    pub fn can_transition_to(self, target: Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Pending => matches!(target, Self::InProgress | Self::Cancelled),
+            Self::InProgress => matches!(target, Self::Completed | Self::Cancelled),
+            Self::Completed | Self::Cancelled => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "维护记录状态不允许从 {} 流转到 {}",
+                self.as_db_str(),
+                target.as_db_str()
+            ))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -57,5 +78,33 @@ mod tests {
             );
         }
         assert_eq!(EquipmentMaintenanceStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn transition_matrix_is_forward_only() {
+        assert!(EquipmentMaintenanceStatus::Pending
+            .can_transition_to(EquipmentMaintenanceStatus::InProgress)
+            .is_ok());
+        assert!(EquipmentMaintenanceStatus::Pending
+            .can_transition_to(EquipmentMaintenanceStatus::Cancelled)
+            .is_ok());
+        assert!(EquipmentMaintenanceStatus::InProgress
+            .can_transition_to(EquipmentMaintenanceStatus::Completed)
+            .is_ok());
+        assert!(EquipmentMaintenanceStatus::InProgress
+            .can_transition_to(EquipmentMaintenanceStatus::Cancelled)
+            .is_ok());
+        assert!(EquipmentMaintenanceStatus::Pending
+            .can_transition_to(EquipmentMaintenanceStatus::Pending)
+            .is_ok());
+        assert!(EquipmentMaintenanceStatus::Pending
+            .can_transition_to(EquipmentMaintenanceStatus::Completed)
+            .is_err());
+        assert!(EquipmentMaintenanceStatus::Completed
+            .can_transition_to(EquipmentMaintenanceStatus::Pending)
+            .is_err());
+        assert!(EquipmentMaintenanceStatus::Cancelled
+            .can_transition_to(EquipmentMaintenanceStatus::InProgress)
+            .is_err());
     }
 }

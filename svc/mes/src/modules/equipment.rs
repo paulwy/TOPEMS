@@ -1285,10 +1285,33 @@ pub async fn update_maintenance_status(
         Err(resp) => return resp,
     };
     let now = Utc::now();
-    let status = match EquipmentMaintenanceStatus::from_db_str(&req.status) {
+    let target_status = match EquipmentMaintenanceStatus::from_db_str(&req.status) {
         Some(status) => status,
         None => return ApiResponse::bad_request("无效的维护记录状态"),
     };
+
+    let current_status = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM mes.equipment_maintenance_records WHERE id = $1 AND tenant_id = $2::uuid",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current_status {
+        Ok(Some(raw)) => match EquipmentMaintenanceStatus::from_db_str(&raw) {
+            Some(status) => status,
+            None => return ApiResponse::conflict("维护记录状态不在规范集合内"),
+        },
+        Ok(None) => return ApiResponse::not_found("维护记录不存在"),
+        Err(e) => {
+            tracing::warn!("Failed to read maintenance status: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("更新维护状态失败");
+        }
+    };
+    if let Err(msg) = current_status.can_transition_to(target_status) {
+        return ApiResponse::bad_request(&msg);
+    }
 
     let result = sqlx::query_as::<_, MaintenanceStatusRow>(
         r#"
@@ -1296,23 +1319,24 @@ pub async fn update_maintenance_status(
             status = $2,
             result = COALESCE($3, result),
             updated_at = $4
-        WHERE id = $1 AND tenant_id = $5::uuid
+        WHERE id = $1 AND tenant_id = $5::uuid AND status = $6
         RETURNING 
             id, equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at
         "#,
     )
     .bind(id)
-    .bind(status.as_db_str())
+    .bind(target_status.as_db_str())
     .bind(req.result)
     .bind(now)
     .bind(tenant_id)
+    .bind(current_status.as_db_str())
     .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("维护记录不存在"),
+        Ok(None) => return ApiResponse::conflict("维护记录状态已变化，请刷新后重试"),
         Err(e) => {
             tracing::warn!("Failed to update maintenance status: {}", e);
             let _ = scope.rollback().await;
