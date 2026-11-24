@@ -1045,10 +1045,10 @@ jobs:
           echo "|--------|------|------|------|" >> $GITHUB_STEP_SUMMARY
 
           if [ -f /tmp/i18n-audit.json ]; then
-            FAKE=$(node -e "console.log(require('/tmp/i18n-audit.json').fake_en.total)")
-            KEYMIS=$(node -e "console.log(require('/tmp/i18n-audit.json').key_mismatch.total)")
-            MIXED=$(node -e "console.log(require('/tmp/i18n-audit.json').mixed_structure.total)")
-            NS=$(node -e "console.log(require('/tmp/i18n-audit.json').namespaces_scanned)")
+            FAKE=$(node -e "const d=require('/tmp/i18n-audit.json');const q=d.quality||d;console.log(q.fake_en.total)")
+            KEYMIS=$(node -e "const d=require('/tmp/i18n-audit.json');const q=d.quality||d;console.log(q.key_mismatch.total)")
+            MIXED=$(node -e "const d=require('/tmp/i18n-audit.json');const q=d.quality||d;console.log(q.mixed_structure.total)")
+            NS=$(node -e "const d=require('/tmp/i18n-audit.json');const q=d.quality||d;console.log(q.namespaces_scanned)")
 
             echo "| 扫描命名空间 | $NS | - | ⏭️ |" >> $GITHUB_STEP_SUMMARY
             echo "| ① 假 en 值残留 | $FAKE | 0 | $([ "$FAKE" -eq 0 ] && echo '✅' || echo '❌') |" >> $GITHUB_STEP_SUMMARY
@@ -2178,6 +2178,7 @@ jobs:
       DEVELOPMENT_MODE: '1'
       APP_ENV: test
       JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
+      JWT_REFRESH_SECRET: test-jwt-refresh-secret-for-testing-only-32chars
     services:
       postgres:
         image: pgvector/pgvector:pg16
