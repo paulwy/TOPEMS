@@ -3103,3 +3103,11 @@ pending_forward_patches:
     effect: "qms.qa_eightd_reports.status 的 'new'/NULL 归 initiated、默认 initiated、SET NOT NULL，新增八态 CHECK（initiated/in_progress/containment/root_cause/permanent_action/verified/closed/cancelled）并 VALIDATE"
     destructive_scan: "UPDATE status 'new'/NULL→initiated，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "对齐 QMS shared/fsm EIGHT_D 状态机；创建改为 initiated，update 与 D1/D3/D4/D5/D6/D7/D8 步骤入口统一先读当前态、按 FSM 校验并带来源态 UPDATE。回滚 database/rollback/20261125006000_qms_eightd_status_standard.rollback.sql 恢复 'new' 默认与可空"
+
+  # ===== 2026-11-25：B278 审核任务状态值域收口 =====
+  - version: "20261125007000"
+    file: "database/migrations/20261125007000_qms_audit_task_status_standard.sql"
+    status: to_apply
+    effect: "qms.qa_audit_tasks.status 的 NULL 归 pending、默认 pending、SET NOT NULL，新增三态 CHECK（pending/in_progress/completed）并 VALIDATE"
+    destructive_scan: "UPDATE status NULL→pending，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "新增 AuditTaskStatus 三态唯一源；创建任务由枚举默认值写入 pending，complete_audit_task 先读当前态、按状态机校验并带来源态 UPDATE。回滚 database/rollback/20261125007000_qms_audit_task_status_standard.rollback.sql 恢复可空并移除 CHECK"

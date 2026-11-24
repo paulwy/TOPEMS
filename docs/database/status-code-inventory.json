@@ -5,7 +5,7 @@
     "db_check_constraints": 35,
     "db_enum_types": 5,
     "db_check_values": 54,
-    "rust_enums": 319,
+    "rust_enums": 320,
     "rust_enum_values": 241,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 251,
@@ -4409,6 +4409,21 @@
         "draft",
         "in_progress",
         "scheduled"
+      ]
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/audit_task_status.rs",
+      "name": "AuditTaskStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "pending"
       ]
     },
     {
