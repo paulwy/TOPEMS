@@ -18,33 +18,36 @@
 
 `@` 的 A 记录原为「仅 DNS」→ 直接打 `39.97.42.144`（已无响应，客户端只会连接超时）。改为代理后请求先到 Cloudflare 边缘，才能被重定向规则接管。
 
-**2. 新增单一重定向规则 `apex-root-to-www`**
+**2. 新增单一重定向规则 `apex-root-to-www`（已进一步压成单跳）**
 
-- 匹配（通配符模式）：`https://topmap.net/*`
-- 目标：`https://www.topmap.net/${1}`（301，保留查询字符串）
-- 另开启 SSL/TLS → 边缘证书 → **始终使用 HTTPS**，使 `http://topmap.net/*` 先在边缘 301 到 `https://topmap.net/*`
+- 匹配（自定义筛选表达式）：`(http.host eq "topmap.net")` —— 不再区分 scheme，http/https 都直接命中
+- 目标（动态表达式）：`concat("https://www.topmap.net", http.request.uri.path)`，301，勾选保留查询字符串
+- 同时开启 SSL/TLS → 边缘证书 → **始终使用 HTTPS**
+- 早期版本用通配符 `https://topmap.net/*`，导致 http 请求先被「始终使用 HTTPS」改写一次、再被规则改写一次，共两跳；改为 host 匹配后实测 **一跳**。
 
 **3. 删除 `test.topmap.net`**
 
 原 A 记录指向已无响应的 `39.97.42.144`（已代理，访问只会 5xx），已从控制台删除。删后记录数 4 → 3，`dig @1.1.1.1 test.topmap.net` 返回空（NXDOMAIN）。
 
-## 验证结果（2026-11-24 01:43 UTC 实测）
+## 验证结果（单跳版，2026-11-24 实测，直连边缘 IP 以排除本机 DNS 缓存）
 
 ```text
-curl -sIL http://topmap.net/
-  HTTP/1.1 301 → Location: https://topmap.net/
-  HTTP/2   301 → location: https://www.topmap.net/
-  HTTP/2   200
+curl -sI --resolve topmap.net:80:104.21.85.89  http://topmap.net/
+  HTTP/1.1 301  Location: https://www.topmap.net/          ← 只跳一次
 
-curl -sI  https://topmap.net/login      → 301  location: https://www.topmap.net/login
-curl -sI "https://topmap.net/a?x=1"      → 301  location: https://www.topmap.net/a?x=1
-curl -sI  https://www.topmap.net        → 200
-dig +short @1.1.1.1 www/app/topmap.net  → 全部 Cloudflare 边缘 IP，无 pages.dev
+curl -sI --resolve topmap.net:443:104.21.85.89 https://topmap.net/
+  HTTP/2   301  location: https://www.topmap.net/
+
+curl -sI https://topmap.net/login   → 301  location: https://www.topmap.net/login
+curl -sI "https://topmap.net/a?x=1&y=2" → 301  location: https://www.topmap.net/a?x=1&y=2（查询串保留）
+curl -sIL http://topmap.net/a?x=1   → 301 → 200（整条链路一跳）
+curl -sI https://www.topmap.net     → 200
+dig +short @1.1.1.1 www/app/topmap.net/topmap.net → 全部 Cloudflare 边缘 IP，无 pages.dev
 ```
 
-路径与查询串都保住了；裸域到 `www` 是两跳（http→https→www），浏览器无感。
+注意：本机（air）的 mDNSResponder 仍缓存着 `@` 改为代理之前的旧答案（`topmap.net → 39.97.42.144`），所以在本机直接 `curl http://topmap.net` 会超时——这是本机缓存假象，不是线上问题。清缓存需 `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`（需密码，本轮未执行），或等 TTL 过期。
 
-## 遗留（非阻塞）
+## 遗留
 
-- `http→https` 与 `https→www` 是两条机制，链路两跳；若以后要压成一跳，把重定向规则的匹配改为自定义表达式 `http.host eq "topmap.net"`、目标用动态路径即可，属优化项。
-- 入口链路只剩裸域两跳这一项优化，无功能遗留。
+- 无功能遗留；裸域到 `www` 已是单跳。
+- 唯一注意点：本机 DNS 缓存（见上）需清一次缓存才能在本机看到单跳效果。
