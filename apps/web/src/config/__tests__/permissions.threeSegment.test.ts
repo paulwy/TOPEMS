@@ -44,8 +44,12 @@ describe('hasPermission 三段码精确判定（批 15）', () => {
     expect(hasPermission(['mes:admin'], 'wms:inbound:create')).toBe(false);
   });
 
-  it('管理员不被误锁：superadmin(all) 与 admin 实测集', () => {
+  it('管理员不被误锁：superadmin(all/*) 与 admin 实测集', () => {
     expect(hasPermission(['all'], 'mes:work_order:delete')).toBe(true);
+    // 后端超管登录/刷新签发的是 ["*"]，必须与 all 等价
+    expect(hasPermission(['*'], 'mes:work_order:delete')).toBe(true);
+    expect(hasPermission(['*'], 'hrm:company:create')).toBe(true);
+    expect(hasPermission(['*'], 'finance:ledger:delete')).toBe(true);
     // admin 角色实测：持有模块级 admin 码 + 大量细粒度码
     const admin = ['admin:dashboard:admin', 'mes:admin', 'iam:user:read', 'scm:contract:create'];
     expect(hasPermission(admin, 'mes:work_order:delete')).toBe(true);

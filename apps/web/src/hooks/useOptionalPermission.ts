@@ -51,7 +51,9 @@ function resolveAliases(permission: string): string[] {
  * 避免两套判定逻辑漂移。
  */
 function checkCode(permissions: string[], inherited: string[], code: string): boolean {
-  if (permissions.includes('all') || inherited.includes('all')) return true;
+  // 后端超管权限集合为 ["*"]，与 "all" 同为通配；漏判会让超管的写按钮被误隐藏。
+  if (permissions.includes('all') || permissions.includes('*')) return true;
+  if (inherited.includes('all') || inherited.includes('*')) return true;
   return hasPermissionWithInheritance(inherited, code) || hasPermission(permissions, code);
 }
 

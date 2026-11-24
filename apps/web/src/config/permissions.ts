@@ -249,7 +249,9 @@ function hasThreeSegmentPermission(userPermissions: string[], parts: string[]): 
 }
 
 export const hasPermission = (userPermissions: string[], requiredPermission: string): boolean => {
-  if (userPermissions.includes('all')) {
+  // `*` 与 `all` 同为通配：后端超管登录/刷新固定签发 ["*"]（iam/auth.rs login、refresh 分支），
+  // 只认 `all` 会让超管在细粒度码判定处被当成"无权限"。
+  if (userPermissions.includes('all') || userPermissions.includes('*')) {
     return true;
   }
 

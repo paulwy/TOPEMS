@@ -48,6 +48,15 @@ describe('useOptionalPermission（批 14）', () => {
     expect(result.current('mes:equipment:delete')).toBe(true);
   });
 
+  it('* 通配放行全部（后端超管权限集）', () => {
+    setCache(['*']);
+    const { result } = renderHook(() => useOptionalPermission());
+    expect(result.current('mes:equipment:create')).toBe(true);
+    expect(result.current('mes:equipment:delete')).toBe(true);
+    expect(result.current('hrm:company:update')).toBe(true);
+    expect(result.current('finance:ledger:delete')).toBe(true);
+  });
+
   it(':view 等价回退到 :read', () => {
     setCache(['mes:equipment:read']);
     const { result } = renderHook(() => useOptionalPermission());
