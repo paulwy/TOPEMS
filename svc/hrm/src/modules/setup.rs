@@ -16,6 +16,23 @@ use super::ApiState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
+/// 预检查询失败必须显式 500，不能把 DB 故障当成「0 行」再误报 400「不存在」。
+/// 只用于拦非法引用的只读预检；事务已 abort 时仍返回可诊断的服务错误。
+macro_rules! precheck_db {
+    ($label:literal, $query:expr) => {
+        match $query {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("{} 预检失败: {}", $label, e);
+                return ApiResponse::from(TopemsError::Internal(format!(
+                    "{}校验失败，请稍后重试",
+                    $label
+                )));
+            }
+        }
+    };
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct InitializationStatus {
     pub id: Uuid,
@@ -317,6 +334,8 @@ pub async fn get_init_progress(
             .fetch_optional(&mut **txn)
             .await;
 
+            let company_id: Option<Uuid> = precheck_db!("公司信息", company_result);
+
             let step_statuses: Vec<StepStatus> = steps
                 .iter()
                 .map(|s| {
@@ -344,7 +363,7 @@ pub async fn get_init_progress(
                     is_completed,
                     current_step,
                     steps: step_statuses,
-                    company_id: company_result.ok().flatten(),
+                    company_id,
                 },
                 "获取初始化进度成功",
             )
@@ -617,15 +636,16 @@ pub async fn setup_departments(
 
     // P1-3：库内已有部门时允许「无新增」提交——只把该步置完成，不再报「至少录入一个」。
     if req.departments.is_empty() {
-        let existing: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            "SELECT COUNT(*) FROM hrm.departments WHERE tenant_id = $1 AND deleted_at IS NULL"
-        ))
-        .bind(org_id)
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let existing: i64 = precheck_db!(
+            "部门数据",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM hrm.departments WHERE tenant_id = $1 AND deleted_at IS NULL"
+            ))
+            .bind(org_id)
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         if existing == 0 {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -692,27 +712,28 @@ pub async fn setup_departments(
     }
 
     // 库内同名（租户范围，软删除外）提前拦截，避免重复落库。
-    let dup_dept: Option<String> = sqlx::query_scalar::<_, String>(only_own_schema_query!(
-        "hrm",
-        r#"
-        SELECT LOWER(name) FROM hrm.departments
-        WHERE tenant_id = $1
-          AND deleted_at IS NULL
-          AND LOWER(name) = ANY($2::text[])
-        LIMIT 1
-        "#
-    ))
-    .bind(org_id)
-    .bind(
-        requested_names
-            .iter()
-            .map(|n| n.to_lowercase())
-            .collect::<Vec<_>>(),
-    )
-    .fetch_optional(&mut **txn)
-    .await
-    .ok()
-    .flatten();
+    let dup_dept: Option<String> = precheck_db!(
+        "部门重名",
+        sqlx::query_scalar::<_, String>(only_own_schema_query!(
+            "hrm",
+            r#"
+            SELECT LOWER(name) FROM hrm.departments
+            WHERE tenant_id = $1
+              AND deleted_at IS NULL
+              AND LOWER(name) = ANY($2::text[])
+            LIMIT 1
+            "#
+        ))
+        .bind(org_id)
+        .bind(
+            requested_names
+                .iter()
+                .map(|n| n.to_lowercase())
+                .collect::<Vec<_>>(),
+        )
+        .fetch_optional(&mut **txn)
+        .await
+    );
     if let Some(dup) = dup_dept {
         return ApiResponse::from(TopemsError::ResourceAlreadyExists(format!(
             "部门已存在：{dup}"
@@ -737,19 +758,20 @@ pub async fn setup_departments(
     manager_ids.dedup();
 
     if !parent_ids.is_empty() {
-        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            r#"
-            SELECT COUNT(*) FROM hrm.departments
-            WHERE tenant_id = $1 AND deleted_at IS NULL AND id = ANY($2::uuid[])
-            "#
-        ))
-        .bind(org_id)
-        .bind(parent_ids.clone())
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let found: i64 = precheck_db!(
+            "上级部门引用",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.departments
+                WHERE tenant_id = $1 AND deleted_at IS NULL AND id = ANY($2::uuid[])
+                "#
+            ))
+            .bind(org_id)
+            .bind(parent_ids.clone())
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         let expected = i64::try_from(parent_ids.len()).unwrap_or(i64::MAX);
         if found != expected {
@@ -760,19 +782,20 @@ pub async fn setup_departments(
     }
 
     if !manager_ids.is_empty() {
-        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            r#"
-            SELECT COUNT(*) FROM hrm.employees
-            WHERE tenant_id = $1 AND deleted_at IS NULL AND id = ANY($2::uuid[])
-            "#
-        ))
-        .bind(org_id)
-        .bind(manager_ids.clone())
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let found: i64 = precheck_db!(
+            "部门负责人引用",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.employees
+                WHERE tenant_id = $1 AND deleted_at IS NULL AND id = ANY($2::uuid[])
+                "#
+            ))
+            .bind(org_id)
+            .bind(manager_ids.clone())
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         let expected = i64::try_from(manager_ids.len()).unwrap_or(i64::MAX);
         if found != expected {
@@ -907,15 +930,16 @@ pub async fn setup_positions(
 
     // P1-3：库内已有岗位时允许「无新增」提交——只把该步置完成。
     if req.positions.is_empty() {
-        let existing: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            "SELECT COUNT(*) FROM hrm.positions WHERE tenant_id = $1 AND deleted_at IS NULL"
-        ))
-        .bind(org_id)
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let existing: i64 = precheck_db!(
+            "岗位数据",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM hrm.positions WHERE tenant_id = $1 AND deleted_at IS NULL"
+            ))
+            .bind(org_id)
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         if existing == 0 {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -982,21 +1006,22 @@ pub async fn setup_positions(
 
     // P2-4：岗位引用的部门必须存在且属本租户，杜绝孤儿岗位（应用层外键防护）。
     if !dept_ids.is_empty() {
-        let found: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-            "hrm",
-            r#"
-            SELECT COUNT(*) FROM hrm.departments
-            WHERE tenant_id = $1
-              AND deleted_at IS NULL
-              AND id = ANY($2::uuid[])
-            "#
-        ))
-        .bind(org_id)
-        .bind(dept_ids.iter().copied().collect::<Vec<_>>())
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let found: i64 = precheck_db!(
+            "岗位部门引用",
+            sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.departments
+                WHERE tenant_id = $1
+                  AND deleted_at IS NULL
+                  AND id = ANY($2::uuid[])
+                "#
+            ))
+            .bind(org_id)
+            .bind(dept_ids.iter().copied().collect::<Vec<_>>())
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         let expected: i64 = i64::try_from(dept_ids.len()).unwrap_or(i64::MAX);
         if found != expected {
@@ -1007,27 +1032,28 @@ pub async fn setup_positions(
     }
 
     // 库内同名（租户范围，软删除外）提前拦截。
-    let dup_pos: Option<String> = sqlx::query_scalar::<_, String>(only_own_schema_query!(
-        "hrm",
-        r#"
-        SELECT LOWER(name) FROM hrm.positions
-        WHERE tenant_id = $1
-          AND deleted_at IS NULL
-          AND LOWER(name) = ANY($2::text[])
-        LIMIT 1
-        "#
-    ))
-    .bind(org_id)
-    .bind(
-        requested_names
-            .iter()
-            .map(|n| n.to_lowercase())
-            .collect::<Vec<_>>(),
-    )
-    .fetch_optional(&mut **txn)
-    .await
-    .ok()
-    .flatten();
+    let dup_pos: Option<String> = precheck_db!(
+        "岗位重名",
+        sqlx::query_scalar::<_, String>(only_own_schema_query!(
+            "hrm",
+            r#"
+            SELECT LOWER(name) FROM hrm.positions
+            WHERE tenant_id = $1
+              AND deleted_at IS NULL
+              AND LOWER(name) = ANY($2::text[])
+            LIMIT 1
+            "#
+        ))
+        .bind(org_id)
+        .bind(
+            requested_names
+                .iter()
+                .map(|n| n.to_lowercase())
+                .collect::<Vec<_>>(),
+        )
+        .fetch_optional(&mut **txn)
+        .await
+    );
     if let Some(dup) = dup_pos {
         return ApiResponse::from(TopemsError::ResourceAlreadyExists(format!(
             "职位已存在：{dup}"
@@ -1270,16 +1296,17 @@ pub async fn setup_admin_user(
 
     // P2-2 / P3-1：管理员引用的部门、岗位、IAM 账号必须存在、未删除且属本租户。
     if let Some(did) = req.department_id {
-        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            "SELECT COUNT(*) FROM hrm.departments WHERE tenant_id = $1 AND deleted_at IS NULL AND id = $2"
-        ))
-        .bind(org_id)
-        .bind(did)
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let found: i64 = precheck_db!(
+            "管理员部门引用",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM hrm.departments WHERE tenant_id = $1 AND deleted_at IS NULL AND id = $2"
+            ))
+            .bind(org_id)
+            .bind(did)
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         if found == 0 {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -1288,16 +1315,17 @@ pub async fn setup_admin_user(
         }
     }
     if let Some(pid) = req.position_id {
-        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            "SELECT COUNT(*) FROM hrm.positions WHERE tenant_id = $1 AND deleted_at IS NULL AND id = $2"
-        ))
-        .bind(org_id)
-        .bind(pid)
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let found: i64 = precheck_db!(
+            "管理员岗位引用",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM hrm.positions WHERE tenant_id = $1 AND deleted_at IS NULL AND id = $2"
+            ))
+            .bind(org_id)
+            .bind(pid)
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         if found == 0 {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -1306,16 +1334,17 @@ pub async fn setup_admin_user(
         }
     }
     if let Some(uid) = req.user_id {
-        let exists: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            "SELECT COUNT(*) FROM iam.users WHERE id = $1 AND deleted_at IS NULL",
-            "iam"
-        ))
-        .bind(uid)
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let exists: i64 = precheck_db!(
+            "IAM 账号引用",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM iam.users WHERE id = $1 AND deleted_at IS NULL",
+                "iam"
+            ))
+            .bind(uid)
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         if exists == 0 {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -1323,16 +1352,17 @@ pub async fn setup_admin_user(
             ));
         }
         // iam.users 无 tenant 列，租户成员关系查 core_tenant_users。
-        let member: i64 = sqlx::query_scalar(only_own_schema_query!(
-            "hrm",
-            "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2"
-        ))
-        .bind(org_id)
-        .bind(uid)
-        .fetch_optional(&mut **txn)
-        .await
-        .ok()
-        .flatten()
+        let member: i64 = precheck_db!(
+            "租户成员关系",
+            sqlx::query_scalar(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2"
+            ))
+            .bind(org_id)
+            .bind(uid)
+            .fetch_optional(&mut **txn)
+            .await
+        )
         .unwrap_or(0);
         if member == 0 {
             return ApiResponse::from(TopemsError::ValidationFailed(
@@ -1535,57 +1565,61 @@ pub async fn complete_initialization(
             }
 
             // 首启结果汇总（租户范围），供前端确认；admin 未绑定 IAM 账号仅告警不阻断。
-            let company_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "hrm",
-                r#"
-                SELECT COUNT(*) FROM hrm.companies
-                WHERE tenant_id = $1 AND deleted_at IS NULL
-                "#
-            ))
-            .bind(org_id)
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten()
+            let company_count: i64 = precheck_db!(
+                "公司汇总",
+                sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "hrm",
+                    r#"
+                    SELECT COUNT(*) FROM hrm.companies
+                    WHERE tenant_id = $1 AND deleted_at IS NULL
+                    "#
+                ))
+                .bind(org_id)
+                .fetch_optional(&mut **txn)
+                .await
+            )
             .unwrap_or(0);
-            let department_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "hrm",
-                r#"
-                SELECT COUNT(*) FROM hrm.departments
-                WHERE tenant_id = $1 AND deleted_at IS NULL
-                "#
-            ))
-            .bind(org_id)
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten()
+            let department_count: i64 = precheck_db!(
+                "部门汇总",
+                sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "hrm",
+                    r#"
+                    SELECT COUNT(*) FROM hrm.departments
+                    WHERE tenant_id = $1 AND deleted_at IS NULL
+                    "#
+                ))
+                .bind(org_id)
+                .fetch_optional(&mut **txn)
+                .await
+            )
             .unwrap_or(0);
-            let position_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "hrm",
-                r#"
-                SELECT COUNT(*) FROM hrm.positions
-                WHERE tenant_id = $1 AND deleted_at IS NULL
-                "#
-            ))
-            .bind(org_id)
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten()
+            let position_count: i64 = precheck_db!(
+                "岗位汇总",
+                sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "hrm",
+                    r#"
+                    SELECT COUNT(*) FROM hrm.positions
+                    WHERE tenant_id = $1 AND deleted_at IS NULL
+                    "#
+                ))
+                .bind(org_id)
+                .fetch_optional(&mut **txn)
+                .await
+            )
             .unwrap_or(0);
-            let admin_bound: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "hrm",
-                r#"
-                SELECT COUNT(*) FROM hrm.employees
-                WHERE tenant_id = $1 AND deleted_at IS NULL AND user_id IS NOT NULL
-                "#
-            ))
-            .bind(org_id)
-            .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten()
+            let admin_bound: i64 = precheck_db!(
+                "管理员绑定汇总",
+                sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "hrm",
+                    r#"
+                    SELECT COUNT(*) FROM hrm.employees
+                    WHERE tenant_id = $1 AND deleted_at IS NULL AND user_id IS NOT NULL
+                    "#
+                ))
+                .bind(org_id)
+                .fetch_optional(&mut **txn)
+                .await
+            )
             .unwrap_or(0);
             let admin_bound = admin_bound > 0;
 
