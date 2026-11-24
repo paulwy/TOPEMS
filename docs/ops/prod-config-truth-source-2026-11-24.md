@@ -79,3 +79,5 @@
 
 **注意**：生产机纠正了一点——navigation-config 的 HTTP 状态是 200（错误在 JSON body），此前 1103 条 200、仅重启窗口 2 条 502。因此不能拿 HTTP 状态做判据，必须看 `success` 字段。
 
+**序号变更（2026-11-24 推送时）**：B260 的 `rs.project_members.status` 收口迁移原为 `20261124150000`，与远端并行的 HRM 初始化唯一索引迁移（`20261124150000_hrm_init_status_tenant_step_unique`）撞号，已重押为 `20261124160000_rd_project_members_status_standard`（回滚件同名），manifest 双条并存、checksums 重算、`gen-manifest.sh --check` 无漂移。生产执行顺序：HRM(150000) → RD(160000)。终稿回执见 `docs/ops/receipt-prod-round3-2026-11-24.md`。
+
