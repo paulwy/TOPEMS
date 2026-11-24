@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **415** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
+共 **414** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
 
 ## 2026-11-24 订单两表撤登记（方案 B）
 
@@ -206,7 +206,7 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 - W5-B238（B238）新增 `qms.qa_audit_findings.ck_qa_audit_findings_status_standard` 只有候选 SQL（`docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B237（B237）新增 `pm.project_resources.ck_project_resources_status_standard` 只有候选 SQL（`docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 - W5-B236（B236）新增 `rd.bugs.ck_rd_bugs_status_standard` 只有候选 SQL（`docs/database/rd-bug-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
-- W5-B235（B235）新增 `pm.project_risks.ck_project_risks_status_standard` 只有候选 SQL（`docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
+- W5-B235（B235）新增 `pm.project_risks.ck_project_risks_status_standard` 只有候选 SQL（`docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql`）、无迁移；已于 2026-11-24 由 B269 回迁（`database/migrations/20261124235500_pm_project_risk_status_standard.sql`），不再计入。
 
 - W5-B239（B239）新增 `pm.settlements.ck_settlements_status_standard` 只有候选 SQL（`docs/database/pm-settlement-status-check-candidates-2026-11-23.sql`）、无迁移；重建库中表存在但约束不存在，`status` 登记在目录 `uncovered`，已计入本清单待回迁。
 
