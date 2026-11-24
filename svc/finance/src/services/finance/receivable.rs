@@ -145,6 +145,9 @@ impl FinanceService {
         created_by: &str,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let created_by = Uuid::parse_str(created_by)
+            .map_err(|_| TopemsError::ValidationFailed("无效的操作人ID".to_string()))?;
         let customer_name = req
             .get("customer_name")
             .and_then(|v| v.as_str())

@@ -148,6 +148,9 @@ impl FinanceService {
         created_by: &str,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let created_by = Uuid::parse_str(created_by)
+            .map_err(|_| TopemsError::ValidationFailed("无效的操作人ID".to_string()))?;
         let supplier_name = req
             .get("supplier_name")
             .and_then(|v| v.as_str())
@@ -166,7 +169,7 @@ impl FinanceService {
         .bind(payment_no)
         .bind(supplier_name)
         .bind(amount)
-        .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
+        .bind(created_by)
         .fetch_one(&mut scope)
         .await?;
 

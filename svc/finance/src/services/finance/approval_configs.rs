@@ -90,6 +90,9 @@ impl FinanceService {
         created_by: &str,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
+        let tenant_id = super::require_tenant(tenant_id)?;
+        let created_by = Uuid::parse_str(created_by)
+            .map_err(|_| TopemsError::ValidationFailed("无效的操作人ID".to_string()))?;
         let mut tx = self.write_scope(txn).await?;
 
         let config: PaymentApprovalConfig = sqlx::query_as(
@@ -105,7 +108,7 @@ impl FinanceService {
         .bind(req.approval_levels.unwrap_or(1))
         .bind(req.priority.unwrap_or(0))
         .bind(req.is_active.unwrap_or(true))
-        .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
+        .bind(created_by)
         .fetch_one(&mut tx)
         .await?;
 

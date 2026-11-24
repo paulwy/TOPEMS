@@ -1654,8 +1654,15 @@ pub async fn create_approval_config_handler(
     }
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let created_by = claims.username.clone();
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let created_by = match claims.user_id() {
+        Ok(u) => u.to_string(),
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
 
     match service
         .create_approval_config(tenant_id, req, &created_by, txn)
@@ -3713,8 +3720,15 @@ pub async fn batch_create_receivables_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let created_by = claims.username.clone();
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let created_by = match claims.user_id() {
+        Ok(u) => u.to_string(),
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
     let items = req
         .get("items")
         .and_then(|v| v.as_array())
@@ -3776,8 +3790,15 @@ async fn create_payable_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let created_by = claims.username.clone();
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let created_by = match claims.user_id() {
+        Ok(u) => u.to_string(),
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
     match service
         .create_payable(tenant_id, req, &created_by, txn)
         .await
@@ -3894,8 +3915,15 @@ pub async fn batch_create_payables_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let created_by = claims.username.clone();
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let created_by = match claims.user_id() {
+        Ok(u) => u.to_string(),
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
     let items = req
         .get("items")
         .and_then(|v| v.as_array())
@@ -3997,8 +4025,15 @@ pub async fn create_collection_handler(
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let created_by = claims.username.clone();
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let created_by = match claims.user_id() {
+        Ok(u) => u.to_string(),
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
     // 连接级租户上下文：复用请求级 RLS 事务，裸池写入在严格 RLS 策略下会被拒绝。
     let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
@@ -4316,8 +4351,15 @@ pub async fn create_payment_record_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
-    let created_by = claims.username.clone();
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
+    let created_by = match claims.user_id() {
+        Ok(u) => u.to_string(),
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
     match service
         .create_payment_record(tenant_id, req, &created_by, txn)
         .await
