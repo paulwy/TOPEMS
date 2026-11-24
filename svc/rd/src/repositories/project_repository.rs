@@ -3,7 +3,7 @@ use serde_json;
 use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
-use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
+use crate::models::{CreateProjectRequest, Project, ProjectStatus, UpdateProjectRequest};
 
 use topems_shared_core::error::{Result, TopemsError};
 
@@ -42,7 +42,7 @@ impl ProjectRepository {
         .bind(&req.code)
         .bind(&req.description)
         .bind(req.project_type)
-        .bind("draft")
+        .bind(ProjectStatus::Draft.as_db_str())
         .bind(&req.leader)
         .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
         .bind(req.start_date)
@@ -232,7 +232,7 @@ impl ProjectRepository {
             .bind(&req.code)
             .bind(&req.description)
             .bind(req.project_type)
-            .bind("draft")
+            .bind(ProjectStatus::Draft.as_db_str())
             .bind(&req.leader)
             .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
             .bind(req.start_date)
@@ -335,7 +335,7 @@ mod tests {
             .bind(&req.code)
             .bind(&req.description)
             .bind(req.project_type)
-            .bind("draft")
+            .bind(ProjectStatus::Draft.as_db_str())
             .bind(&req.leader)
             .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
             .bind(req.start_date)

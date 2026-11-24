@@ -16,7 +16,7 @@ use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
-use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
+use crate::models::{CreateProjectRequest, Project, ProjectStatus, UpdateProjectRequest};
 use crate::services::project_permission::{
     check_project_owner, check_project_permission, ProjectPermission,
 };
@@ -103,6 +103,13 @@ pub async fn list_projects(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let locale = Locale::from_headers(&headers).as_sql();
+    let status_filter = match params.status.as_deref() {
+        Some(raw) if !raw.trim().is_empty() => match ProjectStatus::normalize(raw) {
+            Some(v) => Some(v.to_string()),
+            None => return ApiResponse::bad_request("无效的项目状态筛选值"),
+        },
+        _ => None,
+    };
 
     let result = sqlx::query_as::<_, Project>(
         r#"
@@ -120,7 +127,7 @@ pub async fn list_projects(
         "#,
     )
     .bind(&params.search)
-    .bind(&params.status)
+    .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
     .bind(locale)
@@ -138,7 +145,7 @@ pub async fn list_projects(
                 "#,
             )
             .bind(&params.search)
-            .bind(&params.status)
+            .bind(&status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -222,7 +229,7 @@ pub async fn create_project(
     .bind(&req.code)
     .bind(&req.description)
     .bind(req.project_type)
-    .bind("draft")
+    .bind(ProjectStatus::Draft.as_db_str())
     .bind(&req.leader)
     .bind(serde_json::to_value(&req.team_members).unwrap_or(serde_json::json!([])))
     .bind(req.start_date)
@@ -469,7 +476,19 @@ pub async fn update_project(
 
     let name = req.name.clone().unwrap_or(existing.name);
     let description = req.description.clone().or(existing.description);
-    let status = req.status.map(|s| s.to_string()).unwrap_or(existing.status);
+    let status = match req.status {
+        Some(target) => match ProjectStatus::from_db_str(&existing.status) {
+            Some(current) if current.can_transition_to(target) => target,
+            Some(_) => {
+                return ApiResponse::bad_request("非法的项目状态流转：终态不可回退或跳变");
+            }
+            None => return ApiResponse::server_error("项目当前状态数据非法"),
+        },
+        None => match ProjectStatus::from_db_str(&existing.status) {
+            Some(current) => current,
+            None => return ApiResponse::server_error("项目当前状态数据非法"),
+        },
+    };
     let leader = req.leader.clone().unwrap_or(existing.leader);
     let team_members = req.team_members.clone().or(existing.team_members);
     let end_date = req.end_date.or(existing.end_date);
@@ -492,7 +511,7 @@ pub async fn update_project(
     .bind(id)
     .bind(&name)
     .bind(&description)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(&leader)
     .bind(serde_json::to_value(team_members).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(end_date)
@@ -716,7 +735,7 @@ pub async fn batch_create_projects(
         .bind(&project_req.code)
         .bind(&project_req.description)
         .bind(project_req.project_type)
-        .bind("draft")
+        .bind(ProjectStatus::Draft.as_db_str())
         .bind(&project_req.leader)
         .bind(
             serde_json::to_value(project_req.team_members.clone()).unwrap_or(serde_json::json!([])),
@@ -1281,7 +1300,7 @@ pub async fn import_projects(
                 .bind(&code)
                 .bind(&description)
                 .bind(&project_type)
-                .bind("draft")
+                .bind(ProjectStatus::Draft.as_db_str())
                 .bind(&leader)
                 .bind(serde_json::to_value(team_members).unwrap_or(serde_json::json!([])))
                 .bind(start_date)

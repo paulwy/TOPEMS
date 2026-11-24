@@ -111,6 +111,32 @@ impl ProjectStatus {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<&'static str> {
+        Self::from_db_str(raw).map(|s| s.as_db_str())
+    }
+
+    /// 项目生命周期：草稿可提交/直接启动，审批中可激活或退回草稿；
+    /// 执行中可暂停/完成/取消，暂停可恢复；完成与取消为终态。
+    #[must_use]
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        match self {
+            Self::Draft => matches!(
+                target,
+                Self::PendingApproval | Self::Active | Self::Cancelled
+            ),
+            Self::PendingApproval => {
+                matches!(target, Self::Draft | Self::Active | Self::Cancelled)
+            }
+            Self::Active => matches!(target, Self::Paused | Self::Completed | Self::Cancelled),
+            Self::Paused => matches!(target, Self::Active | Self::Completed | Self::Cancelled),
+            Self::Completed | Self::Cancelled => false,
+        }
+    }
 }
 
 impl std::fmt::Display for ProjectStatus {
@@ -312,8 +338,25 @@ mod tests {
     }
 
     #[test]
+    fn project_status_transitions_follow_lifecycle() {
+        use ProjectStatus::*;
+        assert!(Draft.can_transition_to(PendingApproval));
+        assert!(Draft.can_transition_to(Active));
+        assert!(PendingApproval.can_transition_to(Active));
+        assert!(PendingApproval.can_transition_to(Draft));
+        assert!(Active.can_transition_to(Paused));
+        assert!(Paused.can_transition_to(Active));
+        assert!(Active.can_transition_to(Completed));
+        assert!(!Completed.can_transition_to(Draft));
+        assert!(!Cancelled.can_transition_to(Active));
+        assert!(Active.can_transition_to(Active));
+    }
+
+    #[test]
     fn test_project_status_display() {
         assert_eq!(format!("{}", ProjectStatus::Draft), "draft");
+        assert_eq!(ProjectStatus::normalize("CANCELED"), Some("cancelled"));
+        assert!(!ProjectStatus::normalize("done").is_some());
         assert_eq!(
             format!("{}", ProjectStatus::PendingApproval),
             "pending_approval"
