@@ -20,7 +20,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::middleware::tenant::{resolve_create_tenant, RlsTxnCell};
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -240,14 +240,10 @@ pub async fn create_category(
             "分类名称不能为空".to_string(),
         ));
     }
-    let tenant_bind: Uuid = if claims.is_superuser {
-        Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
-            .unwrap_or(Uuid::nil())
+    let tenant_bind = match resolve_create_tenant(&claims) {
+        Ok(Some(t)) => t,
+        Ok(None) => Uuid::nil(),
+        Err((_, msg)) => return ApiResponse::from(TopemsError::ValidationFailed(msg)),
     };
     let code = payload
         .code
