@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "patrol_no"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "production_line"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "workstation_id"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "workstation_name"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "inspector"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "patrol_time"
           }
         }
@@ -86,7 +86,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "status"
           }
         }
@@ -97,7 +97,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "result"
           }
         }
@@ -108,7 +108,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "findings"
           }
         }
@@ -119,7 +119,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "memo"
           }
         }
@@ -130,7 +130,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "created_at"
           }
         }
@@ -141,7 +141,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "quality_patrols",
+            "table": "mes.quality_patrols",
             "name": "updated_at"
           }
         }

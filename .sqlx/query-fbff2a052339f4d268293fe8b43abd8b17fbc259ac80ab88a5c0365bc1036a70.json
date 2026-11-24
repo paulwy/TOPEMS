@@ -9,7 +9,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "ai_settings",
+            "table": "ai.ai_settings",
             "name": "default_model"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Int4",
         "origin": {
           "Table": {
-            "table": "ai_settings",
+            "table": "ai.ai_settings",
             "name": "max_tokens"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "ai_settings",
+            "table": "ai.ai_settings",
             "name": "temperature"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "ai_settings",
+            "table": "ai.ai_settings",
             "name": "enable_streaming"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "ai_settings",
+            "table": "ai.ai_settings",
             "name": "enable_function_calling"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "ai_settings",
+            "table": "ai.ai_settings",
             "name": "available_models"
           }
         }

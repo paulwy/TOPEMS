@@ -9,7 +9,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "id"
           }
         }

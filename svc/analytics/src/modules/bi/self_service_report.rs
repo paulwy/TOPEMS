@@ -146,10 +146,8 @@ pub async fn list_reports(
         r#"
         SELECT id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
         FROM bi.analytics_self_service_reports
-        WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -353,10 +351,8 @@ pub async fn get_report(
         SELECT id, name, description, datasource_id, fields, filters, config, owner_id, is_public, created_at, updated_at
         FROM bi.analytics_self_service_reports
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -654,10 +650,8 @@ pub async fn query_report_data(
         SELECT id, name, datasource_id, fields, filters
         FROM bi.analytics_self_service_reports
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -922,10 +916,8 @@ pub async fn export_report(
         SELECT id, name, fields
         FROM bi.analytics_self_service_reports
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await

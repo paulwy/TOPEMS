@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "tenant_id"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "warehouse_id"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "rule_type"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Int4",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "priority"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "conditions"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "actions"
           }
         }
@@ -86,7 +86,7 @@
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "is_active"
           }
         }
@@ -97,7 +97,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "slotting_rules",
+            "table": "wms.slotting_rules",
             "name": "created_at"
           }
         }

@@ -9,7 +9,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "bom_items",
+            "table": "mes.bom_items",
             "name": "material_code"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "bom_items",
+            "table": "mes.bom_items",
             "name": "material_name"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "bom_items",
+            "table": "mes.bom_items",
             "name": "specification"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "bom_items",
+            "table": "mes.bom_items",
             "name": "unit"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Numeric",
         "origin": {
           "Table": {
-            "table": "bom_items",
+            "table": "mes.bom_items",
             "name": "quantity"
           }
         }

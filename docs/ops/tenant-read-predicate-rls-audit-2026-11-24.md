@@ -163,6 +163,17 @@
 - **analytics E0599（已闭环，`90199b417` 双态 trait）**：离线/连库双口径 check 绿。BI B 桶 8 张表（comparison_analyses/comparison_results/dashboard_shares/dashboard_templates/drilldown_history/drilldown_paths/row_level_permissions/self_service_reports）经 2026-11-24 复核：迁移 `20261118093000` 已在生产/verify/dryrun 生效，RLS ON+FORCE+严格策略；代码侧残留读旁路 33 处已具备剥除条件，14 处变更守卫保留。`bi.analytics_data`、`analytics_sync_records` 属 C 桶保留。详见 §4.1。
 - **D 守卫保留**：master-data / scm / `lib/shared-db/approval.rs` 等 UPDATE/DELETE 行级守卫不纳入读谓词收敛。
 
+### 7.2 B 桶 BI 读旁路剥除落地（2026-11-25）
+
+- **剥除范围**：B 桶 8 表对应 SELECT 可选租户旁路共 **21 处**，谓词与对应 bind 一并移除；`fallback_comparison_result` 同步移除仅服务谓词的 `tenant_id` 形参与调用处传参。
+  - `comparison_analysis.rs`：7（analyses 列表/计数/详情/运行/默认取数/results/fallback）
+  - `dashboard/share.rs`：1（dashboard_shares 列表）
+  - `data_drilldown.rs`：5（paths 列表/详情/钻取/回滚 + history 历史）
+  - `row_level_permission.rs`：4（规则列表/详情/权限校验/用户权限）
+  - `self_service_report.rs`：4（报表列表/详情/取数/导出）
+- **保留项**：14 处 UPDATE/DELETE 变更守卫不动；C 桶 `bi.analytics_data` 10 处、`analytics_sync_records`（datasources 校验）1 处、`bi.analytics_dashboards` 归属校验 1 处不在本波。
+- **校验**：连库 `SQLX_OFFLINE=false`、离线 `SQLX_OFFLINE=true`、`-D warnings` 严格度、analytics `--all-targets` 离线 `cargo check` 均绿；写源门禁 `check-tenant-write-sources.cjs --strict --changed-only` PASS。`.sqlx` 缓存已 `cargo sqlx prepare --workspace` 重生成并随改动入库。
+
 ## 8. 数据来源与局限
 
 - 静态扫描：`scripts/ci/check-tenant-write-sources.cjs` 同口径正则（`$N::uuid IS NULL OR tenant_id`、`OR tenant_id IS NULL`、nil 字面量读守卫）。

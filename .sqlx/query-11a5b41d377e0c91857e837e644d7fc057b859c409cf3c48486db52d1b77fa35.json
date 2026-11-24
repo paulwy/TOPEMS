@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "equipment_id"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "record_date"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "planned_production_time"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "actual_run_time"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "downtime"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "ideal_cycle_time"
           }
         }
@@ -86,7 +86,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "actual_output"
           }
         }
@@ -97,7 +97,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "good_output"
           }
         }
@@ -108,7 +108,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "defective_output"
           }
         }
@@ -119,7 +119,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "availability"
           }
         }
@@ -130,7 +130,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "performance"
           }
         }
@@ -141,7 +141,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "quality_rate"
           }
         }
@@ -152,7 +152,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "oee"
           }
         }
@@ -163,7 +163,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "shift"
           }
         }
@@ -174,7 +174,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "operator"
           }
         }
@@ -185,7 +185,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "notes"
           }
         }
@@ -196,7 +196,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "created_at"
           }
         }
@@ -207,7 +207,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "updated_at"
           }
         }
@@ -218,7 +218,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment",
+            "table": "mes.equipment",
             "name": "equipment_name"
           }
         }
@@ -229,7 +229,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment",
+            "table": "mes.equipment",
             "name": "equipment_code"
           }
         }

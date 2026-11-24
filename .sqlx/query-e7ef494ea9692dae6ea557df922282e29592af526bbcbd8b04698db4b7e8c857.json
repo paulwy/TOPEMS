@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "tenant_id"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "warehouse_id"
           }
         }
@@ -48,7 +48,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "zone_type"
           }
         }
@@ -59,7 +59,7 @@
         "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "location_ids"
           }
         }
@@ -70,7 +70,7 @@
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "is_active"
           }
         }
@@ -81,7 +81,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "slotting_zones",
+            "table": "wms.slotting_zones",
             "name": "created_at"
           }
         }

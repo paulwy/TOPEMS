@@ -9,7 +9,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "planned_production_time"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "actual_run_time"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "downtime"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "ideal_cycle_time"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "actual_output"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "good_output"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Float8",
         "origin": {
           "Table": {
-            "table": "equipment_oee",
+            "table": "mes.equipment_oee",
             "name": "defective_output"
           }
         }

@@ -9,7 +9,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "tool_permissions",
+            "table": "iam.tool_permissions",
             "name": "tool_name"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "tool_permissions",
+            "table": "iam.tool_permissions",
             "name": "max_permission"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "TextArray",
         "origin": {
           "Table": {
-            "table": "tool_permissions",
+            "table": "iam.tool_permissions",
             "name": "allowed_operations"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "TextArray",
         "origin": {
           "Table": {
-            "table": "tool_permissions",
+            "table": "iam.tool_permissions",
             "name": "denied_operations"
           }
         }

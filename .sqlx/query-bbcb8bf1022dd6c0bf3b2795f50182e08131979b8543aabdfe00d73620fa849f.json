@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "stock_takes",
+            "table": "wms.stock_takes",
             "name": "id"
           }
         }

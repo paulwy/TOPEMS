@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "equipment",
+            "table": "mes.equipment",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment",
+            "table": "mes.equipment",
             "name": "equipment_name"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment",
+            "table": "mes.equipment",
             "name": "equipment_code"
           }
         }

@@ -9,7 +9,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "equipment",
+            "table": "mes.equipment",
             "name": "equipment_name"
           }
         }

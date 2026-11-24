@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "wip_no"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "order_id"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "order_no"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "product_id"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "product_name"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "product_code"
           }
         }
@@ -86,7 +86,7 @@
         "type_info": "Numeric",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "quantity"
           }
         }
@@ -97,7 +97,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "current_process_id"
           }
         }
@@ -108,7 +108,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "current_work_station_id"
           }
         }
@@ -119,7 +119,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "status"
           }
         }
@@ -130,7 +130,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "batch_no"
           }
         }
@@ -141,7 +141,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "start_time"
           }
         }
@@ -152,7 +152,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "last_transfer_time"
           }
         }
@@ -163,7 +163,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "operator"
           }
         }
@@ -174,7 +174,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "notes"
           }
         }
@@ -185,7 +185,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "created_at"
           }
         }
@@ -196,7 +196,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "updated_at"
           }
         }

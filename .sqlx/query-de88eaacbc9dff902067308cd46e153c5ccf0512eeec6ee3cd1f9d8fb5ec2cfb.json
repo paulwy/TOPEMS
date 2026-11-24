@@ -9,7 +9,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "tenant_id"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "user_id"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "role"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "active"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "created_at"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "tenant_permissions",
+            "table": "iam.tenant_permissions",
             "name": "updated_at"
           }
         }

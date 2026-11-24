@@ -178,7 +178,6 @@ pub async fn list_comparisons(
         FROM bi.analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
-          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -186,7 +185,6 @@ pub async fn list_comparisons(
         query.status,
         page_size,
         offset,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -206,11 +204,9 @@ pub async fn list_comparisons(
         FROM bi.analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#,
         search_pattern,
         query.status,
-        tenant_scope.tenant_id(),
     )
     .fetch_one(&mut db_scope)
     .await
@@ -317,10 +313,8 @@ pub async fn get_comparison(
                indicators, filters, status, last_run_at, created_by, created_at, updated_at
         FROM bi.analytics_comparison_analyses
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -747,10 +741,8 @@ pub async fn run_comparison(
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
         FROM bi.analytics_comparison_analyses
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -943,8 +935,7 @@ pub async fn get_comparison_result(
         Err(_) => {
             if id_str == "1" || id_str.parse::<i32>().is_ok() {
                 let default_id = sqlx::query_scalar!(
-                    r#"SELECT id FROM bi.analytics_comparison_analyses WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC LIMIT 1"#,
-                    tenant_scope.tenant_id(),
+                    r#"SELECT id FROM bi.analytics_comparison_analyses ORDER BY created_at DESC LIMIT 1"#,
                 )
                 .fetch_optional(&mut db_scope)
                 .await;
@@ -974,12 +965,10 @@ pub async fn get_comparison_result(
         SELECT id, comparison_id, status, data, summary, generated_at
         FROM bi.analytics_comparison_results
         WHERE comparison_id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY generated_at DESC
         LIMIT 1
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -999,7 +988,7 @@ pub async fn get_comparison_result(
             // If a result has never been generated, derive a deterministic
             // mock result from the analysis record so the UI can render
             // something useful on first load.
-            return fallback_comparison_result(&mut db_scope, tenant_scope.tenant_id(), id).await;
+            return fallback_comparison_result(&mut db_scope, id).await;
         }
     };
 
@@ -1109,7 +1098,6 @@ fn round2(v: f64) -> f64 {
 
 async fn fallback_comparison_result(
     db_scope: &mut ScopedTxn<'_>,
-    tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Json<serde_json::Value> {
     let row = sqlx::query!(
@@ -1117,10 +1105,8 @@ async fn fallback_comparison_result(
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
         FROM bi.analytics_comparison_analyses
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_id,
     )
     .fetch_optional(&mut *db_scope)
     .await

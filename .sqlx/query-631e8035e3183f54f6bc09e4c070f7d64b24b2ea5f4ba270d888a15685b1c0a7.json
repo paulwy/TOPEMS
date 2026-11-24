@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "inventory",
+            "table": "wms.inventory",
             "name": "warehouse_id"
           }
         }

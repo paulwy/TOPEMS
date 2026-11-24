@@ -9,7 +9,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_processes",
+            "table": "mes.production_processes",
             "name": "process_name"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_processes",
+            "table": "mes.production_processes",
             "name": "process_code"
           }
         }

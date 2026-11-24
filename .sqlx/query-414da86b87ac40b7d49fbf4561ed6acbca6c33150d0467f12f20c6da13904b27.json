@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "issue_no"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "order_id"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "order_no"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "bom_id"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "status"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "warehouse_id"
           }
         }
@@ -86,7 +86,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "operator_id"
           }
         }
@@ -97,7 +97,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "issue_time"
           }
         }
@@ -108,7 +108,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "notes"
           }
         }
@@ -119,7 +119,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "created_at"
           }
         }
@@ -130,7 +130,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "material_issues",
+            "table": "mes.material_issues",
             "name": "updated_at"
           }
         }

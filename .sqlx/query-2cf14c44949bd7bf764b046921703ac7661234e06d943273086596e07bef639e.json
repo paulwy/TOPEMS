@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "order_number"
           }
         }
@@ -37,7 +37,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "product_name"
           }
         }
@@ -48,7 +48,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "product_code"
           }
         }
@@ -71,7 +71,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "status"
           }
         }
@@ -88,7 +88,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "source_order_id"
           }
         }
@@ -99,7 +99,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "source_order_number"
           }
         }
@@ -134,7 +134,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "workshop_id"
           }
         }
@@ -145,7 +145,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "notes"
           }
         }
@@ -156,7 +156,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "created_at"
           }
         }
@@ -167,7 +167,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "updated_at"
           }
         }

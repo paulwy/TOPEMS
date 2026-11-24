@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "return_id"
           }
         }
@@ -31,7 +31,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "material_id"
           }
         }
@@ -42,7 +42,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "material_code"
           }
         }
@@ -53,7 +53,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "material_name"
           }
         }
@@ -64,7 +64,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "unit"
           }
         }
@@ -75,7 +75,7 @@
         "type_info": "Numeric",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "quantity"
           }
         }
@@ -86,7 +86,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "reason"
           }
         }
@@ -97,7 +97,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "batch_no"
           }
         }
@@ -108,7 +108,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "material_return_items",
+            "table": "mes.material_return_items",
             "name": "notes"
           }
         }

@@ -193,10 +193,8 @@ pub async fn list_permission_rules(
         SELECT id, name, description, datasource_id, table_name, rule_type, condition, 
                role_ids, user_ids, is_active, created_by, created_at, updated_at
         FROM bi.analytics_row_level_permissions
-        WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -416,10 +414,8 @@ pub async fn get_permission_rule(
                role_ids, user_ids, is_active, created_by, created_at, updated_at
         FROM bi.analytics_row_level_permissions
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -740,13 +736,11 @@ pub async fn validate_permission(
             OR role_ids && $4::text[]
             OR (user_ids IS NULL AND role_ids IS NULL)
           )
-          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         "#,
         req.datasource_id,
         req.table_name,
         &[req.user_id.clone()][..],
         &role_ids[..],
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -878,11 +872,9 @@ pub async fn get_user_permissions(
         FROM bi.analytics_row_level_permissions
         WHERE is_active = true
           AND (user_ids @> $1::text[] OR user_ids IS NULL)
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY created_at DESC
         "#,
         &[user_id.clone()][..],
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await

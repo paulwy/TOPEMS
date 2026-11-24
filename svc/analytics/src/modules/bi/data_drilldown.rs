@@ -132,10 +132,8 @@ pub async fn list_drilldown_paths(
         r#"
         SELECT id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
         FROM bi.analytics_drilldown_paths
-        WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -319,10 +317,8 @@ pub async fn get_drilldown_path(
         SELECT id, name, description, datasource_id, levels, measures, owner_id, created_at, updated_at
         FROM bi.analytics_drilldown_paths
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -590,10 +586,8 @@ pub async fn drill_down(
         SELECT id, name, levels, measures
         FROM bi.analytics_drilldown_paths
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         req.path_id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -722,10 +716,8 @@ pub async fn roll_up(
         SELECT id, name, levels, measures
         FROM bi.analytics_drilldown_paths
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         req.path_id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -854,14 +846,12 @@ pub async fn get_drilldown_history(
         SELECT id, user_id, path_id, action, from_level, to_level, drill_dimension, drill_value, filters, created_at
         FROM bi.analytics_drilldown_history
         WHERE user_id = $1
-          AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
         "#,
         req.user_id,
         page_size,
         offset,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await

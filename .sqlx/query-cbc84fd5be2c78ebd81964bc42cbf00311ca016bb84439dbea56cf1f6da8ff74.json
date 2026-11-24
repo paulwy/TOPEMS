@@ -9,7 +9,7 @@
         "type_info": "Numeric",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "quantity"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "wips",
+            "table": "mes.wips",
             "name": "status"
           }
         }

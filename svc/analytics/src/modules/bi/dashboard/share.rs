@@ -262,11 +262,9 @@ pub async fn list_share_links(
         SELECT id, dashboard_id, shared_with, permission, expires_at, created_at
         FROM bi.analytics_dashboard_shares
         WHERE dashboard_id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         ORDER BY created_at DESC
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await

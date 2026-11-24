@@ -9,7 +9,7 @@
         "type_info": "Uuid",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "id"
           }
         }
@@ -20,7 +20,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "order_number"
           }
         }
@@ -37,7 +37,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "product_name"
           }
         }
@@ -48,7 +48,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "product_code"
           }
         }
@@ -59,7 +59,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "quantity"
           }
         }
@@ -70,7 +70,7 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "completed_quantity"
           }
         }
@@ -81,7 +81,7 @@
         "type_info": "Varchar",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "status"
           }
         }
@@ -92,7 +92,7 @@
         "type_info": "Date",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "actual_start_date"
           }
         }
@@ -103,7 +103,7 @@
         "type_info": "Date",
         "origin": {
           "Table": {
-            "table": "production_orders",
+            "table": "mes.production_orders",
             "name": "actual_end_date"
           }
         }
