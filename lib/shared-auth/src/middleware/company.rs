@@ -129,6 +129,18 @@ async fn load_members(
     tenant_id: Uuid,
     user_id: Uuid,
 ) -> Vec<(Uuid, bool)> {
+    // 表不存在时直接按无上下文处理：先 to_regclass 探测，避免查询报错把请求事务
+    // 置为 aborted，导致后续 set_config 全部 500。
+    let table_exists: Option<String> =
+        sqlx::query_scalar("SELECT to_regclass('public.core_user_company_scopes')::text")
+            .fetch_one(&mut *conn)
+            .await
+            .ok()
+            .flatten();
+    if table_exists.is_none() {
+        return Vec::new();
+    }
+
     match sqlx::query_as::<_, (Uuid, bool)>(
         "SELECT company_id, is_default FROM public.core_user_company_scopes \
          WHERE tenant_id = $1 AND user_id = $2",
