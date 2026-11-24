@@ -1251,8 +1251,19 @@ pub async fn setup_admin_user(
     }
 
     // 只读预检 iam.users 的用户名/邮箱占用（跨 schema 只读，第三参数显式白名单 "iam"）。
-    // 权威去重仍由 IAM 建号端点负责；预检本身失败仅告警放行，绝不阻断本事务。
+    // 权威去重仍由 IAM 建号端点负责；预检失败要真正放行，必须用 SAVEPOINT 包住：
+    // PostgreSQL 中一条语句失败会把整个事务置为 aborted，后面的查询/写入会全部报错，
+    // 仅 `.ok()` 吞掉返回值并不能让事务继续。
     let email_norm = req.email.as_ref().map(|e| e.trim().to_string());
+    if let Err(e) = sqlx::query("SAVEPOINT iam_users_precheck")
+        .execute(&mut **txn)
+        .await
+    {
+        tracing::error!("创建 iam.users 预检 savepoint 失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal(
+            "管理员预检初始化失败，请稍后重试".to_string(),
+        ));
+    }
     let precheck: Result<Option<i64>, sqlx::Error> =
         sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "hrm",
@@ -1269,6 +1280,15 @@ pub async fn setup_admin_user(
         .await;
     match precheck {
         Ok(Some(n)) if n > 0 => {
+            if let Err(e) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
+                .execute(&mut **txn)
+                .await
+            {
+                tracing::error!("释放 iam.users 预检 savepoint 失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "管理员预检收尾失败，请稍后重试".to_string(),
+                ));
+            }
             // 区分冲突类型给出友好 409（只读预检已命中即提前拒绝）；
             // 二次诊断查询本身失败时回退通用冲突文案，不误判为另一种冲突。
             let name_taken = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -1288,9 +1308,41 @@ pub async fn setup_admin_user(
             };
             return ApiResponse::from(TopemsError::ResourceAlreadyExists(message));
         }
-        Ok(_) => {}
+        Ok(_) => {
+            if let Err(e) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
+                .execute(&mut **txn)
+                .await
+            {
+                tracing::error!("释放 iam.users 预检 savepoint 失败: {}", e);
+                return ApiResponse::from(TopemsError::Internal(
+                    "管理员预检收尾失败，请稍后重试".to_string(),
+                ));
+            }
+        }
         Err(e) => {
-            tracing::warn!("iam.users 占用预检失败（放行，由 IAM 端点权威去重）: {}", e);
+            // 失败后先回滚到 savepoint 恢复事务可用状态，再释放、告警放行。
+            if let Err(rb) = sqlx::query("ROLLBACK TO SAVEPOINT iam_users_precheck")
+                .execute(&mut **txn)
+                .await
+            {
+                tracing::error!("回滚 iam.users 预检 savepoint 失败: {}", rb);
+                return ApiResponse::from(TopemsError::Internal(
+                    "管理员预检恢复失败，请稍后重试".to_string(),
+                ));
+            }
+            if let Err(rb) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
+                .execute(&mut **txn)
+                .await
+            {
+                tracing::error!("释放 iam.users 预检 savepoint 失败: {}", rb);
+                return ApiResponse::from(TopemsError::Internal(
+                    "管理员预检收尾失败，请稍后重试".to_string(),
+                ));
+            }
+            tracing::warn!(
+                "iam.users 占用预检失败（已回滚 savepoint 并放行，由 IAM 端点权威去重）: {}",
+                e
+            );
         }
     }
 
