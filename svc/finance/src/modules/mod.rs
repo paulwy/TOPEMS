@@ -1518,9 +1518,16 @@ pub async fn execute_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     // executed_by 列为 uuid，按 JWT sub 绑定；用户名仅供日志/文本列使用。
-    let executed_by = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
+    let executed_by = match claims.user_id() {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
 
     match service
         .execute_payment(tenant_id, payment_id, req, executed_by, txn)
@@ -1553,7 +1560,11 @@ pub async fn write_off_payment_item_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let Some(write_off_by) = Uuid::parse_str(&claims.sub).ok() else {
         return ApiResponse::from(TopemsError::Unauthorized);
     };
