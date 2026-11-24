@@ -1081,7 +1081,8 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 假 en 值类型分布" >> $GITHUB_STEP_SUMMARY
             node -e "
-              const d = require('/tmp/i18n-audit.json');
+              const root = require('/tmp/i18n-audit.json');
+              const d = root.quality || root;
               const t = d.fake_en.by_type;
               if (Object.keys(t).length === 0) {
                 console.log('_全部清零_');
@@ -1096,7 +1097,8 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Key 不一致明细" >> $GITHUB_STEP_SUMMARY
             node -e "
-              const d = require('/tmp/i18n-audit.json').key_mismatch;
+              const root = require('/tmp/i18n-audit.json');
+              const d = (root.quality || root).key_mismatch;
               console.log('| 子项 | 数量 |');
               console.log('|------|------|');
               console.log('| en 缺 key |', d.missing_in_en, '|');
