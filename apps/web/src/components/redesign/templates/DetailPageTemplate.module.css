@@ -27,7 +27,7 @@
 }
 
 .il5 {
-  flex: 1px;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
