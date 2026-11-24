@@ -15,7 +15,7 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -734,7 +734,11 @@ pub async fn create_recovery_point(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let snapshot_type = req
         .snapshot_type
         .as_deref()
@@ -771,7 +775,7 @@ pub async fn create_recovery_point(
     .bind(&rp.checksum)
     .bind(rp.created_at.to_rfc3339())
     .bind(rp.size_bytes)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入恢复点失败", e))
@@ -1060,7 +1064,11 @@ pub async fn create_recovery_plan(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let priority = req
         .priority
         .as_deref()
@@ -1111,7 +1119,7 @@ pub async fn create_recovery_plan(
     .bind(plan.rpo_minutes)
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
     .bind(recovery_plan_status_to_str(&plan.status))
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入恢复计划失败", e))
@@ -1392,7 +1400,11 @@ pub async fn create_continuity_plan(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let strategy = req
         .recovery_strategy
         .as_deref()
@@ -1441,7 +1453,7 @@ pub async fn create_continuity_plan(
     .bind(&plan.test_frequency)
     .bind(Option::<String>::None)
     .bind(continuity_status_to_str(&plan.status))
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入连续性计划失败", e)) { return ApiResponse::from(e); }
@@ -1658,7 +1670,11 @@ pub async fn test_plan(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1 AND status IN ('draft','active','tested','expired')"
     )))
@@ -1679,7 +1695,7 @@ pub async fn test_plan(
     .bind(&id)
     .bind(now.to_rfc3339())
     .bind("tested")
-    .bind(tenant)
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("更新连续性计划失败", e)) { return ApiResponse::from(e); }
@@ -1704,7 +1720,7 @@ pub async fn test_plan(
     .bind(&bc_test.result)
     .bind(bc_test.duration_minutes)
     .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入演练记录失败", e))
@@ -1982,7 +1998,11 @@ pub async fn configure_replication(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let mode = req
         .replication_mode
         .as_deref()
@@ -2009,7 +2029,7 @@ pub async fn configure_replication(
     .bind(replication_mode_to_str(&config.replication_mode))
     .bind(config.lag_max_ms)
     .bind(replication_status_to_str(&config.status))
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入复制配置失败", e))
@@ -2244,7 +2264,11 @@ pub async fn initiate_failover(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let trigger = req
         .trigger
         .as_deref()
@@ -2279,7 +2303,7 @@ pub async fn initiate_failover(
     .bind(Option::<String>::None)
     .bind(&failover.reason)
     .bind(failover_status_to_str(&failover.status))
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     .map_err(|e| TopemsError::internal("写入故障转移记录失败", e))

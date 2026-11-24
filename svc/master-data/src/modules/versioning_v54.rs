@@ -17,7 +17,7 @@ use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -625,7 +625,11 @@ pub async fn create_snapshot(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     // K1：版本号基于真表现有快照推导（不再读内存 Store）。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -669,7 +673,7 @@ pub async fn create_snapshot(
     .bind(&snapshot.created_by)
     .bind(snapshot.created_at.to_rfc3339())
     .bind(&snapshot.comment)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -694,7 +698,7 @@ pub async fn create_snapshot(
     .bind("127.0.0.1")
     .bind(snapshot.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -922,7 +926,11 @@ pub async fn restore_version(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     // K1：目标版本从真表读取。
     let target_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -980,7 +988,7 @@ pub async fn restore_version(
     .bind(&restored.created_by)
     .bind(restored.created_at.to_rfc3339())
     .bind(&restored.comment)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -1005,7 +1013,7 @@ pub async fn restore_version(
     .bind("127.0.0.1")
     .bind(restored.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -1124,7 +1132,11 @@ pub async fn create_branch(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let branch_type = match req.branch_type.as_deref() {
         Some(t) => branch_type_from_str(t),
         None => BranchType::Feature,
@@ -1156,7 +1168,7 @@ pub async fn create_branch(
     .bind(branch.merged_at.map(|t| t.to_rfc3339()))
     .bind(&branch.merged_by)
     .bind(&branch.status)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -1669,7 +1681,11 @@ pub async fn grant_permission(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let perm = DataPermission {
         id: uuid::Uuid::new_v4().to_string(),
         role_id: req.role_id,
@@ -1691,7 +1707,7 @@ pub async fn grant_permission(
     .bind(permission_action_to_str(&perm.action))
     .bind(&perm.condition)
     .bind(perm.inherited)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -2046,7 +2062,11 @@ pub async fn create_role(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let now = chrono::Utc::now();
 
     let role = PermissionRole {
@@ -2066,7 +2086,7 @@ pub async fn create_role(
     .bind(&role.description)
     .bind(&role.inherited_from)
     .bind(role.created_at.to_rfc3339())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -2106,7 +2126,11 @@ pub async fn assign_role(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let now = chrono::Utc::now();
 
     let assignment = UserRoleAssignment {
@@ -2124,7 +2148,7 @@ pub async fn assign_role(
     .bind(&assignment.user_id)
     .bind(&assignment.role_id)
     .bind(assignment.assigned_at.to_rfc3339())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {

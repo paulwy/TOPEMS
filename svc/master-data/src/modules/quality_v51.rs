@@ -18,7 +18,7 @@ use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -541,7 +541,11 @@ pub async fn run_quality_check(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let rows = sqlx::query(
         "SELECT id, name, entity_type, rule_type, description, severity, parameters, enabled, created_at, updated_at
          FROM master_data.mdm_quality_rules
@@ -606,7 +610,7 @@ pub async fn run_quality_check(
         .bind(check.score)
         .bind(&check.details)
         .bind(check.checked_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(scope.create_tenant_id())
         .execute(&mut db_scope)
         .await
         {
@@ -1239,7 +1243,11 @@ pub async fn apply_auto_fix(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let strategy = match req.strategy.as_deref() {
         Some(raw) => match AutoFixActionType::from_db_str(raw) {
             Some(v) => v.as_db_str().to_string(),
@@ -1280,7 +1288,7 @@ pub async fn apply_auto_fix(
     .bind(action.confidence)
     .bind(fix_status_to_str(&action.status))
     .bind(action.applied_at.map(|t| t.to_rfc3339()))
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -1532,7 +1540,11 @@ pub async fn run_fix_workflow(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let now = chrono::Utc::now();
 
     let strategies = req.strategies.unwrap_or_else(|| {
@@ -1579,7 +1591,7 @@ pub async fn run_fix_workflow(
         .bind(action.confidence)
         .bind(fix_status_to_str(&action.status))
         .bind(action.applied_at.map(|t| t.to_rfc3339()))
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(scope.create_tenant_id())
         .execute(&mut db_scope)
         .await
         {
@@ -1632,7 +1644,11 @@ pub async fn generate_suggestions(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let now = chrono::Utc::now();
     let types = req
         .suggestion_types
@@ -1673,7 +1689,7 @@ pub async fn generate_suggestions(
         .bind(&s.ai_model_version)
         .bind(suggestion_status_to_str(&s.status))
         .bind(s.created_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(scope.create_tenant_id())
         .execute(&mut db_scope)
         .await
         {

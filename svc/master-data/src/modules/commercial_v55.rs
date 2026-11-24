@@ -15,7 +15,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::TopemsError;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -563,7 +563,11 @@ pub async fn create_api_product(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let tier = req
         .tier
         .as_deref()
@@ -595,7 +599,7 @@ pub async fn create_api_product(
     .bind(serde_json::to_value(&product.features).unwrap_or(serde_json::json!([])))
     .bind(product.price_monthly)
     .bind(product.active)
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
