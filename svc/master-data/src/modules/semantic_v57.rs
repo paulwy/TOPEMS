@@ -1592,7 +1592,11 @@ pub async fn search_semantic_handler(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：搜索历史落库只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let top_k = req.top_k.unwrap_or(10);
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
     let results = db_exec!(
@@ -1609,7 +1613,7 @@ pub async fn search_semantic_handler(
     .bind(&req.query)
     .bind(results.len() as i64)
     .bind(chrono::Utc::now().to_rfc3339())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -1649,7 +1653,11 @@ pub async fn search_hybrid_handler(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：搜索历史落库只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let top_k = req.top_k.unwrap_or(10);
     let results =
         db_exec!(SemanticSearchEngine::search_hybrid(&mut db_scope, &req.query, top_k).await);
@@ -1664,7 +1672,7 @@ pub async fn search_hybrid_handler(
     .bind(&req.query)
     .bind(results.len() as i64)
     .bind(chrono::Utc::now().to_rfc3339())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
