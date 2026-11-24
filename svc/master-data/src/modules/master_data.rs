@@ -276,7 +276,7 @@ pub async fn create_material(
     let row: Option<Material> = match sqlx::query_as(
         r#"INSERT INTO master_data.materials
             (material_code, material_name, name_en, material_type, specification, unit, uom_id, status, description, tenant_id, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, '00000000-0000-0000-0000-000000000000'), $11)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, '00000000-0000-0000-0000-000000000000'::uuid), $11)
            RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at, updated_at"#,
     )
     .bind(&req.material_code)

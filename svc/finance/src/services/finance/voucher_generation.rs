@@ -429,7 +429,7 @@ impl FinanceService {
                 r#"INSERT INTO finance.core_finance_vouchers
                     (id, tenant_id, company_id, voucher_no, voucher_date, period, voucher_type,
                      total_debit, total_credit, status, description, created_by)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)"#
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10, $11)"#
             ))
             .bind(voucher_id)
             .bind(tenant_id)

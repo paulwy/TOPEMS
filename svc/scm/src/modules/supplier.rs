@@ -522,7 +522,7 @@ pub async fn create_supplier(
         only_own_schema_query!("scm", r#"
         INSERT INTO scm.suppliers (id, supplier_no, name, legal_name, contact_person, phone, email, address, bank_account, tax_id, status, created_at, updated_at, name_en, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        RETURNING id, supplier_no, CASE WHEN $15 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
+        RETURNING id, supplier_no, CASE WHEN $14 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
     .bind(id)

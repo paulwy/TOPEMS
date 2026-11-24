@@ -292,7 +292,7 @@ pub async fn run_optimization(
                    r.rule_type,
                    0.6,
                    0.0,
-                   $3
+                   $3::varchar
             FROM wms.slotting_zones z
             JOIN wms.slotting_rules r
               ON r.is_active = TRUE
@@ -308,7 +308,7 @@ pub async fn run_optimization(
                   WHERE s.warehouse_id = z.warehouse_id
                     AND s.tenant_id = $4
                     AND s.deleted_at IS NULL
-                    AND s.status = $3
+                    AND s.status = $3::varchar
               )
             "#,
         )

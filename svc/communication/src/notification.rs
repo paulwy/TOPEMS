@@ -3986,7 +3986,7 @@ pub async fn batch_update_template_status(
         "public",
         r#"
         UPDATE public.core_notification_templates
-        SET status = $1, updated_at = NOW()
+        SET data = COALESCE(data, '{}'::jsonb) || jsonb_build_object('status', $1::text), updated_at = NOW()
         WHERE id = ANY($2)
         "#
     ))

@@ -7058,11 +7058,11 @@ async fn transition_expense_approval(
     let row = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.expense_approvals SET
-               status = $3,
-               approver_name = CASE WHEN $3 = 'approved' THEN $4 ELSE approver_name END,
+               status = $3::varchar,
+               approver_name = CASE WHEN $3::varchar = 'approved' THEN $4 ELSE approver_name END,
                approval_note = COALESCE($5, approval_note),
                updated_at = NOW()
-           WHERE id = $1 AND status = $2 AND deleted_at IS NULL
+           WHERE id = $1 AND status = $2::varchar AND deleted_at IS NULL
            RETURNING status"#
     ))
     .bind(id_uuid)

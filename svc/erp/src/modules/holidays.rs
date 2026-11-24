@@ -85,7 +85,7 @@ async fn query_holiday_from_db(
     pool: &PgPool,
     date: NaiveDate,
     tenant_id: Option<uuid::Uuid>,
-    kind: &str,
+    _kind: &str,
 ) -> Option<bool> {
     // holidays 表结构（未迁移时查询会失败 → 自动回退 L2）：
     //   CREATE TABLE IF NOT EXISTS erp.holidays (
@@ -99,19 +99,16 @@ async fn query_holiday_from_db(
     // 块 D 登记：erp.holidays 是跨租户共享的法定节假日/调休日历，本次不补租户绑定、
     // 不按租户过滤（None 分支保留全局查询语义）。表虽已 FORCE RLS，后续阶段二迁移
     // 将按"全局字典"用系统通道（app.rls_system）放行；不在此处伪造租户或落 NULL 写入。
-    let year = date.year();
     let result = match tenant_id {
         Some(tid) => {
             sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
                 r#"SELECT COUNT(*) FROM erp.holidays
-                   WHERE tenant_id = $1 AND year = $2 AND date = $3 AND kind = $4"#,
+                   WHERE tenant_id = $1 AND date = $2"#,
                 "erp"
             ))
             .bind(tid)
-            .bind(year)
             .bind(date)
-            .bind(kind)
             .fetch_one(pool)
             .await
         }
@@ -120,12 +117,10 @@ async fn query_holiday_from_db(
             sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "erp",
                 r#"SELECT COUNT(*) FROM erp.holidays
-                   WHERE year = $1 AND date = $2 AND kind = $3 LIMIT 1"#,
+                   WHERE date = $1 LIMIT 1"#,
                 "erp"
             ))
-            .bind(year)
             .bind(date)
-            .bind(kind)
             .fetch_one(pool)
             .await
         }

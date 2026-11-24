@@ -999,13 +999,11 @@ impl ErpEventHandlers {
                SET last_movement_date = $1,
                    last_movement_type = $2,
                    updated_at = $1
-               WHERE material_code = $3
-                 AND tenant_id = $4"#,
+               WHERE material_code = $3"#,
         )
         .bind(now)
         .bind(&payload.change_type)
         .bind(&payload.material_code)
-        .bind(tenant_id)
         .execute(&mut scope)
         .await;
 

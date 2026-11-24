@@ -202,7 +202,7 @@ async fn create_setting(
 
     let setting = sqlx::query_as::<_, NotificationSetting>(
         only_own_schema_query!("pm", "INSERT INTO pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8, $9) RETURNING *")
+        VALUES ($1, $2, '00000000-0000-0000-0000-000000000000'::uuid, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(project_id)

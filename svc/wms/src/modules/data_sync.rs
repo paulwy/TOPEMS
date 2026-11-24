@@ -418,7 +418,7 @@ pub async fn create_inbound_from_scm(
         "wms",
         r#"
         INSERT INTO wms.inbound_orders (id, order_number, supplier_id,
-                                              order_type, status, created_at, updated_at, tenant_id, organization_id)
+                                              order_type, status, created_at, updated_at, tenant_id, org_id)
         VALUES ($1, $2, $3, 'purchase', 'pending', $4, $5, $6, $6)
         "#,
         "wms"

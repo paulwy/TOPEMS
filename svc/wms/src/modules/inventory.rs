@@ -345,8 +345,8 @@ pub async fn create_inventory(
                                    quantity, unit, available_quantity,
                                    min_quantity, max_quantity, quality_status, created_at, updated_at, tenant_id)
         VALUES ($1,
-                COALESCE($13, '00000000-0000-0000-0000-000000000002'),
-                COALESCE($13, '00000000-0000-0000-0000-000000000002'),
+                COALESCE($13, '00000000-0000-0000-0000-000000000002'::uuid),
+                COALESCE($13, '00000000-0000-0000-0000-000000000002'::uuid),
                 $2, $3, $4, $5, $6, $7, $8, $7, $9, $10,
                 $14, $11, $12, $13)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id,

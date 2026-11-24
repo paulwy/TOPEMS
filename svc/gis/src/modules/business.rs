@@ -83,7 +83,7 @@ pub async fn list_business_locations(
             } else {
                 sqlx::query(only_own_schema_query!(
                     "gis",
-                    "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND "
+                    "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL"
                 ))
             };
             let total: i64 = total_query

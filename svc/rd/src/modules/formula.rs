@@ -458,7 +458,7 @@ pub async fn update_formula(
         r#"
         UPDATE rs.formulas SET
             name = $2, category = $3, description = $4, status = $5,
-            effective_date = $6, expiration_date = $7,
+            effective_date = $6::timestamptz, expiration_date = $7::timestamptz,
             ingredients = $8, process_steps = $9, properties = $10, updated_at = $11
         WHERE id = $1
           AND status <> 'archived'
