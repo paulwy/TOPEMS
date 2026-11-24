@@ -244,7 +244,7 @@ pub async fn create_faq(
     }
 
     // 业务写入必须落调用方租户：零 UUID 仅供平台内置共享语料，禁止作为业务数据租户。
-    let tenant_id = match resolve_create_tenant(&claims) {
+    let _tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
@@ -267,8 +267,8 @@ pub async fn create_faq(
     };
 
     let faq: Faq = match sqlx::query_as(
-        r#"INSERT INTO portal.core_faqs (id, question, answer, category, views, is_active, sort_order, created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, 0, true, $5, $6, $7, $8)
+        r#"INSERT INTO portal.core_faqs (id, question, answer, category, views, is_active, sort_order, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, 0, true, $5, $6, $7)
            RETURNING id, question, answer, category, views, is_active, sort_order, created_at, updated_at"#,
     )
     .bind(id)
@@ -278,7 +278,6 @@ pub async fn create_faq(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(now)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     {

@@ -292,7 +292,7 @@ pub async fn create_guide(
     }
 
     // 业务写入必须落调用方租户：零 UUID 仅供平台内置共享语料，禁止作为业务数据租户。
-    let tenant_id = match resolve_create_tenant(&claims) {
+    let _tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
@@ -315,8 +315,8 @@ pub async fn create_guide(
     };
 
     let guide: Guide = match sqlx::query_as(
-        r#"INSERT INTO portal.core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9, $10)
+        r#"INSERT INTO portal.core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9)
            RETURNING id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at"#,
     )
     .bind(id)
@@ -328,7 +328,6 @@ pub async fn create_guide(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(now)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     {
@@ -374,7 +373,7 @@ pub async fn add_lesson(
     }
 
     // 业务写入必须落调用方租户：零 UUID 仅供平台内置共享语料，禁止作为业务数据租户。
-    let tenant_id = match resolve_create_tenant(&claims) {
+    let _tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
         Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
@@ -397,8 +396,8 @@ pub async fn add_lesson(
     };
 
     let lesson: GuideLesson = match sqlx::query_as(
-        r#"INSERT INTO portal.core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8)
+        r#"INSERT INTO portal.core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, true, $7)
            RETURNING id, guide_id, title, content, duration, sort_order, is_active, created_at"#,
     )
     .bind(id)
@@ -408,7 +407,6 @@ pub async fn add_lesson(
     .bind(req.duration)
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
-    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await
     {

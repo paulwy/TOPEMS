@@ -170,6 +170,11 @@ def main():
         cur = conn.cursor()
         cur.execute(f"SET search_path TO {', '.join(search_path)}")
         for i, (sql, fpath, line) in enumerate(items):
+            # only_own_schema_query! 等宏在编译期才展开 {} 占位符，静态提取的 SQL 无法 PREPARE；
+            # 这类条目按 skipped 计入，不计 HARD，也不虚增 pass。
+            if "{}" in sql:
+                stats["skipped"] += 1
+                continue
             # PREPARE 语句名不能含连字符（crate 名可能带 -），统一替换为 _
             name = f"_rc_{crate.replace('-', '_')}_{i:04d}"
             try:

@@ -362,7 +362,7 @@ pub async fn broadcast_notification(
     for user_id in &req.user_ids {
         if let Some(st) = sender_tenant {
             let recipient_ok: Option<(Option<Uuid>,)> = sqlx::query_as(
-                "SELECT tenant_id FROM iam.users WHERE id = $1 AND deleted_at IS NULL",
+                "SELECT tenant_id FROM public.core_tenant_users WHERE id = $1 AND deleted_at IS NULL",
             )
             .bind(user_id)
             .fetch_optional(&mut scope)
