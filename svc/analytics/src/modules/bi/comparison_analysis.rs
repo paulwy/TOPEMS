@@ -178,7 +178,6 @@ pub async fn list_comparisons(
         FROM bi.analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
-          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
@@ -186,7 +185,6 @@ pub async fn list_comparisons(
         query.status,
         page_size,
         offset,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -206,11 +204,9 @@ pub async fn list_comparisons(
         FROM bi.analytics_comparison_analyses
         WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)
           AND ($2::TEXT IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#,
         search_pattern,
         query.status,
-        tenant_scope.tenant_id(),
     )
     .fetch_one(&mut db_scope)
     .await
