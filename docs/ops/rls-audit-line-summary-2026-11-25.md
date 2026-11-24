@@ -71,7 +71,7 @@
 
 | # | 事项 | 说明 |
 |---|---|---|
-| 5 | 档 3 其余 allow-all 逐张定性 | 日志审计 6 / 模板字典权限 4 / 全局配置规则偏好 3 / 聚合指标 1 共 14 张确认豁免口径后登记；通知消息 3 张先定广播还是私有；业务实体 13 张并入 P1 #2 评审 |
+| 5 | 档 3 其余 allow-all 逐张定性 | 复核闭环：17 条（日志 5 + 模板权限 4 + 配置 3 + 通知副本 3 + 聚合 1）中 **16 张为零路径遗留表/副本，随既有归档批次删除**；`bi.audit_logs` 例外保留（schema-defense 重建，已登记 exemption）；通知/邮件本体 `public.core_notifications`/`public.core_emails` 隔离口径随 P1 #2；业务实体 13 张并入 P1 #2 评审 | 台账 §4.4 `allow-all-policy-review-2026-11-24.md` |
 | 6 | 超户/CI 全链 head 库复跑 RLS 对照 | 消除 fixture 库快照偏差（本地空库链受 pgvector 扩展阻塞，不以非超户角色强补） |
 | 7 | C 桶 `analytics_data` 10 处读旁路 | 待该表 RLS 覆盖具备条件后，按 B 桶同口径评估剥除 |
 
