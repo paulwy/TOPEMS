@@ -263,8 +263,9 @@ pub async fn get_login_log(
 pub async fn delete_login_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> ApiResponse<bool> {
-    let tenant_id = Uuid::nil();
+    let tenant_id = super::handlers::claims_tenant_filter(&claims);
     let mut scope = match state.db.scope_system().await {
         Ok(scope) => scope,
         Err(e) => {
@@ -274,7 +275,7 @@ pub async fn delete_login_log(
     };
 
     let result = sqlx::query(
-        r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#,
+        r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(id)
     .bind(tenant_id)
@@ -294,13 +295,14 @@ pub async fn delete_login_log(
 
 pub async fn batch_delete_login_logs(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<DeleteLoginLogRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if req.ids.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed("ID列表不能为空".to_string()));
     }
 
-    let tenant_id = Uuid::nil();
+    let tenant_id = super::handlers::claims_tenant_filter(&claims);
     let mut scope = match state.db.scope_system().await {
         Ok(scope) => scope,
         Err(e) => {
@@ -327,7 +329,7 @@ pub async fn batch_delete_login_logs(
         .join(", ");
 
     let sql = format!(
-        r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE tenant_id = $1 AND id IN ({})"#,
+        r#"UPDATE public.core_login_logs SET deleted_at = NOW() WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id IN ({})"#,
         placeholders
     );
 

@@ -5,7 +5,8 @@ use axum::{
     Json, Router,
 };
 use bigdecimal::BigDecimal;
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::{try_tenant_id_from_claims, RlsTxnCell};
 use topems_shared_core::TopemsError;
 
 /// U6-2：hrm 内部 BigDecimal -> 事件 rust_decimal::Decimal，字符串往返精确（不经过 f64，避免尾差）。
@@ -911,18 +912,22 @@ pub async fn list_payroll_details(
 pub async fn create_payroll_detail(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<PayrollDetail>,
 ) -> ApiResponse<PayrollDetail> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
 
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((_, msg)) => return ApiResponse::from(TopemsError::ValidationFailed(msg)),
+    };
+
     let result = sqlx::query_as::<_, PayrollDetail>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(),
-                COALESCE((SELECT tenant_id FROM hrm.payroll_items WHERE id = $2),
-                          COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')))
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7::uuid)
         RETURNING id, payroll_item_id, item_type, category, description, amount, created_at
         "#)
     )
@@ -932,6 +937,7 @@ pub async fn create_payroll_detail(
     .bind(&req.category)
     .bind(&req.description)
     .bind(&req.amount)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

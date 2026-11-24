@@ -158,6 +158,7 @@ stage_fast() {
   need_file scripts/ci/check-request-txn.mjs && run_gate "请求事务" "node scripts/ci/check-request-txn.mjs --changed-only"
   need_file scripts/ci/check-tenant-context.cjs && run_gate "租户上下文" "node scripts/ci/check-tenant-context.cjs --changed-only"
   need_file scripts/ci/check-repo-tenant-nil-bind.cjs && run_gate "仓库 nil 租户绑定" "node scripts/ci/check-repo-tenant-nil-bind.cjs"
+  need_file scripts/ci/check-tenant-write-sources.cjs && run_gate "零租户写源(strict)" "node scripts/ci/check-tenant-write-sources.cjs --strict"
   need_file scripts/ci/check-no-runtime-permission-insert.mjs && run_gate "权限码落库路径" "node scripts/ci/check-no-runtime-permission-insert.mjs"
 
   # Rust 静态（不编译）

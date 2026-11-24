@@ -358,9 +358,10 @@ async fn install_plugin_inner(
             }
             sqlx::query(
                 "UPDATE core.core_plugins SET install_count = install_count + 1 \
-                 WHERE id = $1 AND tenant_id = '00000000-0000-0000-0000-000000000000'",
+                 WHERE id = $1 AND tenant_id = $2",
             )
             .bind(plugin.id)
+            .bind(PLATFORM_TENANT_ID)
             .execute(&mut scope)
             .await
             .ok();
@@ -683,9 +684,10 @@ async fn uninstall_plugin_inner(
         }
         sqlx::query(
             "UPDATE core.core_plugins SET install_count = GREATEST(install_count - 1, 0) \
-             WHERE id = $1 AND tenant_id = '00000000-0000-0000-0000-000000000000'",
+             WHERE id = $1 AND tenant_id = $2",
         )
         .bind(plugin.id)
+        .bind(PLATFORM_TENANT_ID)
         .execute(&mut scope)
         .await
         .ok();
@@ -1314,11 +1316,12 @@ pub async fn upload_plugin_version(
             let bumped = sqlx::query(
                 "UPDATE core.core_plugins SET version = $1 \
                  WHERE id = $2 \
-                   AND (tenant_id = $3 OR (tenant_id = '00000000-0000-0000-0000-000000000000' AND owner_tenant_id = $3))",
+                   AND (tenant_id = $3 OR (tenant_id = $4 AND owner_tenant_id = $3))",
             )
             .bind(&req.version)
             .bind(plugin.id)
             .bind(owner_tenant)
+            .bind(PLATFORM_TENANT_ID)
             .execute(&mut scope)
             .await;
             match bumped {
