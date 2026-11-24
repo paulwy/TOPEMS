@@ -33,6 +33,25 @@
 
 > 订正方式：以基准 `rls_policy_expected.json` 中同名表策略为准，DROP 生产 `*_allow_all_*` 策略、重建基准策略；变更前在预发演练并核对应用系统通道注入是否在位。
 
+### 3.1 订正路径核对（2026-11-25）
+
+逐条比对迁移链，档 2 五条在链上**均已有对应严格化 forward 迁移**，策略文本与基准 JSON 一致、回滚齐全；生产 `qual=true` 漂移根因为账本滞后（水位 `20261119000002`，下列脚本未重放），正常订正 = 追平账本重放既有迁移，**无需新增链上迁移**。
+
+| 生产表 | 基准目标口径 | 链上既有迁移 | 兜底补丁（账本不可重放时窗口直改） |
+|---|---|---|---|
+| `iam.roles` | `rls_global_read` SELECT(true) + `rls_system_write` ALL | `20261119161000_zero_path_retained_tables_policy_fix.sql` | `scripts/ops/rls-tier2-drift-fix-2026-11-25.sql` |
+| `core.core_tenant_plugins` | `rls_system_only` ALL | `20261119161000_zero_path_retained_tables_policy_fix.sql` | 同上 |
+| `portal.user_preferences` | `rls_system_only` ALL | `20261119161000_zero_path_retained_tables_policy_fix.sql` | 同上 |
+| `mobile.oa_announcement_reads` | `rls_tenant_isolation` ALL | `20261119151000_mobile_oa_announcement_reads_tenant_rls.sql` | 同上 |
+| `pdm.pdm_master_data_refs` | `rls_tenant_isolation` ALL | `20261119150000_pdm_master_data_refs_rls_strict_forward.sql` | 同上 |
+
+兜底补丁三件套（**仅落本地，未连生产、未执行**）：
+- 订正：`scripts/ops/rls-tier2-drift-fix-2026-11-25.sql`（快照既有策略 → DROP 全放行 → 按基准重建 → 后置断言）
+- 回滚：`scripts/ops/rls-tier2-drift-fix-2026-11-25.rollback.sql`（从 `archive._rls_policy_snapshot` 本批次快照恢复）
+- 只读核对：`scripts/ops/rls-tier2-drift-fix-2026-11-25.verify.sql`（逐表比对策略集合/cmd/qual 分支/RLS+FORCE）
+
+> 注意：`mobile.oa_announcement_reads`、`pdm.pdm_master_data_refs` 的补列/回填/索引在既有完整迁移内；兜底补丁前置断言校验 `tenant_id` 列存在，缺失则中止，须先走既有迁移，不在补丁内补数据结构。
+
 ## 4. 档 3：基准未收录（30 条）—— 按用途分档定性
 
 代码基准未对这些表登记 RLS 策略。按用途初分为 6 个子类，标注倾向与待复核点。
