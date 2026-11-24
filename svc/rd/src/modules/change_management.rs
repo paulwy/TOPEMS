@@ -30,21 +30,90 @@ use topems_shared_core::response::{ApiResponse, PaginatedResponse};
 
 // ==================== 纯逻辑引擎 ====================
 
-/// 变更请求合法状态流转表：
-/// submitted → under_review / rejected（可重新提交）
-/// under_review → approved / rejected
-/// approved → closed（变更单执行完成后关闭）
-/// rejected → submitted（修改后重新提交）
+/// 变更请求状态（DB 契约固定小写英文，与迁移 CHECK 同源）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChangeRequestStatus {
+    Submitted,
+    UnderReview,
+    Approved,
+    Rejected,
+    Closed,
+}
+
+impl ChangeRequestStatus {
+    pub const DB_VALUES: [&'static str; 5] = [
+        "submitted",
+        "under_review",
+        "approved",
+        "rejected",
+        "closed",
+    ];
+    pub const DEFAULT: Self = Self::Submitted;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Submitted => "submitted",
+            Self::UnderReview => "under_review",
+            Self::Approved => "approved",
+            Self::Rejected => "rejected",
+            Self::Closed => "closed",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw {
+            "submitted" => Some(Self::Submitted),
+            "under_review" => Some(Self::UnderReview),
+            "approved" => Some(Self::Approved),
+            "rejected" => Some(Self::Rejected),
+            "closed" => Some(Self::Closed),
+            _ => None,
+        }
+    }
+
+    /// 兼容常见历史/外部别名；未知值返回 None，由调用方 fail-closed。
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        match raw.trim().to_lowercase().as_str() {
+            "submitted" => Some(Self::Submitted),
+            "under_review" | "in_review" | "reviewing" => Some(Self::UnderReview),
+            "approved" => Some(Self::Approved),
+            "rejected" | "denied" => Some(Self::Rejected),
+            "closed" | "done" => Some(Self::Closed),
+            _ => None,
+        }
+    }
+
+    /// 合法流转：提交可进入评审或驳回；评审中可批准/驳回；
+    /// 已批准仅可关闭；已驳回可重新提交；关闭为终态；同值幂等。
+    #[must_use]
+    pub const fn can_transition_to(self, target: Self) -> bool {
+        matches!(
+            (self, target),
+            (
+                Self::Submitted,
+                Self::Submitted | Self::UnderReview | Self::Rejected
+            ) | (
+                Self::UnderReview,
+                Self::UnderReview | Self::Approved | Self::Rejected
+            ) | (Self::Approved, Self::Approved | Self::Closed)
+                | (Self::Rejected, Self::Rejected | Self::Submitted)
+                | (Self::Closed, Self::Closed)
+        )
+    }
+}
+
+/// 兼容旧调用点的字符串入口；未知状态一率判为非法。
 pub fn change_request_can_transition(from: &str, to: &str) -> bool {
-    matches!(
-        (from, to),
-        ("submitted", "under_review")
-            | ("submitted", "rejected")
-            | ("under_review", "approved")
-            | ("under_review", "rejected")
-            | ("approved", "closed")
-            | ("rejected", "submitted")
-    )
+    match (
+        ChangeRequestStatus::from_db_str(from),
+        ChangeRequestStatus::from_db_str(to),
+    ) {
+        (Some(from), Some(to)) => from.can_transition_to(to),
+        _ => false,
+    }
 }
 
 /// 变更优先级权重
@@ -189,7 +258,7 @@ pub async fn create_change_request(
         r#"INSERT INTO rs.change_requests
             (id, tenant_id, project_id, title, description, change_type, priority, status,
              impact_score, scope_docs, scope_phases, proposed_by, created_at, updated_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,'submitted',$8,$9,$10,$11,$12,$12)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13)
             RETURNING {CHANGE_REQUEST_RETURN}"#
     )))
     .bind(id)
@@ -199,6 +268,7 @@ pub async fn create_change_request(
     .bind(&req.description)
     .bind(&req.change_type)
     .bind(&priority)
+    .bind(ChangeRequestStatus::DEFAULT.as_db_str())
     .bind(impact_score)
     .bind(scope_docs)
     .bind(scope_phases)
@@ -269,10 +339,20 @@ pub async fn list_change_requests(
         .unwrap_or(20)
         .min(100);
     let offset = (page - 1) * page_size;
-    let status_filter = params
-        .get("status")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let status_filter = match params.get("status").and_then(|v| v.as_str()) {
+        None => None,
+        Some(raw) => match ChangeRequestStatus::normalize(raw) {
+            Some(status) => Some(status.as_db_str()),
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    ApiResponse::<PaginatedResponse<ChangeRequest>>::bad_request(
+                        "status 仅支持 submitted / under_review / approved / rejected / closed",
+                    ),
+                )
+            }
+        },
+    };
 
     let result: Result<Vec<ChangeRequest>, sqlx::Error> =
         sqlx::query_as(sqlx::AssertSqlSafe(format!(
@@ -512,7 +592,15 @@ pub async fn transition_change_request(
             .await;
 
     let current = match current {
-        Ok(Some(s)) => s,
+        Ok(Some(s)) => match ChangeRequestStatus::from_db_str(&s) {
+            Some(status) => status,
+            None => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::<ChangeRequest>::server_error("变更请求状态未标准化，拒绝流转"),
+                )
+            }
+        },
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
@@ -527,12 +615,24 @@ pub async fn transition_change_request(
         }
     };
 
-    if !change_request_can_transition(&current, &req.to) {
+    let target = match ChangeRequestStatus::normalize(&req.to) {
+        Some(status) => status,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<ChangeRequest>::bad_request(
+                    "to 仅支持 submitted / under_review / approved / rejected / closed",
+                ),
+            )
+        }
+    };
+    if !current.can_transition_to(target) {
         return (
             StatusCode::BAD_REQUEST,
             ApiResponse::<ChangeRequest>::bad_request(&format!(
-                "非法状态流转: {current} -> {}",
-                req.to
+                "非法状态流转: {} -> {}",
+                current.as_db_str(),
+                target.as_db_str()
             )),
         );
     }
@@ -544,7 +644,7 @@ pub async fn transition_change_request(
          RETURNING {CHANGE_REQUEST_RETURN}"
         )))
         .bind(id)
-        .bind(&req.to)
+        .bind(target.as_db_str())
         .bind(now)
         .fetch_optional(&mut **txn)
         .await;
@@ -611,7 +711,7 @@ pub async fn create_change_order(
             .await;
 
     let approved = match status {
-        Ok(Some(s)) => s == "approved",
+        Ok(Some(s)) => ChangeRequestStatus::normalize(&s) == Some(ChangeRequestStatus::Approved),
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
@@ -753,6 +853,29 @@ pub fn create_routes() -> Router<ApiState> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn status_db_contract_and_aliases() {
+        assert_eq!(ChangeRequestStatus::DB_VALUES.len(), 5);
+        assert_eq!(ChangeRequestStatus::DEFAULT.as_db_str(), "submitted");
+        for value in ChangeRequestStatus::DB_VALUES {
+            let parsed = ChangeRequestStatus::from_db_str(value).expect("db value must parse");
+            assert_eq!(parsed.as_db_str(), value);
+        }
+        assert_eq!(
+            ChangeRequestStatus::normalize("in_review"),
+            Some(ChangeRequestStatus::UnderReview)
+        );
+        assert_eq!(
+            ChangeRequestStatus::normalize("denied"),
+            Some(ChangeRequestStatus::Rejected)
+        );
+        assert_eq!(
+            ChangeRequestStatus::normalize("done"),
+            Some(ChangeRequestStatus::Closed)
+        );
+        assert_eq!(ChangeRequestStatus::normalize("unknown"), None);
+    }
 
     #[test]
     fn transition_valid_paths() {

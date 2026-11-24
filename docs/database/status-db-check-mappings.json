@@ -2945,6 +2945,16 @@
       "db_constraint": "ck_formulas_status_standard",
       "db_verified_at": "2026-11-24",
       "db_verified_via": "local pg_constraint (convalidated)"
+    },
+    {
+      "file": "svc/rd/src/modules/change_management.rs",
+      "enum": "ChangeRequestStatus",
+      "table": "rs.change_requests",
+      "column": "status",
+      "candidate": "database/migrations/20261124180000_rd_change_request_status_standard.sql",
+      "db_constraint": "ck_change_requests_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     }
   ],
   "non_enum_checks": [

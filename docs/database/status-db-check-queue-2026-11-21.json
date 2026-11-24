@@ -3,18 +3,18 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql + status-db-check-mappings.json(db_constraint)",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用。db_covered 表示台账已核验该枚举至少一个持久化列有 CONVALIDATED 约束（不是缺口）；real_gap 才是待办",
   "stats": {
-    "uncovered_enums": 186,
+    "uncovered_enums": 187,
     "uncovered_values": 192,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 179,
-    "db_covered_enums": 116,
+    "resolved_enums": 180,
+    "db_covered_enums": 117,
     "real_gap_enums": 0,
-    "internal_state_enums": 151,
+    "internal_state_enums": 150,
     "persisted_unmapped_enums": 20,
-    "finance_candidate_ready_enums": 36,
-    "internal_state_values": 164,
+    "finance_candidate_ready_enums": 38,
+    "internal_state_values": 163,
     "persisted_unmapped_values": 14,
-    "finance_candidate_ready_values": 14
+    "finance_candidate_ready_values": 15
   },
   "rows": [
     {
@@ -1703,9 +1703,7 @@
       "values_by_bucket": {
         "finance_candidate_ready": [
           "executed",
-          "proposed"
-        ],
-        "internal_state": [
+          "proposed",
           "under_review"
         ]
       },
@@ -3315,7 +3313,9 @@
       "enum": "DiscoveryStatus",
       "values_by_bucket": {
         "internal_state": [
-          "new",
+          "new"
+        ],
+        "finance_candidate_ready": [
           "under_review"
         ]
       },
@@ -3759,6 +3759,33 @@
       "db_covered": true,
       "db_constraints": [
         "ck_rs_projects_status_standard"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/modules/change_management.rs",
+      "enum": "ChangeRequestStatus",
+      "values_by_bucket": {
+        "finance_candidate_ready": [
+          "under_review"
+        ]
+      },
+      "candidate_targets": [
+        "finance.finance_v56_tax_plans.v56_tax_plans_status_check"
+      ],
+      "resolved": {
+        "file": "svc/rd/src/modules/change_management.rs",
+        "enum": "ChangeRequestStatus",
+        "table": "rs.change_requests",
+        "column": "status",
+        "candidate": "database/migrations/20261124180000_rd_change_request_status_standard.sql",
+        "db_constraint": "ck_change_requests_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_change_requests_status_standard"
       ]
     },
     {
