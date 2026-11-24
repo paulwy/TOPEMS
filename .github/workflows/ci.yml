@@ -498,14 +498,18 @@ jobs:
       - name: Run db-tests crates
         run: |
           set -euo pipefail
+          RUNNER_DSN="postgres://topems_db_test:${DB_TEST_PASSWORD}@localhost:5432/topems_db_test"
           for p in topems-shared-auth topems-crm topems-scm topems-wms topems-mes topems-erp topems-finance topems-unified-core; do
-            echo "== $p"
+            echo "== $p --lib"
+            TEST_DATABASE_URL="$RUNNER_DSN" \
+              cargo test -p "$p" --features db-tests --lib -- --test-threads=4
             if [ "$p" = "topems-shared-auth" ]; then
-              # 该 crate 含 RLS 语义回归，必须以非超级用户连接，否则 FORCE RLS 会被绕过。
-              TEST_DATABASE_URL="postgres://topems_db_test:${DB_TEST_PASSWORD}@localhost:5432/topems_db_test" \
-                cargo test -p "$p" --features db-tests -- --test-threads=4
-            else
-              cargo test -p "$p" --features db-tests -- --test-threads=4
+              # 共享认证的 RLS 端到端文件使用 sqlx::test 临时库，单独跑，仍以非超级用户连接。
+              for t in permission_backfill_e2e rls_middleware_e2e; do
+                echo "== $p --test $t"
+                TEST_DATABASE_URL="$RUNNER_DSN" \
+                  cargo test -p "$p" --features db-tests --test "$t" -- --test-threads=4
+              done
             fi
           done
 
@@ -2659,7 +2663,7 @@ jobs:
 
       - name: Prebuild 26 binaries（避免 defense-check-all 内逐个编译超时）
         run: |
-          cargo build --offline \
+          cargo build \
             -p topems-gis \
             -p topems-ehs \
             -p topems-portal \

@@ -1112,6 +1112,22 @@ mod rls_scope_tests {
                        OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
                 WITH CHECK (COALESCE(current_setting('app.rls_system', true), 'off') = 'on'
                        OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid);
+            CREATE TABLE crm.interactions (
+                id UUID PRIMARY KEY,
+                org_id UUID NOT NULL,
+                tenant_id UUID NOT NULL,
+                customer_id UUID,
+                opportunity_id UUID,
+                interaction_type TEXT NOT NULL,
+                subject TEXT,
+                content TEXT,
+                status TEXT,
+                scheduled_at TIMESTAMPTZ,
+                follow_up_required BOOLEAN DEFAULT FALSE,
+                follow_up_date TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
             "#,
         )
         .execute(pool)
@@ -1237,14 +1253,15 @@ mod rls_scope_tests {
         setup(&pool).await;
         let handlers = CrmEventHandlers::new(pool.clone());
 
-        handlers
+        let err = handlers
             .handle_opportunity_won(Event::new(
                 EventType::OpportunityWon,
                 "crm",
                 opportunity_payload(Uuid::new_v4(), None),
             ))
             .await
-            .expect("无法确定租户时应跳过而非报错");
+            .expect_err("无租户必须 fail-closed");
+        assert!(format!("{err}").contains("无法确定租户"), "{err}");
 
         assert!(
             all_bills(&pool).await.is_empty(),
@@ -1265,6 +1282,18 @@ mod rls_scope_tests {
             .execute(&pool)
             .await
             .unwrap();
+        sqlx::query(
+            r#"CREATE TABLE crm.interactions (
+                id UUID PRIMARY KEY, org_id UUID NOT NULL, tenant_id UUID NOT NULL,
+                customer_id UUID, opportunity_id UUID, interaction_type TEXT NOT NULL,
+                subject TEXT, content TEXT, status TEXT, scheduled_at TIMESTAMPTZ,
+                follow_up_required BOOLEAN DEFAULT FALSE, follow_up_date TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )"#,
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
         let handlers = CrmEventHandlers::new(pool.clone());
 
         let err = handlers
@@ -1303,14 +1332,15 @@ mod rls_scope_tests {
         assert_eq!(b.2, "pending", "租户 B 的应收不得被跨租户核销");
 
         // 无租户载荷：跳过，不得改动任何账单
-        handlers
+        let err = handlers
             .handle_payment_received(Event::new(
                 EventType::PaymentReceived,
                 "finance",
                 payment_payload("PAY-NO-TENANT", None, 88),
             ))
             .await
-            .expect("无租户载荷应跳过");
+            .expect_err("无租户必须 fail-closed");
+        assert!(format!("{err}").contains("缺少有效租户"), "{err}");
         let bills = all_bills(&pool).await;
         let b = bills.iter().find(|b| b.1 == "INV-B").unwrap();
         assert_eq!(b.2, "pending", "无租户上下文不得核销");
