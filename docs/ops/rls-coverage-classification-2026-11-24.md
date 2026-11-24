@@ -248,9 +248,61 @@ schema 聚合：`portal` 108（网关/联邦/缓存/路由/策略等系统表）
 
 B 类 38 张经应用依赖核对：**10 张死表 + 24 张重复遗留表不补 RLS**；仅 **4 张在用表待口径定性**，其中无一张可直接判定为"漏挂 RLS 的租户业务表"。这与 §3 判断一致：生产 RLS 开关覆盖基本健康，主要隔离风险仍在策略内容（allow-all，见审计 §9.3）。
 
+## 8. P1 复核：C 类 53 张疑似业务实体表（2026-11-24）
+
+同 §7.1 方法做三方对照（源码全限定引用 × 生产 RLS 状态 × 基准 ON 集合）。结果分三档。
+
+### 8.1 源码无引用（12 张）—— 死表/归档候选，不补 RLS
+
+- `flow._deprecated_core_doc_document_versions`
+- `flow.core_file_folders`
+- `flow.core_file_permissions`
+- `iam.user_access_logs`
+- `iam.user_roles`
+- `portal.graphql_execution_profiles`
+- `portal.portal_alert_thresholds`
+- `portal.portal_compatibility_reports`
+- `portal.portal_queue_messages`
+- `public._archive_core_doc_documents`
+- `public.qa_ehs_material_stocks`
+- `ticket.schema_defense_ledger`
+
+### 8.2 同名重复遗留（22 张）—— 本体在生产 ON 且基准 ON，副本不补 RLS
+
+| 清单内 OFF 副本 | 源码实际访问本体（生产 ON / 基准 ON） |
+|---|---|
+| `analytics.report_schedules` / `report_subscriptions` / `report_templates` / `reports` | `bi.report_schedules` / `bi.report_subscriptions` / `bi.report_templates`(+`pm.report_templates`) / `bi.reports` |
+| `bi.report_execution_records` | `analytics.report_execution_records` |
+| `doc_service.core_doc_documents` | `public.core_doc_documents` |
+| `flow.core_files` / `core_workflow_tasks` | `public.core_files` / `public.core_workflow_tasks` |
+| `plugin_wms.purchase_order_snapshots` | `wms.purchase_order_snapshots` |
+| `public.equipment_inspections` / `rs.equipment_inspections` | `mes.equipment_inspections` |
+| `public.qa_ehs_inspection_items` / `inspection_plans` / `stock_records` | `ehs.qa_ehs_inspection_items` / `inspection_plans` / `stock_records` |
+| `public.quality_inspections` / `quality_patrol_items` / `quality_patrols` / `quality_standard_values` / `quality_standards` | `mes.quality_inspections` / `quality_patrol_items` / `quality_patrols` / `quality_standard_values` / `quality_standards` |
+| `public.ticket_automation_rules` / `ticket_knowledge_articles` | `ticket.ticket_automation_rules` / `ticket_knowledge_articles` |
+| `unified_core.documents` | `mobile.documents` / `ai.documents` / `erp.documents` |
+
+### 8.3 在用待定性（19 张）
+
+- **基准有意全局通道（豁免）**：`gis.track_positions`（基准白名单 3 张之一）。
+- **与 §7.4③ 同源**：`core.core_plugin_permissions`、`public.core_plugin_permissions`（插件权限目录）。
+- **权限/角色关联表（测试夹具命中，待评审）**：`public.core_permissions`、`public.core_role_permissions`、`public.core_user_roles`、`iam.core_permissions`、`iam.core_role_permissions`、`iam.core_user_roles`、`iam.tool_permissions`。
+- **其余需运行时链路复核**：`ai.user_profiles`、`communication.core_location_messages`、`erp.erp_master_data_quality_reports`、`erp.erp_master_data_quality_rules`、`iam.users`、`master_data.mdm_quality_rules`、`public.core_doc_document_versions`、`qms.qa_inspection_plan_items`、`rs.document_relations`。
+
+> 注意：部分源码命中来自 `svc/**/tests/` 夹具建表/样例 SQL，不等于运行时服务端依赖；上表"待定性"项需在运行时链路（路由 → 服务 → SQL）二次确认，不能仅凭测试命中定性。
+
+### 8.4 两轮复核小结
+
+| 分桶 | 总数 | 无引用死表 | 重复遗留 | 在用待定性 |
+|---|---:|---:|---:|---:|
+| B 类（带 tenant_id，OFF，代码未列） | 38 | 10 | 24 | 4 |
+| C 类（无 tenant_id，OFF，代码未列） | 53 | 12 | 22 | 19 |
+
+两轮对照未发现"明确漏挂 RLS 的租户业务表"；待定性 23 张（4+19）需产品/安全口径与运行时链路复核后再决定补策略。整体结论与 §3、§7.5 一致：**生产 RLS 开关覆盖基本健康，主要隔离风险集中在策略内容（allow-all）与历史重复/遗留表治理。**
+
 ## 6. 下一步建议（优先级）
 
 1. **P1**：~~核对 B 类 38 张业务实体表的应用 SQL 依赖~~（已完成，见 §7；剩 4 张待口径定性）。
-2. **P1**：复核 C 类 53 张疑似业务实体，用同方法（全限定表名 + 生产状态 + 基准对照）区分全局表与漏加 `tenant_id` 的业务表。
+2. **P1**：~~复核 C 类 53 张疑似业务实体~~（已完成，见 §8；12 死表 / 22 重复遗留 / 19 待定性）。
 3. **P2**：在超户/CI 全链 head 库上复跑本对照，消除 fixture 库快照偏差。
 4. **P3**：10 张死表 + 24 张重复遗留表纳入后续归档/下线评估；日志/队列/字典类逐张确认豁免口径后登记豁免台账。
