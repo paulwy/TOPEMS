@@ -28,6 +28,10 @@ mkdir -p "$LOG_DIR"
 
 # 加载环境变量
 load_env() {
+    # 快速自检：生产 env 指向 *_prod 库时，非生产位启动要显式确认（防止误连生产/连错库）
+    if grep -qE '^DATABASE_URL=.*(_prod|topems_prod)' "$ENV_FILE" 2>/dev/null && [ "${TOPEMS_INSTANCE:-}" != "prod" ]; then
+        echo "[WARN] $ENV_FILE 指向生产库（*_prod），但 TOPEMS_INSTANCE!=prod；确认这是生产机再继续" >&2
+    fi
     set -a
     # shellcheck disable=SC1090
     source "$ENV_FILE"

@@ -46,6 +46,9 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       TZ: UTC
       PGTZ: UTC
+    # 连接上限必须 > pgbouncer.max_db_connections(150) + 迁移/运维直连余量；
+    # 容器默认 max_connections=100 会让 pgbouncer 的 150 永远拿不满
+    command: ["postgres", "-c", "max_connections=200", "-c", "shared_buffers=256MB", "-c", "log_min_duration_statement=1000"]
     ports:
       # 宿主机映射默认 5433：本机 5432 被 Homebrew postgres 占用；容器内部仍 5432（服务用 postgres:5432）
       # 可用环境变量 POSTGRES_PORT 覆盖
@@ -68,11 +71,10 @@ services:
     cpus: 0.5
     image: edoburu/pgbouncer:1.23
     container_name: topems-pgbouncer
+    # 连接池参数唯一事实源 = ./pgbouncer/pgbouncer.ini（下方 :ro 挂载）；
+    # 不再用 PGBOUNCER_* 环境变量注入第二份数值，避免与挂载配置互相覆盖。
     environment:
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/topems
-      - PGBOUNCER_MAX_CLIENT_CONN=500
-      - PGBOUNCER_DEFAULT_POOL_SIZE=25
-      - PGBOUNCER_MAX_DB_CONNECTIONS=100
+      - TZ=UTC
     ports:
       - "${PGBOUNCER_PORT:-6432}:6432"
     volumes:
@@ -178,7 +180,8 @@ services:
     container_name: topems-unified-core
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
+      - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - CORE_PORT=8000
       - REDIS_URL=redis://redis:6379
       - RABBITMQ_URL=amqp://${RABBITMQ_USER:-topems}:${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD 必须通过环境变量提供}@rabbitmq:5672/%2f
@@ -731,7 +734,7 @@ services:
     container_name: topems-rd
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - RD_PORT=8053
       - CORE_URL=http://unified-core:8000
@@ -785,7 +788,7 @@ services:
     container_name: topems-bi
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - BI_PORT=8060
       - CORE_URL=http://unified-core:8000
@@ -833,7 +836,7 @@ services:
     container_name: topems-portal
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - PORTAL_PORT=8063
       - CORE_URL=http://unified-core:8000
@@ -878,7 +881,7 @@ services:
     container_name: topems-finance
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - FINANCE_PORT=8011
       - CORE_URL=http://unified-core:8000
@@ -935,7 +938,7 @@ services:
     container_name: topems-ai
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - AI_PORT=8013
       - CORE_URL=http://unified-core:8000
@@ -984,7 +987,7 @@ services:
     container_name: topems-mobile
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - MOBILE_PORT=8070
       - CORE_URL=http://unified-core:8000
@@ -1029,7 +1032,7 @@ services:
     container_name: topems-gis
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - GIS_PORT=8071
       - CORE_URL=http://unified-core:8000
@@ -1077,7 +1080,7 @@ services:
     container_name: topems-integration
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - INTEGRATION_PORT=8072
       - CORE_URL=http://unified-core:8000
@@ -1126,7 +1129,7 @@ services:
     container_name: topems-plugin-registry
     environment:
       - BIND_ADDR=0.0.0.0
-      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}
+      - DATABASE_URL=postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@pgbouncer:6432/${POSTGRES_DB:-topems}
       - MIGRATE_URL=postgres://${POSTGRES_USER:-topems}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须通过环境变量/docker/.env 提供（不再有默认密码）}@postgres:5432/${POSTGRES_DB:-topems}
       - PLUGIN_REGISTRY_PORT=8096
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}

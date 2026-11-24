@@ -540,6 +540,14 @@ pre-commit:
       glob: "{docs/database/status-db-check-queue-2026-11-21.json,scripts/ci/status-db-check-queue.mjs,docs/database/status-code-inventory.json,docs/database/status-db-check-mappings.json,docs/database/finance-status-check-candidates-2026-11-21.sql}"
       run: node scripts/ci/status-db-check-queue.mjs --check
 
+    # [Gate PROD-CONFIG] 2026-11-24：生产配置三源冲突（env / compose / pgbouncer.ini）必须可断言。
+    # 覆盖：DSN 是否绕过 PgBouncer、连接上限是否小于池需求、密钥是否入库、CORS 是否占位、
+    #      示例配置与实配是否漂移。任一回退即阻断提交。
+    prod-config:
+      tags: config deploy
+      glob: "{config/env/.env.production.template,config/production.yaml.example,config/database.toml,deploy/docker/docker-compose.yml,deploy/docker/pgbouncer/pgbouncer.ini,deploy/docker/pgbouncer/render-userlist.sh,deploy/k8s/base/*.yaml,scripts/ci/check-prod-config.mjs}"
+      run: node scripts/ci/check-prod-config.mjs
+
     # [Gate TWS] 零租户写入源头扫描（2026-11-16 接入，report-only 起步）
     # 扫描 svc/lib/scripts 中「裸零 UUID 当 tenant 写」的疑似点；显式
     # PLATFORM_TENANT_ID / SYSTEM_TENANT_ID 与测试代码在白名单内。

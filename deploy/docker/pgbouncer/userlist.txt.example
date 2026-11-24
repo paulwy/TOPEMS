@@ -1,0 +1,4 @@
+; 示例文件：真实 userlist.txt 由 render-userlist.sh 生成并 chmod 600，禁止提交。
+; 格式（明文口令，auth_type=scram-sha-256 时 pgbouncer 自行做 SCRAM 校验）：
+"topems" "<owner-password>"
+"topems_app" "<app-password>"

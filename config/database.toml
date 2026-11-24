@@ -4,9 +4,13 @@ timezone = "UTC"
 max_connections = 10
 
 [production]
-database_url = "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}"
+# native（生产机 Mac mini）：unix socket + peer，无口令；compose 形态则由环境变量覆盖为 pgbouncer:6432
+database_url = "postgres:///${DB_NAME}?user=${DB_USER}"
 timezone = "UTC"
-max_connections = 50
+# 上限受 Postgres max_connections 约束；单进程 30 足够，留出迁移/运维直连余量
+max_connections = 30
+# SSL 不在本文件声明：跨机部署时用 DSN 查询参数表达（?sslmode=require）；
+# 同机 socket/peer 无需 SSL（默认 disable）
 
 [test]
 database_url = "postgres://topems@localhost:5433/topems_test"

@@ -61,3 +61,53 @@ k8s 若继续保留，至少补 `securityContext`（`runAsNonRoot: true`、`allo
 ## 本次没有直接改的原因
 
 `.env.production` 是**未跟踪的本地实文件**，且两种部署形态对 DSN 的要求相反（native 要 5432 直连，compose 要 6432 经池）。在没有确认“生产到底跑哪一种”之前改它，可能直接把现网启动打断。上面 A/B 两套都是可执行的完整改法，选一个我就落地。
+
+---
+
+## 修复记录（2026-11-24，全部修复）
+
+审计结论已全部落地，并用 `scripts/ci/check-prod-config.mjs` 把每一条变成可断言门禁（接入 lefthook `prod-config`）。
+
+**1. `.env.production`（本机实文件，600 权限）重写为 native 形态**
+
+- `DATABASE_URL=postgresql:///topems_prod?user=xingzhai`（unix socket + peer，原 `topems:***@localhost:5432` 作废）
+- 新增 `MIGRATE_URL`（迁移独立连接）；`SERVER_PORT=CORE_PORT=8099`（与 launchd 一致，原 8000）
+- `DATABASE_MAX_CONNECTIONS` 100 → **30**（单进程，留出迁移/运维直连余量）
+- `CORS_ALLOWED_ORIGINS` → `https://www.topmap.net,https://app.topmap.net`
+- `STORAGE_PATH` / `PLUGIN_STORAGE_PATH`：`/opt/topems/...` → `/Users/xingzhai/topems/...`
+- 原文件备份为 `.env.production.bak-2026-11-24`（600，`.gitignore` 的 `*.bak-*` 覆盖）
+
+**2. compose 编排（`deploy/docker/docker-compose.yml`）**
+
+- 所有应用 DSN `postgres://topems_app:...@postgres:5432` → **`@pgbouncer:6432`**（11 处）；`MIGRATE_URL` 保持 owner 直连 5432
+- unified-core 不再用 owner 直连，改为 `topems_app` 经池 + 独立 `MIGRATE_URL`
+- 删除 pgbouncer 服务的 `DATABASE_URL` / `PGBOUNCER_MAX_CLIENT_CONN` / `PGBOUNCER_DEFAULT_POOL_SIZE` / `PGBOUNCER_MAX_DB_CONNECTIONS`：连接池参数**唯一事实源 = pgbouncer.ini**
+- postgres 启动参数补 `max_connections=200`、`shared_buffers=256MB`：原默认 100 < pgbouncer `max_db_connections=150`，池永远拿不满
+
+**3. PgBouncer（`deploy/docker/pgbouncer/`）**
+
+- `auth_type` md5 → **scram-sha-256**（PG18 新角色默认 scram，md5 无法认证）
+- `default_pool_size` 15 → 40、`min_pool_size` 5（与 max_db_connections=150 匹配）
+- `userlist.txt` 不再入库：改为 `render-userlist.sh` 部署时按真实口令生成（600），仓库只留 `userlist.txt.example`；`.gitignore` 追加该路径
+
+**4. k8s（`deploy/k8s/base/`）**
+
+- postgres/redis/rabbitmq 全部加 `securityContext`：`allowPrivilegeEscalation: false` + `seccompProfile: RuntimeDefault`；redis/rabbitmq `drop: ALL`，postgres 保留 entrypoint 必需的 `CHOWN/DAC_OVERRIDE/FOWNER/SETGID/SETUID`
+- postgres 加 `args: -c max_connections=200`
+- rabbitmq 明文口令 `topems_secret` → `secretKeyRef(topems-secrets/RABBITMQ_DEFAULT_PASS)`
+
+**5. 配置漂移**
+
+- `config/env/.env.production.template`：补 `MIGRATE_URL`、双形态 DSN 说明（native / compose）、CORS 填真实域名
+- `config/production.yaml.example`：端口 8013 → 8099、`logging.level` error → info、`max_connections` 30、SSL 注释说明同机前提
+- `config/database.toml` `[production]`：DSN 改为 socket 形态、`max_connections` 50 → 30、补 SSL 唯一表达位置说明（不新增程序不认识的键）
+- `scripts/deploy/start-production.sh`：加载 env 时若 DSN 指向 `*_prod` 且 `TOPEMS_INSTANCE!=prod` 给出显式告警
+
+**6. 门禁（新增，已负例验证）**
+
+`node scripts/ci/check-prod-config.mjs` 断言 6 组不变量：模板 MIGRATE_URL/CORS/DSN/pool、compose 无双源且 app 经池、pgbouncer 认证与池上限、密钥不入库、实配权限与占位、示例配置漂移。把模板 CORS 改回 `your-domain.com` 时立即 FAIL（exit 1），恢复后 PASS。
+
+## 仍然只能人工处理的两件事
+
+1. **DNS（Cloudflare）**：`www.topmap.net` 在部分解析器上仍返回 `topems-website.pages.dev` 的陈旧 CNAME，裸域 `topmap.net` 指向无响应的 `39.97.42.144`。本机没有 Cloudflare 凭据（`~/.cloudflared` 不存在、无 `CLOUDFLARE_API_TOKEN`），且生产机 SSH 不可达，无法代改。操作清单见 `docs/ops/topmap-net-dns-2026-11-24.md`。
+2. **生产机实配核对**：`.env.production` 是**本机副本**是否与生产机 `/Users/xingzhai/topems` 上的实文件一致，需要 SSH 恢复后 `sha256sum` 比对；两处不一致时以生产机为准再回灌本仓库。

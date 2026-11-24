@@ -24,6 +24,17 @@ spec:
         # 与 docker-compose.yml 主基准一致：pgvector/pgvector:pg18（ai 服务依赖 pgvector 扩展）
         image: pgvector/pgvector:pg18
         imagePullPolicy: IfNotPresent
+        # 官方镜像 entrypoint 以 root 起步做 chown 再降权，因此不能 drop ALL；
+        # 仅保留启动所需能力，其余丢弃，且禁止提权
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+            add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
+          seccompProfile:
+            type: RuntimeDefault
+        # 与 compose 对齐：pgbouncer/compose 期望 150 条服务端连接 + 迁移余量
+        args: ["-c", "max_connections=200", "-c", "shared_buffers=512MB"]
         ports:
         - containerPort: 5432
           name: postgres

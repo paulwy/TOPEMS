@@ -31,8 +31,18 @@ spec:
         env:
         - name: RABBITMQ_DEFAULT_USER
           value: "topems"
+        # 口令来自 Secret（原清单把 topems_secret 明文写进仓库）
         - name: RABBITMQ_DEFAULT_PASS
-          value: "topems_secret"
+          valueFrom:
+            secretKeyRef:
+              name: topems-secrets
+              key: RABBITMQ_DEFAULT_PASS
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
         resources:
           requests:
             cpu: "100m"
