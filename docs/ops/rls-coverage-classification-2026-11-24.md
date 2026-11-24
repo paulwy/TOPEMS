@@ -190,9 +190,67 @@ schema 聚合：`portal` 108（网关/联邦/缓存/路由/策略等系统表）
 2. 本台账聚焦「RLS 开关覆盖」；生产 36 条 `qual='true'` 全放行策略属「策略内容不隔离」问题，见审计文档 §9.3，不在本台账重复。
 3. 生产账本滞后（水位 `20261119000002` vs 头版本 `20261124200000`），追平后需对 A 类及 B/C 候选重新跑一遍本对照。
 
+## 7. P1 复核：B 类 38 张业务实体表应用依赖核对（2026-11-24）
+
+### 7.1 方法
+
+扫描 `svc/`、`lib/` 共 1983 个 `.rs` 文件，提取 SQL 中真实 `schema.table` 全限定引用（FROM/JOIN/INTO/UPDATE，共 848 个被引表名），与生产 RLS 状态、代码基准 ON 集合三方对照。关键鉴别：**基名相同不等于同一张表**——源码实际访问的常是另一 schema 的同名表，清单内同名副本可能是历史遗留。
+
+### 7.2 ① 源码零引用死表（10 张）—— 不补 RLS，列归档候选
+
+`.rs` 源码与 seeds/测试均无 SQL 引用：
+
+- `iam.core_billing_invoices`
+- `iam.core_billing_plans`
+- `iam.core_chat_members`
+- `iam.core_chat_messages`
+- `iam.core_chat_rooms`
+- `iam.core_file_folders`
+- `iam.core_plugin_pricing`
+- `iam.core_subscriptions`
+- `iam.core_users`
+- `public.pm_master_data_refs`
+
+### 7.3 ② 同名重复遗留表（24 张）—— 不补 RLS，列重复表清理候选
+
+源码访问的是另一 schema 的同名表，且该本体在生产已 RLS ON、基准期望 ON；清单内副本无应用依赖：
+
+| 清单内 OFF 副本 | 源码实际访问本体（生产 ON / 基准 ON） |
+|---|---|
+| `flow.core_master_data_refs` | `public.core_master_data_refs` |
+| `flow.core_workflow_instances` / `core_workflow_versions` / `core_workflows` | `public.core_workflow_instances` / `core_workflow_versions` / `core_workflows` |
+| `iam.core_emails` | `public.core_emails` |
+| `iam.core_files` | `public.core_files` |
+| `iam.core_notifications` | `public.core_notifications` |
+| `iam.core_roles` | `public.core_roles` |
+| `iam.core_tenant_modules` / `core_tenant_settings` / `core_tenant_usage` / `core_tenant_users` | `public.core_tenant_modules` / `core_tenant_settings` / `core_tenant_usage` / `core_tenant_users` |
+| `iam.core_workflow_instances` / `core_workflow_tasks` / `core_workflows` | `public.core_workflow_instances` / `core_workflow_tasks` / `core_workflows` |
+| `iam.core_plugin_instances` / `core_plugin_permissions` / `core_plugin_reviews` | `core.core_plugin_instances` / `core_plugin_permissions` / `core_plugin_reviews`（本体见 7.4③） |
+| `iam.core_plugins` | `core.core_plugins` |
+| `plugin_erp.accounting_subjects` | `plugin_finance.accounting_subjects` |
+| `public.conversion_executions` / `conversion_rules` | `integration.conversion_executions` / `conversion_rules` |
+| `public.core_ticket_activities` / `core_ticket_comments` / `core_ticket_sla_escalations` / `core_ticket_sla_policies` / `core_tickets` | `ticket.core_ticket_activities` / `core_ticket_comments` / `core_ticket_sla_escalations` / `core_ticket_sla_policies` / `core_tickets` |
+
+### 7.4 ③ 源码在用、生产 OFF、待口径定性（4 张）
+
+这 4 张是 B 类中唯一「代码路径真实访问、但生产 RLS OFF、基准未列入」的表：
+
+| 表 | 访问路径观察 | 初步倾向 |
+|---|---|---|
+| `core.core_plugin_instances` | 插件运行时实例注册；INSERT/UPDATE/SELECT 按 `plugin_id` 关联，SQL 未直接绑定 `tenant_id` | 需评审：平台运行时注册表 vs 租户业务实例 |
+| `core.core_plugin_permissions` | 插件权限定义目录，按 `plugin_code` 查询，无租户谓词 | 倾向全局参考数据，可豁免 |
+| `core.core_plugin_reviews` | 插件市场评论/评分 | 需评审：全局公开评价 vs 租户可见 |
+| `iam.tenant_permissions` | 应用层 SQL 均带 `WHERE tenant_id = $1`，租户谓词在位；RLS OFF 属谓词兜底 | 风险较低，确认是否需补 RLS 兜底策略 |
+
+> 处置建议：③ 组在产品/安全口径确认前不擅自补策略；`iam.tenant_permissions` 已有应用谓词，优先级最低；插件实例/评论表需先明确数据归属模型。
+
+### 7.5 小结
+
+B 类 38 张经应用依赖核对：**10 张死表 + 24 张重复遗留表不补 RLS**；仅 **4 张在用表待口径定性**，其中无一张可直接判定为"漏挂 RLS 的租户业务表"。这与 §3 判断一致：生产 RLS 开关覆盖基本健康，主要隔离风险仍在策略内容（allow-all，见审计 §9.3）。
+
 ## 6. 下一步建议（优先级）
 
-1. **P1**：核对 B 类 38 张业务实体表的应用 SQL 依赖，区分平台全局表与租户业务表；业务表列入补 RLS 迁移清单。
-2. **P1**：复核 C 类 53 张疑似业务实体，确认是全局表还是漏加 `tenant_id`；漏列者先补列再补策略。
+1. **P1**：~~核对 B 类 38 张业务实体表的应用 SQL 依赖~~（已完成，见 §7；剩 4 张待口径定性）。
+2. **P1**：复核 C 类 53 张疑似业务实体，用同方法（全限定表名 + 生产状态 + 基准对照）区分全局表与漏加 `tenant_id` 的业务表。
 3. **P2**：在超户/CI 全链 head 库上复跑本对照，消除 fixture 库快照偏差。
-4. **P3**：B 类废弃归档 11 张纳入后续归档/下线评估；日志/队列/字典类逐张确认豁免口径后登记豁免台账。
+4. **P3**：10 张死表 + 24 张重复遗留表纳入后续归档/下线评估；日志/队列/字典类逐张确认豁免口径后登记豁免台账。
