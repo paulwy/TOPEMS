@@ -60,3 +60,22 @@
 
 临时用 cwd 解决上传，根治要代码引入存储根变量（`TOPEMS_STORAGE_ROOT` 之类，`upload.rs` / `download.rs` 统一拼根），属独立变更；改完再通知生产机，届时 cwd 方案可保留也可回退。
 
+## RLS 根因与修复（2026-11-24 三轮回执后定案）
+
+生产机把根因定位到代码级，我方核对成立：
+
+- `/api/plugin/*` 的 JWT 层是插件自己的 `jwt_auth_middleware`（`svc/plugin-registry/src/shared/middleware.rs:28`），只把 `Claims` 塞进 `req.extensions_mut()`，**不发布 `RLS_REQUEST_TENANT` task-local**；
+- `shared-auth` 的 `auth_middleware`（`lib/shared-auth/src/auth.rs:1207` 附近）才用 `scope_request_tenant(ctx, next.run(req))` 包住后续链路；
+- `tenant_middleware`（`tenant.rs:660+`）只在自己 `begin()` 的事务上 `set_config` 并注入 `RlsTxnCell`，**不发布 task-local**；
+- 而 `Db::scope_with(txn)` → `apply_request_tenant()`（`lib/shared-db/src/scope.rs:450`）只认 task-local。
+
+所以：请求事务在、GUC 也在，但 task-local 缺失 → `RLS context missing`。marketplace 走 `scope_*_system()` 系统通道，绕过该检查，故 200。
+
+**修复（一处改机制）**：`tenant_middleware` 与 `tenant_middleware_no_txn` 都在 `next.run(req)` 外层补 `scope_request_tenant(RlsRequestTenant { tenant, system }, ...)`，不再依赖上游 JWT 层身份。任何模块只要挂了这两个中间件之一，下游 `Db::scope*` 都能拿到上下文。
+
+**并发安全性**：两层可能同时 scope（auth_middleware + tenant_middleware），已验证 tokio task-local 可嵌套、内层覆盖、退出后恢复外层（回归测试 `rls_task_local_tests::scope_request_tenant_nests_and_restores`，通过）。
+
+**回归口径（重建二进制后）**：`GET /api/plugin/navigation-config` 返回 200 且 body `success:true`（此前是 200 + `success:false`，HTTP 状态掩盖了业务失败）；启动期与轮询期不再出现 `Failed to open read scope: ... RLS context missing`；`/api/plugin/runtime/plugins` 同样正常。
+
+**注意**：生产机纠正了一点——navigation-config 的 HTTP 状态是 200（错误在 JSON body），此前 1103 条 200、仅重启窗口 2 条 502。因此不能拿 HTTP 状态做判据，必须看 `success` 字段。
+

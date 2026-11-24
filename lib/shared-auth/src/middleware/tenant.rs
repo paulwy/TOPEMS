@@ -761,6 +761,17 @@ pub fn tenant_middleware() -> impl Fn(
                 post_commit.clone(),
                 REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req)),
             );
+            // 发布 RLS task-local：下游 `Db::scope_with()` / `Db::scope*()` 只认 task-local
+            // （shared-db/src/scope.rs:450）。shared-auth 的 auth_middleware 会发，但自定义
+            // JWT 层（如插件模块的 jwt_auth_middleware）不会——此处兜底，
+            // 避免“请求事务与 GUC 都在、task-local 却缺失”导致误报 RLS context missing。
+            let next_fut = scope_request_tenant(
+                RlsRequestTenant {
+                    tenant: tenant_id,
+                    system,
+                },
+                next_fut,
+            );
             let resp = match company_ctx {
                 Some(ctx) => crate::company_context::scope(ctx, next_fut).await,
                 None => next_fut.await,
@@ -849,6 +860,14 @@ pub fn tenant_middleware_no_txn() -> impl Fn(
 
             let finalizers = RequestFinalizers::new();
             let next_fut = REQUEST_FINALIZERS.scope(finalizers.clone(), next.run(req));
+            // 同上：不依赖上游 JWT 层是否发布 task-local（本中间件不开事务，handler 自开 scope）。
+            let next_fut = scope_request_tenant(
+                RlsRequestTenant {
+                    tenant: tenant_id,
+                    system,
+                },
+                next_fut,
+            );
             let resp = match company_ctx {
                 Some(ctx) => crate::company_context::scope(ctx, next_fut).await,
                 None => next_fut.await,
@@ -1085,6 +1104,36 @@ mod tests {
                 .0,
             400
         );
+    }
+}
+
+#[cfg(test)]
+mod rls_task_local_tests {
+    use super::*;
+
+    /// 两个中间件都可能 scope（auth_middleware + tenant_middleware），必须可嵌套：
+    /// 内层覆盖、退出后恢复外层，而不是 panic 或丢失上下文。
+    #[tokio::test]
+    async fn scope_request_tenant_nests_and_restores() {
+        let outer = RlsRequestTenant {
+            tenant: Uuid::nil(),
+            system: true,
+        };
+        let inner = RlsRequestTenant {
+            tenant: Uuid::new_v4(),
+            system: false,
+        };
+        let (in_outer, in_inner, after) = scope_request_tenant(outer, async move {
+            let in_outer = current_request_tenant();
+            let in_inner = scope_request_tenant(inner, async { current_request_tenant() }).await;
+            let after = current_request_tenant();
+            (in_outer, in_inner, after)
+        })
+        .await;
+
+        assert!(matches!(in_outer, Some(ctx) if ctx.tenant == outer.tenant && ctx.system));
+        assert!(matches!(in_inner, Some(ctx) if ctx.tenant == inner.tenant && !ctx.system));
+        assert!(matches!(after, Some(ctx) if ctx.tenant == outer.tenant && ctx.system));
     }
 }
 
