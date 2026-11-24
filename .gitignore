@@ -380,3 +380,7 @@ _shots/
 # 见 docs/quality/openapi-aggregated-artifact-policy-2026-11-19.md
 /docs/api/openapi-aggregated.json
 /docs/api/openapi-aggregated.yaml
+
+# 参赛演示录屏原片：单文件数十 MB，不入仓库（2026-11-24）。
+# 发布走 Release 附件 / 外链；需要版本化时用 Git LFS，不要直接 add。
+/demo/
