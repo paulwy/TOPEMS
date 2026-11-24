@@ -632,7 +632,10 @@ pub async fn update_team(
     let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     // leader_id 列为 uuid（见迁移 20261103230000_db10_5433_varchar_text_to_uuid_19cols），
     // 必须按 Uuid 绑定，否则 COALESCE($5::text, leader_id::uuid) 类型冲突。
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let status = match req.status.as_deref() {
         None => None,
         Some(raw) if raw.trim().is_empty() => None,
@@ -726,6 +729,11 @@ pub async fn delete_team(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -748,7 +756,7 @@ pub async fn delete_team(
         "#,
     )
     .bind(id)
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -1016,7 +1024,10 @@ pub async fn remove_team_member(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

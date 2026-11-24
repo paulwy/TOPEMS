@@ -331,7 +331,10 @@ pub async fn update_plan(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePlanRequest>,
 ) -> ApiResponse<ProductionPlan> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -479,7 +482,10 @@ pub async fn submit_plan(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionPlan> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -549,7 +555,10 @@ pub async fn approve_plan(
     Path(id): Path<Uuid>,
     Json(_req): Json<ApprovalRequest>,
 ) -> ApiResponse<ProductionPlan> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -619,7 +628,10 @@ pub async fn reject_plan(
     Path(id): Path<Uuid>,
     Json(_req): Json<ApprovalRequest>,
 ) -> ApiResponse<ProductionPlan> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");

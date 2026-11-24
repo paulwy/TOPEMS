@@ -864,7 +864,10 @@ pub async fn update_work_report(
         .labor_hours
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1003,6 +1006,11 @@ pub async fn delete_work_report(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -1031,7 +1039,7 @@ pub async fn delete_work_report(
         "#,
     )
     .bind(uuid)
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -1075,6 +1083,11 @@ pub async fn approve_work_report(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -1082,7 +1095,7 @@ pub async fn approve_work_report(
         }
     };
 
-    let approver = Uuid::parse_str(&claims.username).ok();
+    let approver = claims.user_id().ok();
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1119,7 +1132,7 @@ pub async fn approve_work_report(
     )
     .bind(approver)
     .bind(uuid)
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .bind(WorkReportStatus::Approved.as_db_str())
     .fetch_one(&mut scope)
     .await;
@@ -1192,6 +1205,11 @@ pub async fn reject_work_report(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
@@ -1199,7 +1217,7 @@ pub async fn reject_work_report(
         }
     };
 
-    let approver = Uuid::parse_str(&claims.username).ok();
+    let approver = claims.user_id().ok();
     let remark = body.remark.unwrap_or_default();
 
     let mut guard = txn_arc.lock().await;
@@ -1238,7 +1256,7 @@ pub async fn reject_work_report(
     .bind(approver)
     .bind(remark)
     .bind(uuid)
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .bind(WorkReportStatus::Rejected.as_db_str())
     .fetch_one(&mut scope)
     .await;

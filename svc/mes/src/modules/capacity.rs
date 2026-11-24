@@ -413,7 +413,10 @@ pub async fn update_capacity(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCapacityRequest>,
 ) -> ApiResponse<Capacity> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -591,7 +594,10 @@ pub async fn allocate_capacity(
     Path(id): Path<Uuid>,
     Json(req): Json<AllocateRequest>,
 ) -> ApiResponse<Capacity> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -683,7 +689,10 @@ pub async fn release_capacity(
     Path(id): Path<Uuid>,
     Json(req): Json<AllocateRequest>,
 ) -> ApiResponse<Capacity> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -766,7 +775,10 @@ pub async fn maintenance_capacity(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Capacity> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -901,7 +913,10 @@ pub async fn submit_capacity(
     Path(id): Path<Uuid>,
     Json(_req): Json<SubmitCapacityRequest>,
 ) -> ApiResponse<Capacity> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");

@@ -585,7 +585,10 @@ pub async fn update_process_route(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -692,7 +695,10 @@ pub async fn delete_process_route(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1026,7 +1032,10 @@ pub async fn update_route_step(
         .estimated_time_minutes
         .and_then(|v| v.to_string().parse::<BigDecimal>().ok());
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1204,7 +1213,10 @@ pub async fn reorder_route_steps(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     // 先完成全部入参校验（任一非法即 400，此时零写入），避免「部分步骤已写入后再报错」。
     let mut step_ids = Vec::with_capacity(body.step_ids.len());

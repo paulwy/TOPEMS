@@ -940,7 +940,10 @@ pub async fn update_production_order(
 
     // 租户来源统一为 Claims（与 create 写入的 tenant_id 同源）。
     // `Db::scope()` 在独立事务上同时落 search_path 与请求租户 GUC，RLS 与内联谓词可见。
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1063,7 +1066,10 @@ pub async fn delete_production_order(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1142,7 +1148,10 @@ pub async fn start_production_order(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
 
     let mut guard = txn_arc.lock().await;
@@ -1254,7 +1263,10 @@ pub async fn complete_production_order(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
 
     let mut guard = txn_arc.lock().await;
@@ -1367,7 +1379,10 @@ pub async fn cancel_production_order(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
 
     let mut guard = txn_arc.lock().await;
@@ -1477,7 +1492,10 @@ pub async fn release_production_order(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
 
     let mut guard = txn_arc.lock().await;

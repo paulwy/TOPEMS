@@ -372,7 +372,10 @@ pub async fn update_forecast(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateForecastRequest>,
 ) -> ApiResponse<DemandForecast> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -519,7 +522,10 @@ pub async fn calculate_forecast(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -602,7 +608,10 @@ pub async fn validate_forecast(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -683,7 +692,10 @@ pub async fn adopt_forecast(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DemandForecast> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");

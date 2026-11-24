@@ -507,6 +507,11 @@ pub async fn update_work_station(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let workshop_id = req
         .workshop_id
         .as_ref()
@@ -572,7 +577,7 @@ pub async fn update_work_station(
     .bind(process_id)
     .bind(&req.description)
     .bind(Utc::now())
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -607,6 +612,11 @@ pub async fn delete_work_station(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -629,7 +639,7 @@ pub async fn delete_work_station(
         "#,
     )
     .bind(id)
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
 
@@ -678,6 +688,11 @@ pub async fn activate_work_station(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -707,7 +722,7 @@ pub async fn activate_work_station(
     )
     .bind(id)
     .bind(Utc::now())
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .bind(WorkStationStatus::Active.as_db_str())
     .fetch_optional(&mut scope)
     .await;
@@ -756,6 +771,11 @@ pub async fn deactivate_work_station(
         return e;
     }
 
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -785,7 +805,7 @@ pub async fn deactivate_work_station(
     )
     .bind(id)
     .bind(Utc::now())
-    .bind(get_tenant_id(&claims))
+    .bind(tenant_id)
     .bind(WorkStationStatus::Inactive.as_db_str())
     .bind(WorkStationStatus::deactivate_from())
     .fetch_optional(&mut scope)

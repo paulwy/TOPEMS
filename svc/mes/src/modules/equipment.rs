@@ -587,7 +587,10 @@ pub async fn update_equipment(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let status = match req.status.as_deref() {
         None => None,
@@ -699,7 +702,10 @@ pub async fn delete_equipment(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let result = sqlx::query(
         r#"
@@ -771,7 +777,10 @@ pub async fn maintenance_equipment(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
 
     let now = Utc::now();
     let today =
@@ -1271,7 +1280,10 @@ pub async fn update_maintenance_status(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
     let status = match EquipmentMaintenanceStatus::from_db_str(&req.status) {
         Some(status) => status,
