@@ -3095,3 +3095,11 @@ pending_forward_patches:
     effect: "qms.qa_corrective_actions.status 的 NULL 归 pending、默认 pending、SET NOT NULL，新增五态 CHECK（pending/in_progress/completed/verified/cancelled）并 VALIDATE"
     destructive_scan: "UPDATE status NULL→pending，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "对齐 QMS shared/fsm ACTION 状态机；update_action/complete_action 增加当前态读取与 FSM 校验，UPDATE 带来源态守卫。回滚 database/rollback/20261125005000_qms_corrective_action_status_standard.rollback.sql 恢复可空并移除 CHECK"
+
+  # ===== 2026-11-25：B277 8D 报告状态对齐 FSM =====
+  - version: "20261125006000"
+    file: "database/migrations/20261125006000_qms_eightd_status_standard.sql"
+    status: to_apply
+    effect: "qms.qa_eightd_reports.status 的 'new'/NULL 归 initiated、默认 initiated、SET NOT NULL，新增八态 CHECK（initiated/in_progress/containment/root_cause/permanent_action/verified/closed/cancelled）并 VALIDATE"
+    destructive_scan: "UPDATE status 'new'/NULL→initiated，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "对齐 QMS shared/fsm EIGHT_D 状态机；创建改为 initiated，update 与 D1/D3/D4/D5/D6/D7/D8 步骤入口统一先读当前态、按 FSM 校验并带来源态 UPDATE。回滚 database/rollback/20261125006000_qms_eightd_status_standard.rollback.sql 恢复 'new' 默认与可空"

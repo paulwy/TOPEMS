@@ -1,7 +1,9 @@
 //! 8D Problem Solving handlers
 
 use crate::models::eight_d::*;
-use crate::shared::fsm::{eight_d_can_transition, eight_d_requires_approval};
+use crate::shared::fsm::{
+    eight_d_can_transition, eight_d_requires_approval, is_valid_eight_d_status,
+};
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
@@ -17,6 +19,42 @@ use topems_shared_core::response::ApiResponse;
 const STATUS_VERIFIED: &str = "verified";
 const STATUS_CLOSED: &str = "closed";
 const STATUS_CANCELLED: &str = "cancelled";
+
+/// 8D 报告状态守卫：读取当前态并按 FSM 校验目标态。
+async fn guard_eight_d_status(
+    scope: &mut topems_shared_db::ScopedTxn<'_>,
+    id: Uuid,
+    tenant_id: Uuid,
+    target: Option<&str>,
+) -> Result<String, (u16, String)> {
+    let raw = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_eightd_reports WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(scope)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to read 8D report status: {}", e);
+        (500, "8D报告状态读取失败".to_string())
+    })?;
+    let Some(raw) = raw else {
+        return Err((404, "8D报告不存在".to_string()));
+    };
+    let Some(raw) = raw.filter(|s| !s.trim().is_empty()) else {
+        return Err((409, "8D报告状态为空".to_string()));
+    };
+    let current = raw.trim().to_ascii_lowercase();
+    if !is_valid_eight_d_status(&current) {
+        return Err((409, format!("8D报告状态 {current} 不在规范集合内")));
+    }
+    if let Some(target) = target {
+        if current != target && eight_d_can_transition(&current, target).is_err() {
+            return Err((400, format!("8D报告状态不允许从 {current} 流转到 {target}")));
+        }
+    }
+    Ok(current)
+}
 
 /// 读回用列（uuid 列转 TEXT，避免 String 解码 uuid 失败）。
 const EIGHTD_SELECT_CAST: &str = r#"id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#;
@@ -215,7 +253,7 @@ pub async fn create_eightd_report(
         }
     }
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_reports (tenant_id, report_no, title, severity, priority, related_issue_id, d2_problem_description, status, assignee, due_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'new', $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(tenant_id).bind(report_no).bind(req.title).bind(req.severity).bind(req.priority).bind(related_issue_id).bind(req.d2_problem_description).bind(req.assignee).bind(due_dt).bind(req.created_by)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_reports (tenant_id, report_no, title, severity, priority, related_issue_id, d2_problem_description, status, assignee, due_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'initiated', $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(tenant_id).bind(report_no).bind(req.title).bind(req.severity).bind(req.priority).bind(related_issue_id).bind(req.d2_problem_description).bind(req.assignee).bind(due_dt).bind(req.created_by)
     .fetch_one(&mut scope)
     .await;
 
@@ -344,12 +382,32 @@ pub async fn update_eightd_report(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $18 AND deleted_at IS NULL"#)).bind(id).bind(req.title).bind(req.status).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt).bind(tenant_id)
+    let target_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => {
+            let normalized = raw.trim().to_ascii_lowercase();
+            if !is_valid_eight_d_status(&normalized) {
+                return ApiResponse::bad_request(
+                    "status 仅支持 initiated/in_progress/containment/root_cause/permanent_action/verified/closed/cancelled",
+                );
+            }
+            Some(normalized)
+        }
+    };
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, target_status.as_deref()).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $18 AND status = $19 AND deleted_at IS NULL"#)).bind(id).bind(req.title).bind(target_status.as_deref()).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("8D报告状态已变化，请刷新后重试")
+        }
         Ok(_) => match sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!(
             "SELECT {} FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
             EIGHTD_SELECT_CAST
@@ -486,7 +544,13 @@ pub async fn update_d1_team(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, Some("in_progress")).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
@@ -571,7 +635,13 @@ pub async fn submit_d3_containment(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, Some("containment")).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'containment', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
@@ -655,7 +725,13 @@ pub async fn submit_d4_root_cause(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d4_root_cause = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, Some("root_cause")).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d4_root_cause = $2, status = 'root_cause', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
@@ -739,7 +815,13 @@ pub async fn submit_d5_permanent_action(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d5_permanent_action = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, Some("permanent_action")).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d5_permanent_action = $2, status = 'permanent_action', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
@@ -823,7 +905,13 @@ pub async fn verify_d6_effectiveness(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, Some("verified")).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
@@ -907,7 +995,13 @@ pub async fn submit_d7_preventive(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status =
+        match guard_eight_d_status(&mut scope, id, tenant_id, Some("verified")).await {
+            Ok(status) => status,
+            Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+        };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
@@ -991,7 +1085,13 @@ pub async fn close_eightd_report(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id)
+    let current_status = match guard_eight_d_status(&mut scope, id, tenant_id, Some("closed")).await
+    {
+        Ok(status) => status,
+        Err((code, msg)) => return ApiResponse::<EightDReport>::error(code, &msg),
+    };
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 AND status = $4 AND deleted_at IS NULL"#)).bind(id).bind(req.content).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
