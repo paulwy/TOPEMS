@@ -470,17 +470,37 @@ jobs:
           --health-retries 10
     env:
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      DB_TEST_PASSWORD: postgres
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-rust
         with:
           cache-prefix: "db-tests-2026-11-19"
+      - name: Create non-superuser DB test role
+        # 权限回填测试要验证 FORCE RLS 对普通角色生效；postgres 超级用户会绕过 RLS。
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'topems_db_test') THEN
+              CREATE ROLE topems_db_test LOGIN CREATEDB NOSUPERUSER NOBYPASSRLS PASSWORD 'postgres';
+            END IF;
+          END
+          $$;
+          SQL
       - name: Run db-tests crates
         run: |
           set -euo pipefail
           for p in topems-shared-auth topems-crm topems-scm topems-wms topems-mes topems-erp topems-finance topems-unified-core; do
             echo "== $p"
-            cargo test -p "$p" --features db-tests -- --test-threads=4
+            if [ "$p" = "topems-shared-auth" ]; then
+              # 该 crate 含 RLS 语义回归，必须以非超级用户连接，否则 FORCE RLS 会被绕过。
+              TEST_DATABASE_URL="postgres://topems_db_test:${DB_TEST_PASSWORD}@localhost:5432/postgres" \
+                cargo test -p "$p" --features db-tests -- --test-threads=4
+            else
+              cargo test -p "$p" --features db-tests -- --test-threads=4
+            fi
           done
 
   # ──────────────────────────────────────────────────────────────────────────
