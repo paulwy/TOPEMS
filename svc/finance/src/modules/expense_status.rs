@@ -115,6 +115,34 @@ impl ExpenseStatus {
             Self::Paid => "paid",
         }
     }
+
+    /// 报销状态迁移矩阵：同态视为幂等；`paid` 为终态。
+    ///
+    /// draft → submitted → approved → paid；submitted 可驳回为 rejected，
+    /// rejected 可退回 draft 修改后重提；approved 不允许回退。
+    pub fn can_transition_to(self, target: Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Draft => target == Self::Submitted,
+            Self::Submitted => {
+                matches!(target, Self::Approved | Self::Rejected | Self::Draft)
+            }
+            Self::Approved => target == Self::Paid,
+            Self::Rejected => target == Self::Draft,
+            Self::Paid => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "费用报销状态不允许从 {} 流转到 {}",
+                self.as_str(),
+                target.as_str()
+            ))
+        }
+    }
 }
 
 #[must_use]
@@ -179,5 +207,42 @@ mod tests {
         );
         assert_eq!(normalize("submitted"), None);
         assert_eq!(normalize(""), None);
+    }
+
+    #[test]
+    fn expense_status_transition_matrix() {
+        assert!(ExpenseStatus::Draft
+            .can_transition_to(ExpenseStatus::Submitted)
+            .is_ok());
+        assert!(ExpenseStatus::Submitted
+            .can_transition_to(ExpenseStatus::Approved)
+            .is_ok());
+        assert!(ExpenseStatus::Submitted
+            .can_transition_to(ExpenseStatus::Rejected)
+            .is_ok());
+        assert!(ExpenseStatus::Submitted
+            .can_transition_to(ExpenseStatus::Draft)
+            .is_ok());
+        assert!(ExpenseStatus::Approved
+            .can_transition_to(ExpenseStatus::Paid)
+            .is_ok());
+        assert!(ExpenseStatus::Rejected
+            .can_transition_to(ExpenseStatus::Draft)
+            .is_ok());
+        assert!(ExpenseStatus::Draft
+            .can_transition_to(ExpenseStatus::Draft)
+            .is_ok());
+        assert!(ExpenseStatus::Draft
+            .can_transition_to(ExpenseStatus::Approved)
+            .is_err());
+        assert!(ExpenseStatus::Submitted
+            .can_transition_to(ExpenseStatus::Paid)
+            .is_err());
+        assert!(ExpenseStatus::Approved
+            .can_transition_to(ExpenseStatus::Submitted)
+            .is_err());
+        assert!(ExpenseStatus::Paid
+            .can_transition_to(ExpenseStatus::Submitted)
+            .is_err());
     }
 }

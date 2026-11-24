@@ -184,7 +184,8 @@ pub async fn create_expense(
     let status = match req.get("status").and_then(|v| v.as_str()) {
         None => ExpenseStatus::Draft,
         Some(raw) => match normalize_expense(raw) {
-            Some(status) => status,
+            Some(status @ (ExpenseStatus::Draft | ExpenseStatus::Submitted)) => status,
+            Some(_) => return ApiResponse::bad_request("新建费用报销仅支持 draft/submitted"),
             None => {
                 return ApiResponse::bad_request(
                     "status 仅支持 draft/submitted/approved/rejected/paid",
@@ -345,7 +346,7 @@ pub async fn update_expense(
     let status = match req.get("status").and_then(|v| v.as_str()) {
         None => None,
         Some(raw) => match normalize_expense(raw) {
-            Some(status) => Some(status.as_str()),
+            Some(status) => Some(status),
             None => {
                 return ApiResponse::bad_request(
                     "status 仅支持 draft/submitted/approved/rejected/paid",
@@ -354,13 +355,61 @@ pub async fn update_expense(
         },
     };
 
+    let current_status = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"SELECT status FROM finance.expenses WHERE id = $1 AND deleted_at IS NULL"#
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current_status {
+        Ok(Some(row)) => row
+            .try_get::<Option<String>, _>("status")
+            .ok()
+            .flatten()
+            .filter(|s| !s.trim().is_empty()),
+        Ok(None) => return ApiResponse::not_found("费用报销不存在"),
+        Err(e) => {
+            tracing::error!("读取费用报销状态失败: {}", e);
+            return ApiResponse::server_error("读取费用报销状态失败");
+        }
+    };
+    let Some(current_status) = current_status
+        .as_deref()
+        .and_then(ExpenseStatus::from_db_str)
+    else {
+        return ApiResponse::conflict("费用报销状态不在规范集合内");
+    };
+    if let Some(target) = status {
+        if let Err(msg) = current_status.can_transition_to(target) {
+            return ApiResponse::bad_request(&msg);
+        }
+    }
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.expenses SET
-              applicant_name = $2, department_id = $3, expense_type = $4, amount = $5,
-              description = $6, expense_date = $7, receipt_count = $8, status = $9,
-              approver_id = $10, approved_at = $11, reimbursed_at = $12, updated_at = $13
-           WHERE id = $1
+              applicant_name = COALESCE($2, applicant_name),
+              department_id = COALESCE($3, department_id),
+              expense_type = COALESCE($4, expense_type),
+              amount = COALESCE($5, amount),
+              description = COALESCE($6, description),
+              expense_date = COALESCE($7, expense_date),
+              receipt_count = COALESCE($8, receipt_count),
+              status = COALESCE($9, status),
+              approver_id = COALESCE($10, approver_id),
+              approved_at = CASE
+                  WHEN $9 = 'approved' THEN COALESCE($11, approved_at, $13)
+                  WHEN $9 IN ('draft', 'submitted', 'rejected') THEN NULL
+                  ELSE approved_at
+              END,
+              reimbursed_at = CASE
+                  WHEN $9 = 'paid' THEN COALESCE($12, reimbursed_at, $13)
+                  WHEN $9 IN ('draft', 'submitted', 'approved', 'rejected') THEN NULL
+                  ELSE reimbursed_at
+              END,
+              updated_at = $13
+           WHERE id = $1 AND deleted_at IS NULL AND status = $14
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
                      reimbursed_at, created_at, updated_at"#
@@ -387,10 +436,9 @@ pub async fn update_expense(
     .bind(
         req.get("receipt_count")
             .and_then(|v| v.as_i64())
-            .map(|i| i as i32)
-            .unwrap_or(0),
+            .map(|i| i as i32),
     )
-    .bind(status)
+    .bind(status.map(|s| s.as_str()))
     .bind(
         req.get("approver_id")
             .and_then(|v| v.as_str())
@@ -415,14 +463,18 @@ pub async fn update_expense(
             }),
     )
     .bind(now)
-    .fetch_one(&mut scope)
+    .bind(current_status.as_str())
+    .fetch_optional(&mut scope)
     .await;
 
-    let row = match result {
-        Ok(row) => row,
-        Err(e) => return crate::shared::err_resp(e),
-    };
-    ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功")
+    match result {
+        Ok(Some(row)) => ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功"),
+        Ok(None) => ApiResponse::conflict("费用报销状态已变化，请刷新后重试"),
+        Err(e) => {
+            tracing::error!("更新费用报销失败: {}", e);
+            ApiResponse::server_error("更新费用报销失败")
+        }
+    }
 }
 
 #[utoipa::path(
