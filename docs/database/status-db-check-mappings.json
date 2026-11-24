@@ -2985,6 +2985,16 @@
       "db_constraint": "ck_opportunities_stage_standard",
       "db_verified_at": "2026-11-24",
       "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default draft)"
+    },
+    {
+      "file": "svc/rd/src/modules/change_management.rs",
+      "enum": "ChangeOrderStatus",
+      "table": "rs.change_orders",
+      "column": "status",
+      "candidate": "database/migrations/20261124234500_rd_change_order_status_standard.sql",
+      "db_constraint": "ck_change_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default planned)"
     }
   ],
   "non_enum_checks": [
