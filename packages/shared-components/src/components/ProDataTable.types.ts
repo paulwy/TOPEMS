@@ -487,7 +487,7 @@ export function migrateColumn<TData>(
 
   // Map cell renderer
   if (col.cell && typeof col.cell === 'function') {
-    const originalCell = col.cell as (props: { value: unknown; row: TData; index: number }) => React.ReactNode;
+    const originalCell = col.cell as unknown as (props: { value: unknown; row: TData; index: number }) => React.ReactNode;
     result.renderCell = (params) =>
       originalCell({ value: params.value, row: params.row as TData, index });
   }

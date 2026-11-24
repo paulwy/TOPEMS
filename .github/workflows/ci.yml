@@ -1018,6 +1018,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
@@ -2195,8 +2200,8 @@ jobs:
           enable-sccache: 'false'
           cache-prefix: "hrm-setup-smoke-2026-11-24"
 
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install PostgreSQL client and protoc
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client protobuf-compiler
 
       - name: Wait for PostgreSQL
         run: |

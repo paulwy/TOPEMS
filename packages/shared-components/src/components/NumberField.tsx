@@ -123,13 +123,13 @@ export const NumberField: React.FC<NumberFieldProps> = ({
         ? <InputAdornment position="start">{startAdornment}</InputAdornment>
         : slotProps?.input &&
           'startAdornment' in (slotProps.input as Record<string, unknown>)
-          ? (slotProps.input as Record<string, unknown>).startAdornment
+          ? ((slotProps.input as Record<string, unknown>).startAdornment as React.ReactNode)
           : undefined,
       endAdornment: endAdornment
         ? <InputAdornment position="end">{endAdornment}</InputAdornment>
         : slotProps?.input &&
           'endAdornment' in (slotProps.input as Record<string, unknown>)
-          ? (slotProps.input as Record<string, unknown>).endAdornment
+          ? ((slotProps.input as Record<string, unknown>).endAdornment as React.ReactNode)
           : undefined,
       inputProps: {
         min,
