@@ -332,7 +332,7 @@ async fn create_project(
     .bind(&req.code)
     .bind(&req.description)
     .bind(&req.project_type)
-    .bind("draft")
+    .bind(ProjectStatus::DEFAULT.as_db_str())
     .bind(&req.leader)
     .bind(req.start_date)
     .bind(req.end_date)
@@ -537,16 +537,16 @@ async fn update_project(
 ) -> ApiResponse<Project> {
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let status = match req.status.as_deref() {
+    let requested_status = match req.status.as_deref() {
         None => None,
         Some(raw) => match ProjectStatus::from_db_str(raw) {
-            Some(status) => Some(status.as_db_str().to_string()),
+            Some(status) => Some(status),
             None => return ApiResponse::bad_request(
                 "status 仅支持 draft/pending_approval/active/paused/completed/cancelled/rejected",
             ),
         },
     };
-    let details = Some(serde_json::json!({"status": status}));
+    let details = Some(serde_json::json!({"status": requested_status.map(|s| s.as_db_str())}));
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -576,6 +576,21 @@ async fn update_project(
             return ApiResponse::server_error("查询项目原状态失败");
         }
     };
+
+    if let (Some(target), Some((current_raw, _))) = (requested_status, previous.as_ref()) {
+        let Some(current) = ProjectStatus::from_db_str(current_raw) else {
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("项目当前状态非法");
+        };
+        if !current.can_transition_to(target) {
+            let _ = scope.rollback().await;
+            return ApiResponse::bad_request(&format!(
+                "项目状态不允许从 {} 流转到 {}",
+                current.as_db_str(),
+                target.as_db_str()
+            ));
+        }
+    }
 
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
@@ -608,7 +623,7 @@ async fn update_project(
     ))
     .bind(&req.name)
     .bind(&req.description)
-    .bind(&status)
+    .bind(requested_status.map(|s| s.as_db_str()))
     .bind(&req.leader)
     .bind(req.end_date)
     .bind(req.budget)

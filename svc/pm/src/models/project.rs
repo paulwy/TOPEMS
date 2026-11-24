@@ -55,6 +55,28 @@ impl ProjectStatus {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn is_terminal(&self) -> bool {
+        matches!(self, Self::Completed | Self::Cancelled)
+    }
+
+    /// 外部更新入口允许的状态流转。审批流内部仍走专用状态写入。
+    #[must_use]
+    pub fn can_transition_to(self, target: Self) -> bool {
+        use ProjectStatus::*;
+        if self == target {
+            return true;
+        }
+        match self {
+            Draft => matches!(target, PendingApproval | Cancelled),
+            PendingApproval => matches!(target, Active | Rejected | Draft),
+            Rejected => matches!(target, Draft | PendingApproval),
+            Active => matches!(target, Paused | Completed | Cancelled),
+            Paused => matches!(target, Active | Completed | Cancelled),
+            Completed | Cancelled => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
@@ -211,6 +233,7 @@ mod tests {
             ProjectStatus::Paused,
             ProjectStatus::Completed,
             ProjectStatus::Cancelled,
+            ProjectStatus::Rejected,
         ];
         for v in variants {
             let s = serde_json::to_string(&v).unwrap();
@@ -231,6 +254,30 @@ mod tests {
         assert_eq!(a, b);
         let c = a.clone();
         assert_eq!(a, c);
+    }
+
+    #[test]
+    fn test_project_status_transition_guard() {
+        use ProjectStatus::*;
+        assert!(Draft.can_transition_to(PendingApproval));
+        assert!(Draft.can_transition_to(Cancelled));
+        assert!(!Draft.can_transition_to(Active));
+        assert!(PendingApproval.can_transition_to(Active));
+        assert!(PendingApproval.can_transition_to(Rejected));
+        assert!(PendingApproval.can_transition_to(Draft));
+        assert!(!PendingApproval.can_transition_to(Paused));
+        assert!(Rejected.can_transition_to(Draft));
+        assert!(Rejected.can_transition_to(PendingApproval));
+        assert!(Active.can_transition_to(Paused));
+        assert!(Active.can_transition_to(Completed));
+        assert!(Active.can_transition_to(Cancelled));
+        assert!(Paused.can_transition_to(Active));
+        assert!(!Completed.can_transition_to(Active));
+        assert!(!Cancelled.can_transition_to(Draft));
+        assert!(Active.can_transition_to(Active));
+        assert!(Completed.is_terminal());
+        assert!(Cancelled.is_terminal());
+        assert!(!Active.is_terminal());
     }
 
     #[test]

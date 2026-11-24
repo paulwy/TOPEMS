@@ -87,7 +87,7 @@ const PmProjectListPage: React.FC = () => {
   );
   const headerContent = React.useCallback((rows: Project[]) => {
     const activeCount = rows.filter((r) => r.status === 'active').length;
-    const pendingCount = rows.filter((r) => r.status === 'pending').length;
+    const pendingCount = rows.filter((r) => r.status === 'pending_approval').length;
     const completedCount = rows.filter((r) => r.status === 'completed').length;
     return (
       <Box sx={{ mb: 2 }}>
