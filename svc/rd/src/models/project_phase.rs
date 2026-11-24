@@ -38,6 +38,28 @@ impl PhaseStatus {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<&'static str> {
+        Self::from_db_str(raw).map(|s| s.as_db_str())
+    }
+
+    /// 未开始可启动/完成/延期；执行中可完成/延期；延期可恢复执行或完成；
+    /// 已完成为终态，避免通过更新把已完成阶段回退。
+    #[must_use]
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        match self {
+            Self::NotStarted => {
+                matches!(target, Self::InProgress | Self::Completed | Self::Delayed)
+            }
+            Self::InProgress => matches!(target, Self::Completed | Self::Delayed),
+            Self::Delayed => matches!(target, Self::InProgress | Self::Completed),
+            Self::Completed => false,
+        }
+    }
 }
 
 impl std::fmt::Display for PhaseStatus {
@@ -118,6 +140,18 @@ mod tests {
     #[test]
     fn test_phase_status_default_is_not_started() {
         assert_eq!(PhaseStatus::default(), PhaseStatus::NotStarted);
+    }
+
+    #[test]
+    fn phase_status_transitions_are_guarded() {
+        use PhaseStatus::*;
+        assert!(NotStarted.can_transition_to(InProgress));
+        assert!(NotStarted.can_transition_to(Completed));
+        assert!(InProgress.can_transition_to(Completed));
+        assert!(Delayed.can_transition_to(InProgress));
+        assert!(!Completed.can_transition_to(InProgress));
+        assert!(Completed.can_transition_to(Completed));
+        assert_eq!(PhaseStatus::normalize(" IN_PROGRESS "), Some("in_progress"));
     }
 
     #[test]

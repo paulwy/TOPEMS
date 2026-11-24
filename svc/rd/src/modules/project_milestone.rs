@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
 use crate::models::project_milestone::{
-    CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
+    CreateMilestoneRequest, MilestoneStatus, ProjectMilestone, UpdateMilestoneRequest,
 };
 use crate::services::project_progress;
 use topems_shared_auth::auth::Claims;
@@ -95,7 +95,7 @@ pub async fn create_milestone(
     .bind(payload.name.trim())
     .bind(payload.description.as_deref())
     .bind(payload.target_date)
-    .bind("pending")
+    .bind(MilestoneStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -281,7 +281,14 @@ pub async fn update_milestone(
             description = COALESCE($3, description),
             target_date = COALESCE($4, target_date),
             actual_date = COALESCE($5, actual_date),
-            status = COALESCE($6, status),
+            status = CASE
+                WHEN $6::text IS NULL THEN status
+                WHEN status = $6::text THEN status
+                WHEN status = 'pending' AND $6::text IN ('achieved', 'delayed') THEN $6::text
+                WHEN status = 'delayed' AND $6::text IN ('pending', 'achieved') THEN $6::text
+                WHEN status = 'achieved' AND $6::text = 'delayed' THEN $6::text
+                ELSE status
+            END,
             updated_at = NOW()
         WHERE id = $1
         RETURNING id, tenant_id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at, deliverable_type, acceptance_criteria, acceptance_status, accepted_by, accepted_at
@@ -300,6 +307,12 @@ pub async fn update_milestone(
 
     match result {
         Ok(milestone) => {
+            if let Some(target) = payload.status {
+                if milestone.status != target.as_db_str() {
+                    return ApiResponse::bad_request("非法的里程碑状态流转：已完成不可回退或跳变");
+                }
+            }
+
             invalidate_project_cache(&milestone.project_id.to_string()).await;
 
             if milestone.status == "achieved" {

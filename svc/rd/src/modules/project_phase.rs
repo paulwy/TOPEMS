@@ -10,7 +10,9 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::cache::{cache_get, cache_set, invalidate_project_cache};
-use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhaseRequest};
+use crate::models::project_phase::{
+    CreatePhaseRequest, PhaseStatus, ProjectPhase, UpdatePhaseRequest,
+};
 use crate::services::project_permission::{check_project_permission, ProjectPermission};
 use crate::services::project_progress;
 use topems_shared_auth::auth::Claims;
@@ -112,7 +114,7 @@ pub async fn create_phase(
     .bind(payload.description.as_deref())
     .bind(payload.start_date)
     .bind(payload.end_date)
-    .bind("not_started")
+    .bind(PhaseStatus::DEFAULT.as_db_str())
     .bind(0)
     .bind(weight)
     .bind(payload.predecessor_id)
@@ -332,7 +334,14 @@ pub async fn update_phase(
             description = COALESCE($3, description),
             start_date = COALESCE($4, start_date),
             end_date = COALESCE($5, end_date),
-            status = COALESCE($6, status),
+            status = CASE
+                WHEN $6::text IS NULL THEN status
+                WHEN status = $6::text THEN status
+                WHEN status = 'not_started' AND $6::text IN ('in_progress', 'completed', 'delayed') THEN $6::text
+                WHEN status = 'in_progress' AND $6::text IN ('completed', 'delayed') THEN $6::text
+                WHEN status = 'delayed' AND $6::text IN ('in_progress', 'completed') THEN $6::text
+                ELSE status
+            END,
             progress = COALESCE($7, progress),
             weight = COALESCE($8, weight),
             predecessor_id = COALESCE($9, predecessor_id),
@@ -359,6 +368,12 @@ pub async fn update_phase(
 
     match result {
         Ok(phase) => {
+            if let Some(target) = payload.status {
+                if phase.status != target.as_db_str() {
+                    return ApiResponse::bad_request("非法的阶段状态流转：已完成不可回退或跳变");
+                }
+            }
+
             let _ = project_progress::update_project_progress(&mut **txn, phase.project_id).await;
             invalidate_project_cache(&phase.project_id.to_string()).await;
 

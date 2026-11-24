@@ -35,6 +35,25 @@ impl MilestoneStatus {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<&'static str> {
+        Self::from_db_str(raw).map(|s| s.as_db_str())
+    }
+
+    /// 待达成可标记达成/延期；延期可重新达成或回到待达成；达成后只允许标记延期，
+    /// 不允许直接回退为待达成，避免一条状态更新把已交付里程碑抹掉。
+    #[must_use]
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        match self {
+            Self::Pending => matches!(target, Self::Achieved | Self::Delayed),
+            Self::Delayed => matches!(target, Self::Pending | Self::Achieved),
+            Self::Achieved => matches!(target, Self::Delayed),
+        }
+    }
 }
 
 impl std::fmt::Display for MilestoneStatus {
@@ -121,6 +140,19 @@ mod tests {
     #[test]
     fn test_milestone_status_default_is_pending() {
         assert_eq!(MilestoneStatus::default(), MilestoneStatus::Pending);
+    }
+
+    #[test]
+    fn milestone_status_transitions_are_guarded() {
+        use MilestoneStatus::*;
+        assert!(Pending.can_transition_to(Achieved));
+        assert!(Pending.can_transition_to(Delayed));
+        assert!(Delayed.can_transition_to(Achieved));
+        assert!(Delayed.can_transition_to(Pending));
+        assert!(Achieved.can_transition_to(Delayed));
+        assert!(!Achieved.can_transition_to(Pending));
+        assert!(Pending.can_transition_to(Pending));
+        assert_eq!(MilestoneStatus::normalize(" DELAYED "), Some("delayed"));
     }
 
     #[test]
