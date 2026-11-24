@@ -76,13 +76,6 @@ pub async fn create_routes(db: Db) -> Result<Router> {
     Ok(app)
 }
 
-async fn current_tenant_id(claims: &Claims) -> Option<Uuid> {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-}
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["srm:inquiry:read"])),
@@ -233,8 +226,14 @@ pub async fn create_inquiry(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
-    let tenant_id = current_tenant_id(&claims).await.unwrap_or_else(Uuid::nil);
-    let creator = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+    let creator = match claims.user_id() {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::forbidden("无效的用户身份"),
+    };
     let inquiry_no = format!("INQ-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let initial_status = match req.status.as_deref() {
         Some(raw) => match InquiryStatus::from_db_str(raw) {
