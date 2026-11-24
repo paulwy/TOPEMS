@@ -940,6 +940,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Run page standardization audit
         run: node scripts/ci/page-audit.cjs --strict
@@ -1321,6 +1322,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Run Menu-Gate (report-json + fail-fast @ baseline T1=0 T2=0 P1=0 R3=0)
         run: |
@@ -1474,6 +1476,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Run API Audit (P6 + P7, fail-fast @ baseline p6.red=0 p7.not_legal=0 p7.mismatch=0)
         run: |

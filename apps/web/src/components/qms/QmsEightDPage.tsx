@@ -301,7 +301,7 @@ const eightDAdapter: CrudApiAdapter = {
       d6VerificationResult: [
         String(v.d6_verification_result ?? ''),
         String(v.d6_data_comparison ?? ''),
-        `是否有效:${String(v.d6_is_effective ?? '')}`,
+        `${i18n.t('pages.qms_eight_d_page.d6_is_effective')}:${String(v.d6_is_effective ?? '')}`,
       ]
         .filter(Boolean)
         .join('；'),
@@ -319,9 +319,9 @@ const eightDAdapter: CrudApiAdapter = {
     // 3) 关闭收尾（d8_closed_at + status='closed'）
     const closeRes = await eightDApi.closeEightDReport(rec.id, {
       content: [
-        `审批人：${String(v.d8_approver ?? '')}`,
-        `签字日期：${String(v.d8_sign_off_date ?? '')}`,
-        `总结：${String(v.d8_closure_summary ?? '')}`,
+        `${i18n.t('pages.qms_eight_d_page.d8_approver')}：${String(v.d8_approver ?? '')}`,
+        `${i18n.t('pages.qms_eight_d_page.d8_sign_off_date')}：${String(v.d8_sign_off_date ?? '')}`,
+        `${i18n.t('pages.qms_eight_d_page.d8_closure_summary')}：${String(v.d8_closure_summary ?? '')}`,
       ]
         .filter(Boolean)
         .join('；'),

@@ -26,6 +26,10 @@ inputs:
     description: 'Install sccache binary ("true" / "false"). Disable for jobs that do not use the wrapper.'
     required: false
     default: 'true'
+  install-protoc:
+    description: 'Install protobuf-compiler ("true" / "false"). Required by crates whose build.rs runs prost-build (e.g. etcd-client).'
+    required: false
+    default: 'true'
   enable-cache:
     description: 'Enable Swatinem/rust-cache ("true" / "false"). Disable for jobs that only need the toolchain.'
     required: false
@@ -39,6 +43,16 @@ runs:
       with:
         toolchain: ${{ inputs.toolchain }}
         components: ${{ inputs.components }}
+
+    - name: Install protoc
+      if: ${{ inputs.install-protoc == 'true' }}
+      shell: bash
+      run: |
+        if ! command -v protoc >/dev/null 2>&1; then
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq protobuf-compiler
+        fi
+        protoc --version
 
     - name: Install sccache
       if: ${{ inputs.enable-sccache == 'true' }}

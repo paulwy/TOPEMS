@@ -2279,6 +2279,8 @@
   "pm.project_type_config.status": "Status",
   "pm.project_type_config.defaultPhases": "Default Phases (JSON)",
   "pm.project_type_config.defaultMilestones": "Default Milestones (JSON)",
+  "pm.project_type_config.defaultPhasesPlaceholder": "[{\"name\":\"Initiation\",\"order\":1}]",
+  "pm.project_type_config.defaultMilestonesPlaceholder": "[{\"name\":\"Requirement Confirmation\",\"due_days\":7}]",
   "pm.project_type_config.actions": "Actions",
   "pm.project_type_config.create": "Create",
   "pm.project_type_config.edit": "Edit",

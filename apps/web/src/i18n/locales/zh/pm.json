@@ -1641,6 +1641,8 @@
   "pm.project_type_config.status": "状态",
   "pm.project_type_config.defaultPhases": "默认阶段 (JSON)",
   "pm.project_type_config.defaultMilestones": "默认里程碑 (JSON)",
+  "pm.project_type_config.defaultPhasesPlaceholder": "[{\"name\":\"立项\",\"order\":1}]",
+  "pm.project_type_config.defaultMilestonesPlaceholder": "[{\"name\":\"需求确认\",\"due_days\":7}]",
   "pm.project_type_config.actions": "操作",
   "pm.project_type_config.create": "新建",
   "pm.project_type_config.edit": "编辑",

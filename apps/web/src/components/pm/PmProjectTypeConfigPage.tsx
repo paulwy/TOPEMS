@@ -234,6 +234,7 @@ const PmProjectTypeConfigPage: React.FC = () => {
                       <TableCell>
                         <IconButton
                           size='small'
+                          aria-label={t('pm.project_type_config.edit')}
                           onClick={() => openEdit(row)}
                         >
                           <Pencil size={16} />
@@ -241,6 +242,7 @@ const PmProjectTypeConfigPage: React.FC = () => {
                         <IconButton
                           size='small'
                           color='error'
+                          aria-label={t('common.delete')}
                           onClick={() => {
                             void deleteMutation.mutate(row.id);
                           }}
@@ -316,7 +318,7 @@ const PmProjectTypeConfigPage: React.FC = () => {
                 size='small'
                 multiline
                 rows={2}
-                placeholder='[{"name":"立项","order":1}]'
+                placeholder={t('pm.project_type_config.defaultPhasesPlaceholder')}
               />
               <TextField
                 label={t('pm.project_type_config.defaultMilestones')}
@@ -325,7 +327,7 @@ const PmProjectTypeConfigPage: React.FC = () => {
                 size='small'
                 multiline
                 rows={2}
-                placeholder='[{"name":"需求确认","due_days":7}]'
+                placeholder={t('pm.project_type_config.defaultMilestonesPlaceholder')}
               />
             </Stack>
           </DialogContent>
