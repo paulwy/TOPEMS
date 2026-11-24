@@ -32,6 +32,7 @@ import { WizardPageTemplate, type WizardStep } from '@/components/templates/Wiza
 import { hrmSetupApi, type DepartmentResult, type PositionResult } from '@/api/hrm/hrmSetup';
 import { userApi } from '@/api/iam/user';
 import { departmentApi, positionApi } from '@/api/hrm';
+import { planSetupSubmission } from './setupSubmission';
 import { useNotificationStore } from '@/store';
 
 // ============ 本地表单模型 ============
@@ -287,12 +288,17 @@ const HrmSetupWizardPage: React.FC = () => {
   };
 
   const submitDepartments = async (): Promise<boolean> => {
-    const filled = deptRows.filter((r) => r.name.trim() && !r.persisted);
-    if (filled.length === 0) {
+    // P1-3：已有入库部门时「无新增」合法（仍要调后端把该步置完成）
+    const plan = planSetupSubmission(
+      deptRows,
+      [...existingDepts, ...createdDepts].map((d) => d.name),
+      existingDepts.length > 0 || deptRows.some((r) => r.persisted)
+    );
+    if (!plan.allowed) {
       throw new Error(t('hrm.setup_wizard.dept.at_least_one'));
     }
     const seen = new Set<string>();
-    for (const row of filled) {
+    for (const row of plan.newRows) {
       const key = row.name.trim();
       if (seen.has(key)) {
         throw new Error(t('hrm.setup_wizard.dept.duplicate_name', { name: key }));
@@ -301,17 +307,7 @@ const HrmSetupWizardPage: React.FC = () => {
     }
     // 跳过库中已存在/本次会话已创建的部门（与后端 LOWER(name) 校验对齐），
     // 避免返回上一步再提交时撞"部门已存在"409。
-    const existingNames = new Set(
-      [...existingDepts, ...createdDepts].map((d) => d.name.trim().toLowerCase())
-    );
-    const toCreate = filled.filter((r) => !existingNames.has(r.name.trim().toLowerCase()));
-    if (toCreate.length === 0) {
-      setSummary((prev) => ({
-        ...prev,
-        deptCount: existingDepts.length + createdDepts.length,
-      }));
-      return true;
-    }
+    const toCreate = plan.toCreate;
     setSubmitting(true);
     try {
       const res = await hrmSetupApi.setupDepartments({
@@ -350,13 +346,18 @@ const HrmSetupWizardPage: React.FC = () => {
   };
 
   const submitPositions = async (): Promise<boolean> => {
-    const filled = posRows.filter((r) => r.name.trim() && !r.persisted);
-    if (filled.length === 0) {
+    // P1-3：已有入库岗位时「无新增」合法（仍要调后端把该步置完成）
+    const plan = planSetupSubmission(
+      posRows,
+      [...existingPositions, ...createdPositions].map((p) => p.name),
+      existingPositions.length > 0 || posRows.some((r) => r.persisted)
+    );
+    if (!plan.allowed) {
       throw new Error(t('hrm.setup_wizard.pos.at_least_one'));
     }
     const seen = new Set<string>();
     const seenCodes = new Set<string>();
-    for (const row of filled) {
+    for (const row of plan.newRows) {
       const key = row.name.trim().toLowerCase();
       if (seen.has(key)) {
         throw new Error(t('hrm.setup_wizard.pos.duplicate_name', { name: row.name.trim() }));
@@ -373,17 +374,7 @@ const HrmSetupWizardPage: React.FC = () => {
     }
     // 跳过库中已存在/本次会话已创建的岗位（与后端 LOWER(name) 校验对齐），
     // 避免返回上一步再提交时撞"职位已存在"409。
-    const existingNames = new Set(
-      [...existingPositions, ...createdPositions].map((p) => p.name.trim().toLowerCase())
-    );
-    const toCreate = filled.filter((r) => !existingNames.has(r.name.trim().toLowerCase()));
-    if (toCreate.length === 0) {
-      setSummary((prev) => ({
-        ...prev,
-        posCount: existingPositions.length + createdPositions.length,
-      }));
-      return true;
-    }
+    const toCreate = plan.toCreate;
     setSubmitting(true);
     try {
       const res = await hrmSetupApi.setupPositions({

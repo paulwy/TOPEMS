@@ -3,51 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Box, Button, Chip, LinearProgress, Paper, Typography } from '@mui/material';
 import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
-import { hrmSetupApi, type InitProgressResponse, type StepStatusInfo } from '@/api/hrm/hrmSetup';
-
-/** 初始化向导的规范步骤顺序；后端 steps 为空（新库/未播种）时回退使用。 */
-const CANONICAL_STEPS: { name: string; order: number }[] = [
-  { name: 'company_info', order: 1 },
-  { name: 'departments', order: 2 },
-  { name: 'positions', order: 3 },
-  { name: 'admin_user', order: 4 },
-  { name: 'completion', order: 5 },
-];
-
-type RowState = 'completed' | 'current' | 'pending';
-
-interface Row {
-  name: string;
-  order: number;
-  state: RowState;
-}
-
-function buildRows(data: InitProgressResponse | null): Row[] {
-  const backend = new Map<string, StepStatusInfo>();
-  data?.steps?.forEach((s) => backend.set(s.name, s));
-
-  return CANONICAL_STEPS.map((canon) => {
-    const s = backend.get(canon.name);
-    if (!s) {
-      // 后端未返回该步骤：第一步视为进行中，其余待办
-      return {
-        name: canon.name,
-        order: canon.order,
-        state: canon.order === 1 ? 'current' : 'pending',
-      };
-    }
-    if (s.status === 'completed') return { name: s.name, order: s.order, state: 'completed' };
-    if (s.is_current || s.status !== 'failed')
-      return { name: s.name, order: s.order, state: 'current' };
-    return { name: s.name, order: s.order, state: 'pending' };
-  });
-}
+import { hrmSetupApi, type InitProgressResponse } from '@/api/hrm/hrmSetup';
+import { buildChecklistRows } from './initChecklistRows';
 
 /** 空态 CTA：初始化未完成时展示步骤清单与前往向导的入口。 */
 const InitChecklistPanel: React.FC<{ data: InitProgressResponse | null }> = ({ data }) => {
   const { t } = useTranslation('hrm');
   const navigate = useNavigate();
-  const rows = buildRows(data);
+  const rows = buildChecklistRows(data);
   const done = rows.filter((r) => r.state === 'completed').length;
   const total = rows.length;
   const percent = Math.round((done / total) * 100);

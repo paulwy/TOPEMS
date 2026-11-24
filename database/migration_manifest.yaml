@@ -2977,3 +2977,11 @@ pending_forward_patches:
     effect: "crm.customer_finance.risklevel 建立值集约束 crm_customer_finance_risklevel_check（low/medium/high/critical），与 src FinanceRiskLevel::DB_VALUES 一致；ADD NOT VALID + VALIDATE"
     destructive_scan: "仅 ADD/VALIDATE 1 条 CHECK；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据"
     note: "幂等：约束已存在则跳过；fail-closed：存在值集外行则 RAISE EXCEPTION。回滚 database/rollback/20261124140000_crm_customer_finance_risklevel.rollback.sql 仅 DROP 该约束"
+
+  # ===== 2026-11-24：HRM 初始化进度 (tenant_id, step_name) 唯一索引 =====
+  - version: "20261124150000"
+    file: "database/migrations/20261124150000_hrm_init_status_tenant_step_unique.sql"
+    status: to_apply
+    effect: "hrm.initialization_status 新增 (tenant_id, step_name) 唯一索引 idx_init_status_tenant_step_unique：供 setup 读取侧 INSERT ... ON CONFLICT DO NOTHING 幂等补种，并保证 mark_step_completed 的 UPDATE 影响行数恒为 1（fail-closed 依赖）。仅新增索引，不改列、不动行"
+    destructive_scan: "仅 DO 守卫 + CREATE UNIQUE INDEX IF NOT EXISTS；无 UPDATE/DELETE/TRUNCATE/DROP；若存量存在重复 (tenant_id, step_name)，守卫先 RAISE EXCEPTION 阻断并给出清理口径，不静默删行"
+    note: "执行顺序：必须先于 topems-hrm 新版本上线（新代码补种依赖该索引；旧代码不依赖）。幂等：IF NOT EXISTS，同名约束/索引已存在则跳过。后置断言：索引存在且唯一。回滚 database/rollback/20261124150000_hrm_init_status_tenant_step_unique.rollback.sql 仅 DROP INDEX，进度数据全部保留"

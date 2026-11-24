@@ -33,7 +33,8 @@ pub struct InitProgressResponse {
     pub is_completed: bool,
     pub current_step: i32,
     pub steps: Vec<StepStatus>,
-    pub org_id: Option<Uuid>,
+    /// P3-3：语义就是当前租户的公司 id（旧名 org_id 会与 organization_id 混淆）。
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -105,7 +106,9 @@ pub struct AdminUserRequest {
     pub emergency_contact_name: Option<String>,
     pub emergency_contact_phone: Option<String>,
     pub address: Option<String>,
-    pub password: String,
+    /// 仅为兼容旧前端保留；本接口不落库、不校验强度（密码由 IAM 建号端点消费）。
+    #[serde(default)]
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -123,13 +126,124 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/setup/complete", post(complete_initialization))
 }
 
-const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
+/// P1-1：初始化向导统一租户解析。
+///
+/// 超管的 `x-tenant-id` 已由 `tenant_middleware` 写入 `Claims.tenant_id`，
+/// 这里不再读 header；服务身份（无租户维度）不允许执行初始化。
+/// `resolve_create_tenant` 不过滤 nil UUID，故这里补 `!t.is_nil()`，
+/// 避免全零租户绕过 RLS 的 `WITH CHECK`。
+fn setup_tenant(claims: &Claims) -> Result<Uuid, TopemsError> {
+    match topems_shared_auth::middleware::tenant::resolve_create_tenant(claims) {
+        Ok(Some(t)) if !t.is_nil() => Ok(t),
+        Ok(Some(_)) => Err(TopemsError::ValidationFailed(
+            "租户ID不能为全零".to_string(),
+        )),
+        Ok(None) => Err(TopemsError::ValidationFailed(
+            "服务身份不能执行初始化，请使用租户用户或携带 x-tenant-id 的超管".to_string(),
+        )),
+        Err((_code, msg)) => Err(TopemsError::ValidationFailed(msg)),
+    }
+}
+
+/// P1-2：幂等补种当前租户的 5 条进度行。
+///
+/// 迁移只给默认租户播种，新租户不会重放迁移；读写路径都调用本函数自愈。
+/// 依赖 20261124110000 创建的 `(tenant_id, step_name)` 唯一索引。
+async fn ensure_init_status_rows(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    tenant: Uuid,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(only_own_schema_query!(
+        "hrm",
+        r#"
+        INSERT INTO hrm.initialization_status
+            (id, tenant_id, step_name, step_order, status, created_at, updated_at)
+        SELECT gen_random_uuid(), $1, v.step_name, v.step_order, 'pending', now(), now()
+        FROM (VALUES
+            ('company_info', 1),
+            ('departments', 2),
+            ('positions', 3),
+            ('admin_user', 4),
+            ('completion', 5)
+        ) AS v(step_name, step_order)
+        ON CONFLICT (tenant_id, step_name) DO NOTHING
+        "#
+    ))
+    .bind(tenant)
+    .execute(&mut **txn)
+    .await?;
+    Ok(())
+}
+
+/// P1-2：置完成单步进度；影响行数不为 1 视为进度行缺失，fail-closed 返回 500。
+async fn mark_step_completed(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    tenant: Uuid,
+    step: &str,
+    now: chrono::DateTime<Utc>,
+) -> Result<(), TopemsError> {
+    let res = sqlx::query(only_own_schema_query!(
+        "hrm",
+        r#"
+        UPDATE hrm.initialization_status
+        SET status = 'completed', completed_at = $1, updated_at = $1
+        WHERE tenant_id = $2 AND step_name = $3
+        "#
+    ))
+    .bind(now)
+    .bind(tenant)
+    .bind(step)
+    .execute(&mut **txn)
+    .await
+    .map_err(|e| TopemsError::Internal(format!("更新初始化进度失败: {e}")))?;
+
+    if res.rows_affected() != 1 {
+        tracing::error!(
+            "初始化进度行缺失: tenant={}, step={}, affected={}",
+            tenant,
+            step,
+            res.rows_affected()
+        );
+        return Err(TopemsError::Internal(
+            "初始化进度行缺失，请刷新后重试".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// P2-4：日期字段统一解析，非法值返回 400 而不是落到 SQL `::date` 报 500。
+/// P2-4：按 DDL 列宽做前置长度校验（字符数，trim 后）。
+fn ensure_max_chars(field: &str, value: Option<&str>, max: usize) -> Result<(), TopemsError> {
+    if let Some(v) = value {
+        if v.trim().chars().count() > max {
+            return Err(TopemsError::ValidationFailed(format!(
+                "{field}不能超过{max}个字符"
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn parse_optional_date(
+    field: &str,
+    raw: Option<&String>,
+) -> Result<Option<chrono::NaiveDate>, TopemsError> {
+    match raw.map(|s| s.trim()).filter(|s| !s.is_empty()) {
+        None => Ok(None),
+        Some(s) => chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+            .map(Some)
+            .map_err(|_| {
+                TopemsError::ValidationFailed(format!("{field}格式不正确，应为 YYYY-MM-DD"))
+            }),
+    }
+}
 
 #[utoipa::path(
     get,
-    security(("BearerAuth" = ["hrm:setup:read"])),
+    security(("bearerAuth" = [])),
     path = "/setup/progress",
     responses((status = 200, description = "Get init progress")),
+    description = "实际门禁：读取需任一 hrm 权限（require_module_access(\"hrm\")）；写操作需 hrm:admin。",
     tag = "setup"
 )]
 pub async fn get_init_progress(
@@ -138,17 +252,20 @@ pub async fn get_init_progress(
     Extension(txn_arc): Extension<RlsTxnCell>,
 ) -> ApiResponse<InitProgressResponse> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    // P2-2：进度行按会话租户归属；首启超管无租户时回退 DEFAULT_ORG_ID（与种子一致）
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let txn = match guard.as_mut() {
+        Some(t) => t,
+        None => return ApiResponse::server_error("租户事务缺失，请重试"),
     };
-    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
+    // P1-1：统一严格解析（含超管的 x-tenant-id；服务身份拒绝）
+    let org_id = match setup_tenant(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(e),
+    };
+    // P1-2：读取前幂等补种当前租户的 5 条进度行（迁移只覆盖默认租户）
+    if let Err(e) = ensure_init_status_rows(txn, org_id).await {
+        tracing::error!("初始化进度补种失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("获取初始化进度失败".to_string()));
+    }
 
     let steps = sqlx::query_as::<_, InitializationStatus>(
         only_own_schema_query!("hrm", r#"
@@ -164,15 +281,21 @@ pub async fn get_init_progress(
 
     match steps {
         Ok(steps) => {
-            // P0-2：新库/未播种空集按「未开始」处理——禁止空表 all()=true 误判完成，
-            // 禁止 current_step 兜底 5；返回空 steps、current_step=1、未完成。
+            // 补种后正常必有 5 行；空集只可能是异常，仍按「未开始」处理，
+            // 绝不允许空表 all()=true 误判完成。
             if steps.is_empty() {
+                if let Some(t) = guard.take() {
+                    if let Err(e) = t.commit().await {
+                        tracing::error!("rls commit failed (progress): {}", e);
+                        return ApiResponse::server_error("提交事务失败");
+                    }
+                }
                 return ApiResponse::success(
                     InitProgressResponse {
                         is_completed: false,
                         current_step: 1,
                         steps: vec![],
-                        org_id: None,
+                        company_id: None,
                     },
                     "获取初始化进度成功",
                 );
@@ -185,9 +308,10 @@ pub async fn get_init_progress(
                 .map(|s| s.step_order)
                 .unwrap_or(5);
 
+            // P3-3：不再用不存在的占位名过滤；进度里的 org_id 语义是当前租户的公司 id。
             let company_result = sqlx::query_scalar::<_, Uuid>(only_own_schema_query!(
                 "hrm",
-                "SELECT id FROM hrm.companies WHERE tenant_id = $1 AND name != '我的公司' LIMIT 1"
+                "SELECT id FROM hrm.companies WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 1"
             ))
             .bind(org_id)
             .fetch_optional(&mut **txn)
@@ -196,7 +320,8 @@ pub async fn get_init_progress(
             let step_statuses: Vec<StepStatus> = steps
                 .iter()
                 .map(|s| {
-                    let is_current = s.status != "completed" && s.status != "failed";
+                    // P2-5：只有当前步是 current，其余未完成一律 pending
+                    let is_current = s.status != "completed" && s.step_order == current_step;
                     StepStatus {
                         name: s.step_name.clone(),
                         order: s.step_order,
@@ -206,12 +331,20 @@ pub async fn get_init_progress(
                 })
                 .collect();
 
+            // 补种语句属于写操作，读路径也要提交事务，否则请求结束会被回滚。
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed (progress): {}", e);
+                    return ApiResponse::server_error("提交事务失败");
+                }
+            }
+
             ApiResponse::success(
                 InitProgressResponse {
                     is_completed,
                     current_step,
                     steps: step_statuses,
-                    org_id: company_result.ok().flatten(),
+                    company_id: company_result.ok().flatten(),
                 },
                 "获取初始化进度成功",
             )
@@ -225,9 +358,10 @@ pub async fn get_init_progress(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["hrm:setup:write"])),
+    security(("bearerAuth" = [])),
     path = "/setup/company",
     responses((status = 200, description = "Setup company info")),
+    description = "实际门禁：require_module_write(\"hrm\")，即需 hrm:admin（不存在 hrm:setup:write 权限码）。",
     tag = "setup"
 )]
 pub async fn setup_company_info(
@@ -237,31 +371,62 @@ pub async fn setup_company_info(
     Json(req): Json<CompanyInfoRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let txn = match guard.as_mut() {
+        Some(t) => t,
+        None => return ApiResponse::server_error("租户事务缺失，请重试"),
     };
-    // P2-2：进度行/公司归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
-    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
+    let now = Utc::now();
+    // P1-1：统一严格解析（含超管的 x-tenant-id；服务身份拒绝）
+    let org_id = match setup_tenant(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(e),
+    };
+    // P1-2：写入前确保本租户进度行存在
+    if let Err(e) = ensure_init_status_rows(txn, org_id).await {
+        tracing::error!("初始化进度补种失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("保存公司信息失败".to_string()));
+    }
 
-    // 验证必填字段
-    if req.name.trim().is_empty() {
+    // 验证必填字段与 DDL 长度
+    let name = req.name.trim().to_string();
+    if name.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "公司名称不能为空".to_string(),
         ));
+    }
+    if let Err(e) = ensure_max_chars("公司名称", Some(&name), 255) {
+        return ApiResponse::from(e);
+    }
+    if let Err(e) = ensure_max_chars("公司简称", req.short_name.as_deref(), 100) {
+        return ApiResponse::from(e);
+    }
+    if let Err(e) = ensure_max_chars("注册号", req.registration_number.as_deref(), 100) {
+        return ApiResponse::from(e);
+    }
+    if let Err(e) = ensure_max_chars("税号", req.tax_number.as_deref(), 100) {
+        return ApiResponse::from(e);
+    }
+    if let Err(e) = ensure_max_chars("官网", req.website.as_deref(), 255) {
+        return ApiResponse::from(e);
+    }
+
+    // P3-5：同租户首存串行化。hrm.companies 允许一租户多公司（company.rs 正常 CRUD
+    // 可新增多条），因此不能加 (tenant_id) 唯一索引；用事务级 advisory lock 防止
+    // 并发首存各插一条。
+    if let Err(e) = sqlx::query("SELECT pg_advisory_xact_lock(hashtext($1::text)::bigint)")
+        .bind(format!("hrm_setup_company:{org_id}"))
+        .execute(&mut **txn)
+        .await
+    {
+        tracing::error!("公司首存加锁失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("查询公司信息失败".to_string()));
     }
 
     // P1：按租户 upsert——同一租户只保留一个设置主体，重复保存必须更新同一行，
     // 不再每次生成新 id（旧实现 ON CONFLICT (id) + Uuid::new_v4() 必然 INSERT 新公司，
     // 在 code 唯一约束上线后会被打回）。列名以 live DDL 为准：联系邮箱是 contact_email。
     // 可选字段沿用 COALESCE 语义：仅在本次传入时覆盖，未传保留原值。
-    let tenant_uuid = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
+    let tenant_uuid = org_id;
     let existing_company: Option<Uuid> = match sqlx::query_scalar(
         "SELECT id FROM hrm.companies WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at ASC LIMIT 1",
     )
@@ -276,6 +441,7 @@ pub async fn setup_company_info(
         }
     };
 
+    let is_update = existing_company.is_some();
     let result = if let Some(company_id) = existing_company {
         sqlx::query_as::<_, Company>(only_own_schema_query!(
             "hrm",
@@ -290,7 +456,8 @@ pub async fn setup_company_info(
                 contact_email = COALESCE($8, contact_email),
                 website = COALESCE($9, website),
                 description = COALESCE($10, description),
-                updated_at = $11
+                organization_id = $11,
+                updated_at = $12
             WHERE id = $1 AND deleted_at IS NULL
             RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
                       tax_number, address, contact_phone, contact_email, website, description,
@@ -298,7 +465,7 @@ pub async fn setup_company_info(
             "#
         ))
         .bind(company_id)
-        .bind(&req.name)
+        .bind(&name)
         .bind(&req.short_name)
         .bind(&req.registration_number)
         .bind(&req.tax_number)
@@ -307,6 +474,7 @@ pub async fn setup_company_info(
         .bind(&req.email)
         .bind(&req.website)
         .bind(&req.description)
+        .bind(org_id)
         .bind(now)
         .fetch_one(&mut **txn)
         .await
@@ -317,12 +485,12 @@ pub async fn setup_company_info(
             "hrm",
             r#"
             INSERT INTO hrm.companies (
-                id, tenant_id, code, name, short_name, registration_number,
+                id, tenant_id, organization_id, code, name, short_name, registration_number,
                 tax_number, address, contact_phone, contact_email, website, description,
                 status, created_at, updated_at
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-                'active', $13, $13
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+                'active', $14, $14
             )
             RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
                       tax_number, address, contact_phone, contact_email, website, description,
@@ -331,8 +499,9 @@ pub async fn setup_company_info(
         ))
         .bind(company_id)
         .bind(tenant_uuid)
+        .bind(tenant_uuid)
         .bind(code)
-        .bind(&req.name)
+        .bind(&name)
         .bind(&req.short_name)
         .bind(&req.registration_number)
         .bind(&req.tax_number)
@@ -348,34 +517,30 @@ pub async fn setup_company_info(
 
     match result {
         Ok(company) => {
-            // 更新初始化状态
-            let _ = sqlx::query(only_own_schema_query!(
-                "hrm",
-                r#"
-                UPDATE hrm.initialization_status
-                SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE tenant_id = $2 AND step_name = 'company_info'
-                "#
-            ))
-            .bind(now)
-            .bind(org_id)
-            .execute(&mut **txn)
-            .await;
+            // P1-2：进度置完成，影响 0 行即 500（不再静默成功）
+            if let Err(e) = mark_step_completed(txn, org_id, "company_info", now).await {
+                return ApiResponse::from(e);
+            }
 
-            // 记录日志
-            let _ = sqlx::query(
+            // P3-4：区分首次创建与更新；日志失败不再静默吞掉
+            let action = if is_update { "update" } else { "create" };
+            if let Err(e) = sqlx::query(
                 only_own_schema_query!("hrm", r#"
                 INSERT INTO hrm.initialization_logs (id, organization_id, tenant_id, step_name, action, new_data, created_at)
-                VALUES ($1, $2, $3, 'company_info', 'update', $4, $5)
+                VALUES ($1, $2, $3, 'company_info', $4, $5, $6)
                 "#)
             )
             .bind(Uuid::new_v4())
             .bind(org_id)
             .bind(tenant_uuid)
+            .bind(action)
             .bind(serde_json::json!({ "org_id": company.id, "name": company.name }))
             .bind(now)
             .execute(&mut **txn)
-            .await;
+            .await
+            {
+                tracing::warn!("初始化日志写入失败（不阻断）: {}", e);
+            }
 
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
@@ -432,23 +597,54 @@ pub async fn setup_departments(
     Json(req): Json<DepartmentsBatchRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let txn = match guard.as_mut() {
+        Some(t) => t,
+        None => return ApiResponse::server_error("租户事务缺失，请重试"),
     };
-    // P2-2：进度行/部门归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
-    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
-
-    if req.departments.is_empty() {
-        return ApiResponse::from(TopemsError::ValidationFailed(
-            "请至少创建一个部门".to_string(),
+    let now = Utc::now();
+    // P1-1：统一严格解析（含超管的 x-tenant-id；服务身份拒绝）
+    let org_id = match setup_tenant(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(e),
+    };
+    // P1-2：写入前确保本租户进度行存在
+    if let Err(e) = ensure_init_status_rows(txn, org_id).await {
+        tracing::error!("初始化进度补种失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal(
+            "创建部门失败，整批已回滚".to_string(),
         ));
+    }
+
+    // P1-3：库内已有部门时允许「无新增」提交——只把该步置完成，不再报「至少录入一个」。
+    if req.departments.is_empty() {
+        let existing: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT COUNT(*) FROM hrm.departments WHERE tenant_id = $1 AND deleted_at IS NULL"
+        ))
+        .bind(org_id)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        if existing == 0 {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "请至少创建一个部门".to_string(),
+            ));
+        }
+        if let Err(e) = mark_step_completed(txn, org_id, "departments", now).await {
+            return ApiResponse::from(e);
+        }
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("rls commit failed (departments): {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+        }
+        return ApiResponse::success(
+            serde_json::json!({ "created_count": 0, "departments": [] }),
+            "部门已存在，本步直接完成",
+        );
     }
 
     // P2-3/P2-4：整批预校验（空名、批次内重名/重码、库内同名），全部通过才写库；
@@ -500,11 +696,13 @@ pub async fn setup_departments(
         "hrm",
         r#"
         SELECT LOWER(name) FROM hrm.departments
-        WHERE deleted_at IS NULL
-          AND LOWER(name) = ANY($1::text[])
+        WHERE tenant_id = $1
+          AND deleted_at IS NULL
+          AND LOWER(name) = ANY($2::text[])
         LIMIT 1
         "#
     ))
+    .bind(org_id)
     .bind(
         requested_names
             .iter()
@@ -521,9 +719,80 @@ pub async fn setup_departments(
         )));
     }
 
+    // P2-2：上级部门（departments.parent_id）与负责人（employees.id）必须存在、
+    // 未删除且属本租户；否则会形成孤儿引用/跨租户引用。
+    let mut parent_ids: Vec<Uuid> = Vec::new();
+    let mut manager_ids: Vec<Uuid> = Vec::new();
+    for dept in &req.departments {
+        if let Some(pid) = dept.parent_id {
+            parent_ids.push(pid);
+        }
+        if let Some(mid) = dept.manager_id {
+            manager_ids.push(mid);
+        }
+    }
+    parent_ids.sort_unstable();
+    parent_ids.dedup();
+    manager_ids.sort_unstable();
+    manager_ids.dedup();
+
+    if !parent_ids.is_empty() {
+        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            r#"
+            SELECT COUNT(*) FROM hrm.departments
+            WHERE tenant_id = $1 AND deleted_at IS NULL AND id = ANY($2::uuid[])
+            "#
+        ))
+        .bind(org_id)
+        .bind(parent_ids.clone())
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        let expected = i64::try_from(parent_ids.len()).unwrap_or(i64::MAX);
+        if found != expected {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "引用的上级部门不存在或不属于当前租户".to_string(),
+            ));
+        }
+    }
+
+    if !manager_ids.is_empty() {
+        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            r#"
+            SELECT COUNT(*) FROM hrm.employees
+            WHERE tenant_id = $1 AND deleted_at IS NULL AND id = ANY($2::uuid[])
+            "#
+        ))
+        .bind(org_id)
+        .bind(manager_ids.clone())
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        let expected = i64::try_from(manager_ids.len()).unwrap_or(i64::MAX);
+        if found != expected {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "引用的部门负责人不存在或不属于当前租户".to_string(),
+            ));
+        }
+    }
+
     let mut created_depts = Vec::new();
     for dept in req.departments {
         let id = Uuid::new_v4();
+        // P2-3：落库值与校验值统一 trim，避免「校验同名、库里不同名」。
+        let name = dept.name.trim().to_string();
+        let code = dept
+            .code
+            .as_deref()
+            .map(str::trim)
+            .filter(|c| !c.is_empty())
+            .map(|c| c.to_string());
         let result = sqlx::query_as::<_, Department>(
             only_own_schema_query!("hrm", r#"
             INSERT INTO hrm.departments (id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
@@ -534,8 +803,8 @@ pub async fn setup_departments(
         .bind(id)
         .bind(org_id)
         .bind(org_id)
-        .bind(&dept.name)
-        .bind(&dept.code)
+        .bind(&name)
+        .bind(&code)
         .bind(dept.parent_id)
         .bind(dept.manager_id)
         .bind(&dept.description)
@@ -556,19 +825,10 @@ pub async fn setup_departments(
         }
     }
 
-    // 更新初始化状态
-    let _ = sqlx::query(only_own_schema_query!(
-        "hrm",
-        r#"
-        UPDATE hrm.initialization_status
-        SET status = 'completed', completed_at = $1, updated_at = $1
-        WHERE tenant_id = $2 AND step_name = 'departments'
-        "#
-    ))
-    .bind(now)
-    .bind(org_id)
-    .execute(&mut **txn)
-    .await;
+    // P1-2：进度置完成，影响 0 行即 500
+    if let Err(e) = mark_step_completed(txn, org_id, "departments", now).await {
+        return ApiResponse::from(e);
+    }
 
     // 4.4 修复：与 company 步同构提交 RLS 事务。中间件逐请求 begin 注入 txn，
     // 不 commit 则请求结束 txn drop 自动回滚——此前接口返回成功但数据未持久化。
@@ -627,23 +887,54 @@ pub async fn setup_positions(
     Json(req): Json<PositionsBatchRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let txn = match guard.as_mut() {
+        Some(t) => t,
+        None => return ApiResponse::server_error("租户事务缺失，请重试"),
     };
-    // P2-2：进度行/岗位归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
-    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
-
-    if req.positions.is_empty() {
-        return ApiResponse::from(TopemsError::ValidationFailed(
-            "请至少创建一个职位".to_string(),
+    let now = Utc::now();
+    // P1-1：统一严格解析（含超管的 x-tenant-id；服务身份拒绝）
+    let org_id = match setup_tenant(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(e),
+    };
+    // P1-2：写入前确保本租户进度行存在
+    if let Err(e) = ensure_init_status_rows(txn, org_id).await {
+        tracing::error!("初始化进度补种失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal(
+            "创建职位失败，整批已回滚".to_string(),
         ));
+    }
+
+    // P1-3：库内已有岗位时允许「无新增」提交——只把该步置完成。
+    if req.positions.is_empty() {
+        let existing: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT COUNT(*) FROM hrm.positions WHERE tenant_id = $1 AND deleted_at IS NULL"
+        ))
+        .bind(org_id)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        if existing == 0 {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "请至少创建一个职位".to_string(),
+            ));
+        }
+        if let Err(e) = mark_step_completed(txn, org_id, "positions", now).await {
+            return ApiResponse::from(e);
+        }
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("rls commit failed (positions): {}", e);
+                return ApiResponse::server_error("提交事务失败");
+            }
+        }
+        return ApiResponse::success(
+            serde_json::json!({ "created_count": 0, "positions": [] }),
+            "职位已存在，本步直接完成",
+        );
     }
 
     // P2-3/P2-4：整批预校验（空名、批次内重名/重码、库内同名、部门归属存在性），
@@ -695,10 +986,12 @@ pub async fn setup_positions(
             "hrm",
             r#"
             SELECT COUNT(*) FROM hrm.departments
-            WHERE deleted_at IS NULL
-              AND id = ANY($1::uuid[])
+            WHERE tenant_id = $1
+              AND deleted_at IS NULL
+              AND id = ANY($2::uuid[])
             "#
         ))
+        .bind(org_id)
         .bind(dept_ids.iter().copied().collect::<Vec<_>>())
         .fetch_optional(&mut **txn)
         .await
@@ -718,11 +1011,13 @@ pub async fn setup_positions(
         "hrm",
         r#"
         SELECT LOWER(name) FROM hrm.positions
-        WHERE deleted_at IS NULL
-          AND LOWER(name) = ANY($1::text[])
+        WHERE tenant_id = $1
+          AND deleted_at IS NULL
+          AND LOWER(name) = ANY($2::text[])
         LIMIT 1
         "#
     ))
+    .bind(org_id)
     .bind(
         requested_names
             .iter()
@@ -742,6 +1037,14 @@ pub async fn setup_positions(
     let mut created_positions = Vec::new();
     for pos in req.positions {
         let id = Uuid::new_v4();
+        // P2-3：落库值与校验值统一 trim。
+        let name = pos.name.trim().to_string();
+        let code = pos
+            .code
+            .as_deref()
+            .map(str::trim)
+            .filter(|c| !c.is_empty())
+            .map(|c| c.to_string());
         let result = sqlx::query_as::<_, Position>(
             only_own_schema_query!("hrm", r#"
             INSERT INTO hrm.positions (id, tenant_id, org_id, department_id, name, code, level, description, status, created_at, updated_at)
@@ -753,8 +1056,8 @@ pub async fn setup_positions(
         .bind(org_id)
         .bind(org_id)
         .bind(pos.department_id)
-        .bind(&pos.name)
-        .bind(&pos.code)
+        .bind(&name)
+        .bind(&code)
         .bind(pos.level)
         .bind(&pos.description)
         .bind(now)
@@ -774,19 +1077,10 @@ pub async fn setup_positions(
         }
     }
 
-    // 更新初始化状态
-    let _ = sqlx::query(only_own_schema_query!(
-        "hrm",
-        r#"
-        UPDATE hrm.initialization_status
-        SET status = 'completed', completed_at = $1, updated_at = $1
-        WHERE tenant_id = $2 AND step_name = 'positions'
-        "#
-    ))
-    .bind(now)
-    .bind(org_id)
-    .execute(&mut **txn)
-    .await;
+    // P1-2：进度置完成，影响 0 行即 500
+    if let Err(e) = mark_step_completed(txn, org_id, "positions", now).await {
+        return ApiResponse::from(e);
+    }
 
     // 4.4 修复：提交 RLS 事务（否则请求结束自动回滚）。
     if let Some(t) = guard.take() {
@@ -857,6 +1151,7 @@ pub struct Position {
         (status = 409, description = "Username or employee number already exists"),
         (status = 500, description = "Internal server error")
     ),
+    description = "实际门禁：require_module_write(\"hrm\") 即 hrm:admin；前端第 4 步还会先调 IAM POST /users 建号，另需 admin:iam:write 或租户用户写权限。",
     tag = "setup"
 )]
 pub async fn setup_admin_user(
@@ -866,40 +1161,49 @@ pub async fn setup_admin_user(
     Json(req): Json<AdminUserRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let txn = match guard.as_mut() {
+        Some(t) => t,
+        None => return ApiResponse::server_error("租户事务缺失，请重试"),
     };
-    // P2-2：进度行/管理员归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
-    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
+    let now = Utc::now();
+    // P1-1：统一严格解析（含超管的 x-tenant-id；服务身份拒绝）
+    let org_id = match setup_tenant(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(e),
+    };
+    // P1-2：写入前确保本租户进度行存在
+    if let Err(e) = ensure_init_status_rows(txn, org_id).await {
+        tracing::error!("初始化进度补种失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("创建管理员账户失败".to_string()));
+    }
 
-    // 验证必填字段
-    if req.name.trim().is_empty() {
+    // 验证必填字段与 DDL 长度
+    let name = req.name.trim().to_string();
+    let employee_number = req.employee_number.trim().to_string();
+    if name.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "管理员姓名不能为空".to_string(),
         ));
     }
-    if req.employee_number.trim().is_empty() {
+    if employee_number.is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "员工编号不能为空".to_string(),
         ));
     }
-    if req.password.len() < 6 {
-        return ApiResponse::from(TopemsError::ValidationFailed("密码长度至少6位".to_string()));
+    if let Err(e) = ensure_max_chars("管理员姓名", Some(&name), 255) {
+        return ApiResponse::from(e);
     }
+    if let Err(e) = ensure_max_chars("员工编号", Some(&employee_number), 50) {
+        return ApiResponse::from(e);
+    }
+    // P3-1：password 由 IAM 建号端点消费，本接口只做兼容接收，不再强制长度。
 
     // 解析可登录用户名：缺省回退 employee_number；格式规则对齐 IAM register
     // （3-20 位字母/数字/下划线）。回退值若含中文/连字符等非法字符，要求显式传 username。
     let username = req
         .username
         .clone()
-        .unwrap_or_else(|| req.employee_number.clone());
+        .unwrap_or_else(|| employee_number.clone());
     let username = username.trim().to_string();
     let username_valid = username.len() >= 3
         && username.len() <= 20
@@ -964,13 +1268,92 @@ pub async fn setup_admin_user(
         }
     }
 
+    // P2-2 / P3-1：管理员引用的部门、岗位、IAM 账号必须存在、未删除且属本租户。
+    if let Some(did) = req.department_id {
+        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT COUNT(*) FROM hrm.departments WHERE tenant_id = $1 AND deleted_at IS NULL AND id = $2"
+        ))
+        .bind(org_id)
+        .bind(did)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        if found == 0 {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "引用的部门不存在或不属于当前租户".to_string(),
+            ));
+        }
+    }
+    if let Some(pid) = req.position_id {
+        let found: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT COUNT(*) FROM hrm.positions WHERE tenant_id = $1 AND deleted_at IS NULL AND id = $2"
+        ))
+        .bind(org_id)
+        .bind(pid)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        if found == 0 {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "引用的岗位不存在或不属于当前租户".to_string(),
+            ));
+        }
+    }
+    if let Some(uid) = req.user_id {
+        let exists: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT COUNT(*) FROM iam.users WHERE id = $1 AND deleted_at IS NULL",
+            "iam"
+        ))
+        .bind(uid)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        if exists == 0 {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "关联的 IAM 账号不存在".to_string(),
+            ));
+        }
+        // iam.users 无 tenant 列，租户成员关系查 core_tenant_users。
+        let member: i64 = sqlx::query_scalar(only_own_schema_query!(
+            "hrm",
+            "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2"
+        ))
+        .bind(org_id)
+        .bind(uid)
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        if member == 0 {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "该 IAM 账号不属于当前租户".to_string(),
+            ));
+        }
+    }
+
+    // P2-4：日期非法直接 400，不再静默 None 或落到 SQL `::date` 报 500。
+    let birth_date = match parse_optional_date("出生日期", req.birth_date.as_ref()) {
+        Ok(d) => d,
+        Err(e) => return ApiResponse::from(e),
+    };
+    let hire_date = match parse_optional_date("入职日期", req.hire_date.as_ref()) {
+        Ok(Some(d)) => Some(d),
+        Ok(None) => Some(now.date_naive()),
+        Err(e) => return ApiResponse::from(e),
+    };
+
     // 创建员工
     let employee_id = Uuid::new_v4();
-    let hire_date = if let Some(hd) = &req.hire_date {
-        hd.parse::<chrono::NaiveDate>().ok()
-    } else {
-        Some(now.date_naive())
-    };
 
     let result = sqlx::query_as::<_, Employee>(
         only_own_schema_query!("hrm", r#"
@@ -981,7 +1364,7 @@ pub async fn setup_admin_user(
             emergency_contact_name, emergency_contact_phone, address,
             user_id,
             status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, $12, $13, $14, $15, $16, $17, 'active', $18, $19)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'active', $18, $19)
         RETURNING id, tenant_id, org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
         "#),
@@ -991,13 +1374,13 @@ pub async fn setup_admin_user(
     .bind(org_id)
     .bind(req.department_id)
     .bind(req.position_id)
-    .bind(&req.employee_number)
-    .bind(&req.name)
+    .bind(&employee_number)
+    .bind(&name)
     .bind(&req.gender)
-    .bind(&req.birth_date)
+    .bind(birth_date)
     .bind(hire_date)
     .bind(&req.id_card_number)
-    .bind(&req.email)
+    .bind(email_norm.clone())
     .bind(&req.phone)
     .bind(&req.emergency_contact_name)
     .bind(&req.emergency_contact_phone)
@@ -1011,19 +1394,10 @@ pub async fn setup_admin_user(
     match result {
         Ok(employee) => {
             // 方案B：hrm 不落密码哈希、不写 iam.users；账号开通由前端串联 IAM 建号端点。
-            // 此处仅更新本服务的初始化步骤状态。
-            let _ = sqlx::query(only_own_schema_query!(
-                "hrm",
-                r#"
-                UPDATE hrm.initialization_status
-                SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE tenant_id = $2 AND step_name = 'admin_user'
-                "#
-            ))
-            .bind(now)
-            .bind(org_id)
-            .execute(&mut **txn)
-            .await;
+            // P1-2：进度置完成，影响 0 行即 500。
+            if let Err(e) = mark_step_completed(txn, org_id, "admin_user", now).await {
+                return ApiResponse::from(e);
+            }
 
             // 4.4 修复：提交 RLS 事务（否则请求结束自动回滚）。
             if let Some(t) = guard.take() {
@@ -1053,18 +1427,17 @@ pub async fn setup_admin_user(
             )
         }
         Err(e) => {
-            // 员工编号唯一冲突（部分唯一索引 idx_employees_employee_number_unique）→ 友好 409，绝不 500
-            let duplicate_employee_number = e
+            // P2-4：按约束名分支，只有员工编号唯一索引冲突才是 409；
+            // 其他唯一约束（例如未来新增 user_id 唯一）不再误报「员工编号已存在」。
+            let constraint = e
                 .as_database_error()
-                .and_then(|db| db.code())
-                .map(|c| c == "23505")
-                .unwrap_or(false);
-            if duplicate_employee_number {
+                .and_then(|db| db.constraint().map(str::to_string));
+            if constraint.as_deref() == Some("idx_employees_employee_number_unique") {
                 return ApiResponse::from(TopemsError::ResourceAlreadyExists(
                     "员工编号已存在".to_string(),
                 ));
             }
-            tracing::error!("创建管理员账户失败: {}", e);
+            tracing::error!("创建管理员账户失败: {} (constraint={:?})", e, constraint);
             ApiResponse::from(TopemsError::Internal("创建管理员账户失败".to_string()))
         }
     }
@@ -1102,18 +1475,21 @@ pub async fn complete_initialization(
     Json(req): Json<CompleteInitRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    let now = Utc::now();
-    let tenant_filter: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
+    let txn = match guard.as_mut() {
+        Some(t) => t,
+        None => return ApiResponse::server_error("租户事务缺失，请重试"),
     };
-    // P2-2：complete 进度归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
-    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
+    let now = Utc::now();
+    // P1-1：统一严格解析（含超管的 x-tenant-id；服务身份拒绝）
+    let org_id = match setup_tenant(&claims) {
+        Ok(t) => t,
+        Err(e) => return ApiResponse::from(e),
+    };
+    // P1-2：写入前确保本租户进度行存在
+    if let Err(e) = ensure_init_status_rows(txn, org_id).await {
+        tracing::error!("初始化进度补种失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("完成初始化失败".to_string()));
+    }
 
     if !req.confirm {
         return ApiResponse::from(TopemsError::ValidationFailed(
@@ -1136,13 +1512,15 @@ pub async fn complete_initialization(
 
     match steps {
         Ok(steps) => {
+            // P1-2：fail-closed——必须恰有 4 条前置步骤且全部 completed；
+            // 空集/缺行不再放行（旧实现空集时 incomplete 为空 → 直接判完成）。
             let incomplete: Vec<&str> = steps
                 .iter()
                 .filter(|s| s.status != "completed")
                 .map(|s| s.step_name.as_str())
                 .collect();
 
-            if !incomplete.is_empty() {
+            if steps.len() < 4 || !incomplete.is_empty() {
                 return ApiResponse::from(TopemsError::ValidationFailed(
                     "请先完成初始化步骤".to_string(),
                 ));
@@ -1151,27 +1529,20 @@ pub async fn complete_initialization(
             // P1-1：落租户初始化标记。completion 行即首启闭环标记，进度读取据此判定
             // is_completed。默认角色/权限由 IAM 建号端点分配（方案B，hrm 不跨服务直写
             // core_user_roles，避免孤儿/错位角色行），此处只做结果核验与汇总。
-            let _ = sqlx::query(only_own_schema_query!(
-                "hrm",
-                r#"
-                UPDATE hrm.initialization_status
-                SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE tenant_id = $2 AND step_name = 'completion'
-                "#
-            ))
-            .bind(now)
-            .bind(org_id)
-            .execute(&mut **txn)
-            .await;
+            // P1-2：影响 0 行即 500，不得返回成功。
+            if let Err(e) = mark_step_completed(txn, org_id, "completion", now).await {
+                return ApiResponse::from(e);
+            }
 
             // 首启结果汇总（租户范围），供前端确认；admin 未绑定 IAM 账号仅告警不阻断。
             let company_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.companies
-                WHERE deleted_at IS NULL
+                WHERE tenant_id = $1 AND deleted_at IS NULL
                 "#
             ))
+            .bind(org_id)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1181,9 +1552,10 @@ pub async fn complete_initialization(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.departments
-                WHERE deleted_at IS NULL
+                WHERE tenant_id = $1 AND deleted_at IS NULL
                 "#
             ))
+            .bind(org_id)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1193,9 +1565,10 @@ pub async fn complete_initialization(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.positions
-                WHERE deleted_at IS NULL
+                WHERE tenant_id = $1 AND deleted_at IS NULL
                 "#
             ))
+            .bind(org_id)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1205,9 +1578,10 @@ pub async fn complete_initialization(
                 "hrm",
                 r#"
                 SELECT COUNT(*) FROM hrm.employees
-                WHERE deleted_at IS NULL AND user_id IS NOT NULL
+                WHERE tenant_id = $1 AND deleted_at IS NULL AND user_id IS NOT NULL
                 "#
             ))
+            .bind(org_id)
             .fetch_optional(&mut **txn)
             .await
             .ok()
@@ -1246,5 +1620,67 @@ pub async fn complete_initialization(
             tracing::error!("完成初始化失败: {}", e);
             ApiResponse::from(TopemsError::Internal("完成初始化失败".to_string()))
         }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+mod tests {
+    use super::*;
+
+    fn claims(tenant: Option<&str>, superuser: bool, role: &str) -> Claims {
+        Claims {
+            sub: Uuid::new_v4().to_string(),
+            username: "tester".to_string(),
+            role: role.to_string(),
+            roles: vec![role.to_string()],
+            permissions: vec![],
+            is_superuser: superuser,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant.map(str::to_string),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+            must_change_password: false,
+        }
+    }
+
+    #[test]
+    fn setup_tenant_accepts_superuser_with_explicit_tenant() {
+        let t = Uuid::new_v4();
+        let c = claims(Some(&t.to_string()), true, "superadmin");
+        assert_eq!(setup_tenant(&c).ok(), Some(t));
+    }
+
+    #[test]
+    fn setup_tenant_rejects_missing_nil_and_service() {
+        assert!(setup_tenant(&claims(None, true, "superadmin")).is_err());
+        assert!(setup_tenant(&claims(Some(&Uuid::nil().to_string()), true, "admin")).is_err());
+        assert!(setup_tenant(&claims(None, false, "service")).is_err());
+    }
+
+    #[test]
+    fn parse_optional_date_validates_format() {
+        let ok = Some("2026-01-02".to_string());
+        assert!(parse_optional_date("出生日期", ok.as_ref()).is_ok());
+        let bad = Some("2020-13-40".to_string());
+        assert!(parse_optional_date("出生日期", bad.as_ref()).is_err());
+        let blank = Some("   ".to_string());
+        assert_eq!(
+            parse_optional_date("入职日期", blank.as_ref()).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn ensure_max_chars_counts_chars_not_bytes() {
+        let long = "名".repeat(256);
+        assert!(ensure_max_chars("公司名称", Some(&long), 255).is_err());
+        let ok = "名".repeat(255);
+        assert!(ensure_max_chars("公司名称", Some(&ok), 255).is_ok());
+        assert!(ensure_max_chars("官网", None, 255).is_ok());
     }
 }

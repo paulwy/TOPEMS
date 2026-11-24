@@ -14,7 +14,7 @@ export interface InitProgressResponse {
   is_completed: boolean;
   current_step: number;
   steps: StepStatusInfo[];
-  org_id?: string | null;
+  company_id?: string | null;
 }
 
 // ============ POST /setup/company ============
