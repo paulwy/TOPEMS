@@ -4082,10 +4082,10 @@
         "enum": "WorkflowStatus",
         "table": "public.core_workflows",
         "column": "status",
-        "candidate": "docs/database/core-workflow-status-check-candidates-2026-11-23.sql",
+        "candidate": "database/migrations/20261125001000_core_workflow_status_standard.sql",
         "db_constraint": "ck_core_workflows_status_standard",
-        "db_verified_at": "2026-11-24",
-        "db_verified_via": "local pg_constraint (convalidated)"
+        "db_verified_at": "2026-11-25",
+        "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default draft)"
       },
       "db_covered": true,
       "db_constraints": [
