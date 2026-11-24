@@ -166,14 +166,8 @@ pub async fn get_quality_overview(
     State(state): State<crate::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> ApiResponse<QualityOverview> {
-    // 看板聚合全部落到租户谓词上，超管保持全量口径。
-    let tenant = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -188,7 +182,6 @@ pub async fn get_quality_overview(
     macro_rules! overview_count {
         ($sql:literal, $label:literal) => {{
             match sqlx::query_scalar::<_, i64>(only_own_schema_query!("qms", $sql))
-                .bind(tenant)
                 .fetch_one(&mut scope)
                 .await
             {
@@ -202,23 +195,22 @@ pub async fn get_quality_overview(
     }
 
     let total_inspections = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections",
         "总检验数"
     );
     let qualified_inspections = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'qualified'",
         "合格检验数"
     );
     let unqualified_inspections = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified'",
         "不合格检验数"
     );
 
     let avg_rate: BigDecimal = match sqlx::query_scalar::<_, BigDecimal>(only_own_schema_query!(
         "qms",
-        r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"#
+        r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qms.qa_quality_inspections WHERE status = 'completed'"#
     ))
-    .bind(tenant)
     .fetch_one(&mut scope)
     .await
     {
@@ -231,16 +223,13 @@ pub async fn get_quality_overview(
     let qualification_rate: f64 = big_decimal_to_f64(Some(avg_rate));
     let defect_rate = 100.0 - qualification_rate;
 
-    let total_issues = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)",
-        "问题总数"
-    );
+    let total_issues = overview_count!("SELECT COUNT(*) FROM qms.qa_quality_issues", "问题总数");
     let open_issues = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE (status = 'open' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE (status = 'open' OR status = 'in_progress')",
         "未关闭问题数"
     );
     let complaint_count = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_quality_issues WHERE source = 'customer_complaint'",
         "客诉数"
     );
     let complaint_rate = if total_inspections > 0 {
@@ -250,11 +239,11 @@ pub async fn get_quality_overview(
     };
 
     let in_progress_eightd = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_eightd_reports WHERE status = 'in_progress'",
         "8D 进行中数"
     );
     let pending_actions = overview_count!(
-        "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress') AND ($1::uuid IS NULL OR tenant_id = $1::uuid)",
+        "SELECT COUNT(*) FROM qms.qa_corrective_actions WHERE (status = 'pending' OR status = 'in_progress')",
         "待处理措施数"
     );
 
