@@ -109,6 +109,8 @@ k8s 若继续保留，至少补 `securityContext`（`runAsNonRoot: true`、`allo
 
 ## 收口进展（2026-11-24 晚）
 
-**DNS 已在 Cloudflare 控制台完成，且无需生产机配合**：核对真实记录后确认 `www` / `app` 本来都指向隧道 `d677df4c-…cfargotunnel.com`，此前的 `topems-website.pages.dev` 只是本机解析器缓存假象，没有任何 Pages 残留需要清理。实际动作是：把裸域 `@` 从「仅 DNS」改成「已代理」，新增单一重定向规则 `apex-root-to-www`（`https://topmap.net/*` → `https://www.topmap.net/${1}`，301），并开启「始终使用 HTTPS」。实测 `http://topmap.net/` → 301 → 301 → 200，深路径与查询串均保留。详见 `docs/ops/topmap-net-dns-2026-11-24.md`。
+**DNS 已在 Cloudflare 控制台完成，且无需生产机配合**：核对真实记录后确认 `www` / `app` 本来都指向隧道 `d677df4c-…cfargotunnel.com`，此前的 `topems-website.pages.dev` 只是本机解析器缓存假象，没有任何 Pages 残留需要清理。实际动作是：把裸域 `@` 从「仅 DNS」改成「已代理」，新增单一重定向规则 `apex-root-to-www`（`https://topmap.net/*` → `https://www.topmap.net/${1}`，301），并开启「始终使用 HTTPS」。后又把该规则从通配符 `https://topmap.net/*` 改为自定义表达式 `(http.host eq "topmap.net")` + 动态目标 `concat("https://www.topmap.net", http.request.uri.path)`，实测 `http://topmap.net/` **一跳**直接 301 到 `https://www.topmap.net/`，深路径与查询串均保留；`test.topmap.net`（指向已无响应的 `39.97.42.144`）已删除，记录数 4 → 3。详见 `docs/ops/topmap-net-dns-2026-11-24.md`。
+
+**门禁此前是空跑，已修**：机器上没有 lefthook 二进制，`.git/hooks/pre-commit` 落在 `Can't find lefthook in PATH` 分支并 exit 0，57 个钩子全部静默跳过——本轮新加的 `prod-config` 也就从未真正拦过事。现已 `brew install lefthook`（2.2.2），并把 `status-catalog` 的比对库从开发库改指基线库（`.env` 增 `STATUS_CATALOG_DB_URL=postgresql:///topems_status_baseline_verify`），`lefthook run pre-commit --force` 57/57 全绿，且已用一次**不带 `--no-verify`** 的真实提交验证链路生效。详见 `docs/quality/precommit-gates-restored-2026-11-24.md`。
 
 **只剩一件事需要生产机配合**：核对并同步生产机 `/Users/xingzhai/topems/.env.production`（本机副本已按 native 形态重写），然后重启 launchd 并回传验收结果。通知稿见 `docs/ops/notice-prod-align-2026-11-24.md`。
