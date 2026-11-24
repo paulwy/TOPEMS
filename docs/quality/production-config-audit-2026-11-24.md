@@ -107,7 +107,8 @@ k8s 若继续保留，至少补 `securityContext`（`runAsNonRoot: true`、`allo
 
 `node scripts/ci/check-prod-config.mjs` 断言 6 组不变量：模板 MIGRATE_URL/CORS/DSN/pool、compose 无双源且 app 经池、pgbouncer 认证与池上限、密钥不入库、实配权限与占位、示例配置漂移。把模板 CORS 改回 `your-domain.com` 时立即 FAIL（exit 1），恢复后 PASS。
 
-## 仍然只能人工处理的两件事
+## 收口进展（2026-11-24 晚）
 
-1. **DNS（Cloudflare）**：`www.topmap.net` 在部分解析器上仍返回 `topems-website.pages.dev` 的陈旧 CNAME，裸域 `topmap.net` 指向无响应的 `39.97.42.144`。本机没有 Cloudflare 凭据（`~/.cloudflared` 不存在、无 `CLOUDFLARE_API_TOKEN`），且生产机 SSH 不可达，无法代改。操作清单见 `docs/ops/topmap-net-dns-2026-11-24.md`。
-2. **生产机实配核对**：`.env.production` 是**本机副本**是否与生产机 `/Users/xingzhai/topems` 上的实文件一致，需要 SSH 恢复后 `sha256sum` 比对；两处不一致时以生产机为准再回灌本仓库。
+**DNS 已在 Cloudflare 控制台完成，且无需生产机配合**：核对真实记录后确认 `www` / `app` 本来都指向隧道 `d677df4c-…cfargotunnel.com`，此前的 `topems-website.pages.dev` 只是本机解析器缓存假象，没有任何 Pages 残留需要清理。实际动作是：把裸域 `@` 从「仅 DNS」改成「已代理」，新增单一重定向规则 `apex-root-to-www`（`https://topmap.net/*` → `https://www.topmap.net/${1}`，301），并开启「始终使用 HTTPS」。实测 `http://topmap.net/` → 301 → 301 → 200，深路径与查询串均保留。详见 `docs/ops/topmap-net-dns-2026-11-24.md`。
+
+**只剩一件事需要生产机配合**：核对并同步生产机 `/Users/xingzhai/topems/.env.production`（本机副本已按 native 形态重写），然后重启 launchd 并回传验收结果。通知稿见 `docs/ops/notice-prod-align-2026-11-24.md`。

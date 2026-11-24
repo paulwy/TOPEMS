@@ -1,37 +1,47 @@
-# topmap.net DNS 收口清单（2026-11-24）
+# topmap.net DNS / 入口收口记录（2026-11-24）
 
-## 实测现状（外部探测）
+## 结论：DNS 侧已全部收口，生产机不需要再做 tunnel 路由
 
-| 记录 | 解析结果 | 含义 |
-|---|---|---|
-| `www.topmap.net` | 本机解析器：`CNAME topems-website.pages.dev` + `172.66.47.178/44.78`；`@1.1.1.1`：`172.67.204.59/104.21.85.89`，无 CNAME | **两个解析器答案不一致**，pages.dev 绑定残留 |
-| `app.topmap.net` | `172.67.204.59 / 104.21.85.89` | 与 www 同一边缘 IP |
-| `topmap.net`（裸域） | `39.97.42.144` | 阿里云 ECS，http/https 均无响应 |
-| NS | `sterling.ns.cloudflare.com` / `peaches.ns.cloudflare.com` | 已在 Cloudflare |
+之前从主控机做的外部探测里，`www.topmap.net` 在本机解析器上返回过 `CNAME topems-website.pages.dev`——**那是解析器缓存造成的假象**。登录 Cloudflare 控制台核对真实记录如下（共 4 条）：
 
-HTTP 侧：`https://www.topmap.net` 与 `https://app.topmap.net` 均 200，静态 404 页带 `nginx/1.31.1`，`/api/*` 返回后端统一 JSON 包装 → **两者最终都落到 Mac mini 上的 nginx**，Pages 并未真正提供服务，但 CNAME 残留仍是随时可能翻车的隐患。
+| 类型 | 名称 | 内容 | 代理 |
+|---|---|---|---|
+| A | `test.topmap.net` | `39.97.42.144` | 已代理 |
+| A | `@`（topmap.net） | `39.97.42.144` | **本轮由「仅 DNS」改为「已代理」** |
+| CNAME | `app.topmap.net` | `d677df4c-3b19-472f-8b78-6c62770cf740.cfargotunnel.com` | 已代理 |
+| CNAME | `www.topmap.net` | `d677df4c-3b19-472f-8b78-6c62770cf740.cfargotunnel.com` | 已代理 |
 
-## 要做的三件事
+即 `www` / `app` 本来就指向同一个 cloudflared 隧道（`topems`）的 CNAME，没有任何 Pages 绑定残留；隧道 public hostname 也无需改动。
 
-1. **清掉 www 的 pages.dev 残留**
-   Cloudflare Dashboard → DNS → Records：删除 `www` 的 `CNAME topems-website.pages.dev`；随后在 Zero Trust → Networks → Tunnels → 隧道 `topems` → Public Hostname 里确认 `www.topmap.net → http://127.0.0.1:80`（或 443），保存后 Cloudflare 会自动建回 `CNAME <uuid>.cfargotunnel.com`。
-   命令行等价（需在**生产机**上执行，那里才有 tunnel 凭据）：
+## 本轮实际做了两件事
 
-   ```bash
-   cloudflared tunnel route dns topems www.topmap.net
-   ```
+**1. 裸域改为代理（橙云）**
 
-2. **裸域跳 www**（避免评审直接输 `topmap.net` 打不开）
-   Cloudflare → Rules → Redirect Rules：`topmap.net/*` → `https://www.topmap.net/$1`，301，勾选“Preserve query string”。
+`@` 的 A 记录原为「仅 DNS」→ 直接打 `39.97.42.144`（已无响应，客户端只会连接超时）。改为代理后请求先到 Cloudflare 边缘，才能被重定向规则接管。
 
-3. **复验**
+**2. 新增单一重定向规则 `apex-root-to-www`**
 
-   ```bash
-   dig +short @1.1.1.1 www.topmap.net          # 应为 Cloudflare 边缘 IP，且无 pages.dev CNAME
-   dig +short @8.8.8.8 www.topmap.net          # 与上一条一致（排除缓存假象）
-   curl -sI https://www.topmap.net | head -3   # 200 + server: cloudflare
-   curl -s -o /dev/null -w '%{http_code}\n' https://www.topmap.net/nope.png   # 404 且页面含 nginx/1.x
-   curl -sI https://topmap.net | head -5       # 301 → https://www.topmap.net/
-   ```
+- 匹配（通配符模式）：`https://topmap.net/*`
+- 目标：`https://www.topmap.net/${1}`（301，保留查询字符串）
+- 另开启 SSL/TLS → 边缘证书 → **始终使用 HTTPS**，使 `http://topmap.net/*` 先在边缘 301 到 `https://topmap.net/*`
 
-> 本机无 Cloudflare 凭据（`~/.cloudflared` 不存在、环境无 `CLOUDFLARE_API_TOKEN`），生产机 SSH（`xingzhai@192.168.3.129:22`）当前超时，因此以上三步未能代执行。
+## 验证结果（2026-11-24 01:43 UTC 实测）
+
+```text
+curl -sIL http://topmap.net/
+  HTTP/1.1 301 → Location: https://topmap.net/
+  HTTP/2   301 → location: https://www.topmap.net/
+  HTTP/2   200
+
+curl -sI  https://topmap.net/login      → 301  location: https://www.topmap.net/login
+curl -sI "https://topmap.net/a?x=1"      → 301  location: https://www.topmap.net/a?x=1
+curl -sI  https://www.topmap.net        → 200
+dig +short @1.1.1.1 www/app/topmap.net  → 全部 Cloudflare 边缘 IP，无 pages.dev
+```
+
+路径与查询串都保住了；裸域到 `www` 是两跳（http→https→www），浏览器无感。
+
+## 遗留（非阻塞）
+
+- `http→https` 与 `https→www` 是两条机制，链路两跳；若以后要压成一跳，把重定向规则的匹配改为自定义表达式 `http.host eq "topmap.net"`、目标用动态路径即可，属优化项。
+- `test.topmap.net` 仍指向 `39.97.42.144`（已代理但源站无响应），访问会得到 5xx。若不再使用，建议删除该记录，避免评审误点。
