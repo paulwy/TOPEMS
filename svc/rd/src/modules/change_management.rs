@@ -156,6 +156,7 @@ const CHANGE_ORDER_RETURN: &str = r#"id, change_request_id, title, execution_pla
 pub async fn create_change_request(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateChangeRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -169,7 +170,15 @@ pub async fn create_change_request(
         }
     };
     let id = Uuid::new_v4();
-    let tenant_id = Uuid::nil();
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            return (
+                StatusCode::from_u16(code).unwrap_or(StatusCode::BAD_REQUEST),
+                ApiResponse::<ChangeRequest>::bad_request(&msg),
+            )
+        }
+    };
     let now = Utc::now();
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let scope_docs = req.scope_docs.unwrap_or(0).max(0);
