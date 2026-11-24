@@ -253,10 +253,13 @@ pub async fn create_delegate(
             ));
         }
     };
-    let delegator_id = payload
-        .delegator_id
-        .or_else(|| Uuid::parse_str(&claims.sub).ok())
-        .unwrap_or(Uuid::nil());
+    let delegator_id = match payload.delegator_id {
+        Some(id) => id,
+        None => match Uuid::parse_str(&claims.sub) {
+            Ok(id) => id,
+            Err(_) => return ApiResponse::from(TopemsError::Auth("无效的操作人身份".to_string())),
+        },
+    };
     let scope_name = payload.scope.unwrap_or_else(|| "all".to_string());
 
     let row: Option<DelegateRow> = match sqlx::query_as(

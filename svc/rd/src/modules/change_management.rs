@@ -19,7 +19,8 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use topems_shared_auth::middleware::tenant::RlsTxnCell;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::{try_tenant_id_from_claims, RlsTxnCell};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -580,6 +581,7 @@ pub async fn create_change_order(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateChangeOrder>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
@@ -623,7 +625,15 @@ pub async fn create_change_order(
 
     let co_id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_id = Uuid::nil();
+    let tenant_id = match try_tenant_id_from_claims(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => {
+            return (
+                StatusCode::from_u16(code).unwrap_or(StatusCode::BAD_REQUEST),
+                ApiResponse::<ChangeOrder>::bad_request(&msg),
+            )
+        }
+    };
     let result: Result<ChangeOrder, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"INSERT INTO rs.change_orders
         (id, change_request_id, title, execution_plan, status, executed_by, notes, created_at, updated_at, tenant_id)

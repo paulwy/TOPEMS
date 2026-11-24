@@ -48,6 +48,8 @@ const IMPLICIT_GLOBAL = [
   /\bOR\s+tenant_id\s+IS\s+NULL\b/i,
 ];
 const TEST_PATH = /(^|\/)(tests?|examples|benches)(\/|$)|_test\.rs$|_tests\.rs$/;
+// 运维/回填/清理/演练语料：允许显式以 nil 做标记、回滚与校验，不纳入写源阻断
+const OPS_SCRIPT = /^scripts\/(ops|db\/sql)\//;
 const SELF = 'scripts/ci/check-tenant-write-sources.cjs';
 
 function listFiles(changedOnly) {
@@ -82,7 +84,7 @@ function listFiles(changedOnly) {
 
 function scanFile(file) {
   const hits = { write: [], readGuard: [], implicitGlobal: [] };
-  if (file === SELF || TEST_PATH.test(file)) return hits;
+  if (file === SELF || TEST_PATH.test(file) || OPS_SCRIPT.test(file)) return hits;
   const lines = fs.readFileSync(file, 'utf-8').split('\n');
   lines.forEach((line, idx) => {
     if (IMPLICIT_GLOBAL.some((re) => re.test(line))) {
@@ -94,6 +96,18 @@ function scanFile(file) {
 
     // 上下文窗口：覆盖多行 SQL 的 tenant 字段与绑定
     const window = lines.slice(Math.max(0, idx - 6), idx + 7).join('\n');
+
+    // 读侧谓词先归位：OR tenant_id / tenant_id IS NULL / NULLIF(current_setting...)
+    if (READ_GUARD.test(line) || READ_GUARD.test(window)) {
+      hits.readGuard.push({ file, line: idx + 1, text: line.trim() });
+      return;
+    }
+
+    // RETURNING 投影里的 COALESCE(tenant_id, nil) 只是展示兜底，不是写源
+    if (/RETURNING/i.test(window) && /COALESCE\s*\(\s*tenant_id/i.test(line)) {
+      return;
+    }
+
     const inWriteSql = SQL_WRITE.test(window) && TENANT_HINT.test(window);
     const writeShape = SQL_WRITE_TENANT.test(window) && TENANT_HINT.test(line);
 
@@ -103,8 +117,6 @@ function scanFile(file) {
       (BIND_NIL.test(line) || UNWRAP_NIL.test(line) || /tenant_id/.test(line))
     ) {
       hits.write.push(hit);
-    } else if (READ_GUARD.test(line) || READ_GUARD.test(window)) {
-      hits.readGuard.push(hit);
     } else if (writeShape) {
       hits.write.push(hit);
     }
