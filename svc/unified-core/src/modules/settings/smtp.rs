@@ -19,7 +19,6 @@ use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::{response::ApiResponse, TopemsError};
-use uuid::Uuid;
 
 const SMTP_CONFIG_KEY: &str = "smtp_config";
 const PASSWORD_MASK: &str = "********";
@@ -70,14 +69,8 @@ pub struct TestEmailRequest {
 pub async fn get_smtp_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<SmtpConfig> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_uuid(&claims))
-    };
-
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -94,13 +87,11 @@ pub async fn get_smtp_config(
         }
     };
 
-    let result = sqlx::query(
-        "SELECT setting_value FROM public.core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
-    )
-    .bind(tenant_id)
-    .bind(SMTP_CONFIG_KEY)
-    .fetch_optional(&mut scope)
-    .await;
+    let result =
+        sqlx::query("SELECT setting_value FROM public.core_tenant_settings WHERE setting_key = $1")
+            .bind(SMTP_CONFIG_KEY)
+            .fetch_optional(&mut scope)
+            .await;
 
     scope.commit().await.ok();
 
@@ -168,9 +159,8 @@ pub async fn update_smtp_config(
     let mut to_store = payload.clone();
     if to_store.password.is_empty() || to_store.password == PASSWORD_MASK {
         let existing = sqlx::query(
-            "SELECT setting_value FROM public.core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
+            "SELECT setting_value FROM public.core_tenant_settings WHERE setting_key = $1",
         )
-        .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)
         .fetch_optional(&mut scope)
         .await;
@@ -230,7 +220,7 @@ pub async fn update_smtp_config(
 pub async fn test_smtp_config(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Json(payload): Json<TestEmailRequest>,
 ) -> ApiResponse<serde_json::Value> {
     if payload.to.is_empty() {
@@ -241,7 +231,6 @@ pub async fn test_smtp_config(
     let config = if let Some(cfg) = payload.config {
         cfg
     } else {
-        let tenant_id = tenant_uuid(&claims);
         let mut guard = txn_arc.lock().await;
         let Some(txn) = guard.as_mut() else {
             tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -258,9 +247,8 @@ pub async fn test_smtp_config(
             }
         };
         let row = sqlx::query(
-            "SELECT setting_value FROM public.core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
+            "SELECT setting_value FROM public.core_tenant_settings WHERE setting_key = $1",
         )
-        .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)
         .fetch_optional(&mut scope)
         .await;

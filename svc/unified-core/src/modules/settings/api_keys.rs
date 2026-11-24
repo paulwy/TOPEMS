@@ -71,13 +71,8 @@ fn is_allowed_type(t: &str) -> bool {
 pub async fn list_api_keys(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ApiKeyEntry>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(tenant_uuid(&claims))
-    };
     let pattern = format!("{}%", API_KEY_PREFIX);
 
     let mut guard = txn_arc.lock().await;
@@ -97,9 +92,8 @@ pub async fn list_api_keys(
     };
 
     let result = sqlx::query(
-        "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND setting_key LIKE $2 ORDER BY updated_at DESC",
+        "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE deleted_at IS NULL AND setting_key LIKE $1 ORDER BY updated_at DESC",
     )
-    .bind(tenant_id)
     .bind(&pattern)
     .fetch_all(&mut scope)
     .await;
