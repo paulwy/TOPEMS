@@ -304,6 +304,12 @@ pub enum RecoveryPlanStatus {
     Failed,
 }
 
+impl RecoveryPlanStatus {
+    /// `master_data.mdm_recovery_plans.status` 允许集合（与 DB CHECK 一致）
+    pub const DB_VALUES: &'static [&'static str] =
+        &["draft", "active", "executing", "completed", "failed"];
+}
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RecoveryPoint {
     pub id: String,
@@ -345,6 +351,11 @@ pub enum ContinuityPlanStatus {
     Active,
     Tested,
     Expired,
+}
+
+impl ContinuityPlanStatus {
+    /// `master_data.mdm_continuity_plans.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] = &["draft", "active", "tested", "expired"];
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -399,6 +410,11 @@ pub enum RegionStatus {
     Degraded,
 }
 
+impl RegionStatus {
+    /// `master_data.mdm_regions.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] = &["online", "offline", "degraded"];
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ReplicationMode {
@@ -416,6 +432,11 @@ pub enum ReplicationStatus {
     Lagging,
 }
 
+impl ReplicationStatus {
+    /// `master_data.mdm_replication_configs.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] = &["stopped", "running", "paused", "lagging"];
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FailoverTrigger {
@@ -431,6 +452,12 @@ pub enum FailoverStatus {
     InProgress,
     Completed,
     RolledBack,
+}
+
+impl FailoverStatus {
+    /// `master_data.mdm_failover_records.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] =
+        &["initiated", "in_progress", "completed", "rolled_back"];
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -3218,5 +3245,31 @@ mod tests {
         let cloned = p.clone();
         assert_eq!(cloned.id, p.id);
         assert_eq!(cloned.priority, p.priority);
+    }
+}
+
+#[cfg(test)]
+mod db_values_tests {
+    use super::*;
+
+    #[test]
+    fn db_values_match_db_checks() {
+        assert_eq!(
+            RecoveryPlanStatus::DB_VALUES,
+            ["draft", "active", "executing", "completed", "failed"]
+        );
+        assert_eq!(
+            ContinuityPlanStatus::DB_VALUES,
+            ["draft", "active", "tested", "expired"]
+        );
+        assert_eq!(RegionStatus::DB_VALUES, ["online", "offline", "degraded"]);
+        assert_eq!(
+            ReplicationStatus::DB_VALUES,
+            ["stopped", "running", "paused", "lagging"]
+        );
+        assert_eq!(
+            FailoverStatus::DB_VALUES,
+            ["initiated", "in_progress", "completed", "rolled_back"]
+        );
     }
 }

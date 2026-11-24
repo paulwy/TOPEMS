@@ -1271,13 +1271,13 @@ async fn upsert_report(
     // 与 P3 迁移 20261109110200 的回填口径一致。
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"
-        INSERT INTO finance.financial_reports (report_type, org_id, tenant_id, company_id, period, currency_code, status, approval_status, data, generated_by, generated_at)
-        VALUES ($1, $3, $2, $3, $4, $5, 'draft', 'draft', $6, $7, NOW())
+        INSERT INTO finance.financial_reports (report_type, org_id, tenant_id, company_id, period, currency_code, status, data, generated_by, generated_at)
+        VALUES ($1, $3, $2, $3, $4, $5, 'draft', $6, $7, NOW())
         ON CONFLICT (report_type, org_id, period, currency_code)
         DO UPDATE SET data = EXCLUDED.data, company_id = EXCLUDED.company_id, generated_by = EXCLUDED.generated_by, generated_at = NOW(), updated_at = NOW(),
-                      status = 'draft', approval_status = 'draft', approval_comment = NULL, approved_by = NULL, approved_at = NULL, rejection_reason = NULL
+                      status = 'draft', approval_comment = NULL, approved_by = NULL, approved_at = NULL, rejection_reason = NULL
         WHERE finance.financial_reports.status IN ('draft', 'rejected')
-        RETURNING id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at
+        RETURNING id, report_type, org_id, company_id, period, currency_code, status, data, generated_at
         "#),
     )
     .bind(report_type)
@@ -1302,7 +1302,7 @@ async fn upsert_report(
         "period": row.get::<String, _>("period"),
         "currency_code": row.get::<String, _>("currency_code"),
         "status": row.get::<String, _>("status"),
-        "approval_status": row.get::<String, _>("approval_status"),
+        "approval_status": row.get::<String, _>("status"),
         "data": row.get::<serde_json::Value, _>("data"),
         "generated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
     })))
@@ -1332,7 +1332,7 @@ async fn fetch_report(
 ) -> Result<Option<serde_json::Value>, sqlx::Error> {
     let mut scope = db.scope_with(txn).await?;
     let row = sqlx::query(
-        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, data, generated_at, approved_at
            FROM finance.financial_reports WHERE ($4::uuid IS NULL OR company_id = $4)
              AND report_type = $1 AND period = $2 AND currency_code = $3"#),
     )
@@ -1353,7 +1353,7 @@ async fn fetch_report(
             "period": r.get::<String, _>("period"),
             "currency_code": r.get::<String, _>("currency_code"),
             "status": r.get::<String, _>("status"),
-            "approval_status": r.get::<String, _>("approval_status"),
+            "approval_status": r.get::<String, _>("status"),
             "data": r.get::<serde_json::Value, _>("data"),
             "generated_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
             "approved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("approved_at"),
@@ -1376,7 +1376,7 @@ async fn fetch_history(
     let offset = (page - 1) * page_size;
     let mut scope = db.scope_with(txn).await?;
     let rows = sqlx::query(
-        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, approval_status, data, generated_at, approved_at
+        only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, company_id, period, currency_code, status, data, generated_at, approved_at
            FROM finance.financial_reports WHERE ($7::uuid IS NULL OR company_id = $7)
              AND report_type = $1 AND period >= $2 AND period <= $3
              AND ($4::text IS NULL OR currency_code = $4)
@@ -1418,7 +1418,7 @@ async fn fetch_history(
                 "period": r.get::<String, _>("period"),
                 "currency_code": r.get::<String, _>("currency_code"),
                 "status": r.get::<String, _>("status"),
-                "approval_status": r.get::<String, _>("approval_status"),
+                "approval_status": r.get::<String, _>("status"),
                 "data": r.get::<serde_json::Value, _>("data"),
                 "generated_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("generated_at"),
                 "approved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("approved_at"),
@@ -2078,7 +2078,7 @@ pub async fn submit_report_for_approval(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1 AND status IN ('draft', 'rejected') AND approval_status IN ('draft', 'rejected')"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET status = 'pending', updated_at = NOW() WHERE id = $1 AND status IN ('draft', 'rejected')"))
         .bind(report_id)
         .execute(&mut scope)
         .await
@@ -2124,7 +2124,7 @@ pub async fn approve_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1 AND status = 'pending' AND approval_status = 'pending'"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1 AND status = 'pending'"))
         .bind(report_id)
         .bind(req.comment)
         .bind(&claims.username)
@@ -2172,7 +2172,7 @@ pub async fn reject_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending' AND approval_status = 'pending'"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending'"))
         .bind(report_id)
         .bind(req.reason)
         .execute(&mut scope)
@@ -2232,7 +2232,7 @@ pub async fn lock_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1 AND status = 'approved' AND approval_status = 'approved'"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET status = 'locked', updated_at = NOW() WHERE id = $1 AND status = 'approved'"))
         .bind(report_id)
         .execute(&mut scope)
         .await
@@ -2278,7 +2278,7 @@ pub async fn unlock_report(
         Ok(s) => s,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1 AND status = 'locked' AND approval_status = 'locked'"))
+    match sqlx::query(only_own_schema_query!("finance", "UPDATE finance.financial_reports SET status = 'approved', updated_at = NOW() WHERE id = $1 AND status = 'locked'"))
         .bind(report_id)
         .execute(&mut scope)
         .await

@@ -9,17 +9,14 @@ use uuid::Uuid;
 
 /// 审计日志 status 唯一集合（与各 schema `audit_logs.status` CHECK 同步）。
 ///
-/// 包含 `error`/`failed`：审计必须能记录失败结果，禁止把失败写成 success 或旁路到其他表。
-/// `active`/`inactive`/`archived` 为历史 CHECK 兼容值；`pending`/`unknown`/`not_found`
-/// 为运行时既有写入值（4xx 中间件、同步任务、WMS 查询审计）。
+/// 只表达“一次审计记录的执行结果”，不再混入 `active/inactive/archived` 这类生命周期词表
+/// （历史 CHECK 把它们和结果态拼成一个并集，任何写入方都没用过，已在本轮收窄）。
+/// `error`/`failed` 必须能记录失败结果，禁止把失败写成 success 或旁路到其他表；
+/// `pending`/`unknown`/`not_found` 为运行时既有写入值（4xx 中间件、同步任务、WMS 查询审计）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AuditLogStatus {
-    Active,
-    Inactive,
-    Archived,
     Success,
-    Failure,
     Failed,
     Error,
     Pending,
@@ -30,12 +27,8 @@ pub enum AuditLogStatus {
 impl AuditLogStatus {
     pub const DEFAULT: Self = Self::Success;
 
-    pub const DB_VALUES: [&'static str; 10] = [
-        "active",
-        "inactive",
-        "archived",
+    pub const DB_VALUES: [&'static str; 6] = [
         "success",
-        "failure",
         "failed",
         "error",
         "pending",
@@ -46,11 +39,7 @@ impl AuditLogStatus {
     #[must_use]
     pub fn as_db_str(self) -> &'static str {
         match self {
-            Self::Active => "active",
-            Self::Inactive => "inactive",
-            Self::Archived => "archived",
             Self::Success => "success",
-            Self::Failure => "failure",
             Self::Failed => "failed",
             Self::Error => "error",
             Self::Pending => "pending",
@@ -62,11 +51,7 @@ impl AuditLogStatus {
     #[must_use]
     pub fn from_db_str(raw: &str) -> Option<Self> {
         match raw.trim().to_ascii_lowercase().as_str() {
-            "active" => Some(Self::Active),
-            "inactive" => Some(Self::Inactive),
-            "archived" => Some(Self::Archived),
             "success" => Some(Self::Success),
-            "failure" => Some(Self::Failure),
             "failed" => Some(Self::Failed),
             "error" => Some(Self::Error),
             "pending" => Some(Self::Pending),
@@ -959,7 +944,10 @@ mod tests {
         assert!(is_valid_audit_log_status("error"));
         assert!(is_valid_audit_log_status("success"));
         assert!(is_valid_audit_log_status("failed"));
-        assert!(is_valid_audit_log_status("failure"));
+        // 收窄后不再接受生命周期值与已废弃的 failure 别名
+        assert!(!is_valid_audit_log_status("failure"));
+        assert!(!is_valid_audit_log_status("active"));
+        assert!(!is_valid_audit_log_status("archived"));
         assert!(!is_valid_audit_log_status("bogus"));
     }
 

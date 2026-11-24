@@ -32,6 +32,16 @@ pub enum PaymentStatus {
 }
 
 impl PaymentStatus {
+    /// `finance.core_finance_payments.status` 允许集合（与 DB CHECK 一致）
+    pub const DB_VALUES: &'static [&'static str] = &[
+        "draft",
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+    ];
+
     pub const ALL: [Self; 6] = [
         Self::Draft,
         Self::Pending,
@@ -138,5 +148,31 @@ mod tests {
         assert!(PaymentStatus::Pending.can_reject());
         assert!(PaymentStatus::Processing.can_execute());
         assert!(!PaymentStatus::Completed.can_execute());
+    }
+}
+
+#[cfg(test)]
+mod db_values_tests {
+    use super::*;
+
+    #[test]
+    fn db_values_match_db_check() {
+        assert_eq!(
+            PaymentStatus::DB_VALUES,
+            [
+                "draft",
+                "pending",
+                "processing",
+                "completed",
+                "failed",
+                "cancelled"
+            ]
+        );
+        for v in PaymentStatus::DB_VALUES {
+            assert!(
+                PaymentStatus::ALL.iter().any(|s| s.as_str() == *v),
+                "DB_VALUES 中的 {v} 没有对应枚举变体"
+            );
+        }
     }
 }

@@ -604,6 +604,10 @@ pub enum PaymentStatus {
 }
 
 impl PaymentStatus {
+    /// 与 `finance.finance_v55_payment_results.status` 的 CHECK 值集逐值一致。
+    pub const DB_VALUES: [&'static str; 5] =
+        ["pending", "processing", "completed", "failed", "reversed"];
+
     pub const ALL: [Self; 5] = [
         PaymentStatus::Pending,
         PaymentStatus::Processing,

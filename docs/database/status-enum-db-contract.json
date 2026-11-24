@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "note": "代码 DB_VALUES ↔ DB CHECK 值集契约（NOT VALID 收口后固化）。改 DB 约束或改 Rust DB_VALUES 任一未同步更新本文件，scripts/ci/check-status-enum-contract.mjs 即 FAIL。刷新方式见 docs/database/not-valid-triage-2026-11-24.md。",
+  "entries": [
+    {
+      "file": "svc/finance/src/modules/ap_payment_status.rs",
+      "enum": "PaymentStatus",
+      "table": "finance.core_finance_payments",
+      "column": "status",
+      "constraint": "ck_finance_core_finance_payments_status_standard",
+      "values": [
+        "draft",
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled"
+      ]
+    },
+    {
+      "file": "svc/finance/src/modules/settlement_v55.rs",
+      "enum": "PaymentStatus",
+      "table": "finance.finance_v55_payment_results",
+      "column": "status",
+      "constraint": "ck_finance_v55_payment_results_status_standard",
+      "values": [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "reversed"
+      ]
+    },
+    {
+      "file": "svc/finance/src/modules/decision_v60.rs",
+      "enum": "ScheduleExecutionStatus",
+      "table": "finance.finance_v60_schedule_executions",
+      "column": "status",
+      "constraint": "ck_finance_v60_schedule_executions_status_standard",
+      "values": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled"
+      ]
+    },
+    {
+      "file": "svc/finance/src/modules/risk_v54.rs",
+      "enum": "ReviewWorkflowStatus",
+      "table": "finance.finance_v54_review_workflows",
+      "column": "status",
+      "constraint": "ck_finance_v54_review_workflows_status_standard",
+      "values": [
+        "pending",
+        "in_progress",
+        "completed",
+        "rejected"
+      ]
+    },
+    {
+      "file": "svc/finance/src/modules/treasury_v58.rs",
+      "enum": "TransferStatus",
+      "table": "finance.finance_v58_pool_transfers",
+      "column": "status",
+      "constraint": "ck_finance_v58_pool_transfers_status_standard",
+      "values": [
+        "pending",
+        "completed",
+        "failed"
+      ]
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "RecoveryPlanStatus",
+      "table": "master_data.mdm_recovery_plans",
+      "column": "status",
+      "constraint": "mdm_recovery_plans_status_check",
+      "values": [
+        "draft",
+        "active",
+        "executing",
+        "completed",
+        "failed"
+      ]
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "ContinuityPlanStatus",
+      "table": "master_data.mdm_continuity_plans",
+      "column": "status",
+      "constraint": "mdm_continuity_plans_status_check",
+      "values": [
+        "draft",
+        "active",
+        "tested",
+        "expired"
+      ]
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "RegionStatus",
+      "table": "master_data.mdm_region_configs",
+      "column": "status",
+      "constraint": "mdm_region_configs_status_check",
+      "values": [
+        "online",
+        "offline",
+        "degraded"
+      ]
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "ReplicationStatus",
+      "table": "master_data.mdm_replication_configs",
+      "column": "status",
+      "constraint": "mdm_replication_configs_status_check",
+      "values": [
+        "stopped",
+        "running",
+        "paused",
+        "lagging"
+      ]
+    },
+    {
+      "file": "svc/master-data/src/modules/disaster_v56.rs",
+      "enum": "FailoverStatus",
+      "table": "master_data.mdm_failover_records",
+      "column": "status",
+      "constraint": "mdm_failover_records_status_check",
+      "values": [
+        "initiated",
+        "in_progress",
+        "completed",
+        "rolled_back"
+      ]
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "public.audit_logs",
+      "column": "status",
+      "constraint": "ck_audit_logs_status_standard",
+      "values": [
+        "success",
+        "failed",
+        "error",
+        "pending",
+        "unknown",
+        "not_found"
+      ],
+      "same_values_in_schemas": [
+        "bi",
+        "crm",
+        "erp",
+        "hrm",
+        "iam",
+        "mes",
+        "plugin_mes",
+        "public",
+        "rs",
+        "scm",
+        "shared",
+        "srm",
+        "wms"
+      ]
+    }
+  ]
+}

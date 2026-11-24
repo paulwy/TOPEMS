@@ -3,15 +3,15 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
   "stats": {
-    "uncovered_enums": 186,
-    "uncovered_values": 193,
+    "uncovered_enums": 185,
+    "uncovered_values": 192,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 179,
+    "resolved_enums": 178,
     "internal_state_enums": 151,
-    "persisted_unmapped_enums": 19,
+    "persisted_unmapped_enums": 18,
     "finance_candidate_ready_enums": 36,
     "internal_state_values": 165,
-    "persisted_unmapped_values": 14,
+    "persisted_unmapped_values": 13,
     "finance_candidate_ready_values": 14
   },
   "rows": [
@@ -86,24 +86,6 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "服务健康探针内存态"
-      }
-    },
-    {
-      "module": "lib/shared-db",
-      "file": "lib/shared-db/src/audit.rs",
-      "enum": "AuditLogStatus",
-      "values_by_bucket": {
-        "persisted_unmapped": [
-          "not_found"
-        ]
-      },
-      "candidate_targets": [],
-      "resolved": {
-        "file": "lib/shared-db/src/audit.rs",
-        "enum": "AuditLogStatus",
-        "table": "public.audit_logs",
-        "column": "status",
-        "candidate": "docs/database/audit-logs-status-check-candidates-2026-11-22.sql"
       }
     },
     {
@@ -414,9 +396,9 @@
       "resolved": {
         "file": "svc/analytics/src/modules/report/schedule.rs",
         "enum": "ScheduleStatus",
-        "table": "bi.report_schedules",
+        "table": "analytics.report_schedules",
         "column": "status",
-        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+        "note": "2026-11-24 复核：约束 ck_report_schedules_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
       }
     },
     {
@@ -2924,9 +2906,9 @@
       "resolved": {
         "file": "svc/qms/src/modules/qms_status.rs",
         "enum": "QmsInspectionStatus",
-        "table": "qms.qa_quality_inspections",
+        "table": "qms.quality_inspections",
         "column": "status",
-        "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql"
+        "note": "2026-11-24 复核：约束 ck_quality_inspections_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
       }
     },
     {

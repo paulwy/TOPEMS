@@ -214,6 +214,10 @@ pub enum ReviewWorkflowStatus {
 }
 
 impl ReviewWorkflowStatus {
+    /// `finance.finance_v54_review_workflows.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] =
+        &["pending", "in_progress", "completed", "rejected"];
+
     pub const ALL: [Self; 4] = [
         ReviewWorkflowStatus::Pending,
         ReviewWorkflowStatus::InProgress,
@@ -2164,5 +2168,24 @@ mod tests {
             "TX-001"
         ));
         assert!(AutoComplianceReviewer::evaluate_rule(&rule, "", ""));
+    }
+}
+
+#[cfg(test)]
+mod db_values_tests {
+    use super::*;
+
+    #[test]
+    fn db_values_match_db_check() {
+        assert_eq!(
+            ReviewWorkflowStatus::DB_VALUES,
+            ["pending", "in_progress", "completed", "rejected"]
+        );
+        for v in ReviewWorkflowStatus::DB_VALUES {
+            assert!(
+                ReviewWorkflowStatus::ALL.iter().any(|s| s.as_str() == *v),
+                "DB_VALUES 中的 {v} 没有对应枚举变体"
+            );
+        }
     }
 }

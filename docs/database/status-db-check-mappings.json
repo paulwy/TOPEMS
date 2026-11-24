@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "人工确认的枚举→表列映射；只登记已读代码与 DB 列核对过的项",
+  "note": "人工确认的枚举→表列映射；只登记已读代码与 DB 列核对过的项。2026-11-24 NOT VALID 收口新增 33 条枚举映射 + 4 条无枚举检查（non_enum_checks）",
   "mappings": [
     {
       "file": "lib/shared-auth/src/tenant.rs",
@@ -2045,6 +2045,188 @@
       "table": "rs.rs_projects",
       "column": "status",
       "candidate": "docs/database/rd-rs-project-status-check-candidates-2026-11-24.sql"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/schedule.rs",
+      "enum": "ScheduleStatus",
+      "table": "analytics.report_schedules",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_report_schedules_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "svc/wms/src/modules/outbound_execution_status.rs",
+      "enum": "OutboundExecutionStatus",
+      "table": "wms.outbound_orders",
+      "column": "packing_status",
+      "note": "2026-11-24 复核：约束 ck_outbound_orders_packing_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "svc/wms/src/modules/outbound_execution_status.rs",
+      "enum": "OutboundExecutionStatus",
+      "table": "wms.outbound_orders",
+      "column": "shipping_status",
+      "note": "2026-11-24 复核：约束 ck_outbound_orders_shipping_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "svc/wms/src/modules/stock_take_adjustment_status.rs",
+      "enum": "StockTakeAdjustmentStatus",
+      "table": "wms.stock_take_items",
+      "column": "adjustment_status",
+      "note": "2026-11-24 复核：约束 ck_stock_take_items_adjustment_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "svc/qms/src/modules/qms_status.rs",
+      "enum": "QmsInspectionStatus",
+      "table": "qms.quality_inspections",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_quality_inspections_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "bi.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "crm.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "erp.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "hrm.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "iam.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "mes.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "plugin_mes.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "rs.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "scm.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "shared.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "srm.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "lib/shared-db/src/audit.rs",
+      "enum": "AuditLogStatus",
+      "table": "wms.audit_logs",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "svc/hrm/src/modules/salary_adjustment_status.rs",
+      "enum": "SalaryAdjustmentStatus",
+      "table": "hrm.salary_adjustments",
+      "column": "approval_status",
+      "note": "2026-11-24 复核：约束 ck_hrm_salary_adjustments_approval_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    },
+    {
+      "file": "svc/finance/src/models/mod.rs",
+      "enum": "PeriodStatus",
+      "table": "finance.core_finance_periods",
+      "column": "status",
+      "note": "2026-11-24 复核：约束 ck_core_finance_periods_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+    }
+  ],
+  "non_enum_checks": [
+    {
+      "table": "finance.financial_reports",
+      "column": "approval_status,status",
+      "constraint": "ck_financial_reports_status_pair",
+      "kind": "invariant",
+      "values": [],
+      "note": "2026-11-24 已合并：approval_status 列删除（B255 20261124130000），status 单列承载报表态；API 仍返回 approval_status 字段（由 status 派生），前端契约不变。原双列同值不变量随列删除",
+      "resolution": "merged_2026-11-24"
+    },
+    {
+      "table": "master_data.mdm_sla_incidents",
+      "column": "incident_type",
+      "constraint": "mdm_sla_incidents_type_check",
+      "kind": "domain",
+      "values": [
+        "data_loss",
+        "degraded_performance",
+        "downtime",
+        "security_breach"
+      ],
+      "note": "非状态列（域值集），表空，与代码无枚举冲突"
+    },
+    {
+      "table": "master_data.mdm_sla_incidents",
+      "column": "impact_severity",
+      "constraint": "mdm_sla_incidents_severity_check",
+      "kind": "domain",
+      "values": [
+        "critical",
+        "high",
+        "low",
+        "medium"
+      ],
+      "note": "非状态列（域值集），表空，与代码无枚举冲突"
+    },
+    {
+      "table": "master_data.mdm_sla_configs",
+      "column": "metric",
+      "constraint": "mdm_sla_configs_metric_check",
+      "kind": "domain",
+      "values": [
+        "availability",
+        "error_rate",
+        "latency"
+      ],
+      "note": "非状态列（域值集），表空，与代码无枚举冲突"
     }
   ]
 }

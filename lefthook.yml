@@ -524,6 +524,14 @@ pre-commit:
       glob: "{apps/web/src/utils/status.ts,docs/database/status-code-inventory.json}"
       run: node scripts/ci/dump-status-code-inventory.mjs --check --strict-palette
 
+    # [Gate STATUS-ENUM-CONTRACT] 2026-11-24：代码 DB_VALUES ↔ DB CHECK 值集逐条断言。
+    # 11 个枚举（finance 5 / master-data 5 / audit_logs）的常量值与契约文件必须一致；
+    # 改约束、改常量、改契约任一未同步即阻断。
+    status-enum-contract:
+      tags: database status rust
+      glob: "{docs/database/status-enum-db-contract.json,scripts/ci/check-status-enum-contract.mjs,svc/finance/src/modules/*status*.rs,svc/finance/src/modules/decision_v60.rs,svc/finance/src/modules/risk_v54.rs,svc/finance/src/modules/settlement_v55.rs,svc/finance/src/modules/treasury_v58.rs,svc/master-data/src/modules/disaster_v56.rs,lib/shared-db/src/audit.rs}"
+      run: node scripts/ci/check-status-enum-contract.mjs
+
     # [Gate TWS] 零租户写入源头扫描（2026-11-16 接入，report-only 起步）
     # 扫描 svc/lib/scripts 中「裸零 UUID 当 tenant 写」的疑似点；显式
     # PLATFORM_TENANT_ID / SYSTEM_TENANT_ID 与测试代码在白名单内。

@@ -75,6 +75,9 @@ pub enum TransferStatus {
 }
 
 impl TransferStatus {
+    /// `finance.finance_v58_transfers.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] = &["pending", "completed", "failed"];
+
     pub const ALL: [Self; 3] = [
         TransferStatus::Pending,
         TransferStatus::Completed,
@@ -2258,5 +2261,24 @@ mod tests {
     fn assess_risk_empty_actions_low() {
         let actions: Vec<Action> = vec![];
         assert_eq!(LiquidityOptimizer::assess_risk(&actions), RiskLevel::Low);
+    }
+}
+
+#[cfg(test)]
+mod db_values_tests {
+    use super::*;
+
+    #[test]
+    fn db_values_match_db_check() {
+        assert_eq!(
+            TransferStatus::DB_VALUES,
+            ["pending", "completed", "failed"]
+        );
+        for v in TransferStatus::DB_VALUES {
+            assert!(
+                TransferStatus::ALL.iter().any(|s| s.as_str() == *v),
+                "DB_VALUES 中的 {v} 没有对应枚举变体"
+            );
+        }
     }
 }

@@ -1,13 +1,15 @@
 //! 财务报表状态单一源（W5-B B6）
 //!
-//! `finance.financial_reports.status` 与 `approval_status` 原本由各写入口直接写字符串：
+//! `finance.financial_reports.status` 原本由各写入口直接写字符串：
 //! 生成写 `draft`，提交写 `pending`，审批写 `approved/rejected`，锁定写 `locked`；
 //! 但提交/审批/驳回/锁定/解锁都不校验起始状态，草稿可被直接批准，已锁定报表可被解锁成普通已批准。
-//! 两个列承载同一业务状态，这里统一为一套集合与迁移规则。
+//!
+//! 2026-11-24（B255）：原来的并列列 `approval_status` 已删除，报表态只由 `status` 承载；
+//! API 响应仍返回 `approval_status` 字段（由 `status` 派生），前端契约不变。
 
 use std::fmt;
 
-/// 财务报表状态。`status` 与 `approval_status` 两列必须保持同值。
+/// 财务报表状态。只对应 `status` 单列（`approval_status` 已合并删除）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FinancialReportStatus {
     Draft,

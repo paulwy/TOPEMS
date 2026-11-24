@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **416** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
+共 **415** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
 
 ## 2026-11-24 订单两表撤登记（方案 B）
 
@@ -54,7 +54,7 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 | `doc_service` | 1 |
 | `ehs` | 28 |
 | `erp` | 31 |
-| `finance` | 41 |
+| `finance` | 40 |
 | `flow` | 7 |
 | `gis` | 10 |
 | `hrm` | 24 |
@@ -286,7 +286,7 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 ### 口径校正
 
 当前 JSON 实际 **416** 条；「391 条」是 11-23 第二轮推送前的读数，之后 B224–B253 继续追加、B251 回迁 1 条，
-2026-11-24 再按方案 B 撤登记订单两表 2 条，故为 416（第二轮口径即 391 → 389）。
+2026-11-24 再按方案 B 撤登记订单两表 2 条、B255 删除报表 approval 约束 1 条，故为 415（第二轮口径即 391 → 389）。
 本方案按 416 排；若只按 391 口径执行，差额全部落在 S2/S3/S5 的后增条目，分批骨架不变。
 
 ### 分批（按域合并，一次窗口同时做「状态 CHECK 回迁 + 同域宽松策略收紧」）
@@ -295,7 +295,7 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 |---|---|---|---:|---|
 | S1 | 平台与公共域 | public 42、gis 10、flow 7、portal 7、iam 6、rs 8、analytics 3、core 2、bi 2、communication 2、ai 1、mail 1、shared 1、doc_service 1（**93**） | W7-B 批 6（public 52）、批 2（平台语料） | `flow` 7 条以影子表 DROP 决策为前置；未决则先跳过 flow |
 | S2 | 制造与供应链 | mes 41、wms 32、scm 20、master_data 16、srm 9、tms 4、plugin_mes 1（**123**） | W7-B 批 7（主数据）+ 制造/供应链同域批次 | 无替换型；mes/scm 的「模块统一枚举」12 条优先 |
-| S3 | 财务 / ERP / 集成 / PDM | finance 41、erp 31、integration 5、pdm 9（**86**） | W7-B 批 8（ERP）、批 3（身份/客户同域） | 订单两表已按方案 B 撤登记，不纳入本批；B251 已单独回迁 1 条 |
+| S3 | 财务 / ERP / 集成 / PDM | finance 40、erp 31、integration 5、pdm 9（**85**） | W7-B 批 8（ERP）、批 3（身份/客户同域） | 订单两表已按方案 B 撤登记，不纳入本批；B251 已单独回迁 1 条；B255 删除 `financial_reports` 冗余 approval 列后移出 1 条 |
 | S4 | 项目 / 质量 / 研发 | pm 20、qms 13、lims 9、rd 3（**45**） | W7-B 批 4（质量）、批 2（研发） | `pm.acceptance_records` 为替换型：先 DROP 旧 `ck_acceptance_records_status_standard` 再 ADD |
 | S5 | 人力 / EHS / 移动 / CRM | ehs 28、hrm 24、crm 12、mobile 5（**69**） | W7-B 批 5（人力）、批 3（CRM） | 3 条替换型（`hrm.training_plans`、`ehs` 两张），必须 DROP 旧 + ADD 新同事务 |
 
@@ -326,3 +326,8 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 - 本 JSON 条目数按批复精确递减，目录与清单无重复、无遗漏。
 
 > 本方案只定义批次与判据；未生成任何迁移、未改目录、未动生产。
+
+## B255 报表双列合并后的清单变化（2026-11-24）
+
+- 删除 `finance.financial_reports.approval_status` 列后，`ck_financial_reports_approval_status_standard` 随列删除，本清单移除该条：416 → 415，finance 41 → 40。
+- `audit_logs` 13 个 schema 的 `ck_audit_logs_status_standard` 已收窄为 6 结果态，清单内定义与值集同步更新；参考库仅 `crm` 有该约束，不属 prod-only。

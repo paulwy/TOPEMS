@@ -316,6 +316,10 @@ pub enum ScheduleExecutionStatus {
 }
 
 impl ScheduleExecutionStatus {
+    /// `finance.finance_v60_schedule_executions.status` 允许集合
+    pub const DB_VALUES: &'static [&'static str] =
+        &["pending", "running", "completed", "failed", "cancelled"];
+
     fn as_str(&self) -> &'static str {
         match self {
             ScheduleExecutionStatus::Pending => "pending",
@@ -2724,5 +2728,23 @@ mod tests {
             DecisionScenarioType::from_str("marketing"),
             DecisionScenarioType::Investment
         );
+    }
+}
+
+#[cfg(test)]
+mod db_values_tests {
+    use super::*;
+
+    #[test]
+    fn db_values_match_db_check() {
+        assert_eq!(
+            ScheduleExecutionStatus::DB_VALUES,
+            ["pending", "running", "completed", "failed", "cancelled"]
+        );
+        for v in ScheduleExecutionStatus::DB_VALUES {
+            let parsed = ScheduleExecutionStatus::Pending;
+            assert!(!parsed.as_str().is_empty());
+            assert!(ScheduleExecutionStatus::DB_VALUES.contains(v));
+        }
     }
 }

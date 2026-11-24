@@ -2945,3 +2945,27 @@ pending_forward_patches:
     effect: "finance.budgets.status 收敛到 BudgetStatus 五态（active/inactive/frozen/exhausted/archived）：DROP 历史模板约束 ck_budgets_status_standard（仅 active/inactive/archived，frozen/exhausted 写入必失败），改建 ck_budgets_status_lifecycle_standard（NOT VALID 后立即 VALIDATE）；新增 ck_budgets_exhausted_requires_depleted_budget（exhausted 态要求 remaining_amount <= 0，防止状态与金额漂移）"
     destructive_scan: "仅 DROP 1 条旧 CHECK、ADD/VALIDATE 2 条 CHECK；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据、不改列可空性；DO 块内 to_regclass + pg_constraint 存在性守卫，可重复执行"
     note: "幂等：旧约束 DROP IF EXISTS；新约束按 conname+relid 判断后 ADD NOT VALID，未验证则 VALIDATE（本表百量级，扩容方向为旧值集超集，存量必然合法）。NULL 口径：status 在基线/参考库均 NOT NULL DEFAULT 'active'；历史 NULL 行因 CHECK 对 NULL 求值为 unknown 而通过，不匿改数据、不收紧可空性。回滚 database/rollback/20261124100000_finance_budgets_status_lifecycle.rollback.sql 以 NOT VALID 加回旧三态约束（存量 frozen/exhausted 不阻断回滚，但回滚后这两类值的新写入会被拒绝，业务侧须同步回退枚举）。来源：B251 候选 SQL 先落本地库，本迁移回迁入目录；docs/database/prod-only-status-checks-2026-11-23.json 对应条目同步删除"
+
+  # ===== 2026-11-24：B254 finance.expenses 状态默认值对齐 =====
+  - version: "20261124110000"
+    file: "database/migrations/20261124110000_finance_expenses_status_default.sql"
+    status: to_apply
+    effect: "finance.expenses.status 列默认值 'pending' -> 'draft'，与 svc/finance ExpenseStatus::DEFAULT 对齐：值集为 draft/submitted/approved/rejected/paid，pending 只是历史别名（normalize_expense 归一为 submitted）。约束 VALIDATE 后，默认值本身会违反值集，故本迁移消除该隐患；同时更新列注释"
+    destructive_scan: "仅 ALTER COLUMN SET DEFAULT 与 COMMENT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据、不改可空性、不改值集"
+    note: "幂等：SET DEFAULT 可重复执行；前置断言表/列存在（缺失则 NOTICE 跳过），后置断言 pg_attrdef 默认值必须为 'draft'::text，否则 RAISE EXCEPTION。回滚 database/rollback/20261124110000_finance_expenses_status_default.rollback.sql 恢复 'pending'，仅应在约束同步回到 NOT VALID 时使用"
+
+  # ===== 2026-11-24：B254 audit_logs 状态收窄 =====
+  - version: "20261124120000"
+    file: "database/migrations/20261124120000_audit_logs_status_narrow.sql"
+    status: to_apply
+    effect: "audit_logs.status 从「生命周期+执行结果」10 值并集收窄为 6 个结果态（success/failed/error/pending/unknown/not_found），同步 lib/shared-db AuditLogStatus 枚举；覆盖已有 ck_audit_logs_status_standard 的 13 个 schema（bi/crm/erp/hrm/iam/mes/plugin_mes/public/rs/scm/shared/srm/wms），DROP + ADD NOT VALID + VALIDATE"
+    destructive_scan: "仅 ALTER TABLE DROP/ADD 1 条 CHECK 与 VALIDATE CONSTRAINT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据、不改列类型与默认值"
+    note: "幂等：约束定义已不含 'active' 且含 'not_found' 则跳过；无该约束名的 schema 跳过（本迁移只收窄已有约束，不新建）。fail-closed：某 schema 存在值集外历史行则 RAISE EXCEPTION 中止。回滚 database/rollback/20261124120000_audit_logs_status_narrow.rollback.sql 恢复 10 值并集（回滚后 DB 比代码宽，不会拒绝合法写入）"
+
+  # ===== 2026-11-24：B255 financial_reports 双列合并 =====
+  - version: "20261124130000"
+    file: "database/migrations/20261124130000_financial_reports_single_status.sql"
+    status: to_apply
+    effect: "finance.financial_reports 双列 status/approval_status 合并为单列：删除 approval_status（连带 ck_financial_reports_approval_status_standard）与不变量 ck_financial_reports_status_pair；Rust 写入口/查询改为只写只读 status，API 响应保留 approval_status 字段（由 status 派生），前端契约不变"
+    destructive_scan: "DROP COLUMN approval_status + DROP CONSTRAINT ck_financial_reports_status_pair；无 UPDATE/DELETE/TRUNCATE/DROP TABLE，不改其他列与行数据"
+    note: "幂等：列不存在则跳过；fail-closed：存在 status <> approval_status 的行则 RAISE EXCEPTION 先清洗。回滚 database/rollback/20261124130000_financial_reports_single_status.rollback.sql 重加列、回填 approval_status=status 并重建 2 条 CHECK；回滚仅在代码同步回退双写版本时使用"

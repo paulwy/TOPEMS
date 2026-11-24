@@ -41,17 +41,14 @@
         "status"
       ],
       "values": [
-        "active",
-        "archived",
         "error",
         "failed",
-        "failure",
-        "inactive",
+        "not_found",
         "pending",
         "success",
         "unknown"
       ],
-      "definition": "CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY[('active'::character varying)::text, ('inactive'::character varying)::text, ('archived'::character varying)::text, ('success'::character varying)::text, ('failure'::character varying)::text, ('failed'::character varying)::text, ('error'::character varying)::text, ('pending'::character varying)::text, ('unknown'::character varying)::text]))))"
+      "definition": "CHECK (((status)::text = ANY (ARRAY['success'::text, 'failed'::text, 'error'::text, 'pending'::text, 'unknown'::text, 'not_found'::text])))"
     },
     {
       "schema": "crm",
@@ -317,7 +314,7 @@
         "pending",
         "terminated"
       ],
-      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'expired'::character varying, 'terminated'::character varying, 'pending'::character varying])::text[]))) NOT VALID"
+      "definition": "CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'expired'::character varying, 'terminated'::character varying, 'pending'::character varying])::text[])))"
     },
     {
       "schema": "hrm",
@@ -2844,7 +2841,7 @@
       "type": "text",
       "enum_type": "text",
       "not_null": false,
-      "default_expr": "'pending'::text"
+      "default_expr": "'draft'::text"
     },
     {
       "schema": "finance",
@@ -2998,15 +2995,6 @@
       "enum_type": "varchar",
       "not_null": false,
       "default_expr": "'active'::character varying"
-    },
-    {
-      "schema": "finance",
-      "table": "financial_reports",
-      "column": "approval_status",
-      "type": "character varying(32)",
-      "enum_type": "varchar",
-      "not_null": true,
-      "default_expr": "'draft'::character varying"
     },
     {
       "schema": "finance",

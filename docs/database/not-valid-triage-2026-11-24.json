@@ -1,0 +1,1208 @@
+{
+ "version": 1,
+ "generated_at": "2026-11-24",
+ "scope": "本地库 topems 的 37 条 C 类（无人工映射）NOT VALID CHECK",
+ "context": {
+  "local_check_total": 471,
+  "local_not_valid": 251,
+  "c_class": 37,
+  "a_class": 214,
+  "reference_db_not_valid": 1
+ },
+ "rules": [
+  {
+   "id": "R1",
+   "desc": "声明值集 == 代码 pub const DB_VALUES（强背书）",
+   "gate": "AUTO"
+  },
+  {
+   "id": "R2",
+   "desc": "声明值集 == 代码枚举 serde 归一集合（无 DB_VALUES 常量，弱背书）",
+   "gate": "AUTO + 标注"
+  },
+  {
+   "id": "R3",
+   "desc": "非状态列（incident_type/impact_severity/metric），纯域值集",
+   "gate": "AUTO_DOMAIN"
+  },
+  {
+   "id": "R4",
+   "desc": "多列不变量（status == approval_status）",
+   "gate": "AUTO_INVARIANT"
+  },
+  {
+   "id": "R5",
+   "desc": "值集为两套正交词表并集（生命周期 + 日志结果）",
+   "gate": "AUTO_SUPERSET + 收窄待办"
+  },
+  {
+   "id": "R6",
+   "desc": "存量存在越界值",
+   "gate": "BLOCK 清洗"
+  }
+ ],
+ "after_batch": {
+  "validated": 250,
+  "batch_a": 213,
+  "batch_c": 37,
+  "remaining_not_valid": 0,
+  "remaining": [],
+  "assertion_weak": [
+   {
+    "enum": "PaymentStatus",
+    "why": "同名枚举双定义 + 无 DB_VALUES"
+   },
+   {
+    "enum": "RegionStatus"
+   },
+   {
+    "enum": "TransferStatus"
+   },
+   {
+    "enum": "ReviewWorkflowStatus"
+   },
+   {
+    "enum": "ScheduleExecutionStatus"
+   },
+   {
+    "enum": "ContinuityPlanStatus"
+   },
+   {
+    "enum": "FailoverStatus"
+   },
+   {
+    "enum": "RecoveryPlanStatus"
+   },
+   {
+    "enum": "ReplicationStatus"
+   }
+  ],
+  "scripts": [
+   "docs/database/validate-a-class-2026-11-24.sql",
+   "docs/database/validate-c-class-2026-11-24.sql"
+  ]
+ },
+ "items": [
+  {
+   "schema": "finance",
+   "table": "financial_reports",
+   "column": "approval_status,status",
+   "constraint": "ck_financial_reports_status_pair",
+   "declared": [],
+   "declared_n": 0,
+   "enum": null,
+   "enum_file": null,
+   "enum_match": null,
+   "actual_values": null,
+   "dead_values": [],
+   "outside_values": null,
+   "verdict": "AUTO_INVARIANT",
+   "note": "双列同值不变量：status == approval_status；表空。设计冗余（两列同值），建议后续合并列"
+  },
+  {
+   "schema": "analytics",
+   "table": "report_schedules",
+   "column": "status",
+   "constraint": "ck_report_schedules_status_standard",
+   "declared": [
+    "active",
+    "completed",
+    "failed",
+    "paused"
+   ],
+   "declared_n": 4,
+   "enum": "ScheduleStatus",
+   "enum_file": "svc/analytics/src/modules/report/schedule.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "paused",
+    "completed",
+    "failed"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "wms",
+   "table": "outbound_orders",
+   "column": "packing_status",
+   "constraint": "ck_outbound_orders_packing_status_standard",
+   "declared": [
+    "completed",
+    "in_progress",
+    "pending"
+   ],
+   "declared_n": 3,
+   "enum": "OutboundExecutionStatus",
+   "enum_file": "svc/wms/src/modules/outbound_execution_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "in_progress",
+    "completed"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "wms",
+   "table": "outbound_orders",
+   "column": "shipping_status",
+   "constraint": "ck_outbound_orders_shipping_status_standard",
+   "declared": [
+    "completed",
+    "in_progress",
+    "pending"
+   ],
+   "declared_n": 3,
+   "enum": "OutboundExecutionStatus",
+   "enum_file": "svc/wms/src/modules/outbound_execution_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "in_progress",
+    "completed"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "wms",
+   "table": "stock_take_items",
+   "column": "adjustment_status",
+   "constraint": "ck_stock_take_items_adjustment_status_standard",
+   "declared": [
+    "completed",
+    "pending"
+   ],
+   "declared_n": 2,
+   "enum": "StockTakeAdjustmentStatus",
+   "enum_file": "svc/wms/src/modules/stock_take_adjustment_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "completed"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "master_data",
+   "table": "mdm_sla_incidents",
+   "column": "incident_type",
+   "constraint": "mdm_sla_incidents_type_check",
+   "declared": [
+    "data_loss",
+    "degraded_performance",
+    "downtime",
+    "security_breach"
+   ],
+   "declared_n": 4,
+   "enum": null,
+   "enum_file": null,
+   "enum_match": "none",
+   "actual_values": [],
+   "dead_values": [
+    "downtime",
+    "degraded_performance",
+    "data_loss",
+    "security_breach"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_DOMAIN",
+   "note": "非状态列（域值集），表空，与代码无枚举冲突"
+  },
+  {
+   "schema": "master_data",
+   "table": "mdm_sla_incidents",
+   "column": "impact_severity",
+   "constraint": "mdm_sla_incidents_severity_check",
+   "declared": [
+    "critical",
+    "high",
+    "low",
+    "medium"
+   ],
+   "declared_n": 4,
+   "enum": null,
+   "enum_file": null,
+   "enum_match": "none",
+   "actual_values": [],
+   "dead_values": [
+    "low",
+    "medium",
+    "high",
+    "critical"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_DOMAIN",
+   "note": "非状态列（域值集），表空，与代码无枚举冲突"
+  },
+  {
+   "schema": "master_data",
+   "table": "mdm_sla_configs",
+   "column": "metric",
+   "constraint": "mdm_sla_configs_metric_check",
+   "declared": [
+    "availability",
+    "error_rate",
+    "latency"
+   ],
+   "declared_n": 3,
+   "enum": null,
+   "enum_file": null,
+   "enum_match": "none",
+   "actual_values": [],
+   "dead_values": [
+    "availability",
+    "latency",
+    "error_rate"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_DOMAIN",
+   "note": "非状态列（域值集），表空，与代码无枚举冲突"
+  },
+  {
+   "schema": "qms",
+   "table": "quality_inspections",
+   "column": "status",
+   "constraint": "ck_quality_inspections_status_standard",
+   "declared": [
+    "cancelled",
+    "completed",
+    "in_progress",
+    "pending",
+    "pending_audit",
+    "rejected"
+   ],
+   "declared_n": 6,
+   "enum": "QmsInspectionStatus",
+   "enum_file": "svc/qms/src/modules/qms_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "pending"
+   ],
+   "dead_values": [
+    "in_progress",
+    "pending_audit",
+    "completed",
+    "rejected",
+    "cancelled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "代码枚举一致，死值多仅因低流量"
+  },
+  {
+   "schema": "bi",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "success",
+    "failure",
+    "failed",
+    "error",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "crm",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "success",
+    "error"
+   ],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "failure",
+    "failed",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "erp",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "success",
+    "error"
+   ],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "failure",
+    "failed",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "hrm",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "success",
+    "error"
+   ],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "failure",
+    "failed",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "iam",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "success",
+    "failure",
+    "failed",
+    "error",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "mes",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "success",
+    "failure",
+    "failed",
+    "error",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "plugin_mes",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "success",
+    "failure",
+    "failed",
+    "error",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "rs",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "success",
+    "error"
+   ],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "failure",
+    "failed",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "scm",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "success",
+    "error"
+   ],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "failure",
+    "failed",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "shared",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "success",
+    "failure",
+    "failed",
+    "error",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "srm",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "success",
+    "failure",
+    "failed",
+    "error",
+    "pending",
+    "unknown",
+    "not_found"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "wms",
+   "table": "audit_logs",
+   "column": "status",
+   "constraint": "ck_audit_logs_status_standard",
+   "declared": [
+    "active",
+    "archived",
+    "error",
+    "failed",
+    "failure",
+    "inactive",
+    "not_found",
+    "pending",
+    "success",
+    "unknown"
+   ],
+   "declared_n": 10,
+   "enum": "AuditLogStatus",
+   "enum_file": "lib/shared-db/src/audit.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "error",
+    "success",
+    "not_found"
+   ],
+   "dead_values": [
+    "active",
+    "inactive",
+    "archived",
+    "failure",
+    "failed",
+    "pending",
+    "unknown"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO_SUPERSET",
+   "note": "值集 == lib/shared-db AuditLogStatus（生命周期+日志结果 10 值并集）；实际仅写 success/error（wms 另有 not_found）。validate 安全，但会固化坏枚举"
+  },
+  {
+   "schema": "erp",
+   "table": "erp_production_orders",
+   "column": "status",
+   "constraint": "ck_erp_erp_production_orders_status_standard",
+   "declared": [
+    "approved",
+    "cancelled",
+    "completed",
+    "in_progress",
+    "pending",
+    "released"
+   ],
+   "declared_n": 6,
+   "enum": "ProductionOrderStatus",
+   "enum_file": "svc/erp/src/modules/production_order_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "approved",
+    "released",
+    "in_progress",
+    "completed",
+    "cancelled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "job_openings",
+   "column": "status",
+   "constraint": "ck_hrm_job_openings_status_standard",
+   "declared": [
+    "closed",
+    "draft",
+    "filled",
+    "in_progress",
+    "published"
+   ],
+   "declared_n": 5,
+   "enum": "JobOpeningStatus",
+   "enum_file": "svc/hrm/src/modules/recruitment_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "draft",
+    "published",
+    "in_progress",
+    "closed",
+    "filled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "candidates",
+   "column": "status",
+   "constraint": "ck_hrm_candidates_status_standard",
+   "declared": [
+    "hired",
+    "interviewing",
+    "new",
+    "offered",
+    "rejected",
+    "screening",
+    "withdrawn"
+   ],
+   "declared_n": 7,
+   "enum": "CandidateStatus",
+   "enum_file": "svc/hrm/src/modules/recruitment_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "new",
+    "screening",
+    "interviewing",
+    "offered",
+    "hired",
+    "rejected",
+    "withdrawn"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "interviews",
+   "column": "status",
+   "constraint": "ck_hrm_interviews_status_standard",
+   "declared": [
+    "cancelled",
+    "completed",
+    "in_progress",
+    "scheduled"
+   ],
+   "declared_n": 4,
+   "enum": "InterviewStatus",
+   "enum_file": "svc/hrm/src/modules/recruitment_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "scheduled",
+    "in_progress",
+    "completed",
+    "cancelled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "performance_reviews",
+   "column": "status",
+   "constraint": "ck_hrm_performance_reviews_status_standard",
+   "declared": [
+    "approved",
+    "archived",
+    "completed",
+    "draft",
+    "manager_reviewed",
+    "pending",
+    "self_reviewed",
+    "submitted"
+   ],
+   "declared_n": 8,
+   "enum": "PerformanceReviewStatus",
+   "enum_file": "svc/hrm/src/modules/performance_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "draft",
+    "pending",
+    "submitted",
+    "approved",
+    "self_reviewed",
+    "manager_reviewed",
+    "completed",
+    "archived"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "performance_goals",
+   "column": "status",
+   "constraint": "ck_hrm_performance_goals_status_standard",
+   "declared": [
+    "cancelled",
+    "completed",
+    "in_progress",
+    "pending"
+   ],
+   "declared_n": 4,
+   "enum": "PerformanceGoalStatus",
+   "enum_file": "svc/hrm/src/modules/performance_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "in_progress",
+    "completed",
+    "cancelled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "salary_adjustments",
+   "column": "status",
+   "constraint": "ck_hrm_salary_adjustments_status_standard",
+   "declared": [
+    "approved",
+    "pending",
+    "rejected"
+   ],
+   "declared_n": 3,
+   "enum": "SalaryAdjustmentStatus",
+   "enum_file": "svc/hrm/src/modules/salary_adjustment_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "approved",
+    "rejected"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "salary_adjustments",
+   "column": "approval_status",
+   "constraint": "ck_hrm_salary_adjustments_approval_status_standard",
+   "declared": [
+    "approved",
+    "pending",
+    "rejected"
+   ],
+   "declared_n": 3,
+   "enum": "SalaryAdjustmentStatus",
+   "enum_file": "svc/hrm/src/modules/salary_adjustment_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "approved",
+    "rejected"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "attendance_records",
+   "column": "status",
+   "constraint": "ck_hrm_attendance_records_status_standard",
+   "declared": [
+    "active",
+    "early_leave",
+    "late",
+    "normal"
+   ],
+   "declared_n": 4,
+   "enum": "AttendanceStatus",
+   "enum_file": "svc/hrm/src/modules/attendance_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [
+    "active"
+   ],
+   "dead_values": [
+    "normal",
+    "late",
+    "early_leave"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "枚举含 active（clock-in 兜底值）与 normal 并存，存量仅 active，建议产品收敛口径"
+  },
+  {
+   "schema": "hrm",
+   "table": "payroll_runs",
+   "column": "status",
+   "constraint": "ck_hrm_payroll_runs_status_standard",
+   "declared": [
+    "calculated",
+    "draft",
+    "paid"
+   ],
+   "declared_n": 3,
+   "enum": "PayrollRunStatus",
+   "enum_file": "svc/hrm/src/modules/payroll_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "draft",
+    "calculated",
+    "paid"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "hrm",
+   "table": "payroll_items",
+   "column": "status",
+   "constraint": "ck_hrm_payroll_items_status_standard",
+   "declared": [
+    "paid",
+    "pending"
+   ],
+   "declared_n": 2,
+   "enum": "PayrollItemStatus",
+   "enum_file": "svc/hrm/src/modules/payroll_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "paid"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "finance",
+   "table": "receivables",
+   "column": "status",
+   "constraint": "ck_finance_receivables_status_standard",
+   "declared": [
+    "approved",
+    "cancelled",
+    "draft",
+    "posted"
+   ],
+   "declared_n": 4,
+   "enum": "ReceivablePayableStatus",
+   "enum_file": "svc/finance/src/modules/receivable_payable_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "draft",
+    "approved",
+    "posted",
+    "cancelled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "finance",
+   "table": "payables",
+   "column": "status",
+   "constraint": "ck_finance_payables_status_standard",
+   "declared": [
+    "approved",
+    "cancelled",
+    "draft",
+    "posted"
+   ],
+   "declared_n": 4,
+   "enum": "ReceivablePayableStatus",
+   "enum_file": "svc/finance/src/modules/receivable_payable_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "draft",
+    "approved",
+    "posted",
+    "cancelled"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "erp",
+   "table": "fin_reconciliations",
+   "column": "status",
+   "constraint": "ck_erp_fin_reconciliations_status_standard",
+   "declared": [
+    "approved",
+    "draft",
+    "matched",
+    "pending"
+   ],
+   "declared_n": 4,
+   "enum": "FinReconciliationStatus",
+   "enum_file": "svc/erp/src/modules/fin_reconciliation_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "draft",
+    "matched",
+    "approved"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "erp",
+   "table": "payables",
+   "column": "status",
+   "constraint": "ck_erp_payables_status_standard",
+   "declared": [
+    "paid",
+    "pending"
+   ],
+   "declared_n": 2,
+   "enum": "PayableStatus",
+   "enum_file": "svc/erp/src/modules/payable_status.rs",
+   "enum_match": "DB_VALUES",
+   "actual_values": [],
+   "dead_values": [
+    "pending",
+    "paid"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "值集 == 代码 DB_VALUES，存量无越界"
+  },
+  {
+   "schema": "finance",
+   "table": "core_finance_periods",
+   "column": "status",
+   "constraint": "ck_core_finance_periods_status_standard",
+   "declared": [
+    "closed",
+    "closing",
+    "open"
+   ],
+   "declared_n": 3,
+   "enum": "PeriodStatus",
+   "enum_file": "svc/finance/src/models/mod.rs",
+   "enum_match": "serde_only",
+   "actual_values": [
+    "open"
+   ],
+   "dead_values": [
+    "closing",
+    "closed"
+   ],
+   "outside_values": [],
+   "verdict": "AUTO",
+   "note": "代码枚举一致，死值多仅因低流量; 枚举无 DB_VALUES 常量，仅 serde 归一，守卫强度较弱"
+  }
+ ],
+ "executed": {
+  "date": "2026-11-24",
+  "batch_a_ok": 213,
+  "batch_c_ok": 37,
+  "expenses_rows_cleaned": 3,
+  "expenses_default_fixed": "'pending' -> 'draft'（migration 20261124110000）",
+  "local_not_valid_after": 0,
+  "reference_not_valid_after": 0,
+  "checksum_files": 857,
+  "manifest_drift": false
+ },
+ "decisions": {
+  "audit_logs": "先按 10 值 VALIDATE，收窄独立立项（跨模块改造不捆绑）",
+  "financial_reports": "保留双列，按不变量 VALIDATE，合并列列技术债",
+  "finance_expenses": "清洗 3 行 pending->submitted + 默认值改 draft，再 VALIDATE",
+  "reference_db": "1 条一并 VALIDATE，保持 CI 基线干净",
+  "bulk_migration": "不做 250 条 bulk 迁移，改为带断言维护脚本 + 判定表"
+ }
+}
