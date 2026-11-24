@@ -1,6 +1,7 @@
 //! APQP (Advanced Product Quality Planning) handlers
 
 use crate::models::apqp::*;
+use crate::modules::apqp_approval_status::ApqpApprovalStatus;
 use crate::modules::apqp_item_status::ApqpItemStatus;
 use crate::shared::fsm::{apqp_can_transition, apqp_requires_approval};
 use axum::{
@@ -1972,12 +1973,13 @@ pub async fn create_apqp_approval(
 
     // qa_apqp_approvals 无 tenant_id 列（表无 RLS），租户隔离通过父项目属主保证。
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment) VALUES ($1, $2, 'pending', $3, $4) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment) VALUES ($1, $2, $5, $3, $4) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
     .bind(project_id)
     .bind(req.approval_type)
     .bind(req.applicant)
     .bind(req.comment)
+    .bind(ApqpApprovalStatus::DEFAULT.as_db_str())
     .fetch_one(&mut scope)
     .await;
 
@@ -2026,7 +2028,11 @@ pub async fn process_apqp_approval(
         Err(_) => return ApiResponse::bad_request("无效的审批ID"),
     };
 
-    let status = if req.approved { "approved" } else { "rejected" };
+    let target_status = if req.approved {
+        ApqpApprovalStatus::Approved
+    } else {
+        ApqpApprovalStatus::Rejected
+    };
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -2041,25 +2047,25 @@ pub async fn process_apqp_approval(
     };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 AND project_id IN (SELECT id FROM qms.qa_apqp_projects WHERE tenant_id = $5 AND deleted_at IS NULL) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = CASE WHEN $2 = 'approved' THEN NOW() ELSE NULL END WHERE id = $1 AND status = 'pending' AND project_id IN (SELECT id FROM qms.qa_apqp_projects WHERE tenant_id = $5 AND deleted_at IS NULL) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
     .bind(id)
-    .bind(status)
+    .bind(target_status.as_db_str())
     .bind(req.approver)
     .bind(req.comment)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match approval {
-        Ok(data) => {
+        Ok(Some(data)) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交APQP审批处理事务失败: {}", e);
                 return ApiResponse::server_error("APQP审批处理失败");
             }
             ApiResponse::success(data, "APQP审批处理成功")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("审批记录不存在或状态已变更"),
+        Ok(None) => ApiResponse::conflict("审批记录不存在或已被处理"),
         Err(e) => {
             tracing::error!("Failed to process APQP approval: {}", e);
             ApiResponse::server_error("APQP审批处理失败")
