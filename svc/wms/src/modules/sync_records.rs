@@ -464,7 +464,10 @@ pub async fn retry_sync_record(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e.0;
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_write(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let now = Utc::now();
 
     let updated = sqlx::query(only_own_schema_query!(
@@ -531,7 +534,10 @@ pub async fn retry_failed_items(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e.0;
     }
-    let tenant_bind = tenant_bind_value(&claims);
+    let tenant_bind = match require_tenant_write(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     #[allow(
         clippy::cast_possible_truncation,
         clippy::cast_possible_wrap,
