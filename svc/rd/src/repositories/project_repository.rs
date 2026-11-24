@@ -228,7 +228,11 @@ impl ProjectRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn batch_create(&self, projects: &[CreateProjectRequest], tenant_id: Uuid) -> Result<Vec<Project>> {
+    pub async fn batch_create(
+        &self,
+        projects: &[CreateProjectRequest],
+        tenant_id: Uuid,
+    ) -> Result<Vec<Project>> {
         let tenant_id = require_tenant(tenant_id)?;
         let mut created_projects = Vec::new();
         let now = Utc::now();
@@ -344,7 +348,11 @@ mod tests {
             Self { db }
         }
 
-        pub async fn create(&self, req: &CreateProjectRequest, _tenant_id: Uuid) -> Result<Project> {
+        pub async fn create(
+            &self,
+            req: &CreateProjectRequest,
+            _tenant_id: Uuid,
+        ) -> Result<Project> {
             let id = Uuid::new_v4();
             let now = Utc::now();
 
@@ -522,7 +530,10 @@ mod tests {
             workspace_id: None,
         };
 
-        let created = repo.create(&req, TEST_TENANT).await.expect("Failed to create project");
+        let created = repo
+            .create(&req, TEST_TENANT)
+            .await
+            .expect("Failed to create project");
         let fetched = repo
             .get_by_id(created.id, TEST_TENANT)
             .await
@@ -558,7 +569,9 @@ mod tests {
                 parent_id: None,
                 workspace_id: None,
             };
-            repo.create(&req, TEST_TENANT).await.expect("Failed to create project");
+            repo.create(&req, TEST_TENANT)
+                .await
+                .expect("Failed to create project");
         }
 
         let (projects, total) = repo

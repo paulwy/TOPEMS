@@ -22,7 +22,11 @@ impl ProjectService {
         }
     }
 
-    pub async fn create_project(&self, req: &CreateProjectRequest, tenant_id: Uuid) -> Result<Project> {
+    pub async fn create_project(
+        &self,
+        req: &CreateProjectRequest,
+        tenant_id: Uuid,
+    ) -> Result<Project> {
         self.repository.create(req, tenant_id).await
     }
 
@@ -38,7 +42,9 @@ impl ProjectService {
         page_size: i64,
         tenant_id: Uuid,
     ) -> Result<(Vec<Project>, i64)> {
-        self.repository.list(search, status, page, page_size, tenant_id).await
+        self.repository
+            .list(search, status, page, page_size, tenant_id)
+            .await
     }
 
     pub async fn update_project(
