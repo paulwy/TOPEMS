@@ -2054,6 +2054,8 @@ jobs:
     timeout-minutes: 30
     env:
       POSTGRES_VERSION: '16'
+      # 本作业不启用 sccache；覆盖全局 RUSTC_WRAPPER，避免 cargo install 调不到二进制。
+      RUSTC_WRAPPER: ''
       DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
     services:
       postgres:
