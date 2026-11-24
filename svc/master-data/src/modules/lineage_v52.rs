@@ -19,7 +19,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -430,7 +430,7 @@ impl LineageTracker {
             .bind(&node.name)
             .bind(&node.description)
             .bind(node.created_at.to_rfc3339())
-            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+            .bind(tenant)
             .execute(&mut *scope)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘节点失败: {e}")))?;
@@ -453,7 +453,7 @@ impl LineageTracker {
         .bind(&edge.to_node_id)
         .bind(edge_type_to_str(&edge.edge_type))
         .bind(&edge.transformation_description)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘边失败: {e}")))?;
@@ -1138,7 +1138,7 @@ impl ChangePropagator {
         .bind(&rule.target_entity_type)
         .bind(&rule.condition)
         .bind(propagation_action_to_str(&rule.action))
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入传播规则失败: {e}")))?;
@@ -1345,12 +1345,16 @@ pub async fn register_lineage(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let edge_type = edge_type_from_str(&req.edge_type);
 
     match LineageTracker::register(
         &mut db_scope,
-        tenant,
+        Some(scope.create_tenant_id()),
         req.from_entity_type,
         req.from_entity_id,
         req.to_entity_type,
@@ -1677,8 +1681,14 @@ pub async fn delete_lineage(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
-    match LineageTracker::delete_node(&mut db_scope, tenant, &req.node_id).await {
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
+    match LineageTracker::delete_node(&mut db_scope, Some(scope.create_tenant_id()), &req.node_id)
+        .await
+    {
         Ok(()) => ApiResponse::success_no_data("血缘节点已删除"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1950,11 +1960,15 @@ pub async fn add_propagation_rule(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let action = propagation_action_from_str(&req.action);
     match ChangePropagator::add_rule(
         &mut db_scope,
-        tenant,
+        Some(scope.create_tenant_id()),
         req.source_entity_type,
         req.target_entity_type,
         req.condition,
