@@ -110,6 +110,10 @@ AGGREGATION_SERVICE_EXCEPTIONS = {
         "/api/v1/auth/",
         "/api/v1/notifications",
     ],
+    # 聚合检索服务根路径（/api/search 为服务发现入口，无二级资源）。
+    "search": [
+        "/api/search",
+    ],
 }
 
 # HTTP 方法列表
