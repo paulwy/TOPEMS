@@ -128,6 +128,28 @@ describe('session', () => {
       });
       expect(session.hasPermission('delete')).toBe(false);
     });
+
+    it('should treat "*" and legacy "all" as wildcard', () => {
+      session.setUser({
+        id: 'u1',
+        username: 'admin',
+        email: 'a@b.com',
+        name: 'Admin',
+        role: 'admin',
+        permissions: ['*'],
+      });
+      expect(session.hasPermission('hrm:employee:write')).toBe(true);
+
+      session.setUser({
+        id: 'u2',
+        username: 'admin2',
+        email: 'a2@b.com',
+        name: 'Admin2',
+        role: 'admin',
+        permissions: ['all'],
+      });
+      expect(session.hasPermission('finance:ledger:delete')).toBe(true);
+    });
   });
 
   describe('hasAnyPermission', () => {
@@ -157,6 +179,18 @@ describe('session', () => {
         permissions: ['read'],
       });
       expect(session.hasAnyPermission(['write', 'delete'])).toBe(false);
+    });
+
+    it('should return true for wildcard permissions', () => {
+      session.setUser({
+        id: 'u1',
+        username: 'admin',
+        email: 'a@b.com',
+        name: 'Admin',
+        role: 'admin',
+        permissions: ['*'],
+      });
+      expect(session.hasAnyPermission(['write', 'delete'])).toBe(true);
     });
   });
 

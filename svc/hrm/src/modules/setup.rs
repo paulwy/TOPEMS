@@ -165,7 +165,7 @@ fn setup_tenant(claims: &Claims) -> Result<Uuid, TopemsError> {
 /// P1-2：幂等补种当前租户的 5 条进度行。
 ///
 /// 迁移只给默认租户播种，新租户不会重放迁移；读写路径都调用本函数自愈。
-/// 依赖 20261124110000 创建的 `(tenant_id, step_name)` 唯一索引。
+/// 依赖 20261124150000 创建的 `(tenant_id, step_name)` 唯一索引。
 async fn ensure_init_status_rows(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant: Uuid,

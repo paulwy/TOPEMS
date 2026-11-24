@@ -508,8 +508,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       authLogger.error('Failed to parse auth data from localStorage:', e);
     }
 
-    // 超级用户拥有所有权限
-    if (user?.is_superuser) return true;
+    // 超级用户/通配权限拥有所有权限（后端超管下发 permissions=["*"]）
+    if (user?.is_superuser || user?.isSuperuser) return true;
+    if (permissions.includes('*') || permissions.includes('all')) return true;
 
     // 检查是否有任意一个要求的权限
     return perms.some((perm) => permissions.includes(perm));
@@ -534,8 +535,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       authLogger.error('Failed to parse auth data from localStorage:', e);
     }
 
-    // 超级用户拥有所有权限
-    if (user?.is_superuser) return true;
+    // 超级用户/通配权限拥有所有权限（后端超管下发 permissions=["*"]）
+    if (user?.is_superuser || user?.isSuperuser) return true;
+    if (permissions.includes('*') || permissions.includes('all')) return true;
 
     // 检查是否拥有所有要求的权限
     return perms.every((perm) => permissions.includes(perm));
@@ -560,8 +562,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       authLogger.error('Failed to parse auth data from localStorage:', e);
     }
 
-    // 超级用户拥有所有权限
-    if (user?.is_superuser) return true;
+    // 超级用户/通配权限拥有所有权限（后端超管下发 permissions=["*"]）
+    if (user?.is_superuser || user?.isSuperuser) return true;
+    if (permissions.includes('*') || permissions.includes('all')) return true;
 
     return permissions.includes(permission);
   }, []);

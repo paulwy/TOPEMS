@@ -89,12 +89,14 @@ export const session = {
   hasPermission(permission: string): boolean {
     const user = this.getUser();
     if (!user) return false;
+    if (user.permissions.includes('*') || user.permissions.includes('all')) return true;
     return user.permissions.includes(permission);
   },
 
   hasAnyPermission(permissions: string[]): boolean {
     const user = this.getUser();
     if (!user) return false;
+    if (user.permissions.includes('*') || user.permissions.includes('all')) return true;
     return permissions.some((p) => user.permissions.includes(p));
   },
 

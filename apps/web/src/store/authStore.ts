@@ -81,18 +81,22 @@ export const useAuthStore = create<AuthState>()(
       hasPermission: (permission) => {
         const state = get();
         if (state.isSuperuser()) return true;
+        // 后端超管下发 permissions=["*"]，未带 is_superuser 时也必须放行
+        if (state.permissions.includes('*') || state.permissions.includes('all')) return true;
         return state.permissions.includes(permission);
       },
 
       hasAnyPermission: (perms) => {
         const state = get();
         if (state.isSuperuser()) return true;
+        if (state.permissions.includes('*') || state.permissions.includes('all')) return true;
         return perms.some((p) => state.permissions.includes(p));
       },
 
       hasAllPermissions: (perms) => {
         const state = get();
         if (state.isSuperuser()) return true;
+        if (state.permissions.includes('*') || state.permissions.includes('all')) return true;
         return perms.every((p) => state.permissions.includes(p));
       },
 
