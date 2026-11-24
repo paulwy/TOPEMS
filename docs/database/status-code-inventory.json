@@ -5,7 +5,7 @@
     "db_check_constraints": 35,
     "db_enum_types": 5,
     "db_check_values": 54,
-    "rust_enums": 320,
+    "rust_enums": 321,
     "rust_enum_values": 241,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 251,
@@ -4373,6 +4373,21 @@
         "paused",
         "rolled_back",
         "running"
+      ]
+    },
+    {
+      "module": "qms",
+      "file": "svc/qms/src/modules/apqp_item_status.rs",
+      "name": "ApqpItemStatus",
+      "values": [
+        "Completed",
+        "InProgress",
+        "Pending"
+      ],
+      "normalized": [
+        "completed",
+        "in_progress",
+        "pending"
       ]
     },
     {

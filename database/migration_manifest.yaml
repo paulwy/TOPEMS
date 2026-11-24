@@ -3119,3 +3119,11 @@ pending_forward_patches:
     effect: "qms.qa_apqp_projects.status 的 NULL 归 planning、默认 planning、SET NOT NULL，新增六态 CHECK（planning/in_design/in_pilot/in_production/completed/cancelled）并 VALIDATE"
     destructive_scan: "UPDATE status NULL→planning，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "APQP 六态继续以 shared/fsm::APQP 为唯一源；update 校验值域与 FSM 并带来源态 UPDATE，approve/complete/cancel 的 UPDATE 增加 AND status=当前态，空行 409。回滚 database/rollback/20261125008000_qms_apqp_project_status_standard.rollback.sql 恢复可空并移除 CHECK"
+
+  # ===== 2026-11-25：B280 APQP 阶段/任务状态收口 =====
+  - version: "20261125009000"
+    file: "database/migrations/20261125009000_qms_apqp_item_status_standard.sql"
+    status: to_apply
+    effect: "qms.qa_apqp_phases.status 与 qms.qa_apqp_tasks.status 的 NULL 归 pending、默认 pending、SET NOT NULL，各新增三态 CHECK（pending/in_progress/completed）并 VALIDATE"
+    destructive_scan: "两表 UPDATE status NULL→pending，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 各 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "新增 ApqpItemStatus 三态唯一源；阶段/任务 update 增加值域、当前态读取与线性状态机校验，UPDATE 带 AND status=当前态。回滚 database/rollback/20261125009000_qms_apqp_item_status_standard.rollback.sql 恢复可空并移除 CHECK"
