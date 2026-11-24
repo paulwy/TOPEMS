@@ -994,6 +994,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Run OpenAPI coverage gate (authoritative openapi.json)
         run: node scripts/ci/check-openapi-coverage.cjs
@@ -1207,6 +1208,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Run Perm-Gate (report-json + fail-fast @ baseline thresholds)
         run: |
@@ -1422,7 +1424,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '22'
-          cache: 'pnpm'
+          package-manager-cache: false
 
       - name: "Run Axum Layer Order Checker (R1 strict: --fail-fast R1:0 + R2:0 / R3 allowed)"
         run: |
@@ -2278,6 +2280,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
       - name: Install Node.js
         uses: actions/setup-node@v5
         with:
@@ -2333,6 +2340,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: "Run 统一错误出口检查（--changed-only · 仅拦新增）"
         run: node scripts/ci/check-error-handling.cjs --changed-only
@@ -2382,6 +2390,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: "Run SQLx Cache Freshness Checker (D-track · warn mode · non-blocking)"
         id: sqlx-cache

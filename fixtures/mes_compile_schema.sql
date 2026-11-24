@@ -25,7 +25,6 @@ DO $$ BEGIN EXECUTE format('ALTER DATABASE %I SET app.tenant_id = %L', current_d
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -2912,7 +2911,6 @@ ALTER TABLE mes.workshops ENABLE ROW LEVEL SECURITY;
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -2992,7 +2990,6 @@ CREATE POLICY rls_tenant_isolation ON public.audit_logs USING (((COALESCE(curren
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -3020,7 +3017,6 @@ CREATE TABLE public.schema_defense_ledger (
 
 ALTER TABLE ONLY public.schema_defense_ledger
     ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
-
 
 
 

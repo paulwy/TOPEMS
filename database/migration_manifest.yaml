@@ -3007,3 +3007,11 @@ pending_forward_patches:
     effect: "rs.formulas.status 历史中文/英文混写归一为 draft/testing/approved/archived 四态；默认值固定 'draft'；ADD CHECK ck_formulas_status_standard + VALIDATE"
     destructive_scan: "UPDATE status 四类历史值归一，ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有四态之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124170000_rd_formula_status_standard.rollback.sql 恢复默认与历史值并 DROP 约束"
+
+  # ===== 2026-11-24：B264 public.core_mdm_reconciliation_log 时区收口 =====
+  - version: "20261124190000"
+    file: "database/migrations/20261124190000_public_mdm_reconciliation_timestamptz.sql"
+    status: to_apply
+    effect: "public.core_mdm_reconciliation_log 的 detected_at / resolved_at 从 timestamp without time zone 改为 timestamptz，存量按 UTC 解释，满足 Instant 边界契约"
+    destructive_scan: "仅 ALTER COLUMN TYPE（带 USING），无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数与约束"
+    note: "幂等：按 information_schema 判断列类型，已是 timestamptz 则跳过；后置断言无 naive 列，否则 RAISE。回滚 database/rollback/20261124190000_public_mdm_reconciliation_timestamptz.rollback.sql 恢复无时区 timestamp"

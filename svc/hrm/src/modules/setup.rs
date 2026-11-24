@@ -1408,7 +1408,7 @@ pub async fn setup_admin_user(
             "租户成员关系",
             sqlx::query_scalar(only_own_schema_query!(
                 "hrm",
-                "SELECT COUNT(*) FROM core_tenant_users WHERE tenant_id = $1 AND user_id = $2"
+                "SELECT COUNT(*) FROM public.core_tenant_users WHERE tenant_id = $1 AND user_id = $2"
             ))
             .bind(org_id)
             .bind(uid)
