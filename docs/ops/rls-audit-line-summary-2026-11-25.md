@@ -11,6 +11,8 @@
 | `allow-all-policy-review-2026-11-24.md` | 37 条 `qual=true` 策略分档（档1 豁免 2 / 档2 漂移 5 / 档3 未收录 30），§3.1 既有迁移映射 |
 | `cleanup-dead-duplicate-tables-2026-11-24.md` + `.csv` | 22 死表 + 49 重复副本（共 71 张）归档清理清单与前置条件 |
 | `scripts/ops/rls-tier2-drift-fix-2026-11-25.{sql,rollback.sql,verify.sql}` | 档 2 五条漂移订正兜底补丁三件套（本地干跑验证，未连生产） |
+| `scripts/ops/cleanup-pending-dependency-check-2026-11-25.sql` | 11 张独有表只读依赖核对（存在性/RLS/外键/视图/授权/发布/本体在位） |
+| `docs/ops/rls-head-snapshot-recheck-2026-11-25.md` | P3 #6 head 库快照对照复跑：三层门禁盘点、实测读数、偏差定性与 CI/窗口复跑口径 |
 
 ## 2. 总体硬结论
 
@@ -72,14 +74,14 @@
 | # | 事项 | 说明 |
 |---|---|---|
 | 5 | 档 3 其余 allow-all 逐张定性 | 复核闭环：17 条（日志 5 + 模板权限 4 + 配置 3 + 通知副本 3 + 聚合 1）中 **16 张为零路径遗留表/副本，随既有归档批次删除**；`bi.audit_logs` 例外保留（schema-defense 重建，已登记 exemption）；通知/邮件本体 `public.core_notifications`/`public.core_emails` 隔离口径随 P1 #2；业务实体 13 张并入 P1 #2 评审 | 台账 §4.4 `allow-all-policy-review-2026-11-24.md` |
-| 6 | 超户/CI 全链 head 库复跑 RLS 对照 | 消除 fixture 库快照偏差（本地空库链受 pgvector 扩展阻塞，不以非超户角色强补） |
+| 6 | 超户/CI 全链 head 库复跑 RLS 对照 | **复跑闭环**：两个 head 校验库（`runtime_fixture_verify`、`runtime_gate_verify`）非超户连库实测 801 表 / 855 策略，与基准快照逐项一致 **PASS**，基准无 fixture 偏差；`drift_check`（800/835，35 项）、`smoke`（751 项）偏差系历史旧库未追平迁移链，非基准缺陷。连库 snapshot 门禁未挂 CI，当前由静态 shape 门禁覆盖 fail-open 回潮；生产追平账本后须在生产/`topems_drift` 复跑同一门禁 | 备忘 `rls-head-snapshot-recheck-2026-11-25.md`（口径、命令、快照更新红线、阻塞项） |
 | 7 | C 桶 `analytics_data` 10 处读旁路 | 待该表 RLS 覆盖具备条件后，按 B 桶同口径评估剥除 |
 
 ## 8. 方法局限与复核前提
 
 - **生产账本滞后**：水位 `20261119000002` vs 头版本 `20261124200000`；追平迁移后须重跑 RLS/策略对照，档 2 与 A 类结论以追平后快照为准。
 - **源码命中口径**：裸表名 / 动态 SQL 可能漏配；运行时定性以路由 → 服务 → SQL 链路为准，测试夹具命中不计服务端依赖。
-- **测试库不可作基准**：`topems_test_runner` 账本为空、schema 来源不可追溯；隔离判定以生产只读快照 + head 校验库为准。
+- **测试库不可作基准**：`topems_test_runner` 账本为空、schema 来源不可追溯；隔离判定以生产只读快照 + head 校验库为准。两个 head 校验库已复跑快照门禁 PASS（801/855），历史演练/烟测库偏差不计入基准。
 - **本汇总不替代窗口评审**：破坏性 DROP、策略收紧、归属模型变更均须产品/安全确认后在生产窗口执行。
 
 ## 9. 本轮落地记录
