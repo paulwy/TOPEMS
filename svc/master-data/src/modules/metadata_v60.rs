@@ -15,7 +15,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -469,7 +469,11 @@ pub async fn create_metadata(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let object_type = match parse_metadata_type(&req.object_type) {
         Some(t) => t,
         None => return ApiResponse::bad_request("无效的元数据对象类型"),
@@ -503,7 +507,7 @@ pub async fn create_metadata(
     .bind(&obj.attributes)
     .bind(obj.created_at.to_rfc3339())
     .bind(obj.updated_at.to_rfc3339())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
@@ -534,7 +538,11 @@ pub async fn create_metadata_compat(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let object_type = match req
         .get("object_type")
         .and_then(|v| v.as_str())
@@ -594,7 +602,7 @@ pub async fn create_metadata_compat(
     .bind(&obj.attributes)
     .bind(obj.created_at.to_rfc3339())
     .bind(obj.updated_at.to_rfc3339())
-    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+    .bind(scope.create_tenant_id())
     .execute(&mut db_scope)
     .await
     {
