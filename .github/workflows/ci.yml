@@ -2457,7 +2457,7 @@ jobs:
           echo "| Rust Tests | ${{ needs.rust-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Cargo Deny (License + Security + Bans) | ${{ needs.cargo-deny.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Schema Defense Gate（26 services · strict） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema Defense Gate（运行期 DDL 零新增） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Slow DB Startup Test (regression · V278) | ${{ needs.slow-db-startup-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Lint | ${{ needs.frontend-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend Type Check | ${{ needs.frontend-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -2479,7 +2479,7 @@ jobs:
           echo "| CHANGELOG 发布校验 (P2-3 · tag only) | ${{ needs.changelog-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Gate T · 统一错误出口 (错误泄露 / 业务层 anyhow · V517) | ${{ needs.error-handling-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SQLx Cache Freshness (D-track · advisory · non-blocking) | ${{ steps.sqlx-cache.outputs.status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Schema Defense Gate (26 svc · strict · V274 含 sqlx 语义 advisory) | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema Defense Gate（运行期 DDL 零新增） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           # [P3-6 2026-10-24] 补汇总行：needs 声明了 schema-defense-drift 但表中无行（此前漏汇总）
           echo "| Schema Defense Drift (TABLE_DEFS 漂移检测) | ${{ needs.schema-defense-drift.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -2584,263 +2584,33 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   schema-defense-gate:
-    name: Schema Defense Gate（26 services · strict mode）
-    needs: [changes, rust-lint]
+    name: Schema Defense Gate（运行期 DDL 零新增）
+    needs: changes
     if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    env:
-      SCHEMA_DEFENSE_VERIFY_STRICT: "true"
-      SQLX_OFFLINE: "false"
-      DATABASE_URL: "postgresql://topems_test:topems_test_secret@localhost:5432/topems_defense"
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: topems_test
-          POSTGRES_PASSWORD: topems_test_secret
-          POSTGRES_DB: topems_defense
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U topems_test -d topems_defense"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - uses: ./.github/actions/setup-rust
-        with:
-          cache-prefix: "rust-schema-defense-nightly-2026-07-01"
+      # W2-D2 已移除各服务启动期 schema_defense/DDL，schema 所有权归迁移；
+      # 原 26 服务启动自检全部为 N/A，且冷编译需 45+ 分钟。这里改为静态
+      # 校验“运行期 DDL 零新增”，与 schema-defense-drift 共同守住迁移单一事实源。
+      - name: Verify runtime DDL baseline (no new startup DDL)
+        run: node scripts/ci/check-runtime-ddl.mjs
 
-      - name: Wait for PostgreSQL
-        # V278: 双保险 — service health check 通过后，再显式等待 user/db 就绪
-        # 避免 psql "CREATE EXTENSION" 在 DB user/db 未初始化时执行
-        # 注意本 job 用 topems_defense db（与其他 job 的 topems_test 不同）
-        #
-        # V278 慢启动测试结论（scripts/dev/test-slow-db-startup.sh 验证）：
-        #   1. pg_isready 只验证服务器监听端口，不检查 DB 存在性（PostgreSQL 官方文档）
-        #   2. 慢启动场景（注入 sleep）下，wait 循环正确等待，未发生误判
-        #   3. wait 通过后 psql + information_schema 查询均成功，无 race condition
-        #
-        # 因此分两阶段验证：
-        #   阶段 1: pg_isready 等待服务器进程就绪
-        #   阶段 2: psql 验证 topems_defense db 确实存在（捕获 db 名配置错误）
+      - name: Summarize gate
         run: |
-          # 阶段 1: 等待 postgres 服务器就绪（端口监听）
-          until pg_isready -h localhost -p 5432 -U topems_test -d topems_defense; do
-            sleep 1
-          done
-          # 阶段 2: 真实连接验证 topems_defense db 存在
-          # pg_isready 不检查 DB 存在性，需 psql 双重确认
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
-          export PGPASSWORD=topems_test_secret
-          for i in $(seq 1 30); do
-            if psql -h localhost -p 5432 -U topems_test -d topems_defense -c "SELECT 1;" >/dev/null 2>&1; then
-              echo "✓ topems_defense db 可用"
-              break
-            fi
-            echo "  等待 topems_defense db 初始化完成... ($i/30)"
-            sleep 1
-            if [ "$i" -eq 30 ]; then
-              echo "✗ topems_defense db 30s 内未就绪" >&2
-              exit 1
-            fi
-          done
-
-      - name: Install pg extensions + create schemas（4 批 19 schema + public 默认）
-        run: |
-          export PGPASSWORD=topems_test_secret
-          for ext in uuid-ossp pg_trgm vector; do
-            psql -h localhost -U topems_test -d topems_defense \
-              -c "CREATE EXTENSION IF NOT EXISTS \"$ext\";"
-          done
-          # 19 个非 public schema（billing/ticket/feedback/plugin-registry/unified-core/master-data/communication 共用 public）
-          for schema in \
-            gis ehs portal finance \
-            erp hrm crm pm scm wms srm pdm mes qms lims \
-            ai mobile integration \
-            bi rs; do
-            psql -h localhost -U topems_test -d topems_defense \
-              -c "CREATE SCHEMA IF NOT EXISTS $schema;"
-          done
-
-      - name: Prebuild 26 binaries（避免 defense-check-all 内逐个编译超时）
-        env:
-          # 预编译仅消费仓库内 .sqlx 缓存；实时 sqlx 校验留给后续 prepare check，
-          # 避免空 topems_defense 库因 ai.ai_settings 等表缺失直接编译失败。
-          SQLX_OFFLINE: "true"
-        run: |
-          cargo build \
-            -p topems-gis \
-            -p topems-ehs \
-            -p topems-portal \
-            -p topems-finance \
-            -p topems-erp \
-            -p topems-hrm \
-            -p topems-crm \
-            -p topems-pm \
-            -p topems-scm \
-            -p topems-wms \
-            -p topems-srm \
-            -p topems-pdm \
-            -p topems-mes \
-            -p topems-qms \
-            -p topems-lims \
-            -p topems-ai \
-            -p topems-rd \
-            -p topems-ticket \
-            -p topems-plugin-registry \
-            -p topems-mobile \
-            -p topems-unified-core \
-            -p topems-integration \
-            -p topems-master-data \
-            -p topems-communication \
-            -p topems-analytics
-
-      - name: Install sqlx-cli
-        # V274: cargo sqlx prepare --check --workspace 需要 sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-
-      - name: Run schema defense（26 services · strict，V69.3 + V69.4 四批全覆盖）
-        id: defense
-        run: |
-          set +e
-          bash scripts/topems.sh db defense-check-all | tee /tmp/defense-all.log
-          RC=${PIPESTATUS[0]}
-          set -e
-
-          # 从日志中提取四批汇总行 + 全量汇总行写进 Step Summary
-          B1=$(grep -E "第1批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
-          B2=$(grep -E "第2批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
-          B3=$(grep -E "第3批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
-          B4=$(grep -E "第4批.*汇总：通过" /tmp/defense-all.log 2>/dev/null || echo "")
-          TOTAL=$(grep -E "全量汇总.*共 2[0-9] 服务" /tmp/defense-all.log 2>/dev/null || echo "")
-
-          extract_counts() {
-              local line="$1"
-              echo "$line" | grep -oE "通过 [0-9]+" | grep -oE "[0-9]+" || echo 0
-          }
-          PASS_COUNT=$(extract_counts "$TOTAL")
-          WARN_COUNT=$(echo "$TOTAL" | grep -oE "警告 [0-9]+" | grep -oE "[0-9]+" || echo 0)
-          FAIL_COUNT=$(echo "$TOTAL" | grep -oE "失败 [0-9]+" | grep -oE "[0-9]+" || echo 0)
-
           {
-            echo "## Schema Defense Gate（26 services · strict）"
+            echo "## Schema Defense Gate（运行期 DDL 零新增）"
             echo ""
-            echo "| 批次 | 通过 | 警告 | 失败 | 详情 |"
-            echo "|------|------|------|------|------|"
-            for batch_line in "$B1" "$B2" "$B3" "$B4"; do
-              [ -z "$batch_line" ] && continue
-              bp=$(echo "$batch_line" | grep -oE "通过 [0-9]+" | grep -oE "[0-9]+" || echo 0)
-              bw=$(echo "$batch_line" | grep -oE "警告 [0-9]+" | grep -oE "[0-9]+" || echo 0)
-              bf=$(echo "$batch_line" | grep -oE "失败 [0-9]+" | grep -oE "[0-9]+" || echo 0)
-              bname=$(echo "$batch_line" | sed -E 's/.*(第[1-4]批[^（]*).*/\1/' || echo "-")
-              echo "| $bname | $bp | $bw | $bf | $batch_line |"
-            done
+            echo "W2-D2 起 schema 所有权归迁移；本门禁校验运行期 DDL 未新增。"
             echo ""
-            echo "| 服务 | 状态 | 详情 |"
-            echo "|------|------|------|"
-            # 解析每个服务的 PASS/WARN/FAIL 染色行，去掉 ANSI 颜色码后转 Markdown
-            grep -E "\[✓ PASS\]|\[⚠ WARN\]|\[✗ FAIL\]" /tmp/defense-all.log 2>/dev/null \
-              | sed -E 's/\x1B\[[0-9;]*m//g' \
-              | sed -E 's/.*\[✓ PASS\] ([^ ]+)  —  (.*)/| \1 | ✅ PASS | \2 |/' \
-              | sed -E 's/.*\[⚠ WARN\] ([^ ]+)  —  (.*)/| \1 | ⚠️ WARN | \2 |/' \
-              | sed -E 's/.*\[✗ FAIL\] ([^ ]+)  —  (.*)/| \1 | ❌ FAIL | \2 |/'
-            echo ""
-            echo "### 汇总（全量 26 服务）"
-            echo ""
-            echo "| 指标 | 值 |"
-            echo "|------|----|"
-            echo "| 通过 | $PASS_COUNT |"
-            echo "| 警告 | $WARN_COUNT |"
-            echo "| 失败 | $FAIL_COUNT |"
-            echo "| 退出码 | $RC |"
-            echo ""
-            if [ -n "$TOTAL" ]; then
-              echo "> **$TOTAL**"
-              echo ""
-            fi
-            if [ "$RC" -ne 0 ]; then
-              echo "> 📘 规范文档: docs/development/backend/database-development.md"
-              echo "> 📋 本地复现: \`SCHEMA_DEFENSE_VERIFY_STRICT=true bash scripts/topems.sh db defense-check-all\`"
-            fi
-          } >> $GITHUB_STEP_SUMMARY
+            echo '```'
+            node scripts/ci/check-runtime-ddl.mjs
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          case "$RC" in
-            0)
-              echo "✅ Schema Defense: 26 services ALL PASSED ($PASS_COUNT 通过 / $WARN_COUNT 警告 / $FAIL_COUNT 失败)"
-              exit 0
-              ;;
-            1)
-              echo "::warning title=Schema Defense::有警告（$WARN_COUNT 服务缺列或尚未接入 TABLE_DEFS），严格模式下阻断合并。本地复现见 Step Summary 命令。"
-              echo "❌ Schema Defense: 有警告 $WARN_COUNT · strict 模式阻断"
-              exit 1
-              ;;
-            *)
-              echo "::error title=Schema Defense::有错误（$FAIL_COUNT 服务 build/启动失败）。请修复后再提交。"
-              echo "❌ Schema Defense: 有错误 $FAIL_COUNT · strict 模式阻断 (exit=$RC)"
-              exit 2
-              ;;
-          esac
-
-      - name: Verify sqlx cache semantic consistency (blocking)
-        # V274: defense-check-all 完成后 DB 已有完整 schema（所有表+列），
-        # 此时运行 cargo sqlx prepare --check --workspace 验证 .sqlx/ 缓存与 DB schema 语义一致。
-        # V300: advisory → blocking。历史教训：根 .sqlx 缓存曾 322→53 缩水（mes/analytics 查询全失），
-        #       因 continue-on-error 非阻断而被合入，导致 mes 离线编译反复炸。
-        #       缓存不完整/不一致 = 本步骤失败 = 无法合并。
-        # 前置条件：defense-check-all 通过（exit 0）→ DB schema 完整。
-        env:
-          DATABASE_URL: postgresql://topems_test:topems_test_secret@localhost:5432/topems_defense
-          SQLX_OFFLINE: "false"
-        run: |
-          set +e
-          ./scripts/dev/sqlx-prepare.sh --semantic 2>&1 | tee /tmp/sqlx-semantic-check.log
-          # 注意：$? 捕获的是 tee 的退出码（恒为 0），需用 PIPESTATUS[0] 获取脚本退出码
-          RC=${PIPESTATUS[0]}
-          echo ""
-          if [ $RC -eq 0 ]; then
-            echo "✅ SQLx Semantic Check: .sqlx cache consistent with DB schema"
-          else
-            echo "::error title=SQLx Semantic Check::.sqlx 缓存与 DB schema 语义不一致，请运行 ./scripts/dev/sqlx-prepare.sh 刷新缓存后重新提交（V300 起为 blocking 门禁）"
-            echo "❌ SQLx Semantic Check: FAIL (blocking — 缓存不完整/不一致将阻断合并)"
-          fi
-
-          # 写入 Step Summary
-          {
-            echo "### SQLx Cache Semantic Check (blocking)"
-            echo ""
-            echo "| 指标 | 值 |"
-            echo "|------|----|"
-            echo "| 退出码 | $RC |"
-            echo "| 状态 | $([ $RC -eq 0 ] && echo '✅ PASS' || echo '❌ FAIL (blocking)') |"
-            echo ""
-            echo "> 本地复现: \`DATABASE_URL=... ./scripts/dev/sqlx-prepare.sh --semantic\`"
-          } >> $GITHUB_STEP_SUMMARY
-
-          exit $RC
-
-  # ==========================================================================
-  # Slow DB Startup Test（V278 回归测试）
-  #
-  # 作用：验证 schema-defense-gate job 的 Wait for PostgreSQL 策略在 DB 慢启动
-  #       （user/db 未初始化完成）场景下不会误判通过。
-  #
-  # 实现方式：本地 scripts/dev/test-slow-db-startup.sh 的 CI 化版本——
-  #   1. 通过自定义 entrypoint 注入 sleep 延迟启动 postgres:16-alpine 容器
-  #   2. 运行与 ci.yml schema-defense-gate job 完全相同的 wait 循环
-  #   3. 断言：wait 时间 >= 注入延迟；wait 通过后 psql SELECT 1 必成功
-  #
-  # 触发条件：
-  #   - schema-defense-gate 改动（ci/scripts 路径过滤）
-  #   - 定时调度
-  #
-  # 依赖：Docker（runner 自带）+ postgresql-client（pg_isready + psql，apt 安装）
-  # 本地复现：./scripts/dev/test-slow-db-startup.sh 10
-  # ==========================================================================
   slow-db-startup-test:
     name: Slow DB Startup Test (regression)
     needs: [changes, schema-defense-gate]
