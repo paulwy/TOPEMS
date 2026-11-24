@@ -436,17 +436,11 @@ pub async fn create_supplier(
         return ApiResponse::from(e);
     }
 
-    // 租户解析：超管（x-tenant-id 缺失/全零）允许用 body 里的 tenant_id；
-    // 非超管强制使用请求头租户，body 里的 tenant_id 直接忽略（不允许跨租户创建）。
-    let header_tenant = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
-    let tenant_id = if header_tenant.is_nil() {
-        req.tenant_id.unwrap_or_else(Uuid::nil)
-    } else {
-        header_tenant
+    // D 类写路径：只允许租户通道，缺失/非法/nil 租户即 400；body 里的
+    // tenant_id 不参与解析（不允许跨租户创建）。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
     };
 
     let row: Result<Option<Supplier>, sqlx::Error> = sqlx::query_as(
@@ -484,7 +478,7 @@ pub async fn create_supplier(
     .bind(&req.remarks)
     .bind(&req.name_en)
     .bind(req.lead_time_days)
-    .bind(tenant_id)
+    .bind(scope.create_tenant_id())
     .fetch_optional(&mut db_scope)
     .await;
 
