@@ -3015,3 +3015,10 @@ pending_forward_patches:
     effect: "public.core_mdm_reconciliation_log 的 detected_at / resolved_at 从 timestamp without time zone 改为 timestamptz，存量按 UTC 解释，满足 Instant 边界契约"
     destructive_scan: "仅 ALTER COLUMN TYPE（带 USING），无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数与约束"
     note: "幂等：按 information_schema 判断列类型，已是 timestamptz 则跳过；后置断言无 naive 列，否则 RAISE。回滚 database/rollback/20261124190000_public_mdm_reconciliation_timestamptz.rollback.sql 恢复无时区 timestamp"
+  # ===== 2026-11-24：B265 finance U8 导入表租户策略 fail-closed =====
+  - version: "20261124200000"
+    file: "database/migrations/20261124200000_finance_u8_import_records_rls_fail_closed.sql"
+    status: to_apply
+    effect: "finance.finance_u8_import_records 的 rls_tenant_isolation 策略从“未设置/空串即放行”改为 tenant_id = NULLIF(current_setting('app.tenant_id'), '')::uuid；未设置租户时零行可见"
+    destructive_scan: "仅 ALTER/CREATE POLICY 与 ENABLE+FORCE 断言；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "幂等：策略存在则 ALTER，不存在则 CREATE；表不存在跳过；后置断言仍含空租户豁免则 RAISE。回滚 database/rollback/20261124200000_finance_u8_import_records_rls_fail_closed.rollback.sql 恢复原表达式（仅精确回退）"

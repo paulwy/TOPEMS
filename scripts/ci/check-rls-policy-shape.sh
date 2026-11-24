@@ -29,6 +29,9 @@ public.core_dict_items public.core_roles public.core_tenants ai.ai_models \
 ai.ai_prompt_templates mobile.sync_policies pm.project_type_configs \
 finance.core_finance_currencies finance.core_finance_report_line_map"
 STRICT_FROM="20261110100000"
+# 历史已提交迁移不可改写：以下文件的 fail-open 策略由 20261124200000 在线收紧，
+# 静态扫描按“已 remediation”跳过（仅限这两个文件，新增迁移不得加入）。
+RLS_SHAPE_REMEDIATED="database/migrations/20261119190000_finance_u8_import_records_create.sql database/migrations/20261119230000_rls_dedupe_finance_u8_import_records_policy.sql"
 #
 # 用法：
 #   scripts/ci/check-rls-policy-shape.sh
@@ -66,6 +69,9 @@ while IFS= read -r f; do
   fi
   SCANNED=$((SCANNED + 1))
   rel="${f#"$ROOT"/}"
+  case " $RLS_SHAPE_REMEDIATED " in
+    *" $rel "*) LEGACY=$((LEGACY + 1)); continue ;;
+  esac
   out="$(GLOBAL_READ_TABLES="$GLOBAL_READ_TABLES" python3 - "$f" <<'PY'
 import os, re, sys
 
