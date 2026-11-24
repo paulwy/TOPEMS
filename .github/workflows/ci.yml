@@ -2171,9 +2171,10 @@ jobs:
           PGPASSWORD=topems_test_secret createdb -h localhost -U topems_test topems_test
 
           # pg_dump 末尾 COMMENT ON EXTENSION 需要扩展属主；扩展由镜像预装，仅过滤该元数据。
-          gzip -dc "$SCHEMA" | grep -v '^COMMENT ON EXTENSION ' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+          # 基线由 pg_dump 18 生成，PG16 服务端不识别 transaction_timeout；过滤该会话设置。
+          gzip -dc "$SCHEMA" | grep -v -E '^(COMMENT ON EXTENSION |SET transaction_timeout)' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$LEDGER"
-          gzip -dc "$DATA" | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+          gzip -dc "$DATA" | grep -v '^SET transaction_timeout' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
 
           LEDGER_MAX="$(psql "$DATABASE_URL" -Atc "SELECT max(version) FROM _sqlx_migrations WHERE success")"
           test "$LEDGER_MAX" = "$ANCHOR" || { echo "FAIL: 账本 max=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
