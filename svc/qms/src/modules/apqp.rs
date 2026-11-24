@@ -320,6 +320,12 @@ pub async fn update_apqp_project(
     let start_dt = req.start_date.map(date_to_utc);
     let target_dt = req.target_date.map(date_to_utc);
     let actual_end_dt = req.actual_end_date.map(date_to_utc);
+    let requested_status = req.status.as_deref().map(|s| s.trim().to_ascii_lowercase());
+    if let Some(target) = requested_status.as_deref() {
+        if !crate::shared::fsm::is_valid_apqp_status(target) {
+            return ApiResponse::bad_request("APQP项目状态不在规范集合内");
+        }
+    }
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -333,8 +339,34 @@ pub async fn update_apqp_project(
         }
     };
 
+    let current = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current {
+        Ok(Some(raw)) => match raw.as_deref() {
+            Some(value) if crate::shared::fsm::is_valid_apqp_status(value) => value.to_string(),
+            _ => return ApiResponse::conflict("APQP项目状态不在规范集合内"),
+        },
+        Ok(None) => return ApiResponse::not_found("记录不存在"),
+        Err(e) => {
+            tracing::error!("读取APQP项目状态失败: {}", e);
+            return ApiResponse::server_error("APQP项目更新失败");
+        }
+    };
+    if let Some(target) = requested_status.as_deref() {
+        if target != current_status
+            && crate::shared::fsm::apqp_can_transition(&current_status, target).is_err()
+        {
+            return ApiResponse::bad_request("当前状态不允许执行该状态流转");
+        }
+    }
+
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 AND tenant_id = $16 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 AND tenant_id = $16 AND status = $17 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.project_name)
@@ -352,6 +384,7 @@ pub async fn update_apqp_project(
     .bind(req.progress)
     .bind(req.risk_level)
     .bind(tenant_id)
+    .bind(current_status)
     .fetch_one(&mut scope)
     .await;
 
@@ -2029,13 +2062,14 @@ pub async fn approve_apqp(
             if apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_err() {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS)))
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $3 RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS)))
                 .bind(id)
                 .bind(tenant_id)
-                .fetch_one(&mut scope)
+                .bind(&current_status)
+                .fetch_optional(&mut scope)
                 .await;
             match project {
-                Ok(data) => {
+                Ok(Some(data)) => {
                     if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut scope,
                         &tenant_id.to_string(),
@@ -2058,6 +2092,7 @@ pub async fn approve_apqp(
                     }
                     ApiResponse::success(data, "审批通过")
                 }
+                Ok(None) => ApiResponse::conflict("APQP项目状态已变更，请刷新后重试"),
                 Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
                 Err(e) => {
                     tracing::error!("Failed to approve APQP: {}", e);
@@ -2136,13 +2171,14 @@ pub async fn complete_apqp(
             if apqp_can_transition(&current_status, STATUS_COMPLETED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许完成");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS)))
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $3 RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS)))
                 .bind(id)
                 .bind(tenant_id)
-                .fetch_one(&mut scope)
+                .bind(&current_status)
+                .fetch_optional(&mut scope)
                 .await;
             match project {
-                Ok(data) => {
+                Ok(Some(data)) => {
                     if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut scope,
                         &tenant_id.to_string(),
@@ -2165,6 +2201,7 @@ pub async fn complete_apqp(
                     }
                     ApiResponse::success(data, "APQP项目已完成")
                 }
+                Ok(None) => ApiResponse::conflict("APQP项目状态已变更，请刷新后重试"),
                 Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
                 Err(e) => {
                     tracing::error!("Failed to complete APQP: {}", e);
@@ -2238,13 +2275,14 @@ pub async fn cancel_apqp(
             if apqp_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS)))
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = $3 RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS)))
                 .bind(id)
                 .bind(tenant_id)
-                .fetch_one(&mut scope)
+                .bind(&current_status)
+                .fetch_optional(&mut scope)
                 .await;
             match project {
-                Ok(data) => {
+                Ok(Some(data)) => {
                     if let Err(e) = crate::models::audit_log::log_approval_event(
                         &mut scope,
                         &tenant_id.to_string(),
@@ -2267,6 +2305,7 @@ pub async fn cancel_apqp(
                     }
                     ApiResponse::success(data, "APQP项目已取消")
                 }
+                Ok(None) => ApiResponse::conflict("APQP项目状态已变更，请刷新后重试"),
                 Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("项目不存在或状态已变更"),
                 Err(e) => {
                     tracing::error!("Failed to cancel APQP: {}", e);
