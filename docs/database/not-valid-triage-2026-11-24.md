@@ -201,10 +201,28 @@ psql -h /tmp -U air -d topems -v ON_ERROR_STOP=1 \
 
 ### 4. 映射台账回写（301 → 324，不是 338）
 
-- **实际**：`status-db-check-mappings.json` 从 301 条增至 **320 条 mappings + 4 条 `non_enum_checks` = 324 条记录**。
-- **338 的算术**：`301 + 33 + 4 = 338` 是把 37 条判定全部当成“新增”算出来的；实际 33 条里有 **14 条原本已在台账**，缺的是 `candidate` 指针（早前误判为“无映射”），只新增 19 条。所以 338 不是可达目标，324 才是正确基数。
+- **实际**：`status-db-check-mappings.json` 从 301 条增至 **319 条 mappings + 4 条 `non_enum_checks` = 323 条记录**（320 条里另有 1 条 `approval_status` 映射随后随列删除，见“台账自检”）。
+- **338 的算术**：`301 + 33 + 4 = 338` 是把 37 条判定全部当成“新增”算出来的；实际 33 条里有 **14 条原本已在台账**，缺的是 `candidate` 指针（早前误判为“无映射”），只新增 19 条。所以 338 不是可达目标；收尾后正确基数是 323（319 mappings + 4 non_enum）。
 - **覆盖校验**（机器核对，不靠印象）：把 `/tmp/final_rows.json` 的 37 条判定按 `table + column` 与台账比对，**37/37 命中，0 遗漏**。
 - **台账同步**：`financial_reports` 的 `ck_financial_reports_status_pair` 条目补 `resolution: merged_2026-11-24` 与合并说明，避免下次又被当作待办。
+
+
+### 台账自检（2026-11-24，机器核对而非抽查）
+
+不再凭“台账有这条”就认为约束存在，而是把台账逐条拿去和本地 `pg_constraint` 对账：
+
+| 检查 | 结果 |
+|---|---|
+| 台账总数 | 319 mappings + 4 `non_enum_checks` |
+| 带表列坐标（可落约束） | 255 条 |
+| 能在本地约束里定位且已 VALIDATE | **254 条** |
+| 无表列坐标（进程内状态/无独立列） | 64 条，按设计不适用列级 CHECK |
+| 唯一未定位项 | `master_data.mdm_workflows.steps(jsonb)`：步骤状态嵌在 jsonb 数组里，`persisted=false`，列级 CHECK 无法表达（保留说明，不是缺口） |
+
+自检过程中发现并修掉两处真实问题：
+
+1. **陈旧映射**：`FinancialReportStatus → financial_reports.approval_status` 这行在 B255 删列后已失效，属于“台账说有、DB 里没有”。已删除该行，并在 `status` 那行补 B255 合并说明。
+2. **真实缺口**：`crm.customer_finance.risklevel` 此前只有候选 SQL、没有约束。补迁移 `20261124140000`（`risklevel IN (low, medium, high, critical)`，前置断言值集外即中止，ADD NOT VALID + VALIDATE），本地与参考库均 `convalidated=true`；台账 `candidate` 由 SQL 文档改为真实约束名，契约文件同步增至 12 条（`check-status-enum-contract` 12/12 通过）。
 
 ### 本轮门禁汇总
 

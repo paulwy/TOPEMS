@@ -164,6 +164,19 @@
         "srm",
         "wms"
       ]
+    },
+    {
+      "file": "svc/crm/src/modules/finance_risk.rs",
+      "enum": "FinanceRiskLevel",
+      "table": "crm.customer_finance",
+      "column": "risklevel",
+      "constraint": "crm_customer_finance_risklevel_check",
+      "values": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
     }
   ]
 }

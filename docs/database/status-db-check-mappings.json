@@ -561,7 +561,8 @@
       "enum": "FinanceRiskLevel",
       "table": "crm.customer_finance",
       "column": "risklevel",
-      "candidate": "docs/database/crm-customer-finance-risklevel-check-candidates-2026-11-21.sql"
+      "candidate": "crm_customer_finance_risklevel_check",
+      "note": "2026-11-24 已收口：迁移 20261124140000 建立并 VALIDATE crm_customer_finance_risklevel_check（low/medium/high/critical）"
     },
     {
       "file": "svc/crm/src/modules/customer_status.rs",
@@ -981,14 +982,8 @@
       "enum": "FinancialReportStatus",
       "table": "finance.financial_reports",
       "column": "status",
-      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-    },
-    {
-      "file": "svc/finance/src/modules/financial_report_status.rs",
-      "enum": "FinancialReportStatus",
-      "table": "finance.financial_reports",
-      "column": "approval_status",
-      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+      "note": "2026-11-24 B255 合并：approval_status 列已删除，报表态只由 status 承载；原 approval_status 映射行随列删除"
     },
     {
       "file": "svc/finance/src/modules/decision_v60.rs",

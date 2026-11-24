@@ -2969,3 +2969,11 @@ pending_forward_patches:
     effect: "finance.financial_reports 双列 status/approval_status 合并为单列：删除 approval_status（连带 ck_financial_reports_approval_status_standard）与不变量 ck_financial_reports_status_pair；Rust 写入口/查询改为只写只读 status，API 响应保留 approval_status 字段（由 status 派生），前端契约不变"
     destructive_scan: "DROP COLUMN approval_status + DROP CONSTRAINT ck_financial_reports_status_pair；无 UPDATE/DELETE/TRUNCATE/DROP TABLE，不改其他列与行数据"
     note: "幂等：列不存在则跳过；fail-closed：存在 status <> approval_status 的行则 RAISE EXCEPTION 先清洗。回滚 database/rollback/20261124130000_financial_reports_single_status.rollback.sql 重加列、回填 approval_status=status 并重建 2 条 CHECK；回滚仅在代码同步回退双写版本时使用"
+
+  # ===== 2026-11-24：B256 crm 财务风险等级值集约束 =====
+  - version: "20261124140000"
+    file: "database/migrations/20261124140000_crm_customer_finance_risklevel.sql"
+    status: to_apply
+    effect: "crm.customer_finance.risklevel 建立值集约束 crm_customer_finance_risklevel_check（low/medium/high/critical），与 src FinanceRiskLevel::DB_VALUES 一致；ADD NOT VALID + VALIDATE"
+    destructive_scan: "仅 ADD/VALIDATE 1 条 CHECK；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数据"
+    note: "幂等：约束已存在则跳过；fail-closed：存在值集外行则 RAISE EXCEPTION。回滚 database/rollback/20261124140000_crm_customer_finance_risklevel.rollback.sql 仅 DROP 该约束"

@@ -1239,8 +1239,9 @@
         "file": "svc/finance/src/modules/financial_report_status.rs",
         "enum": "FinancialReportStatus",
         "table": "finance.financial_reports",
-        "column": "approval_status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+        "column": "status",
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+        "note": "2026-11-24 B255 合并：approval_status 列已删除，报表态只由 status 承载；原 approval_status 映射行随列删除"
       }
     },
     {
