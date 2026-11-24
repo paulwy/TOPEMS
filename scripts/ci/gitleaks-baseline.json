@@ -2461,5 +2461,53 @@
   "Message": "feat: 添加 IAM 身份认证平台服务\n\n- 后端：Rust + Axum 实现的身份认证服务\n- 前端：React + TypeScript 管理界面\n- 支持用户管理、角色权限、认证授权",
   "Tags": [],
   "Fingerprint": "f60b621452fa28ee102da3a3f47dea3754a22eec:platform/topems-iam/backend/tests/unit_test.rs:generic-api-key:19"
+ },
+ {
+  "RuleID": "topems-database-url",
+  "Description": "Database URL with credentials",
+  "StartLine": 26,
+  "EndLine": 26,
+  "StartColumn": 21,
+  "EndColumn": 62,
+  "Match": "postgresql://topems_app:REDACTED@",
+  "Secret": "REDACTED",
+  "File": "config/env/.env.production.template",
+  "SymlinkFile": "",
+  "Commit": "26403c33d96b42efcb1d4fd5d93b65b6b337a19a",
+  "Link": "https://github.com/paulwy/TOPEMS/blob/26403c33d96b42efcb1d4fd5d93b65b6b337a19a/config/env/.env.production.template#L26",
+  "Entropy": 3.2195282,
+  "Author": "paulwy",
+  "Email": "wy_hb@126.com",
+  "Date": "2026-11-24T01:19:09Z",
+  "Message": "fix(deploy): \u751f\u4ea7\u914d\u7f6e\u5168\u9762\u6536\u53e3\uff08env/compose/pgbouncer/k8s \u4e09\u6e90\u51b2\u7a81 + \u53ef\u65ad\u8a00\u95e8\u7981\uff09\n\n- .env.production \u91cd\u5199\u4e3a native Mac \u5f62\u6001\uff1asocket+peer(topems_prod)\u3001pool 100\u219230\u3001CORS \u771f\u5b9e\u57df\u540d\u3001\u8def\u5f84\u6539 /Users/xingzhai\u3001600\n- compose\uff1a11 \u5904\u5e94\u7528 DSN \u6539\u7ecf pgbouncer:6432\uff1bowner \u4ec5\u4fdd\u7559\u5728 MIGRATE_URL\uff1bpostgres -c max_connections=200\n- pgbouncer\uff1a\u5220\u9664\u4e0e ini \u51b2\u7a81\u7684 PGBOUNCER_* env\uff08\u5355\u4e00\u4e8b\u5b9e\u6e90\uff09\uff1bauth_type\u2192scram-sha-256\uff1bpool 15\u219240\n- pgbouncer userlist \u4e0d\u518d\u5165\u5e93\uff1arender-userlist.sh \u90e8\u7f72\u65f6\u751f\u6210\uff0c\u4ed3\u5e93\u53ea\u7559 .example\n- k8s\uff1apostgres/redis/rabbitmq \u8865 securityContext\uff1brabbitmq \u660e\u6587\u53e3\u4ee4\u6539 secretKeyRef\n- \u65b0\u589e scripts/ci/check-prod-config.mjs\uff086 \u7ec4\u4e0d\u53d8\u91cf\uff0c\u8d1f\u4f8b\u5df2\u9a8c\u8bc1\uff09+ lefthook prod-config \u94a9\u5b50\n- docs\uff1a\u5ba1\u8ba1\u4fee\u590d\u8bb0\u5f55 + topmap.net DNS \u6536\u53e3\u6e05\u5355",
+  "Tags": [
+   "database",
+   "credentials"
+  ],
+  "Fingerprint": "26403c33d96b42efcb1d4fd5d93b65b6b337a19a:config/env/.env.production.template:topems-database-url:26"
+ },
+ {
+  "RuleID": "topems-database-url",
+  "Description": "Database URL with credentials",
+  "StartLine": 29,
+  "EndLine": 29,
+  "StartColumn": 15,
+  "EndColumn": 56,
+  "Match": "postgresql://topems_app:REDACTED@",
+  "Secret": "REDACTED",
+  "File": "config/env/.env.production.template",
+  "SymlinkFile": "",
+  "Commit": "26403c33d96b42efcb1d4fd5d93b65b6b337a19a",
+  "Link": "https://github.com/paulwy/TOPEMS/blob/26403c33d96b42efcb1d4fd5d93b65b6b337a19a/config/env/.env.production.template#L29",
+  "Entropy": 3.2195282,
+  "Author": "paulwy",
+  "Email": "wy_hb@126.com",
+  "Date": "2026-11-24T01:19:09Z",
+  "Message": "fix(deploy): \u751f\u4ea7\u914d\u7f6e\u5168\u9762\u6536\u53e3\uff08env/compose/pgbouncer/k8s \u4e09\u6e90\u51b2\u7a81 + \u53ef\u65ad\u8a00\u95e8\u7981\uff09\n\n- .env.production \u91cd\u5199\u4e3a native Mac \u5f62\u6001\uff1asocket+peer(topems_prod)\u3001pool 100\u219230\u3001CORS \u771f\u5b9e\u57df\u540d\u3001\u8def\u5f84\u6539 /Users/xingzhai\u3001600\n- compose\uff1a11 \u5904\u5e94\u7528 DSN \u6539\u7ecf pgbouncer:6432\uff1bowner \u4ec5\u4fdd\u7559\u5728 MIGRATE_URL\uff1bpostgres -c max_connections=200\n- pgbouncer\uff1a\u5220\u9664\u4e0e ini \u51b2\u7a81\u7684 PGBOUNCER_* env\uff08\u5355\u4e00\u4e8b\u5b9e\u6e90\uff09\uff1bauth_type\u2192scram-sha-256\uff1bpool 15\u219240\n- pgbouncer userlist \u4e0d\u518d\u5165\u5e93\uff1arender-userlist.sh \u90e8\u7f72\u65f6\u751f\u6210\uff0c\u4ed3\u5e93\u53ea\u7559 .example\n- k8s\uff1apostgres/redis/rabbitmq \u8865 securityContext\uff1brabbitmq \u660e\u6587\u53e3\u4ee4\u6539 secretKeyRef\n- \u65b0\u589e scripts/ci/check-prod-config.mjs\uff086 \u7ec4\u4e0d\u53d8\u91cf\uff0c\u8d1f\u4f8b\u5df2\u9a8c\u8bc1\uff09+ lefthook prod-config \u94a9\u5b50\n- docs\uff1a\u5ba1\u8ba1\u4fee\u590d\u8bb0\u5f55 + topmap.net DNS \u6536\u53e3\u6e05\u5355",
+  "Tags": [
+   "database",
+   "credentials"
+  ],
+  "Fingerprint": "26403c33d96b42efcb1d4fd5d93b65b6b337a19a:config/env/.env.production.template:topems-database-url:29"
  }
 ]
