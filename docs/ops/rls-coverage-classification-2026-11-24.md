@@ -300,9 +300,60 @@ B 类 38 张经应用依赖核对：**10 张死表 + 24 张重复遗留表不补
 
 两轮对照未发现"明确漏挂 RLS 的租户业务表"；待定性 23 张（4+19）需产品/安全口径与运行时链路复核后再决定补策略。整体结论与 §3、§7.5 一致：**生产 RLS 开关覆盖基本健康，主要隔离风险集中在策略内容（allow-all）与历史重复/遗留表治理。**
 
+## 9. 待定性表运行时链路复核（2026-11-24）
+
+### 9.1 方法
+
+排除 `**/tests/` 夹具与测试样例，扫描 1750 个运行时 `.rs`，逐表核查：运行时是否有真实 SQL、SQL 是否绑定 `tenant_id`、数据归属靠什么隔离。下列为客观观察与初步建议，**不构成补 RLS 迁移结论**；④ 组仍需产品/安全口径拍板。
+
+### 9.2 ① 全局参考/目录表（倾向豁免，不补 RLS）
+
+| 表 | 运行时观察 |
+|---|---|
+| `core.core_plugin_permissions` | 插件权限定义目录，按 `plugin_code` 查询/写入，无租户谓词 |
+| `erp.erp_master_data_quality_rules` / `erp_master_data_quality_reports` | 主数据质量规则/报告目录，按 domain/entity_type 过滤 |
+| `master_data.mdm_quality_rules` | 质量规则目录，按 entity_type/enabled 过滤 |
+| `public.core_permissions` / `core_role_permissions` / `core_user_roles`（及 `iam.core_permissions` / `core_role_permissions` / `core_user_roles` 副本） | 权限-角色-用户授权关联模型，全局权限定义与关联 |
+| `iam.tool_permissions` | 工具级权限覆盖，外键挂 `tenant_permission_id`，无独立租户谓词 |
+
+### 9.3 ② 父子关联/版本表，靠父表 JOIN 隔离（豁免自身 RLS）
+
+| 表 | 隔离现状 |
+|---|---|
+| `public.core_doc_document_versions` | 表无 `tenant_id`、无 RLS；代码注释明确：JOIN 父文档表 `d.tenant_id` 谓词做归属校验，不依赖版本表自身策略 |
+| `qms.qa_inspection_plan_items` | 计划-明细关联表，JOIN `qa_inspection_items` 带 `i.tenant_id` 谓词 |
+| `rs.document_relations` | 按 `entity_type`/`entity_id` 关联归属（列表分页见 9.5④） |
+| `communication.core_location_messages` | 按 `chat_id` 归属会话（chat 边界见 9.5④） |
+
+### 9.4 ③ 应用谓词/作用域在位，风险较低
+
+| 表 | 隔离现状 |
+|---|---|
+| `iam.tenant_permissions` | SQL `WHERE tenant_id=$1 AND user_id=$2`，租户谓词在位 |
+| `iam.users` | 身份主表；scope 判定 JOIN `tenant_users` 带 `tenant_id`；登录按 username/email 做全局身份解析 |
+| `ai.user_profiles` | 按 `user_id` 读写，走 `scope_with` 租户作用域事务 |
+
+### 9.5 ④ 仍需口径拍板（4 类）
+
+| 表 | 待确认点 |
+|---|---|
+| `core.core_plugin_instances` | 插件运行时实例注册；INSERT/UPDATE/SELECT 按 `plugin_id` 关联，SQL 未直接绑定 `tenant_id`，需明确实例是平台共享还是租户私有 |
+| `core.core_plugin_reviews` | 市场评论/评分，需确认公开可见还是租户内可见 |
+| `rs.document_relations` | 列表与 COUNT 为全表分页，未见租户过滤；需复核是否应按实体租户收敛 |
+| `communication.core_location_messages` | 仅按 `chat_id` 归属，需确认 chat 边界是否已覆盖租户隔离 |
+
+### 9.6 ⑤ 基准白名单（豁免）
+
+- `gis.track_positions`：代码基准 `rls_policy_expected.json` 有意保留的全局读通道（白名单 3 张之一）。
+
+### 9.7 复核结论
+
+23 张待定性表经运行时链路复核：**未发现必须立即补 RLS 的明确租户业务表**。① 组倾向目录/全局豁免；② 组靠父表 JOIN 隔离；③ 组应用谓词在位；④ 组 4 个点需产品/安全口径确认后再定；⑤ 组为有意全局通道。后续若补策略，优先复核 ④ 组中 `rs.document_relations` 的全表分页读与 `core_plugin_instances` 的实例归属。
+
 ## 6. 下一步建议（优先级）
 
 1. **P1**：~~核对 B 类 38 张业务实体表的应用 SQL 依赖~~（已完成，见 §7；剩 4 张待口径定性）。
 2. **P1**：~~复核 C 类 53 张疑似业务实体~~（已完成，见 §8；12 死表 / 22 重复遗留 / 19 待定性）。
 3. **P2**：在超户/CI 全链 head 库上复跑本对照，消除 fixture 库快照偏差。
-4. **P3**：10 张死表 + 24 张重复遗留表纳入后续归档/下线评估；日志/队列/字典类逐张确认豁免口径后登记豁免台账。
+4. **P3**：22 张死表 + 46 张重复遗留表纳入后续归档/下线评估；日志/队列/字典类逐张确认豁免口径后登记豁免台账。
+5. **口径待办**：§9.5④ 组 4 个点（插件实例归属、插件评论可见性、`rs.document_relations` 全表分页、位置消息 chat 边界）提交产品/安全评审。
