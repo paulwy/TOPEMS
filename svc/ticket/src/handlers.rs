@@ -1770,10 +1770,6 @@ pub struct UpdateCommentRequest {
     is_internal: Option<bool>,
 }
 
-fn tenant_id_of(claims: &Claims) -> Uuid {
-    Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil())
-}
-
 /// 写操作必须携带有效租户：缺失或为零租户时返回 400，禁止把业务数据写入零 UUID 区间。
 fn require_tenant_id<T>(claims: &Claims) -> Result<Uuid, ApiResponse<T>> {
     match claims
@@ -1794,7 +1790,10 @@ pub async fn update_comment_handler(
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateCommentRequest>,
 ) -> ApiResponse<TicketComment> {
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1857,7 +1856,10 @@ pub async fn delete_comment_handler(
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1947,7 +1949,10 @@ pub async fn list_activities_timeline_handler(
     Path(ticket_id): Path<Uuid>,
 ) -> ApiResponse<Vec<TicketActivity>> {
     let service = TicketService::new(db);
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     match service
         .list_activities(tenant_id, ticket_id, &txn_arc)
         .await
@@ -1968,7 +1973,10 @@ pub async fn assign_ticket_handler(
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db.clone());
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     if let Err(e) = service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
@@ -2024,7 +2032,10 @@ pub async fn resolve_ticket_handler(
     Json(_body): Json<serde_json::Value>,
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db.clone());
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     if let Err(e) = service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
@@ -2075,7 +2086,10 @@ pub async fn close_ticket_handler(
     Json(_body): Json<serde_json::Value>,
 ) -> ApiResponse<Ticket> {
     let service = TicketService::new(db.clone());
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     if let Err(e) = service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
@@ -2128,7 +2142,10 @@ pub async fn list_sla_escalations_handler(
 ) -> ApiResponse<Vec<SlaEscalationEvent>> {
     let ticket_service = TicketService::new(db.clone());
     let sla_service = TicketSlaService::new(db.clone());
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     if let Err(e) = ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         return match e {
             sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
@@ -2153,7 +2170,10 @@ pub async fn calculate_ticket_sla_handler(
 ) -> ApiResponse<TicketSlaInfo> {
     let ticket_service = TicketService::new(db.clone());
     let sla_service = TicketSlaService::new(db.clone());
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let ticket = match ticket_service.get_ticket(tenant_id, id, &txn_arc).await {
         Ok(t) => t,
         Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("工单不存在"),
@@ -2282,7 +2302,10 @@ pub async fn dashboard_my_handler(
     State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_id_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
     let me = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {

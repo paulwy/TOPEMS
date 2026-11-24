@@ -29,8 +29,16 @@ const ALL_STATUSES: &[&str] = &[
     "cancelled",
 ];
 
-fn tenant_of(claims: &Claims) -> Uuid {
-    Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil())
+/// 写操作必须携带有效租户：缺失/非法/nil 返回 400，禁止落零 UUID 区间。
+fn require_tenant_id(claims: &Claims) -> Result<Uuid, (u16, String)> {
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        Some(t) if !t.is_nil() => Ok(t),
+        _ => Err((400, "缺少租户上下文：拒绝工单写操作".to_string())),
+    }
 }
 
 fn user_of(claims: &Claims) -> Option<Uuid> {
@@ -279,7 +287,10 @@ pub async fn toggle_workflow_automation_rule(
     Path(id): Path<Uuid>,
     Json(req): Json<WorkflowToggleRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -482,7 +493,10 @@ pub async fn apply_transition(
     Path(id): Path<Uuid>,
     Json(req): Json<TransitionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let user_id = user_of(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -659,7 +673,10 @@ async fn add_ticket_tag(
     Path(id): Path<Uuid>,
     Json(req): Json<TagRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let tag = req.tag.trim().to_string();
     if tag.is_empty() {
         return ApiResponse::bad_request("标签不能为空");
@@ -735,7 +752,10 @@ pub async fn remove_ticket_tag(
     claims: axum::Extension<Claims>,
     Path((id, tag)): Path<(Uuid, String)>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -943,7 +963,10 @@ pub async fn batch_update_tickets(
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let ids = ids_param(&req);
     if ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
@@ -1005,7 +1028,10 @@ pub async fn batch_assign_tickets(
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let ids = ids_param(&req);
     let assignee = match req.assignee_id {
         Some(a) => a,
@@ -1060,7 +1086,10 @@ pub async fn batch_close_tickets(
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let ids = ids_param(&req);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1110,7 +1139,10 @@ pub async fn batch_delete_tickets(
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let ids = ids_param(&req);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1160,7 +1192,10 @@ pub async fn batch_escalate_tickets(
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let ids = ids_param(&req);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -1295,7 +1330,10 @@ async fn upload_attachment(
     Path(id): Path<Uuid>,
     Json(req): Json<UploadAttachmentRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let user_id = user_of(&claims);
     if req.file_name.trim().is_empty() {
         return ApiResponse::bad_request("file_name 必填");
@@ -1421,7 +1459,10 @@ async fn update_attachment(
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UploadAttachmentRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let data = req
         .file_data
         .as_deref()
@@ -1476,7 +1517,10 @@ async fn delete_attachment(
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -1535,7 +1579,10 @@ pub async fn batch_upload_attachments(
     Path(id): Path<Uuid>,
     Json(req): Json<BatchUploadRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let user_id = user_of(&claims);
     let mut created = 0usize;
     let mut guard = txn_arc.lock().await;
@@ -1602,7 +1649,10 @@ pub async fn batch_delete_attachments(
     Path(id): Path<Uuid>,
     Json(req): Json<BatchDeleteAttachmentsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = tenant_of(&claims);
+    let tenant_id = match require_tenant_id(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     if req.ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
     }
