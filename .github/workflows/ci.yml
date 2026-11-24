@@ -2559,7 +2559,7 @@ jobs:
       DATABASE_URL: "postgresql://topems_test:topems_test_secret@localhost:5432/topems_defense"
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: topems_test
           POSTGRES_PASSWORD: topems_test_secret
