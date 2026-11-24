@@ -34,7 +34,7 @@ const MENU_COLUMNS: &str =
 pub async fn list_groups(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(query): Query<MenuGroupQuery>,
 ) -> ApiResponse<MenuGroupListResponse> {
     let page = query.page.unwrap_or(1).max(1);
@@ -43,11 +43,6 @@ pub async fn list_groups(
 
     let search = query.search.clone();
     let status = query.status.clone();
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -65,12 +60,10 @@ pub async fn list_groups(
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM public.core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
-             AND ($2::text IS NULL OR status = $2)
-             AND ($3::uuid IS NULL OR tenant_id = $3)"#,
+             AND ($2::text IS NULL OR status = $2)"#,
     )
     .bind(search.clone())
     .bind(status.clone())
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     {
@@ -85,16 +78,14 @@ pub async fn list_groups(
         r#"SELECT {} FROM public.core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
-             AND ($3::uuid IS NULL OR tenant_id = $3)
            ORDER BY sort_order ASC, created_at DESC
-           LIMIT $4 OFFSET $5"#,
+           LIMIT $3 OFFSET $4"#,
         MENU_GROUP_COLUMNS
     );
 
     let items: Vec<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(search)
         .bind(status)
-        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut scope)
@@ -335,7 +326,7 @@ pub async fn delete_group(
 pub async fn list_menus(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(query): Query<MenuQuery>,
 ) -> ApiResponse<MenuListResponse> {
     let page = query.page.unwrap_or(1).max(1);
@@ -346,11 +337,6 @@ pub async fn list_menus(
     let parent_id = query.parent_id;
     let search = query.search.clone();
     let status = query.status.clone();
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id_from_claims(&claims))
-    };
 
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
@@ -370,14 +356,12 @@ pub async fn list_menus(
            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
-             AND ($4::text IS NULL OR status = $4)
-             AND ($5::uuid IS NULL OR tenant_id = $5)"#,
+             AND ($4::text IS NULL OR status = $4)"#,
     )
     .bind(group_id)
     .bind(parent_id)
     .bind(search.clone())
     .bind(status.clone())
-    .bind(tenant_opt)
     .fetch_one(&mut scope)
     .await
     {
@@ -394,9 +378,8 @@ pub async fn list_menus(
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
              AND ($4::text IS NULL OR status = $4)
-             AND ($5::uuid IS NULL OR tenant_id = $5)
            ORDER BY sort_order ASC, created_at DESC
-           LIMIT $6 OFFSET $7"#,
+           LIMIT $5 OFFSET $6"#,
         MENU_COLUMNS
     );
 
@@ -405,7 +388,6 @@ pub async fn list_menus(
         .bind(parent_id)
         .bind(search)
         .bind(status)
-        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&mut scope)
@@ -803,21 +785,12 @@ pub async fn my_menu_tree(
     let rows = match state.menu_cache.get(&cache_key) {
         Some(rows) => rows,
         None => {
-            let tenant_opt: Option<Uuid> = if claims.is_superuser {
-                None
-            } else {
-                claims
-                    .tenant_id
-                    .as_deref()
-                    .and_then(|t| Uuid::parse_str(t).ok())
-            };
             let sql = format!(
                 r#"SELECT {}
                    FROM public.core_menus m
                    LEFT JOIN public.core_menu_groups g
                      ON g.id = m.group_id AND g.deleted_at IS NULL
                    WHERE m.deleted_at IS NULL
-                     AND ($1::uuid IS NULL OR m.tenant_id = $1)
                    ORDER BY g.sort_order ASC, m.sort_order ASC, m.code ASC"#,
                 MENU_READ_COLUMNS
             );
@@ -840,7 +813,6 @@ pub async fn my_menu_tree(
                 }
             };
             match sqlx::query_as::<_, DbMenuRow>(sqlx::AssertSqlSafe(sql))
-                .bind(tenant_opt)
                 .fetch_all(&mut scope)
                 .await
             {
