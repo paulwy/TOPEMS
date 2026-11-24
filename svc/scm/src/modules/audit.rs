@@ -221,6 +221,7 @@ pub async fn log_audit_event(
     // 统一走系统通道（nil + rls_system=on）保证 WITH CHECK 通过，tenant_id 列
     // 仍按请求租户显式绑定，读回时租户只看到自己的行。
     let ctx = current_request_tenant();
+    // tenant-system: 审计日志系统通道写入，nil 为缺省系统租户哨兵
     let tenant_id = ctx.map(|c| c.tenant).unwrap_or_else(Uuid::nil);
     let scoped = Db::new(db.clone(), "scm, public, shared");
     let mut scope = match scoped.scope_system().await {

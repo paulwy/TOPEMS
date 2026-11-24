@@ -444,6 +444,7 @@ async fn save_audit_log(
     // 中间件在响应后写审计，认证中间件的 task-local 已结束；
     // 这里显式使用系统通道（nil UUID + system=on）并显式绑定行租户，
     // 避免裸连接无 GUC 时被 RLS `WITH CHECK` 拒绝（静默丢审计）。
+    // tenant-system: 审计日志系统通道写入，nil 为缺省系统租户哨兵
     let tenant_id = request.tenant_id.unwrap_or_else(Uuid::nil);
     // public.audit_logs.user_id 为 uuid；Claims.sub 是字符串，必须解析后再绑定，
     // 否则 PostgreSQL 报 "column user_id is of type uuid but expression is of type text"。
