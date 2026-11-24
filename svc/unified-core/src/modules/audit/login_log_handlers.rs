@@ -87,14 +87,13 @@ pub async fn record_login(
 pub async fn list_login_logs(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(query): Query<LoginLogQuery>,
 ) -> ApiResponse<LoginLogListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let tenant_id = super::handlers::claims_tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -137,15 +136,14 @@ pub async fn list_login_logs(
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM public.core_login_logs
-           WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::text IS NULL OR username ILIKE $2)
-             AND ($3::text IS NULL OR status = $3)
-             AND ($4::uuid IS NULL OR user_id = $4)
-             AND ($5::text IS NULL OR ip_address ILIKE $5)
-             AND ($6::timestamp IS NULL OR login_time >= $6)
-             AND ($7::timestamp IS NULL OR login_time <= $7)"#,
+           WHERE deleted_at IS NULL
+             AND ($1::text IS NULL OR username ILIKE $1)
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::uuid IS NULL OR user_id = $3)
+             AND ($4::text IS NULL OR ip_address ILIKE $4)
+             AND ($5::timestamp IS NULL OR login_time >= $5)
+             AND ($6::timestamp IS NULL OR login_time <= $6)"#,
     )
-    .bind(tenant_id)
     .bind(username_like)
     .bind(status_filter)
     .bind(user_id)
@@ -181,17 +179,15 @@ pub async fn list_login_logs(
     let items: Vec<LoginLog> = match sqlx::query_as(
         r#"SELECT id, tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time, created_at
            FROM public.core_login_logs
-           WHERE ($1::uuid IS NULL OR tenant_id = $1)
-             AND ($2::text IS NULL OR username ILIKE $2)
-             AND ($3::text IS NULL OR status = $3)
-             AND ($4::uuid IS NULL OR user_id = $4)
-             AND ($5::text IS NULL OR ip_address ILIKE $5)
-             AND ($6::timestamp IS NULL OR login_time >= $6)
-             AND ($7::timestamp IS NULL OR login_time <= $7)
+           WHERE ($1::text IS NULL OR username ILIKE $1)
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::uuid IS NULL OR user_id = $3)
+             AND ($4::text IS NULL OR ip_address ILIKE $4)
+             AND ($5::timestamp IS NULL OR login_time >= $5)
+             AND ($6::timestamp IS NULL OR login_time <= $6)
            ORDER BY login_time DESC
-           LIMIT $8 OFFSET $9"#,
+           LIMIT $7 OFFSET $8"#,
     )
-    .bind(tenant_id)
     .bind(username_like2)
     .bind(status_filter)
     .bind(user_id2)
@@ -221,10 +217,9 @@ pub async fn list_login_logs(
 pub async fn get_login_log(
     Extension(txn_arc): Extension<RlsTxnCell>,
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LoginLog> {
-    let tenant_id = super::handlers::claims_tenant_filter(&claims);
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
@@ -240,10 +235,9 @@ pub async fn get_login_log(
 
     let log: Option<LoginLog> = match sqlx::query_as(
         r#"SELECT id, tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time, created_at
-           FROM public.core_login_logs WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+           FROM public.core_login_logs WHERE id = $1"#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
