@@ -2985,3 +2985,11 @@ pending_forward_patches:
     effect: "hrm.initialization_status 新增 (tenant_id, step_name) 唯一索引 idx_init_status_tenant_step_unique：供 setup 读取侧 INSERT ... ON CONFLICT DO NOTHING 幂等补种，并保证 mark_step_completed 的 UPDATE 影响行数恒为 1（fail-closed 依赖）。仅新增索引，不改列、不动行"
     destructive_scan: "仅 DO 守卫 + CREATE UNIQUE INDEX IF NOT EXISTS；无 UPDATE/DELETE/TRUNCATE/DROP；若存量存在重复 (tenant_id, step_name)，守卫先 RAISE EXCEPTION 阻断并给出清理口径，不静默删行"
     note: "执行顺序：必须先于 topems-hrm 新版本上线（新代码补种依赖该索引；旧代码不依赖）。幂等：IF NOT EXISTS，同名约束/索引已存在则跳过。后置断言：索引存在且唯一。回滚 database/rollback/20261124150000_hrm_init_status_tenant_step_unique.rollback.sql 仅 DROP INDEX，进度数据全部保留"
+
+  # ===== 2026-11-24：B260 RD 项目成员状态大小写收口 =====
+  - version: "20261124160000"
+    file: "database/migrations/20261124160000_rd_project_members_status_standard.sql"
+    status: to_apply
+    effect: "rs.project_members.status 从默认 'ACTIVE' + Rust 大写写入，收口为 active/inactive 小写；权限查询 lower(status)='active' 与写入一致；ADD CHECK ck_project_members_status_standard + VALIDATE"
+    destructive_scan: "UPDATE status 大小写归一（ACTIVE→active），ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有 active/inactive 之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124160000_rd_project_members_status_standard.rollback.sql 恢复默认 ACTIVE、存量大写并 DROP 约束"

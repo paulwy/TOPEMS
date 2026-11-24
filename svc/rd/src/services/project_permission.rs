@@ -72,7 +72,7 @@ pub async fn get_project_role(
 
     let member_result = sqlx::query(
         r#"
-        SELECT role FROM rs.project_members WHERE project_id = $1 AND employee_id = $2 AND status = 'active'
+        SELECT role FROM rs.project_members WHERE project_id = $1 AND employee_id = $2 AND lower(status) = 'active'
         "#,
     )
     .bind(project_id)

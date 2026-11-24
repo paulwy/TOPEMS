@@ -43,6 +43,33 @@ pub enum MemberStatus {
     Inactive,
 }
 
+impl MemberStatus {
+    pub const DB_VALUES: [&'static str; 2] = ["active", "inactive"];
+    pub const DEFAULT: Self = Self::Active;
+
+    #[must_use]
+    pub fn as_db_str(&self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Inactive => "inactive",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Active),
+            "inactive" => Some(Self::Inactive),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<&'static str> {
+        Self::from_db_str(raw).map(|s| s.as_db_str())
+    }
+}
+
 impl std::fmt::Display for MemberStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -160,6 +187,15 @@ mod tests {
     fn test_member_status_display() {
         assert_eq!(format!("{}", MemberStatus::Active), "ACTIVE");
         assert_eq!(format!("{}", MemberStatus::Inactive), "INACTIVE");
+    }
+
+    #[test]
+    fn member_status_db_contract_is_lowercase() {
+        assert_eq!(MemberStatus::DB_VALUES, ["active", "inactive"]);
+        assert_eq!(MemberStatus::Active.as_db_str(), "active");
+        assert_eq!(MemberStatus::normalize(" Inactive "), Some("inactive"));
+        assert!(MemberStatus::from_db_str("ACTIVE").is_some());
+        assert!(MemberStatus::from_db_str("archived").is_none());
     }
 
     #[test]

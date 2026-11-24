@@ -74,7 +74,7 @@ pub async fn create_member(
     }
 
     let id = Uuid::new_v4();
-    let status = MemberStatus::Active.to_string();
+    let status = MemberStatus::Active.as_db_str();
 
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
@@ -281,7 +281,7 @@ pub async fn update_member(
     .bind(payload.responsibility.as_deref())
     .bind(payload.allocation)
     .bind(payload.leave_date)
-    .bind(payload.status.map(|s| s.to_string()))
+    .bind(payload.status.map(|s| s.as_db_str()))
     .bind(payload.hourly_rate)
     .bind(payload.cost_rate)
     .bind(payload.budgeted_hours)
