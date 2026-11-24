@@ -84,6 +84,19 @@
 | bi.analytics_row_level_permissions | 6 | 4 | 2 | OFF | 0 | svc/analytics/src/modules/bi/row_level_permission.rs |
 | bi.analytics_self_service_reports | 6 | 4 | 2 | OFF | 0 | svc/analytics/src/modules/bi/self_service_report.rs |
 
+### 4.1 复核更新（2026-11-24）
+
+**迁移生效状态（实测）**：
+- 生产 `topems_prod`、head 校验库 `topems_runtime_fixture_verify`、演练库 `topems_prod_dryrun`：8 张表均 `relrowsecurity=t / relforcerowsecurity=t / 1 条策略`；账本 `_sqlx_migrations` 中 `20261118093000` `success=t`。策略 qual 为严格 B 范式：`COALESCE(current_setting('app.rls_system'),'off')='on' OR tenant_id=(NULLIF(current_setting('app.tenant_id'),''))::uuid`，无 `tenant_id IS NULL` 放行分支。
+- `topems_test_runner`：8 张仍 OFF / 0 策略；该库账本为空、schema 来源不可追溯，**不作为隔离基准**。
+
+**代码侧残留量化**（`svc/analytics/src`，排除测试）：
+- 可选租户旁路谓词共 **47 处**：读（SELECT）旁路 **33** 处、变更守卫（UPDATE/DELETE）**14** 处。
+- 读旁路已具备剥除条件：RLS 严格策略已在生产兜底；剥除后隔离由 RLS + 作用域事务承担。
+- 14 处变更守卫按 D 桶口径**保留**，不纳入剥除。
+- 注：`bi.analytics_data`、`analytics_sync_records` 仍属 C 桶保留；`multidimensional_analysis.rs` / `predictive_analysis.rs` 中的读旁路指向 `analytics_data`，不在本波剥除范围。
+- 剥除 B 桶读旁路时须按 A 桶先例：连库 `SQLX_OFFLINE=false` + 离线双口径 `cargo check` 绿、写源门禁 strict PASS 后入库推送。
+
 ## 5. C 桶：须保留应用谓词（无 RLS 覆盖）
 
 | 表 | 谓词总数 | SELECT | 变更守卫 | 测试库 RLS | 策略数 | 涉及文件 |
@@ -147,7 +160,7 @@
 - **中央处理器，待专项评审后再剥**：`unified-core` 的 role 2 处（谓词含显式零 uuid 腿 `tenant_id='0000…000'`，而 RLS `rls_global_read` 仅放行 `tenant_id IS NULL`、不放行 nil，剥离会隐藏平台共享角色，保留待口径定论）。
 - **系统/路径作用域实过滤，保留（2026-11-24 复核）**：`tenant/handlers.rs` 19 处谓词绑定的是路径 `Path(tenant_id)` 或在 `scope_with_system`（system 通道）下打开，谓词承担真实目标租户过滤；剥除后 RLS system 旁路隔离、且应用层不再按目标租户收敛，会跨租户泄漏行，**不是冗余旁路，禁止剥除**。menu 分组/菜单/菜单树 5 处读已剥除（40b7fa0e5）；login_logs 读 3 处已剥除（b52cac713）。grep 在 menu/login 残留命中均为保留的 UPDATE/软删守卫。
 - **共享/零租户腿，待可见性评审**：wms `sync_records`/`sync_record_details` 谓词带零 uuid 腿（`'0000…000' OR tenant_id=`）；monitor、erp settings 谓词带 `tenant_id IS NULL` 共享行腿。剥除会改变平台共享角色/全局默认行对租户的可见性，不能按普通旁路批量处理。
-- **analytics E0599（已闭环，`90199b417` 双态 trait）**：离线/连库双口径 check 绿。BI 读谓词仍按 B 桶口径：迁移 `20261118093000` 覆盖的 8 张表（comparison_analyses/comparison_results/dashboard_shares/dashboard_templates/drilldown_history/drilldown_paths/row_level_permissions/self_service_reports）在测试库 `bi` schema 复核仍为 RLS OFF、0 策略，本地链未生效，剥除会移除唯一租户过滤，**继续保留**；`bi.analytics_data`、`analytics_sync_records` 属 C 桶保留。
+- **analytics E0599（已闭环，`90199b417` 双态 trait）**：离线/连库双口径 check 绿。BI B 桶 8 张表（comparison_analyses/comparison_results/dashboard_shares/dashboard_templates/drilldown_history/drilldown_paths/row_level_permissions/self_service_reports）经 2026-11-24 复核：迁移 `20261118093000` 已在生产/verify/dryrun 生效，RLS ON+FORCE+严格策略；代码侧残留读旁路 33 处已具备剥除条件，14 处变更守卫保留。`bi.analytics_data`、`analytics_sync_records` 属 C 桶保留。详见 §4.1。
 - **D 守卫保留**：master-data / scm / `lib/shared-db/approval.rs` 等 UPDATE/DELETE 行级守卫不纳入读谓词收敛。
 
 ## 8. 数据来源与局限
