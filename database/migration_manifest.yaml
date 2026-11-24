@@ -3071,3 +3071,11 @@ pending_forward_patches:
     effect: "finance.finance_u8_import_records 的 rls_tenant_isolation 策略从“未设置/空串即放行”改为 tenant_id = NULLIF(current_setting('app.tenant_id'), '')::uuid；未设置租户时零行可见"
     destructive_scan: "仅 ALTER/CREATE POLICY 与 ENABLE+FORCE 断言；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：策略存在则 ALTER，不存在则 CREATE；表不存在跳过；后置断言仍含空租户豁免则 RAISE。回滚 database/rollback/20261124200000_finance_u8_import_records_rls_fail_closed.rollback.sql 恢复原表达式（仅精确回退）"
+
+  # ===== 2026-11-25：B273 Mobile OA 表 tenant_id 类型漂移收口 =====
+  - version: "20261125003000"
+    file: "database/migrations/20261125003000_mobile_oa_tenant_id_uuid.sql"
+    status: to_apply
+    effect: "mobile.oa_announcements / oa_meetings / oa_calendar_events / oa_tasks 的 tenant_id 从 text 转为 uuid；同步重建 rls_tenant_isolation 为 tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid"
+    destructive_scan: "仅 ALTER COLUMN TYPE（带 USING）与 DROP/CREATE POLICY；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数"
+    note: "幂等：已是 uuid 则跳过改型，仅校正策略；后置断言无 text 租户列且策略含 uuid 比较，否则 RAISE。回滚 database/rollback/20261125003000_mobile_oa_tenant_id_uuid.rollback.sql 恢复 text 与旧策略表达式"
