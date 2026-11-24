@@ -35,3 +35,28 @@
 - 生产机启动期 4 条 `plugin registry "RLS context missing"` ERROR（01:59:25–01:59:41）：与本次 CORS/ENV 改动无关，需单独排查（现象是插件注册表在无租户上下文下访问了 fail-closed 的 scope 连接）。
 - 回执提到的 `SecurityHeadersConfig` 改动需要**重建二进制**才会在生产生效；二进制当前构建于 11-19 04:34，是否需要为此重建由发布节奏决定。
 - `test.topmap.net` 已删除，DNS 侧无遗留。
+
+## 第二轮回执后的裁决（2026-11-24 二次）
+
+**1. cwd 方案：批准生产机把 plist `WorkingDirectory` 设为 `/Users/xingzhai`（不是仓库目录）**
+
+生产机的反对理由经代码核对成立：`Cargo.toml:341` 把 `dotenv` 解析为 `dotenvy 0.15`，`dotenv::dotenv()`（`svc/server/src/main.rs:162`、`lib/shared-bootstrap/src/lib.rs:336/818`）会从 cwd 逐级向上找 `.env`。cwd 若落在 `/Users/xingzhai/topems`，会把仓库 `.env` 的约 40 个变量注入进程（含 `RUST_LOG`、旧 `DATABASE_URL`），属隐式行为变更。`/Users/xingzhai` 与 `/` 下均无 `.env`，是当前最干净的落点；相对路径 `uploads/` 顺带落到 `/Users/xingzhai/uploads`（首次上传自动创建）。
+
+验收追加两条：`lsof -a -p <pid> -d cwd` 显示 `/Users/xingzhai`；首次上传后 `ls -ld /Users/xingzhai/uploads` 存在，且 **`/uploads` 未被创建**。
+
+**2. `.env` 的 `DATABASE_URL`：选 b（整行注释掉），并保留说明注释**
+
+理由：保留旧值仍可能被以仓库为 cwd 的 dotenv 工具静默读到并连错库；注释掉让工具 fail loud。`MIGRATE_URL` 同理应一并注释——否则有人在仓库目录跑迁移工具，会按 `.env` 指向开发库。
+
+**3. plugin-registry 的 `RLS context missing`（158 条 / 20 分钟，前端轮询 `/api/plugin/navigation-config`）**
+
+代码事实：错误来自 `lib/shared-db/src/scope.rs:450` 的 `apply_request_tenant()`——它只认 `tokio::task_local! RLS_REQUEST_TENANT`（`lib/shared-auth/src/middleware/tenant.rs:65`），由 `tenant_middleware` 用 `RLS_REQUEST_TENANT.scope(ctx, next.run(req))` 注入（同文件 :79）。拿不到即报这条。
+
+关键推断：报的是 scope 失败而不是“事务上下文缺失”（`runtime.rs` 里 txn 为空时是另一条错误），说明请求事务存在、中间件**部分**跑了；所以要么该请求命中的是另一处未挂 `tenant_middleware` 的 `/api/plugin` 挂载，要么 task-local 在跨 `spawn` 后丢失。
+
+待生产机回传两个判据：nginx access log 中该请求完整一行（path/status/UA/referer）；同一浏览器会话下 `GET /api/plugin/marketplace` 的状态码。市场 200 + 导航 500 → 同一路由栈，问题在 path 豁免/挂载分层；两者都 500 → 路由栈整体缺 tenant 层。**在定位前不加 BYPASSRLS、不放宽 scope。**
+
+**4. 存储根目录**
+
+临时用 cwd 解决上传，根治要代码引入存储根变量（`TOPEMS_STORAGE_ROOT` 之类，`upload.rs` / `download.rs` 统一拼根），属独立变更；改完再通知生产机，届时 cwd 方案可保留也可回退。
+
