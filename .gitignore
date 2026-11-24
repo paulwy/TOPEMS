@@ -246,6 +246,8 @@ build/
 *.md.bak
 *.md.tmp
 *.txt.bak
+# rustc 编译器崩溃转储（本地诊断产物，禁止入库）
+rustc-ice-*.txt
 .traecache/
 # TRAE HTML 分享产物（zip 误入库已移除，2026-10-03）
 .trae-html-share-packages/
