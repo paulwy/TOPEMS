@@ -16,14 +16,6 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
-fn tenant_filter(claims: &Claims, headers: &axum::http::HeaderMap) -> Option<Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(claims, headers))
-    }
-}
-
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn mean(values: &[f64]) -> f64 {
     if values.is_empty() {
@@ -832,11 +824,10 @@ pub async fn calculate_spc_chart_limits(
     State(state): State<crate::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     _body: Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    let filter = tenant_filter(&claims, &headers);
     let chart_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的控制图ID"),
@@ -852,7 +843,7 @@ pub async fn calculate_spc_chart_limits(
             return ApiResponse::server_error("控制限计算失败");
         }
     };
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#)).bind(chart_id.to_string()).bind(filter).fetch_one(&mut scope).await;
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id::TEXT = $1"#)).bind(chart_id.to_string()).fetch_one(&mut scope).await;
     match chart {
         Ok(c) => {
             let f = |v: Option<&bigdecimal::BigDecimal>| v.and_then(|x| x.to_f64()).unwrap_or(0.0);

@@ -10,7 +10,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
@@ -278,16 +277,11 @@ pub async fn get_quality_trend(
     State(state): State<crate::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<TrendQuery>,
 ) -> ApiResponse<Vec<QualityTrendItem>> {
     let days = query.days.unwrap_or(30);
     let days_str = days.to_string();
-    let tenant = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -308,10 +302,9 @@ pub async fn get_quality_trend(
             COALESCE(AVG(CASE WHEN result = 'qualified' THEN 100.0 ELSE 0 END), 0) as qualification_rate
         FROM qms.qa_quality_inspections
         WHERE created_at >= NOW() - ($1 || ' days')::INTERVAL
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY period ASC
-        "#)).bind(days_str).bind(tenant)
+        "#)).bind(days_str)
     .fetch_all(&mut scope)
     .await;
 
@@ -355,13 +348,8 @@ pub async fn get_defect_distribution(
     State(state): State<crate::AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> ApiResponse<Vec<QualityDefectDistribution>> {
-    let tenant = if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(&claims, &headers))
-    };
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         return ApiResponse::server_error("数据库事务上下文缺失");
@@ -375,9 +363,8 @@ pub async fn get_defect_distribution(
     };
     let total_count: i64 = match sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_inspection_results WHERE is_qualified = false AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+        "SELECT COUNT(*) FROM qms.qa_inspection_results WHERE is_qualified = false"
     ))
-    .bind(tenant)
     .fetch_one(&mut scope)
     .await
     {
@@ -396,13 +383,11 @@ pub async fn get_defect_distribution(
             COUNT(*) as count
         FROM qms.qa_inspection_results
         WHERE is_qualified = false
-          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         GROUP BY item_name
         ORDER BY count DESC
         LIMIT 10
         "#
     ))
-    .bind(tenant)
     .fetch_all(&mut scope)
     .await;
 
