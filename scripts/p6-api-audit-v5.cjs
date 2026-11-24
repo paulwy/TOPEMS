@@ -912,8 +912,9 @@ function drillDown(canonical, restParts, visited = null, depth = 0) {
 }
 
 const CALLS = [];
-const PAGES_DIR = path.join(APPS, 'pages');
-const allPageFiles = walk(PAGES_DIR).filter((p) => /\.tsx?$/.test(p));
+// 页面已收敛到 components/<module>/*Page.tsx，pages/ 目录已不存在（2026-11-24）
+const PAGES_DIR = APPS;
+const allPageFiles = walk(PAGES_DIR).filter((p) => /Page\.tsx$/.test(p));
 console.log(`[P6 v5] 扫描 Page 组件：${allPageFiles.length} 个`);
 
 for (const page of allPageFiles) {
