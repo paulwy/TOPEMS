@@ -2993,6 +2993,13 @@ pending_forward_patches:
     effect: "rs.project_members.status 从默认 'ACTIVE' + Rust 大写写入，收口为 active/inactive 小写；权限查询 lower(status)='active' 与写入一致；ADD CHECK ck_project_members_status_standard + VALIDATE"
     destructive_scan: "UPDATE status 大小写归一（ACTIVE→active），ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有 active/inactive 之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124160000_rd_project_members_status_standard.rollback.sql 恢复默认 ACTIVE、存量大写并 DROP 约束"
+  # ===== 2026-11-25：B271 工单状态值域与批量更新守卫 =====
+  - version: "20261125002000"
+    file: "database/migrations/20261125002000_ticket_status_standard.sql"
+    status: to_apply
+    effect: "ticket.core_tickets.status 增加 ck_core_tickets_status_standard 六态 CHECK（NOT VALID，本地 VALIDATE）；批量更新入口补值域校验与逐单来源态转移校验，priority/severity 同步校验"
+    destructive_scan: "DO 幂等 ADD 1 条 CHECK + COMMENT；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "TicketStatus 六态与单条状态机已存在，但批量入口可绕过；回滚 database/rollback/20261125002000_ticket_status_standard.rollback.sql 仅移除约束"
   # ===== 2026-11-25：B270 工作流状态约束回迁 =====
   - version: "20261125001000"
     file: "database/migrations/20261125001000_core_workflow_status_standard.sql"

@@ -971,6 +971,17 @@ pub async fn batch_update_tickets(
     if ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
     }
+    // 批量更新不能绕过 TicketStatus 值域与状态机：先校验目标值，再按每张工单当前态校验转移。
+    if let Some(status) = req.status.as_deref() {
+        if !ALL_STATUSES.contains(&status) {
+            return ApiResponse::bad_request("无效的工单状态");
+        }
+    }
+    if let Some(priority) = req.priority.as_deref() {
+        if !crate::util::is_valid_priority(priority) {
+            return ApiResponse::bad_request("无效的工单优先级");
+        }
+    }
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return ApiResponse::from(TopemsError::internal(
@@ -982,6 +993,37 @@ pub async fn batch_update_tickets(
         Ok(s) => s,
         Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
+    if let Some(target) = req.status.as_deref() {
+        let current_rows = match sqlx::query(
+            "SELECT status FROM ticket.core_tickets WHERE id = ANY($1) AND tenant_id = $2 AND deleted_at IS NULL",
+        )
+        .bind(&ids)
+        .bind(tenant_id)
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::internal("读取工单当前状态失败", e));
+            }
+        };
+        for row in &current_rows {
+            let current: String = match row.try_get("status") {
+                Ok(v) => v,
+                Err(e) => {
+                    let _ = scope.rollback().await;
+                    return ApiResponse::from(TopemsError::internal("解析工单当前状态失败", e));
+                }
+            };
+            if !is_valid_ticket_transition(&current, target) {
+                let _ = scope.rollback().await;
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "非法工单状态转移: {current} -> {target}"
+                )));
+            }
+        }
+    }
     let mut set = "updated_at = now()".to_string();
     if req.status.is_some() {
         set.push_str(", status = $3");
