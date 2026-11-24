@@ -4,6 +4,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
@@ -196,6 +197,7 @@ pub struct UnifiedPoiResult {
 pub async fn send_location_message(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<SendLocationRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let mut txn_guard = txn_arc.lock().await;
@@ -222,6 +224,11 @@ pub async fn send_location_message(
 
     let map_provider = payload.map_provider.unwrap_or_else(|| "osm".to_string());
 
+    let sender_id = match claims.user_id() {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(TopemsError::from(e)),
+    };
+
     let msg = match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
         "public",
         r#"
@@ -236,7 +243,7 @@ pub async fn send_location_message(
         "communication"
     ))
     .bind(payload.chat_id)
-    .bind(Uuid::nil())
+    .bind(sender_id)
     .bind(&payload.location_type)
     .bind(&payload.coordinates)
     .bind(&payload.address)
@@ -350,6 +357,7 @@ pub async fn list_location_messages(
 pub async fn create_geofence(
     State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateImGeofenceRequest>,
 ) -> ApiResponse<GeofenceSyncResult> {
     let mut txn_guard = txn_arc.lock().await;
@@ -372,6 +380,11 @@ pub async fn create_geofence(
         .unwrap_or_else(|| vec!["notification".to_string()]));
     let notify_users = serde_json::json!(payload.notify_users.unwrap_or_default());
 
+    let creator_id = match claims.user_id() {
+        Ok(id) => id,
+        Err(e) => return ApiResponse::from(TopemsError::from(e)),
+    };
+
     let created = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         r#"
@@ -387,7 +400,7 @@ pub async fn create_geofence(
     .bind(&payload.name)
     .bind(&payload.description)
     .bind(payload.chat_id)
-    .bind(Uuid::nil())
+    .bind(creator_id)
     .bind(&payload.shape_type)
     .bind(&payload.coordinates)
     .bind(payload.radius)
