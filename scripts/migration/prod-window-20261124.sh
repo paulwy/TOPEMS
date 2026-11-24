@@ -65,11 +65,13 @@ defer_for() {
 
 run_one() {
   local v="$1" gate_guc="" gate_val="" allow="" defer
+  LAST_SKIPPED=0
   # 断点续跑：已应用版本直接跳过。apply-forward 的扫描以 anchor(账本max) 为下界，
   # 窗口内更早的版本此时既不在待应用队列也不在"已应用"集合，会被判为扫描截断。
   if psql -h "$PGHOST" -U "$PGUSER_" -d "$DB" -X -tAc \
       "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" 2>/dev/null | grep -q 1; then
     echo "--- [${DB}] ${v} 已应用，跳过"
+    LAST_SKIPPED=1
     return 0
   fi
   defer="$(defer_for "$v")"
@@ -101,9 +103,17 @@ run_one() {
 }
 
 run_list() {
-  local v rc=0
+  local v rc=0 n=0
+  local max_new="${WINDOW_MAX_NEW:-0}"
   for v in ${1//,/ }; do
     run_one "$v" || { rc=1; echo "STOP: ${v} 失败，后续不再执行" >&2; break; }
+    if [[ "$LAST_SKIPPED" == "0" ]]; then
+      n=$((n+1))
+      if [[ "$max_new" -gt 0 && "$n" -ge "$max_new" ]]; then
+        echo "--- 已达本次分段上限 ${max_new} 条，暂停（再跑同一命令即从账本断点续做）"
+        break
+      fi
+    fi
     echo "--- 账本水位: $(psql -h "$PGHOST" -U "$PGUSER_" -d "$DB" -X -tAc 'select max(version) from _sqlx_migrations')"
   done
   return $rc

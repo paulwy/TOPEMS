@@ -87,6 +87,8 @@ WINDOW_DB=topems_prod_dryrun bash scripts/migration/prod-window-20261124.sh dryr
 
 `dryrun` 与正式窗口走**同一条代码路径**（`--prod`、闸门 `PGOPTIONS`、`--allow-destructive`、票据全保留），只是目标库换成演练库；这样演练结果对正式执行有约束力。
 
+注意：`pg_restore` 必须**带数据**恢复（上面的整库 dump 天然带数据）。若改用 `database/baseline/` 三件套在本机造演练库，必须 schema + 账本 + `baseline_20261117235500_data.sql.gz` 三样都恢复，缺数据会在第一条带数据前置断言的迁移上被 `RAISE` 拒绝（§5.4 表最后一行）。
+
 演练通过判据：
 
 - 81 条全部入账，`max(version)=20261124160000`，`failed=0`；
@@ -118,7 +120,15 @@ CONFIRM=1 WINDOW_DB=topems_prod bash scripts/migration/prod-window-20261124.sh p
 bash scripts/migration/prod-window-20261124.sh verify
 ```
 
-9 条破坏性里两条要开闸门（`20261119100000`=batch-1、`20261119110000`=batch-2），脚本已自动加 `PGOPTIONS`；其余 7 条是「复活死表」类，靠行数守卫。
+9 条破坏性里有 5 条要开闸门，脚本已按版本→GUC 映射自动注入 `PGOPTIONS`（映射逐条 grep 核对过，见 §5.4 表）；其余 4 条是「复活死表/非空拒绝」类，靠行数守卫。
+
+| 版本 | GUC | 取值 |
+|---|---|---|
+| `20261119100000` | `app.drop_dead_tables_gate` | `batch-1` |
+| `20261119110000` | `app.drop_dead_tables_gate` | `batch-2` |
+| `20261119160000` | `app.drop_zero_path_tables_gate` | `zero-path-20261119` |
+| `20261119180000` | `app.archive_legacy_copies_gate` | `legacy-copies-20261119` |
+| `20261119200000` | `app.tenant_unblock_archive_gate` | `tenant-unblock-20261119` |
 
 ### 5.2 phase2（预计 10–15 分钟）
 
@@ -141,24 +151,47 @@ bash scripts/migration/prod-window-20261124.sh verify        # 期望 ledger_max
 | 报错 | 含义 | 处置 |
 |---|---|---|
 | `gate closed: set app.drop_dead_tables_gate=batch-N` | 批次归档闸门未开 | 用手工命令时漏了 `PGOPTIONS`；脚本已自动注入，走脚本即可 |
+| `gate closed: set app.drop_zero_path_tables_gate=zero-path-20261119` | 零路径死表归档闸门未开 | 同上；`20261119160000` 专用 |
+| `gate closed: set app.archive_legacy_copies_gate=legacy-copies-20261119` | legacy 副本归档闸门未开 | 同上；`20261119180000` 专用 |
+| `gate closed: set app.tenant_unblock_archive_gate=tenant-unblock-20261119` | 租户表解锁归档闸门未开 | 同上；`20261119200000` 专用 |
+| `前置断言失败：<schema>.<table> 的 NULL 行数为 N，与基线 M 不符` | 目标库数据与迁移声明的基线不符 | 停手：确认目标库是否漏恢复数据（演练库必须同时恢复 schema + 账本 + 基线数据，见 §4） |
 | `仍有 N 行数据，拒绝自动 DROP` | 该"复活死表"在目标库非空 | **停手**，先归档到 `archive.*` 并核对，再决定是否删；禁止强删 |
 | `batch precheck: <schema>.<table> 的 canonical 策略不存在或不含系统通道` | 目标库 RLS 策略与迁移预期不一致 | **停手回报**，不要跳过该条；说明该 schema 策略历史与仓库预期不同，需按实际策略补一条定向处置 |
 | `archive table archive.<x> already exists: refusing to re-run` | 归档表已存在 | 确认是上次中断残留还是真实占用；必要时改名归档批次再跑 |
 | `白名单外 pending 迁移` | `--defer` 未覆盖全部磁盘 pending | 脚本按磁盘全量生成 defer，不应出现；手工跑时必须把其余版本全部列出 |
 
-### 5.5 执行器本地冒烟（2026-11-24 我方已做）
+### 5.5 代表性演练结论（2026-11-24 我方在本机完成，非 dev 克隆）
 
-在本机用 dev 库克隆（`createdb -T topems`）跑 `dryrun`，验证到：
+演练库由生产基线恢复，而非 dev 克隆，因此具备代表性：
 
-- 脚本 plumbing 正确：账本写入、逐版本 `--only`/`--defer`、票据比对、`archive` 归档路径都走通；
-- 两条闸门批次（`20261119100000` batch-1、`20261119110000` batch-2）在 `PGOPTIONS` 注入下正常开闸并完成；
-- 第 6 条 `20261119130000` 在 dev 克隆库被 RLS 策略 precheck 拒绝（`bi.report_templates 的 canonical 策略不存在或不含系统通道`）——这是 **dev 与 prod 策略历史不同**造成的，不是迁移缺陷。因此正式演练**只能**在 prod dump 恢复库上做，dev 克隆不具备代表性。
+```bash
+createdb -h /tmp -U air topems_prodlite
+gunzip -c database/baseline/prod_schema_20261117235500.sql.gz | psql -h /tmp -U air -d topems_prodlite
+psql -h /tmp -U air -d topems_prodlite -f database/baseline/prod_ledger_20261117235500.sql
+gunzip -c database/baseline/baseline_20261117235500_data.sql.gz | psql -h /tmp -U air -d topems_prodlite
+```
 
-结论：脚本可用，但演练结论必须以 prod dump 为准；若 prod 演练也报同一类 precheck，按 §5.4 停手回报，我方按 prod 实际策略补定向处置。
+**恢复必须三件齐（schema + 账本 + 基线数据）**：只恢复 schema 会踩数据前置断言——`20261118110000` 要求 `finance.core_finance_currencies` 有 8 行 NULL 租户，空表时 `RAISE` 拒绝（演练中实际撞到，补数据后通过）。
+
+执行路径：先补跑 `20261117235500`→`20261119000002` 的 16 条，把演练库对齐到生产当前水位，再按 phase1/2/3 跑完 81 条。
+
+结果：
+
+- `ledger_max=20261124160000`，`failed=0`，全 81 条入账；
+- `public.core_user_company_scopes.is_default` 已存在（`boolean NOT NULL DEFAULT false`，伴部分唯一索引 `uq_user_company_scopes_default`）；
+- 表 1413 → 1442，约束 10027，索引 3325，策略 855，菜单码 452（归档/删表按 `archive._drop_manifest` 记录核对一致）；
+- 5 条闸门版本全部在 `PGOPTIONS` 注入下正常开闸完成，无一条被 `gate closed` 拦住；
+- dev 克隆上那条 `bi.report_templates` 策略 precheck 拒绝在 prod 基线库上**未复现**，说明它确实是 dev 与 prod 策略历史差异，不是迁移缺陷。
+
+结论：脚本 + 迁移链在生产基线上可跑通，§3.2 的七条判据就是正式窗口的等价判据。
+
+**本次演练同时修掉执行器三个真实缺陷**（已随本文件一起修复）：闸门映射只覆盖 2 条（漏 `zero-path`/`legacy-copies`/`tenant-unblock` 三条 GUC）；断点续跑时窗口内已应用版本被 anchor 下界跳过、误报「白名单版本未被扫描到」；长时间分段跑需要人工续段。现已加：版本→GUC 完整映射、已应用即跳过（`LAST_SKIPPED` 标记）、`WINDOW_MAX_NEW=N` 分段上限。
 
 ### 5.6 断点与续跑
 
-- 任一段中断，重跑同一段即可：已入账版本被跳过（`--only` 命中已应用版本输出 0 pending）。
+- 任一段中断，重跑同一段即可：已应用版本直接打印 `--- 已应用，跳过`，不需要额外参数；这依赖执行器内的账本查询，不使用 `--anchor` 覆盖。
+- 若需按时间切片执行（窗口紧张或分多次播报），加 `WINDOW_MAX_NEW=N`：每段最多新应用 N 条后自动停在账本断点，重跑同一条命令继续。
+- 本机演练时目标库不是 `topems_prod`，需额外 `WINDOW_PGUSER=air`（执行器默认用户是生产 OS 用户 `xingzhai`，本地库没有该角色）。
 - 段间休息前先 `verify` 存档水位；恢复后从下一段继续，不要回头重跑整段。
 - 出现 `RAISE` 且脚本停止时，**先看报错文本再决定**：`仍有 N 行数据，拒绝自动 DROP` 属于设计内拒绝，需先归档再定，不允许任何方式强行 DROP。
 
@@ -211,6 +244,8 @@ psql -h /tmp -U xingzhai -d topems_prod -c "select version,success from _sqlx_mi
 不改 plist /.env/cwd、不动口令、不放宽 RLS、不加 BYPASSRLS、不重建二进制、不应用 `20261124170000`、不动生产数据（除迁移自身的归档 / 归一）。
 
 ## 附 A：本窗口 81 条待应用版本
+
+窗口边界固定为 `20261119000002`（生产水位）→ `20261124160000`（`642ca90db` 内最后一条）。此后仓库又进了 3 条（`20261124170000`/`20261124180000`/`20261124190000`），执行器会把它们按磁盘全量写进 `--defer`，保持 pending，不在本窗口应用。
 
 
 - `20261119010000`
