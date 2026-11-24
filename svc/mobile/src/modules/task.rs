@@ -1208,7 +1208,7 @@ pub async fn batch_update_status(
                 continue;
             };
             let result = sqlx::query(
-            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, completed_at = CASE WHEN $3 = 'completed' THEN COALESCE(completed_at, NOW()) ELSE NULL END, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND status = $4"),
+            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3::varchar(20), completed_at = CASE WHEN $3::varchar(20) = 'completed' THEN COALESCE(completed_at, NOW()) ELSE NULL END, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND status = $4"),
         )
         .bind(id)
         .bind(&user_id)
