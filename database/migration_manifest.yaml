@@ -3079,3 +3079,11 @@ pending_forward_patches:
     effect: "mobile.oa_announcements / oa_meetings / oa_calendar_events / oa_tasks 的 tenant_id 从 text 转为 uuid；同步重建 rls_tenant_isolation 为 tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid"
     destructive_scan: "仅 ALTER COLUMN TYPE（带 USING）与 DROP/CREATE POLICY；无 UPDATE/DELETE/TRUNCATE/DROP TABLE/COLUMN，不改行数"
     note: "幂等：已是 uuid 则跳过改型，仅校正策略；后置断言无 text 租户列且策略含 uuid 比较，否则 RAISE。回滚 database/rollback/20261125003000_mobile_oa_tenant_id_uuid.rollback.sql 恢复 text 与旧策略表达式"
+
+  # ===== 2026-11-25：B274 费用报销状态值域与写入口守卫 =====
+  - version: "20261125004000"
+    file: "database/migrations/20261125004000_finance_expense_status_standard.sql"
+    status: to_apply
+    effect: "finance.expenses.status 的 NULL 归 draft、默认值固定 draft、SET NOT NULL，重建五态 CHECK（draft/submitted/approved/rejected/paid）并 VALIDATE"
+    destructive_scan: "UPDATE status NULL→draft，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "fail-closed：五态之外的值会在 VALIDATE 失败；update_expense 增加当前态读取与迁移矩阵校验，补齐 COALESCE 防部分字段置空。回滚 database/rollback/20261125004000_finance_expense_status_standard.rollback.sql 恢复可空与旧 CHECK"
