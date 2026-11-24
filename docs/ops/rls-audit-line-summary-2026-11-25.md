@@ -13,6 +13,7 @@
 | `scripts/ops/rls-tier2-drift-fix-2026-11-25.{sql,rollback.sql,verify.sql}` | 档 2 五条漂移订正兜底补丁三件套（本地干跑验证，未连生产） |
 | `scripts/ops/cleanup-pending-dependency-check-2026-11-25.sql` | 11 张独有表只读依赖核对（存在性/RLS/外键/视图/授权/发布/本体在位） |
 | `docs/ops/rls-head-snapshot-recheck-2026-11-25.md` | P3 #6 head 库快照对照复跑：三层门禁盘点、实测读数、偏差定性与 CI/窗口复跑口径 |
+| `docs/ops/window-decision-batch-bridge-2026-11-25.md` | 三项待窗口事项（档 2 订正 / 23 张拍板 / 71 表归档）衔接清单：风险、阻断、执行物、阶段顺序与追平后对账口径 |
 
 ## 2. 总体硬结论
 
