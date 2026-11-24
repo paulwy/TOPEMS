@@ -15,7 +15,7 @@
 
 ## 总量
 
-共 **414** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
+共 **413** 条。订单两表 `sales_orders_status_check`、`purchase_orders_status_check` 已于 2026-11-24 按方案 B 撤登记（生产遗留、不回迁），不再计入；撤登记前 418，历史读数 391 → 389、415 → 413 均保留为口径记录。
 
 ## 2026-11-24 订单两表撤登记（方案 B）
 
@@ -69,7 +69,7 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 | `plugin_mes` | 1 |
 | `pm` | 20 |
 | `portal` | 7 |
-| `public` | 42 |
+| `public` | 41 |
 | `qms` | 13 |
 | `rd` | 3 |
 | `rs` | 8 |
@@ -100,7 +100,6 @@ where conrelid in ('erp.sales_orders'::regclass, 'erp.purchase_orders'::regclass
 | B165 | 1 |
 | B166 | 1 |
 | B167 | 1 |
-| B168 | 1 |
 | B169 | 1 |
 | B183 | 1 |
 | B184 | 1 |
