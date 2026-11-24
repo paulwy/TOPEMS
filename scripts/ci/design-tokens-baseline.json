@@ -1,7 +1,7 @@
 {
   "_comment": "Design Token 偏差基线（按文件计数，2026-11-07 实测）。仅允许下降；修复后请下调对应计数。",
-  "updated_at": "2026-11-07",
-  "total": 42,
+  "updated_at": "2026-11-24",
+  "total": 41,
   "by_rule": {
     "fixed-px-spacing": 37,
     "hardcoded-color": 5
@@ -14,16 +14,15 @@
     "apps/web/src/components/notification/NotificationItem.module.css": 3,
     "apps/web/src/components/notification/NotificationPanel.module.css": 1,
     "apps/web/src/components/pm/ProjectTemplateCard.module.css": 5,
-    "apps/web/src/pages/admin/PerformanceMonitorPage.module.css": 4,
-    "apps/web/src/pages/crm/CrmOpportunityRedesignPage.module.css": 1,
-    "apps/web/src/pages/ehs/EhsHazardDetailPage.tsx": 1,
-    "apps/web/src/pages/erp/ErpInventoryRedesignPage.module.css": 2,
-    "apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx": 4,
-    "apps/web/src/pages/lims/InspectionResultPage.module.css": 4,
-    "apps/web/src/pages/mes/MesWorkOrderPage.module.css": 1,
-    "apps/web/src/pages/oa/AnnouncementPage.module.css": 7,
-    "apps/web/src/pages/qms/QmsEightDRedesignPage.module.css": 1,
-    "apps/web/src/pages/shared/DashboardPage.module.css": 1,
-    "apps/web/src/pages/workflow/WorkflowApprovalsPage.module.css": 1
+    "apps/web/src/components/admin/PerformanceMonitorPage.module.css": 4,
+    "apps/web/src/components/crm/CrmOpportunityRedesignPage.module.css": 1,
+    "apps/web/src/components/ehs/EhsHazardDetailPage.tsx": 1,
+    "apps/web/src/components/erp/ErpInventoryRedesignPage.module.css": 2,
+    "apps/web/src/components/integration/IntegrationErpOverviewPage.tsx": 4,
+    "apps/web/src/components/lims/InspectionResultPage.module.css": 4,
+    "apps/web/src/components/mes/MesWorkOrderPage.module.css": 1,
+    "apps/web/src/components/oa/AnnouncementPage.module.css": 7,
+    "apps/web/src/components/qms/QmsEightDRedesignPage.module.css": 1,
+    "apps/web/src/components/shared/DashboardPage.module.css": 1
   }
 }

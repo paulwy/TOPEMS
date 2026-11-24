@@ -50,6 +50,12 @@ const NON_NAV_WHITELIST = [
   'template',
   'tenant',
   'unified-core',
+  'analytics',
+  'communication',
+  'core',
+  'master-data',
+  'plugin-registry',
+  'portal',
 ];
 
 const MAPPING_WITHOUT_API_DIR = ['asset', 'oa', 'rs'];

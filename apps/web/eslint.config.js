@@ -319,7 +319,8 @@ export default [
       },
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // 测试 mock/断言允许显式 any；生产代码仍保持 warn。
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/naming-convention': 'off',
       '@typescript-eslint/consistent-type-imports': 'off',
       '@typescript-eslint/no-misused-promises': 'off',

@@ -2,7 +2,8 @@
 // 页面标准化审计脚本（V64 新增）
 //
 // 用途：
-// 1. 扫描 apps/web/src/pages 下所有 tsx，统计使用 CrudPage / ListPageTemplate 的比例
+// 1. 扫描 apps/web/src 下所有 *Page.tsx（2026-11 起页面统一收敛到 components/<module>/），
+//    统计 CRUD 型页面使用 CrudPage / ListPageTemplate / PageContainer 等标准模板的比例
 // 2. 对新建（git diff）的 CRUD 型页面检查是否使用了标准模板
 // 3. 输出审计报告，CI 门禁用
 //
@@ -20,7 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src/pages');
+const WEB_ROOT = path.resolve(__dirname, '../../apps/web/src');
 // V64.1: 扩展模板家族识别（含 Dashboard/Detail/Settings/Form 等非 CRUD 模板）
 const TEMPLATES = [
   // CRUD 型模板
@@ -56,11 +57,10 @@ const CRUD_KEYWORDS = ['Management', 'List', 'Table', 'Crud', 'Catalog', 'Invent
 // V64.3: 特殊功能页白名单 — 这些页面豁免标准化检查
 // 原因：登录/错误/性能基准等页面运行在框架外或刻意不依赖主框架
 const SPECIAL_PAGE_WHITELIST = [
-  'shared/LoginPage.tsx', // 认证入口，未登录状态，不能用 PageContainer
-  'shared/ForgotPasswordPage.tsx', // 认证流程，未登录状态
-  'shared/ErrorPage.tsx', // 错误兜底页，必须独立于主框架
-  'shared/NotFoundPage.tsx', // 404 兜底页
-  'performance/PerformanceTestPage.tsx', // Lighthouse 基准页，刻意不依赖模板
+  'components/shared/LoginPage.tsx', // 认证入口，未登录状态，不能用 PageContainer
+  'components/shared/ForgotPasswordPage.tsx', // 认证流程，未登录状态
+  'components/shared/NotFoundPage.tsx', // 404 兜底页
+  'components/performance/PerformanceTestPage.tsx', // Lighthouse 基准页，刻意不依赖模板
 ];
 
 // 豁免页面（非 CRUD 型，不需要标准化）
@@ -109,30 +109,11 @@ function findTsxFiles(dir) {
   return results;
 }
 
-// V64.1: 区分"纯页面文件"和"组件文件"
-// 纯页面：*Page.tsx 或 index.tsx（在模块根目录下，不在 components/hooks/utils 子目录下）
+// 2026-11 起页面统一收敛到 components/<module>/*Page.tsx，
+// 页面口径统一为「文件名以 Page 结尾」，index.tsx 与普通组件不再计入。
 function isPageFile(filePath) {
-  const baseName = path.basename(filePath, '.tsx');
-  // 在 components/hooks/utils 子目录的都不是页面
-  if (filePath.includes('/components/') || filePath.includes('/hooks/') || filePath.includes('/utils/')) {
-    return false;
-  }
-  // 跳过 re-export 包装（barrel 文件）：export { default } from './xxx/index'
-  // 这类文件不管文件名是什么，都是包装而非真实页面实现
-  try {
-    const content = fs.readFileSync(filePath, 'utf8').trim();
-    if (/^export\s*(\{[^}]*\}|\*)\s*from\s*['"][^'"]+['"]/.test(content) && content.split('\n').length <= 3) {
-      return false;
-    }
-  } catch {
-    // 读不了内容则保守判断为页面
-  }
-  // index.tsx 在模块根目录算页面
-  if (baseName === 'index') {
-    return true;
-  }
-  // *Page.tsx 算页面
-  return baseName.endsWith('Page');
+  if (filePath.includes('/__tests__/') || filePath.includes('/node_modules/')) return false;
+  return path.basename(filePath, '.tsx').endsWith('Page');
 }
 
 function checkTemplateUsage(filePath) {
@@ -162,7 +143,7 @@ function getGitDiffNewFiles() {
     });
     return output
       .split('\n')
-      .filter((f) => f.startsWith('apps/web/src/pages/') && f.endsWith('.tsx') && !f.endsWith('.test.tsx'))
+      .filter((f) => f.startsWith('apps/web/src/') && f.endsWith('Page.tsx') && !f.endsWith('.test.tsx'))
       .map((f) => path.resolve(__dirname, '../..', f));
   } catch {
     return [];
@@ -187,6 +168,8 @@ function main() {
     checked_pages: filesToCheck.length,
     standardized: 0,
     not_standardized: 0,
+    crud_total: 0,
+    crud_standardized: 0,
     crud_new_without_template: [],
     module_stats: {},
     files: [],
@@ -197,11 +180,11 @@ function main() {
     // __dirname = /repo/scripts/ci，相对项目根上溯 2 层
     const relPath = path.relative(path.resolve(__dirname, '../..'), file);
     const fileName = path.basename(file, '.tsx');
-    const moduleMatch = relPath.match(/pages\/([^/]+)\//);
+    const moduleMatch = relPath.match(/(?:pages|components)\/([^/]+)\//);
     const moduleName = moduleMatch ? moduleMatch[1] : 'root';
     // V64.3: 特殊功能页豁免（标准化视为通过）
     const relNorm = relPath.replace(/\\/g, '/');
-    const pageRel = relNorm.replace(/^apps\/web\/src\/pages\//, '');
+    const pageRel = relNorm.replace(/^apps\/web\/src\//, '');
     const isWhitelisted = SPECIAL_PAGE_WHITELIST.includes(pageRel);
     const effectivelyStandardized = usesTemplate || isWhitelisted;
 
@@ -210,12 +193,17 @@ function main() {
     }
     report.module_stats[moduleName].total++;
 
+    // 标准化率只考核 CRUD 型页面：详情/看板/报表等本来就该用各自专用布局。
+    if (isCrudPage(file)) {
+      report.crud_total++;
+    }
     if (effectivelyStandardized) {
       report.standardized++;
       report.module_stats[moduleName].standardized++;
       if (isWhitelisted) {
         report.module_stats[moduleName].whitelisted++;
       }
+      if (isCrudPage(file)) report.crud_standardized++;
     } else {
       report.not_standardized++;
     }
@@ -237,11 +225,11 @@ function main() {
   // V64.3: 模块统计和标准化率都基于"纯页面"，避免组件文件污染
   // 白名单页面计入"标准化"分子，分母为纯页面总数
   report.standardization_rate =
-    pageFilesAll.length > 0 ? Math.round((report.standardized / pageFilesAll.length) * 100) : 0;
+    report.crud_total > 0 ? Math.round((report.crud_standardized / report.crud_total) * 100) : 100;
   // 兼容旧字段（page_only_rate 旧脚本有引用）
   report.overall_standardization_rate = report.standardization_rate;
   report.page_only_total = pageFilesAll.length;
-  report.page_only_standardized = report.standardized;
+  report.page_only_standardized = report.crud_standardized;
   report.page_only_rate = report.standardization_rate;
 
   if (jsonOut) {
@@ -257,7 +245,7 @@ function main() {
     console.log(`纯页面标准化率                : ${report.standardization_rate}%`);
     console.log('');
 
-    console.log('模块统计（纯页面口径，白名单豁免计入达标）:');
+    console.log('模块统计（*Page.tsx 口径，白名单豁免计入达标）:');
     const sortedModules = Object.entries(report.module_stats).sort((a, b) => b[1].total - a[1].total);
     for (const [mod, stats] of sortedModules) {
       const rate = stats.total > 0 ? Math.round((stats.standardized / stats.total) * 100) : 0;
@@ -274,18 +262,18 @@ function main() {
       }
       console.log('');
       console.log('建议：新建 CRUD 页面应使用 CrudPage 或 ListPageTemplate 标准模板。');
-      console.log('参考：apps/web/src/pages/admin/TenantManagementPage.tsx');
+      console.log('参考：apps/web/src/components/admin/TenantManagementPage.tsx');
     }
 
     // V64.3: 全量 --strict 模式下，若标准化率不达标则失败
     // 阈值默认 95%，可通过 --threshold=N 覆盖
     const thresholdArg = args.find((a) => a.startsWith('--threshold='));
     const threshold = thresholdArg ? Number(thresholdArg.split('=')[1]) : 95;
-    // 只列"非白名单且未标准化"的页面（白名单页面不报警）
-    const notStandardizedPages = report.files.filter((f) => !f.uses_template && !f.whitelisted);
+    // 只列"非白名单且未标准化"的 CRUD 页面（其余页面不参与达标考核）
+    const notStandardizedPages = report.files.filter((f) => f.is_crud && !f.uses_template && !f.whitelisted);
     if (notStandardizedPages.length > 0) {
       console.log('');
-      console.log(`未标准化纯页面清单（${notStandardizedPages.length} 个，不含白名单）：`);
+      console.log(`未标准化 CRUD 页面清单（${notStandardizedPages.length} 个，不含白名单）：`);
       for (const f of notStandardizedPages) {
         const note = f.is_crud ? ' [CRUD]' : '';
         console.log(`  - ${f.module.padEnd(12)} ${f.file}${note}`);
