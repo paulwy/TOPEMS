@@ -19,7 +19,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -461,7 +461,7 @@ impl KnowledgeGraphEngine {
         .bind(&node.properties)
         .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
         .bind(node.created_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱节点失败: {e}")))?;
@@ -512,7 +512,7 @@ impl KnowledgeGraphEngine {
         .bind(relation_type_to_str(&edge.relation_type))
         .bind(edge.weight)
         .bind(edge.confidence)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱边失败: {e}")))?;
@@ -877,7 +877,7 @@ impl RecommendationEngine {
         .bind(&record.item_id)
         .bind(&record.interaction_type)
         .bind(&record.timestamp)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入交互记录失败: {e}")))?;
@@ -1077,7 +1077,7 @@ impl AssetCatalogManager {
         .bind(asset.quality_score)
         .bind(&asset.access_level)
         .bind(asset.updated_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据资产失败: {e}")))?;
@@ -1337,7 +1337,7 @@ async fn upsert_search_index(
         )
         .bind(&key)
         .bind(serde_json::to_value(&merged).unwrap_or_default())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
@@ -1471,11 +1471,23 @@ pub async fn add_kg_node(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let node_type = node_type_from_str(&req.node_type);
     let props = req.properties.unwrap_or_else(|| serde_json::json!({}));
 
-    match KnowledgeGraphEngine::add_node(&mut db_scope, tenant, req.label, node_type, props).await {
+    match KnowledgeGraphEngine::add_node(
+        &mut db_scope,
+        Some(scope.create_tenant_id()),
+        req.label,
+        node_type,
+        props,
+    )
+    .await
+    {
         Ok(node) => ApiResponse::success(node, "知识图谱节点已添加"),
         Err(e) => ApiResponse::server_error(&e.classify().1),
     }
@@ -1508,11 +1520,15 @@ pub async fn add_kg_edge(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let relation_type = relation_type_from_str(&req.relation_type);
     match KnowledgeGraphEngine::add_edge(
         &mut db_scope,
-        tenant,
+        Some(scope.create_tenant_id()),
         req.source_id,
         req.target_id,
         relation_type,
@@ -1748,11 +1764,15 @@ pub async fn record_interaction(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let interaction_type = req.interaction_type.unwrap_or_else(|| "view".to_string());
     match RecommendationEngine::record_interaction(
         &mut db_scope,
-        tenant,
+        Some(scope.create_tenant_id()),
         req.user_id,
         req.item_id,
         interaction_type,
@@ -1859,13 +1879,17 @@ pub async fn register_asset(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let asset_type = asset_type_from_str(&req.asset_type);
     let tags = req.tags.unwrap_or_default();
 
     match AssetCatalogManager::register_asset(
         &mut db_scope,
-        tenant,
+        Some(scope.create_tenant_id()),
         req.name,
         asset_type,
         req.description,
@@ -2004,10 +2028,14 @@ pub async fn update_asset(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     match AssetCatalogManager::update_asset(
         &mut db_scope,
-        tenant,
+        Some(scope.create_tenant_id()),
         &id,
         req.name,
         req.description,
