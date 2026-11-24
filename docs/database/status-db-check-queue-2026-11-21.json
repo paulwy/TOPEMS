@@ -1,12 +1,14 @@
 {
-  "version": 1,
-  "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
-  "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
+  "version": 2,
+  "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql + status-db-check-mappings.json(db_constraint)",
+  "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用。db_covered 表示台账已核验该枚举至少一个持久化列有 CONVALIDATED 约束（不是缺口）；real_gap 才是待办",
   "stats": {
     "uncovered_enums": 185,
     "uncovered_values": 192,
     "finance_candidate_constraints": 25,
     "resolved_enums": 178,
+    "db_covered_enums": 115,
+    "real_gap_enums": 0,
     "internal_state_enums": 151,
     "persisted_unmapped_enums": 18,
     "finance_candidate_ready_enums": 36,
@@ -31,8 +33,15 @@
         "enum": "TenantStatus",
         "table": "public.core_tenants",
         "column": "status",
-        "candidate": "docs/database/tenant-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/tenant-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "core_tenants_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "core_tenants_status_check"
+      ]
     },
     {
       "module": "lib/shared-auth",
@@ -49,7 +58,9 @@
         "enum": "UserStatus",
         "persisted": false,
         "reason": "无 DB 写入方；public.core_users.status 存在枚举外的 inactive（本地 1 行），接线前需先对齐；core_users 已标废弃"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-auth",
@@ -67,7 +78,9 @@
         "enum": "SubscriptionStatus",
         "persisted": false,
         "reason": "unified-core 订阅模块无 SQL，纯内存 tier 计算"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-core",
@@ -86,7 +99,9 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "服务健康探针内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-db",
@@ -103,7 +118,9 @@
         "enum": "BackupStatus",
         "persisted": false,
         "reason": "备份元数据只在内存与文件路径，无状态表"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-db",
@@ -120,7 +137,9 @@
         "enum": "DsrRequestStatus",
         "persisted": false,
         "reason": "DSR 请求存于 RwLock<HashMap>，无 DB 写入"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-event",
@@ -141,7 +160,9 @@
         "enum": "NodeStatus",
         "persisted": false,
         "reason": "集群节点状态内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-event",
@@ -158,7 +179,9 @@
         "enum": "TraceStatus",
         "persisted": false,
         "reason": "事件轨迹监控内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-event",
@@ -177,7 +200,9 @@
         "enum": "SagaStatus",
         "persisted": false,
         "reason": "saga 编排内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-event",
@@ -196,7 +221,9 @@
         "enum": "StepStatus",
         "persisted": false,
         "reason": "saga 步骤内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-observability",
@@ -215,7 +242,9 @@
         "enum": "ServiceStatus",
         "persisted": false,
         "reason": "服务监控内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-observability",
@@ -235,7 +264,9 @@
         "enum": "SLOStatus",
         "persisted": false,
         "reason": "SLO 计算内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lib/shared-service-client",
@@ -252,7 +283,9 @@
         "enum": "TemplateStatus",
         "persisted": false,
         "reason": "public.core_notification_templates 无 status 列，模板状态仅内存/API"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "ai",
@@ -272,7 +305,9 @@
         "enum": "ComplianceFrameworkStatus",
         "persisted": false,
         "reason": "框架合规评估结果，DSH 模块零 SQL，仅仪表盘展示"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "ai",
@@ -290,7 +325,9 @@
         "enum": "TaskStatus",
         "persisted": false,
         "reason": "多智能体任务在内存中的分配态（assigned/timeout），模块零 SQL"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "ai",
@@ -307,7 +344,9 @@
         "enum": "TemplateStatus",
         "persisted": false,
         "reason": "提示词模板内存生命周期（含 deprecated），无对应表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "ai",
@@ -325,7 +364,9 @@
         "enum": "NodeExecutionStatus",
         "persisted": false,
         "reason": "工作流节点执行态（含 skipped/timeout），执行引擎内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "ai",
@@ -342,7 +383,9 @@
         "enum": "WorkflowExecutionStatus",
         "persisted": false,
         "reason": "工作流整体执行态（含 waiting），内存态；无执行记录表"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "ai",
@@ -360,8 +403,15 @@
         "enum": "DocumentStatus",
         "table": "ai.documents",
         "column": "status",
-        "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "documents_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "documents_status_check"
+      ]
     },
     {
       "module": "ai",
@@ -378,8 +428,15 @@
         "enum": "KnowledgeDocumentStatus",
         "table": "core.knowledge_documents",
         "column": "status",
-        "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql",
+        "db_constraint": "knowledge_documents_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "knowledge_documents_status_check"
+      ]
     },
     {
       "module": "analytics",
@@ -398,8 +455,15 @@
         "enum": "ScheduleStatus",
         "table": "analytics.report_schedules",
         "column": "status",
-        "note": "2026-11-24 复核：约束 ck_report_schedules_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
-      }
+        "note": "2026-11-24 复核：约束 ck_report_schedules_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+        "db_constraint": "ck_report_schedules_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_report_schedules_status_standard"
+      ]
     },
     {
       "module": "communication",
@@ -417,7 +481,9 @@
         "enum": "EmailQueueStatus",
         "persisted": false,
         "reason": "邮件 DashMap 队列内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "crm",
@@ -434,8 +500,15 @@
         "enum": "ContactApprovalStatus",
         "table": "crm.contacts",
         "column": "approval_status",
-        "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "contacts_approval_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "contacts_approval_status_check"
+      ]
     },
     {
       "module": "crm",
@@ -452,8 +525,15 @@
         "enum": "CustomerApprovalStatus",
         "table": "crm.customers",
         "column": "approval_status",
-        "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "customers_approval_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "customers_approval_status_check"
+      ]
     },
     {
       "module": "crm",
@@ -470,8 +550,15 @@
         "enum": "CustomerOrderStatus",
         "table": "crm.customer_orders",
         "column": "status",
-        "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_customer_orders_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_customer_orders_status_standard"
+      ]
     },
     {
       "module": "crm",
@@ -488,8 +575,15 @@
         "enum": "InteractionStatus",
         "table": "crm.interactions",
         "column": "status",
-        "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_interactions_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_interactions_status_standard"
+      ]
     },
     {
       "module": "crm",
@@ -506,8 +600,15 @@
         "enum": "MasterDataRefStatus",
         "table": "crm.crm_master_data_refs",
         "column": "status",
-        "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_crm_master_data_refs_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_crm_master_data_refs_status_standard"
+      ]
     },
     {
       "module": "crm",
@@ -525,8 +626,15 @@
         "enum": "OpportunityStatus",
         "table": "crm.opportunities",
         "column": "status",
-        "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_crm_opportunities_status_canonical",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_crm_opportunities_status_canonical"
+      ]
     },
     {
       "module": "crm",
@@ -543,8 +651,15 @@
         "enum": "SalesForecastStatus",
         "table": "crm.sales_forecasts",
         "column": "status",
-        "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_sales_forecasts_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_sales_forecasts_status_standard"
+      ]
     },
     {
       "module": "crm",
@@ -561,8 +676,15 @@
         "enum": "SalesOrderStatus",
         "table": "crm.sales_orders",
         "column": "status",
-        "candidate": "docs/database/crm-sales-order-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/crm-sales-order-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_sales_orders_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_sales_orders_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -579,8 +701,15 @@
         "enum": "AccidentStatus",
         "table": "ehs.qa_ehs_accidents",
         "column": "status",
-        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
-      }
+        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+        "db_constraint": "ck_qa_ehs_accidents_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_accidents_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -607,8 +736,15 @@
         "enum": "HazardStatus",
         "table": "ehs.qa_ehs_hazards",
         "column": "status",
-        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
-      }
+        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+        "db_constraint": "ck_qa_ehs_hazards_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_hazards_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -625,8 +761,15 @@
         "enum": "HazardousMaterialStatus",
         "table": "ehs.qa_ehs_hazardous_materials",
         "column": "status",
-        "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_qa_ehs_hazardous_materials_status_lifecycle_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_hazardous_materials_status_lifecycle_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -645,8 +788,15 @@
         "enum": "IncidentActionStatus",
         "table": "ehs.qa_ehs_incident_actions",
         "column": "status",
-        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
-      }
+        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+        "db_constraint": "ck_qa_ehs_incident_actions_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_incident_actions_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -665,8 +815,15 @@
         "enum": "RiskStatus",
         "table": "ehs.qa_ehs_risks",
         "column": "status",
-        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
-      }
+        "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+        "db_constraint": "ck_qa_ehs_risks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_risks_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -693,8 +850,15 @@
         "enum": "SafetyHazardStatus",
         "table": "ehs.safety_hazards",
         "column": "status",
-        "candidate": "docs/database/safety-hazard-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/safety-hazard-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_ehs_safety_hazards_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_ehs_safety_hazards_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -712,8 +876,15 @@
         "enum": "TrainingCertificateStatus",
         "table": "ehs.qa_ehs_training_certificates",
         "column": "status",
-        "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_qa_ehs_training_certificates_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_training_certificates_status_standard"
+      ]
     },
     {
       "module": "ehs",
@@ -730,8 +901,15 @@
         "enum": "TrainingSessionStatus",
         "table": "ehs.qa_ehs_trainings",
         "column": "status",
-        "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_qa_ehs_trainings_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_ehs_trainings_status_standard"
+      ]
     },
     {
       "module": "erp",
@@ -751,8 +929,15 @@
         "enum": "AssetStatus",
         "table": "erp.assets",
         "column": "status",
-        "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "assets_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "assets_status_check"
+      ]
     },
     {
       "module": "erp",
@@ -771,7 +956,9 @@
         "enum": "CreditStatus",
         "persisted": false,
         "reason": "按 credit_limit/used_credit 比例实时计算的展示分级，模块无 SQL；erp.customers.status 存的是客户生命周期（active/inactive，已有 CHECK），不是信用状态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -791,7 +978,9 @@
         "enum": "ComplianceStatus",
         "persisted": false,
         "reason": "内存审计引擎的规则评估结果，模块零 SQL，仅作报告输出"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -808,7 +997,9 @@
         "enum": "FindingStatus",
         "persisted": false,
         "reason": "内存审计发现的处理态，模块零 SQL，无对应表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -828,7 +1019,9 @@
         "enum": "KpiStatus",
         "persisted": false,
         "reason": "仪表盘 KPI 阈值分级（good/warning/critical），计算值不落库"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -850,7 +1043,9 @@
         "enum": "QualityTicketStatus",
         "persisted": false,
         "reason": "内存质量工单 FSM，模块零 SQL；工单经 mdm_collections JSONB 快照，无独立 status 列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -872,7 +1067,9 @@
         "enum": "ReportStatus",
         "persisted": false,
         "reason": "内存报告生成 FSM（pending/generating/completed/failed/delivered），模块零 SQL；public.reports 由其他服务写入"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -891,7 +1088,9 @@
         "enum": "SyncStatus",
         "persisted": false,
         "reason": "内存同步编排态（含 compensating/compensated），模块零 SQL；public.external_erp_sync_logs 属另一模块"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -910,7 +1109,9 @@
         "enum": "RetirementStatus",
         "persisted": false,
         "reason": "退役计划态，仅随实体进 mdm_collections JSONB，无独立列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -930,7 +1131,9 @@
         "enum": "TaskStatus",
         "persisted": false,
         "reason": "生命周期任务态，仅随 LifecycleEntity.tasks 进 mdm_collections JSONB，无独立列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -949,8 +1152,15 @@
         "enum": "MeetingRoomStatus",
         "table": "erp.meeting_rooms",
         "column": "status",
-        "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_erp_meeting_rooms_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_erp_meeting_rooms_status_standard"
+      ]
     },
     {
       "module": "erp",
@@ -970,8 +1180,15 @@
         "enum": "OfficeSupplyStatus",
         "table": "erp.office_supplies",
         "column": "status",
-        "candidate": "docs/database/office-supply-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/office-supply-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_erp_office_supplies_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_erp_office_supplies_status_standard"
+      ]
     },
     {
       "module": "erp",
@@ -991,7 +1208,9 @@
         "enum": "ProductionStatusCategory",
         "persisted": false,
         "reason": "把外部 erp_production_orders.status 自由文本归类的展示投影（pending/released/completed/cancelled），本身不写库"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -1002,7 +1221,9 @@
           "released"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "erp",
@@ -1019,8 +1240,15 @@
         "enum": "SalesOrderStatus",
         "table": "erp.sales_orders",
         "column": "status",
-        "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "sales_orders_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "sales_orders_status_check"
+      ]
     },
     {
       "module": "erp",
@@ -1039,8 +1267,15 @@
         "enum": "VehicleStatus",
         "table": "erp.vehicles",
         "column": "status",
-        "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_erp_vehicles_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_erp_vehicles_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1059,7 +1294,9 @@
         "enum": "SagaStatus",
         "persisted": false,
         "reason": "saga 编排内存态，无对应表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "finance",
@@ -1077,7 +1314,9 @@
         "enum": "SagaStepStatus",
         "persisted": false,
         "reason": "saga 步骤内存态，无对应表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "finance",
@@ -1101,7 +1340,9 @@
         "enum": "SettlementStatus",
         "persisted": false,
         "reason": "财务应收/应付聚合的核销进度 DTO，无对应表列；不与 erp_collection_records.status 混用"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "finance",
@@ -1121,8 +1362,15 @@
         "enum": "InvoiceStatus",
         "table": "finance.finance_v55_invoices",
         "column": "status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v55_invoices_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v55_invoices_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1139,8 +1387,15 @@
         "enum": "FindingStatus",
         "table": "finance.finance_audit_findings_v52",
         "column": "status",
-        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_audit_findings_v52_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_audit_findings_v52_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1159,8 +1414,15 @@
         "enum": "CollectionStatus",
         "table": "finance.erp_collection_records",
         "column": "status",
-        "candidate": "docs/database/finance-collection-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-collection-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_erp_collection_records_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_erp_collection_records_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1179,8 +1441,15 @@
         "enum": "DecisionStatus",
         "table": "finance.finance_v60_decision_scenarios",
         "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v60_decision_scenarios_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v60_decision_scenarios_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1199,8 +1468,15 @@
         "enum": "ScheduleTaskStatus",
         "table": "finance.finance_v60_schedule_tasks",
         "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v60_schedule_tasks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v60_schedule_tasks_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1219,8 +1495,15 @@
         "enum": "ExpenseApprovalStatus",
         "table": "finance.expense_approvals",
         "column": "status",
-        "candidate": "docs/database/finance-expense-approval-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-expense-approval-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_expense_approvals_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_expense_approvals_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1241,8 +1524,15 @@
         "table": "finance.financial_reports",
         "column": "status",
         "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
-        "note": "2026-11-24 B255 合并：approval_status 列已删除，报表态只由 status 承载；原 approval_status 映射行随列删除"
-      }
+        "note": "2026-11-24 B255 合并：approval_status 列已删除，报表态只由 status 承载；原 approval_status 映射行随列删除",
+        "db_constraint": "ck_financial_reports_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_financial_reports_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1259,8 +1549,15 @@
         "enum": "AlertStatus",
         "table": "finance.finance_v60_alerts",
         "column": "status",
-        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v60_alerts_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v60_alerts_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1279,8 +1576,15 @@
         "enum": "ReportStatus",
         "table": "finance.finance_v57_generated_reports",
         "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v57_generated_reports_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v57_generated_reports_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1299,8 +1603,15 @@
         "enum": "SettlementLinkStatus",
         "table": "finance.reconciliation_settlement_links",
         "column": "status",
-        "candidate": "docs/database/finance-settlement-link-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-settlement-link-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_reconciliation_settlement_links_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_reconciliation_settlement_links_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1320,8 +1631,15 @@
         "enum": "InvoiceStatus",
         "table": "finance.finance_v55_invoices",
         "column": "status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v55_invoices_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v55_invoices_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1341,8 +1659,15 @@
         "enum": "MatchStatus",
         "table": "finance.finance_v55_reconciliation_results",
         "column": "match_status",
-        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v55_recon_results_match_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v55_recon_results_match_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1361,8 +1686,15 @@
         "enum": "TaxFormStatus",
         "table": "finance.finance_v56_tax_forms",
         "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v56_tax_forms_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v56_tax_forms_status_standard"
+      ]
     },
     {
       "module": "finance",
@@ -1385,8 +1717,15 @@
         "enum": "TaxPlanStatus",
         "table": "finance.finance_v56_tax_plans",
         "column": "status",
-        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_finance_v56_tax_plans_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_finance_v56_tax_plans_status_standard"
+      ]
     },
     {
       "module": "hrm",
@@ -1399,7 +1738,9 @@
           "normal"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "hrm",
@@ -1418,8 +1759,15 @@
         "enum": "ContractRenewalStatus",
         "table": "hrm.contract_renewals",
         "column": "status",
-        "candidate": "ck_hrm_contract_renewals_status_standard"
-      }
+        "candidate": "ck_hrm_contract_renewals_status_standard",
+        "db_constraint": "ck_hrm_contract_renewals_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_hrm_contract_renewals_status_standard"
+      ]
     },
     {
       "module": "hrm",
@@ -1432,7 +1780,9 @@
       },
       "candidate_targets": [
         "finance.finance_v56_tax_forms.v56_tax_forms_status_check"
-      ]
+      ],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "hrm",
@@ -1444,7 +1794,9 @@
           "self_reviewed"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "hrm",
@@ -1460,7 +1812,9 @@
           "withdrawn"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "hrm",
@@ -1471,7 +1825,9 @@
           "scheduled"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "hrm",
@@ -1482,7 +1838,9 @@
           "filled"
         ]
       },
-      "candidate_targets": []
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "hrm",
@@ -1500,8 +1858,15 @@
         "enum": "TrainingAttendanceStatus",
         "table": "hrm.training_records",
         "column": "attendance_status",
-        "candidate": "docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_training_records_attendance_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_training_records_attendance_status_standard"
+      ]
     },
     {
       "module": "integration",
@@ -1518,8 +1883,15 @@
         "enum": "AsyncTaskStatus",
         "table": "integration.async_tasks",
         "column": "status",
-        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_async_tasks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_async_tasks_status_standard"
+      ]
     },
     {
       "module": "integration",
@@ -1536,8 +1908,15 @@
         "enum": "MesErpSyncStatus",
         "table": "integration.mes_erp_sync",
         "column": "sync_status",
-        "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_erp_sync_sync_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_erp_sync_sync_status_standard"
+      ]
     },
     {
       "module": "integration",
@@ -1554,7 +1933,9 @@
         "enum": "SyncStatus",
         "persisted": false,
         "reason": "同步重试执行器内存态，无对应表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "lims",
@@ -1576,8 +1957,15 @@
         "enum": "LabSampleStatus",
         "table": "public.qa_lab_samples",
         "column": "status",
-        "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_qa_lab_samples_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_lab_samples_status_standard"
+      ]
     },
     {
       "module": "master-data",
@@ -1594,8 +1982,15 @@
         "enum": "BillingStatus",
         "table": "master_data.mdm_billing_records",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_billing_records_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_billing_records_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1612,8 +2007,15 @@
         "enum": "IncidentStatus",
         "table": "master_data.mdm_sla_incidents",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_sla_incidents_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_sla_incidents_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1630,8 +2032,15 @@
         "enum": "ContinuityPlanStatus",
         "table": "master_data.mdm_continuity_plans",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_continuity_plans_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_continuity_plans_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1648,8 +2057,15 @@
         "enum": "FailoverStatus",
         "table": "master_data.mdm_failover_records",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_failover_records_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_failover_records_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1666,8 +2082,15 @@
         "enum": "RecoveryPlanStatus",
         "table": "master_data.mdm_recovery_plans",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_recovery_plans_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_recovery_plans_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1688,8 +2111,15 @@
         "enum": "RegionStatus",
         "table": "master_data.mdm_region_configs",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_region_configs_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_region_configs_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1712,8 +2142,15 @@
         "enum": "ReplicationStatus",
         "table": "master_data.mdm_replication_configs",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_replication_configs_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_replication_configs_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1731,8 +2168,15 @@
         "enum": "DataProductStatus",
         "table": "master_data.mdm_data_products",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_data_products_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_data_products_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1751,8 +2195,15 @@
         "enum": "WorkflowStatus",
         "table": "master_data.mdm_workflows",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_workflows_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_workflows_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1771,7 +2222,9 @@
         "column": "steps(jsonb)",
         "persisted": false,
         "reason": "步骤状态嵌在 steps jsonb 数组里，没有独立列，无法用列级 CHECK 约束"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "master-data",
@@ -1793,8 +2246,15 @@
         "enum": "FixStatus",
         "table": "master_data.mdm_auto_fix_actions",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_auto_fix_actions_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_auto_fix_actions_status_check"
+      ]
     },
     {
       "module": "master-data",
@@ -1812,8 +2272,15 @@
         "enum": "QualityStatus",
         "table": "master_data.mdm_quality_checks",
         "column": "status",
-        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "mdm_quality_checks_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "mdm_quality_checks_status_check"
+      ]
     },
     {
       "module": "mes",
@@ -1831,7 +2298,9 @@
         "enum": "ConstraintStatus",
         "persisted": false,
         "reason": "APS 求解过程约束结果，不落库"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "mes",
@@ -1851,8 +2320,15 @@
         "enum": "CapacityStatus",
         "table": "mes.capacities",
         "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_capacities_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_capacities_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1876,8 +2352,15 @@
         "enum": "DemandForecastStatus",
         "table": "mes.demand_forecasts",
         "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_demand_forecasts_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_demand_forecasts_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1895,8 +2378,15 @@
         "enum": "EquipmentInspectionOverallStatus",
         "table": "mes.equipment_inspection_records",
         "column": "overall_status",
-        "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_equipment_inspection_records_overall_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_equipment_inspection_records_overall_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1913,8 +2403,15 @@
         "enum": "EquipmentInspectionRecordStatus",
         "table": "mes.equipment_inspection_records",
         "column": "status",
-        "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_equipment_inspection_records_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_equipment_inspection_records_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1932,8 +2429,15 @@
         "enum": "EquipmentInspectionStatus",
         "table": "mes.equipment_inspections",
         "column": "status",
-        "candidate": "docs/database/equipment-inspection-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/equipment-inspection-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_equipment_inspections_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_equipment_inspections_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1952,8 +2456,15 @@
         "enum": "EquipmentStatus",
         "table": "mes.equipment",
         "column": "status",
-        "candidate": "docs/database/equipment-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/equipment-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_equipment_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_equipment_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1970,8 +2481,15 @@
         "enum": "BomStatus",
         "table": "mes.material_boms",
         "column": "status",
-        "candidate": "docs/database/mes-bom-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/mes-bom-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_material_boms_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_material_boms_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -1988,8 +2506,15 @@
         "enum": "MaterialReturnStatus",
         "table": "mes.material_returns",
         "column": "status",
-        "candidate": "docs/database/mes-material-return-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/mes-material-return-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_material_returns_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_material_returns_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2009,8 +2534,15 @@
         "enum": "MaterialPlanStatus",
         "table": "mes.material_plans",
         "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_material_plans_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_material_plans_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2027,8 +2559,15 @@
         "enum": "MaterialRequirementStatus",
         "table": "mes.material_requirements",
         "column": "status",
-        "candidate": "docs/database/material-requirement-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/material-requirement-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_material_requirements_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_material_requirements_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2050,8 +2589,15 @@
         "enum": "ProductionOrderStatus",
         "table": "mes.production_orders",
         "column": "status",
-        "candidate": "docs/database/mes-production-order-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/mes-production-order-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "production_orders_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "production_orders_status_check"
+      ]
     },
     {
       "module": "mes",
@@ -2068,8 +2614,15 @@
         "enum": "ProductionPlanStatus",
         "table": "mes.production_plans",
         "column": "status",
-        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_production_plans_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_production_plans_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2087,8 +2640,15 @@
         "enum": "ProductionScheduleStatus",
         "table": "mes.production_schedules",
         "column": "status",
-        "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "production_schedules_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "production_schedules_status_check"
+      ]
     },
     {
       "module": "mes",
@@ -2109,8 +2669,15 @@
         "enum": "InspectionStatus",
         "table": "mes.quality_inspections",
         "column": "status",
-        "candidate": "docs/database/mes-inspection-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/mes-inspection-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_quality_inspections_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_quality_inspections_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2128,8 +2695,15 @@
         "enum": "QualityPatrolItemStatus",
         "table": "mes.quality_patrol_items",
         "column": "status",
-        "candidate": "docs/database/quality-patrol-item-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/quality-patrol-item-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_quality_patrol_items_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_quality_patrol_items_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2146,8 +2720,15 @@
         "enum": "QualityRecordStatus",
         "table": "mes.quality_records",
         "column": "quality_status",
-        "candidate": "docs/database/quality-record-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/quality-record-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_quality_records_quality_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_quality_records_quality_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2164,8 +2745,15 @@
         "enum": "WipStatus",
         "table": "mes.wips",
         "column": "status",
-        "candidate": "docs/database/wip-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/wip-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_wips_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_wips_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2184,8 +2772,15 @@
         "enum": "WorkOrderStatus",
         "table": "mes.work_orders",
         "column": "status",
-        "candidate": "docs/database/mes-work-order-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/mes-work-order-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "work_orders_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "work_orders_status_check"
+      ]
     },
     {
       "module": "mes",
@@ -2202,8 +2797,15 @@
         "enum": "WorkReportStatus",
         "table": "mes.work_reports",
         "column": "status",
-        "candidate": "docs/database/mes-work-report-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/mes-work-report-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mes_work_reports_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_mes_work_reports_status_standard"
+      ]
     },
     {
       "module": "mes",
@@ -2220,8 +2822,15 @@
         "enum": "WorkStationStatus",
         "table": "mes.work_stations",
         "column": "status",
-        "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "work_stations_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "work_stations_status_check"
+      ]
     },
     {
       "module": "mobile",
@@ -2238,8 +2847,16 @@
         "enum": "PushNotificationStatus",
         "table": "mobile.mobile_push_notifications",
         "column": "status",
-        "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_mobile_push_notifications_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_push_notifications_status_standard",
+        "ck_mobile_push_notifications_status_standard"
+      ]
     },
     {
       "module": "pdm",
@@ -2257,8 +2874,15 @@
         "enum": "ChangeNoticeStatus",
         "table": "pdm.pdm_change_notices",
         "column": "status",
-        "candidate": "docs/database/pdm-change-notice-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/pdm-change-notice-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_pdm_change_notices_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_pdm_change_notices_status_standard"
+      ]
     },
     {
       "module": "plugin-registry",
@@ -2275,7 +2899,9 @@
         "enum": "UpgradeQueueStatus",
         "persisted": false,
         "reason": "插件升级队列内存态，无对应状态列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "plugin-registry",
@@ -2297,7 +2923,9 @@
         "enum": "UpgradeStatus",
         "persisted": false,
         "reason": "插件升级编排内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "pm",
@@ -2319,8 +2947,15 @@
         "enum": "ProjectStatus",
         "table": "pm.projects",
         "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_projects_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_projects_status_standard"
+      ]
     },
     {
       "module": "pm",
@@ -2337,8 +2972,15 @@
         "enum": "AcceptanceRecordStatus",
         "table": "pm.acceptance_records",
         "column": "status",
-        "candidate": "docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_acceptance_records_result_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_acceptance_records_result_status_standard"
+      ]
     },
     {
       "module": "pm",
@@ -2355,8 +2997,15 @@
         "enum": "ProjectReportStatus",
         "table": "pm.project_reports",
         "column": "status",
-        "candidate": "docs/database/pm-project-report-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/pm-project-report-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_project_reports_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_project_reports_status_standard"
+      ]
     },
     {
       "module": "pm",
@@ -2375,8 +3024,15 @@
         "enum": "ProjectResourceStatus",
         "table": "pm.project_resources",
         "column": "status",
-        "candidate": "docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_project_resources_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_project_resources_status_standard"
+      ]
     },
     {
       "module": "pm",
@@ -2394,8 +3050,15 @@
         "enum": "ProjectRiskStatus",
         "table": "pm.project_risks",
         "column": "status",
-        "candidate": "docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_project_risks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_project_risks_status_standard"
+      ]
     },
     {
       "module": "pm",
@@ -2415,8 +3078,15 @@
         "enum": "TaskStatus",
         "table": "pm.pm_tasks",
         "column": "status",
-        "candidate": "docs/database/pm-task-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/pm-task-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_pm_tasks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_pm_tasks_status_standard"
+      ]
     },
     {
       "module": "portal",
@@ -2435,7 +3105,9 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "Portal 健康探针内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2452,7 +3124,9 @@
         "enum": "HealingStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2470,7 +3144,9 @@
         "enum": "AuthStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2488,7 +3164,9 @@
         "enum": "CheckStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2506,7 +3184,9 @@
         "enum": "DeploymentStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2523,7 +3203,9 @@
         "enum": "RollbackActionStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2542,7 +3224,9 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "网关监控内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2559,7 +3243,9 @@
         "enum": "DeploymentStatusGql",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2576,7 +3262,9 @@
         "enum": "EdgeExecutionStatusGql",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2594,7 +3282,9 @@
         "enum": "ClusterStatusV4",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2613,7 +3303,9 @@
         "enum": "SchemaVersionStatusGql",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2633,7 +3325,9 @@
         "enum": "DiscoveryStatus",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2652,7 +3346,9 @@
         "enum": "MutationStatusGql",
         "persisted": false,
         "reason": "GraphQL/API 投影，无表列"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2669,7 +3365,9 @@
         "enum": "ConflictStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2689,7 +3387,9 @@
         "enum": "StitchStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2708,7 +3408,9 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "编排健康状态内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2725,7 +3427,9 @@
         "enum": "QueryStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2742,7 +3446,9 @@
         "enum": "SyncStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2759,7 +3465,9 @@
         "enum": "QueryStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2778,7 +3486,9 @@
         "enum": "SubscriptionStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2797,7 +3507,9 @@
         "enum": "VersionStatus",
         "persisted": false,
         "reason": "Schema 版本 API 投影"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2816,7 +3528,9 @@
         "enum": "StreamStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2835,7 +3549,9 @@
         "enum": "APIVersionStatus",
         "persisted": false,
         "reason": "API 版本投影"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "portal",
@@ -2854,7 +3570,9 @@
         "enum": "CanaryStatus",
         "persisted": false,
         "reason": "进程内状态（HashMap/Mutex），无持久化；portal 同名 DB 表在本地无代码读写（schema-only）"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "qms",
@@ -2873,8 +3591,15 @@
         "enum": "QmsAuditFindingStatus",
         "table": "qms.qa_audit_findings",
         "column": "status",
-        "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_qa_audit_findings_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_audit_findings_status_standard"
+      ]
     },
     {
       "module": "qms",
@@ -2891,8 +3616,15 @@
         "enum": "AuditPlanStatus",
         "table": "qms.qa_audit_plans",
         "column": "status",
-        "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_qa_audit_plans_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_audit_plans_status_standard"
+      ]
     },
     {
       "module": "qms",
@@ -2909,8 +3641,16 @@
         "enum": "QmsInspectionStatus",
         "table": "qms.quality_inspections",
         "column": "status",
-        "note": "2026-11-24 复核：约束 ck_quality_inspections_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
-      }
+        "note": "2026-11-24 复核：约束 ck_quality_inspections_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+        "db_constraint": "ck_quality_inspections_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_qa_quality_inspections_status_standard",
+        "ck_quality_inspections_status_standard"
+      ]
     },
     {
       "module": "rd",
@@ -2928,8 +3668,15 @@
         "enum": "MilestoneStatus",
         "table": "rs.project_milestones",
         "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_project_milestones_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_project_milestones_status_standard"
+      ]
     },
     {
       "module": "rd",
@@ -2947,8 +3694,15 @@
         "enum": "PhaseStatus",
         "table": "rs.project_phases",
         "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_project_phases_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_project_phases_status_standard"
+      ]
     },
     {
       "module": "rd",
@@ -2970,8 +3724,15 @@
         "enum": "ProjectStatus",
         "table": "rs.projects",
         "column": "status",
-        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_rs_projects_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_rs_projects_status_standard"
+      ]
     },
     {
       "module": "scm",
@@ -2988,8 +3749,15 @@
         "enum": "DeliveryAppointmentStatus",
         "table": "scm.supplier_delivery_appointments",
         "column": "status",
-        "candidate": "docs/database/delivery-appointment-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/delivery-appointment-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_scm_supplier_delivery_appointments_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_scm_supplier_delivery_appointments_status_standard"
+      ]
     },
     {
       "module": "scm",
@@ -3006,8 +3774,15 @@
         "enum": "IncomingInspectionStatus",
         "table": "scm.incoming_inspections",
         "column": "status",
-        "candidate": "docs/database/incoming-inspection-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/incoming-inspection-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_scm_incoming_inspections_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_scm_incoming_inspections_status_standard"
+      ]
     },
     {
       "module": "scm",
@@ -3024,8 +3799,15 @@
         "enum": "IncomingNoticeStatus",
         "table": "scm.incoming_notices",
         "column": "status",
-        "candidate": "docs/database/incoming-notice-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/incoming-notice-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_scm_incoming_notices_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_scm_incoming_notices_status_standard"
+      ]
     },
     {
       "module": "scm",
@@ -3042,8 +3824,15 @@
         "enum": "MasterDataRefStatus",
         "table": "scm.scm_master_data_refs",
         "column": "status",
-        "candidate": "docs/database/scm-master-data-ref-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/scm-master-data-ref-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_scm_master_data_refs_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_scm_master_data_refs_status_standard"
+      ]
     },
     {
       "module": "scm",
@@ -3061,8 +3850,15 @@
         "enum": "PurchaseContractStatus",
         "table": "scm.purchase_contracts",
         "column": "status",
-        "candidate": "docs/database/purchase-contract-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/purchase-contract-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_scm_purchase_contracts_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_scm_purchase_contracts_status_standard"
+      ]
     },
     {
       "module": "scm",
@@ -3079,8 +3875,15 @@
         "enum": "PurchaseRequisitionStatus",
         "table": "scm.purchase_requisitions",
         "column": "status",
-        "candidate": "docs/database/purchase-requisition-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/purchase-requisition-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_scm_purchase_requisitions_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_scm_purchase_requisitions_status_standard"
+      ]
     },
     {
       "module": "srm",
@@ -3102,8 +3905,15 @@
         "enum": "BiddingStatus",
         "table": "srm.biddings",
         "column": "status",
-        "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "biddings_status_check",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "biddings_status_check"
+      ]
     },
     {
       "module": "srm",
@@ -3120,8 +3930,15 @@
         "enum": "SupplierRecordStatus",
         "table": "srm.suppliers",
         "column": "status",
-        "candidate": "docs/database/srm-supplier-status-check-candidates-2026-11-21.sql"
-      }
+        "candidate": "docs/database/srm-supplier-status-check-candidates-2026-11-21.sql",
+        "db_constraint": "ck_suppliers_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_suppliers_status_standard"
+      ]
     },
     {
       "module": "tms",
@@ -3139,8 +3956,15 @@
         "enum": "ShipmentStatus",
         "table": "tms.tms_shipments",
         "column": "status",
-        "candidate": "docs/database/tms-shipment-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/tms-shipment-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_tms_shipments_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_tms_shipments_status_standard"
+      ]
     },
     {
       "module": "unified-core",
@@ -3158,7 +3982,9 @@
         "enum": "VersionStatus",
         "persisted": false,
         "reason": "中间件版本兼容判断内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "unified-core",
@@ -3175,8 +4001,15 @@
         "enum": "WorkflowStatus",
         "table": "public.core_workflows",
         "column": "status",
-        "candidate": "docs/database/core-workflow-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/core-workflow-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_core_workflows_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_core_workflows_status_standard"
+      ]
     },
     {
       "module": "unified-core",
@@ -3194,8 +4027,15 @@
         "enum": "WorkflowTaskStatus",
         "table": "public.core_workflow_tasks",
         "column": "status",
-        "candidate": "docs/database/core-workflow-task-status-check-candidates-2026-11-23.sql"
-      }
+        "candidate": "docs/database/core-workflow-task-status-check-candidates-2026-11-23.sql",
+        "db_constraint": "ck_core_workflow_tasks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_core_workflow_tasks_status_standard"
+      ]
     },
     {
       "module": "unified-core",
@@ -3212,7 +4052,9 @@
         "enum": "SubscriptionStatus",
         "persisted": false,
         "reason": "纯内存订阅状态计算，无 SQL；与 shared-auth 同值集但 Canceled/Cancelled 拼写与 serde 输出不同，收敛需 API 契约决策"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "unified-core",
@@ -3231,7 +4073,9 @@
         "enum": "HealthStatus",
         "persisted": false,
         "reason": "健康探针内存态"
-      }
+      },
+      "db_covered": false,
+      "db_constraints": []
     },
     {
       "module": "wms",
@@ -3250,8 +4094,15 @@
         "enum": "BatchQualityStatus",
         "table": "wms.batches",
         "column": "quality_status",
-        "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_batches_quality_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_batches_quality_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3271,8 +4122,15 @@
         "enum": "BatchStatus",
         "table": "wms.batches",
         "column": "status",
-        "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_batches_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_batches_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3289,8 +4147,15 @@
         "enum": "InboundItemQualityStatus",
         "table": "wms.inbound_order_items",
         "column": "quality_status",
-        "candidate": "docs/database/wms-inbound-item-quality-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-inbound-item-quality-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_inbound_order_items_quality_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_inbound_order_items_quality_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3308,8 +4173,15 @@
         "enum": "InboundStatus",
         "table": "wms.inbound_orders",
         "column": "status",
-        "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_inbound_orders_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_inbound_orders_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3327,8 +4199,15 @@
         "enum": "InventoryQualityStatus",
         "table": "wms.inventory",
         "column": "quality_status",
-        "candidate": "docs/database/wms-inventory-quality-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-inventory-quality-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_inventory_quality_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_inventory_quality_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3351,8 +4230,15 @@
         "enum": "LocationStatus",
         "table": "wms.locations",
         "column": "status",
-        "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_wms_locations_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_wms_locations_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3372,8 +4258,15 @@
         "enum": "OutboundStatus",
         "table": "wms.outbound_orders",
         "column": "status",
-        "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_outbound_orders_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_outbound_orders_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3392,8 +4285,15 @@
         "enum": "SerialNumberQualityStatus",
         "table": "wms.serial_numbers",
         "column": "quality_status",
-        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_serial_numbers_quality_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_serial_numbers_quality_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3413,8 +4313,15 @@
         "enum": "SerialNumberStatus",
         "table": "wms.serial_numbers",
         "column": "status",
-        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_serial_numbers_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_serial_numbers_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3431,8 +4338,15 @@
         "enum": "SlottingSuggestionStatus",
         "table": "wms.slotting_suggestions",
         "column": "status",
-        "candidate": "docs/database/wms-slotting-suggestion-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-slotting-suggestion-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_slotting_suggestions_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_slotting_suggestions_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3450,8 +4364,15 @@
         "enum": "StockTakeItemQualityStatus",
         "table": "wms.stock_take_items",
         "column": "quality_status",
-        "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_stock_take_items_quality_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_stock_take_items_quality_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3473,8 +4394,15 @@
         "enum": "TransferItemStatus",
         "table": "wms.transfer_order_items",
         "column": "status",
-        "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_transfer_order_items_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_transfer_order_items_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3492,8 +4420,15 @@
         "enum": "TransferOrderStatus",
         "table": "wms.transfer_orders",
         "column": "status",
-        "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_transfer_orders_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_transfer_orders_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3511,8 +4446,15 @@
         "enum": "WavePickItemStatus",
         "table": "wms.wave_pick_items",
         "column": "status",
-        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_wave_pick_items_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_wave_pick_items_status_standard"
+      ]
     },
     {
       "module": "wms",
@@ -3531,8 +4473,15 @@
         "enum": "WavePickStatus",
         "table": "wms.wave_picks",
         "column": "status",
-        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
-      }
+        "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql",
+        "db_constraint": "ck_wave_picks_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_wave_picks_status_standard"
+      ]
     }
   ]
 }

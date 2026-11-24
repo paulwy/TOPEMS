@@ -7,7 +7,10 @@
       "enum": "TenantStatus",
       "table": "public.core_tenants",
       "column": "status",
-      "candidate": "docs/database/tenant-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/tenant-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "core_tenants_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-auth/src/tenant.rs",
@@ -92,91 +95,130 @@
       "enum": "BillingStatus",
       "table": "master_data.mdm_billing_records",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_billing_records_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/commercial_v55.rs",
       "enum": "IncidentStatus",
       "table": "master_data.mdm_sla_incidents",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_sla_incidents_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/commercial_v55.rs",
       "enum": "SLAMetric",
       "table": "master_data.mdm_sla_configs",
       "column": "metric",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_sla_configs_metric_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/commercial_v55.rs",
       "enum": "SLAIncidentType",
       "table": "master_data.mdm_sla_incidents",
       "column": "incident_type",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_sla_incidents_type_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/commercial_v55.rs",
       "enum": "ImpactSeverity",
       "table": "master_data.mdm_sla_incidents",
       "column": "impact_severity",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_sla_incidents_severity_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/commercial_v55.rs",
       "enum": "SubscriptionStatus",
       "table": "master_data.mdm_subscriptions",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_subscriptions_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/disaster_v56.rs",
       "enum": "ContinuityPlanStatus",
       "table": "master_data.mdm_continuity_plans",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_continuity_plans_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/disaster_v56.rs",
       "enum": "FailoverStatus",
       "table": "master_data.mdm_failover_records",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_failover_records_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/disaster_v56.rs",
       "enum": "RecoveryPlanStatus",
       "table": "master_data.mdm_recovery_plans",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_recovery_plans_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/disaster_v56.rs",
       "enum": "RegionStatus",
       "table": "master_data.mdm_region_configs",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_region_configs_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/disaster_v56.rs",
       "enum": "ReplicationStatus",
       "table": "master_data.mdm_replication_configs",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_replication_configs_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/governance_v58.rs",
       "enum": "DataProductStatus",
       "table": "master_data.mdm_data_products",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_data_products_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/governance_v58.rs",
       "enum": "WorkflowStatus",
       "table": "master_data.mdm_workflows",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_workflows_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/governance_v58.rs",
@@ -191,14 +233,20 @@
       "enum": "FixStatus",
       "table": "master_data.mdm_auto_fix_actions",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_auto_fix_actions_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/quality_v51.rs",
       "enum": "QualityStatus",
       "table": "master_data.mdm_quality_checks",
       "column": "status",
-      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/master-data-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "mdm_quality_checks_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/portal/src/models/mod.rs",
@@ -433,35 +481,50 @@
       "enum": "SalesOrderStatus",
       "table": "erp.sales_orders",
       "column": "status",
-      "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/erp-sales-order-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "sales_orders_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/purchase_order_status.rs",
       "enum": "PurchaseOrderStatus",
       "table": "erp.purchase_orders",
       "column": "status",
-      "candidate": "docs/database/erp-purchase-order-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/erp-purchase-order-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "purchase_orders_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/content_status.rs",
       "enum": "AnnouncementStatus",
       "table": "erp.announcements",
       "column": "status",
-      "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "announcements_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/content_status.rs",
       "enum": "AssetStatus",
       "table": "erp.assets",
       "column": "status",
-      "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/erp-content-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "assets_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/receivable_status.rs",
       "enum": "ReceivableStatus",
       "table": "erp.receivables",
       "column": "status",
-      "candidate": "docs/database/erp-receivable-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/erp-receivable-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "ck_erp_receivables_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ai/src/dsh/governance_dashboard/mod.rs",
@@ -498,63 +561,90 @@
       "enum": "DocumentStatus",
       "table": "ai.documents",
       "column": "status",
-      "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ai-document-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "documents_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/work_order_status.rs",
       "enum": "WorkOrderStatus",
       "table": "mes.work_orders",
       "column": "status",
-      "candidate": "docs/database/mes-work-order-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/mes-work-order-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "work_orders_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/production_order_status.rs",
       "enum": "ProductionOrderStatus",
       "table": "mes.production_orders",
       "column": "status",
-      "candidate": "docs/database/mes-production-order-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/mes-production-order-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "production_orders_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/production_schedule_status.rs",
       "enum": "ProductionScheduleStatus",
       "table": "mes.production_schedules",
       "column": "status",
-      "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/mes-production-schedule-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "production_schedules_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/work_station_status.rs",
       "enum": "WorkStationStatus",
       "table": "mes.work_stations",
       "column": "status",
-      "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/mes-work-station-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "work_stations_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",
       "enum": "ReplenishmentSuggestionStatus",
       "table": "wms.replenishment_suggestions",
       "column": "status",
-      "candidate": "docs/database/wms-replenishment-suggestion-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-replenishment-suggestion-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_replenishment_suggestions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",
       "enum": "ReplenishmentOrderItemStatus",
       "table": "wms.replenishment_order_items",
       "column": "status",
-      "candidate": "docs/database/wms-replenishment-order-item-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-replenishment-order-item-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_replenishment_order_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/slotting_status.rs",
       "enum": "SlottingSuggestionStatus",
       "table": "wms.slotting_suggestions",
       "column": "status",
-      "candidate": "docs/database/wms-slotting-suggestion-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-slotting-suggestion-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_slotting_suggestions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",
       "enum": "ReplenishmentOrderStatus",
       "table": "wms.replenishment_orders",
       "column": "status",
-      "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/wms-replenishment-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "ck_replenishment_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/finance_risk.rs",
@@ -562,420 +652,600 @@
       "table": "crm.customer_finance",
       "column": "risklevel",
       "candidate": "crm_customer_finance_risklevel_check",
-      "note": "2026-11-24 已收口：迁移 20261124140000 建立并 VALIDATE crm_customer_finance_risklevel_check（low/medium/high/critical）"
+      "note": "2026-11-24 已收口：迁移 20261124140000 建立并 VALIDATE crm_customer_finance_risklevel_check（low/medium/high/critical）",
+      "db_constraint": "crm_customer_finance_risklevel_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/customer_status.rs",
       "enum": "CustomerStatus",
       "table": "crm.customers",
       "column": "status",
-      "candidate": "existing:ck_customers_status_standard"
+      "candidate": "existing:ck_customers_status_standard",
+      "db_constraint": "ck_customers_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/sync_status.rs",
       "enum": "SyncRecordStatus",
       "table": "wms.sync_records",
       "column": "status",
-      "candidate": "docs/database/wms-sync-record-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/wms-sync-record-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "sync_records_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/srm/src/modules/inquiry_status.rs",
       "enum": "InquiryStatus",
       "table": "srm.inquiries",
       "column": "status",
-      "candidate": "docs/database/srm-inquiry-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/srm-inquiry-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "inquiries_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/sync_status.rs",
       "enum": "SyncRecordStatus",
       "table": "scm.sync_records",
       "column": "status",
-      "candidate": "docs/database/scm-sync-record-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/scm-sync-record-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "sync_records_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/hazard_status.rs",
       "enum": "HazardStatus",
       "table": "ehs.qa_ehs_hazards",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_hazards_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/risk_status.rs",
       "enum": "RiskStatus",
       "table": "ehs.qa_ehs_risks",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_risks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/accident_status.rs",
       "enum": "AccidentStatus",
       "table": "ehs.qa_ehs_accidents",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_accidents_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mobile/src/modules/push_status.rs",
       "enum": "PushNotificationStatus",
       "table": "mobile.push_notifications",
       "column": "status",
-      "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/mobile-push-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "ck_push_notifications_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/srm/src/modules/quotation_status.rs",
       "enum": "QuotationStatus",
       "table": "srm.quotations",
       "column": "status",
-      "candidate": "docs/database/srm-quotation-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/srm-quotation-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "quotations_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/material_bom/issue_status.rs",
       "enum": "MaterialIssueStatus",
       "table": "mes.material_issues",
       "column": "status",
-      "candidate": "docs/database/mes-material-issue-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/mes-material-issue-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "material_issues_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/investigation_status.rs",
       "enum": "InvestigationStatus",
       "table": "ehs.qa_ehs_investigations",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_investigations_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/treatment_status.rs",
       "enum": "TreatmentStatus",
       "table": "ehs.qa_ehs_treatments",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_treatments_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/treatment_status.rs",
       "enum": "TreatmentActionStatus",
       "table": "ehs.qa_ehs_treatment_actions",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_treatment_actions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/incident_action_status.rs",
       "enum": "IncidentActionStatus",
       "table": "ehs.qa_ehs_incident_actions",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_incident_actions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/drill_status.rs",
       "enum": "DrillPlanStatus",
       "table": "ehs.qa_ehs_drill_plans",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_drill_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/drill_status.rs",
       "enum": "DrillRecordStatus",
       "table": "ehs.qa_ehs_drill_records",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_drill_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/rectification_status.rs",
       "enum": "RectificationStatus",
       "table": "ehs.qa_ehs_hazard_rectifications",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_hazard_rectifications_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/risk_control_status.rs",
       "enum": "RiskControlStatus",
       "table": "ehs.qa_ehs_risk_controls",
       "column": "status",
-      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql"
+      "candidate": "docs/database/ehs-legacy-status-check-standardize-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_risk_controls_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/customer_approval_status.rs",
       "enum": "CustomerApprovalStatus",
       "table": "crm.customers",
       "column": "approval_status",
-      "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/crm-customer-approval-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "customers_approval_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/contact_approval_status.rs",
       "enum": "ContactApprovalStatus",
       "table": "crm.contacts",
       "column": "approval_status",
-      "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/crm-contact-approval-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "contacts_approval_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/contact_status.rs",
       "enum": "ContactStatus",
       "table": "crm.contacts",
       "column": "status",
-      "candidate": "existing:ck_contacts_status_standard"
+      "candidate": "existing:ck_contacts_status_standard",
+      "db_constraint": "ck_contacts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/srm/src/modules/bidding_status.rs",
       "enum": "BiddingStatus",
       "table": "srm.biddings",
       "column": "status",
-      "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/srm-bidding-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "biddings_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/srm/src/modules/supplier_contract_status.rs",
       "enum": "SupplierContractStatus",
       "table": "srm.supplier_contracts",
       "column": "status",
-      "candidate": "docs/database/srm-supplier-contract-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/srm-supplier-contract-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "ck_supplier_contracts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/srm/src/modules/supplier_record_status.rs",
       "enum": "SupplierRecordStatus",
       "table": "srm.suppliers",
       "column": "status",
-      "candidate": "docs/database/srm-supplier-status-check-candidates-2026-11-21.sql"
+      "candidate": "docs/database/srm-supplier-status-check-candidates-2026-11-21.sql",
+      "db_constraint": "ck_suppliers_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ai/src/modules/ai_knowledge/document_status.rs",
       "enum": "KnowledgeDocumentStatus",
       "table": "core.knowledge_documents",
       "column": "status",
-      "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql"
+      "candidate": "docs/database/ai-knowledge-document-status-candidates-2026-11-21.sql",
+      "db_constraint": "knowledge_documents_status_check",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/contract_status.rs",
       "enum": "ContractStatus",
       "table": "crm.contracts",
       "column": "status",
-      "candidate": "docs/database/crm-contract-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-contract-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_crm_contracts_status_canonical",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/opportunity_status.rs",
       "enum": "OpportunityStatus",
       "table": "crm.opportunities",
       "column": "status",
-      "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-opportunity-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_crm_opportunities_status_canonical",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/billing_status.rs",
       "enum": "BillingStatus",
       "table": "crm.billing_records",
       "column": "status",
-      "candidate": "docs/database/crm-billing-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-billing-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_billing_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/inbound_status.rs",
       "enum": "InboundStatus",
       "table": "wms.inbound_orders",
       "column": "status",
-      "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-inbound-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_inbound_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/inbound_item_quality_status.rs",
       "enum": "InboundItemQualityStatus",
       "table": "wms.inbound_order_items",
       "column": "quality_status",
-      "candidate": "docs/database/wms-inbound-item-quality-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-inbound-item-quality-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_inbound_order_items_quality_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/inventory_quality_status.rs",
       "enum": "InventoryQualityStatus",
       "table": "wms.inventory",
       "column": "quality_status",
-      "candidate": "docs/database/wms-inventory-quality-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-inventory-quality-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_inventory_quality_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/outbound_status.rs",
       "enum": "OutboundStatus",
       "table": "wms.outbound_orders",
       "column": "status",
-      "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-outbound-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_outbound_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/location_status.rs",
       "enum": "LocationStatus",
       "table": "wms.locations",
       "column": "status",
-      "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-location-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_wms_locations_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/warehouse_status.rs",
       "enum": "WarehouseStatus",
       "table": "wms.warehouses",
       "column": "status",
-      "candidate": "docs/database/wms-warehouse-status-lifecycle-check-candidates-2026-11-24.sql"
+      "candidate": "docs/database/wms-warehouse-status-lifecycle-check-candidates-2026-11-24.sql",
+      "db_constraint": "ck_warehouses_status_lifecycle_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/transfer_status.rs",
       "enum": "TransferOrderStatus",
       "table": "wms.transfer_orders",
       "column": "status",
-      "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_transfer_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/transfer_status.rs",
       "enum": "TransferItemStatus",
       "table": "wms.transfer_order_items",
       "column": "status",
-      "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-transfer-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_transfer_order_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/stock_take_status.rs",
       "enum": "StockTakeStatus",
       "table": "wms.stock_takes",
       "column": "status",
-      "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_stock_takes_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/stock_take_status.rs",
       "enum": "StockTakeApprovalStatus",
       "table": "wms.stock_takes",
       "column": "approval_status",
-      "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-stock-take-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_stock_takes_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/wave_pick_status.rs",
       "enum": "WavePickStatus",
       "table": "wms.wave_picks",
       "column": "status",
-      "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_wave_picks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/wave_pick_status.rs",
       "enum": "WavePickItemStatus",
       "table": "wms.wave_pick_items",
       "column": "status",
-      "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-wave-pick-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_wave_pick_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/batch_status.rs",
       "enum": "BatchStatus",
       "table": "wms.batches",
       "column": "status",
-      "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_batches_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/batch_status.rs",
       "enum": "BatchQualityStatus",
       "table": "wms.batches",
       "column": "quality_status",
-      "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-batch-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_batches_quality_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/serial_number_status.rs",
       "enum": "SerialNumberStatus",
       "table": "wms.serial_numbers",
       "column": "status",
-      "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_serial_numbers_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/serial_number_status.rs",
       "enum": "SerialNumberQualityStatus",
       "table": "wms.serial_numbers",
       "column": "quality_status",
-      "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-serial-number-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_serial_numbers_quality_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/smart_replenishment/status.rs",
       "enum": "ReplenishmentOrderStatus",
       "table": "wms.replenishment_orders",
       "column": "status",
-      "candidate": "docs/database/wms-replenishment-order-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-replenishment-order-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_replenishment_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/discrepancy_status.rs",
       "enum": "DiscrepancyStatus",
       "table": "wms.discrepancy_records",
       "column": "adjustment_status",
-      "candidate": "docs/database/wms-discrepancy-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-discrepancy-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_discrepancy_records_adjustment_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/stock_take_item_status.rs",
       "enum": "StockTakeItemStatus",
       "table": "wms.stock_take_items",
       "column": "status",
-      "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_stock_take_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/outbound_execution_status.rs",
       "enum": "OutboundExecutionStatus",
       "table": "wms.outbound_orders",
       "column": "picking_status",
-      "candidate": "docs/database/wms-outbound-execution-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-outbound-execution-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_outbound_orders_picking_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/stock_take_adjustment_status.rs",
       "enum": "StockTakeAdjustmentStatus",
       "table": "wms.stock_takes",
       "column": "adjustment_status",
-      "candidate": "docs/database/wms-stock-take-adjustment-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-stock-take-adjustment-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_stock_takes_adjustment_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/stock_take_item_quality_status.rs",
       "enum": "StockTakeItemQualityStatus",
       "table": "wms.stock_take_items",
       "column": "quality_status",
-      "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/wms-stock-take-item-quality-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_stock_take_items_quality_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/sales_forecast_status.rs",
       "enum": "SalesForecastStatus",
       "table": "crm.sales_forecasts",
       "column": "status",
-      "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-sales-forecast-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_sales_forecasts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/interaction_status.rs",
       "enum": "InteractionStatus",
       "table": "crm.interactions",
       "column": "status",
-      "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-interaction-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_interactions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/customer_order_status.rs",
       "enum": "CustomerOrderStatus",
       "table": "crm.customer_orders",
       "column": "status",
-      "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-customer-order-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_customer_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/master_data_ref_status.rs",
       "enum": "MasterDataRefStatus",
       "table": "crm.crm_master_data_refs",
       "column": "status",
-      "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-master-data-ref-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_crm_master_data_refs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/crm/src/modules/sales_order_status.rs",
       "enum": "SalesOrderStatus",
       "table": "crm.sales_orders",
       "column": "status",
-      "candidate": "docs/database/crm-sales-order-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/crm-sales-order-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_sales_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/expense_status.rs",
       "enum": "ExpenseApprovalStatus",
       "table": "finance.expense_approvals",
       "column": "status",
-      "candidate": "docs/database/finance-expense-approval-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-expense-approval-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_expense_approvals_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/settlement_center_status.rs",
       "enum": "SettlementLinkStatus",
       "table": "finance.reconciliation_settlement_links",
       "column": "status",
-      "candidate": "docs/database/finance-settlement-link-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-settlement-link-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_reconciliation_settlement_links_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/settlement_v55.rs",
       "enum": "InvoiceStatus",
       "table": "finance.finance_v55_invoices",
       "column": "status",
-      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v55_invoices_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/settlement_v55.rs",
       "enum": "MatchStatus",
       "table": "finance.finance_v55_reconciliation_results",
       "column": "match_status",
-      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v55_recon_results_match_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/financial_report_status.rs",
@@ -983,56 +1253,80 @@
       "table": "finance.financial_reports",
       "column": "status",
       "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
-      "note": "2026-11-24 B255 合并：approval_status 列已删除，报表态只由 status 承载；原 approval_status 映射行随列删除"
+      "note": "2026-11-24 B255 合并：approval_status 列已删除，报表态只由 status 承载；原 approval_status 映射行随列删除",
+      "db_constraint": "ck_financial_reports_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/decision_v60.rs",
       "enum": "DecisionStatus",
       "table": "finance.finance_v60_decision_scenarios",
       "column": "status",
-      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v60_decision_scenarios_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/decision_v60.rs",
       "enum": "ScheduleTaskStatus",
       "table": "finance.finance_v60_schedule_tasks",
       "column": "status",
-      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v60_schedule_tasks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/tax_v56.rs",
       "enum": "TaxFormStatus",
       "table": "finance.finance_v56_tax_forms",
       "column": "status",
-      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v56_tax_forms_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/tax_v56.rs",
       "enum": "TaxPlanStatus",
       "table": "finance.finance_v56_tax_plans",
       "column": "status",
-      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v56_tax_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/reports_v57.rs",
       "enum": "ReportStatus",
       "table": "finance.finance_v57_generated_reports",
       "column": "status",
-      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v60-tax-v57-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v57_generated_reports_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/collection_status.rs",
       "enum": "CollectionStatus",
       "table": "finance.erp_collection_records",
       "column": "status",
-      "candidate": "docs/database/finance-collection-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-collection-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_erp_collection_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/models/mod.rs",
       "enum": "InvoiceStatus",
       "table": "finance.finance_v55_invoices",
       "column": "status",
-      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-v55-reports-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v55_invoices_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/domain/saga.rs",
@@ -1057,42 +1351,60 @@
       "enum": "FindingStatus",
       "table": "finance.finance_audit_findings_v52",
       "column": "status",
-      "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_audit_findings_v52_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/forecasting.rs",
       "enum": "AlertStatus",
       "table": "finance.finance_v60_alerts",
       "column": "status",
-      "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/finance-audit-alert-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_finance_v60_alerts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/capacity_status.rs",
       "enum": "CapacityStatus",
       "table": "mes.capacities",
       "column": "status",
-      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_capacities_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/demand_forecast_status.rs",
       "enum": "DemandForecastStatus",
       "table": "mes.demand_forecasts",
       "column": "status",
-      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_demand_forecasts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/material_plan_status.rs",
       "enum": "MaterialPlanStatus",
       "table": "mes.material_plans",
       "column": "status",
-      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_material_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/production_plan_status.rs",
       "enum": "ProductionPlanStatus",
       "table": "mes.production_plans",
       "column": "status",
-      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/mes-aps-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_production_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/aps_scheduling.rs",
@@ -1105,14 +1417,20 @@
       "enum": "ScheduleStatus",
       "table": "bi.report_schedules",
       "column": "status",
-      "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_report_schedules_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/async_task_queue.rs",
       "enum": "AsyncTaskStatus",
       "table": "integration.async_tasks",
       "column": "status",
-      "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/analytics-integration-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_async_tasks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/sync_retry.rs",
@@ -1143,1036 +1461,1480 @@
       "enum": "ProjectStatus",
       "table": "rs.projects",
       "column": "status",
-      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_rs_projects_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/rd/src/models/project_milestone.rs",
       "enum": "MilestoneStatus",
       "table": "rs.project_milestones",
       "column": "status",
-      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_project_milestones_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/rd/src/models/project_phase.rs",
       "enum": "PhaseStatus",
       "table": "rs.project_phases",
       "column": "status",
-      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_project_phases_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/models/project.rs",
       "enum": "ProjectStatus",
       "table": "pm.projects",
       "column": "status",
-      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/rd-pm-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_projects_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/tms/src/modules/shipment_status.rs",
       "enum": "ShipmentStatus",
       "table": "tms.tms_shipments",
       "column": "status",
-      "candidate": "docs/database/tms-shipment-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/tms-shipment-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_tms_shipments_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/lims/src/modules/sample_status.rs",
       "enum": "LabSampleStatus",
       "table": "public.qa_lab_samples",
       "column": "status",
-      "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_qa_lab_samples_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/lims/src/modules/safety_task_status.rs",
       "enum": "SafetyTaskStatus",
       "table": "lims.lims_safety_tasks",
       "column": "status",
-      "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/lims-sample-safety-task-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_lims_safety_tasks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/qms/src/modules/qms_status.rs",
       "enum": "QmsInspectionStatus",
       "table": "qms.qa_quality_inspections",
       "column": "status",
-      "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_qa_quality_inspections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/qms/src/modules/qms_status.rs",
       "enum": "QmsIssueStatus",
       "table": "qms.qa_quality_issues",
       "column": "status",
-      "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/qms-inspection-issue-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_qa_quality_issues_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mobile/src/modules/mobile_content_status.rs",
       "enum": "MobileDocumentStatus",
       "table": "mobile.documents",
       "column": "status",
-      "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_mobile_documents_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mobile/src/modules/mobile_content_status.rs",
       "enum": "MobilePatrolStatus",
       "table": "mobile.patrol_records",
       "column": "status",
-      "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/mobile-document-patrol-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_mobile_patrol_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "public.audit_logs",
       "column": "status",
-      "candidate": "docs/database/audit-logs-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/audit-logs-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/training_status.rs",
       "enum": "TrainingProgramStatus",
       "table": "ehs.training_programs",
       "column": "status",
-      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_training_programs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/training_status.rs",
       "enum": "TrainingSessionStatus",
       "table": "ehs.qa_ehs_trainings",
       "column": "status",
-      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_trainings_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/training_status.rs",
       "enum": "TrainingRecordStatus",
       "table": "ehs.training_records",
       "column": "status",
-      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_training_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/training_status.rs",
       "enum": "TrainingCertificateStatus",
       "table": "ehs.qa_ehs_training_certificates",
       "column": "status",
-      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/ehs-training-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_qa_ehs_training_certificates_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/master_data_ref_status.rs",
       "enum": "MasterDataRefStatus",
       "table": "scm.scm_master_data_refs",
       "column": "status",
-      "candidate": "docs/database/scm-master-data-ref-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/scm-master-data-ref-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_scm_master_data_refs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/erp_status.rs",
       "enum": "ErpConnectionStatus",
       "table": "integration.erp_connections",
       "column": "status",
-      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_erp_connections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/erp_status.rs",
       "enum": "ErpSyncLogStatus",
       "table": "integration.erp_connections",
       "column": "last_sync_status",
-      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_erp_connections_last_sync_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/erp_status.rs",
       "enum": "ErpSyncLogStatus",
       "table": "integration.external_erp_sync_logs",
       "column": "status",
-      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_external_erp_sync_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/erp_status.rs",
       "enum": "ErpConnectionStatus",
       "table": "public.erp_connections",
       "column": "status",
-      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_erp_connections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/erp_status.rs",
       "enum": "ErpSyncLogStatus",
       "table": "public.external_erp_sync_logs",
       "column": "status",
-      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql"
+      "candidate": "docs/database/erp-sync-connection-status-check-candidates-2026-11-22.sql",
+      "db_constraint": "ck_external_erp_sync_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/master-data/src/modules/supplier_status.rs",
       "enum": "SupplierStatus",
       "table": "master_data.mdm_suppliers",
       "column": "status",
-      "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mdm_suppliers_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/supplier_status.rs",
       "enum": "SupplierStatus",
       "table": "scm.suppliers",
       "column": "status",
-      "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/supplier-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_suppliers_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/unified-core/src/modules/audit/login_status.rs",
       "enum": "LoginStatus",
       "table": "public.core_login_logs",
       "column": "status",
-      "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_core_login_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mobile/src/modules/push_status.rs",
       "enum": "PushNotificationStatus",
       "table": "mobile.mobile_push_notifications",
       "column": "status",
-      "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/login-push-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mobile_push_notifications_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/purchase_order_status.rs",
       "enum": "PurchaseOrderStatus",
       "table": "scm.purchase_orders",
       "column": "status",
-      "candidate": "docs/database/purchase-order-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/purchase-order-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_purchase_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/sync_log_status.rs",
       "enum": "SyncLogStatus",
       "table": "scm.sync_logs",
       "column": "status",
-      "candidate": "docs/database/scm-sync-log-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/scm-sync-log-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_sync_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/emergency_plan_status.rs",
       "enum": "EmergencyPlanStatus",
       "table": "ehs.qa_ehs_emergency_plans",
       "column": "status",
-      "candidate": "docs/database/ehs-emergency-plan-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/ehs-emergency-plan-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_qa_ehs_emergency_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/unified-core/src/modules/flow/workflow_status.rs",
       "enum": "WorkflowStatus",
       "table": "public.core_workflows",
       "column": "status",
-      "candidate": "docs/database/core-workflow-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/core-workflow-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_core_workflows_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/unified-core/src/modules/flow/workflow_instance_status.rs",
       "enum": "WorkflowInstanceStatus",
       "table": "public.core_workflow_instances",
       "column": "status",
-      "candidate": "docs/database/core-workflow-instance-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/core-workflow-instance-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_core_workflow_instances_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/unified-core/src/modules/flow/workflow_task_status.rs",
       "enum": "WorkflowTaskStatus",
       "table": "public.core_workflow_tasks",
       "column": "status",
-      "candidate": "docs/database/core-workflow-task-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/core-workflow-task-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_core_workflow_tasks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/purchase_requisition_status.rs",
       "enum": "PurchaseRequisitionStatus",
       "table": "scm.purchase_requisitions",
       "column": "status",
-      "candidate": "docs/database/purchase-requisition-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/purchase-requisition-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_purchase_requisitions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/purchase_contract_status.rs",
       "enum": "PurchaseContractStatus",
       "table": "scm.purchase_contracts",
       "column": "status",
-      "candidate": "docs/database/purchase-contract-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/purchase-contract-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_purchase_contracts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/delivery_appointment_status.rs",
       "enum": "DeliveryAppointmentStatus",
       "table": "scm.supplier_delivery_appointments",
       "column": "status",
-      "candidate": "docs/database/delivery-appointment-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/delivery-appointment-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_supplier_delivery_appointments_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/incoming_inspection_status.rs",
       "enum": "IncomingInspectionStatus",
       "table": "scm.incoming_inspections",
       "column": "status",
-      "candidate": "docs/database/incoming-inspection-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/incoming-inspection-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_incoming_inspections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/supplier_evaluation_status.rs",
       "enum": "SupplierEvaluationStatus",
       "table": "scm.supplier_evaluations",
       "column": "status",
-      "candidate": "docs/database/supplier-evaluation-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/supplier-evaluation-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_supplier_evaluations_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/mrp_suggestion_status.rs",
       "enum": "MrpSuggestionStatus",
       "table": "scm.mrp_suggestions",
       "column": "status",
-      "candidate": "docs/database/mrp-suggestion-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/mrp-suggestion-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_mrp_suggestions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/supplier_admission_status.rs",
       "enum": "SupplierAdmissionStatus",
       "table": "scm.supplier_admissions",
       "column": "status",
-      "candidate": "docs/database/supplier-admission-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/supplier-admission-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_supplier_admissions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/quality_management/inspection_status.rs",
       "enum": "InspectionStatus",
       "table": "mes.quality_inspections",
       "column": "status",
-      "candidate": "docs/database/mes-inspection-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/mes-inspection-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_quality_inspections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/material_bom/bom_status.rs",
       "enum": "BomStatus",
       "table": "mes.material_boms",
       "column": "status",
-      "candidate": "docs/database/mes-bom-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/mes-bom-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_material_boms_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/material_bom/return_status.rs",
       "enum": "MaterialReturnStatus",
       "table": "mes.material_returns",
       "column": "status",
-      "candidate": "docs/database/mes-material-return-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/mes-material-return-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_material_returns_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/production_record_status.rs",
       "enum": "ProductionRecordStatus",
       "table": "mes.production_records",
       "column": "status",
-      "candidate": "docs/database/mes-production-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/mes-production-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_production_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/work_report_status.rs",
       "enum": "WorkReportStatus",
       "table": "mes.work_reports",
       "column": "status",
-      "candidate": "docs/database/mes-work-report-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/mes-work-report-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_work_reports_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/material_requirement_status.rs",
       "enum": "MaterialRequirementStatus",
       "table": "mes.material_requirements",
       "column": "status",
-      "candidate": "docs/database/material-requirement-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/material-requirement-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_material_requirements_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/equipment_maintenance_status.rs",
       "enum": "EquipmentMaintenanceStatus",
       "table": "mes.equipment_maintenance_records",
       "column": "status",
-      "candidate": "docs/database/equipment-maintenance-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/equipment-maintenance-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_equipment_maintenance_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/team_status.rs",
       "enum": "TeamStatus",
       "table": "mes.teams",
       "column": "status",
-      "candidate": "docs/database/team-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/team-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_teams_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/wip_status.rs",
       "enum": "WipStatus",
       "table": "mes.wips",
       "column": "status",
-      "candidate": "docs/database/wip-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/wip-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_wips_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/quality_management/patrol_status.rs",
       "enum": "QualityPatrolStatus",
       "table": "mes.quality_patrols",
       "column": "status",
-      "candidate": "docs/database/quality-patrol-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/quality-patrol-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_quality_patrols_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/quality_management/patrol_item_status.rs",
       "enum": "QualityPatrolItemStatus",
       "table": "mes.quality_patrol_items",
       "column": "status",
-      "candidate": "docs/database/quality-patrol-item-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/quality-patrol-item-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_quality_patrol_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/equipment_status.rs",
       "enum": "EquipmentStatus",
       "table": "mes.equipment",
       "column": "status",
-      "candidate": "docs/database/equipment-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/equipment-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_equipment_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/equipment_inspection_status.rs",
       "enum": "EquipmentInspectionStatus",
       "table": "mes.equipment_inspections",
       "column": "status",
-      "candidate": "docs/database/equipment-inspection-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/equipment-inspection-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_equipment_inspections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/quality_traceability_status.rs",
       "enum": "QualityRecordStatus",
       "table": "mes.quality_records",
       "column": "quality_status",
-      "candidate": "docs/database/quality-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/quality-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_quality_records_quality_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/batch_record_status.rs",
       "enum": "BatchRecordStatus",
       "table": "mes.batch_records",
       "column": "status",
-      "candidate": "docs/database/batch-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/batch-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_batch_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/equipment_inspection_overall_status.rs",
       "enum": "EquipmentInspectionOverallStatus",
       "table": "mes.equipment_inspection_records",
       "column": "overall_status",
-      "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_equipment_inspection_records_overall_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/mes/src/modules/equipment_inspection_record_status.rs",
       "enum": "EquipmentInspectionRecordStatus",
       "table": "mes.equipment_inspection_records",
       "column": "status",
-      "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/equipment-inspection-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_equipment_inspection_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/purchase_requisition_approval_status.rs",
       "enum": "PurchaseRequisitionApprovalStatus",
       "table": "scm.purchase_requisitions",
       "column": "approval_status",
-      "candidate": "docs/database/purchase-approval-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/purchase-approval-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_purchase_requisitions_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/purchase_contract_approval_status.rs",
       "enum": "PurchaseContractApprovalStatus",
       "table": "scm.purchase_contracts",
       "column": "approval_status",
-      "candidate": "docs/database/purchase-approval-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/purchase-approval-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_purchase_contracts_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/supplier_admission_approval_status.rs",
       "enum": "SupplierAdmissionApprovalStatus",
       "table": "scm.supplier_admissions",
       "column": "approval_status",
-      "candidate": "docs/database/supplier-admission-approval-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/supplier-admission-approval-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_supplier_admissions_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/supplier_quote_status.rs",
       "enum": "SupplierQuoteStatus",
       "table": "scm.supplier_quotes",
       "column": "status",
-      "candidate": "docs/database/supplier-quote-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/supplier-quote-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_supplier_quotes_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/scm/src/modules/incoming_notice_status.rs",
       "enum": "IncomingNoticeStatus",
       "table": "scm.incoming_notices",
       "column": "status",
-      "candidate": "docs/database/incoming-notice-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/incoming-notice-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_scm_incoming_notices_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/safety_hazard_status.rs",
       "enum": "SafetyHazardStatus",
       "table": "ehs.safety_hazards",
       "column": "status",
-      "candidate": "docs/database/safety-hazard-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/safety-hazard-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_ehs_safety_hazards_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/leave_request_status.rs",
       "enum": "LeaveRequestStatus",
       "table": "erp.leave_requests",
       "column": "status",
-      "candidate": "docs/database/leave-request-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/leave-request-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_erp_leave_requests_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/leave_status.rs",
       "enum": "LeaveRecordStatus",
       "table": "hrm.leave_records",
       "column": "status",
-      "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_hrm_leave_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/leave_status.rs",
       "enum": "LeaveApprovalStatus",
       "table": "hrm.leave_records",
       "column": "approval_status",
-      "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/hrm-leave-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_hrm_leave_records_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/vehicle_status.rs",
       "enum": "VehicleStatus",
       "table": "erp.vehicles",
       "column": "status",
-      "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_erp_vehicles_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/vehicle_status.rs",
       "enum": "VehicleRequestStatus",
       "table": "erp.vehicle_requests",
       "column": "status",
-      "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/vehicle-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_erp_vehicle_requests_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/meeting_status.rs",
       "enum": "MeetingRoomStatus",
       "table": "erp.meeting_rooms",
       "column": "status",
-      "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_erp_meeting_rooms_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/meeting_status.rs",
       "enum": "MeetingBookingStatus",
       "table": "erp.meeting_bookings",
       "column": "status",
-      "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/meeting-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_erp_meeting_bookings_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/office_supply_status.rs",
       "enum": "OfficeSupplyStatus",
       "table": "erp.office_supplies",
       "column": "status",
-      "candidate": "docs/database/office-supply-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/office-supply-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_erp_office_supplies_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/production_order.rs",
       "enum": "ProductionOrderStatus",
       "table": "erp.erp_production_orders",
       "column": "status",
-      "candidate": "ck_erp_erp_production_orders_status_standard"
+      "candidate": "ck_erp_erp_production_orders_status_standard",
+      "db_constraint": "ck_erp_erp_production_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/recruitment.rs",
       "enum": "JobOpeningStatus",
       "table": "hrm.job_openings",
       "column": "status",
-      "candidate": "ck_hrm_job_openings_status_standard"
+      "candidate": "ck_hrm_job_openings_status_standard",
+      "db_constraint": "ck_hrm_job_openings_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/recruitment.rs",
       "enum": "CandidateStatus",
       "table": "hrm.candidates",
       "column": "status",
-      "candidate": "ck_hrm_candidates_status_standard"
+      "candidate": "ck_hrm_candidates_status_standard",
+      "db_constraint": "ck_hrm_candidates_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/recruitment.rs",
       "enum": "InterviewStatus",
       "table": "hrm.interviews",
       "column": "status",
-      "candidate": "ck_hrm_interviews_status_standard"
+      "candidate": "ck_hrm_interviews_status_standard",
+      "db_constraint": "ck_hrm_interviews_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/performance.rs",
       "enum": "PerformanceReviewStatus",
       "table": "hrm.performance_reviews",
       "column": "status",
-      "candidate": "ck_hrm_performance_reviews_status_standard"
+      "candidate": "ck_hrm_performance_reviews_status_standard",
+      "db_constraint": "ck_hrm_performance_reviews_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/performance.rs",
       "enum": "PerformanceGoalStatus",
       "table": "hrm.performance_goals",
       "column": "status",
-      "candidate": "ck_hrm_performance_goals_status_standard"
+      "candidate": "ck_hrm_performance_goals_status_standard",
+      "db_constraint": "ck_hrm_performance_goals_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/salary_adjustment.rs",
       "enum": "SalaryAdjustmentStatus",
       "table": "hrm.salary_adjustments",
       "column": "status",
-      "candidate": "ck_hrm_salary_adjustments_status_standard"
+      "candidate": "ck_hrm_salary_adjustments_status_standard",
+      "db_constraint": "ck_hrm_salary_adjustments_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/attendance.rs",
       "enum": "AttendanceStatus",
       "table": "hrm.attendance_records",
       "column": "status",
-      "candidate": "ck_hrm_attendance_records_status_standard"
+      "candidate": "ck_hrm_attendance_records_status_standard",
+      "db_constraint": "ck_hrm_attendance_records_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/payroll.rs",
       "enum": "PayrollRunStatus",
       "table": "hrm.payroll_runs",
       "column": "status",
-      "candidate": "ck_hrm_payroll_runs_status_standard"
+      "candidate": "ck_hrm_payroll_runs_status_standard",
+      "db_constraint": "ck_hrm_payroll_runs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/payroll.rs",
       "enum": "PayrollItemStatus",
       "table": "hrm.payroll_items",
       "column": "status",
-      "candidate": "ck_hrm_payroll_items_status_standard"
+      "candidate": "ck_hrm_payroll_items_status_standard",
+      "db_constraint": "ck_hrm_payroll_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/operational.rs",
       "enum": "ReceivablePayableStatus",
       "table": "finance.receivables",
       "column": "status",
-      "candidate": "ck_finance_receivables_status_standard"
+      "candidate": "ck_finance_receivables_status_standard",
+      "db_constraint": "ck_finance_receivables_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/operational.rs",
       "enum": "ReceivablePayableStatus",
       "table": "finance.payables",
       "column": "status",
-      "candidate": "ck_finance_payables_status_standard"
+      "candidate": "ck_finance_payables_status_standard",
+      "db_constraint": "ck_finance_payables_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/event_handlers/mod.rs",
       "enum": "FinReconciliationStatus",
       "table": "erp.fin_reconciliations",
       "column": "status",
-      "candidate": "ck_erp_fin_reconciliations_status_standard"
+      "candidate": "ck_erp_fin_reconciliations_status_standard",
+      "db_constraint": "ck_erp_fin_reconciliations_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/ap_payment_status.rs",
       "enum": "PaymentStatus",
       "table": "finance.core_finance_payments",
       "column": "status",
-      "candidate": "ck_finance_core_finance_payments_status_standard"
+      "candidate": "ck_finance_core_finance_payments_status_standard",
+      "db_constraint": "ck_finance_core_finance_payments_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/event_handlers/mod.rs",
       "enum": "ReceivableStatus",
       "table": "erp.receivables",
       "column": "status",
-      "candidate": "ck_erp_receivables_status_standard"
+      "candidate": "ck_erp_receivables_status_standard",
+      "db_constraint": "ck_erp_receivables_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/event_handlers/mod.rs",
       "enum": "PayableStatus",
       "table": "erp.payables",
       "column": "status",
-      "candidate": "ck_erp_payables_status_standard"
+      "candidate": "ck_erp_payables_status_standard",
+      "db_constraint": "ck_erp_payables_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/finance_snapshot_status.rs",
       "enum": "ReconciliationSnapshotStatus",
       "table": "finance.reconciliation_snapshots",
       "column": "status",
-      "candidate": "ck_finance_reconciliation_snapshots_status_standard"
+      "candidate": "ck_finance_reconciliation_snapshots_status_standard",
+      "db_constraint": "ck_finance_reconciliation_snapshots_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/finance_snapshot_status.rs",
       "enum": "SettlementSnapshotStatus",
       "table": "finance.settlement_snapshots",
       "column": "status",
-      "candidate": "ck_finance_settlement_snapshots_status_standard"
+      "candidate": "ck_finance_settlement_snapshots_status_standard",
+      "db_constraint": "ck_finance_settlement_snapshots_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/contract_renewal_status.rs",
       "enum": "ContractRenewalStatus",
       "table": "hrm.contract_renewals",
       "column": "status",
-      "candidate": "ck_hrm_contract_renewals_status_standard"
+      "candidate": "ck_hrm_contract_renewals_status_standard",
+      "db_constraint": "ck_hrm_contract_renewals_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/contract_status.rs",
       "enum": "ContractStatus",
       "table": "hrm.contracts",
       "column": "status",
-      "candidate": "ck_hrm_contracts_status_standard"
+      "candidate": "ck_hrm_contracts_status_standard",
+      "db_constraint": "ck_hrm_contracts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/settlement_center_status.rs",
       "enum": "DifferenceAdjustmentStatus",
       "table": "finance.difference_adjustments",
       "column": "status",
-      "candidate": "docs/database/finance-difference-adjustment-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-difference-adjustment-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_difference_adjustments_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/payment_workflow_status.rs",
       "enum": "PaymentWorkflowStatus",
       "table": "finance.core_finance_payment_workflow",
       "column": "status",
-      "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_core_finance_payment_workflow_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/payment_item_write_off_status.rs",
       "enum": "PaymentItemWriteOffStatus",
       "table": "finance.core_finance_payment_items",
       "column": "write_off_status",
-      "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-payment-workflow-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_core_finance_payment_items_write_off_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/risk_v54.rs",
       "enum": "ReviewWorkflowStatus",
       "table": "finance.finance_v54_review_workflows",
       "column": "status",
-      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_finance_v54_review_workflows_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/settlement_v55.rs",
       "enum": "PaymentStatus",
       "table": "finance.finance_v55_payment_results",
       "column": "status",
-      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_finance_v55_payment_results_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/treasury_v58.rs",
       "enum": "TransferStatus",
       "table": "finance.finance_v58_pool_transfers",
       "column": "status",
-      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_finance_v58_pool_transfers_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/decision_v60.rs",
       "enum": "ScheduleExecutionStatus",
       "table": "finance.finance_v60_schedule_executions",
       "column": "status",
-      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-v54-v60-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_finance_v60_schedule_executions_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/reconcile_status.rs",
       "enum": "ReconcileOrderStatus",
       "table": "finance.reconcile_orders",
       "column": "status",
-      "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_reconcile_orders_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/reconcile_status.rs",
       "enum": "ReconcileItemStatus",
       "table": "finance.reconcile_items",
       "column": "status",
-      "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-reconcile-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_reconcile_items_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/settlement_center_status.rs",
       "enum": "SnapshotMatchStatus",
       "table": "finance.reconciliation_item_snapshots",
       "column": "match_status",
-      "candidate": "docs/database/finance-item-snapshot-match-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-item-snapshot-match-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_reconciliation_item_snapshots_match_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/expense_status.rs",
       "enum": "ExpenseStatus",
       "table": "finance.expenses",
       "column": "status",
-      "candidate": "docs/database/finance-expenses-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/finance-expenses-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_expenses_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/consolidation_scope_status.rs",
       "enum": "ConsolidationScopeStatus",
       "table": "erp.consolidation_scopes",
       "column": "status",
-      "candidate": "docs/database/erp-consolidation-scope-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/erp-consolidation-scope-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_consolidation_scopes_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/erp/src/modules/consolidation_report_approval_status.rs",
       "enum": "ConsolidationReportApprovalStatus",
       "table": "erp.consolidation_reports",
       "column": "approval_status",
-      "candidate": "docs/database/erp-consolidation-report-approval-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/erp-consolidation-report-approval-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_consolidation_reports_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/integration/src/mes_erp_sync_status.rs",
       "enum": "MesErpSyncStatus",
       "table": "integration.mes_erp_sync",
       "column": "sync_status",
-      "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/integration-mes-erp-sync-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_mes_erp_sync_sync_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pdm/src/modules/change_notice_status.rs",
       "enum": "ChangeNoticeStatus",
       "table": "pdm.pdm_change_notices",
       "column": "status",
-      "candidate": "docs/database/pdm-change-notice-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pdm-change-notice-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_pdm_change_notices_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/task_status.rs",
       "enum": "TaskStatus",
       "table": "pm.pm_tasks",
       "column": "status",
-      "candidate": "docs/database/pm-task-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-task-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_pm_tasks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_approval_status.rs",
       "enum": "ProjectApprovalStatus",
       "table": "pm.project_approvals",
       "column": "status",
-      "candidate": "docs/database/pm-project-approval-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-project-approval-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_approvals_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/contract_status.rs",
       "enum": "ContractStatus",
       "table": "pm.contracts",
       "column": "status",
-      "candidate": "docs/database/pm-contract-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-contract-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_contracts_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/budget_status.rs",
       "enum": "BudgetStatus",
       "table": "pm.budgets",
       "column": "status",
-      "candidate": "docs/database/pm-budget-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-budget-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_budgets_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/milestone_status.rs",
       "enum": "MilestoneStatus",
       "table": "pm.project_milestones",
       "column": "status",
-      "candidate": "docs/database/pm-milestone-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-milestone-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_milestones_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_expense_status.rs",
       "enum": "ProjectExpenseStatus",
       "table": "pm.project_expenses",
       "column": "status",
-      "candidate": "docs/database/pm-project-expense-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-project-expense-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_expenses_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_phase_status.rs",
       "enum": "ProjectPhaseStatus",
       "table": "pm.project_phases",
       "column": "status",
-      "candidate": "docs/database/pm-project-phase-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-project-phase-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_phases_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_report_status.rs",
       "enum": "ProjectReportStatus",
       "table": "pm.project_reports",
       "column": "status",
-      "candidate": "docs/database/pm-project-report-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-project-report-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_reports_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/defect_status.rs",
       "enum": "DefectStatus",
       "table": "pm.defects",
       "column": "status",
-      "candidate": "docs/database/pm-defect-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-defect-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_defects_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_risk_status.rs",
       "enum": "ProjectRiskStatus",
       "table": "pm.project_risks",
       "column": "status",
-      "candidate": "docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-project-risk-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_risks_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/rd/src/modules/bug_status.rs",
       "enum": "BugStatus",
       "table": "rd.bugs",
       "column": "status",
-      "candidate": "docs/database/rd-bug-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/rd-bug-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_rd_bugs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_resource_status.rs",
       "enum": "ProjectResourceStatus",
       "table": "pm.project_resources",
       "column": "status",
-      "candidate": "docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-project-resource-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_project_resources_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/qms/src/modules/audit_finding_status.rs",
       "enum": "QmsAuditFindingStatus",
       "table": "qms.qa_audit_findings",
       "column": "status",
-      "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/qms-audit-finding-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_qa_audit_findings_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/project_settlement_status.rs",
       "enum": "ProjectSettlementStatus",
       "table": "pm.settlements",
       "column": "status",
-      "candidate": "docs/database/pm-settlement-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-settlement-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_settlements_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/acceptance_record_status.rs",
       "enum": "AcceptanceRecordStatus",
       "table": "pm.acceptance_records",
       "column": "status",
-      "candidate": "docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-acceptance-record-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_acceptance_records_result_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/qms/src/modules/audit_plan_status.rs",
       "enum": "AuditPlanStatus",
       "table": "qms.qa_audit_plans",
       "column": "status",
-      "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/qms-audit-plan-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_qa_audit_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/pm/src/modules/acceptance_plan_status.rs",
       "enum": "AcceptancePlanStatus",
       "table": "pm.acceptance_plans",
       "column": "status",
-      "candidate": "docs/database/pm-acceptance-plan-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/pm-acceptance-plan-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_acceptance_plans_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/training_completion_status.rs",
       "enum": "TrainingCompletionStatus",
       "table": "hrm.training_records",
       "column": "completion_status",
-      "candidate": "docs/database/hrm-training-record-completion-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/hrm-training-record-completion-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_training_records_completion_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/training_attendance_status.rs",
       "enum": "TrainingAttendanceStatus",
       "table": "hrm.training_records",
       "column": "attendance_status",
-      "candidate": "docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/hrm-training-record-attendance-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_training_records_attendance_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/training_plan_status.rs",
       "enum": "TrainingPlanStatus",
       "table": "hrm.training_plans",
       "column": "status",
-      "candidate": "docs/database/hrm-training-plan-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/hrm-training-plan-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_training_plans_status_lifecycle_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/hazardous_material_status.rs",
       "enum": "HazardousMaterialStatus",
       "table": "ehs.qa_ehs_hazardous_materials",
       "column": "status",
-      "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/ehs-hazardous-material-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_qa_ehs_hazardous_materials_status_lifecycle_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/ehs/src/modules/environment_monitor_status.rs",
       "enum": "EnvironmentMonitorStatus",
       "table": "ehs.qa_ehs_environment_monitors",
       "column": "status",
-      "candidate": "docs/database/ehs-environment-monitor-status-check-candidates-2026-11-23.sql"
+      "candidate": "docs/database/ehs-environment-monitor-status-check-candidates-2026-11-23.sql",
+      "db_constraint": "ck_qa_ehs_environment_monitors_status_lifecycle_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/modules/budget_status.rs",
       "enum": "BudgetStatus",
       "table": "finance.budgets",
       "column": "status",
-      "candidate": "docs/database/finance-budget-status-check-candidates-2026-11-24.sql"
+      "candidate": "docs/database/finance-budget-status-check-candidates-2026-11-24.sql",
+      "db_constraint": "ck_budgets_status_lifecycle_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/rd/src/modules/rd_project_status.rs",
       "enum": "RdProjectStatus",
       "table": "rs.rs_projects",
       "column": "status",
-      "candidate": "docs/database/rd-rs-project-status-check-candidates-2026-11-24.sql"
+      "candidate": "docs/database/rd-rs-project-status-check-candidates-2026-11-24.sql",
+      "db_constraint": "ck_rs_projects_status_lifecycle_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/analytics/src/modules/report/schedule.rs",
       "enum": "ScheduleStatus",
       "table": "analytics.report_schedules",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_report_schedules_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_report_schedules_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_report_schedules_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/outbound_execution_status.rs",
       "enum": "OutboundExecutionStatus",
       "table": "wms.outbound_orders",
       "column": "packing_status",
-      "note": "2026-11-24 复核：约束 ck_outbound_orders_packing_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_outbound_orders_packing_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_outbound_orders_packing_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/outbound_execution_status.rs",
       "enum": "OutboundExecutionStatus",
       "table": "wms.outbound_orders",
       "column": "shipping_status",
-      "note": "2026-11-24 复核：约束 ck_outbound_orders_shipping_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_outbound_orders_shipping_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_outbound_orders_shipping_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/wms/src/modules/stock_take_adjustment_status.rs",
       "enum": "StockTakeAdjustmentStatus",
       "table": "wms.stock_take_items",
       "column": "adjustment_status",
-      "note": "2026-11-24 复核：约束 ck_stock_take_items_adjustment_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_stock_take_items_adjustment_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_stock_take_items_adjustment_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/qms/src/modules/qms_status.rs",
       "enum": "QmsInspectionStatus",
       "table": "qms.quality_inspections",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_quality_inspections_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_quality_inspections_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_quality_inspections_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "bi.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "crm.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "erp.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "hrm.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "iam.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "mes.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "plugin_mes.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "rs.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "scm.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "shared.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "srm.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "lib/shared-db/src/audit.rs",
       "enum": "AuditLogStatus",
       "table": "wms.audit_logs",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_audit_logs_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_audit_logs_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/hrm/src/modules/salary_adjustment_status.rs",
       "enum": "SalaryAdjustmentStatus",
       "table": "hrm.salary_adjustments",
       "column": "approval_status",
-      "note": "2026-11-24 复核：约束 ck_hrm_salary_adjustments_approval_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_hrm_salary_adjustments_approval_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_hrm_salary_adjustments_approval_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     },
     {
       "file": "svc/finance/src/models/mod.rs",
       "enum": "PeriodStatus",
       "table": "finance.core_finance_periods",
       "column": "status",
-      "note": "2026-11-24 复核：约束 ck_core_finance_periods_status_standard 字面值集与枚举逐值一致，已 VALIDATE"
+      "note": "2026-11-24 复核：约束 ck_core_finance_periods_status_standard 字面值集与枚举逐值一致，已 VALIDATE",
+      "db_constraint": "ck_core_finance_periods_status_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated)"
     }
   ],
   "non_enum_checks": [

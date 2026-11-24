@@ -8,6 +8,12 @@
  * 输出：
  *   docs/database/status-db-check-queue-2026-11-21.json
  *
+ * 2026-11-24 口径修正：此前 uncovered 是拿“参考库基线 catalog（35 条）”当全集，
+ * 把“基线快照未收录”误算成“没有约束”（129 个枚举在本地其实已有 CONVALIDATED 的 CHECK）。
+ * 现在叠加映射台账里已核验的 `db_constraint` 字段，输出：
+ *   db_covered_enums  台账里有已核验约束的枚举（不是缺口）
+ *   real_gap_enums    既不在基线、台账也没有已核验约束的持久化枚举（真缺口）
+ *
  * 分桶（启发式，供排期，不是最终结论）：
  *   finance_candidate_ready  finance 值已在候选 DDL 的某列集合内，等窗口
  *   api_projection            GraphQL/API 投影类型（*Gql、graphql_*.rs），不对应表列
@@ -58,9 +64,17 @@ function main() {
   }
 
   const resolvedMap = new Map();
+  const dbCoveredMap = new Map();
   if (fs.existsSync(MAPPINGS)) {
     const { mappings = [] } = JSON.parse(fs.readFileSync(MAPPINGS, "utf8"));
-    for (const m of mappings) resolvedMap.set(`${m.file}#${m.enum}`, m);
+    for (const m of mappings) {
+      resolvedMap.set(`${m.file}#${m.enum}`, m);
+      if (m.db_constraint) {
+        const k = `${m.file}#${m.enum}`;
+        if (!dbCoveredMap.has(k)) dbCoveredMap.set(k, new Set());
+        dbCoveredMap.get(k).add(m.db_constraint);
+      }
+    }
   }
 
   // 值级归因：每个值只落一个桶，优先级 候选 > 显式非持久化 > 投影 > 持久化 > 内部
@@ -107,6 +121,8 @@ function main() {
       values_by_bucket: byBucket,
       candidate_targets: [...new Set(values.flatMap((v) => candidateValues.get(v) ?? []))],
       ...(resolvedMap.has(`${e.file}#${e.name}`) ? { resolved: resolvedMap.get(`${e.file}#${e.name}`) } : {}),
+      db_covered: dbCoveredMap.has(`${e.file}#${e.name}`),
+      db_constraints: [...(dbCoveredMap.get(`${e.file}#${e.name}`) ?? [])],
     });
   }
   const buckets = {};
@@ -116,15 +132,27 @@ function main() {
   }
   for (const r of rows) for (const k of Object.keys(r.values_by_bucket)) buckets[k].enums += 1;
 
+  // 真缺口 = 文件确实落库（persisted_unmapped）且台账没有已核验约束，且台账未标注 persisted:false。
+  // finance_candidate_ready 只是“值名与候选 DDL 撞名”，跨模块撞名极多（如 paused/verified），不计入真缺口。
+  const realGapRows = rows.filter(
+    (r) =>
+      !r.db_covered &&
+      r.values_by_bucket.persisted_unmapped &&
+      r.resolved?.persisted !== false,
+  );
+
   const out = {
-    version: 1,
-    source: "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql",
-    note: "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用",
+    version: 2,
+    source:
+      "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql + status-db-check-mappings.json(db_constraint)",
+    note: "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用。db_covered 表示台账已核验该枚举至少一个持久化列有 CONVALIDATED 约束（不是缺口）；real_gap 才是待办",
     stats: {
       uncovered_enums: rows.length,
       uncovered_values: gaps.size,
       finance_candidate_constraints: cols.length,
       resolved_enums: rows.filter((r) => r.resolved).length,
+      db_covered_enums: rows.filter((r) => r.db_covered).length,
+      real_gap_enums: realGapRows.length,
       ...Object.fromEntries(Object.entries(buckets).map(([k, v]) => [`${k}_enums`, v.enums])),
       ...Object.fromEntries(Object.entries(buckets).map(([k, v]) => [`${k}_values`, v.values])),
     },
@@ -136,12 +164,13 @@ function main() {
       console.error(`${TAG} FAIL: 队列与盘点/候选不一致，重跑后复核并提交`);
       process.exit(1);
     }
-    console.log(`${TAG} PASS: ${rows.length} 个枚举 / ${gaps.size} 个值，分桶一致`);
+    console.log(`${TAG} PASS: ${rows.length} 个枚举 / ${gaps.size} 个值，分桶与 db_covered 一致`);
     return;
   }
   fs.writeFileSync(OUT, body);
   console.log(
     `${TAG} WROTE: ${rows.length} 枚举 / ${gaps.size} 值 -> ` +
+      `db_covered ${rows.filter((r) => r.db_covered).length} / real_gap ${realGapRows.length} / ` +
       Object.entries(buckets).map(([k, v]) => `${k} ${v.values}`).join(" / "),
   );
 }
