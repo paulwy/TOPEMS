@@ -65,7 +65,7 @@
 | # | 事项 | 前置条件 | 执行物 |
 |---|---|---|---|
 | 3 | 71 张死表/重复副本归档清理 | 账本追平、应用部署确认无副本命中；`pg_dump` 备份；单行表单独导出；外键/视图/触发器核对；预发演练归档与回滚。甄别结论：60 张已被既有归档迁移覆盖、随批次落地；11 张独有（7 死表 + 4 副本）另批处置 | 前置手册 `cleanup-pending-archive-prep-2026-11-25.md`；差集 `cleanup-pending-split-2026-11-25.csv`；依赖核对 `cleanup-pending-dependency-check-2026-11-25.sql`；上游台账 `cleanup-dead-duplicate-tables-2026-11-24.md` |
-| 4 | A 类 1 张 `iam.core_tenant_plugins` 去留 | 追平后复核开关；确认是否为重复副本（对照 `core.core_tenant_plugins`） | 随 schema 追赶窗口 |
+| 4 | A 类 1 张 `iam.core_tenant_plugins` 去留 | **复核定论：权威活表，保留，不可归档**；生产 OFF 系账本滞后，追平后重放 `20261119140000` 严格化迁移即对齐基准（tenant_isolation，ON+FORCE），前置断言 tenant_id NOT NULL、0 零/NULL 租户。壳表 `core.core_tenant_plugins` 随档 2；骨架副本 `public.core_tenant_plugins` 纳入下一批副本评审 | 结论回填分类台账 §4.1 |
 
 ### P3 · 复核与登记
 

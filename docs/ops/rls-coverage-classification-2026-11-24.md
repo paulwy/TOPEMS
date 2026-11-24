@@ -31,7 +31,13 @@
 
 - `iam.core_tenant_plugins`
 
-> 备注：基准内 `core.core_tenant_plugins`、`iam.core_tenant_plugins` 两条并存；生产 OFF 的是 `iam` 副本，可能为历史重复表，需在追平前确认是否保留。
+> **复核结论（2026-11-25）**：`iam.core_tenant_plugins` 是**权威活表**，不是重复副本，**保留、不可归档**。
+> - 源码证据：`svc/plugin-registry` 的 `tenant_plugins.rs` / `simple_api.rs` / `runtime.rs` 运行时读写该表（安装/激活/停用/卸载/列表/状态，JOIN `core.core_plugins`）。
+> - 结构证据：14 列，`tenant_id`/`plugin_id` NOT NULL，唯一约束 `(tenant_id,plugin_id)`、租户索引、`tenant_id` 外键；数据已由 `20261115140800_family_tenant_plugins_to_iam.sql` 从 core 迁入。
+> - 基准口径：`rls_tenant_isolation` ALL，ON+FORCE；严格化前向补丁 `20261119140000_iam_core_tenant_plugins_rls_strict_forward.sql`（前置断言 tenant_id NOT NULL、0 零/NULL 租户）。
+> - 生产 OFF 根因：账本滞后，`20261119140000` 未重放；**追平账本后该迁移落地即对齐基准**，无需新增策略迁移。
+>
+> 同名另两张（勿混淆）：`core.core_tenant_plugins` 为遗留壳表（2 列骨架、无 tenant_id、源码零引用，档 2 系统通道口径，`20261119161000` 已重建）；`public.core_tenant_plugins` 为遗留骨架副本（2 列、OFF、零引用），建议纳入下一批副本归档评审。
 
 ### 4.2 B 类 —— 带 `tenant_id` 列、RLS OFF、代码未列入（72 张）
 
