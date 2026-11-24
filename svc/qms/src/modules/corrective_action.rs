@@ -1,6 +1,7 @@
 //! Corrective Action handlers
 
 use crate::models::corrective_action::*;
+use crate::shared::fsm::{action_can_transition, is_valid_action_status};
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
@@ -386,12 +387,55 @@ pub async fn update_action(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $10 AND deleted_at IS NULL"#)).bind(id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(req.status).bind(req.priority).bind(req.assignee).bind(req.target_date).bind(tenant_id)
+    let target_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => {
+            let normalized = raw.trim().to_ascii_lowercase();
+            if !is_valid_action_status(&normalized) {
+                return ApiResponse::bad_request(
+                    "status 仅支持 pending/in_progress/completed/verified/cancelled",
+                );
+            }
+            Some(normalized)
+        }
+    };
+
+    let current_status = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_corrective_actions WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current_status {
+        Ok(Some(raw)) => raw
+            .map(|s| s.trim().to_ascii_lowercase())
+            .filter(|s| is_valid_action_status(s)),
+        Ok(None) => return ApiResponse::not_found("记录不存在"),
+        Err(e) => {
+            tracing::error!("Failed to read action status: {}", e);
+            return ApiResponse::server_error("整改措施更新失败");
+        }
+    };
+    let Some(current_status) = current_status else {
+        return ApiResponse::conflict("整改措施状态不在规范集合内");
+    };
+    if let Some(target) = target_status.as_deref() {
+        if target != current_status && action_can_transition(&current_status, target).is_err() {
+            return ApiResponse::bad_request(&format!(
+                "整改措施状态不允许从 {current_status} 流转到 {target}"
+            ));
+        }
+    }
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), completed_at = CASE WHEN $6 = 'completed' THEN COALESCE(completed_at, NOW()) WHEN $6 IN ('pending', 'in_progress', 'cancelled') THEN NULL ELSE completed_at END, priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $10 AND deleted_at IS NULL AND status = $11"#)).bind(id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(target_status.as_deref()).bind(req.priority).bind(req.assignee).bind(req.target_date).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("记录不存在"),
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("整改措施状态已变化，请刷新后重试")
+        }
         Ok(_) => match sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
         .fetch_one(&mut scope)
         .await
@@ -456,7 +500,36 @@ pub async fn complete_action(
         }
     };
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status <> 'completed'"#)).bind(id).bind(tenant_id)
+    let current_status = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM qms.qa_corrective_actions WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current_status = match current_status {
+        Ok(Some(raw)) => raw
+            .map(|s| s.trim().to_ascii_lowercase())
+            .filter(|s| is_valid_action_status(s)),
+        Ok(None) => return ApiResponse::not_found("整改措施不存在"),
+        Err(e) => {
+            tracing::error!("Failed to read action status: {}", e);
+            return ApiResponse::server_error("整改措施完成失败");
+        }
+    };
+    let Some(current_status) = current_status else {
+        return ApiResponse::conflict("整改措施状态不在规范集合内");
+    };
+    if current_status == "completed" {
+        return ApiResponse::conflict("整改措施已完成");
+    }
+    if action_can_transition(&current_status, "completed").is_err() {
+        return ApiResponse::bad_request(&format!(
+            "整改措施状态不允许从 {current_status} 流转到 completed"
+        ));
+    }
+
+    let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status = $3"#)).bind(id).bind(tenant_id).bind(current_status.as_str())
     .execute(&mut scope)
     .await;
 

@@ -3087,3 +3087,11 @@ pending_forward_patches:
     effect: "finance.expenses.status 的 NULL 归 draft、默认值固定 draft、SET NOT NULL，重建五态 CHECK（draft/submitted/approved/rejected/paid）并 VALIDATE"
     destructive_scan: "UPDATE status NULL→draft，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "fail-closed：五态之外的值会在 VALIDATE 失败；update_expense 增加当前态读取与迁移矩阵校验，补齐 COALESCE 防部分字段置空。回滚 database/rollback/20261125004000_finance_expense_status_standard.rollback.sql 恢复可空与旧 CHECK"
+
+  # ===== 2026-11-25：B276 整改措施状态值域与写入口守卫 =====
+  - version: "20261125005000"
+    file: "database/migrations/20261125005000_qms_corrective_action_status_standard.sql"
+    status: to_apply
+    effect: "qms.qa_corrective_actions.status 的 NULL 归 pending、默认 pending、SET NOT NULL，新增五态 CHECK（pending/in_progress/completed/verified/cancelled）并 VALIDATE"
+    destructive_scan: "UPDATE status NULL→pending，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "对齐 QMS shared/fsm ACTION 状态机；update_action/complete_action 增加当前态读取与 FSM 校验，UPDATE 带来源态守卫。回滚 database/rollback/20261125005000_qms_corrective_action_status_standard.rollback.sql 恢复可空并移除 CHECK"
