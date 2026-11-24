@@ -14,7 +14,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -296,7 +296,7 @@ impl EnhancedKnowledgeGraph {
         .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
         .bind(node.degree)
         .bind(&node.community_id)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱节点失败: {e}")))?;
@@ -320,7 +320,7 @@ impl EnhancedKnowledgeGraph {
         .bind(&edge.relation_type)
         .bind(edge.weight)
         .bind(edge.confidence)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱边失败: {e}")))?;
@@ -592,7 +592,7 @@ impl SemanticSearchEngine {
         .bind(serde_json::to_value(&index.embeddings).unwrap_or_default())
         .bind(&index.text)
         .bind(&index.metadata)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
@@ -775,7 +775,7 @@ impl SmartTagger {
         .bind(&tag.color)
         .bind(&tag.description)
         .bind(tag.usage_count)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入标签失败: {e}")))?;
@@ -812,7 +812,7 @@ impl SmartTagger {
         .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
         .bind(1.0)
         .bind(now.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
@@ -1249,7 +1249,11 @@ pub async fn add_graph_node(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let id = req.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let embeddings = generate_simulated_embedding(&req.label, &req.node_type);
 
@@ -1263,7 +1267,9 @@ pub async fn add_graph_node(
         community_id: None,
     };
 
-    let result = db_exec!(EnhancedKnowledgeGraph::add_node(&mut db_scope, tenant, node).await);
+    let result = db_exec!(
+        EnhancedKnowledgeGraph::add_node(&mut db_scope, Some(scope.create_tenant_id()), node).await
+    );
     ApiResponse::success(result, "图谱节点已创建")
 }
 
@@ -1294,7 +1300,11 @@ pub async fn add_graph_edge(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let edge = GraphEdgeV57 {
         source_id: req.source_id,
         target_id: req.target_id,
@@ -1303,7 +1313,9 @@ pub async fn add_graph_edge(
         confidence: req.confidence.unwrap_or(1.0),
     };
 
-    let result = db_exec!(EnhancedKnowledgeGraph::add_edge(&mut db_scope, tenant, edge).await);
+    let result = db_exec!(
+        EnhancedKnowledgeGraph::add_edge(&mut db_scope, Some(scope.create_tenant_id()), edge).await
+    );
     ApiResponse::success(result, "图谱边已创建")
 }
 
@@ -1531,12 +1543,16 @@ pub async fn index_entity(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({}));
     let result = db_exec!(
         SemanticSearchEngine::index_entity(
             &mut db_scope,
-            tenant,
+            Some(scope.create_tenant_id()),
             req.entity_type,
             req.entity_id,
             req.text,
@@ -1796,7 +1812,11 @@ pub async fn create_tag(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let tag = Tag {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -1806,7 +1826,8 @@ pub async fn create_tag(
         usage_count: 0,
     };
 
-    let result = db_exec!(SmartTagger::create_tag(&mut db_scope, tenant, tag).await);
+    let result =
+        db_exec!(SmartTagger::create_tag(&mut db_scope, Some(scope.create_tenant_id()), tag).await);
     ApiResponse::success(result, "标签已创建")
 }
 
@@ -1837,11 +1858,15 @@ pub async fn apply_tag(
             return ApiResponse::from(TopemsError::Internal("数据库上下文初始化失败".to_string()));
         }
     };
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let result = db_exec!(
         SmartTagger::apply_tag(
             &mut db_scope,
-            tenant,
+            Some(scope.create_tenant_id()),
             req.entity_type,
             req.entity_id,
             req.tag_id
