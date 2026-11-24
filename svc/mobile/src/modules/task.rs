@@ -9,6 +9,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
@@ -127,6 +128,17 @@ pub fn is_valid_task_transition(from: &str, to: &str) -> bool {
         "cancelled" => matches!(to, "pending"),
         _ => false,
     }
+}
+
+/// 统一状态写入口的值域 + 来源态守卫；返回可直接给 400 的中文原因。
+fn ensure_task_status_change(from: &str, to: &str) -> Result<(), String> {
+    if !is_valid_task_status(to) {
+        return Err(format!("无效的任务状态: {to}"));
+    }
+    if !is_valid_task_transition(from, to) {
+        return Err(format!("非法任务状态转移: {from} -> {to}"));
+    }
+    Ok(())
 }
 
 /// 按优先级对任务进行稳定排序（urgent > high > normal > low > unknown）。
@@ -438,22 +450,26 @@ pub async fn update_task(
     let description = payload.description.or(current_task.description);
     let task_type = payload.task_type.unwrap_or(current_task.task_type);
     let priority = payload.priority.unwrap_or(current_task.priority);
+    let previous_status = current_task.status.clone();
     let status = payload.status.unwrap_or(current_task.status);
+    if let Err(message) = ensure_task_status_change(&previous_status, &status) {
+        return (StatusCode::BAD_REQUEST, ApiResponse::bad_request(&message));
+    }
     let assignee = payload.assignee.or(current_task.assignee);
     let location_lat = payload.location_lat.or(current_task.location_lat);
     let location_lng = payload.location_lng.or(current_task.location_lng);
     let due_date = payload.due_date.or(current_task.due_date);
-    let completed_at = if status == "completed" && current_task.completed_at.is_none() {
-        Some(Utc::now())
+    let completed_at = if status == "completed" {
+        current_task.completed_at.or_else(|| Some(Utc::now()))
     } else {
-        current_task.completed_at
+        None
     };
 
     if let Err(e) = sqlx::query(
         only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks 
          SET title = $1, description = $2, task_type = $3, priority = $4, status = $5, assignee = $6, 
              location_lat = $7, location_lng = $8, due_date = $9, completed_at = $10, updated_at = $11 
-         WHERE id = $12 AND (assignee = $13 OR assignee IS NULL)")
+         WHERE id = $12 AND (assignee = $13 OR assignee IS NULL) AND status = $14")
     )
     .bind(&title)
     .bind(&description)
@@ -468,6 +484,7 @@ pub async fn update_task(
     .bind(Utc::now())
     .bind(id)
     .bind(&user_id)
+    .bind(&previous_status)
     .execute(&mut scope)
     .await
     {
@@ -519,6 +536,34 @@ pub async fn update_task_status(
         }
     };
 
+    let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "mobile",
+        "SELECT status FROM mobile.mobile_tasks WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .bind(&user_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("任务不存在或无权修改"),
+            );
+        }
+        Err(e) => {
+            tracing::error!("读取任务状态失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("读取任务状态失败"),
+            );
+        }
+    };
+    if let Err(message) = ensure_task_status_change(&current_status, &payload.status) {
+        return (StatusCode::BAD_REQUEST, ApiResponse::bad_request(&message));
+    }
+
     let completed_at = if payload.status == "completed" {
         Some(Utc::now())
     } else {
@@ -529,13 +574,14 @@ pub async fn update_task_status(
         "mobile",
         "UPDATE mobile.mobile_tasks 
          SET status = $1, completed_at = $2, updated_at = $3 
-         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL)"
+         WHERE id = $4 AND (assignee = $5 OR assignee IS NULL) AND status = $6"
     ))
     .bind(&payload.status)
     .bind(&completed_at)
     .bind(Utc::now())
     .bind(id)
     .bind(&user_id)
+    .bind(&current_status)
     .execute(&mut scope)
     .await;
 
@@ -1116,17 +1162,58 @@ pub async fn batch_update_status(
         }
     };
 
+    if !is_valid_task_status(&payload.status) {
+        return (
+            StatusCode::BAD_REQUEST,
+            ApiResponse::bad_request("无效的任务状态"),
+        );
+    }
+    let current_rows = match sqlx::query_as::<_, (Uuid, String)>(
+        only_own_schema_query!(
+            "mobile",
+            "SELECT id, status FROM mobile.mobile_tasks WHERE id = ANY($1) AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"
+        ),
+    )
+    .bind(&payload.ids)
+    .bind(&user_id)
+    .fetch_all(&mut scope)
+    .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("读取批量任务状态失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("读取任务状态失败"),
+            );
+        }
+    };
+    let status_by_id: HashMap<Uuid, String> = current_rows.into_iter().collect();
+    for (id, current) in &status_by_id {
+        if let Err(message) = ensure_task_status_change(current, &payload.status) {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::bad_request(&format!("任务 {id}: {message}")),
+            );
+        }
+    }
+
     let mut success = 0;
     let mut failed = 0;
 
     let __mobile_response = {
-        for id in payload.ids {
+        for id in &payload.ids {
+            let Some(current) = status_by_id.get(id) else {
+                failed += 1;
+                continue;
+            };
             let result = sqlx::query(
-            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
+            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, completed_at = CASE WHEN $3 = 'completed' THEN COALESCE(completed_at, NOW()) ELSE NULL END, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND status = $4"),
         )
         .bind(id)
         .bind(&user_id)
         .bind(&payload.status)
+        .bind(current)
         .execute(&mut scope)
         .await;
 
@@ -1193,6 +1280,21 @@ mod tests {
         assert!(!is_valid_task_status("done"));
         assert!(!is_valid_task_status("PENDING"));
         assert!(!is_valid_task_status("archived"));
+    }
+
+    // ---- ensure_task_status_change ----
+
+    #[test]
+    fn test_ensure_task_status_change_allows_valid_transition() {
+        assert!(ensure_task_status_change("pending", "in_progress").is_ok());
+        assert!(ensure_task_status_change("completed", "completed").is_ok());
+    }
+
+    #[test]
+    fn test_ensure_task_status_change_rejects_invalid_value_and_transition() {
+        assert!(ensure_task_status_change("pending", "bogus").is_err());
+        assert!(ensure_task_status_change("pending", "completed").is_err());
+        assert!(ensure_task_status_change("completed", "cancelled").is_err());
     }
 
     // ---- is_valid_task_priority ----
