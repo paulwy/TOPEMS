@@ -560,8 +560,8 @@ now,
                                                             layout: new_row.layout,
                                                             owner_id: new_row.owner_id,
                                                             is_public: new_row.is_public.unwrap_or(false),
-                    created_at: new_row.created_at.unwrap_or_else(Utc::now),
-                    updated_at: new_row.updated_at.unwrap_or_else(Utc::now),
+                    created_at: new_row.created_at,
+                    updated_at: new_row.updated_at,
                                                         }
                                                     }))
                 }
