@@ -606,6 +606,7 @@ struct StandardUpdateRow {
     inspection_type: Option<String>,
     status: Option<String>,
     version: Option<i32>,
+    // date-type-convention: exempt — DB 历史列为 text，字段承载展示串，非时间序列化
     effective_date: Option<String>,
     description: Option<String>,
     created_at: Option<DateTime<Utc>>,

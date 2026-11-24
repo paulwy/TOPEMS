@@ -480,6 +480,7 @@ struct PatrolUpdateRow {
     workstation_id: Option<Uuid>,
     workstation_name: Option<String>,
     inspector: String,
+    // date-type-convention: exempt — DB 历史列为 text，字段承载展示串，非时间序列化
     patrol_time: Option<String>,
     status: Option<String>,
     result: Option<String>,

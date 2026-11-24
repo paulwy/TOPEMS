@@ -499,7 +499,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: topems
           POSTGRES_USER: postgres
@@ -1000,7 +1000,9 @@ jobs:
         run: node scripts/ci/check-openapi-coverage.cjs
 
       - name: Run aggregated OpenAPI ratchet gate
-        run: node scripts/ci/check-openapi-aggregated.cjs
+        # 聚合产物自 2026-11-19 起不再入库，由 openapi-aggregated.yml 生成并校验；
+        # 主 CI 无产物时跳过，避免每次 rust/docs 变更必红。
+        run: node scripts/ci/check-openapi-aggregated.cjs --allow-missing
 
   # ──────────────────────────────────────────────────────────────────────────
   # i18n 质量门禁（R11 Z-P1 固化）
@@ -1504,23 +1506,25 @@ jobs:
           if [ -f /tmp/api-audit-ci.json ]; then
             node -e "
               const j = require('/tmp/api-audit-ci.json');
+              const a = j.audit || j;
+              const m = a.metrics || {};
               console.log('### Overview');
               console.log('| Metric | Value | Threshold | Level |');
               console.log('|--------|-------|-----------|-------|');
-              (j.results || []).forEach(r => {
+              (a.results || []).forEach(r => {
                 const thr = r.threshold === Infinity ? '∞ (WARN)' : r.threshold;
                 const mark = r.level === 'PASS' ? '✅' : (r.level === 'FAIL' ? '❌' : '⚠️');
                 console.log('|', r.key, '|', r.value, '|', thr, '|', mark, r.level, '|');
               });
               console.log('');
               console.log('### P7 RBAC Coverage');
-              console.log('- Legal permission codes: **', j.metrics['p7.legal_count'] ?? '-', '**');
-              console.log('- Used permission codes: **', j.metrics['p7.used_count'] ?? '-', '**');
-              console.log('- Coverage: **', j.metrics['p7.coverage_pct'] ?? '-', '%**');
-              console.log('- Dead codes (WARN, not blocking): **', j.metrics['p7.dead'] ?? 0, '**');
+              console.log('- Legal permission codes: **', m['p7.legal_count'] ?? '-', '**');
+              console.log('- Used permission codes: **', m['p7.used_count'] ?? '-', '**');
+              console.log('- Coverage: **', m['p7.coverage_pct'] ?? '-', '%**');
+              console.log('- Dead codes (WARN, not blocking): **', m['p7.dead'] ?? 0, '**');
               console.log('');
               // P6 RED 样本
-              const p6Red = (j.samples && j.samples.p6Red) || [];
+              const p6Red = (a.samples && a.samples.p6Red) || [];
               if (p6Red.length > 0) {
                 console.log('### P6 RED Samples (Page→API 方法不存在, 前 30 条)');
                 console.log('| keyPath | shapes | page |');
@@ -1530,7 +1534,7 @@ jobs:
                 });
               }
               // P7 NOT_LEGAL 样本
-              const p7nl = (j.samples && j.samples.p7NotLegal) || [];
+              const p7nl = (a.samples && a.samples.p7NotLegal) || [];
               if (p7nl.length > 0) {
                 console.log('');
                 console.log('### P7 NOT_LEGAL Samples (未注册权限码, 前 30 条)');
@@ -1541,13 +1545,13 @@ jobs:
                 });
               }
               // P7 MISMATCH 样本
-              const p7mm = (j.samples && j.samples.p7Mismatch) || [];
+              const p7mm = (a.samples && a.samples.p7Mismatch) || [];
               if (p7mm.length > 0) {
                 console.log('');
                 console.log('### P7 MISMATCH Samples (NavItem.code ≠ Route.permission)');
-                console.log('```json');
+                console.log('--- json ---');
                 console.log(JSON.stringify(p7mm, null, 2));
-                console.log('```');
+                console.log('--- end ---');
               }
             " >> $GITHUB_STEP_SUMMARY
           else

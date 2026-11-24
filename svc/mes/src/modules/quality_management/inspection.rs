@@ -583,6 +583,7 @@ struct InspectionUpdateRow {
     unqualified_quantity: Option<BigDecimal>,
     qualification_rate: Option<BigDecimal>,
     inspector: Option<String>,
+    // date-type-convention: exempt — DB 历史列为 text，字段承载展示串，非时间序列化
     inspection_time: Option<String>,
     status: Option<String>,
     result: Option<String>,
