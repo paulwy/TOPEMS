@@ -1,36 +1,41 @@
 #!/usr/bin/env node
 /**
- * 零租户写入源头扫描（report-only 起步）
+ * 零租户写入源头扫描（WRITE 阻断；读侧两类永久 report-only）
  *
  * 背景：业务写入必须以 claims/GUC 租户落库，零 UUID
  * （00000000-0000-0000-0000-000000000000）只能作为「平台通道」显式常量使用。
  *
  * 判定规则（分三类，避免把读侧守卫混进写源）：
- * 1. WRITE（写源疑似）：零 UUID 出现在 INSERT/UPDATE/DELETE 的 tenant 绑定位置；
- *    关联口径：先看绑定行 ±6 行局部窗口，再回退到所在函数体做语句级关联
- *    （写 SQL 与 .bind 相距较远时不再漏判）；函数级关联只认行内即租户绑定的
- *    nil 兜底，事件负载/外键/操作人 ID 的 parse 兜底不计入。
+ * 1. WRITE（写源疑似，阻断口径）：零 UUID 出现在 INSERT/UPDATE/DELETE 的 tenant
+ *    绑定位置；关联口径：先看绑定行 ±6 行局部窗口，再回退到所在函数体做语句级关联
+ *    （写 SQL 与 .bind 相距较远时不再漏判）；另补「局部变量先兜底 nil、落库时直绑
+ *    该变量」的绑定侧关联。事件负载/外键/操作人 ID 的 parse 兜底不计入。
  * 2. READ-GUARD（读侧隐式全局）：`OR tenant_id` / `tenant_id IS NULL` /
  *    `NULLIF(NULLIF(current_setting('app.tenant_id'...` 等谓词里的零 UUID；
- * 3. IMPLICIT-GLOBAL（读侧隐式全局，第二轮新增，始终 report-only）：
- *    `$N::uuid IS NULL OR tenant_id`、`OR tenant_id IS NULL` 等不带零 UUID
- *    字面量的隐式全局谓词。超管/服务令牌跨租户读必须走系统作用域
- *    （`scope_system` / `scope_read_system` / `scope_read_platform`），
- *    不得在 SQL 里自己写可选租户谓词。
+ * 3. IMPLICIT-GLOBAL（读侧隐式全局）：`$N::uuid IS NULL OR tenant_id`、
+ *    `OR tenant_id IS NULL` 等不带零 UUID 字面量的隐式全局谓词。超管/服务令牌
+ *    跨租户读必须走系统作用域（`scope_system` / `scope_read_system` /
+ *    `scope_read_platform`），不得在 SQL 里自己写可选租户谓词。
+ *
+ * 口径拍板（2026-11-24）：WRITE 写源纳入 --strict 阻断；READ-GUARD 与
+ * IMPLICIT-GLOBAL 属读侧设计问题，永久 report-only，走系统作用域收敛专项治理，
+ * 不混进写源门禁阻断。
  *
  * 白名单（不报告）：
  * - 显式常量 PLATFORM_TENANT_ID / SYSTEM_TENANT_ID
  * - 测试代码（tests/、examples/、benches/、*_test.rs）
  * - 本脚本自身
  * - 同行或上一行带 `// tenant-system: <原因>` 的显式系统通道写入
+ * - 同行或上一行带 `// tenant-event: <原因>` 的事件负载字段（非落库绑定）
  * - SELECT/RETURNING 投影里的 COALESCE(tenant_id, nil)、结构体/DTO 字段默认值
  *
- * 默认 report-only：始终 exit 0；传入 --strict 时才以非零退出阻断。
+ * 默认 report-only：始终 exit 0；传入 --strict 时仅在 WRITE 命中时非零退出阻断，
+ * READ-GUARD / IMPLICIT-GLOBAL 命中不影响退出码。
  *
  * 用法：
  *   node scripts/ci/check-tenant-write-sources.cjs --changed-only
  *   node scripts/ci/check-tenant-write-sources.cjs            # 全量扫描
- *   node scripts/ci/check-tenant-write-sources.cjs --strict   # 稳定后转阻断
+ *   node scripts/ci/check-tenant-write-sources.cjs --strict   # WRITE 阻断模式
  */
 
 const { execSync } = require('child_process');
@@ -55,8 +60,14 @@ const IMPLICIT_GLOBAL = [
 const TEST_PATH = /(^|\/)(tests?|examples|benches)(\/|$)|_test\.rs$|_tests\.rs$/;
 // 显式系统通道登记：同一行或上一行带 `// tenant-system: <原因>` 即豁免写源判定。
 const SYSTEM_ANNOTATION = /\/\/\s*tenant-system\s*:/;
+// 事件负载登记：同一行或上一行带 `// tenant-event: <原因>`，表示该 nil 仅进入
+// 事件消息体/外键/操作人字段，并非落库租户绑定，不纳入写源阻断。
+const EVENT_ANNOTATION = /\/\/\s*tenant-event\s*:/;
 function hasSystemAnnotation(lines, idx) {
-  return SYSTEM_ANNOTATION.test(lines[idx]) || (idx > 0 && SYSTEM_ANNOTATION.test(lines[idx - 1]));
+  const here = lines[idx];
+  const prev = idx > 0 ? lines[idx - 1] : '';
+  return SYSTEM_ANNOTATION.test(here) || SYSTEM_ANNOTATION.test(prev)
+    || EVENT_ANNOTATION.test(here) || EVENT_ANNOTATION.test(prev);
 }
 // 运维/回填/清理/演练语料：允许显式以 nil 做标记、回滚与校验，不纳入写源阻断
 const OPS_SCRIPT = /^scripts\/(ops|db\/sql)\//;
@@ -119,6 +130,15 @@ function scanFile(file) {
   const hits = { write: [], readGuard: [], implicitGlobal: [] };
   if (file === SELF || TEST_PATH.test(file) || OPS_SCRIPT.test(file)) return hits;
   const lines = fs.readFileSync(file, 'utf-8').split('\n');
+  // 函数体内先声明局部变量并兜底 nil，随后在写 SQL 绑定处直绑该变量
+  // （如 `let tenant_uuid = ...unwrap_or(nil)` → `.bind(tenant_uuid)`），
+  // 原语句级关联只看绑定行 nil 字面量会漏判；这里收集这类变量名再在绑定侧命中。
+  const nilVars = new Set();
+  lines.forEach((l) => {
+    const m = l.match(/^\s*(?:let|var)\s+(\w+)\s*=.*unwrap_or(?:_else)?\s*\([^)]*Uuid::nil/);
+    if (m) nilVars.add(m[1]);
+  });
+
   const spans = functionSpans(lines);
   lines.forEach((line, idx) => {
     if (IMPLICIT_GLOBAL.some((re) => re.test(line))) {
@@ -170,6 +190,12 @@ function scanFile(file) {
     ) {
       hits.write.push(hit);
     } else if (writeShape) {
+      hits.write.push(hit);
+    }
+
+    // 绑定侧关联：局部变量先兜底 nil，落库时 `.bind(<var>)` 引用该变量。
+    const bindVar = line.match(/\.bind\s*\(\s*(\w+)\s*\)/);
+    if (writeContext && bindVar && nilVars.has(bindVar[1])) {
       hits.write.push(hit);
     }
   });

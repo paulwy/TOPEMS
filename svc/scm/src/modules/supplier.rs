@@ -622,6 +622,7 @@ pub async fn create_supplier(
     if let Ok(supplier) = &result {
         let mdm_service = MdmEventService::new();
         let sid = supplier.id;
+        // tenant-event: 进入 MDM 事件消息体的负载字段，非落库租户绑定。
         let event_tenant = tenant_opt.unwrap_or(Uuid::nil());
         let scode = supplier.supplier_no.clone().unwrap_or_default();
         let sname = supplier.name.clone();

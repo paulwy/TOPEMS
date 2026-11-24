@@ -298,6 +298,9 @@ jobs:
       - name: Real module tenant middleware gate (fail-closed)
         run: node scripts/ci/check-real-module-tenant-middleware.mjs
 
+      - name: Tenant write-source nil bind gate (fail-closed)
+        run: node scripts/ci/check-tenant-write-sources.cjs --strict
+
       - name: Pool direct + system scope gate
         run: python3 scripts/ci/check-pool-direct-system-scope.py
 
