@@ -76,6 +76,13 @@ fi
 
 "${PSQL[@]}" -d postgres -q -c "DROP DATABASE IF EXISTS \"$DB\";" -c "CREATE DATABASE \"$DB\";"
 
+# 迁移中的 GRANT 依赖运行期应用角色；全新 PG 实例不会自带该角色。
+APP_ROLE="${APP_ROLE:-topems_app}"
+if ! "${PSQL[@]}" -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${APP_ROLE}'" | grep -q 1; then
+  echo "== 创建应用角色 ${APP_ROLE}（NOLOGIN，仅用于迁移 GRANT）"
+  "${PSQL[@]}" -d postgres -q -c "CREATE ROLE \"${APP_ROLE}\" NOLOGIN"
+fi
+
 echo "== 恢复 schema 快照"
 gunzip -c "$BASE_DIR/$SCHEMA_FILE" | grep -Ev '^(COMMENT ON EXTENSION |SET transaction_timeout = )' | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
 
