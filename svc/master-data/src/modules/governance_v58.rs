@@ -15,7 +15,7 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
-use crate::shared::AppState;
+use crate::shared::{tenant_write_scope, AppState};
 
 /// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
 fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
@@ -166,7 +166,7 @@ struct GovernanceMaturity;
 impl GovernanceMaturity {
     async fn assess_maturity(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
-        tenant: Option<uuid::Uuid>,
+        tenant: uuid::Uuid,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
     ) -> Result<MaturityAssessment, TopemsError> {
@@ -204,7 +204,7 @@ impl GovernanceMaturity {
         .bind(serde_json::to_value(&assessment.gaps).unwrap_or_default())
         .bind(serde_json::to_value(&assessment.recommendations).unwrap_or_default())
         .bind(assessment.assessed_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度评估失败: {e}")))?;
@@ -218,7 +218,7 @@ impl GovernanceMaturity {
         .bind(assessment.score)
         .bind(maturity_level_str(&assessment.current_level))
         .bind(now.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度历史失败: {e}")))?;
@@ -248,7 +248,7 @@ impl GovernanceMaturity {
 
     async fn create_improvement_plan(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
-        tenant: Option<uuid::Uuid>,
+        tenant: uuid::Uuid,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
         actions: Vec<String>,
@@ -274,7 +274,7 @@ impl GovernanceMaturity {
         .bind(&plan.priority)
         .bind(&plan.due_date)
         .bind(&plan.status)
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入改进计划失败: {e}")))?;
@@ -441,7 +441,7 @@ struct MDMWorkflowEngine;
 impl MDMWorkflowEngine {
     async fn create_workflow(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
-        tenant: Option<uuid::Uuid>,
+        tenant: uuid::Uuid,
         name: String,
         workflow_type: WorkflowType,
         steps: Vec<WorkflowStepV58>,
@@ -469,7 +469,7 @@ impl MDMWorkflowEngine {
         .bind(status_str(&workflow.status))
         .bind(workflow.created_at.to_rfc3339())
         .bind(workflow.updated_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建工作流失败: {e}")))?;
@@ -905,7 +905,7 @@ struct DataProductManager;
 impl DataProductManager {
     async fn create_data_product(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
-        tenant: Option<uuid::Uuid>,
+        tenant: uuid::Uuid,
         name: String,
         description: String,
         owner: String,
@@ -941,7 +941,7 @@ impl DataProductManager {
         .bind(product_status_str(&product.status))
         .bind(product.created_at.to_rfc3339())
         .bind(product.updated_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建数据产品失败: {e}")))?;
@@ -1077,7 +1077,7 @@ impl DataProductManager {
 
     async fn expose_as_api(
         scope: &mut topems_shared_db::ScopedTxn<'_>,
-        tenant: Option<uuid::Uuid>,
+        tenant: uuid::Uuid,
         product_id: &str,
         auth_type: String,
         rate_limit: String,
@@ -1108,7 +1108,7 @@ impl DataProductManager {
         .bind(&exposure.rate_limit)
         .bind(exposure.enabled)
         .bind(exposure.created_at.to_rfc3339())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
+        .bind(tenant)
         .execute(&mut *scope)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入 API 暴露失败: {e}")))?;
@@ -1376,7 +1376,11 @@ pub async fn assess_maturity(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
         None => return ApiResponse::bad_request("无效的维度类型"),
@@ -1388,7 +1392,13 @@ pub async fn assess_maturity(
         .unwrap_or(MaturityLevel::Optimized);
 
     let result = db_exec!(
-        GovernanceMaturity::assess_maturity(&mut db_scope, tenant, dimension, target).await
+        GovernanceMaturity::assess_maturity(
+            &mut db_scope,
+            scope.create_tenant_id(),
+            dimension,
+            target
+        )
+        .await
     );
     ApiResponse::success(result, "成熟度评估完成")
 }
@@ -1492,7 +1502,11 @@ pub async fn create_improvement_plan(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
         None => return ApiResponse::bad_request("无效的维度类型"),
@@ -1505,7 +1519,7 @@ pub async fn create_improvement_plan(
     let plan = db_exec!(
         GovernanceMaturity::create_improvement_plan(
             &mut db_scope,
-            tenant,
+            scope.create_tenant_id(),
             dimension,
             target,
             req.actions
@@ -1638,7 +1652,11 @@ pub async fn create_workflow(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
         None => return ApiResponse::bad_request("无效的工作流类型"),
@@ -1667,8 +1685,14 @@ pub async fn create_workflow(
         .collect();
 
     let workflow = db_exec!(
-        MDMWorkflowEngine::create_workflow(&mut db_scope, tenant, req.name, workflow_type, steps)
-            .await
+        MDMWorkflowEngine::create_workflow(
+            &mut db_scope,
+            scope.create_tenant_id(),
+            req.name,
+            workflow_type,
+            steps
+        )
+        .await
     );
     ApiResponse::success(workflow, "工作流已创建")
 }
@@ -1994,7 +2018,11 @@ pub async fn create_data_product(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let sla = req
         .sla_level
         .as_deref()
@@ -2004,7 +2032,7 @@ pub async fn create_data_product(
     let product = db_exec!(
         DataProductManager::create_data_product(
             &mut db_scope,
-            tenant,
+            scope.create_tenant_id(),
             req.name,
             req.description,
             req.owner,
@@ -2036,7 +2064,11 @@ pub async fn create_data_product_compat(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let name = req
         .get("name")
         .and_then(|v| v.as_str())
@@ -2066,7 +2098,7 @@ pub async fn create_data_product_compat(
     let product = db_exec!(
         DataProductManager::create_data_product(
             &mut db_scope,
-            tenant,
+            scope.create_tenant_id(),
             name,
             description,
             owner,
@@ -2308,12 +2340,18 @@ pub async fn expose_as_api(
         }
     };
 
-    let tenant = tenant_of(&claims);
+    // D 类写路径：只允许租户通道，缺/非法/nil 租户即 400。
+    let scope = match tenant_write_scope(&claims) {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(e),
+    };
     let auth = req.auth_type.unwrap_or_else(|| "bearer".to_string());
     let rate = req.rate_limit.unwrap_or_else(|| "1000/min".to_string());
 
-    match db_exec!(DataProductManager::expose_as_api(&mut db_scope, tenant, &id, auth, rate).await)
-    {
+    match db_exec!(
+        DataProductManager::expose_as_api(&mut db_scope, scope.create_tenant_id(), &id, auth, rate)
+            .await
+    ) {
         Some(e) => ApiResponse::success(e, "API 已暴露"),
         None => ApiResponse::not_found("未找到数据产品"),
     }
