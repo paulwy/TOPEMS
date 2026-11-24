@@ -247,6 +247,30 @@ psql -h /tmp -U air -d topems -v ON_ERROR_STOP=1 \
 
 这样队列从“185 条待办”变成“115 已覆盖 + 0 真缺口”，既没改单一源语义，也没放过真正的缺口。
 
+
+### 生产上线闸门（B254）与 catalog 决策
+
+**闸门脚本**：`docs/database/audit-logs-legacy-status-prod-check.sql`（只读，逐 schema 输出 `rows / outside_narrow_set / outside_values`）。
+
+执行与判定：
+
+1. `psql "$PROD_READONLY_DSN" -f docs/database/audit-logs-legacy-status-prod-check.sql`
+2. 全部 `outside_narrow_set = 0` → B254 直接可过（本地同口径实测 55,008 行、13 schema 全 0）。
+3. 任一非零 → **不要改迁移放宽值集**。先确认是否为测试/演示数据，再按下面模板走带票据的清洗，清洗后重跑闸门脚本：
+   ```sql
+   UPDATE <schema>.audit_logs
+      SET status = 'unknown'
+    WHERE status IN ('active','inactive','archived','failure');
+   ```
+   该 UPDATE 需带 `destructive-gate` 豁免标记（kind=UPDATE、max-rows=实测行数、ticket、backup），并先在只读脚本里核准行数。
+4. 若某 schema 的历史值无法清洗（例如业务确实在用 `active`）→ 把该 schema 从 B254 的 `schemas` 列表移除并单独登记，不降级全局值集。
+
+**catalog 决策（2026-11-24）：不动**。
+
+- catalog 的定位是「基线 + 前向迁移可复现」，扩到本地全量会让 `gen-finance-status` 生成的 `financeStatus.ts`、`dump-status-code-inventory` 的覆盖分母、`dump-status-checks --check` 的比对基准一起变，属于改单一源语义。
+- 扩全量的收益（“看到全部 471 条”）已经由两处替代：台账 `db_constraint`（254 条已核验事实）+ 队列 v2 的 `real_gap`（0）。这两个是**证据层**，catalog 是**可复现基线层**，分层比合并更稳。
+- 若将来确实需要“本地全量视图”，新增独立的 effective-constraints 导出，而不是改 catalog。
+
 ### 本轮门禁汇总
 
 | 项目 | 结果 |
