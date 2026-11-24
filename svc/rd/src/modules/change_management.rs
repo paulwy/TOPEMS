@@ -116,6 +116,73 @@ pub fn change_request_can_transition(from: &str, to: &str) -> bool {
     }
 }
 
+/// 变更单执行状态（与 `rs.change_orders.status` 约束同源）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChangeOrderStatus {
+    Planned,
+    InProgress,
+    Completed,
+    Cancelled,
+}
+
+impl ChangeOrderStatus {
+    pub const DB_VALUES: [&'static str; 4] = ["planned", "in_progress", "completed", "cancelled"];
+    pub const DEFAULT: Self = Self::Planned;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Planned => "planned",
+            Self::InProgress => "in_progress",
+            Self::Completed => "completed",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw {
+            "planned" => Some(Self::Planned),
+            "in_progress" => Some(Self::InProgress),
+            "completed" => Some(Self::Completed),
+            "cancelled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        match raw.trim().to_lowercase().as_str() {
+            "planned" | "new" | "pending" => Some(Self::Planned),
+            "in_progress" | "executing" | "ongoing" => Some(Self::InProgress),
+            "completed" | "done" | "implemented" => Some(Self::Completed),
+            "cancelled" | "canceled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_terminal(self) -> bool {
+        matches!(self, Self::Completed | Self::Cancelled)
+    }
+
+    /// 计划可开始或取消；执行中可完成或取消；终态封闭；同值幂等。
+    #[must_use]
+    pub const fn can_transition_to(self, target: Self) -> bool {
+        matches!(
+            (self, target),
+            (
+                Self::Planned,
+                Self::Planned | Self::InProgress | Self::Cancelled
+            ) | (
+                Self::InProgress,
+                Self::InProgress | Self::Completed | Self::Cancelled
+            ) | (Self::Completed, Self::Completed)
+                | (Self::Cancelled, Self::Cancelled)
+        )
+    }
+}
+
 /// 变更优先级权重
 pub fn change_priority_weight(priority: &str) -> i32 {
     match priority {
@@ -746,7 +813,7 @@ pub async fn create_change_order(
     let result: Result<ChangeOrder, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"INSERT INTO rs.change_orders
         (id, change_request_id, title, execution_plan, status, executed_by, notes, created_at, updated_at, tenant_id)
-        VALUES ($1,$2,$3,$4,'planned',$5,$6,$7,$7,$8)
+        VALUES ($1,$2,$3,$4,$9,$5,$6,$7,$7,$8)
         RETURNING {CHANGE_ORDER_RETURN}"#
     )))
     .bind(co_id)
@@ -757,6 +824,7 @@ pub async fn create_change_order(
     .bind(&req.notes)
     .bind(now)
     .bind(tenant_id)
+    .bind(ChangeOrderStatus::DEFAULT.as_db_str())
     .fetch_one(&mut **txn)
     .await;
 
@@ -779,6 +847,143 @@ pub async fn create_change_order(
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             ApiResponse::<ChangeOrder>::from(TopemsError::internal("创建变更单失败", e)),
+        ),
+    }
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/change-orders/{id}/transition",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "change_management"
+)]
+pub async fn transition_change_order(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Json(req): Json<TransitionRequest>,
+) -> impl IntoResponse {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::<ChangeOrder>::server_error("rls transaction unavailable"),
+        );
+    };
+    let db = state.db.clone();
+    let mut scope = match db.scope_with(&mut *txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("变更单事务作用域开启失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::<ChangeOrder>::from(TopemsError::internal(
+                    "变更单事务作用域开启失败",
+                    e,
+                )),
+            );
+        }
+    };
+
+    let current: Result<Option<String>, sqlx::Error> =
+        sqlx::query_scalar("SELECT status FROM rs.change_orders WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut scope)
+            .await;
+    let current = match current {
+        Ok(Some(raw)) => match ChangeOrderStatus::from_db_str(&raw) {
+            Some(status) => status,
+            None => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::<ChangeOrder>::server_error("变更单状态未标准化，拒绝流转"),
+                )
+            }
+        },
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                ApiResponse::<ChangeOrder>::not_found("变更单不存在"),
+            )
+        }
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::<ChangeOrder>::from(TopemsError::internal("查询变更单失败", e)),
+            )
+        }
+    };
+
+    let target = match ChangeOrderStatus::normalize(&req.to) {
+        Some(status) => status,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                ApiResponse::<ChangeOrder>::bad_request(
+                    "to 仅支持 planned / in_progress / completed / cancelled",
+                ),
+            )
+        }
+    };
+    if !current.can_transition_to(target) {
+        return (
+            StatusCode::BAD_REQUEST,
+            ApiResponse::<ChangeOrder>::bad_request(&format!(
+                "非法状态流转: {} -> {}",
+                current.as_db_str(),
+                target.as_db_str()
+            )),
+        );
+    }
+
+    let now = Utc::now();
+    let result: Result<Option<ChangeOrder>, sqlx::Error> =
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "UPDATE rs.change_orders
+             SET status = $2,
+                 executed_at = CASE WHEN $2 = 'completed' THEN COALESCE(executed_at, $3) ELSE executed_at END,
+                 updated_at = $3
+             WHERE id = $1
+             RETURNING {CHANGE_ORDER_RETURN}"
+        )))
+        .bind(id)
+        .bind(target.as_db_str())
+        .bind(now)
+        .fetch_optional(&mut scope)
+        .await;
+
+    drop(scope);
+
+    match result {
+        Ok(Some(co)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ApiResponse::server_error("提交事务失败"),
+                    );
+                }
+            }
+            (
+                StatusCode::OK,
+                ApiResponse::success(co, "变更单状态流转成功"),
+            )
+        }
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            ApiResponse::<ChangeOrder>::not_found("变更单不存在"),
+        ),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            ApiResponse::<ChangeOrder>::from(TopemsError::internal("变更单状态流转失败", e)),
         ),
     }
 }
@@ -846,6 +1051,10 @@ pub fn create_routes() -> Router<ApiState> {
             post(create_change_order),
         )
         .route("/change-orders", get(list_change_orders))
+        .route(
+            "/change-orders/{id}/transition",
+            post(transition_change_order),
+        )
 }
 
 // ==================== Tests ====================
@@ -895,6 +1104,45 @@ mod tests {
         assert!(!change_request_can_transition("closed", "submitted"));
         assert!(!change_request_can_transition("approved", "rejected"));
         assert!(!change_request_can_transition("rejected", "approved"));
+    }
+
+    #[test]
+    fn change_order_status_db_contract_and_aliases() {
+        assert_eq!(ChangeOrderStatus::DB_VALUES.len(), 4);
+        assert_eq!(ChangeOrderStatus::DEFAULT.as_db_str(), "planned");
+        for value in ChangeOrderStatus::DB_VALUES {
+            let parsed = ChangeOrderStatus::from_db_str(value).expect("db value must parse");
+            assert_eq!(parsed.as_db_str(), value);
+        }
+        assert_eq!(
+            ChangeOrderStatus::normalize("executing"),
+            Some(ChangeOrderStatus::InProgress)
+        );
+        assert_eq!(
+            ChangeOrderStatus::normalize("implemented"),
+            Some(ChangeOrderStatus::Completed)
+        );
+        assert_eq!(
+            ChangeOrderStatus::normalize("canceled"),
+            Some(ChangeOrderStatus::Cancelled)
+        );
+        assert_eq!(ChangeOrderStatus::normalize("unknown"), None);
+    }
+
+    #[test]
+    fn change_order_transition_paths() {
+        use ChangeOrderStatus::*;
+        assert!(Planned.can_transition_to(InProgress));
+        assert!(Planned.can_transition_to(Cancelled));
+        assert!(InProgress.can_transition_to(Completed));
+        assert!(InProgress.can_transition_to(Cancelled));
+        assert!(Planned.can_transition_to(Planned));
+        assert!(!Planned.can_transition_to(Completed));
+        assert!(!Completed.can_transition_to(InProgress));
+        assert!(!Cancelled.can_transition_to(Planned));
+        assert!(Completed.is_terminal());
+        assert!(Cancelled.is_terminal());
+        assert!(!InProgress.is_terminal());
     }
 
     #[test]

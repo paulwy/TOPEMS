@@ -5,7 +5,7 @@
     "db_check_constraints": 35,
     "db_enum_types": 5,
     "db_check_values": 54,
-    "rust_enums": 318,
+    "rust_enums": 319,
     "rust_enum_values": 241,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 251,
@@ -4572,6 +4572,23 @@
         "in_progress",
         "open",
         "resolved"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/modules/change_management.rs",
+      "name": "ChangeOrderStatus",
+      "values": [
+        "Cancelled",
+        "Completed",
+        "InProgress",
+        "Planned"
+      ],
+      "normalized": [
+        "cancelled",
+        "completed",
+        "in_progress",
+        "planned"
       ]
     },
     {
