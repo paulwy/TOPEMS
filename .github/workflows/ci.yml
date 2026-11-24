@@ -77,6 +77,7 @@ jobs:
       menu: ${{ steps.decide.outputs.menu }}
       api_audit: ${{ steps.decide.outputs.api_audit }}
       migration: ${{ steps.decide.outputs.migration }}
+      hrm: ${{ steps.decide.outputs.hrm }}
       desktop: ${{ steps.decide.outputs.desktop }}
     steps:
       - uses: actions/checkout@v5
@@ -159,6 +160,15 @@ jobs:
               - 'scripts/ci/check-rls-policy-shape.sh'
               - 'docs/database/snippets/add_tenant_id_template.sql'
               - 'scripts/db/provision-env.sh'
+            hrm:
+              - 'svc/hrm/**'
+              - 'lib/shared-auth/**'
+              - 'lib/shared-bootstrap/**'
+              - 'scripts/hrm_setup_smoke.py'
+              - 'database/migrations/**'
+              - 'database/baseline/**'
+              - 'scripts/migration/**'
+              - '.github/workflows/ci.yml'
             desktop:
               - 'apps/desktop/**'
 
@@ -178,6 +188,7 @@ jobs:
             echo "docs=true" >> $GITHUB_OUTPUT
             echo "ci=true" >> $GITHUB_OUTPUT
             echo "migration=true" >> $GITHUB_OUTPUT
+            echo "hrm=true" >> $GITHUB_OUTPUT
             echo "desktop=true" >> $GITHUB_OUTPUT
           else
             echo "rust=${{ steps.filter.outputs.rust }}" >> $GITHUB_OUTPUT
@@ -189,6 +200,7 @@ jobs:
             echo "docs=${{ steps.filter.outputs.docs }}" >> $GITHUB_OUTPUT
             echo "ci=${{ steps.filter.outputs.ci }}" >> $GITHUB_OUTPUT
             echo "migration=${{ steps.filter.outputs.migration }}" >> $GITHUB_OUTPUT
+            echo "hrm=${{ steps.filter.outputs.hrm }}" >> $GITHUB_OUTPUT
             echo "desktop=${{ steps.filter.outputs.desktop }}" >> $GITHUB_OUTPUT
           fi
 
@@ -2147,6 +2159,102 @@ jobs:
         run: node scripts/ci/check-menu-permission-codes.mjs --dsn "$DATABASE_URL"
 
   # ==========================================================================
+  # HRM setup API smoke (P3-7)
+  #   基线重建隔离库 → 起 HRM（DEVELOPMENT_MODE 开发旁路）→ 跑六场景接口回归：
+  #   五步推进、非默认租户、完成不回退、回退续走、非法输入 400、并发首存。
+  #   依赖基线重建脚本恢复参考数据并注入演练闸门 GUC。
+  # ==========================================================================
+  hrm-setup-smoke:
+    name: Gate · HRM setup API smoke (baseline rebuild)
+    needs: changes
+    if: needs.changes.outputs.hrm == 'true' && inputs.skip_rust != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PGHOST: localhost
+      PGUSER: topems_test
+      PGPASSWORD: topems_test_secret
+      DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_hrm_smoke_test
+      HRM_PORT: '18022'
+      DEVELOPMENT_MODE: '1'
+      APP_ENV: test
+      JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: topems_test
+          POSTGRES_PASSWORD: topems_test_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U topems_test -d topems_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          enable-sccache: 'false'
+          cache-prefix: "hrm-setup-smoke-2026-11-24"
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U topems_test; do
+            sleep 1
+          done
+
+      - name: Rebuild isolated DB from baseline
+        run: |
+          set -euo pipefail
+          bash scripts/migration/rebuild-from-baseline.sh --db topems_hrm_smoke_test
+
+      - name: Build HRM service
+        run: cargo build -p topems-hrm --locked
+
+      - name: Start HRM and run six-scenario smoke
+        run: |
+          set -euo pipefail
+          target/debug/topems-hrm > /tmp/hrm-setup-smoke.log 2>&1 &
+          HRM_PID=$!
+          echo "$HRM_PID" > /tmp/hrm-setup-smoke.pid
+
+          READY=0
+          for _ in $(seq 1 60); do
+            if curl -fsS "http://127.0.0.1:${HRM_PORT}/health" >/dev/null 2>&1                || curl -fsS "http://127.0.0.1:${HRM_PORT}/api/hrm/health" >/dev/null 2>&1; then
+              READY=1
+              break
+            fi
+            if ! kill -0 "$HRM_PID" 2>/dev/null; then
+              echo "FAIL: HRM 进程提前退出" >&2
+              tail -200 /tmp/hrm-setup-smoke.log >&2 || true
+              exit 1
+            fi
+            sleep 1
+          done
+          if [[ "$READY" != "1" ]]; then
+            echo "FAIL: HRM 60s 内未就绪" >&2
+            tail -200 /tmp/hrm-setup-smoke.log >&2 || true
+            exit 1
+          fi
+
+          python3 scripts/hrm_setup_smoke.py             --base-url "http://127.0.0.1:${HRM_PORT}"             --dsn "$DATABASE_URL"             --cleanup
+
+      - name: Show HRM log
+        if: always()
+        run: |
+          tail -200 /tmp/hrm-setup-smoke.log || true
+          if [[ -f /tmp/hrm-setup-smoke.pid ]]; then
+            kill "$(cat /tmp/hrm-setup-smoke.pid)" 2>/dev/null || true
+          fi
+
+  # ==========================================================================
   # Desktop Build (P2-5: merged from desktop-build.yml)
   #   - Cross-platform Tauri desktop app build (ubuntu, windows, macos)
   # ==========================================================================
@@ -2247,6 +2355,7 @@ jobs:
       - slow-db-startup-test
       - code-quality
       - migration-test
+      - hrm-setup-smoke
       - desktop-build
       - changelog-gate
       - error-handling-gate
@@ -2308,6 +2417,7 @@ jobs:
           echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Code Quality (API paths · naming · console.log · allow_baseline) | ${{ needs.code-quality.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Migration Up-Down-Up Test | ${{ needs.migration-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| HRM Setup API Smoke (P3-7 · 六场景) | ${{ needs.hrm-setup-smoke.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Desktop Build | ${{ needs.desktop-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CHANGELOG 发布校验 (P2-3 · tag only) | ${{ needs.changelog-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Gate T · 统一错误出口 (错误泄露 / 业务层 anyhow · V517) | ${{ needs.error-handling-gate.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -2334,7 +2444,7 @@ jobs:
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
           # [P3-6] RESULTS 补齐两个 needs 已声明但未纳入门控判定的 job（此前其失败不会让汇总变红）
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.schema-defense-drift.result }} ${{ needs.error-handling-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.schema-defense-drift.result }} ${{ needs.error-handling-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.hrm-setup-smoke.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
 
           FAILED=false
           for result in $RESULTS; do

@@ -77,14 +77,14 @@ fi
 "${PSQL[@]}" -d postgres -q -c "DROP DATABASE IF EXISTS \"$DB\";" -c "CREATE DATABASE \"$DB\";"
 
 echo "== 恢复 schema 快照"
-gunzip -c "$BASE_DIR/$SCHEMA_FILE" | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
+gunzip -c "$BASE_DIR/$SCHEMA_FILE" | grep -Ev '^(COMMENT ON EXTENSION |SET transaction_timeout = )' | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
 
 echo "== 载入账本锚点"
 psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1 -f "$BASE_DIR/$LEDGER_FILE"
 
 if (( WITH_DATA == 1 )); then
   echo "== 恢复参考数据基线（${DATA_FILE}）"
-  gunzip -c "$BASE_DIR/$DATA_FILE" | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
+  gunzip -c "$BASE_DIR/$DATA_FILE" | grep -Ev '^(COMMENT ON EXTENSION |SET transaction_timeout = )' | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
 fi
 
 ACT_TABLES="$(psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -tA -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')")"
