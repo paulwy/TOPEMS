@@ -3,6 +3,7 @@
 日期：2026-11-24
 表：`rs.formulas`
 迁移：`database/migrations/20261124170000_rd_formula_status_standard.sql`
+落地提交：`fde231ef9`（B262 代码/迁移随生产 schema 追赶文档同提交落库）
 
 ## 缺陷
 

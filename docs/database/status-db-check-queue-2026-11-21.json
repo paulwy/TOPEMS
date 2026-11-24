@@ -3,17 +3,17 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql + status-db-check-mappings.json(db_constraint)",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用。db_covered 表示台账已核验该枚举至少一个持久化列有 CONVALIDATED 约束（不是缺口）；real_gap 才是待办",
   "stats": {
-    "uncovered_enums": 185,
+    "uncovered_enums": 186,
     "uncovered_values": 192,
     "finance_candidate_constraints": 25,
-    "resolved_enums": 178,
-    "db_covered_enums": 115,
+    "resolved_enums": 179,
+    "db_covered_enums": 116,
     "real_gap_enums": 0,
     "internal_state_enums": 151,
-    "persisted_unmapped_enums": 18,
+    "persisted_unmapped_enums": 20,
     "finance_candidate_ready_enums": 36,
-    "internal_state_values": 165,
-    "persisted_unmapped_values": 13,
+    "internal_state_values": 164,
+    "persisted_unmapped_values": 14,
     "finance_candidate_ready_values": 14
   },
   "rows": [
@@ -1947,7 +1947,9 @@
           "received",
           "registered",
           "retrieved",
-          "stored",
+          "stored"
+        ],
+        "persisted_unmapped": [
           "testing"
         ]
       },
@@ -3650,6 +3652,31 @@
       "db_constraints": [
         "ck_qa_quality_inspections_status_standard",
         "ck_quality_inspections_status_standard"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/formula.rs",
+      "enum": "FormulaStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "testing"
+        ]
+      },
+      "candidate_targets": [],
+      "resolved": {
+        "file": "svc/rd/src/models/formula.rs",
+        "enum": "FormulaStatus",
+        "table": "rs.formulas",
+        "column": "status",
+        "candidate": "database/migrations/20261124170000_rd_formula_status_standard.sql",
+        "db_constraint": "ck_formulas_status_standard",
+        "db_verified_at": "2026-11-24",
+        "db_verified_via": "local pg_constraint (convalidated)"
+      },
+      "db_covered": true,
+      "db_constraints": [
+        "ck_formulas_status_standard"
       ]
     },
     {
