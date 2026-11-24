@@ -13,6 +13,8 @@ import {
   Building2,
   Network,
   Trash2,
+  Pencil,
+  Plus,
   ChevronRight,
   ChevronDown,
   Users,
@@ -30,16 +32,31 @@ import {
   Tabs,
   Tab,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  CircularProgress,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import {
   useCompanyRelations,
   useCompanyTree,
   useDeleteCompanyRelation,
+  useCreateCompanyRelation,
+  useUpdateCompanyRelation,
 } from '@/hooks/useConsolidation';
+import { companyApi } from '@/api/hrm/company';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
-import type { CompanyRelation, CompanyTreeNode, CompanyRelationType } from '@/types/consolidation';
+import type {
+  CompanyRelation,
+  CompanyTreeNode,
+  CompanyRelationType,
+  CreateCompanyRelationRequest,
+} from '@/types/consolidation';
 import { ConfirmDialog } from '@topems/shared-components';
 import { useConfirmDialog } from '@/hooks';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +65,28 @@ import i18n from '@/i18n';
 type RelationTypeConfig = {
   label: string;
   color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+};
+
+type RelationFormState = {
+  parent_company_id: string;
+  child_company_id: string;
+  relation_type: CompanyRelationType;
+  ownership_percentage: string;
+  control_percentage: string;
+  effective_date: string;
+  expiry_date: string;
+  status: 'active' | 'inactive';
+};
+
+const EMPTY_RELATION_FORM: RelationFormState = {
+  parent_company_id: '',
+  child_company_id: '',
+  relation_type: 'subsidiary',
+  ownership_percentage: '100',
+  control_percentage: '',
+  effective_date: '',
+  expiry_date: '',
+  status: 'active',
 };
 
 function getRelationTypeConfig(): Record<CompanyRelationType, RelationTypeConfig> {
@@ -165,6 +204,10 @@ export default function CompanyStructurePage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [relationDialogOpen, setRelationDialogOpen] = useState(false);
+  const [editingRelation, setEditingRelation] = useState<CompanyRelation | null>(null);
+  const [relationForm, setRelationForm] = useState<RelationFormState>(EMPTY_RELATION_FORM);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const {
     confirmOpen: confirmDialogOpen,
@@ -183,6 +226,17 @@ export default function CompanyStructurePage() {
 
   // 删除公司关系
   const deleteRelation = useDeleteCompanyRelation();
+  const createRelation = useCreateCompanyRelation();
+  const updateRelation = useUpdateCompanyRelation();
+
+  // 新增/编辑弹窗打开时才拉公司下拉，避免页面初次加载多打一次接口
+  const { data: companyOptionsData, isLoading: companyOptionsLoading } = useQuery({
+    queryKey: ['hrm', 'companies', 'company-relations-options'],
+    queryFn: () => companyApi.list({ page: 1, page_size: 100 }),
+    enabled: relationDialogOpen,
+    staleTime: 60_000,
+  });
+  const companyOptions = companyOptionsData?.data?.items ?? [];
 
   // 处理展开/折叠
   const handleToggle = (id: string) => {
@@ -211,6 +265,99 @@ export default function CompanyStructurePage() {
     },
     [openConfirmDialog, t, deleteRelation]
   );
+
+  const openCreateDialog = useCallback(() => {
+    setEditingRelation(null);
+    setFormError(null);
+    setRelationForm({
+      ...EMPTY_RELATION_FORM,
+      effective_date: new Date().toISOString().slice(0, 10),
+    });
+    setRelationDialogOpen(true);
+  }, []);
+
+  const openEditDialog = useCallback((row: CompanyRelation) => {
+    setEditingRelation(row);
+    setFormError(null);
+    setRelationForm({
+      parent_company_id: row.parent_company_id,
+      child_company_id: row.child_company_id,
+      relation_type: row.relation_type,
+      ownership_percentage: String(row.ownership_percentage),
+      control_percentage: String(row.control_percentage ?? ''),
+      effective_date: row.effective_date,
+      expiry_date: row.expiry_date ?? '',
+      status: row.status,
+    });
+    setRelationDialogOpen(true);
+  }, []);
+
+  const closeRelationDialog = useCallback(() => {
+    setRelationDialogOpen(false);
+    setFormError(null);
+  }, []);
+
+  const handleSubmitRelation = useCallback(() => {
+    const ownership = Number(relationForm.ownership_percentage);
+    const controlRaw = relationForm.control_percentage.trim();
+    const control = controlRaw === '' ? undefined : Number(controlRaw);
+    if (!Number.isFinite(ownership) || ownership < 0 || ownership > 100) {
+      setFormError(t('iam.company_structure_page.k36'));
+      return;
+    }
+    if (control !== undefined && (!Number.isFinite(control) || control < 0 || control > 100)) {
+      setFormError(t('iam.company_structure_page.k36'));
+      return;
+    }
+    if (
+      relationForm.expiry_date &&
+      relationForm.effective_date &&
+      relationForm.expiry_date < relationForm.effective_date
+    ) {
+      setFormError(t('iam.company_structure_page.k38'));
+      return;
+    }
+
+    if (editingRelation) {
+      updateRelation.mutate(
+        {
+          relationId: editingRelation.id,
+          data: {
+            ownership_percentage: ownership,
+            control_percentage: control,
+            expiry_date: relationForm.expiry_date || undefined,
+            status: relationForm.status,
+          },
+        },
+        { onSuccess: closeRelationDialog }
+      );
+      return;
+    }
+
+    if (!relationForm.parent_company_id || !relationForm.child_company_id) {
+      setFormError(t('iam.company_structure_page.k37'));
+      return;
+    }
+    if (relationForm.parent_company_id === relationForm.child_company_id) {
+      setFormError(t('iam.company_structure_page.k35'));
+      return;
+    }
+    if (!relationForm.effective_date) {
+      setFormError(t('iam.company_structure_page.k39'));
+      return;
+    }
+
+    const payload: CreateCompanyRelationRequest = {
+      parent_company_id: relationForm.parent_company_id,
+      child_company_id: relationForm.child_company_id,
+      relation_type: relationForm.relation_type,
+      ownership_percentage: ownership,
+      control_percentage: control,
+      effective_date: relationForm.effective_date,
+      expiry_date: relationForm.expiry_date || undefined,
+    };
+    createRelation.mutate(payload, { onSuccess: closeRelationDialog });
+  }, [relationForm, editingRelation, updateRelation, createRelation, closeRelationDialog, t]);
 
   // 关系列表列定义
   const relationColumns: ColumnDef<CompanyRelation>[] = useMemo(
@@ -307,6 +454,12 @@ export default function CompanyStructurePage() {
   const rowActions: RowAction<CompanyRelation>[] = useMemo(
     () => [
       {
+        key: 'edit',
+        label: t('iam.company_structure_page.k29'),
+        icon: <Pencil size={16} />,
+        onClick: (row) => openEditDialog(row),
+      },
+      {
         key: 'delete',
         label: t('iam.company_structure_page.k8'),
         icon: <Trash2 size={16} />,
@@ -315,7 +468,7 @@ export default function CompanyStructurePage() {
         disabled: () => deleteRelation.isPending,
       },
     ],
-    [t, handleDeleteRelation, deleteRelation.isPending]
+    [t, handleDeleteRelation, deleteRelation.isPending, openEditDialog]
   );
 
   return (
@@ -349,6 +502,13 @@ export default function CompanyStructurePage() {
               />
             </Box>
             <Button variant='outlined'>{t('iam.company_structure_page.k20')}</Button>
+            <Button
+              variant='contained'
+              startIcon={<Plus size={16} />}
+              onClick={openCreateDialog}
+            >
+              {t('iam.company_structure_page.k28')}
+            </Button>
           </Box>
         </CardContent>
       </Card>
@@ -490,6 +650,169 @@ export default function CompanyStructurePage() {
           </Box>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={relationDialogOpen}
+        onClose={closeRelationDialog}
+        fullWidth
+        maxWidth='sm'
+      >
+        <DialogTitle>
+          {editingRelation
+            ? t('iam.company_structure_page.k30')
+            : t('iam.company_structure_page.k28')}
+        </DialogTitle>
+        <DialogContent dividers>
+          {companyOptionsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : (
+            <Box sx={{ display: 'grid', gap: 2, pt: 1 }}>
+              <TextField
+                select
+                size='small'
+                label={t('iam.company_structure_page.k31')}
+                value={relationForm.parent_company_id}
+                disabled={!!editingRelation}
+                onChange={(e) =>
+                  setRelationForm((f) => ({ ...f, parent_company_id: e.target.value }))
+                }
+              >
+                {companyOptions.map((c) => (
+                  <MenuItem
+                    key={c.id}
+                    value={c.id}
+                  >
+                    {c.name}
+                    {c.code ? `（${c.code}）` : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                size='small'
+                label={t('iam.company_structure_page.k32')}
+                value={relationForm.child_company_id}
+                disabled={!!editingRelation}
+                onChange={(e) =>
+                  setRelationForm((f) => ({ ...f, child_company_id: e.target.value }))
+                }
+              >
+                {companyOptions.map((c) => (
+                  <MenuItem
+                    key={c.id}
+                    value={c.id}
+                  >
+                    {c.name}
+                    {c.code ? `（${c.code}）` : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                size='small'
+                label={t('iam.company_structure_page.k33')}
+                value={relationForm.relation_type}
+                disabled={!!editingRelation}
+                onChange={(e) =>
+                  setRelationForm((f) => ({
+                    ...f,
+                    relation_type: e.target.value as CompanyRelationType,
+                  }))
+                }
+              >
+                {Object.entries(relationTypeConfig).map(([value, config]) => (
+                  <MenuItem
+                    key={value}
+                    value={value}
+                  >
+                    {config.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  size='small'
+                  type='number'
+                  label={t('iam.company_structure_page.k34')}
+                  value={relationForm.ownership_percentage}
+                  onChange={(e) =>
+                    setRelationForm((f) => ({ ...f, ownership_percentage: e.target.value }))
+                  }
+                  slotProps={{ htmlInput: { min: 0, max: 100, step: 0.01 } }}
+                />
+                <TextField
+                  size='small'
+                  type='number'
+                  label={t('iam.company_structure_page.k40')}
+                  value={relationForm.control_percentage}
+                  onChange={(e) =>
+                    setRelationForm((f) => ({ ...f, control_percentage: e.target.value }))
+                  }
+                  slotProps={{ htmlInput: { min: 0, max: 100, step: 0.01 } }}
+                />
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  size='small'
+                  type='date'
+                  label={t('iam.company_structure_page.k41')}
+                  value={relationForm.effective_date}
+                  disabled={!!editingRelation}
+                  onChange={(e) =>
+                    setRelationForm((f) => ({ ...f, effective_date: e.target.value }))
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  size='small'
+                  type='date'
+                  label={t('iam.company_structure_page.k42')}
+                  value={relationForm.expiry_date}
+                  onChange={(e) => setRelationForm((f) => ({ ...f, expiry_date: e.target.value }))}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Box>
+              {editingRelation && (
+                <TextField
+                  select
+                  size='small'
+                  label={t('iam.company_structure_page.k43')}
+                  value={relationForm.status}
+                  onChange={(e) =>
+                    setRelationForm((f) => ({
+                      ...f,
+                      status: e.target.value as 'active' | 'inactive',
+                    }))
+                  }
+                >
+                  <MenuItem value='active'>{statusConfig.active.label}</MenuItem>
+                  <MenuItem value='inactive'>{statusConfig.inactive.label}</MenuItem>
+                </TextField>
+              )}
+              {formError && (
+                <Typography
+                  color='error'
+                  variant='body2'
+                >
+                  {formError}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeRelationDialog}>{t('iam.company_structure_page.k44')}</Button>
+          <Button
+            variant='contained'
+            onClick={handleSubmitRelation}
+            disabled={createRelation.isPending || updateRelation.isPending || companyOptionsLoading}
+          >
+            {t('iam.company_structure_page.k45')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmDialog
         isOpen={confirmDialogOpen}

@@ -8,6 +8,8 @@ import {
   useCompanyRelations,
   useCompanyTree,
   useDeleteCompanyRelation,
+  useCreateCompanyRelation,
+  useUpdateCompanyRelation,
 } from '@/hooks/useConsolidation';
 
 const { tMock } = vi.hoisted(() => {
@@ -92,6 +94,8 @@ vi.mock('@/hooks/useConsolidation', () => ({
   useCompanyRelations: vi.fn(),
   useCompanyTree: vi.fn(),
   useDeleteCompanyRelation: vi.fn(),
+  useCreateCompanyRelation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useUpdateCompanyRelation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 vi.mock('@/hooks', () => ({
@@ -234,6 +238,8 @@ describe('CompanyStructurePage', () => {
     });
     (useCompanyTree as unknown).mockReturnValue({ data: { data: tree }, isLoading: false });
     (useDeleteCompanyRelation as unknown).mockReturnValue({ mutate: mockMutate });
+    (useCreateCompanyRelation as unknown).mockReturnValue({ mutate: mockMutate, isPending: false });
+    (useUpdateCompanyRelation as unknown).mockReturnValue({ mutate: mockMutate, isPending: false });
   });
 
   it('renders page container with title and subtitle', () => {

@@ -5,6 +5,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ConsolidationScope,
+  CreateCompanyRelationRequest,
+  UpdateCompanyRelationRequest,
   GenerateConsolidationReportRequest,
   ConsolidationScopeQueryParams,
   ConsolidationReportQueryParams,
@@ -282,6 +284,57 @@ export const useDeleteCompanyRelation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (relationId: string) => consolidationApi.deleteCompanyRelation(relationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
+  });
+};
+
+/**
+ * 创建公司关系
+ */
+export const useCreateCompanyRelation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateCompanyRelationRequest) =>
+      consolidationApi.createCompanyRelation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+    },
+  });
+};
+
+/**
+ * 更新公司关系
+ */
+export const useUpdateCompanyRelation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      relationId,
+      data,
+    }: {
+      relationId: string;
+      data: UpdateCompanyRelationRequest;
+    }) => consolidationApi.updateCompanyRelation(relationId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,

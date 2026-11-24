@@ -7,6 +7,8 @@ import {
   useCompanyRelations,
   useCompanyTree,
   useDeleteCompanyRelation,
+  useCreateCompanyRelation,
+  useUpdateCompanyRelation,
 } from '@/hooks/useConsolidation';
 import { useNotificationStore, useAuthStore } from '@/store';
 
@@ -14,6 +16,8 @@ vi.mock('@/hooks/useConsolidation', () => ({
   useCompanyRelations: vi.fn(() => ({ data: { data: [] }, isLoading: false })),
   useCompanyTree: vi.fn(() => ({ data: { data: null }, isLoading: false })),
   useDeleteCompanyRelation: vi.fn(() => ({ mutate: vi.fn() })),
+  useCreateCompanyRelation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useUpdateCompanyRelation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 vi.mock('@/store', () => ({
