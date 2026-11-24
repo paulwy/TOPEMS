@@ -20,10 +20,10 @@ const getExperimentTypes = () => [
   i18n.t('rd.rs_experiment_create_page.k0'),
 ];
 const getPhases = () => [
-  i18n.t('rd.rs_experiment_create_page.k9'),
-  i18n.t('rd.rs_experiment_create_page.k8'),
-  i18n.t('rd.rs_experiment_create_page.k7'),
-  i18n.t('rd.rs_experiment_create_page.k6'),
+  { value: 'production', label: i18n.t('rd.rs_experiment_create_page.k6') },
+  { value: 'scaleup', label: i18n.t('rd.rs_experiment_create_page.k7') },
+  { value: 'pilot', label: i18n.t('rd.rs_experiment_create_page.k8') },
+  { value: 'lab', label: i18n.t('rd.rs_experiment_create_page.k9') },
 ];
 const scaleUnits = ['g', 'kg', 't', 'mL', 'L'];
 const RsExperimentCreatePage: React.FC = () => {
@@ -139,7 +139,7 @@ const RsExperimentCreatePage: React.FC = () => {
     project_id: '',
     formula_id: '',
     experiment_type: i18n.t('rd.rs_experiment_create_page.k22'),
-    phase: i18n.t('rd.rs_experiment_create_page.k23'),
+    phase: 'lab',
     objective: '',
     method: '',
     experimenter: '',
@@ -208,7 +208,7 @@ const RsExperimentCreatePage: React.FC = () => {
             name: 'phase',
             label: i18n.t('rd.rs_experiment_create_page.k34'),
             type: 'select',
-            options: getPhases().map((phase) => ({ label: phase, value: phase })),
+            options: getPhases().map((phase) => ({ label: phase.label, value: phase.value })),
           },
         ],
       },

@@ -3,10 +3,18 @@ import { Chip } from '@mui/material';
 import type { EntitySchema } from '@/schema-dsl';
 import i18n from '@/i18n';
 
-const PHASE_COLOR_MAP: Record<string, 'info' | 'warning' | 'error' | 'default'> = {
-  [i18n.t('schemas.experiment.k0')]: 'info',
-  [i18n.t('schemas.experiment.k1')]: 'warning',
-  [i18n.t('schemas.experiment.k2')]: 'error',
+const PHASE_LABEL_MAP: Record<string, string> = {
+  lab: i18n.t('rd.rs_experiment_create_page.k9'),
+  pilot: i18n.t('rd.rs_experiment_create_page.k8'),
+  scaleup: i18n.t('rd.rs_experiment_create_page.k7'),
+  production: i18n.t('rd.rs_experiment_create_page.k6'),
+};
+
+const PHASE_COLOR_MAP: Record<string, 'info' | 'warning' | 'error' | 'success' | 'default'> = {
+  lab: 'info',
+  pilot: 'warning',
+  scaleup: 'error',
+  production: 'success',
 };
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
@@ -62,20 +70,22 @@ export const experimentSchema: EntitySchema = {
       name: 'phase',
       label: i18n.t('rd.experiment.k5'),
       type: 'select',
-      defaultValue: i18n.t('rd.experiment.k6'),
+      defaultValue: 'lab',
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('rd.experiment.k7'), label: i18n.t('rd.experiment.k8') },
-          { value: i18n.t('rd.experiment.k9'), label: i18n.t('rd.experiment.k10') },
-          { value: i18n.t('rd.experiment.k11'), label: i18n.t('rd.experiment.k12') },
+          { value: 'lab', label: i18n.t('rd.experiment.k8') },
+          { value: 'pilot', label: i18n.t('rd.experiment.k10') },
+          { value: 'scaleup', label: i18n.t('rd.experiment.k12') },
+          { value: 'production', label: i18n.t('rd.rs_experiment_create_page.k6') },
         ],
       },
       listWidth: 100,
       renderCell: (row: Record<string, unknown>) => {
         const val = String(row.phase ?? '');
         const color = PHASE_COLOR_MAP[val] || 'default';
-        return React.createElement(Chip, { label: val, size: 'small', color });
+        const label = PHASE_LABEL_MAP[val] || val;
+        return React.createElement(Chip, { label, size: 'small', color });
       },
     },
     {

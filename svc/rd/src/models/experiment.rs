@@ -79,6 +79,86 @@ impl ExperimentStatus {
     }
 }
 
+/// 试验阶段（DB 契约固定小写英文）。
+///
+/// 历史阶段值由前端中文标签/英文展示名直接落库，且 update 与推进接口接受任意值。
+/// 本枚举固定 lab → pilot → scaleup → production 单向推进链。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExperimentPhase {
+    Lab,
+    Pilot,
+    ScaleUp,
+    Production,
+}
+
+impl ExperimentPhase {
+    pub const DB_VALUES: [&'static str; 4] = ["lab", "pilot", "scaleup", "production"];
+    pub const DEFAULT: Self = Self::Lab;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Lab => "lab",
+            Self::Pilot => "pilot",
+            Self::ScaleUp => "scaleup",
+            Self::Production => "production",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw {
+            "lab" => Some(Self::Lab),
+            "pilot" => Some(Self::Pilot),
+            "scaleup" => Some(Self::ScaleUp),
+            "production" => Some(Self::Production),
+            _ => None,
+        }
+    }
+
+    /// 兼容前端展示名/中文历史值；未知值 fail-closed。
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        let key = raw.trim().to_lowercase().replace([' ', '-'], "_");
+        match key.as_str() {
+            "lab" | "lab_trial" | "laboratory" | "small_trial" | "小试" | "实验室" => {
+                Some(Self::Lab)
+            }
+            "pilot" | "pilot_run" | "pilot_test" | "中试" => Some(Self::Pilot),
+            "scaleup" | "scale_up" | "扩试" | "放大" => Some(Self::ScaleUp),
+            "production"
+            | "production_validation"
+            | "production_trial"
+            | "生产验证"
+            | "量产"
+            | "生产" => Some(Self::Production),
+            _ => None,
+        }
+    }
+
+    /// 阶段链只允许前进或停留；production 为终态。
+    #[must_use]
+    pub const fn can_transition_to(self, target: Self) -> bool {
+        matches!(
+            (self, target),
+            (Self::Lab, Self::Lab | Self::Pilot)
+                | (Self::Pilot, Self::Pilot | Self::ScaleUp)
+                | (Self::ScaleUp, Self::ScaleUp | Self::Production)
+                | (Self::Production, Self::Production)
+        )
+    }
+
+    #[must_use]
+    pub const fn next(self) -> Option<Self> {
+        match self {
+            Self::Lab => Some(Self::Pilot),
+            Self::Pilot => Some(Self::ScaleUp),
+            Self::ScaleUp => Some(Self::Production),
+            Self::Production => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Experiment {
     pub id: Uuid,
@@ -187,7 +267,7 @@ mod tests {
             project_id: Some(Uuid::nil()),
             formula_id: Some(Uuid::nil()),
             experiment_type: "synthesis".to_string(),
-            phase: "testing".to_string(),
+            phase: "lab".to_string(),
             status: "planned".to_string(),
             objective: "验证配方".to_string(),
             method: "对照实验".to_string(),
@@ -242,7 +322,7 @@ mod tests {
             project_id: Uuid::nil(),
             formula_id: None,
             experiment_type: "analysis".to_string(),
-            phase: "formulation".to_string(),
+            phase: "lab".to_string(),
             objective: "目标".to_string(),
             method: "方法".to_string(),
             experimenter: "李四".to_string(),
@@ -359,6 +439,68 @@ mod tests {
             Some(ExperimentStatus::Failed)
         );
         assert_eq!(ExperimentStatus::normalize("unknown"), None);
+    }
+
+    #[test]
+    fn experiment_phase_db_contract_and_legacy_values() {
+        assert_eq!(ExperimentPhase::DB_VALUES.len(), 4);
+        assert_eq!(ExperimentPhase::DEFAULT.as_db_str(), "lab");
+        for value in ExperimentPhase::DB_VALUES {
+            let parsed = ExperimentPhase::from_db_str(value).expect("db value must parse");
+            assert_eq!(parsed.as_db_str(), value);
+        }
+        assert_eq!(
+            ExperimentPhase::normalize("Lab Trial"),
+            Some(ExperimentPhase::Lab)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("小试"),
+            Some(ExperimentPhase::Lab)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("Pilot Run"),
+            Some(ExperimentPhase::Pilot)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("中试"),
+            Some(ExperimentPhase::Pilot)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("Scale-up"),
+            Some(ExperimentPhase::ScaleUp)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("放大"),
+            Some(ExperimentPhase::ScaleUp)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("Production Validation"),
+            Some(ExperimentPhase::Production)
+        );
+        assert_eq!(
+            ExperimentPhase::normalize("生产验证"),
+            Some(ExperimentPhase::Production)
+        );
+        assert_eq!(ExperimentPhase::normalize("unknown"), None);
+    }
+
+    #[test]
+    fn experiment_phase_transitions_are_forward_only() {
+        assert_eq!(ExperimentPhase::Lab.next(), Some(ExperimentPhase::Pilot));
+        assert_eq!(
+            ExperimentPhase::Pilot.next(),
+            Some(ExperimentPhase::ScaleUp)
+        );
+        assert_eq!(
+            ExperimentPhase::ScaleUp.next(),
+            Some(ExperimentPhase::Production)
+        );
+        assert_eq!(ExperimentPhase::Production.next(), None);
+        assert!(ExperimentPhase::Lab.can_transition_to(ExperimentPhase::Pilot));
+        assert!(ExperimentPhase::Pilot.can_transition_to(ExperimentPhase::ScaleUp));
+        assert!(!ExperimentPhase::Pilot.can_transition_to(ExperimentPhase::Lab));
+        assert!(!ExperimentPhase::Production.can_transition_to(ExperimentPhase::ScaleUp));
+        assert!(ExperimentPhase::Production.can_transition_to(ExperimentPhase::Production));
     }
 
     #[test]

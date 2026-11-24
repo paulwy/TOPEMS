@@ -2993,6 +2993,13 @@ pending_forward_patches:
     effect: "rs.project_members.status 从默认 'ACTIVE' + Rust 大写写入，收口为 active/inactive 小写；权限查询 lower(status)='active' 与写入一致；ADD CHECK ck_project_members_status_standard + VALIDATE"
     destructive_scan: "UPDATE status 大小写归一（ACTIVE→active），ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有 active/inactive 之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124160000_rd_project_members_status_standard.rollback.sql 恢复默认 ACTIVE、存量大写并 DROP 约束"
+  # ===== 2026-11-24：B265 RD 试验阶段词表收口 =====
+  - version: "20261124230000"
+    file: "database/migrations/20261124230000_rd_experiment_phase_standard.sql"
+    status: to_apply
+    effect: "rs.experiments.phase 空值/中文/展示名统一归一为 lab/pilot/scaleup/production；默认值固定 'lab'；phase NOT NULL；ADD CHECK ck_experiments_phase_standard + VALIDATE"
+    destructive_scan: "UPDATE phase 归一，ALTER COLUMN SET DEFAULT/SET NOT NULL，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有四态之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124230000_rd_experiment_phase_standard.rollback.sql 恢复可空无默认并 DROP 约束"
   # ===== 2026-11-24：B264 RD 试验状态词表收口 =====
   - version: "20261124193000"
     file: "database/migrations/20261124193000_rd_experiment_status_standard.sql"

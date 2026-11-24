@@ -2965,6 +2965,16 @@
       "db_constraint": "ck_experiments_status_standard",
       "db_verified_at": "2026-11-24",
       "db_verified_via": "local pg_constraint (convalidated)"
+    },
+    {
+      "file": "svc/rd/src/models/experiment.rs",
+      "enum": "ExperimentPhase",
+      "table": "rs.experiments",
+      "column": "phase",
+      "candidate": "database/migrations/20261124230000_rd_experiment_phase_standard.sql",
+      "db_constraint": "ck_experiments_phase_standard",
+      "db_verified_at": "2026-11-24",
+      "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default lab)"
     }
   ],
   "non_enum_checks": [

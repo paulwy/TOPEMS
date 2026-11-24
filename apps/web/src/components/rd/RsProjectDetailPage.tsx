@@ -136,16 +136,33 @@ const RsProjectDetailPage: React.FC = () => {
         return status;
     }
   };
-  const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'default' => {
+  const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'success' | 'default' => {
     switch (phase) {
-      case i18n.t('rd.rs_project_detail_page.k13'):
+      case 'lab':
         return 'info';
-      case i18n.t('rd.rs_project_detail_page.k14'):
+      case 'pilot':
         return 'warning';
-      case i18n.t('rd.rs_project_detail_page.k15'):
+      case 'scaleup':
         return 'error';
+      case 'production':
+        return 'success';
       default:
         return 'default';
+    }
+  };
+
+  const getPhaseLabel = (phase: string): string => {
+    switch (phase) {
+      case 'lab':
+        return i18n.t('rd.rs_project_detail_page.k13');
+      case 'pilot':
+        return i18n.t('rd.rs_project_detail_page.k14');
+      case 'scaleup':
+        return i18n.t('rd.rs_project_detail_page.k15');
+      case 'production':
+        return i18n.t('rd.rs_experiment_create_page.k6');
+      default:
+        return phase;
     }
   };
   const teamMembers = project?.team_members || [];
@@ -274,7 +291,7 @@ const RsProjectDetailPage: React.FC = () => {
                   <TableCell>{exp.name}</TableCell>
                   <TableCell>
                     <Chip
-                      label={exp.phase}
+                      label={getPhaseLabel(exp.phase)}
                       size='small'
                       color={getPhaseColor(exp.phase)}
                     />

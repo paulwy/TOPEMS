@@ -10,7 +10,7 @@ use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
 use crate::models::{
-    CreateExperimentRequest, Experiment, ExperimentStatus, UpdateExperimentRequest,
+    CreateExperimentRequest, Experiment, ExperimentPhase, ExperimentStatus, UpdateExperimentRequest,
 };
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
@@ -223,7 +223,16 @@ pub async fn create_experiment(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let phase = req.phase.clone();
+    let phase = if req.phase.trim().is_empty() {
+        ExperimentPhase::DEFAULT
+    } else {
+        match ExperimentPhase::normalize(&req.phase) {
+            Some(phase) => phase,
+            None => {
+                return ApiResponse::bad_request("phase 仅支持 lab / pilot / scaleup / production")
+            }
+        }
+    };
     let status = match req.status.as_deref() {
         None => ExperimentStatus::DEFAULT,
         Some(raw) => match ExperimentStatus::normalize(raw) {
@@ -257,7 +266,7 @@ pub async fn create_experiment(
     .bind(req.project_id)
     .bind(req.formula_id)
     .bind(&req.experiment_type)
-    .bind(&phase)
+    .bind(phase.as_db_str())
     .bind(status.as_db_str())
     .bind(&req.objective)
     .bind(&req.method)
@@ -1036,11 +1045,13 @@ pub async fn advance_phase(
         Err(e) => return ApiResponse::from(TopemsError::internal("查询试验失败", e)),
     };
 
-    let new_phase = match existing.phase.as_str() {
-        "lab" => "pilot",
-        "pilot" => "scaleup",
-        "scaleup" => "production",
-        _ => return ApiResponse::bad_request("无法推进当前试验阶段"),
+    let current_phase = match ExperimentPhase::normalize(&existing.phase) {
+        Some(phase) => phase,
+        None => return ApiResponse::server_error("试验阶段未标准化，拒绝推进"),
+    };
+    let new_phase = match current_phase.next() {
+        Some(phase) => phase,
+        None => return ApiResponse::bad_request("已是最终试验阶段，无法继续推进"),
     };
     let current = match ExperimentStatus::from_db_str(&existing.status) {
         Some(status) => status,
@@ -1080,7 +1091,7 @@ pub async fn advance_phase(
         "#,
     )
     .bind(id)
-    .bind(new_phase)
+    .bind(new_phase.as_db_str())
     .bind(target.as_db_str())
     .bind(Utc::now())
     .fetch_one(&mut **txn)

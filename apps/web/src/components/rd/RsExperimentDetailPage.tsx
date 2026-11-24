@@ -179,16 +179,33 @@ const RsExperimentDetailPage: React.FC = () => {
     createRecordMutation.mutate(recordForm);
   };
 
-  const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'default' => {
+  const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'success' | 'default' => {
     switch (phase) {
-      case i18n.t('pages.rs_experiment_detail_page.k15'):
+      case 'lab':
         return 'info';
-      case i18n.t('pages.rs_experiment_detail_page.k16'):
+      case 'pilot':
         return 'warning';
-      case i18n.t('pages.rs_experiment_detail_page.k17'):
+      case 'scaleup':
         return 'error';
+      case 'production':
+        return 'success';
       default:
         return 'default';
+    }
+  };
+
+  const getPhaseLabel = (phase: string): string => {
+    switch (phase) {
+      case 'lab':
+        return i18n.t('pages.rs_experiment_detail_page.k15');
+      case 'pilot':
+        return i18n.t('pages.rs_experiment_detail_page.k16');
+      case 'scaleup':
+        return i18n.t('pages.rs_experiment_detail_page.k17');
+      case 'production':
+        return i18n.t('rd.rs_experiment_create_page.k6');
+      default:
+        return phase;
     }
   };
 
@@ -261,7 +278,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 color={getStatusColor(experiment.status)}
               />
               <Chip
-                label={experiment.phase}
+                label={getPhaseLabel(experiment.phase)}
                 color={getPhaseColor(experiment.phase)}
                 size='small'
               />
