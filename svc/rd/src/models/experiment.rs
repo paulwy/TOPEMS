@@ -4,6 +4,81 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// 试验状态（DB 契约固定小写英文）。
+///
+/// 历史三套写法：DB 默认 `planning`、后端创建写 `planned`、前端提交中文
+/// 「进行中/已完成/暂停/失败」。本枚举统一为五态并兼容旧值与中文值。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExperimentStatus {
+    Planned,
+    InProgress,
+    Completed,
+    Paused,
+    Failed,
+}
+
+impl ExperimentStatus {
+    pub const DB_VALUES: [&'static str; 5] =
+        ["planned", "in_progress", "completed", "paused", "failed"];
+    pub const DEFAULT: Self = Self::Planned;
+
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Planned => "planned",
+            Self::InProgress => "in_progress",
+            Self::Completed => "completed",
+            Self::Paused => "paused",
+            Self::Failed => "failed",
+        }
+    }
+
+    #[must_use]
+    pub fn from_db_str(raw: &str) -> Option<Self> {
+        match raw {
+            "planned" => Some(Self::Planned),
+            "in_progress" => Some(Self::InProgress),
+            "completed" => Some(Self::Completed),
+            "paused" => Some(Self::Paused),
+            "failed" => Some(Self::Failed),
+            _ => None,
+        }
+    }
+
+    /// 兼容 DB 旧默认 `planning`、前端中文值与常见英文别名；未知值 fail-closed。
+    #[must_use]
+    pub fn normalize(raw: &str) -> Option<Self> {
+        match raw.trim().to_lowercase().as_str() {
+            "planned" | "planning" | "计划中" => Some(Self::Planned),
+            "in_progress" | "in-progress" | "running" | "进行中" => Some(Self::InProgress),
+            "completed" | "done" | "已完成" => Some(Self::Completed),
+            "paused" | "on_hold" | "暂停" => Some(Self::Paused),
+            "failed" | "failure" | "失败" => Some(Self::Failed),
+            _ => None,
+        }
+    }
+
+    /// 状态机：计划中可开始/失败；进行中可完成/暂停/失败；
+    /// 暂停可恢复/完成/失败；已完成、失败为终态；同值幂等。
+    #[must_use]
+    pub const fn can_transition_to(self, target: Self) -> bool {
+        matches!(
+            (self, target),
+            (
+                Self::Planned,
+                Self::Planned | Self::InProgress | Self::Failed
+            ) | (
+                Self::InProgress,
+                Self::InProgress | Self::Completed | Self::Paused | Self::Failed
+            ) | (
+                Self::Paused,
+                Self::Paused | Self::InProgress | Self::Completed | Self::Failed
+            ) | (Self::Completed, Self::Completed)
+                | (Self::Failed, Self::Failed)
+        )
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Experiment {
     pub id: Uuid,
@@ -50,6 +125,8 @@ pub struct CreateExperimentRequest {
     pub batch_number: Option<String>,
     pub scale: Option<f64>,
     pub scale_unit: Option<String>,
+    /// 兼容前端表单直传；缺省为 Planned，中文/旧值由 ExperimentStatus 归一。
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -172,6 +249,7 @@ mod tests {
             batch_number: None,
             scale: None,
             scale_unit: None,
+            status: None,
         };
         let json = serde_json::to_string(&req).unwrap();
         let back: CreateExperimentRequest = serde_json::from_str(&json).unwrap();
@@ -250,5 +328,47 @@ mod tests {
         let back: Experiment = serde_json::from_str(&json).unwrap();
         assert!(back.formula_id.is_none());
         assert!(back.completed_at.is_none());
+    }
+
+    #[test]
+    fn experiment_status_db_contract_and_legacy_values() {
+        assert_eq!(ExperimentStatus::DB_VALUES.len(), 5);
+        assert_eq!(ExperimentStatus::DEFAULT.as_db_str(), "planned");
+        for value in ExperimentStatus::DB_VALUES {
+            let parsed = ExperimentStatus::from_db_str(value).expect("db value must parse");
+            assert_eq!(parsed.as_db_str(), value);
+        }
+        assert_eq!(
+            ExperimentStatus::normalize("planning"),
+            Some(ExperimentStatus::Planned)
+        );
+        assert_eq!(
+            ExperimentStatus::normalize("进行中"),
+            Some(ExperimentStatus::InProgress)
+        );
+        assert_eq!(
+            ExperimentStatus::normalize("已完成"),
+            Some(ExperimentStatus::Completed)
+        );
+        assert_eq!(
+            ExperimentStatus::normalize("暂停"),
+            Some(ExperimentStatus::Paused)
+        );
+        assert_eq!(
+            ExperimentStatus::normalize("失败"),
+            Some(ExperimentStatus::Failed)
+        );
+        assert_eq!(ExperimentStatus::normalize("unknown"), None);
+    }
+
+    #[test]
+    fn experiment_status_transitions_guard_terminal_states() {
+        assert!(ExperimentStatus::Planned.can_transition_to(ExperimentStatus::InProgress));
+        assert!(ExperimentStatus::InProgress.can_transition_to(ExperimentStatus::Completed));
+        assert!(ExperimentStatus::Paused.can_transition_to(ExperimentStatus::InProgress));
+        assert!(!ExperimentStatus::Completed.can_transition_to(ExperimentStatus::InProgress));
+        assert!(!ExperimentStatus::Failed.can_transition_to(ExperimentStatus::InProgress));
+        assert!(!ExperimentStatus::Planned.can_transition_to(ExperimentStatus::Completed));
+        assert!(ExperimentStatus::InProgress.can_transition_to(ExperimentStatus::InProgress));
     }
 }

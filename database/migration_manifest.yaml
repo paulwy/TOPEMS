@@ -2993,6 +2993,13 @@ pending_forward_patches:
     effect: "rs.project_members.status 从默认 'ACTIVE' + Rust 大写写入，收口为 active/inactive 小写；权限查询 lower(status)='active' 与写入一致；ADD CHECK ck_project_members_status_standard + VALIDATE"
     destructive_scan: "UPDATE status 大小写归一（ACTIVE→active），ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有 active/inactive 之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124160000_rd_project_members_status_standard.rollback.sql 恢复默认 ACTIVE、存量大写并 DROP 约束"
+  # ===== 2026-11-24：B264 RD 试验状态词表收口 =====
+  - version: "20261124193000"
+    file: "database/migrations/20261124193000_rd_experiment_status_standard.sql"
+    status: to_apply
+    effect: "rs.experiments.status 旧默认 planning、后端 planned、前端中文值统一归一为 planned/in_progress/completed/paused/failed 五态；默认值固定 'planned'；ADD CHECK ck_experiments_status_standard + VALIDATE"
+    destructive_scan: "UPDATE status 旧默认/别名/中文值归一，ALTER COLUMN SET DEFAULT，ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "幂等：约束已存在则重新 VALIDATE；fail-closed：归一后仍有五态之外的值则 RAISE EXCEPTION。回滚 database/rollback/20261124193000_rd_experiment_status_standard.rollback.sql 恢复默认 planning 并 DROP 约束"
   # ===== 2026-11-24：B263 RD 变更请求状态落库约束 =====
   - version: "20261124180000"
     file: "database/migrations/20261124180000_rd_change_request_status_standard.sql"

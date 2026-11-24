@@ -9,7 +9,9 @@ use serde::Deserialize;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use uuid::Uuid;
 
-use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
+use crate::models::{
+    CreateExperimentRequest, Experiment, ExperimentStatus, UpdateExperimentRequest,
+};
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -58,6 +60,16 @@ impl ListParams {
 
     pub fn offset(&self) -> i64 {
         (self.page_or_default() - 1) * self.page_size_or_default()
+    }
+}
+
+fn normalized_status_filter(raw: &Option<String>) -> Result<Option<&'static str>, &'static str> {
+    match raw.as_deref() {
+        None => Ok(None),
+        Some(value) => match ExperimentStatus::normalize(value) {
+            Some(status) => Ok(Some(status.as_db_str())),
+            None => Err("status 仅支持 planned / in_progress / completed / paused / failed"),
+        },
     }
 }
 
@@ -112,6 +124,10 @@ pub async fn list_experiments(
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
+    let status_filter = match normalized_status_filter(&params.status) {
+        Ok(value) => value,
+        Err(message) => return ApiResponse::bad_request(message),
+    };
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -129,7 +145,7 @@ pub async fn list_experiments(
         "#,
     )
     .bind(&params.search)
-    .bind(&params.status)
+    .bind(status_filter)
     .bind(params.project_id)
     .bind(&params.experiment_type)
     .bind(page_size)
@@ -150,7 +166,7 @@ pub async fn list_experiments(
                 "#,
             )
             .bind(&params.search)
-            .bind(&params.status)
+            .bind(status_filter)
             .bind(params.project_id)
             .bind(&params.experiment_type)
             .fetch_one(&mut **txn)
@@ -208,6 +224,17 @@ pub async fn create_experiment(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let phase = req.phase.clone();
+    let status = match req.status.as_deref() {
+        None => ExperimentStatus::DEFAULT,
+        Some(raw) => match ExperimentStatus::normalize(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 planned / in_progress / completed / paused / failed",
+                )
+            }
+        },
+    };
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -231,7 +258,7 @@ pub async fn create_experiment(
     .bind(req.formula_id)
     .bind(&req.experiment_type)
     .bind(&phase)
-    .bind("planned")
+    .bind(status.as_db_str())
     .bind(&req.objective)
     .bind(&req.method)
     .bind(serde_json::json!({}))
@@ -383,7 +410,30 @@ pub async fn update_experiment(
     let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
-    let status = req.status.unwrap_or(existing.status);
+    let current = match ExperimentStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => match ExperimentStatus::normalize(&existing.status) {
+            Some(status) => status,
+            None => return ApiResponse::server_error("试验状态未标准化，拒绝写入"),
+        },
+    };
+    let status = match req.status.as_deref() {
+        None => current,
+        Some(raw) => match ExperimentStatus::normalize(raw) {
+            Some(target) if current.can_transition_to(target) => target,
+            Some(_) => {
+                return ApiResponse::bad_request(&format!(
+                    "非法试验状态流转: {} -> {raw}",
+                    current.as_db_str()
+                ))
+            }
+            None => {
+                return ApiResponse::bad_request(
+                    "status 仅支持 planned / in_progress / completed / paused / failed",
+                )
+            }
+        },
+    };
     let results = req
         .results
         .or(existing.results)
@@ -409,7 +459,7 @@ pub async fn update_experiment(
     )
     .bind(id)
     .bind(&name)
-    .bind(&status)
+    .bind(status.as_db_str())
     .bind(&results)
     .bind(&conclusions)
     .bind(completed_at)
@@ -717,6 +767,10 @@ pub async fn list_lab_experiments(
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
+    let status_filter = match normalized_status_filter(&params.status) {
+        Ok(value) => value,
+        Err(message) => return ApiResponse::bad_request(message),
+    };
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -733,7 +787,7 @@ pub async fn list_lab_experiments(
         "#,
     )
     .bind(&params.search)
-    .bind(&params.status)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -751,7 +805,7 @@ pub async fn list_lab_experiments(
                 "#,
             )
             .bind(&params.search)
-            .bind(&params.status)
+            .bind(status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -798,6 +852,10 @@ pub async fn list_pilot_experiments(
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
+    let status_filter = match normalized_status_filter(&params.status) {
+        Ok(value) => value,
+        Err(message) => return ApiResponse::bad_request(message),
+    };
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -814,7 +872,7 @@ pub async fn list_pilot_experiments(
         "#,
     )
     .bind(&params.search)
-    .bind(&params.status)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -832,7 +890,7 @@ pub async fn list_pilot_experiments(
                 "#,
             )
             .bind(&params.search)
-            .bind(&params.status)
+            .bind(status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -879,6 +937,10 @@ pub async fn list_scaleup_experiments(
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
+    let status_filter = match normalized_status_filter(&params.status) {
+        Ok(value) => value,
+        Err(message) => return ApiResponse::bad_request(message),
+    };
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -895,7 +957,7 @@ pub async fn list_scaleup_experiments(
         "#,
     )
     .bind(&params.search)
-    .bind(&params.status)
+    .bind(status_filter)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -913,7 +975,7 @@ pub async fn list_scaleup_experiments(
                 "#,
             )
             .bind(&params.search)
-            .bind(&params.status)
+            .bind(status_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -980,6 +1042,31 @@ pub async fn advance_phase(
         "scaleup" => "production",
         _ => return ApiResponse::bad_request("无法推进当前试验阶段"),
     };
+    let current = match ExperimentStatus::from_db_str(&existing.status) {
+        Some(status) => status,
+        None => match ExperimentStatus::normalize(&existing.status) {
+            Some(status) => status,
+            None => return ApiResponse::server_error("试验状态未标准化，拒绝推进"),
+        },
+    };
+    let target = match req.new_status.as_deref() {
+        None => ExperimentStatus::InProgress,
+        Some(raw) => match ExperimentStatus::normalize(raw) {
+            Some(status) => status,
+            None => {
+                return ApiResponse::bad_request(
+                    "new_status 仅支持 planned / in_progress / completed / paused / failed",
+                )
+            }
+        },
+    };
+    if !current.can_transition_to(target) {
+        return ApiResponse::bad_request(&format!(
+            "非法试验状态流转: {} -> {}",
+            current.as_db_str(),
+            target.as_db_str()
+        ));
+    }
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
@@ -994,7 +1081,7 @@ pub async fn advance_phase(
     )
     .bind(id)
     .bind(new_phase)
-    .bind(req.new_status.unwrap_or("in_progress".to_string()))
+    .bind(target.as_db_str())
     .bind(Utc::now())
     .fetch_one(&mut **txn)
     .await;

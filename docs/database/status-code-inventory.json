@@ -5,7 +5,7 @@
     "db_check_constraints": 35,
     "db_enum_types": 5,
     "db_check_values": 54,
-    "rust_enums": 317,
+    "rust_enums": 318,
     "rust_enum_values": 241,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 251,
@@ -4453,6 +4453,25 @@
         "open",
         "rejected",
         "resolved"
+      ]
+    },
+    {
+      "module": "rd",
+      "file": "svc/rd/src/models/experiment.rs",
+      "name": "ExperimentStatus",
+      "values": [
+        "Completed",
+        "Failed",
+        "InProgress",
+        "Paused",
+        "Planned"
+      ],
+      "normalized": [
+        "completed",
+        "failed",
+        "in_progress",
+        "paused",
+        "planned"
       ]
     },
     {

@@ -37,7 +37,7 @@ DESTRUCTIVE="20261119100000 20261119110000 20261119160000 20261119180000 2026111
 
 case "$MODE" in
   plan|dryrun|phase1|phase2|phase3|verify) ;;
-  *) echo "未知模式: $MODE（plan|dryrun|phase1|phase2|phase3|verify）" >&2; exit 2 ;;
+  *) echo "未知模式: ${MODE}（plan|dryrun|phase1|phase2|phase3|verify）" >&2; exit 2 ;;
 esac
 
 if [[ -z "${PROD_CHANGE_TICKET:-}" ]]; then
@@ -64,16 +64,27 @@ defer_for() {
 }
 
 run_one() {
-  local v="$1" gate="" allow="" defer
+  local v="$1" gate_guc="" gate_val="" allow="" defer
+  # 断点续跑：已应用版本直接跳过。apply-forward 的扫描以 anchor(账本max) 为下界，
+  # 窗口内更早的版本此时既不在待应用队列也不在"已应用"集合，会被判为扫描截断。
+  if psql -h "$PGHOST" -U "$PGUSER_" -d "$DB" -X -tAc \
+      "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" 2>/dev/null | grep -q 1; then
+    echo "--- [${DB}] ${v} 已应用，跳过"
+    return 0
+  fi
   defer="$(defer_for "$v")"
+  # 闸门（GUC 名与取值必须与迁移文件内 current_setting 完全一致；已逐条 grep 核对）
   case "$v" in
-    20261119100000) gate="batch-1" ;;
-    20261119110000) gate="batch-2" ;;
+    20261119100000) gate_guc="app.drop_dead_tables_gate";       gate_val="batch-1" ;;
+    20261119110000) gate_guc="app.drop_dead_tables_gate";       gate_val="batch-2" ;;
+    20261119160000) gate_guc="app.drop_zero_path_tables_gate";  gate_val="zero-path-20261119" ;;
+    20261119180000) gate_guc="app.archive_legacy_copies_gate";  gate_val="legacy-copies-20261119" ;;
+    20261119200000) gate_guc="app.tenant_unblock_archive_gate"; gate_val="tenant-unblock-20261119" ;;
   esac
   case " $DESTRUCTIVE " in
     *" $v "*) allow=1 ;;
   esac
-  echo ">>> [${DB}] ${v}${gate:+  (gate=$gate)}"
+  echo ">>> [${DB}] ${v}${gate_val:+  (gate=${gate_guc#app.}=$gate_val)}"
   set -- --prod --db "$DB" --only "$v" --defer "$defer"
   if [[ -n "$ANCHOR" ]]; then
     set -- "$@" --anchor "$ANCHOR"
@@ -81,8 +92,8 @@ run_one() {
   if [[ -n "$allow" ]]; then
     set -- "$@" "--allow-destructive=$v"
   fi
-  if [[ -n "$gate" ]]; then
-    env PGOPTIONS="-c app.drop_dead_tables_gate=$gate" \
+  if [[ -n "$gate_guc" ]]; then
+    env PGOPTIONS="-c ${gate_guc}=${gate_val}" \
       bash scripts/migration/apply-forward.sh "$@"
   else
     bash scripts/migration/apply-forward.sh "$@"

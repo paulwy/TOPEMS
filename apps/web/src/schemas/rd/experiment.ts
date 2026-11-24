@@ -10,10 +10,11 @@ const PHASE_COLOR_MAP: Record<string, 'info' | 'warning' | 'error' | 'default'> 
 };
 
 const STATUS_COLOR_MAP: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
-  [i18n.t('schemas.experiment.k3')]: 'primary',
-  [i18n.t('schemas.experiment.k4')]: 'success',
-  [i18n.t('schemas.experiment.k5')]: 'warning',
-  [i18n.t('schemas.experiment.k6')]: 'error',
+  planned: 'default',
+  in_progress: 'primary',
+  completed: 'success',
+  paused: 'warning',
+  failed: 'error',
 };
 
 export const experimentSchema: EntitySchema = {
@@ -81,14 +82,15 @@ export const experimentSchema: EntitySchema = {
       name: 'status',
       label: i18n.t('rd.experiment.k13'),
       type: 'select',
-      defaultValue: i18n.t('rd.experiment.k14'),
+      defaultValue: 'in_progress',
       options: {
         type: 'static',
         options: [
-          { value: i18n.t('rd.experiment.k15'), label: i18n.t('rd.experiment.k16') },
-          { value: i18n.t('rd.experiment.k17'), label: i18n.t('rd.experiment.k18') },
-          { value: i18n.t('rd.experiment.k19'), label: i18n.t('rd.experiment.k20') },
-          { value: i18n.t('rd.experiment.k21'), label: i18n.t('rd.experiment.k22') },
+          { value: 'planned', label: i18n.t('schemas.experiment.k7') },
+          { value: 'in_progress', label: i18n.t('schemas.experiment.k3') },
+          { value: 'completed', label: i18n.t('schemas.experiment.k4') },
+          { value: 'paused', label: i18n.t('schemas.experiment.k5') },
+          { value: 'failed', label: i18n.t('schemas.experiment.k6') },
         ],
       },
       listWidth: 110,

@@ -119,6 +119,7 @@
   "schemas.experiment.k4": "已完成",
   "schemas.experiment.k5": "暂停",
   "schemas.experiment.k6": "失败",
+  "schemas.experiment.k7": "计划中",
   "schemas.finance.k0": "待处理",
   "schemas.finance.k1": "处理中",
   "schemas.finance.k2": "已交付",

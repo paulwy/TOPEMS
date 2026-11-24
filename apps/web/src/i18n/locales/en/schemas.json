@@ -119,6 +119,7 @@
   "schemas.experiment.k4": "Completed",
   "schemas.experiment.k5": "Paused",
   "schemas.experiment.k6": "Failed",
+  "schemas.experiment.k7": "Planned",
   "schemas.finance.k0": "Pending",
   "schemas.finance.k1": "Processing",
   "schemas.finance.k2": "Delivered",
