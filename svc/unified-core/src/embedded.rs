@@ -89,7 +89,8 @@ async fn build_router_inner(
         crate::middleware::versioning::VersionMiddleware::new(version_config),
     );
 
-    let security_headers_config = topems_shared_auth::security::SecurityHeadersConfig::default();
+    // 与独立部署一致：按 ENVIRONMENT 选择预设，避免嵌入模式在生产悄悄用 default()
+    let security_headers_config = topems_shared_auth::security::SecurityHeadersConfig::from_env();
     let security_headers_layer = std::sync::Arc::new(
         topems_shared_auth::security::SecurityHeadersLayer::new(security_headers_config),
     );

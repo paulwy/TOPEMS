@@ -40,9 +40,21 @@ const tplDsn = tpl.match(/^DATABASE_URL=(.*)$/m)?.[1] ?? '';
 if (/@localhost:5432/.test(tplDsn)) {
   fail('env-template', `DATABASE_URL 直连 5432 会绕过 PgBouncer：${tplDsn}`);
 }
-const tplPool = Number(tpl.match(/^DATABASE_MAX_CONNECTIONS=(\d+)$/m)?.[1] ?? 0);
+// 池大小键名必须是被代码真正读取的 DB_MAX_CONNECTIONS；
+// DATABASE_MAX_CONNECTIONS 没有任何代码读取（2026-11-24 生产机实测反馈）。
+if (/^DATABASE_MAX_CONNECTIONS=/m.test(tpl)) {
+  fail('env-template', '模板仍在使用无人读取的 DATABASE_MAX_CONNECTIONS，应改为 DB_MAX_CONNECTIONS');
+}
+const tplPool = Number(tpl.match(/^DB_MAX_CONNECTIONS=(\d+)$/m)?.[1] ?? 0);
 if (!tplPool || tplPool > 50) {
-  fail('env-template', `DATABASE_MAX_CONNECTIONS 未设置或过大（>50 会撑爆默认 max_connections=100）：${tplPool}`);
+  fail('env-template', `DB_MAX_CONNECTIONS 未设置或过大（>50 会撑爆默认 max_connections=100）：${tplPool}`);
+}
+
+// 这些键在 Rust 侧没有对应读取逻辑，写进模板只会让运维改一份“假配置”。
+for (const ghost of ['STORAGE_PATH', 'PLUGIN_STORAGE_PATH', 'DATABASE_MAX_CONNECTIONS']) {
+  if (new RegExp(`^${ghost}=`, 'm').test(tpl)) {
+    fail('env-template', `${ghost} 无代码读取，模板中不得以生效形式出现（注释说明可以保留）`);
+  }
 }
 
 // ------------------------------------------------------------ 2. compose 编排
@@ -120,6 +132,11 @@ if (has('.env.production')) {
   }
   if (/^DATABASE_URL=.*@localhost:5432/m.test(liveKeys)) {
     fail('env-live', '.env.production 仍用 owner 直连 localhost:5432');
+  }
+  for (const ghost of ['STORAGE_PATH', 'PLUGIN_STORAGE_PATH', 'DATABASE_MAX_CONNECTIONS']) {
+    if (new RegExp(`^${ghost}=`, 'm').test(liveKeys)) {
+      fail('env-live', `.env.production 含无代码读取的键 ${ghost}，应改为注释`);
+    }
   }
 }
 

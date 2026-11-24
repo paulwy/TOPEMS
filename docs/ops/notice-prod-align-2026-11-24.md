@@ -1,5 +1,11 @@
 # 发给生产机（xingzhai Mac mini）的对齐通知 —— 2026-11-24
 
+> ❌ **本文已作废（2026-11-24 晚）**：生产机回执证明 `.env.production` 在生产机上不存在且不会被加载；
+> 真实配置源是 launchd plist 的 `EnvironmentVariables` + Keychain 注入。本文中关于改 `.env.production`、
+> `DATABASE_MAX_CONNECTIONS`、`STORAGE_PATH`、`PLUGIN_STORAGE_PATH`、`CORE_PORT` 的要求**均不成立**，
+> 请勿据此操作。纠正记录见 `docs/ops/prod-config-truth-source-2026-11-24.md`。
+
+
 > 主控机（air）已完成生产配置收口（提交 `6221cc78e`），并在 Cloudflare 侧完成了 DNS/入口收口。
 > 本轮生产机**只需要核对并同步 `.env.production` + 重启 + 回传验收结果**，DNS 不用你动。
 > 通知不含任何口令；所有口令沿用生产机现有值，不要新建、不要回传明文。

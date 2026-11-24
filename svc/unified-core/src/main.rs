@@ -332,7 +332,9 @@ async fn main() -> anyhow::Result<()> {
         middleware::versioning::VersionMiddleware::new(version_config),
     );
 
-    let security_headers_config = SecurityHeadersConfig::default();
+    // ENVIRONMENT=production/prod 时启用 production() 预设（更严的 CSP + HSTS preload 标记）；
+    // 未设或其它值时回落 default()。见 lib/shared-auth/src/security/security_headers.rs。
+    let security_headers_config = SecurityHeadersConfig::from_env();
     let security_headers_layer =
         std::sync::Arc::new(SecurityHeadersLayer::new(security_headers_config));
 

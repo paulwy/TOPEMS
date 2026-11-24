@@ -113,4 +113,9 @@ k8s 若继续保留，至少补 `securityContext`（`runAsNonRoot: true`、`allo
 
 **门禁此前是空跑，已修**：机器上没有 lefthook 二进制，`.git/hooks/pre-commit` 落在 `Can't find lefthook in PATH` 分支并 exit 0，57 个钩子全部静默跳过——本轮新加的 `prod-config` 也就从未真正拦过事。现已 `brew install lefthook`（2.2.2），并把 `status-catalog` 的比对库从开发库改指基线库（`.env` 增 `STATUS_CATALOG_DB_URL=postgresql:///topems_status_baseline_verify`），`lefthook run pre-commit --force` 57/57 全绿，且已用一次**不带 `--no-verify`** 的真实提交验证链路生效。详见 `docs/quality/precommit-gates-restored-2026-11-24.md`。
 
-**只剩一件事需要生产机配合**：核对并同步生产机 `/Users/xingzhai/topems/.env.production`（本机副本已按 native 形态重写），然后重启 launchd 并回传验收结果。通知稿见 `docs/ops/notice-prod-align-2026-11-24.md`。
+> ⚠️ **前提纠正（2026-11-24 晚）**：生产机回执证明它的配置真源是 launchd plist + Keychain，`.env.production`
+> 在其上不存在、也不会被加载；本文前半段“改生产机 `.env.production`”的结论因此不成立，已按回执改为
+> plist + Keychain 口径。另：`DATABASE_MAX_CONNECTIONS` / `STORAGE_PATH` / `PLUGIN_STORAGE_PATH` / `CORE_PORT`
+> 均无代码读取，模板与门禁已同步修正。详见 `docs/ops/prod-config-truth-source-2026-11-24.md`。
+
+**生产机侧已收口**：`CORS_ALLOWED_ORIGINS` / `ENVIRONMENT=production` / `WS_ALLOWED_ORIGINS` 三项已在 plist 中改好并重启生效（state=running，health=200，www/app 均 200，CORS 双向断言通过）。剩余非阻塞项：`.env` 旧 `DATABASE_URL` 待清理、4 条启动期 `RLS context missing` ERROR 待排查、安全头 `from_env()` 改动需重建二进制才生效。
