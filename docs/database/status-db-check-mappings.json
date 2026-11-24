@@ -2995,6 +2995,16 @@
       "db_constraint": "ck_change_orders_status_standard",
       "db_verified_at": "2026-11-24",
       "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default planned)"
+    },
+    {
+      "file": "svc/ticket/src/models.rs",
+      "enum": "TicketStatus",
+      "table": "ticket.core_tickets",
+      "column": "status",
+      "candidate": "database/migrations/20261125002000_ticket_status_standard.sql",
+      "db_constraint": "ck_core_tickets_status_standard",
+      "db_verified_at": "2026-11-25",
+      "db_verified_via": "local pg_constraint (convalidated, NOT NULL, default open)"
     }
   ],
   "non_enum_checks": [
