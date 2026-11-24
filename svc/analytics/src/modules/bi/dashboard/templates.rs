@@ -64,10 +64,8 @@ pub async fn list_dashboard_templates(
         SELECT id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         FROM bi.analytics_dashboard_templates
         WHERE is_active = true
-          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         "#,
-        tenant_scope.tenant_id(),
     )
     .fetch_all(&mut db_scope)
     .await
@@ -237,10 +235,8 @@ pub async fn get_dashboard_template(
         SELECT id, name, description, layout, preview_image, category, tags, is_active, created_at, updated_at
         FROM bi.analytics_dashboard_templates
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#,
         id,
-        tenant_scope.tenant_id(),
     )
     .fetch_optional(&mut db_scope)
     .await
@@ -564,8 +560,8 @@ now,
                                                             layout: new_row.layout,
                                                             owner_id: new_row.owner_id,
                                                             is_public: new_row.is_public.unwrap_or(false),
-                    created_at: new_row.created_at,
-                    updated_at: new_row.updated_at,
+                    created_at: new_row.created_at.unwrap_or_else(Utc::now),
+                    updated_at: new_row.updated_at.unwrap_or_else(Utc::now),
                                                         }
                                                     }))
                 }

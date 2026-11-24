@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, dashboard_id, shared_with, permission, expires_at, created_at\n        FROM bi.analytics_dashboard_shares\n        WHERE dashboard_id = $1\n        ORDER BY created_at DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_dashboard_shares",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "dashboard_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_dashboard_shares",
+            "name": "dashboard_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "shared_with",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_dashboard_shares",
+            "name": "shared_with"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "permission",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_dashboard_shares",
+            "name": "permission"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_dashboard_shares",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_dashboard_shares",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "4b6db11ff6feff9bf3ffd14e336957508f32a391ff78c8e38ec83c4d01c43dd7"
+}

@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, levels, measures\n        FROM bi.analytics_drilldown_paths\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "levels",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "levels"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "measures",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "bi.analytics_drilldown_paths",
+            "name": "measures"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "8067144fca6c72f62af0980f9826c313454a92b343cb634f9388c4cde0fe479b"
+}
