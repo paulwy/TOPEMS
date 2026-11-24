@@ -14,6 +14,7 @@ use super::models::{
     CreateDashboardRequest, DashboardListResponse, DashboardResponse, ImportDashboardRequest,
     UpdateDashboardRequest,
 };
+use super::IntoDateTime;
 
 #[utoipa::path(
     get,
@@ -73,8 +74,8 @@ pub async fn list_dashboards(
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at.into_datetime(),
+            updated_at: row.updated_at.into_datetime(),
         })
         .collect();
 
@@ -240,8 +241,8 @@ pub async fn get_dashboard(
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at.into_datetime(),
+        updated_at: row.updated_at.into_datetime(),
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -331,8 +332,8 @@ pub async fn update_dashboard(
                                     layout: row.layout,
                                     owner_id: row.owner_id,
                                     is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at.into_datetime(),
+            updated_at: row.updated_at.into_datetime(),
                                 }
                             }))
         }
@@ -468,8 +469,8 @@ pub async fn get_public_dashboards(
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at.into_datetime(),
+            updated_at: row.updated_at.into_datetime(),
         })
         .collect();
 
@@ -539,8 +540,8 @@ pub async fn get_user_dashboards(
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at.into_datetime(),
+            updated_at: row.updated_at.into_datetime(),
         })
         .collect();
 
@@ -642,8 +643,8 @@ now,
                                                             layout: new_row.layout,
                                                             owner_id: new_row.owner_id,
                                                             is_public: new_row.is_public.unwrap_or(false),
-                    created_at: new_row.created_at.unwrap_or_else(Utc::now),
-                    updated_at: new_row.updated_at.unwrap_or_else(Utc::now),
+                    created_at: new_row.created_at.into_datetime(),
+                    updated_at: new_row.updated_at.into_datetime(),
                                                         }
                                                     }))
                 }
@@ -725,8 +726,8 @@ now,
                                     layout: row.layout,
                                     owner_id: row.owner_id,
                                     is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at.into_datetime(),
+            updated_at: row.updated_at.into_datetime(),
                                 }
                             }))
         }
