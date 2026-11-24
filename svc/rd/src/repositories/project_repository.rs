@@ -12,13 +12,24 @@ pub struct ProjectRepository {
     db: PgPool,
 }
 
+/// 写/读路径都必须持有真实租户：nil 一律拒绝，不保留 nil 哨兵兜底。
+fn require_tenant(tenant_id: Uuid) -> Result<Uuid> {
+    if tenant_id.is_nil() {
+        return Err(TopemsError::ValidationFailed(
+            "缺少租户上下文，无法写入研发项目".to_string(),
+        ));
+    }
+    Ok(tenant_id)
+}
+
 #[allow(dead_code)]
 impl ProjectRepository {
     pub fn new(db: PgPool) -> Self {
         Self { db }
     }
 
-    pub async fn create(&self, req: &CreateProjectRequest) -> Result<Project> {
+    pub async fn create(&self, req: &CreateProjectRequest, tenant_id: Uuid) -> Result<Project> {
+        let tenant_id = require_tenant(tenant_id)?;
         let id = Uuid::new_v4();
         let now = Utc::now();
 
@@ -59,14 +70,15 @@ impl ProjectRepository {
         .bind(&req.tags)
         .bind(req.parent_id)
         .bind(req.workspace_id)
-        .bind(Uuid::nil())
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await?;
 
         Ok(project)
     }
 
-    pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Project>> {
+    pub async fn get_by_id(&self, id: Uuid, tenant_id: Uuid) -> Result<Option<Project>> {
+        let tenant_id = require_tenant(tenant_id)?;
         let project = sqlx::query_as::<_, Project>(
             r#"
             SELECT id, name, code, description, project_type, status, leader,
@@ -74,10 +86,11 @@ impl ProjectRepository {
                    created_by, created_at, updated_at, project_config,
                    benefit_target, risk_level, priority, tags, parent_id, workspace_id
             FROM rs.projects
-            WHERE id = $1
+            WHERE id = $1 AND tenant_id = $2::uuid
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .fetch_optional(&self.db)
         .await?;
 
@@ -90,7 +103,9 @@ impl ProjectRepository {
         status: Option<String>,
         page: i64,
         page_size: i64,
+        tenant_id: Uuid,
     ) -> Result<(Vec<Project>, i64)> {
+        let tenant_id = require_tenant(tenant_id)?;
         let offset = (page - 1) * page_size;
 
         let results = sqlx::query_as::<_, Project>(
@@ -102,6 +117,7 @@ impl ProjectRepository {
             FROM rs.projects
             WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
+              AND tenant_id = $5::uuid
             ORDER BY created_at DESC
             LIMIT $3 OFFSET $4
             "#,
@@ -110,6 +126,7 @@ impl ProjectRepository {
         .bind(&status)
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_id)
         .fetch_all(&self.db)
         .await?;
 
@@ -118,10 +135,12 @@ impl ProjectRepository {
             SELECT COUNT(*) FROM rs.projects
             WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
+              AND tenant_id = $3::uuid
             "#,
         )
         .bind(&search)
         .bind(&status)
+        .bind(tenant_id)
         .fetch_one(&self.db)
         .await?;
 
@@ -209,7 +228,8 @@ impl ProjectRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn batch_create(&self, projects: &[CreateProjectRequest]) -> Result<Vec<Project>> {
+    pub async fn batch_create(&self, projects: &[CreateProjectRequest], tenant_id: Uuid) -> Result<Vec<Project>> {
+        let tenant_id = require_tenant(tenant_id)?;
         let mut created_projects = Vec::new();
         let now = Utc::now();
 
@@ -242,7 +262,7 @@ impl ProjectRepository {
             .bind(&req.leader)
             .bind(now)
             .bind(now)
-            .bind(Uuid::nil())
+            .bind(tenant_id)
             .fetch_one(&self.db)
             .await?;
 
@@ -285,6 +305,9 @@ mod tests {
     static DB_TEST_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
         std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
 
+    /// 测试固定租户：连接建立时写入会话配置 app.tenant_id，写/读与 RLS 策略对齐。
+    const TEST_TENANT: Uuid = Uuid::from_bytes([0x11; 16]);
+
     fn test_database_url() -> String {
         std::env::var("TEST_DATABASE_URL").expect(
             "[test-dsn] 未设置 TEST_DATABASE_URL：测试库 DSN 必须显式提供，禁止回退到 DATABASE_URL 或硬编码开发库",
@@ -294,12 +317,22 @@ mod tests {
     async fn setup_test_db() -> PgPool {
         // 必须显式提供测试库 DSN；不回退 DATABASE_URL，也不使用硬编码开发库。
         let database_url = test_database_url();
-        let pool = PgPool::connect(&database_url)
+        // 每条新连接落会话租户上下文，与生产 claims → tenant_id 的链路等价。
+        sqlx::postgres::PgPoolOptions::new()
+            .after_connect(|conn, _meta| {
+                Box::pin(async move {
+                    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                        .bind(TEST_TENANT.to_string())
+                        .execute(&mut *conn)
+                        .await?;
+                    Ok::<_, sqlx::Error>(())
+                })
+            })
+            .connect(&database_url)
             .await
-            .expect("Failed to connect to test database");
+            .expect("Failed to connect to test database")
         // 不在 setup 里全局清表：同一测试会被 lib/bin 两个二进制并行执行，
         // 各自清表会互相删除刚插入的行。需要空表的用例自行清理自己依赖的表。
-        pool
     }
 
     pub struct TestProjectRepository {
@@ -311,7 +344,7 @@ mod tests {
             Self { db }
         }
 
-        pub async fn create(&self, req: &CreateProjectRequest) -> Result<Project> {
+        pub async fn create(&self, req: &CreateProjectRequest, _tenant_id: Uuid) -> Result<Project> {
             let id = Uuid::new_v4();
             let now = Utc::now();
 
@@ -321,9 +354,9 @@ mod tests {
                     id, name, code, description, project_type, status, leader,
                     team_members, start_date, end_date, budget, progress, created_by,
                     created_at, updated_at, project_config, benefit_target, risk_level,
-                    priority, tags, parent_id, workspace_id
+                    priority, tags, parent_id, workspace_id, tenant_id
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                          $16, $17, $18, $19, $20, $21, $22)
+                          $16, $17, $18, $19, $20, $21, $22, $23)
                 RETURNING id, name, code, description, project_type, status, leader,
                           team_members, start_date, end_date, budget, progress,
                           created_by, created_at, updated_at, project_config,
@@ -352,13 +385,14 @@ mod tests {
             .bind(&req.tags)
             .bind(req.parent_id)
             .bind(req.workspace_id)
+            .bind(TEST_TENANT)
             .fetch_one(&self.db)
             .await?;
 
             Ok(project)
         }
 
-        pub async fn get_by_id(&self, id: Uuid) -> Result<Option<Project>> {
+        pub async fn get_by_id(&self, id: Uuid, _tenant_id: Uuid) -> Result<Option<Project>> {
             let project = sqlx::query_as::<_, Project>(
                 r#"
                 SELECT id, name, code, description, project_type, status, leader,
@@ -366,10 +400,11 @@ mod tests {
                        created_by, created_at, updated_at, project_config,
                        benefit_target, risk_level, priority, tags, parent_id, workspace_id
                 FROM rs.projects
-                WHERE id = $1
+                WHERE id = $1 AND tenant_id = $2::uuid
                 "#,
             )
             .bind(id)
+            .bind(TEST_TENANT)
             .fetch_optional(&self.db)
             .await?;
 
@@ -382,6 +417,7 @@ mod tests {
             status: Option<String>,
             page: i64,
             page_size: i64,
+            _tenant_id: Uuid,
         ) -> Result<(Vec<Project>, i64)> {
             let offset = (page - 1) * page_size;
 
@@ -394,6 +430,7 @@ mod tests {
                 FROM rs.projects
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND tenant_id = $5::uuid
                 ORDER BY created_at DESC
                 LIMIT $3 OFFSET $4
                 "#,
@@ -402,6 +439,7 @@ mod tests {
             .bind(&status)
             .bind(page_size)
             .bind(offset)
+            .bind(TEST_TENANT)
             .fetch_all(&self.db)
             .await?;
 
@@ -410,10 +448,12 @@ mod tests {
                 SELECT COUNT(*) FROM rs.projects
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND tenant_id = $3::uuid
                 "#,
             )
             .bind(&search)
             .bind(&status)
+            .bind(TEST_TENANT)
             .fetch_one(&self.db)
             .await?;
 
@@ -446,7 +486,7 @@ mod tests {
             workspace_id: None,
         };
 
-        let result = repo.create(&req).await;
+        let result = repo.create(&req, TEST_TENANT).await;
         if let Err(e) = &result {
             tracing::error!(error = %e, "Create project error");
         }
@@ -482,9 +522,9 @@ mod tests {
             workspace_id: None,
         };
 
-        let created = repo.create(&req).await.expect("Failed to create project");
+        let created = repo.create(&req, TEST_TENANT).await.expect("Failed to create project");
         let fetched = repo
-            .get_by_id(created.id)
+            .get_by_id(created.id, TEST_TENANT)
             .await
             .expect("Failed to fetch project");
 
@@ -518,11 +558,11 @@ mod tests {
                 parent_id: None,
                 workspace_id: None,
             };
-            repo.create(&req).await.expect("Failed to create project");
+            repo.create(&req, TEST_TENANT).await.expect("Failed to create project");
         }
 
         let (projects, total) = repo
-            .list(None, None, 1, 10)
+            .list(None, None, 1, 10, TEST_TENANT)
             .await
             .expect("Failed to list projects");
         assert!(total >= 5, "列表应该至少返回5个项目，实际: {}", total);

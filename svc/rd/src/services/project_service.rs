@@ -22,12 +22,12 @@ impl ProjectService {
         }
     }
 
-    pub async fn create_project(&self, req: &CreateProjectRequest) -> Result<Project> {
-        self.repository.create(req).await
+    pub async fn create_project(&self, req: &CreateProjectRequest, tenant_id: Uuid) -> Result<Project> {
+        self.repository.create(req, tenant_id).await
     }
 
-    pub async fn get_project(&self, id: Uuid) -> Result<Option<Project>> {
-        self.repository.get_by_id(id).await
+    pub async fn get_project(&self, id: Uuid, tenant_id: Uuid) -> Result<Option<Project>> {
+        self.repository.get_by_id(id, tenant_id).await
     }
 
     pub async fn list_projects(
@@ -36,8 +36,9 @@ impl ProjectService {
         status: Option<String>,
         page: i64,
         page_size: i64,
+        tenant_id: Uuid,
     ) -> Result<(Vec<Project>, i64)> {
-        self.repository.list(search, status, page, page_size).await
+        self.repository.list(search, status, page, page_size, tenant_id).await
     }
 
     pub async fn update_project(
@@ -46,7 +47,7 @@ impl ProjectService {
         req: &UpdateProjectRequest,
         tenant_id: Uuid,
     ) -> Result<Project> {
-        let existing = self.repository.get_by_id(id).await?;
+        let existing = self.repository.get_by_id(id, tenant_id).await?;
         let existing = existing.ok_or_else(|| TopemsError::NotFound("项目不存在".to_string()))?;
         self.repository.update(id, req, &existing, tenant_id).await
     }
@@ -58,8 +59,9 @@ impl ProjectService {
     pub async fn batch_create_projects(
         &self,
         projects: &[CreateProjectRequest],
+        tenant_id: Uuid,
     ) -> Result<Vec<Project>> {
-        self.repository.batch_create(projects).await
+        self.repository.batch_create(projects, tenant_id).await
     }
 
     pub async fn batch_delete_projects(&self, ids: &[Uuid], tenant_id: Uuid) -> Result<i64> {
