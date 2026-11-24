@@ -110,6 +110,7 @@ pub enum EventType {
     OpportunityWon,
 
     // PM Extended Events
+    PmProjectStatusChanged,
     PmProjectCompleted,
     PmProjectSettled,
 
@@ -681,6 +682,21 @@ pub struct PositionDeletedPayload {
 }
 
 // --- PM Extended Events ---
+
+/// PM 项目状态流转（active/cancelled/rejected 等非完成态）
+///
+/// RD 关联项目据此补齐 `in_progress` 与 `cancelled` 写入；完成态仍走
+/// [`PmProjectCompletedPayload`]，避免同一流转发布两条语义重叠的事件。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PmProjectStatusChangedPayload {
+    pub project_id: Uuid,
+    pub project_name: String,
+    /// PM 侧原始状态：active / cancelled / rejected
+    pub status: String,
+    pub changed_by: Option<String>,
+    pub changed_at: Option<DateTime<Utc>>,
+    pub tenant_id: Option<Uuid>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PmProjectCompletedPayload {

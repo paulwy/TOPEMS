@@ -7,6 +7,7 @@ use topems_shared_event::event::{
     require_event_tenant, Event, EventPublisher, EventResult, EventSubscriber, EventType,
     PdmBomCreatedPayload, PdmBomUpdatedPayload, PdmMaterialCreatedPayload,
     PdmMaterialUpdatedPayload, PmProjectCompletedPayload, PmProjectCreatedPayload,
+    PmProjectStatusChangedPayload,
 };
 
 use crate::modules::rd_project_status::RdProjectStatus;
@@ -37,7 +38,11 @@ impl RdEventHandlers {
 
         Ok(subscriber
             .subscribe_handler(
-                vec![EventType::PmProjectCreated, EventType::PmProjectCompleted],
+                vec![
+                    EventType::PmProjectCreated,
+                    EventType::PmProjectCompleted,
+                    EventType::PmProjectStatusChanged,
+                ],
                 move |event| {
                     let h = h1.clone();
                     Box::pin(async move { h.handle_project_event(event).await })
@@ -68,6 +73,7 @@ impl RdEventHandlers {
 
         // 事件必须携带合法租户：缺失/零租户直接拒绝，禁止写零租户或按名称跨租户更新。
         let tenant_id = require_event_tenant(&event)?.get();
+        let db = Db::new(self.db.clone(), "rs, public, shared");
 
         match event.event_type {
             EventType::PmProjectCreated => {
@@ -87,7 +93,6 @@ impl RdEventHandlers {
                     payload.project_name.chars().take(4).collect::<String>(),
                     Utc::now().timestamp_subsec_millis()
                 );
-                let db = Db::new(self.db.clone(), "rs, public, shared");
                 let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
                     TopemsError::DatabaseTransaction(format!("打开研发项目创建作用域失败: {e}"))
                 })?;
@@ -149,7 +154,6 @@ impl RdEventHandlers {
                     payload.completed_by
                 );
 
-                let db = Db::new(self.db.clone(), "rs, public, shared");
                 let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
                     TopemsError::DatabaseTransaction(format!("打开研发项目完成作用域失败: {e}"))
                 })?;
@@ -186,6 +190,91 @@ impl RdEventHandlers {
                 scope.commit().await.map_err(|e| {
                     TopemsError::DatabaseTransaction(format!(
                         "提交研发项目完成失败 - tenant_id={tenant_id}, project={}: {e}",
+                        payload.project_name
+                    ))
+                })?;
+            }
+            EventType::PmProjectStatusChanged => {
+                let payload: PmProjectStatusChangedPayload =
+                    event.parse_payload().map_err(|e| {
+                        TopemsError::ValidationFailed(format!(
+                            "解析项目状态流转事件 payload 失败: {}",
+                            e
+                        ))
+                    })?;
+                let target = match RdProjectStatus::from_pm_status(&payload.status) {
+                    Some(target) => target,
+                    // paused/draft 等中间态不改 RD 关联项目状态。
+                    None => {
+                        tracing::info!(
+                            "[rd] 忽略非终态项目流转: project={}, status={}",
+                            payload.project_name,
+                            payload.status
+                        );
+                        return Ok(());
+                    }
+                };
+
+                // scope-exempt: bg-event
+                let mut scope = db.scope_for_tenant(tenant_id).await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!("打开研发项目状态流转作用域失败: {e}"))
+                })?;
+                let result = match target {
+                    RdProjectStatus::InProgress => {
+                        sqlx::query(
+                            "UPDATE rs.rs_projects SET status = $1, updated_at = $2 \
+                             WHERE source_type = 'pm_project' AND source_id = $3 AND tenant_id = $4 \
+                               AND status = $5",
+                        )
+                        .bind(target.as_db_str())
+                        .bind(Utc::now())
+                        .bind(payload.project_id)
+                        .bind(tenant_id)
+                        .bind(RdProjectStatus::Pending.as_db_str())
+                        .execute(&mut scope)
+                        .await
+                    }
+                    RdProjectStatus::Cancelled => {
+                        sqlx::query(
+                            "UPDATE rs.rs_projects SET status = $1, updated_at = $2 \
+                             WHERE source_type = 'pm_project' AND source_id = $3 AND tenant_id = $4 \
+                               AND status IN ($5, $6)",
+                        )
+                        .bind(target.as_db_str())
+                        .bind(Utc::now())
+                        .bind(payload.project_id)
+                        .bind(tenant_id)
+                        .bind(RdProjectStatus::Pending.as_db_str())
+                        .bind(RdProjectStatus::InProgress.as_db_str())
+                        .execute(&mut scope)
+                        .await
+                    }
+                    _ => unreachable!("target 只可能是 in_progress/cancelled"),
+                }
+                .map_err(|e| {
+                    TopemsError::DatabaseQuery(format!(
+                        "研发项目状态流转失败 - tenant_id={tenant_id}, project={}: {e}",
+                        payload.project_name
+                    ))
+                })?;
+
+                if result.rows_affected() > 0 {
+                    tracing::info!(
+                        "[rd] 研发项目状态流转完成: project={}, status={}",
+                        payload.project_name,
+                        target.as_db_str()
+                    );
+                } else {
+                    tracing::info!(
+                        "[rd] 状态流转无匹配（幂等或终态保护）: project={}, target={}",
+                        payload.project_name,
+                        target.as_db_str()
+                    );
+                }
+
+                scope.commit().await.map_err(|e| {
+                    TopemsError::DatabaseTransaction(format!(
+                        "提交研发项目状态流转失败 - tenant_id={tenant_id}, project={}: {e}",
                         payload.project_name
                     ))
                 })?;

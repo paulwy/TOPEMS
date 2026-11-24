@@ -50,6 +50,20 @@ impl RdProjectStatus {
         matches!(self, Self::Completed | Self::Cancelled)
     }
 
+    /// PM 项目状态到 RD 关联项目状态的映射。
+    ///
+    /// - PM `active` → RD `in_progress`
+    /// - PM `cancelled/canceled/rejected` → RD `cancelled`
+    /// - 其他（draft/pending_approval/paused/completed）→ None，由专用事件处理或保持原状
+    #[must_use]
+    pub fn from_pm_status(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::InProgress),
+            "cancelled" | "canceled" | "rejected" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
     #[must_use]
     pub fn can_transition_to(self, target: Self) -> bool {
         match self {
@@ -96,5 +110,23 @@ mod tests {
         assert!(!RdProjectStatus::Completed.can_transition_to(RdProjectStatus::Pending));
         assert!(!RdProjectStatus::Cancelled.can_transition_to(RdProjectStatus::Completed));
         assert!(RdProjectStatus::Completed.is_terminal());
+    }
+
+    #[test]
+    fn pm_status_mapping_covers_lifecycle() {
+        assert_eq!(
+            RdProjectStatus::from_pm_status("ACTIVE"),
+            Some(RdProjectStatus::InProgress)
+        );
+        assert_eq!(
+            RdProjectStatus::from_pm_status("cancelled"),
+            Some(RdProjectStatus::Cancelled)
+        );
+        assert_eq!(
+            RdProjectStatus::from_pm_status("rejected"),
+            Some(RdProjectStatus::Cancelled)
+        );
+        assert_eq!(RdProjectStatus::from_pm_status("paused"), None);
+        assert_eq!(RdProjectStatus::from_pm_status("completed"), None);
     }
 }

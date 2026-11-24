@@ -16,6 +16,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     commit_retry, EventPublisher, EventType, PmProjectCompletedPayload, PmProjectCreatedPayload,
+    PmProjectStatusChangedPayload,
 };
 
 use crate::modules::effective_tenant_id;
@@ -666,6 +667,39 @@ async fn update_project(
                         tracing::info!(
                             "[pm] PmProjectCompleted 事件发布成功 - project_id={}",
                             payload.project_id
+                        );
+                    }
+                }
+            }
+
+            // active/cancelled/rejected 为非完成态流转：只在真实变化时发布一次，
+            // 供 RD 关联项目补齐 in_progress/cancelled；completed 已有专用事件，不重复发布。
+            let previous_status = previous.as_ref().map(|(status, _)| status.as_str());
+            let became_active = project.status == "active" && previous_status != Some("active");
+            let became_cancelled = matches!(project.status.as_str(), "cancelled" | "rejected")
+                && previous_status != Some(project.status.as_str());
+            if became_active || became_cancelled {
+                if let Some(ref publisher) = state.event_publisher {
+                    let payload = PmProjectStatusChangedPayload {
+                        project_id: project.id,
+                        project_name: project.name.clone(),
+                        status: project.status.clone(),
+                        changed_by: user_id.map(str::to_string),
+                        changed_at: Some(now),
+                        tenant_id: previous.as_ref().map(|(_, tenant_id)| *tenant_id),
+                    };
+                    let et = EventType::PmProjectStatusChanged;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
+                        tracing::warn!(
+                            "[pm] PmProjectStatusChanged 事件发布失败: {}，入重试队列",
+                            e
+                        );
+                        commit_retry::push_retry_typed("pm", et, &payload).await;
+                    } else {
+                        tracing::info!(
+                            "[pm] PmProjectStatusChanged 事件发布成功 - project_id={}, status={}",
+                            payload.project_id,
+                            payload.status
                         );
                     }
                 }
