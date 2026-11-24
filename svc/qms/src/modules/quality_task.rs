@@ -14,21 +14,12 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_auth::require_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 use crate::AppState;
-
-fn tenant_filter(claims: &Claims, headers: &axum::http::HeaderMap) -> Option<uuid::Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        Some(get_tenant_id(claims, headers))
-    }
-}
 
 #[derive(Debug, Deserialize)]
 pub struct QualityTaskQuery {
@@ -98,14 +89,13 @@ pub async fn list_quality_tasks(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Query(query): Query<QualityTaskQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
-    let filter = tenant_filter(&claims, &headers);
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -126,12 +116,10 @@ pub async fn list_quality_tasks(
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR status = $1)
           AND ($2::text IS NULL OR inspection_no ILIKE $2 OR product_name ILIKE $2)
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
     "#
     ))
     .bind(query.status.as_deref())
     .bind(search_pattern.as_deref())
-    .bind(filter)
     .fetch_one(&mut scope)
     .await
     {
@@ -164,7 +152,6 @@ pub async fn list_quality_tasks(
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR status = $1)
           AND ($2::text IS NULL OR inspection_no ILIKE $2 OR product_name ILIKE $2)
-          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
     "#
@@ -173,7 +160,6 @@ pub async fn list_quality_tasks(
     .bind(search_pattern.as_deref())
     .bind(page_size)
     .bind(offset)
-    .bind(filter)
     .fetch_all(&mut scope)
     .await
     {
@@ -195,10 +181,9 @@ pub async fn get_quality_task(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let filter = tenant_filter(&claims, &headers);
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的质检任务ID"),
@@ -236,11 +221,9 @@ pub async fn get_quality_task(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
         WHERE id = $1 AND deleted_at IS NULL
-          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
     "#
     ))
     .bind(id)
-    .bind(filter)
     .fetch_optional(&mut scope)
     .await;
 
@@ -328,13 +311,12 @@ pub async fn list_defect_records(
     State(state): State<AppState>,
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Query(query): Query<DefectRecordQuery>,
 ) -> ApiResponse<serde_json::Value> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
-    let filter = tenant_filter(&claims, &headers);
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
@@ -353,10 +335,8 @@ pub async fn list_defect_records(
         r#"
         SELECT COUNT(*) FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
-          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
     "#
     ))
-    .bind(filter)
     .fetch_one(&mut scope)
     .await
     {
@@ -381,14 +361,12 @@ pub async fn list_defect_records(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
-          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
     "#
     ))
     .bind(page_size)
     .bind(offset)
-    .bind(filter)
     .fetch_all(&mut scope)
     .await
     {
