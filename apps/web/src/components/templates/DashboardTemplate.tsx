@@ -720,6 +720,8 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   actions,
   onRefresh,
   emptyState,
+  quickActions,
+  quickActionsTitle,
 }) => {
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (statCardsProp && statCardsProp.length > 0) return statCardsProp;
@@ -835,6 +837,77 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                 </Grid>
               ))}
             </Grid>
+          )}
+
+          {/* 快捷操作 */}
+          {quickActions && quickActions.length > 0 && (
+            <Box>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+                gutterBottom
+              >
+                {quickActionsTitle || i18n.t('components.dashboard_template.k3')}
+              </Typography>
+              <Grid
+                container
+                spacing={2}
+              >
+                {quickActions.map((action) => (
+                  <Grid
+                    key={action.id}
+                    size={{ xs: 12, sm: 6, md: Math.floor(24 / Math.min(quickActions.length, 4)) }}
+                  >
+                    <Card
+                      variant='outlined'
+                      sx={{
+                        cursor: action.disabled ? 'default' : 'pointer',
+                        opacity: action.disabled ? 0.6 : 1,
+                        transition: 'box-shadow 0.15s ease',
+                        '&:hover': action.disabled
+                          ? {}
+                          : { boxShadow: (theme) => theme.shadows[2] },
+                      }}
+                      onClick={action.disabled ? undefined : action.onClick}
+                      role={action.onClick ? 'button' : undefined}
+                      tabIndex={action.onClick && !action.disabled ? 0 : undefined}
+                      onKeyDown={(e) => {
+                        if (
+                          action.onClick &&
+                          !action.disabled &&
+                          (e.key === 'Enter' || e.key === ' ')
+                        ) {
+                          e.preventDefault();
+                          action.onClick();
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
+                        {action.icon && (
+                          <Box sx={{ color: action.color ?? 'primary.main' }}>{action.icon}</Box>
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant='body1'
+                            sx={{ fontWeight: 500 }}
+                          >
+                            {action.label}
+                          </Typography>
+                          {action.description && (
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {action.description}
+                            </Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
           )}
 
           {/* 数据表格 */}
