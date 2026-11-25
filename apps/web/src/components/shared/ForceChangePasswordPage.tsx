@@ -192,6 +192,7 @@ const ForceChangePasswordPage: React.FC = () => {
               data-testid='force-current-password'
               label={i18n.t('pages.force_change_password_page.k2')}
               type={showCurrent ? 'text' : 'password'}
+              autoComplete='current-password'
               value={form.watch('current_password')}
               onChange={(e) => form.setValue('current_password', e.target.value)}
               error={!!form.formState.errors.current_password}
@@ -219,6 +220,7 @@ const ForceChangePasswordPage: React.FC = () => {
               data-testid='force-new-password'
               label={i18n.t('pages.force_change_password_page.k4')}
               type={showNew ? 'text' : 'password'}
+              autoComplete='new-password'
               value={form.watch('new_password')}
               onChange={(e) => form.setValue('new_password', e.target.value)}
               error={!!form.formState.errors.new_password}

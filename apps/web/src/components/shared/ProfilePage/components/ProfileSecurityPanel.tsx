@@ -186,6 +186,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
               fullWidth
               label={i18n.t('pages.profile_security_panel.k8')}
               type='password'
+              autoComplete='current-password'
               {...passwordForm.register('current_password', {
                 required: i18n.t('pages.profile_security_panel.k1'),
               })}
@@ -198,6 +199,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
               fullWidth
               label={i18n.t('pages.profile_security_panel.k9')}
               type='password'
+              autoComplete='new-password'
               {...passwordForm.register('new_password', {
                 required: i18n.t('pages.profile_security_panel.k3'),
                 minLength: { value: 6, message: i18n.t('pages.profile_security_panel.6_4') },
@@ -211,6 +213,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
               fullWidth
               label={i18n.t('pages.profile_security_panel.k10')}
               type='password'
+              autoComplete='new-password'
               {...passwordForm.register('confirm_password', {
                 required: i18n.t('pages.profile_security_panel.k6'),
               })}

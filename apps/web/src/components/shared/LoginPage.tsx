@@ -320,6 +320,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                 data-testid='login-password'
                 label={i18n.t('pages.login_page.k22')}
                 type={showPassword ? 'text' : 'password'}
+                autoComplete='current-password'
                 placeholder={i18n.t('pages.login_page.k23')}
                 value={form.watch('password')}
                 onChange={(e) => form.setValue('password', e.target.value)}
