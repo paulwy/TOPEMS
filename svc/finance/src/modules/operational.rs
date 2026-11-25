@@ -962,12 +962,33 @@ pub async fn delete_budget(
         }
     };
 
+    let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "finance",
+        "SELECT status FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("预算不存在"),
+        Err(e) => {
+            tracing::error!("读取预算状态失败: {}", e);
+            return ApiResponse::server_error("读取预算状态失败");
+        }
+    };
+    if !BudgetStatus::DELETABLE.contains(&current_status.as_str()) {
+        return ApiResponse::conflict("预算仍处于 active/frozen，需先停用或归档再删除");
+    }
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE finance.budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE finance.budgets SET deleted_at = $2, updated_at = $2
+         WHERE id = $1 AND deleted_at IS NULL AND status = $3"
     ))
     .bind(id)
     .bind(now)
+    .bind(&current_status)
     .execute(&mut scope)
     .await;
     let r = match result {

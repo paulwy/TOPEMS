@@ -62,6 +62,9 @@ impl BudgetStatus {
 
     pub const DEFAULT: Self = Self::Active;
 
+    /// 软删允许的状态：正常执行/冻结中的预算必须先停用或归档，不能直接删除。
+    pub const DELETABLE: [&'static str; 3] = ["inactive", "archived", "exhausted"];
+
     /// 严格解析持久化/请求值；兼容旧库 `inactive`，其余未知值返回 `None`
     pub fn from_db_str(raw: &str) -> Option<Self> {
         match raw.trim().to_ascii_lowercase().as_str() {
@@ -152,6 +155,16 @@ mod tests {
     const BUDGET_STATUS_MIGRATION: &str = include_str!(
         "../../../../database/migrations/20261124100000_finance_budgets_status_lifecycle.sql"
     );
+
+    #[test]
+    fn delete_set_excludes_spendable_states() {
+        assert_eq!(
+            BudgetStatus::DELETABLE,
+            ["inactive", "archived", "exhausted"]
+        );
+        assert!(!BudgetStatus::DELETABLE.contains(&"active"));
+        assert!(!BudgetStatus::DELETABLE.contains(&"frozen"));
+    }
 
     #[test]
     fn roundtrip_all_values() {
