@@ -883,6 +883,30 @@ pub async fn update_work_report(
         }
     };
 
+    let current_raw = match sqlx::query_scalar::<_, Option<String>>(
+        r#"SELECT status FROM mes.work_reports
+           WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"#,
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(raw)) => raw.unwrap_or_else(|| WorkReportStatus::DEFAULT.as_db_str().to_string()),
+        Ok(None) => return ApiResponse::not_found("工报不存在或已删除"),
+        Err(e) => {
+            tracing::error!("读取工报当前态失败: {}", e);
+            return ApiResponse::server_error("更新工报失败");
+        }
+    };
+    let current = match WorkReportStatus::from_db_str(&current_raw) {
+        Some(v) => v,
+        None => return ApiResponse::conflict("工报当前状态非法"),
+    };
+    if !WorkReportStatus::editable_from().contains(&current.as_db_str()) {
+        return ApiResponse::conflict("当前状态不可编辑");
+    }
+
     let status = match body.status.as_deref() {
         None => None,
         Some(raw) if raw.trim().is_empty() => None,
@@ -891,6 +915,11 @@ pub async fn update_work_report(
             None => return ApiResponse::bad_request("无效的报工状态"),
         },
     };
+    if let Some(target) = status {
+        if !current.can_transition_to(target) {
+            return ApiResponse::conflict("当前状态不允许迁移到目标状态");
+        }
+    }
     let result = sqlx::query_as::<_, WorkReportRow>(
         r#"
         UPDATE mes.work_reports
@@ -912,6 +941,8 @@ pub async fn update_work_report(
             updated_at = NOW()
         WHERE id = $15
           AND tenant_id = $16::uuid
+          AND COALESCE(status, 'submitted') = $17
+          AND deleted_at IS NULL
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -937,11 +968,12 @@ pub async fn update_work_report(
     .bind(status.map(WorkReportStatus::as_db_str))
     .bind(uuid)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .bind(&current_raw)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(Some(r)) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交工报事务失败: {}", e);
                 return ApiResponse::server_error("更新工报失败");
@@ -973,7 +1005,7 @@ pub async fn update_work_report(
                 "更新工报成功",
             )
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
+        Ok(None) => ApiResponse::conflict("工报已被并发修改或删除"),
         Err(e) => {
             tracing::error!("Failed to update work report: {}", e);
             ApiResponse::server_error("更新工报失败")
@@ -1036,14 +1068,20 @@ pub async fn delete_work_report(
         r#"
         UPDATE mes.work_reports SET deleted_at = NOW() WHERE id = $1
           AND tenant_id = $2::uuid
+          AND COALESCE(status, 'submitted') = ANY($3)
+          AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
     .bind(tenant_id)
+    .bind(WorkReportStatus::deletable_from().to_vec())
     .execute(&mut scope)
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => {
+            ApiResponse::conflict("工报不存在、已删除或当前状态不可删除")
+        }
         Ok(_) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交工报事务失败: {}", e);
@@ -1121,6 +1159,8 @@ pub async fn approve_work_report(
             updated_at = NOW()
         WHERE id = $2
           AND tenant_id = $3::uuid
+          AND COALESCE(status, 'submitted') = 'submitted'
+          AND deleted_at IS NULL
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -1134,11 +1174,11 @@ pub async fn approve_work_report(
     .bind(uuid)
     .bind(tenant_id)
     .bind(WorkReportStatus::Approved.as_db_str())
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(Some(r)) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交工报事务失败: {}", e);
                 return ApiResponse::server_error("审批通过失败");
@@ -1170,7 +1210,7 @@ pub async fn approve_work_report(
                 "审批通过成功",
             )
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
+        Ok(None) => ApiResponse::conflict("工报不存在、已删除或非待审批状态"),
         Err(e) => {
             tracing::error!("Failed to approve work report: {}", e);
             ApiResponse::server_error("审批通过失败")
@@ -1244,6 +1284,8 @@ pub async fn reject_work_report(
             updated_at = NOW()
         WHERE id = $3
           AND tenant_id = $4::uuid
+          AND COALESCE(status, 'submitted') = 'submitted'
+          AND deleted_at IS NULL
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -1258,11 +1300,11 @@ pub async fn reject_work_report(
     .bind(uuid)
     .bind(tenant_id)
     .bind(WorkReportStatus::Rejected.as_db_str())
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(Some(r)) => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交工报事务失败: {}", e);
                 return ApiResponse::server_error("审批驳回失败");
@@ -1294,7 +1336,7 @@ pub async fn reject_work_report(
                 "审批驳回成功",
             )
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
+        Ok(None) => ApiResponse::conflict("工报不存在、已删除或非待审批状态"),
         Err(e) => {
             tracing::error!("Failed to reject work report: {}", e);
             ApiResponse::server_error("审批驳回失败")
