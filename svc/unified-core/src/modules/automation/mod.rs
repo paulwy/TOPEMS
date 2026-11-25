@@ -1590,8 +1590,9 @@ pub async fn get_dashboard_stats(
         0.0
     };
 
+    // AVG(integer) 返回 NUMERIC，显式 ::float8 避免按 f64(FLOAT8) 解码时类型不匹配
     let avg_duration = match sqlx::query_scalar::<_, f64>(
-        "SELECT COALESCE(AVG(duration_ms), 0) FROM public.automation_runs WHERE duration_ms IS NOT NULL",
+        "SELECT COALESCE(AVG(duration_ms), 0)::float8 FROM public.automation_runs WHERE duration_ms IS NOT NULL",
     )
     .fetch_one(&mut rls_scope)
     .await

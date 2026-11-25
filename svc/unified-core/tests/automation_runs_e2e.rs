@@ -17,9 +17,9 @@ use topems_shared_auth::middleware::tenant::{
     rls_request_tenant, scope_request_tenant, RlsRequestTenant, RlsTxnCell,
 };
 use topems_unified_core::modules::automation::{
-    cancel_run, get_run, get_run_log_by_id, get_run_logs, get_run_steps, list_runs, purge_runs,
-    retry_run, trigger_rule, AutomationRun, PurgeRequest, RunLogQueryParams, RunQueryParams,
-    TriggerRequest,
+    cancel_run, get_dashboard_stats, get_run, get_run_log_by_id, get_run_logs, get_run_steps,
+    list_runs, purge_runs, retry_run, trigger_rule, AutomationRun, PurgeRequest,
+    RunLogQueryParams, RunQueryParams, TriggerRequest,
 };
 
 async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
@@ -87,6 +87,25 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .execute(pool)
     .await
     .unwrap();
+    sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS automation_variables (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
+            key VARCHAR(200) NOT NULL DEFAULT '',
+            value TEXT,
+            description TEXT,
+            scope VARCHAR(20) DEFAULT 'rule',
+            rule_id UUID,
+            is_secret BOOLEAN NOT NULL DEFAULT FALSE,
+            created_by UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMPTZ
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 fn empty_params() -> RunQueryParams {
@@ -144,6 +163,56 @@ async fn insert_run_with_content(
 }
 
 topems_test_support::sqlx_dsn_guard!();
+#[sqlx::test(migrations = false)]
+async fn dashboard_stats_empty_table_ok(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+
+    // 空表：AVG(duration_ms) 走 COALESCE 0 分支，NUMERIC→f64 解码不应报错（回归 P1）。
+    let (cell, ctx) = rls_scope(&pool).await;
+    let state = test_app_state(pool);
+    let resp = scope_request_tenant(ctx, get_dashboard_stats(State(state), Extension(cell))).await;
+    assert!(resp.success, "空表 stats 应成功: code={} msg={}", resp.code, resp.message);
+    let stats = resp.data.expect("空表 stats 应返回数据");
+    assert_eq!(stats.total_runs, 0);
+    assert_eq!(stats.avg_duration_ms, 0.0);
+}
+
+#[sqlx::test(migrations = false)]
+async fn dashboard_stats_with_runs_avg_duration_ok(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+
+    let rule_id = uuid::Uuid::new_v4();
+    sqlx::query(
+        r#"INSERT INTO automation_rules (id, tenant_id, name, code, status)
+           VALUES ($1, gen_random_uuid(), '规则S', 'RULE_S', 'enabled')"#,
+    )
+    .bind(rule_id)
+    .execute(&pool)
+    .await
+    .unwrap();
+    // 两条成功运行，duration_ms 分别 100 / 200，平均应为 150。
+    for dur in [100i32, 200] {
+        sqlx::query(
+            r#"INSERT INTO automation_runs (rule_id, rule_name, status, trigger_type, duration_ms)
+               VALUES ($1, '规则S', 'success', 'manual', $2)"#,
+        )
+        .bind(rule_id)
+        .bind(dur)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    let (cell, ctx) = rls_scope(&pool).await;
+    let state = test_app_state(pool);
+    let resp = scope_request_tenant(ctx, get_dashboard_stats(State(state), Extension(cell))).await;
+    assert!(resp.success, "有数据 stats 应成功: code={} msg={}", resp.code, resp.message);
+    let stats = resp.data.expect("有数据 stats 应返回数据");
+    assert_eq!(stats.total_runs, 2);
+    assert_eq!(stats.successful_runs, 2);
+    assert!((stats.avg_duration_ms - 150.0).abs() < 1e-6, "avg={}", stats.avg_duration_ms);
+}
+
 #[sqlx::test(migrations = false)]
 async fn list_runs_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;

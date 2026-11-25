@@ -24,6 +24,8 @@
 # ============================================================
 set -uo pipefail
 
+# 连接参数由调用方显式注入（环境变量 PGHOST/PGUSER，或 --host/--user）；
+# 不内置 socket 路径/本地用户名回落（D-9），缺失即 fail-fast，避免静默连到非预期库。
 HOST="${PGHOST-}"
 USER_="${PGUSER-}"
 DB="topems_prod"
@@ -40,7 +42,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$HOST" || -z "$USER_" ]]; then
-  echo "拒绝：必须显式指定 --host/--user（或注入 PGHOST/PGUSER），禁止内置本地/生产默认值" >&2
+  echo "拒绝：未提供连接参数，请显式设置 PGHOST/PGUSER 或传入 --host/--user" >&2
   exit 2
 fi
 
