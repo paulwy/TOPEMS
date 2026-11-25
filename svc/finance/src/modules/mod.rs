@@ -4958,7 +4958,7 @@ pub async fn unapprove_voucher(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
+    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted') AND deleted_at IS NULL"))
         .bind(voucher_id)
         .bind(tenant_id)
         .execute(&mut scope)
@@ -4966,7 +4966,7 @@ pub async fn unapprove_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                ApiResponse::not_found("凭证不存在或状态不允许反审核")
+                ApiResponse::conflict("凭证不存在、已删除或状态不允许反审核")
             } else {
                 ApiResponse::success(
                     serde_json::json!({"voucher_id": voucher_id, "status": "submitted"}),
