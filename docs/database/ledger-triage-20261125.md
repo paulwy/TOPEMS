@@ -70,3 +70,27 @@ scripts/db/apply-pending.sh apply --from 20261115142000 --limit 10
 1. **归档 43 条空档**：已产出 `database/migrations-archive.tsv`（43 行，逐条 reason；`status` 区分 `archived` 与 `replayable-not-applied`）。剩余动作是团队确认 `replayable-not-applied` 的 32 条里哪些需要真正执行——注意其中含 `drop_dead_tables`、`cleanup_*` 与种子脚本，必须逐条评审，不能批量跑。
 2. **用 schema 基线代替账本对齐**：以 `fixtures/full_schema_contract.sql` + 属主/权限巡检（`scripts/db/owner-sweep.sh`）作为"是否落后"的判据，而不是 pending 数量。
 3. **checksum 归一**：`docs/database/ledger-rebaseline-20261125.md` 的 108 条映射只在"本机一次性修复"口径下成立，是否进 CI 需团队决定；在决定前不要跑 `sqlx migrate run`。
+
+## 7. 判「落后」的工具：`scripts/db/schema-health.sh`
+
+账本已与 schema 脱钩，所以「是否落后」改用三个维度判：
+
+```bash
+scripts/db/schema-health.sh              # 报告
+scripts/db/schema-health.sh --strict     # 属主漂移或有 schema 落后基线时 exit 1
+scripts/db/schema-health.sh --no-baseline
+```
+
+1. **属主漂移**（复用 `owner-sweep.sh`）：硬指标，必须 0。
+2. **与基线 `fixtures/full_schema_contract.sql` 的结构差量**：把基线灌进临时库（本机超级用户 `air` 建 `topems_schema_baseline_tmp`，用完即删），按 schema 比 `tables/views/columns/functions/policies` 计数；正数=现库领先（正常），负数=现库落后（可疑）。落后时再按表列出差距最大的 15 个（排除 `archive` 回收站 schema）。
+3. **真实待办迁移** = pending − `database/migrations-archive.tsv` 的 43 条归档。
+
+2026-11-25 本机读数（供对照）：
+
+- 属主漂移：0（relations=0 functions=0）
+- 基线差量：40 个 schema 有差异，其中 3 个**落后**：`communication`（columns-2）、`finance`（tables+4/columns-11/policies+16）、`integration`（columns-10/policies-3）
+- 待办：pending 182，其中 43 条归档解释，真实待办 139（多数因"schema 已领先账本"无法按序 apply，见 §4）
+
+落后最明显的位置（摘录）：`integration.external_erp_sync_logs`（现库 14 / 基线 35）、`public.core_tickets`（2 / 19）、`finance.budgets`（13 / 20）、`mes.production_records`（41 / 50）、`qms.qa_eightd_reports`（27 / 34），另有 `erp.sales_order_items`、`plugin_finance.accounting_subjects` 等表整表缺失。
+
+**判读要点**：这些差异不必然是"漏迁移"，也可能是基线快照生成于另一条更干净的历史线（该库把 pending 全跑过）。下一步只能**逐表定位**是哪条迁移负责补这些列，再单点 `apply-pending.sh dry-run --only <version>` 验证——不要指望一次批量对齐。
