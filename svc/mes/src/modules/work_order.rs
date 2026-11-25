@@ -1062,6 +1062,7 @@ pub async fn start_work_order(
         SET status = $1, actual_start_date = NOW(), updated_at = NOW()
         WHERE wo.id = $2 AND wo.status = ANY($3)
           AND wo.tenant_id = $4::uuid
+          AND wo.deleted_at IS NULL
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1092,7 +1093,9 @@ pub async fn start_work_order(
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "开始工单成功"),
-        Ok(None) => ApiResponse::not_found("工单不存在或状态不允许开始（仅 pending 状态可开始）"),
+        Ok(None) => {
+            ApiResponse::conflict("工单不存在、已删除或状态不允许开始（仅 pending 状态可开始）")
+        }
         Err(e) => {
             tracing::error!("Failed to start work order: {}", e);
             ApiResponse::server_error("开始工单失败")
@@ -1157,6 +1160,7 @@ pub async fn complete_work_order(
         SET status = $1, actual_end_date = NOW(), updated_at = NOW()
         WHERE wo.id = $2 AND wo.status = ANY($3)
           AND wo.tenant_id = $4::uuid
+          AND wo.deleted_at IS NULL
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1188,7 +1192,7 @@ pub async fn complete_work_order(
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "完成工单成功"),
         Ok(None) => {
-            ApiResponse::not_found("工单不存在或状态不允许完成（仅 in_progress 状态可完成）")
+            ApiResponse::conflict("工单不存在、已删除或状态不允许完成（仅 in_progress 状态可完成）")
         }
         Err(e) => {
             tracing::error!("Failed to complete work order: {}", e);
@@ -1254,6 +1258,7 @@ pub async fn cancel_work_order(
         SET status = $1, updated_at = NOW()
         WHERE wo.id = $2 AND wo.status = ANY($3)
           AND wo.tenant_id = $4::uuid
+          AND wo.deleted_at IS NULL
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1284,9 +1289,9 @@ pub async fn cancel_work_order(
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "取消工单成功"),
-        Ok(None) => {
-            ApiResponse::not_found("工单不存在或状态不允许取消（已完成/已取消的工单不可取消）")
-        }
+        Ok(None) => ApiResponse::conflict(
+            "工单不存在、已删除或状态不允许取消（已完成/已取消的工单不可取消）",
+        ),
         Err(e) => {
             tracing::error!("Failed to cancel work order: {}", e);
             ApiResponse::server_error("取消工单失败")
@@ -1351,6 +1356,7 @@ pub async fn pause_work_order(
         SET status = $1, updated_at = NOW()
         WHERE wo.id = $2 AND wo.status = ANY($3)
           AND wo.tenant_id = $4::uuid
+          AND wo.deleted_at IS NULL
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1382,7 +1388,7 @@ pub async fn pause_work_order(
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "暂停工单成功"),
         Ok(None) => {
-            ApiResponse::not_found("工单不存在或状态不允许暂停（仅 in_progress 状态可暂停）")
+            ApiResponse::conflict("工单不存在、已删除或状态不允许暂停（仅 in_progress 状态可暂停）")
         }
         Err(e) => {
             tracing::error!("Failed to pause work order: {}", e);
@@ -1448,6 +1454,7 @@ pub async fn resume_work_order(
         SET status = $1, updated_at = NOW()
         WHERE wo.id = $2 AND wo.status = ANY($3)
           AND wo.tenant_id = $4::uuid
+          AND wo.deleted_at IS NULL
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1478,7 +1485,9 @@ pub async fn resume_work_order(
 
     match result {
         Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "恢复工单成功"),
-        Ok(None) => ApiResponse::not_found("工单不存在或状态不允许恢复（仅 paused 状态可恢复）"),
+        Ok(None) => {
+            ApiResponse::conflict("工单不存在、已删除或状态不允许恢复（仅 paused 状态可恢复）")
+        }
         Err(e) => {
             tracing::error!("Failed to resume work order: {}", e);
             ApiResponse::server_error("恢复工单失败")
