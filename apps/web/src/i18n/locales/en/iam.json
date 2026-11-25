@@ -471,5 +471,15 @@
   "iam.company_structure_page.k42": "Expiry Date (optional)",
   "iam.company_structure_page.k43": "Status",
   "iam.company_structure_page.k44": "Cancel",
-  "iam.company_structure_page.k45": "Save"
+  "iam.company_structure_page.k45": "Save",
+  "iam.dashboard_page.title": "Identity Overview",
+  "iam.dashboard_page.subtitle": "Users, roles and permissions overview",
+  "iam.dashboard_page.stat_users": "Total Users",
+  "iam.dashboard_page.stat_roles": "Roles",
+  "iam.dashboard_page.stat_permissions": "Permissions",
+  "iam.dashboard_page.action_users": "User Management",
+  "iam.dashboard_page.action_roles": "Role Management",
+  "iam.dashboard_page.action_permissions": "Permissions",
+  "iam.dashboard_page.action_acl": "Resource ACL",
+  "iam.dashboard_page.quick_actions_title": "Quick Actions"
 }

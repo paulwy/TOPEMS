@@ -408,5 +408,15 @@
   "iam.company_structure_page.k42": "失效日期（可选）",
   "iam.company_structure_page.k43": "状态",
   "iam.company_structure_page.k44": "取消",
-  "iam.company_structure_page.k45": "保存"
+  "iam.company_structure_page.k45": "保存",
+  "iam.dashboard_page.title": "身份管理概览",
+  "iam.dashboard_page.subtitle": "用户、角色与权限概览",
+  "iam.dashboard_page.stat_users": "用户总数",
+  "iam.dashboard_page.stat_roles": "角色数量",
+  "iam.dashboard_page.stat_permissions": "权限项",
+  "iam.dashboard_page.action_users": "用户管理",
+  "iam.dashboard_page.action_roles": "角色管理",
+  "iam.dashboard_page.action_permissions": "权限管理",
+  "iam.dashboard_page.action_acl": "资源授权",
+  "iam.dashboard_page.quick_actions_title": "快捷操作"
 }
