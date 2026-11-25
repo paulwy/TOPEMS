@@ -816,22 +816,14 @@ pub async fn update_budget(
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
     let now = Utc::now();
-    let total_budget: rust_decimal::Decimal = req
+    let requested_total_budget = req
         .get("total_budget")
         .and_then(|v| v.as_str())
-        .and_then(|s| rust_decimal::Decimal::from_str(s).ok())
-        .unwrap_or_default();
-    let used_amount: rust_decimal::Decimal = req
+        .and_then(|s| rust_decimal::Decimal::from_str(s).ok());
+    let requested_used_amount = req
         .get("used_amount")
         .and_then(|v| v.as_str())
-        .and_then(|s| rust_decimal::Decimal::from_str(s).ok())
-        .unwrap_or_default();
-    let remaining_amount = total_budget - used_amount;
-    let usage_rate = if total_budget.is_zero() {
-        rust_decimal::Decimal::ZERO
-    } else {
-        (used_amount / total_budget) * rust_decimal::Decimal::from(100)
-    };
+        .and_then(|s| rust_decimal::Decimal::from_str(s).ok());
 
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
@@ -848,10 +840,10 @@ pub async fn update_budget(
         }
     };
 
-    let (current_status_raw, current_used_amount) =
-        match sqlx::query_as::<_, (String, Decimal)>(only_own_schema_query!(
+    let (current_status_raw, current_used_amount, current_total_budget) =
+        match sqlx::query_as::<_, (String, Decimal, Decimal)>(only_own_schema_query!(
             "finance",
-            "SELECT status, used_amount FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
+            "SELECT status, used_amount, total_budget FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
         ))
         .bind(id)
         .fetch_optional(&mut scope)
@@ -876,6 +868,16 @@ pub async fn update_budget(
         },
     };
 
+    // 未显式传金额时保留库内现值，避免只改状态把预算额度清零。
+    let total_budget = requested_total_budget.unwrap_or(current_total_budget);
+    let used_amount = requested_used_amount.unwrap_or(current_used_amount);
+    let remaining_amount = total_budget - used_amount;
+    let usage_rate = if total_budget.is_zero() {
+        rust_decimal::Decimal::ZERO
+    } else {
+        (used_amount / total_budget) * rust_decimal::Decimal::from(100)
+    };
+
     // 统一状态守卫：占用增量仅 active 允许；archived 只能恢复 active；exhausted 需 remaining <= 0。
     if let Err(violation) = BudgetStatus::check_update(
         current_status,
@@ -892,7 +894,7 @@ pub async fn update_budget(
               department_id = $2, budget_type = $3, fiscal_year = $4,
               total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8,
               status = $9, updated_at = $10
-           WHERE id = $1 AND deleted_at IS NULL
+           WHERE id = $1 AND deleted_at IS NULL AND status = $11
            RETURNING id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#
@@ -915,11 +917,13 @@ pub async fn update_budget(
     .bind(usage_rate)
     .bind(status.as_db_str())
     .bind(now)
+    .bind(&current_status_raw)
     .fetch_one(&mut scope)
     .await;
 
     let row = match result {
         Ok(row) => row,
+        Err(sqlx::Error::RowNotFound) => return ApiResponse::conflict("预算状态已变化，请重试"),
         Err(e) => return crate::shared::err_resp(e),
     };
     ApiResponse::success(row_to_budget_json(&row), "预算更新成功")
