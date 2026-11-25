@@ -84,7 +84,7 @@ impl ReconciliationService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let count: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid) AND deleted_at IS NULL"),
         )
         .bind(tenant_id)
         .fetch_one(&mut scope)
@@ -104,7 +104,7 @@ impl ReconciliationService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.read_scope(txn).await?;
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND (tenant_id = $2::uuid)"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -129,9 +129,9 @@ impl ReconciliationService {
     ) -> Result<(Vec<ReconciliationSession>, i64), TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut query =
-            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)");
+            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid) AND deleted_at IS NULL");
         let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid)",
+            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE (tenant_id = $1::uuid) AND deleted_at IS NULL",
         );
 
         let reco_type_param = reco_type.clone();
@@ -528,7 +528,7 @@ impl ReconciliationService {
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET diff_reason = $1, notes = $2, match_status = 'diff', updated_at = NOW()
-            WHERE id = $3 AND tenant_id = $4
+            WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL
             RETURNING *
             "#
         ))
@@ -560,7 +560,7 @@ impl ReconciliationService {
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut query = String::from(
-            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid)",
+            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL",
         );
 
         let source_type_param = source_type.clone();
@@ -645,7 +645,7 @@ impl ReconciliationService {
             r#"
             UPDATE finance.core_finance_reconciliation_sessions
             SET status = 'completed', completed_at = COALESCE(completed_at, NOW()), updated_at = NOW()
-            WHERE id = $1 AND tenant_id = $2 AND status IN ('pending', 'processing')
+            WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL AND status IN ('pending', 'processing')
             RETURNING *
             "#
         ))
@@ -675,7 +675,7 @@ impl ReconciliationService {
         let items = sqlx::query_as::<_, ReconciliationItem>(
             only_own_schema_query!("finance", r#"
             SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND source_type = $3 AND match_status = 'unmatched'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND source_type = $3 AND match_status = 'unmatched'
             ORDER BY amount, transaction_date
             "#),
         )
@@ -703,7 +703,7 @@ impl ReconciliationService {
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
-            WHERE id = $2 AND (tenant_id = $3::uuid)
+            WHERE id = $2 AND (tenant_id = $3::uuid) AND deleted_at IS NULL
             "#
         ))
         .bind(erp_item_id)
@@ -718,7 +718,7 @@ impl ReconciliationService {
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
-            WHERE id = $2 AND (tenant_id = $3::uuid)
+            WHERE id = $2 AND (tenant_id = $3::uuid) AND deleted_at IS NULL
             "#
         ))
         .bind(bank_item_id)
@@ -742,7 +742,7 @@ impl ReconciliationService {
         let tenant_id = super::require_tenant(tenant_id)?;
         let mut scope = self.write_scope(txn).await?;
         let total: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid)"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -751,7 +751,7 @@ impl ReconciliationService {
         .unwrap_or(0);
 
         let matched: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'matched'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'matched'"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -760,7 +760,7 @@ impl ReconciliationService {
         .unwrap_or(0);
 
         let diff: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'diff'"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -774,7 +774,7 @@ impl ReconciliationService {
             only_own_schema_query!("finance", r#"
             UPDATE finance.core_finance_reconciliation_sessions
             SET total_items = $1, matched_items = $2, unmatched_items = $3, diff_items = $4, updated_at = NOW()
-            WHERE id = $5 AND tenant_id = $6
+            WHERE id = $5 AND tenant_id = $6 AND deleted_at IS NULL
             "#),
         )
         .bind(total)
@@ -802,7 +802,7 @@ impl ReconciliationService {
         let allowed_from = ReconciliationStatus::allowed_from(&status);
         let mut scope = self.write_scope(txn).await?;
         let result = sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3 AND status::text = ANY($4::text[])"),
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL AND status::text = ANY($4::text[])"),
         )
         .bind(status)
         .bind(session_id)
@@ -832,7 +832,7 @@ impl ReconciliationService {
         let mut scope = self.read_scope(txn).await?;
         let session_id: Option<Uuid> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            "SELECT session_id FROM finance.core_finance_reconciliation_items WHERE id = $1"
+            "SELECT session_id FROM finance.core_finance_reconciliation_items WHERE id = $1 AND deleted_at IS NULL"
         ))
         .bind(item_id)
         .fetch_optional(&mut scope)
@@ -862,7 +862,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND source_type = 'bank'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND source_type = 'bank'
             "#
         ))
         .bind(session_id)
@@ -877,7 +877,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND source_type = 'erp'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND source_type = 'erp'
             "#
         ))
         .bind(session_id)
@@ -891,7 +891,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'matched'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'matched'
             "#
         ))
         .bind(session_id)
@@ -905,7 +905,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'unmatched'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'unmatched'
             "#
         ))
         .bind(session_id)
@@ -919,7 +919,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
@@ -990,7 +990,7 @@ impl ReconciliationService {
                         r#"
                         SELECT SUM(amount), COUNT(*)
                         FROM finance.core_finance_reconciliation_items
-                        WHERE (tenant_id = $1::uuid)
+                        WHERE (tenant_id = $1::uuid) AND deleted_at IS NULL
                           AND source_type = 'erp'
                           AND direction = 'in'
                           AND match_status IN ('unmatched', 'diff')
@@ -1013,7 +1013,7 @@ impl ReconciliationService {
                         r#"
                         SELECT SUM(amount), COUNT(*)
                         FROM finance.core_finance_reconciliation_items
-                        WHERE (tenant_id = $1::uuid)
+                        WHERE (tenant_id = $1::uuid) AND deleted_at IS NULL
                           AND source_type = 'erp'
                           AND direction = 'out'
                           AND match_status IN ('unmatched', 'diff')
@@ -1079,7 +1079,7 @@ impl ReconciliationService {
                 r#"
                 UPDATE finance.core_finance_reconciliation_items
                 SET diff_reason = $1, notes = $2, match_status = 'diff', updated_at = NOW()
-                WHERE id = $3 AND tenant_id = $4
+                WHERE id = $3 AND tenant_id = $4 AND deleted_at IS NULL
                 "#
             ))
             .bind(item.diff_reason.clone())
@@ -1135,7 +1135,7 @@ impl ReconciliationService {
             "finance",
             r#"
             SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
@@ -1149,7 +1149,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
@@ -1165,7 +1165,7 @@ impl ReconciliationService {
                 r#"
             SELECT diff_reason::text, COUNT(*)::INT, SUM(COALESCE(diff_amount, amount))
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND match_status = 'diff'
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL AND match_status = 'diff'
             GROUP BY diff_reason
             "#
             ))
@@ -1190,7 +1190,7 @@ impl ReconciliationService {
             r#"
             SELECT match_status::text, COUNT(*)::INT
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND (tenant_id = $2::uuid)
+            WHERE session_id = $1 AND (tenant_id = $2::uuid) AND deleted_at IS NULL
             GROUP BY match_status
             "#
         ))
