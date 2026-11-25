@@ -31,6 +31,9 @@ impl WorkOrderStatus {
     /// 删除（软删）允许的状态：未开工或已取消
     pub const DELETABLE: [&'static str; 2] = ["pending", "cancelled"];
 
+    /// 通用编辑入口允许的状态：仅未完结工单；completed/cancelled 为终态。
+    pub const EDITABLE: [&'static str; 3] = ["pending", "in_progress", "paused"];
+
     /// 严格解析数据库字符串；未知值返回 `None`
     pub fn from_db_str(s: &str) -> Option<Self> {
         match s.trim().to_ascii_lowercase().as_str() {
@@ -97,5 +100,9 @@ mod tests {
         assert_eq!(WorkOrderStatus::DEFAULT.as_db_str(), "pending");
         assert!(WorkOrderStatus::cancel_from().contains(&"paused"));
         assert!(!WorkOrderStatus::cancel_from().contains(&"completed"));
+        assert_eq!(
+            WorkOrderStatus::EDITABLE,
+            ["pending", "in_progress", "paused"]
+        );
     }
 }

@@ -818,6 +818,25 @@ pub async fn update_work_order(
         Err(resp) => return resp,
     };
 
+    let current_status = match sqlx::query_scalar::<_, String>(
+        "SELECT status FROM mes.work_orders WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => status,
+        Ok(None) => return ApiResponse::not_found("工单不存在或已删除"),
+        Err(e) => {
+            tracing::error!("Failed to read work order status: {}", e);
+            return ApiResponse::server_error("读取工单状态失败");
+        }
+    };
+    if !WorkOrderStatus::EDITABLE.contains(&current_status.as_str()) {
+        return ApiResponse::conflict("工单已完工或已取消，不可再编辑");
+    }
+
     let result = sqlx::query(
         r#"
         UPDATE mes.work_orders wo
@@ -840,6 +859,7 @@ pub async fn update_work_order(
             updated_at = NOW()
         WHERE wo.id = $16
           AND wo.tenant_id = $17::uuid
+          AND wo.status = $18 AND wo.deleted_at IS NULL
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -869,6 +889,7 @@ pub async fn update_work_order(
     .bind(body.remark)
     .bind(uuid)
     .bind(tenant_id)
+    .bind(current_status)
     .fetch_optional(&mut scope)
     .await;
 
@@ -951,7 +972,7 @@ pub async fn delete_work_order(
         r#"
         UPDATE mes.work_orders wo SET deleted_at = NOW()
         WHERE wo.id = $1 AND wo.status = ANY($2)
-          AND wo.tenant_id = $3::uuid
+          AND wo.tenant_id = $3::uuid AND wo.deleted_at IS NULL
         "#,
     )
     .bind(uuid)
