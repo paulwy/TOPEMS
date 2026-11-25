@@ -638,6 +638,28 @@ pub async fn update_inspection(
         },
     };
     let tenant_id = get_tenant_id(&claims);
+    let current = match sqlx::query_scalar::<_, Option<String>>(
+        "SELECT status FROM mes.quality_inspections WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v.unwrap_or_else(|| "pending".to_string()),
+        Ok(None) => return ApiResponse::not_found("检验记录不存在"),
+        Err(e) => {
+            tracing::error!("读取检验记录状态失败: {}", e);
+            return ApiResponse::server_error("读取检验记录状态失败");
+        }
+    };
+    let Some(current_status) = InspectionStatus::from_db_str(&current) else {
+        return ApiResponse::conflict("检验记录状态不在规范集合内");
+    };
+    if let Err(msg) = current_status.can_update_from(status) {
+        return ApiResponse::conflict(msg);
+    }
+
     let result = sqlx::query_as::<_, InspectionUpdateRow>(
         r#"
             UPDATE mes.quality_inspections
@@ -655,6 +677,7 @@ pub async fn update_inspection(
             memo = COALESCE($7, memo),
             updated_at = NOW()
         WHERE id = $8 AND tenant_id = $9::uuid
+          AND status IS NOT DISTINCT FROM $10 AND deleted_at IS NULL
         RETURNING
             id, inspection_no, order_id, order_number,
             product_code, product_name, process_id, process_name,
@@ -673,6 +696,7 @@ pub async fn update_inspection(
     .bind(body.memo)
     .bind(uuid)
     .bind(tenant_id)
+    .bind(Some(current))
     .fetch_one(&mut scope)
     .await;
 
@@ -702,7 +726,7 @@ pub async fn update_inspection(
             },
             "更新检验记录成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("检验记录不存在"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::conflict("检验记录状态已变化，请重试"),
         Err(e) => {
             tracing::error!("Failed to update quality inspection: {}", e);
             ApiResponse::server_error("更新检验记录失败")
@@ -743,15 +767,19 @@ pub async fn delete_inspection(
     let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE mes.quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.quality_inspections SET deleted_at = NOW()
+        WHERE id = $1 AND tenant_id = $2::uuid
+          AND status = ANY($3) AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
     .bind(tenant_id)
+    .bind(InspectionStatus::editable_from())
     .execute(&mut scope)
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::conflict("检验记录不存在、已删除或已完结"),
         Ok(_) => ApiResponse::success(id, "删除检验记录成功"),
         Err(e) => {
             tracing::error!("Failed to delete quality inspection: {}", e);
