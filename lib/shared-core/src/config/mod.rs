@@ -2110,6 +2110,9 @@ mod tests {
         let _db_guard = DatabaseUrlGuard::set(TEST_DATABASE_URL);
         {
             std::env::remove_var("APP_ENV");
+            std::env::remove_var("JWT_SECRET");
+            std::env::remove_var("JWT_REFRESH_SECRET");
+            std::env::remove_var("SESSION_SECRET");
         }
         let cfg = Config::load().await.expect("load ok");
         let auth = cfg.get_auth().await;
