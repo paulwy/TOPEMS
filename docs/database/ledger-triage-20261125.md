@@ -285,29 +285,32 @@ stage1/stage2/stage3/stage5 的目标环境互斥：新库跑 1/2、存量生产
 
 两个已知的 canonical 先序缺口（记着，不假装通过）：`20261120170000` 依赖 `public.account_type`（来自 `20260725000000_business_base_tables`），`20261120235945` 依赖 `iam.users`——canonical 批要真跑，必须让 iam/base 链先于 unified-core canonical。
 
-## 17. 空库可复制建库路径（已实测跑通）
+## 17. 全新环境建库：官方 anchor 路径端到端跑通（自建 baseline 方案已废弃）
 
-§16 只做到了「证伪」：纯迁移文件无法从零建库。这一节把它做成了可复跑的三段式，并留下可执行验收脚本。
+结论先行：项目本来就有官方建库路径——`database/baseline/anchors.json` 的 anchor 资产 + `scripts/migration/apply-forward.sh`，CI 的 `migration-test` 也在这条路径上。§16 证伪的「raw 全量迁移」是另一条路，CI 注释里早就写明「零库全量链不再作为判据：历史链序不闭合」。§16 保留为证伪记录，不再单独造第二套基线。
 
-**建库四步（`scripts/db/bootstrap-check.sh --baseline database/fixtures/baseline_schema_20261125.sql.gz`）**
+**这条官方路径有两个隐含前提，裸 PG 实例上不满足，必须先补超管 bootstrap**
 
-1. `database/scripts/bootstrap_schemas.sql`（超管）：62 个 schema 唯一入口 + 7 个扩展 + `public` 属主改 `topems_owner`。
-2. 灌结构基线 `database/fixtures/baseline_schema_20261125.sql.gz`（`pg_dump --schema-only --no-owner --no-privileges`，229 KB gz / 3.4 MB 明文 / 1334 张表 / 1227 条策略）。生成时剔除 `CREATE SCHEMA`、`CREATE EXTENSION`、`ALTER SCHEMA`、`COMMENT ON EXTENSION`——schema 与扩展由第 1 步负责，不重复。
-3. `database/scripts/converge_owner.sql`（超管）：属主收敛到 `topems_owner`，`topems_app` 拿 USAGE + DML + `public/erp/finance/master_data/hrm` 的 CREATE，并写 default privileges。
-4. 以 `topems_owner` 跑 `stage2-b-class + stage4-replay`（84 个），每个文件**单事务**（`psql -1`），会话预置 `app.tenant_id`。
+- 扩展、角色、部分 schema 在项目里默认由镜像或历史库提供；
+- `public` schema 属主在新库里是 `pg_database_owner`，迁移角色没有 CREATE；
+- `archive` schema 被 `20260831190800_drop_archive_schema.sql` 删掉后，`20261119100000` 之后的迁移又往里写表（`archive._drop_manifest` 等），裸库跑直接 `schema "archive" does not exist`。
 
-**实测结果**：67 成功 / 16 已达标跳过 / 1 失败；最终 1327 表 / 17774 列 / 4380 索引 / 1222 策略。
+**验收脚本（`scripts/db/bootstrap-check.sh`，已改写为官方路径）**
 
-唯一失败是 `20261118125000_seed_module_umbrella_permissions.sql`——它断言 admin 已绑定 69 条权限，而空库只有结构没有数据。这是数据种子，不是结构缺口，留待「建库后初始化数据」那一步。
+1. 建临时库（默认 `topems_bootstrap_check`）
+2. 超管跑 `database/scripts/bootstrap_schemas.sql`：62 schema（含 `archive`）+ 7 扩展 + `public` 属主改 `topems_owner`
+3. 超管灌 anchor 三件套：`prod_schema_<anchor>.sql.gz` / `prod_ledger_<anchor>.sql` / `baseline_<anchor>_data.sql.gz`（schema 文件里的 `CREATE SCHEMA` 过滤掉，避免与第 2 步冲突）
+4. 超管跑 `converge_owner.sql`：属主收敛 + `topems_app` 授权
+5. `topems_owner` 跑 `apply-forward.sh --drill-gate-guc-auto`
 
-**与现库的 10 张表差量是现库的残留，不是新库缺口**：cleanup 迁移按设计要 drop 的遗留表（`bi.audit_logs`、`hrm.payroll_records` 等 6 张 hrm、`mobile.mobile_leave_applications`、`pm.pm_master_data_refs`、`public.core_file_folders`）在现库还活着，新库跑完就被清掉。对应文件：`20261119110000_drop_dead_tables_batch2`、`20261121201000_analytics_drop_resurrected_dead_tables`、`20261121111000_mobile_drop_resurrected_dead_tables`、`20261121131000_pm_drop_resurrected_dead_tables`、`20261120235950_unified_core_drop_resurrected_dead_tables`、`20260908000012_dead_tables_cleanup`。
+实测（anchor `20261117235500`）：**apply-forward 应用 120 条、0 失败**；结果 1375 表 / 17761 列 / 3202 索引 / 855 条策略 / 账本 824 行。跑完即删库，`--keep` 留库。
 
-**stage1-canonical 与基线互斥**：canonical 是「空库自建整表」，基线里已是现网真实列集合；两者硬凑会在已有表上撞「索引列不存在」（实测 `core.core_plugins.owner_tenant_id`、`mes.production_records.equipment_id`）。所以脚本在 `--baseline` 模式自动跳过 stage1；不带基线时才跑 canonical（此时 88 成功 / 16 跳过 / 4 失败，4 条都是 canonical 与现库列差或不依赖数据的断言）。
+**同时修掉一处真缺陷**
 
-**三个把结果跑偏的坑（都已在脚本里修掉）**
+`20261121220000_finance_opening_balances_move.sql` 开头有 `CREATE SCHEMA IF NOT EXISTS finance;`。owner 收回库级 CREATE 后，任何环境从头跑这条都会 `permission denied for database topems_...`。已改为注释（schema 统一归 bootstrap），并同步 `database/checksums.txt`；`scripts/migration/validate.sh` 复跑 0 error。
 
-- `gunzip -c file.sql.gz | psql` 走 stdin：psql 只执行到第一句就停（日志只剩 `set_config`），表只建了 525 张。改成先解压到临时文件再 `-f`。
-- 逐文件跑不加 `-1`：`system_settings_company_scope` 用 `set_config('app.w12b2_pre_rows', ..., true)`（事务级）在同一文件里传中间值，逐语句自动提交会丢，报 `invalid input syntax for type bigint: ""`。加 `-1` 后 3 条此类迁移直接过。
-- 不预置 `app.tenant_id`：部分迁移用 `EXECUTE format(...)` 在 DDL 时求值该 GUC，裸 psql 直接 `unrecognized configuration parameter`。会话预置 nil UUID（与 `20261023000005` 里「全租户」约定一致），13 条从失败转为成功；且核对过没有把字面量烘进策略——新库 nil-uuid 策略 398 条 < 现库 488 条，说明没多写。
+**废弃的东西**：上一轮临时生成的 `database/fixtures/baseline_schema_20261125.sql.gz` 已删除。它是 `pg_dump` 快照，没有账本、没有种子数据，与 anchor 资产重复，留着就是第二套事实源。
 
-**结论**：全新环境的标准路径 = 超管 bootstrap + 结构基线 + converge + 单事务跑 stage2/4；`--full`（全量 880 个迁移）只用于诊断，永远不该被当成建库入口。`bootstrap-check.sh --baseline` 可作空库验收，跑完即删库；`--keep` 留库手工验。
+**与本地 dev 库的差量不是缺陷**：新库 3202 索引 / 855 策略 vs 本地 4399 / 1227，差的是只在本机应用过的历史迁移累积；anchor 路径复现的是「prod@anchor + 前向」，不是本地库现状。
+
+**遗留一条（需要动 CI）**：`ci.yml` 的「Restore baseline snapshot」步骤目前只灌 dump、不打 bootstrap。如果镜像里没有 `archive` schema，该作业会在 `20261119100000` 上撞 `schema "archive" does not exist`。修法是在该 step 的 `createdb` 之后补 `psql -f database/scripts/bootstrap_schemas.sql`，并把 dump 的 `CREATE SCHEMA` 一并过滤。这一行与并行会话在 `ci.yml` 的未提交改动同文件，为避免混提交，留到下一轮落地。

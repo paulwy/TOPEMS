@@ -10,7 +10,9 @@
 -- 幂等：erp 表存在且 finance 表不存在时迁移；已迁移则跳过。
 -- 冲突保护：两张表同时存在时中止，避免静默选错事实源。
 
-CREATE SCHEMA IF NOT EXISTS finance;
+-- schema 由 database/scripts/bootstrap_schemas.sql 唯一创建（owner 已无库级 CREATE）；
+-- 这里只做表搬迁，不再建 schema。
+-- CREATE SCHEMA IF NOT EXISTS finance;
 
 DO $$
 BEGIN
