@@ -3,17 +3,17 @@
   "source": "docs/database/status-code-inventory.json + finance-status-check-candidates-2026-11-21.sql + status-db-check-mappings.json(db_constraint)",
   "note": "bucket 为启发式归因，落 CHECK 前仍需逐列确认表列与业务语义；分桶统计按枚举计，值存在跨枚举复用。db_covered 表示台账已核验该枚举至少一个持久化列有 CONVALIDATED 约束（不是缺口）；real_gap 才是待办",
   "stats": {
-    "uncovered_enums": 188,
+    "uncovered_enums": 189,
     "uncovered_values": 192,
     "finance_candidate_constraints": 25,
     "resolved_enums": 181,
     "db_covered_enums": 118,
-    "real_gap_enums": 0,
-    "internal_state_enums": 150,
-    "persisted_unmapped_enums": 20,
+    "real_gap_enums": 1,
+    "internal_state_enums": 149,
+    "persisted_unmapped_enums": 22,
     "finance_candidate_ready_enums": 39,
-    "internal_state_values": 163,
-    "persisted_unmapped_values": 14,
+    "internal_state_values": 162,
+    "persisted_unmapped_values": 15,
     "finance_candidate_ready_values": 15
   },
   "rows": [
@@ -1427,6 +1427,19 @@
     {
       "module": "finance",
       "file": "svc/finance/src/modules/decision_v60.rs",
+      "enum": "AlertStatus",
+      "values_by_bucket": {
+        "persisted_unmapped": [
+          "suppressed"
+        ]
+      },
+      "candidate_targets": [],
+      "db_covered": false,
+      "db_constraints": []
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/modules/decision_v60.rs",
       "enum": "DecisionStatus",
       "values_by_bucket": {
         "finance_candidate_ready": [
@@ -1539,7 +1552,7 @@
       "file": "svc/finance/src/modules/forecasting.rs",
       "enum": "AlertStatus",
       "values_by_bucket": {
-        "internal_state": [
+        "persisted_unmapped": [
           "suppressed"
         ]
       },

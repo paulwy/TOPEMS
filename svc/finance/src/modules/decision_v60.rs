@@ -185,6 +185,7 @@ pub enum AlertStatus {
     Active,
     Acknowledged,
     Resolved,
+    Suppressed,
 }
 
 impl AlertStatus {
@@ -193,6 +194,42 @@ impl AlertStatus {
             AlertStatus::Active => "active",
             AlertStatus::Acknowledged => "acknowledged",
             AlertStatus::Resolved => "resolved",
+            AlertStatus::Suppressed => "suppressed",
+        }
+    }
+
+    fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Active),
+            "acknowledged" => Some(Self::Acknowledged),
+            "resolved" => Some(Self::Resolved),
+            "suppressed" => Some(Self::Suppressed),
+            _ => None,
+        }
+    }
+
+    /// active → acknowledged → resolved；active/acknowledged 可直接解决；
+    /// resolved / suppressed 为终态。
+    fn can_transition_to(&self, target: &Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Active => matches!(
+                target,
+                Self::Acknowledged | Self::Resolved | Self::Suppressed
+            ),
+            Self::Acknowledged => matches!(target, Self::Resolved | Self::Suppressed),
+            Self::Resolved | Self::Suppressed => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "预警状态不允许从 {} 流转到 {}",
+                self.as_str(),
+                target.as_str()
+            ))
         }
     }
 }
@@ -1030,20 +1067,43 @@ impl AlertEngine {
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         alert_id: Uuid,
-    ) -> Result<AlertV60, sqlx::Error> {
+    ) -> Result<AlertV60, TopemsError> {
         let mut scope = db.scope_with(txn).await?;
+        let current: AlertV60 = sqlx::query_as(
+            only_own_schema_query!("finance", r#"SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at
+            FROM finance.finance_v60_alerts
+            WHERE id = $1 AND tenant_id = $2"#),
+        )
+        .bind(alert_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| TopemsError::DatabaseRecordNotFound("预警不存在".to_string()))?;
+
+        let current_status = AlertStatus::from_db_str(&current.status)
+            .ok_or_else(|| TopemsError::ValidationFailed("预警状态不在规范集合内".to_string()))?;
+        if current_status == AlertStatus::Acknowledged {
+            return Ok(current);
+        }
+        if let Err(message) = current_status.can_transition_to(&AlertStatus::Acknowledged) {
+            return Err(TopemsError::ValidationFailed(message));
+        }
+
         let now = Utc::now();
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_alerts
             SET status = 'acknowledged', acknowledged_at = $1
-            WHERE id = $2 AND tenant_id = $3
+            WHERE id = $2 AND tenant_id = $3 AND status = 'active'
             RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#),
         )
         .bind(now)
         .bind(alert_id)
         .bind(tenant_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("预警状态已被并发修改，确认失败".to_string())
+        })?;
         scope.commit().await?;
         Ok(result)
     }
@@ -1053,20 +1113,43 @@ impl AlertEngine {
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
         tenant_id: Uuid,
         alert_id: Uuid,
-    ) -> Result<AlertV60, sqlx::Error> {
+    ) -> Result<AlertV60, TopemsError> {
         let mut scope = db.scope_with(txn).await?;
+        let current: AlertV60 = sqlx::query_as(
+            only_own_schema_query!("finance", r#"SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at
+            FROM finance.finance_v60_alerts
+            WHERE id = $1 AND tenant_id = $2"#),
+        )
+        .bind(alert_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| TopemsError::DatabaseRecordNotFound("预警不存在".to_string()))?;
+
+        let current_status = AlertStatus::from_db_str(&current.status)
+            .ok_or_else(|| TopemsError::ValidationFailed("预警状态不在规范集合内".to_string()))?;
+        if current_status == AlertStatus::Resolved {
+            return Ok(current);
+        }
+        if let Err(message) = current_status.can_transition_to(&AlertStatus::Resolved) {
+            return Err(TopemsError::ValidationFailed(message));
+        }
+
         let now = Utc::now();
         let result = sqlx::query_as(
             only_own_schema_query!("finance", r#"UPDATE finance.finance_v60_alerts
             SET status = 'resolved', resolved_at = $1
-            WHERE id = $2 AND tenant_id = $3
+            WHERE id = $2 AND tenant_id = $3 AND status IN ('active', 'acknowledged')
             RETURNING id, rule_id, metric_name, current_value, threshold, severity, status, created_at"#),
         )
         .bind(now)
         .bind(alert_id)
         .bind(tenant_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("预警状态已被并发修改，解决失败".to_string())
+        })?;
         scope.commit().await?;
         Ok(result)
     }
@@ -2441,6 +2524,22 @@ mod tests {
         assert_eq!(AlertStatus::Active.as_str(), "active");
         assert_eq!(AlertStatus::Acknowledged.as_str(), "acknowledged");
         assert_eq!(AlertStatus::Resolved.as_str(), "resolved");
+        assert_eq!(AlertStatus::Suppressed.as_str(), "suppressed");
+        assert!(AlertStatus::Active
+            .can_transition_to(&AlertStatus::Acknowledged)
+            .is_ok());
+        assert!(AlertStatus::Active
+            .can_transition_to(&AlertStatus::Resolved)
+            .is_ok());
+        assert!(AlertStatus::Acknowledged
+            .can_transition_to(&AlertStatus::Resolved)
+            .is_ok());
+        assert!(AlertStatus::Resolved
+            .can_transition_to(&AlertStatus::Acknowledged)
+            .is_err());
+        assert!(AlertStatus::Suppressed
+            .can_transition_to(&AlertStatus::Active)
+            .is_err());
     }
 
     #[test]
