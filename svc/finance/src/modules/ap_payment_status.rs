@@ -42,6 +42,9 @@ impl PaymentStatus {
         "cancelled",
     ];
 
+    /// 可编辑/可删除状态：付款一旦提交即封闭，避免并发提交后被改写或软删。
+    pub const DRAFT_ONLY: &'static [&'static str] = &["draft"];
+
     pub const ALL: [Self; 6] = [
         Self::Draft,
         Self::Pending,
@@ -148,6 +151,7 @@ mod tests {
         assert!(PaymentStatus::Pending.can_reject());
         assert!(PaymentStatus::Processing.can_execute());
         assert!(!PaymentStatus::Completed.can_execute());
+        assert_eq!(PaymentStatus::DRAFT_ONLY, &["draft"]);
     }
 }
 
