@@ -772,48 +772,53 @@ pub async fn update_production_schedule(
         }
     };
 
-    let status_value = match req.status.as_deref() {
+    let requested_status = match req.status.as_deref() {
         Some(raw) => match ProductionScheduleStatus::from_db_str(raw) {
-            Some(v) => Some(v.as_db_str().to_string()),
+            Some(v) => Some(v),
             None => return ApiResponse::bad_request("无效的排产状态"),
         },
         None => None,
     };
 
-    // 状态若随编辑提交，必须走与流转端点相同的状态机，禁止跳态
-    if let Some(target_raw) = status_value.as_deref() {
-        let target = match ProductionScheduleStatus::from_db_str(target_raw) {
-            Some(v) => v,
-            None => return ApiResponse::bad_request("无效的排产状态"),
-        };
-        let current: Option<(String,)> = match sqlx::query_as(
-            "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
-        )
-        .bind(id)
-        .bind(tenant_id)
-        .fetch_optional(&mut scope)
-        .await
-        {
-            Ok(row) => row,
-            Err(e) => {
-                tracing::error!("查询排产单当前状态失败: {}", e);
-                return ApiResponse::server_error("更新生产排产失败");
-            }
-        };
-        let Some((current_raw,)) = current else {
-            return ApiResponse::not_found("排产单不存在");
-        };
-        let Some(current_status) = ProductionScheduleStatus::from_db_str(&current_raw) else {
-            return ApiResponse::conflict("排产单当前状态非法，需人工处理");
-        };
-        if !current_status.can_transition_to(target) {
-            return ApiResponse::conflict(&format!(
-                "当前状态 {} 不允许切换到 {}",
-                current_status.as_db_str(),
-                target.as_db_str()
-            ));
+    // 无论是否改状态都先读当前态，并对状态与软删做并发谓词
+    let current: Option<(Option<String>,)> = match sqlx::query_as(
+        "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("查询排产单当前状态失败: {}", e);
+            return ApiResponse::server_error("更新生产排产失败");
         }
+    };
+    let Some((current_raw,)) = current else {
+        return ApiResponse::not_found("排产单不存在");
+    };
+    let Some(current_raw) = current_raw else {
+        return ApiResponse::conflict("排产单状态为空，需人工处理");
+    };
+    let Some(current_status) = ProductionScheduleStatus::from_db_str(&current_raw) else {
+        return ApiResponse::conflict("排产单当前状态非法，需人工处理");
+    };
+    if !ProductionScheduleStatus::adjustable_from().contains(&current_status.as_db_str()) {
+        return ApiResponse::conflict(&format!(
+            "当前状态 {} 不允许编辑",
+            current_status.as_db_str()
+        ));
     }
+    let target_status = requested_status.unwrap_or(current_status);
+    if !current_status.can_transition_to(target_status) {
+        return ApiResponse::conflict(&format!(
+            "当前状态 {} 不允许切换到 {}",
+            current_status.as_db_str(),
+            target_status.as_db_str()
+        ));
+    }
+    let status_value = Some(target_status.as_db_str().to_string());
 
     let result = sqlx::query_as::<_, ProductionScheduleRow>(
         r#"
@@ -828,7 +833,7 @@ pub async fn update_production_schedule(
             status = COALESCE($9, status),
             notes = COALESCE($10, notes),
             updated_at = $11
-        WHERE id = $1 AND tenant_id = $12::uuid
+        WHERE id = $1 AND tenant_id = $12::uuid AND status = $13 AND deleted_at IS NULL
         RETURNING 
             id, schedule_no, order_id, order_no,
             product_id, product_name, product_code,
@@ -851,6 +856,7 @@ pub async fn update_production_schedule(
     .bind(req.notes)
     .bind(Utc::now())
     .bind(tenant_id)
+    .bind(current_raw)
     .fetch_optional(&mut scope)
     .await;
 
@@ -897,7 +903,7 @@ pub async fn update_production_schedule(
             };
             ApiResponse::success(schedule, "生产排产更新成功")
         }
-        None => ApiResponse::not_found("生产排产不存在"),
+        None => ApiResponse::conflict("排产单状态已被并发修改，更新失败"),
     }
 }
 
