@@ -3151,3 +3151,11 @@ pending_forward_patches:
     effect: "finance.erp_payment_records.status 的 NULL 归 active、默认 active、SET NOT NULL，CHECK 扩充为 active/inactive/archived/written_off 四态并 VALIDATE"
     destructive_scan: "UPDATE status NULL→active，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "PaymentRecordStatus 四态唯一源；update 校验值域与状态机并带 AND status=当前态，write_off 只允许 active 且带 AND status='active'。回滚 database/rollback/20261125012000_finance_payment_record_status_standard.rollback.sql 恢复可空与旧三态 CHECK"
+
+  # ===== 2026-11-25：B327 Finance 对账明细快照列名形态归一 =====
+  - version: "20261125130000"
+    file: "database/migrations/20261125130000_finance_recon_item_snapshots_shape_normalize.sql"
+    status: to_apply
+    effect: "finance.reconciliation_item_snapshots 补齐 A 形态列 recon_id/debit_amount/credit_amount/match_status/updated_at；旧 B 形态列 reconciliation_id/item_type/amount 按存在性条件回填到双列金额，兼容 A 形态库缺列跳过"
+    destructive_scan: "ADD COLUMN IF NOT EXISTS 五列 + DO 块条件 UPDATE 回填 + CREATE INDEX IF NOT EXISTS；无 DELETE/TRUNCATE/DROP TABLE/COLUMN、不改列类型、不写 CHECK 约束"
+    note: "settlement_center/service.rs 按 recon_id/debit_amount/credit_amount 读写（自动对账双列金额相等配对）；B 形态库缺 recon_id 会在 auto-reconcile 500。索引 idx_finance_recon_item_snapshots_recon_id。checksum 791597644d55fa788a9ef1f7660b339843a4315c8ca21eaf4d0f71c3b37fdce8"
