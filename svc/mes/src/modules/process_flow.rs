@@ -19,6 +19,17 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
+/// `mes.process_flows.status` 的唯一取值集合。
+const PROCESS_FLOW_STATUSES: [&str; 3] = ["active", "inactive", "archived"];
+
+fn normalize_process_flow_status(raw: &str) -> Option<&'static str> {
+    let normalized = raw.trim().to_ascii_lowercase();
+    PROCESS_FLOW_STATUSES
+        .iter()
+        .copied()
+        .find(|value| *value == normalized)
+}
+
 #[derive(Debug, sqlx::FromRow)]
 struct FlowStepRow {
     id: Uuid,
@@ -627,6 +638,40 @@ pub async fn update_process_flow(
         }
     };
 
+    let requested_status = match body.status.as_deref() {
+        Some(raw) => match normalize_process_flow_status(raw) {
+            Some(status) => Some(status.to_string()),
+            None => {
+                return ApiResponse::bad_request(
+                    "无效的工艺流程状态，允许值: active/inactive/archived",
+                )
+            }
+        },
+        None => None,
+    };
+
+    let current: Option<(Option<String>,)> = match sqlx::query_as(
+        "SELECT status FROM mes.process_flows WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(uuid)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("查询工艺流程当前状态失败: {}", e);
+            return ApiResponse::server_error("更新工艺流程失败");
+        }
+    };
+    let Some((current_raw,)) = current else {
+        return ApiResponse::not_found("工艺流程不存在");
+    };
+    let current_status = current_raw.as_deref().unwrap_or("active");
+    if current_status == "archived" {
+        return ApiResponse::conflict("工艺流程已归档，不允许编辑");
+    }
+
     let result = sqlx::query_as::<_, ProcessFlowUpdateRow>(
         r#"
         UPDATE mes.process_flows
@@ -641,6 +686,8 @@ pub async fn update_process_flow(
             status = COALESCE($8, status),
             updated_at = NOW()
         WHERE id = $9 AND tenant_id = $10::uuid
+          AND status IS NOT DISTINCT FROM $11
+          AND deleted_at IS NULL
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
@@ -653,9 +700,10 @@ pub async fn update_process_flow(
     .bind(body.production_line)
     .bind(capacity_value)
     .bind(body.unit)
-    .bind(body.status)
+    .bind(requested_status)
     .bind(uuid)
     .bind(tenant_id)
+    .bind(current_raw)
     .fetch_one(&mut scope)
     .await;
 
@@ -734,7 +782,7 @@ pub async fn delete_process_flow(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid
+        UPDATE mes.process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL
         "#,
     )
     .bind(uuid)
@@ -743,13 +791,14 @@ pub async fn delete_process_flow(
     .await;
 
     match result {
-        Ok(_) => {
+        Ok(result) if result.rows_affected() > 0 => {
             if let Err(e) = scope.commit().await {
                 tracing::error!("提交工艺流程事务失败: {}", e);
                 return ApiResponse::server_error("删除工艺流程失败");
             }
             ApiResponse::success(id, "删除工艺流程成功")
         }
+        Ok(_) => ApiResponse::not_found("工艺流程不存在或已删除"),
         Err(e) => {
             tracing::error!("Failed to delete process flow: {}", e);
             ApiResponse::server_error("删除工艺流程失败")
@@ -1581,5 +1630,17 @@ mod tests {
     #[test]
     fn big_decimal_to_f64_none() {
         assert_eq!(big_decimal_to_f64_opt(None), None);
+    }
+}
+#[cfg(test)]
+mod lifecycle_tests {
+    use super::normalize_process_flow_status;
+
+    #[test]
+    fn process_flow_status_is_strict() {
+        assert_eq!(normalize_process_flow_status("active"), Some("active"));
+        assert_eq!(normalize_process_flow_status("ACTIVE"), Some("active"));
+        assert_eq!(normalize_process_flow_status("archived"), Some("archived"));
+        assert_eq!(normalize_process_flow_status("bogus"), None);
     }
 }
