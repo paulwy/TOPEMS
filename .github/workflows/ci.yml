@@ -2323,10 +2323,10 @@ jobs:
     needs: changes
     if: needs.changes.outputs.desktop == 'true'
     # 本 job 未安装 sccache，必须清空全局 RUSTC_WRAPPER；
-    # rustix 0.37（经 keyring→secret-service→zbus 3 引入）与最新 nightly 不兼容，固定 1.85。
+    # Tauri 2.12 要求 rustc 1.90；同时避开 nightly 下 rustix 0.37 的 rustc 属性报错。
     env:
       RUSTC_WRAPPER: ''
-      RUSTUP_TOOLCHAIN: '1.85.0'
+      RUSTUP_TOOLCHAIN: '1.90.0'
       # CI 无 Developer ID 证书，使用 ad-hoc 签名，避免 bundle 阶段 codesign 失败
       APPLE_SIGNING_IDENTITY: '-'
     runs-on: ${{ matrix.os }}
@@ -2349,7 +2349,7 @@ jobs:
 
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: '1.85.0'
+          toolchain: '1.90.0'
           enable-sccache: 'false'
           enable-cache: 'false'
 
