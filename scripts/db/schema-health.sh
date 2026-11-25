@@ -38,6 +38,7 @@ DSN="${MIGRATE_URL:-}"
 
 FIXTURE="$ROOT/fixtures/full_schema_contract.sql"
 ARCHIVE="$ROOT/database/migrations-archive.tsv"
+WAIVERS="$ROOT/database/schema-diff-waivers.tsv"
 MIGDIR="$ROOT/database/migrations"
 TMPDB="topems_schema_baseline_tmp"
 DRIFT=0
@@ -131,10 +132,17 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
             echo "  ✓ 与基线一致（按 schema 的 tables/views/columns/functions/policies 计数）"
         else
             NSCH=$(printf '%s\n' "$DELTA" | grep -c .)
-            NBACK=$(printf '%s\n' "$DELTA" | awk -F'|' '$2==1' | grep -c .)
+            # 已判读接受的差量（database/schema-diff-waivers.tsv）不算"落后"，只标注说明
+            WAIVED=$(awk -F'\t' '!/^#/ && $1!="schema" {printf "%s ", $1}' "$WAIVERS" 2>/dev/null)
+            WAIVED_TBL=$(awk -F'\t' '!/^#/ && $1!="schema" { if ($2=="*") printf "%s. ", $1; else printf "%s.%s ", $1, $2 }' "$WAIVERS" 2>/dev/null)
+            NBACK=$(printf '%s\n' "$DELTA" | awk -F'|' -v wl="$WAIVED" '
+                BEGIN { n=split(wl,a," "); for (i=1;i<=n;i++) if (a[i]!="") w[a[i]]=1 }
+                $2==1 && !($1 in w) { c++ } END { print c+0 }')
             echo "  - ${NSCH} 个 schema 与基线有差异（正数=现库领先，负数=现库落后）"
-            printf '%s\n' "$DELTA" | sort -t'|' -k2,2nr | awk -F'|' '
-                { mark = ($2==1 ? "⚠ 落后" : " 领先"); printf("    %-18s %s%s\n", $1, mark, $3) }' | head -30
+            printf '%s\n' "$DELTA" | sort -t'|' -k2,2nr | awk -F'|' -v wl="$WAIVED" '
+                BEGIN { n=split(wl,a," "); for (i=1;i<=n;i++) if (a[i]!="") w[a[i]]=1 }
+                { if ($2==1 && ($1 in w)) mark="✓ 已判读接受"; else mark=($2==1 ? "⚠ 落后" : " 领先");
+                  printf("    %-18s %s%s\n", $1, mark, $3) }' | head -30
             if [ "$NBACK" -gt 0 ]; then
                 echo "  ⚠ 有 $NBACK 个 schema 的列/表少于基线（可能漏迁移，也可能只是基线快照更早）"
                 # shellcheck disable=SC2016
@@ -146,10 +154,13 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
                           group by 1 order by 1'
                 psql "$DSN" -tAq -c "$COL_SQL" 2>/dev/null | grep . | sort > /tmp/schema_health_live_tbl.txt
                 psql "$TMPDB" -tAq -c "$COL_SQL" 2>/dev/null | grep . | sort > /tmp/schema_health_base_tbl.txt
-                awk -F'|' '
+                awk -F'|' -v wl="$WAIVED_TBL" '
+                    BEGIN { n=split(wl,a," "); for (i=1;i<=n;i++) if (a[i]!="") w[a[i]]=1 }
                     NR==FNR { b[$1]=$2+0; next }
                     { l[$1]=$2+0 }
-                    END { for (t in b) { if (!(t in l)) printf("%d|  表缺失  %s（基线 %d 列）\n", b[t], t, b[t]);
+                    END { for (t in b) {
+                            if ((t in w) || (substr(t,1,index(t,".")) in w)) continue;
+                            if (!(t in l)) printf("%d|  表缺失  %s（基线 %d 列）\n", b[t], t, b[t]);
                             else if (l[t] < b[t]) printf("%d|  列偏少  %-40s 现库 %d / 基线 %d\n", b[t]-l[t], t, l[t], b[t]) } }' \
                     /tmp/schema_health_base_tbl.txt /tmp/schema_health_live_tbl.txt \
                     | sort -t'|' -k1,1nr | head -15 | cut -d'|' -f2

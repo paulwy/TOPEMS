@@ -1,0 +1,7 @@
+# 结构差量「已判读接受」清单（schema-health.sh 读取；不改变差量本身，只标注并排除出"落后"计数）
+# 判据：基线 fixtures/full_schema_contract.sql 是另一条历史线的快照，不是真理；
+#       只有「代码 SQL 字面量真的引用该列/表」才算真缺，否则记血缘差异。
+# 字段：schema	table(*=整个 schema)	reason	evidence	decided_on
+schema	table	reason	evidence	decided_on
+communication	notification_channels	基线是旧渠道模型（code/channel_type/category/enabled），现库与代码用 name/name_en/type/status/config；冒烟 200	代码 SQL 只引用现库列；/api/communication/notification-channels 200	2026-11-25
+integration	core_inter_module_sync	基线保留 operation/entity_type/entity_ids/started_at/finished_at 旧侧 5 列；代码已统一到 source_entity/source_id/source_code + retry_count/max_retries/executed_at	svc/integration/src/handlers/sync.rs 全量对齐；/api/integration/sync/pending 200	2026-11-25

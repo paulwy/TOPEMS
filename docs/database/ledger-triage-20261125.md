@@ -155,3 +155,5 @@ scripts/db/schema-health.sh --table finance.budgets
 **阻塞记录：`20261115142500`**
 
 该迁移把 D 侧列补到 prod 侧库，本机方向相反，dry-run 被断言拒绝（`portal.portal_todos 已有本次要补的列`）。不改这个已发表迁移的语义，前向队列按单条 apply（`--only`）推进即可，不做批量。
+
+**判读结果落库**：新增 `database/schema-diff-waivers.tsv`（`schema / table / reason / evidence / decided_on`），把上面这两处已判读的差量登记为"接受"；`schema-health.sh` 读它，只做标注（`✓ 已判读接受`）并从"落后"计数里剔除，其它未登记的差量仍按"落后"告警——判读结论可见、可追溯、不会每次重复解读。当前结论：**健康**（属主 0 漂移、未落后基线），真实待办 136 条仅作提示。
