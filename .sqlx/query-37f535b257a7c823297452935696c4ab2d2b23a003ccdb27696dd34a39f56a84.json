@@ -1,0 +1,1 @@
+{"db_name":"PostgreSQL","query":"SELECT status FROM mes.material_requirements WHERE id = $1","describe":{"columns":[{"ordinal":0,"name":"status","type_info":"Varchar","origin":{"Table":{"table":"mes.material_requirements","name":"status"}}}],"parameters":{"Left":["Uuid"]},"nullable":[true]},"hash":"37f535b257a7c823297452935696c4ab2d2b23a003ccdb27696dd34a39f56a84"}
