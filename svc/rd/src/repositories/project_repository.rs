@@ -471,6 +471,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project() {
+        // CI 的 Rust 作业只有空库，未提供 TEST_DATABASE_URL 时显式跳过真库用例。
+        if std::env::var("TEST_DATABASE_URL").is_err() {
+            eprintln!("SKIP: TEST_DATABASE_URL 未设置，跳过 RD 项目库真库测试");
+            return;
+        }
         let _guard = DB_TEST_LOCK.lock().await;
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
@@ -507,6 +512,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_project_by_id() {
+        // CI 的 Rust 作业只有空库，未提供 TEST_DATABASE_URL 时显式跳过真库用例。
+        if std::env::var("TEST_DATABASE_URL").is_err() {
+            eprintln!("SKIP: TEST_DATABASE_URL 未设置，跳过 RD 项目库真库测试");
+            return;
+        }
         let _guard = DB_TEST_LOCK.lock().await;
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
@@ -545,6 +555,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_projects() {
+        // CI 的 Rust 作业只有空库，未提供 TEST_DATABASE_URL 时显式跳过真库用例。
+        if std::env::var("TEST_DATABASE_URL").is_err() {
+            eprintln!("SKIP: TEST_DATABASE_URL 未设置，跳过 RD 项目库真库测试");
+            return;
+        }
         let _guard = DB_TEST_LOCK.lock().await;
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
