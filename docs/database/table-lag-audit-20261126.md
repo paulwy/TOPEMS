@@ -64,4 +64,4 @@
 
 **验证**：11 条关键语句逐条 `PREPARE` 打真库 schema 全部通过（settings 参数分级 SELECT、project_type_configs 带 name_en 的检索、erp.sales_orders INSERT 13 参、core_flow_rules INSERT、resource_permissions UPDATE）；`search_recent` 用 `ON CONFLICT (user_id,keyword)` 实测 upsert 成功。
 
-**waive 的 8 个（别名误判）**：`wms.locations`、`mes.equipment`、`mes.production_orders`、`mes.work_stations`、`ai.model_usage_stats`、`erp.erp_master_data_refs`、`public.monitor_settings`、`public.system_settings` —— 都是 `xxx AS name` / `AS requests` 这类列别名，以及事件处理器里的运行时自愈 DDL。
+**waive 的 8 个（别名误判）**：`wms.locations`、`mes.equipment`、`mes.production_orders`、`mes.work_stations`、`ai.model_usage_stats`、`erp.erp_master_data_refs`、`public.monitor_settings`、`public.system_settings` —— 都是 `xxx AS name` / `AS requests` 这类列别名，以及事件处理器里的自愈 DDL。**更正**：`erp.erp_master_data_refs` 的 `id` 缺口不是请求路径问题——那段 `CREATE SCHEMA/TABLE/POLICY` 在 `svc/erp/src/event_handlers/mod.rs` 的 `mod tests`（`#[sqlx::test(migrations = false)]` 用它自建表），真实 UPSERT（同文件 ~1473 行）列清单不含 `id`，线上表以 `master_data_id` 唯一键工作，属纯血缘差异，无需改代码、也无需再拆 DDL。

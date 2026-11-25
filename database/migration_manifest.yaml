@@ -3175,3 +3175,11 @@ pending_forward_patches:
     effect: "补齐代码 SQL 真实引用而 anchor/prod 血缘缺失的列：erp.sales_orders/purchase_orders.company_id、iam.resource_permissions effect/scope/role_id、core.core_plugins owner_tenant_id/last_owner_tenant_id/unpublished_at、mobile.oa_announcement_reads.tenant_id、pm.project_type_configs.name_en、public.core_flow_rules/delegates/variables/variable_history.tenant_id、core_tenant_modules.company_id、schema_registry/dynamic_data.tenant_id、system_settings/monitor_settings company_id+override_policy；附 5 个 IF NOT EXISTS 索引"
     destructive_scan: "全部 ADD COLUMN IF NOT EXISTS（可空、不带默认值）+ CREATE INDEX IF NOT EXISTS；不删列、不改列类型、不动既有数据、无 DELETE/DROP TABLE/COLUMN"
     note: "来源 docs/database/table-lag-audit-20261126.md 风险项；schema-health [2b] 逐表列差 + 代码 SQL 字面量核对，确认为运行期真实引用（非别名/别表），否则解析期报 column ... does not exist 引爆 500。checksum 3daf9f2ffb0465b45a9b3cbaef766458b77fb314aefb876bb74268d14c18e366"
+
+  # ===== 2026-11-26：iam 权限存储表（DatabasePermissionStore 后端） =====
+  - version: "20261125160000"
+    file: "database/migrations/20261125160000_iam_permission_tables.sql"
+    status: to_apply
+    effect: "建 iam.tenant_permissions（id identity/tenant_id/user_id/role/active/时间戳/软删）+ iam.tool_permissions（id identity/tenant_permission_id FK CASCADE/tool_name/max_permission/allowed_operations text[]/denied_operations text[]）；唯一索引 (tenant_id,user_id) 与 (tenant_permission_id,tool_name)；GRANT 给 topems_app；tenant_permissions 启 RLS"
+    destructive_scan: "CREATE TABLE IF NOT EXISTS + CREATE UNIQUE INDEX IF NOT EXISTS + GRANT + ENABLE RLS + DROP/CREATE POLICY；无 DELETE/UPDATE/TRUNCATE/DROP TABLE"
+    note: "关闭 V448 记录的『id 无默认值导致 INSERT 失败』缺陷；默认仍走 Memory 存储，切 DatabasePermissionStore 只需改配置"
