@@ -44,6 +44,7 @@ const PAGE_TIMEOUT = Number(arg('timeout', '35')) * 1000;
 const MAX_ROUTES = Number(arg('max', '12'));
 const JSON_OUT = arg('json', '');
 const ALL = has('all');
+const INCLUDE_DASHBOARD = has('include-dashboard');
 
 // 默认抽查：覆盖改过模板后最容易踩的模块，且本机都有数据
 const DEFAULT_ROUTES = [
@@ -91,7 +92,9 @@ async function fetchMenuPaths(token) {
   return items
     .map((m) => m.path)
     .filter((p) => typeof p === 'string' && p.startsWith('/') && !p.includes(':'))
-    .filter((p) => !p.includes('/detail'));
+    .filter((p) => !p.includes('/detail'))
+    // 看板/首页/个人页默认跳过：它们本来就没有分页表格，逐页等超时纯浪费
+    .filter((p) => INCLUDE_DASHBOARD || !/(dashboard|\/home|\/profile|workbench|analytics)/.test(p));
 }
 
 function dedupe(list) {
@@ -103,8 +106,12 @@ async function sample(page) {
     const bodyText = document.body.innerText || '';
     const m = bodyText.match(/共\s*(\d+)\s*条/);
     const total = m ? Number(m[1]) : null;
+    // 空态占位行通常是单个 colSpan 单元格（文案可能是「暂无数据」或本地化变体），
+    // 因此按「至少 2 个单元格」判定为真实数据行，避免把空态算成 1 行。
     const trs = Array.from(document.querySelectorAll('table tbody tr'));
-    const rows = trs.filter((tr) => !tr.innerText.includes('暂无数据')).length;
+    const rows = trs.filter(
+      (tr) => !tr.innerText.includes('暂无数据') && tr.querySelectorAll('td').length > 1
+    ).length;
     return { total, rows, hasTable: document.querySelectorAll('table').length > 0 };
   }).catch(() => ({ total: null, rows: 0, hasTable: false }));
 }
@@ -128,7 +135,7 @@ async function inspectRoute(page, route) {
     // 页面上根本没有表格（详情页/看板页/被权限挡住）：6 秒后放弃
     if (!last.hasTable) {
       if (noTableSince === null) noTableSince = Date.now();
-      else if (Date.now() - noTableSince > 6000) break;
+      else if (Date.now() - noTableSince > 4000) break;
     } else {
       noTableSince = null;
     }

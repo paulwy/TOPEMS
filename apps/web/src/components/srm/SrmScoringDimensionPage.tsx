@@ -33,7 +33,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
     }
     const items = (response.data || []) as unknown as ScoringDimension[];
     const search = params?.search?.toLowerCase() || '';
-    const page = params?.page || 0;
+    const page = params?.page || 1; // CrudPage 传 1-based
     const pageSize = params?.pageSize || 10;
 
     let filtered = items;
@@ -45,7 +45,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
     }
 
     const total = filtered.length;
-    const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
+    const data = filtered.slice((page - 1) * pageSize, page * pageSize);
     return { data: data as unknown as Record<string, unknown>[], total };
   },
   create: async (data) => {

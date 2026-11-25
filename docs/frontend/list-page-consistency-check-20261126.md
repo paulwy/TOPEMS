@@ -51,6 +51,20 @@ FAIL  /wms/inbound               总数=2   行=0
 
 恢复修复后同一批路由全绿（`总数=29 行=10`、`总数=2 行=2`、`总数=189 行=10` 等）。说明这条检查确实能抓到目标缺陷，而不是永远通过。
 
+## 全量扫描抓到并修掉的第二类问题（SRM 页码基数）
+
+`--all` 跑 128 页分页表格后，抓到唯一一条不一致：`/srm/product` 显示「1-8 共 8 条」但表格空。
+根因与模板无关——`CrudPage` 传的 `page` 是 **1-based**，而 SRM 五个内存适配器按 **0-based**
+处理（`params?.page || 0` + `slice(page * pageSize, ...)`），第 1 页恰好切到 `[10,20)` 区间，
+行全被切掉、总数却是 8。
+
+修法与影响面：`SrmContractPage`、`SrmSupplierProductPage`、`SrmPerformancePage`、
+`SrmEvaluationPage`、`SrmScoringDimensionPage` 统一改为 `page || 1` + `slice((page-1)*pageSize, page*pageSize)`。
+修复后 `/srm/product` 为 8 行/共 8 条，其余四个 SRM 页由「总数 0 行 1」变为「总数 0 行 0」的干净空态。
+
+顺带修正检查器一个口径问题：空态占位行可能是单个 `colSpan` 单元格且文案不带「暂无数据」，
+原先会把它算成 1 行；现在按「至少 2 个 `td`」才算真实数据行。
+
 ## 现状与取舍
 
 - 默认 8 条跑完约 10 秒（登录一次、逐页复用同一上下文）；开发模式下首进页面有 Vite 编译开销，故单页超时默认 35 秒，可 `--timeout` 调。
