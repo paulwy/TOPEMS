@@ -6806,10 +6806,10 @@ pub async fn update_expense_approval(
             return ApiResponse::unprocessable("total_amount 不能为负数");
         }
     }
-    let (status, allowed_from) = match req.status.as_deref() {
-        None => (None, Some(ExpenseApprovalStatus::DB_VALUES.to_vec())),
+    let target_status = match req.status.as_deref() {
+        None => None,
         Some(raw) => match normalize_expense_status(raw) {
-            Some(status) => (Some(status.as_str()), Some(status.allowed_from().to_vec())),
+            Some(status) => Some(status),
             None => {
                 return ApiResponse::bad_request(
                     "status 仅支持 draft/pending/approved/rejected/reimbursed",
@@ -6840,6 +6840,36 @@ pub async fn update_expense_approval(
         Err(e) => return crate::shared::err_resp(e),
     };
 
+    let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "finance",
+        "SELECT status FROM finance.expense_approvals WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id_uuid)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(status)) => match ExpenseApprovalStatus::from_db_str(&status) {
+            Some(status) => status,
+            None => return ApiResponse::conflict("费用审批状态不在规范集合内"),
+        },
+        Ok(None) => return ApiResponse::not_found("费用审批不存在"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let same_or_no_target = target_status.is_none_or(|target| target == current_status);
+    if same_or_no_target && !ExpenseApprovalStatus::EDITABLE.contains(&current_status.as_str()) {
+        return ApiResponse::conflict("费用审批已审批/已报销，字段不可再编辑");
+    }
+    if let Some(target) = target_status {
+        if !target.allowed_from().contains(&current_status.as_str()) {
+            return ApiResponse::conflict("当前状态不允许该操作");
+        }
+    }
+    let allowed_from: Vec<&'static str> = match target_status {
+        Some(target) => target.allowed_from().to_vec(),
+        None => vec![current_status.as_str()],
+    };
+    let status = target_status.map(ExpenseApprovalStatus::as_str);
+
     // 此前该 handler 是纯回显桩：返回 {id,data} 但不落库（GET 复核仍为 draft）。
     let row = sqlx::query(only_own_schema_query!(
         "finance",
@@ -6858,7 +6888,7 @@ pub async fn update_expense_approval(
                approver_name = COALESCE($13, approver_name),
                updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
-             AND status = ANY($14::text[])
+             AND status = ANY($14::text[]) AND status = $15
            RETURNING id, expense_no, employee_id, employee_name, department, expense_date,
                      expense_type, total_amount, status, description, approver_id, approver_name,
                      approval_note, created_at, updated_at"#
@@ -6877,6 +6907,7 @@ pub async fn update_expense_approval(
     .bind(approver_id)
     .bind(req.approver_name)
     .bind(&allowed_from)
+    .bind(current_status.as_str())
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -6944,14 +6975,16 @@ pub async fn delete_expense_approval(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.expense_approvals SET deleted_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL"#
+           WHERE id = $1 AND deleted_at IS NULL
+             AND status = ANY($2::text[])"#
     ))
     .bind(id_uuid)
+    .bind(ExpenseApprovalStatus::DELETABLE.as_slice())
     .execute(&mut scope)
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "删除成功"),
-        Ok(_) => ApiResponse::not_found("费用审批不存在"),
+        Ok(_) => ApiResponse::not_found("费用审批不存在或状态不允许删除"),
         Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!(
             "删除费用审批失败: {}",
             e
