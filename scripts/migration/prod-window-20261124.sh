@@ -125,8 +125,19 @@ pre_normalize() {
   local script="$ROOT/scripts/migration/pre-normalize-org-null.sh"
   [[ "${W5C_SKIP_PRENORM:-0}" == "1" ]] && { echo "[prenorm] 已按 W5C_SKIP_PRENORM=1 跳过"; return 0; }
   [[ -f "$script" ]] || return 0
-  echo "[prenorm] organization_id NULL → 租户键（幂等）"
-  bash "$script" --host "$PGHOST" --user "$PGUSER_" --db "$DB" 2>&1 | sed 's/^/  /'
+  local out rc
+  # 生产库写入需 CONFIRM=1（与执行器同一口径）；dryrun 库不需要。
+  if [[ "$DB" == "topems_prod" ]]; then
+    out="$(CONFIRM=1 bash "$script" --host "$PGHOST" --user "$PGUSER_" --db "$DB" 2>&1)"; rc=$?
+  else
+    out="$(bash "$script" --host "$PGHOST" --user "$PGUSER_" --db "$DB" 2>&1)"; rc=$?
+  fi
+  printf '%s\n' "$out" | sed 's/^/  /'
+  if [[ "$rc" -ne 0 ]]; then
+    echo "[prenorm] 归一失败（rc=${rc}），中止：不要带着 NULL 撞 W5-C 守卫" >&2
+    return 1
+  fi
+  return 0
 }
 
 case "$MODE" in
@@ -157,14 +168,14 @@ case "$MODE" in
       exit 2
     fi
     echo "[dryrun] 目标 ${DB}，与正式窗口同一命令路径"
-    pre_normalize
+    pre_normalize || exit 3
     run_list "$ALL"
     ;;
   phase1|phase2|phase3)
     if [[ "$DB" == "topems_prod" && "${CONFIRM:-0}" != "1" ]]; then
       echo "拒绝：正式库执行需 CONFIRM=1（先 plan → dryrun → 开窗）" >&2; exit 2
     fi
-    pre_normalize
+    pre_normalize || exit 3
     case "$MODE" in
       phase1) run_list "$SEG1" ;;
       phase2) run_list "$SEG2" ;;
