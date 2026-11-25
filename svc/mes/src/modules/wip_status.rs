@@ -51,6 +51,11 @@ impl WipStatus {
     pub fn transferable_from() -> &'static [&'static str] {
         &["pending", "in_progress"]
     }
+
+    /// 可软删的当前态：仅已完成在制品（清账），活跃/已转移保留追溯。
+    pub fn deletable_from() -> &'static [&'static str] {
+        &["completed"]
+    }
 }
 
 #[cfg(test)]
@@ -75,6 +80,11 @@ mod tests {
             );
         }
         assert_eq!(WipStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn deletable_set_is_completed_only() {
+        assert_eq!(WipStatus::deletable_from(), &["completed"]);
     }
 
     #[test]
