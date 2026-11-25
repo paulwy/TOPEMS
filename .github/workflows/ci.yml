@@ -755,6 +755,56 @@ jobs:
         # --no-fail-fast：一次性枚举全部失败，避免每轮 60 分钟编译后只看到第一个失败
         run: cargo nextest run --workspace --test-threads=4 --no-fail-fast
 
+  rust-coverage:
+    name: Rust Coverage
+    # 覆盖率单独成 job：完整 workspace 的 llvm-cov 需要重新插桩编译，
+    # 与 Rust Tests 串行会超过单 job 时间上限；拆开后两条链路并行且各自可解释。
+    needs: [changes, rust-lint, cargo-check]
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_test
+          POSTGRES_PASSWORD: topems_test_secret
+          POSTGRES_DB: topems_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U topems_test -d topems_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: "rust-coverage-nightly-2026-07-01"
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U topems_test; do
+            sleep 1
+          done
+
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
 
@@ -763,8 +813,9 @@ jobs:
           APP_ENV: test
           DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
           REDIS_URL: redis://localhost:6379/0
+          TEST_REDIS_URL: redis://localhost:6379/1
           JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
-        run: cargo llvm-cov test --workspace --html --output-dir target/llvm-cov-report
+        run: cargo llvm-cov test --workspace --no-fail-fast --html --output-dir target/llvm-cov-report -- --test-threads=4
 
       - name: Upload Rust coverage report
         uses: actions/upload-artifact@v5
@@ -2452,6 +2503,7 @@ jobs:
     needs:
       - rust-lint
       - rust-test
+      - rust-coverage
       - rust-audit
       - cargo-deny
       - frontend-lint
@@ -2516,6 +2568,7 @@ jobs:
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Lint (fmt + clippy) | ${{ needs.rust-lint.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Tests | ${{ needs.rust-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rust Coverage | ${{ needs.rust-coverage.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Rust Security Audit | ${{ needs.rust-audit.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Cargo Deny (License + Security + Bans) | ${{ needs.cargo-deny.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate（运行期 DDL 零新增） | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
@@ -2562,7 +2615,7 @@ jobs:
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
           # [P3-6] RESULTS 补齐两个 needs 已声明但未纳入门控判定的 job（此前其失败不会让汇总变红）
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.schema-defense-drift.result }} ${{ needs.error-handling-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.hrm-setup-smoke.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-coverage.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.schema-defense-drift.result }} ${{ needs.error-handling-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.hrm-setup-smoke.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
 
           FAILED=false
           for result in $RESULTS; do
