@@ -33,6 +33,24 @@ impl WipStatus {
             _ => None,
         }
     }
+
+    /// pending → in_progress；in_progress → completed / transferred；
+    /// completed、transferred 为终态；同态幂等。
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        matches!(
+            (self, target),
+            (Self::Pending, Self::InProgress)
+                | (Self::InProgress, Self::Completed | Self::Transferred)
+        )
+    }
+
+    /// 仍可发生工序转移的活跃态。
+    pub fn transferable_from() -> &'static [&'static str] {
+        &["pending", "in_progress"]
+    }
 }
 
 #[cfg(test)]
@@ -57,5 +75,16 @@ mod tests {
             );
         }
         assert_eq!(WipStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn transition_and_transferable_matrix() {
+        use WipStatus::*;
+        assert!(Pending.can_transition_to(InProgress));
+        assert!(!Pending.can_transition_to(Completed));
+        assert!(InProgress.can_transition_to(Completed));
+        assert!(InProgress.can_transition_to(Transferred));
+        assert!(!Completed.can_transition_to(InProgress));
+        assert_eq!(WipStatus::transferable_from(), &["pending", "in_progress"]);
     }
 }

@@ -748,7 +748,12 @@ pub async fn update_wip(
         }
     };
 
-    let status = match req.status.as_deref() {
+    let tenant_id = match crate::shared::permission::require_write_tenant(&claims) {
+        Ok(t) => t,
+        Err(resp) => return resp,
+    };
+
+    let requested_status = match req.status.as_deref() {
         None => None,
         Some(raw) if raw.trim().is_empty() => None,
         Some(raw) => match WipStatus::from_db_str(raw) {
@@ -756,7 +761,36 @@ pub async fn update_wip(
             None => return ApiResponse::bad_request("无效的在制品状态"),
         },
     };
-    let result = sqlx::query!(
+
+    // 先读未删除当前态（按租户），终态 completed/transferred 不再接受更新
+    let current: Option<(Option<String>,)> = match sqlx::query_as(
+        "SELECT status FROM mes.wips WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("查询WIP当前状态失败: {}", e);
+            return ApiResponse::server_error("更新WIP失败");
+        }
+    };
+    let Some((current_raw,)) = current else {
+        return ApiResponse::not_found("WIP不存在");
+    };
+    let current_status = current_raw
+        .as_deref()
+        .and_then(WipStatus::from_db_str)
+        .unwrap_or(WipStatus::DEFAULT);
+    let target_status = requested_status.unwrap_or(current_status);
+    if !current_status.can_transition_to(target_status) {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict("WIP 已完工/已转移，不允许回退或重复更新");
+    }
+    let status = Some(target_status);
+    let result = sqlx::query_as::<_, WipCreateRow>(
         r#"
         UPDATE mes.wips SET
             quantity = COALESCE($2, quantity),
@@ -765,20 +799,27 @@ pub async fn update_wip(
             notes = COALESCE($5, notes),
             updated_at = $6
         WHERE id = $1
+          AND tenant_id = $7
+          AND status IS NOT DISTINCT FROM $8
+          AND deleted_at IS NULL
         RETURNING 
             id, wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
             status, batch_no, start_time, last_transfer_time, operator, notes,
             created_at, updated_at
         "#,
-        id,
+    )
+    .bind(id)
+    .bind(
         req.quantity
             .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        status.map(WipStatus::as_db_str),
-        req.batch_no,
-        req.notes,
-        Utc::now(),
     )
+    .bind(status.map(WipStatus::as_db_str))
+    .bind(req.batch_no)
+    .bind(req.notes)
+    .bind(Utc::now())
+    .bind(tenant_id)
+    .bind(current_raw.as_deref())
     .fetch_optional(&mut scope)
     .await;
 
@@ -827,7 +868,7 @@ pub async fn update_wip(
             };
             ApiResponse::success(wip, "WIP更新成功")
         }
-        None => ApiResponse::not_found("WIP不存在"),
+        None => ApiResponse::conflict("WIP状态已被并发修改，更新失败"),
     }
 }
 
@@ -871,7 +912,7 @@ pub async fn delete_wip(
     let result = sqlx::query(
         r#"
         UPDATE mes.wips SET deleted_at = NOW()
-        WHERE id = $1 AND status = $2
+        WHERE id = $1 AND status = $2 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -925,7 +966,7 @@ pub async fn transfer_wip(
         return e;
     }
     // 写路径必须有确定租户：先于父行查询判定，服务身份缺租户头一律 400。
-    let _tenant_id = match require_tenant(&claims, &headers) {
+    let tenant_id = match require_tenant(&claims, &headers) {
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
@@ -971,14 +1012,15 @@ pub async fn transfer_wip(
         }
     };
 
-    // 子表从父行继承租户。
-    let wip_tenant: Option<Uuid> =
-        sqlx::query_scalar("SELECT tenant_id FROM mes.wips WHERE id = $1")
-            .bind(req.wip_id)
-            .fetch_optional(&mut scope)
-            .await
-            .ok()
-            .flatten();
+    let current_status = wip
+        .status
+        .as_deref()
+        .and_then(WipStatus::from_db_str)
+        .unwrap_or(WipStatus::DEFAULT);
+    if !WipStatus::transferable_from().contains(&current_status.as_db_str()) {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict("WIP 已完工/已转移，不允许继续转移");
+    }
 
     let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
@@ -1013,7 +1055,7 @@ pub async fn transfer_wip(
             .clone()
             .unwrap_or_else(|| "process_transfer".to_string()),
         req.notes.clone(),
-        wip_tenant,
+        tenant_id,
     )
     .fetch_one(&mut scope)
     .await;
@@ -1027,7 +1069,7 @@ pub async fn transfer_wip(
         }
     };
 
-    let _ = sqlx::query!(
+    let wip_update = sqlx::query(
         r#"
         UPDATE mes.wips SET
             current_process_id = COALESCE($2, current_process_id),
@@ -1035,14 +1077,32 @@ pub async fn transfer_wip(
             last_transfer_time = $4,
             updated_at = $4
         WHERE id = $1
+          AND tenant_id = $5
+          AND status = ANY($6)
+          AND deleted_at IS NULL
         "#,
-        req.wip_id,
-        req.to_process_id,
-        req.to_work_station_id,
-        now,
     )
+    .bind(req.wip_id)
+    .bind(req.to_process_id)
+    .bind(req.to_work_station_id)
+    .bind(now)
+    .bind(tenant_id)
+    .bind(WipStatus::transferable_from())
     .execute(&mut scope)
     .await;
+
+    match wip_update {
+        Ok(result) if result.rows_affected() > 0 => {}
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::conflict("WIP 状态已被并发修改，转移失败");
+        }
+        Err(e) => {
+            tracing::error!("Failed to update WIP after transfer: {}", e);
+            let _ = scope.rollback().await;
+            return ApiResponse::server_error("WIP转移失败");
+        }
+    }
 
     let from_process_name = if let Some(pid) = req.from_process_id {
         sqlx::query!(
