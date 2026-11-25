@@ -91,7 +91,6 @@ macro_rules! require_test_db {
     };
 }
 
-
 /// 测试请求事务句柄：开启事务并按 tenant_middleware 的方式设置租户 GUC。
 async fn test_txn_cell(state: &AppState) -> RlsTxnCell {
     let mut txn = state.db.begin().await.ok();
