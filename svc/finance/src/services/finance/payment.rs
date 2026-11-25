@@ -451,9 +451,9 @@ impl FinanceService {
         )
         .await?;
 
-        sqlx::query(
+        let payment_update = sqlx::query(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET supplier_id = $1, supplier_name = $2, payment_method = $3, bank_account_id = $4, bank_name = $5, bank_account_no = $6, total_amount = $7, remark = $8, updated_at = NOW() \
-             WHERE tenant_id = $9 AND id = $10"),
+             WHERE tenant_id = $9 AND id = $10 AND status = ANY($11) AND deleted_at IS NULL"),
         )
         .bind(req.supplier_id)
         .bind(&req.supplier_name)
@@ -465,8 +465,14 @@ impl FinanceService {
         .bind(&req.remark)
         .bind(tenant_id)
         .bind(payment_id)
+        .bind(crate::modules::ap_payment_status::PaymentStatus::DRAFT_ONLY)
         .execute(&mut tx)
         .await?;
+        if payment_update.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "付款单已提交、已删除或状态已变化，不能继续编辑".to_string(),
+            ));
+        }
 
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -536,13 +542,20 @@ impl FinanceService {
         }
 
         let mut scope = self.write_scope(txn).await?;
-        sqlx::query(only_own_schema_query!(
+        let delete_result = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE finance.core_finance_payments SET deleted_at = NOW() WHERE id = $1"
+            "UPDATE finance.core_finance_payments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status = ANY($3) AND deleted_at IS NULL"
         ))
         .bind(payment_id)
+        .bind(tenant_id)
+        .bind(crate::modules::ap_payment_status::PaymentStatus::DRAFT_ONLY)
         .execute(&mut scope)
         .await?;
+        if delete_result.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "付款单已提交、已删除或状态已变化，不能删除".to_string(),
+            ));
+        }
 
         scope.commit().await?;
 
