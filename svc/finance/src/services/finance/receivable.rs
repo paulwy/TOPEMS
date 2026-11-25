@@ -9,6 +9,7 @@ fn decimal_from_value(v: Option<&Value>) -> Option<Decimal> {
         .and_then(Decimal::from_f64_retain)
 }
 
+use super::erp_ar_ap_status::ErpLedgerStatus;
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
 
@@ -159,7 +160,7 @@ impl FinanceService {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "INSERT INTO finance.erp_receivables (tenant_id, customer_name, amount, status, created_by)
-             VALUES ($1, $2, $3, 'unpaid', $4)
+             VALUES ($1, $2, $3, 'active', $4)
              RETURNING id, customer_name, amount, status, created_at"
         ))
         .bind(tenant_id)
@@ -193,9 +194,46 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let customer_name = req.get("customer_name").and_then(|v| v.as_str());
         let amount = decimal_from_value(req.get("amount"));
-        let status = req.get("status").and_then(|v| v.as_str());
+        let status = match req.get("status").and_then(|v| v.as_str()) {
+            None => None,
+            Some(raw) => match ErpLedgerStatus::from_db_str(raw) {
+                Some(status) => Some(status),
+                None => {
+                    return Err(TopemsError::ValidationFailed(
+                        "状态仅支持 active/inactive/archived".to_string(),
+                    ))
+                }
+            },
+        };
 
         let mut scope = self.write_scope(txn).await?;
+
+        let current_raw: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+            "finance",
+            "SELECT status FROM finance.erp_receivables \
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(receivable_id)
+        .fetch_optional(&mut scope)
+        .await?;
+        let current_raw =
+            current_raw.ok_or_else(|| TopemsError::NotFound("应收账款不存在".to_string()))?;
+        let current = ErpLedgerStatus::from_db_str(&current_raw).ok_or_else(|| {
+            TopemsError::ValidationFailed("应收账款状态不在规范集合内".to_string())
+        })?;
+        if current == ErpLedgerStatus::Archived {
+            return Err(TopemsError::ValidationFailed(
+                "已归档应收账款不可编辑".to_string(),
+            ));
+        }
+        if let Some(target) = status {
+            if !current.can_transition_to(target) {
+                return Err(TopemsError::ValidationFailed(
+                    "应收账款状态流转不合法".to_string(),
+                ));
+            }
+        }
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -204,16 +242,20 @@ impl FinanceService {
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
                  updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $4 AND id = $5
+             WHERE tenant_id = $4 AND id = $5 AND status = $6 AND deleted_at IS NULL
              RETURNING id, customer_name, amount, status, updated_at"
         ))
         .bind(customer_name)
         .bind(amount)
-        .bind(status)
+        .bind(status.map(ErpLedgerStatus::as_str))
         .bind(tenant_id)
         .bind(receivable_id)
-        .fetch_one(&mut scope)
+        .bind(current.as_str())
+        .fetch_optional(&mut scope)
         .await?;
+        let row = row.ok_or_else(|| {
+            TopemsError::ValidationFailed("应收账款状态已变化，请刷新后重试".to_string())
+        })?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let customer_name: String = sqlx::Row::get(&row, "customer_name");
@@ -238,17 +280,41 @@ impl FinanceService {
     ) -> Result<(), TopemsError> {
         let mut scope = self.write_scope(txn).await?;
 
-        let result = sqlx::query(only_own_schema_query!(
+        let current_raw: Option<String> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
-            "UPDATE finance.erp_receivables SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+            "SELECT status FROM finance.erp_receivables \
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
         ))
         .bind(tenant_id)
         .bind(receivable_id)
+        .fetch_optional(&mut scope)
+        .await?;
+        let current_raw =
+            current_raw.ok_or_else(|| TopemsError::NotFound("应收账款不存在".to_string()))?;
+        let current = ErpLedgerStatus::from_db_str(&current_raw).ok_or_else(|| {
+            TopemsError::ValidationFailed("应收账款状态不在规范集合内".to_string())
+        })?;
+        if !current.can_delete() {
+            return Err(TopemsError::ValidationFailed(
+                "启用中的应收账款不可删除，请先停用或归档".to_string(),
+            ));
+        }
+
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE finance.erp_receivables SET deleted_at = NOW() \
+             WHERE tenant_id = $1 AND id = $2 AND status = $3 AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(receivable_id)
+        .bind(current.as_str())
         .execute(&mut scope)
         .await?;
 
         if result.rows_affected() == 0 {
-            return Err(TopemsError::NotFound("应收账款不存在".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "应收账款状态已变化，请刷新后重试".to_string(),
+            ));
         }
 
         scope.commit().await?;
