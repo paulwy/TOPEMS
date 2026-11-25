@@ -284,3 +284,30 @@ stage1/stage2/stage3/stage5 的目标环境互斥：新库跑 1/2、存量生产
 所以：**全新环境不要用「raw psql 全量迁移」建库**，正确路径是「bootstrap_schemas.sql（超管）→ app 启动建骨架 → 迁移补列」。`bootstrap-check.sh` 因此不进 CI 必绿项，它是诊断工具；日常只盯默认模式的 40 条前置表缺失是否新增。
 
 两个已知的 canonical 先序缺口（记着，不假装通过）：`20261120170000` 依赖 `public.account_type`（来自 `20260725000000_business_base_tables`），`20261120235945` 依赖 `iam.users`——canonical 批要真跑，必须让 iam/base 链先于 unified-core canonical。
+
+## 17. 空库可复制建库路径（已实测跑通）
+
+§16 只做到了「证伪」：纯迁移文件无法从零建库。这一节把它做成了可复跑的三段式，并留下可执行验收脚本。
+
+**建库四步（`scripts/db/bootstrap-check.sh --baseline database/fixtures/baseline_schema_20261125.sql.gz`）**
+
+1. `database/scripts/bootstrap_schemas.sql`（超管）：62 个 schema 唯一入口 + 7 个扩展 + `public` 属主改 `topems_owner`。
+2. 灌结构基线 `database/fixtures/baseline_schema_20261125.sql.gz`（`pg_dump --schema-only --no-owner --no-privileges`，229 KB gz / 3.4 MB 明文 / 1334 张表 / 1227 条策略）。生成时剔除 `CREATE SCHEMA`、`CREATE EXTENSION`、`ALTER SCHEMA`、`COMMENT ON EXTENSION`——schema 与扩展由第 1 步负责，不重复。
+3. `database/scripts/converge_owner.sql`（超管）：属主收敛到 `topems_owner`，`topems_app` 拿 USAGE + DML + `public/erp/finance/master_data/hrm` 的 CREATE，并写 default privileges。
+4. 以 `topems_owner` 跑 `stage2-b-class + stage4-replay`（84 个），每个文件**单事务**（`psql -1`），会话预置 `app.tenant_id`。
+
+**实测结果**：67 成功 / 16 已达标跳过 / 1 失败；最终 1327 表 / 17774 列 / 4380 索引 / 1222 策略。
+
+唯一失败是 `20261118125000_seed_module_umbrella_permissions.sql`——它断言 admin 已绑定 69 条权限，而空库只有结构没有数据。这是数据种子，不是结构缺口，留待「建库后初始化数据」那一步。
+
+**与现库的 10 张表差量是现库的残留，不是新库缺口**：cleanup 迁移按设计要 drop 的遗留表（`bi.audit_logs`、`hrm.payroll_records` 等 6 张 hrm、`mobile.mobile_leave_applications`、`pm.pm_master_data_refs`、`public.core_file_folders`）在现库还活着，新库跑完就被清掉。对应文件：`20261119110000_drop_dead_tables_batch2`、`20261121201000_analytics_drop_resurrected_dead_tables`、`20261121111000_mobile_drop_resurrected_dead_tables`、`20261121131000_pm_drop_resurrected_dead_tables`、`20261120235950_unified_core_drop_resurrected_dead_tables`、`20260908000012_dead_tables_cleanup`。
+
+**stage1-canonical 与基线互斥**：canonical 是「空库自建整表」，基线里已是现网真实列集合；两者硬凑会在已有表上撞「索引列不存在」（实测 `core.core_plugins.owner_tenant_id`、`mes.production_records.equipment_id`）。所以脚本在 `--baseline` 模式自动跳过 stage1；不带基线时才跑 canonical（此时 88 成功 / 16 跳过 / 4 失败，4 条都是 canonical 与现库列差或不依赖数据的断言）。
+
+**三个把结果跑偏的坑（都已在脚本里修掉）**
+
+- `gunzip -c file.sql.gz | psql` 走 stdin：psql 只执行到第一句就停（日志只剩 `set_config`），表只建了 525 张。改成先解压到临时文件再 `-f`。
+- 逐文件跑不加 `-1`：`system_settings_company_scope` 用 `set_config('app.w12b2_pre_rows', ..., true)`（事务级）在同一文件里传中间值，逐语句自动提交会丢，报 `invalid input syntax for type bigint: ""`。加 `-1` 后 3 条此类迁移直接过。
+- 不预置 `app.tenant_id`：部分迁移用 `EXECUTE format(...)` 在 DDL 时求值该 GUC，裸 psql 直接 `unrecognized configuration parameter`。会话预置 nil UUID（与 `20261023000005` 里「全租户」约定一致），13 条从失败转为成功；且核对过没有把字面量烘进策略——新库 nil-uuid 策略 398 条 < 现库 488 条，说明没多写。
+
+**结论**：全新环境的标准路径 = 超管 bootstrap + 结构基线 + converge + 单事务跑 stage2/4；`--full`（全量 880 个迁移）只用于诊断，永远不该被当成建库入口。`bootstrap-check.sh --baseline` 可作空库验收，跑完即删库；`--keep` 留库手工验。
