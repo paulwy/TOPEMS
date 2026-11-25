@@ -970,7 +970,7 @@ pub async fn update_production_order(
             workshop_id = COALESCE($7, workshop_id),
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND status = ANY($11) AND tenant_id = $10::uuid
+        WHERE id = $1 AND status = ANY($11) AND tenant_id = $10::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1174,7 +1174,7 @@ pub async fn start_production_order(
             status = $5,
             actual_start_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid
+        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1290,7 +1290,7 @@ pub async fn complete_production_order(
             completed_quantity = quantity,
             actual_end_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid
+        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1404,7 +1404,7 @@ pub async fn cancel_production_order(
         UPDATE mes.production_orders SET
             status = $4,
             updated_at = $2
-        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid
+        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1517,7 +1517,7 @@ pub async fn release_production_order(
         UPDATE mes.production_orders SET
             status = $4,
             updated_at = $2
-        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid
+        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
