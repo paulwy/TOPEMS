@@ -13,8 +13,10 @@
 #     --log /Users/xingzhai/Library/Logs/topems/server.err.log
 #
 #   带登录态的读回归（可选，给 1–2 条真实模块读接口）：
-#   TOKEN=... bash scripts/ops/post-swap-regression-20261124.sh \
+#   TOKEN=... TENANT_ID=... bash scripts/ops/post-swap-regression-20261124.sh \
 #     --authed-path "/api/core/users?page=1&page_size=5"
+#   注：生产 tenant 中间件要求 X-Tenant-Id 头，缺了会 400「缺少租户上下文」；
+#       不给 TOKEN 时导航/运行时接口只会 401，判据必然 FAIL——判据要真值就带 token+tenant。
 #
 # 判据（任一 FAIL 即建议立刻换回 bin/topems-server.bak-20261124-1325）：
 #   1) 二进制 sha256 前 8 位 = fe23cda1
@@ -34,6 +36,7 @@ UPLOADS_DIR=""
 LOG_FILE=""
 LOG_TAIL=300
 TOKEN="${TOKEN:-}"
+TENANT_ID="${TENANT_ID:-}"
 AUTHED_PATHS=()
 
 while [[ $# -gt 0 ]]; do
@@ -45,6 +48,7 @@ while [[ $# -gt 0 ]]; do
     --log) LOG_FILE="$2"; shift 2 ;;
     --log-tail) LOG_TAIL="$2"; shift 2 ;;
     --token) TOKEN="$2"; shift 2 ;;
+    --tenant-id) TENANT_ID="$2"; shift 2 ;;
     --authed-path) AUTHED_PATHS+=("$2"); shift 2 ;;
     --skip-sha) EXPECT_SHA_PREFIX=""; shift ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
@@ -55,8 +59,15 @@ FAILS=0
 pass() { echo "PASS  $1"; }
 fail() { echo "FAIL  $1"; FAILS=$((FAILS+1)); }
 
-http_code() { curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$1"; }
-http_body() { curl -s --max-time 10 "$1"; }
+# 生产 tenant 中间件要求显式租户头（X-Tenant-Id），否则 400「缺少租户上下文」；
+# 无 TOKEN 时导航接口必然 401. 给了 token/tenant 就统一带上。
+AUTH_HEADERS=()
+if [[ -n "$TOKEN" ]]; then AUTH_HEADERS+=(-H "Authorization: Bearer ${TOKEN}"); fi
+if [[ -n "$TENANT_ID" ]]; then AUTH_HEADERS+=(-H "X-Tenant-Id: ${TENANT_ID}"); fi
+
+# bash 3.2 + set -u 下空数组直接展开会报 unbound，故用 ${arr[@]+...} 惯用法
+http_code() { curl -s -o /dev/null -w '%{http_code}' --max-time 10 ${AUTH_HEADERS[@]+"${AUTH_HEADERS[@]}"} "$1"; }
+http_body() { curl -s --max-time 10 ${AUTH_HEADERS[@]+"${AUTH_HEADERS[@]}"} "$1"; }
 
 echo "== 换入后五项回归：${BASE} =="
 
@@ -127,7 +138,7 @@ if [[ ${#AUTHED_PATHS[@]} -gt 0 ]]; then
     fail "给了 --authed-path 但没有 TOKEN，无法验证登录态读"
   else
     for p in "${AUTHED_PATHS[@]}"; do
-      code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -H "Authorization: Bearer ${TOKEN}" "$BASE$p")"
+      code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 ${AUTH_HEADERS[@]+"${AUTH_HEADERS[@]}"} "$BASE$p")"
       [[ "$code" == "200" ]] && pass "GET $p → ${code}" || fail "GET $p → ${code}"
     done
   fi
