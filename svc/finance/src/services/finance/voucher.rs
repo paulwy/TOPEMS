@@ -201,8 +201,11 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("只有草稿凭证可以提交，或凭证已不存在".to_string())
+        })?;
 
         before.status.validate_submit().map_err(|e| {
             let ModelValidationError::InvalidStatus(msg) = e;
@@ -211,13 +214,16 @@ impl FinanceService {
 
         let voucher = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2 AND status = 'draft'
+             WHERE tenant_id = $1 AND id = $2 AND status = 'draft' AND deleted_at IS NULL
              RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("凭证状态已被并发修改，提交失败".to_string())
+        })?;
 
         scope.commit().await?;
 
@@ -238,8 +244,11 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("只有已提交凭证可以审核，或凭证已不存在".to_string())
+        })?;
 
         before.status.validate_approve().map_err(|e| {
             let ModelValidationError::InvalidStatus(msg) = e;
@@ -248,14 +257,17 @@ impl FinanceService {
 
         let voucher = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'approved', approved_by = $3, updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
+             WHERE tenant_id = $1 AND id = $2 AND status = 'submitted' AND deleted_at IS NULL
              RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(approved_by)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("凭证状态已被并发修改，审核失败".to_string())
+        })?;
 
         scope.commit().await?;
 
@@ -276,8 +288,11 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("只有已提交凭证可以驳回，或凭证已不存在".to_string())
+        })?;
 
         before.status.validate_reject().map_err(|e| {
             let ModelValidationError::InvalidStatus(msg) = e;
@@ -286,13 +301,16 @@ impl FinanceService {
 
         let voucher = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
+             WHERE tenant_id = $1 AND id = $2 AND status = 'submitted' AND deleted_at IS NULL
              RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("凭证状态已被并发修改，驳回失败".to_string())
+        })?;
 
         scope.commit().await?;
 
@@ -313,8 +331,11 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("只有已审核凭证可以过账，或凭证已不存在".to_string())
+        })?;
 
         voucher.status.validate_post().map_err(|e| {
             let ModelValidationError::InvalidStatus(msg) = e;
@@ -429,7 +450,7 @@ impl FinanceService {
         // 幂等状态原子门：仅 approved 状态可过账。并发/重试时状态已变 → UPDATE 0 行 → 回滚拒绝
         let updated_voucher = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'posted', posted_by = $3, updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2 AND status = 'approved'
+             WHERE tenant_id = $1 AND id = $2 AND status = 'approved' AND deleted_at IS NULL
              RETURNING *"),
         )
         .bind(tenant_id)
