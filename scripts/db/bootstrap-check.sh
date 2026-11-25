@@ -33,6 +33,10 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+if [ -n "$ONLY_STAGE" ]; then
+    echo "提示：--only-stage 已废弃，当前按 release-plan 默认阶段或 --full 执行" >&2
+fi
+
 PLAN="$ROOT/database/migrations-release-plan.tsv"
 [ -f "$PLAN" ] || { echo "缺少 $PLAN，先跑 scripts/db/release-plan.sh" >&2; exit 2; }
 
@@ -92,7 +96,8 @@ fi
 # 未设该 GUC 就直接报 unrecognized configuration parameter。用 nil UUID（全租户/全局
 # 语义，与 20261023000005 里的约定一致）预置，保证裸 psql 也能跑。
 export PGOPTIONS="${PGOPTIONS:-} -c app.tenant_id=00000000-0000-0000-0000-000000000000"
-export PGOPTIONS="$(echo "$PGOPTIONS" | sed 's/^ //')"
+PGOPTIONS="$(echo "$PGOPTIONS" | sed 's/^ //')"
+export PGOPTIONS
 
 echo "[3/4] 依次执行 $(grep -c . "$LIST_FILE") 个迁移（topems_owner）"
 ok=0; bad=0; skip=0; bad_list=""
@@ -133,4 +138,7 @@ if [ $KEEP -eq 0 ]; then
 else
     echo "临时库保留：${DB}"
 fi
-exit $([ "$bad" -eq 0 ] && echo 0 || echo 1)
+if [ "$bad" -eq 0 ]; then
+    exit 0
+fi
+exit 1

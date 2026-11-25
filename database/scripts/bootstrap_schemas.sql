@@ -91,5 +91,16 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gin;
-CREATE EXTENSION IF NOT EXISTS vector;
-CREATE EXTENSION IF NOT EXISTS postgis;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'vector') THEN
+    CREATE EXTENSION IF NOT EXISTS vector;
+  ELSE
+    RAISE NOTICE '跳过 vector：当前 PostgreSQL 镜像未提供该扩展';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'postgis') THEN
+    CREATE EXTENSION IF NOT EXISTS postgis;
+  ELSE
+    RAISE NOTICE '跳过 postgis：当前 PostgreSQL 镜像未提供该扩展（GIS 在线门禁需换用含 postgis 的镜像）';
+  END IF;
+END $$;

@@ -37,37 +37,33 @@ vi.mock('@/api/ticket', () => ({
   ticketApi: {
     listTickets: vi.fn().mockResolvedValue({
       data: {
-        data: {
-          items: [
-            { id: 'tk-1', subject: '登录失败', status: 'open', severity: 'high' },
-            { id: 'tk-2', subject: '报表导出慢', status: 'in_progress', severity: 'medium' },
-          ],
-          total: 2,
-        },
+        items: [
+          { id: 'tk-1', subject: '登录失败', status: 'open', severity: 'high' },
+          { id: 'tk-2', subject: '报表导出慢', status: 'in_progress', severity: 'medium' },
+        ],
+        total: 2,
       },
     }),
     createTicket: vi.fn().mockResolvedValue({
-      data: { data: { id: 'tk-9', subject: '新工单' } },
+      data: { id: 'tk-9', subject: '新工单' },
     }),
     updateTicket: vi.fn().mockResolvedValue({
-      data: { data: { id: 'tk-1', status: 'in_progress' } },
+      data: { id: 'tk-1', status: 'in_progress' },
     }),
     getStats: vi.fn().mockResolvedValue({
       data: {
-        data: {
-          total: 5,
-          open: 2,
-          in_progress: 1,
-          pending: 0,
-          resolved: 1,
-          closed: 1,
-          sla_breached: 0,
-        },
+        total: 5,
+        open: 2,
+        in_progress: 1,
+        pending: 0,
+        resolved: 1,
+        closed: 1,
+        sla_breached: 0,
       },
     }),
-    getComments: vi.fn().mockResolvedValue({ data: { data: [] } }),
-    getTicketSla: vi.fn().mockResolvedValue({ data: { data: null } }),
-    addComment: vi.fn().mockResolvedValue({ data: { data: {} } }),
+    getComments: vi.fn().mockResolvedValue({ data: [] }),
+    getTicketSla: vi.fn().mockResolvedValue({ data: null }),
+    addComment: vi.fn().mockResolvedValue({ data: {} }),
   },
 }));
 
