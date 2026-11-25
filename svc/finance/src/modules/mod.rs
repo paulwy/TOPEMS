@@ -6983,7 +6983,7 @@ pub async fn get_expense_approval(
 // gate: admin-only
 pub async fn update_expense_approval(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<ExpenseApprovalUpsert>,
@@ -7023,6 +7023,10 @@ pub async fn update_expense_approval(
         .approver_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::bad_request("缺少租户上下文");
+    }
 
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -7040,9 +7044,10 @@ pub async fn update_expense_approval(
 
     let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "finance",
-        "SELECT status FROM finance.expense_approvals WHERE id = $1 AND deleted_at IS NULL"
+        "SELECT status FROM finance.expense_approvals WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
     ))
     .bind(id_uuid)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -7085,7 +7090,7 @@ pub async fn update_expense_approval(
                approver_id = COALESCE($12, approver_id),
                approver_name = COALESCE($13, approver_name),
                updated_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL
+           WHERE id = $1 AND tenant_id = $16::uuid AND deleted_at IS NULL
              AND status = ANY($14::text[]) AND status = $15
            RETURNING id, expense_no, employee_id, employee_name, department, expense_date,
                      expense_type, total_amount, status, description, approver_id, approver_name,
@@ -7106,6 +7111,7 @@ pub async fn update_expense_approval(
     .bind(req.approver_name)
     .bind(&allowed_from)
     .bind(current_status.as_str())
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
@@ -7146,7 +7152,7 @@ pub async fn update_expense_approval(
 // gate: admin-only
 pub async fn delete_expense_approval(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<String> {
@@ -7154,6 +7160,10 @@ pub async fn delete_expense_approval(
         Ok(u) => u,
         Err(_) => return ApiResponse::not_found("费用审批不存在"),
     };
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::bad_request("缺少租户上下文");
+    }
 
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -7173,16 +7183,17 @@ pub async fn delete_expense_approval(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.expense_approvals SET deleted_at = NOW()
-           WHERE id = $1 AND deleted_at IS NULL
+           WHERE id = $1 AND tenant_id = $3::uuid AND deleted_at IS NULL
              AND status = ANY($2::text[])"#
     ))
     .bind(id_uuid)
     .bind(ExpenseApprovalStatus::DELETABLE.as_slice())
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "删除成功"),
-        Ok(_) => ApiResponse::not_found("费用审批不存在或状态不允许删除"),
+        Ok(_) => ApiResponse::conflict("费用审批不存在、已删除或状态不允许删除"),
         Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!(
             "删除费用审批失败: {}",
             e
@@ -7193,13 +7204,14 @@ pub async fn delete_expense_approval(
 // gate: admin-only
 pub async fn submit_expense_approval(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     transition_expense_approval(
         &state,
         txn_arc,
+        &claims,
         &id,
         ExpenseApprovalStatus::Draft,
         ExpenseApprovalStatus::Pending,
@@ -7220,6 +7232,7 @@ pub async fn approve_expense_approval(
     transition_expense_approval(
         &state,
         txn_arc,
+        &claims,
         &id,
         ExpenseApprovalStatus::Pending,
         ExpenseApprovalStatus::Approved,
@@ -7244,7 +7257,7 @@ pub async fn approve_expense_approval(
 )]
 pub async fn reject_expense_approval(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<String>,
     Json(req): Json<serde_json::Value>,
@@ -7253,6 +7266,7 @@ pub async fn reject_expense_approval(
     transition_expense_approval(
         &state,
         txn_arc,
+        &claims,
         &id,
         ExpenseApprovalStatus::Pending,
         ExpenseApprovalStatus::Rejected,
@@ -7266,6 +7280,7 @@ pub async fn reject_expense_approval(
 async fn transition_expense_approval(
     state: &AppState,
     txn_arc: topems_shared_auth::middleware::tenant::RlsTxnCell,
+    claims: &Claims,
     id: &str,
     from: ExpenseApprovalStatus,
     to: ExpenseApprovalStatus,
@@ -7276,6 +7291,10 @@ async fn transition_expense_approval(
     let Ok(id_uuid) = Uuid::parse_str(id) else {
         return ApiResponse::not_found("费用审批不存在");
     };
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::bad_request("缺少租户上下文");
+    }
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return crate::shared::err_resp(TopemsError::DatabaseTransaction(
@@ -7293,7 +7312,8 @@ async fn transition_expense_approval(
                approver_name = CASE WHEN $3::varchar = 'approved' THEN $4 ELSE approver_name END,
                approval_note = COALESCE($5, approval_note),
                updated_at = NOW()
-           WHERE id = $1 AND status = $2::varchar AND deleted_at IS NULL
+           WHERE id = $1 AND tenant_id = $6::uuid
+             AND status = $2::varchar AND deleted_at IS NULL
            RETURNING status"#
     ))
     .bind(id_uuid)
@@ -7301,6 +7321,7 @@ async fn transition_expense_approval(
     .bind(to.as_str())
     .bind(actor)
     .bind(note)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     match row {
