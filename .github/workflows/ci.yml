@@ -881,6 +881,9 @@ jobs:
           fi
 
   rust-audit:
+    # 本作业不安装 sccache，必须清空全局 RUSTC_WRAPPER，否则 cargo install 直接失败。
+    env:
+      RUSTC_WRAPPER: ''
     name: Rust Security Audit
     needs: [changes, rust-test]
     if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
@@ -915,6 +918,9 @@ jobs:
           echo "| cargo audit | ✅ No known vulnerabilities |" >> $GITHUB_STEP_SUMMARY
 
   cargo-deny:
+    # 本作业不安装 sccache，必须清空全局 RUSTC_WRAPPER，否则 cargo install 直接失败。
+    env:
+      RUSTC_WRAPPER: ''
     name: Cargo Deny (License + Security + Bans)
     needs: [changes, rust-test]
     if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
