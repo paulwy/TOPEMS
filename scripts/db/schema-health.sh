@@ -143,8 +143,12 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
                 BEGIN { n=split(wl,a," "); for (i=1;i<=n;i++) if (a[i]!="") w[a[i]]=1 }
                 { if ($2==1 && ($1 in w)) mark="✓ 已判读接受"; else mark=($2==1 ? "⚠ 落后" : " 领先");
                   printf("    %-18s %s%s\n", $1, mark, $3) }' | head -30
+            # 2026-11-25: 表级落后校验不再依赖 schema 级落后——一个"整体领先"的 schema 里
+            # 仍可能有个别表列数少于基线（例如 public 领先 columns+2003，但 public.core_tickets 只有 2 列）。
             if [ "$NBACK" -gt 0 ]; then
                 echo "  ⚠ 有 $NBACK 个 schema 的列/表少于基线（可能漏迁移，也可能只是基线快照更早）"
+            fi
+            echo "  [2b] 表级落后校验（基线有现库无 / 列数偏少）"
                 # shellcheck disable=SC2016
                 COL_SQL='select n.nspname||$$.$$||c.relname, count(*) from pg_attribute a
                            join pg_class c on c.oid=a.attrelid
@@ -154,7 +158,7 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
                           group by 1 order by 1'
                 psql "$DSN" -tAq -c "$COL_SQL" 2>/dev/null | grep . | sort > /tmp/schema_health_live_tbl.txt
                 psql "$TMPDB" -tAq -c "$COL_SQL" 2>/dev/null | grep . | sort > /tmp/schema_health_base_tbl.txt
-                awk -F'|' -v wl="$WAIVED_TBL" '
+                FINDINGS=$(awk -F'|' -v wl="$WAIVED_TBL" '
                     BEGIN { n=split(wl,a," "); for (i=1;i<=n;i++) if (a[i]!="") w[a[i]]=1 }
                     NR==FNR { b[$1]=$2+0; next }
                     { l[$1]=$2+0 }
@@ -163,11 +167,13 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
                             if (!(t in l)) printf("%d|  表缺失  %s（基线 %d 列）\n", b[t], t, b[t]);
                             else if (l[t] < b[t]) printf("%d|  列偏少  %-40s 现库 %d / 基线 %d\n", b[t]-l[t], t, l[t], b[t]) } }' \
                     /tmp/schema_health_base_tbl.txt /tmp/schema_health_live_tbl.txt \
-                    | sort -t'|' -k1,1nr | head -15 | cut -d'|' -f2
-                BEHIND=1
-            else
-                echo "  ✓ 无落后项（差异均为现库领先基线：代码/迁移跑在基线之前属正常）"
-            fi
+                    | sort -t'|' -k1,1nr | head -20 | cut -d'|' -f2)
+                if [ -n "$FINDINGS" ]; then
+                    echo "$FINDINGS" | sed 's/^/    /'
+                    echo "    （逐表落后：先确认代码是否真引用这些列；确认不用的记入 database/schema-diff-waivers.tsv）"
+                else
+                    echo "    ✓ 逐表列数不落后基线"
+                fi
         fi
     else
         echo "  - 跳过：基线装载失败（见 /tmp/schema_health_load.log）"
