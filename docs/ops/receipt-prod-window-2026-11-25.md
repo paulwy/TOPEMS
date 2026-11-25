@@ -93,10 +93,12 @@
 
   合计 **0 FAIL**。
 
-### 回归脚本的两处订正（生产实测暴露）
+### 回归脚本的四处订正（生产实测暴露）
 
 1. 生产 tenant 中间件要求显式 `X-Tenant-Id` 头，缺了返回 `400 缺少租户上下文`；脚本原先把导航接口当匿名请求，必然 401 → 加 `--tenant-id` / `TENANT_ID`，统一注入 `Authorization` + `X-Tenant-Id`。
 2. 脚本注释里的登录态示例路径 `/api/core/users` 是 404；实际路由为 `/api/core/iam/users`（`svc/unified-core/src/routes/iam.rs:86`）。
+3. 示例日志路径 `~/Library/Logs/topems/server.err.log` 在生产不存在，会让“日志无异常签名”这条判据**假 FAIL**；真实值取自 plist `StandardErrorPath` = `/Users/xingzhai/topems/logs/server.err`。
+4. 示例上传目录写的是 `/Users/xingzhai/uploads`（不存在）→ 改 `/Users/xingzhai/topems/storage`；FAIL 提示里指向的回滚件旧名 `bak-20261124-1325` 也改成真实的 `bak-20261125-0925`。
 
 ## 6. 回滚资产（保留）
 
