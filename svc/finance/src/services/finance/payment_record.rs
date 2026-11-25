@@ -39,6 +39,11 @@ impl PaymentRecordStatus {
         }
     }
 
+    /// 仅停用态可软删；active 需先停用，archived/written_off 为终态台账。
+    fn deletable_from() -> &'static [&'static str] {
+        &["inactive"]
+    }
+
     fn can_transition_to(self, target: Self) -> Result<(), String> {
         if self == target {
             return Ok(());
@@ -332,17 +337,44 @@ impl FinanceService {
     ) -> Result<(), TopemsError> {
         let mut scope = self.write_scope(txn).await?;
 
-        let result = sqlx::query(only_own_schema_query!(
+        let current_row = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE finance.erp_payment_records SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"
+            "SELECT status::text AS status FROM finance.erp_payment_records
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
         ))
         .bind(tenant_id)
         .bind(payment_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("付款记录不存在".to_string()))?;
+        let current_raw: Option<String> = sqlx::Row::get(&current_row, "status");
+        let current_status = current_raw
+            .as_deref()
+            .and_then(PaymentRecordStatus::from_db_str)
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed("付款记录当前状态不在规范集合内".to_string())
+            })?;
+        if !PaymentRecordStatus::deletable_from().contains(&current_status.as_str()) {
+            return Err(TopemsError::ValidationFailed(
+                "仅停用状态的付款记录可删除；启用记录需先停用，归档/核销记录保留台账".to_string(),
+            ));
+        }
+
+        let result = sqlx::query(only_own_schema_query!(
+            "finance",
+            "UPDATE finance.erp_payment_records SET deleted_at = NOW()
+             WHERE tenant_id = $1 AND id = $2 AND status = ANY($3) AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(payment_id)
+        .bind(PaymentRecordStatus::deletable_from())
         .execute(&mut scope)
         .await?;
 
         if result.rows_affected() == 0 {
-            return Err(TopemsError::NotFound("付款记录不存在".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "付款记录状态已被并发修改，删除失败".to_string(),
+            ));
         }
 
         scope.commit().await?;
@@ -510,5 +542,6 @@ mod tests {
         assert!(Archived.can_transition_to(Active).is_err());
         assert!(WrittenOff.can_transition_to(Active).is_err());
         assert!(WrittenOff.can_transition_to(WrittenOff).is_ok());
+        assert_eq!(PaymentRecordStatus::deletable_from(), &["inactive"]);
     }
 }
