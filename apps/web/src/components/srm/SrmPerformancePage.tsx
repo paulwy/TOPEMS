@@ -4,6 +4,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { performanceSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
+import { unwrapList } from './unwrapList';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, Chip, Rating, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown, Award, Target, BarChart3 } from 'lucide-react';
@@ -45,7 +46,7 @@ const performanceApiAdapter: CrudApiAdapter = {
       return { data: [], total: 0 };
     }
 
-    const items = response.data.performances;
+    const items = unwrapList<SupplierPerformance>(response.data, 'performances');
     const search = params?.search?.toLowerCase() || '';
     const page = params?.page || 1; // CrudPage 传 1-based
     const pageSize = params?.pageSize || 10;

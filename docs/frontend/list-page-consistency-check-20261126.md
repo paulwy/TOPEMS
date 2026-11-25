@@ -71,3 +71,9 @@ FAIL  /wms/inbound               总数=2   行=0
 - 不进 PR CI：需要起后端 + 浏览器 + Chrome，成本高于收益；定位是**发版前/Nightly/改动 `ListPageTemplate` 或批量生成列表页之后**跑一遍。
 - `--all` 会遍历菜单里的非详情路由，其中看板、详情、无权限页会被 `SKIP(无表格)` 自然排除，不需要维护白名单。
 - 同类问题若出现在非 `ListPageTemplate` 的页面（自建表格），本脚本抓不到，需要单独补断言。
+
+## 配套：全站页面健康巡检
+
+本脚本只看「总数 vs 行」，接口失败会被空态掩盖（`/srm/contract` 就是这种），
+另见 `docs/frontend/page-health-check-20261126.md`（`pnpm check:pages`），
+抓 5xx / 前端未捕获异常 / 错误边界，两层一起跑才算把「列表页」这条线闭上。

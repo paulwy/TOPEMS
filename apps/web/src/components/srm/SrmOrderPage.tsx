@@ -3,6 +3,7 @@ import React from 'react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { orderSchema } from '@/schemas/srm/order';
 import { srmApi } from '@/api/srm';
+import { unwrapList } from './unwrapList';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography } from '@mui/material';
@@ -15,12 +16,12 @@ const SrmOrderStats: React.FC = () => {
     queryFn: async () => {
       const response = await srmApi.listPurchaseOrders();
       if (!response.success) throw new Error(i18n.t('pages.srm_order_page.k0'));
-      const items = (response.data || []) as Array<{
+      const items = unwrapList<{
         id?: string;
         status?: string;
         total_amount?: number;
         amount?: number;
-      }>;
+      }>(response.data, 'purchase_orders');
       return items.map((item) => ({
         ...item,
         total_amount: item.total_amount || item.amount || 0,
@@ -161,7 +162,7 @@ const orderApiAdapter: CrudApiAdapter = {
     if (!response.success) {
       throw new Error(i18n.t('pages.srm_order_page.k6'));
     }
-    const items = (response.data || []) as unknown as Array<Record<string, unknown>>;
+    const items = unwrapList<Record<string, unknown>>(response.data, 'purchase_orders');
     const adapted = items.map((item) => ({
       ...item,
       total_amount: (item.total_amount as number) || (item.amount as number) || 0,

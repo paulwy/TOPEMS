@@ -62,7 +62,9 @@
     "gen:api": "node ../../scripts/openapi/gen-types.mjs",
     "openapi:gen": "bash ../../scripts/openapi/generate.sh --with-types",
     "check:list-pages": "node scripts/check-list-page-consistency.mjs",
-    "check:list-pages:all": "node scripts/check-list-page-consistency.mjs --all --max 40"
+    "check:list-pages:all": "node scripts/check-list-page-consistency.mjs --all --max 40",
+    "check:pages": "node scripts/check-page-health.mjs",
+    "check:pages:all": "node scripts/check-page-health.mjs --all --include-dashboards --max 200"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

@@ -24,27 +24,20 @@
  * 退出码：0 全部一致（含被跳过的页不计失败）；1 存在「有总数没行」或脚本级错误。
  */
 import { chromium } from 'playwright';
+import { login as sharedLogin, installAuth, fetchMenuPaths as sharedMenuPaths, argOf, hasFlag } from './lib/auth-session.mjs';
 
 const argv = process.argv.slice(2);
-const arg = (name, dflt) => {
-  const hit = argv.find((a) => a.startsWith(`--${name}=`));
-  if (hit) return hit.split('=').slice(1).join('=');
-  const idx = argv.indexOf(`--${name}`);
-  if (idx >= 0 && argv[idx + 1] && !argv[idx + 1].startsWith('--')) return argv[idx + 1];
-  return dflt;
-};
-const has = (name) => argv.includes(`--${name}`);
 
-const WEB_BASE = arg('web', process.env.WEB_BASE || 'http://localhost:3000');
-const API_BASE = arg('api', process.env.API_BASE || 'http://127.0.0.1:8099');
+const WEB_BASE = argOf(argv, 'web', process.env.WEB_BASE || 'http://localhost:3000');
+const API_BASE = argOf(argv, 'api', process.env.API_BASE || 'http://127.0.0.1:8099');
 const USERNAME = process.env.USERNAME || 'admin';
 const PASSWORD = process.env.PASSWORD || 'Topems@2026';
 const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001';
-const PAGE_TIMEOUT = Number(arg('timeout', '35')) * 1000;
-const MAX_ROUTES = Number(arg('max', '12'));
-const JSON_OUT = arg('json', '');
-const ALL = has('all');
-const INCLUDE_DASHBOARD = has('include-dashboard');
+const PAGE_TIMEOUT = Number(argOf(argv, 'timeout', '35')) * 1000;
+const MAX_ROUTES = Number(argOf(argv, 'max', '12'));
+const JSON_OUT = argOf(argv, 'json', '');
+const ALL = hasFlag(argv, 'all');
+const INCLUDE_DASHBOARD = hasFlag(argv, 'include-dashboard') || hasFlag(argv, 'include-dashboards');
 
 // 默认抽查：覆盖改过模板后最容易踩的模块，且本机都有数据
 const DEFAULT_ROUTES = [
@@ -55,46 +48,18 @@ const DEFAULT_ROUTES = [
   '/finance/vouchers',
   '/scm/purchase-orders',
   '/wms/inventory',
-  '/hr/employees',
+  '/hrm/employees',
 ];
 
 const TOTAL_RE = /共\s*(\d+)\s*条/;
 const EMPTY_RE = /暂无数据/;
 
 async function login() {
-  const res = await fetch(`${API_BASE}/api/core/iam/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': TENANT_ID },
-    body: JSON.stringify({ username: USERNAME, password: PASSWORD }),
-  });
-  const body = await res.json().catch(() => null);
-  const data = body && body.data;
-  if (!res.ok || !data || !data.access_token) {
-    throw new Error(`登录失败：HTTP ${res.status} ${body ? JSON.stringify(body).slice(0, 120) : ''}`);
-  }
-  const user = data.user || {};
-  return {
-    token: data.access_token,
-    refresh: data.refresh_token || '',
-    expiresIn: Number(data.expires_in || 3600),
-    user: JSON.stringify(user),
-    roles: JSON.stringify(user.roles || []),
-    permissions: JSON.stringify(user.permissions || []),
-  };
+  return sharedLogin({ apiBase: API_BASE, tenantId: TENANT_ID, username: USERNAME, password: PASSWORD });
 }
 
 async function fetchMenuPaths(token) {
-  const res = await fetch(`${API_BASE}/api/core/menus`, {
-    headers: { Authorization: `Bearer ${token}`, 'X-Tenant-Id': TENANT_ID },
-  });
-  const body = await res.json().catch(() => null);
-  const items = (body && body.data && body.data.items) || [];
-  return items
-    .map((m) => m.path)
-    .filter((p) => typeof p === 'string' && p.startsWith('/') && !p.includes(':'))
-    .filter((p) => !p.includes('/detail'))
-    // 看板/首页/个人页默认跳过：它们本来就没有分页表格，逐页等超时纯浪费
-    .filter((p) => INCLUDE_DASHBOARD || !/(dashboard|\/home|\/profile|workbench|analytics)/.test(p));
+  return sharedMenuPaths({ apiBase: API_BASE, tenantId: TENANT_ID, token, includeDashboards: INCLUDE_DASHBOARD });
 }
 
 function dedupe(list) {
@@ -153,7 +118,7 @@ async function inspectRoute(page, route) {
 
 (async () => {
   const creds = await login();
-  const explicit = arg('routes', '');
+  const explicit = argOf(argv, 'routes', '');
   let routes = explicit
     ? explicit.split(',').map((s) => s.trim()).filter(Boolean)
     : ALL
@@ -165,23 +130,7 @@ async function inspectRoute(page, route) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 
   // 在页面脚本执行前把登录态写进 localStorage（同源每个导航都会先跑这段）
-  await context.addInitScript(
-    ({ token, refresh, expiresIn, user, roles, permissions, tenant }) => {
-      try {
-        const exp = String(Date.now() + expiresIn * 1000);
-        localStorage.setItem('token', token);
-        localStorage.setItem('token_expiry', exp);
-        if (refresh) localStorage.setItem('refresh_token', refresh);
-        localStorage.setItem('user', user);
-        localStorage.setItem('roles', roles);
-        localStorage.setItem('permissions', permissions);
-        localStorage.setItem('current_tenant_id', tenant);
-      } catch {
-        /* 隐私模式/禁用存储时忽略，页面会自行跳登录 */
-      }
-    },
-    { ...creds, tenant: TENANT_ID }
-  );
+  await installAuth(context, creds, TENANT_ID);
 
   const page = await context.newPage();
   const failures = [];

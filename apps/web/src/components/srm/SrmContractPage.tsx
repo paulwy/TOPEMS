@@ -4,6 +4,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { contractSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
+import { unwrapList } from './unwrapList';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { FileText, CheckCircle, Clock, Eye } from 'lucide-react';
@@ -38,7 +39,7 @@ const contractApiAdapter: CrudApiAdapter = {
     if (!response.success || !response.data) {
       return { data: [], total: 0 };
     }
-    const items = (response.data || []) as SupplierContract[];
+    const items = unwrapList<SupplierContract>(response.data, 'contracts');
     const search = params?.search?.toLowerCase() || '';
     const page = params?.page || 1; // CrudPage 传 1-based
     const pageSize = params?.pageSize || 10;

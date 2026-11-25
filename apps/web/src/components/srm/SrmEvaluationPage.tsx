@@ -4,6 +4,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { evaluationSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
+import { unwrapList } from './unwrapList';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, Rating, Chip, useTheme } from '@mui/material';
 import { FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
@@ -36,7 +37,7 @@ const evaluationApiAdapter: CrudApiAdapter = {
       return { data: [], total: 0 };
     }
 
-    const items = response.data as unknown as SupplierEvaluation[];
+    const items = unwrapList<SupplierEvaluation>(response.data, 'evaluations');
     const search = params?.search?.toLowerCase() || '';
     const status = params?.status as string | undefined;
     const page = params?.page || 1; // CrudPage 传 1-based
