@@ -53,6 +53,20 @@ impl WorkStationStatus {
     pub fn activate_from() -> &'static [&'static str] {
         &["inactive", "active"]
     }
+
+    /// 通用 update 只允许在“启用族”(active/available) 或停用族内部变化，
+    /// 跨族启停必须走 activate/deactivate 专用入口。
+    pub fn can_update_status_to(self, target: Self) -> bool {
+        match self {
+            Self::Active | Self::Available => matches!(target, Self::Active | Self::Available),
+            Self::Inactive => target == Self::Inactive,
+        }
+    }
+
+    /// 仅停用态可软删；启用族必须先停用。
+    pub fn deletable_from() -> &'static [&'static str] {
+        &["inactive"]
+    }
 }
 
 impl std::fmt::Display for WorkStationStatus {
@@ -80,5 +94,9 @@ mod tests {
         assert!(WorkStationStatus::deactivate_from().contains(&"available"));
         assert!(WorkStationStatus::activate_from().contains(&"inactive"));
         assert!(!WorkStationStatus::activate_from().contains(&"available"));
+        assert!(WorkStationStatus::Active.can_update_status_to(WorkStationStatus::Available));
+        assert!(!WorkStationStatus::Active.can_update_status_to(WorkStationStatus::Inactive));
+        assert!(!WorkStationStatus::Inactive.can_update_status_to(WorkStationStatus::Active));
+        assert_eq!(WorkStationStatus::deletable_from(), &["inactive"]);
     }
 }
