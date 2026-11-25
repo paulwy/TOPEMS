@@ -18,8 +18,8 @@ use topems_shared_auth::middleware::tenant::{
 };
 use topems_unified_core::modules::automation::{
     cancel_run, get_dashboard_stats, get_run, get_run_log_by_id, get_run_logs, get_run_steps,
-    list_runs, purge_runs, retry_run, trigger_rule, AutomationRun, PurgeRequest,
-    RunLogQueryParams, RunQueryParams, TriggerRequest,
+    list_runs, purge_runs, retry_run, trigger_rule, AutomationRun, PurgeRequest, RunLogQueryParams,
+    RunQueryParams, TriggerRequest,
 };
 
 async fn rls_scope(pool: &sqlx::PgPool) -> (RlsTxnCell, RlsRequestTenant) {
@@ -171,7 +171,11 @@ async fn dashboard_stats_empty_table_ok(pool: sqlx::PgPool) {
     let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
     let resp = scope_request_tenant(ctx, get_dashboard_stats(State(state), Extension(cell))).await;
-    assert!(resp.success, "空表 stats 应成功: code={} msg={}", resp.code, resp.message);
+    assert!(
+        resp.success,
+        "空表 stats 应成功: code={} msg={}",
+        resp.code, resp.message
+    );
     let stats = resp.data.expect("空表 stats 应返回数据");
     assert_eq!(stats.total_runs, 0);
     assert_eq!(stats.avg_duration_ms, 0.0);
@@ -206,11 +210,19 @@ async fn dashboard_stats_with_runs_avg_duration_ok(pool: sqlx::PgPool) {
     let (cell, ctx) = rls_scope(&pool).await;
     let state = test_app_state(pool);
     let resp = scope_request_tenant(ctx, get_dashboard_stats(State(state), Extension(cell))).await;
-    assert!(resp.success, "有数据 stats 应成功: code={} msg={}", resp.code, resp.message);
+    assert!(
+        resp.success,
+        "有数据 stats 应成功: code={} msg={}",
+        resp.code, resp.message
+    );
     let stats = resp.data.expect("有数据 stats 应返回数据");
     assert_eq!(stats.total_runs, 2);
     assert_eq!(stats.successful_runs, 2);
-    assert!((stats.avg_duration_ms - 150.0).abs() < 1e-6, "avg={}", stats.avg_duration_ms);
+    assert!(
+        (stats.avg_duration_ms - 150.0).abs() < 1e-6,
+        "avg={}",
+        stats.avg_duration_ms
+    );
 }
 
 #[sqlx::test(migrations = false)]

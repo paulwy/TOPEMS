@@ -1261,96 +1261,96 @@ pub async fn setup_admin_user(
     let email_norm = req.email.as_ref().map(|e| e.trim().to_string());
     let bound_existing_account = req.user_id.is_some();
     if !bound_existing_account {
-      if let Err(e) = sqlx::query("SAVEPOINT iam_users_precheck")
-        .execute(&mut **txn)
-        .await
-    {
-        tracing::error!("创建 iam.users 预检 savepoint 失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal(
-            "管理员预检初始化失败，请稍后重试".to_string(),
-        ));
-    }
-    let precheck: Result<Option<i64>, sqlx::Error> =
-        sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-            "hrm",
-            r#"
+        if let Err(e) = sqlx::query("SAVEPOINT iam_users_precheck")
+            .execute(&mut **txn)
+            .await
+        {
+            tracing::error!("创建 iam.users 预检 savepoint 失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "管理员预检初始化失败，请稍后重试".to_string(),
+            ));
+        }
+        let precheck: Result<Option<i64>, sqlx::Error> =
+            sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"
             SELECT COUNT(*) FROM iam.users
             WHERE deleted_at IS NULL
               AND (username = $1 OR ($2::text IS NOT NULL AND email = $2))
             "#,
-            "iam"
-        ))
-        .bind(&username)
-        .bind(&email_norm)
-        .fetch_optional(&mut **txn)
-        .await;
-    match precheck {
-        Ok(Some(n)) if n > 0 => {
-            if let Err(e) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
-                .execute(&mut **txn)
-                .await
-            {
-                tracing::error!("释放 iam.users 预检 savepoint 失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal(
-                    "管理员预检收尾失败，请稍后重试".to_string(),
-                ));
-            }
-            // 区分冲突类型给出友好 409（只读预检已命中即提前拒绝）；
-            // 二次诊断查询本身失败时回退通用冲突文案，不误判为另一种冲突。
-            let name_taken = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "hrm",
-                "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1",
                 "iam"
             ))
             .bind(&username)
+            .bind(&email_norm)
             .fetch_optional(&mut **txn)
-            .await
-            .ok()
-            .flatten();
-            let message = match name_taken {
-                Some(c) if c > 0 => "用户名已存在".to_string(),
-                Some(_) => "邮箱已被占用".to_string(),
-                None => "用户名或邮箱已被占用".to_string(),
-            };
-            return ApiResponse::from(TopemsError::ResourceAlreadyExists(message));
-        }
-        Ok(_) => {
-            if let Err(e) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
-                .execute(&mut **txn)
+            .await;
+        match precheck {
+            Ok(Some(n)) if n > 0 => {
+                if let Err(e) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
+                    .execute(&mut **txn)
+                    .await
+                {
+                    tracing::error!("释放 iam.users 预检 savepoint 失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "管理员预检收尾失败，请稍后重试".to_string(),
+                    ));
+                }
+                // 区分冲突类型给出友好 409（只读预检已命中即提前拒绝）；
+                // 二次诊断查询本身失败时回退通用冲突文案，不误判为另一种冲突。
+                let name_taken = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "hrm",
+                    "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1",
+                    "iam"
+                ))
+                .bind(&username)
+                .fetch_optional(&mut **txn)
                 .await
-            {
-                tracing::error!("释放 iam.users 预检 savepoint 失败: {}", e);
-                return ApiResponse::from(TopemsError::Internal(
-                    "管理员预检收尾失败，请稍后重试".to_string(),
-                ));
+                .ok()
+                .flatten();
+                let message = match name_taken {
+                    Some(c) if c > 0 => "用户名已存在".to_string(),
+                    Some(_) => "邮箱已被占用".to_string(),
+                    None => "用户名或邮箱已被占用".to_string(),
+                };
+                return ApiResponse::from(TopemsError::ResourceAlreadyExists(message));
+            }
+            Ok(_) => {
+                if let Err(e) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
+                    .execute(&mut **txn)
+                    .await
+                {
+                    tracing::error!("释放 iam.users 预检 savepoint 失败: {}", e);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "管理员预检收尾失败，请稍后重试".to_string(),
+                    ));
+                }
+            }
+            Err(e) => {
+                // 失败后先回滚到 savepoint 恢复事务可用状态，再释放、告警放行。
+                if let Err(rb) = sqlx::query("ROLLBACK TO SAVEPOINT iam_users_precheck")
+                    .execute(&mut **txn)
+                    .await
+                {
+                    tracing::error!("回滚 iam.users 预检 savepoint 失败: {}", rb);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "管理员预检恢复失败，请稍后重试".to_string(),
+                    ));
+                }
+                if let Err(rb) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
+                    .execute(&mut **txn)
+                    .await
+                {
+                    tracing::error!("释放 iam.users 预检 savepoint 失败: {}", rb);
+                    return ApiResponse::from(TopemsError::Internal(
+                        "管理员预检收尾失败，请稍后重试".to_string(),
+                    ));
+                }
+                tracing::warn!(
+                    "iam.users 占用预检失败（已回滚 savepoint 并放行，由 IAM 端点权威去重）: {}",
+                    e
+                );
             }
         }
-        Err(e) => {
-            // 失败后先回滚到 savepoint 恢复事务可用状态，再释放、告警放行。
-            if let Err(rb) = sqlx::query("ROLLBACK TO SAVEPOINT iam_users_precheck")
-                .execute(&mut **txn)
-                .await
-            {
-                tracing::error!("回滚 iam.users 预检 savepoint 失败: {}", rb);
-                return ApiResponse::from(TopemsError::Internal(
-                    "管理员预检恢复失败，请稍后重试".to_string(),
-                ));
-            }
-            if let Err(rb) = sqlx::query("RELEASE SAVEPOINT iam_users_precheck")
-                .execute(&mut **txn)
-                .await
-            {
-                tracing::error!("释放 iam.users 预检 savepoint 失败: {}", rb);
-                return ApiResponse::from(TopemsError::Internal(
-                    "管理员预检收尾失败，请稍后重试".to_string(),
-                ));
-            }
-            tracing::warn!(
-                "iam.users 占用预检失败（已回滚 savepoint 并放行，由 IAM 端点权威去重）: {}",
-                e
-            );
-        }
-    }
     }
 
     // P2-2 / P3-1：管理员引用的部门、岗位、IAM 账号必须存在、未删除且属本租户。
