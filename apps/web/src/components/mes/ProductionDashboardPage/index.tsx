@@ -68,6 +68,8 @@ export const ProductionDashboardPage: React.FC = () => {
   // WebSocket（避免无限低频重连风暴刷 console），数据由 REST 轮询（autoRefresh）兜底。
   const [wsAvailable, setWsAvailable] = useState(true);
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 防重入：上一批看板请求未 settle 前，跳过后续轮询触发，避免新旧两批请求互相 abort
+  const loadingRef = useRef(false);
   const {
     isConnected: wsConnected,
     connectionStatus: wsStatus,
@@ -101,7 +103,9 @@ export const ProductionDashboardPage: React.FC = () => {
       }
     },
   });
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (force = false) => {
+    if (loadingRef.current && !force) return;
+    loadingRef.current = true;
     setRefreshStatus('loading');
     try {
       const [orderRes, recordRes, workStationRes, equipmentStatsRes, scheduleRes] =
@@ -200,6 +204,7 @@ export const ProductionDashboardPage: React.FC = () => {
       apiLogger.error(i18n.t('pages.index.k5'), err);
       setRefreshStatus('error');
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   }, []);
@@ -322,7 +327,7 @@ export const ProductionDashboardPage: React.FC = () => {
 
   const handleRefresh = useCallback(() => {
     setLoading(true);
-    void loadAll();
+    void loadAll(true);
   }, [loadAll]);
 
   const statCards = useMemo<StatCardConfig[]>(
