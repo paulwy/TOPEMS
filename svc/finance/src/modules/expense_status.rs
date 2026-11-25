@@ -20,6 +20,12 @@ impl ExpenseApprovalStatus {
     /// 新建费用审批默认进入草稿，提交动作再转 pending。
     pub const DEFAULT: Self = Self::Draft;
 
+    /// 通用编辑允许的状态：已审批/已报销为终态，字段与金额不可再改。
+    pub const EDITABLE: [&'static str; 3] = ["draft", "pending", "rejected"];
+
+    /// 软删允许的状态：只允许未进入审批终态的记录。
+    pub const DELETABLE: [&'static str; 3] = ["draft", "pending", "rejected"];
+
     #[must_use]
     pub fn from_db_str(raw: &str) -> Option<Self> {
         match raw.trim() {
@@ -160,6 +166,20 @@ pub fn normalize_expense(raw: &str) -> Option<ExpenseStatus> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn approval_terminal_sets_are_strict() {
+        assert_eq!(
+            ExpenseApprovalStatus::EDITABLE,
+            ["draft", "pending", "rejected"]
+        );
+        assert_eq!(
+            ExpenseApprovalStatus::DELETABLE,
+            ["draft", "pending", "rejected"]
+        );
+        assert!(!ExpenseApprovalStatus::EDITABLE.contains(&"approved"));
+        assert!(!ExpenseApprovalStatus::DELETABLE.contains(&"reimbursed"));
+    }
 
     #[test]
     fn normalize_canonical_values() {
