@@ -157,3 +157,21 @@ scripts/db/schema-health.sh --table finance.budgets
 该迁移把 D 侧列补到 prod 侧库，本机方向相反，dry-run 被断言拒绝（`portal.portal_todos 已有本次要补的列`）。不改这个已发表迁移的语义，前向队列按单条 apply（`--only`）推进即可，不做批量。
 
 **判读结果落库**：新增 `database/schema-diff-waivers.tsv`（`schema / table / reason / evidence / decided_on`），把上面这两处已判读的差量登记为"接受"；`schema-health.sh` 读它，只做标注（`✓ 已判读接受`）并从"落后"计数里剔除，其它未登记的差量仍按"落后"告警——判读结论可见、可追溯、不会每次重复解读。当前结论：**健康**（属主 0 漂移、未落后基线），真实待办 136 条仅作提示。
+
+## 10. 公司级写接口 403 的根因与修复（2026-11-25）
+
+修完同步任务表列错位后，`POST /api/integration/sync/tasks` 仍 403：`公司主体不属于当前租户或当前用户无数据范围`。链路排查结论：
+
+- 中间件 `lib/shared-auth/src/middleware/company.rs` 的顺序是「显式 `x-company-id` → `is_default` → 唯一成员推断」，**两条路径都要求 `public.core_user_company_scopes` 有记录**，没有就 fail-closed 403。这是设计意图，不是 bug。
+- 但是 `admin` 在本机库里既没有 `core_tenant_users` 成员记录（`iam.users` 里有 `admin`，成员表没有），也没有任何范围记录；`core_user_company_scopes` 里 14 行全是 e2e 测试账号。
+- 更底层的原因：`core_tenant_users` 里有两行 `admin@topems.com` 的**孤儿成员记录**（`user_id` 指向 `iam.users` 已不存在的 id），把 `(tenant_id, email)` 唯一槽占住了，导致补成员时直接撞唯一约束。这是历史重建用户表留下的残行。
+- 播种迁移 `20261108130000_p1_company_master_and_scopes.sql` 只处理「已有成员记录」且「单一活跃公司」的租户；本租户只有 1 家活跃公司，但因 admin 无成员记录，回填没覆盖到它。
+
+处置：新增 `scripts/db/backfill-admin-company-access.sh`（默认 dry-run，`--apply` 落库），三步同一事务：
+1. 删本租户里 `user_id` 已不存在的孤儿成员记录（实测 2 行）；
+2. 给 `admin` 补 `core_tenant_users`（role `owner`、status `active`）；
+3. 给 `admin` 补 `core_user_company_scopes`（唯一活跃公司 `write` + `is_default=true`），已有 `consolidate` 不降级。
+
+验证（全部 200，之前分别为 403/不可用）：`POST /sync/tasks`（返回 DTO 字段正确：`source_entity/source_code/retry_count=0/max_retries=3`）→ 状态更新 `POST /sync/tasks/{id}/status`（`status=success` 且 `executed_at` 已落）→ 三个触发器 `trigger/scm-to-wms`、`wms-to-crm`、`srm-to-scm` 全部 200。验证后把 4 条测试任务清掉（表回到 0 行）。
+
+可逆：删除新增的成员行与范围行即可回退；脚本 `--user/--tenant` 可指向别的账号或租户。
