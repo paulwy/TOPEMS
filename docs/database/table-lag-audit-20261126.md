@@ -65,3 +65,8 @@
 **验证**：11 条关键语句逐条 `PREPARE` 打真库 schema 全部通过（settings 参数分级 SELECT、project_type_configs 带 name_en 的检索、erp.sales_orders INSERT 13 参、core_flow_rules INSERT、resource_permissions UPDATE）；`search_recent` 用 `ON CONFLICT (user_id,keyword)` 实测 upsert 成功。
 
 **waive 的 8 个（别名误判）**：`wms.locations`、`mes.equipment`、`mes.production_orders`、`mes.work_stations`、`ai.model_usage_stats`、`erp.erp_master_data_refs`、`public.monitor_settings`、`public.system_settings` —— 都是 `xxx AS name` / `AS requests` 这类列别名，以及事件处理器里的自愈 DDL。**更正**：`erp.erp_master_data_refs` 的 `id` 缺口不是请求路径问题——那段 `CREATE SCHEMA/TABLE/POLICY` 在 `svc/erp/src/event_handlers/mod.rs` 的 `mod tests`（`#[sqlx::test(migrations = false)]` 用它自建表），真实 UPSERT（同文件 ~1473 行）列清单不含 `id`，线上表以 `master_data_id` 唯一键工作，属纯血缘差异，无需改代码、也无需再拆 DDL。
+
+## 门禁取舍（2026-11-26 定案）
+
+- `schema-health.sh` 的 `[2b]` 逐表落后校验**保持提示性，不进 `--strict` 判负**。原因：它依赖 `fixtures/full_schema_contract.sql` 这份 20 天前的 pg_dump，其它模块每天新增表/列会让基线不断「落后」，把 PR 门禁变成噪音源。当前 waive 后为 0 项，需要时可人工跑 `--table s.t` 定位。
+- `ci.yml` 的 migration-test **不新增逐表落后门禁**，只保留归档门禁 + 租户完整性门禁（这两条是硬违反，不会随基线老化误报）。逐表比对放夜间任务/发版前人工执行，命令与口径见本文档上文。
