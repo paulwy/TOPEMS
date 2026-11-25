@@ -1039,6 +1039,13 @@ pub async fn adjust_schedule(
         }
     };
 
+    if req.schedule_ids.is_empty() {
+        let _ = scope.rollback().await;
+        return ApiResponse::bad_request("未选择需要调整的排产记录");
+    }
+
+    let mut invalid_ids: Vec<String> = Vec::new();
+    let mut updated_count = 0u64;
     for schedule_id in &req.schedule_ids {
         let result = sqlx::query(
             r#"
@@ -1059,10 +1066,24 @@ pub async fn adjust_schedule(
         .execute(&mut scope)
         .await;
 
-        if let Err(e) = result {
-            tracing::error!("Failed to adjust schedule {}: {}", schedule_id, e);
-            return ApiResponse::server_error("调整生产排产失败");
+        match result {
+            Ok(r) if r.rows_affected() > 0 => updated_count += r.rows_affected(),
+            Ok(_) => invalid_ids.push(schedule_id.to_string()),
+            Err(e) => {
+                tracing::error!("Failed to adjust schedule {}: {}", schedule_id, e);
+                let _ = scope.rollback().await;
+                return ApiResponse::server_error("调整生产排产失败");
+            }
         }
+    }
+
+    if !invalid_ids.is_empty() {
+        let _ = scope.rollback().await;
+        return ApiResponse::conflict(&format!(
+            "{} 条排产不存在、已删除或状态不允许调整，整批未提交：{}",
+            invalid_ids.len(),
+            invalid_ids.join(", ")
+        ));
     }
 
     if let Err(e) = scope.commit().await {
@@ -1070,7 +1091,10 @@ pub async fn adjust_schedule(
         return ApiResponse::server_error("调整生产排产失败");
     }
 
-    ApiResponse::success("".to_string(), "生产排产调整成功")
+    ApiResponse::success(
+        format!("已调整 {} 条排产", updated_count),
+        "生产排产调整成功",
+    )
 }
 
 #[utoipa::path(
