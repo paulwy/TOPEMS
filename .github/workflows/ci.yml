@@ -1945,8 +1945,12 @@ jobs:
           cd apps/web
           npx serve dist -l 3000 --single &
           echo $! > /tmp/serve.pid
-          sleep 5
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/)
+          HTTP_CODE=""
+          for i in $(seq 1 60); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/ || true)
+            [ "$HTTP_CODE" = "200" ] && break
+            sleep 1
+          done
           echo "Server responded with HTTP $HTTP_CODE"
           if [ "$HTTP_CODE" != "200" ]; then
             echo "❌ Preview server not responding"
