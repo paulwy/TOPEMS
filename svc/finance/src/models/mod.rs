@@ -340,6 +340,17 @@ impl VoucherStatus {
         matches!(self, VoucherStatus::Posted)
     }
 
+    /// 仅未进入审批终态的凭证可删除；approved/posted/reversed 保留台账。
+    pub fn can_delete(&self) -> bool {
+        matches!(
+            self,
+            VoucherStatus::Draft
+                | VoucherStatus::Submitted
+                | VoucherStatus::Rejected
+                | VoucherStatus::Cancelled
+        )
+    }
+
     pub fn validate_reverse(&self) -> Result<(), ModelValidationError> {
         if !self.can_reverse() {
             return Err(ModelValidationError::InvalidStatus(format!(
@@ -2269,6 +2280,18 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_voucher_status_can_delete() {
+        use VoucherStatus::*;
+        assert!(Draft.can_delete());
+        assert!(Submitted.can_delete());
+        assert!(!Approved.can_delete());
+        assert!(!Posted.can_delete());
+        assert!(!Reversed.can_delete());
+        assert!(Rejected.can_delete());
+        assert!(Cancelled.can_delete());
     }
 
     #[test]
