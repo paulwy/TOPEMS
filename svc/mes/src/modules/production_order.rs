@@ -1171,10 +1171,10 @@ pub async fn start_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = $5,
-            actual_start_date = $2,
-            updated_at = $3
-        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid AND deleted_at IS NULL
+            status = $2,
+            actual_start_date = $3,
+            updated_at = $4
+        WHERE id = $1 AND status = ANY($5) AND tenant_id = $6::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1185,8 +1185,10 @@ pub async fn start_production_order(
         "#,
     )
     .bind(id)
+    .bind(ProductionOrderStatus::InProgress.as_db_str())
     .bind(now.date_naive())
     .bind(now)
+    .bind(ProductionOrderStatus::start_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1286,11 +1288,11 @@ pub async fn complete_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = $5,
+            status = $2,
             completed_quantity = quantity,
-            actual_end_date = $2,
-            updated_at = $3
-        WHERE id = $1 AND status = ANY($6) AND tenant_id = $4::uuid AND deleted_at IS NULL
+            actual_end_date = $3,
+            updated_at = $4
+        WHERE id = $1 AND status = ANY($5) AND tenant_id = $6::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1301,8 +1303,10 @@ pub async fn complete_production_order(
         "#,
     )
     .bind(id)
+    .bind(ProductionOrderStatus::Completed.as_db_str())
     .bind(now.date_naive())
     .bind(now)
+    .bind(ProductionOrderStatus::complete_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1402,9 +1406,9 @@ pub async fn cancel_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = $4,
-            updated_at = $2
-        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid AND deleted_at IS NULL
+            status = $2,
+            updated_at = $3
+        WHERE id = $1 AND status = ANY($4) AND tenant_id = $5::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1415,7 +1419,9 @@ pub async fn cancel_production_order(
         "#,
     )
     .bind(id)
+    .bind(ProductionOrderStatus::Cancelled.as_db_str())
     .bind(now)
+    .bind(ProductionOrderStatus::cancel_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
@@ -1515,9 +1521,9 @@ pub async fn release_production_order(
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE mes.production_orders SET
-            status = $4,
-            updated_at = $2
-        WHERE id = $1 AND status = ANY($5) AND tenant_id = $3::uuid AND deleted_at IS NULL
+            status = $2,
+            updated_at = $3
+        WHERE id = $1 AND status = ANY($4) AND tenant_id = $5::uuid AND deleted_at IS NULL
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1528,7 +1534,9 @@ pub async fn release_production_order(
         "#,
     )
     .bind(id)
+    .bind(ProductionOrderStatus::Released.as_db_str())
     .bind(now)
+    .bind(ProductionOrderStatus::release_from())
     .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
