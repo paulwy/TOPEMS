@@ -959,6 +959,7 @@ pub async fn delete_production_schedule(
         r#"
         UPDATE mes.production_schedules SET deleted_at = NOW()
         WHERE id = $1 AND status = ANY($3) AND tenant_id = $2::uuid
+          AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -983,7 +984,7 @@ pub async fn delete_production_schedule(
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "生产排产删除成功")
     } else {
-        ApiResponse::not_found("生产排产不存在或状态不允许删除")
+        ApiResponse::conflict("生产排产不存在、已删除或状态不允许删除")
     }
 }
 
@@ -1046,6 +1047,7 @@ pub async fn adjust_schedule(
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
             WHERE id = $1 AND status = ANY($6) AND tenant_id = $5::uuid
+              AND deleted_at IS NULL
             "#,
         )
         .bind(schedule_id)
