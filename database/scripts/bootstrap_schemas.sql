@@ -75,3 +75,21 @@ CREATE SCHEMA IF NOT EXISTS ticket AUTHORIZATION topems_owner;
 CREATE SCHEMA IF NOT EXISTS tms AUTHORIZATION topems_owner;
 CREATE SCHEMA IF NOT EXISTS unified_core AUTHORIZATION topems_owner;
 CREATE SCHEMA IF NOT EXISTS wms AUTHORIZATION topems_owner;
+
+-- public 由 PG 初始化时建成、属主是 pg_database_owner；迁移角色在建表前必须拥有它。
+-- 本地库此前由 database/scripts/converge_owner.sql 收敛过；新库必须在 bootstrap 里补这一步，
+-- 否则 canonical/常规迁移都会因 "permission denied for schema public" 失败。
+ALTER SCHEMA public OWNER TO topems_owner;
+
+-- ---------------------------------------------------------------------------
+-- 扩展：迁移里用到 vector / uuid-ossp / pgcrypto / pg_trgm / btree_gin / postgis，
+-- 但 CREATE EXTENSION 需要超级用户，迁移角色（topems_owner）永远做不了。
+-- 所以扩展只能在 bootstrap（超管）里落，且必须在跑任何迁移之前。
+-- ---------------------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS plpgsql;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS btree_gin;
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS postgis;

@@ -262,3 +262,25 @@ CI 接线（已完成）：`ci.yml` 的 `migration-test` 作业在起库之后�
 
 发版执行顺序建议：备份 → `bootstrap_schemas.sql`（仅新库）→ stage1（仅新库）→ stage2 → stage3（逐条核对）→ stage4 → stage5（开 gate 后逐条、每条单独提交）。
 stage1/stage2/stage3/stage5 的目标环境互斥：新库跑 1/2、存量生产库跑 3/4/5，别在同一库把 1 和 4 混跑。
+
+## 16. 空库建库验证：修了两个真缺陷，也证伪了「纯 SQL 全量建库」
+
+`scripts/db/bootstrap-check.sh`：在 temp 库（`topems_bootstrap_check`，默认跑完即删）里从零建库。默认按 `release-plan.tsv` 的 stage1/2/4 跑（110 个），`--full` 跑全部 880 个迁移文件（去归档）。
+
+**修掉的两个真缺陷（`database/scripts/bootstrap_schemas.sql`）**
+
+1. **`public` 的属主**。新库里 `public` 属 `pg_database_owner`，迁移角色对它没有 `CREATE`，于是所有在 `public` 建表的迁移一律 `permission denied for schema public`。本地库此前是被 `converge_owner.sql` 收敛过才没暴露。bootstrap 末尾补 `ALTER SCHEMA public OWNER TO topems_owner;`。
+2. **扩展必须由超管装**。迁移里用到 `vector / uuid-ossp / pgcrypto / pg_trgm / btree_gin / postgis`，而 `CREATE EXTENSION` 需要超级用户，`topems_owner` 永远做不到（实测 rd canonical 直接 `permission denied to create extension "uuid-ossp"`）。bootstrap 里先装齐这七个扩展。
+
+修后默认模式：**70 成功 / 40 失败**，失败的 40 条几乎全是「前置表不存在」（`finance.expenses`、`mes.material_requirements`、`public.core_user_company_scopes`、`public.system_settings` 等）。
+
+**结论 A（重要）**：`release-plan.tsv` 是「存量库升级补集」，**不是全新库的建库清单**。它只含 pending，天然不含那些已经在本地记账、但新库必须从头建的早期迁移。要建新库不能用 stage4-replay，得全量。
+
+**结论 B（重要）**：`--full` 跑全量是 **484 成功 / 356 失败**，主因三类，都不是这几条脚本能修的：
+- 大量迁移依赖 app 启动时由 `schema_defense` 建的骨架表（表在运行时才出现，纯 psql 阶段自然没有）；
+- RLS 策略 DDL 里有 `current_setting('app.tenant_id')`（未带 `missing_ok`），裸 psql 下直接 `unrecognized configuration parameter`；
+- 早期 base 链（`000_create_schemas`、`20260725000000_business_base_tables` 等）自身不幂等、依赖旧形状。
+
+所以：**全新环境不要用「raw psql 全量迁移」建库**，正确路径是「bootstrap_schemas.sql（超管）→ app 启动建骨架 → 迁移补列」。`bootstrap-check.sh` 因此不进 CI 必绿项，它是诊断工具；日常只盯默认模式的 40 条前置表缺失是否新增。
+
+两个已知的 canonical 先序缺口（记着，不假装通过）：`20261120170000` 依赖 `public.account_type`（来自 `20260725000000_business_base_tables`），`20261120235945` 依赖 `iam.users`——canonical 批要真跑，必须让 iam/base 链先于 unified-core canonical。
