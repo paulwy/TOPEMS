@@ -184,8 +184,8 @@ pub struct UpdateSupplierRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Inventory {
     pub id: Uuid,
-    pub material_id: Uuid,
-    pub material_code: String,
+    pub material_id: Option<Uuid>,
+    pub material_code: Option<String>,
     pub material_name: String,
     pub warehouse_id: Option<Uuid>,
     pub warehouse_name: Option<String>,
@@ -193,7 +193,7 @@ pub struct Inventory {
     pub quantity: f64,
     pub available_quantity: f64,
     pub reserved_quantity: f64,
-    pub unit: String,
+    pub unit: Option<String>,
     pub unit_price: f64,
     pub total_amount: f64,
     pub batch_no: Option<String>,
@@ -740,8 +740,8 @@ mod tests {
     fn test_inventory_serde_full() {
         let inv = Inventory {
             id: sample_uuid(),
-            material_id: sample_uuid(),
-            material_code: "MAT-001".into(),
+            material_id: Some(sample_uuid()),
+            material_code: Some("MAT-001".into()),
             material_name: "原材料A".into(),
             warehouse_id: Some(sample_uuid()),
             warehouse_name: Some("主仓库".into()),
@@ -749,7 +749,7 @@ mod tests {
             quantity: 1500.0,
             available_quantity: 1200.0,
             reserved_quantity: 300.0,
-            unit: "kg".into(),
+            unit: Some("kg".into()),
             unit_price: 50.25,
             total_amount: 75375.0,
             batch_no: Some("B20250101".into()),
@@ -768,11 +768,41 @@ mod tests {
     }
 
     #[test]
+    fn test_inventory_nullable_fields_deserialize() {
+        // 回归：erp.inventory 历史脏行 material_id/material_code/unit 可能为 NULL，
+        // 模型必须按 Option 解码，不得在查询/列表解码阶段 500。
+        let json = serde_json::json!({
+            "id": sample_uuid(),
+            "material_id": null,
+            "material_code": null,
+            "material_name": "无物料关联库存行",
+            "warehouse_id": null,
+            "warehouse_name": null,
+            "location_code": null,
+            "quantity": 0.0,
+            "available_quantity": 0.0,
+            "reserved_quantity": 0.0,
+            "unit": null,
+            "unit_price": 0.0,
+            "total_amount": 0.0,
+            "batch_no": null,
+            "expire_date": null,
+            "status": "active",
+            "created_at": Utc::now(),
+            "updated_at": Utc::now(),
+        });
+        let inv: Inventory = serde_json::from_value(json).unwrap();
+        assert!(inv.material_id.is_none());
+        assert!(inv.material_code.is_none());
+        assert!(inv.unit.is_none());
+    }
+
+    #[test]
     fn test_inventory_zero_stock() {
         let inv = Inventory {
             id: sample_uuid(),
-            material_id: sample_uuid(),
-            material_code: "M".into(),
+            material_id: Some(sample_uuid()),
+            material_code: Some("M".into()),
             material_name: "N".into(),
             warehouse_id: None,
             warehouse_name: None,
@@ -780,7 +810,7 @@ mod tests {
             quantity: 0.0,
             available_quantity: 0.0,
             reserved_quantity: 0.0,
-            unit: "pcs".into(),
+            unit: Some("pcs".into()),
             unit_price: 0.0,
             total_amount: 0.0,
             batch_no: None,
@@ -799,8 +829,8 @@ mod tests {
     fn test_inventory_negative_quantity_reserved() {
         let inv = Inventory {
             id: sample_uuid(),
-            material_id: sample_uuid(),
-            material_code: "MN".into(),
+            material_id: Some(sample_uuid()),
+            material_code: Some("MN".into()),
             material_name: "负库存".into(),
             warehouse_id: None,
             warehouse_name: None,
@@ -808,7 +838,7 @@ mod tests {
             quantity: -50.0,
             available_quantity: -60.0,
             reserved_quantity: 10.0,
-            unit: "x".into(),
+            unit: Some("x".into()),
             unit_price: -5.0,
             total_amount: 250.0,
             batch_no: None,
