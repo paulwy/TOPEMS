@@ -48,6 +48,17 @@ POST /api/finance/api/core/settlement-center/auto-reconcile {"period":"2026-11"}
 - 旧二进制实测：`auto-reconcile` 500 + 日志报 `ri.reconciliation_id does not exist`（复现）
 - 新二进制实测：同一请求 200（重建后复验，见下）
 
-## 仍未做
+## 两条血缘与归一迁移（2026-11-25 追加）
 
-模块挂载本身没动：路由需要挂到 `svc/server` 或 finance 服务，属于产品/权限决策。挂载当天这段 SQL 已可用。
+这张表在仓库里有两条血缘，代码只能选一边：
+
+- **A（生产/anchor）**：`recon_id` / `debit_amount` / `credit_amount`。`database/baseline/anchors.json` 的 `prod_schema_*` 就是这个形态，`scripts/db/bootstrap-check.sh` 空库实测建出来也是这个形态，本机 `topems` 库同样是这个形态。
+- **B（迁移契约）**：`20261007140000_align_stub_tables_handler_contract.sql` 给这张表 ALTER 出 `reconciliation_id` / `item_type` / `amount` / `business_id` / `business_no` / `status` / `remark`。这条版本在本机账本里早已是 applied，但它**从未真正作用到这张表**——anchor 恢复把整库换成 A 形态后，账本仍保留该行。
+
+结论：**A 是生产真相，B 是历史契约**。所以代码按 A 写（本文「处置」四条），并且新增迁移 `20261125130000_finance_recon_item_snapshots_shape_normalize.sql` 把 B 形态的库补齐 A 列并回填（`reconciliation_id → recon_id`，`item_type + amount → debit_amount / credit_amount`），非破坏、只加列不删列。这样「anchor+forward 建库」和「迁移零建库」两条路出来的库都能跑同一套 SQL。
+
+⚠️ 注意与 `ae567ef7f`（2026-11-25 21:27）的冲突：该提交把财务对账 SQL「回到 canonical 列」即改回 `reconciliation_id` / `item_type` / `amount`。按上面的血缘判定，这一步在 A 形态的库（本机、CI、新部署）上会重新引入 500。**已回退该部分并加迁移兜底**，判定依据记录在此。
+
+## 仍未做（更正）
+
+模块挂载本身不需要动：它已按 `/api/finance/api/core/settlement-center/...` 可达，三个只读接口与两个写接口实测 200。
