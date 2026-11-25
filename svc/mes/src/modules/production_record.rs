@@ -532,7 +532,7 @@ pub async fn update_record(
     }
 
     let now = Utc::now();
-    let status = if req.end_time.is_some() {
+    let target_status = if req.end_time.is_some() {
         ProductionRecordStatus::Completed
     } else {
         ProductionRecordStatus::InProgress
@@ -557,6 +557,37 @@ pub async fn update_record(
         }
     };
 
+    // 先读当前态并限定未删除；completed/cancelled 不允许再编辑
+    let current: Option<(Option<String>,)> = match sqlx::query_as(
+        "SELECT status FROM mes.production_records WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("查询生产记录当前状态失败: {}", e);
+            return ApiResponse::server_error("更新生产记录失败");
+        }
+    };
+    let Some((current_raw,)) = current else {
+        return ApiResponse::not_found("生产记录不存在");
+    };
+    let Some(current_raw) = current_raw else {
+        return ApiResponse::conflict("生产记录状态为空，需人工处理");
+    };
+    let Some(current_status) = ProductionRecordStatus::from_db_str(&current_raw) else {
+        return ApiResponse::conflict("生产记录当前状态非法，需人工处理");
+    };
+    if !ProductionRecordStatus::editable_from().contains(&current_status.as_db_str()) {
+        return ApiResponse::conflict("已完成/已取消的生产记录不可编辑");
+    }
+    if !current_status.can_transition_to(target_status) {
+        return ApiResponse::conflict("生产记录状态不允许执行本次更新");
+    }
+
     let result = sqlx::query_as::<_, ProductionRecordRow>(
         r#"
         UPDATE mes.production_records SET
@@ -568,7 +599,7 @@ pub async fn update_record(
             status = $7,
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND tenant_id = $10::uuid
+        WHERE id = $1 AND tenant_id = $10::uuid AND status = $11 AND deleted_at IS NULL
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
@@ -582,10 +613,11 @@ pub async fn update_record(
     .bind(req.operator_id)
     .bind(req.end_time)
     .bind(f64_to_big_decimal(req.quantity_produced))
-    .bind(status.as_db_str())
+    .bind(target_status.as_db_str())
     .bind(req.notes)
     .bind(now)
     .bind(tenant_id)
+    .bind(current_raw)
     .fetch_optional(&mut scope)
     .await;
 
@@ -623,7 +655,7 @@ pub async fn update_record(
             };
             ApiResponse::success(record, "生产记录更新成功")
         }
-        None => ApiResponse::not_found("生产记录不存在"),
+        None => ApiResponse::conflict("生产记录状态已被并发修改，更新失败"),
     }
 }
 
@@ -659,11 +691,12 @@ pub async fn delete_record(
     let result = sqlx::query(
         r#"
         UPDATE mes.production_records SET deleted_at = NOW()
-        WHERE id = $1 AND tenant_id = $2::uuid
+        WHERE id = $1 AND tenant_id = $2::uuid AND status = ANY($3) AND deleted_at IS NULL
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(ProductionRecordStatus::editable_from())
     .execute(&mut scope)
     .await;
 
@@ -683,7 +716,7 @@ pub async fn delete_record(
     if result.rows_affected() > 0 {
         ApiResponse::success("".to_string(), "生产记录删除成功")
     } else {
-        ApiResponse::not_found("生产记录不存在")
+        ApiResponse::conflict("生产记录不存在或已完成/已取消，不允许删除")
     }
 }
 

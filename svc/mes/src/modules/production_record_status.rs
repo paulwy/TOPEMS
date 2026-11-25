@@ -36,6 +36,24 @@ impl ProductionRecordStatus {
             _ => None,
         }
     }
+
+    /// pending → in_progress / cancelled；in_progress → completed / cancelled；
+    /// completed、cancelled 为终态；同态幂等。
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        matches!(
+            (self, target),
+            (Self::Pending, Self::InProgress | Self::Cancelled)
+                | (Self::InProgress, Self::Completed | Self::Cancelled)
+        )
+    }
+
+    /// 可编辑/可软删的活跃态；completed/cancelled 不允许再改。
+    pub fn editable_from() -> &'static [&'static str] {
+        &["pending", "in_progress"]
+    }
 }
 
 #[cfg(test)]
@@ -60,5 +78,19 @@ mod tests {
             );
         }
         assert_eq!(ProductionRecordStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn transition_and_editable_matrix() {
+        use ProductionRecordStatus::*;
+        assert!(Pending.can_transition_to(InProgress));
+        assert!(InProgress.can_transition_to(Completed));
+        assert!(!Pending.can_transition_to(Completed));
+        assert!(!Completed.can_transition_to(InProgress));
+        assert!(InProgress.can_transition_to(Cancelled));
+        assert_eq!(
+            ProductionRecordStatus::editable_from(),
+            &["pending", "in_progress"]
+        );
     }
 }
