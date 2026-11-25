@@ -2146,6 +2146,9 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f database/scripts/bootstrap_schemas.sql
 
 
+      - name: 租户数据完整性体检
+        run: node scripts/ci/check-tenant-integrity.mjs --db
+
       - name: Run migration up-down-up tests
         run: |
           echo "## Migration Test Report" >> $GITHUB_STEP_SUMMARY
