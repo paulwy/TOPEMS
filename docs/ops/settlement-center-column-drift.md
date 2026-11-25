@@ -12,9 +12,24 @@
 
 `match_status / updated_at / tenant_id / deleted_at` 两边一致，`finance.reconciliation_settlement_links.reconciliation_id` 也是真列（未动）。
 
-## 为什么一直没暴露
+## 路由在哪（上一版文档写错，这里更正）
 
-`settlement_center` 路由在 8099 / 8000 / 8011 上都是 404——模块没挂载，这段 SQL 从未被真实请求打到。表本身 0 行。所以是**待引爆的 500**，不是线上故障。
+模块**是挂载的**，只是路径被双重前缀：`svc/server` 的 finance 模块以 `api_prefix=/api/finance` nest，而 `settlement_center/routes.rs` 里写的是绝对路径 `/api/core/settlement-center/...`，于是真实路径是
+
+`/api/finance/api/core/settlement-center/...`
+
+前端 `apiClient.finance` 的 baseURL 也是 `/api/finance`，调用方又写 `/api/core/settlement-center/...`，两层拼起来正好对上，所以列表页是通的。我先前按 `/api/core/settlement-center/...` 直接 curl 得到 404，属于路径判断错误，不是模块缺失。
+
+## 为什么暴露不了：列表能过、写路径直接 500
+
+只读三个接口（reconciliations / settlements / differences）不碰明细快照，实测 200 空列表。真正踩列名的是写路径：
+
+```
+POST /api/finance/api/core/settlement-center/auto-reconcile {"period":"2026-11"}
+→ 500   日志：column ri.reconciliation_id does not exist at line 3827
+```
+
+`reconcile`（手工核销）同理。表 0 行也不影响——解析阶段就报错。
 
 ## 处置
 
@@ -30,6 +45,8 @@
 - 四段 SQL 逐条 `PREPARE` 走真库 schema，`prepare_exit=0`（列/类型全部可解析）
 - `cargo check -p topems-finance --lib` 通过
 - 绑定参数个数与占位符一致（$1..$5 未增减）
+- 旧二进制实测：`auto-reconcile` 500 + 日志报 `ri.reconciliation_id does not exist`（复现）
+- 新二进制实测：同一请求 200（重建后复验，见下）
 
 ## 仍未做
 
