@@ -5,3 +5,126 @@
 schema	table	reason	evidence	decided_on
 communication	notification_channels	基线是旧渠道模型（code/channel_type/category/enabled），现库与代码用 name/name_en/type/status/config；冒烟 200	代码 SQL 只引用现库列；/api/communication/notification-channels 200	2026-11-25
 integration	core_inter_module_sync	基线保留 operation/entity_type/entity_ids/started_at/finished_at 旧侧 5 列；代码已统一到 source_entity/source_id/source_code + retry_count/max_retries/executed_at	svc/integration/src/handlers/sync.rs 全量对齐；/api/integration/sync/pending 200	2026-11-25
+flow	_deprecated_core_doc_documents	deprecated 前缀的历史表：现库不存在，代码 0 引用（全仓 grep flow._deprecated_core_doc_documents 无命中）；文档能力已迁到 doc/doc_service	代码 0 引用；现库 doc/doc_service 有 4 表 +78 列领先基线	2026-11-26
+flow	_deprecated_core_doc_document_versions	同上，历史文档版本表	代码 0 引用	2026-11-26
+flow	_deprecated_core_doc_templates	同上，历史模板表	代码 0 引用	2026-11-26
+flow	_deprecated_core_doc_folders	同上，历史目录表	代码 0 引用	2026-11-26
+flow	_deprecated_core_flow_categories	同上，历史流程分类表	代码 0 引用	2026-11-26
+flow	_deprecated_core_operation_logs	同上，历史操作日志表；现库审计走 flow.audit_logs / public.permission_audit_logs	代码 0 引用	2026-11-26
+flow	_deprecated_core_mdm_approvals	同上，历史 MDM 审批表	代码 0 引用	2026-11-26
+flow	_deprecated_core_master_data_change_log	同上，历史主数据变更表	代码 0 引用	2026-11-26
+public	core_tickets	基线 19 列是旧工单表；现库 public.core_tickets 只剩 id/deleted_at 桩表，真实表是 ticket.core_tickets（19 列，与 svc/ticket 代码一致）	ticket.core_tickets 列集=ticket_no/title/description/ticket_type/severity/status/.../tags/metadata；public.core_tickets 代码 0 引用	2026-11-26
+plugin_finance	accounting_subjects	基线里 plugin_finance 是插件副本；真实表是 finance.accounting_subjects（现库存在且 accounting_subjects 模块在用）	plugin_finance.accounting_subjects 仅出现在 lib/shared-boundary 的文档/测试示例里，运行期 0 引用	2026-11-26
+iam	tenant_permissions	数据库版权限存储（V448 DatabasePermissionStore）默认关闭（Memory 实现），启用前必须先补 id 生成；表在当前血缘里不存在	svc/unified-core/src/routes/business_tools/database_permission_store.rs 头部已记录该缺陷；默认 Memory，不影响运行	2026-11-26
+iam	tool_permissions	同上（tool_permissions 依赖 tenant_permissions 的 id）	同上	2026-11-26
+integration	external_erp_sync_logs	基线 35 列 vs 现库 14 列：现库列集为 connection_id/entity/direction/total_records/success_count/failed_count/error_message/started_at/completed_at；代码 SQL 字面量只用现库列（api_url/app_key/sync_mode 等命中的是 external_erp_connections 的列）	svc/integration/src/external_erp.rs 内所有含该表名的 SQL 字面量逐一核对，未引用基线独有列	2026-11-26
+pm	acceptance_records	基线 acceptance_type/actual_result/is_passed/participants/required_standard 等 vs 现库 acceptance_date/conclusion/score/attendees/findings；代码用现库列	svc/pm/src/modules/acceptance.rs 的 SQL 字面量核对：acceptance_type/actual_result 等仅出现在别名或响应字段	2026-11-26
+mes	production_records	基线 equipment_id/product_name/quantity_produced/quantity_defective vs 现库 work_station_id/completed_quantity/rejected_quantity；代码用 `NULL::uuid AS equipment_id`、`completed_quantity AS quantity_produced` 这类别名对齐响应 DTO	svc/mes/src/modules/production_record.rs:370/479 的 RETURNING/SELECT 全是别名，非真实列	2026-11-26
+gis	device_locations	基线 altitude/speed/device_id vs 现库 device_code/position/last_inspected；代码用现库列与 JSONB position	svc/gis/src/modules/sync.rs、device.rs 的 SQL 字面量核对无基线独有列	2026-11-26
+qms	qa_apqp_phases	基线 name/sequence/planned_start/actual_start vs 现库 phase_name/sort_order/start_date/actual_start_date；代码用现库列	svc/qms/src/modules/apqp.rs 的 SQL 字面量核对无基线独有列	2026-11-26
+erp	documents	基线 chunk_count/content_hash/mime_type/tags vs 现库 title/doc_type/status/file_url/file_size/uploader；AI 知识库用的是 erp.knowledge_* 与 mobile.documents	svc/ai、svc/unified-core/doc 内 SQL 字面量无 erp.documents 基线独有列	2026-11-26
+finance	budgets	基线 total_amount/start_date/end_date/created_by vs 现库 total_budget/used_amount/remaining_amount/fiscal_year；pm 预算模块查的是 pm.budget_items/预算表，不是 finance.budgets	svc/finance/financial_reports.rs、operational.rs 用现库列；svc/pm/budget.rs 无 finance.budgets 字面量	2026-11-26
+ai	ai_models	基线独有列（input_tokens,output_tokens,token_count,usage）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+ai	ai_settings	基线独有列（deleted_at,id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+ai	usage_logs	基线独有列（token_count）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+bi	analytics_datasets	基线独有列（created_by,source_id,source_type）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+crm	interactions	基线独有列（interaction_time,type）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+ehs	qa_ehs_hazards	基线独有列（assessments,controls）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+ehs	qa_ehs_risks	基线独有列（created_by,department_id,location,mitigation）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+erp	bank_accounts	基线独有列（bank_code）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+erp	holidays	基线独有列（deleted_at,id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	core_finance_approval_nodes	基线独有列（approver_id,node_config）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	core_finance_payment_workflow	基线独有列（approved_at,comment,created_by,workflow_name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	core_finance_payments	基线独有列（approved_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	erp_collection_records	基线独有列（category,fiscal_year,invoice_date）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	erp_payables	基线独有列（category,paid_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	erp_payment_records	基线独有列（due_date）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	expenses	基线独有列（created_by,paid_amount,remaining_amount）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	finance_v55_invoices	基线独有列（project_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	finance_v55_payment_requests	基线独有列（status）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	finance_v55_reconciliation_results	基线独有列（status）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	finance_v55_reconciliation_rules	基线独有列（recon_code）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	financial_reports	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	mv_receivable_aging	基线独有列（amount,created_at,days_overdue,due_date,invoice_no,receivable_no…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	mv_voucher_summary	基线独有列（period,total_credit,total_debit）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	payables	基线独有列（amount_paid,approved_at,approver_id,remaining_amount）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	receivables	基线独有列（amount_received,approved_at,approver_id,paid_amount,remaining_amount）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	reconciliation_item_snapshots	基线独有列（amount,business_id,business_no,item_type,reconciliation_id,remark…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+finance	reconciliation_snapshots	基线独有列（matched_amount,project_id,total_amount,unmatched_amount）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+gis	business_locations	基线独有列（latitude,location_type,longitude,name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+gis	device_location_records	基线独有列（located_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+gis	factory_maps	基线独有列（floor_level,height,image_url,scale,status,width）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+gis	location_photos	基线独有列（location_id,location_type,remark,updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+gis	warehouse_locations	基线独有列（latitude,location_type,longitude,name,radius,warehouse_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+iam	_sqlx_migrations	基线独有列（checksum,description,execution_time,installed_on,success,version）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+integration	erp_connections	基线独有列（source_type）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+integration	integration_sync_logs	基线独有列（completed_at,created_at,error_message,failed_count,success_count,total_count…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+lims	inspection_records	基线独有列（inspected_at,inspection_no,inspection_type,instrument_id,sample_code,sample_id…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+lims	maintenance_records	基线独有列（actual_end_date,actual_start_date,conclusion,planned_date,result,status）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+master_data	dynamic_data	基线独有列（created_at,data_json,id,schema_id,updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+mes	process_flow_steps	基线独有列（duration_seconds,operation_type,process_flow_id,step_name,step_no,updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+mobile	core_mobile_offline_records	基线独有列（policy_key,policy_value,updated_by）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+mobile	documents	基线独有列（chunk_count,content_hash,error_message,knowledge_base_id,mime_type,processed_at…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pdm	pdm_master_data_refs	基线独有列（deleted_at,id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	acceptance_items	基线独有列（expected_result）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	budget_items	基线独有列（actual_amount,budget_code,name,planned_amount,remaining_amount,status）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	contract_milestones	基线独有列（amount,milestone_type,planned_date）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	contract_payment_schedule	基线独有列（amount,payment_date,payment_type）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	contract_templates	基线独有列（code,template_type,version）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	defects	基线独有列（assignee_id,description）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	document_folders	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	document_versions	基线独有列（document_code,document_name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	notification_settings	基线独有列（notify_channels,notify_events）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	project_documents	基线独有列（category,change_note,file_name,file_type,folder_id,folder_name…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	report_templates	基线独有列（name,template_type,version）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	risk_events	基线独有列（created_by,description,event_date,event_name,impact,updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	risks	基线独有列（mitigation_strategy）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	settlement_adjustments	基线独有列（adjustment_name,status,updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+pm	settlement_items	基线独有列（amount,name,status）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	graphql_breaking_changes	基线独有列（version_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	graphql_execution_profiles	基线独有列（query_hash）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	graphql_stream_events	基线独有列（stream_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	graphql_stream_subscribers	基线独有列（stream_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_accel_configs	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_acceleration_configs	基线独有列（strategy）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_api_versions	基线独有列（version）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_cache_entries	基线独有列（cache_key,checksum）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_cache_versions	基线独有列（version_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_compatibility_policies	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_compiled_queries	基线独有列（hash）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_config_environments	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_consistency_checks	基线独有列（checked_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_edge_cache	基线独有列（cache_key）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_edge_functions	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_health_checks	基线独有列（check_type）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_identity_policies	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_metrics	基线独有列（checked_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_persisted_queries	基线独有列（query_hash）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_queue_configs	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_security_policies	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_service_descriptors	基线独有列（name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_service_heartbeats	基线独有列（checked_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_service_loads	基线独有列（service_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_subscription_channels	基线独有列（channel）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+portal	portal_version_vectors	基线独有列（entity_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	automation_rules	基线独有列（trigger_type）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	automation_runs	基线独有列（finished_at,output,updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	core_tenant_plugins	基线独有列（deleted_at,id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	core_ticket_activities	基线独有列（action,from_value,tenant_id,ticket_id,to_value,user_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	core_ticket_comments	基线独有列（content,is_internal,tenant_id,ticket_id,user_id,user_name）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	core_workflow_versions	基线独有列（updated_at）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+public	permission_audit_logs	基线独有列（metadata）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+qms	qa_apqp_risks	基线独有列（created_by,impact,mitigation,probability,risk_code,risk_type…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+qms	qa_apqp_tasks	基线独有列（assignee_id,created_by,name,task_code）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+qms	qa_eightd_reports	基线独有列（d2_description,d3_interim,d5_corrective,d6_implement,d7_prevent,d8_celebrate…）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+srm	bids	基线独有列（comparison_note）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+wms	batches	基线独有列（org_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+wms	replenishment_suggestions	基线独有列（org_id）在运行期 SQL 中未被引用；现库列为改名/裁剪后的模型	scripts/db 逐表字面量核对（docs/database/table-lag-audit-20261126.md §干净项）	2026-11-26
+wms	locations	基线 address/code/name/properties：code/name 在代码里是 location_code/location_name 的别名（svc/wms/src/modules/location.rs 的 RETURNING 就用 `location_code AS code`），address/properties 运行期未引用	逐字面量核对 2026-11-26	2026-11-26
+mes	equipment	基线 name/maintenance_cycle/warranty_end_date 都是别名（equipment_name AS name、maintenance_frequency_days AS maintenance_cycle，anomaly_detection.rs:813）	逐字面量核对 2026-11-26	2026-11-26
+mes	production_orders	基线 product_id/source/qualified_quantity：production_order.rs:359/539/705 写的是 `NULL::uuid AS product_id`、`quantity::float8 AS ...` 这类别名	逐字面量核对 2026-11-26	2026-11-26
+mes	work_stations	基线 name 是 `station_name AS name` 的别名（work_station.rs RETURNING）	逐字面量核对 2026-11-26	2026-11-26
+ai	model_usage_stats	基线 requests 是 `SUM(request_count) AS requests` 的别名（model_admin_handlers.rs:750）；cost 运行期未引用	逐字面量核对 2026-11-26	2026-11-26
+erp	erp_master_data_refs	基线 id：现库以 master_data_id 为业务主键，代码里唯一的 id 出现在 event_handlers/mod.rs 的运行时自愈 DDL（`CREATE TABLE IF NOT EXISTS ... id UUID PRIMARY KEY`），对已存在表是 no-op	逐字面量核对 2026-11-26；另记：运行时自愈 DDL 应另拆，别留在请求路径	2026-11-26
+public	monitor_settings	基线 is_active 未在代码里引用；company_id/override_policy 已由 20261125150000 补列	逐字面量核对 2026-11-26	2026-11-26
+public	system_settings	同上（is_active 未引用；company_id/override_policy 已补列）	逐字面量核对 2026-11-26	2026-11-26

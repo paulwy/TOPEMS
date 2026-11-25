@@ -167,7 +167,7 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
                             if (!(t in l)) printf("%d|  表缺失  %s（基线 %d 列）\n", b[t], t, b[t]);
                             else if (l[t] < b[t]) printf("%d|  列偏少  %-40s 现库 %d / 基线 %d\n", b[t]-l[t], t, l[t], b[t]) } }' \
                     /tmp/schema_health_base_tbl.txt /tmp/schema_health_live_tbl.txt \
-                    | sort -t'|' -k1,1nr | head -20 | cut -d'|' -f2)
+                    | sort -t'|' -k1,1nr | head -60 | cut -d'|' -f2)
                 if [ -n "$FINDINGS" ]; then
                     echo "$FINDINGS" | sed 's/^/    /'
                     echo "    （逐表落后：先确认代码是否真引用这些列；确认不用的记入 database/schema-diff-waivers.tsv）"
