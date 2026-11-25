@@ -76,6 +76,21 @@ use topems_shared_auth::middleware::tenant::{scope_request_tenant, RlsRequestTen
 
 const TEST_TENANT: &str = "00000000-0000-0000-0000-000000000001";
 
+fn has_test_database() -> bool {
+    std::env::var("TEST_DATABASE_URL")
+        .map(|v| !v.trim().is_empty())
+        .unwrap_or(false)
+}
+
+macro_rules! require_test_db {
+    () => {
+        if !has_test_database() {
+            eprintln!("SKIP: TEST_DATABASE_URL 未设置，跳过需要 MDM 真库的集成测试");
+            return;
+        }
+    };
+}
+
 /// 测试请求事务句柄：开启事务并按 tenant_middleware 的方式设置租户 GUC。
 async fn test_txn_cell(state: &AppState) -> RlsTxnCell {
     let mut txn = state.db.begin().await.ok();
@@ -152,6 +167,7 @@ async fn seed_duplicate_insight(cell: &RlsTxnCell) {
 
 #[tokio::test]
 async fn test_quality_rule_create_and_list() {
+    require_test_db!();
     let state = make_test_state();
 
     // 创建一条新的质量规则
@@ -202,6 +218,7 @@ async fn test_quality_rule_create_and_list() {
 
 #[tokio::test]
 async fn test_quality_rule_get_by_id() {
+    require_test_db!();
     let state = make_test_state();
 
     // 先创建一条规则
@@ -239,6 +256,7 @@ async fn test_quality_rule_get_by_id() {
 
 #[tokio::test]
 async fn test_quality_rule_get_not_found() {
+    require_test_db!();
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
@@ -256,6 +274,7 @@ async fn test_quality_rule_get_not_found() {
 
 #[tokio::test]
 async fn test_quality_rule_update() {
+    require_test_db!();
     let state = make_test_state();
 
     // 先创建一条规则
@@ -303,6 +322,7 @@ async fn test_quality_rule_update() {
 
 #[tokio::test]
 async fn test_quality_rule_update_not_found() {
+    require_test_db!();
     let state = make_test_state();
 
     let update_req = UpdateQualityRuleRequest {
@@ -327,6 +347,7 @@ async fn test_quality_rule_update_not_found() {
 
 #[tokio::test]
 async fn test_quality_rule_delete() {
+    require_test_db!();
     let state = make_test_state();
 
     // 先创建一条规则
@@ -369,6 +390,7 @@ async fn test_quality_rule_delete() {
 
 #[tokio::test]
 async fn test_quality_rule_delete_not_found() {
+    require_test_db!();
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
@@ -386,6 +408,7 @@ async fn test_quality_rule_delete_not_found() {
 
 #[tokio::test]
 async fn test_run_quality_check_format_rule() {
+    require_test_db!();
     let state = make_test_state();
 
     // 对 customer 实体执行质量检查（format 规则由测试自备）
@@ -416,6 +439,7 @@ async fn test_run_quality_check_format_rule() {
 
 #[tokio::test]
 async fn test_run_quality_check_range_rule_warns() {
+    require_test_db!();
     let state = make_test_state();
 
     // 对 material 实体执行质量检查（range 规则由测试自备）
@@ -448,6 +472,7 @@ async fn test_run_quality_check_range_rule_warns() {
 
 #[tokio::test]
 async fn test_list_quality_checks_with_filter() {
+    require_test_db!();
     let state = make_test_state();
 
     // 先执行一次质量检查以确保有数据
@@ -494,6 +519,7 @@ async fn test_list_quality_checks_with_filter() {
 
 #[tokio::test]
 async fn test_get_quality_check_results_by_entity() {
+    require_test_db!();
     let state = make_test_state();
 
     // 执行质量检查
@@ -535,6 +561,7 @@ async fn test_get_quality_check_results_by_entity() {
 
 #[tokio::test]
 async fn test_get_quality_score() {
+    require_test_db!();
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
@@ -564,6 +591,7 @@ async fn test_get_quality_score() {
 
 #[tokio::test]
 async fn test_get_quality_dashboard() {
+    require_test_db!();
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
@@ -602,6 +630,7 @@ async fn test_get_quality_dashboard() {
 
 #[tokio::test]
 async fn test_quality_rule_with_various_severities() {
+    require_test_db!();
     let state = make_test_state();
 
     let severities = vec!["error", "warning", "info"];
@@ -629,6 +658,7 @@ async fn test_quality_rule_with_various_severities() {
 
 #[tokio::test]
 async fn test_quality_rule_default_severity() {
+    require_test_db!();
     let state = make_test_state();
 
     // 不指定 severity，应使用默认值 "warning"
@@ -655,6 +685,7 @@ async fn test_quality_rule_default_severity() {
 
 #[tokio::test]
 async fn test_duplicate_detection_insight() {
+    require_test_db!();
     let state = make_test_state();
 
     let cell = test_txn_cell(&state).await;
@@ -682,6 +713,7 @@ async fn test_duplicate_detection_insight() {
 
 #[tokio::test]
 async fn test_quality_status_serialization() {
+    require_test_db!();
     let statuses = vec![
         (QualityStatus::Passed, "passed"),
         (QualityStatus::Failed, "failed"),
@@ -699,6 +731,7 @@ async fn test_quality_status_serialization() {
 
 #[tokio::test]
 async fn test_fix_status_serialization() {
+    require_test_db!();
     let statuses = vec![
         (FixStatus::Pending, "pending"),
         (FixStatus::Applied, "applied"),
@@ -714,6 +747,7 @@ async fn test_fix_status_serialization() {
 
 #[tokio::test]
 async fn test_auto_fix_action_type_serialization() {
+    require_test_db!();
     let types = vec![
         (AutoFixActionType::Normalize, "normalize"),
         (AutoFixActionType::DefaultValue, "default_value"),
@@ -730,6 +764,7 @@ async fn test_auto_fix_action_type_serialization() {
 
 #[tokio::test]
 async fn test_suggestion_type_serialization() {
+    require_test_db!();
     let types = vec![
         (SuggestionType::Standardize, "standardize"),
         (SuggestionType::Enrich, "enrich"),
@@ -745,6 +780,7 @@ async fn test_suggestion_type_serialization() {
 
 #[tokio::test]
 async fn test_suggestion_status_serialization() {
+    require_test_db!();
     let statuses = vec![
         (SuggestionStatus::Pending, "pending"),
         (SuggestionStatus::Approved, "approved"),
@@ -761,6 +797,7 @@ async fn test_suggestion_status_serialization() {
 
 #[tokio::test]
 async fn test_quality_rule_full_lifecycle() {
+    require_test_db!();
     let state = make_test_state();
 
     // 1. 创建规则
