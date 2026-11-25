@@ -305,7 +305,7 @@ async fn fetch_invoice(
 /// 已收敛到请求事务的 handler 在同一事务内回读，避免提交后再开连接读不到未提交数据。
 async fn fetch_invoice_in<'e, E>(
     executor: E,
-    _tenant_id: Option<Uuid>,
+    tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<SalesInvoiceOut>, sqlx::Error>
 where
@@ -317,9 +317,12 @@ where
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 amount, tax_amount, total_amount, paid_amount,
                 status, invoice_type, cancel_reason, red_flush_of
-         FROM finance.sales_invoices WHERE id = $1",
+         FROM finance.sales_invoices
+         WHERE id = $1 AND deleted_at IS NULL
+           AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(executor)
     .await?;
     Ok(row.map(|r| SalesInvoiceOut {
@@ -514,6 +517,9 @@ pub async fn create_sales_invoice(
     Json(payload): Json<InvoiceCreatePayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::<SalesInvoiceOut>::bad_request("缺少租户上下文");
+    }
     let inv_type = if payload.invoice_type.is_empty() {
         "tax".to_string()
     } else {
@@ -586,6 +592,9 @@ pub async fn update_sales_invoice(
     Json(payload): Json<InvoiceUpdatePayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::<SalesInvoiceOut>::bad_request("缺少租户上下文");
+    }
     if let Some(t) = &payload.invoice_type {
         if !validate_invoice_type(t) {
             return ApiResponse::<SalesInvoiceOut>::unprocessable(
@@ -613,6 +622,7 @@ pub async fn update_sales_invoice(
             total_amount = COALESCE($5, amount) + COALESCE($6, tax_amount),
             updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status = 'draft'
+           AND deleted_at IS NULL
          RETURNING id",
     )
     .bind(id)
@@ -644,6 +654,9 @@ pub async fn delete_sales_invoice(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::<String>::bad_request("缺少租户上下文");
+    }
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -654,7 +667,8 @@ pub async fn delete_sales_invoice(
         Err(e) => return crate::shared::err_resp(e),
     };
     let result = match sqlx::query(
-        "DELETE FROM finance.sales_invoices WHERE id = $1 AND tenant_id = $2 AND status = 'draft'",
+        "UPDATE finance.sales_invoices SET deleted_at = NOW(), updated_at = NOW()
+         WHERE id = $1 AND tenant_id = $2 AND status = 'draft' AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
@@ -692,6 +706,9 @@ pub async fn issue_sales_invoice(
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::<SalesInvoiceOut>::bad_request("缺少租户上下文");
+    }
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -704,6 +721,7 @@ pub async fn issue_sales_invoice(
     let issued = match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'issued', issued_at = NOW(), updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status = 'draft'
+           AND deleted_at IS NULL
          RETURNING id",
     )
     .bind(id)
@@ -744,6 +762,9 @@ pub async fn cancel_sales_invoice(
     Json(payload): Json<CancelPayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::<SalesInvoiceOut>::bad_request("缺少租户上下文");
+    }
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -757,6 +778,7 @@ pub async fn cancel_sales_invoice(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
                 cancelled_at = NOW(), updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status IN ('draft', 'issued', 'overdue')
+           AND deleted_at IS NULL
          RETURNING id",
     )
     .bind(id)
@@ -798,6 +820,9 @@ pub async fn red_flush_sales_invoice(
     Json(payload): Json<RedFlushPayload>,
 ) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if tenant_id.is_nil() {
+        return ApiResponse::<SalesInvoiceOut>::bad_request("缺少租户上下文");
+    }
     let now = today();
 
     let mut guard = txn_arc.lock().await;
@@ -833,6 +858,7 @@ pub async fn red_flush_sales_invoice(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
                 cancelled_at = NOW(), updated_at = NOW()
          WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')
+           AND deleted_at IS NULL
          RETURNING id",
     )
     .bind(id)
@@ -1266,7 +1292,7 @@ pub async fn confirm_collection(
     if let Some(inv_id) = invoice_id {
         let inv = match sqlx::query(
             "SELECT total_amount, paid_amount FROM finance.sales_invoices
-             WHERE id = $1 AND tenant_id = $2 FOR UPDATE",
+             WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL FOR UPDATE",
         )
         .bind(inv_id)
         .bind(tenant_id)
@@ -1291,7 +1317,8 @@ pub async fn confirm_collection(
              SET paid_amount = paid_amount + $3,
                  status = CASE WHEN paid_amount + $3 >= total_amount THEN 'paid' ELSE status END,
                  updated_at = NOW()
-             WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')",
+             WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')
+               AND deleted_at IS NULL",
         )
         .bind(inv_id)
         .bind(tenant_id)
@@ -1393,7 +1420,7 @@ pub async fn batch_confirm_collections(
         if let Some(inv_id) = invoice_id {
             let inv = match sqlx::query(
                 "SELECT total_amount, paid_amount FROM finance.sales_invoices
-                 WHERE id = $1 AND tenant_id = $2 FOR UPDATE",
+                 WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL FOR UPDATE",
             )
             .bind(inv_id)
             .bind(tenant_id)
@@ -1441,7 +1468,8 @@ pub async fn batch_confirm_collections(
                  SET paid_amount = paid_amount + $3,
                      status = CASE WHEN paid_amount + $3 >= total_amount THEN 'paid' ELSE status END,
                      updated_at = NOW()
-                 WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')",
+                 WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')
+               AND deleted_at IS NULL",
             )
             .bind(inv_id)
             .bind(tenant_id)
