@@ -251,7 +251,11 @@ pub async fn create_account(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.create_account(tenant_id, req, txn).await {
         Ok(account) => ApiResponse::success(account, "创建成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -397,7 +401,11 @@ pub async fn create_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
@@ -492,7 +500,11 @@ pub async fn submit_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.submit_voucher(tenant_id, voucher_id, txn).await {
         Ok(voucher) => ApiResponse::success(voucher, "提交成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -514,7 +526,11 @@ pub async fn approve_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let approved_by = claims.username.clone();
     match service
         .approve_voucher(tenant_id, voucher_id, &approved_by, txn)
@@ -540,7 +556,11 @@ pub async fn post_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let posted_by = claims.username.clone();
     match service
         .post_voucher(tenant_id, voucher_id, &posted_by, txn)
@@ -569,7 +589,11 @@ async fn update_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let updated_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
@@ -597,7 +621,11 @@ pub async fn delete_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.delete_voucher(tenant_id, voucher_id, txn).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -620,7 +648,11 @@ pub async fn unpost_voucher(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.unpost_voucher(tenant_id, voucher_id, txn).await {
         Ok(voucher) => ApiResponse::success(voucher, "反过账成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -846,7 +878,11 @@ pub async fn create_aux_account(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.create_aux_account(tenant_id, req, txn).await {
         Ok(account) => ApiResponse::success(account, "辅助科目创建成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1047,7 +1083,11 @@ pub async fn batch_submit_vouchers(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .batch_submit_vouchers(tenant_id, req.voucher_ids, txn)
         .await
@@ -1072,7 +1112,11 @@ pub async fn batch_approve_vouchers(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let approved_by = claims.username.clone();
     match service
         .batch_approve_vouchers(tenant_id, req.voucher_ids, &approved_by, txn)
@@ -1098,7 +1142,11 @@ pub async fn batch_post_vouchers(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let posted_by = claims.username.clone();
     match service
         .batch_post_vouchers(tenant_id, req.voucher_ids, &posted_by, txn)
@@ -1135,7 +1183,11 @@ pub async fn export_vouchers(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.export_vouchers(tenant_id, req, txn).await {
         Ok(result) => ApiResponse::success(result, "导出成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1158,7 +1210,11 @@ pub async fn year_end_close(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
@@ -1194,7 +1250,11 @@ pub async fn create_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     let supplier_id = req.supplier_id;
     let payment_method = req.payment_method.clone();
@@ -1345,7 +1405,11 @@ pub async fn update_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let updated_by = claims.username.clone();
     let locale = Locale::from_headers(&headers).as_sql();
     match service
@@ -1372,7 +1436,11 @@ pub async fn delete_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.delete_payment(tenant_id, payment_id, txn).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -1395,7 +1463,11 @@ pub async fn submit_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let _submitted_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id, txn).await {
@@ -1436,7 +1508,11 @@ pub async fn approve_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let approved_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id, txn).await {
@@ -1480,7 +1556,11 @@ pub async fn reject_payment_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let rejected_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id, txn).await {
@@ -1619,7 +1699,11 @@ pub async fn export_payments_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     match service.export_payments(tenant_id, req, txn).await {
         Ok(r) => ApiResponse::success(r, "导出成功"),
@@ -1741,7 +1825,11 @@ pub async fn update_approval_config_handler(
     }
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let updated_by = claims.username.clone();
 
     match service
@@ -1773,7 +1861,11 @@ pub async fn delete_approval_config_handler(
     }
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
 
     match service
         .delete_approval_config(tenant_id, config_id, txn)
@@ -2154,7 +2246,11 @@ pub async fn create_voucher_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     let req: crate::services::finance::voucher_template::CreateVoucherTemplateRequest =
         match serde_json::from_value(req) {
@@ -2191,7 +2287,11 @@ async fn update_voucher_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let req: crate::services::finance::voucher_template::UpdateVoucherTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -2226,7 +2326,11 @@ pub async fn delete_voucher_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .delete_voucher_template(tenant_id, template_id, txn)
         .await
@@ -2251,7 +2355,11 @@ pub async fn set_default_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .set_default_template(tenant_id, template_id, txn)
         .await
@@ -2294,7 +2402,11 @@ pub async fn apply_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let req: crate::services::finance::voucher_template::ApplyTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -2332,7 +2444,11 @@ async fn copy_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     let source = match service
         .get_voucher_template(tenant_id, template_id, txn)
@@ -2400,7 +2516,11 @@ pub async fn toggle_template_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<ToggleTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let mut guard = txn_arc.lock().await;
@@ -2479,7 +2599,11 @@ pub async fn match_template_handler(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<MatchTemplateRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let source_type = match req.source_type {
         Some(s) => s,
         None => return ApiResponse::bad_request("source_type 为必填"),
@@ -2643,7 +2767,11 @@ async fn add_template_entry_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -2730,7 +2858,11 @@ async fn update_template_entry_handler(
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -2808,7 +2940,11 @@ async fn delete_template_entry_handler(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -2875,7 +3011,11 @@ pub async fn reorder_template_entries_handler(
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -3022,7 +3162,11 @@ pub async fn import_template_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
 
     let mut file_content: Option<Vec<u8>> = None;
@@ -3165,7 +3309,11 @@ pub async fn create_generation_rule_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     let req: crate::services::finance::voucher_generation::CreateGenerationRuleRequest =
         match serde_json::from_value(req) {
@@ -3202,7 +3350,11 @@ pub async fn update_generation_rule_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let req: crate::services::finance::voucher_generation::UpdateGenerationRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -3237,7 +3389,11 @@ pub async fn delete_generation_rule_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .delete_generation_rule(tenant_id, rule_id, txn)
         .await
@@ -3259,7 +3415,11 @@ pub async fn toggle_generation_rule_handler(
     Path(rule_id): Path<Uuid>,
     Json(req): Json<ToggleRuleRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
     let mut guard = txn_arc.lock().await;
@@ -3346,7 +3506,11 @@ pub async fn test_rule_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let req: crate::services::finance::voucher_generation::TestRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
@@ -3378,7 +3542,11 @@ pub async fn generate_vouchers_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let generated_by = claims.username.clone();
     let req: crate::services::finance::voucher_generation::GenerateVouchersRequest =
         match serde_json::from_value(req) {
@@ -3437,7 +3605,11 @@ pub async fn import_vouchers_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let imported_by = claims.username.clone();
     let req: crate::services::finance::u8_import::ImportVouchersRequest =
         match serde_json::from_value(req) {
@@ -3574,7 +3746,11 @@ pub async fn rollback_import_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.rollback_import(tenant_id, import_id, txn).await {
         Ok(_) => ApiResponse::success((), "回滚成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -3628,7 +3804,11 @@ async fn create_receivable_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let created_by = claims.username.clone();
     match service
         .create_receivable(tenant_id, req, &created_by, txn)
@@ -3655,7 +3835,11 @@ async fn update_receivable_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .update_receivable(tenant_id, receivable_id, req, txn)
         .await
@@ -3680,7 +3864,11 @@ async fn delete_receivable_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .delete_receivable(tenant_id, receivable_id, txn)
         .await
@@ -3843,7 +4031,11 @@ async fn update_payable_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .update_payable(tenant_id, payable_id, req, txn)
         .await
@@ -3868,7 +4060,11 @@ async fn delete_payable_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service.delete_payable(tenant_id, payable_id, txn).await {
         Ok(_) => ApiResponse::success((), "删除成功"),
         Err(e) => crate::shared::err_resp(e),
@@ -4156,7 +4352,11 @@ async fn update_collection_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .update_collection(tenant_id, collection_id, req, txn)
         .await
@@ -4181,7 +4381,11 @@ async fn delete_collection_handler(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .delete_collection(tenant_id, collection_id, txn)
         .await
@@ -4932,7 +5136,11 @@ pub async fn batch_delete_vouchers(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Json(req): Json<BatchDeleteVouchersRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut deleted = 0i64;
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -4983,7 +5191,11 @@ pub async fn unapprove_voucher(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(voucher_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -5025,7 +5237,11 @@ pub async fn reverse_voucher(
     Path(voucher_id): Path<Uuid>,
     Json(req): Json<ReverseVoucherRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let reversal_id = Uuid::new_v4();
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -5118,7 +5334,11 @@ pub async fn generate_voucher_by_template(
         Err(_) => return ApiResponse::bad_request("无效的模板ID"),
     };
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     match service
         .get_voucher_template(tenant_id, template_id, txn)
         .await
@@ -5539,7 +5759,11 @@ pub async fn close_income_period(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let period = req.period.unwrap_or_default();
     if period.is_empty() {
         return ApiResponse::bad_request("period 不能为空（YYYY-MM 或 YYYYMM）");
@@ -5581,7 +5805,11 @@ pub async fn year_end_close_v2(
     };
 
     let service = FinanceService::new(state.db.clone(), state.workflow_client.clone());
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let year = req.year.unwrap_or_else(|| Utc::now().year());
     let locale = Locale::from_headers(&headers).as_sql();
     match service
@@ -5727,7 +5955,11 @@ pub async fn update_account(
     Path(account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<Account> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return crate::shared::err_resp(TopemsError::DatabaseTransaction(
@@ -5837,7 +6069,11 @@ pub async fn delete_account(
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(account_id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         return crate::shared::err_resp(TopemsError::DatabaseTransaction(
@@ -7071,7 +7307,11 @@ pub async fn update_expense_approval(
         .approver_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     if tenant_id.is_nil() {
         return ApiResponse::bad_request("缺少租户上下文");
     }
@@ -7208,7 +7448,11 @@ pub async fn delete_expense_approval(
         Ok(u) => u,
         Err(_) => return ApiResponse::not_found("费用审批不存在"),
     };
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let tenant_id = match topems_shared_auth::middleware::tenant::try_tenant_id_from_claims(&claims)
+    {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     if tenant_id.is_nil() {
         return ApiResponse::bad_request("缺少租户上下文");
     }
