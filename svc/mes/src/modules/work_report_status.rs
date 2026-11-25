@@ -40,6 +40,36 @@ impl WorkReportStatus {
         }
     }
 
+    /// 可编辑/可提交的当前态：草稿、驳回、返工中。
+    pub fn editable_from() -> &'static [&'static str] {
+        &["draft", "rejected", "reworking"]
+    }
+
+    /// 可软删的当前态：草稿、驳回、已取消；已提交/已审批/已归档保留台账。
+    pub fn deletable_from() -> &'static [&'static str] {
+        &["draft", "rejected", "cancelled"]
+    }
+
+    /// 状态迁移：draft→submitted/cancelled；submitted→approved/rejected/cancelled；
+    /// rejected→reworking/cancelled；reworking→submitted/cancelled；approved→archived；
+    /// archived/cancelled 终态，同态幂等。
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        matches!(
+            (self, target),
+            (Self::Draft, Self::Submitted | Self::Cancelled)
+                | (
+                    Self::Submitted,
+                    Self::Approved | Self::Rejected | Self::Cancelled
+                )
+                | (Self::Rejected, Self::Reworking | Self::Cancelled)
+                | (Self::Reworking, Self::Submitted | Self::Cancelled)
+                | (Self::Approved, Self::Archived)
+        )
+    }
+
     #[must_use]
     pub fn from_db_str(raw: &str) -> Option<Self> {
         match raw.trim().to_ascii_lowercase().as_str() {
@@ -73,6 +103,28 @@ mod tests {
                 "archived",
                 "cancelled"
             ]
+        );
+    }
+
+    #[test]
+    fn lifecycle_and_sets_are_strict() {
+        use WorkReportStatus::*;
+        assert!(Draft.can_transition_to(Submitted));
+        assert!(Submitted.can_transition_to(Approved));
+        assert!(Submitted.can_transition_to(Rejected));
+        assert!(Rejected.can_transition_to(Reworking));
+        assert!(Reworking.can_transition_to(Submitted));
+        assert!(Approved.can_transition_to(Archived));
+        assert!(!Approved.can_transition_to(Submitted));
+        assert!(!Archived.can_transition_to(Draft));
+        assert!(!Cancelled.can_transition_to(Draft));
+        assert_eq!(
+            WorkReportStatus::editable_from(),
+            &["draft", "rejected", "reworking"]
+        );
+        assert_eq!(
+            WorkReportStatus::deletable_from(),
+            &["draft", "rejected", "cancelled"]
         );
     }
 
