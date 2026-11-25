@@ -604,6 +604,36 @@ pub async fn update_equipment(
         },
     };
 
+    // 无论是否改状态都读当前态，限定未删除；报废为终态
+    let current: Option<(Option<String>,)> = match sqlx::query_as(
+        "SELECT status FROM mes.equipment WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("查询设备当前状态失败: {}", e);
+            return ApiResponse::server_error("更新设备失败");
+        }
+    };
+    let Some((current_raw,)) = current else {
+        return ApiResponse::not_found("设备不存在");
+    };
+    let Some(current_raw) = current_raw else {
+        return ApiResponse::conflict("设备状态为空，需人工处理");
+    };
+    let Some(current_status) = EquipmentStatus::from_db_str(&current_raw) else {
+        return ApiResponse::conflict("设备当前状态非法，需人工处理");
+    };
+    if let Some(target) = status {
+        if !current_status.can_transition_to(target) {
+            return ApiResponse::conflict("设备已报废，不允许恢复其它状态");
+        }
+    }
+
     let result = sqlx::query(
         r#"
         UPDATE mes.equipment SET
@@ -619,7 +649,7 @@ pub async fn update_equipment(
             next_maintenance_date = COALESCE($11, next_maintenance_date),
             description = COALESCE($12, description),
             updated_at = $13
-        WHERE id = $1 AND tenant_id = $14::uuid
+        WHERE id = $1 AND tenant_id = $14::uuid AND status = $15 AND deleted_at IS NULL
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -641,6 +671,7 @@ pub async fn update_equipment(
     .bind(&req.description)
     .bind(Utc::now())
     .bind(tenant_id)
+    .bind(current_raw)
     .fetch_optional(&mut scope)
     .await;
 
@@ -660,7 +691,7 @@ pub async fn update_equipment(
 
     match result {
         Some(row) => ApiResponse::success(row_to_equipment_response(&row), "设备更新成功"),
-        None => ApiResponse::not_found("设备不存在"),
+        None => ApiResponse::conflict("设备状态已被并发修改，更新失败"),
     }
 }
 
@@ -794,7 +825,7 @@ pub async fn maintenance_equipment(
             last_maintenance_date = $2,
             next_maintenance_date = $3,
             updated_at = $4
-        WHERE id = $1 AND tenant_id = $6::uuid
+        WHERE id = $1 AND tenant_id = $6::uuid AND status <> 'scrapped' AND deleted_at IS NULL
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -827,7 +858,7 @@ pub async fn maintenance_equipment(
 
     match result {
         Some(row) => ApiResponse::success(row_to_equipment_response(&row), "设备维护成功"),
-        None => ApiResponse::not_found("设备不存在"),
+        None => ApiResponse::conflict("设备不存在或已报废，不允许登记维护"),
     }
 }
 

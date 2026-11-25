@@ -35,6 +35,14 @@ impl EquipmentStatus {
             _ => None,
         }
     }
+
+    /// 报废为终态，其余四态之间允许运维调整；同态幂等。
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        self != Self::Scrapped
+    }
 }
 
 #[cfg(test)]
@@ -56,5 +64,13 @@ mod tests {
         assert!(EquipmentStatus::from_db_str("normal").is_none());
         assert!(EquipmentStatus::from_db_str("available").is_none());
         assert!(EquipmentStatus::from_db_str("bogus").is_none());
+    }
+
+    #[test]
+    fn scrapped_is_terminal() {
+        assert!(EquipmentStatus::Idle.can_transition_to(EquipmentStatus::Running));
+        assert!(EquipmentStatus::Fault.can_transition_to(EquipmentStatus::Maintenance));
+        assert!(!EquipmentStatus::Scrapped.can_transition_to(EquipmentStatus::Idle));
+        assert!(EquipmentStatus::Scrapped.can_transition_to(EquipmentStatus::Scrapped));
     }
 }
