@@ -302,10 +302,13 @@ export function ListPageTemplate<
   // 解析最终数据/加载状态/错误：外部传入优先，其次 crud 内部
   // V64 防御：过滤掉 data 中可能存在的 null / undefined 元素，避免 300+ 处
   // schema renderCell 因 "row is undefined" 抛错（典型：can't access property "isactive"）
-  const rawData = useMemo(
-    () => propData ?? (crud ? crudResult.data : []),
-    [propData, crud, crudResult]
-  );
+  // crud 模式下「空数组」不算显式数据源：页面目录重构后 20+ 处调用统一写成 data={[]}，
+  // 若按 ?? 语义会让 crud 拉回的行被空数组顶掉（表现为「1-10 共 29 条」但表格显示暂无数据）。
+  // 因此只有非空 propData 才覆盖 crud 结果。
+  const rawData = useMemo(() => {
+    if (propData && propData.length > 0) return propData;
+    return crud ? crudResult.data : (propData ?? []);
+  }, [propData, crud, crudResult]);
   const data = useMemo(
     () =>
       Array.isArray(rawData) ? rawData.filter((r): r is NonNullable<typeof r> => r != null) : [],
