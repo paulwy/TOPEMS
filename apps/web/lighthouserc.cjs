@@ -1,7 +1,8 @@
 module.exports = {
   ci: {
     collect: {
-      numberOfRuns: 3,
+      // CI 15 分钟超时内需覆盖 9 个页面；单跑已能反映性能基线，3 跑会超时。
+      numberOfRuns: 1,
       settings: {
         preset: 'desktop',
         maxWaitForFcp: 30000,
