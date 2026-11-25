@@ -547,6 +547,25 @@ pub async fn update_work_station(
         None => None,
     };
 
+    // 先读未删除当前态，用于并发认领
+    let current: Option<(String,)> = match sqlx::query_as(
+        "SELECT status FROM mes.work_stations WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(row) => row,
+        Err(e) => {
+            tracing::error!("查询工位当前状态失败: {}", e);
+            return ApiResponse::server_error("更新工位失败");
+        }
+    };
+    let Some((current_raw,)) = current else {
+        return ApiResponse::not_found("工位不存在");
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE mes.work_stations SET
@@ -561,6 +580,8 @@ pub async fn update_work_station(
             updated_at = $10
         WHERE id = $1
           AND tenant_id = $11::uuid
+          AND status = $12
+          AND deleted_at IS NULL
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -578,6 +599,7 @@ pub async fn update_work_station(
     .bind(&req.description)
     .bind(Utc::now())
     .bind(tenant_id)
+    .bind(current_raw)
     .fetch_optional(&mut scope)
     .await;
 
@@ -596,7 +618,7 @@ pub async fn update_work_station(
 
     match result {
         Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位更新成功"),
-        None => ApiResponse::not_found("工位不存在"),
+        None => ApiResponse::conflict("工位状态已被并发修改，更新失败"),
     }
 }
 
@@ -636,6 +658,7 @@ pub async fn delete_work_station(
         UPDATE mes.work_stations SET deleted_at = NOW()
         WHERE id = $1
           AND tenant_id = $2::uuid
+          AND deleted_at IS NULL
         "#,
     )
     .bind(id)
@@ -714,6 +737,8 @@ pub async fn activate_work_station(
             updated_at = $2
         WHERE id = $1
           AND tenant_id = $3::uuid
+          AND status = ANY($6)
+          AND deleted_at IS NULL
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -724,6 +749,7 @@ pub async fn activate_work_station(
     .bind(Utc::now())
     .bind(tenant_id)
     .bind(WorkStationStatus::Active.as_db_str())
+    .bind(WorkStationStatus::activate_from())
     .fetch_optional(&mut scope)
     .await;
 
@@ -742,7 +768,7 @@ pub async fn activate_work_station(
 
     match result {
         Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位激活成功"),
-        None => ApiResponse::not_found("工位不存在"),
+        None => ApiResponse::conflict("工位不存在、已删除或状态不允许激活"),
     }
 }
 
@@ -797,6 +823,7 @@ pub async fn deactivate_work_station(
             updated_at = $2
         WHERE id = $1 AND status = ANY($5)
           AND tenant_id = $3::uuid
+          AND deleted_at IS NULL
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
