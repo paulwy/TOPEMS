@@ -79,12 +79,18 @@ async fn create_database_pool_from_reservation(
     let connect_options = PgConnectOptions::from_str(&config.url)
         .map_err(|e| TopemsError::Database(format!("数据库 DSN 解析失败: {e}")))?
         .application_name(&application_name)
-        // 禁用 prepared statement 客户端缓存（H1 根因修复）。
-        // 机理：DDL（如 ALTER COLUMN TYPE）后，旧连接上缓存的 prepared statement 仍引用旧
-        // schema 元数据，执行时报类型不匹配错误。设为 0 后每条查询都即时准备，
-        // DDL 后下一次查询自动用新 schema，彻底消除「DDL 后新旧连接交替 500/200」。
-        // 代价：每次查询多一次 Prepare 往返（~0.5-1ms/条），按「正确性优先」接受。
-        .statement_cache_capacity(0);
+        // prepared statement 缓存容量（H1 与 26000 的平衡点）。
+        // 过去设为 0 以规避 H1：DDL（如 ALTER COLUMN TYPE）后旧连接缓存的语句引用旧元数据，
+        // 执行时报类型不匹配。但容量 0 意味着所有语句共用会话内唯一的 unnamed 语句槽，
+        // 而 sqlx 在遇到未知的自定义类型（枚举参数/枚举列）时会额外发一条 pg_type 自省查询
+        // （简单协议同样占用 unnamed 槽），把刚 Parse 好、尚未 Execute 的语句顶掉，触发
+        // SQLSTATE 26000「unnamed prepared statement does not exist」——且只在该连接首次
+        // 执行这类查询时发生（之后类型信息被连接级缓存记住），表现为「重启/新连接后首个请求 500」。
+        // 改为小容量命名缓存后：语句走命名槽，自省不再覆盖业务语句，26000 消失。
+        // H1 残余风险与对策：仅影响「缓存该语句的连接 + 语句涉及的对象在运行期被 DDL」这一窗口，
+        // 以 (a) 运行期 DDL 收敛计划（docs/database/runtime-ddl-plan.md）、(b) 部署即重启连接池、
+        // (c) max_lifetime 600s 轮换 作为兜底。
+        .statement_cache_capacity(8);
 
     let options = PgPoolOptions::new()
         .max_connections(max_connections)

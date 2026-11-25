@@ -560,7 +560,9 @@ impl FinanceService {
         let period_provided = period.is_some();
 
         if status_provided {
-            query.push_str(" AND status = $2");
+            // 枚举参数按文本绑定 + SQL 显式转型：避免 sqlx 在无缓存连接上为未知自定义类型
+            // 额外发一次 pg_type 自省（简单协议会覆盖 unnamed 语句槽，触发 26000）
+            query.push_str(" AND status = $2::public.voucher_status");
         }
         if period_provided {
             let param_num = if status_provided { "$3" } else { "$2" };
@@ -571,7 +573,7 @@ impl FinanceService {
 
         let mut query_builder = sqlx::query_as(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(s) = status {
-            query_builder = query_builder.bind(s);
+            query_builder = query_builder.bind(s.to_string());
         }
         if let Some(p) = period {
             query_builder = query_builder.bind(p);

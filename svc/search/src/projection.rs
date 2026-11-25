@@ -148,8 +148,11 @@ async fn apply_v1(db: &Db, payload: &SearchableEntityChangedPayload) -> Result<(
         .tenant_id
         .unwrap_or_else(|| Uuid::parse_str(ZERO_TENANT).unwrap_or_default());
 
+    // 事件/backfill 没有请求租户上下文；payload 缺 tenant_id 时落到零租户行。
+    // scope_for_tenant 会拒绝 nil（fail-closed），这里与 v2 一致走系统写通道：
+    // 系统通道写入仍按 SQL 里的 tenant_id 谓词落行，不会跨租户读取。
     let mut scope = db
-        .scope_for_tenant(tenant)
+        .scope_system()
         .await
         .map_err(|e| TopemsError::Internal(format!("search 投影 scope begin 失败: {}", e)))?;
 

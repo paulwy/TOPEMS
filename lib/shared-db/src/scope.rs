@@ -135,7 +135,8 @@ impl Db {
         self.guard_request_own_txn("scope_read")?;
         let mut tx = self.pool.begin().await?;
         // 必须是事务内第一条语句。
-        sqlx::query("SET TRANSACTION READ ONLY")
+        // 简单协议执行：不占用会话级 unnamed prepared statement 槽，避免与业务查询交错。
+        sqlx::raw_sql("SET TRANSACTION READ ONLY")
             .execute(&mut *tx)
             .await?;
         let mut scope = ScopedTxn {
@@ -167,7 +168,8 @@ impl Db {
     /// 不设 GUC 在策略下是 fail-closed（NULL 不匹配任何分支）。
     pub async fn scope_read_system(&self) -> sqlx::Result<ScopedTxn<'_>> {
         let mut tx = self.pool.begin().await?;
-        sqlx::query("SET TRANSACTION READ ONLY")
+        // 简单协议执行：不占用会话级 unnamed prepared statement 槽，避免与业务查询交错。
+        sqlx::raw_sql("SET TRANSACTION READ ONLY")
             .execute(&mut *tx)
             .await?;
         let mut scope = ScopedTxn {
@@ -232,10 +234,11 @@ impl Db {
     pub async fn scope_read_for_tenant_stream(&self, tenant: Uuid) -> sqlx::Result<ScopedTxn<'_>> {
         let mut scope = self.open_read_for_tenant(tenant).await?;
         // 长连接每轮短读同样受 30s 语句超时保护，避免一条慢查询卡住订阅循环。
-        let timeout =
-            std::env::var("TOPEMS_STATEMENT_TIMEOUT").unwrap_or_else(|_| "30s".to_string());
-        sqlx::query("SELECT set_config('statement_timeout', $1, true)")
-            .bind(timeout)
+        let sql = format!(
+            "SELECT set_config('statement_timeout', {}, true)",
+            sql_string_lit(&statement_timeout_literal())
+        );
+        sqlx::raw_sql(sqlx::AssertSqlSafe(sql))
             .execute(&mut scope)
             .await?;
         Ok(scope)
@@ -250,7 +253,8 @@ impl Db {
             ));
         }
         let mut tx = self.pool.begin().await?;
-        sqlx::query("SET TRANSACTION READ ONLY")
+        // 简单协议执行：不占用会话级 unnamed prepared statement 槽，避免与业务查询交错。
+        sqlx::raw_sql("SET TRANSACTION READ ONLY")
             .execute(&mut *tx)
             .await?;
         let mut scope = ScopedTxn {
@@ -406,6 +410,27 @@ enum TxRef<'a> {
 }
 
 /// 带 schema 作用域的事务视图。
+/// SQL 单引号字面量转义。仅用于本模块内部构造的 GUC 值（schema 名 / UUID / 常量），
+/// 不接受外部输入；外部值仍必须走 bind 参数。
+fn sql_string_lit(v: &str) -> String {
+    format!("'{}'", v.replace('\'', "''"))
+}
+
+/// 语句超时字面量：只接受「数字 + 可选 ms/s」，非法值回落 30s。
+fn statement_timeout_literal() -> String {
+    let raw = std::env::var("TOPEMS_STATEMENT_TIMEOUT").unwrap_or_else(|_| "30s".to_string());
+    let ok = raw
+        .strip_suffix("ms")
+        .or_else(|| raw.strip_suffix('s'))
+        .map(|d| !d.is_empty() && d.bytes().all(|b| b.is_ascii_digit()))
+        .unwrap_or(false);
+    if ok {
+        raw
+    } else {
+        "30s".to_string()
+    }
+}
+
 pub struct ScopedTxn<'a> {
     inner: TxRef<'a>,
     search_path: Arc<str>,
@@ -428,8 +453,11 @@ impl ScopedTxn<'_> {
 
     async fn apply_search_path(&mut self) -> sqlx::Result<()> {
         let path = self.search_path.to_string();
-        sqlx::query("SELECT set_config('search_path', $1, true)")
-            .bind(path)
+        let sql = format!(
+            "SELECT set_config('search_path', {}, true)",
+            sql_string_lit(&path)
+        );
+        sqlx::raw_sql(sqlx::AssertSqlSafe(sql))
             .execute(&mut *self)
             .await?;
         Ok(())
@@ -456,10 +484,11 @@ impl ScopedTxn<'_> {
         };
         self.apply_explicit_tenant(ctx.tenant, ctx.system).await?;
         // no_txn 服务不经过请求中间件；在请求上下文内的自开作用域同样加 30s 语句超时。
-        let timeout =
-            std::env::var("TOPEMS_STATEMENT_TIMEOUT").unwrap_or_else(|_| "30s".to_string());
-        sqlx::query("SELECT set_config('statement_timeout', $1, true)")
-            .bind(timeout)
+        let sql = format!(
+            "SELECT set_config('statement_timeout', {}, true)",
+            sql_string_lit(&statement_timeout_literal())
+        );
+        sqlx::raw_sql(sqlx::AssertSqlSafe(sql))
             .execute(&mut *self)
             .await?;
         Ok(())
@@ -480,20 +509,22 @@ impl ScopedTxn<'_> {
                 ),
                 None => (String::new(), "off", String::new()),
             };
-        sqlx::query(
-            "SELECT set_config('app.tenant_id', $1, true), \
-                    set_config('app.rls_system', $2, true), \
-                    set_config('app.company_id', $3, true), \
-                    set_config('app.actor_is_parent', $4, true), \
-                    set_config('app.visible_company_ids', $5, true)",
-        )
-        .bind(tenant.to_string())
-        .bind(if system { "on" } else { "off" })
-        .bind(company_id)
-        .bind(actor_is_parent)
-        .bind(visible_ids)
-        .execute(&mut *self)
-        .await?;
+        let rls = if system { "on" } else { "off" };
+        let sql = format!(
+            "SELECT set_config('app.tenant_id', {}, true), \
+                    set_config('app.rls_system', {}, true), \
+                    set_config('app.company_id', {}, true), \
+                    set_config('app.actor_is_parent', {}, true), \
+                    set_config('app.visible_company_ids', {}, true)",
+            sql_string_lit(&tenant.to_string()),
+            sql_string_lit(rls),
+            sql_string_lit(&company_id),
+            sql_string_lit(actor_is_parent),
+            sql_string_lit(&visible_ids)
+        );
+        sqlx::raw_sql(sqlx::AssertSqlSafe(sql))
+            .execute(&mut *self)
+            .await?;
         Ok(())
     }
 
