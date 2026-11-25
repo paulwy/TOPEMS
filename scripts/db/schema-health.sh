@@ -21,12 +21,14 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 STRICT=0
 BASELINE=1
-for a in "$@"; do
-    case "$a" in
-        --strict) STRICT=1 ;;
-        --no-baseline) BASELINE=0 ;;
+TARGET_TABLE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --strict) STRICT=1; shift ;;
+        --no-baseline) BASELINE=0; shift ;;
+        --table) TARGET_TABLE="$2"; shift 2 ;;
         -h|--help) sed -n '1,24p' "${BASH_SOURCE[0]}"; exit 0 ;;
-        *) echo "未知参数: $a" >&2; exit 2 ;;
+        *) echo "未知参数: $1" >&2; exit 2 ;;
     esac
 done
 
@@ -41,6 +43,7 @@ TMPDB="topems_schema_baseline_tmp"
 DRIFT=0
 BEHIND=0
 
+# shellcheck disable=SC2016  # SQL 里的 $$ 是 PG 的 dollar-quote，不是 shell 变量
 COUNT_SQL='
 WITH rel AS (
   SELECT n.nspname AS schema, c.relkind, count(*) AS n
@@ -113,6 +116,14 @@ echo "[2/3] 与基线 fixtures/full_schema_contract.sql 的结构差量（排除
 if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>&1 && psql postgres -tAc "select 1" >/dev/null 2>&1; then
     dropdb --if-exists "$TMPDB" >/dev/null 2>&1
     if createdb "$TMPDB" 2>/dev/null && psql "$TMPDB" -v ON_ERROR_STOP=1 -q -f "$FIXTURE" >/tmp/schema_health_load.log 2>&1; then
+        if [ -n "$TARGET_TABLE" ]; then
+            echo "  表级列名差量：${TARGET_TABLE}（< = 基线有现库无 / > = 现库有基线无）"
+            CQL=$(printf "select attname from pg_attribute a join pg_class c on c.oid=a.attrelid where c.relname = '%s' and c.relnamespace = '%s'::regnamespace and a.attnum > 0 and not a.attisdropped order by attname" "${TARGET_TABLE#*.}" "${TARGET_TABLE%%.*}")
+            diff <(psql "$TMPDB" -tAq -c "$CQL" 2>/dev/null) <(psql "$DSN" -tAq -c "$CQL" 2>/dev/null) \
+                | grep -E "^[<>]" | sed 's/^/    /' | head -40
+            dropdb --if-exists "$TMPDB" >/dev/null 2>&1
+            exit 0
+        fi
         snapshot "$DSN" > /tmp/schema_health_live.txt
         snapshot "$TMPDB" > /tmp/schema_health_base.txt
         DELTA=$(delta /tmp/schema_health_base.txt /tmp/schema_health_live.txt)
@@ -126,6 +137,7 @@ if [ $BASELINE -eq 1 ] && [ -f "$FIXTURE" ] && command -v createdb >/dev/null 2>
                 { mark = ($2==1 ? "⚠ 落后" : " 领先"); printf("    %-18s %s%s\n", $1, mark, $3) }' | head -30
             if [ "$NBACK" -gt 0 ]; then
                 echo "  ⚠ 有 $NBACK 个 schema 的列/表少于基线（可能漏迁移，也可能只是基线快照更早）"
+                # shellcheck disable=SC2016
                 COL_SQL='select n.nspname||$$.$$||c.relname, count(*) from pg_attribute a
                            join pg_class c on c.oid=a.attrelid
                            join pg_namespace n on n.oid=c.relnamespace
@@ -161,6 +173,7 @@ echo
 echo "[3/3] 真实待办迁移（pending - 归档表）"
 INSTALLED=$(psql "$DSN" -tAc "select version from public._sqlx_migrations where success" 2>/dev/null)
 ARCHIVED_VERS=$(awk -F'\t' '$1 !~ /^#/ && $1 != "version" {print $1}' "$ARCHIVE" 2>/dev/null | sort -u)
+# shellcheck disable=SC2012
 PENDING=$(ls "$MIGDIR"/[0-9]*_*.sql 2>/dev/null | while read -r f; do
     v=$(basename "$f" | cut -d_ -f1)
     [ ${#v} -eq 14 ] || continue

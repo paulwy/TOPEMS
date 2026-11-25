@@ -94,3 +94,15 @@ scripts/db/schema-health.sh --no-baseline
 落后最明显的位置（摘录）：`integration.external_erp_sync_logs`（现库 14 / 基线 35）、`public.core_tickets`（2 / 19）、`finance.budgets`（13 / 20）、`mes.production_records`（41 / 50）、`qms.qa_eightd_reports`（27 / 34），另有 `erp.sales_order_items`、`plugin_finance.accounting_subjects` 等表整表缺失。
 
 **判读要点**：这些差异不必然是"漏迁移"，也可能是基线快照生成于另一条更干净的历史线（该库把 pending 全跑过）。下一步只能**逐表定位**是哪条迁移负责补这些列，再单点 `apply-pending.sh dry-run --only <version>` 验证——不要指望一次批量对齐。
+
+### 7.1 单表列名差量（`--table`）
+
+```bash
+scripts/db/schema-health.sh --table finance.budgets
+#   < approved_at / < approver_id / < created_by / < description / < end_date / < start_date / < total_amount
+#   （< = 基线有、现库无；> = 现库有、基线无）
+```
+
+**重要限制**：基线 `fixtures/full_schema_contract.sql` 是 pg_dump 快照，它由哪条历史线生成没有登记在案。实测 `finance.budgets` 现库列与**代码**一致（`operational.rs` 读 `total_budget`/`used_amount`/`status`），而基线多出 `total_amount/start_date/end_date/approver_id/approved_at` —— 说明基线里那张表是**另一套定义**，不是"现库漏了迁移"。已装的 `20261007140000`（`success=t`）当年确实给 budgets 加过 `description/created_by`，现库没有，进一步说明该表在本地被"另一条路径"重建过。
+
+因此 `--table` 的正确用法是：**拿代码实际引用的列去核对**，而不是拿基线当真理。基线差量只作线索，不判定谁对谁错。
