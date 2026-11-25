@@ -854,11 +854,15 @@ pub async fn get_budget(
 
 pub async fn update_budget(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
     let requested_total_budget = req
         .get("total_budget")
@@ -887,9 +891,10 @@ pub async fn update_budget(
     let (current_status_raw, current_used_amount, current_total_budget) =
         match sqlx::query_as::<_, (String, Decimal, Decimal)>(only_own_schema_query!(
             "finance",
-            "SELECT status, used_amount, total_budget FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
+            "SELECT status, used_amount, total_budget FROM finance.budgets WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
         ))
         .bind(id)
+        .bind(tenant_id)
         .fetch_optional(&mut scope)
         .await
         {
@@ -938,7 +943,7 @@ pub async fn update_budget(
               department_id = $2, budget_type = $3, fiscal_year = $4,
               total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8,
               status = $9, updated_at = $10
-           WHERE id = $1 AND deleted_at IS NULL AND status = $11
+           WHERE id = $1 AND tenant_id = $12::uuid AND deleted_at IS NULL AND status = $11
            RETURNING id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#
@@ -962,6 +967,7 @@ pub async fn update_budget(
     .bind(status.as_db_str())
     .bind(now)
     .bind(&current_status_raw)
+    .bind(tenant_id)
     .fetch_one(&mut scope)
     .await;
 
@@ -986,10 +992,14 @@ pub async fn update_budget(
 )]
 pub async fn delete_budget(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
@@ -1008,9 +1018,10 @@ pub async fn delete_budget(
 
     let current_status = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "finance",
-        "SELECT status FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"
+        "SELECT status FROM finance.budgets WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
     ))
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await
     {
@@ -1028,11 +1039,12 @@ pub async fn delete_budget(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.budgets SET deleted_at = $2, updated_at = $2
-         WHERE id = $1 AND deleted_at IS NULL AND status = $3"
+         WHERE id = $1 AND tenant_id = $4::uuid AND deleted_at IS NULL AND status = $3"
     ))
     .bind(id)
     .bind(now)
     .bind(&current_status)
+    .bind(tenant_id)
     .execute(&mut scope)
     .await;
     let r = match result {
