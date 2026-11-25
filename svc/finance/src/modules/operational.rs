@@ -300,7 +300,7 @@ pub async fn get_expense(
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
-           FROM finance.expenses WHERE id = $1"#
+           FROM finance.expenses WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .fetch_optional(&mut scope)
@@ -384,6 +384,12 @@ pub async fn update_expense(
         if let Err(msg) = current_status.can_transition_to(target) {
             return ApiResponse::bad_request(&msg);
         }
+        // 同态回传仍视为“编辑字段”，终态必须拒绝；跨态流转（approved→paid）放行。
+        if target == current_status && !current_status.is_editable() {
+            return ApiResponse::conflict("费用报销已审批或已支付，不可再编辑");
+        }
+    } else if !current_status.is_editable() {
+        return ApiResponse::conflict("费用报销已审批或已支付，不可再编辑");
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -509,11 +515,35 @@ pub async fn delete_expense(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!(
+    let current = sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
         "finance",
-        "UPDATE finance.expenses SET deleted_at = NOW() WHERE id = $1"
+        "SELECT status FROM finance.expenses WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
+    .fetch_optional(&mut scope)
+    .await;
+    let current = match current {
+        Ok(Some(v)) => v.unwrap_or_else(|| ExpenseStatus::DEFAULT.as_str().to_string()),
+        Ok(None) => return ApiResponse::not_found("费用报销不存在"),
+        Err(e) => {
+            tracing::error!("读取费用报销状态失败: {}", e);
+            return ApiResponse::server_error("读取费用报销状态失败");
+        }
+    };
+    let Some(current_status) = ExpenseStatus::from_db_str(&current) else {
+        return ApiResponse::conflict("费用报销状态不在规范集合内");
+    };
+    if !current_status.is_deletable() {
+        return ApiResponse::conflict("费用报销已审批或已支付，不可删除");
+    }
+
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.expenses SET deleted_at = NOW() \
+         WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2)"
+    ))
+    .bind(id)
+    .bind(ExpenseStatus::DELETABLE.as_slice())
     .execute(&mut scope)
     .await;
     let r = match result {
@@ -524,9 +554,9 @@ pub async fn delete_expense(
         }
     };
     if r.rows_affected() > 0 {
-        ApiResponse::success("".to_string(), "费用报销删除成功")
+        ApiResponse::success(String::new(), "费用报销删除成功")
     } else {
-        ApiResponse::not_found("费用报销不存在")
+        ApiResponse::conflict("费用报销状态已变化或已删除，请刷新后重试")
     }
 }
 

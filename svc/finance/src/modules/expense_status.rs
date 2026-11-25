@@ -92,6 +92,22 @@ impl ExpenseStatus {
     /// 创建接口的默认状态（DB 列默认值仍是历史 `pending`，见 B221 证据文档）。
     pub const DEFAULT: Self = Self::Draft;
 
+    /// 允许通用编辑的状态：approved/paid 已形成财务负债或已支付，字段与金额不可再改。
+    pub const EDITABLE: [&'static str; 3] = ["draft", "submitted", "rejected"];
+
+    /// 软删允许的状态：已审批/已支付的报销不得删除。
+    pub const DELETABLE: [&'static str; 3] = ["draft", "submitted", "rejected"];
+
+    #[must_use]
+    pub fn is_editable(self) -> bool {
+        Self::EDITABLE.contains(&self.as_str())
+    }
+
+    #[must_use]
+    pub fn is_deletable(self) -> bool {
+        Self::DELETABLE.contains(&self.as_str())
+    }
+
     #[must_use]
     pub fn from_db_str(raw: &str) -> Option<Self> {
         normalize_expense(raw)
@@ -179,6 +195,18 @@ mod tests {
         );
         assert!(!ExpenseApprovalStatus::EDITABLE.contains(&"approved"));
         assert!(!ExpenseApprovalStatus::DELETABLE.contains(&"reimbursed"));
+    }
+
+    #[test]
+    fn expense_terminal_sets_are_strict() {
+        assert_eq!(ExpenseStatus::EDITABLE, ["draft", "submitted", "rejected"]);
+        assert_eq!(ExpenseStatus::DELETABLE, ["draft", "submitted", "rejected"]);
+        assert!(!ExpenseStatus::Approved.is_editable());
+        assert!(!ExpenseStatus::Paid.is_deletable());
+        assert!(ExpenseStatus::Submitted.is_editable());
+        assert!(ExpenseStatus::Paid
+            .can_transition_to(ExpenseStatus::Paid)
+            .is_ok());
     }
 
     #[test]
