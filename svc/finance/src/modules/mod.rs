@@ -5367,15 +5367,20 @@ pub async fn open_period_v2(
                 "finance",
                 "UPDATE finance.core_finance_periods \
                  SET status = $4, closed_at = NULL, closed_by = NULL, updated_at = NOW() \
-                 WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"
+                 WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL \
+                   AND status = $5"
             ))
             .bind(tenant_id)
             .bind(year)
             .bind(month)
             .bind(PeriodStatus::Open)
+            .bind(PeriodStatus::Closed)
             .execute(&mut scope)
             .await;
             match res {
+                Ok(r) if r.rows_affected() == 0 => {
+                    ApiResponse::conflict("期间状态已变化，请刷新后重试")
+                }
                 Ok(_) => ApiResponse::success(
                     serde_json::json!({"period": period_name, "status": "open"}),
                     "期间已重开",
@@ -5428,7 +5433,7 @@ pub async fn close_period_v2(
         Ok(v) => v,
         Err(e) => return crate::shared::err_resp(e),
     };
-    match current {
+    let current_status = match current {
         None => return ApiResponse::not_found("会计期间不存在"),
         // 已关闭期间重复关闭按幂等成功处理，避免前端重试产生虚假失败。
         Some(PeriodStatus::Closed) => {
@@ -5437,26 +5442,28 @@ pub async fn close_period_v2(
                 "期间已处于关闭状态",
             )
         }
-        Some(PeriodStatus::Open | PeriodStatus::Closing) => {}
-    }
+        Some(status @ (PeriodStatus::Open | PeriodStatus::Closing)) => status,
+    };
 
     let res = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.core_finance_periods \
          SET status = $4, closed_at = COALESCE(closed_at, NOW()), closed_by = COALESCE(closed_by, $5), updated_at = NOW() \
-         WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"
+         WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL \
+           AND status = $6"
     ))
     .bind(tenant_id)
     .bind(year)
     .bind(month)
     .bind(PeriodStatus::Closed)
     .bind(&claims.username)
+    .bind(&current_status)
     .execute(&mut scope)
     .await;
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                ApiResponse::not_found("会计期间不存在")
+                ApiResponse::conflict("期间状态已变化，请刷新后重试")
             } else {
                 ApiResponse::success(
                     serde_json::json!({"period": period_name, "status": "closed"}),
