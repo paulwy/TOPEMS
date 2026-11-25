@@ -2201,7 +2201,9 @@ jobs:
 
           # pg_dump 末尾 COMMENT ON EXTENSION 需要扩展属主；扩展由镜像预装，仅过滤该元数据。
           # 基线由 pg_dump 18 生成，PG16 服务端不识别 transaction_timeout；过滤该会话设置。
-          gzip -dc "$SCHEMA" | grep -v -E '^(COMMENT ON EXTENSION |SET transaction_timeout)' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+          # 2026-11-25: CREATE SCHEMA 也要过滤——schema 由上面的 bootstrap 步骤唯一创建，
+          # dump 里重复的 CREATE SCHEMA 在 ON_ERROR_STOP 下会直接中止整段恢复。
+          gzip -dc "$SCHEMA" | grep -v -E '^(COMMENT ON EXTENSION |SET transaction_timeout|CREATE SCHEMA )' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$LEDGER"
           gzip -dc "$DATA" | grep -v '^SET transaction_timeout' | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
 
