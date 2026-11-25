@@ -46,11 +46,12 @@
 1. **本次生产执行**用的是执行侧补丁：`20261121230000`（hrm 四表）、`20261121235900`（wms 两表）、`20261121235930`（hrm 初始化进度）的守卫谓词临时改为 `organization_id IS NOT NULL AND organization_id <> 目标列`，语义依据是“删的是逐行等于租户键的重复列，NULL 不携带组织信息、删列无损失；非 NULL 且不等仍然中止”。生产已按此跑完，`_sqlx_migrations` 记录的是补丁文件的 SHA-384。
 2. **账本对齐**：跑完后把这三条在 `topems_prod._sqlx_migrations` 里的 `checksum` 改回仓库原文件的 SHA-384（`b0f5b96a…`、`73f87484…`、`8ffe7dde…`，已核对一致），使账本与仓库内容重新对齐；生产二进制不内嵌迁移、不在启动时校验收据（`sqlx::migrate!` 全仓 0 处），本次对齐是防将来校验报 mismatch。
 
-**根因仍留在仓库里**：守卫把 NULL 当“冲突”。后续若要根治，只有两条合规路径——把 NULL 归一化写成新迁移（放在窗口之后、下次发布带上），或对该文件走显式例外审批；本轮不为此改动已提交历史。
+**根因仍留在仓库里**：守卫把 NULL 当“冲突”。已提交迁移不可改，所以补的是执行侧：
+新增 `scripts/migration/pre-normalize-org-null.sh`（幂等，7 张表，`--dry-run` 可预览，prod 需 `CONFIRM=1`），窗口执行器 `dryrun` 与 `phase1/2/3` 都在 `run_list` 之前自动调用它（`W5C_SKIP_PRENORM=1` 可跳过）。
 
-**对其他环境的操作要求**：任何库在跑到 `20261121230000` 之前，先做
-`UPDATE hrm.employees SET organization_id = tenant_id WHERE organization_id IS NULL;`
-（同理 `hrm.departments/positions/attendance_records`、`wms.audit_logs`、`wms.inbound_orders`、`hrm.initialization_status` 各自的 NULL 行），否则必然被闸门拦下。
+验证（2026-11-25，本地用生产 dump 恢复的临时库）：`hrm.employees` 预览 1 行 NULL → 执行后归一 1 行、非 NULL 冲突 0 → **同一份未修改的 `20261121230000` 直接跑通（exit 0，四张表合法删列）**，证明补数据是对的解法，不需要动迁移。
+
+**对其他环境的操作要求**：任何库在跑到 `20261121230000` 之前先跑这个脚本（或等价 SQL `UPDATE hrm.employees SET organization_id = tenant_id WHERE organization_id IS NULL`，其余 6 张表按 `pre-normalize-org-null.sh` 里的映射同理），否则必然被闸门拦下。
 
 
 - 修复后从同一 anchor 续跑，**81/81 通过，账本 `20261124160000`，failed 0**；体检闸 `post-window-probe-20261124.sh` 在演练库 **0 FAIL**（`is_default` 定义为 `boolean NOT NULL DEFAULT false` + 部分唯一索引、338 张归档表全部落 `archive`、表 1373 / 策略 855 / 菜单 452）。
@@ -106,11 +107,23 @@
 
 回滚口径：`bootout` → dump 恢复（`pg_restore --clean`）→ `bin/topems-server.bak-20261125-0925` 覆盖 `bin/topems-server` → `bootstrap`。
 
-## 7. 未做/待决
+## 7. 窗口外版本：21 条，**有意不应用**
 
-1. **窗口外版本未应用**：`20261124170000`（B261）、`20261124180000`、`20261124190000` 及 11-25 新增的多条（`20261124193000`…`20261125011000`）。当前生产二进制（`642ca90db`）不需要它们；它们是下一次发布的迁移包。
-2. **W5-C 守卫的 NULL 口径仍是仓库里的已知缺陷**（见 §3）。生产已通过执行侧补丁跑过并完成账本对齐；如果将来有新环境或重新演练，必须先按 §3 末的数据归一化步骤处理，或者走例外审批改守卫。
-3. 生产仓库 3 条本地独有提交未推送、与 `origin/main` 分叉：需人工裁决合并或丢弃，本轮未处置。
-4. `target/debug` 27 GB（incremental 20 GB）未清，属磁盘卫生项，与窗口无关。
-5. HSTS 仍未在 Cloudflare 边缘开启（建议 max-age 6 个月、不勾 preload）。
-6. 本次登录态验证用的是用生产 `JWT_SECRET` 临时签发的 admin token（仅本机 127.0.0.1、只读 GET、900 秒有效、未落盘）。日常验收建议走一次真实登录。
+`20261124170000` 起共 21 条（到 `20261125012000`）仍 pending，这是刻意留的，不是遗漏：
+
+- 它们与当前运行件（`642ca90db`，`fe23cda1…`）**不同代**。代表例：`20261124170000` 会把 `rs.formulas.status` 的中文「草稿」归一为 `draft` 并加 CHECK，而旧件的创建路径仍在写中文；先加约束、后换件就会拒绝旧代码的合法写入（正是 11-24 那次 500 的同类问题：schema 超在二进制前面）。
+- 结论：这 21 条与 B261+ 的新二进制绑定发布，**下一次发布时 schema 与二进制同窗推进**，不能单独补跑。
+- 生产账本现停在 `20261124160000`，与运行件严格对齐；`post-window-probe` 的判据也是按这个水位设的。
+
+## 8. 后续收口（本轮一并处理）
+
+1. **W5-C 守卫**：新增 `scripts/migration/pre-normalize-org-null.sh`（幂等，7 张表），窗口执行器的 `dryrun`/`phase1-3` 自动前置调用；已在生产 dump 恢复的临时库上实测“归一 1 行 → 未修改的 `20261121230000` 直接通过”。已提交迁移未动，符合 `migration-validate` 不可变门禁。
+2. **生产仓库分叉**：3 条本地独有提交经 patch-id 比对确认均被 `origin/main` 覆盖（`7df23415d` 是上游 `c0778bf2d` 的子集，另两条 `git cherry` 判 `-`）。已 `git stash` 保留前端锁文件残留、`git branch backup/prod-main-20261125` 留旧位，然后 `reset --hard origin/main`；`bin/` 被 gitignore，换入二进制未受影响（`fe23cda1…` 仍在位、health 200）。
+3. **磁盘**：删除 `target/debug/incremental`（20 GB，cargo 增量缓存，`pgrep -x cargo/rustc` 确认为空后删）。`/` 可用从 19 GiB → **37 GiB（26% 已用）**，`target` 从 34 GB → 14 GB。
+4. **HSTS 与安全头**：没有 Cloudflare API token，改在**源站 nginx** 落地（CF 只做透传，边缘已验证下发）。`deploy/nginx/macos/servers/topems.conf` 与生产 `/opt/homebrew/etc/nginx/servers/topems.conf` 同步加了 `Strict-Transport-Security: max-age=15768000`（6 个月、不加 includeSubDomains/preload）+ `X-Frame-Options: DENY`、`X-Content-Type-Options: nosniff`、`Referrer-Policy`、`Permissions-Policy`；静态缓存 location 里重复声明（nginx 的 add_header 不跨层继承）。备份 `topems.conf.bak-20261125`，`nginx -t` 通过、`nginx -s reload` 零停机；`http://127.0.0.1/`、`/health`、静态资源、`https://app.topmap.net/` 全部实测带 HSTS。
+
+## 9. 仍未做
+
+- 生产 `target/debug` 仍占 9.3 GB、`target` 14 GB（只清了 incremental；再清需 `cargo clean`，会牺牲下次构建速度，收益不大）。
+- 本次登录态验证用的是用生产 `JWT_SECRET` 临时签发的 admin token（仅本机 127.0.0.1、只读 GET、900 秒有效、未落盘）。日常验收建议走一次真实登录。
+- HSTS 后续若要加 `includeSubDomains`/`preload`，需先确认 `*.topmap.net` 下所有子域均强制 HTTPS，且接受 preload 名单的不可逆性。

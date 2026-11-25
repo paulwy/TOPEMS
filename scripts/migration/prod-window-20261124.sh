@@ -119,6 +119,16 @@ run_list() {
   return $rc
 }
 
+pre_normalize() {
+  # W5-C 三条迁移的守卫把 organization_id IS NULL 判成冲突（NULL 实为“未设置”）。
+  # 已提交迁移不可改，故窗口前置把 NULL 归一为租户键；幂等，已删列则跳过。
+  local script="$ROOT/scripts/migration/pre-normalize-org-null.sh"
+  [[ "${W5C_SKIP_PRENORM:-0}" == "1" ]] && { echo "[prenorm] 已按 W5C_SKIP_PRENORM=1 跳过"; return 0; }
+  [[ -f "$script" ]] || return 0
+  echo "[prenorm] organization_id NULL → 租户键（幂等）"
+  bash "$script" --host "$PGHOST" --user "$PGUSER_" --db "$DB" 2>&1 | sed 's/^/  /'
+}
+
 case "$MODE" in
   plan)
     echo "目标库: ${DB}（prod 入口）  锚点: ${ANCHOR}"
@@ -126,6 +136,7 @@ case "$MODE" in
     echo "phase2: 38 条（20261121090000…20261124130000，含 7 条破坏性）"
     echo "phase3:  3 条（20261124140000…20261124160000，无破坏性）"
     echo "合计: 81 条（不含 20261124170000）"
+    echo "前置：跑 pre-normalize-org-null.sh（W5-C 守卫的 NULL 口径，见回执 §3）"
     ;;
   verify)
     psql -h "$PGHOST" -U "$PGUSER_" -d "$DB" -X -c "select max(version) as ledger_max from _sqlx_migrations"
@@ -146,12 +157,14 @@ case "$MODE" in
       exit 2
     fi
     echo "[dryrun] 目标 ${DB}，与正式窗口同一命令路径"
+    pre_normalize
     run_list "$ALL"
     ;;
   phase1|phase2|phase3)
     if [[ "$DB" == "topems_prod" && "${CONFIRM:-0}" != "1" ]]; then
       echo "拒绝：正式库执行需 CONFIRM=1（先 plan → dryrun → 开窗）" >&2; exit 2
     fi
+    pre_normalize
     case "$MODE" in
       phase1) run_list "$SEG1" ;;
       phase2) run_list "$SEG2" ;;

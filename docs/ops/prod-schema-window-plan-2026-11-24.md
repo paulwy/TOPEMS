@@ -69,10 +69,16 @@ bash 侧：
 
 ```bash
 # ⑥ 磁盘
-df -h /System/Volumes/Data | tail -1     # 需 ≥25GiB
+df -g / | tail -1                       # 需 ≥10GiB（库 95MB 级；25GiB 是按 132GB 库设的保守值）
 
 # ⑦ 当前件（窗口前必须是旧件；换件前必须是 fe23cda1…）
 shasum -a 256 /Users/xingzhai/topems/target/release/topems-server
+
+# ⑧ W5-C 守卫的数据前置（2026-11-25 生产演练新增）
+#    20261121230000 的守卫把 organization_id IS NULL 判成冲突（NULL 实为“未设置”）。
+#    该迁移受 migration-validate 保护不可改，故开窗前先把 NULL 归一为租户键：
+bash scripts/migration/pre-normalize-org-null.sh --host /tmp --user xingzhai --db topems_prod --dry-run
+#    预览行数符合预期后再执行（prod 需 CONFIRM=1）；幂等，已删列自动跳过。
 ```
 
 判定：① `ledger_max=20261119000002` 且 `failed=0`；② 无 `is_default`；③ `archive_ns=0` 且 archive 对象列表为空（**非空即停窗**，批次1/2 会拒绝重跑）；⑤ 无长事务；⑥ ≥25GiB；⑦ 旧件 `676287d3…`。
@@ -159,6 +165,7 @@ bash scripts/migration/prod-window-20261124.sh verify        # 期望 ledger_max
 | `batch precheck: <schema>.<table> 的 canonical 策略不存在或不含系统通道` | 目标库 RLS 策略与迁移预期不一致 | **停手回报**，不要跳过该条；说明该 schema 策略历史与仓库预期不同，需按实际策略补一条定向处置 |
 | `archive table archive.<x> already exists: refusing to re-run` | 归档表已存在 | 确认是上次中断残留还是真实占用；必要时改名归档批次再跑 |
 | `白名单外 pending 迁移` | `--defer` 未覆盖全部磁盘 pending | 脚本按磁盘全量生成 defer，不应出现；手工跑时必须把其余版本全部列出 |
+| `W5-C guard failed: hrm.<t> has N rows where organization_id <> tenant_id` | 该表有 `organization_id IS NULL` 的行（NULL 被守卫当“不等于”；NULL 实为“未设置”） | 跑 `scripts/migration/pre-normalize-org-null.sh --dry-run` 预览，再正式执行（prod 需 `CONFIRM=1`），然后从同一 anchor 续跑。2026-11-25 生产演练实测：归一 1 行后同一条迁移直接通过 |
 
 ### 5.5 代表性演练结论（2026-11-24 我方在本机完成，非 dev 克隆）
 
