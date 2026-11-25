@@ -51,6 +51,24 @@ impl ReceivablePayableStatus {
         }
     }
 
+    /// 生命周期：draft → approved/cancelled；approved → posted/cancelled；
+    /// posted、cancelled 为终态，同态幂等。
+    pub fn can_transition_to(self, target: Self) -> bool {
+        if self == target {
+            return true;
+        }
+        match self {
+            Self::Draft => matches!(target, Self::Approved | Self::Cancelled),
+            Self::Approved => matches!(target, Self::Posted | Self::Cancelled),
+            Self::Posted | Self::Cancelled => false,
+        }
+    }
+
+    /// 仅未进入过账台账的 draft/cancelled 可软删；approved 需先转 cancelled 或 posted。
+    pub fn can_delete(self) -> bool {
+        matches!(self, Self::Draft | Self::Cancelled)
+    }
+
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -120,6 +138,28 @@ mod tests {
             ReceivablePayableStatus::parse_filter(Some("bogus")),
             Err("unknown_status")
         );
+    }
+
+    #[test]
+    fn lifecycle_transitions() {
+        use ReceivablePayableStatus::*;
+        assert!(Draft.can_transition_to(Approved));
+        assert!(Draft.can_transition_to(Cancelled));
+        assert!(!Draft.can_transition_to(Posted));
+        assert!(Approved.can_transition_to(Posted));
+        assert!(Approved.can_transition_to(Cancelled));
+        assert!(!Approved.can_transition_to(Draft));
+        assert!(!Posted.can_transition_to(Approved));
+        assert!(!Cancelled.can_transition_to(Draft));
+    }
+
+    #[test]
+    fn delete_only_unposted_or_cancelled() {
+        use ReceivablePayableStatus::*;
+        assert!(Draft.can_delete());
+        assert!(!Approved.can_delete());
+        assert!(!Posted.can_delete());
+        assert!(Cancelled.can_delete());
     }
 
     #[test]

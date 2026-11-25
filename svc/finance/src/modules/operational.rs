@@ -1312,15 +1312,44 @@ pub async fn update_receivable(
         }
     };
 
+    let current_row = match sqlx::query(only_own_schema_query!(
+        "finance",
+        "SELECT status::text AS status FROM finance.receivables
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(row)) => row,
+        Ok(None) => return ApiResponse::not_found("应收不存在或已删除"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let current_raw: Option<String> = current_row.get("status");
+    let current_raw = current_raw.unwrap_or_else(|| "pending".to_string());
+    let Some(current_status) = normalize_receivable_payable(&current_raw) else {
+        return ApiResponse::conflict("应收当前状态不在规范集合内，需人工处理");
+    };
+
     let status = match req.get("status").and_then(|v| v.as_str()) {
         None => None,
         Some(raw) => match normalize_receivable_payable(raw) {
-            Some(status) => Some(status.as_str()),
+            Some(status) => Some(status),
             None => {
                 return ApiResponse::bad_request("status 仅支持 draft/approved/posted/cancelled")
             }
         },
     };
+    if let Some(target) = status {
+        if !current_status.can_transition_to(target) {
+            return ApiResponse::conflict(&format!(
+                "应收状态不允许从 {} 流转到 {}",
+                current_status.as_str(),
+                target.as_str()
+            ));
+        }
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -1329,6 +1358,8 @@ pub async fn update_receivable(
               due_date = $6, status = COALESCE($7, status), received_amount = $8, payment_schedule = $9,
               updated_at = $10
            WHERE id = $1 AND tenant_id = $11
+             AND COALESCE(status, 'pending') = $12
+             AND deleted_at IS NULL
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1351,16 +1382,18 @@ pub async fn update_receivable(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     }))
-    .bind(status)
+    .bind(status.map(ReceivablePayableStatus::as_str))
     .bind(amount_decimal(&req, "received_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .bind(&current_raw)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
-        Ok(row) => row,
+        Ok(Some(row)) => row,
+        Ok(None) => return ApiResponse::conflict("应收状态已被并发修改，更新失败"),
         Err(e) => return crate::shared::err_resp(e),
     };
     ApiResponse::success(row_to_receivable_json(&row), "应收更新成功")
@@ -1403,12 +1436,41 @@ pub async fn delete_receivable(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!(
+    let current_row = match sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE finance.receivables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+        "SELECT status::text AS status FROM finance.receivables
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
     ))
     .bind(id)
     .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(row)) => row,
+        Ok(None) => return ApiResponse::not_found("应收不存在或已删除"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let current_raw: Option<String> = current_row.get("status");
+    let current_raw = current_raw.unwrap_or_else(|| "pending".to_string());
+    let Some(current_status) = normalize_receivable_payable(&current_raw) else {
+        return ApiResponse::conflict("应收当前状态不在规范集合内，需人工处理");
+    };
+    if !current_status.can_delete() {
+        return ApiResponse::conflict(
+            "仅 draft/cancelled 应收可删除；approved 需先取消或过账，posted 保留台账",
+        );
+    }
+
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.receivables SET deleted_at = NOW()
+         WHERE id = $1 AND tenant_id = $2
+           AND COALESCE(status, 'pending') = $3
+           AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&current_raw)
     .execute(&mut scope)
     .await;
     let r = match result {
@@ -1704,15 +1766,44 @@ pub async fn update_payable(
         }
     };
 
+    let current_row = match sqlx::query(only_own_schema_query!(
+        "finance",
+        "SELECT status::text AS status FROM finance.payables
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(row)) => row,
+        Ok(None) => return ApiResponse::not_found("应付不存在或已删除"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let current_raw: Option<String> = current_row.get("status");
+    let current_raw = current_raw.unwrap_or_else(|| "pending".to_string());
+    let Some(current_status) = normalize_receivable_payable(&current_raw) else {
+        return ApiResponse::conflict("应付当前状态不在规范集合内，需人工处理");
+    };
+
     let status = match req.get("status").and_then(|v| v.as_str()) {
         None => None,
         Some(raw) => match normalize_receivable_payable(raw) {
-            Some(status) => Some(status.as_str()),
+            Some(status) => Some(status),
             None => {
                 return ApiResponse::bad_request("status 仅支持 draft/approved/posted/cancelled")
             }
         },
     };
+    if let Some(target) = status {
+        if !current_status.can_transition_to(target) {
+            return ApiResponse::conflict(&format!(
+                "应付状态不允许从 {} 流转到 {}",
+                current_status.as_str(),
+                target.as_str()
+            ));
+        }
+    }
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -1721,6 +1812,8 @@ pub async fn update_payable(
               due_date = $6, status = COALESCE($7, status), paid_amount = $8, payment_schedule = $9,
               updated_at = $10
            WHERE id = $1 AND tenant_id = $11
+             AND COALESCE(status, 'pending') = $12
+             AND deleted_at IS NULL
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                      created_at, updated_at"#
@@ -1743,16 +1836,18 @@ pub async fn update_payable(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     }))
-    .bind(status)
+    .bind(status.map(ReceivablePayableStatus::as_str))
     .bind(amount_decimal(&req, "paid_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut scope)
+    .bind(&current_raw)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match result {
-        Ok(row) => row,
+        Ok(Some(row)) => row,
+        Ok(None) => return ApiResponse::conflict("应付状态已被并发修改，更新失败"),
         Err(e) => return crate::shared::err_resp(e),
     };
     ApiResponse::success(row_to_payable_json(&row), "应付更新成功")
@@ -1795,12 +1890,41 @@ pub async fn delete_payable(
         }
     };
 
-    let result = sqlx::query(only_own_schema_query!(
+    let current_row = match sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE finance.payables SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+        "SELECT status::text AS status FROM finance.payables
+         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
     ))
     .bind(id)
     .bind(tenant_id)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(row)) => row,
+        Ok(None) => return ApiResponse::not_found("应付不存在或已删除"),
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let current_raw: Option<String> = current_row.get("status");
+    let current_raw = current_raw.unwrap_or_else(|| "pending".to_string());
+    let Some(current_status) = normalize_receivable_payable(&current_raw) else {
+        return ApiResponse::conflict("应付当前状态不在规范集合内，需人工处理");
+    };
+    if !current_status.can_delete() {
+        return ApiResponse::conflict(
+            "仅 draft/cancelled 应付可删除；approved 需先取消或过账，posted 保留台账",
+        );
+    }
+
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        "UPDATE finance.payables SET deleted_at = NOW()
+         WHERE id = $1 AND tenant_id = $2
+           AND COALESCE(status, 'pending') = $3
+           AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .bind(&current_raw)
     .execute(&mut scope)
     .await;
     let r = match result {
