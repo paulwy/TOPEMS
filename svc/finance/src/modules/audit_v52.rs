@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::OnceLock;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
@@ -62,7 +63,7 @@ impl AuditSeverity {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum FindingStatus {
     Open,
@@ -90,6 +91,21 @@ impl FindingStatus {
             "ignored" => Some(Self::Ignored),
             _ => None,
         }
+    }
+
+    /// open → resolved / ignored；resolved、ignored 为终态；同态幂等。
+    pub fn can_transition_to(self, target: Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        if self == Self::Open && matches!(target, Self::Resolved | Self::Ignored) {
+            return Ok(());
+        }
+        Err(format!(
+            "审计发现状态不允许从 {} 流转到 {}",
+            self.as_str(),
+            target.as_str()
+        ))
     }
 }
 
@@ -1107,26 +1123,51 @@ impl AutoAuditEngine {
         tenant_id: Uuid,
         resolution: &str,
         resolved_by: &str,
-    ) -> Result<AuditFinding, sqlx::Error> {
+    ) -> Result<AuditFinding, TopemsError> {
         let now = Utc::now();
 
         let mut scope = db.scope_with(txn).await?;
-        let finding = sqlx::query_as::<_, AuditFinding>(
-            only_own_schema_query!("finance", r#"UPDATE finance.finance_audit_findings_v52
+        let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!(
+            "finance",
+            r#"SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by
+               FROM finance.finance_audit_findings_v52 WHERE id = $1 AND tenant_id = $2"#
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("审计发现不存在".to_string()))?;
+
+        let current = FindingStatus::from_db_str(&finding.status).ok_or_else(|| {
+            TopemsError::ValidationFailed("审计发现当前状态不在规范集合内".to_string())
+        })?;
+        current
+            .can_transition_to(FindingStatus::Resolved)
+            .map_err(TopemsError::ValidationFailed)?;
+
+        // 已解决：幂等返回原记录，不重复写 resolved_at / resolution
+        if current == FindingStatus::Resolved {
+            scope.commit().await?;
+            return Ok(finding);
+        }
+
+        let resolved = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("finance", r#"UPDATE finance.finance_audit_findings_v52
                SET status = 'resolved', resolved_at = $1, resolved_by = $2,
                    evidence = jsonb_set(COALESCE(evidence, '{}')::jsonb, '{resolution}', to_jsonb($3::text))::text
-               WHERE id = $4 AND tenant_id = $5
-               RETURNING id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by"#),
-        )
+               WHERE id = $4 AND tenant_id = $5 AND status = 'open'
+               RETURNING id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by"#))
         .bind(now)
         .bind(resolved_by)
         .bind(resolution)
         .bind(id)
         .bind(tenant_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("审计发现状态已被并发修改，处理失败".to_string())
+        })?;
         scope.commit().await?;
-        Ok(finding)
+        Ok(resolved)
     }
 }
 
@@ -2721,5 +2762,34 @@ mod tests {
         assert_eq!(AnomalyDetector::get_first_digit(1_000_000.0), 1);
         assert_eq!(AnomalyDetector::get_first_digit(5_000_000.0), 5);
         assert_eq!(AnomalyDetector::get_first_digit(9_999_999.0), 9);
+    }
+    #[test]
+    fn finding_status_roundtrips() {
+        for raw in FindingStatus::DB_VALUES {
+            assert_eq!(
+                FindingStatus::from_db_str(raw).map(|s| s.as_str()),
+                Some(raw)
+            );
+        }
+        assert_eq!(FindingStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn finding_status_transition_matrix() {
+        assert!(FindingStatus::Open
+            .can_transition_to(FindingStatus::Resolved)
+            .is_ok());
+        assert!(FindingStatus::Open
+            .can_transition_to(FindingStatus::Ignored)
+            .is_ok());
+        assert!(FindingStatus::Resolved
+            .can_transition_to(FindingStatus::Resolved)
+            .is_ok());
+        assert!(FindingStatus::Ignored
+            .can_transition_to(FindingStatus::Resolved)
+            .is_err());
+        assert!(FindingStatus::Resolved
+            .can_transition_to(FindingStatus::Ignored)
+            .is_err());
     }
 }
