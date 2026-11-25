@@ -48,6 +48,8 @@ env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '22'
   PNPM_VERSION: '9'
+  # Windows runner 默认 cp1252，prepare 脚本输出中文会触发 UnicodeEncodeError
+  PYTHONIOENCODING: utf-8
   RUSTC_WRAPPER: sccache
   SCCACHE_DIR: ${{ github.workspace }}/.sccache
   SCCACHE_CACHE_SIZE: "50G"
