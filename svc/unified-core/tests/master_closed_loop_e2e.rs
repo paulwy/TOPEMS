@@ -326,6 +326,10 @@ async fn master_ten_endpoints_form_closed_loop() {
 
 #[tokio::test]
 async fn master_routes_enforce_system_write_permission() {
+    if std::env::var("TEST_DATABASE_URL").is_err() {
+        eprintln!("SKIP: TEST_DATABASE_URL 未设置，跳过需要已迁移 MDM schema 的路由测试");
+        return;
+    }
     topems_test_support::ensure_test_dsn();
     let pool = PgPool::connect(&topems_test_support::test_database_url())
         .await

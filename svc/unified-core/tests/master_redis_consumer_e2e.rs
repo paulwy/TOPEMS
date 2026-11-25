@@ -125,6 +125,10 @@ async fn redis_publish_twice_converges_to_one_ref_and_acks() {
     // MasterDataEvent::publish 与 EventSubscriber 都读 REDIS_URL
     std::env::set_var("REDIS_URL", &redis_url);
 
+    if std::env::var("TEST_DATABASE_URL").is_err() {
+        eprintln!("SKIP: TEST_DATABASE_URL 未设置，跳过需要已迁移 MDM schema 的 Redis 消费测试");
+        return;
+    }
     topems_test_support::ensure_test_dsn();
     let pool = PgPool::connect(&topems_test_support::test_database_url())
         .await
