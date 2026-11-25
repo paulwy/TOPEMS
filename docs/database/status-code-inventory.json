@@ -5,7 +5,7 @@
     "db_check_constraints": 35,
     "db_enum_types": 5,
     "db_check_values": 54,
-    "rust_enums": 322,
+    "rust_enums": 324,
     "rust_enum_values": 241,
     "rust_values_not_in_db_check": 192,
     "frontend_status_keys": 251,
@@ -2218,6 +2218,21 @@
         "completed",
         "failed",
         "pending"
+      ]
+    },
+    {
+      "module": "finance",
+      "file": "svc/finance/src/services/finance/erp_ar_ap_status.rs",
+      "name": "ErpLedgerStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive"
       ]
     },
     {
@@ -5199,6 +5214,21 @@
         "error",
         "pending",
         "rejected"
+      ]
+    },
+    {
+      "module": "unified-core",
+      "file": "svc/unified-core/src/modules/menu/menu_status.rs",
+      "name": "MenuStatus",
+      "values": [
+        "Active",
+        "Archived",
+        "Inactive"
+      ],
+      "normalized": [
+        "active",
+        "archived",
+        "inactive"
       ]
     },
     {

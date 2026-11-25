@@ -144,4 +144,39 @@ mod tests {
         assert!(!ProductionOrderStatus::Closed.can_transition_to(ProductionOrderStatus::Completed));
         assert!(ProductionOrderStatus::Planned.can_transition_to(ProductionOrderStatus::Cancelled));
     }
+
+    #[test]
+    fn production_order_transition_targets_match_sources() {
+        let cases = [
+            (
+                ProductionOrderStatus::release_from(),
+                ProductionOrderStatus::Released,
+            ),
+            (
+                ProductionOrderStatus::start_from(),
+                ProductionOrderStatus::InProgress,
+            ),
+            (
+                ProductionOrderStatus::complete_from(),
+                ProductionOrderStatus::Completed,
+            ),
+            (
+                ProductionOrderStatus::cancel_from(),
+                ProductionOrderStatus::Cancelled,
+            ),
+        ];
+        for (sources, target) in cases {
+            assert!(ProductionOrderStatus::DB_VALUES.contains(&target.as_db_str()));
+            for source in sources {
+                let from = ProductionOrderStatus::from_db_str(source)
+                    .expect("迁移来源必须是合法状态字符串");
+                assert!(
+                    from.can_transition_to(target),
+                    "{} → {} 不在状态机允许集合内",
+                    from,
+                    target
+                );
+            }
+        }
+    }
 }
