@@ -121,3 +121,37 @@ scripts/db/schema-health.sh --table finance.budgets
 **可复跑的做法**：`scripts/db/schema-health.sh --table <schema.table>` 看列名差 → 回到代码里该表的 SQL 字面量核对 → 若确认真缺，先 `apply-pending.sh dry-run --only <version>` 找对应迁移，再 apply。
 
 **副作用记录**：`topems_owner` 补了 `CREATE ON DATABASE topems`（`CREATE SCHEMA IF NOT EXISTS` 即使 schema 已存在也校验该权限）。
+
+## 9. 第二轮判读：`integration` / `communication` 同批表（2026-11-25）
+
+同一套判据（列名差 → 代码 SQL 字面量）过了一遍剩余"落后"表，结论如下。
+
+**真缺并已修：`integration.core_inter_module_sync`**
+
+- 症状：`GET /api/integration/sync/pending` 稳定 500，日志 `column "operation" does not exist`。
+- 结构现状：本机 18 列是"D 侧"定义（`source_entity/source_id/source_code/retry_count/max_retries/next_retry_at/executed_at/data`），缺的是另一侧 5 列（`operation/entity_type/entity_ids/started_at/finished_at`）；`company_id` 与四条公司级 RLS 策略来自 pending 迁移 `20261123100000_core_inter_module_sync_company_scope.sql`。
+- 代码真相：`SyncTaskRow` 与 4 条 SQL 仍按 `operation/entity_type/entity_ids/started_at/finished_at` 写，DTO 却已按 D 侧字段声明——**半迁移状态**。`20261115142500_shell_tail_7tables_13cols.sql` 是"往 prod 侧补 D 侧列"的剧本，与本机方向相反，dry-run 在前置断言处直接失败（`portal.portal_todos 已有本次要补的列`），不适用。
+- 处置：①apply `20261123100000`（补 `company_id` + 公司级策略，dry-run 先过）；②把 `sync.rs` 的 `SyncTaskRow` 与全部 SQL 改成 D 侧真实列（`source_entity/source_id/source_code`、`retry_count/max_retries/next_retry_at/executed_at`），状态更新只对终态落 `executed_at`，触发器统一写 `source_entity/source_id` + `retry_count=0/max_retries=3`。
+- 验证：`/sync/pending`、`/sync/statistics`、`/sync-stats` 均 200（修复前第一个必 500）；`INSERT` 语句形状在事务内实测通过（`RETURNING` 正常、已 ROLLBACK）。
+- 未决：写路径需要公司上下文，`admin` 没有任何 `core_user_company_scopes` 行，故带 `x-company-id` 会 403——这是账号数据缺口，与本次列错位无关，另行处理。
+
+**判为血缘差异（不动）**
+
+| 表 | 基线独有列 | 代码实际用 | 结论 |
+|---|---|---|---|
+| `finance.budgets` | `total_amount/start_date/end_date/description/created_by/approved_at/approver_id` | `total_budget/fiscal_year/used_amount/remaining_amount/usage_rate` | 本地重设计过，基线过时 |
+| `finance.payables` | `amount_paid/remaining_amount/approved_at/approver_id` | `paid_amount` | 同上 |
+| `finance.receivables` | `amount_received/paid_amount/remaining_amount/approved_at/approver_id` | `received_amount` | 同上 |
+| `finance.mv_receivable_aging` | `amount/due_date/invoice_no/receivable_no/...` | `total_amount/current_amount/bucket_*_amount` | 同上 |
+| `communication.notification_channels` | `code/channel_type/category/enabled` | `name/name_en/type/status/config` | 同上 |
+| `integration.external_erp_sync_logs` | `app_key/sync_mode/mapping_type/...` | `connection_id/entity/direction/total_records/started_at/completed_at` | 同上（那张是"外部 ERP 映射"的旧形状） |
+
+冒烟：`/api/finance/budgets`、`/api/finance/payables`、`/api/finance/receivables`、`/api/integration/external-erp/sync-logs` 全 200——反证这些表当前可用，缺列无人引用。
+
+**潜在（未触达，先记不动）：`finance.reconciliation_item_snapshots`**
+
+代码（`settlement_center/service.rs`）用 `reconciliation_id/item_type/amount`，库内是 `recon_id/debit_amount/credit_amount`。但 `settlement_center` 路由在 8099/8000/8011 全部 404（模块未挂载），表内 0 行，属潜伏缺陷；等该模块真正接线时再一并修，避免现在为一个不可达路径改表结构。
+
+**阻塞记录：`20261115142500`**
+
+该迁移把 D 侧列补到 prod 侧库，本机方向相反，dry-run 被断言拒绝（`portal.portal_todos 已有本次要补的列`）。不改这个已发表迁移的语义，前向队列按单条 apply（`--only`）推进即可，不做批量。

@@ -6,7 +6,6 @@
 
 use axum::extract::{Extension, Json, State};
 use serde::{Deserialize, Serialize};
-use serde_json::Value as JsonValue;
 use topems_shared_auth::middleware::tenant::RlsTxnCell;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
@@ -92,43 +91,38 @@ struct SyncTaskRow {
     sync_type: String,
     source_module: String,
     target_module: String,
-    operation: Option<String>,
-    entity_type: Option<String>,
-    entity_ids: Option<JsonValue>,
+    source_entity: String,
+    source_id: Option<Uuid>,
+    source_code: Option<String>,
     status: String,
+    retry_count: Option<i32>,
+    max_retries: Option<i32>,
     error_message: Option<String>,
-    started_at: Option<chrono::DateTime<chrono::Utc>>,
-    finished_at: Option<chrono::DateTime<chrono::Utc>>,
+    next_retry_at: Option<chrono::DateTime<chrono::Utc>>,
+    executed_at: Option<chrono::DateTime<chrono::Utc>>,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
-    data: Option<JsonValue>,
 }
 
 impl From<SyncTaskRow> for SyncTask {
     fn from(row: SyncTaskRow) -> Self {
-        // 兼容映射：表新 schema（operation/entity_type/entity_ids/started_at/finished_at/data）
-        // → 旧 SyncTask DTO 形状（source_entity/source_id/retry 等保留默认值，避免破坏前端契约）
-        let source_id = row.entity_ids.as_ref().and_then(|v| {
-            v.as_array()
-                .and_then(|arr| arr.first())
-                .and_then(|f| f.as_str())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        });
+        // 库内列即 DTO 形状（source_entity/source_id/source_code/retry_count/max_retries/
+        // next_retry_at/executed_at），无需再经 data/entity_ids 反向推导。
         SyncTask {
             id: row.id,
             tenant_id: row.tenant_id,
             sync_type: row.sync_type,
             source_module: row.source_module,
             target_module: row.target_module,
-            source_entity: row.entity_type.unwrap_or_default(),
-            source_id,
-            source_code: None,
+            source_entity: row.source_entity,
+            source_id: row.source_id,
+            source_code: row.source_code,
             status: row.status,
-            retry_count: 0,
-            max_retries: 0,
+            retry_count: row.retry_count.unwrap_or(0),
+            max_retries: row.max_retries.unwrap_or(3),
             error_message: row.error_message,
-            next_retry_at: None,
-            executed_at: row.finished_at,
+            next_retry_at: row.next_retry_at,
+            executed_at: row.executed_at,
             created_at: row.created_at,
             updated_at: row.updated_at,
         }
@@ -181,9 +175,9 @@ pub async fn create_task(
         "integration",
         r#"
         INSERT INTO integration.core_inter_module_sync
-            (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
-             status, started_at, created_at, updated_at, company_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11)
+            (id, tenant_id, sync_type, source_module, target_module, source_entity, source_id,
+             source_code, status, retry_count, max_retries, created_at, updated_at, company_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, 3, $9, $10, $11)
         RETURNING *
         "#
     ))
@@ -193,8 +187,12 @@ pub async fn create_task(
     .bind(&req.source_module)
     .bind(&req.target_module)
     .bind(&req.source_entity)
-    .bind(req.source_id.as_deref().map(|s| serde_json::json!([s])))
-    .bind(now)
+    .bind(
+        req.source_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
+    .bind(&req.source_code)
     .bind(now)
     .bind(now)
     .bind(company_id)
@@ -242,7 +240,7 @@ pub async fn get_task(
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let row = sqlx::query_as::<_, SyncTaskRow>(
-                only_own_schema_query!("integration", "SELECT id, tenant_id, sync_type, source_module, target_module, operation, entity_type, entity_ids, status, error_message, started_at, finished_at, created_at, updated_at, data FROM integration.core_inter_module_sync WHERE id = $1 AND deleted_at IS NULL"),
+                only_own_schema_query!("integration", "SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at, data FROM integration.core_inter_module_sync WHERE id = $1 AND deleted_at IS NULL"),
             )
             .bind(id)
             .fetch_optional(&mut scope)
@@ -300,7 +298,9 @@ pub async fn update_status(
                 "integration",
                 r#"
                 UPDATE integration.core_inter_module_sync
-                SET status = $2, error_message = $3, finished_at = $4, updated_at = $5
+                SET status = $2, error_message = $3, updated_at = $4,
+                    executed_at = CASE WHEN $2 IN ('success', 'failed', 'cancelled', 'completed')
+                                       THEN $4 ELSE executed_at END
                 WHERE id = $1 AND deleted_at IS NULL
                 RETURNING *
                 "#
@@ -351,7 +351,7 @@ pub async fn get_pending(
 
     match sqlx::query_as::<_, SyncTaskRow>(
         only_own_schema_query!("integration", r#"
-        SELECT id, tenant_id, sync_type, source_module, target_module, operation, entity_type, entity_ids, status, error_message, started_at, finished_at, created_at, updated_at, data FROM integration.core_inter_module_sync
+        SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at, data FROM integration.core_inter_module_sync
         WHERE status = 'pending' AND deleted_at IS NULL
         ORDER BY created_at ASC
         "#),
@@ -592,17 +592,16 @@ pub async fn trigger_scm_wms(
             match sqlx::query_as::<_, SyncTaskRow>(
                 only_own_schema_query!("integration", r#"
                 INSERT INTO integration.core_inter_module_sync
-                    (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
-                     status, started_at, created_at, updated_at, company_id)
+                    (id, tenant_id, sync_type, source_module, target_module, source_entity, source_id,
+                     status, retry_count, max_retries, created_at, updated_at, company_id)
                 VALUES ($1, $2,
-                        'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', $4, $5, $6, $7)
+                        'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', 0, 3, $4, $5, $6)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
             .bind(tenant_ctx.tenant)
-            .bind(serde_json::json!([id.to_string()]))
-            .bind(now)
+            .bind(id)
             .bind(now)
             .bind(now)
             .bind(company_id)
@@ -669,17 +668,16 @@ pub async fn trigger_wms_crm(
             match sqlx::query_as::<_, SyncTaskRow>(
                 only_own_schema_query!("integration", r#"
                 INSERT INTO integration.core_inter_module_sync
-                    (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
-                     status, started_at, created_at, updated_at, company_id)
+                    (id, tenant_id, sync_type, source_module, target_module, source_entity, source_id,
+                     status, retry_count, max_retries, created_at, updated_at, company_id)
                 VALUES ($1, $2,
-                        'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', $4, $5, $6, $7)
+                        'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', 0, 3, $4, $5, $6)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
             .bind(tenant_ctx.tenant)
-            .bind(serde_json::json!([id.to_string()]))
-            .bind(now)
+            .bind(id)
             .bind(now)
             .bind(now)
             .bind(company_id)
