@@ -24,8 +24,30 @@ const setupMocks = path.resolve(__dirname, './src/__tests__/setup-mocks.ts');
  * BEFORE the node_modules resolution, so it catches ALL imports regardless
  * of which package in pnpm's virtual store is the importer.
  */
+function findRtgRoot(): string {
+  const candidates = [
+    path.resolve(__dirname, 'node_modules/react-transition-group'),
+    path.resolve(__dirname, '../../node_modules/react-transition-group'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, 'package.json'))) return candidate;
+  }
+  // pnpm isolated：根 node_modules 可能没有提升，退回 .pnpm 虚拟存储中的副本。
+  const pnpmRoot = path.resolve(__dirname, '../../node_modules/.pnpm');
+  if (fs.existsSync(pnpmRoot)) {
+    for (const entry of fs.readdirSync(pnpmRoot)) {
+      if (!entry.startsWith('react-transition-group@')) continue;
+      const candidate = path.join(pnpmRoot, entry, 'node_modules/react-transition-group');
+      if (fs.existsSync(path.join(candidate, 'package.json'))) return candidate;
+    }
+  }
+  throw new Error('react-transition-group not found; run pnpm install first');
+}
+
+const RTG_ROOT = findRtgRoot();
+
 function fixReactTransitionGroup(): Plugin {
-  const ROOT = path.resolve(__dirname, '../../node_modules/react-transition-group');
+  const ROOT = RTG_ROOT;
   const RTG_SUB_PATHS: Record<string, string> = {
     'react-transition-group/TransitionGroupContext': 'TransitionGroupContext.js',
     'react-transition-group/Transition': 'Transition.js',
@@ -42,13 +64,7 @@ function fixReactTransitionGroup(): Plugin {
       // 此时 importer 可能位于 pnpm/.pnpm/.../mui+x-date-pickers/... 下，而 resolve.alias
       // 无法按 importer 做子依赖修正，所以 resolveId 必须兜底：当 importer 位于 pnpm store、
       // 且直接 ROOT 路径不存在时，改用 pnpm 根下已安装的 react-transition-group 副本。
-      const fallbackRoots = [
-        ROOT,
-        path.resolve(
-          __dirname,
-          '../../node_modules/.pnpm/react-transition-group@4.4.5_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/react-transition-group'
-        ),
-      ];
+      const fallbackRoots = [ROOT];
       for (const root of fallbackRoots) {
         // 处理 MUI 9.4+ 的直接 cjs/* 路径导入（如 react-transition-group/cjs/TransitionGroupContext.js）
         if (id.startsWith('react-transition-group/cjs/')) {
@@ -74,7 +90,7 @@ function fixReactTransitionGroup(): Plugin {
 }
 
 function resolveRtgCjs(file: string) {
-  return path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/', file);
+  return path.resolve(RTG_ROOT, 'cjs/', file);
 }
 
 /**
