@@ -322,11 +322,15 @@ pub async fn get_expense(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_expense(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
 ) -> ApiResponse<Value> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     let now = Utc::now();
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
@@ -357,9 +361,11 @@ pub async fn update_expense(
 
     let current_status = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"SELECT status FROM finance.expenses WHERE id = $1 AND deleted_at IS NULL"#
+        r#"SELECT status FROM finance.expenses
+           WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"#
     ))
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     let current_status = match current_status {
@@ -415,7 +421,7 @@ pub async fn update_expense(
                   ELSE reimbursed_at
               END,
               updated_at = $13
-           WHERE id = $1 AND deleted_at IS NULL AND status = $14
+           WHERE id = $1 AND tenant_id = $15::uuid AND deleted_at IS NULL AND status = $14
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
                      reimbursed_at, created_at, updated_at"#
@@ -470,6 +476,7 @@ pub async fn update_expense(
     )
     .bind(now)
     .bind(current_status.as_str())
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
 
@@ -496,10 +503,14 @@ pub async fn update_expense(
 )]
 pub async fn delete_expense(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
+    let tenant_id = match resolve_write_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
+    };
     // 复用请求级 RLS 事务：提交由 tenant_middleware 统一收尾，不再单独 commit。
     let db = state.db.clone();
     let mut guard = txn_arc.lock().await;
@@ -517,9 +528,11 @@ pub async fn delete_expense(
 
     let current = sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
         "finance",
-        "SELECT status FROM finance.expenses WHERE id = $1 AND deleted_at IS NULL"
+        "SELECT status FROM finance.expenses \
+         WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL"
     ))
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&mut scope)
     .await;
     let current = match current {
@@ -540,9 +553,10 @@ pub async fn delete_expense(
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.expenses SET deleted_at = NOW() \
-         WHERE id = $1 AND deleted_at IS NULL AND status = ANY($2)"
+         WHERE id = $1 AND tenant_id = $2::uuid AND deleted_at IS NULL AND status = ANY($3)"
     ))
     .bind(id)
+    .bind(tenant_id)
     .bind(ExpenseStatus::DELETABLE.as_slice())
     .execute(&mut scope)
     .await;
@@ -2203,6 +2217,28 @@ mod tests {
     fn invalid_tenant_is_rejected() {
         assert_eq!(
             resolve_create_tenant(&claims(false, Some("not-a-uuid"))),
+            Err((400, "无效的租户ID".to_string()))
+        );
+    }
+
+    #[test]
+    fn write_path_rejects_superuser_without_tenant() {
+        // 写路径不允许超管在无租户上下文时按 id 跨租户改删
+        assert_eq!(
+            resolve_write_tenant(&claims(true, None)),
+            Err((400, "缺少租户ID".to_string()))
+        );
+    }
+
+    #[test]
+    fn write_path_requires_valid_uuid_tenant() {
+        let tid = "00000000-0000-0000-0000-000000000001";
+        assert_eq!(
+            resolve_write_tenant(&claims(false, Some(tid))),
+            Ok(Uuid::parse_str(tid).unwrap())
+        );
+        assert_eq!(
+            resolve_write_tenant(&claims(false, Some("not-a-uuid"))),
             Err((400, "无效的租户ID".to_string()))
         );
     }
