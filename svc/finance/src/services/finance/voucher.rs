@@ -1004,27 +1004,36 @@ impl FinanceService {
                 .await?
                 .ok_or_else(|| TopemsError::NotFound("凭证不存在".to_string()))?;
 
-        if existing.status == VoucherStatus::Posted {
-            return Err(TopemsError::ValidationFailed(
-                "已过账的凭证不能删除".to_string(),
-            ));
+        if !existing.status.can_delete() {
+            return Err(TopemsError::ValidationFailed(format!(
+                "凭证状态 {} 不允许删除；仅 draft/submitted/rejected/cancelled 可删除",
+                existing.status
+            )));
         }
+        let current_status = existing.status.to_string();
 
         sqlx::query(only_own_schema_query!(
             "finance",
-            "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1"
+            "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2"
         ))
         .bind(voucher_id)
+        .bind(tenant_id)
         .execute(&mut scope)
         .await?;
 
-        sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2"),
+        let delete_result = sqlx::query(
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET deleted_at = NOW() WHERE tenant_id = $1 AND id = $2 AND status::text = $3 AND deleted_at IS NULL"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
+        .bind(&current_status)
         .execute(&mut scope)
         .await?;
+        if delete_result.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "凭证状态已被并发修改，删除失败".to_string(),
+            ));
+        }
 
         scope.commit().await?;
 
