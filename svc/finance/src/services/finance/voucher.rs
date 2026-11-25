@@ -834,10 +834,8 @@ impl FinanceService {
                 .fetch_one(&mut scope)
                 .await?;
 
-        if existing.status == VoucherStatus::Posted {
-            return Err(TopemsError::ValidationFailed(
-                "已过账的凭证不能修改".to_string(),
-            ));
+        if let Err(err) = existing.status.validate_edit() {
+            return Err(TopemsError::ValidationFailed(err.to_string()));
         }
 
         let voucher_date = req.voucher_date.unwrap_or(existing.voucher_date);
@@ -854,8 +852,8 @@ impl FinanceService {
                 return Err(TopemsError::ValidationFailed("借贷不平".to_string()));
             }
 
-            sqlx::query(
-                only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, total_debit = $5, total_credit = $6, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $7 AND id = $8"),
+            let updated_row = sqlx::query(
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, total_debit = $5, total_credit = $6, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $7 AND id = $8 AND status::text = $9"),
             )
             .bind(voucher_date)
             .bind(&period)
@@ -865,8 +863,14 @@ impl FinanceService {
             .bind(total_credit)
             .bind(tenant_id)
             .bind(voucher_id)
+            .bind(existing.status.to_string())
             .execute(&mut scope)
             .await?;
+            if updated_row.rows_affected() == 0 {
+                return Err(TopemsError::ValidationFailed(
+                    "凭证状态已变化，请刷新后重试".to_string(),
+                ));
+            }
 
             sqlx::query(only_own_schema_query!(
                 "finance",
@@ -879,9 +883,11 @@ impl FinanceService {
 
             let company_id: Uuid = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
                 "finance",
-                "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
+                "SELECT company_id FROM finance.core_finance_vouchers \
+                 WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
             ))
             .bind(voucher_id)
+            .bind(tenant_id)
             .fetch_one(&mut scope)
             .await?
             .ok_or_else(|| {
@@ -951,8 +957,8 @@ impl FinanceService {
                 created_at: updated.created_at,
             })
         } else {
-            let updated: Voucher = sqlx::query_as(
-                only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $5 AND id = $6 RETURNING *"),
+            let updated: Option<Voucher> = sqlx::query_as(
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET voucher_date = $1, period = $2, voucher_type = $3, description = $4, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $5 AND id = $6 AND status::text = $7 RETURNING *"),
             )
             .bind(voucher_date)
             .bind(&period)
@@ -960,8 +966,14 @@ impl FinanceService {
             .bind(&description)
             .bind(tenant_id)
             .bind(voucher_id)
-            .fetch_one(&mut scope)
+            .bind(existing.status.to_string())
+            .fetch_optional(&mut scope)
             .await?;
+            let Some(updated) = updated else {
+                return Err(TopemsError::ValidationFailed(
+                    "凭证状态已变化，请刷新后重试".to_string(),
+                ));
+            };
 
             let existing_lines: Vec<VoucherLine> = sqlx::query_as(
                 only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
@@ -1252,20 +1264,28 @@ impl FinanceService {
         let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
         let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
 
-        sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET total_debit = $1, total_credit = $2, updated_at = NOW() WHERE id = $3"),
+        let updated = sqlx::query(
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET total_debit = $1, total_credit = $2, updated_at = NOW() WHERE id = $3 AND tenant_id = $4 AND status::text = 'draft' AND deleted_at IS NULL"),
         )
         .bind(total_debit)
         .bind(total_credit)
         .bind(voucher_id)
+        .bind(tenant_id)
         .execute(&mut *tx)
         .await?;
+        if updated.rows_affected() == 0 {
+            return Err(TopemsError::ValidationFailed(
+                "凭证状态已变化，请刷新后重试".to_string(),
+            ));
+        }
 
         let company_id: Uuid = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
             "finance",
-            "SELECT company_id FROM finance.core_finance_vouchers WHERE id = $1"
+            "SELECT company_id FROM finance.core_finance_vouchers \
+             WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"
         ))
         .bind(voucher_id)
+        .bind(tenant_id)
         .fetch_one(&mut *tx)
         .await?
         .ok_or_else(|| {

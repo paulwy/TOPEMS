@@ -351,6 +351,23 @@ impl VoucherStatus {
         )
     }
 
+    /// 仅草稿、已提交、已驳回可编辑；approved/posted/reversed/cancelled 不可改金额与分录。
+    pub fn can_edit(&self) -> bool {
+        matches!(
+            self,
+            VoucherStatus::Draft | VoucherStatus::Submitted | VoucherStatus::Rejected
+        )
+    }
+
+    pub fn validate_edit(&self) -> Result<(), ModelValidationError> {
+        if !self.can_edit() {
+            return Err(ModelValidationError::InvalidStatus(
+                "只有草稿/已提交/已驳回的凭证才能修改".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
     pub fn validate_reverse(&self) -> Result<(), ModelValidationError> {
         if !self.can_reverse() {
             return Err(ModelValidationError::InvalidStatus(format!(
@@ -2292,6 +2309,20 @@ mod tests {
         assert!(!Reversed.can_delete());
         assert!(Rejected.can_delete());
         assert!(Cancelled.can_delete());
+    }
+
+    #[test]
+    fn test_voucher_status_can_edit() {
+        use VoucherStatus::*;
+        assert!(Draft.can_edit());
+        assert!(Submitted.can_edit());
+        assert!(Rejected.can_edit());
+        assert!(!Approved.can_edit());
+        assert!(!Posted.can_edit());
+        assert!(!Reversed.can_edit());
+        assert!(!Cancelled.can_edit());
+        assert!(Approved.validate_edit().is_err());
+        assert!(Draft.validate_edit().is_ok());
     }
 
     #[test]
