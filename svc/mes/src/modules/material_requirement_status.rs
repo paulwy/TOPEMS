@@ -1,6 +1,6 @@
 //! 物料需求状态唯一集合。
 //!
-//! 落库列：`mes.material_requirements.status`（varchar，DB 默认 `pending`）。
+//! 落库列：`mes.material_requirements.status`（varchar，DB 默认 `draft`）。
 //! 值集与前端 `apps/web/src/schemas/mes/materialRequirement.ts` 一致。
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +40,29 @@ impl MaterialRequirementStatus {
             _ => None,
         }
     }
+
+    /// 物料需求单向生命周期：draft → confirmed → released → completed；
+    /// 各阶段可取消，completed/cancelled 终态，同态幂等。
+    pub fn can_transition_to(self, target: Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Draft => matches!(target, Self::Confirmed | Self::Cancelled),
+            Self::Confirmed => matches!(target, Self::Released | Self::Cancelled),
+            Self::Released => matches!(target, Self::Completed | Self::Cancelled),
+            Self::Completed | Self::Cancelled => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "物料需求状态不允许从 {} 流转到 {}",
+                self.as_db_str(),
+                target.as_db_str()
+            ))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -64,5 +87,20 @@ mod tests {
             );
         }
         assert_eq!(MaterialRequirementStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn transition_matrix_is_linear() {
+        use MaterialRequirementStatus::*;
+        assert!(Draft.can_transition_to(Confirmed).is_ok());
+        assert!(Draft.can_transition_to(Cancelled).is_ok());
+        assert!(Confirmed.can_transition_to(Released).is_ok());
+        assert!(Released.can_transition_to(Completed).is_ok());
+        assert!(Released.can_transition_to(Cancelled).is_ok());
+        assert!(Draft.can_transition_to(Released).is_err());
+        assert!(Confirmed.can_transition_to(Completed).is_err());
+        assert!(Completed.can_transition_to(Confirmed).is_err());
+        assert!(Cancelled.can_transition_to(Draft).is_err());
+        assert!(Completed.can_transition_to(Completed).is_ok());
     }
 }

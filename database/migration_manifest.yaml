@@ -3135,3 +3135,11 @@ pending_forward_patches:
     effect: "qms.qa_apqp_approvals.status 的 NULL 归 pending、默认 pending、SET NOT NULL，新增三态 CHECK（pending/approved/rejected）并 VALIDATE"
     destructive_scan: "UPDATE status NULL→pending，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
     note: "新增 ApqpApprovalStatus 三态唯一源；创建绑定默认态，process 只允许 pending 记录并带 AND status='pending'，空行 409，拒绝时清空 approved_at。回滚 database/rollback/20261125010000_qms_apqp_approval_status_standard.rollback.sql 恢复可空并移除 CHECK"
+
+  # ===== 2026-11-25：B282 MES 物料需求状态收口 =====
+  - version: "20261125011000"
+    file: "database/migrations/20261125011000_mes_material_requirement_status_standard.sql"
+    status: to_apply
+    effect: "mes.material_requirements.status 默认统一 draft、NULL 归 draft、SET NOT NULL；五态 CHECK 沿用既有 ck_mes_material_requirements_status_standard"
+    destructive_scan: "UPDATE status NULL→draft，ALTER COLUMN SET DEFAULT/SET NOT NULL；无 DELETE/TRUNCATE/DROP TABLE/COLUMN/CHECK"
+    note: "MaterialRequirementStatus 新增 can_transition_to；update/confirm/release 三入口先读当前态、校验线性状态机并带 AND status=当前态，空行 409。回滚 database/rollback/20261125011000_mes_material_requirement_status_standard.rollback.sql 恢复可空"

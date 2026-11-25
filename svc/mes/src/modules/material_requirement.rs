@@ -22,6 +22,39 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64;
+use topems_shared_db::scope::ScopedTxn;
+
+#[derive(Debug, Clone, Copy)]
+enum StatusLookupError {
+    NotFound,
+    Corrupt,
+    Db,
+}
+
+/// 读取物料需求当前状态；状态列历史可空，NULL 或非法值都视为数据异常。
+async fn load_requirement_status(
+    scope: &mut ScopedTxn<'_>,
+    id: Uuid,
+) -> Result<MaterialRequirementStatus, StatusLookupError> {
+    let row = sqlx::query_unchecked!(
+        "SELECT status FROM mes.material_requirements WHERE id = $1",
+        id
+    )
+    .fetch_optional(&mut *scope)
+    .await
+    .map_err(|e| {
+        tracing::error!("读取物料需求状态失败: {}", e);
+        StatusLookupError::Db
+    })?;
+    let Some(row) = row else {
+        return Err(StatusLookupError::NotFound);
+    };
+    let raw = row.status;
+    let Some(raw) = raw.as_deref().filter(|v| !v.trim().is_empty()) else {
+        return Err(StatusLookupError::Corrupt);
+    };
+    MaterialRequirementStatus::from_db_str(raw).ok_or(StatusLookupError::Corrupt)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -586,6 +619,17 @@ pub async fn update_material_requirement(
             None => return ApiResponse::bad_request("无效的物料需求状态"),
         },
     };
+    let current_status = match load_requirement_status(&mut scope, uuid).await {
+        Ok(status) => status,
+        Err(StatusLookupError::NotFound) => return ApiResponse::not_found("物料需求不存在"),
+        Err(StatusLookupError::Corrupt) => return ApiResponse::conflict("物料需求状态数据异常"),
+        Err(StatusLookupError::Db) => return ApiResponse::server_error("读取物料需求状态失败"),
+    };
+    if let Some(target) = status {
+        if let Err(message) = current_status.can_transition_to(target) {
+            return ApiResponse::bad_request(&message);
+        }
+    }
     let result = sqlx::query_unchecked!(
         r#"
         UPDATE mes.material_requirements
@@ -598,7 +642,7 @@ pub async fn update_material_requirement(
             status = COALESCE($5, status),
             remark = COALESCE($6, remark),
             updated_at = NOW()
-        WHERE id = $7
+        WHERE id = $7 AND status = $8 AND deleted_at IS NULL
         RETURNING *
         "#,
         required_quantity,
@@ -608,11 +652,13 @@ pub async fn update_material_requirement(
         status.map(MaterialRequirementStatus::as_db_str),
         body.remark,
         uuid,
+        current_status.as_db_str(),
     )
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
-    if result.is_ok() {
+    let should_commit = matches!(result.as_ref(), Ok(Some(_)));
+    if should_commit {
         if let Err(e) = scope.commit().await {
             tracing::error!("Failed to commit material requirement update: {}", e);
             return ApiResponse::server_error("更新物料需求失败");
@@ -622,7 +668,7 @@ pub async fn update_material_requirement(
     }
 
     match result {
-        Ok(r) => ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -651,7 +697,7 @@ pub async fn update_material_requirement(
             },
             "更新物料需求成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
+        Ok(None) => ApiResponse::conflict("物料需求状态已被并发修改，请刷新后重试"),
         Err(e) => {
             tracing::error!("Failed to update material requirement: {}", e);
             ApiResponse::server_error("更新物料需求失败")
@@ -938,20 +984,32 @@ pub async fn confirm_requirement(
         }
     };
 
+    let current_status = match load_requirement_status(&mut scope, uuid).await {
+        Ok(status) => status,
+        Err(StatusLookupError::NotFound) => return ApiResponse::not_found("物料需求不存在"),
+        Err(StatusLookupError::Corrupt) => return ApiResponse::conflict("物料需求状态数据异常"),
+        Err(StatusLookupError::Db) => return ApiResponse::server_error("读取物料需求状态失败"),
+    };
+    let target_status = MaterialRequirementStatus::Confirmed;
+    if let Err(message) = current_status.can_transition_to(target_status) {
+        return ApiResponse::bad_request(&message);
+    }
     let result = sqlx::query_unchecked!(
         r#"
         UPDATE mes.material_requirements
         SET status = $2, updated_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND status = $3 AND deleted_at IS NULL
         RETURNING *
         "#,
         uuid,
-        MaterialRequirementStatus::Confirmed.as_db_str(),
+        target_status.as_db_str(),
+        current_status.as_db_str(),
     )
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
-    if result.is_ok() {
+    let should_commit = matches!(result.as_ref(), Ok(Some(_)));
+    if should_commit {
         if let Err(e) = scope.commit().await {
             tracing::error!("Failed to commit confirm requirement: {}", e);
             return ApiResponse::server_error("确认物料需求失败");
@@ -961,7 +1019,7 @@ pub async fn confirm_requirement(
     }
 
     match result {
-        Ok(r) => ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -990,7 +1048,7 @@ pub async fn confirm_requirement(
             },
             "确认物料需求成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
+        Ok(None) => ApiResponse::conflict("物料需求状态已被并发修改，请刷新后重试"),
         Err(e) => {
             tracing::error!("Failed to confirm material requirement: {}", e);
             ApiResponse::server_error("确认物料需求失败")
@@ -1044,20 +1102,32 @@ pub async fn release_requirement(
         }
     };
 
+    let current_status = match load_requirement_status(&mut scope, uuid).await {
+        Ok(status) => status,
+        Err(StatusLookupError::NotFound) => return ApiResponse::not_found("物料需求不存在"),
+        Err(StatusLookupError::Corrupt) => return ApiResponse::conflict("物料需求状态数据异常"),
+        Err(StatusLookupError::Db) => return ApiResponse::server_error("读取物料需求状态失败"),
+    };
+    let target_status = MaterialRequirementStatus::Released;
+    if let Err(message) = current_status.can_transition_to(target_status) {
+        return ApiResponse::bad_request(&message);
+    }
     let result = sqlx::query_unchecked!(
         r#"
         UPDATE mes.material_requirements
         SET status = $2, updated_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND status = $3 AND deleted_at IS NULL
         RETURNING *
         "#,
         uuid,
-        MaterialRequirementStatus::Released.as_db_str(),
+        target_status.as_db_str(),
+        current_status.as_db_str(),
     )
-    .fetch_one(&mut scope)
+    .fetch_optional(&mut scope)
     .await;
 
-    if result.is_ok() {
+    let should_commit = matches!(result.as_ref(), Ok(Some(_)));
+    if should_commit {
         if let Err(e) = scope.commit().await {
             tracing::error!("Failed to commit release requirement: {}", e);
             return ApiResponse::server_error("下发物料需求失败");
@@ -1067,7 +1137,7 @@ pub async fn release_requirement(
     }
 
     match result {
-        Ok(r) => ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -1096,7 +1166,7 @@ pub async fn release_requirement(
             },
             "下发物料需求成功",
         ),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
+        Ok(None) => ApiResponse::conflict("物料需求状态已被并发修改，请刷新后重试"),
         Err(e) => {
             tracing::error!("Failed to release material requirement: {}", e);
             ApiResponse::server_error("下发物料需求失败")
