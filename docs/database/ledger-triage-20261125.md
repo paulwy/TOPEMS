@@ -175,3 +175,27 @@ scripts/db/schema-health.sh --table finance.budgets
 验证（全部 200，之前分别为 403/不可用）：`POST /sync/tasks`（返回 DTO 字段正确：`source_entity/source_code/retry_count=0/max_retries=3`）→ 状态更新 `POST /sync/tasks/{id}/status`（`status=success` 且 `executed_at` 已落）→ 三个触发器 `trigger/scm-to-wms`、`wms-to-crm`、`srm-to-scm` 全部 200。验证后把 4 条测试任务清掉（表回到 0 行）。
 
 可逆：删除新增的成员行与范围行即可回退；脚本 `--user/--tenant` 可指向别的账号或租户。
+
+## 11. 入库单"仓库"列显示 UUID / 空白（2026-11-25）
+
+- 现象：`/wms/inbound` 列表的"仓库"列显示 UUID，接口返回 `warehouse_name` 为空；详情页标签同样。
+- 根因：`wms.inbound_orders.warehouse_name` 这一列存在但**创建时从不写入**（`create` 的 `INSERT` 只写 `warehouse_id`），历史行全是 NULL；而 `wms.warehouses` 里名称字段是 `warehouse_name`（`name` 多为空）。
+- 处置：不猜历史数据、也不回填脏值，改为**读时补齐**——`svc/wms/src/modules/inbound_order.rs` 的 8 处列清单把 `warehouse_name` 换成
+  `COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name`。
+  单表标量子查询，不引入 JOIN，规避列名歧义；不需要数据回填，历史行立即显示正确名称。
+- 验证：`psql` 实测同一表达式对 `IB-DEMO-001/002` 返回"原材料仓库"；重编二进制重启后接口与页面复核通过。
+- 说明：写入路径仍不落 `warehouse_name`（保留派生语义，仓库改名后列表自动跟随），这是有意选择，不是遗漏。
+
+## 12. 新增租户数据完整性体检（CI 可用）
+
+`scripts/ci/check-tenant-integrity.mjs`：无 `--db` 时跳过（退出 0），给 `MIGRATE_URL`/`DATABASE_URL` 时检查三条硬规则：
+
+1. `core_tenant_users` 孤儿成员（`user_id` 在 `iam.users` 不存在）——正是 §10 的坑；
+2. `core_user_company_scopes.company_id` 指向不存在/已删公司；
+3. 单公司租户的活跃成员必须有该公司范围记录（多公司租户按设计可不配）。
+
+当前库跑通输出 `✔ tenant-integrity ok`；清理后全库孤儿成员为 0。
+配套：`scripts/db/backfill-admin-company-access.sh --tenant '*' --apply` 只删悬空引用（跨租户），
+按租户/用户补成员与范围仍用不带 `--tenant '*'` 的默认模式。
+CI 接线：`ci.yml` 目前有其他并行改动未提交（前端覆盖率 jq 段等），本次不动该文件，
+等那份改动落定后再加一行 `node scripts/ci/check-tenant-integrity.mjs --db` 到 migration-test 段。

@@ -164,7 +164,7 @@ pub async fn list_inbound_orders(
         "wms",
         r#"
         SELECT id, tenant_id AS tenant_id, order_number, order_type,
-               reference_number, reference_type, warehouse_id, warehouse_name,
+               reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
                production_order_id, production_order_number,
@@ -287,7 +287,7 @@ pub async fn create_inbound_order(
         VALUES ($1, $2, 'purchase', $3, $4, $5, $6, $7,
                $12, $8, $9, $10, $11)
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
-                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
                   production_order_id, production_order_number,
@@ -441,7 +441,7 @@ pub async fn get_inbound_order(
         "wms",
         r#"
         SELECT id, tenant_id AS tenant_id, order_number, order_type,
-               reference_number, reference_type, warehouse_id, warehouse_name,
+               reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
                production_order_id, production_order_number,
@@ -515,7 +515,7 @@ pub async fn update_inbound_order(
         "wms",
         r#"
         SELECT id, tenant_id AS tenant_id, order_number, order_type,
-               reference_number, reference_type, warehouse_id, warehouse_name,
+               reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
                production_order_id, production_order_number,
@@ -586,7 +586,7 @@ pub async fn update_inbound_order(
             total_value = $6, status = $7, notes = $8, updated_at = $9
         WHERE id = $1 AND status = $10 AND deleted_at IS NULL
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
-                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
                   production_order_id, production_order_number,
@@ -1284,7 +1284,7 @@ pub async fn confirm_inbound_order(
             status = $3, updated_at = $2
         WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
-                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
                   production_order_id, production_order_number,
@@ -1681,7 +1681,7 @@ pub async fn receive_inbound_order(
         "wms",
         r#"
         SELECT id, tenant_id AS tenant_id, order_number, order_type,
-               reference_number, reference_type, warehouse_id, warehouse_name,
+               reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                supplier_id, supplier_name, supplier_code,
                purchase_order_id, purchase_order_number,
                production_order_id, production_order_number,
@@ -1899,7 +1899,7 @@ pub async fn complete_inbound_order(
             status = $3, updated_at = $2
         WHERE id = $1 AND status = $4 AND deleted_at IS NULL
         RETURNING id, tenant_id AS tenant_id, order_number, order_type,
-                  reference_number, reference_type, warehouse_id, warehouse_name,
+                  reference_number, reference_type, warehouse_id, COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name,
                   supplier_id, supplier_name, supplier_code,
                   purchase_order_id, purchase_order_number,
                   production_order_id, production_order_number,

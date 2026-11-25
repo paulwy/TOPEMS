@@ -16,6 +16,9 @@
 #   ./scripts/db/backfill-admin-company-access.sh                 # 预览
 #   ./scripts/db/backfill-admin-company-access.sh --apply         # 落库
 #   ./scripts/db/backfill-admin-company-access.sh --user admin --tenant <uuid> --apply
+#   ./scripts/db/backfill-admin-company-access.sh --tenant '*' --apply   # 只清理全库孤儿成员行
+#
+# --tenant '*' 仅做孤儿成员清理（不补成员/范围），用于跨租户的悬空引用治理。
 
 set -euo pipefail
 
@@ -42,10 +45,32 @@ if [ -z "${DATABASE_URL:-}" ]; then
     DATABASE_URL="postgres:///topems"
 fi
 
+ORPHAN_SQL_ALL=$(cat <<'SQL'
+DELETE FROM public.core_tenant_users tu
+WHERE tu.deleted_at IS NULL
+  AND NOT EXISTS (SELECT 1 FROM iam.users u WHERE u.id = tu.user_id)
+SQL
+)
+
+if [ "$TENANT_ID" = "*" ]; then
+    echo "[scope] 全库孤儿成员清理（只删悬空引用，不补成员/范围）"
+    if [ "$MODE" = "dry-run" ]; then
+        if printf 'BEGIN;\n%s;\nROLLBACK;\n' "$ORPHAN_SQL_ALL" | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -tAq >/tmp/backfill_all.log 2>&1; then
+            echo "  ✓ 试跑通过（已回滚）"
+        else
+            echo "  ✗ 试跑失败："; tail -4 /tmp/backfill_all.log; exit 1
+        fi
+    else
+        printf '%s;\n' "$ORPHAN_SQL_ALL" | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -tAq
+        echo "✓ 全库孤儿成员已清理"
+    fi
+    exit 0
+fi
 PSQL=(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -v user_name="$USER_NAME" -v tenant_id="$TENANT_ID")
 
 echo "================ backfill-admin-company-access ================"
 echo "模式: $MODE   用户: $USER_NAME   租户: $TENANT_ID"
+
 
 ADMIN_ID=$(psql "$DATABASE_URL" -tAq -c "select id from iam.users where username = '$USER_NAME' and deleted_at is null limit 1")
 if [ -z "$ADMIN_ID" ]; then
@@ -60,6 +85,7 @@ if [ -z "$COMPANY_IDS" ]; then
     exit 1
 fi
 echo "活跃公司: $(printf '%s' "$COMPANY_IDS" | tr '\n' ' ')"
+
 
 ORPHAN_SQL=$(cat <<'SQL'
 DELETE FROM public.core_tenant_users tu
@@ -109,18 +135,10 @@ SQL
 
 run_sql() {
     local title="$1" sql="$2"
-    if [ "$MODE" = "dry-run" ]; then
-        echo "[dry-run] $title —— 事务内执行后回滚"
-        if printf 'BEGIN;\n%s;\nROLLBACK;\n' "$sql" | "${PSQL[@]}" -v user_id="$ADMIN_ID" -tAq >/tmp/backfill_dry.log 2>&1; then
-            echo "  ✓ SQL 通过（已回滚，未落库）"
-        else
-            echo "  ✗ SQL 失败："; tail -4 /tmp/backfill_dry.log; return 1
-        fi
-    else
-        echo "[apply] $title"
-        printf '%s;\n' "$sql" | "${PSQL[@]}" -v user_id="$ADMIN_ID" -tAq 2>&1 | tail -3
-    fi
+    echo "[apply] $title"
+    printf '%s;\n' "$sql" | "${PSQL[@]}" -v user_id="$ADMIN_ID" -tAq
 }
+
 
 if [ "$MODE" = "dry-run" ]; then
     # 三步存在依赖（先清孤儿腾出 email 唯一槽，再补成员，最后补范围）：
@@ -136,9 +154,6 @@ else
     run_sql "清理孤儿成员记录（user_id 已不存在）" "$ORPHAN_SQL"
     run_sql "补成员记录" "$MEMBERSHIP_SQL"
     run_sql "补公司数据范围" "$SCOPE_SQL"
-fi
-
-if [ "$MODE" = "apply" ]; then
     echo "--- 结果"
     psql "$DATABASE_URL" -F'|' -tAq -c "
         select 'membership', tu.role, tu.status from public.core_tenant_users tu
