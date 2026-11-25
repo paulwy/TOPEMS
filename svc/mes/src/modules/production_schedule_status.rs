@@ -135,5 +135,7 @@ mod tests {
             ProductionScheduleStatus::active_from(),
             &["scheduled", "released", "running"]
         );
+        assert!(ProductionScheduleStatus::adjustable_from().contains(&"running"));
+        assert!(!ProductionScheduleStatus::adjustable_from().contains(&"completed"));
     }
 }
