@@ -365,7 +365,7 @@ impl FinanceService {
             "payment" => {
                 let mut query = String::from(
                     "SELECT id, payment_no, total_amount::float8 FROM finance.core_finance_payments \
-                     WHERE tenant_id = $1 AND status = 'approved' AND voucher_id IS NULL",
+                     WHERE tenant_id = $1 AND status = 'approved' AND voucher_id IS NULL AND deleted_at IS NULL",
                 );
                 let mut source_ids_bound = false;
                 let ids: Vec<Uuid> = req
@@ -527,9 +527,9 @@ impl FinanceService {
             }
 
             if lines_ok {
-                // Link source payment to voucher
-                let _ = sqlx::query(
-                    only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3")
+                // Link source payment to voucher; soft-deleted source must not be linked.
+                let link_result = sqlx::query(
+                    only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET voucher_id = $1 WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL")
                 )
                 .bind(voucher_id)
                 .bind(source_id)
@@ -537,8 +537,34 @@ impl FinanceService {
                 .execute(&mut scope)
                 .await;
 
-                voucher_ids.push(voucher_id);
-                success_count += 1;
+                let linked = match link_result {
+                    Ok(r) => r.rows_affected() > 0,
+                    Err(e) => {
+                        errors.push(format!("源记录 {} 关联凭证失败: {}", source_no, e));
+                        false
+                    }
+                };
+
+                if linked {
+                    voucher_ids.push(voucher_id);
+                    success_count += 1;
+                } else {
+                    let _ = sqlx::query(only_own_schema_query!(
+                        "finance",
+                        "DELETE FROM finance.core_finance_vouchers WHERE id = $1 AND tenant_id = $2"
+                    ))
+                    .bind(voucher_id)
+                    .bind(tenant_id)
+                    .execute(&mut scope)
+                    .await;
+                    if !errors.iter().any(|e| e.contains(source_no.as_str())) {
+                        errors.push(format!(
+                            "源记录 {} 已删除或状态已变化，凭证已回滚",
+                            source_no
+                        ));
+                    }
+                    failed_count += 1;
+                }
             } else {
                 // Clean up voucher without lines
                 let _ = sqlx::query(only_own_schema_query!(

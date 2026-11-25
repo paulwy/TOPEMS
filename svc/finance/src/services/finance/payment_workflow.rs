@@ -173,7 +173,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
         let updated = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE finance.core_finance_payments SET status = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 AND status = $4"
+            "UPDATE finance.core_finance_payments SET status = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 AND status = $4 AND deleted_at IS NULL"
         ))
         .bind(crate::modules::ap_payment_status::PaymentStatus::Pending.as_str())
         .bind(tenant_id)
@@ -409,7 +409,7 @@ impl FinanceService {
 
             let mut scope = self.write_scope(txn).await?;
             let updated = sqlx::query(
-                only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND id = $4 AND status = $5"),
+                only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND id = $4 AND status = $5 AND deleted_at IS NULL"),
             )
             .bind(approver_id)
             .bind(crate::modules::ap_payment_status::PaymentStatus::Processing.as_str())
@@ -610,7 +610,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
         let updated = sqlx::query(only_own_schema_query!(
             "finance",
-            "UPDATE finance.core_finance_payments SET status = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 AND status = $4"
+            "UPDATE finance.core_finance_payments SET status = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3 AND status = $4 AND deleted_at IS NULL"
         ))
         .bind(crate::modules::ap_payment_status::PaymentStatus::Failed.as_str())
         .bind(tenant_id)
@@ -675,7 +675,7 @@ impl FinanceService {
 
         let mut scope = self.write_scope(txn).await?;
         let updated = sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), status = $6, updated_at = NOW() WHERE tenant_id = $4 AND id = $5 AND status = $7"),
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), status = $6, updated_at = NOW() WHERE tenant_id = $4 AND id = $5 AND status = $7 AND deleted_at IS NULL"),
         )
         .bind(req.actual_payment_date)
         .bind(&req.bank_transaction_no)
