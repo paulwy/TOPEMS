@@ -541,7 +541,7 @@ pub async fn update_work_station(
 
     let status_value = match req.status.as_deref() {
         Some(raw) => match WorkStationStatus::from_db_str(raw) {
-            Some(v) => Some(v.as_db_str().to_string()),
+            Some(v) => Some(v),
             None => return ApiResponse::bad_request("无效的工位状态"),
         },
         None => None,
@@ -565,6 +565,16 @@ pub async fn update_work_station(
     let Some((current_raw,)) = current else {
         return ApiResponse::not_found("工位不存在");
     };
+    let Some(current_status) = WorkStationStatus::from_db_str(&current_raw) else {
+        return ApiResponse::conflict("工位当前状态非法，需人工处理");
+    };
+    if let Some(target) = status_value {
+        if !current_status.can_update_status_to(target) {
+            return ApiResponse::conflict(
+                "工位启停请走 activate/deactivate 接口，通用更新不能跨启停族切换状态",
+            );
+        }
+    }
 
     let result = sqlx::query(
         r#"
@@ -592,7 +602,7 @@ pub async fn update_work_station(
     .bind(&req.name)
     .bind(workshop_id)
     .bind(&req.location)
-    .bind(status_value)
+    .bind(status_value.map(|v| v.as_db_str()))
     .bind(req.capacity)
     .bind(equipment_id)
     .bind(process_id)
@@ -658,11 +668,13 @@ pub async fn delete_work_station(
         UPDATE mes.work_stations SET deleted_at = NOW()
         WHERE id = $1
           AND tenant_id = $2::uuid
+          AND status = ANY($3)
           AND deleted_at IS NULL
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(WorkStationStatus::deletable_from())
     .execute(&mut scope)
     .await;
 
@@ -680,9 +692,9 @@ pub async fn delete_work_station(
     }
 
     if result.rows_affected() > 0 {
-        ApiResponse::success("".to_string(), "工位删除成功")
+        ApiResponse::success(String::new(), "工位删除成功")
     } else {
-        ApiResponse::not_found("工位不存在")
+        ApiResponse::conflict("工位不存在、已删除或未停用，启用中的工位需先停用")
     }
 }
 
