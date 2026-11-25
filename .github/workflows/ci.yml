@@ -2318,6 +2318,9 @@ jobs:
     name: Desktop Build (${{ matrix.os }})
     needs: changes
     if: needs.changes.outputs.desktop == 'true'
+    # 本 job 未安装 sccache，必须清空全局 RUSTC_WRAPPER
+    env:
+      RUSTC_WRAPPER: ''
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
