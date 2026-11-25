@@ -1030,6 +1030,21 @@ impl FinanceService {
             TopemsError::ValidationFailed(msg)
         })?;
 
+        // 先原子认领 posted → approved，再回滚账簿；并发反过账或已取消时直接失败，
+        // 避免 ledger 已被软删但凭证状态没有成功回退。
+        let voucher = sqlx::query_as(
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'approved', posted_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $1 AND id = $2 AND status = 'posted' AND deleted_at IS NULL RETURNING *"),
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed(
+                "凭证状态已被并发修改，只有已过账凭证可以反过账".to_string(),
+            )
+        })?;
+
         sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_ledger SET deleted_at = NOW() WHERE tenant_id = $1 AND voucher_id = $2"))
             .bind(tenant_id)
             .bind(voucher_id)
@@ -1059,14 +1074,6 @@ impl FinanceService {
                 .execute(&mut scope)
                 .await?;
         }
-
-        let voucher = sqlx::query_as(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'approved', posted_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $1 AND id = $2 RETURNING *"),
-        )
-        .bind(tenant_id)
-        .bind(voucher_id)
-        .fetch_one(&mut scope)
-        .await?;
 
         scope.commit().await?;
 
