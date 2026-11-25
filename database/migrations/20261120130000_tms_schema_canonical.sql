@@ -10,7 +10,7 @@
 -- 幂等：CREATE TABLE / INDEX IF NOT EXISTS；策略先 DROP IF EXISTS 再建。
 -- 不删除数据、不改已有列类型。
 
-CREATE SCHEMA IF NOT EXISTS tms;
+-- CREATE SCHEMA 已归位：由 database/scripts/bootstrap_schemas.sql 预置（迁移不再自建 schema）
 
 CREATE TABLE IF NOT EXISTS tms.tms_carriers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,

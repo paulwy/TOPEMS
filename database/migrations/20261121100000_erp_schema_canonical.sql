@@ -16,7 +16,7 @@
 -- 约束用 pg_constraint 存在性守卫；索引 IF NOT EXISTS；策略先 DROP IF EXISTS 再建。
 -- 不删除数据、不改已有列类型。
 
-CREATE SCHEMA IF NOT EXISTS erp;
+-- CREATE SCHEMA 已归位：由 database/scripts/bootstrap_schemas.sql 预置（迁移不再自建 schema）
 
 CREATE TABLE IF NOT EXISTS erp.asset_categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,

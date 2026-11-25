@@ -10,7 +10,7 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE SCHEMA IF NOT EXISTS rs;
+-- CREATE SCHEMA 已归位：由 database/scripts/bootstrap_schemas.sql 预置（迁移不再自建 schema）
 
 CREATE TABLE IF NOT EXISTS rs.change_orders (
     id uuid DEFAULT gen_random_uuid() NOT NULL,

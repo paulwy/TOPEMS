@@ -199,3 +199,27 @@ scripts/db/schema-health.sh --table finance.budgets
 按租户/用户补成员与范围仍用不带 `--tenant '*'` 的默认模式。
 CI 接线：`ci.yml` 目前有其他并行改动未提交（前端覆盖率 jq 段等），本次不动该文件，
 等那份改动落定后再加一行 `node scripts/ci/check-tenant-integrity.mjs --db` 到 migration-test 段。
+
+## 13. schema 建库归位 + 待办口径修正（2026-11-25）
+
+**归位**：schema 只能由 `database/scripts/bootstrap_schemas.sql` 建（超管，幂等，直接 `AUTHORIZATION topems_owner`）。
+32 个 pending 迁移的 `CREATE SCHEMA IF NOT EXISTS` 已改注释，`apply-pending.sh` 会拒绝任何自带该语句的迁移。
+随后撤掉 `topems_owner` / `topems_app` 的库级 `CREATE`（详见 `role-ownership.md §10`）。
+
+**工具修正**：`apply-pending.sh` 原本不读归档表，批量 `dry-run` 会在第一个归档文件（`20261103210000`，`mes.core_emails` 已搬迁）处误判失败。
+现在两处补上：
+1. 跳过 `database/migrations-archive.tsv` 里的归档版本（`plan` 从 179 降到 **136**，与文档口径一致）；
+2. 「已达标」断言识别——B 类补列脚本在目标状态已存在时主动 `RAISE`（"本迁移只补缺失列" / "已有本次要补的列"），按 **跳过且不记账** 处理，**不进归档表**（这些文件必须留给真正缺列的库执行）。
+
+**136 条待办的实际分布**（逐文件事务内 `ROLLBACK` 试跑，2026-11-25）：
+
+| 结果 | 条数 | 含义 |
+| --- | --- | --- |
+| PASS | 87 | 可直接重放 |
+| SATISFIED（已达标） | 15 | B 类补列/约束脚本，目标状态已在库，无需执行、不记账 |
+| FAIL（需判读） | 34 | 见下 |
+
+34 条的构成：门禁类 5 条（`set app.*_gate=...` 未开）、数据前置不满足约 18 条（行数/策略数/`tenant_id IS NULL` 行数与定性时不符）、依赖归档迁移未落库导致的命名/对象缺失约 10 条（`core_flow_rules` 缺 `tenant_id`、`idx_core_tenant_plugins_tenant` 缺失、`cannot drop ... depends on it` 等）。
+**结论**：这 34 条不是"该跑没跑"，而是"依赖的前置状态在本库不成立"，需按门禁/数仓口径逐条定性后再决定 apply 或归档——属于下一批工作，不在本轮强推。
+
+顺带修了一处非幂等：`20261124234500_rd_change_order_status_standard.sql` 的 `ADD CONSTRAINT ck_change_orders_status_standard` 改为 `DO` 块内 `IF NOT EXISTS` 判断，避免约束已由更早批次建好时重放中止。

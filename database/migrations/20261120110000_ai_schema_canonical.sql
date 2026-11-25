@@ -9,7 +9,7 @@
 -- 幂等：CREATE TABLE / INDEX / FUNCTION IF NOT EXISTS；策略与触发器先 DROP IF EXISTS。
 -- 可重复执行；不删除数据、不改已有列类型。
 
-CREATE SCHEMA IF NOT EXISTS ai;
+-- CREATE SCHEMA 已归位：由 database/scripts/bootstrap_schemas.sql 预置（迁移不再自建 schema）
 
 CREATE OR REPLACE FUNCTION ai.update_documents_timestamp()
 RETURNS trigger

@@ -13,7 +13,7 @@
 SET LOCAL search_path = public;
 SET LOCAL statement_timeout = '300s';
 
-CREATE SCHEMA IF NOT EXISTS archive;
+-- CREATE SCHEMA 已归位：由 database/scripts/bootstrap_schemas.sql 预置（迁移不再自建 schema）
 
 CREATE TABLE IF NOT EXISTS archive._drop_manifest (
   migration_version text NOT NULL,

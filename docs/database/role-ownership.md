@@ -116,4 +116,14 @@ select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
 ## 10. 后续补充：`topems_owner` 的库级权限
 
 - 2026-11-25：补 `GRANT CREATE ON DATABASE topems TO topems_owner`。原因是多条迁移以 `CREATE SCHEMA IF NOT EXISTS <schema>` 开头，而 PG 对 `IF NOT EXISTS` 同样校验 `CREATE` 权限，缺权限会让 `apply-pending.sh` 在该文件上直接失败（实测 `20261121220000_finance_opening_balances_move.sql`）。
-- 影响面：owner 可在 `topems` 库新建 schema，但不能建库（`NOCREATEDB` 保持）。若要收紧，正确做法是让迁移不再自带 `CREATE SCHEMA`（schema 由 bootstrap 负责），届时可撤该权限。
+- 影响面：owner 可在 `topems` 库新建 schema，但不能建库（`NOCREATEDB` 保持）。
+- **2026-11-25 已收紧（本条已闭环）**：把「建 schema」从迁移里剥离后撤回了该权限。
+  1. 新增 `database/scripts/bootstrap_schemas.sql`（62 个 schema，`CREATE SCHEMA IF NOT EXISTS x AUTHORIZATION topems_owner`，超管执行一次、幂等）作为 schema 的唯一创建入口；
+  2. 32 个 pending 迁移里的 `CREATE SCHEMA IF NOT EXISTS` 语句改为注释（已应用的 42 个文件一字未动，避免动历史 checksum）；
+  3. `scripts/db/apply-pending.sh` 拒绝任何仍自带 `CREATE SCHEMA` 的迁移文件（退出码 2，提示去补 bootstrap）；
+  4. 撤权：`REVOKE CREATE ON DATABASE topems FROM topems_owner`，同时撤掉运行时角色 `topems_app` 的库级 `CREATE`（PUBLIC 本来就只有 `CONNECT/TEMP`）。
+  现状：`has_database_privilege(...,'CREATE')` 对 owner / app 均为 `f`，库级 `CREATE` 只剩 `topems`（管理角色）与库属主；
+  owner 仍可建表（它拥有各 schema，`pg_class` 属主不变），owner-sweep 仍 `relations=0 functions=0`。
+  回滚：`GRANT CREATE ON DATABASE topems TO topems_owner;`（app 同理），再把 bootstrap 前的迁移语句恢复。
+  验证：`apply-pending.sh dry-run` 在同一批迁移上依旧通过（`20261125012000`、`20261125011000`）。
+

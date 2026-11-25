@@ -7,7 +7,8 @@
 #   * 不依赖 sqlx-cli 的 checksum 校验，只按「文件版本 vs 账本版本」判定 pending；
 #   * 用 MIGRATE_URL（topems_owner，对象属主角色）执行，符合 docs/database/role-ownership.md；
 #   * 每个文件单独事务（文件自带 `BEGIN;` 的按其自身事务执行），失败只回滚该文件并即停；
-#   * 只有执行成功才写 public._sqlx_migrations，失败绝不补记。
+#   * 只有执行成功才写 public._sqlx_migrations，失败绝不补记；
+#   * 自动跳过 database/migrations-archive.tsv 里判定「不重放」的归档版本。
 #
 # 用法：
 #   scripts/db/apply-pending.sh plan                 # 只列 pending（默认）
@@ -57,8 +58,18 @@ installed_versions() {
     psql "$DSN" -tAc 'select version from public._sqlx_migrations where success order by version'
 }
 
+ARCHIVE_TSV="$ROOT/database/migrations-archive.tsv"
+
+# 归档版本：已在 database/migrations-archive.tsv 判定「不重放」（依赖搬迁/前向撞断言等），
+# 批量 dry-run 不能再撞它们（否则会在第一个归档文件处误判为失败）。
+archived_versions() {
+    [ -f "$ARCHIVE_TSV" ] || return 0
+    awk -F'\t' 'NF>1 && $1 ~ /^[0-9]{14}$/ {print $1}' "$ARCHIVE_TSV" | sort -u
+}
+
 pending_files() {
-    local installed="$1" f ver
+    local installed="$1" f ver archived
+    archived="$(archived_versions)"
     ls "$SOURCE_DIR"/[0-9]*_*.sql 2>/dev/null | while IFS= read -r f; do
         ver=$(basename "$f" | sed -E 's/^([0-9]+)_[0-9]+_.*$/\1/')
         # 版本号是文件名第一段的 14 位数字
@@ -69,6 +80,9 @@ pending_files() {
         # 只认 sqlx 的 14 位时间戳版本（000_/001_ 这类 bootstrap 文件不进账本）
         [ ${#ver} -eq 14 ] || continue
         if printf '%s\n' "$installed" | grep -qx "$ver"; then
+            continue
+        fi
+        if printf '%s\n' "$archived" | grep -qx "$ver"; then
             continue
         fi
         echo "$ver $f"
@@ -87,6 +101,11 @@ record_success() {
 
 has_own_txn() { grep -qE '^BEGIN;' "$1"; }
 
+# 「已达标」断言：迁移把自己写成「只补缺失列/缺失约束」，目标状态已在库时主动 RAISE 拒绝重放。
+# 这类文件（B 类补列脚本）在本库无需执行、也不该记账；但它们仍必须保留在仓库里供
+# 真正缺列的库（prod）执行，因此只做跳过，不进 migrations-archive.tsv。
+SATISFIED_RE='本迁移只补缺失列|已有本次要补的列|已存在，本迁移只补'
+
 # ---- run ---------------------------------------------------------------------
 INSTALLED="$(installed_versions)"
 LIST="$(pending_files "$INSTALLED")"
@@ -103,6 +122,19 @@ fi
 
 COUNT=$(printf '%s\n' "$LIST" | grep -c . 2>/dev/null) || COUNT=0
 echo "[$MODE] pending 文件: ${COUNT}（目录 ${SOURCE_DIR}）"
+
+# schema 只能由 bootstrap 创建：迁移文件不得自带 CREATE SCHEMA（否则迁移角色必须有库级
+# CREATE，等于绕过 governance，且新 schema 会以「无人设计」的形状进入 PG）。
+OFFENDERS=$(printf '%s\n' "$LIST" | while read -r ver file; do
+    [ -z "${ver:-}" ] && continue
+    grep -qE '^[[:space:]]*CREATE SCHEMA' "$file" && echo "  - $ver $(basename "$file")"
+done)
+if [ -n "$OFFENDERS" ]; then
+    echo "[$MODE] 拒绝执行：以下迁移自带 CREATE SCHEMA" >&2
+    printf '%s\n' "$OFFENDERS" >&2
+    echo "  请把 schema 名加进 database/scripts/bootstrap_schemas.sql 并先以超管执行，再删掉迁移里的该语句。" >&2
+    exit 2
+fi
 
 case "$MODE" in
     plan)
@@ -123,10 +155,15 @@ case "$MODE" in
                     echo "  ✓ $ver $(basename "$file")"
                     ok=$((ok+1))
                 else
-                    echo "  ✗ $ver $(basename "$file")"
-                    tail -12 /tmp/dbmig_dryrun.log | sed 's/^/      /'
-                    echo "[dry-run] 在 $ver 失败，停止"
-                    exit 1
+                    if grep -qE "$SATISFIED_RE" /tmp/dbmig_dryrun.log; then
+                        echo "  ↷ $ver $(basename "$file") 跳过（B 类前置断言：目标状态已在库）"
+                        skip=$((skip+1))
+                    else
+                        echo "  ✗ $ver $(basename "$file")"
+                        tail -12 /tmp/dbmig_dryrun.log | sed 's/^/      /'
+                        echo "[dry-run] 在 $ver 失败，停止"
+                        exit 1
+                    fi
                 fi
             else
                 if [ "$(has_own_txn "$file" && echo y)" = "y" ]; then
@@ -145,8 +182,13 @@ case "$MODE" in
                         echo "  ✓ $ver $(basename "$file")"
                         ok=$((ok+1))
                     else
-                        echo "  ✗ $ver $(basename "$file")"; tail -12 /tmp/dbmig_apply.log | sed 's/^/      /'
-                        echo "[apply] 在 $ver 失败，事务已回滚，未记账，停止"; exit 1
+                        if grep -qE "$SATISFIED_RE" /tmp/dbmig_apply.log; then
+                            echo "  ↷ $ver $(basename "$file") 跳过（B 类前置断言：目标状态已在库，未记账）"
+                            skip=$((skip+1))
+                        else
+                            echo "  ✗ $ver $(basename "$file")"; tail -12 /tmp/dbmig_apply.log | sed 's/^/      /'
+                            echo "[apply] 在 $ver 失败，事务已回滚，未记账，停止"; exit 1
+                        fi
                     fi
                 fi
             fi
