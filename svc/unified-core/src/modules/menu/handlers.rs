@@ -17,6 +17,7 @@ use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
 use super::cache::DbMenuRow;
+use super::menu_status::MenuStatus;
 use super::models::{
     CreateMenuGroupRequest, CreateMenuRequest, Menu, MenuGroup, MenuGroupListResponse,
     MenuGroupQuery, MenuListResponse, MenuNode, MenuQuery, MenuTreeResponse,
@@ -225,6 +226,17 @@ pub async fn update_group(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match MenuStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "菜单分组状态仅支持 active/inactive/archived".to_string(),
+                ))
+            }
+        },
+    };
     let sql = format!(
         r#"UPDATE public.core_menu_groups
            SET name = COALESCE($1, name),
@@ -234,6 +246,7 @@ pub async fn update_group(
                status = COALESCE($5, status),
                updated_at = $6
            WHERE id = $7 AND ($8::uuid IS NULL OR tenant_id = $8)
+             AND status = $9 AND deleted_at IS NULL
            RETURNING {}"#,
         MENU_GROUP_COLUMNS
     );
@@ -251,15 +264,52 @@ pub async fn update_group(
         }
     };
 
+    let current_raw: String = match sqlx::query_scalar(
+        "SELECT status FROM public.core_menu_groups \
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_opt)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("读取菜单分组状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新菜单分组失败".to_string()));
+        }
+    };
+    let Some(current_status) = MenuStatus::from_db_str(&current_raw) else {
+        return ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单分组当前状态不在规范集合内".to_string(),
+        ));
+    };
+    if current_status == MenuStatus::Archived {
+        return ApiResponse::from(TopemsError::ValidationFailed(
+            "已归档菜单分组不可编辑".to_string(),
+        ));
+    }
+    if let Some(target) = requested_status {
+        if !current_status.can_transition_to(target) {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "菜单分组状态不允许从当前态流转到目标态".to_string(),
+            ));
+        }
+    }
+
     let group: Option<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.name)
         .bind(req.code)
         .bind(req.icon)
         .bind(req.sort_order)
-        .bind(req.status)
+        .bind(requested_status.map(MenuStatus::as_str))
         .bind(chrono::Utc::now())
         .bind(id)
         .bind(tenant_opt)
+        .bind(current_status.as_str())
         .fetch_optional(&mut scope)
         .await
     {
@@ -274,7 +324,9 @@ pub async fn update_group(
 
     match group {
         Some(g) => api_success(g),
-        None => ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string())),
+        None => ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单分组状态已变化或已被删除，请刷新后重试".to_string(),
+        )),
     }
 }
 
@@ -305,7 +357,7 @@ pub async fn delete_group(
         }
     };
 
-    let result = sqlx::query(r#"UPDATE public.core_menu_groups SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
+    let result = sqlx::query(r#"UPDATE public.core_menu_groups SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"#)
         .bind(id)
         .bind(tenant_opt)
         .execute(&mut scope)
@@ -531,6 +583,17 @@ pub async fn update_menu(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
+    let requested_status = match req.status.as_deref() {
+        None => None,
+        Some(raw) => match MenuStatus::from_db_str(raw) {
+            Some(status) => Some(status),
+            None => {
+                return ApiResponse::from(TopemsError::ValidationFailed(
+                    "菜单状态仅支持 active/inactive/archived".to_string(),
+                ))
+            }
+        },
+    };
     let sql = format!(
         r#"UPDATE public.core_menus
            SET group_id = COALESCE($1, group_id),
@@ -544,6 +607,7 @@ pub async fn update_menu(
                status = COALESCE($9, status),
                updated_at = $10
            WHERE id = $11 AND ($12::uuid IS NULL OR tenant_id = $12)
+             AND status = $13 AND deleted_at IS NULL
            RETURNING {}"#,
         MENU_COLUMNS
     );
@@ -561,6 +625,42 @@ pub async fn update_menu(
         }
     };
 
+    let current_raw: String = match sqlx::query_scalar(
+        "SELECT status FROM public.core_menus \
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(tenant_opt)
+    .fetch_optional(&mut scope)
+    .await
+    {
+        Ok(Some(v)) => v,
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string()))
+        }
+        Err(e) => {
+            tracing::error!("读取菜单项状态失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("更新菜单项失败".to_string()));
+        }
+    };
+    let Some(current_status) = MenuStatus::from_db_str(&current_raw) else {
+        return ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单项当前状态不在规范集合内".to_string(),
+        ));
+    };
+    if current_status == MenuStatus::Archived {
+        return ApiResponse::from(TopemsError::ValidationFailed(
+            "已归档菜单不可编辑".to_string(),
+        ));
+    }
+    if let Some(target) = requested_status {
+        if !current_status.can_transition_to(target) {
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "菜单状态不允许从当前态流转到目标态".to_string(),
+            ));
+        }
+    }
+
     let menu: Option<Menu> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.group_id)
         .bind(req.parent_id)
@@ -570,10 +670,11 @@ pub async fn update_menu(
         .bind(req.icon)
         .bind(req.sort_order)
         .bind(req.permissions)
-        .bind(req.status)
+        .bind(requested_status.map(MenuStatus::as_str))
         .bind(chrono::Utc::now())
         .bind(id)
         .bind(tenant_opt)
+        .bind(current_status.as_str())
         .fetch_optional(&mut scope)
         .await
     {
@@ -588,7 +689,9 @@ pub async fn update_menu(
 
     match menu {
         Some(m) => api_success(m),
-        None => ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string())),
+        None => ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单状态已变化或已被删除，请刷新后重试".to_string(),
+        )),
     }
 }
 
@@ -619,7 +722,7 @@ pub async fn delete_menu(
         }
     };
 
-    let result = sqlx::query(r#"UPDATE public.core_menus SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
+    let result = sqlx::query(r#"UPDATE public.core_menus SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"#)
         .bind(id)
         .bind(tenant_opt)
         .execute(&mut scope)
