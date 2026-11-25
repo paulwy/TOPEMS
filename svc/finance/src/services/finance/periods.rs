@@ -125,7 +125,7 @@ impl FinanceService {
         let mut scope = self.read_scope(txn).await?;
 
         let period_status: Option<(PeriodStatus,)> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND period_name = $2"),
+            only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND period_name = $2 AND deleted_at IS NULL"),
         )
         .bind(tenant_id)
         .bind(&period)
@@ -153,7 +153,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let existing: Option<Period> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"),
         )
         .bind(tenant_id)
         .bind(year)
@@ -170,19 +170,38 @@ impl FinanceService {
                 let updated: Period = sqlx::query_as(
                     only_own_schema_query!("finance", "UPDATE finance.core_finance_periods 
                      SET status = 'open', closed_at = NULL, closed_by = NULL, updated_at = CURRENT_TIMESTAMP
-                     WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status = 'closed'
+                     WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status = 'closed' AND deleted_at IS NULL
                      RETURNING *"),
                 )
                 .bind(tenant_id)
                 .bind(year)
                 .bind(month)
-                .fetch_one(&mut scope)
-                .await?;
+                .fetch_optional(&mut scope)
+                .await?
+                .ok_or_else(|| {
+                    TopemsError::ValidationFailed(
+                        "会计期间状态已变化或已删除，请刷新后重试".to_string(),
+                    )
+                })?;
                 scope.commit().await?;
                 return Ok(updated);
             }
             scope.commit().await?;
             return Ok(period);
+        }
+
+        let soft_deleted: i64 = sqlx::query_scalar(
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NOT NULL"),
+        )
+        .bind(tenant_id)
+        .bind(year)
+        .bind(month)
+        .fetch_one(&mut scope)
+        .await?;
+        if soft_deleted > 0 {
+            return Err(TopemsError::ValidationFailed(
+                "会计期间已删除，不可重新开启".to_string(),
+            ));
         }
 
         let start_date = NaiveDate::from_ymd_opt(year, month as u32, 1)
@@ -259,7 +278,7 @@ impl FinanceService {
         let mut scope = self.write_scope(txn).await?;
 
         let existing: Option<Period> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, year, month, period_name, status, start_date, end_date, closed_at, closed_by, created_at, updated_at FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NULL"),
         )
         .bind(tenant_id)
         .bind(year)
@@ -278,7 +297,7 @@ impl FinanceService {
             })?;
 
             let child_statuses: Vec<PeriodStatus> = sqlx::query_scalar::<_, String>(
-                only_own_schema_query!("finance", "SELECT status::text FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 ORDER BY month ASC")
+                only_own_schema_query!("finance", "SELECT status::text FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 AND deleted_at IS NULL ORDER BY month ASC")
             )
             .bind(tenant_id)
             .bind(year)
@@ -300,17 +319,36 @@ impl FinanceService {
             let updated: Period = sqlx::query_as(
                 only_own_schema_query!("finance", "UPDATE finance.core_finance_periods
                  SET status = 'closed', closed_at = CURRENT_TIMESTAMP, closed_by = $4, updated_at = CURRENT_TIMESTAMP
-                 WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status IN ('open', 'closing')
+                 WHERE tenant_id = $1 AND year = $2 AND month = $3 AND status IN ('open', 'closing') AND deleted_at IS NULL
                  RETURNING *"),
             )
             .bind(tenant_id)
             .bind(year)
             .bind(month)
             .bind(closed_by)
-            .fetch_one(&mut scope)
-            .await?;
+            .fetch_optional(&mut scope)
+            .await?
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed(
+                    "会计期间状态已变化或已删除，请刷新后重试".to_string(),
+                )
+            })?;
             scope.commit().await?;
             return Ok(updated);
+        }
+
+        let soft_deleted: i64 = sqlx::query_scalar(
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month = $3 AND deleted_at IS NOT NULL"),
+        )
+        .bind(tenant_id)
+        .bind(year)
+        .bind(month)
+        .fetch_one(&mut scope)
+        .await?;
+        if soft_deleted > 0 {
+            return Err(TopemsError::ValidationFailed(
+                "会计期间已删除，不可关闭".to_string(),
+            ));
         }
 
         let period: Period = sqlx::query_as(
