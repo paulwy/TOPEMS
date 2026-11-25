@@ -9,6 +9,57 @@ fn decimal_from_value(v: Option<&Value>) -> Option<Decimal> {
         .and_then(Decimal::from_f64_retain)
 }
 
+/// 付款记录生命周期：active → inactive / archived / written_off；
+/// inactive → active / archived；archived、written_off 为终态。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PaymentRecordStatus {
+    Active,
+    Inactive,
+    Archived,
+    WrittenOff,
+}
+
+impl PaymentRecordStatus {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Inactive => "inactive",
+            Self::Archived => "archived",
+            Self::WrittenOff => "written_off",
+        }
+    }
+
+    fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "active" => Some(Self::Active),
+            "inactive" => Some(Self::Inactive),
+            "archived" => Some(Self::Archived),
+            "written_off" => Some(Self::WrittenOff),
+            _ => None,
+        }
+    }
+
+    fn can_transition_to(self, target: Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Active => matches!(target, Self::Inactive | Self::Archived | Self::WrittenOff),
+            Self::Inactive => matches!(target, Self::Active | Self::Archived),
+            Self::Archived | Self::WrittenOff => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "付款记录状态不允许从 {} 流转到 {}",
+                self.as_str(),
+                target.as_str()
+            ))
+        }
+    }
+}
+
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
 
@@ -162,7 +213,7 @@ impl FinanceService {
 
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO finance.erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
-             VALUES ($1, $2, $3, $4, NULL, $5)
+             VALUES ($1, $2, $3, $4, 'active', $5)
              RETURNING id, payment_no, supplier_name, amount, status::text AS status, created_at"),
         )
         .bind(tenant_id)
@@ -177,7 +228,7 @@ impl FinanceService {
         let payment_no: String = sqlx::Row::get(&row, "payment_no");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
         let amount: Decimal = sqlx::Row::get(&row, "amount");
-        let status: Option<String> = sqlx::Row::get(&row, "status");
+        let status: String = sqlx::Row::get(&row, "status");
 
         scope.commit().await?;
 
@@ -199,9 +250,39 @@ impl FinanceService {
     ) -> Result<Value, TopemsError> {
         let supplier_name = req.get("supplier_name").and_then(|v| v.as_str());
         let amount = decimal_from_value(req.get("amount"));
-        let status = req.get("status").and_then(|v| v.as_str());
+        let target_status = match req.get("status").and_then(|v| v.as_str()) {
+            Some(raw) => Some(PaymentRecordStatus::from_db_str(raw).ok_or_else(|| {
+                TopemsError::ValidationFailed(
+                    "status 仅支持 active/inactive/archived/written_off".to_string(),
+                )
+            })?),
+            None => None,
+        };
 
         let mut scope = self.write_scope(txn).await?;
+
+        let current_row = sqlx::query(only_own_schema_query!(
+            "finance",
+            "SELECT status::text AS status FROM finance.erp_payment_records
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("付款记录不存在".to_string()))?;
+        let current_raw: Option<String> = sqlx::Row::get(&current_row, "status");
+        let current_status = current_raw
+            .as_deref()
+            .and_then(PaymentRecordStatus::from_db_str)
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed("付款记录当前状态不在规范集合内".to_string())
+            })?;
+        if let Some(target) = target_status {
+            if let Err(message) = current_status.can_transition_to(target) {
+                return Err(TopemsError::ValidationFailed(message));
+            }
+        }
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -210,16 +291,20 @@ impl FinanceService {
                  amount = COALESCE($2, amount),
                  status = COALESCE($3, status),
                  updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $4 AND id = $5
+             WHERE tenant_id = $4 AND id = $5 AND status = $6 AND deleted_at IS NULL
              RETURNING id, payment_no, supplier_name, amount, status, updated_at"
         ))
         .bind(supplier_name)
         .bind(amount)
-        .bind(status)
+        .bind(target_status.map(PaymentRecordStatus::as_str))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .bind(current_status.as_str())
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("付款记录状态已被并发修改，更新失败".to_string())
+        })?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let payment_no: String = sqlx::Row::get(&row, "payment_no");
@@ -235,6 +320,7 @@ impl FinanceService {
             "supplier_name": supplier_name,
             "amount": amount,
             "status": status,
+            "updated_at": sqlx::Row::get::<chrono::DateTime<chrono::Utc>, _>(&row, "updated_at"),
         }))
     }
 
@@ -272,19 +358,49 @@ impl FinanceService {
         write_off_amount: f64,
         txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ) -> Result<Value, TopemsError> {
+        if !write_off_amount.is_finite() || write_off_amount <= 0.0 {
+            return Err(TopemsError::ValidationFailed(
+                "核销金额必须大于 0".to_string(),
+            ));
+        }
+
         let mut scope = self.write_scope(txn).await?;
+
+        let current_row = sqlx::query(only_own_schema_query!(
+            "finance",
+            "SELECT status::text AS status FROM finance.erp_payment_records
+             WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL"
+        ))
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| TopemsError::NotFound("付款记录不存在".to_string()))?;
+        let current_raw: Option<String> = sqlx::Row::get(&current_row, "status");
+        let current_status = current_raw
+            .as_deref()
+            .and_then(PaymentRecordStatus::from_db_str)
+            .ok_or_else(|| {
+                TopemsError::ValidationFailed("付款记录当前状态不在规范集合内".to_string())
+            })?;
+        if let Err(message) = current_status.can_transition_to(PaymentRecordStatus::WrittenOff) {
+            return Err(TopemsError::ValidationFailed(message));
+        }
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "UPDATE finance.erp_payment_records
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2
+             WHERE tenant_id = $1 AND id = $2 AND status = 'active' AND deleted_at IS NULL
              RETURNING id, payment_no, status"
         ))
         .bind(tenant_id)
         .bind(payment_id)
-        .fetch_one(&mut scope)
-        .await?;
+        .fetch_optional(&mut scope)
+        .await?
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed("付款记录状态已被并发修改，核销失败".to_string())
+        })?;
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let status: String = sqlx::Row::get(&row, "status");
@@ -364,5 +480,35 @@ impl FinanceService {
             "fail_count": fail_count,
             "results": results
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PaymentRecordStatus;
+
+    #[test]
+    fn payment_record_status_roundtrips() {
+        use PaymentRecordStatus::*;
+        for status in [Active, Inactive, Archived, WrittenOff] {
+            assert_eq!(
+                PaymentRecordStatus::from_db_str(status.as_str()),
+                Some(status)
+            );
+        }
+        assert_eq!(PaymentRecordStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn payment_record_transition_matrix() {
+        use PaymentRecordStatus::*;
+        assert!(Active.can_transition_to(Inactive).is_ok());
+        assert!(Active.can_transition_to(Archived).is_ok());
+        assert!(Active.can_transition_to(WrittenOff).is_ok());
+        assert!(Inactive.can_transition_to(Active).is_ok());
+        assert!(Inactive.can_transition_to(WrittenOff).is_err());
+        assert!(Archived.can_transition_to(Active).is_err());
+        assert!(WrittenOff.can_transition_to(Active).is_err());
+        assert!(WrittenOff.can_transition_to(WrittenOff).is_ok());
     }
 }

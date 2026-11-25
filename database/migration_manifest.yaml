@@ -3143,3 +3143,11 @@ pending_forward_patches:
     effect: "mes.material_requirements.status 默认统一 draft、NULL 归 draft、SET NOT NULL；五态 CHECK 沿用既有 ck_mes_material_requirements_status_standard"
     destructive_scan: "UPDATE status NULL→draft，ALTER COLUMN SET DEFAULT/SET NOT NULL；无 DELETE/TRUNCATE/DROP TABLE/COLUMN/CHECK"
     note: "MaterialRequirementStatus 新增 can_transition_to；update/confirm/release 三入口先读当前态、校验线性状态机并带 AND status=当前态，空行 409。回滚 database/rollback/20261125011000_mes_material_requirement_status_standard.rollback.sql 恢复可空"
+
+  # ===== 2026-11-25：B287 Finance 付款记录状态收口 =====
+  - version: "20261125012000"
+    file: "database/migrations/20261125012000_finance_payment_record_status_standard.sql"
+    status: to_apply
+    effect: "finance.erp_payment_records.status 的 NULL 归 active、默认 active、SET NOT NULL，CHECK 扩充为 active/inactive/archived/written_off 四态并 VALIDATE"
+    destructive_scan: "UPDATE status NULL→active，ALTER COLUMN SET DEFAULT/SET NOT NULL，DROP/ADD/VALIDATE 1 条 CHECK；无 DELETE/TRUNCATE/DROP TABLE/COLUMN"
+    note: "PaymentRecordStatus 四态唯一源；update 校验值域与状态机并带 AND status=当前态，write_off 只允许 active 且带 AND status='active'。回滚 database/rollback/20261125012000_finance_payment_record_status_standard.rollback.sql 恢复可空与旧三态 CHECK"
