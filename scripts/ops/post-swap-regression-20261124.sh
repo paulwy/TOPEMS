@@ -9,16 +9,16 @@
 #   bash scripts/ops/post-swap-regression-20261124.sh \
 #     --base http://127.0.0.1:8099 \
 #     --bin target/release/topems-server \
-#     --uploads-dir /Users/xingzhai/uploads \
-#     --log /Users/xingzhai/Library/Logs/topems/server.err.log
+#     --uploads-dir /Users/xingzhai/topems/storage \
+#     --log /Users/xingzhai/topems/logs/server.err
 #
 #   带登录态的读回归（可选，给 1–2 条真实模块读接口）：
 #   TOKEN=... TENANT_ID=... bash scripts/ops/post-swap-regression-20261124.sh \
-#     --authed-path "/api/core/users?page=1&page_size=5"
+#     --authed-path "/api/core/iam/users?page=1&page_size=5"
 #   注：生产 tenant 中间件要求 X-Tenant-Id 头，缺了会 400「缺少租户上下文」；
 #       不给 TOKEN 时导航/运行时接口只会 401，判据必然 FAIL——判据要真值就带 token+tenant。
 #
-# 判据（任一 FAIL 即建议立刻换回 bin/topems-server.bak-20261124-1325）：
+# 判据（任一 FAIL 即建议立刻换回 bin/topems-server.bak-20261125-0925）：
 #   1) 二进制 sha256 前 8 位 = fe23cda1
 #   2) GET /health → 200
 #   3) GET /api/core/health → 200
@@ -169,5 +169,5 @@ if [[ "$FAILS" -eq 0 ]]; then
   echo "== 五项回归通过（0 FAIL）=="
   exit 0
 fi
-echo "== 五项回归未通过：${FAILS} 项 FAIL → 建议立即换回 bin/topems-server.bak-20261124-1325 =="
+echo "== 五项回归未通过：${FAILS} 项 FAIL → 建议立即换回 bin/topems-server.bak-20261125-0925 =="
 exit 1
