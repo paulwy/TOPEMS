@@ -2047,7 +2047,7 @@ pub async fn process_apqp_approval(
     };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = CASE WHEN $2 = 'approved' THEN NOW() ELSE NULL END WHERE id = $1 AND status = 'pending' AND project_id IN (SELECT id FROM qms.qa_apqp_projects WHERE tenant_id = $5 AND deleted_at IS NULL) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2::varchar(32), approver = $3, comment = COALESCE($4, comment), approved_at = CASE WHEN $2::varchar(32) = 'approved' THEN NOW() ELSE NULL END WHERE id = $1 AND status = 'pending' AND project_id IN (SELECT id FROM qms.qa_apqp_projects WHERE tenant_id = $5 AND deleted_at IS NULL) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
     .bind(id)
     .bind(target_status.as_db_str())
