@@ -751,7 +751,8 @@ jobs:
           TEST_REDIS_URL: redis://localhost:6379/1
           JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
           APP_ENV: test
-        run: cargo nextest run --workspace --test-threads=4
+        # --no-fail-fast：一次性枚举全部失败，避免每轮 60 分钟编译后只看到第一个失败
+        run: cargo nextest run --workspace --test-threads=4 --no-fail-fast
 
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov

@@ -996,7 +996,10 @@ mod tests {
 
     // ---------- RedisConfig ----------
     #[test]
+    #[serial]
     fn redis_config_default_values() {
+        // Default 实现会读取 REDIS_URL；CI 设置该变量后默认值断言必须隔离环境
+        std::env::remove_var("REDIS_URL");
         let c = RedisConfig::default();
         assert_eq!(c.url, "redis://localhost:6379");
         assert_eq!(c.max_connections, 10);
