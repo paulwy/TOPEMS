@@ -1383,6 +1383,42 @@ pub enum ReconciliationStatus {
     Cancelled,
 }
 
+impl ReconciliationStatus {
+    /// 对账会话状态机：pending ↔ processing，二者均可完成或取消；
+    /// completed / cancelled 为终态，同态幂等。
+    pub fn can_transition_to(&self, target: &Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Pending => matches!(target, Self::Processing | Self::Completed | Self::Cancelled),
+            Self::Processing => matches!(target, Self::Pending | Self::Completed | Self::Cancelled),
+            Self::Completed | Self::Cancelled => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!("对账会话状态不允许从 {} 流转到 {}", self, target))
+        }
+    }
+
+    #[must_use]
+    pub fn is_terminal(&self) -> bool {
+        matches!(self, Self::Completed | Self::Cancelled)
+    }
+
+    /// 写入目标态时允许的来源态，用于 `AND status = ANY(...)` 并发谓词。
+    #[must_use]
+    pub fn allowed_from(target: &Self) -> &'static [&'static str] {
+        match target {
+            Self::Pending => &["pending", "processing"],
+            Self::Processing => &["pending", "processing"],
+            Self::Completed => &["pending", "processing"],
+            Self::Cancelled => &["pending", "processing"],
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
 #[sqlx(type_name = "match_status")]
 #[sqlx(rename_all = "snake_case")]
@@ -2037,6 +2073,30 @@ mod tests {
             let d: ReconciliationStatus = serde_json::from_str(&json).unwrap();
             assert_eq!(s, &d);
         }
+
+        assert!(ReconciliationStatus::Pending
+            .can_transition_to(&ReconciliationStatus::Processing)
+            .is_ok());
+        assert!(ReconciliationStatus::Processing
+            .can_transition_to(&ReconciliationStatus::Pending)
+            .is_ok());
+        assert!(ReconciliationStatus::Pending
+            .can_transition_to(&ReconciliationStatus::Completed)
+            .is_ok());
+        assert!(ReconciliationStatus::Processing
+            .can_transition_to(&ReconciliationStatus::Cancelled)
+            .is_ok());
+        assert!(ReconciliationStatus::Completed
+            .can_transition_to(&ReconciliationStatus::Pending)
+            .is_err());
+        assert!(ReconciliationStatus::Cancelled
+            .can_transition_to(&ReconciliationStatus::Processing)
+            .is_err());
+        assert!(ReconciliationStatus::Completed
+            .can_transition_to(&ReconciliationStatus::Completed)
+            .is_ok());
+        assert!(ReconciliationStatus::Completed.is_terminal());
+        assert!(!ReconciliationStatus::Pending.is_terminal());
 
         let match_statuses = [
             MatchStatus::Unmatched,
