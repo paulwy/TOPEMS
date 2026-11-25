@@ -15,54 +15,47 @@ import type { TicketComment, TicketActivity, AddCommentRequest } from './types';
 
 export const commentApi = {
   listComments: async (ticketId: string) => {
-    return apiClient.ticket.get<{ data: TicketComment[] }>(`/tickets/${ticketId}/comments`);
+    return apiClient.ticket.get<TicketComment[]>(`/tickets/${ticketId}/comments`);
   },
 
   addComment: async (ticketId: string, data: AddCommentRequest) => {
-    return apiClient.ticket.post<{ data: TicketComment }>(`/tickets/${ticketId}/comments`, data);
+    return apiClient.ticket.post<TicketComment>(`/tickets/${ticketId}/comments`, data);
   },
 
   addPublicComment: async (ticketId: string, content: string) => {
-    return apiClient.ticket.post<{ data: TicketComment }>(`/tickets/${ticketId}/comments`, {
+    return apiClient.ticket.post<TicketComment>(`/tickets/${ticketId}/comments`, {
       content,
       is_internal: false,
     });
   },
 
   addInternalComment: async (ticketId: string, content: string) => {
-    return apiClient.ticket.post<{ data: TicketComment }>(`/tickets/${ticketId}/comments`, {
+    return apiClient.ticket.post<TicketComment>(`/tickets/${ticketId}/comments`, {
       content,
       is_internal: true,
     });
   },
 
   updateComment: async (ticketId: string, commentId: string, data: Partial<AddCommentRequest>) => {
-    return apiClient.ticket.put<{ data: TicketComment }>(
-      `/tickets/${ticketId}/comments/${commentId}`,
-      data
-    );
+    return apiClient.ticket.put<TicketComment>(`/tickets/${ticketId}/comments/${commentId}`, data);
   },
 
   deleteComment: async (ticketId: string, commentId: string) => {
-    return apiClient.ticket.delete<{ data: { deleted: boolean } }>(
+    return apiClient.ticket.delete<{ deleted: boolean }>(
       `/tickets/${ticketId}/comments/${commentId}`
     );
   },
 
   listActivities: async (ticketId: string) => {
-    return apiClient.ticket.get<{ data: TicketActivity[] }>(`/tickets/${ticketId}/activities`);
+    return apiClient.ticket.get<TicketActivity[]>(`/tickets/${ticketId}/activities`);
   },
 
   getActivity: async (ticketId: string, activityId: string) => {
-    return apiClient.ticket.get<{ data: TicketActivity }>(
-      `/tickets/${ticketId}/activities/${activityId}`
-    );
+    return apiClient.ticket.get<TicketActivity>(`/tickets/${ticketId}/activities/${activityId}`);
   },
 
   getActivityTimeline: async (ticketId: string) => {
-    return apiClient.ticket.get<{ data: TicketActivity[] }>(
-      `/tickets/${ticketId}/activities/timeline`
-    );
+    return apiClient.ticket.get<TicketActivity[]>(`/tickets/${ticketId}/activities/timeline`);
   },
 };
 

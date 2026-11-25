@@ -63,7 +63,7 @@ const ticketApiAdapter: CrudApiAdapter<Ticket> = {
       ticket_type: (params?.ticket_type as string) || undefined,
       severity: (params?.severity as string) || undefined,
     });
-    const data = res.data.data;
+    const data = res.data;
     return {
       data: data.items ?? [],
       total: data.total ?? 0,
@@ -71,11 +71,11 @@ const ticketApiAdapter: CrudApiAdapter<Ticket> = {
   },
   create: async (data) => {
     const res = await ticketApi.createTicket(data as unknown as CreateTicketRequest);
-    return res.data.data;
+    return res.data;
   },
   update: async (id, data) => {
     const res = await ticketApi.updateTicket(id, data as unknown as UpdateTicketRequest);
-    return res.data.data;
+    return res.data;
   },
   delete: async () => {
     throw new Error(i18n.t('ticket:errors.deleteNotSupported'));
@@ -123,7 +123,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
     queryFn: async () => {
       try {
         const res = await ticketApi.getComments(ticket.id);
-        return res.data.data ?? [];
+        return res.data ?? [];
       } catch {
         return [];
       }
@@ -136,7 +136,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
     queryFn: async () => {
       try {
         const res = await ticketApi.getTicketSla(ticket.id);
-        return res.data.data ?? null;
+        return res.data ?? null;
       } catch {
         return null;
       }
@@ -407,7 +407,7 @@ const TicketCenterPage: React.FC = () => {
     queryFn: async () => {
       try {
         const res = await ticketApi.getStats();
-        return res.data.data ?? null;
+        return res.data ?? null;
       } catch {
         return null;
       }

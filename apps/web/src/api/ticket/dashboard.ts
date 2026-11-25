@@ -50,71 +50,67 @@ interface AssigneeLoad {
 
 export const dashboardApi = {
   getStats: async () => {
-    return apiClient.ticket.get<{ data: TicketStats }>('/tickets/stats');
+    return apiClient.ticket.get<TicketStats>('/tickets/stats');
   },
 
   getSlaStats: async () => {
-    return apiClient.ticket.get<{ data: TicketSlaStats }>('/tickets/sla-stats');
+    return apiClient.ticket.get<TicketSlaStats>('/tickets/sla-stats');
   },
 
   getSummary: async () => {
-    return apiClient.ticket.get<{ data: DashboardSummary }>('/tickets/dashboard/summary');
+    return apiClient.ticket.get<DashboardSummary>('/tickets/dashboard/summary');
   },
 
   getTrend: async (params?: { days?: number; from?: string; to?: string }) => {
-    return apiClient.ticket.get<{ data: TrendPoint[] }>('/tickets/dashboard/trend', {
+    return apiClient.ticket.get<TrendPoint[]>('/tickets/dashboard/trend', {
       params,
     });
   },
 
   getBySeverity: async () => {
-    return apiClient.ticket.get<{
-      data: Array<{ severity: string; count: number; breached: number }>;
-    }>('/tickets/dashboard/by-severity');
+    return apiClient.ticket.get<Array<{ severity: string; count: number; breached: number }>>(
+      '/tickets/dashboard/by-severity'
+    );
   },
 
   getByType: async () => {
-    return apiClient.ticket.get<{
-      data: Array<{ ticket_type: string; count: number; open: number; resolved: number }>;
-    }>('/tickets/dashboard/by-type');
+    return apiClient.ticket.get<
+      Array<{ ticket_type: string; count: number; open: number; resolved: number }>
+    >('/tickets/dashboard/by-type');
   },
 
   getBySource: async () => {
-    return apiClient.ticket.get<{ data: Array<{ source_service: string; count: number }> }>(
+    return apiClient.ticket.get<Array<{ source_service: string; count: number }>>(
       '/tickets/dashboard/by-source'
     );
   },
 
   getSlaOverview: async () => {
     return apiClient.ticket.get<{
-      data: {
-        total: number;
-        on_time: number;
-        breached: number;
-        breach_rate: number;
-        avg_resolution_minutes: number;
-        avg_response_minutes: number;
-      };
+      total: number;
+      on_time: number;
+      breached: number;
+      breach_rate: number;
+      avg_resolution_minutes: number;
+      avg_response_minutes: number;
     }>('/tickets/dashboard/sla-overview');
   },
 
   getAssigneeLoad: async () => {
-    return apiClient.ticket.get<{ data: AssigneeLoad[] }>('/tickets/dashboard/assignee-load');
+    return apiClient.ticket.get<AssigneeLoad[]>('/tickets/dashboard/assignee-load');
   },
 
   getMyDashboard: async () => {
     return apiClient.ticket.get<{
-      data: {
-        my_open: number;
-        my_in_progress: number;
-        my_overdue: number;
-        my_recent: TicketListResponse;
-      };
+      my_open: number;
+      my_in_progress: number;
+      my_overdue: number;
+      my_recent: TicketListResponse;
     }>('/tickets/dashboard/my');
   },
 
   searchTickets: async (query: string, params?: TicketQuery) => {
-    return apiClient.ticket.get<{ data: TicketListResponse }>('/tickets/search', {
+    return apiClient.ticket.get<TicketListResponse>('/tickets/search', {
       params: { q: query, ...params },
     });
   },

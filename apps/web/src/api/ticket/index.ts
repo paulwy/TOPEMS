@@ -60,45 +60,43 @@ export type { BatchResult } from './batch';
 export const ticketApi = {
   // 基础工单操作（推荐通过 BFF）
   listTickets: (query?: TicketQuery) =>
-    apiClient.ticket.get<{ data: TicketListResponse }>('/tickets', { params: query }),
+    apiClient.ticket.get<TicketListResponse>('/tickets', { params: query }),
 
-  getTicket: (id: string) => apiClient.ticket.get<{ data: Ticket }>(`/tickets/${id}`),
+  getTicket: (id: string) => apiClient.ticket.get<Ticket>(`/tickets/${id}`),
 
-  createTicket: (data: CreateTicketRequest) =>
-    apiClient.ticket.post<{ data: Ticket }>('/tickets', data),
+  createTicket: (data: CreateTicketRequest) => apiClient.ticket.post<Ticket>('/tickets', data),
 
   updateTicket: (id: string, data: UpdateTicketRequest) =>
-    apiClient.ticket.put<{ data: Ticket }>(`/tickets/${id}`, data),
+    apiClient.ticket.put<Ticket>(`/tickets/${id}`, data),
 
-  deleteTicket: (id: string) =>
-    apiClient.ticket.delete<{ data: { deleted: boolean } }>(`/tickets/${id}`),
+  deleteTicket: (id: string) => apiClient.ticket.delete<{ deleted: boolean }>(`/tickets/${id}`),
 
   getStats: dashboardApi.getStats,
 
   // ==================== 直接访问 ticket 服务 ====================
 
   assignTicket: (id: string, assigneeId: string) =>
-    apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/assign`, {
+    apiClient.ticket.post<Ticket>(`/tickets/${id}/assign`, {
       assignee_id: assigneeId,
     }),
 
   resolveTicket: (id: string, resolution?: string) =>
-    apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/resolve`, {
+    apiClient.ticket.post<Ticket>(`/tickets/${id}/resolve`, {
       resolution,
     }),
 
   closeTicket: (id: string, reason?: string) =>
-    apiClient.ticket.post<{ data: Ticket }>(`/tickets/${id}/close`, { reason }),
+    apiClient.ticket.post<Ticket>(`/tickets/${id}/close`, { reason }),
 
   batchUpdate: (data: {
     ids: string[];
     status?: string;
     priority?: string;
     assignee_id?: string;
-  }) => apiClient.ticket.post<{ data: { updated_count: number } }>('/tickets/batch-update', data),
+  }) => apiClient.ticket.post<{ updated_count: number }>('/tickets/batch-update', data),
 
   getMyTickets: (params?: { status?: string; page?: number; page_size?: number }) =>
-    apiClient.ticket.get<{ data: TicketListResponse }>('/tickets/my', { params }),
+    apiClient.ticket.get<TicketListResponse>('/tickets/my', { params }),
 
   // SLA 子域
   sla: slaApi,

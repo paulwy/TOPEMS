@@ -3,7 +3,7 @@ import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
-const TICKET_PATHS = {
+export const TICKET_PATHS = {
   root: '/ticket',
   dashboard: '/ticket/dashboard',
   center: '/ticket/center',
