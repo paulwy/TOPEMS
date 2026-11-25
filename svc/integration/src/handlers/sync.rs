@@ -298,7 +298,7 @@ pub async fn update_status(
                 "integration",
                 r#"
                 UPDATE integration.core_inter_module_sync
-                SET status = $2, error_message = $3, updated_at = $4,
+                SET status = $2::varchar, error_message = $3, updated_at = $4,
                     executed_at = CASE WHEN $2 IN ('success', 'failed', 'cancelled', 'completed')
                                        THEN $4 ELSE executed_at END
                 WHERE id = $1 AND deleted_at IS NULL

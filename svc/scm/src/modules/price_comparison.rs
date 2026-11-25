@@ -1058,7 +1058,7 @@ pub async fn approve_comparison(
         "scm",
         r#"
         UPDATE scm.price_comparisons
-        SET remarks = CONCAT(COALESCE(remarks, ''), ' | 已审批: ', $1), updated_at = $2
+        SET remarks = CONCAT(COALESCE(remarks, ''), ' | 已审批: ', $1::text), updated_at = $2
         WHERE id = $3 AND tenant_id = $4::uuid
         "#
     ))

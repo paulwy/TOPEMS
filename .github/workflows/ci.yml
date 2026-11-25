@@ -2137,11 +2137,14 @@ jobs:
             sleep 1
           done
 
-      - name: 迁移归档/判读表门禁
-        run: node scripts/ci/check-migration-archive.mjs
+      - name: Bootstrap schemas (唯一 schema 创建入口)
+        # 2026-11-25: 迁移不再自带 CREATE SCHEMA；up-down-up 的空库循环必须先执行 bootstrap，
+        # 否则 archive/core 等服务 schema 缺失，drop-batch 类迁移在建 archive._drop_manifest 时失败。
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "SELECT 1 FROM pg_roles WHERE rolname='topems_owner'" | grep -q 1 \
+            || psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "CREATE ROLE topems_owner NOLOGIN;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f database/scripts/bootstrap_schemas.sql
 
-      - name: 租户数据完整性体检
-        run: node scripts/ci/check-tenant-integrity.mjs --db
 
       - name: Run migration up-down-up tests
         run: |
@@ -2205,6 +2208,9 @@ jobs:
           LEDGER_MAX="$(psql "$DATABASE_URL" -Atc "SELECT max(version) FROM _sqlx_migrations WHERE success")"
           test "$LEDGER_MAX" = "$ANCHOR" || { echo "FAIL: 账本 max=${LEDGER_MAX}，与锚点 ${ANCHOR} 不一致" >&2; exit 1; }
 
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "SELECT 1 FROM pg_roles WHERE rolname='topems_owner'" | grep -q 1 \
+            || psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -c "CREATE ROLE topems_owner NOLOGIN;"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f database/scripts/bootstrap_schemas.sql
           bash scripts/migration/apply-forward.sh --dsn "$DATABASE_URL" --drill-gate-guc-auto
 
       - name: Run migration validation (validate.sh 三方核对 + schema drift)

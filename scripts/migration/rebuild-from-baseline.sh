@@ -82,6 +82,10 @@ if ! "${PSQL[@]}" -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${APP_
   echo "== 创建应用角色 ${APP_ROLE}（NOLOGIN，仅用于迁移 GRANT）"
   "${PSQL[@]}" -d postgres -q -c "CREATE ROLE \"${APP_ROLE}\" NOLOGIN"
 fi
+if ! "${PSQL[@]}" -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='topems_owner'" | grep -q 1; then
+  echo "== 创建迁移角色 topems_owner（NOLOGIN，schema 属主）"
+  "${PSQL[@]}" -d postgres -q -c "CREATE ROLE topems_owner NOLOGIN"
+fi
 
 echo "== 恢复 schema 快照"
 gunzip -c "$BASE_DIR/$SCHEMA_FILE" | grep -Ev '^(COMMENT ON EXTENSION |SET transaction_timeout = )' | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
@@ -114,6 +118,9 @@ if (( WITH_DATA == 1 )); then
   done < <(python3 -c 'import json,sys;m=json.load(open(sys.argv[1]));[print(t+"|"+str(m["row_counts"][t])) for t in m["tables"]]' "$DATA_META")
   echo "   OK: 参考数据行数与元数据一致"
 fi
+
+echo "== 预置 schema（迁移已不再自带 CREATE SCHEMA）"
+psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1 -f "$ROOT/database/scripts/bootstrap_schemas.sql"
 
 echo "== 前向迁移"
 bash "$ROOT/scripts/migration/apply-forward.sh" --db "$DB" --anchor "$ANCHOR" --drill-gate-guc-auto

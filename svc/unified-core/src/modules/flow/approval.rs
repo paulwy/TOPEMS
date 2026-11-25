@@ -1339,7 +1339,7 @@ pub async fn create_approval(
 
     let task = match sqlx::query_as::<_, WorkflowTask>(
         r#"INSERT INTO public.core_workflow_tasks (instance_id, node_id, assignee_id, status, tenant_id)
-           VALUES ($1, 'start', $2, $4, $5)
+           VALUES ($1, 'start', $2, $3, $4)
            RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, claimed_at, created_at, completed_at, tenant_id"#,
     )
     .bind(instance.id)

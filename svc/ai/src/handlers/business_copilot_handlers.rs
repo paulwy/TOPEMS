@@ -601,7 +601,7 @@ pub async fn set_context_data(
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
     let affected = sqlx::query(
-        "UPDATE core.ai_conversations SET context_data = context_data || jsonb_build_object($2, $3::jsonb), updated_at = now() WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE core.ai_conversations SET context_data = context_data || jsonb_build_object($2::text, $3::jsonb), updated_at = now() WHERE id = $1 AND deleted_at IS NULL"
     )
         .bind(sid)
         .bind(&req.key)

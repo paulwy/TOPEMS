@@ -749,7 +749,7 @@ pub async fn activate_work_station(
             updated_at = $2
         WHERE id = $1
           AND tenant_id = $3::uuid
-          AND status = ANY($6)
+          AND status = ANY($5)
           AND deleted_at IS NULL
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,

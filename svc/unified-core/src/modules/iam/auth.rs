@@ -1504,7 +1504,7 @@ pub async fn forgot_password(
             r#"
         INSERT INTO public.core_notifications (id, user_id, title, content, notification_type, priority, data, created_at)
         SELECT gen_random_uuid(), u.id, $1, $2, 'system', 2,
-               jsonb_build_object('source', 'password_reset', 'requested_email', $3, 'requested_user_id', $4),
+               jsonb_build_object('source', 'password_reset', 'requested_email', $3::text, 'requested_user_id', $4::text),
                NOW()
         FROM iam.users u
         WHERE u.status = 'active' AND u.deleted_at IS NULL

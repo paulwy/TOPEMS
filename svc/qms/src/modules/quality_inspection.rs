@@ -653,7 +653,7 @@ pub async fn submit_result(
             });
 
             let inspector = req.inspector.clone();
-            let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET qualified_quantity = $2, unqualified_quantity = $3, qualification_rate = $4, inspector = $5, result = $6, memo = $7, status = 'pending_audit', inspected_at = NOW(), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $8 AND status = $10 AND deleted_at IS NULL"#)).bind(id.to_string()).bind(req.qualified_quantity).bind(req.unqualified_quantity).bind(rate).bind(inspector.clone()).bind(req.result).bind(req.memo).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql()).bind(current_status)
+            let updated = sqlx::query(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET qualified_quantity = $2, unqualified_quantity = $3, qualification_rate = $4, inspector = $5, result = $6, memo = $7, status = 'pending_audit', inspected_at = NOW(), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $8 AND status = $9 AND deleted_at IS NULL"#)).bind(id.to_string()).bind(req.qualified_quantity).bind(req.unqualified_quantity).bind(rate).bind(inspector.clone()).bind(req.result).bind(req.memo).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql()).bind(current_status)
             .execute(&mut scope)
             .await;
 
