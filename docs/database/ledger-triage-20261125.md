@@ -183,7 +183,7 @@ scripts/db/schema-health.sh --table finance.budgets
 - 处置：不猜历史数据、也不回填脏值，改为**读时补齐**——`svc/wms/src/modules/inbound_order.rs` 的 8 处列清单把 `warehouse_name` 换成
   `COALESCE(warehouse_name, (SELECT w.warehouse_name FROM wms.warehouses w WHERE w.id = inbound_orders.warehouse_id AND w.deleted_at IS NULL)) AS warehouse_name`。
   单表标量子查询，不引入 JOIN，规避列名歧义；不需要数据回填，历史行立即显示正确名称。
-- 验证：`psql` 实测同一表达式对 `IB-DEMO-001/002` 返回"原材料仓库"；重编二进制重启后接口与页面复核通过。
+- 验证：`psql` 实测同一表达式对 `IB-DEMO-001/002` 返回"原材料仓库"；重编二进制重启后 `GET /api/wms/inbound-orders` 返回 `warehouse_name="原材料仓库"`（页面读取同一字段，随接口生效）。
 - 说明：写入路径仍不落 `warehouse_name`（保留派生语义，仓库改名后列表自动跟随），这是有意选择，不是遗漏。
 
 ## 12. 新增租户数据完整性体检（CI 可用）
