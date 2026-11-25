@@ -70,9 +70,9 @@ const PublicMasterDataPage: React.FC = () => {
     queryKey,
     queryFn: async () => {
       const params = { page: page + 1, page_size: pageSize };
-      if (tab === 0) return (await materialApi.list(params)).data.data;
-      if (tab === 1) return (await uomApi.list(params)).data.data;
-      return (await sampleApi.list(params)).data.data;
+      if (tab === 0) return (await materialApi.list(params)).data;
+      if (tab === 1) return (await uomApi.list(params)).data;
+      return (await sampleApi.list(params)).data;
     },
   });
 

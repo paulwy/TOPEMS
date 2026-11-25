@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== P2-11 剩余项：PDM 独立图纸实体 ====================
 
@@ -26,14 +26,14 @@ export interface DrawingListResponse {
   page_size: number;
 }
 
-const BASE = '/api/pdm/drawings';
+const BASE = '/drawings';
 
 export const drawingApi = {
   list: (params: PaginationParams & { search?: string; status?: string; drawing_type?: string }) =>
-    apiClient.get<ApiResponse<DrawingListResponse>>(BASE, { params }),
-  get: (id: string) => apiClient.get<ApiResponse<PdmDrawing>>(`${BASE}/${id}`),
-  create: (data: Record<string, unknown>) => apiClient.post<ApiResponse<PdmDrawing>>(BASE, data),
+    apiClient.pdm.get<DrawingListResponse>(BASE, { params }),
+  get: (id: string) => apiClient.pdm.get<PdmDrawing>(`${BASE}/${id}`),
+  create: (data: Record<string, unknown>) => apiClient.pdm.post<PdmDrawing>(BASE, data),
   update: (id: string, data: Record<string, unknown>) =>
-    apiClient.put<ApiResponse<PdmDrawing>>(`${BASE}/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`${BASE}/${id}`),
+    apiClient.pdm.put<PdmDrawing>(`${BASE}/${id}`, data),
+  remove: (id: string) => apiClient.pdm.delete<string>(`${BASE}/${id}`),
 };

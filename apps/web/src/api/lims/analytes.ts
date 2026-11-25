@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== LIMS 检验项目（analyte） ====================
 
@@ -48,11 +48,10 @@ export interface AnalyteListResponse {
 
 export const analyteApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<AnalyteListResponse>>('/api/lims/analytes', { params }),
-  get: (id: string) => apiClient.get<ApiResponse<Analyte>>(`/api/lims/analytes/${id}`),
-  create: (data: CreateAnalyteRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/lims/analytes', data),
+    apiClient.lims.get<AnalyteListResponse>('/analytes', { params }),
+  get: (id: string) => apiClient.lims.get<Analyte>(`/analytes/${id}`),
+  create: (data: CreateAnalyteRequest) => apiClient.lims.post<{ id: string }>('/analytes', data),
   update: (id: string, data: UpdateAnalyteRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/lims/analytes/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/lims/analytes/${id}`),
+    apiClient.lims.put<{ id: string }>(`/analytes/${id}`, data),
+  remove: (id: string) => apiClient.lims.delete<string>(`/analytes/${id}`),
 };

@@ -4,10 +4,13 @@ import { renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 
 import PublicMasterDataPage from '../PublicMasterDataPage';
 
-// useQuery queryFn 形状：(await materialApi.list(params)).data.data → { items, total }
-// vi.mock 被提升到文件顶部，辅助函数必须用 vi.hoisted 才能在工厂内引用。
+// useQuery queryFn 形状：(await materialApi.list(params)).data → { items, total }
+// 后端为单层 ApiResponse{success,code,data}；vi.mock 被提升到文件顶部，辅助函数用 vi.hoisted。
 const listEnvelope = vi.hoisted(() => (items: unknown[]) => ({
-  data: { success: true, code: 0, message: '', data: { items, total: items.length } },
+  success: true,
+  code: 200,
+  message: 'success',
+  data: { items, total: items.length },
 }));
 
 vi.mock('@/api/master/masterData', () => ({
@@ -25,9 +28,9 @@ vi.mock('@/api/master/masterData', () => ({
       ])
     ),
     get: vi.fn(),
-    create: vi.fn().mockResolvedValue({ data: {} }),
-    update: vi.fn().mockResolvedValue({ data: {} }),
-    remove: vi.fn().mockResolvedValue({ data: {} }),
+    create: vi.fn().mockResolvedValue({ success: true, code: 200, data: {} }),
+    update: vi.fn().mockResolvedValue({ success: true, code: 200, data: {} }),
+    remove: vi.fn().mockResolvedValue({ success: true, code: 200, data: {} }),
   },
   uomApi: {
     list: vi.fn().mockResolvedValue(listEnvelope([])),

@@ -58,7 +58,7 @@ const PdmDrawingPage: React.FC = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['pdm-drawings', page, pageSize],
-    queryFn: async () => (await drawingApi.list({ page: page + 1, page_size: pageSize })).data.data,
+    queryFn: async () => (await drawingApi.list({ page: page + 1, page_size: pageSize })).data,
   });
 
   const listData = (data as unknown as ListLike) ?? { items: [], total: 0 };

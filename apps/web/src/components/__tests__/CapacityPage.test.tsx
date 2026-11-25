@@ -6,10 +6,13 @@ import { capacityApi } from '@/api/mes/capacity';
 import { useNotificationStore } from '@/store';
 
 // 页面自绘 MUI 表格 + Dialog 表单（非 CrudPage 模板），
-// list/create/update/remove 逐一 mock；页面从 data.data.items 取行数据。
+// list/create/update/remove 逐一 mock；后端单层 ApiResponse，页面从 data.data.items 取行。
 vi.mock('@/api/mes/capacity', () => ({
   capacityApi: {
     list: vi.fn().mockResolvedValue({
+      success: true,
+      code: 200,
+      message: 'success',
       data: {
         items: [
           {
@@ -27,9 +30,9 @@ vi.mock('@/api/mes/capacity', () => ({
         page_size: 10,
       },
     }),
-    create: vi.fn().mockResolvedValue({ data: { success: true, data: { id: 'cap-new' } } }),
-    update: vi.fn().mockResolvedValue({ data: { success: true, data: { id: 'cap-1' } } }),
-    remove: vi.fn().mockResolvedValue({ data: { success: true, data: 'cap-1' } }),
+    create: vi.fn().mockResolvedValue({ success: true, code: 200, data: { id: 'cap-new' } }),
+    update: vi.fn().mockResolvedValue({ success: true, code: 200, data: { id: 'cap-1' } }),
+    remove: vi.fn().mockResolvedValue({ success: true, code: 200, data: 'cap-1' }),
   },
 }));
 

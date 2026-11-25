@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== P2-11 剩余项：PM 项目类型模板 ====================
 
@@ -24,15 +24,14 @@ export interface ProjectTypeListResponse {
   page_size: number;
 }
 
-const BASE = '/api/pm/project-types';
+const BASE = '/project-types';
 
 export const projectTypeConfigApi = {
   list: (params: PaginationParams & { search?: string; is_active?: boolean }) =>
-    apiClient.get<ApiResponse<ProjectTypeListResponse>>(BASE, { params }),
-  get: (id: string) => apiClient.get<ApiResponse<ProjectTypeConfig>>(`${BASE}/${id}`),
-  create: (data: Record<string, unknown>) =>
-    apiClient.post<ApiResponse<ProjectTypeConfig>>(BASE, data),
+    apiClient.pm.get<ProjectTypeListResponse>(BASE, { params }),
+  get: (id: string) => apiClient.pm.get<ProjectTypeConfig>(`${BASE}/${id}`),
+  create: (data: Record<string, unknown>) => apiClient.pm.post<ProjectTypeConfig>(BASE, data),
   update: (id: string, data: Record<string, unknown>) =>
-    apiClient.put<ApiResponse<ProjectTypeConfig>>(`${BASE}/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`${BASE}/${id}`),
+    apiClient.pm.put<ProjectTypeConfig>(`${BASE}/${id}`, data),
+  remove: (id: string) => apiClient.pm.delete<string>(`${BASE}/${id}`),
 };

@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== 公共主数据域（P2-11）：物料 / UOM / 样品 ====================
 
@@ -48,37 +48,36 @@ export interface MasterListResponse {
   page_size: number;
 }
 
-const BASE = '/api/master-data/master-data';
+const BASE = '/master-data';
 
 export const materialApi = {
   list: (params: PaginationParams & { material_type?: string; status?: string; search?: string }) =>
-    apiClient.get<ApiResponse<MasterListResponse>>(`${BASE}/materials`, { params }),
-  get: (id: string) => apiClient.get<ApiResponse<MasterMaterial>>(`${BASE}/materials/${id}`),
+    apiClient.master.get<MasterListResponse>(`${BASE}/materials`, { params }),
+  get: (id: string) => apiClient.master.get<MasterMaterial>(`${BASE}/materials/${id}`),
   create: (data: Record<string, unknown>) =>
-    apiClient.post<ApiResponse<MasterMaterial>>(`${BASE}/materials`, data),
+    apiClient.master.post<MasterMaterial>(`${BASE}/materials`, data),
   update: (id: string, data: Record<string, unknown>) =>
-    apiClient.put<ApiResponse<MasterMaterial>>(`${BASE}/materials/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`${BASE}/materials/${id}`),
+    apiClient.master.put<MasterMaterial>(`${BASE}/materials/${id}`, data),
+  remove: (id: string) => apiClient.master.delete<string>(`${BASE}/materials/${id}`),
 };
 
 export const uomApi = {
   list: (params: PaginationParams & { uom_type?: string; status?: string; search?: string }) =>
-    apiClient.get<ApiResponse<MasterListResponse>>(`${BASE}/uoms`, { params }),
-  get: (id: string) => apiClient.get<ApiResponse<MasterUom>>(`${BASE}/uoms/${id}`),
-  create: (data: Record<string, unknown>) =>
-    apiClient.post<ApiResponse<MasterUom>>(`${BASE}/uoms`, data),
+    apiClient.master.get<MasterListResponse>(`${BASE}/uoms`, { params }),
+  get: (id: string) => apiClient.master.get<MasterUom>(`${BASE}/uoms/${id}`),
+  create: (data: Record<string, unknown>) => apiClient.master.post<MasterUom>(`${BASE}/uoms`, data),
   update: (id: string, data: Record<string, unknown>) =>
-    apiClient.put<ApiResponse<MasterUom>>(`${BASE}/uoms/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`${BASE}/uoms/${id}`),
+    apiClient.master.put<MasterUom>(`${BASE}/uoms/${id}`, data),
+  remove: (id: string) => apiClient.master.delete<string>(`${BASE}/uoms/${id}`),
 };
 
 export const sampleApi = {
   list: (params: PaginationParams & { sample_type?: string; status?: string; search?: string }) =>
-    apiClient.get<ApiResponse<MasterListResponse>>(`${BASE}/samples`, { params }),
-  get: (id: string) => apiClient.get<ApiResponse<MasterSample>>(`${BASE}/samples/${id}`),
+    apiClient.master.get<MasterListResponse>(`${BASE}/samples`, { params }),
+  get: (id: string) => apiClient.master.get<MasterSample>(`${BASE}/samples/${id}`),
   create: (data: Record<string, unknown>) =>
-    apiClient.post<ApiResponse<MasterSample>>(`${BASE}/samples`, data),
+    apiClient.master.post<MasterSample>(`${BASE}/samples`, data),
   update: (id: string, data: Record<string, unknown>) =>
-    apiClient.put<ApiResponse<MasterSample>>(`${BASE}/samples/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`${BASE}/samples/${id}`),
+    apiClient.master.put<MasterSample>(`${BASE}/samples/${id}`, data),
+  remove: (id: string) => apiClient.master.delete<string>(`${BASE}/samples/${id}`),
 };

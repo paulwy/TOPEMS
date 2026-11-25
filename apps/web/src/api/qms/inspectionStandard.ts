@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== QMS 检验项 / 检验方案 / 抽样方案（P1-7） ====================
 
@@ -110,45 +110,43 @@ export interface ListResponse<T> {
 
 export const inspectionItemApi = {
   list: (params: PaginationParams & { search?: string; status?: string; category?: string }) =>
-    apiClient.get<ApiResponse<ListResponse<InspectionItem>>>('/api/qms/inspection-items', {
+    apiClient.qms.get<ListResponse<InspectionItem>>('/inspection-items', {
       params,
     }),
-  get: (id: string) =>
-    apiClient.get<ApiResponse<InspectionItem>>(`/api/qms/inspection-items/${id}`),
+  get: (id: string) => apiClient.qms.get<InspectionItem>(`/inspection-items/${id}`),
   create: (data: CreateInspectionItemRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/qms/inspection-items', data),
+    apiClient.qms.post<{ id: string }>('/inspection-items', data),
   update: (id: string, data: UpdateInspectionItemRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/qms/inspection-items/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/qms/inspection-items/${id}`),
+    apiClient.qms.put<{ id: string }>(`/inspection-items/${id}`, data),
+  remove: (id: string) => apiClient.qms.delete<string>(`/inspection-items/${id}`),
 };
 
 export const samplingPlanApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<ListResponse<SamplingPlan>>>('/api/qms/sampling-plans', { params }),
-  get: (id: string) => apiClient.get<ApiResponse<SamplingPlan>>(`/api/qms/sampling-plans/${id}`),
+    apiClient.qms.get<ListResponse<SamplingPlan>>('/sampling-plans', { params }),
+  get: (id: string) => apiClient.qms.get<SamplingPlan>(`/sampling-plans/${id}`),
   create: (data: CreateSamplingPlanRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/qms/sampling-plans', data),
+    apiClient.qms.post<{ id: string }>('/sampling-plans', data),
   update: (id: string, data: Partial<CreateSamplingPlanRequest>) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/qms/sampling-plans/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/qms/sampling-plans/${id}`),
+    apiClient.qms.put<{ id: string }>(`/sampling-plans/${id}`, data),
+  remove: (id: string) => apiClient.qms.delete<string>(`/sampling-plans/${id}`),
 };
 
 export const inspectionPlanApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<ListResponse<InspectionPlan>>>('/api/qms/inspection-plans', {
+    apiClient.qms.get<ListResponse<InspectionPlan>>('/inspection-plans', {
       params,
     }),
-  get: (id: string) =>
-    apiClient.get<ApiResponse<InspectionPlan>>(`/api/qms/inspection-plans/${id}`),
+  get: (id: string) => apiClient.qms.get<InspectionPlan>(`/inspection-plans/${id}`),
   create: (data: CreateInspectionPlanRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/qms/inspection-plans', data),
+    apiClient.qms.post<{ id: string }>('/inspection-plans', data),
   update: (id: string, data: Partial<CreateInspectionPlanRequest>) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/qms/inspection-plans/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/qms/inspection-plans/${id}`),
+    apiClient.qms.put<{ id: string }>(`/inspection-plans/${id}`, data),
+  remove: (id: string) => apiClient.qms.delete<string>(`/inspection-plans/${id}`),
   listItems: (id: string) =>
-    apiClient.get<ApiResponse<{ items: PlanItem[] }>>(`/api/qms/inspection-plans/${id}/items`),
+    apiClient.qms.get<{ items: PlanItem[] }>(`/inspection-plans/${id}/items`),
   addItem: (id: string, data: AddPlanItemRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>(`/api/qms/inspection-plans/${id}/items`, data),
+    apiClient.qms.post<{ id: string }>(`/inspection-plans/${id}/items`, data),
   removeItem: (id: string, itemId: string) =>
-    apiClient.delete<ApiResponse<string>>(`/api/qms/inspection-plans/${id}/items/${itemId}`),
+    apiClient.qms.delete<string>(`/inspection-plans/${id}/items/${itemId}`),
 };

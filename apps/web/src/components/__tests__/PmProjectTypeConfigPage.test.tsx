@@ -6,40 +6,40 @@ import { projectTypeConfigApi } from '@/api/pm/projectTypeConfig';
 import { useNotificationStore } from '@/store';
 
 // 页面自绘 MUI 表格 + Dialog 表单（非 CrudPage 模板），
-// list/create/update/remove 逐一 mock；响应为 axios 双层解包（页面取 .data.data）。
+// list/create/update/remove 逐一 mock；后端单层 ApiResponse（页面 queryFn 取 .data）。
 vi.mock('@/api/pm/projectTypeConfig', () => ({
   projectTypeConfigApi: {
     list: vi.fn().mockResolvedValue({
+      success: true,
+      code: 200,
+      message: 'success',
       data: {
-        success: true,
-        data: {
-          items: [
-            {
-              id: 'tpc-1',
-              type_code: 'RND-001',
-              type_name: 'Research Project',
-              name_en: 'Research',
-              description: 'desc-1',
-              is_active: true,
-            },
-            {
-              id: 'tpc-2',
-              type_code: 'BLD-002',
-              type_name: 'Building Project',
-              name_en: 'Building',
-              description: 'desc-2',
-              is_active: false,
-            },
-          ],
-          total: 2,
-          page: 1,
-          page_size: 10,
-        },
+        items: [
+          {
+            id: 'tpc-1',
+            type_code: 'RND-001',
+            type_name: 'Research Project',
+            name_en: 'Research',
+            description: 'desc-1',
+            is_active: true,
+          },
+          {
+            id: 'tpc-2',
+            type_code: 'BLD-002',
+            type_name: 'Building Project',
+            name_en: 'Building',
+            description: 'desc-2',
+            is_active: false,
+          },
+        ],
+        total: 2,
+        page: 1,
+        page_size: 10,
       },
     }),
-    create: vi.fn().mockResolvedValue({ data: { success: true, data: { id: 'tpc-new' } } }),
-    update: vi.fn().mockResolvedValue({ data: { success: true, data: { id: 'tpc-1' } } }),
-    remove: vi.fn().mockResolvedValue({ data: { success: true, data: 'tpc-1' } }),
+    create: vi.fn().mockResolvedValue({ success: true, code: 200, data: { id: 'tpc-new' } }),
+    update: vi.fn().mockResolvedValue({ success: true, code: 200, data: { id: 'tpc-1' } }),
+    remove: vi.fn().mockResolvedValue({ success: true, code: 200, data: 'tpc-1' }),
   },
 }));
 

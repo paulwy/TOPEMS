@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== 车间 ====================
 
@@ -41,13 +41,12 @@ export interface WorkshopListResponse {
 
 export const workshopApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<WorkshopListResponse>>('/api/mes/workshops', { params }),
-  get: (id: string) => apiClient.get<ApiResponse<Workshop>>(`/api/mes/workshops/${id}`),
-  create: (data: CreateWorkshopRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/mes/workshops', data),
+    apiClient.mes.get<WorkshopListResponse>('/workshops', { params }),
+  get: (id: string) => apiClient.mes.get<Workshop>(`/workshops/${id}`),
+  create: (data: CreateWorkshopRequest) => apiClient.mes.post<{ id: string }>('/workshops', data),
   update: (id: string, data: UpdateWorkshopRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/mes/workshops/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/mes/workshops/${id}`),
+    apiClient.mes.put<{ id: string }>(`/workshops/${id}`, data),
+  remove: (id: string) => apiClient.mes.delete<string>(`/workshops/${id}`),
 };
 
 // ==================== 产线 ====================
@@ -87,14 +86,13 @@ export interface ProductionLineListResponse {
 
 export const productionLineApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<ProductionLineListResponse>>('/api/mes/production-lines', { params }),
-  get: (id: string) =>
-    apiClient.get<ApiResponse<ProductionLine>>(`/api/mes/production-lines/${id}`),
+    apiClient.mes.get<ProductionLineListResponse>('/production-lines', { params }),
+  get: (id: string) => apiClient.mes.get<ProductionLine>(`/production-lines/${id}`),
   create: (data: CreateProductionLineRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/mes/production-lines', data),
+    apiClient.mes.post<{ id: string }>('/production-lines', data),
   update: (id: string, data: UpdateProductionLineRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/mes/production-lines/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/mes/production-lines/${id}`),
+    apiClient.mes.put<{ id: string }>(`/production-lines/${id}`, data),
+  remove: (id: string) => apiClient.mes.delete<string>(`/production-lines/${id}`),
 };
 
 // ==================== 班次 ====================
@@ -140,13 +138,12 @@ export interface ShiftListResponse {
 
 export const shiftApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<ShiftListResponse>>('/api/mes/shifts', { params }),
-  get: (id: string) => apiClient.get<ApiResponse<Shift>>(`/api/mes/shifts/${id}`),
-  create: (data: CreateShiftRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/mes/shifts', data),
+    apiClient.mes.get<ShiftListResponse>('/shifts', { params }),
+  get: (id: string) => apiClient.mes.get<Shift>(`/shifts/${id}`),
+  create: (data: CreateShiftRequest) => apiClient.mes.post<{ id: string }>('/shifts', data),
   update: (id: string, data: UpdateShiftRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/mes/shifts/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/mes/shifts/${id}`),
+    apiClient.mes.put<{ id: string }>(`/shifts/${id}`, data),
+  remove: (id: string) => apiClient.mes.delete<string>(`/shifts/${id}`),
 };
 
 // ==================== 工作日历 ====================
@@ -192,11 +189,11 @@ export interface WorkCalendarListResponse {
 
 export const workCalendarApi = {
   list: (params: PaginationParams & { search?: string; calendarType?: string }) =>
-    apiClient.get<ApiResponse<WorkCalendarListResponse>>('/api/mes/work-calendars', { params }),
-  get: (id: string) => apiClient.get<ApiResponse<WorkCalendar>>(`/api/mes/work-calendars/${id}`),
+    apiClient.mes.get<WorkCalendarListResponse>('/work-calendars', { params }),
+  get: (id: string) => apiClient.mes.get<WorkCalendar>(`/work-calendars/${id}`),
   create: (data: CreateWorkCalendarRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/mes/work-calendars', data),
+    apiClient.mes.post<{ id: string }>('/work-calendars', data),
   update: (id: string, data: UpdateWorkCalendarRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/mes/work-calendars/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/mes/work-calendars/${id}`),
+    apiClient.mes.put<{ id: string }>(`/work-calendars/${id}`, data),
+  remove: (id: string) => apiClient.mes.delete<string>(`/work-calendars/${id}`),
 };

@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== MES 产能日历 ====================
 
@@ -31,17 +31,13 @@ export interface CapacityListResponse {
 
 export const capacityApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<CapacityListResponse>>('/api/mes/capacities', { params }),
-  create: (data: CreateCapacityRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/mes/capacities', data),
+    apiClient.mes.get<CapacityListResponse>('/capacities', { params }),
+  create: (data: CreateCapacityRequest) => apiClient.mes.post<{ id: string }>('/capacities', data),
   update: (id: string, data: Partial<CreateCapacityRequest>) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/mes/capacities/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/mes/capacities/${id}`),
+    apiClient.mes.put<{ id: string }>(`/capacities/${id}`, data),
+  remove: (id: string) => apiClient.mes.delete<string>(`/capacities/${id}`),
 
   // ── v74 to_bind 补绑（2026-10-29）──
   maintenance: (id: string, data?: Record<string, unknown>) =>
-    apiClient.post<ApiResponse<Record<string, unknown>>>(
-      `/api/mes/capacities/${id}/maintenance`,
-      data
-    ),
+    apiClient.mes.post<Record<string, unknown>>(`/capacities/${id}/maintenance`, data),
 };
