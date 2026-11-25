@@ -2092,6 +2092,12 @@ jobs:
       - name: Static check — migration integrity
         run: node scripts/check-migrations.mjs
 
+      # 归档表门禁（2026-11-25）：database/migrations-archive.tsv 用于解释 43 条历史空档的
+      # pending 噪声，必须冻结——新增迁移（>= 20261201000000）禁止入表，防止它腐化成隐藏迁移的白名单。
+      # 归档与账本互斥的 DB 侧校验只在本地/有库环境用 `--db` 跑（本作业起的是空库，不做该项）。
+      - name: Static check — migration archive
+        run: node scripts/ci/check-migration-archive.mjs
+
       # prod 误跑防线（2026-11-05）：定向命名禁止新增（既存 19 条白名单）；
       # 破坏性语句仅阻断新增/修改文件（既存 25 文件/651 条记录在 destructive-sql-baseline.json，
       # 仅报告，保证 main 为绿）。
