@@ -25,6 +25,14 @@ CREATE TABLE IF NOT EXISTS public.search_recent (
     deleted_at  timestamptz
 );
 
+-- anchor/prod 血缘里这张表可能存在（基线 5 列：id/keyword/searched_at/user_id/deleted_at），
+-- 那时 CREATE TABLE IF NOT EXISTS 是 no-op，必须再显式补列，否则后面的租户策略引用不到 tenant_id。
+ALTER TABLE public.search_recent
+    ADD COLUMN IF NOT EXISTS tenant_id uuid,
+    ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+
 -- ON CONFLICT (user_id, keyword) 依赖这个唯一索引
 CREATE UNIQUE INDEX IF NOT EXISTS uq_search_recent_user_keyword
     ON public.search_recent (user_id, keyword);
