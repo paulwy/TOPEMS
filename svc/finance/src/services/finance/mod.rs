@@ -24,6 +24,7 @@ mod approval_configs;
 mod aux_accounts;
 mod collection;
 pub(crate) mod company;
+pub mod erp_ar_ap_status;
 pub mod erp_e2e;
 mod payable;
 mod payment;
