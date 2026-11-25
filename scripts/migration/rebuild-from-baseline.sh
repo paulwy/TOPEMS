@@ -87,8 +87,11 @@ if ! "${PSQL[@]}" -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='topems
   "${PSQL[@]}" -d postgres -q -c "CREATE ROLE topems_owner NOLOGIN"
 fi
 
+echo "== 预置 schema（基线 dump 不含插件 schema，且 CREATE SCHEMA 非幂等）"
+psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1 -f "$ROOT/database/scripts/bootstrap_schemas.sql"
+
 echo "== 恢复 schema 快照"
-gunzip -c "$BASE_DIR/$SCHEMA_FILE" | grep -Ev '^(COMMENT ON EXTENSION |SET transaction_timeout = )' | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
+gunzip -c "$BASE_DIR/$SCHEMA_FILE" | grep -Ev '^(CREATE SCHEMA |COMMENT ON EXTENSION |SET transaction_timeout = )' | psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1
 
 echo "== 载入账本锚点"
 psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1 -f "$BASE_DIR/$LEDGER_FILE"
@@ -118,9 +121,6 @@ if (( WITH_DATA == 1 )); then
   done < <(python3 -c 'import json,sys;m=json.load(open(sys.argv[1]));[print(t+"|"+str(m["row_counts"][t])) for t in m["tables"]]' "$DATA_META")
   echo "   OK: 参考数据行数与元数据一致"
 fi
-
-echo "== 预置 schema（迁移已不再自带 CREATE SCHEMA）"
-psql -h "$PGHOST" -U "$PGUSER" -d "$DB" -q -v ON_ERROR_STOP=1 -f "$ROOT/database/scripts/bootstrap_schemas.sql"
 
 echo "== 前向迁移"
 bash "$ROOT/scripts/migration/apply-forward.sh" --db "$DB" --anchor "$ANCHOR" --drill-gate-guc-auto
