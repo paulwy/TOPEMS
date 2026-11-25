@@ -772,6 +772,7 @@ pub async fn complete_record(
             status = $4,
             updated_at = $2
         WHERE id = $1 AND status = $5 AND tenant_id = $3::uuid
+          AND deleted_at IS NULL
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
@@ -821,7 +822,7 @@ pub async fn complete_record(
             };
             ApiResponse::success(record, "生产记录完成成功")
         }
-        None => ApiResponse::not_found("生产记录不存在或状态不允许完成"),
+        None => ApiResponse::conflict("生产记录不存在、已删除或状态不允许完成"),
     }
 }
 
