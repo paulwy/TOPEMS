@@ -42,7 +42,8 @@ on:
 # Cancel superseded runs on the same ref to save CI minutes.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # main 的长作业（Rust ~80min）不能被并行提交反复取消；PR 仍取消旧提交
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   CARGO_TERM_COLOR: always
