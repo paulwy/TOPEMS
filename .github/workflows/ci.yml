@@ -2327,6 +2327,8 @@ jobs:
     env:
       RUSTC_WRAPPER: ''
       RUSTUP_TOOLCHAIN: '1.85.0'
+      # CI 无 Developer ID 证书，使用 ad-hoc 签名，避免 bundle 阶段 codesign 失败
+      APPLE_SIGNING_IDENTITY: '-'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
