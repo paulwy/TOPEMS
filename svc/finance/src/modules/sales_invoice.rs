@@ -45,6 +45,61 @@ use uuid::Uuid;
 use crate::modules::collection_status::CollectionStatus;
 use crate::shared::AppState;
 
+/// 销售发票生命周期：draft → issued → paid；issued/overdue 可 cancelled；
+/// paid、cancelled 为终态；同态幂等。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SalesInvoiceStatus {
+    Draft,
+    Issued,
+    Paid,
+    Overdue,
+    Cancelled,
+}
+
+impl SalesInvoiceStatus {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::Issued => "issued",
+            Self::Paid => "paid",
+            Self::Overdue => "overdue",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    fn from_db_str(raw: &str) -> Option<Self> {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "draft" => Some(Self::Draft),
+            "issued" => Some(Self::Issued),
+            "paid" => Some(Self::Paid),
+            "overdue" => Some(Self::Overdue),
+            "cancelled" => Some(Self::Cancelled),
+            _ => None,
+        }
+    }
+
+    fn can_transition_to(self, target: Self) -> Result<(), String> {
+        if self == target {
+            return Ok(());
+        }
+        let allowed = match self {
+            Self::Draft => matches!(target, Self::Issued | Self::Cancelled),
+            Self::Issued => matches!(target, Self::Paid | Self::Overdue | Self::Cancelled),
+            Self::Overdue => matches!(target, Self::Paid | Self::Cancelled),
+            Self::Paid | Self::Cancelled => false,
+        };
+        if allowed {
+            Ok(())
+        } else {
+            Err(format!(
+                "发票状态不允许从 {} 流转到 {}",
+                self.as_str(),
+                target.as_str()
+            ))
+        }
+    }
+}
+
 // ========== 请求/响应类型（对齐前端 crmFinance 契约）==========
 
 #[derive(Debug, Serialize)]
@@ -701,7 +756,7 @@ pub async fn cancel_sales_invoice(
     let cancelled = match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
                 cancelled_at = NOW(), updated_at = NOW()
-         WHERE id = $1 AND tenant_id = $2 AND status IN ('draft', 'issued')
+         WHERE id = $1 AND tenant_id = $2 AND status IN ('draft', 'issued', 'overdue')
          RETURNING id",
     )
     .bind(id)
@@ -755,8 +810,17 @@ pub async fn red_flush_sales_invoice(
         Ok(Some(inv)) => inv,
         _ => return ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
     };
-    if original.status != "issued" {
-        return ApiResponse::<SalesInvoiceOut>::conflict("仅已开具发票可红冲");
+    let original_status = match SalesInvoiceStatus::from_db_str(&original.status) {
+        Some(status) => status,
+        None => {
+            return ApiResponse::<SalesInvoiceOut>::conflict("发票状态不在规范集合内");
+        }
+    };
+    if original_status
+        .can_transition_to(SalesInvoiceStatus::Cancelled)
+        .is_err()
+    {
+        return ApiResponse::<SalesInvoiceOut>::conflict("仅已开具/逾期发票可红冲");
     }
 
     let mut scope = match state.db.scope_with(txn).await {
@@ -764,20 +828,26 @@ pub async fn red_flush_sales_invoice(
         Err(e) => return crate::shared::err_resp(e),
     };
 
-    // 取消原票
-    if let Err(e) = sqlx::query(
+    // 取消原票：带来源态谓词，避免并发红冲/回款后仍覆盖状态
+    let cancelled = match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
                 cancelled_at = NOW(), updated_at = NOW()
-         WHERE id = $1 AND tenant_id = $2",
+         WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')
+         RETURNING id",
     )
     .bind(id)
     .bind(tenant_id)
     .bind(payload.reason.clone().unwrap_or_else(|| "红冲".to_string()))
-    .execute(&mut scope)
+    .fetch_optional(&mut scope)
     .await
     {
-        return crate::shared::err_resp(e);
-    }
+        Ok(Some(row)) => row.get::<Uuid, _>("id"),
+        Ok(None) => {
+            return ApiResponse::<SalesInvoiceOut>::conflict("发票状态已被并发修改，红冲失败");
+        }
+        Err(e) => return crate::shared::err_resp(e),
+    };
+    let _ = cancelled;
 
     // 生成负数发票（金额取负）
     let red_number = format!("RF-{}-{}", original.invoice_number, now.format("%Y%m%d"));
@@ -1216,12 +1286,12 @@ pub async fn confirm_collection(
                 amount, balance
             ));
         }
-        if let Err(e) = sqlx::query(
+        let payment_update = match sqlx::query(
             "UPDATE finance.sales_invoices
              SET paid_amount = paid_amount + $3,
                  status = CASE WHEN paid_amount + $3 >= total_amount THEN 'paid' ELSE status END,
                  updated_at = NOW()
-             WHERE id = $1 AND tenant_id = $2",
+             WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')",
         )
         .bind(inv_id)
         .bind(tenant_id)
@@ -1229,7 +1299,11 @@ pub async fn confirm_collection(
         .execute(&mut scope)
         .await
         {
-            return crate::shared::err_resp(e);
+            Ok(result) => result,
+            Err(e) => return crate::shared::err_resp(e),
+        };
+        if payment_update.rows_affected() == 0 {
+            return ApiResponse::<CollectionOut>::conflict("仅已开具/逾期发票可回款");
         }
     }
 
@@ -1362,12 +1436,12 @@ pub async fn batch_confirm_collections(
 
         // 回写发票：与单条 confirm_collection 相同语句
         if let Some(inv_id) = invoice_id {
-            if let Err(e) = sqlx::query(
+            let payment_update = match sqlx::query(
                 "UPDATE finance.sales_invoices
                  SET paid_amount = paid_amount + $3,
                      status = CASE WHEN paid_amount + $3 >= total_amount THEN 'paid' ELSE status END,
                      updated_at = NOW()
-                 WHERE id = $1 AND tenant_id = $2",
+                 WHERE id = $1 AND tenant_id = $2 AND status IN ('issued', 'overdue')",
             )
             .bind(inv_id)
             .bind(tenant_id)
@@ -1375,7 +1449,11 @@ pub async fn batch_confirm_collections(
             .execute(&mut scope)
             .await
             {
-                return crate::shared::err_resp(e);
+                Ok(result) => result,
+                Err(e) => return crate::shared::err_resp(e),
+            };
+            if payment_update.rows_affected() == 0 {
+                return ApiResponse::<serde_json::Value>::conflict("仅已开具/逾期发票可回款");
             }
         }
         success += 1;
@@ -1848,4 +1926,35 @@ pub fn create_routes() -> Router<AppState> {
         .layer(axum::middleware::from_fn(
             topems_shared_auth::middleware::require_permission("finance:sales_invoice:read"),
         ))
+}
+
+#[cfg(test)]
+mod status_tests {
+    use super::SalesInvoiceStatus;
+
+    #[test]
+    fn sales_invoice_status_roundtrips() {
+        use SalesInvoiceStatus::*;
+        for status in [Draft, Issued, Paid, Overdue, Cancelled] {
+            assert_eq!(
+                SalesInvoiceStatus::from_db_str(status.as_str()),
+                Some(status)
+            );
+        }
+        assert_eq!(SalesInvoiceStatus::from_db_str("bogus"), None);
+    }
+
+    #[test]
+    fn sales_invoice_transition_matrix() {
+        use SalesInvoiceStatus::*;
+        assert!(Draft.can_transition_to(Issued).is_ok());
+        assert!(Draft.can_transition_to(Paid).is_err());
+        assert!(Issued.can_transition_to(Paid).is_ok());
+        assert!(Issued.can_transition_to(Overdue).is_ok());
+        assert!(Issued.can_transition_to(Cancelled).is_ok());
+        assert!(Overdue.can_transition_to(Paid).is_ok());
+        assert!(Overdue.can_transition_to(Cancelled).is_ok());
+        assert!(Paid.can_transition_to(Cancelled).is_err());
+        assert!(Cancelled.can_transition_to(Cancelled).is_ok());
+    }
 }
