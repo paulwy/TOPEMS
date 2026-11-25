@@ -22,9 +22,12 @@
 
 ## 3. 43 条账本空档（版本早于当时 max `20261115141100`）
 
-逐条 dry-run（事务内执行后回滚，不记账）结果：**22 通过 / 21 失败**。
+逐条 dry-run（事务内执行后回滚，不记账）结果：**32 可重放（幂等通过）/ 11 判定归档**。
+（其中 11 个文件自带 `BEGIN;`，脚本 dry-run 会跳过；对这 11 个额外做了「剥离 BEGIN/COMMIT 后在事务内执行再 ROLLBACK」的复测，纠正了初版把它们误判为失败的口径。）
 
-失败的 21 条按原因分类（都不是"缺 schema"，而是历史脚本与当前 schema 不兼容）：
+逐条判定落在 `database/migrations-archive.tsv`（43 行，列 `version/description/status/reason_category/reason/evidence/decided_on`），可直接作为团队口径的初稿。
+
+归档的 11 条按原因分类（都不是"缺 schema"，而是历史脚本与当前 schema 不兼容）：
 
 | 类别 | 版本 | 典型错误 |
 | --- | --- | --- |
@@ -32,7 +35,9 @@
 | 枚举/数据前置 | `20261104030000`、`20261104070000` | `invalid input syntax for type uuid: "system"`；`invalid input value for enum bi.report_type: "summary"` |
 | RLS/FK 种子类 | `20261105145000`、`20261115140800`、`20261115140900` | `new row violates row-level security policy`；`violates foreign key constraint` |
 | 需要已收回的权限 | `20261105235800` | `must be able to SET ROLE "topems"`（本轮已收 `topems` 的角色能力） |
-| 结构性冲突/其它断言 | `20261103230000`（`cannot alter type of a column used in a policy definition`）、`20261106000001`、`20261107000025`~`00033`、`00036` | 断言失败或空输出 |
+| 结构性冲突 | `20261103230000`（`cannot alter type of a column used in a policy definition`） | 列类型变更与既有 RLS 策略冲突 |
+| 种子被 RLS 拒绝 | `20261107000025` | `new row violates row-level security policy for table "core_menu_groups"`（脚本内未设 `app.rls_system`，owner 无 BYPASSRLS） |
+| 外键前置数据缺失 | `20261115140800` | `violates foreign key constraint "core_tenant_plugins_tenant_id_fkey"` |
 
 判断：这 21 条属于**历史空档**（当时被跳过），其效果要么已被后续迁移覆盖，要么本就依赖当时的中间态数据。**不重放、不 adopt**（adopt 等于伪造执行记录）。
 
@@ -62,6 +67,6 @@ scripts/db/apply-pending.sh apply --from 20261115142000 --limit 10
 
 ## 6. 建议团队口径（需另拍板，本次未做）
 
-1. **归档 43 条空档**：在 `_sqlx_migrations` 之外维护 `database/migrations-archive.tsv`，逐条写 reason（本轮 §3 的分类可直接作为初稿），避免每次 `migrate info` 都被它们污染。
+1. **归档 43 条空档**：已产出 `database/migrations-archive.tsv`（43 行，逐条 reason；`status` 区分 `archived` 与 `replayable-not-applied`）。剩余动作是团队确认 `replayable-not-applied` 的 32 条里哪些需要真正执行——注意其中含 `drop_dead_tables`、`cleanup_*` 与种子脚本，必须逐条评审，不能批量跑。
 2. **用 schema 基线代替账本对齐**：以 `fixtures/full_schema_contract.sql` + 属主/权限巡检（`scripts/db/owner-sweep.sh`）作为"是否落后"的判据，而不是 pending 数量。
 3. **checksum 归一**：`docs/database/ledger-rebaseline-20261125.md` 的 108 条映射只在"本机一次性修复"口径下成立，是否进 CI 需团队决定；在决定前不要跑 `sqlx migrate run`。
