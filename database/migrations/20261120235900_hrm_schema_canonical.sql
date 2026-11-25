@@ -545,161 +545,161 @@ CREATE INDEX IF NOT EXISTS idx_training_records_course_id ON hrm.training_record
 CREATE INDEX IF NOT EXISTS idx_training_records_employee_id ON hrm.training_records USING btree (employee_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.attendance_records'::regclass AND conname='attendance_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.attendance_records'::regclass AND contype='p') THEN
         ALTER TABLE hrm.attendance_records ADD CONSTRAINT "attendance_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE hrm.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.candidates'::regclass AND conname='candidates_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.candidates'::regclass AND contype='p') THEN
         ALTER TABLE hrm.candidates ADD CONSTRAINT "candidates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.companies'::regclass AND conname='companies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.companies'::regclass AND contype='p') THEN
         ALTER TABLE hrm.companies ADD CONSTRAINT "companies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.contract_renewals'::regclass AND conname='contract_renewals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.contract_renewals'::regclass AND contype='p') THEN
         ALTER TABLE hrm.contract_renewals ADD CONSTRAINT "contract_renewals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.contracts'::regclass AND conname='contracts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.contracts'::regclass AND contype='p') THEN
         ALTER TABLE hrm.contracts ADD CONSTRAINT "contracts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.departments'::regclass AND conname='departments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.departments'::regclass AND contype='p') THEN
         ALTER TABLE hrm.departments ADD CONSTRAINT "departments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.employees'::regclass AND conname='employees_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.employees'::regclass AND contype='p') THEN
         ALTER TABLE hrm.employees ADD CONSTRAINT "employees_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.initialization_logs'::regclass AND conname='initialization_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.initialization_logs'::regclass AND contype='p') THEN
         ALTER TABLE hrm.initialization_logs ADD CONSTRAINT "initialization_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.initialization_status'::regclass AND conname='initialization_status_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.initialization_status'::regclass AND contype='p') THEN
         ALTER TABLE hrm.initialization_status ADD CONSTRAINT "initialization_status_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.interviews'::regclass AND conname='interviews_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.interviews'::regclass AND contype='p') THEN
         ALTER TABLE hrm.interviews ADD CONSTRAINT "interviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.job_openings'::regclass AND conname='job_openings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.job_openings'::regclass AND contype='p') THEN
         ALTER TABLE hrm.job_openings ADD CONSTRAINT "job_openings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.leave_records'::regclass AND conname='leave_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.leave_records'::regclass AND contype='p') THEN
         ALTER TABLE hrm.leave_records ADD CONSTRAINT "leave_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.payroll_details'::regclass AND conname='payroll_details_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.payroll_details'::regclass AND contype='p') THEN
         ALTER TABLE hrm.payroll_details ADD CONSTRAINT "payroll_details_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.payroll_items'::regclass AND conname='payroll_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.payroll_items'::regclass AND contype='p') THEN
         ALTER TABLE hrm.payroll_items ADD CONSTRAINT "payroll_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.payroll_runs'::regclass AND conname='payroll_runs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.payroll_runs'::regclass AND contype='p') THEN
         ALTER TABLE hrm.payroll_runs ADD CONSTRAINT "payroll_runs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.performance_goals'::regclass AND conname='performance_goals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.performance_goals'::regclass AND contype='p') THEN
         ALTER TABLE hrm.performance_goals ADD CONSTRAINT "performance_goals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.performance_reviews'::regclass AND conname='performance_reviews_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.performance_reviews'::regclass AND contype='p') THEN
         ALTER TABLE hrm.performance_reviews ADD CONSTRAINT "performance_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.positions'::regclass AND conname='positions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.positions'::regclass AND contype='p') THEN
         ALTER TABLE hrm.positions ADD CONSTRAINT "positions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.salary_adjustments'::regclass AND conname='salary_adjustments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.salary_adjustments'::regclass AND contype='p') THEN
         ALTER TABLE hrm.salary_adjustments ADD CONSTRAINT "salary_adjustments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.training_courses'::regclass AND conname='training_courses_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.training_courses'::regclass AND contype='p') THEN
         ALTER TABLE hrm.training_courses ADD CONSTRAINT "training_courses_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.training_plans'::regclass AND conname='training_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.training_plans'::regclass AND contype='p') THEN
         ALTER TABLE hrm.training_plans ADD CONSTRAINT "training_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.training_records'::regclass AND conname='training_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='hrm.training_records'::regclass AND contype='p') THEN
         ALTER TABLE hrm.training_records ADD CONSTRAINT "training_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

@@ -143,42 +143,42 @@ CREATE INDEX IF NOT EXISTS idx_projects_tenant ON rs.projects USING btree (tenan
 CREATE INDEX IF NOT EXISTS idx_projects_type ON rs.projects USING btree (project_type);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.change_orders'::regclass AND conname='change_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.change_orders'::regclass AND contype='p') THEN
         ALTER TABLE rs.change_orders ADD CONSTRAINT "change_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.change_requests'::regclass AND conname='change_requests_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.change_requests'::regclass AND contype='p') THEN
         ALTER TABLE rs.change_requests ADD CONSTRAINT "change_requests_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.project_members'::regclass AND conname='project_members_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.project_members'::regclass AND contype='p') THEN
         ALTER TABLE rs.project_members ADD CONSTRAINT "project_members_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.project_milestones'::regclass AND conname='project_milestones_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.project_milestones'::regclass AND contype='p') THEN
         ALTER TABLE rs.project_milestones ADD CONSTRAINT "project_milestones_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.project_phases'::regclass AND conname='project_phases_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.project_phases'::regclass AND contype='p') THEN
         ALTER TABLE rs.project_phases ADD CONSTRAINT "project_phases_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.projects'::regclass AND conname='projects_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='rs.projects'::regclass AND contype='p') THEN
         ALTER TABLE rs.projects ADD CONSTRAINT "projects_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

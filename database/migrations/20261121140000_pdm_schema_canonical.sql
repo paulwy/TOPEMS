@@ -382,133 +382,133 @@ CREATE INDEX IF NOT EXISTS idx_pdm_workflows_type ON pdm.pdm_workflows USING btr
 CREATE INDEX IF NOT EXISTS pdm_workflows_tenant_id_idx ON pdm.pdm_workflows USING btree (tenant_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_bom_items'::regclass AND conname='pdm_bom_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_bom_items'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_bom_items ADD CONSTRAINT "pdm_bom_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_boms'::regclass AND conname='pdm_boms_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_boms'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_boms ADD CONSTRAINT "pdm_boms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_change_notices'::regclass AND conname='pdm_change_notices_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_change_notices'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_change_notices ADD CONSTRAINT "pdm_change_notices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_configurations'::regclass AND conname='pdm_configurations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_configurations'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_configurations ADD CONSTRAINT "pdm_configurations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_document_versions'::regclass AND conname='pdm_document_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_document_versions'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_document_versions ADD CONSTRAINT "pdm_document_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_documents'::regclass AND conname='pdm_documents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_documents'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_documents ADD CONSTRAINT "pdm_documents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_master_data_refs'::regclass AND conname='pdm_master_data_refs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_master_data_refs'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_master_data_refs ADD CONSTRAINT "pdm_master_data_refs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_materials'::regclass AND conname='pdm_materials_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_materials'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_materials ADD CONSTRAINT "pdm_materials_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_batches'::regclass AND conname='pdm_production_batches_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_batches'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_production_batches ADD CONSTRAINT "pdm_production_batches_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_formulas'::regclass AND conname='pdm_production_formulas_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_formulas'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_production_formulas ADD CONSTRAINT "pdm_production_formulas_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_processes'::regclass AND conname='pdm_production_processes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_processes'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_production_processes ADD CONSTRAINT "pdm_production_processes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_steps'::regclass AND conname='pdm_production_steps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_production_steps'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_production_steps ADD CONSTRAINT "pdm_production_steps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_products'::regclass AND conname='pdm_products_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_products'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_products ADD CONSTRAINT "pdm_products_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_project_members'::regclass AND conname='pdm_project_members_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_project_members'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_project_members ADD CONSTRAINT "pdm_project_members_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_project_phases'::regclass AND conname='pdm_project_phases_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_project_phases'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_project_phases ADD CONSTRAINT "pdm_project_phases_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_projects'::regclass AND conname='pdm_projects_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_projects'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_projects ADD CONSTRAINT "pdm_projects_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_versions'::regclass AND conname='pdm_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_versions'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_versions ADD CONSTRAINT "pdm_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_workflow_instances'::regclass AND conname='pdm_workflow_instances_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_workflow_instances'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_workflow_instances ADD CONSTRAINT "pdm_workflow_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_workflows'::regclass AND conname='pdm_workflows_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pdm.pdm_workflows'::regclass AND contype='p') THEN
         ALTER TABLE pdm.pdm_workflows ADD CONSTRAINT "pdm_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

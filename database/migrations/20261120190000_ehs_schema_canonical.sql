@@ -784,231 +784,231 @@ CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_status ON ehs.qa_ehs_sync_records USI
 CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_type ON ehs.qa_ehs_sync_records USING btree (sync_type);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_accidents'::regclass AND conname='qa_ehs_accidents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_accidents'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_accidents ADD CONSTRAINT "qa_ehs_accidents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_compliance_evaluations'::regclass AND conname='qa_ehs_compliance_evaluations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_compliance_evaluations'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_compliance_evaluations ADD CONSTRAINT "qa_ehs_compliance_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_contraindications'::regclass AND conname='qa_ehs_contraindications_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_contraindications'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_contraindications ADD CONSTRAINT "qa_ehs_contraindications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_discharge_permits'::regclass AND conname='qa_ehs_discharge_permits_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_discharge_permits'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_discharge_permits ADD CONSTRAINT "qa_ehs_discharge_permits_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_disease_cases'::regclass AND conname='qa_ehs_disease_cases_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_disease_cases'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_disease_cases ADD CONSTRAINT "qa_ehs_disease_cases_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_evaluations'::regclass AND conname='qa_ehs_drill_evaluations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_evaluations'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_drill_evaluations ADD CONSTRAINT "qa_ehs_drill_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_plans'::regclass AND conname='qa_ehs_drill_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_plans'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_drill_plans ADD CONSTRAINT "qa_ehs_drill_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_problems'::regclass AND conname='qa_ehs_drill_problems_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_problems'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_drill_problems ADD CONSTRAINT "qa_ehs_drill_problems_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_records'::regclass AND conname='qa_ehs_drill_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_drill_records'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_drill_records ADD CONSTRAINT "qa_ehs_drill_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plan_approvals'::regclass AND conname='qa_ehs_emergency_plan_approvals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plan_approvals'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_emergency_plan_approvals ADD CONSTRAINT "qa_ehs_emergency_plan_approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plan_supplies'::regclass AND conname='qa_ehs_emergency_plan_supplies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plan_supplies'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_emergency_plan_supplies ADD CONSTRAINT "qa_ehs_emergency_plan_supplies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plan_versions'::regclass AND conname='qa_ehs_emergency_plan_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plan_versions'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_emergency_plan_versions ADD CONSTRAINT "qa_ehs_emergency_plan_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plans'::regclass AND conname='qa_ehs_emergency_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_emergency_plans'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_emergency_plans ADD CONSTRAINT "qa_ehs_emergency_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_employees'::regclass AND conname='qa_ehs_employees_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_employees'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_employees ADD CONSTRAINT "qa_ehs_employees_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_env_monitor_records'::regclass AND conname='qa_ehs_env_monitor_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_env_monitor_records'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_env_monitor_records ADD CONSTRAINT "qa_ehs_env_monitor_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_environment_incidents'::regclass AND conname='qa_ehs_environment_incidents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_environment_incidents'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_environment_incidents ADD CONSTRAINT "qa_ehs_environment_incidents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_environmental_regulations'::regclass AND conname='qa_ehs_environmental_regulations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_environmental_regulations'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_environmental_regulations ADD CONSTRAINT "qa_ehs_environmental_regulations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazard_factors'::regclass AND conname='qa_ehs_hazard_factors_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazard_factors'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_hazard_factors ADD CONSTRAINT "qa_ehs_hazard_factors_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazard_rectifications'::regclass AND conname='qa_ehs_hazard_rectifications_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazard_rectifications'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_hazard_rectifications ADD CONSTRAINT "qa_ehs_hazard_rectifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazard_verifications'::regclass AND conname='qa_ehs_hazard_verifications_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazard_verifications'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_hazard_verifications ADD CONSTRAINT "qa_ehs_hazard_verifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazardous_materials'::regclass AND conname='qa_ehs_hazardous_materials_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazardous_materials'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_hazardous_materials ADD CONSTRAINT "qa_ehs_hazardous_materials_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazards'::regclass AND conname='qa_ehs_hazards_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_hazards'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_hazards ADD CONSTRAINT "qa_ehs_hazards_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_health_exam_plans'::regclass AND conname='qa_ehs_health_exam_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_health_exam_plans'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_health_exam_plans ADD CONSTRAINT "qa_ehs_health_exam_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_health_exam_records'::regclass AND conname='qa_ehs_health_exam_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_health_exam_records'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_health_exam_records ADD CONSTRAINT "qa_ehs_health_exam_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_items'::regclass AND conname='qa_ehs_inspection_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_items'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_inspection_items ADD CONSTRAINT "qa_ehs_inspection_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_plans'::regclass AND conname='qa_ehs_inspection_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_plans'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_inspection_plans ADD CONSTRAINT "qa_ehs_inspection_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_record_items'::regclass AND conname='qa_ehs_inspection_record_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_record_items'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_inspection_record_items ADD CONSTRAINT "qa_ehs_inspection_record_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_records'::regclass AND conname='qa_ehs_inspection_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_inspection_records'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_inspection_records ADD CONSTRAINT "qa_ehs_inspection_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_msds'::regclass AND conname='qa_ehs_msds_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_msds'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_msds ADD CONSTRAINT "qa_ehs_msds_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_risks'::regclass AND conname='qa_ehs_risks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_risks'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_risks ADD CONSTRAINT "qa_ehs_risks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_stock_records'::regclass AND conname='qa_ehs_stock_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_stock_records'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_stock_records ADD CONSTRAINT "qa_ehs_stock_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_sync_records'::regclass AND conname='qa_ehs_sync_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_sync_records'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_sync_records ADD CONSTRAINT "qa_ehs_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_trainings'::regclass AND conname='qa_ehs_trainings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='ehs.qa_ehs_trainings'::regclass AND contype='p') THEN
         ALTER TABLE ehs.qa_ehs_trainings ADD CONSTRAINT "qa_ehs_trainings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

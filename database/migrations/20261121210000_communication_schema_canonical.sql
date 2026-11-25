@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS communication.core_location_messages (
 CREATE INDEX IF NOT EXISTS idx_core_location_messages_chat ON communication.core_location_messages USING btree (chat_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='communication.core_location_messages'::regclass AND conname='core_location_messages_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='communication.core_location_messages'::regclass AND contype='p') THEN
         ALTER TABLE communication.core_location_messages ADD CONSTRAINT "core_location_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

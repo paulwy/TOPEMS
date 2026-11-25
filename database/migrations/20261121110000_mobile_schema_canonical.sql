@@ -382,154 +382,154 @@ CREATE INDEX IF NOT EXISTS idx_mobile_sync_policies_tenant_user ON mobile.sync_p
 CREATE UNIQUE INDEX IF NOT EXISTS sync_policies_user_id_key ON mobile.sync_policies USING btree (user_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.audio_recordings'::regclass AND conname='audio_recordings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.audio_recordings'::regclass AND contype='p') THEN
         ALTER TABLE mobile.audio_recordings ADD CONSTRAINT "audio_recordings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.barcode_scans'::regclass AND conname='barcode_scans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.barcode_scans'::regclass AND contype='p') THEN
         ALTER TABLE mobile.barcode_scans ADD CONSTRAINT "barcode_scans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.core_mobile_offline_records'::regclass AND conname='core_mobile_offline_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.core_mobile_offline_records'::regclass AND contype='p') THEN
         ALTER TABLE mobile.core_mobile_offline_records ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.devices'::regclass AND conname='devices_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.devices'::regclass AND contype='p') THEN
         ALTER TABLE mobile.devices ADD CONSTRAINT "devices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.media_files'::regclass AND conname='media_files_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.media_files'::regclass AND contype='p') THEN
         ALTER TABLE mobile.media_files ADD CONSTRAINT "media_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_attendance'::regclass AND conname='mobile_attendance_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_attendance'::regclass AND contype='p') THEN
         ALTER TABLE mobile.mobile_attendance ADD CONSTRAINT "mobile_attendance_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_push_notifications'::regclass AND conname='mobile_push_notifications_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_push_notifications'::regclass AND contype='p') THEN
         ALTER TABLE mobile.mobile_push_notifications ADD CONSTRAINT "mobile_push_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_scan_records'::regclass AND conname='mobile_scan_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_scan_records'::regclass AND contype='p') THEN
         ALTER TABLE mobile.mobile_scan_records ADD CONSTRAINT "mobile_scan_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_tasks'::regclass AND conname='mobile_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_tasks'::regclass AND contype='p') THEN
         ALTER TABLE mobile.mobile_tasks ADD CONSTRAINT "mobile_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_users'::regclass AND conname='mobile_users_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.mobile_users'::regclass AND contype='p') THEN
         ALTER TABLE mobile.mobile_users ADD CONSTRAINT "mobile_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.offline_operations'::regclass AND conname='offline_operations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.offline_operations'::regclass AND contype='p') THEN
         ALTER TABLE mobile.offline_operations ADD CONSTRAINT "offline_operations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.offline_sync_records'::regclass AND conname='offline_sync_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.offline_sync_records'::regclass AND contype='p') THEN
         ALTER TABLE mobile.offline_sync_records ADD CONSTRAINT "offline_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.patrol_records'::regclass AND conname='patrol_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.patrol_records'::regclass AND contype='p') THEN
         ALTER TABLE mobile.patrol_records ADD CONSTRAINT "patrol_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.photo_evidences'::regclass AND conname='photo_evidences_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.photo_evidences'::regclass AND contype='p') THEN
         ALTER TABLE mobile.photo_evidences ADD CONSTRAINT "photo_evidences_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.photo_uploads'::regclass AND conname='photo_uploads_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.photo_uploads'::regclass AND contype='p') THEN
         ALTER TABLE mobile.photo_uploads ADD CONSTRAINT "photo_uploads_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.push_devices'::regclass AND conname='push_devices_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.push_devices'::regclass AND contype='p') THEN
         ALTER TABLE mobile.push_devices ADD CONSTRAINT "push_devices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.push_notifications'::regclass AND conname='push_notifications_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.push_notifications'::regclass AND contype='p') THEN
         ALTER TABLE mobile.push_notifications ADD CONSTRAINT "push_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.push_templates'::regclass AND conname='push_templates_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.push_templates'::regclass AND contype='p') THEN
         ALTER TABLE mobile.push_templates ADD CONSTRAINT "push_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.scan_records'::regclass AND conname='scan_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.scan_records'::regclass AND contype='p') THEN
         ALTER TABLE mobile.scan_records ADD CONSTRAINT "scan_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.shortcuts'::regclass AND conname='shortcuts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.shortcuts'::regclass AND contype='p') THEN
         ALTER TABLE mobile.shortcuts ADD CONSTRAINT "shortcuts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.sync_policies'::regclass AND conname='sync_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.sync_policies'::regclass AND contype='p') THEN
         ALTER TABLE mobile.sync_policies ADD CONSTRAINT "sync_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.video_recordings'::regclass AND conname='video_recordings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mobile.video_recordings'::regclass AND contype='p') THEN
         ALTER TABLE mobile.video_recordings ADD CONSTRAINT "video_recordings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

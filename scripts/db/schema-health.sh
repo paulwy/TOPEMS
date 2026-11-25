@@ -193,10 +193,19 @@ done | sort -u)
 TOTAL_PENDING=$(printf '%s\n' "$PENDING" | grep -c . 2>/dev/null) || TOTAL_PENDING=0
 ARCH_PENDING=$(printf '%s\n' "$PENDING" | grep -xF -f <(echo "$ARCHIVED_VERS") 2>/dev/null | grep -c . 2>/dev/null) || ARCH_PENDING=0
 REAL_LIST=$(printf '%s\n' "$PENDING" | grep -vxF -f <(echo "$ARCHIVED_VERS") 2>/dev/null)
+# 判读表（database/migrations-triage.tsv）：gate 门控的破坏性清理 / 只在空库执行的 canonical 骨架 /
+# 按生产同源状态编写的定向收口 —— 这些在本库「不该执行」，但仍保留在仓库里供对应环境执行。
+# 与归档表不同：归档=永不重放，判读表=本库不适用但 prod 仍需跑。
+TRIAGE="$ROOT/database/migrations-triage.tsv"
+NOAPPLY_VERS=$(awk -F'\t' '$1 !~ /^#/ && $1 != "version" {print $1}' "$TRIAGE" 2>/dev/null | sort -u)
+NOAPPLY_LIST=$(printf '%s\n' "$REAL_LIST" | grep -xF -f <(echo "$NOAPPLY_VERS") 2>/dev/null)
+NOAPPLY_PENDING=$(printf '%s\n' "$NOAPPLY_LIST" | grep -c . 2>/dev/null) || NOAPPLY_PENDING=0
+REAL_LIST=$(printf '%s\n' "$REAL_LIST" | grep -vxF -f <(echo "$NOAPPLY_VERS") 2>/dev/null)
 REAL_PENDING=$(printf '%s\n' "$REAL_LIST" | grep -c . 2>/dev/null) || REAL_PENDING=0
 echo "  已记账 $(printf '%s\n' "$INSTALLED" | grep -c .) 条；pending ${TOTAL_PENDING} 条"
 echo "    其中归档解释 ${ARCH_PENDING} 条（不是缺陷，见 docs/database/ledger-triage-20261125.md）"
-echo "    真实待办 ${REAL_PENDING} 条"
+echo "    其中本库不适用 ${NOAPPLY_PENDING} 条（gate/canonical/生产定向收口，见 database/migrations-triage.tsv）"
+echo "    真实待办 ${REAL_PENDING} 条（含 B 类补列脚本：目标状态已在库时 dry-run 会以 ↷ 跳过，不计缺陷）"
 if [ "$REAL_PENDING" -gt 0 ]; then
     echo "  ⚠ 有真实待办（前 10 条）："
     printf '%s\n' "$REAL_LIST" | head -10 | sed 's/^/    /'

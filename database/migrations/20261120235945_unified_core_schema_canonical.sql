@@ -460,168 +460,168 @@ CREATE INDEX IF NOT EXISTS idx_core_tasks_instance ON public.core_workflow_tasks
 CREATE INDEX IF NOT EXISTS idx_core_workflows_status ON public.core_workflows USING btree (status);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_api_version_configs'::regclass AND conname='core_api_version_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_api_version_configs'::regclass AND contype='p') THEN
         ALTER TABLE public.core_api_version_configs ADD CONSTRAINT "core_api_version_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_doc_documents'::regclass AND conname='core_doc_documents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_doc_documents'::regclass AND contype='p') THEN
         ALTER TABLE public.core_doc_documents ADD CONSTRAINT "core_doc_documents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_doc_folders'::regclass AND conname='core_doc_folders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_doc_folders'::regclass AND contype='p') THEN
         ALTER TABLE public.core_doc_folders ADD CONSTRAINT "core_doc_folders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_doc_templates'::regclass AND conname='core_doc_templates_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_doc_templates'::regclass AND contype='p') THEN
         ALTER TABLE public.core_doc_templates ADD CONSTRAINT "core_doc_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_file_permissions'::regclass AND conname='core_file_permissions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_file_permissions'::regclass AND contype='p') THEN
         ALTER TABLE public.core_file_permissions ADD CONSTRAINT "core_file_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_files'::regclass AND conname='core_files_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_files'::regclass AND contype='p') THEN
         ALTER TABLE public.core_files ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_login_logs'::regclass AND conname='core_login_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_login_logs'::regclass AND contype='p') THEN
         ALTER TABLE public.core_login_logs ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_master_data_change_log'::regclass AND conname='core_master_data_change_log_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_master_data_change_log'::regclass AND contype='p') THEN
         ALTER TABLE public.core_master_data_change_log ADD CONSTRAINT "core_master_data_change_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_master_data_refs'::regclass AND conname='core_master_data_refs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_master_data_refs'::regclass AND contype='p') THEN
         ALTER TABLE public.core_master_data_refs ADD CONSTRAINT "core_master_data_refs_pkey" PRIMARY KEY (master_data_id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_mdm_approvals'::regclass AND conname='core_mdm_approvals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_mdm_approvals'::regclass AND contype='p') THEN
         ALTER TABLE public.core_mdm_approvals ADD CONSTRAINT "core_mdm_approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_mdm_reconciliation_log'::regclass AND conname='core_mdm_reconciliation_log_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_mdm_reconciliation_log'::regclass AND contype='p') THEN
         ALTER TABLE public.core_mdm_reconciliation_log ADD CONSTRAINT "core_mdm_reconciliation_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_menu_groups'::regclass AND conname='core_menu_groups_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_menu_groups'::regclass AND contype='p') THEN
         ALTER TABLE public.core_menu_groups ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_menus'::regclass AND conname='core_menus_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_menus'::regclass AND contype='p') THEN
         ALTER TABLE public.core_menus ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_migration_history'::regclass AND conname='core_migration_history_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_migration_history'::regclass AND contype='p') THEN
         ALTER TABLE public.core_migration_history ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_operation_logs'::regclass AND conname='core_operation_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_operation_logs'::regclass AND contype='p') THEN
         ALTER TABLE public.core_operation_logs ADD CONSTRAINT "core_operation_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_permissions'::regclass AND conname='core_permissions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_permissions'::regclass AND contype='p') THEN
         ALTER TABLE public.core_permissions ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_role_permissions'::regclass AND conname='core_role_permissions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_role_permissions'::regclass AND contype='p') THEN
         ALTER TABLE public.core_role_permissions ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_roles'::regclass AND conname='core_roles_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_roles'::regclass AND contype='p') THEN
         ALTER TABLE public.core_roles ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_modules'::regclass AND conname='core_tenant_modules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_modules'::regclass AND contype='p') THEN
         ALTER TABLE public.core_tenant_modules ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_settings'::regclass AND conname='core_tenant_settings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_settings'::regclass AND contype='p') THEN
         ALTER TABLE public.core_tenant_settings ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_usage'::regclass AND conname='core_tenant_usage_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_usage'::regclass AND contype='p') THEN
         ALTER TABLE public.core_tenant_usage ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_users'::regclass AND conname='core_tenant_users_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenant_users'::regclass AND contype='p') THEN
         ALTER TABLE public.core_tenant_users ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenants'::regclass AND conname='core_tenants_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_tenants'::regclass AND contype='p') THEN
         ALTER TABLE public.core_tenants ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_user_roles'::regclass AND conname='core_user_roles_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_user_roles'::regclass AND contype='p') THEN
         ALTER TABLE public.core_user_roles ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
     END IF;
 END $$;
@@ -642,7 +642,7 @@ END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_workflows'::regclass AND conname='core_workflows_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='public.core_workflows'::regclass AND contype='p') THEN
         ALTER TABLE public.core_workflows ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

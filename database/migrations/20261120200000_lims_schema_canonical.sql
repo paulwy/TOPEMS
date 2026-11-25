@@ -785,294 +785,294 @@ CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_projects_status ON lims.qa_li
 CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_sources_project ON lims.qa_lims_uncertainty_sources USING btree (project_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.ai_analyses'::regclass AND conname='ai_analyses_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.ai_analyses'::regclass AND contype='p') THEN
         ALTER TABLE lims.ai_analyses ADD CONSTRAINT "ai_analyses_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE lims.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.document_relations'::regclass AND conname='document_relations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.document_relations'::regclass AND contype='p') THEN
         ALTER TABLE lims.document_relations ADD CONSTRAINT "document_relations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.inspection_processes'::regclass AND conname='inspection_processes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.inspection_processes'::regclass AND contype='p') THEN
         ALTER TABLE lims.inspection_processes ADD CONSTRAINT "inspection_processes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.inspection_records'::regclass AND conname='inspection_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.inspection_records'::regclass AND contype='p') THEN
         ALTER TABLE lims.inspection_records ADD CONSTRAINT "inspection_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.inspection_tasks'::regclass AND conname='inspection_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.inspection_tasks'::regclass AND contype='p') THEN
         ALTER TABLE lims.inspection_tasks ADD CONSTRAINT "inspection_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.instrument_calibrations'::regclass AND conname='instrument_calibrations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.instrument_calibrations'::regclass AND contype='p') THEN
         ALTER TABLE lims.instrument_calibrations ADD CONSTRAINT "instrument_calibrations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.instruments'::regclass AND conname='instruments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.instruments'::regclass AND contype='p') THEN
         ALTER TABLE lims.instruments ADD CONSTRAINT "instruments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.lab_ledger'::regclass AND conname='lab_ledger_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.lab_ledger'::regclass AND contype='p') THEN
         ALTER TABLE lims.lab_ledger ADD CONSTRAINT "lab_ledger_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.maintenance_records'::regclass AND conname='maintenance_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.maintenance_records'::regclass AND contype='p') THEN
         ALTER TABLE lims.maintenance_records ADD CONSTRAINT "maintenance_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_calibration_records'::regclass AND conname='qa_lab_calibration_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_calibration_records'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_calibration_records ADD CONSTRAINT "qa_lab_calibration_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_inspection_reports'::regclass AND conname='qa_lab_inspection_reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_inspection_reports'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_inspection_reports ADD CONSTRAINT "qa_lab_inspection_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_instruments'::regclass AND conname='qa_lab_instruments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_instruments'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_instruments ADD CONSTRAINT "qa_lab_instruments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_processes'::regclass AND conname='qa_lab_processes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_processes'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_processes ADD CONSTRAINT "qa_lab_processes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_reagent_alerts'::regclass AND conname='qa_lab_reagent_alerts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_reagent_alerts'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_reagent_alerts ADD CONSTRAINT "qa_lab_reagent_alerts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_reagent_history'::regclass AND conname='qa_lab_reagent_history_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_reagent_history'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_reagent_history ADD CONSTRAINT "qa_lab_reagent_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_reagents'::regclass AND conname='qa_lab_reagents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_reagents'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_reagents ADD CONSTRAINT "qa_lab_reagents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_records'::regclass AND conname='qa_lab_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_records'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_records ADD CONSTRAINT "qa_lab_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_sample_lifecycle'::regclass AND conname='qa_lab_sample_lifecycle_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lab_sample_lifecycle'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lab_sample_lifecycle ADD CONSTRAINT "qa_lab_sample_lifecycle_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_audit_logs'::regclass AND conname='qa_lims_audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_audit_logs ADD CONSTRAINT "qa_lims_audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_barcode_scan_records'::regclass AND conname='qa_lims_barcode_scan_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_barcode_scan_records'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_barcode_scan_records ADD CONSTRAINT "qa_lims_barcode_scan_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_collection_tasks'::regclass AND conname='qa_lims_collection_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_collection_tasks'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_collection_tasks ADD CONSTRAINT "qa_lims_collection_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_instrument_data'::regclass AND conname='qa_lims_instrument_data_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_instrument_data'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_instrument_data ADD CONSTRAINT "qa_lims_instrument_data_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_method_categories'::regclass AND conname='qa_lims_method_categories_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_method_categories'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_method_categories ADD CONSTRAINT "qa_lims_method_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_method_validations'::regclass AND conname='qa_lims_method_validations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_method_validations'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_method_validations ADD CONSTRAINT "qa_lims_method_validations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_method_versions'::regclass AND conname='qa_lims_method_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_method_versions'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_method_versions ADD CONSTRAINT "qa_lims_method_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_parse_rules'::regclass AND conname='qa_lims_parse_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_parse_rules'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_parse_rules ADD CONSTRAINT "qa_lims_parse_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_corrective_actions'::regclass AND conname='qa_lims_pt_corrective_actions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_corrective_actions'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_pt_corrective_actions ADD CONSTRAINT "qa_lims_pt_corrective_actions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_evaluations'::regclass AND conname='qa_lims_pt_evaluations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_evaluations'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_pt_evaluations ADD CONSTRAINT "qa_lims_pt_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_plans'::regclass AND conname='qa_lims_pt_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_plans'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_pt_plans ADD CONSTRAINT "qa_lims_pt_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_results'::regclass AND conname='qa_lims_pt_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_results'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_pt_results ADD CONSTRAINT "qa_lims_pt_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_samples'::regclass AND conname='qa_lims_pt_samples_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_pt_samples'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_pt_samples ADD CONSTRAINT "qa_lims_pt_samples_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_rfid_tags'::regclass AND conname='qa_lims_rfid_tags_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_rfid_tags'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_rfid_tags ADD CONSTRAINT "qa_lims_rfid_tags_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_sample_barcodes'::regclass AND conname='qa_lims_sample_barcodes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_sample_barcodes'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_sample_barcodes ADD CONSTRAINT "qa_lims_sample_barcodes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_sync_records'::regclass AND conname='qa_lims_sync_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_sync_records'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_sync_records ADD CONSTRAINT "qa_lims_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_test_methods'::regclass AND conname='qa_lims_test_methods_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_test_methods'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_test_methods ADD CONSTRAINT "qa_lims_test_methods_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_uncertainty_components'::regclass AND conname='qa_lims_uncertainty_components_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_uncertainty_components'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_uncertainty_components ADD CONSTRAINT "qa_lims_uncertainty_components_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_uncertainty_projects'::regclass AND conname='qa_lims_uncertainty_projects_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_uncertainty_projects'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_uncertainty_projects ADD CONSTRAINT "qa_lims_uncertainty_projects_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_uncertainty_sources'::regclass AND conname='qa_lims_uncertainty_sources_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.qa_lims_uncertainty_sources'::regclass AND contype='p') THEN
         ALTER TABLE lims.qa_lims_uncertainty_sources ADD CONSTRAINT "qa_lims_uncertainty_sources_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.reagent_usages'::regclass AND conname='reagent_usages_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.reagent_usages'::regclass AND contype='p') THEN
         ALTER TABLE lims.reagent_usages ADD CONSTRAINT "reagent_usages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.reagents'::regclass AND conname='reagents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.reagents'::regclass AND contype='p') THEN
         ALTER TABLE lims.reagents ADD CONSTRAINT "reagents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.samples'::regclass AND conname='samples_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='lims.samples'::regclass AND contype='p') THEN
         ALTER TABLE lims.samples ADD CONSTRAINT "samples_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

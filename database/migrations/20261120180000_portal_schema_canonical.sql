@@ -1320,784 +1320,784 @@ CREATE INDEX IF NOT EXISTS idx_core_guides_category ON portal.core_guides USING 
 CREATE INDEX IF NOT EXISTS idx_core_guides_sort ON portal.core_guides USING btree (sort_order);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_faqs'::regclass AND conname='core_faqs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_faqs'::regclass AND contype='p') THEN
         ALTER TABLE portal.core_faqs ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_guide_lessons'::regclass AND conname='core_guide_lessons_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_guide_lessons'::regclass AND contype='p') THEN
         ALTER TABLE portal.core_guide_lessons ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_guide_progress'::regclass AND conname='core_guide_progress_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_guide_progress'::regclass AND contype='p') THEN
         ALTER TABLE portal.core_guide_progress ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_guides'::regclass AND conname='core_guides_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.core_guides'::regclass AND contype='p') THEN
         ALTER TABLE portal.core_guides ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_compensation_logs'::regclass AND conname='federation_compensation_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_compensation_logs'::regclass AND contype='p') THEN
         ALTER TABLE portal.federation_compensation_logs ADD CONSTRAINT "federation_compensation_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_execution_logs'::regclass AND conname='federation_execution_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_execution_logs'::regclass AND contype='p') THEN
         ALTER TABLE portal.federation_execution_logs ADD CONSTRAINT "federation_execution_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_query_plans'::regclass AND conname='federation_query_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_query_plans'::regclass AND contype='p') THEN
         ALTER TABLE portal.federation_query_plans ADD CONSTRAINT "federation_query_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_subgraphs'::regclass AND conname='federation_subgraphs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_subgraphs'::regclass AND contype='p') THEN
         ALTER TABLE portal.federation_subgraphs ADD CONSTRAINT "federation_subgraphs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_transaction_steps'::regclass AND conname='federation_transaction_steps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_transaction_steps'::regclass AND contype='p') THEN
         ALTER TABLE portal.federation_transaction_steps ADD CONSTRAINT "federation_transaction_steps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_transactions'::regclass AND conname='federation_transactions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.federation_transactions'::regclass AND contype='p') THEN
         ALTER TABLE portal.federation_transactions ADD CONSTRAINT "federation_transactions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_degradation_policies'::regclass AND conname='gateway_degradation_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_degradation_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.gateway_degradation_policies ADD CONSTRAINT "gateway_degradation_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_health_metrics'::regclass AND conname='gateway_health_metrics_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_health_metrics'::regclass AND contype='p') THEN
         ALTER TABLE portal.gateway_health_metrics ADD CONSTRAINT "gateway_health_metrics_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_protocols'::regclass AND conname='gateway_protocols_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_protocols'::regclass AND contype='p') THEN
         ALTER TABLE portal.gateway_protocols ADD CONSTRAINT "gateway_protocols_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_routes'::regclass AND conname='gateway_routes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.gateway_routes'::regclass AND contype='p') THEN
         ALTER TABLE portal.gateway_routes ADD CONSTRAINT "gateway_routes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_breaking_changes'::regclass AND conname='graphql_breaking_changes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_breaking_changes'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_breaking_changes ADD CONSTRAINT "graphql_breaking_changes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_execution_metrics'::regclass AND conname='graphql_execution_metrics_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_execution_metrics'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_execution_metrics ADD CONSTRAINT "graphql_execution_metrics_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_execution_profiles'::regclass AND conname='graphql_execution_profiles_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_execution_profiles'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_execution_profiles ADD CONSTRAINT "graphql_execution_profiles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_optimization_history'::regclass AND conname='graphql_optimization_history_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_optimization_history'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_optimization_history ADD CONSTRAINT "graphql_optimization_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_schema_versions'::regclass AND conname='graphql_schema_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_schema_versions'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_schema_versions ADD CONSTRAINT "graphql_schema_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_stream_events'::regclass AND conname='graphql_stream_events_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_stream_events'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_stream_events ADD CONSTRAINT "graphql_stream_events_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_stream_subscribers'::regclass AND conname='graphql_stream_subscribers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_stream_subscribers'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_stream_subscribers ADD CONSTRAINT "graphql_stream_subscribers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_streams'::regclass AND conname='graphql_streams_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_streams'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_streams ADD CONSTRAINT "graphql_streams_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_suggestions'::regclass AND conname='graphql_suggestions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_suggestions'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_suggestions ADD CONSTRAINT "graphql_suggestions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_version_negotiations'::regclass AND conname='graphql_version_negotiations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.graphql_version_negotiations'::regclass AND contype='p') THEN
         ALTER TABLE portal.graphql_version_negotiations ADD CONSTRAINT "graphql_version_negotiations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_affinities'::regclass AND conname='intelligent_gw_affinities_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_affinities'::regclass AND contype='p') THEN
         ALTER TABLE portal.intelligent_gw_affinities ADD CONSTRAINT "intelligent_gw_affinities_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_conflicts'::regclass AND conname='intelligent_gw_conflicts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_conflicts'::regclass AND contype='p') THEN
         ALTER TABLE portal.intelligent_gw_conflicts ADD CONSTRAINT "intelligent_gw_conflicts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_routing_table'::regclass AND conname='intelligent_gw_routing_table_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_routing_table'::regclass AND contype='p') THEN
         ALTER TABLE portal.intelligent_gw_routing_table ADD CONSTRAINT "intelligent_gw_routing_table_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_stitch_logs'::regclass AND conname='intelligent_gw_stitch_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_stitch_logs'::regclass AND contype='p') THEN
         ALTER TABLE portal.intelligent_gw_stitch_logs ADD CONSTRAINT "intelligent_gw_stitch_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_stitch_plans'::regclass AND conname='intelligent_gw_stitch_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.intelligent_gw_stitch_plans'::regclass AND contype='p') THEN
         ALTER TABLE portal.intelligent_gw_stitch_plans ADD CONSTRAINT "intelligent_gw_stitch_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_accel_configs'::regclass AND conname='portal_accel_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_accel_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_accel_configs ADD CONSTRAINT "portal_accel_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_acceleration_configs'::regclass AND conname='portal_acceleration_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_acceleration_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_acceleration_configs ADD CONSTRAINT "portal_acceleration_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_acceleration_results'::regclass AND conname='portal_acceleration_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_acceleration_results'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_acceleration_results ADD CONSTRAINT "portal_acceleration_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_access_decisions'::regclass AND conname='portal_access_decisions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_access_decisions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_access_decisions ADD CONSTRAINT "portal_access_decisions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_access_policies'::regclass AND conname='portal_access_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_access_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_access_policies ADD CONSTRAINT "portal_access_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_aggregation_configs'::regclass AND conname='portal_aggregation_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_aggregation_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_aggregation_configs ADD CONSTRAINT "portal_aggregation_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_aggregation_results'::regclass AND conname='portal_aggregation_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_aggregation_results'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_aggregation_results ADD CONSTRAINT "portal_aggregation_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_alert_thresholds'::regclass AND conname='portal_alert_thresholds_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_alert_thresholds'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_alert_thresholds ADD CONSTRAINT "portal_alert_thresholds_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_anomalies'::regclass AND conname='portal_anomalies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_anomalies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_anomalies ADD CONSTRAINT "portal_anomalies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_api_versions'::regclass AND conname='portal_api_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_api_versions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_api_versions ADD CONSTRAINT "portal_api_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_audit_entries'::regclass AND conname='portal_audit_entries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_audit_entries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_audit_entries ADD CONSTRAINT "portal_audit_entries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_audit_exports'::regclass AND conname='portal_audit_exports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_audit_exports'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_audit_exports ADD CONSTRAINT "portal_audit_exports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_auth_policies'::regclass AND conname='portal_auth_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_auth_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_auth_policies ADD CONSTRAINT "portal_auth_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_backpressure_configs'::regclass AND conname='portal_backpressure_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_backpressure_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_backpressure_configs ADD CONSTRAINT "portal_backpressure_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_backpressure_states'::regclass AND conname='portal_backpressure_states_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_backpressure_states'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_backpressure_states ADD CONSTRAINT "portal_backpressure_states_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_cache_entries'::regclass AND conname='portal_cache_entries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_cache_entries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_cache_entries ADD CONSTRAINT "portal_cache_entries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_cache_policies'::regclass AND conname='portal_cache_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_cache_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_cache_policies ADD CONSTRAINT "portal_cache_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_cache_versions'::regclass AND conname='portal_cache_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_cache_versions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_cache_versions ADD CONSTRAINT "portal_cache_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_canary_configs'::regclass AND conname='portal_canary_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_canary_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_canary_configs ADD CONSTRAINT "portal_canary_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_canary_results'::regclass AND conname='portal_canary_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_canary_results'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_canary_results ADD CONSTRAINT "portal_canary_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compatibility_policies'::regclass AND conname='portal_compatibility_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compatibility_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_compatibility_policies ADD CONSTRAINT "portal_compatibility_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compatibility_reports'::regclass AND conname='portal_compatibility_reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compatibility_reports'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_compatibility_reports ADD CONSTRAINT "portal_compatibility_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compilation_rules'::regclass AND conname='portal_compilation_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compilation_rules'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_compilation_rules ADD CONSTRAINT "portal_compilation_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compiled_queries'::regclass AND conname='portal_compiled_queries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_compiled_queries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_compiled_queries ADD CONSTRAINT "portal_compiled_queries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_config_diffs'::regclass AND conname='portal_config_diffs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_config_diffs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_config_diffs ADD CONSTRAINT "portal_config_diffs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_config_environments'::regclass AND conname='portal_config_environments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_config_environments'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_config_environments ADD CONSTRAINT "portal_config_environments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_consistency_checks'::regclass AND conname='portal_consistency_checks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_consistency_checks'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_consistency_checks ADD CONSTRAINT "portal_consistency_checks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_dead_letter_queue'::regclass AND conname='portal_dead_letter_queue_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_dead_letter_queue'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_dead_letter_queue ADD CONSTRAINT "portal_dead_letter_queue_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_dedup_results'::regclass AND conname='portal_dedup_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_dedup_results'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_dedup_results ADD CONSTRAINT "portal_dedup_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_dedup_rules'::regclass AND conname='portal_dedup_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_dedup_rules'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_dedup_rules ADD CONSTRAINT "portal_dedup_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_deployment_steps'::regclass AND conname='portal_deployment_steps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_deployment_steps'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_deployment_steps ADD CONSTRAINT "portal_deployment_steps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_deployments'::regclass AND conname='portal_deployments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_deployments'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_deployments ADD CONSTRAINT "portal_deployments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_detection_models'::regclass AND conname='portal_detection_models_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_detection_models'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_detection_models ADD CONSTRAINT "portal_detection_models_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_distributed_queries'::regclass AND conname='portal_distributed_queries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_distributed_queries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_distributed_queries ADD CONSTRAINT "portal_distributed_queries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_cache'::regclass AND conname='portal_edge_cache_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_cache'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_edge_cache ADD CONSTRAINT "portal_edge_cache_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_deployments'::regclass AND conname='portal_edge_deployments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_deployments'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_edge_deployments ADD CONSTRAINT "portal_edge_deployments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_entries'::regclass AND conname='portal_edge_entries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_entries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_edge_entries ADD CONSTRAINT "portal_edge_entries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_functions'::regclass AND conname='portal_edge_functions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_functions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_edge_functions ADD CONSTRAINT "portal_edge_functions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_replication'::regclass AND conname='portal_edge_replication_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_edge_replication'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_edge_replication ADD CONSTRAINT "portal_edge_replication_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_execution_plans'::regclass AND conname='portal_execution_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_execution_plans'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_execution_plans ADD CONSTRAINT "portal_execution_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_execution_steps'::regclass AND conname='portal_execution_steps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_execution_steps'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_execution_steps ADD CONSTRAINT "portal_execution_steps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_federated_identities'::regclass AND conname='portal_federated_identities_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_federated_identities'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_federated_identities ADD CONSTRAINT "portal_federated_identities_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_gateway_configs'::regclass AND conname='portal_gateway_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_gateway_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_gateway_configs ADD CONSTRAINT "portal_gateway_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_healing_actions'::regclass AND conname='portal_healing_actions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_healing_actions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_healing_actions ADD CONSTRAINT "portal_healing_actions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_health_checks'::regclass AND conname='portal_health_checks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_health_checks'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_health_checks ADD CONSTRAINT "portal_health_checks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_identity_policies'::regclass AND conname='portal_identity_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_identity_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_identity_policies ADD CONSTRAINT "portal_identity_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_invalidation_events'::regclass AND conname='portal_invalidation_events_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_invalidation_events'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_invalidation_events ADD CONSTRAINT "portal_invalidation_events_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_latency_stats'::regclass AND conname='portal_latency_stats_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_latency_stats'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_latency_stats ADD CONSTRAINT "portal_latency_stats_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_masking_rules'::regclass AND conname='portal_masking_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_masking_rules'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_masking_rules ADD CONSTRAINT "portal_masking_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_metrics'::regclass AND conname='portal_metrics_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_metrics'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_metrics ADD CONSTRAINT "portal_metrics_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_orchestration_plans'::regclass AND conname='portal_orchestration_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_orchestration_plans'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_orchestration_plans ADD CONSTRAINT "portal_orchestration_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_persisted_queries'::regclass AND conname='portal_persisted_queries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_persisted_queries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_persisted_queries ADD CONSTRAINT "portal_persisted_queries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_persisted_query_versions'::regclass AND conname='portal_persisted_query_versions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_persisted_query_versions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_persisted_query_versions ADD CONSTRAINT "portal_persisted_query_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_plan_steps'::regclass AND conname='portal_plan_steps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_plan_steps'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_plan_steps ADD CONSTRAINT "portal_plan_steps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_push_stats'::regclass AND conname='portal_push_stats_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_push_stats'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_push_stats ADD CONSTRAINT "portal_push_stats_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_queue_configs'::regclass AND conname='portal_queue_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_queue_configs'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_queue_configs ADD CONSTRAINT "portal_queue_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_queue_messages'::regclass AND conname='portal_queue_messages_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_queue_messages'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_queue_messages ADD CONSTRAINT "portal_queue_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_recovery_plans'::regclass AND conname='portal_recovery_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_recovery_plans'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_recovery_plans ADD CONSTRAINT "portal_recovery_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_replay_requests'::regclass AND conname='portal_replay_requests_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_replay_requests'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_replay_requests ADD CONSTRAINT "portal_replay_requests_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_replay_results'::regclass AND conname='portal_replay_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_replay_results'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_replay_results ADD CONSTRAINT "portal_replay_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_resolver_timings'::regclass AND conname='portal_resolver_timings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_resolver_timings'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_resolver_timings ADD CONSTRAINT "portal_resolver_timings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_rollback_actions'::regclass AND conname='portal_rollback_actions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_rollback_actions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_rollback_actions ADD CONSTRAINT "portal_rollback_actions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_rollback_policies'::regclass AND conname='portal_rollback_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_rollback_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_rollback_policies ADD CONSTRAINT "portal_rollback_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_route_rules'::regclass AND conname='portal_route_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_route_rules'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_route_rules ADD CONSTRAINT "portal_route_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_routing_decisions'::regclass AND conname='portal_routing_decisions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_routing_decisions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_routing_decisions ADD CONSTRAINT "portal_routing_decisions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_routing_rules'::regclass AND conname='portal_routing_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_routing_rules'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_routing_rules ADD CONSTRAINT "portal_routing_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_security_events'::regclass AND conname='portal_security_events_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_security_events'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_security_events ADD CONSTRAINT "portal_security_events_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_security_incidents'::regclass AND conname='portal_security_incidents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_security_incidents'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_security_incidents ADD CONSTRAINT "portal_security_incidents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_security_policies'::regclass AND conname='portal_security_policies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_security_policies'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_security_policies ADD CONSTRAINT "portal_security_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_service_descriptors'::regclass AND conname='portal_service_descriptors_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_service_descriptors'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_service_descriptors ADD CONSTRAINT "portal_service_descriptors_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_service_heartbeats'::regclass AND conname='portal_service_heartbeats_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_service_heartbeats'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_service_heartbeats ADD CONSTRAINT "portal_service_heartbeats_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_service_loads'::regclass AND conname='portal_service_loads_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_service_loads'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_service_loads ADD CONSTRAINT "portal_service_loads_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_stream_events'::regclass AND conname='portal_stream_events_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_stream_events'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_stream_events ADD CONSTRAINT "portal_stream_events_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_streams'::regclass AND conname='portal_streams_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_streams'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_streams ADD CONSTRAINT "portal_streams_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_sub_queries'::regclass AND conname='portal_sub_queries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_sub_queries'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_sub_queries ADD CONSTRAINT "portal_sub_queries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscribers'::regclass AND conname='portal_subscribers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscribers'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_subscribers ADD CONSTRAINT "portal_subscribers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscription_channels'::regclass AND conname='portal_subscription_channels_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscription_channels'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_subscription_channels ADD CONSTRAINT "portal_subscription_channels_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscription_events'::regclass AND conname='portal_subscription_events_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscription_events'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_subscription_events ADD CONSTRAINT "portal_subscription_events_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscription_records'::regclass AND conname='portal_subscription_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_subscription_records'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_subscription_records ADD CONSTRAINT "portal_subscription_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_traces'::regclass AND conname='portal_traces_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_traces'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_traces ADD CONSTRAINT "portal_traces_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_trust_decisions'::regclass AND conname='portal_trust_decisions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_trust_decisions'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_trust_decisions ADD CONSTRAINT "portal_trust_decisions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_version_mappings'::regclass AND conname='portal_version_mappings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_version_mappings'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_version_mappings ADD CONSTRAINT "portal_version_mappings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_version_vectors'::regclass AND conname='portal_version_vectors_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='portal.portal_version_vectors'::regclass AND contype='p') THEN
         ALTER TABLE portal.portal_version_vectors ADD CONSTRAINT "portal_version_vectors_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

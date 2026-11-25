@@ -1216,462 +1216,462 @@ CREATE INDEX IF NOT EXISTS idx_v60_schedule_tasks_tenant ON finance.finance_v60_
 CREATE INDEX IF NOT EXISTS idx_v60_schedule_tasks_type ON finance.finance_v60_schedule_tasks USING btree (task_type);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_accounts'::regclass AND conname='core_finance_accounts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_accounts'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_accounts ADD CONSTRAINT "core_finance_accounts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_approval_workflows'::regclass AND conname='core_finance_approval_workflows_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_approval_workflows'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_approval_workflows ADD CONSTRAINT "core_finance_approval_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_aux_accounts'::regclass AND conname='core_finance_aux_accounts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_aux_accounts'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_aux_accounts ADD CONSTRAINT "core_finance_aux_accounts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_aux_balances'::regclass AND conname='core_finance_aux_balances_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_aux_balances'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_aux_balances ADD CONSTRAINT "core_finance_aux_balances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_ledger'::regclass AND conname='core_finance_ledger_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_ledger'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_ledger ADD CONSTRAINT "core_finance_ledger_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_periods'::regclass AND conname='core_finance_periods_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_periods'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_periods ADD CONSTRAINT "core_finance_periods_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_reconciliation_items'::regclass AND conname='core_finance_reconciliation_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_reconciliation_items'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_reconciliation_items ADD CONSTRAINT "core_finance_reconciliation_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_reconciliation_sessions'::regclass AND conname='core_finance_reconciliation_sessions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_reconciliation_sessions'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_reconciliation_sessions ADD CONSTRAINT "core_finance_reconciliation_sessions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_voucher_lines'::regclass AND conname='core_finance_voucher_lines_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_voucher_lines'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_voucher_lines ADD CONSTRAINT "core_finance_voucher_lines_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_vouchers'::regclass AND conname='core_finance_vouchers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.core_finance_vouchers'::regclass AND contype='p') THEN
         ALTER TABLE finance.core_finance_vouchers ADD CONSTRAINT "core_finance_vouchers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.difference_adjustments'::regclass AND conname='difference_adjustments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.difference_adjustments'::regclass AND contype='p') THEN
         ALTER TABLE finance.difference_adjustments ADD CONSTRAINT "difference_adjustments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_compliance_issues'::regclass AND conname='finance_compliance_issues_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_compliance_issues'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_compliance_issues ADD CONSTRAINT "finance_compliance_issues_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_compliance_reports'::regclass AND conname='finance_compliance_reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_compliance_reports'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_compliance_reports ADD CONSTRAINT "finance_compliance_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_control_matrices'::regclass AND conname='finance_control_matrices_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_control_matrices'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_control_matrices ADD CONSTRAINT "finance_control_matrices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_control_points'::regclass AND conname='finance_control_points_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_control_points'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_control_points ADD CONSTRAINT "finance_control_points_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_risk_assessments'::regclass AND conname='finance_risk_assessments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_risk_assessments'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_risk_assessments ADD CONSTRAINT "finance_risk_assessments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_fraud_rules'::regclass AND conname='finance_v54_fraud_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_fraud_rules'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_fraud_rules ADD CONSTRAINT "finance_v54_fraud_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_fraud_scores'::regclass AND conname='finance_v54_fraud_scores_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_fraud_scores'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_fraud_scores ADD CONSTRAINT "finance_v54_fraud_scores_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_review_results'::regclass AND conname='finance_v54_review_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_review_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_review_results ADD CONSTRAINT "finance_v54_review_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_review_rules'::regclass AND conname='finance_v54_review_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_review_rules'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_review_rules ADD CONSTRAINT "finance_v54_review_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_review_workflows'::regclass AND conname='finance_v54_review_workflows_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_review_workflows'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_review_workflows ADD CONSTRAINT "finance_v54_review_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_risk_alerts'::regclass AND conname='finance_v54_risk_alerts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_risk_alerts'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_risk_alerts ADD CONSTRAINT "finance_v54_risk_alerts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_risk_indicators'::regclass AND conname='finance_v54_risk_indicators_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v54_risk_indicators'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v54_risk_indicators ADD CONSTRAINT "finance_v54_risk_indicators_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_invoice_items'::regclass AND conname='finance_v55_invoice_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_invoice_items'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v55_invoice_items ADD CONSTRAINT "finance_v55_invoice_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_invoices'::regclass AND conname='finance_v55_invoices_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_invoices'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v55_invoices ADD CONSTRAINT "finance_v55_invoices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_payment_requests'::regclass AND conname='finance_v55_payment_requests_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_payment_requests'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v55_payment_requests ADD CONSTRAINT "finance_v55_payment_requests_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_payment_results'::regclass AND conname='finance_v55_payment_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_payment_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v55_payment_results ADD CONSTRAINT "finance_v55_payment_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_reconciliation_results'::regclass AND conname='finance_v55_reconciliation_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_reconciliation_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v55_reconciliation_results ADD CONSTRAINT "finance_v55_reconciliation_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_reconciliation_rules'::regclass AND conname='finance_v55_reconciliation_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v55_reconciliation_rules'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v55_reconciliation_rules ADD CONSTRAINT "finance_v55_reconciliation_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_brackets'::regclass AND conname='finance_v56_tax_brackets_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_brackets'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v56_tax_brackets ADD CONSTRAINT "finance_v56_tax_brackets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_forms'::regclass AND conname='finance_v56_tax_forms_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_forms'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v56_tax_forms ADD CONSTRAINT "finance_v56_tax_forms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_lines'::regclass AND conname='finance_v56_tax_lines_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_lines'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v56_tax_lines ADD CONSTRAINT "finance_v56_tax_lines_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_plans'::regclass AND conname='finance_v56_tax_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_plans'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v56_tax_plans ADD CONSTRAINT "finance_v56_tax_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_rates'::regclass AND conname='finance_v56_tax_rates_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_rates'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v56_tax_rates ADD CONSTRAINT "finance_v56_tax_rates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_suggestions'::regclass AND conname='finance_v56_tax_suggestions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v56_tax_suggestions'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v56_tax_suggestions ADD CONSTRAINT "finance_v56_tax_suggestions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_analysis_dimensions'::regclass AND conname='finance_v57_analysis_dimensions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_analysis_dimensions'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v57_analysis_dimensions ADD CONSTRAINT "finance_v57_analysis_dimensions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_analysis_results'::regclass AND conname='finance_v57_analysis_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_analysis_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v57_analysis_results ADD CONSTRAINT "finance_v57_analysis_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_forecast_models'::regclass AND conname='finance_v57_forecast_models_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_forecast_models'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v57_forecast_models ADD CONSTRAINT "finance_v57_forecast_models_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_generated_reports'::regclass AND conname='finance_v57_generated_reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_generated_reports'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v57_generated_reports ADD CONSTRAINT "finance_v57_generated_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_insights'::regclass AND conname='finance_v57_insights_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_insights'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v57_insights ADD CONSTRAINT "finance_v57_insights_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_report_templates'::regclass AND conname='finance_v57_report_templates_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v57_report_templates'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v57_report_templates ADD CONSTRAINT "finance_v57_report_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_cash_pools'::regclass AND conname='finance_v58_cash_pools_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_cash_pools'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_cash_pools ADD CONSTRAINT "finance_v58_cash_pools_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_forecast_results'::regclass AND conname='finance_v58_forecast_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_forecast_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_forecast_results ADD CONSTRAINT "finance_v58_forecast_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_forecast_scenarios'::regclass AND conname='finance_v58_forecast_scenarios_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_forecast_scenarios'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_forecast_scenarios ADD CONSTRAINT "finance_v58_forecast_scenarios_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_liquidity_targets'::regclass AND conname='finance_v58_liquidity_targets_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_liquidity_targets'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_liquidity_targets ADD CONSTRAINT "finance_v58_liquidity_targets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_optimization_results'::regclass AND conname='finance_v58_optimization_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_optimization_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_optimization_results ADD CONSTRAINT "finance_v58_optimization_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_pool_allocations'::regclass AND conname='finance_v58_pool_allocations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_pool_allocations'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_pool_allocations ADD CONSTRAINT "finance_v58_pool_allocations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_pool_transfers'::regclass AND conname='finance_v58_pool_transfers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v58_pool_transfers'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v58_pool_transfers ADD CONSTRAINT "finance_v58_pool_transfers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_credit_profiles'::regclass AND conname='finance_v59_credit_profiles_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_credit_profiles'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_credit_profiles ADD CONSTRAINT "finance_v59_credit_profiles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_device_profiles'::regclass AND conname='finance_v59_device_profiles_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_device_profiles'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_device_profiles ADD CONSTRAINT "finance_v59_device_profiles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_fraud_decisions'::regclass AND conname='finance_v59_fraud_decisions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_fraud_decisions'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_fraud_decisions ADD CONSTRAINT "finance_v59_fraud_decisions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_fraud_rules'::regclass AND conname='finance_v59_fraud_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_fraud_rules'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_fraud_rules ADD CONSTRAINT "finance_v59_fraud_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_fraud_signals'::regclass AND conname='finance_v59_fraud_signals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_fraud_signals'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_fraud_signals ADD CONSTRAINT "finance_v59_fraud_signals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_scoring_models'::regclass AND conname='finance_v59_scoring_models_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_scoring_models'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_scoring_models ADD CONSTRAINT "finance_v59_scoring_models_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_stress_results'::regclass AND conname='finance_v59_stress_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_stress_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_stress_results ADD CONSTRAINT "finance_v59_stress_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_stress_scenarios'::regclass AND conname='finance_v59_stress_scenarios_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v59_stress_scenarios'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v59_stress_scenarios ADD CONSTRAINT "finance_v59_stress_scenarios_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_alert_channels'::regclass AND conname='finance_v60_alert_channels_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_alert_channels'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_alert_channels ADD CONSTRAINT "finance_v60_alert_channels_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_alert_rules'::regclass AND conname='finance_v60_alert_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_alert_rules'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_alert_rules ADD CONSTRAINT "finance_v60_alert_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_alerts'::regclass AND conname='finance_v60_alerts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_alerts'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_alerts ADD CONSTRAINT "finance_v60_alerts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_decision_results'::regclass AND conname='finance_v60_decision_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_decision_results'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_decision_results ADD CONSTRAINT "finance_v60_decision_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_decision_scenarios'::regclass AND conname='finance_v60_decision_scenarios_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_decision_scenarios'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_decision_scenarios ADD CONSTRAINT "finance_v60_decision_scenarios_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_schedule_dependencies'::regclass AND conname='finance_v60_schedule_dependencies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_schedule_dependencies'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_schedule_dependencies ADD CONSTRAINT "finance_v60_schedule_dependencies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_schedule_executions'::regclass AND conname='finance_v60_schedule_executions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_schedule_executions'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_schedule_executions ADD CONSTRAINT "finance_v60_schedule_executions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_schedule_tasks'::regclass AND conname='finance_v60_schedule_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.finance_v60_schedule_tasks'::regclass AND contype='p') THEN
         ALTER TABLE finance.finance_v60_schedule_tasks ADD CONSTRAINT "finance_v60_schedule_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.reconciliation_settlement_links'::regclass AND conname='reconciliation_settlement_links_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.reconciliation_settlement_links'::regclass AND contype='p') THEN
         ALTER TABLE finance.reconciliation_settlement_links ADD CONSTRAINT "reconciliation_settlement_links_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.settlement_center_dashboards'::regclass AND conname='settlement_center_dashboards_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='finance.settlement_center_dashboards'::regclass AND contype='p') THEN
         ALTER TABLE finance.settlement_center_dashboards ADD CONSTRAINT "settlement_center_dashboards_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

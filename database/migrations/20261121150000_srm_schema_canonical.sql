@@ -306,112 +306,112 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_srm_supplier_performance ON srm.supplier_pe
 CREATE UNIQUE INDEX IF NOT EXISTS uq_srm_suppliers_no ON srm.suppliers USING btree (supplier_no);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE srm.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.bid_requests'::regclass AND conname='bid_requests_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.bid_requests'::regclass AND contype='p') THEN
         ALTER TABLE srm.bid_requests ADD CONSTRAINT "bid_requests_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.bids'::regclass AND conname='bids_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.bids'::regclass AND contype='p') THEN
         ALTER TABLE srm.bids ADD CONSTRAINT "bids_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.contract_terms'::regclass AND conname='contract_terms_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.contract_terms'::regclass AND contype='p') THEN
         ALTER TABLE srm.contract_terms ADD CONSTRAINT "contract_terms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.inquiries'::regclass AND conname='inquiries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.inquiries'::regclass AND contype='p') THEN
         ALTER TABLE srm.inquiries ADD CONSTRAINT "inquiries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.purchase_orders'::regclass AND conname='purchase_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.purchase_orders'::regclass AND contype='p') THEN
         ALTER TABLE srm.purchase_orders ADD CONSTRAINT "purchase_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.scm_supplier_snapshots'::regclass AND conname='scm_supplier_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.scm_supplier_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE srm.scm_supplier_snapshots ADD CONSTRAINT "scm_supplier_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_categories'::regclass AND conname='supplier_categories_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_categories'::regclass AND contype='p') THEN
         ALTER TABLE srm.supplier_categories ADD CONSTRAINT "supplier_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_contracts'::regclass AND conname='supplier_contracts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_contracts'::regclass AND contype='p') THEN
         ALTER TABLE srm.supplier_contracts ADD CONSTRAINT "supplier_contracts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_evaluations'::regclass AND conname='supplier_evaluations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_evaluations'::regclass AND contype='p') THEN
         ALTER TABLE srm.supplier_evaluations ADD CONSTRAINT "supplier_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_performance'::regclass AND conname='supplier_performance_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_performance'::regclass AND contype='p') THEN
         ALTER TABLE srm.supplier_performance ADD CONSTRAINT "supplier_performance_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_products'::regclass AND conname='supplier_products_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.supplier_products'::regclass AND contype='p') THEN
         ALTER TABLE srm.supplier_products ADD CONSTRAINT "supplier_products_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.suppliers'::regclass AND conname='suppliers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.suppliers'::regclass AND contype='p') THEN
         ALTER TABLE srm.suppliers ADD CONSTRAINT "suppliers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.tender_awards'::regclass AND conname='tender_awards_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.tender_awards'::regclass AND contype='p') THEN
         ALTER TABLE srm.tender_awards ADD CONSTRAINT "tender_awards_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.tender_bids'::regclass AND conname='tender_bids_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.tender_bids'::regclass AND contype='p') THEN
         ALTER TABLE srm.tender_bids ADD CONSTRAINT "tender_bids_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.tenders'::regclass AND conname='tenders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='srm.tenders'::regclass AND contype='p') THEN
         ALTER TABLE srm.tenders ADD CONSTRAINT "tenders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

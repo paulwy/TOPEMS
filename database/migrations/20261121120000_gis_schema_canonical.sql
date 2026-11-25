@@ -407,140 +407,140 @@ CREATE INDEX IF NOT EXISTS idx_gis_spatial_analysis_tenant_id ON gis.spatial_ana
 CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON gis.warehouse_locations USING btree (map_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.business_locations'::regclass AND conname='business_locations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.business_locations'::regclass AND contype='p') THEN
         ALTER TABLE gis.business_locations ADD CONSTRAINT "business_locations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.device_location_records'::regclass AND conname='device_location_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.device_location_records'::regclass AND contype='p') THEN
         ALTER TABLE gis.device_location_records ADD CONSTRAINT "device_location_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.device_locations'::regclass AND conname='device_locations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.device_locations'::regclass AND contype='p') THEN
         ALTER TABLE gis.device_locations ADD CONSTRAINT "device_locations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.devices'::regclass AND conname='devices_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.devices'::regclass AND contype='p') THEN
         ALTER TABLE gis.devices ADD CONSTRAINT "devices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.evidence_records'::regclass AND conname='evidence_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.evidence_records'::regclass AND contype='p') THEN
         ALTER TABLE gis.evidence_records ADD CONSTRAINT "evidence_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.factory_maps'::regclass AND conname='factory_maps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.factory_maps'::regclass AND contype='p') THEN
         ALTER TABLE gis.factory_maps ADD CONSTRAINT "factory_maps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.geodata'::regclass AND conname='geodata_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.geodata'::regclass AND contype='p') THEN
         ALTER TABLE gis.geodata ADD CONSTRAINT "geodata_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.geofeatures'::regclass AND conname='geofeatures_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.geofeatures'::regclass AND contype='p') THEN
         ALTER TABLE gis.geofeatures ADD CONSTRAINT "geofeatures_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.geofences'::regclass AND conname='geofences_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.geofences'::regclass AND contype='p') THEN
         ALTER TABLE gis.geofences ADD CONSTRAINT "geofences_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.gis_map_markers'::regclass AND conname='gis_map_markers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.gis_map_markers'::regclass AND contype='p') THEN
         ALTER TABLE gis.gis_map_markers ADD CONSTRAINT "gis_map_markers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.location_photos'::regclass AND conname='location_photos_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.location_photos'::regclass AND contype='p') THEN
         ALTER TABLE gis.location_photos ADD CONSTRAINT "location_photos_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.locations'::regclass AND conname='locations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.locations'::regclass AND contype='p') THEN
         ALTER TABLE gis.locations ADD CONSTRAINT "locations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.map_layers'::regclass AND conname='map_layers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.map_layers'::regclass AND contype='p') THEN
         ALTER TABLE gis.map_layers ADD CONSTRAINT "map_layers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.map_markers'::regclass AND conname='map_markers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.map_markers'::regclass AND contype='p') THEN
         ALTER TABLE gis.map_markers ADD CONSTRAINT "map_markers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.maps'::regclass AND conname='maps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.maps'::regclass AND contype='p') THEN
         ALTER TABLE gis.maps ADD CONSTRAINT "maps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.pipelines'::regclass AND conname='pipelines_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.pipelines'::regclass AND contype='p') THEN
         ALTER TABLE gis.pipelines ADD CONSTRAINT "pipelines_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.spatial_analysis'::regclass AND conname='spatial_analysis_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.spatial_analysis'::regclass AND contype='p') THEN
         ALTER TABLE gis.spatial_analysis ADD CONSTRAINT "spatial_analysis_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.track_positions'::regclass AND conname='track_positions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.track_positions'::regclass AND contype='p') THEN
         ALTER TABLE gis.track_positions ADD CONSTRAINT "track_positions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.track_records'::regclass AND conname='track_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.track_records'::regclass AND contype='p') THEN
         ALTER TABLE gis.track_records ADD CONSTRAINT "track_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.warehouse_locations'::regclass AND conname='warehouse_locations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='gis.warehouse_locations'::regclass AND contype='p') THEN
         ALTER TABLE gis.warehouse_locations ADD CONSTRAINT "warehouse_locations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

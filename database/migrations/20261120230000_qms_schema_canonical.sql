@@ -673,210 +673,210 @@ CREATE INDEX IF NOT EXISTS idx_qa_standard_revisions_standard ON qms.qa_standard
 CREATE INDEX IF NOT EXISTS idx_qa_standards_code ON qms.qa_standards USING btree (code);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_alert_messages'::regclass AND conname='qa_alert_messages_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_alert_messages'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_alert_messages ADD CONSTRAINT "qa_alert_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_alert_rules'::regclass AND conname='qa_alert_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_alert_rules'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_alert_rules ADD CONSTRAINT "qa_alert_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_approvals'::regclass AND conname='qa_apqp_approvals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_approvals'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_apqp_approvals ADD CONSTRAINT "qa_apqp_approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_phases'::regclass AND conname='qa_apqp_phases_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_phases'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_apqp_phases ADD CONSTRAINT "qa_apqp_phases_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_projects'::regclass AND conname='qa_apqp_projects_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_projects'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_apqp_projects ADD CONSTRAINT "qa_apqp_projects_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_risks'::regclass AND conname='qa_apqp_risks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_risks'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_apqp_risks ADD CONSTRAINT "qa_apqp_risks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_tasks'::regclass AND conname='qa_apqp_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_apqp_tasks'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_apqp_tasks ADD CONSTRAINT "qa_apqp_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_audit_findings'::regclass AND conname='qa_audit_findings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_audit_findings'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_audit_findings ADD CONSTRAINT "qa_audit_findings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_audit_plans'::regclass AND conname='qa_audit_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_audit_plans'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_audit_plans ADD CONSTRAINT "qa_audit_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_audit_tasks'::regclass AND conname='qa_audit_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_audit_tasks'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_audit_tasks ADD CONSTRAINT "qa_audit_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_corrective_action_items'::regclass AND conname='qa_corrective_action_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_corrective_action_items'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_corrective_action_items ADD CONSTRAINT "qa_corrective_action_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_corrective_actions'::regclass AND conname='qa_corrective_actions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_corrective_actions'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_corrective_actions ADD CONSTRAINT "qa_corrective_actions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_eightd_audit_logs'::regclass AND conname='qa_eightd_audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_eightd_audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_eightd_audit_logs ADD CONSTRAINT "qa_eightd_audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_eightd_reports'::regclass AND conname='qa_eightd_reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_eightd_reports'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_eightd_reports ADD CONSTRAINT "qa_eightd_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_fmea_analyses'::regclass AND conname='qa_fmea_analyses_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_fmea_analyses'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_fmea_analyses ADD CONSTRAINT "qa_fmea_analyses_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_fmea_items'::regclass AND conname='qa_fmea_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_fmea_items'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_fmea_items ADD CONSTRAINT "qa_fmea_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_audits'::regclass AND conname='qa_inspection_audits_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_audits'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_inspection_audits ADD CONSTRAINT "qa_inspection_audits_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_items'::regclass AND conname='qa_inspection_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_items'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_inspection_items ADD CONSTRAINT "qa_inspection_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_plan_items'::regclass AND conname='qa_inspection_plan_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_plan_items'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_inspection_plan_items ADD CONSTRAINT "qa_inspection_plan_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_plans'::regclass AND conname='qa_inspection_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_plans'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_inspection_plans ADD CONSTRAINT "qa_inspection_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_results'::regclass AND conname='qa_inspection_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_inspection_results'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_inspection_results ADD CONSTRAINT "qa_inspection_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_qms_sync_records'::regclass AND conname='qa_qms_sync_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_qms_sync_records'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_qms_sync_records ADD CONSTRAINT "qa_qms_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_quality_costs'::regclass AND conname='qa_quality_costs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_quality_costs'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_quality_costs ADD CONSTRAINT "qa_quality_costs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_quality_inspections'::regclass AND conname='qa_quality_inspections_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_quality_inspections'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_quality_inspections ADD CONSTRAINT "qa_quality_inspections_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_quality_issues'::regclass AND conname='qa_quality_issues_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_quality_issues'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_quality_issues ADD CONSTRAINT "qa_quality_issues_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_sampling_plans'::regclass AND conname='qa_sampling_plans_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_sampling_plans'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_sampling_plans ADD CONSTRAINT "qa_sampling_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_spc_charts'::regclass AND conname='qa_spc_charts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_spc_charts'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_spc_charts ADD CONSTRAINT "qa_spc_charts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_spc_data_points'::regclass AND conname='qa_spc_data_points_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_spc_data_points'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_spc_data_points ADD CONSTRAINT "qa_spc_data_points_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_standard_revisions'::regclass AND conname='qa_standard_revisions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_standard_revisions'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_standard_revisions ADD CONSTRAINT "qa_standard_revisions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_standards'::regclass AND conname='qa_standards_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='qms.qa_standards'::regclass AND contype='p') THEN
         ALTER TABLE qms.qa_standards ADD CONSTRAINT "qa_standards_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

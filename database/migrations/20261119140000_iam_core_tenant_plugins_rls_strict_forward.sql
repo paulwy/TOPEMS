@@ -118,8 +118,17 @@ BEGIN
         RAISE EXCEPTION '后置断言失败：唯一约束 (tenant_id, plugin_id) 缺失';
     END IF;
 
-    IF to_regclass('iam.idx_core_tenant_plugins_tenant') IS NULL THEN
-        RAISE EXCEPTION '后置断言失败：idx_core_tenant_plugins_tenant 缺失';
+    -- tenant_id 必须有索引（不绑定具体索引名：同一张表在不同环境曾被建过多种命名）
+    IF NOT EXISTS (
+        SELECT 1
+          FROM pg_index i
+          JOIN pg_attribute a
+            ON a.attrelid = 'iam.core_tenant_plugins'::regclass
+           AND a.attnum = i.indkey[0]
+         WHERE i.indrelid = 'iam.core_tenant_plugins'::regclass
+           AND a.attname = 'tenant_id'
+    ) THEN
+        RAISE EXCEPTION '后置断言失败：iam.core_tenant_plugins 缺少 tenant_id 前导索引';
     END IF;
 
     RAISE NOTICE '后置断言通过：iam.core_tenant_plugins 严格 B（1 策略，RLS+FORCE）';

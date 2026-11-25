@@ -335,91 +335,91 @@ CREATE INDEX IF NOT EXISTS idx_crm_rfm_results_tenant ON crm.rfm_results USING b
 CREATE INDEX IF NOT EXISTS idx_crm_tags_tenant ON crm.tags USING btree (tenant_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE crm.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.contacts'::regclass AND conname='contacts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.contacts'::regclass AND contype='p') THEN
         ALTER TABLE crm.contacts ADD CONSTRAINT "contacts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.crm_master_data_refs'::regclass AND conname='crm_master_data_refs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.crm_master_data_refs'::regclass AND contype='p') THEN
         ALTER TABLE crm.crm_master_data_refs ADD CONSTRAINT "crm_master_data_refs_pkey" PRIMARY KEY (master_data_id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customer_finance'::regclass AND conname='customer_finance_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customer_finance'::regclass AND contype='p') THEN
         ALTER TABLE crm.customer_finance ADD CONSTRAINT "customer_finance_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customer_orders'::regclass AND conname='customer_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customer_orders'::regclass AND contype='p') THEN
         ALTER TABLE crm.customer_orders ADD CONSTRAINT "customer_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customer_tags'::regclass AND conname='customer_tags_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customer_tags'::regclass AND contype='p') THEN
         ALTER TABLE crm.customer_tags ADD CONSTRAINT "customer_tags_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customers'::regclass AND conname='customers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.customers'::regclass AND contype='p') THEN
         ALTER TABLE crm.customers ADD CONSTRAINT "customers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.interactions'::regclass AND conname='interactions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.interactions'::regclass AND contype='p') THEN
         ALTER TABLE crm.interactions ADD CONSTRAINT "interactions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.opportunities'::regclass AND conname='opportunities_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.opportunities'::regclass AND contype='p') THEN
         ALTER TABLE crm.opportunities ADD CONSTRAINT "opportunities_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.return_items'::regclass AND conname='return_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.return_items'::regclass AND contype='p') THEN
         ALTER TABLE crm.return_items ADD CONSTRAINT "return_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.returns'::regclass AND conname='returns_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.returns'::regclass AND contype='p') THEN
         ALTER TABLE crm.returns ADD CONSTRAINT "returns_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.rfm_results'::regclass AND conname='rfm_results_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.rfm_results'::regclass AND contype='p') THEN
         ALTER TABLE crm.rfm_results ADD CONSTRAINT "rfm_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.tags'::regclass AND conname='tags_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='crm.tags'::regclass AND contype='p') THEN
         ALTER TABLE crm.tags ADD CONSTRAINT "tags_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

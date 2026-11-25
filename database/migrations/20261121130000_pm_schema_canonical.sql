@@ -409,126 +409,126 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_code_unique ON pm.projects USING 
 CREATE INDEX IF NOT EXISTS idx_projects_parent_id ON pm.projects USING btree (parent_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.acceptances'::regclass AND conname='acceptances_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.acceptances'::regclass AND contype='p') THEN
         ALTER TABLE pm.acceptances ADD CONSTRAINT "acceptances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.budgets'::regclass AND conname='budgets_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.budgets'::regclass AND contype='p') THEN
         ALTER TABLE pm.budgets ADD CONSTRAINT "budgets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.contracts'::regclass AND conname='contracts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.contracts'::regclass AND contype='p') THEN
         ALTER TABLE pm.contracts ADD CONSTRAINT "contracts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.documents'::regclass AND conname='documents_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.documents'::regclass AND contype='p') THEN
         ALTER TABLE pm.documents ADD CONSTRAINT "documents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.notifications'::regclass AND conname='notifications_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.notifications'::regclass AND contype='p') THEN
         ALTER TABLE pm.notifications ADD CONSTRAINT "notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.pm_tasks'::regclass AND conname='pm_tasks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.pm_tasks'::regclass AND contype='p') THEN
         ALTER TABLE pm.pm_tasks ADD CONSTRAINT "pm_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_approvals'::regclass AND conname='project_approvals_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_approvals'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_approvals ADD CONSTRAINT "project_approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_benefits'::regclass AND conname='project_benefits_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_benefits'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_benefits ADD CONSTRAINT "project_benefits_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_expenses'::regclass AND conname='project_expenses_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_expenses'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_expenses ADD CONSTRAINT "project_expenses_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_members'::regclass AND conname='project_members_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_members'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_members ADD CONSTRAINT "project_members_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_milestones'::regclass AND conname='project_milestones_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_milestones'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_milestones ADD CONSTRAINT "project_milestones_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_phases'::regclass AND conname='project_phases_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_phases'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_phases ADD CONSTRAINT "project_phases_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_resources'::regclass AND conname='project_resources_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_resources'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_resources ADD CONSTRAINT "project_resources_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_type_configs'::regclass AND conname='project_type_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.project_type_configs'::regclass AND contype='p') THEN
         ALTER TABLE pm.project_type_configs ADD CONSTRAINT "project_type_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.projects'::regclass AND conname='projects_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.projects'::regclass AND contype='p') THEN
         ALTER TABLE pm.projects ADD CONSTRAINT "projects_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.quality_checks'::regclass AND conname='quality_checks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.quality_checks'::regclass AND contype='p') THEN
         ALTER TABLE pm.quality_checks ADD CONSTRAINT "quality_checks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.risks'::regclass AND conname='risks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.risks'::regclass AND contype='p') THEN
         ALTER TABLE pm.risks ADD CONSTRAINT "risks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.settlements'::regclass AND conname='settlements_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='pm.settlements'::regclass AND contype='p') THEN
         ALTER TABLE pm.settlements ADD CONSTRAINT "settlements_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

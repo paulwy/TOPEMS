@@ -610,196 +610,196 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_scm_inbound_snapshot_tenant_po ON scm.wms_i
 CREATE UNIQUE INDEX IF NOT EXISTS uq_wms_snapshot_wh_item ON scm.wms_inventory_snapshots USING btree (warehouse_id, item_code);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE scm.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.mrp_suggestions'::regclass AND conname='mrp_suggestions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.mrp_suggestions'::regclass AND contype='p') THEN
         ALTER TABLE scm.mrp_suggestions ADD CONSTRAINT "mrp_suggestions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.price_comparison_items'::regclass AND conname='price_comparison_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.price_comparison_items'::regclass AND contype='p') THEN
         ALTER TABLE scm.price_comparison_items ADD CONSTRAINT "price_comparison_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.price_comparisons'::regclass AND conname='price_comparisons_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.price_comparisons'::regclass AND contype='p') THEN
         ALTER TABLE scm.price_comparisons ADD CONSTRAINT "price_comparisons_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_contract_items'::regclass AND conname='purchase_contract_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_contract_items'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_contract_items ADD CONSTRAINT "purchase_contract_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_contracts'::regclass AND conname='purchase_contracts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_contracts'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_contracts ADD CONSTRAINT "purchase_contracts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_inquiries'::regclass AND conname='purchase_inquiries_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_inquiries'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_inquiries ADD CONSTRAINT "purchase_inquiries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_inquiry_items'::regclass AND conname='purchase_inquiry_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_inquiry_items'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_inquiry_items ADD CONSTRAINT "purchase_inquiry_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_items'::regclass AND conname='purchase_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_items'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_items ADD CONSTRAINT "purchase_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_orders'::regclass AND conname='purchase_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_orders'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_orders ADD CONSTRAINT "purchase_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_requisitions'::regclass AND conname='purchase_requisitions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.purchase_requisitions'::regclass AND contype='p') THEN
         ALTER TABLE scm.purchase_requisitions ADD CONSTRAINT "purchase_requisitions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.scm_master_data_refs'::regclass AND conname='scm_master_data_refs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.scm_master_data_refs'::regclass AND contype='p') THEN
         ALTER TABLE scm.scm_master_data_refs ADD CONSTRAINT "scm_master_data_refs_pkey" PRIMARY KEY (master_data_id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.srm_supplier_snapshots'::regclass AND conname='srm_supplier_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.srm_supplier_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE scm.srm_supplier_snapshots ADD CONSTRAINT "srm_supplier_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_admission_audit_items'::regclass AND conname='supplier_admission_audit_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_admission_audit_items'::regclass AND contype='p') THEN
         ALTER TABLE scm.supplier_admission_audit_items ADD CONSTRAINT "supplier_admission_audit_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_admissions'::regclass AND conname='supplier_admissions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_admissions'::regclass AND contype='p') THEN
         ALTER TABLE scm.supplier_admissions ADD CONSTRAINT "supplier_admissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_delivery_appointments'::regclass AND conname='supplier_delivery_appointments_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_delivery_appointments'::regclass AND contype='p') THEN
         ALTER TABLE scm.supplier_delivery_appointments ADD CONSTRAINT "supplier_delivery_appointments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_evaluations'::regclass AND conname='supplier_evaluations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_evaluations'::regclass AND contype='p') THEN
         ALTER TABLE scm.supplier_evaluations ADD CONSTRAINT "supplier_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_quote_items'::regclass AND conname='supplier_quote_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_quote_items'::regclass AND contype='p') THEN
         ALTER TABLE scm.supplier_quote_items ADD CONSTRAINT "supplier_quote_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_quotes'::regclass AND conname='supplier_quotes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.supplier_quotes'::regclass AND contype='p') THEN
         ALTER TABLE scm.supplier_quotes ADD CONSTRAINT "supplier_quotes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.suppliers'::regclass AND conname='suppliers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.suppliers'::regclass AND contype='p') THEN
         ALTER TABLE scm.suppliers ADD CONSTRAINT "suppliers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.sync_logs'::regclass AND conname='sync_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.sync_logs'::regclass AND contype='p') THEN
         ALTER TABLE scm.sync_logs ADD CONSTRAINT "sync_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.sync_record_details'::regclass AND conname='sync_record_details_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.sync_record_details'::regclass AND contype='p') THEN
         ALTER TABLE scm.sync_record_details ADD CONSTRAINT "sync_record_details_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.sync_records'::regclass AND conname='sync_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.sync_records'::regclass AND contype='p') THEN
         ALTER TABLE scm.sync_records ADD CONSTRAINT "sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_inbound_order_snapshots'::regclass AND conname='wms_inbound_order_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_inbound_order_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE scm.wms_inbound_order_snapshots ADD CONSTRAINT "wms_inbound_order_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_inventory_movement_snapshots'::regclass AND conname='wms_inventory_movement_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_inventory_movement_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE scm.wms_inventory_movement_snapshots ADD CONSTRAINT "wms_inventory_movement_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_inventory_snapshots'::regclass AND conname='wms_inventory_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_inventory_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE scm.wms_inventory_snapshots ADD CONSTRAINT "wms_inventory_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_outbound_order_snapshots'::regclass AND conname='wms_outbound_order_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_outbound_order_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE scm.wms_outbound_order_snapshots ADD CONSTRAINT "wms_outbound_order_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_replenishment_suggestion_snapshots'::regclass AND conname='wms_replenishment_suggestion_snapshots_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='scm.wms_replenishment_suggestion_snapshots'::regclass AND contype='p') THEN
         ALTER TABLE scm.wms_replenishment_suggestion_snapshots ADD CONSTRAINT "wms_replenishment_suggestion_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

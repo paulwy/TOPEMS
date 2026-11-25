@@ -488,98 +488,98 @@ CREATE INDEX IF NOT EXISTS idx_work_stations_station_no ON mes.work_stations USI
 CREATE INDEX IF NOT EXISTS idx_work_stations_workshop_id ON mes.work_stations USING btree (workshop_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE mes.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.equipment'::regclass AND conname='equipment_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.equipment'::regclass AND contype='p') THEN
         ALTER TABLE mes.equipment ADD CONSTRAINT "equipment_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.equipment_inspection_records'::regclass AND conname='equipment_inspection_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.equipment_inspection_records'::regclass AND contype='p') THEN
         ALTER TABLE mes.equipment_inspection_records ADD CONSTRAINT "equipment_inspection_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.equipment_maintenance_records'::regclass AND conname='equipment_maintenance_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.equipment_maintenance_records'::regclass AND contype='p') THEN
         ALTER TABLE mes.equipment_maintenance_records ADD CONSTRAINT "equipment_maintenance_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.process_route_steps'::regclass AND conname='process_route_steps_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.process_route_steps'::regclass AND contype='p') THEN
         ALTER TABLE mes.process_route_steps ADD CONSTRAINT "process_route_steps_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.process_routes'::regclass AND conname='process_routes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.process_routes'::regclass AND contype='p') THEN
         ALTER TABLE mes.process_routes ADD CONSTRAINT "process_routes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_lines'::regclass AND conname='production_lines_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_lines'::regclass AND contype='p') THEN
         ALTER TABLE mes.production_lines ADD CONSTRAINT "production_lines_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_orders'::regclass AND conname='production_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_orders'::regclass AND contype='p') THEN
         ALTER TABLE mes.production_orders ADD CONSTRAINT "production_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_processes'::regclass AND conname='production_processes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_processes'::regclass AND contype='p') THEN
         ALTER TABLE mes.production_processes ADD CONSTRAINT "production_processes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_records'::regclass AND conname='production_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.production_records'::regclass AND contype='p') THEN
         ALTER TABLE mes.production_records ADD CONSTRAINT "production_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.shifts'::regclass AND conname='shifts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.shifts'::regclass AND contype='p') THEN
         ALTER TABLE mes.shifts ADD CONSTRAINT "shifts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.work_calendars'::regclass AND conname='work_calendars_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.work_calendars'::regclass AND contype='p') THEN
         ALTER TABLE mes.work_calendars ADD CONSTRAINT "work_calendars_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.work_stations'::regclass AND conname='work_stations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.work_stations'::regclass AND contype='p') THEN
         ALTER TABLE mes.work_stations ADD CONSTRAINT "work_stations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.workshops'::regclass AND conname='workshops_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='mes.workshops'::regclass AND contype='p') THEN
         ALTER TABLE mes.workshops ADD CONSTRAINT "workshops_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

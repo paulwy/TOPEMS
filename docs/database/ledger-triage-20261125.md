@@ -223,3 +223,24 @@ CI 接线：`ci.yml` 目前有其他并行改动未提交（前端覆盖率 jq �
 **结论**：这 34 条不是"该跑没跑"，而是"依赖的前置状态在本库不成立"，需按门禁/数仓口径逐条定性后再决定 apply 或归档——属于下一批工作，不在本轮强推。
 
 顺带修了一处非幂等：`20261124234500_rd_change_order_status_standard.sql` 的 `ADD CONSTRAINT ck_change_orders_status_standard` 改为 `DO` 块内 `IF NOT EXISTS` 判断，避免约束已由更早批次建好时重放中止。
+
+## 14. 136 条待办的逐条定性收口（2026-11-25 二轮）
+
+二轮全量试跑（逐文件事务内 `ROLLBACK`）结果：**91 可重放 / 16 已达标（↷ 跳过、不记账）/ 29 本库不适用 / 0 未判读**，合计 136。
+比一轮（87 / 15 / 34）多出 4 条可重放，来自下面两处代码修正。
+
+**修正 1：索引后置断言写死索引名（`20261118124000`、`20261119140000`）**
+断言写的是 `to_regclass('iam.idx_core_tenant_plugins_tenant')`，而这两个文件本身并不建该索引；同名索引实际存在于 `core` 变体（`core.idx_core_tenant_plugins_tenant`）。改为「该表存在以 `tenant_id` 为前导列的索引」——不绑定命名，dev/prod 都成立。修后两文件均 PASS。
+
+**修正 2：主键守卫按约束名判重（21 个 canonical 文件，557 处）**
+`schema_canonical` 批统一用 `IF NOT EXISTS (SELECT 1 FROM pg_constraint ... AND conname='<表>_pkey')` 再 `ADD PRIMARY KEY`。本库这些表已有主键但命名不同（如 `..._pkey` 之外的历史命名），守卫放行后 `ADD` 报 `multiple primary keys`。改为 `AND contype='p'`（表已有任意主键即跳过）。`gis`、`qms(20261121120000)` 因此转为 PASS；`unified_core`(20261120235945)、`mes`(20261121160000) 仍卡在自身 FK/列形状，归入 `bootstrap-only`。
+
+**判读表 `database/migrations-triage.tsv`**（29 行，列 `version/description/class/reason/evidence/decided_on`）：
+
+| class | 条数 | 语义 |
+| --- | --- | --- |
+| `gated-cleanup` | 5 | 删表/归档副本类破坏性清理，迁移自带 `SET app.*_gate=...` 门控。本库不开门；保留供 prod 开窗执行 |
+| `bootstrap-only` | 3 | `schema_canonical` 骨架固化，按空库形状写死 CREATE/ADD 与 FK，只在全新库初始化时执行 |
+| `prod-directed` | 21 | RLS 收紧 / 平台语料归一 / 删表收口，前置断言按「与生产同源」状态编写；本库行数、策略数、列可空性与定性时不同故拒绝执行 |
+
+**与归档表的区别（重要）**：归档表 = 永不重放（本库该版本作废）；判读表 = 本库不适用、但目标环境（prod/空库）仍需执行。所以这 29 条不进 `migrations-archive.tsv`，以免被 prod 的迁移流程误跳过。`schema-health.sh` 现在对判读表做减法，输出「其中本库不适用 29 条」与「真实待办 107 条」。

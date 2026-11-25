@@ -181,56 +181,56 @@ CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_tenant ON integration.mes_qms_sync U
 CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_type ON integration.mes_qms_sync USING btree (sync_type);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.conversion_executions'::regclass AND conname='conversion_executions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.conversion_executions'::regclass AND contype='p') THEN
         ALTER TABLE integration.conversion_executions ADD CONSTRAINT "conversion_executions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.conversion_rules'::regclass AND conname='conversion_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.conversion_rules'::regclass AND contype='p') THEN
         ALTER TABLE integration.conversion_rules ADD CONSTRAINT "conversion_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.integration_events'::regclass AND conname='integration_events_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.integration_events'::regclass AND contype='p') THEN
         ALTER TABLE integration.integration_events ADD CONSTRAINT "integration_events_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.lims_qms_sync'::regclass AND conname='lims_qms_sync_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.lims_qms_sync'::regclass AND contype='p') THEN
         ALTER TABLE integration.lims_qms_sync ADD CONSTRAINT "lims_qms_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.mes_erp_sync'::regclass AND conname='mes_erp_sync_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.mes_erp_sync'::regclass AND contype='p') THEN
         ALTER TABLE integration.mes_erp_sync ADD CONSTRAINT "mes_erp_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.mes_erp_sync_logs'::regclass AND conname='mes_erp_sync_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.mes_erp_sync_logs'::regclass AND contype='p') THEN
         ALTER TABLE integration.mes_erp_sync_logs ADD CONSTRAINT "mes_erp_sync_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.mes_qms_sync'::regclass AND conname='mes_qms_sync_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.mes_qms_sync'::regclass AND contype='p') THEN
         ALTER TABLE integration.mes_qms_sync ADD CONSTRAINT "mes_qms_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.wms_scm_sync'::regclass AND conname='wms_scm_sync_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='integration.wms_scm_sync'::regclass AND contype='p') THEN
         ALTER TABLE integration.wms_scm_sync ADD CONSTRAINT "wms_scm_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

@@ -84,21 +84,21 @@ CREATE INDEX IF NOT EXISTS idx_report_templates_code ON bi.report_templates USIN
 CREATE INDEX IF NOT EXISTS idx_bi_reports_tenant_status ON bi.reports USING btree (tenant_id, status, created_at DESC);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='bi.report_schedules'::regclass AND conname='report_schedules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='bi.report_schedules'::regclass AND contype='p') THEN
         ALTER TABLE bi.report_schedules ADD CONSTRAINT "report_schedules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='bi.report_templates'::regclass AND conname='report_templates_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='bi.report_templates'::regclass AND contype='p') THEN
         ALTER TABLE bi.report_templates ADD CONSTRAINT "report_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='bi.reports'::regclass AND conname='reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='bi.reports'::regclass AND contype='p') THEN
         ALTER TABLE bi.reports ADD CONSTRAINT "reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

@@ -1016,217 +1016,217 @@ CREATE INDEX IF NOT EXISTS idx_outbound_orders_warehouse_id ON wms.outbound_orde
 CREATE INDEX IF NOT EXISTS idx_transfer_order_items_transfer_id ON wms.transfer_order_items USING btree (transfer_id);
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE wms.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.batches'::regclass AND conname='batches_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.batches'::regclass AND contype='p') THEN
         ALTER TABLE wms.batches ADD CONSTRAINT "batches_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.cycle_count_configs'::regclass AND conname='cycle_count_configs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.cycle_count_configs'::regclass AND contype='p') THEN
         ALTER TABLE wms.cycle_count_configs ADD CONSTRAINT "cycle_count_configs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.discrepancy_records'::regclass AND conname='discrepancy_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.discrepancy_records'::regclass AND contype='p') THEN
         ALTER TABLE wms.discrepancy_records ADD CONSTRAINT "discrepancy_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inbound_order_items'::regclass AND conname='inbound_order_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inbound_order_items'::regclass AND contype='p') THEN
         ALTER TABLE wms.inbound_order_items ADD CONSTRAINT "inbound_order_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inbound_orders'::regclass AND conname='inbound_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inbound_orders'::regclass AND contype='p') THEN
         ALTER TABLE wms.inbound_orders ADD CONSTRAINT "inbound_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory'::regclass AND conname='inventory_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory'::regclass AND contype='p') THEN
         ALTER TABLE wms.inventory ADD CONSTRAINT "inventory_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory_alert_records'::regclass AND conname='inventory_alert_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory_alert_records'::regclass AND contype='p') THEN
         ALTER TABLE wms.inventory_alert_records ADD CONSTRAINT "inventory_alert_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory_alert_rules'::regclass AND conname='inventory_alert_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory_alert_rules'::regclass AND contype='p') THEN
         ALTER TABLE wms.inventory_alert_rules ADD CONSTRAINT "inventory_alert_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory_movements'::regclass AND conname='inventory_movements_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.inventory_movements'::regclass AND contype='p') THEN
         ALTER TABLE wms.inventory_movements ADD CONSTRAINT "inventory_movements_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.locations'::regclass AND conname='locations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.locations'::regclass AND contype='p') THEN
         ALTER TABLE wms.locations ADD CONSTRAINT "locations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.outbound_order_items'::regclass AND conname='outbound_order_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.outbound_order_items'::regclass AND contype='p') THEN
         ALTER TABLE wms.outbound_order_items ADD CONSTRAINT "outbound_order_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.outbound_orders'::regclass AND conname='outbound_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.outbound_orders'::regclass AND contype='p') THEN
         ALTER TABLE wms.outbound_orders ADD CONSTRAINT "outbound_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_order_items'::regclass AND conname='replenishment_order_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_order_items'::regclass AND contype='p') THEN
         ALTER TABLE wms.replenishment_order_items ADD CONSTRAINT "replenishment_order_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_orders'::regclass AND conname='replenishment_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_orders'::regclass AND contype='p') THEN
         ALTER TABLE wms.replenishment_orders ADD CONSTRAINT "replenishment_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_rules'::regclass AND conname='replenishment_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_rules'::regclass AND contype='p') THEN
         ALTER TABLE wms.replenishment_rules ADD CONSTRAINT "replenishment_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_suggestions'::regclass AND conname='replenishment_suggestions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.replenishment_suggestions'::regclass AND contype='p') THEN
         ALTER TABLE wms.replenishment_suggestions ADD CONSTRAINT "replenishment_suggestions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.safety_stock_settings'::regclass AND conname='safety_stock_settings_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.safety_stock_settings'::regclass AND contype='p') THEN
         ALTER TABLE wms.safety_stock_settings ADD CONSTRAINT "safety_stock_settings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.serial_numbers'::regclass AND conname='serial_numbers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.serial_numbers'::regclass AND contype='p') THEN
         ALTER TABLE wms.serial_numbers ADD CONSTRAINT "serial_numbers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.slotting_rules'::regclass AND conname='slotting_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.slotting_rules'::regclass AND contype='p') THEN
         ALTER TABLE wms.slotting_rules ADD CONSTRAINT "slotting_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.slotting_suggestions'::regclass AND conname='slotting_suggestions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.slotting_suggestions'::regclass AND contype='p') THEN
         ALTER TABLE wms.slotting_suggestions ADD CONSTRAINT "slotting_suggestions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.slotting_zones'::regclass AND conname='slotting_zones_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.slotting_zones'::regclass AND contype='p') THEN
         ALTER TABLE wms.slotting_zones ADD CONSTRAINT "slotting_zones_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.stock_take_items'::regclass AND conname='stock_take_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.stock_take_items'::regclass AND contype='p') THEN
         ALTER TABLE wms.stock_take_items ADD CONSTRAINT "stock_take_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.stock_takes'::regclass AND conname='stock_takes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.stock_takes'::regclass AND contype='p') THEN
         ALTER TABLE wms.stock_takes ADD CONSTRAINT "stock_takes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.sync_record_details'::regclass AND conname='sync_record_details_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.sync_record_details'::regclass AND contype='p') THEN
         ALTER TABLE wms.sync_record_details ADD CONSTRAINT "sync_record_details_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.sync_records'::regclass AND conname='sync_records_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.sync_records'::regclass AND contype='p') THEN
         ALTER TABLE wms.sync_records ADD CONSTRAINT "sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.transfer_order_items'::regclass AND conname='transfer_order_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.transfer_order_items'::regclass AND contype='p') THEN
         ALTER TABLE wms.transfer_order_items ADD CONSTRAINT "transfer_order_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.transfer_orders'::regclass AND conname='transfer_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.transfer_orders'::regclass AND contype='p') THEN
         ALTER TABLE wms.transfer_orders ADD CONSTRAINT "transfer_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.warehouses'::regclass AND conname='warehouses_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.warehouses'::regclass AND contype='p') THEN
         ALTER TABLE wms.warehouses ADD CONSTRAINT "warehouses_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.wave_pick_items'::regclass AND conname='wave_pick_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.wave_pick_items'::regclass AND contype='p') THEN
         ALTER TABLE wms.wave_pick_items ADD CONSTRAINT "wave_pick_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.wave_picks'::regclass AND conname='wave_picks_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='wms.wave_picks'::regclass AND contype='p') THEN
         ALTER TABLE wms.wave_picks ADD CONSTRAINT "wave_picks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;

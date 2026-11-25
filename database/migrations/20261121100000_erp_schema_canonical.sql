@@ -621,189 +621,189 @@ ALTER TABLE erp.asset_categories ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.asset_categories'::regclass AND conname='asset_categories_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.asset_categories'::regclass AND contype='p') THEN
         ALTER TABLE erp.asset_categories ADD CONSTRAINT "asset_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.assets'::regclass AND conname='assets_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.assets'::regclass AND contype='p') THEN
         ALTER TABLE erp.assets ADD CONSTRAINT "assets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.audit_logs'::regclass AND conname='audit_logs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.audit_logs'::regclass AND contype='p') THEN
         ALTER TABLE erp.audit_logs ADD CONSTRAINT "audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.bank_accounts'::regclass AND conname='bank_accounts_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.bank_accounts'::regclass AND contype='p') THEN
         ALTER TABLE erp.bank_accounts ADD CONSTRAINT "bank_accounts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.company_relations'::regclass AND conname='company_relations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.company_relations'::regclass AND contype='p') THEN
         ALTER TABLE erp.company_relations ADD CONSTRAINT "company_relations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_report_lines'::regclass AND conname='consolidation_report_lines_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_report_lines'::regclass AND contype='p') THEN
         ALTER TABLE erp.consolidation_report_lines ADD CONSTRAINT "consolidation_report_lines_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_reports'::regclass AND conname='consolidation_reports_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_reports'::regclass AND contype='p') THEN
         ALTER TABLE erp.consolidation_reports ADD CONSTRAINT "consolidation_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_scope_companies'::regclass AND conname='consolidation_scope_companies_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_scope_companies'::regclass AND contype='p') THEN
         ALTER TABLE erp.consolidation_scope_companies ADD CONSTRAINT "consolidation_scope_companies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_scopes'::regclass AND conname='consolidation_scopes_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.consolidation_scopes'::regclass AND contype='p') THEN
         ALTER TABLE erp.consolidation_scopes ADD CONSTRAINT "consolidation_scopes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.customers'::regclass AND conname='customers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.customers'::regclass AND contype='p') THEN
         ALTER TABLE erp.customers ADD CONSTRAINT "customers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.dict_items'::regclass AND conname='dict_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.dict_items'::regclass AND contype='p') THEN
         ALTER TABLE erp.dict_items ADD CONSTRAINT "dict_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.dict_types'::regclass AND conname='dict_types_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.dict_types'::regclass AND contype='p') THEN
         ALTER TABLE erp.dict_types ADD CONSTRAINT "dict_types_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.elimination_rules'::regclass AND conname='elimination_rules_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.elimination_rules'::regclass AND contype='p') THEN
         ALTER TABLE erp.elimination_rules ADD CONSTRAINT "elimination_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.erp_master_data_refs'::regclass AND conname='erp_master_data_refs_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.erp_master_data_refs'::regclass AND contype='p') THEN
         ALTER TABLE erp.erp_master_data_refs ADD CONSTRAINT "erp_master_data_refs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.erp_production_orders'::regclass AND conname='erp_production_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.erp_production_orders'::regclass AND contype='p') THEN
         ALTER TABLE erp.erp_production_orders ADD CONSTRAINT "erp_production_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.fin_reconciliations'::regclass AND conname='fin_reconciliations_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.fin_reconciliations'::regclass AND contype='p') THEN
         ALTER TABLE erp.fin_reconciliations ADD CONSTRAINT "fin_reconciliations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.financial_vouchers'::regclass AND conname='financial_vouchers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.financial_vouchers'::regclass AND contype='p') THEN
         ALTER TABLE erp.financial_vouchers ADD CONSTRAINT "financial_vouchers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.fixed_assets'::regclass AND conname='fixed_assets_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.fixed_assets'::regclass AND contype='p') THEN
         ALTER TABLE erp.fixed_assets ADD CONSTRAINT "fixed_assets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.internal_transactions'::regclass AND conname='internal_transactions_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.internal_transactions'::regclass AND contype='p') THEN
         ALTER TABLE erp.internal_transactions ADD CONSTRAINT "internal_transactions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.inventory'::regclass AND conname='inventory_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.inventory'::regclass AND contype='p') THEN
         ALTER TABLE erp.inventory ADD CONSTRAINT "inventory_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.leave_requests'::regclass AND conname='leave_requests_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.leave_requests'::regclass AND contype='p') THEN
         ALTER TABLE erp.leave_requests ADD CONSTRAINT "leave_requests_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.materials'::regclass AND conname='materials_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.materials'::regclass AND contype='p') THEN
         ALTER TABLE erp.materials ADD CONSTRAINT "materials_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.opening_balances'::regclass AND conname='opening_balances_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.opening_balances'::regclass AND contype='p') THEN
         ALTER TABLE erp.opening_balances ADD CONSTRAINT "opening_balances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.purchase_orders'::regclass AND conname='purchase_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.purchase_orders'::regclass AND contype='p') THEN
         ALTER TABLE erp.purchase_orders ADD CONSTRAINT "purchase_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.sales_orders'::regclass AND conname='sales_orders_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.sales_orders'::regclass AND contype='p') THEN
         ALTER TABLE erp.sales_orders ADD CONSTRAINT "sales_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.suppliers'::regclass AND conname='suppliers_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.suppliers'::regclass AND contype='p') THEN
         ALTER TABLE erp.suppliers ADD CONSTRAINT "suppliers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.voucher_items'::regclass AND conname='voucher_items_pkey') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='erp.voucher_items'::regclass AND contype='p') THEN
         ALTER TABLE erp.voucher_items ADD CONSTRAINT "voucher_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
