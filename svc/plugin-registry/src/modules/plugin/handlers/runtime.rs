@@ -249,10 +249,12 @@ pub async fn update_plugin_status(
     );
 
     let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
+    let Some(_txn) = guard.as_mut() else {
         return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    // 插件心跳是平台级服务间写入（X-Plugin-Token/无请求租户上下文），
+    // 走系统通道作用域，避免 RLS 因缺租户上下文拒绝写库。
+    let mut scope = match state.db.scope_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -310,10 +312,10 @@ pub async fn get_plugin_status(
     tracing::debug!("[Plugin] Getting status for plugin: {}", plugin_code);
 
     let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
+    let Some(_txn) = guard.as_mut() else {
         return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
@@ -366,10 +368,10 @@ pub async fn unregister_plugin(
     tracing::info!("[Plugin] Unregistering plugin: {}", plugin_code);
 
     let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
+    let Some(_txn) = guard.as_mut() else {
         return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open write scope: {}", e);
@@ -416,10 +418,10 @@ pub async fn list_plugins_with_status(
     tracing::info!("[Plugin] Listing plugins with runtime status");
 
     let mut guard = txn_arc.lock().await;
-    let Some(txn) = guard.as_mut() else {
+    let Some(_txn) = guard.as_mut() else {
         return Json(CoreResponse::error("数据库事务上下文缺失：请求事务未注入"));
     };
-    let mut scope = match state.db.scope_with(txn).await {
+    let mut scope = match state.db.scope_read_system().await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("[Plugin] Failed to open read scope: {}", e);
